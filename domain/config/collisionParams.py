@@ -1,0 +1,18 @@
+# FILE: domain/config/collisionParams.py
+from __future__ import annotations
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class CollisionParams:
+    eps: float = 1e-4
+    ground_probe: float = 0.03
+
+    nearby_xz_pad: int = 1
+    nearby_y_down_pad: int = 2
+    nearby_y_up_pad: int = 1
+
+    # Sneak edge-walk clamp.
+    # This is used only when: on ground + crouching + not jumping.
+    sneak_step: float = 0.05  # world units per backoff step
+
+DEFAULT_COLLISION_PARAMS = CollisionParams()

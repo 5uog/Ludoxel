@@ -1,0 +1,2 @@
+/* FILE: presentation/theme/main.qss */
+QMainWindow { background: #202225; }

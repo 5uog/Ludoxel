@@ -1,0 +1,38 @@
+# FILE: application/session/sessionSettings.py
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import ClassVar
+
+from domain.config.movementParams import MovementParams, DEFAULT_MOVEMENT_PARAMS
+from domain.config.collisionParams import CollisionParams, DEFAULT_COLLISION_PARAMS
+
+@dataclass
+class SessionSettings:
+    """
+    Runtime settings for a play session.
+
+    This object is intentionally mutable:
+    UI can change FOV/sensitivity at runtime without touching domain params.
+    """
+
+    # User-adjustable runtime settings
+    seed: int = 0
+    fov_deg: float = 80.0
+    mouse_sens_deg_per_px: float = 0.09
+
+    # Domain parameters (typically fixed per session)
+    movement: MovementParams = field(default_factory=lambda: DEFAULT_MOVEMENT_PARAMS)
+    collision: CollisionParams = field(default_factory=lambda: DEFAULT_COLLISION_PARAMS)
+
+    # Shared ranges (avoid duplicating numeric constraints across UI/widgets)
+    FOV_MIN: ClassVar[float] = 50.0
+    FOV_MAX: ClassVar[float] = 110.0
+    SENS_MIN: ClassVar[float] = 0.01
+    SENS_MAX: ClassVar[float] = 0.30
+
+    def set_fov(self, fov: float) -> None:
+        self.fov_deg = float(max(self.FOV_MIN, min(self.FOV_MAX, float(fov))))
+
+    def set_mouse_sens(self, sens: float) -> None:
+        self.mouse_sens_deg_per_px = float(max(self.SENS_MIN, min(self.SENS_MAX, float(sens))))
