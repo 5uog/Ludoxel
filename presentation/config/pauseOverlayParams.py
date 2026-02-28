@@ -23,4 +23,10 @@ class PauseOverlayParams:
     sens_min: float = float(SessionSettings.SENS_MIN)
     sens_max: float = float(SessionSettings.SENS_MAX)
 
+    # Sun angles are expressed in degrees and map directly to renderer sun_dir.
+    sun_az_min: int = 0
+    sun_az_max: int = 360
+    sun_el_min: int = 0
+    sun_el_max: int = 90
+
 DEFAULT_PAUSE_OVERLAY_PARAMS = PauseOverlayParams()

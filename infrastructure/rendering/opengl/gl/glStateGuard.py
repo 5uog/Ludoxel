@@ -2,16 +2,18 @@
 from __future__ import annotations
 
 """
-glStateGuard provides a narrow, explicit GL state boundary primitive for pass isolation. 
-The responsibility of this module is not to snapshot "all GL state" (which is expensive and incomplete 
-in portable OpenGL), but to capture and restore a carefully selected subset of high-impact states that 
+glStateGuard provides a narrow, explicit GL state boundary primitive for pass isolation.
+The responsibility of this module is not to snapshot "all GL state" (which is expensive and incomplete
+in portable OpenGL), but to capture and restore a carefully selected subset of high-impact states that
 are commonly mutated by rendering passes and are frequent sources of regressions when they leak.
 
-This guard targets framebuffer binding, viewport, enable caps, cull face mode, and polygon mode. 
+This guard targets framebuffer binding, viewport, enable caps, cull face mode, and polygon mode.
 These are the states most likely to be modified by depth-only, translucent, and debug visualization passes.
 
-The design is intentionally minimal: 
-it keeps the pass cost bounded and makes the boundary policy explicit at the call site.
+Implementation note (polygon mode):
+Some driver/profile combinations are strict about glPolygonMode's 'face' parameter.
+To avoid GL_INVALID_ENUM regressions, polygon mode is restored via GL_FRONT_AND_BACK only.
+This is sufficient for this project because passes author polygon mode symmetrically.
 """
 
 from dataclasses import dataclass
@@ -19,7 +21,7 @@ from typing import Sequence
 
 from OpenGL.GL import (
     glGetIntegerv, glIsEnabled, glEnable, glDisable, glBindFramebuffer, glViewport, glCullFace, glPolygonMode,
-    GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_VIEWPORT, GL_CULL_FACE_MODE, GL_POLYGON_MODE, GL_FRONT, GL_BACK,
+    GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_VIEWPORT, GL_CULL_FACE_MODE, GL_POLYGON_MODE, GL_FRONT_AND_BACK,
 )
 
 @dataclass(frozen=True)
@@ -47,7 +49,9 @@ class GLStateGuard:
         self._prev_vp: tuple[int, int, int, int] | None = None
         self._prev_en: list[_EnableCapState] = []
         self._prev_cull_mode: int | None = None
-        self._prev_poly: tuple[int, int] | None = None  # (front, back)
+
+        # Stored as a single mode restored with GL_FRONT_AND_BACK.
+        self._prev_poly_mode: int | None = None
 
     def __enter__(self) -> "GLStateGuard":
         if self._cap_fb:
@@ -68,19 +72,20 @@ class GLStateGuard:
 
         if self._cap_poly:
             pm = glGetIntegerv(GL_POLYGON_MODE)
-            # GL_POLYGON_MODE returns [frontMode, backMode] in core profiles.
-            if pm is not None and len(pm) >= 2:
-                self._prev_poly = (int(pm[0]), int(pm[1]))
+            # GL_POLYGON_MODE typically returns [frontMode, backMode].
+            # We restore via GL_FRONT_AND_BACK with a single mode to avoid profile-specific enum issues.
+            if pm is None:
+                self._prev_poly_mode = None
+            elif hasattr(pm, "__len__") and len(pm) >= 1:
+                self._prev_poly_mode = int(pm[0])
             else:
-                self._prev_poly = None
+                self._prev_poly_mode = int(pm)
 
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        if self._cap_poly and self._prev_poly is not None:
-            front_mode, back_mode = self._prev_poly
-            glPolygonMode(GL_FRONT, int(front_mode))
-            glPolygonMode(GL_BACK, int(back_mode))
+        if self._cap_poly and self._prev_poly_mode is not None:
+            glPolygonMode(GL_FRONT_AND_BACK, int(self._prev_poly_mode))
 
         if self._cap_cull and self._prev_cull_mode is not None:
             glCullFace(int(self._prev_cull_mode))

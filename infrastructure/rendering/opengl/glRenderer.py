@@ -48,9 +48,10 @@ class GLRenderer:
 
         self._res: GLResources | None = None
 
-        # The sun direction is modeled as a session-constant directional light.
-        # This is sufficient for an MVP and avoids coupling with time-of-day simulation.
-        self._sun_dir = sun_dir_from_az_el_deg(self._cfg.sun.azimuth_deg, self._cfg.sun.elevation_deg)
+        # Runtime sun angles are presentation-controlled.
+        self._sun_azimuth_deg = float(self._cfg.sun.azimuth_deg)
+        self._sun_elevation_deg = float(self._cfg.sun.elevation_deg)
+        self._sun_dir = sun_dir_from_az_el_deg(self._sun_azimuth_deg, self._sun_elevation_deg)
 
         self._shadow = ShadowMapPass(self._cfg.shadow)
         self._world = WorldPass()
@@ -59,6 +60,10 @@ class GLRenderer:
 
         # Debug toggles are centralized here so the presentation layer does not need to know about pass wiring.
         self._debug_shadow = False
+
+        # Runtime toggles.
+        self._shadow_enabled = True
+        self._world_wireframe = False
 
     def initialize(self, assets_dir: Path) -> None:
         # GLResources centralizes shader/mesh/texture creation under the active context.
@@ -75,8 +80,28 @@ class GLRenderer:
     def set_cloud_wireframe(self, on: bool) -> None:
         self._cloud.set_wireframe(bool(on))
 
+    def set_world_wireframe(self, on: bool) -> None:
+        self._world_wireframe = bool(on)
+
+    def set_shadow_enabled(self, on: bool) -> None:
+        self._shadow_enabled = bool(on)
+
     def set_debug_shadow(self, on: bool) -> None:
         self._debug_shadow = bool(on)
+
+    def sun_angles(self) -> tuple[float, float]:
+        return (float(self._sun_azimuth_deg), float(self._sun_elevation_deg))
+
+    def set_sun_angles(self, azimuth_deg: float, elevation_deg: float) -> None:
+        az = float(azimuth_deg) % 360.0
+        if az < 0.0:
+            az += 360.0
+        el = float(elevation_deg)
+        el = max(0.0, min(90.0, el))
+
+        self._sun_azimuth_deg = az
+        self._sun_elevation_deg = el
+        self._sun_dir = sun_dir_from_az_el_deg(self._sun_azimuth_deg, self._sun_elevation_deg)
 
     def sun_dir(self) -> Vec3:
         return self._sun_dir
@@ -86,6 +111,9 @@ class GLRenderer:
         return float(self._cfg.shadow.dark_mul)
 
     def shadow_info(self) -> tuple[bool, int]:
+        if not bool(self._shadow_enabled):
+            return (False, 0)
+
         info = self._shadow.info()
         ok = bool(self._cfg.shadow.enabled and info.ok and info.tex_id != 0 and info.inst_count > 0)
         return (ok, int(info.size) if ok else 0)
@@ -179,13 +207,13 @@ class GLRenderer:
             shadow=self._cfg.shadow,
             shadow_size=int(max(1, int(shadow_info_pre.size))),
         )
-        if self._shadow.should_render(light_vp):
+
+        if bool(self._shadow_enabled) and self._shadow.should_render(light_vp):
             self._shadow.render(light_vp)
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
         # The perspective matrix uses z_near and z_far chosen to balance close-range precision and coverage.
-        # Excessively small z_near amplifies depth buffer precision loss; the configured value is conservative.
         view = mat4.look_dir(eye, forward)
         proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(self._cfg.camera.z_near), float(self._cfg.camera.z_far))
         vp = mat4.mul(proj, view)
@@ -208,6 +236,8 @@ class GLRenderer:
                 light_view_proj=light_vp,
                 sun_dir=self._sun_dir,
                 debug_shadow=bool(self._debug_shadow),
+                shadow_enabled=bool(self._shadow_enabled),
+                world_wireframe=bool(self._world_wireframe),
                 shadow=self._cfg.shadow,
                 shadow_info=shadow_info,
             )

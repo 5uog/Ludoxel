@@ -17,6 +17,14 @@ class PauseOverlay(QWidget):
     invert_y_changed = pyqtSignal(bool)
     cloud_wireframe_changed = pyqtSignal(bool)
 
+    # Rendering toggles.
+    world_wireframe_changed = pyqtSignal(bool)
+    shadow_enabled_changed = pyqtSignal(bool)
+
+    # Sun direction controls.
+    sun_azimuth_changed = pyqtSignal(float)
+    sun_elevation_changed = pyqtSignal(float)
+
     def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
         super().__init__(parent)
         self._params = params
@@ -87,6 +95,24 @@ class PauseOverlay(QWidget):
         sens_row.addWidget(self._sld_sens)
         pv.addLayout(sens_row)
 
+        sun_az_row = QVBoxLayout()
+        self._lbl_sun_az = QLabel("Sun azimuth: 45 deg", panel)
+        self._sld_sun_az = QSlider(Qt.Orientation.Horizontal, panel)
+        self._sld_sun_az.setRange(int(self._params.sun_az_min), int(self._params.sun_az_max))
+        self._sld_sun_az.valueChanged.connect(self._on_sun_az)
+        sun_az_row.addWidget(self._lbl_sun_az)
+        sun_az_row.addWidget(self._sld_sun_az)
+        pv.addLayout(sun_az_row)
+
+        sun_el_row = QVBoxLayout()
+        self._lbl_sun_el = QLabel("Sun elevation: 60 deg", panel)
+        self._sld_sun_el = QSlider(Qt.Orientation.Horizontal, panel)
+        self._sld_sun_el.setRange(int(self._params.sun_el_min), int(self._params.sun_el_max))
+        self._sld_sun_el.valueChanged.connect(self._on_sun_el)
+        sun_el_row.addWidget(self._lbl_sun_el)
+        sun_el_row.addWidget(self._sld_sun_el)
+        pv.addLayout(sun_el_row)
+
         inv_row = QHBoxLayout()
         self._cb_inv_x = QCheckBox("Invert X", panel)
         self._cb_inv_y = QCheckBox("Invert Y", panel)
@@ -99,15 +125,37 @@ class PauseOverlay(QWidget):
 
         dbg_row = QHBoxLayout()
         self._cb_cloud_wire = QCheckBox("Cloud wireframe", panel)
+        self._cb_world_wire = QCheckBox("World wireframe", panel)
         self._cb_cloud_wire.toggled.connect(self.cloud_wireframe_changed.emit)
+        self._cb_world_wire.toggled.connect(self.world_wireframe_changed.emit)
         dbg_row.addWidget(self._cb_cloud_wire)
+        dbg_row.addWidget(self._cb_world_wire)
         dbg_row.addStretch(1)
         pv.addLayout(dbg_row)
+
+        shadow_row = QHBoxLayout()
+        self._cb_shadow_enabled = QCheckBox("Enable shadow map", panel)
+        self._cb_shadow_enabled.toggled.connect(self.shadow_enabled_changed.emit)
+        shadow_row.addWidget(self._cb_shadow_enabled)
+        shadow_row.addStretch(1)
+        pv.addLayout(shadow_row)
 
         root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addStretch(1)
 
-    def sync_values(self, fov_deg: float, sens_deg_per_px: float, inv_x: bool, inv_y: bool, cloud_wire: bool) -> None:
+    def sync_values(
+        self,
+        *,
+        fov_deg: float,
+        sens_deg_per_px: float,
+        inv_x: bool,
+        inv_y: bool,
+        cloud_wire: bool,
+        world_wire: bool,
+        shadow_enabled: bool,
+        sun_az_deg: float,
+        sun_el_deg: float,
+    ) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
         self._sld_fov.blockSignals(True)
@@ -123,6 +171,22 @@ class PauseOverlay(QWidget):
         self._sld_sens.blockSignals(False)
         self._lbl_sens.setText(f"Mouse sensitivity: {s:.3f} deg/px")
 
+        az = float(sun_az_deg) % 360.0
+        az_i = int(round(az))
+        az_i = max(int(self._params.sun_az_min), min(int(self._params.sun_az_max), az_i))
+        self._sld_sun_az.blockSignals(True)
+        self._sld_sun_az.setValue(az_i)
+        self._sld_sun_az.blockSignals(False)
+        self._lbl_sun_az.setText(f"Sun azimuth: {az_i} deg")
+
+        el = float(sun_el_deg)
+        el_i = int(round(el))
+        el_i = max(int(self._params.sun_el_min), min(int(self._params.sun_el_max), el_i))
+        self._sld_sun_el.blockSignals(True)
+        self._sld_sun_el.setValue(el_i)
+        self._sld_sun_el.blockSignals(False)
+        self._lbl_sun_el.setText(f"Sun elevation: {el_i} deg")
+
         self._cb_inv_x.blockSignals(True)
         self._cb_inv_y.blockSignals(True)
         self._cb_inv_x.setChecked(bool(inv_x))
@@ -134,6 +198,14 @@ class PauseOverlay(QWidget):
         self._cb_cloud_wire.setChecked(bool(cloud_wire))
         self._cb_cloud_wire.blockSignals(False)
 
+        self._cb_world_wire.blockSignals(True)
+        self._cb_world_wire.setChecked(bool(world_wire))
+        self._cb_world_wire.blockSignals(False)
+
+        self._cb_shadow_enabled.blockSignals(True)
+        self._cb_shadow_enabled.setChecked(bool(shadow_enabled))
+        self._cb_shadow_enabled.blockSignals(False)
+
     def _on_fov(self, v: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(v)}")
         self.fov_changed.emit(float(v))
@@ -142,3 +214,11 @@ class PauseOverlay(QWidget):
         s = float(v) / float(self._params.sens_scale)
         self._lbl_sens.setText(f"Mouse sensitivity: {s:.3f} deg/px")
         self.sens_changed.emit(s)
+
+    def _on_sun_az(self, v: int) -> None:
+        self._lbl_sun_az.setText(f"Sun azimuth: {int(v)} deg")
+        self.sun_azimuth_changed.emit(float(v))
+
+    def _on_sun_el(self, v: int) -> None:
+        self._lbl_sun_el.setText(f"Sun elevation: {int(v)} deg")
+        self.sun_elevation_changed.emit(float(v))

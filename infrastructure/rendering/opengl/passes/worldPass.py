@@ -20,12 +20,15 @@ import numpy as np
 
 from OpenGL.GL import (
     glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glBindVertexArray, glDrawArraysInstanced,
+    glPolygonMode,
     GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_TRIANGLES,
+    GL_FRONT_AND_BACK, GL_LINE,
 )
 
 from core.math.vec3 import Vec3
 from ..gl.shaderProgram import ShaderProgram
 from ..gl.meshBuffer import MeshBuffer
+from ..gl.glStateGuard import GLStateGuard
 from ..resources.textureAtlas import TextureAtlas
 from ..glRendererParams import ShadowParams
 from .shadowMapPass import ShadowMapInfo
@@ -36,6 +39,12 @@ class WorldDrawInputs:
     light_view_proj: np.ndarray
     sun_dir: Vec3
     debug_shadow: bool
+
+    # Runtime toggles (presentation-driven).
+    shadow_enabled: bool
+    world_wireframe: bool
+
+    # Static tuning surface (bias, dark_mul, etc.).
     shadow: ShadowParams
     shadow_info: ShadowMapInfo
 
@@ -82,55 +91,64 @@ class WorldPass:
         if self._prog is None or self._meshes is None or self._atlas is None:
             return
 
-        self._prog.use()
-        self._prog.set_mat4("u_viewProj", inp.view_proj)
-        self._prog.set_mat4("u_lightViewProj", inp.light_view_proj)
+        # GLStateGuard is used so that debug polygon mode does not leak into other passes.
+        with GLStateGuard(
+            capture_framebuffer=False,
+            capture_viewport=False,
+            capture_enables=(GL_CULL_FACE,),
+            capture_cull_mode=True,
+            capture_polygon_mode=True,
+        ):
+            if bool(inp.world_wireframe):
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
-        # u_sunDir is the only directional light term in this MVP.
-        # Keeping it explicit (instead of baking into vertices) allows dynamic time-of-day later.
-        self._prog.set_vec3("u_sunDir", inp.sun_dir.x, inp.sun_dir.y, inp.sun_dir.z)
-        self._prog.set_int("u_atlas", 0)
-        self._prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
+            self._prog.use()
+            self._prog.set_mat4("u_viewProj", inp.view_proj)
+            self._prog.set_mat4("u_lightViewProj", inp.light_view_proj)
 
-        # Shadow sampling is considered valid only when the map is complete and has casters.
-        # This avoids interpreting uninitialized depth as "everything in shadow", which is a common failure mode.
-        shadow_enabled = bool(
-            inp.shadow.enabled
-            and inp.shadow_info.ok
-            and int(inp.shadow_info.tex_id) != 0
-            and int(inp.shadow_info.inst_count) > 0
-        )
-        self._prog.set_int("u_shadowEnabled", 1 if shadow_enabled else 0)
-        self._prog.set_int("u_shadowMap", 1)
+            # u_sunDir is the only directional light term in this MVP.
+            # Keeping it explicit (instead of baking into vertices) allows dynamic time-of-day later.
+            self._prog.set_vec3("u_sunDir", inp.sun_dir.x, inp.sun_dir.y, inp.sun_dir.z)
+            self._prog.set_int("u_atlas", 0)
+            self._prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
 
-        # u_shadowTexel allows bias and filter footprints to scale with resolution.
-        # The reciprocal is used in the shader for stable "texel-sized" offsets independent of size.
-        ss = float(max(1, int(inp.shadow_info.size))) if shadow_enabled else 1.0
-        self._prog.set_vec2("u_shadowTexel", 1.0 / ss, 1.0 / ss)
-        self._prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
-        self._prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
-        self._prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
+            # Shadow sampling is considered valid only when enabled, the map is complete, and has casters.
+            shadow_sampling_ok = bool(
+                inp.shadow_enabled
+                and inp.shadow_info.ok
+                and int(inp.shadow_info.tex_id) != 0
+                and int(inp.shadow_info.inst_count) > 0
+            )
+            self._prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)
+            self._prog.set_int("u_shadowMap", 1)
 
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, int(self._atlas.tex_id))
+            # u_shadowTexel allows bias and filter footprints to scale with resolution.
+            ss = float(max(1, int(inp.shadow_info.size))) if shadow_sampling_ok else 1.0
+            self._prog.set_vec2("u_shadowTexel", 1.0 / ss, 1.0 / ss)
+            self._prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
+            self._prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
+            self._prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
 
-        glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, int(inp.shadow_info.tex_id) if shadow_enabled else 0)
+            glActiveTexture(GL_TEXTURE0)
+            glBindTexture(GL_TEXTURE_2D, int(self._atlas.tex_id))
 
-        glEnable(GL_CULL_FACE)
-        glCullFace(GL_BACK)
+            glActiveTexture(GL_TEXTURE1)
+            glBindTexture(GL_TEXTURE_2D, int(inp.shadow_info.tex_id) if shadow_sampling_ok else 0)
 
-        # The draw order is fixed by face index, which keeps frame-to-frame behavior deterministic.
-        for mesh, cnt in zip(self._meshes, self._counts):
-            if int(cnt) <= 0:
-                continue
-            glBindVertexArray(mesh.vao)
-            glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
-            glBindVertexArray(0)
+            glEnable(GL_CULL_FACE)
+            glCullFace(GL_BACK)
 
-        glDisable(GL_CULL_FACE)
+            # The draw order is fixed by face index, which keeps frame-to-frame behavior deterministic.
+            for mesh, cnt in zip(self._meshes, self._counts):
+                if int(cnt) <= 0:
+                    continue
+                glBindVertexArray(mesh.vao)
+                glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
+                glBindVertexArray(0)
 
-        glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, 0)
+            glDisable(GL_CULL_FACE)
+
+            glActiveTexture(GL_TEXTURE1)
+            glBindTexture(GL_TEXTURE_2D, 0)
+            glActiveTexture(GL_TEXTURE0)
+            glBindTexture(GL_TEXTURE_2D, 0)

@@ -24,13 +24,13 @@ from dataclasses import dataclass
 import numpy as np
 
 from OpenGL.GL import (
-    glGenFramebuffers, glDeleteFramebuffers, glBindFramebuffer, glCheckFramebufferStatus, glGenTextures, 
+    glGenFramebuffers, glDeleteFramebuffers, glBindFramebuffer, glCheckFramebufferStatus, glGenTextures,
     glDeleteTextures, glBindTexture, glTexImage2D, glTexParameteri, glTexParameterfv, glFramebufferTexture2D,
     glDrawBuffer, glReadBuffer, glViewport, glClear, glEnable, glDisable, glDepthMask, glDepthFunc, glCullFace,
     glPolygonOffset, glBindVertexArray, glDrawArraysInstanced,
-    GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, GL_DEPTH_COMPONENT24, 
+    GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, GL_DEPTH_COMPONENT24,
     GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR,
-    GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER, GL_TEXTURE_BORDER_COLOR, GL_TEXTURE_COMPARE_MODE, 
+    GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER, GL_TEXTURE_BORDER_COLOR, GL_TEXTURE_COMPARE_MODE,
     GL_TEXTURE_COMPARE_FUNC, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL, GL_NONE, GL_BLEND, GL_DEPTH_TEST, GL_LESS,
     GL_DEPTH_BUFFER_BIT, GL_CULL_FACE, GL_BACK, GL_FRONT, GL_POLYGON_OFFSET_FILL, GL_TRIANGLES,
 )
@@ -72,6 +72,9 @@ class ShadowMapPass:
         # In a voxel world, geometry changes are typically sparse, and this avoids needless buffer traffic.
         self._last_revision: int = -1
 
+        # dirty forces a re-render when caster instances change even if light VP is unchanged.
+        self._dirty: bool = True
+
     def initialize(self, prog: ShaderProgram, cube_mesh: MeshBuffer, size: int) -> None:
         self._prog = prog
         self._mesh = cube_mesh
@@ -83,6 +86,7 @@ class ShadowMapPass:
         self._mesh = None
         self._last_vp_rendered = None
         self._last_revision = -1
+        self._dirty = True
 
     def info(self) -> ShadowMapInfo:
         return ShadowMapInfo(
@@ -104,6 +108,9 @@ class ShadowMapPass:
             data = np.zeros((0, 7), dtype=np.float32)
             self._mesh.upload_instances(data)
             self._inst_count = 0
+            # No casters => no meaningful shadow render.
+            self._dirty = False
+            self._last_vp_rendered = None
             return
 
         # Deduplication is a direct performance win because the shadow pass is instance-count bound.
@@ -121,15 +128,26 @@ class ShadowMapPass:
             data = np.zeros((0, 7), dtype=np.float32)
             self._mesh.upload_instances(data)
             self._inst_count = 0
+            self._dirty = False
+            self._last_vp_rendered = None
             return
 
         # Shadow caster instances only need translation, so i_data is kept as zeros.
-        # The fixed 7-float instance layout matches MeshBuffer.create_cube_instanced().
         data = np.array([[cx, cy, cz, 0.0, 0.0, 0.0, 0.0] for (cx, cy, cz) in centers], dtype=np.float32)
         self._mesh.upload_instances(data)
         self._inst_count = int(data.shape[0])
 
+        # Casters changed => shadow result must be recomputed.
+        self._dirty = True
+
     def should_render(self, light_vp: np.ndarray) -> bool:
+        # If there are no casters, rendering is pointless and would only waste work.
+        if int(self._inst_count) <= 0:
+            return False
+
+        if bool(self._dirty):
+            return True
+
         if self._last_vp_rendered is None:
             return True
 
@@ -199,6 +217,7 @@ class ShadowMapPass:
             glDisable(GL_CULL_FACE)
 
         self._last_vp_rendered = light_vp.copy()
+        self._dirty = False
 
     def _destroy_shadow_map(self) -> None:
         if int(self._tex) != 0:
@@ -209,6 +228,7 @@ class ShadowMapPass:
             self._fbo = 0
         self._ok = False
         self._last_vp_rendered = None
+        self._dirty = True
 
     def _create_shadow_map(self, size: int) -> None:
         # The size clamp is a defensive engineering choice.
@@ -271,8 +291,10 @@ class ShadowMapPass:
             self._tex = 0
             self._fbo = 0
             self._ok = False
+            self._dirty = True
             return
 
         self._tex = tex
         self._fbo = fbo
         self._ok = True
+        self._dirty = True

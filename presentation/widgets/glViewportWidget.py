@@ -41,6 +41,16 @@ class GLViewportWidget(QOpenGLWidget):
         self._invert_y = False
         self._cloud_wire = False
 
+        self._world_wire = False
+        self._shadow_enabled = True
+
+        az, el = self._renderer.sun_angles()
+        self._sun_az_deg = float(az)
+        self._sun_el_deg = float(el)
+
+        self._renderer.set_shadow_enabled(self._shadow_enabled)
+        self._renderer.set_world_wireframe(self._world_wire)
+
         self._debug_shadow = False
         self._renderer.set_debug_shadow(self._debug_shadow)
 
@@ -51,6 +61,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.invert_x_changed.connect(self._set_invert_x)
         self._overlay.invert_y_changed.connect(self._set_invert_y)
         self._overlay.cloud_wireframe_changed.connect(self._set_cloud_wire)
+
+        self._overlay.world_wireframe_changed.connect(self._set_world_wire)
+        self._overlay.shadow_enabled_changed.connect(self._set_shadow_enabled)
+        self._overlay.sun_azimuth_changed.connect(self._set_sun_azimuth)
+        self._overlay.sun_elevation_changed.connect(self._set_sun_elevation)
 
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(True)
@@ -82,6 +97,10 @@ class GLViewportWidget(QOpenGLWidget):
     def initializeGL(self) -> None:
         self._renderer.initialize(self._assets_dir)
         self._renderer.set_cloud_wireframe(self._cloud_wire)
+        self._renderer.set_shadow_enabled(self._shadow_enabled)
+        self._renderer.set_world_wireframe(self._world_wire)
+        self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
+
         self._runner.start()
         self._sim_timer.start()
         self._render_timer.start()
@@ -105,10 +124,15 @@ class GLViewportWidget(QOpenGLWidget):
             self._renderer.submit_world(world_revision=int(snap.world_revision), blocks=blocks)
             self._world_uploaded = int(snap.world_revision)
 
+        # Use framebuffer pixel size (logical * devicePixelRatio) to avoid left-aligned rendering on DPI changes.
+        dpr = float(self.devicePixelRatioF())
+        fb_w = max(1, int(round(float(self.width()) * dpr)))
+        fb_h = max(1, int(round(float(self.height()) * dpr)))
+
         cam = snap.camera
         self._renderer.render(
-            w=max(1, self.width()),
-            h=max(1, self.height()),
+            w=fb_w,
+            h=fb_h,
             eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z),
             yaw_deg=cam.yaw_deg,
             pitch_deg=cam.pitch_deg,
@@ -149,6 +173,8 @@ class GLViewportWidget(QOpenGLWidget):
             f"vel=({p.velocity.x:.2f},{p.velocity.y:.2f},{p.velocity.z:.2f}) "
             f"ground={int(p.on_ground)} yaw={p.yaw_deg:.1f} pitch={p.pitch_deg:.1f} "
             f"fov={self._session.settings.fov_deg:.0f} sens={self._session.settings.mouse_sens_deg_per_px:.3f}\n"
+            f"sunAz={self._sun_az_deg:.0f} sunEl={self._sun_el_deg:.0f} "
+            f"shadowEn={int(self._shadow_enabled)} worldWire={int(self._world_wire)} cloudWire={int(self._cloud_wire)} "
             f"shadow={int(shadow_ok)} size={int(shadow_size)} mode={mode} dbg={int(self._debug_shadow)}"
         )
         self.hud_updated.emit(hud)
@@ -171,12 +197,20 @@ class GLViewportWidget(QOpenGLWidget):
             self.unsetCursor()
 
     def _sync_overlay_values(self) -> None:
+        az, el = self._renderer.sun_angles()
+        self._sun_az_deg = float(az)
+        self._sun_el_deg = float(el)
+
         self._overlay.sync_values(
             fov_deg=self._session.settings.fov_deg,
             sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px,
             inv_x=self._invert_x,
             inv_y=self._invert_y,
             cloud_wire=self._cloud_wire,
+            world_wire=self._world_wire,
+            shadow_enabled=self._shadow_enabled,
+            sun_az_deg=self._sun_az_deg,
+            sun_el_deg=self._sun_el_deg,
         )
 
     def _set_paused(self, on: bool) -> None:
@@ -217,6 +251,22 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_cloud_wire(self, on: bool) -> None:
         self._cloud_wire = bool(on)
         self._renderer.set_cloud_wireframe(self._cloud_wire)
+
+    def _set_world_wire(self, on: bool) -> None:
+        self._world_wire = bool(on)
+        self._renderer.set_world_wireframe(self._world_wire)
+
+    def _set_shadow_enabled(self, on: bool) -> None:
+        self._shadow_enabled = bool(on)
+        self._renderer.set_shadow_enabled(self._shadow_enabled)
+
+    def _set_sun_azimuth(self, az_deg: float) -> None:
+        self._sun_az_deg = float(az_deg)
+        self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
+
+    def _set_sun_elevation(self, el_deg: float) -> None:
+        self._sun_el_deg = float(el_deg)
+        self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
         if int(e.key()) == int(Qt.Key.Key_F3):
