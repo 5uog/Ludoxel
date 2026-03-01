@@ -9,13 +9,6 @@ from domain.config.collisionParams import CollisionParams, DEFAULT_COLLISION_PAR
 
 @dataclass
 class SessionSettings:
-    """
-    Runtime settings for a play session.
-
-    This object is intentionally mutable:
-    UI can change FOV/sensitivity at runtime without touching domain params.
-    """
-
     # User-adjustable runtime settings
     seed: int = 0
     fov_deg: float = 80.0

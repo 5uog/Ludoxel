@@ -1,16 +1,6 @@
 // FILE: infrastructure/rendering/opengl/shaders/world.frag
 #version 330 core
 
-// World fragment shader.
-// The responsibility of this shader is to combine atlas texturing, a simple directional diffuse term,
-// and shadow mapping into an LDR output suitable for a stylized voxel scene.
-
-// Shadow sampling uses sampler2DShadow so the hardware performs the depth compare and filtering.
-// The bias model combines a constant minimum bias with a slope-scaled term based on N·L, because grazing
-// angles amplify depth quantization and are the dominant source of acne. A small texel-scaled additive
-// bias is used to make the behavior resolution-aware; 0.25 texel is a conservative value that suppresses
-// acne without introducing large detachment in a block-scale scene.
-
 in vec3 v_normal;
 in vec2 v_uv;
 in vec4 v_uvRect;

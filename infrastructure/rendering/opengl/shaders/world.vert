@@ -1,15 +1,6 @@
 // FILE: infrastructure/rendering/opengl/shaders/world.vert
 #version 330 core
 
-// World vertex shader.
-// The responsibility of this shader is to transform instanced voxel faces into clip space and provide
-// the fragment shader with per-fragment normal, atlas UV mapping, and light-space position for shadowing.
-
-// Per-face static meshes provide correct normals and base UVs, while per-instance data supplies only
-// translation and atlas UV rectangle. This keeps the instance payload compact and reduces vertex ALU.
-// v_lightPos is computed per-vertex in light clip space. Using the same worldPos for both camera and
-// light transforms ensures shadow sampling remains spatially coherent with the rendered geometry.
-
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec3 a_normal;
 layout(location = 2) in vec2 a_uv;

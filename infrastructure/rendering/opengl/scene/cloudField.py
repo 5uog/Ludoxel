@@ -1,20 +1,6 @@
 # FILE: infrastructure/rendering/opengl/scene/cloudField.py
 from __future__ import annotations
 
-"""
-CloudField generates and caches deterministic procedural "cloud boxes" in a stable pattern space.
-The responsibility of this file is to ensure that cloud distribution is reproducible, inexpensive to
-update, and compatible with a real-time loop where frame time must remain stable. The core design is to
-separate spatial randomness (pattern-space boxes) from temporal motion (a continuous shift), which avoids
-two common artifacts: visible popping due to regeneration and "swimming noise" due to time-varying hashes.
-
-The cache is indexed by an anchor key in macro-cell coordinates. The macro size is chosen as a chunk-like
-scale rather than a per-block scale because it reduces regeneration frequency as the camera moves. Culling
-is conservative and uses a sphere bound per box; this is intentionally slightly over-inclusive to preserve
-temporal stability, because under-inclusion causes hard popping that is much more noticeable than minor
-overdraw in a translucent pass.
-"""
-
 import math
 from dataclasses import dataclass
 

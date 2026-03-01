@@ -1,18 +1,6 @@
 # FILE: infrastructure/rendering/opengl/gl/shaderProgram.py
 from __future__ import annotations
 
-"""
-ShaderProgram provides a compact wrapper over shader compilation and uniform updates. 
-The responsibility of this file is to enforce compile/link error checking, keep uniform writes typed, 
-and minimize call-site verbosity so that rendering code remains readable and less error-prone.
-
-A crucial engineering detail is matrix upload. NumPy arrays are typically treated as row-major in Python, 
-while GLSL expects column-major matrices by default. This wrapper uses transpose=True in glUniformMatrix4fv 
-as a deliberate convention so that CPU-side code can author matrices in a consistent NumPy-friendly form 
-and still match GLSL multiplication semantics. This avoids a class of bugs where matrices appear correct 
-in isolation but are silently transposed at the boundary.
-"""
-
 from dataclasses import dataclass
 from pathlib import Path
 

@@ -1,23 +1,12 @@
 # FILE: infrastructure/rendering/opengl/resources/textureAtlas.py
 from __future__ import annotations
 
-"""
-TextureAtlas packs block textures into a single GL texture and provides per-block UV rectangles. The
-responsibility of this file is to reduce per-frame texture binds and to make material selection a pure
-per-instance attribute, which is essential for scalable voxel rendering.
-
-Nearest filtering is used because voxel textures are authored for crisp sampling. Linear filtering would
-introduce blur and, more importantly, bleed across tile boundaries unless careful padding is implemented.
-Clamp-to-edge is used to prevent UV interpolation from sampling neighboring tiles. Tile size is fixed so
-UV rectangles remain stable and deterministic; images are scaled as a pragmatic choice to keep the packer
-simple and robust in an MVP.
-"""
-
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Iterable
 import math
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPainter, QColor
 from OpenGL.GL import (
     glGenTextures, glBindTexture, glTexImage2D, glTexParameteri, glDeleteTextures,
@@ -36,10 +25,12 @@ class TextureAtlas:
     height: int
 
     @staticmethod
-    def build_from_dir(block_dir: Path, tile_size: int = 64) -> "TextureAtlas":
-        items = _collect_images(block_dir, tile_size)
-        if not items:
-            items = [("default", _placeholder(tile_size, QColor(180, 180, 180)))]
+    def build_from_dir(block_dir: Path, tile_size: int = 64, names: Iterable[str] | None = None) -> "TextureAtlas":
+        items = _collect_images(block_dir, tile_size, names=names)
+
+        has_default = any(n == "default" for (n, _img) in items)
+        if not has_default:
+            items.append(("default", _placeholder(tile_size, QColor(180, 180, 180))))
 
         n = len(items)
         cols = int(math.ceil(math.sqrt(n)))
@@ -90,21 +81,48 @@ class TextureAtlas:
             glDeleteTextures(1, [int(self.tex_id)])
             self.tex_id = 0
 
-def _collect_images(block_dir: Path, tile_size: int) -> list[tuple[str, QImage]]:
+def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None = None) -> list[tuple[str, QImage]]:
     out: list[tuple[str, QImage]] = []
     if not block_dir.exists():
         return out
-    for p in sorted(block_dir.glob("*.png")):
-        name = p.stem
+
+    def _prep(img: QImage) -> QImage:
+        img = img.convertToFormat(QImage.Format.Format_RGBA8888)
+        if img.width() != tile_size or img.height() != tile_size:
+            img = img.scaled(
+                tile_size,
+                tile_size,
+                Qt.AspectRatioMode.IgnoreAspectRatio,
+                Qt.TransformationMode.FastTransformation,
+            )
+
+        # Coordinate-system correction (single-source-of-truth):
+        # QImage pixel data is top-origin, while the GL texture sampling convention expects bottom-origin V.
+        # We correct this once by vertically mirroring each tile image before atlas packing.
+        # This keeps UV rectangles and mesh UVs in a conventional, non-special-cased form.
+        img = img.mirrored(False, True)
+        return img
+
+    if names is None:
+        for p in sorted(block_dir.glob("*.png")):
+            name = p.stem
+            img = QImage(str(p))
+            if img.isNull():
+                continue
+            out.append((name, _prep(img)))
+        return out
+
+    # Deterministic ordering is inherited from the provided iteration order.
+    for nm in names:
+        name = str(nm)
+        p = block_dir / f"{name}.png"
+        if not p.exists():
+            continue
         img = QImage(str(p))
         if img.isNull():
             continue
-        img = img.convertToFormat(QImage.Format.Format_RGBA8888)
-        if img.width() != tile_size or img.height() != tile_size:
-            # Scaling keeps packing predictable.
-            # For voxel textures, uniform scaling to the atlas tile size is typically acceptable.
-            img = img.scaled(tile_size, tile_size)
-        out.append((name, img))
+        out.append((name, _prep(img)))
+
     return out
 
 def _placeholder(tile: int, c: QColor) -> QImage:
@@ -114,4 +132,6 @@ def _placeholder(tile: int, c: QColor) -> QImage:
     painter.fillRect(0, 0, tile // 2, tile // 2, QColor(120, 120, 120))
     painter.fillRect(tile // 2, tile // 2, tile // 2, tile // 2, QColor(120, 120, 120))
     painter.end()
-    return img
+
+    # Keep placeholder consistent with the same pixel-origin convention as real tiles.
+    return img.mirrored(False, True)

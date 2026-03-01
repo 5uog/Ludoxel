@@ -64,10 +64,6 @@ def _apply_sneak_edge_clamp(
     delta: Vec3,
     params: CollisionParams,
 ) -> Vec3:
-    """
-    Clamp horizontal motion so the player's feet AABB remains supported.
-    This is a simplified Minecraft-like edge-walk behavior.
-    """
     step = float(params.sneak_step)
     dx = float(delta.x)
     dz = float(delta.z)

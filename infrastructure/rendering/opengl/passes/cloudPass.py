@@ -1,21 +1,6 @@
 # FILE: infrastructure/rendering/opengl/passes/cloudPass.py
 from __future__ import annotations
 
-"""
-CloudPass is a deliberately self-contained translucent pass that renders a stylized "volumetric hint"
-using instanced axis-aligned boxes. The responsibility of this file is not to model physically-based
-participating media, but to provide a cheap depth-aware layer that can be tuned independently from
-the opaque world path. Isolation matters because translucent rendering is extremely sensitive to GL
-state (blending, depth writes, culling) and accidental state coupling commonly causes hard-to-debug
-regressions.
-
-The implementation combines conservative CPU frustum culling with GPU instancing. Culling keeps the
-instance count proportional to the visible volume, while instancing amortizes draw-call overhead by
-reusing a single cube mesh and a single program. Time-based motion is implemented as a uniform shift
-instead of regenerating geometry, which preserves determinism of the cached pattern-space field and
-keeps per-frame CPU work bounded by "visible set" rather than "world size".
-"""
-
 import time
 import numpy as np
 

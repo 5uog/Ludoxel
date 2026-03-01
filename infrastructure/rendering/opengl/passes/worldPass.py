@@ -1,20 +1,6 @@
 # FILE: infrastructure/rendering/opengl/passes/worldPass.py
 from __future__ import annotations
 
-"""
-WorldPass renders opaque voxel faces using instanced drawing and a texture atlas. The responsibility of
-this file is to be the single place where the world shading program is bound, its uniforms are authored,
-and the draw submission is issued in a deterministic order. This separation is engineering-relevant
-because opaque rendering is extremely stateful, and mixing world rendering with unrelated passes tends to
-produce implicit dependencies that later block optimization.
-
-The pass uses six face-direction meshes. This is a structural choice: by baking per-face normals and base
-UVs into static vertex buffers, the shader remains branch-free with respect to face orientation, and the
-instance payload stays compact. Shadow mapping is integrated by sampling a sampler2DShadow, using a
-compare-mode depth texture produced by ShadowMapPass. A resolution-aware texel size uniform is provided
-so that bias and sampling footprints scale correctly when shadow size changes.
-"""
-
 from dataclasses import dataclass
 import numpy as np
 

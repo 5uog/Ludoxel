@@ -1,25 +1,6 @@
 # FILE: infrastructure/rendering/opengl/passes/shadowMapPass.py
 from __future__ import annotations
 
-"""
-ShadowMapPass renders a depth-only shadow map for a directional light and exposes it as a depth-compare
-texture suitable for sampler2DShadow sampling in the lighting shader. The responsibility of this file is
-to own the FBO/texture pair and define the shadow pass’ GL state boundary in a way that remains robust
-under iterative tuning. Directional shadow mapping is numerically delicate because it is dominated by
-quantization (shadow map texels) and floating error (light-space transforms), so explicit state control
-and data caching are not "nice to have"; they are required for stability.
-
-This pass uses a single instanced cube mesh as a shadow caster proxy. That choice is intentional for an
-MVP: it preserves the mental model that every voxel block casts a block-sized shadow, and it avoids the
-complexity of face-only casters or silhouette extrusion. The pass is configured to output a GPU-native
-comparison texture, enabling hardware depth compare and built-in PCF when GL_LINEAR filtering is used.
-
-State boundary note (robustness):
-The pass restores framebuffer and viewport, and also restores key enable states that are commonly affected
-by translucent passes (blend) and debugging toggles (cull / polygon offset). This reduces accidental GL
-state coupling across passes.
-"""
-
 from dataclasses import dataclass
 import numpy as np
 

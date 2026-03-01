@@ -5,11 +5,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class GameLoopParams:
-    """
-    Presentation-layer timing parameters.
-    This isolates frame/tick constants from widget logic.
-    """
-
     sim_hz: float = 120.0
     sim_timer_interval_ms: int = 0
     render_timer_interval_ms: int = 16

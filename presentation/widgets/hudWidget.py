@@ -4,7 +4,6 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QLabel, QSizePolicy
 from PyQt6.QtCore import Qt
 
-
 class HUDWidget(QLabel):
     def __init__(self) -> None:
         super().__init__()

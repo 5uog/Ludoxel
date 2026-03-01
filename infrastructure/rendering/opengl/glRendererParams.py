@@ -1,18 +1,6 @@
 # FILE: infrastructure/rendering/opengl/glRendererParams.py
 from __future__ import annotations
 
-"""
-glRendererParams defines the typed configuration surface for rendering and lighting. The responsibility
-of this file is to make renderer behavior explicit, reproducible, and tunable without scattering magic
-numbers across call sites. Frozen dataclasses are used to prevent accidental mutation during rendering,
-which is an engineering choice that improves debuggability under a stateful GL pipeline.
-
-Default values are selected as conservative, scale-consistent heuristics for a voxel scene with unit-sized
-blocks. They are not physically derived constants; they are tuned to balance numeric stability, quality,
-and performance on typical consumer GPUs. Where a numeric value is a trade-off, it is exposed as a field
-instead of being buried as a literal.
-"""
-
 from dataclasses import dataclass, field
 
 from core.math.vec3 import Vec3

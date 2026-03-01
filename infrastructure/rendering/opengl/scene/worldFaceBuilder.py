@@ -1,20 +1,6 @@
 # FILE: infrastructure/rendering/opengl/scene/worldFaceBuilder.py
 from __future__ import annotations
 
-"""
-worldFaceBuilder converts a voxel block list into six per-face instance lists suitable for instanced
-rendering. The responsibility of this file is to perform visibility extraction (neighbor-face culling),
-associate each visible face with an atlas UV rectangle, and optionally estimate a scalar occlusion factor
-in a deterministic and bounded-cost way.
-
-Splitting by face direction is an engineering choice that keeps the GPU path simple. A dedicated static
-mesh per direction bakes normals and base UVs, which removes per-vertex branching and reduces per-instance
-payload. The optional occlusion estimator uses grid traversal (DDA) rather than per-AABB ray tests because
-voxel worlds map naturally to discrete cell stepping. The sampling pattern is intentionally tiny and fixed;
-its purpose is not physically-based soft shadows but stable micro-variation near edges when such a look is
-desired.
-"""
-
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
@@ -22,7 +8,9 @@ from core.math.vec3 import Vec3
 from core.grid.dda import dda_grid_traverse
 from .instanceTypes import BlockInstanceGPU
 
-UVLookup = Callable[[str], tuple[float, float, float, float]]
+# UVLookup resolves a UV rectangle for a given block id and face index.
+# The face index matches MeshBuffer.create_quad_instanced() ordering and must remain consistent across the pipeline.
+UVLookup = Callable[[str, int], tuple[float, float, float, float]]
 
 @dataclass(frozen=True)
 class FaceBakeParams:
@@ -64,34 +52,38 @@ def build_world_faces(
         y = int(y)
         z = int(z)
 
-        u0, v0, u1, v1 = uv_lookup(str(bid))
-
-        # Instances translate by block center to match MeshBuffer’s unit cube and quad conventions.
+        # Instances translate by block center to match MeshBuffer's unit cube and quad conventions.
         base_x = float(x) + 0.5
         base_y = float(y) + 0.5
         base_z = float(z) + 0.5
 
         if (x + 1, y, z) not in coords:
+            u0, v0, u1, v1 = uv_lookup(str(bid), 0)
             sh = _face_shadow_mul(0, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
             faces[0].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
 
         if (x - 1, y, z) not in coords:
+            u0, v0, u1, v1 = uv_lookup(str(bid), 1)
             sh = _face_shadow_mul(1, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
             faces[1].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
 
         if (x, y + 1, z) not in coords:
+            u0, v0, u1, v1 = uv_lookup(str(bid), 2)
             sh = _face_shadow_mul(2, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
             faces[2].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
 
         if (x, y - 1, z) not in coords:
+            u0, v0, u1, v1 = uv_lookup(str(bid), 3)
             sh = _face_shadow_mul(3, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
             faces[3].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
 
         if (x, y, z + 1) not in coords:
+            u0, v0, u1, v1 = uv_lookup(str(bid), 4)
             sh = _face_shadow_mul(4, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
             faces[4].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
 
         if (x, y, z - 1) not in coords:
+            u0, v0, u1, v1 = uv_lookup(str(bid), 5)
             sh = _face_shadow_mul(5, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
             faces[5].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
 

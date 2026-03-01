@@ -1,31 +1,13 @@
 # FILE: infrastructure/rendering/opengl/gl/meshBuffer.py
 from __future__ import annotations
 
-"""
-MeshBuffer owns a VAO plus vertex and instance buffers for instanced drawing. 
-The responsibility of this file is to define the attribute layout exactly once, then allow frequent 
-instance updates without rebinding or re-describing vertex formats. This matters because VAO setup 
-and draw-call count dominate CPU overhead in immediate-mode OpenGL renderers.
-
-The design uses interleaved vertex buffers (position, normal, uv) for cache-friendly fetch on the GPU.
-Instances are stored in a separate VBO and advanced per-instance via glVertexAttribDivisor. Two instance 
-layouts are supported: a 7-float layout for cube-based passes (translation + vec4 payload) and an 8-float 
-layout for world faces (translation + uv rect + shade). Using fixed layouts and reusing attribute slots 
-reduces VAO complexity and allows multiple passes to share meshes and programs with minimal specialization.
-
-Implementation note (performance + determinism):
-Instance data is rewritten frequently, so the instance VBO uses GL_STREAM_DRAW. To reduce driver churn, 
-this module keeps a byte-capacity watermark and updates in-place with glBufferSubData when possible. 
-Reallocations are performed only when the new payload exceeds the current capacity.
-"""
-
 from dataclasses import dataclass
 from ctypes import c_void_p
 import numpy as np
 
 from OpenGL.GL import (
-    glGenVertexArrays, glBindVertexArray, glGenBuffers, glBindBuffer, glBufferData, 
-    glBufferSubData, glEnableVertexAttribArray, glVertexAttribPointer, glVertexAttribDivisor, 
+    glGenVertexArrays, glBindVertexArray, glGenBuffers, glBindBuffer, glBufferData,
+    glBufferSubData, glEnableVertexAttribArray, glVertexAttribPointer, glVertexAttribDivisor,
     glDeleteBuffers, glDeleteVertexArrays, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_STREAM_DRAW, GL_FLOAT,
 )
 
@@ -195,15 +177,22 @@ class MeshBuffer:
         self.vao = 0
         self.instance_capacity = 0
 
-def _face(nx, ny, nz, corners):
+def _face(nx, ny, nz, corners, *, flip_v: bool = False):
     (a, b, c, d) = corners
+
+    # Side-face UV correction:
+    # The four vertical faces (+X,-X,+Z,-Z) currently sample textures with V orientation inverted relative
+    # to the authored "top edge". This fix is applied at the static quad level so +Y/-Y are unaffected.
+    v0 = 1.0 if bool(flip_v) else 0.0
+    v1 = 0.0 if bool(flip_v) else 1.0
+
     return [
-        (*a, nx, ny, nz, 0.0, 0.0),
-        (*b, nx, ny, nz, 1.0, 0.0),
-        (*c, nx, ny, nz, 1.0, 1.0),
-        (*a, nx, ny, nz, 0.0, 0.0),
-        (*c, nx, ny, nz, 1.0, 1.0),
-        (*d, nx, ny, nz, 0.0, 1.0),
+        (*a, nx, ny, nz, 0.0, v0),
+        (*b, nx, ny, nz, 1.0, v0),
+        (*c, nx, ny, nz, 1.0, v1),
+        (*a, nx, ny, nz, 0.0, v0),
+        (*c, nx, ny, nz, 1.0, v1),
+        (*d, nx, ny, nz, 0.0, v1),
     ]
 
 def _quad_vertices(face: int):
@@ -211,17 +200,20 @@ def _quad_vertices(face: int):
     # The quad is defined on a unit cube centered at origin. Instances translate by block center.
     p = 0.5
 
+    # Only the four vertical faces are flipped. Top and bottom faces are left unchanged by design.
+    flip_v = int(face) in (0, 1, 4, 5)
+
     if face == 0:
-        return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)])
+        return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)], flip_v=flip_v)
     if face == 1:
-        return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)])
+        return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)], flip_v=flip_v)
     if face == 2:
-        return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)])
+        return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)], flip_v=flip_v)
     if face == 3:
-        return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)])
+        return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)], flip_v=flip_v)
     if face == 4:
-        return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)])
-    return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)])
+        return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)], flip_v=flip_v)
+    return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)], flip_v=flip_v)
 
 def _cube_vertices():
     # The cube is a concatenation of six faces.

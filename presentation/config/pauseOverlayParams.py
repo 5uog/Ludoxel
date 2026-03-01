@@ -7,12 +7,6 @@ from application.session.sessionSettings import SessionSettings
 
 @dataclass(frozen=True)
 class PauseOverlayParams:
-    """
-    UI mapping parameters for the pause overlay.
-    Value ranges are sourced from SessionSettings to avoid duplication.
-    Slider scaling is a UI concern and stays here.
-    """
-
     fov_min: int = int(SessionSettings.FOV_MIN)
     fov_max: int = int(SessionSettings.FOV_MAX)
 

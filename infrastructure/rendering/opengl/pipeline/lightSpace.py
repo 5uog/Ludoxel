@@ -1,18 +1,6 @@
 # FILE: infrastructure/rendering/opengl/pipeline/lightSpace.py
 from __future__ import annotations
 
-"""
-lightSpace defines directional-light light-space transforms used by the shadow mapping pipeline.
-The responsibility of this module is to isolate "light camera policy" (coverage, near/far, stabilization)
-from GLRenderer orchestration so that it can be reasoned about, tested, and evolved without entangling
-it with draw submission and resource wiring.
-
-Texel snapping is implemented here because it is a policy-level stabilization technique: it quantizes the
-light-space center to a texel-sized grid derived from orthographic coverage and shadow resolution. Without
-snapping, the projection continuously slides over the texel grid under camera motion, producing shimmering
-even when the scene is static.
-"""
-
 import numpy as np
 
 from core.math.vec3 import Vec3

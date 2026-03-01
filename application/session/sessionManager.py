@@ -4,10 +4,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from core.math.vec3 import Vec3, clampf
+from core.geometry.aabb import AABB
+
 from domain.world.worldState import WorldState, generate_test_map
 from domain.entities.playerEntity import PlayerEntity
 from domain.systems.movementSystem import MoveInput, step_minecraft
 from domain.systems.collisionSystem import integrate_with_collisions
+from domain.systems.buildSystem import pick_block
+
 from application.session.sessionSettings import SessionSettings
 from application.ports.rendererPort import BlockInstanceDTO, CameraDTO, RenderSnapshotDTO
 
@@ -69,3 +73,40 @@ class SessionManager:
             fov_deg=self.settings.fov_deg,
         )
         return RenderSnapshotDTO(world_revision=self.world.revision, blocks=blocks, camera=cam)
+
+    def break_block(self, reach: float = 5.0) -> bool:
+        eye = self.player.eye_pos()
+        d = self.player.view_forward()
+        hit = pick_block(self.world, origin=eye, direction=d, reach=float(reach))
+        if hit is None:
+            return False
+
+        hx, hy, hz = hit.hit
+        self.world.remove_block(int(hx), int(hy), int(hz))
+        return True
+
+    def place_block(self, block_id: str, reach: float = 5.0) -> bool:
+        eye = self.player.eye_pos()
+        d = self.player.view_forward()
+        hit = pick_block(self.world, origin=eye, direction=d, reach=float(reach))
+        if hit is None:
+            return False
+
+        if hit.place is None:
+            return False
+
+        px, py, pz = hit.place
+        k = (int(px), int(py), int(pz))
+        if k in self.world.blocks:
+            return False
+
+        ba = AABB(
+            mn=Vec3(float(px), float(py), float(pz)),
+            mx=Vec3(float(px + 1), float(py + 1), float(pz + 1)),
+        )
+        pa = self.player.aabb_at(self.player.position)
+        if pa.intersects(ba):
+            return False
+
+        self.world.set_block(int(px), int(py), int(pz), str(block_id))
+        return True

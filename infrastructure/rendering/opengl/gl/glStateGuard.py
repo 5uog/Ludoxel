@@ -1,21 +1,6 @@
 # FILE: infrastructure/rendering/opengl/gl/glStateGuard.py
 from __future__ import annotations
 
-"""
-glStateGuard provides a narrow, explicit GL state boundary primitive for pass isolation.
-The responsibility of this module is not to snapshot "all GL state" (which is expensive and incomplete
-in portable OpenGL), but to capture and restore a carefully selected subset of high-impact states that
-are commonly mutated by rendering passes and are frequent sources of regressions when they leak.
-
-This guard targets framebuffer binding, viewport, enable caps, cull face mode, and polygon mode.
-These are the states most likely to be modified by depth-only, translucent, and debug visualization passes.
-
-Implementation note (polygon mode):
-Some driver/profile combinations are strict about glPolygonMode's 'face' parameter.
-To avoid GL_INVALID_ENUM regressions, polygon mode is restored via GL_FRONT_AND_BACK only.
-This is sufficient for this project because passes author polygon mode symmetrically.
-"""
-
 from dataclasses import dataclass
 from typing import Sequence
 

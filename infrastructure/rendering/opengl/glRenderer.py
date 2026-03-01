@@ -1,22 +1,6 @@
 # FILE: infrastructure/rendering/opengl/glRenderer.py
 from __future__ import annotations
 
-"""
-GLRenderer orchestrates the OpenGL rendering pipeline for the MVP and defines a hard boundary between
-rendering "policy" and GL "mechanics". The responsibility of this file is to compose passes, compute
-camera/light transforms, and translate high-level world snapshots into GPU submissions while keeping
-state transitions explicit. In real-time rendering, this separation is not stylistic; it directly reduces
-regression risk because GL state is global and mutable.
-
-This renderer uses a directional-light shadow map with optional texel snapping stabilization. Stabilized
-shadows are critical for camera motion: without snapping, the light-space projection continuously slides
-over the shadow map texel grid, producing shimmering even when the scene is static. The snapping method
-implemented here quantizes the light-space center to a texel-sized step derived from the orthographic
-coverage radius and shadow resolution. The renderer also uses instanced draws for voxel faces, which
-keeps draw call count constant with respect to block count and shifts workload to the GPU, where the
-pipeline is designed to handle parallel vertex/fragment processing.
-"""
-
 import math
 import numpy as np
 from pathlib import Path
@@ -122,23 +106,32 @@ class GLRenderer:
         ok, _ = self.shadow_info()
         return "SHADOWMAP_ON" if ok else "SHADOWMAP_OFF"
 
-    def atlas_uv(self, block_id: str) -> tuple[float, float, float, float]:
+    def atlas_uv_face(self, block_id: str, face_idx: int) -> tuple[float, float, float, float]:
         # Atlas lookup is kept here to avoid leaking TextureAtlas internals into world building code.
+        # Face-specific mapping is resolved via the domain block registry, not via renderer-side heuristics.
         if self._res is None:
             return (0.0, 0.0, 1.0, 1.0)
-        return self._res.atlas.uv.get(block_id, self._res.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0)))
+
+        b = self._res.blocks.get(str(block_id))
+        tex_name = b.texture_for_face(int(face_idx)) if b is not None else "default"
+
+        uv = self._res.atlas.uv.get(str(tex_name))
+        if uv is None:
+            uv = self._res.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
+
+        u0, v0, u1, v1 = uv
+
+        # Face-space convention correction:
+        # The four vertical faces (+X,-X,+Z,-Z) currently sample textures with V orientation inverted relative
+        # to the authored "top edge". We correct only those faces by swapping the atlas V interval.
+        # This must not affect +Y/-Y, because top/bottom should remain unchanged under a "side-only" fix.
+        fi = int(face_idx)
+        if fi == 0 or fi == 1 or fi == 4 or fi == 5:
+            return (float(u0), float(v1), float(u1), float(v0))
+
+        return (float(u0), float(v0), float(u1), float(v1))
 
     def upload_world_faces(self, world_revision: int, faces_gpu: list[list[BlockInstanceGPU]]) -> None:
-        """
-        Upload prebuilt per-face instances to the GPU world pass.
-
-        This method is intentionally compatible with callers that perform face extraction outside the renderer.
-        For shadow casters, integer block coordinates are inferred from visible face instance centers:
-        base_x/y/z are authored as (block + 0.5), so (center - 0.5) maps back to block coordinates.
-
-        This inference excludes fully occluded blocks (no visible faces), which is consistent with voxel
-        silhouette intent: fully interior blocks should not contribute to the shadow caster set.
-        """
         if self._res is None:
             return
 
@@ -155,7 +148,6 @@ class GLRenderer:
 
         self._world.upload_faces(int(world_revision), faces_np)
 
-        # Derive caster blocks from visible face centers.
         seen: set[tuple[int, int, int]] = set()
         casters: list[tuple[int, int, int]] = []
         for face in faces_gpu:
@@ -175,13 +167,11 @@ class GLRenderer:
         if self._res is None:
             return
 
-        # World faces are built on CPU to remove hidden faces and reduce fragment load.
-        # The MVP keeps occlusion estimation disabled because shadow mapping already provides direct-light occlusion.
         sdir = self._sun_dir.normalized()
 
         faces_gpu = build_world_faces(
             blocks=blocks,
-            uv_lookup=self.atlas_uv,
+            uv_lookup=self.atlas_uv_face,
             sun_dir=sdir,
             shadow_dark_mul=float(self._cfg.shadow.dark_mul),
             enable_occlusion=False,
@@ -189,8 +179,6 @@ class GLRenderer:
 
         self.upload_world_faces(int(world_revision), faces_gpu)
 
-        # When the full block set is available, prefer it for caster submission to avoid edge cases where
-        # an unusually culled face set could under-report casters.
         casters = [(int(x), int(y), int(z)) for (x, y, z, _bid) in blocks]
         self._shadow.set_casters(int(world_revision), casters)
 
@@ -198,7 +186,6 @@ class GLRenderer:
         if self._res is None:
             return
 
-        # Light-space policy is isolated in pipeline/lightSpace.py.
         shadow_info_pre = self._shadow.info()
         light_vp = compute_light_view_proj(
             center=eye,
@@ -213,7 +200,6 @@ class GLRenderer:
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
-        # The perspective matrix uses z_near and z_far chosen to balance close-range precision and coverage.
         view = mat4.look_dir(eye, forward)
         proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(self._cfg.camera.z_near), float(self._cfg.camera.z_far))
         vp = mat4.mul(proj, view)

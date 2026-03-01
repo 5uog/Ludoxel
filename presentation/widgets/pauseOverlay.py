@@ -25,6 +25,9 @@ class PauseOverlay(QWidget):
     sun_azimuth_changed = pyqtSignal(float)
     sun_elevation_changed = pyqtSignal(float)
 
+    # Build mode toggle is exposed in the settings surface so it is not limited to a hotkey path.
+    build_mode_changed = pyqtSignal(bool)
+
     def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
         super().__init__(parent)
         self._params = params
@@ -140,6 +143,13 @@ class PauseOverlay(QWidget):
         shadow_row.addStretch(1)
         pv.addLayout(shadow_row)
 
+        build_row = QHBoxLayout()
+        self._cb_build_mode = QCheckBox("Build mode", panel)
+        self._cb_build_mode.toggled.connect(self.build_mode_changed.emit)
+        build_row.addWidget(self._cb_build_mode)
+        build_row.addStretch(1)
+        pv.addLayout(build_row)
+
         root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addStretch(1)
 
@@ -155,6 +165,7 @@ class PauseOverlay(QWidget):
         shadow_enabled: bool,
         sun_az_deg: float,
         sun_el_deg: float,
+        build_mode: bool,
     ) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
@@ -205,6 +216,10 @@ class PauseOverlay(QWidget):
         self._cb_shadow_enabled.blockSignals(True)
         self._cb_shadow_enabled.setChecked(bool(shadow_enabled))
         self._cb_shadow_enabled.blockSignals(False)
+
+        self._cb_build_mode.blockSignals(True)
+        self._cb_build_mode.setChecked(bool(build_mode))
+        self._cb_build_mode.blockSignals(False)
 
     def _on_fov(self, v: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(v)}")

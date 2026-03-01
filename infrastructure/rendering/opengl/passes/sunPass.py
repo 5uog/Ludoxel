@@ -1,19 +1,6 @@
 # FILE: infrastructure/rendering/opengl/passes/sunPass.py
 from __future__ import annotations
 
-"""
-SunPass renders a camera-facing billboard for a stylized sun. The responsibility of this file is to
-provide a visually stable reference for the directional light direction without entangling it with the
-world depth/shadow pipeline. Keeping the sun as a separate pass is engineering-significant because it
-avoids feedback loops where world depth configuration accidentally clips or shadows an object that should
-behave as emissive sky decoration.
-
-The geometry is synthesized in the vertex shader using gl_VertexID and an empty VAO. This avoids CPU-side
-mesh management for a trivial quad and ensures the billboard remains resolution-independent. The sun’s
-apparent size is expressed as a half-angle in degrees, which maps directly to a physical interpretation
-and is numerically stable when the camera position changes.
-"""
-
 import math
 import numpy as np
 
@@ -88,7 +75,7 @@ class SunPass:
         sun_dist = float(self._cfg.distance)
         sun_center = eye + d * sun_dist
 
-        # half_angle_deg expresses the sun’s apparent size in a physically interpretable way.
+        # half_angle_deg expresses the sun's apparent size in a physically interpretable way.
         # A small angle (order of a few degrees) is sufficient for stylization while remaining stable
         # under perspective; tan(angle) * distance is numerically well-behaved in this range.
         half_angle = float(self._cfg.half_angle_deg)

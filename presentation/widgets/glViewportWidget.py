@@ -14,6 +14,7 @@ from infrastructure.platform.qtInputAdapter import QtInputAdapter
 from infrastructure.rendering.opengl.glRenderer import GLRenderer
 from presentation.widgets.pauseOverlay import PauseOverlay
 from presentation.widgets.crosshairWidget import CrosshairWidget
+from presentation.widgets.inventoryOverlay import InventoryOverlay
 from presentation.config.gameLoopParams import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
 
 class GLViewportWidget(QOpenGLWidget):
@@ -44,6 +45,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._world_wire = False
         self._shadow_enabled = True
 
+        self._build_mode = False
+        self._inventory_open = False
+        self._selected_block_id = "minecraft:grass_block"
+        self._reach = 5.0
+
         az, el = self._renderer.sun_angles()
         self._sun_az_deg = float(az)
         self._sun_el_deg = float(el)
@@ -67,8 +73,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.sun_azimuth_changed.connect(self._set_sun_azimuth)
         self._overlay.sun_elevation_changed.connect(self._set_sun_elevation)
 
+        self._overlay.build_mode_changed.connect(self._set_build_mode)
+
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(True)
+
+        self._inventory = InventoryOverlay(self)
+        self._inventory.block_selected.connect(self._on_inventory_selected)
+        self._inventory.closed.connect(self._on_inventory_closed)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
@@ -111,8 +123,11 @@ class GLViewportWidget(QOpenGLWidget):
             self._hud.raise_()
         self._overlay.setGeometry(0, 0, max(1, w), max(1, h))
         self._crosshair.setGeometry(0, 0, max(1, w), max(1, h))
+        self._inventory.setGeometry(0, 0, max(1, w), max(1, h))
         if self._paused:
             self._overlay.raise_()
+        elif self._inventory_open:
+            self._inventory.raise_()
         else:
             self._crosshair.raise_()
 
@@ -140,7 +155,7 @@ class GLViewportWidget(QOpenGLWidget):
         )
 
     def _tick_sim(self) -> None:
-        if not self._paused:
+        if not self._paused and not self._inventory_open:
             self._runner.update()
 
     def _on_step(self, dt: float) -> None:
@@ -169,10 +184,12 @@ class GLViewportWidget(QOpenGLWidget):
         p = self._session.player
         hud = (
             "WASD: move | Space: jump | Shift: crouch | Click: capture mouse | ESC: pause/menu | F3: shadow debug view\n"
+            "B: build mode | E: inventory | LMB: break | RMB: place\n"
             f"pos=({p.position.x:.2f},{p.position.y:.2f},{p.position.z:.2f}) "
             f"vel=({p.velocity.x:.2f},{p.velocity.y:.2f},{p.velocity.z:.2f}) "
             f"ground={int(p.on_ground)} yaw={p.yaw_deg:.1f} pitch={p.pitch_deg:.1f} "
             f"fov={self._session.settings.fov_deg:.0f} sens={self._session.settings.mouse_sens_deg_per_px:.3f}\n"
+            f"build={int(self._build_mode)} inv={int(self._inventory_open)} sel={self._selected_block_id} reach={self._reach:.1f} "
             f"sunAz={self._sun_az_deg:.0f} sunEl={self._sun_el_deg:.0f} "
             f"shadowEn={int(self._shadow_enabled)} worldWire={int(self._world_wire)} cloudWire={int(self._cloud_wire)} "
             f"shadow={int(shadow_ok)} size={int(shadow_size)} mode={mode} dbg={int(self._debug_shadow)}"
@@ -211,6 +228,7 @@ class GLViewportWidget(QOpenGLWidget):
             shadow_enabled=self._shadow_enabled,
             sun_az_deg=self._sun_az_deg,
             sun_el_deg=self._sun_el_deg,
+            build_mode=self._build_mode,
         )
 
     def _set_paused(self, on: bool) -> None:
@@ -221,6 +239,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._input.reset()
 
         if on:
+            self._set_inventory_open(False)
             self._set_mouse_capture(False)
             self._sync_overlay_values()
             self._overlay.setVisible(True)
@@ -228,10 +247,33 @@ class GLViewportWidget(QOpenGLWidget):
         else:
             self._overlay.setVisible(False)
             self._runner.start()
-            self._set_mouse_capture(True)
+            if not self._inventory_open:
+                self._set_mouse_capture(True)
             self._crosshair.raise_()
             if self._hud is not None:
                 self._hud.raise_()
+
+    def _set_inventory_open(self, on: bool) -> None:
+        on = bool(on)
+        if on == self._inventory_open:
+            return
+        self._inventory_open = on
+
+        self._input.reset()
+
+        if on:
+            self._set_mouse_capture(False)
+            self._inventory.setVisible(True)
+            self._inventory.raise_()
+            self._inventory.setFocus()
+        else:
+            self._inventory.setVisible(False)
+            if not self._paused:
+                self._runner.start()
+                self._set_mouse_capture(True)
+                self._crosshair.raise_()
+                if self._hud is not None:
+                    self._hud.raise_()
 
     def _resume_from_overlay(self) -> None:
         self._set_paused(False)
@@ -268,6 +310,17 @@ class GLViewportWidget(QOpenGLWidget):
         self._sun_el_deg = float(el_deg)
         self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
 
+    def _set_build_mode(self, on: bool) -> None:
+        self._build_mode = bool(on)
+        if not bool(self._build_mode):
+            self._set_inventory_open(False)
+
+    def _on_inventory_selected(self, block_id: str) -> None:
+        self._selected_block_id = str(block_id)
+
+    def _on_inventory_closed(self) -> None:
+        self._set_inventory_open(False)
+
     def keyPressEvent(self, e: QKeyEvent) -> None:
         if int(e.key()) == int(Qt.Key.Key_F3):
             self._debug_shadow = not self._debug_shadow
@@ -275,10 +328,22 @@ class GLViewportWidget(QOpenGLWidget):
             return
 
         if int(e.key()) == int(Qt.Key.Key_Escape):
+            if self._inventory_open:
+                self._set_inventory_open(False)
+                return
             self._set_paused(not self._paused)
             return
 
-        if not self._paused:
+        if int(e.key()) == int(Qt.Key.Key_B) and (not self._paused):
+            self._set_build_mode(not self._build_mode)
+            self._sync_overlay_values()
+            return
+
+        if int(e.key()) == int(Qt.Key.Key_E) and (not self._paused) and bool(self._build_mode):
+            self._set_inventory_open(not self._inventory_open)
+            return
+
+        if not self._paused and not self._inventory_open:
             self._input.on_key_press(e)
         super().keyPressEvent(e)
 
@@ -288,15 +353,25 @@ class GLViewportWidget(QOpenGLWidget):
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         self.setFocus()
-        if self._paused:
+        if self._paused or self._inventory_open:
             super().mousePressEvent(e)
             return
         if not self._captured:
             self._set_mouse_capture(True)
+            super().mousePressEvent(e)
+            return
+
+        if bool(self._build_mode):
+            b = e.button()
+            if b == Qt.MouseButton.LeftButton:
+                self._session.break_block(reach=float(self._reach))
+            elif b == Qt.MouseButton.RightButton:
+                self._session.place_block(block_id=self._selected_block_id, reach=float(self._reach))
+
         super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if self._paused or not self._captured:
+        if self._paused or self._inventory_open or not self._captured:
             super().mouseMoveEvent(e)
             return
 

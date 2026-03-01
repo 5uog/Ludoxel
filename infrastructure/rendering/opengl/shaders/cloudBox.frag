@@ -1,15 +1,6 @@
 // FILE: infrastructure/rendering/opengl/shaders/cloudBox.frag
 #version 330 core
 
-// This shader implements a stylized translucent "volume hint" rather than physical volumetric 
-// scattering. The responsibility of this fragment shader is to produce a stable, low-cost shading 
-// signal for instanced boxes that reads as soft clouds under a directional light.
-
-// The numeric choices here intentionally bias toward ambient lighting. A high ambient term reduces 
-// the visibility of incorrect ordering artifacts that are unavoidable when drawing many translucent 
-// boxes without sorting. The direct term is kept mild so that normals provide shape cues without 
-// turning the cloud field into hard-lit geometry.
-
 in vec3 v_normal;
 in float v_alphaMul;
 
