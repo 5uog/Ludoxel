@@ -1,6 +1,7 @@
 # FILE: presentation/widgets/glViewportWidget.py
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPoint
@@ -35,7 +36,6 @@ class GLViewportWidget(QOpenGLWidget):
         self._world_uploaded = -1
 
         self._captured = False
-        self._ignore_next_move = False
 
         self._paused = False
         self._invert_x = False
@@ -86,11 +86,13 @@ class GLViewportWidget(QOpenGLWidget):
         self.setMouseTracking(True)
 
         self._sim_timer = QTimer(self)
-        self._sim_timer.setInterval(int(self._loop.sim_timer_interval_ms))
+        self._sim_timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self._sim_timer.setInterval(int(self._effective_sim_timer_interval_ms()))
         self._sim_timer.timeout.connect(self._tick_sim)
 
         self._render_timer = QTimer(self)
-        self._render_timer.setInterval(int(self._loop.render_timer_interval_ms))
+        self._render_timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self._render_timer.setInterval(int(max(0, int(self._loop.render_timer_interval_ms))))
         self._render_timer.timeout.connect(self.update)
 
         fmt = QSurfaceFormat()
@@ -98,6 +100,25 @@ class GLViewportWidget(QOpenGLWidget):
         fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
         fmt.setDepthBufferSize(24)
         self.setFormat(fmt)
+
+        self._fps_render = 0.0
+        self._fps_sim = 0.0
+        self._fps_window_t0 = time.perf_counter()
+        self._fps_render_frames = 0
+        self._fps_sim_steps = 0
+
+        self._hud_emit_last_t = 0.0
+        self._hud_emit_interval_s = 0.10
+
+    def _effective_sim_timer_interval_ms(self) -> int:
+        ms = int(self._loop.sim_timer_interval_ms)
+        if ms > 0:
+            return ms
+
+        hz = float(self._loop.sim_hz)
+        if hz <= 1e-6:
+            return 1
+        return max(1, int(round(1000.0 / hz)))
 
     def set_hud(self, hud) -> None:
         self._hud = hud
@@ -132,6 +153,9 @@ class GLViewportWidget(QOpenGLWidget):
             self._crosshair.raise_()
 
     def paintGL(self) -> None:
+        self._fps_render_frames += 1
+        self._maybe_update_fps()
+
         snap = self._session.make_snapshot()
 
         if int(snap.world_revision) != int(self._world_uploaded):
@@ -139,7 +163,6 @@ class GLViewportWidget(QOpenGLWidget):
             self._renderer.submit_world(world_revision=int(snap.world_revision), blocks=blocks)
             self._world_uploaded = int(snap.world_revision)
 
-        # Use framebuffer pixel size (logical * devicePixelRatio) to avoid left-aligned rendering on DPI changes.
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
@@ -158,43 +181,18 @@ class GLViewportWidget(QOpenGLWidget):
         if not self._paused and not self._inventory_open:
             self._runner.update()
 
-    def _on_step(self, dt: float) -> None:
-        fr = self._input.consume()
+    def _maybe_update_fps(self) -> None:
+        now = time.perf_counter()
+        dt = float(now - self._fps_window_t0)
+        if dt < 0.5:
+            return
 
-        mdx = fr.mdx
-        mdy = fr.mdy
-        if self._invert_x:
-            mdx = -mdx
-        if self._invert_y:
-            mdy = -mdy
+        self._fps_render = float(self._fps_render_frames) / dt if dt > 1e-9 else 0.0
+        self._fps_sim = float(self._fps_sim_steps) / dt if dt > 1e-9 else 0.0
 
-        self._session.step(
-            dt=dt,
-            move_f=fr.move_f,
-            move_s=fr.move_s,
-            jump=fr.jump_pressed,
-            crouch=fr.crouch,
-            mdx=mdx,
-            mdy=mdy,
-        )
-
-        shadow_ok, shadow_size = self._renderer.shadow_info()
-        mode = self._renderer.shadow_status_text()
-
-        p = self._session.player
-        hud = (
-            "WASD: move | Space: jump | Shift: crouch | Click: capture mouse | ESC: pause/menu | F3: shadow debug view\n"
-            "B: build mode | E: inventory | LMB: break | RMB: place\n"
-            f"pos=({p.position.x:.2f},{p.position.y:.2f},{p.position.z:.2f}) "
-            f"vel=({p.velocity.x:.2f},{p.velocity.y:.2f},{p.velocity.z:.2f}) "
-            f"ground={int(p.on_ground)} yaw={p.yaw_deg:.1f} pitch={p.pitch_deg:.1f} "
-            f"fov={self._session.settings.fov_deg:.0f} sens={self._session.settings.mouse_sens_deg_per_px:.3f}\n"
-            f"build={int(self._build_mode)} inv={int(self._inventory_open)} sel={self._selected_block_id} reach={self._reach:.1f} "
-            f"sunAz={self._sun_az_deg:.0f} sunEl={self._sun_el_deg:.0f} "
-            f"shadowEn={int(self._shadow_enabled)} worldWire={int(self._world_wire)} cloudWire={int(self._cloud_wire)} "
-            f"shadow={int(shadow_ok)} size={int(shadow_size)} mode={mode} dbg={int(self._debug_shadow)}"
-        )
-        self.hud_updated.emit(hud)
+        self._fps_window_t0 = now
+        self._fps_render_frames = 0
+        self._fps_sim_steps = 0
 
     def _center_global(self) -> QPoint:
         c = QPoint(self.width() // 2, self.height() // 2)
@@ -203,15 +201,33 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_mouse_capture(self, on: bool) -> None:
         if on == self._captured:
             return
-        self._captured = on
-        if on:
+        self._captured = bool(on)
+
+        if self._captured:
+            self.setFocus(Qt.FocusReason.MouseFocusReason)
             self.setCursor(Qt.CursorShape.BlankCursor)
             self.grabMouse()
+            self.grabKeyboard()
             QCursor.setPos(self._center_global())
-            self._ignore_next_move = True
         else:
+            self.releaseKeyboard()
             self.releaseMouse()
             self.unsetCursor()
+
+    def _poll_relative_mouse_delta(self) -> None:
+        if not self._captured:
+            return
+
+        center = self._center_global()
+        cur = QCursor.pos()
+        dx = float(cur.x() - center.x())
+        dy = float(cur.y() - center.y())
+
+        if dx == 0.0 and dy == 0.0:
+            return
+
+        self._input.add_mouse_delta(dx, dy)
+        QCursor.setPos(center)
 
     def _sync_overlay_values(self) -> None:
         az, el = self._renderer.sun_angles()
@@ -234,11 +250,11 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_paused(self, on: bool) -> None:
         if on == self._paused:
             return
-        self._paused = on
+        self._paused = bool(on)
 
         self._input.reset()
 
-        if on:
+        if self._paused:
             self._set_inventory_open(False)
             self._set_mouse_capture(False)
             self._sync_overlay_values()
@@ -261,7 +277,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._input.reset()
 
-        if on:
+        if self._inventory_open:
             self._set_mouse_capture(False)
             self._inventory.setVisible(True)
             self._inventory.raise_()
@@ -321,6 +337,54 @@ class GLViewportWidget(QOpenGLWidget):
     def _on_inventory_closed(self) -> None:
         self._set_inventory_open(False)
 
+    def _on_step(self, dt: float) -> None:
+        self._fps_sim_steps += 1
+        self._maybe_update_fps()
+
+        self._poll_relative_mouse_delta()
+        fr = self._input.consume()
+
+        mdx = fr.mdx
+        mdy = fr.mdy
+        if self._invert_x:
+            mdx = -mdx
+        if self._invert_y:
+            mdy = -mdy
+
+        self._session.step(
+            dt=dt,
+            move_f=fr.move_f,
+            move_s=fr.move_s,
+            jump=fr.jump_pressed,
+            crouch=fr.crouch,
+            mdx=mdx,
+            mdy=mdy,
+        )
+
+        now = time.perf_counter()
+        if (now - float(self._hud_emit_last_t)) < float(self._hud_emit_interval_s):
+            return
+        self._hud_emit_last_t = now
+
+        shadow_ok, shadow_size = self._renderer.shadow_info()
+        mode = self._renderer.shadow_status_text()
+
+        p = self._session.player
+        hud = (
+            f"FPS: render={self._fps_render:.1f} sim={self._fps_sim:.1f}\n"
+            "WASD: move | Space: jump | Shift: crouch | Click: capture mouse | ESC: pause/menu | F3: shadow debug view\n"
+            "B: build mode | E: inventory | LMB: break | RMB: place\n"
+            f"pos=({p.position.x:.2f},{p.position.y:.2f},{p.position.z:.2f}) "
+            f"vel=({p.velocity.x:.2f},{p.velocity.y:.2f},{p.velocity.z:.2f}) "
+            f"ground={int(p.on_ground)} yaw={p.yaw_deg:.1f} pitch={p.pitch_deg:.1f} "
+            f"fov={self._session.settings.fov_deg:.0f} sens={self._session.settings.mouse_sens_deg_per_px:.3f}\n"
+            f"build={int(self._build_mode)} inv={int(self._inventory_open)} sel={self._selected_block_id} reach={self._reach:.1f} "
+            f"sunAz={self._sun_az_deg:.0f} sunEl={self._sun_el_deg:.0f} "
+            f"shadowEn={int(self._shadow_enabled)} worldWire={int(self._world_wire)} cloudWire={int(self._cloud_wire)} "
+            f"shadow={int(shadow_ok)} size={int(shadow_size)} mode={mode} dbg={int(self._debug_shadow)}"
+        )
+        self.hud_updated.emit(hud)
+
     def keyPressEvent(self, e: QKeyEvent) -> None:
         if int(e.key()) == int(Qt.Key.Key_F3):
             self._debug_shadow = not self._debug_shadow
@@ -352,10 +416,11 @@ class GLViewportWidget(QOpenGLWidget):
         super().keyReleaseEvent(e)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
-        self.setFocus()
+        self.setFocus(Qt.FocusReason.MouseFocusReason)
         if self._paused or self._inventory_open:
             super().mousePressEvent(e)
             return
+
         if not self._captured:
             self._set_mouse_capture(True)
             super().mousePressEvent(e)
@@ -375,18 +440,5 @@ class GLViewportWidget(QOpenGLWidget):
             super().mouseMoveEvent(e)
             return
 
-        if self._ignore_next_move:
-            self._ignore_next_move = False
-            super().mouseMoveEvent(e)
-            return
-
-        center_local = QPoint(self.width() // 2, self.height() // 2)
-        dx = float(e.position().x() - center_local.x())
-        dy = float(e.position().y() - center_local.y())
-
-        if dx != 0.0 or dy != 0.0:
-            self._input.add_mouse_delta(dx, dy)
-            QCursor.setPos(self._center_global())
-            self._ignore_next_move = True
-
-        super().mouseMoveEvent(e)
+        e.accept()
+        return
