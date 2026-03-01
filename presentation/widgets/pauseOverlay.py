@@ -15,17 +15,18 @@ class PauseOverlay(QWidget):
     sens_changed = pyqtSignal(float)
     invert_x_changed = pyqtSignal(bool)
     invert_y_changed = pyqtSignal(bool)
-    cloud_wireframe_changed = pyqtSignal(bool)
 
-    # Rendering toggles.
+    cloud_wireframe_changed = pyqtSignal(bool)
+    clouds_enabled_changed = pyqtSignal(bool)
+    cloud_density_changed = pyqtSignal(int)
+    cloud_seed_changed = pyqtSignal(int)
+
     world_wireframe_changed = pyqtSignal(bool)
     shadow_enabled_changed = pyqtSignal(bool)
 
-    # Sun direction controls.
     sun_azimuth_changed = pyqtSignal(float)
     sun_elevation_changed = pyqtSignal(float)
 
-    # Build mode toggle is exposed in the settings surface so it is not limited to a hotkey path.
     build_mode_changed = pyqtSignal(bool)
 
     def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
@@ -54,7 +55,7 @@ class PauseOverlay(QWidget):
         panel = QFrame(self)
         panel.setObjectName("panel")
         panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        panel.setMinimumWidth(520)
+        panel.setMinimumWidth(560)
 
         pv = QVBoxLayout(panel)
         pv.setContentsMargins(18, 16, 18, 16)
@@ -143,6 +144,31 @@ class PauseOverlay(QWidget):
         shadow_row.addStretch(1)
         pv.addLayout(shadow_row)
 
+        clouds_row = QHBoxLayout()
+        self._cb_clouds_enabled = QCheckBox("Show clouds", panel)
+        self._cb_clouds_enabled.toggled.connect(self.clouds_enabled_changed.emit)
+        clouds_row.addWidget(self._cb_clouds_enabled)
+        clouds_row.addStretch(1)
+        pv.addLayout(clouds_row)
+
+        cloud_density_row = QVBoxLayout()
+        self._lbl_cloud_density = QLabel("Cloud density: 1", panel)
+        self._sld_cloud_density = QSlider(Qt.Orientation.Horizontal, panel)
+        self._sld_cloud_density.setRange(0, 4)
+        self._sld_cloud_density.valueChanged.connect(self._on_cloud_density)
+        cloud_density_row.addWidget(self._lbl_cloud_density)
+        cloud_density_row.addWidget(self._sld_cloud_density)
+        pv.addLayout(cloud_density_row)
+
+        cloud_seed_row = QVBoxLayout()
+        self._lbl_cloud_seed = QLabel("Cloud seed: 1337", panel)
+        self._sld_cloud_seed = QSlider(Qt.Orientation.Horizontal, panel)
+        self._sld_cloud_seed.setRange(0, 9999)
+        self._sld_cloud_seed.valueChanged.connect(self._on_cloud_seed)
+        cloud_seed_row.addWidget(self._lbl_cloud_seed)
+        cloud_seed_row.addWidget(self._sld_cloud_seed)
+        pv.addLayout(cloud_seed_row)
+
         build_row = QHBoxLayout()
         self._cb_build_mode = QCheckBox("Build mode", panel)
         self._cb_build_mode.toggled.connect(self.build_mode_changed.emit)
@@ -161,6 +187,9 @@ class PauseOverlay(QWidget):
         inv_x: bool,
         inv_y: bool,
         cloud_wire: bool,
+        clouds_enabled: bool,
+        cloud_density: int,
+        cloud_seed: int,
         world_wire: bool,
         shadow_enabled: bool,
         sun_az_deg: float,
@@ -217,6 +246,22 @@ class PauseOverlay(QWidget):
         self._cb_shadow_enabled.setChecked(bool(shadow_enabled))
         self._cb_shadow_enabled.blockSignals(False)
 
+        self._cb_clouds_enabled.blockSignals(True)
+        self._cb_clouds_enabled.setChecked(bool(clouds_enabled))
+        self._cb_clouds_enabled.blockSignals(False)
+
+        cd = int(max(0, min(4, int(cloud_density))))
+        self._sld_cloud_density.blockSignals(True)
+        self._sld_cloud_density.setValue(cd)
+        self._sld_cloud_density.blockSignals(False)
+        self._lbl_cloud_density.setText(f"Cloud density: {cd}")
+
+        cs = int(max(0, min(9999, int(cloud_seed))))
+        self._sld_cloud_seed.blockSignals(True)
+        self._sld_cloud_seed.setValue(cs)
+        self._sld_cloud_seed.blockSignals(False)
+        self._lbl_cloud_seed.setText(f"Cloud seed: {cs}")
+
         self._cb_build_mode.blockSignals(True)
         self._cb_build_mode.setChecked(bool(build_mode))
         self._cb_build_mode.blockSignals(False)
@@ -237,3 +282,13 @@ class PauseOverlay(QWidget):
     def _on_sun_el(self, v: int) -> None:
         self._lbl_sun_el.setText(f"Sun elevation: {int(v)} deg")
         self.sun_elevation_changed.emit(float(v))
+
+    def _on_cloud_density(self, v: int) -> None:
+        dv = int(v)
+        self._lbl_cloud_density.setText(f"Cloud density: {dv}")
+        self.cloud_density_changed.emit(int(dv))
+
+    def _on_cloud_seed(self, v: int) -> None:
+        sv = int(v)
+        self._lbl_cloud_seed.setText(f"Cloud seed: {sv}")
+        self.cloud_seed_changed.emit(int(sv))

@@ -59,6 +59,15 @@ class GLRenderer:
     def set_cloud_wireframe(self, on: bool) -> None:
         self._cloud.set_wireframe(bool(on))
 
+    def set_cloud_enabled(self, on: bool) -> None:
+        self._cloud.set_enabled(bool(on))
+
+    def set_cloud_density(self, density: int) -> None:
+        self._cloud.set_density(int(density))
+
+    def set_cloud_seed(self, seed: int) -> None:
+        self._cloud.set_seed(int(seed))
+
     def set_world_wireframe(self, on: bool) -> None:
         self._world_wireframe = bool(on)
 

@@ -13,6 +13,13 @@ from application.session.fixedStepRunner import FixedStepRunner
 from application.session.sessionManager import SessionManager
 from infrastructure.platform.qtInputAdapter import QtInputAdapter
 from infrastructure.rendering.opengl.glRenderer import GLRenderer
+from infrastructure.persistence.appStateStore import (
+    AppStateStore,
+    AppState,
+    PersistedSettings,
+    PersistedWorld,
+    PersistedPlayer,
+)
 from presentation.widgets.pauseOverlay import PauseOverlay
 from presentation.widgets.crosshairWidget import CrosshairWidget
 from presentation.widgets.inventoryOverlay import InventoryOverlay
@@ -42,6 +49,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._invert_y = False
         self._cloud_wire = False
 
+        self._cloud_enabled = True
+        self._cloud_density = 1
+        self._cloud_seed = 1337
+
         self._world_wire = False
         self._shadow_enabled = True
 
@@ -54,9 +65,6 @@ class GLViewportWidget(QOpenGLWidget):
         self._sun_az_deg = float(az)
         self._sun_el_deg = float(el)
 
-        self._renderer.set_shadow_enabled(self._shadow_enabled)
-        self._renderer.set_world_wireframe(self._world_wire)
-
         self._debug_shadow = False
         self._renderer.set_debug_shadow(self._debug_shadow)
 
@@ -67,12 +75,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.invert_x_changed.connect(self._set_invert_x)
         self._overlay.invert_y_changed.connect(self._set_invert_y)
         self._overlay.cloud_wireframe_changed.connect(self._set_cloud_wire)
+        self._overlay.clouds_enabled_changed.connect(self._set_cloud_enabled)
+        self._overlay.cloud_density_changed.connect(self._set_cloud_density)
+        self._overlay.cloud_seed_changed.connect(self._set_cloud_seed)
 
         self._overlay.world_wireframe_changed.connect(self._set_world_wire)
         self._overlay.shadow_enabled_changed.connect(self._set_shadow_enabled)
         self._overlay.sun_azimuth_changed.connect(self._set_sun_azimuth)
         self._overlay.sun_elevation_changed.connect(self._set_sun_elevation)
-
         self._overlay.build_mode_changed.connect(self._set_build_mode)
 
         self._crosshair = CrosshairWidget(self)
@@ -110,6 +120,103 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud_emit_last_t = 0.0
         self._hud_emit_interval_s = 0.10
 
+        self._apply_persisted_state_if_present()
+
+    def _apply_persisted_state_if_present(self) -> None:
+        store = AppStateStore(project_root=self._project_root)
+        st = store.load()
+        if st is None:
+            return
+
+        ps = st.settings
+        self._session.settings.set_fov(float(ps.fov_deg))
+        self._session.settings.set_mouse_sens(float(ps.mouse_sens_deg_per_px))
+
+        self._invert_x = bool(ps.invert_x)
+        self._invert_y = bool(ps.invert_y)
+
+        self._world_wire = bool(ps.world_wireframe)
+        self._shadow_enabled = bool(ps.shadow_enabled)
+
+        self._sun_az_deg = float(ps.sun_az_deg)
+        self._sun_el_deg = float(ps.sun_el_deg)
+
+        self._cloud_enabled = bool(ps.cloud_enabled)
+        self._cloud_density = int(max(0, min(4, int(ps.cloud_density))))
+        self._cloud_seed = int(max(0, min(9999, int(ps.cloud_seed))))
+
+        self._build_mode = bool(ps.build_mode)
+        if not bool(self._build_mode):
+            self._inventory_open = False
+
+        pp = st.player
+        p = self._session.player
+        p.position = Vec3(float(pp.pos_x), float(pp.pos_y), float(pp.pos_z))
+        p.velocity = Vec3(float(pp.vel_x), float(pp.vel_y), float(pp.vel_z))
+        p.yaw_deg = float(pp.yaw_deg)
+        p.pitch_deg = float(pp.pitch_deg)
+        p.clamp_pitch()
+        p.on_ground = bool(pp.on_ground)
+        p.jump_cooldown_s = float(max(0.0, float(pp.jump_cooldown_s)))
+        p.crouch_eye_offset = float(max(0.0, min(float(p.crouch_eye_drop), float(pp.crouch_eye_offset))))
+
+        pw = st.world
+        if pw.blocks:
+            self._session.world.blocks.clear()
+            for (x, y, z), s in pw.blocks.items():
+                self._session.world.blocks[(int(x), int(y), int(z))] = str(s)
+            self._session.world.revision = int(max(1, int(pw.revision)))
+
+        self._renderer.set_world_wireframe(self._world_wire)
+        self._renderer.set_shadow_enabled(self._shadow_enabled)
+        self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
+
+        self._renderer.set_cloud_wireframe(self._cloud_wire)
+        self._renderer.set_cloud_enabled(self._cloud_enabled)
+        self._renderer.set_cloud_density(self._cloud_density)
+        self._renderer.set_cloud_seed(self._cloud_seed)
+
+    def save_state(self) -> None:
+        store = AppStateStore(project_root=self._project_root)
+
+        settings = PersistedSettings(
+            fov_deg=float(self._session.settings.fov_deg),
+            mouse_sens_deg_per_px=float(self._session.settings.mouse_sens_deg_per_px),
+            invert_x=bool(self._invert_x),
+            invert_y=bool(self._invert_y),
+            world_wireframe=bool(self._world_wire),
+            shadow_enabled=bool(self._shadow_enabled),
+            sun_az_deg=float(self._sun_az_deg),
+            sun_el_deg=float(self._sun_el_deg),
+            cloud_enabled=bool(self._cloud_enabled),
+            cloud_density=int(self._cloud_density),
+            cloud_seed=int(self._cloud_seed),
+            build_mode=bool(self._build_mode),
+        )
+
+        pl = self._session.player
+        player = PersistedPlayer(
+            pos_x=float(pl.position.x),
+            pos_y=float(pl.position.y),
+            pos_z=float(pl.position.z),
+            vel_x=float(pl.velocity.x),
+            vel_y=float(pl.velocity.y),
+            vel_z=float(pl.velocity.z),
+            yaw_deg=float(pl.yaw_deg),
+            pitch_deg=float(pl.pitch_deg),
+            on_ground=bool(pl.on_ground),
+            jump_cooldown_s=float(max(0.0, float(pl.jump_cooldown_s))),
+            crouch_eye_offset=float(max(0.0, min(float(pl.crouch_eye_drop), float(pl.crouch_eye_offset)))),
+        )
+
+        world = PersistedWorld(
+            revision=int(self._session.world.revision),
+            blocks={k: str(v) for (k, v) in self._session.world.blocks.items()},
+        )
+
+        state = AppState(version=2, settings=settings, player=player, world=world)
+        store.save(state)
+
     def _effective_sim_timer_interval_ms(self) -> int:
         ms = int(self._loop.sim_timer_interval_ms)
         if ms > 0:
@@ -129,7 +236,12 @@ class GLViewportWidget(QOpenGLWidget):
 
     def initializeGL(self) -> None:
         self._renderer.initialize(self._assets_dir)
+
         self._renderer.set_cloud_wireframe(self._cloud_wire)
+        self._renderer.set_cloud_enabled(self._cloud_enabled)
+        self._renderer.set_cloud_density(self._cloud_density)
+        self._renderer.set_cloud_seed(self._cloud_seed)
+
         self._renderer.set_shadow_enabled(self._shadow_enabled)
         self._renderer.set_world_wireframe(self._world_wire)
         self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
@@ -240,6 +352,9 @@ class GLViewportWidget(QOpenGLWidget):
             inv_x=self._invert_x,
             inv_y=self._invert_y,
             cloud_wire=self._cloud_wire,
+            clouds_enabled=self._cloud_enabled,
+            cloud_density=int(self._cloud_density),
+            cloud_seed=int(self._cloud_seed),
             world_wire=self._world_wire,
             shadow_enabled=self._shadow_enabled,
             sun_az_deg=self._sun_az_deg,
@@ -309,6 +424,18 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_cloud_wire(self, on: bool) -> None:
         self._cloud_wire = bool(on)
         self._renderer.set_cloud_wireframe(self._cloud_wire)
+
+    def _set_cloud_enabled(self, on: bool) -> None:
+        self._cloud_enabled = bool(on)
+        self._renderer.set_cloud_enabled(self._cloud_enabled)
+
+    def _set_cloud_density(self, v: int) -> None:
+        self._cloud_density = int(max(0, min(4, int(v))))
+        self._renderer.set_cloud_density(self._cloud_density)
+
+    def _set_cloud_seed(self, v: int) -> None:
+        self._cloud_seed = int(max(0, min(9999, int(v))))
+        self._renderer.set_cloud_seed(self._cloud_seed)
 
     def _set_world_wire(self, on: bool) -> None:
         self._world_wire = bool(on)
@@ -381,6 +508,7 @@ class GLViewportWidget(QOpenGLWidget):
             f"build={int(self._build_mode)} inv={int(self._inventory_open)} sel={self._selected_block_id} reach={self._reach:.1f} "
             f"sunAz={self._sun_az_deg:.0f} sunEl={self._sun_el_deg:.0f} "
             f"shadowEn={int(self._shadow_enabled)} worldWire={int(self._world_wire)} cloudWire={int(self._cloud_wire)} "
+            f"cloudEn={int(self._cloud_enabled)} cloudDen={int(self._cloud_density)} cloudSeed={int(self._cloud_seed)} "
             f"shadow={int(shadow_ok)} size={int(shadow_size)} mode={mode} dbg={int(self._debug_shadow)}"
         )
         self.hud_updated.emit(hud)
