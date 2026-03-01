@@ -19,4 +19,4 @@ class GameScreen(QWidget):
 
         layout.addWidget(self.viewport)
         self.viewport.set_hud(self.hud)
-        self.viewport.hud_updated.connect(self.hud.set_text)
+        self.viewport.hud_updated.connect(self.hud.set_payload)

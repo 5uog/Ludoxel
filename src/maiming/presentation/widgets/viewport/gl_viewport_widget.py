@@ -27,7 +27,7 @@ from maiming.presentation.widgets.viewport.viewport_persistence import apply_per
 from maiming.presentation.widgets.viewport.viewport_world_upload import WorldUploadTracker
 
 class GLViewportWidget(QOpenGLWidget):
-    hud_updated = pyqtSignal(str)
+    hud_updated = pyqtSignal(object)
 
     def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
@@ -70,6 +70,10 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._debug_shadow = False
         self._renderer.set_debug_shadow(self._debug_shadow)
+
+        self._vsync_on: bool = False
+
+        self._hud_visible: bool = True
 
         self._overlay = PauseOverlay(self)
         self._overlay.resume_requested.connect(self._resume_from_overlay)
@@ -181,12 +185,21 @@ class GLViewportWidget(QOpenGLWidget):
     def set_hud(self, hud) -> None:
         self._hud = hud
         self._hud.setParent(self)
-        self._hud.move(10, 10)
-        self._hud.show()
-        self._hud.raise_()
+        self._hud.setGeometry(0, 0, max(1, self.width()), max(1, self.height()))
+        self._hud.setVisible(bool(self._hud_visible))
+        if bool(self._hud_visible):
+            self._hud.show()
+            self._hud.raise_()
 
     def initializeGL(self) -> None:
         self._renderer.initialize(self._assets_dir)
+
+        ctx = self.context()
+        if ctx is not None:
+            try:
+                self._vsync_on = int(ctx.format().swapInterval()) > 0
+            except Exception:
+                self._vsync_on = False
 
         self._renderer.set_cloud_wireframe(self._cloud_wire)
         self._renderer.set_cloud_enabled(self._cloud_enabled)
@@ -203,8 +216,10 @@ class GLViewportWidget(QOpenGLWidget):
 
     def resizeGL(self, w: int, h: int) -> None:
         if self._hud is not None:
-            self._hud.move(10, 10)
-            self._hud.raise_()
+            self._hud.setGeometry(0, 0, max(1, w), max(1, h))
+            if bool(self._hud_visible):
+                self._hud.raise_()
+
         self._overlay.setGeometry(0, 0, max(1, w), max(1, h))
         self._crosshair.setGeometry(0, 0, max(1, w), max(1, h))
         self._inventory.setGeometry(0, 0, max(1, w), max(1, h))
@@ -362,7 +377,14 @@ class GLViewportWidget(QOpenGLWidget):
         if not self._hud_ctl.should_emit():
             return
 
-        hud = self._hud_ctl.build_text(
+        if not bool(self._hud_visible):
+            return
+
+        dpr = float(self.devicePixelRatioF())
+        fb_w = max(1, int(round(float(self.width()) * dpr)))
+        fb_h = max(1, int(round(float(self.height()) * dpr)))
+
+        payload = self._hud_ctl.build_payload(
             session=self._session,
             renderer=self._renderer,
             auto_jump_enabled=self._auto_jump_enabled,
@@ -379,13 +401,27 @@ class GLViewportWidget(QOpenGLWidget):
             cloud_density=self._cloud_density,
             cloud_seed=self._cloud_seed,
             debug_shadow=self._debug_shadow,
+            fb_w=fb_w,
+            fb_h=fb_h,
+            dpr=dpr,
+            vsync_on=self._vsync_on,
+            render_timer_interval_ms=int(self._render_timer.interval()),
+            sim_hz=float(self._loop.sim_hz),
         )
-        self.hud_updated.emit(hud)
+        self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
-        if int(e.key()) == int(Qt.Key.Key_F3):
+        if int(e.key()) == int(Qt.Key.Key_F4):
             self._debug_shadow = not self._debug_shadow
             self._renderer.set_debug_shadow(self._debug_shadow)
+            return
+
+        if int(e.key()) == int(Qt.Key.Key_F3):
+            self._hud_visible = not self._hud_visible
+            if self._hud is not None:
+                self._hud.setVisible(bool(self._hud_visible))
+                if bool(self._hud_visible):
+                    self._hud.raise_()
             return
 
         if int(e.key()) == int(Qt.Key.Key_Escape):

@@ -7,8 +7,10 @@ from pathlib import Path
 from OpenGL.GL import (
     glClearColor, glClear, glViewport,
     glEnable, glDepthFunc, glDepthMask,
+    glGetString,
     GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST, GL_LESS,
+    GL_VENDOR, GL_RENDERER, GL_VERSION, GL_SHADING_LANGUAGE_VERSION,
 )
 
 from maiming.core.math.vec3 import Vec3
@@ -45,6 +47,11 @@ class GLRenderer:
         self._shadow_enabled = True
         self._world_wireframe = False
 
+        self._gl_vendor: str = ""
+        self._gl_renderer: str = ""
+        self._gl_version: str = ""
+        self._glsl_version: str = ""
+
     def initialize(self, assets_dir: Path) -> None:
         self._res = GLResources.load(assets_dir)
 
@@ -55,6 +62,26 @@ class GLRenderer:
         self._world.initialize(self._res.world_prog, self._res.world_meshes, self._res.atlas)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
+
+        self._gl_vendor = self._gl_get_string(GL_VENDOR)
+        self._gl_renderer = self._gl_get_string(GL_RENDERER)
+        self._gl_version = self._gl_get_string(GL_VERSION)
+        self._glsl_version = self._gl_get_string(GL_SHADING_LANGUAGE_VERSION)
+
+    @staticmethod
+    def _gl_get_string(name: int) -> str:
+        try:
+            v = glGetString(int(name))
+            if v is None:
+                return ""
+            if isinstance(v, (bytes, bytearray)):
+                return v.decode("utf-8", errors="replace")
+            return str(v)
+        except Exception:
+            return ""
+
+    def gl_info(self) -> tuple[str, str, str, str]:
+        return (str(self._gl_vendor), str(self._gl_renderer), str(self._gl_version), str(self._glsl_version))
 
     def set_cloud_wireframe(self, on: bool) -> None:
         self._cloud.set_wireframe(bool(on))
