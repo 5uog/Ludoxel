@@ -10,6 +10,7 @@ class DDAHit:
     cell_y: int
     cell_z: int
     t: float
+    enter_face: int = -1
 
 def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
     d = direction
@@ -41,17 +42,23 @@ def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: fl
     tdz = (cell_size / abs(d.z)) if abs(d.z) > 1e-12 else 1e30
 
     t = 0.0
+    enter_face = -1
+
     while t <= t_max:
-        yield DDAHit(x, y, z, t)
+        yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))
+
         if tmx < tmy and tmx < tmz:
             x += step_x
             t = tmx
             tmx += tdx
+            enter_face = 1 if step_x > 0 else 0
         elif tmy < tmz:
             y += step_y
             t = tmy
             tmy += tdy
+            enter_face = 3 if step_y > 0 else 2
         else:
             z += step_z
             t = tmz
             tmz += tdz
+            enter_face = 5 if step_z > 0 else 4

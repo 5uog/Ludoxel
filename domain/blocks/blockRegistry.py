@@ -44,35 +44,17 @@ def create_default_registry() -> BlockRegistry:
     reg = BlockRegistry()
 
     from domain.blocks.catalog.grassBlock import register_grass_block
-
-    from domain.blocks.catalog.planks.oakPlanks import register_oak_planks
-    from domain.blocks.catalog.planks.sprucePlanks import register_spruce_planks
-    from domain.blocks.catalog.planks.birchPlanks import register_birch_planks
-    from domain.blocks.catalog.planks.junglePlanks import register_jungle_planks
-    from domain.blocks.catalog.planks.acaciaPlanks import register_acacia_planks
-    from domain.blocks.catalog.planks.darkOakPlanks import register_dark_oak_planks
-    from domain.blocks.catalog.planks.mangrovePlanks import register_mangrove_planks
-    from domain.blocks.catalog.planks.cherryPlanks import register_cherry_planks
-    from domain.blocks.catalog.planks.paleOakPlanks import register_pale_oak_planks
-    from domain.blocks.catalog.planks.bambooPlanks import register_bamboo_planks
-    from domain.blocks.catalog.planks.bambooMosaic import register_bamboo_mosaic
-    from domain.blocks.catalog.planks.crimsonPlanks import register_crimson_planks
-    from domain.blocks.catalog.planks.warpedPlanks import register_warped_planks
+    from domain.blocks.catalog.planks import register_planks
+    from domain.blocks.catalog.slabs import register_slabs
+    from domain.blocks.catalog.stairs import register_stairs
+    from domain.blocks.catalog.fences import register_fences
+    from domain.blocks.catalog.fenceGates import register_fence_gates
 
     register_grass_block(reg)
-
-    register_oak_planks(reg)
-    register_spruce_planks(reg)
-    register_birch_planks(reg)
-    register_jungle_planks(reg)
-    register_acacia_planks(reg)
-    register_dark_oak_planks(reg)
-    register_mangrove_planks(reg)
-    register_cherry_planks(reg)
-    register_pale_oak_planks(reg)
-    register_bamboo_planks(reg)
-    register_bamboo_mosaic(reg)
-    register_crimson_planks(reg)
-    register_warped_planks(reg)
+    register_planks(reg)
+    register_slabs(reg)
+    register_stairs(reg)
+    register_fences(reg)
+    register_fence_gates(reg)
 
     return reg

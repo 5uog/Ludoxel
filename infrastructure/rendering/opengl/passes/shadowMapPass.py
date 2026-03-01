@@ -20,6 +20,7 @@ from ..gl.shaderProgram import ShaderProgram
 from ..gl.meshBuffer import MeshBuffer
 from ..gl.glStateGuard import GLStateGuard
 from ..glRendererParams import ShadowParams
+from ..scene.instanceTypes import ShadowCasterGPU
 
 @dataclass
 class ShadowMapInfo:
@@ -40,20 +41,9 @@ class ShadowMapPass:
         self._size: int = int(cfg.size)
         self._ok: bool = False
 
-        # inst_count communicates whether sampling is meaningful.
-        # Sampling a valid-but-empty depth texture is a common source of "everything shadowed" failures.
         self._inst_count: int = 0
-
-        # The rendered light VP is cached to skip redundant shadow renders.
-        # This is especially valuable when the shadow VP is stabilized (snapped),
-        # because many camera moves do not change the effective light-space sampling grid.
         self._last_vp_rendered: np.ndarray | None = None
-
-        # last_revision is a coarse invalidation key for instance uploads.
-        # In a voxel world, geometry changes are typically sparse, and this avoids needless buffer traffic.
         self._last_revision: int = -1
-
-        # dirty forces a re-render when caster instances change even if light VP is unchanged.
         self._dirty: bool = True
 
     def initialize(self, prog: ShaderProgram, cube_mesh: MeshBuffer, size: int) -> None:
@@ -77,7 +67,7 @@ class ShadowMapPass:
             inst_count=int(self._inst_count),
         )
 
-    def set_casters(self, world_revision: int, casters: list[tuple[int, int, int]]) -> None:
+    def set_casters(self, world_revision: int, casters: list[ShadowCasterGPU]) -> None:
         if self._mesh is None:
             return
 
@@ -89,46 +79,23 @@ class ShadowMapPass:
             data = np.zeros((0, 7), dtype=np.float32)
             self._mesh.upload_instances(data)
             self._inst_count = 0
-            # No casters => no meaningful shadow render.
             self._dirty = False
             self._last_vp_rendered = None
             return
 
-        # Deduplication is a direct performance win because the shadow pass is instance-count bound.
-        # The integer triplet is the natural key for voxel blocks and ensures deterministic ordering.
-        seen: set[tuple[int, int, int]] = set()
-        centers: list[tuple[float, float, float]] = []
-        for (x, y, z) in casters:
-            k = (int(x), int(y), int(z))
-            if k in seen:
-                continue
-            seen.add(k)
-            centers.append((float(x) + 0.5, float(y) + 0.5, float(z) + 0.5))
-
-        if not centers:
-            data = np.zeros((0, 7), dtype=np.float32)
-            self._mesh.upload_instances(data)
-            self._inst_count = 0
-            self._dirty = False
-            self._last_vp_rendered = None
-            return
-
-        # Shadow caster instances only need translation, so i_data is kept as zeros.
-        data = np.array([[cx, cy, cz, 0.0, 0.0, 0.0, 0.0] for (cx, cy, cz) in centers], dtype=np.float32)
+        data = np.array(
+            [[c.cx, c.cy, c.cz, c.sx, c.sy, c.sz, 0.0] for c in casters],
+            dtype=np.float32,
+        )
         self._mesh.upload_instances(data)
         self._inst_count = int(data.shape[0])
-
-        # Casters changed => shadow result must be recomputed.
         self._dirty = True
 
     def should_render(self, light_vp: np.ndarray) -> bool:
-        # If there are no casters, rendering is pointless and would only waste work.
         if int(self._inst_count) <= 0:
             return False
-
         if bool(self._dirty):
             return True
-
         if self._last_vp_rendered is None:
             return True
 
@@ -137,9 +104,6 @@ class ShadowMapPass:
         if a.shape != b.shape:
             return True
 
-        # Max-norm change detection is chosen because it is cheap and robust to localized perturbations.
-        # The epsilon 1e-6 is tuned for float32 matrices so that tiny jitter from repeated multiplications
-        # does not force re-render, yet real snapping/translation changes are still detected.
         diff = float(np.max(np.abs(a - b)))
         return diff > 1e-6
 
@@ -165,8 +129,6 @@ class ShadowMapPass:
             glBindFramebuffer(GL_FRAMEBUFFER, int(self._fbo))
             glViewport(0, 0, s, s)
 
-            # This pass is depth-only, so blending is explicitly disabled.
-            # Shadow maps are extremely sensitive to unintended state leakage from translucent passes.
             glDisable(GL_BLEND)
 
             glEnable(GL_DEPTH_TEST)
@@ -175,15 +137,9 @@ class ShadowMapPass:
 
             glClear(GL_DEPTH_BUFFER_BIT)
 
-            # Face culling is a trade-off between acne and detachment.
-            # Front-face culling tends to reduce self-shadowing on convex geometry but can detach contact shadows.
-            # Back-face culling preserves contact but often increases acne; the parameter is exposed for tuning.
             glEnable(GL_CULL_FACE)
             glCullFace(GL_FRONT if bool(self._cfg.cull_front) else GL_BACK)
 
-            # Polygon offset shifts depth in light space to reduce rasterization-time self-intersections.
-            # The factor/units defaults are conservative and intentionally small; large offsets hide acne but
-            # quickly produce unacceptable "floating" shadows, especially at block-scale contact edges.
             glEnable(GL_POLYGON_OFFSET_FILL)
             glPolygonOffset(float(self._cfg.poly_offset_factor), float(self._cfg.poly_offset_units))
 
@@ -212,8 +168,6 @@ class ShadowMapPass:
         self._dirty = True
 
     def _create_shadow_map(self, size: int) -> None:
-        # The size clamp is a defensive engineering choice.
-        # 64 is a functional minimum for debug; 8192 protects VRAM and avoids driver allocation failures.
         size_i = int(max(64, min(8192, int(size))))
         self._size = size_i
 
@@ -222,8 +176,6 @@ class ShadowMapPass:
         tex = int(glGenTextures(1))
         glBindTexture(GL_TEXTURE_2D, tex)
 
-        # DEPTH_COMPONENT24 balances precision and bandwidth for an MVP.
-        # 16-bit can exhibit visible banding with large ortho ranges; 32-bit is often overkill for block scale.
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
@@ -236,19 +188,13 @@ class ShadowMapPass:
             None,
         )
 
-        # GL_LINEAR enables 2x2 hardware PCF for sampler2DShadow in core profiles.
-        # This is a cost-effective quality win compared to manual multi-tap filtering.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        # CLAMP_TO_BORDER with white border makes out-of-bounds sampling "fully lit".
-        # This prevents hard dark fringes when the light-space UV leaves [0,1] due to numerical drift.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1.0, 1.0, 1.0, 1.0])
 
-        # Compare mode configures the texture as a comparison sampler source.
-        # The shader then provides (uv, refDepth) and receives a filtered "lit fraction" in [0,1].
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL)
 
@@ -258,8 +204,6 @@ class ShadowMapPass:
         glBindFramebuffer(GL_FRAMEBUFFER, fbo)
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex, 0)
 
-        # Color writes are explicitly disabled for a depth-only FBO.
-        # Relying on implicit defaults is brittle across drivers and can cause undefined behavior warnings.
         glDrawBuffer(GL_NONE)
         glReadBuffer(GL_NONE)
 

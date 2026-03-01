@@ -4,190 +4,200 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
+import numpy as np
+
+from domain.blocks.stateCodec import parse_state
+from domain.blocks.runtimeModels import render_boxes_for_block, LocalBox
+from domain.blocks.blockDefinition import BlockDefinition
 from core.math.vec3 import Vec3
-from core.grid.dda import dda_grid_traverse
-from .instanceTypes import BlockInstanceGPU
 
-# UVLookup resolves a UV rectangle for a given block id and face index.
-# The face index matches MeshBuffer.create_quad_instanced() ordering and must remain consistent across the pipeline.
-UVLookup = Callable[[str, int], tuple[float, float, float, float]]
+from .instanceTypes import BlockFaceInstanceGPU, ShadowCasterGPU
 
-@dataclass(frozen=True)
-class FaceBakeParams:
-    # sample_spread sets the offset distance on the face plane for the micro-sampling pattern.
-    # 0.24 is a sub-voxel offset that remains inside the face while being large enough to detect edge occlusion.
-    sample_spread: float = 0.24
+UVRect = tuple[float, float, float, float]
+UVLookup = Callable[[str, int], UVRect]
+DefLookup = Callable[[str], BlockDefinition | None]
 
-    # t_max bounds traversal length; it must exceed view distance but remain finite for predictable cost.
-    t_max: float = 220.0
+def _overlap_1d(a0: float, a1: float, b0: float, b1: float) -> bool:
+    return (float(a1) > float(b0)) and (float(b1) > float(a0))
 
-    # eps_out and eps_sun avoid self-intersection and "starting inside geometry" artifacts in voxel DDA.
-    # Values around 1e-3 are large enough relative to float32 epsilon at unit scale while remaining invisible.
-    eps_out: float = 1e-3
-    eps_sun: float = 1e-3
+def _internal_face_mask(boxes: list[LocalBox]) -> set[tuple[int, int]]:
+    eps = 1e-7
+    internal: set[tuple[int, int]] = set()
 
-    # dark_mul maps full occlusion to minimum brightness.
-    # A non-zero floor preserves readability and reduces banding in LDR shading.
-    dark_mul: float = 0.20
+    def eq(a: float, b: float) -> bool:
+        return abs(float(a) - float(b)) <= eps
+
+    for i, a in enumerate(boxes):
+        for j, b in enumerate(boxes):
+            if i == j:
+                continue
+
+            if eq(a.mx_x, b.mn_x):
+                if eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
+                    internal.add((i, 0))
+                    internal.add((j, 1))
+
+            if eq(a.mn_x, b.mx_x):
+                if eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
+                    internal.add((i, 1))
+                    internal.add((j, 0))
+
+            if eq(a.mx_y, b.mn_y):
+                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
+                    internal.add((i, 2))
+                    internal.add((j, 3))
+
+            if eq(a.mn_y, b.mx_y):
+                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
+                    internal.add((i, 3))
+                    internal.add((j, 2))
+
+            if eq(a.mx_z, b.mn_z):
+                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y):
+                    internal.add((i, 4))
+                    internal.add((j, 5))
+
+            if eq(a.mn_z, b.mx_z):
+                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y):
+                    internal.add((i, 5))
+                    internal.add((j, 4))
+
+    return internal
+
+def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
+    uA0, vA0, uA1, vA1 = atlas
+
+    def lerp(a: float, b: float, t: float) -> float:
+        return float(a) + (float(b) - float(a)) * float(t)
+
+    def clamp01(x: float) -> float:
+        v = float(x)
+        if v < 0.0:
+            return 0.0
+        if v > 1.0:
+            return 1.0
+        return v
+
+    fi = int(face_idx)
+
+    if fi == 0:
+        u0, u1 = float(b.mn_z), float(b.mx_z)
+        v0, v1 = float(b.mn_y), float(b.mx_y)
+    elif fi == 1:
+        u0, u1 = float(b.mx_z), float(b.mn_z)
+        v0, v1 = float(b.mn_y), float(b.mx_y)
+    elif fi == 2:
+        u0, u1 = float(b.mn_x), float(b.mx_x)
+        v0, v1 = float(b.mn_z), float(b.mx_z)
+    elif fi == 3:
+        u0, u1 = float(b.mn_x), float(b.mx_x)
+        v0, v1 = float(b.mx_z), float(b.mn_z)
+    elif fi == 4:
+        u0, u1 = float(b.mx_x), float(b.mn_x)
+        v0, v1 = float(b.mn_y), float(b.mx_y)
+    else:
+        u0, u1 = float(b.mn_x), float(b.mx_x)
+        v0, v1 = float(b.mn_y), float(b.mx_y)
+
+    u0 = clamp01(u0)
+    u1 = clamp01(u1)
+    v0 = clamp01(v0)
+    v1 = clamp01(v1)
+
+    return (
+        lerp(uA0, uA1, u0),
+        lerp(vA0, vA1, v0),
+        lerp(uA0, uA1, u1),
+        lerp(vA0, vA1, v1),
+    )
+
 
 def build_world_faces(
     blocks: Iterable[tuple[int, int, int, str]],
     uv_lookup: UVLookup,
+    def_lookup: DefLookup,
     sun_dir: Vec3,
     shadow_dark_mul: float,
-    enable_occlusion: bool = True,
-    params: FaceBakeParams | None = None,
-) -> list[list[BlockInstanceGPU]]:
-    p = params or FaceBakeParams(dark_mul=float(shadow_dark_mul))
-
+) -> tuple[list[list[BlockFaceInstanceGPU]], list[ShadowCasterGPU]]:
     b_list = list(blocks)
-    coords = {(int(x), int(y), int(z)) for (x, y, z, _bid) in b_list}
 
-    sdir = sun_dir.normalized()
-
-    faces: list[list[BlockInstanceGPU]] = [[], [], [], [], [], []]
-
+    state_at: dict[tuple[int, int, int], str] = {}
     for (x, y, z, bid) in b_list:
+        state_at[(int(x), int(y), int(z))] = str(bid)
+
+    def get_state(x: int, y: int, z: int) -> str | None:
+        return state_at.get((int(x), int(y), int(z)))
+
+    faces: list[list[BlockFaceInstanceGPU]] = [[], [], [], [], [], []]
+    casters: list[ShadowCasterGPU] = []
+
+    for (x, y, z, state_str) in b_list:
         x = int(x)
         y = int(y)
         z = int(z)
 
-        # Instances translate by block center to match MeshBuffer's unit cube and quad conventions.
-        base_x = float(x) + 0.5
-        base_y = float(y) + 0.5
-        base_z = float(z) + 0.5
+        base, _p = parse_state(str(state_str))
+        defn = def_lookup(str(base))
 
-        if (x + 1, y, z) not in coords:
-            u0, v0, u1, v1 = uv_lookup(str(bid), 0)
-            sh = _face_shadow_mul(0, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
-            faces[0].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
-
-        if (x - 1, y, z) not in coords:
-            u0, v0, u1, v1 = uv_lookup(str(bid), 1)
-            sh = _face_shadow_mul(1, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
-            faces[1].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
-
-        if (x, y + 1, z) not in coords:
-            u0, v0, u1, v1 = uv_lookup(str(bid), 2)
-            sh = _face_shadow_mul(2, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
-            faces[2].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
-
-        if (x, y - 1, z) not in coords:
-            u0, v0, u1, v1 = uv_lookup(str(bid), 3)
-            sh = _face_shadow_mul(3, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
-            faces[3].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
-
-        if (x, y, z + 1) not in coords:
-            u0, v0, u1, v1 = uv_lookup(str(bid), 4)
-            sh = _face_shadow_mul(4, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
-            faces[4].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
-
-        if (x, y, z - 1) not in coords:
-            u0, v0, u1, v1 = uv_lookup(str(bid), 5)
-            sh = _face_shadow_mul(5, x, y, z, coords, sdir, p) if enable_occlusion else 1.0
-            faces[5].append(BlockInstanceGPU(base_x, base_y, base_z, u0, v0, u1, v1, float(sh)))
-
-    return faces
-
-def _face_frame(face_idx: int, x: int, y: int, z: int) -> tuple[Vec3, Vec3, Vec3, Vec3]:
-    # The frame provides a face center, outward normal, and two orthogonal tangents on the face plane.
-    cx = float(x) + 0.5
-    cy = float(y) + 0.5
-    cz = float(z) + 0.5
-
-    if face_idx == 0:
-        c = Vec3(float(x) + 1.0, cy, cz)
-        n = Vec3(1.0, 0.0, 0.0)
-        t1 = Vec3(0.0, 1.0, 0.0)
-        t2 = Vec3(0.0, 0.0, 1.0)
-        return c, n, t1, t2
-
-    if face_idx == 1:
-        c = Vec3(float(x) + 0.0, cy, cz)
-        n = Vec3(-1.0, 0.0, 0.0)
-        t1 = Vec3(0.0, 1.0, 0.0)
-        t2 = Vec3(0.0, 0.0, 1.0)
-        return c, n, t1, t2
-
-    if face_idx == 2:
-        c = Vec3(cx, float(y) + 1.0, cz)
-        n = Vec3(0.0, 1.0, 0.0)
-        t1 = Vec3(1.0, 0.0, 0.0)
-        t2 = Vec3(0.0, 0.0, 1.0)
-        return c, n, t1, t2
-
-    if face_idx == 3:
-        c = Vec3(cx, float(y) + 0.0, cz)
-        n = Vec3(0.0, -1.0, 0.0)
-        t1 = Vec3(1.0, 0.0, 0.0)
-        t2 = Vec3(0.0, 0.0, 1.0)
-        return c, n, t1, t2
-
-    if face_idx == 4:
-        c = Vec3(cx, cy, float(z) + 1.0)
-        n = Vec3(0.0, 0.0, 1.0)
-        t1 = Vec3(1.0, 0.0, 0.0)
-        t2 = Vec3(0.0, 1.0, 0.0)
-        return c, n, t1, t2
-
-    c = Vec3(cx, cy, float(z) + 0.0)
-    n = Vec3(0.0, 0.0, -1.0)
-    t1 = Vec3(1.0, 0.0, 0.0)
-    t2 = Vec3(0.0, 1.0, 0.0)
-    return c, n, t1, t2
-
-def _ray_hits_block(
-    origin: Vec3,
-    direction: Vec3,
-    blocks: set[tuple[int, int, int]],
-    self_block: tuple[int, int, int],
-    t_max: float,
-) -> bool:
-    # DDA traversal is used because it matches the discrete structure of voxel occupancy.
-    # It yields robust "first hit" behavior without requiring floating AABB slab intersection per block.
-    for hit in dda_grid_traverse(origin=origin, direction=direction, t_max=float(t_max), cell_size=1.0):
-        k = (int(hit.cell_x), int(hit.cell_y), int(hit.cell_z))
-        if k == self_block:
+        boxes = render_boxes_for_block(str(state_str), get_state, def_lookup, x, y, z)
+        if not boxes:
             continue
-        if k in blocks:
-            return True
-    return False
 
-def _face_shadow_mul(
-    face_idx: int,
-    x: int,
-    y: int,
-    z: int,
-    blocks: set[tuple[int, int, int]],
-    sun_dir: Vec3,
-    params: FaceBakeParams,
-) -> float:
-    c, n, t1, t2 = _face_frame(face_idx, x, y, z)
+        internal = _internal_face_mask(boxes)
 
-    ndl = n.dot(sun_dir)
-    if ndl <= 1e-6:
-        # 1e-6 is used as a float32-safe threshold to avoid noise at nearly grazing angles.
-        return 1.0
+        for bi, b in enumerate(boxes):
+            mnx = float(x) + float(b.mn_x)
+            mny = float(y) + float(b.mn_y)
+            mnz = float(z) + float(b.mn_z)
+            mxx = float(x) + float(b.mx_x)
+            mxy = float(y) + float(b.mx_y)
+            mxz = float(z) + float(b.mx_z)
 
-    self_block = (int(x), int(y), int(z))
+            cx = (mnx + mxx) * 0.5
+            cy = (mny + mxy) * 0.5
+            cz = (mnz + mxz) * 0.5
+            sx = max(0.0, float(mxx - mnx))
+            sy = max(0.0, float(mxy - mny))
+            sz = max(0.0, float(mxz - mnz))
+            casters.append(ShadowCasterGPU(cx, cy, cz, sx, sy, sz))
 
-    s = float(params.sample_spread)
-    samples = [
-        (0.0, 0.0),
-        (-s, -s),
-        (-s, s),
-        (s, -s),
-        (s, s),
-    ]
+            for fi in range(6):
+                if (bi, fi) in internal:
+                    continue
 
-    occ = 0.0
-    for a, b in samples:
-        p = c + (t1 * float(a)) + (t2 * float(b))
-        o = p + (n * float(params.eps_out)) + (sun_dir * float(params.eps_sun))
-        if _ray_hits_block(origin=o, direction=sun_dir, blocks=blocks, self_block=self_block, t_max=float(params.t_max)):
-            occ += 1.0
+                if defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid):
+                    nx, ny, nz = x, y, z
+                    if fi == 0:
+                        nx += 1
+                    elif fi == 1:
+                        nx -= 1
+                    elif fi == 2:
+                        ny += 1
+                    elif fi == 3:
+                        ny -= 1
+                    elif fi == 4:
+                        nz += 1
+                    else:
+                        nz -= 1
 
-    occ /= float(len(samples))
+                    nst = get_state(nx, ny, nz)
+                    if nst is not None:
+                        nb, _np = parse_state(nst)
+                        nd = def_lookup(str(nb))
+                        if nd is None or (bool(nd.is_full_cube) and bool(nd.is_solid)):
+                            continue
 
-    dark_mul = float(max(0.0, min(1.0, float(params.dark_mul))))
-    return 1.0 - occ * (1.0 - dark_mul)
+                atlas = uv_lookup(str(state_str), int(fi))
+                u0, v0, u1, v1 = _sub_uv_rect(atlas, int(fi), b)
+
+                faces[fi].append(
+                    BlockFaceInstanceGPU(
+                        mn_x=mnx, mn_y=mny, mn_z=mnz,
+                        mx_x=mxx, mx_y=mxy, mx_z=mxz,
+                        u0=float(u0), v0=float(v0), u1=float(u1), v1=float(v1),
+                        shade=1.0,
+                        uv_rot=0.0,
+                    )
+                )
+
+    return faces, casters

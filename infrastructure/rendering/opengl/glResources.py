@@ -34,28 +34,26 @@ class GLResources:
     def load(assets_dir: Path) -> "GLResources":
         shader_dir = Path(__file__).resolve().parent / "shaders"
 
-        # Compiling from files keeps shader sources visible to external tooling and makes iteration cheap.
         world_prog = ShaderProgram.from_files(shader_dir / "world.vert", shader_dir / "world.frag")
         shadow_prog = ShaderProgram.from_files(shader_dir / "shadow.vert", shader_dir / "shadow.frag")
         sun_prog = ShaderProgram.from_files(shader_dir / "sun.vert", shader_dir / "sun.frag")
         cloud_prog = ShaderProgram.from_files(shader_dir / "cloudBox.vert", shader_dir / "cloudBox.frag")
 
-        # Face-specific world meshes are an intentional performance structure.
-        # They avoid per-vertex branching for orientation and keep per-instance payload minimal.
         world_meshes = [MeshBuffer.create_quad_instanced(i) for i in range(6)]
 
-        # cloud_mesh and shadow_cube_mesh share the same cube vertex layout for maximum reuse.
         cloud_mesh = MeshBuffer.create_cube_instanced()
         shadow_cube_mesh = MeshBuffer.create_cube_instanced()
 
         blocks = create_default_registry()
         tex_names = blocks.required_texture_names()
 
-        # The atlas is built from the Minecraft-like asset directory:
-        # assets/minecraft/textures/block/*.png
-        atlas = TextureAtlas.build_from_dir(assets_dir / "minecraft" / "textures" / "block", tile_size=64, names=tex_names)
+        atlas = TextureAtlas.build_from_dir(
+            assets_dir / "minecraft" / "textures" / "block",
+            tile_size=64,
+            names=tex_names,
+            pad=1,
+        )
 
-        # Core profile requires a VAO even when the shader synthesizes geometry from gl_VertexID.
         empty_vao = int(glGenVertexArrays(1))
 
         return GLResources(
@@ -72,7 +70,6 @@ class GLResources:
         )
 
     def destroy(self) -> None:
-        # Destruction must be performed with a current GL context; otherwise GL deletes are undefined.
         for m in self.world_meshes:
             m.destroy()
         self.cloud_mesh.destroy()

@@ -26,11 +26,9 @@ class WorldDrawInputs:
     sun_dir: Vec3
     debug_shadow: bool
 
-    # Runtime toggles (presentation-driven).
     shadow_enabled: bool
     world_wireframe: bool
 
-    # Static tuning surface (bias, dark_mul, etc.).
     shadow: ShadowParams
     shadow_info: ShadowMapInfo
 
@@ -40,10 +38,7 @@ class WorldPass:
         self._meshes: list[MeshBuffer] | None = None
         self._atlas: TextureAtlas | None = None
 
-        # Per-face instance counts allow skipping empty directions and reduce VAO binds.
         self._counts: list[int] = [0, 0, 0, 0, 0, 0]
-
-        # World revision gating prevents expensive instance buffer uploads when the world is unchanged.
         self._last_revision: int = -1
 
     def initialize(self, prog: ShaderProgram, meshes: list[MeshBuffer], atlas: TextureAtlas) -> None:
@@ -58,10 +53,8 @@ class WorldPass:
             return
         self._last_revision = int(world_revision)
 
-        # Exactly six face arrays are expected.
-        # Padding keeps the interface stable even if upstream code provides fewer directions for debugging.
         if len(faces) != 6:
-            faces = (faces + [np.zeros((0, 8), dtype=np.float32) for _ in range(6)])[:6]
+            faces = (faces + [np.zeros((0, 12), dtype=np.float32) for _ in range(6)])[:6]
 
         for fi in range(6):
             data = faces[fi]
@@ -77,7 +70,6 @@ class WorldPass:
         if self._prog is None or self._meshes is None or self._atlas is None:
             return
 
-        # GLStateGuard is used so that debug polygon mode does not leak into other passes.
         with GLStateGuard(
             capture_framebuffer=False,
             capture_viewport=False,
@@ -91,14 +83,10 @@ class WorldPass:
             self._prog.use()
             self._prog.set_mat4("u_viewProj", inp.view_proj)
             self._prog.set_mat4("u_lightViewProj", inp.light_view_proj)
-
-            # u_sunDir is the only directional light term in this MVP.
-            # Keeping it explicit (instead of baking into vertices) allows dynamic time-of-day later.
             self._prog.set_vec3("u_sunDir", inp.sun_dir.x, inp.sun_dir.y, inp.sun_dir.z)
             self._prog.set_int("u_atlas", 0)
             self._prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
 
-            # Shadow sampling is considered valid only when enabled, the map is complete, and has casters.
             shadow_sampling_ok = bool(
                 inp.shadow_enabled
                 and inp.shadow_info.ok
@@ -108,7 +96,6 @@ class WorldPass:
             self._prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)
             self._prog.set_int("u_shadowMap", 1)
 
-            # u_shadowTexel allows bias and filter footprints to scale with resolution.
             ss = float(max(1, int(inp.shadow_info.size))) if shadow_sampling_ok else 1.0
             self._prog.set_vec2("u_shadowTexel", 1.0 / ss, 1.0 / ss)
             self._prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
@@ -124,10 +111,10 @@ class WorldPass:
             glEnable(GL_CULL_FACE)
             glCullFace(GL_BACK)
 
-            # The draw order is fixed by face index, which keeps frame-to-frame behavior deterministic.
-            for mesh, cnt in zip(self._meshes, self._counts):
+            for fi, (mesh, cnt) in enumerate(zip(self._meshes, self._counts)):
                 if int(cnt) <= 0:
                     continue
+                self._prog.set_int("u_face", int(fi))
                 glBindVertexArray(mesh.vao)
                 glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
                 glBindVertexArray(0)

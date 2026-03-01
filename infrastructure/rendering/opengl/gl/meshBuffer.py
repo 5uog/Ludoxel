@@ -17,15 +17,10 @@ class MeshBuffer:
     vbo: int
     vertex_count: int
     instance_vbo: int
-
-    # instance_capacity tracks the allocated size in bytes for the instance VBO.
-    # It is used to prefer glBufferSubData updates over full reallocations.
     instance_capacity: int = 0
 
     @staticmethod
     def create_cube_instanced() -> "MeshBuffer":
-        # The cube is built as 36 vertices (6 faces × 2 triangles × 3 vertices).
-        # Interleaving (pos, normal, uv) yields a 32-byte stride, which aligns well with common cache lines.
         v = np.array(_cube_vertices(), dtype=np.float32)
         if not v.flags["C_CONTIGUOUS"]:
             v = np.ascontiguousarray(v, dtype=np.float32)
@@ -50,9 +45,6 @@ class MeshBuffer:
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 2, GL_FLOAT, False, stride, c_void_p(24))
 
-        # Instance buffer for cube-based passes uses 7 floats:
-        # i_offset(vec3) + i_data(vec4). i_data is pass-specific but the layout is fixed for reuse.
-        # GL_STREAM_DRAW is used because instance payloads are expected to be rewritten frequently.
         instance_vbo = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, instance_vbo)
         glBufferData(GL_ARRAY_BUFFER, 0, None, GL_STREAM_DRAW)
@@ -80,8 +72,6 @@ class MeshBuffer:
 
     @staticmethod
     def create_quad_instanced(face: int) -> "MeshBuffer":
-        # Face-specific quads bake normal direction into static vertices.
-        # This avoids per-instance normals and prevents shader branching on face index.
         v = np.array(_quad_vertices(face), dtype=np.float32)
         if not v.flags["C_CONTIGUOUS"]:
             v = np.ascontiguousarray(v, dtype=np.float32)
@@ -106,25 +96,31 @@ class MeshBuffer:
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(2, 2, GL_FLOAT, False, stride, c_void_p(24))
 
-        # World face instance payload uses 8 floats:
-        # i_offset(vec3) + i_uvRect(vec4) + i_shade(float). This matches world.vert locations 3,4,5.
         instance_vbo = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, instance_vbo)
         glBufferData(GL_ARRAY_BUFFER, 0, None, GL_STREAM_DRAW)
 
-        inst_stride = 8 * 4
+        inst_stride = 12 * 4
 
         glEnableVertexAttribArray(3)
         glVertexAttribPointer(3, 3, GL_FLOAT, False, inst_stride, c_void_p(0))
         glVertexAttribDivisor(3, 1)
 
         glEnableVertexAttribArray(4)
-        glVertexAttribPointer(4, 4, GL_FLOAT, False, inst_stride, c_void_p(12))
+        glVertexAttribPointer(4, 3, GL_FLOAT, False, inst_stride, c_void_p(12))
         glVertexAttribDivisor(4, 1)
 
         glEnableVertexAttribArray(5)
-        glVertexAttribPointer(5, 1, GL_FLOAT, False, inst_stride, c_void_p(28))
+        glVertexAttribPointer(5, 4, GL_FLOAT, False, inst_stride, c_void_p(24))
         glVertexAttribDivisor(5, 1)
+
+        glEnableVertexAttribArray(6)
+        glVertexAttribPointer(6, 1, GL_FLOAT, False, inst_stride, c_void_p(40))
+        glVertexAttribDivisor(6, 1)
+
+        glEnableVertexAttribArray(7)
+        glVertexAttribPointer(7, 1, GL_FLOAT, False, inst_stride, c_void_p(44))
+        glVertexAttribDivisor(7, 1)
 
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -138,9 +134,6 @@ class MeshBuffer:
         )
 
     def upload_instances(self, instance_data: np.ndarray) -> None:
-        # Instance uploads are a performance-sensitive path.
-        # Enforcing float32 and contiguity prevents implicit conversions that can otherwise occur inside
-        # PyOpenGL or the driver binding layer.
         if instance_data.dtype != np.float32:
             instance_data = instance_data.astype(np.float32, copy=False)
         if not instance_data.flags["C_CONTIGUOUS"]:
@@ -151,7 +144,6 @@ class MeshBuffer:
         glBindBuffer(GL_ARRAY_BUFFER, int(self.instance_vbo))
 
         if nbytes <= 0:
-            # A zero-sized store is used to release capacity when the instance set becomes empty.
             glBufferData(GL_ARRAY_BUFFER, 0, None, GL_STREAM_DRAW)
             self.instance_capacity = 0
             glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -159,10 +151,8 @@ class MeshBuffer:
 
         cap = int(self.instance_capacity)
         if cap > 0 and nbytes <= cap:
-            # In-place update avoids reallocations and reduces driver synchronization risk.
             glBufferSubData(GL_ARRAY_BUFFER, 0, nbytes, instance_data)
         else:
-            # Reallocate only when the new payload exceeds the current capacity.
             glBufferData(GL_ARRAY_BUFFER, nbytes, instance_data, GL_STREAM_DRAW)
             self.instance_capacity = nbytes
 
@@ -177,47 +167,33 @@ class MeshBuffer:
         self.vao = 0
         self.instance_capacity = 0
 
-def _face(nx, ny, nz, corners, *, flip_v: bool = False):
+def _face(nx, ny, nz, corners):
     (a, b, c, d) = corners
-
-    # Side-face UV correction:
-    # The four vertical faces (+X,-X,+Z,-Z) currently sample textures with V orientation inverted relative
-    # to the authored "top edge". This fix is applied at the static quad level so +Y/-Y are unaffected.
-    v0 = 1.0 if bool(flip_v) else 0.0
-    v1 = 0.0 if bool(flip_v) else 1.0
-
     return [
-        (*a, nx, ny, nz, 0.0, v0),
-        (*b, nx, ny, nz, 1.0, v0),
-        (*c, nx, ny, nz, 1.0, v1),
-        (*a, nx, ny, nz, 0.0, v0),
-        (*c, nx, ny, nz, 1.0, v1),
-        (*d, nx, ny, nz, 0.0, v1),
+        (*a, nx, ny, nz, 0.0, 0.0),
+        (*b, nx, ny, nz, 1.0, 0.0),
+        (*c, nx, ny, nz, 1.0, 1.0),
+        (*a, nx, ny, nz, 0.0, 0.0),
+        (*c, nx, ny, nz, 1.0, 1.0),
+        (*d, nx, ny, nz, 0.0, 1.0),
     ]
 
 def _quad_vertices(face: int):
-    # Face indices are: 0:+X, 1:-X, 2:+Y, 3:-Y, 4:+Z, 5:-Z.
-    # The quad is defined on a unit cube centered at origin. Instances translate by block center.
     p = 0.5
 
-    # Only the four vertical faces are flipped. Top and bottom faces are left unchanged by design.
-    flip_v = int(face) in (0, 1, 4, 5)
-
     if face == 0:
-        return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)], flip_v=flip_v)
+        return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)])
     if face == 1:
-        return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)], flip_v=flip_v)
+        return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)])
     if face == 2:
-        return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)], flip_v=flip_v)
+        return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)])
     if face == 3:
-        return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)], flip_v=flip_v)
+        return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)])
     if face == 4:
-        return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)], flip_v=flip_v)
-    return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)], flip_v=flip_v)
+        return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)])
+    return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)])
 
 def _cube_vertices():
-    # The cube is a concatenation of six faces.
-    # Each face contributes 6 vertices, for a total of 36 vertices.
     p = 0.5
     faces = []
 

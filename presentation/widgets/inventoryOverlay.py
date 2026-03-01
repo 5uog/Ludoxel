@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap, QImage, QIcon
+from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -14,14 +14,18 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSizePolicy,
     QGridLayout,
+    QScrollArea,
 )
 
 from domain.blocks.blockRegistry import BlockRegistry, create_default_registry
+from presentation.widgets.itemPhotoProvider import ItemPhotoProvider
 
 class _SlotButton(QPushButton):
-    def __init__(self, block_id: str | None, parent: QWidget | None = None) -> None:
+    def __init__(self, block_id: str, display_name: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._block_id = block_id
+        self._block_id = str(block_id)
+        self._display_name = str(display_name)
+
         self.setObjectName("slot")
         self.setCheckable(False)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -29,14 +33,13 @@ class _SlotButton(QPushButton):
 
         s = 46
         self.setFixedSize(QSize(s, s))
-        self.setIconSize(QSize(32, 32))
+        self.setIconSize(QSize(36, 36))
         self._set_selected(False)
 
-    def block_id(self) -> str | None:
-        return self._block_id
+        self.setToolTip(f"{self._display_name}\n{self._block_id}")
 
-    def set_block_id(self, block_id: str | None) -> None:
-        self._block_id = block_id
+    def block_id(self) -> str:
+        return self._block_id
 
     def set_icon_pixmap(self, pm: QPixmap | None) -> None:
         if pm is None:
@@ -58,9 +61,8 @@ class InventoryOverlay(QWidget):
         super().__init__(parent)
 
         self._reg = registry or create_default_registry()
-
         self._project_root = Path(__file__).resolve().parents[2]
-        self._tex_dir = self._project_root / "assets" / "minecraft" / "textures" / "block"
+        self._photos = ItemPhotoProvider(project_root=self._project_root, registry=self._reg, icon_size=36)
 
         self._selected_block_id: str | None = None
         self._slot_buttons: list[_SlotButton] = []
@@ -81,6 +83,7 @@ class InventoryOverlay(QWidget):
             "QPushButton#slot { background: rgba(15,15,15,235); border: 2px solid rgba(255,255,255,32); border-radius: 6px; }"
             "QPushButton#slot:hover { border: 2px solid rgba(255,255,255,85); }"
             "QPushButton#slot[selected=\"true\"] { border: 2px solid rgba(255,255,255,230); }"
+            "QScrollArea { border: none; background: transparent; }"
         )
 
         root = QVBoxLayout(self)
@@ -90,7 +93,8 @@ class InventoryOverlay(QWidget):
         panel = QFrame(self)
         panel.setObjectName("panel")
         panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        panel.setMinimumWidth(640)
+        panel.setMinimumWidth(740)
+        panel.setMinimumHeight(520)
 
         pv = QVBoxLayout(panel)
         pv.setContentsMargins(18, 16, 18, 16)
@@ -109,96 +113,75 @@ class InventoryOverlay(QWidget):
         title_row.addWidget(btn_close)
         pv.addLayout(title_row)
 
-        sub = QLabel("Click a slot to select a block for placement.", panel)
+        sub = QLabel("Hover a slot to see its display name and minecraft:id. Click to select.", panel)
         sub.setObjectName("subtitle")
         pv.addWidget(sub)
 
-        grid_frame = QFrame(panel)
-        grid_frame.setObjectName("gridFrame")
-        gv = QVBoxLayout(grid_frame)
-        gv.setContentsMargins(0, 0, 0, 0)
-        gv.setSpacing(8)
+        scroll = QScrollArea(panel)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        self._grid = QWidget(grid_frame)
-        gl = QGridLayout(self._grid)
-        gl.setContentsMargins(0, 0, 0, 0)
-        gl.setHorizontalSpacing(6)
-        gl.setVerticalSpacing(6)
+        scroll_host = QWidget(scroll)
+        self._grid_layout = QGridLayout(scroll_host)
+        self._grid_layout.setContentsMargins(0, 0, 0, 0)
+        self._grid_layout.setHorizontalSpacing(6)
+        self._grid_layout.setVerticalSpacing(6)
 
-        blocks = self._reg.all_blocks()
+        scroll.setWidget(scroll_host)
+        pv.addWidget(scroll, stretch=1)
 
-        cols = 9
-        rows = 3
-        max_slots = cols * rows
-
-        for i in range(max_slots):
-            block_id = str(blocks[i].block_id) if i < len(blocks) else None
-            btn = _SlotButton(block_id, self._grid)
-            btn.clicked.connect(self._on_slot_clicked)
-            self._slot_buttons.append(btn)
-
-            r = i // cols
-            c = i % cols
-            gl.addWidget(btn, r, c)
-
-        gv.addWidget(self._grid, alignment=Qt.AlignmentFlag.AlignHCenter)
-
-        hotbar = QWidget(grid_frame)
+        hotbar = QWidget(panel)
         hl = QGridLayout(hotbar)
         hl.setContentsMargins(0, 0, 0, 0)
         hl.setHorizontalSpacing(6)
         hl.setVerticalSpacing(0)
 
-        self._hotbar_slots: list[_SlotButton] = []
+        self._hotbar_slots: list[QPushButton] = []
         for i in range(9):
-            b = _SlotButton(None, hotbar)
+            b = QPushButton(hotbar)
+            b.setObjectName("slot")
             b.setEnabled(False)
+            b.setFixedSize(QSize(46, 46))
+            b.setIconSize(QSize(36, 36))
+            b.setToolTip("")
             self._hotbar_slots.append(b)
             hl.addWidget(b, 0, i)
 
-        gv.addWidget(hotbar, alignment=Qt.AlignmentFlag.AlignHCenter)
-
-        pv.addWidget(grid_frame)
+        pv.addWidget(hotbar, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addStretch(1)
 
-        self._reload_icons()
+        self._rebuild_grid()
 
-    def _reload_icons(self) -> None:
-        for btn in self._slot_buttons:
-            bid = btn.block_id()
-            if bid is None:
-                btn.set_icon_pixmap(None)
-                continue
+    def _rebuild_grid(self) -> None:
+        while self._grid_layout.count() > 0:
+            item = self._grid_layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.setParent(None)
 
-            b = self._reg.get(bid)
-            if b is None:
-                btn.set_icon_pixmap(None)
-                continue
+        self._slot_buttons.clear()
 
-            tex_name = str(b.textures.pos_y) if hasattr(b, "textures") else "default"
-            pm = self._load_icon_pixmap(tex_name)
+        blocks = self._reg.all_blocks()
+        cols = 12
+
+        for i, b in enumerate(blocks):
+            bid = str(b.block_id)
+            name = str(b.display_name)
+            btn = _SlotButton(bid, name, self)
+            btn.clicked.connect(self._on_slot_clicked)
+
+            pm = self._photos.pixmap_for_block(bid)
             btn.set_icon_pixmap(pm)
 
+            self._slot_buttons.append(btn)
+
+            r = i // cols
+            c = i % cols
+            self._grid_layout.addWidget(btn, r, c)
+
         self._update_selection_visuals()
-
-    def _load_icon_pixmap(self, tex_name: str) -> QPixmap | None:
-        p = self._tex_dir / f"{str(tex_name)}.png"
-        if not p.exists():
-            return None
-
-        img = QImage(str(p))
-        if img.isNull():
-            return None
-
-        img = img.convertToFormat(QImage.Format.Format_RGBA8888)
-
-        # Slot icons are scaled up for readability. FastTransformation approximates nearest scaling in Qt.
-        target = 32
-        img = img.scaled(target, target, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation)
-
-        return QPixmap.fromImage(img)
 
     def _set_selected_block(self, block_id: str | None) -> None:
         self._selected_block_id = str(block_id) if block_id is not None else None
@@ -211,25 +194,26 @@ class InventoryOverlay(QWidget):
             b._set_selected(bool(sel is not None and b.block_id() == sel))
 
         for hb in self._hotbar_slots:
-            hb.set_icon_pixmap(None)
-            hb._set_selected(False)
+            hb.setIcon(QIcon())
+            hb.setProperty("selected", False)
+            hb.style().unpolish(hb)
+            hb.style().polish(hb)
+            hb.update()
 
         if sel is not None:
-            b = self._reg.get(sel)
-            tex_name = str(b.textures.pos_y) if b is not None else "default"
-            pm = self._load_icon_pixmap(tex_name)
-            self._hotbar_slots[0].set_icon_pixmap(pm)
-            self._hotbar_slots[0]._set_selected(True)
+            pm = self._photos.pixmap_for_block(sel)
+            if pm is not None:
+                self._hotbar_slots[0].setIcon(QIcon(pm))
+                self._hotbar_slots[0].setProperty("selected", True)
+                self._hotbar_slots[0].style().unpolish(self._hotbar_slots[0])
+                self._hotbar_slots[0].style().polish(self._hotbar_slots[0])
+                self._hotbar_slots[0].update()
 
     def _on_slot_clicked(self) -> None:
         btn = self.sender()
         if not isinstance(btn, _SlotButton):
             return
-
         bid = btn.block_id()
-        if bid is None:
-            return
-
         self._set_selected_block(bid)
         self.block_selected.emit(str(bid))
         self._close()

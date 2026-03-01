@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Tuple
 
 FACE_POS_X: int = 0
 FACE_NEG_X: int = 1
@@ -41,8 +42,14 @@ class BlockDefinition:
     display_name: str
     textures: BlockTextures
 
+    kind: str = "cube"
     is_full_cube: bool = True
     is_solid: bool = True
+    tags: Tuple[str, ...] = ()
 
     def texture_for_face(self, face_idx: int) -> str:
         return self.textures.texture_for_face(int(face_idx))
+
+    def has_tag(self, tag: str) -> bool:
+        t = str(tag)
+        return any(str(x) == t for x in self.tags)

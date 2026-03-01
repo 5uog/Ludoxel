@@ -12,6 +12,9 @@ from domain.systems.movementSystem import MoveInput, step_minecraft
 from domain.systems.collisionSystem import integrate_with_collisions
 from domain.systems.buildSystem import pick_block
 
+from domain.blocks.stateCodec import parse_state, format_state
+from domain.blocks.blockRegistry import create_default_registry
+
 from application.session.sessionSettings import SessionSettings
 from application.ports.rendererPort import BlockInstanceDTO, CameraDTO, RenderSnapshotDTO
 
@@ -85,6 +88,40 @@ class SessionManager:
         self.world.remove_block(int(hx), int(hy), int(hz))
         return True
 
+    def _player_cardinal(self) -> str:
+        f = self.player.view_forward()
+        ax = abs(float(f.x))
+        az = abs(float(f.z))
+        if ax >= az:
+            return "east" if float(f.x) > 0.0 else "west"
+        return "south" if float(f.z) > 0.0 else "north"
+
+    def _choose_half_type(self, hit_face: int, hit_point: Vec3) -> str:
+        if int(hit_face) == 2:
+            return "bottom"
+        if int(hit_face) == 3:
+            return "top"
+        fy = float(hit_point.y) - float(int(hit_point.y))
+        return "top" if fy >= 0.5 else "bottom"
+
+    def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> bool:
+        k = (int(hit_cell[0]), int(hit_cell[1]), int(hit_cell[2]))
+        st = self.world.blocks.get(k)
+        if st is None:
+            return False
+
+        base, props = parse_state(st)
+        reg = create_default_registry()
+        d = reg.get(str(base))
+        if d is None or d.kind != "fence_gate":
+            return False
+
+        open_s = str(props.get("open", "false")).lower()
+        is_open = open_s in ("1", "true", "yes", "on")
+        props["open"] = "false" if is_open else "true"
+        self.world.set_block(k[0], k[1], k[2], format_state(str(base), props))
+        return True
+
     def place_block(self, block_id: str, reach: float = 5.0) -> bool:
         eye = self.player.eye_pos()
         d = self.player.view_forward()
@@ -92,13 +129,34 @@ class SessionManager:
         if hit is None:
             return False
 
+        if self._toggle_fence_gate_if_hit(hit.hit):
+            return True
+
         if hit.place is None:
             return False
 
         px, py, pz = hit.place
         k = (int(px), int(py), int(pz))
+
         if k in self.world.blocks:
             return False
+
+        base_sel = str(block_id)
+        reg = create_default_registry()
+        defn = reg.get(base_sel)
+
+        props: dict[str, str] = {}
+
+        if defn is not None and defn.kind == "slab":
+            props["type"] = self._choose_half_type(int(hit.face), hit.hit_point)
+        elif defn is not None and defn.kind == "stairs":
+            props["facing"] = self._player_cardinal()
+            props["half"] = self._choose_half_type(int(hit.face), hit.hit_point)
+        elif defn is not None and defn.kind == "fence_gate":
+            props["facing"] = self._player_cardinal()
+            props["open"] = "false"
+
+        place_state = format_state(base_sel, props)
 
         ba = AABB(
             mn=Vec3(float(px), float(py), float(pz)),
@@ -108,5 +166,5 @@ class SessionManager:
         if pa.intersects(ba):
             return False
 
-        self.world.set_block(int(px), int(py), int(pz), str(block_id))
+        self.world.set_block(int(px), int(py), int(pz), place_state)
         return True

@@ -25,18 +25,25 @@ class TextureAtlas:
     height: int
 
     @staticmethod
-    def build_from_dir(block_dir: Path, tile_size: int = 64, names: Iterable[str] | None = None) -> "TextureAtlas":
-        items = _collect_images(block_dir, tile_size, names=names)
+    def build_from_dir(
+        block_dir: Path,
+        tile_size: int = 64,
+        names: Iterable[str] | None = None,
+        pad: int = 1,
+    ) -> "TextureAtlas":
+        items = _collect_images(block_dir, tile_size, names=names, pad=pad)
 
         has_default = any(n == "default" for (n, _img) in items)
         if not has_default:
-            items.append(("default", _placeholder(tile_size, QColor(180, 180, 180))))
+            items.append(("default", _placeholder(tile_size, QColor(180, 180, 180), pad=pad)))
 
         n = len(items)
         cols = int(math.ceil(math.sqrt(n)))
         rows = int(math.ceil(n / cols))
-        w = cols * tile_size
-        h = rows * tile_size
+
+        cell = int(tile_size + 2 * max(0, int(pad)))
+        w = cols * cell
+        h = rows * cell
 
         atlas = QImage(w, h, QImage.Format.Format_RGBA8888)
         atlas.fill(QColor(0, 0, 0, 0))
@@ -44,17 +51,17 @@ class TextureAtlas:
         painter = QPainter(atlas)
         uv: Dict[str, UVRect] = {}
 
+        p = int(max(0, int(pad)))
+
         for i, (name, img) in enumerate(items):
-            cx = (i % cols) * tile_size
-            cy = (i // cols) * tile_size
+            cx = (i % cols) * cell
+            cy = (i // cols) * cell
             painter.drawImage(cx, cy, img)
 
-            # UVs are normalized atlas coordinates.
-            # Using rect endpoints enables interpolation with base quad UVs without extra math in the shader.
-            u0 = cx / w
-            v0 = cy / h
-            u1 = (cx + tile_size) / w
-            v1 = (cy + tile_size) / h
+            u0 = (cx + p) / w
+            v0 = (cy + p) / h
+            u1 = (cx + p + tile_size) / w
+            v1 = (cy + p + tile_size) / h
             uv[name] = (u0, v0, u1, v1)
 
         painter.end()
@@ -81,10 +88,12 @@ class TextureAtlas:
             glDeleteTextures(1, [int(self.tex_id)])
             self.tex_id = 0
 
-def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None = None) -> list[tuple[str, QImage]]:
+def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None = None, pad: int = 1) -> list[tuple[str, QImage]]:
     out: list[tuple[str, QImage]] = []
     if not block_dir.exists():
         return out
+
+    p = int(max(0, int(pad)))
 
     def _prep(img: QImage) -> QImage:
         img = img.convertToFormat(QImage.Format.Format_RGBA8888)
@@ -96,36 +105,64 @@ def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None
                 Qt.TransformationMode.FastTransformation,
             )
 
-        # Coordinate-system correction (single-source-of-truth):
-        # QImage pixel data is top-origin, while the GL texture sampling convention expects bottom-origin V.
-        # We correct this once by vertically mirroring each tile image before atlas packing.
-        # This keeps UV rectangles and mesh UVs in a conventional, non-special-cased form.
         img = img.mirrored(False, True)
-        return img
+
+        if p <= 0:
+            return img
+
+        return _pad_extrude(img, pad=p)
 
     if names is None:
-        for p in sorted(block_dir.glob("*.png")):
-            name = p.stem
-            img = QImage(str(p))
+        for q in sorted(block_dir.glob("*.png")):
+            name = q.stem
+            img = QImage(str(q))
             if img.isNull():
                 continue
             out.append((name, _prep(img)))
         return out
 
-    # Deterministic ordering is inherited from the provided iteration order.
     for nm in names:
         name = str(nm)
-        p = block_dir / f"{name}.png"
-        if not p.exists():
+        q = block_dir / f"{name}.png"
+        if not q.exists():
             continue
-        img = QImage(str(p))
+        img = QImage(str(q))
         if img.isNull():
             continue
         out.append((name, _prep(img)))
 
     return out
 
-def _placeholder(tile: int, c: QColor) -> QImage:
+def _pad_extrude(src: QImage, pad: int) -> QImage:
+    """
+    The atlas is packed without per-tile gaps unless padding is explicitly added.
+    This function creates a (tile + 2*pad) image and duplicates edge pixels into the padding area,
+    preventing out-of-tile sampling from reading transparent atlas background.
+    """
+    p = int(max(0, pad))
+    w = int(src.width())
+    h = int(src.height())
+
+    dst = QImage(w + 2 * p, h + 2 * p, QImage.Format.Format_RGBA8888)
+    dst.fill(QColor(0, 0, 0, 0))
+
+    painter = QPainter(dst)
+    painter.drawImage(p, p, src)
+
+    painter.drawImage(0, p, src.copy(0, 0, 1, h).scaled(p, h, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+    painter.drawImage(p + w, p, src.copy(w - 1, 0, 1, h).scaled(p, h, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+    painter.drawImage(p, 0, src.copy(0, 0, w, 1).scaled(w, p, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+    painter.drawImage(p, p + h, src.copy(0, h - 1, w, 1).scaled(w, p, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+
+    painter.drawImage(0, 0, src.copy(0, 0, 1, 1).scaled(p, p, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+    painter.drawImage(p + w, 0, src.copy(w - 1, 0, 1, 1).scaled(p, p, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+    painter.drawImage(0, p + h, src.copy(0, h - 1, 1, 1).scaled(p, p, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+    painter.drawImage(p + w, p + h, src.copy(w - 1, h - 1, 1, 1).scaled(p, p, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation))
+
+    painter.end()
+    return dst
+
+def _placeholder(tile: int, c: QColor, pad: int = 1) -> QImage:
     img = QImage(tile, tile, QImage.Format.Format_RGBA8888)
     img.fill(c)
     painter = QPainter(img)
@@ -133,5 +170,9 @@ def _placeholder(tile: int, c: QColor) -> QImage:
     painter.fillRect(tile // 2, tile // 2, tile // 2, tile // 2, QColor(120, 120, 120))
     painter.end()
 
-    # Keep placeholder consistent with the same pixel-origin convention as real tiles.
-    return img.mirrored(False, True)
+    img = img.mirrored(False, True)
+
+    p = int(max(0, int(pad)))
+    if p > 0:
+        img = _pad_extrude(img, pad=p)
+    return img

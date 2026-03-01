@@ -13,6 +13,8 @@ class BlockPick:
     hit: tuple[int, int, int]
     place: tuple[int, int, int] | None
     t: float
+    face: int
+    hit_point: Vec3
 
 def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -> BlockPick | None:
     d = direction.normalized()
@@ -35,7 +37,8 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -
             place = prev
             if place is not None and place in world.blocks:
                 place = None
-            return BlockPick(hit=k, place=place, t=float(h.t))
+            hp = o + d * float(h.t)
+            return BlockPick(hit=k, place=place, t=float(h.t), face=int(h.enter_face), hit_point=hp)
 
         prev = k
 
