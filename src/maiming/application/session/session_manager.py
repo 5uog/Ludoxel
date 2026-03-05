@@ -14,6 +14,12 @@ from maiming.domain.systems.build_system import pick_block
 
 from maiming.domain.blocks.state_codec import parse_state, format_state
 from maiming.domain.blocks.default_registry import create_default_registry
+from maiming.domain.blocks.connectivity import (
+    make_wall_state,
+    make_fence_gate_state,
+    refresh_structural_neighbors,
+)
+from maiming.domain.blocks.models.api import collision_boxes_for_block
 
 from maiming.application.session.session_settings import SessionSettings
 from maiming.application.ports.renderer_port import CameraDTO, RenderSnapshotDTO
@@ -152,6 +158,7 @@ class SessionManager:
 
         hx, hy, hz = hit.hit
         self.world.remove_block(int(hx), int(hy), int(hz))
+        refresh_structural_neighbors(self.world, int(hx), int(hy), int(hz))
         return True
 
     def _player_cardinal(self) -> str:
@@ -182,11 +189,56 @@ class SessionManager:
         if d is None or d.kind != "fence_gate":
             return False
 
-        open_s = str(props.get("open", "false")).lower()
-        is_open = open_s in ("1", "true", "yes", "on")
-        props["open"] = "false" if is_open else "true"
-        self.world.set_block(k[0], k[1], k[2], format_state(str(base), props))
+        is_open = str(props.get("open", "false")).strip().lower() in ("1", "true", "yes", "on")
+        facing = str(props.get("facing", "south"))
+        powered = str(props.get("powered", "false")).strip().lower() in ("1", "true", "yes", "on")
+        in_wall = str(props.get("in_wall", "false")).strip().lower() in ("1", "true", "yes", "on")
+        waterlogged = str(props.get("waterlogged", "false")).strip().lower() in ("1", "true", "yes", "on")
+
+        next_state = make_fence_gate_state(
+            str(base),
+            str(facing),
+            open_state=(not bool(is_open)),
+            powered=bool(powered),
+            in_wall=bool(in_wall),
+            waterlogged=bool(waterlogged),
+        )
+        self.world.set_block(k[0], k[1], k[2], next_state)
+        refresh_structural_neighbors(self.world, k[0], k[1], k[2])
         return True
+
+    def _placement_intersects_player(self, px: int, py: int, pz: int, place_state: str) -> bool:
+        reg = create_default_registry()
+        pa = self.player.aabb_at(self.player.position)
+
+        def get_state(x: int, y: int, z: int) -> str | None:
+            k = (int(x), int(y), int(z))
+            if k == (int(px), int(py), int(pz)):
+                return str(place_state)
+            return self.world.blocks.get(k)
+
+        def get_def(base_id: str):
+            return reg.get(str(base_id))
+
+        boxes = collision_boxes_for_block(
+            str(place_state),
+            get_state,
+            get_def,
+            int(px),
+            int(py),
+            int(pz),
+        )
+        if not boxes:
+            return False
+
+        for b in boxes:
+            ba = AABB(
+                mn=Vec3(float(px) + float(b.mn_x), float(py) + float(b.mn_y), float(pz) + float(b.mn_z)),
+                mx=Vec3(float(px) + float(b.mx_x), float(py) + float(b.mx_y), float(pz) + float(b.mx_z)),
+            )
+            if pa.intersects(ba):
+                return True
+        return False
 
     def place_block(self, block_id: str, reach: float = 5.0) -> bool:
         eye = self.player.eye_pos()
@@ -211,26 +263,28 @@ class SessionManager:
         reg = create_default_registry()
         defn = reg.get(base_sel)
 
-        props: dict[str, str] = {}
-
-        if defn is not None and defn.kind == "slab":
-            props["type"] = self._choose_half_type(int(hit.face), hit.hit_point)
-        elif defn is not None and defn.kind == "stairs":
-            props["facing"] = self._player_cardinal()
-            props["half"] = self._choose_half_type(int(hit.face), hit.hit_point)
-        elif defn is not None and defn.kind == "fence_gate":
-            props["facing"] = self._player_cardinal()
-            props["open"] = "false"
-
-        place_state = format_state(base_sel, props)
-
-        ba = AABB(
-            mn=Vec3(float(px), float(py), float(pz)),
-            mx=Vec3(float(px + 1), float(py + 1), float(pz + 1)),
-        )
-        pa = self.player.aabb_at(self.player.position)
-        if pa.intersects(ba):
+        if defn is None:
             return False
 
-        self.world.set_block(int(px), int(py), int(pz), place_state)
+        props: dict[str, str] = {}
+
+        if defn.kind == "slab":
+            props["type"] = self._choose_half_type(int(hit.face), hit.hit_point)
+            place_state = format_state(base_sel, props)
+        elif defn.kind == "stairs":
+            props["facing"] = self._player_cardinal()
+            props["half"] = self._choose_half_type(int(hit.face), hit.hit_point)
+            place_state = format_state(base_sel, props)
+        elif defn.kind == "fence_gate":
+            place_state = make_fence_gate_state(base_sel, self._player_cardinal(), open_state=False)
+        elif defn.kind == "wall":
+            place_state = make_wall_state(base_sel, waterlogged=False)
+        else:
+            place_state = format_state(base_sel, props)
+
+        if self._placement_intersects_player(int(px), int(py), int(pz), str(place_state)):
+            return False
+
+        self.world.set_block(int(px), int(py), int(pz), str(place_state))
+        refresh_structural_neighbors(self.world, int(px), int(py), int(pz))
         return True

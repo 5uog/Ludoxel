@@ -8,7 +8,6 @@ import numpy as np
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import render_boxes_for_block, LocalBox
 from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.core.math.vec3 import Vec3
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
@@ -59,20 +58,31 @@ def _internal_face_mask(boxes: list[LocalBox]) -> set[tuple[int, int]]:
 
     return internal
 
-def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
+def _lerp(a: float, c: float, t: float) -> float:
+    return float(a) + (float(c) - float(a)) * float(t)
+
+def _clamp01(x: float) -> float:
+    v = float(x)
+    if v < 0.0:
+        return 0.0
+    if v > 1.0:
+        return 1.0
+    return v
+
+def _uv_rect(atlas: UVRect, u0: float, v0: float, u1: float, v1: float) -> UVRect:
     uA0, vA0, uA1, vA1 = atlas
+    uu0 = _clamp01(u0)
+    vv0 = _clamp01(v0)
+    uu1 = _clamp01(u1)
+    vv1 = _clamp01(v1)
+    return (
+        _lerp(uA0, uA1, uu0),
+        _lerp(vA0, vA1, vv0),
+        _lerp(uA0, uA1, uu1),
+        _lerp(vA0, vA1, vv1),
+    )
 
-    def lerp(a: float, c: float, t: float) -> float:
-        return float(a) + (float(c) - float(a)) * float(t)
-
-    def clamp01(x: float) -> float:
-        v = float(x)
-        if v < 0.0:
-            return 0.0
-        if v > 1.0:
-            return 1.0
-        return v
-
+def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
     fi = int(face_idx)
 
     if fi == 0:
@@ -94,17 +104,22 @@ def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
         u0, u1 = float(b.mn_x), float(b.mx_x)
         v0, v1 = float(b.mn_y), float(b.mx_y)
 
-    u0 = clamp01(u0)
-    u1 = clamp01(u1)
-    v0 = clamp01(v0)
-    v1 = clamp01(v1)
+    return _uv_rect(atlas, u0, v0, u1, v1)
 
-    return (
-        lerp(uA0, uA1, u0),
-        lerp(vA0, vA1, v0),
-        lerp(uA0, uA1, u1),
-        lerp(vA0, vA1, v1),
-    )
+def _fence_gate_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
+    fi = int(face_idx)
+
+    if fi == 0 or fi == 1:
+        u0, u1 = float(b.mn_z), float(b.mx_z)
+        v0, v1 = float(b.mn_y), float(b.mx_y)
+    elif fi == 2 or fi == 3:
+        u0, u1 = float(b.mn_x), float(b.mx_x)
+        v0, v1 = float(b.mn_z), float(b.mx_z)
+    else:
+        u0, u1 = float(b.mn_x), float(b.mx_x)
+        v0, v1 = float(b.mn_y), float(b.mx_y)
+
+    return _uv_rect(atlas, u0, v0, u1, v1)
 
 def build_chunk_mesh(
     *,
@@ -173,7 +188,11 @@ def build_chunk_mesh(
                             continue
 
                 atlas = uv_lookup(str(state_str), int(fi))
-                u0, v0, u1, v1 = _sub_uv_rect(atlas, int(fi), b)
+
+                if defn is not None and str(defn.kind) == "fence_gate" and str(b.uv_hint):
+                    u0, v0, u1, v1 = _fence_gate_uv_rect(atlas, int(fi), b)
+                else:
+                    u0, v0, u1, v1 = _sub_uv_rect(atlas, int(fi), b)
 
                 faces_rows[fi].append(
                     [

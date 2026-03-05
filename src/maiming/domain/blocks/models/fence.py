@@ -1,10 +1,25 @@
 # FILE: src/maiming/domain/blocks/models/fence.py
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import List
 
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw, is_full_solid, is_fence_like
+from maiming.domain.blocks.block_definition import BlockDefinition
+from maiming.domain.blocks.models.common import (
+    LocalBox,
+    GetState,
+    GetDef,
+    rotate_box_y_cw,
+    is_full_solid,
+    is_fence_like,
+)
+
+def _is_wall_like(defn: BlockDefinition | None) -> bool:
+    if defn is None:
+        return False
+    if defn.kind == "wall":
+        return True
+    return defn.has_tag("wall")
 
 def boxes_for_fence(
     *,
@@ -25,7 +40,7 @@ def boxes_for_fence(
         if nd is None:
             connections[d] = True
             continue
-        if is_full_solid(nd) or is_fence_like(nd):
+        if is_full_solid(nd) or is_fence_like(nd) or _is_wall_like(nd):
             connections[d] = True
 
     post = LocalBox(6.0 / 16.0, 0.0, 6.0 / 16.0, 10.0 / 16.0, 1.0, 10.0 / 16.0)
