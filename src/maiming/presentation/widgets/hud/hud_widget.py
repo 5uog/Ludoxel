@@ -7,8 +7,6 @@ from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QFont, QFontMetrics
 from PyQt6.QtWidgets import QWidget, QLabel
 
-from maiming.presentation.hud.hud_payload import HudPayload
-
 @dataclass(frozen=True)
 class _FitResult:
     text: str
@@ -45,10 +43,22 @@ class HUDWidget(QWidget):
 
         self._raw_text = ""
 
-    def set_payload(self, payload: HudPayload) -> None:
-        t = ""
-        if isinstance(payload, HudPayload):
-            t = str(payload.text or "")
+    @staticmethod
+    def _coerce_text(payload: object) -> str:
+        if payload is None:
+            return ""
+
+        if isinstance(payload, str):
+            return str(payload)
+
+        text = getattr(payload, "text", None)
+        if text is None:
+            return ""
+
+        return str(text)
+
+    def set_payload(self, payload: object) -> None:
+        t = self._coerce_text(payload)
         if t == self._raw_text:
             return
         self._raw_text = t

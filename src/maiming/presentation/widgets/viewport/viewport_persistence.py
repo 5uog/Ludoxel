@@ -79,12 +79,15 @@ def apply_persisted_state_if_present(
     p.crouch_eye_offset = float(max(0.0, min(float(p.crouch_eye_drop), float(pp.crouch_eye_offset))))
     p.hold_jump_queued = False
     p.auto_jump_pending = False
-    p.auto_jump_cooldown_s = 0.0
+    p.auto_jump_cooldown_s = float(max(0.0, float(pp.auto_jump_cooldown_s)))
     p.auto_jump_start_y = float(p.position.y)
 
     pw = st.world
     if pw.blocks:
-        session.world.replace_all(blocks={k: str(v) for (k, v) in pw.blocks.items()}, revision=int(max(1, int(pw.revision))))
+        session.world.replace_all(
+            blocks={k: str(v) for (k, v) in pw.blocks.items()},
+            revision=int(max(1, int(pw.revision))),
+        )
 
     renderer.set_world_wireframe(bool(out.world_wire))
     renderer.set_shadow_enabled(bool(out.shadow_enabled))
@@ -145,7 +148,7 @@ def save_state(
         yaw_deg=float(pl.yaw_deg),
         pitch_deg=float(pl.pitch_deg),
         on_ground=bool(pl.on_ground),
-        jump_cooldown_s=0.0,
+        auto_jump_cooldown_s=float(max(0.0, float(pl.auto_jump_cooldown_s))),
         crouch_eye_offset=float(max(0.0, min(float(pl.crouch_eye_drop), float(pl.crouch_eye_offset)))),
     )
 
@@ -155,5 +158,5 @@ def save_state(
         blocks={k: str(v) for (k, v) in snap.items()},
     )
 
-    state = AppState(version=2, settings=settings, player=player, world=world)
+    state = AppState(version=3, settings=settings, player=player, world=world)
     store.save(state)

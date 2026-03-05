@@ -2,34 +2,47 @@
 from __future__ import annotations
 
 import math
-import numpy as np
 from pathlib import Path
 
+import numpy as np
 from OpenGL.GL import (
-    glClearColor, glClear, glViewport,
-    glEnable, glDepthFunc, glDepthMask,
+    glClearColor,
+    glClear,
+    glViewport,
+    glEnable,
+    glDepthFunc,
+    glDepthMask,
     glGetString,
-    GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT,
-    GL_DEPTH_TEST, GL_LESS,
-    GL_VENDOR, GL_RENDERER, GL_VERSION, GL_SHADING_LANGUAGE_VERSION,
+    GL_COLOR_BUFFER_BIT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_TEST,
+    GL_LESS,
+    GL_VENDOR,
+    GL_RENDERER,
+    GL_VERSION,
+    GL_SHADING_LANGUAGE_VERSION,
 )
 
 from maiming.core.math.vec3 import Vec3
 from maiming.core.math import mat4
 from maiming.core.math.view_angles import forward_from_yaw_pitch_deg, sun_dir_from_az_el_deg
-
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.world.chunking import chunk_key
+from maiming.domain.world.chunking import ChunkKey, chunk_key
 
-from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
-from .gl_resources import GLResources
-from .._internal.passes.shadow_map_pass import ShadowMapPass
-from .._internal.passes.world_pass import WorldPass, WorldDrawInputs
-from .._internal.passes.sun_pass import SunPass
-from .._internal.passes.cloud_pass import CloudPass
-from .._internal.pipeline.light_space import compute_light_view_proj
-from maiming.domain.world.chunking import ChunkKey
+from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import (
+    GLRendererParams,
+    default_gl_renderer_params,
+)
+from maiming.infrastructure.rendering.opengl.facade.gl_resources import GLResources
+from maiming.infrastructure.rendering.opengl._internal.passes.shadow_map_pass import ShadowMapPass
+from maiming.infrastructure.rendering.opengl._internal.passes.world_pass import (
+    WorldPass,
+    WorldDrawInputs,
+)
+from maiming.infrastructure.rendering.opengl._internal.passes.sun_pass import SunPass
+from maiming.infrastructure.rendering.opengl._internal.passes.cloud_pass import CloudPass
+from maiming.infrastructure.rendering.opengl._internal.pipeline.light_space import compute_light_view_proj
 
 class GLRenderer:
     def __init__(self, params: GLRendererParams | None = None) -> None:
@@ -208,7 +221,12 @@ class GLRenderer:
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
         view = mat4.look_dir(eye, forward)
-        proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(self._cfg.camera.z_near), float(self._cfg.camera.z_far))
+        proj = mat4.perspective(
+            fov_deg,
+            (w / max(h, 1)),
+            float(self._cfg.camera.z_near),
+            float(self._cfg.camera.z_far),
+        )
         vp = mat4.mul(proj, view)
 
         glViewport(0, 0, w, h)

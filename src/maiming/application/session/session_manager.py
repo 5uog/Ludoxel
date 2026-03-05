@@ -13,6 +13,7 @@ from maiming.domain.systems.collision_system import integrate_with_collisions, c
 from maiming.domain.systems.build_system import pick_block
 
 from maiming.domain.blocks.state_codec import parse_state, format_state
+from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.default_registry import create_default_registry
 from maiming.domain.blocks.connectivity import (
     make_wall_state,
@@ -22,13 +23,14 @@ from maiming.domain.blocks.connectivity import (
 from maiming.domain.blocks.models.api import collision_boxes_for_block
 
 from maiming.application.session.session_settings import SessionSettings
-from maiming.application.ports.renderer_port import CameraDTO, RenderSnapshotDTO
+from maiming.application.session.render_snapshot import CameraDTO, RenderSnapshotDTO
 
 @dataclass
 class SessionManager:
     settings: SessionSettings
     world: WorldState
     player: PlayerEntity
+    block_registry: BlockRegistry
 
     @staticmethod
     def create_default(seed: int = 0) -> "SessionManager":
@@ -40,7 +42,12 @@ class SessionManager:
             yaw_deg=0.0,
             pitch_deg=0.0,
         )
-        return SessionManager(settings=st, world=world, player=player)
+        return SessionManager(
+            settings=st,
+            world=world,
+            player=player,
+            block_registry=create_default_registry(),
+        )
 
     def respawn(self) -> None:
         p = self.player
@@ -99,7 +106,13 @@ class SessionManager:
                         probe = float(self.settings.movement.auto_jump_probe)
                         dx = float(wish.x) * probe
                         dz = float(wish.z) * probe
-                        if can_auto_jump_one_block(self.player, self.world, dx=dx, dz=dz, params=self.settings.collision):
+                        if can_auto_jump_one_block(
+                            self.player,
+                            self.world,
+                            dx=dx,
+                            dz=dz,
+                            params=self.settings.collision,
+                        ):
                             jump_pulse = True
                             self.player.auto_jump_pending = True
                             self.player.auto_jump_start_y = float(self.player.position.y)
@@ -184,8 +197,7 @@ class SessionManager:
             return False
 
         base, props = parse_state(st)
-        reg = create_default_registry()
-        d = reg.get(str(base))
+        d = self.block_registry.get(str(base))
         if d is None or d.kind != "fence_gate":
             return False
 
@@ -208,7 +220,6 @@ class SessionManager:
         return True
 
     def _placement_intersects_player(self, px: int, py: int, pz: int, place_state: str) -> bool:
-        reg = create_default_registry()
         pa = self.player.aabb_at(self.player.position)
 
         def get_state(x: int, y: int, z: int) -> str | None:
@@ -218,7 +229,7 @@ class SessionManager:
             return self.world.blocks.get(k)
 
         def get_def(base_id: str):
-            return reg.get(str(base_id))
+            return self.block_registry.get(str(base_id))
 
         boxes = collision_boxes_for_block(
             str(place_state),
@@ -260,8 +271,7 @@ class SessionManager:
             return False
 
         base_sel = str(block_id)
-        reg = create_default_registry()
-        defn = reg.get(base_sel)
+        defn = self.block_registry.get(base_sel)
 
         if defn is None:
             return False

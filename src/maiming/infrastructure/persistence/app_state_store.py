@@ -102,7 +102,7 @@ class PersistedPlayer:
     pitch_deg: float = 0.0
 
     on_ground: bool = False
-    jump_cooldown_s: float = 0.0
+    auto_jump_cooldown_s: float = 0.0
     crouch_eye_offset: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
@@ -112,7 +112,7 @@ class PersistedPlayer:
             "yaw_deg": float(self.yaw_deg),
             "pitch_deg": float(self.pitch_deg),
             "on_ground": bool(self.on_ground),
-            "jump_cooldown_s": float(self.jump_cooldown_s),
+            "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
             "crouch_eye_offset": float(self.crouch_eye_offset),
         }
 
@@ -137,6 +137,8 @@ class PersistedPlayer:
         if not isinstance(vel, list) or len(vel) != 3:
             vel = [0.0, 0.0, 0.0]
 
+        cooldown_raw = d.get("auto_jump_cooldown_s", d.get("jump_cooldown_s", 0.0))
+
         return PersistedPlayer(
             pos_x=g_float(pos[0], 0.0),
             pos_y=g_float(pos[1], 1.0),
@@ -147,7 +149,7 @@ class PersistedPlayer:
             yaw_deg=g_float(d.get("yaw_deg", 0.0), 0.0),
             pitch_deg=g_float(d.get("pitch_deg", 0.0), 0.0),
             on_ground=g_bool(d.get("on_ground", False), False),
-            jump_cooldown_s=g_float(d.get("jump_cooldown_s", 0.0), 0.0),
+            auto_jump_cooldown_s=g_float(cooldown_raw, 0.0),
             crouch_eye_offset=g_float(d.get("crouch_eye_offset", 0.0), 0.0),
         )
 
@@ -209,7 +211,7 @@ class AppState:
     @staticmethod
     def default() -> "AppState":
         return AppState(
-            version=2,
+            version=3,
             settings=PersistedSettings(),
             player=PersistedPlayer(),
             world=PersistedWorld(revision=0, blocks={}),
