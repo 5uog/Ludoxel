@@ -1,4 +1,3 @@
-# FILE: src/maiming/domain/blocks/models/common.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -115,3 +114,25 @@ def get_neighbor_def(get_state: GetState, get_def: GetDef, x: int, y: int, z: in
         return None
     base, _p = parse_state(s)
     return get_def(str(base))
+
+def opposite_cardinal(d: str) -> str:
+    s = str(d)
+    if s == "north":
+        return "south"
+    if s == "south":
+        return "north"
+    if s == "east":
+        return "west"
+    if s == "west":
+        return "east"
+    return "south"
+
+def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
+    f = str(facing)
+    s = str(side_from_gate)
+
+    if f in ("north", "south"):
+        return s in ("east", "west")
+    if f in ("east", "west"):
+        return s in ("north", "south")
+    return s in ("east", "west")

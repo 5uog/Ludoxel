@@ -1,4 +1,3 @@
-# FILE: src/maiming/domain/blocks/connectivity.py
 from __future__ import annotations
 
 from maiming.domain.blocks.block_definition import BlockDefinition
@@ -50,8 +49,17 @@ def _is_fence_gate(defn: BlockDefinition | None) -> bool:
         return False
     return str(defn.kind) == "fence_gate" or defn.has_tag("fence_gate")
 
-def _wall_side_from_neighbor(world: WorldState, x: int, y: int, z: int) -> str:
-    st = _state_at(world, int(x), int(y), int(z))
+def _gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
+    f = str(facing)
+    s = str(side_from_gate)
+    if f in ("north", "south"):
+        return s in ("east", "west")
+    if f in ("east", "west"):
+        return s in ("north", "south")
+    return s in ("east", "west")
+
+def _wall_side_from_neighbor(world: WorldState, nb_x: int, nb_y: int, nb_z: int, *, side_from_neighbor: str) -> str:
+    st = _state_at(world, int(nb_x), int(nb_y), int(nb_z))
     d = _def_from_state(st)
 
     if d is None:
@@ -61,7 +69,11 @@ def _wall_side_from_neighbor(world: WorldState, x: int, y: int, z: int) -> str:
     if _is_fence(d):
         return "low"
     if _is_fence_gate(d):
-        return "low"
+        _b, props = parse_state(str(st))
+        facing = str(props.get("facing", "south"))
+        if _gate_connects_to_side(facing=facing, side_from_gate=str(side_from_neighbor)):
+            return "low"
+        return "none"
     if _is_full_solid(d):
         return "tall"
     return "none"
@@ -108,10 +120,10 @@ def canonical_wall_state(world: WorldState, x: int, y: int, z: int) -> str | Non
     base, props = parse_state(str(st))
     waterlogged = _as_bool(props.get("waterlogged"), False)
 
-    north = _wall_side_from_neighbor(world, int(x), int(y), int(z - 1))
-    east = _wall_side_from_neighbor(world, int(x + 1), int(y), int(z))
-    south = _wall_side_from_neighbor(world, int(x), int(y), int(z + 1))
-    west = _wall_side_from_neighbor(world, int(x - 1), int(y), int(z))
+    north = _wall_side_from_neighbor(world, int(x), int(y), int(z - 1), side_from_neighbor="south")
+    east = _wall_side_from_neighbor(world, int(x + 1), int(y), int(z), side_from_neighbor="west")
+    south = _wall_side_from_neighbor(world, int(x), int(y), int(z + 1), side_from_neighbor="north")
+    west = _wall_side_from_neighbor(world, int(x - 1), int(y), int(z), side_from_neighbor="east")
 
     above_def = _def_from_state(_state_at(world, int(x), int(y + 1), int(z)))
     up = _wall_up_rule(

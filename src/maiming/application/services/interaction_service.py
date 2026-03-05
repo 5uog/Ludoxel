@@ -1,4 +1,3 @@
-# FILE: src/maiming/application/services/interaction_service.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -10,6 +9,7 @@ from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.connectivity import (
     make_fence_gate_state,
+    canonical_fence_gate_state,
     refresh_structural_neighbors,
 )
 
@@ -62,6 +62,32 @@ class InteractionService:
         refresh_structural_neighbors(self.world, int(hx), int(hy), int(hz))
         return True
 
+    @staticmethod
+    def _opposite_cardinal(f: str) -> str:
+        s = str(f)
+        if s == "north":
+            return "south"
+        if s == "south":
+            return "north"
+        if s == "east":
+            return "west"
+        if s == "west":
+            return "east"
+        return "south"
+
+    @staticmethod
+    def _facing_vec_xz(f: str) -> tuple[float, float]:
+        s = str(f)
+        if s == "north":
+            return (0.0, -1.0)
+        if s == "south":
+            return (0.0, 1.0)
+        if s == "east":
+            return (1.0, 0.0)
+        if s == "west":
+            return (-1.0, 0.0)
+        return (0.0, 1.0)
+
     def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> bool:
         k = (int(hit_cell[0]), int(hit_cell[1]), int(hit_cell[2]))
         st = self.world.blocks.get(k)
@@ -76,19 +102,46 @@ class InteractionService:
         is_open = str(props.get("open", "false")).strip().lower() in ("1", "true", "yes", "on")
         facing = str(props.get("facing", "south"))
         powered = str(props.get("powered", "false")).strip().lower() in ("1", "true", "yes", "on")
-        in_wall = str(props.get("in_wall", "false")).strip().lower() in ("1", "true", "yes", "on")
         waterlogged = str(props.get("waterlogged", "false")).strip().lower() in ("1", "true", "yes", "on")
 
-        next_state = make_fence_gate_state(
-            str(base),
-            str(facing),
-            open_state=(not bool(is_open)),
-            powered=bool(powered),
-            in_wall=bool(in_wall),
-            waterlogged=bool(waterlogged),
+        next_open = not bool(is_open)
+        next_facing = str(facing)
+
+        if bool(next_open):
+            px = float(self.player.position.x)
+            pz = float(self.player.position.z)
+            cx = float(k[0]) + 0.5
+            cz = float(k[2]) + 0.5
+            dx = px - cx
+            dz = pz - cz
+
+            fx, fz = self._facing_vec_xz(str(facing))
+            dot = float(dx) * float(fx) + float(dz) * float(fz)
+
+            if dot > 1e-9:
+                next_facing = self._opposite_cardinal(str(facing))
+
+        nxt = canonical_fence_gate_state(
+            self.world,
+            int(k[0]),
+            int(k[1]),
+            int(k[2]),
+            facing_override=str(next_facing),
+            open_override=bool(next_open),
         )
-        self.world.set_block(k[0], k[1], k[2], next_state)
-        refresh_structural_neighbors(self.world, k[0], k[1], k[2])
+
+        if nxt is None:
+            nxt = make_fence_gate_state(
+                str(base),
+                str(next_facing),
+                open_state=bool(next_open),
+                powered=bool(powered),
+                in_wall=str(props.get("in_wall", "false")).strip().lower() in ("1", "true", "yes", "on"),
+                waterlogged=bool(waterlogged),
+            )
+
+        self.world.set_block(int(k[0]), int(k[1]), int(k[2]), str(nxt))
+        refresh_structural_neighbors(self.world, int(k[0]), int(k[1]), int(k[2]))
         return True
 
     def place_block(self, block_id: str, reach: float = 5.0) -> bool:

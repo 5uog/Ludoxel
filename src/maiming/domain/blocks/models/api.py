@@ -1,4 +1,3 @@
-# FILE: src/maiming/domain/blocks/models/api.py
 from __future__ import annotations
 
 from typing import List
@@ -75,7 +74,11 @@ def collision_boxes_for_block(
         is_open = open_s in ("1", "true", "yes", "on")
         if bool(is_open):
             return []
-        return render_boxes_for_block(state_str, get_state, get_def, x, y, z)
+        r = render_boxes_for_block(state_str, get_state, get_def, x, y, z)
+        out: list[LocalBox] = []
+        for b in r:
+            out.append(LocalBox(b.mn_x, b.mn_y, b.mn_z, b.mx_x, max(1.5, float(b.mx_y)), b.mx_z, uv_hint=str(b.uv_hint)))
+        return out
 
     if kind == "fence":
         r = render_boxes_for_block(state_str, get_state, get_def, x, y, z)

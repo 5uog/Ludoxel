@@ -1,4 +1,3 @@
-# FILE: src/maiming/domain/blocks/models/fence.py
 from __future__ import annotations
 
 from typing import List
@@ -11,7 +10,8 @@ from maiming.domain.blocks.models.common import (
     GetDef,
     rotate_box_y_cw,
     is_full_solid,
-    is_fence_like,
+    fence_gate_connects_to_side,
+    opposite_cardinal,
 )
 
 def _is_wall_like(defn: BlockDefinition | None) -> bool:
@@ -20,6 +20,20 @@ def _is_wall_like(defn: BlockDefinition | None) -> bool:
     if defn.kind == "wall":
         return True
     return defn.has_tag("wall")
+
+def _is_fence(defn: BlockDefinition | None) -> bool:
+    if defn is None:
+        return False
+    if defn.kind == "fence":
+        return True
+    return defn.has_tag("fence")
+
+def _is_fence_gate(defn: BlockDefinition | None) -> bool:
+    if defn is None:
+        return False
+    if defn.kind == "fence_gate":
+        return True
+    return defn.has_tag("fence_gate")
 
 def boxes_for_fence(
     *,
@@ -35,13 +49,21 @@ def boxes_for_fence(
         s = get_state(int(x + dx), int(y), int(z + dz))
         if s is None:
             continue
-        nb, _np = parse_state(str(s))
+        nb, np = parse_state(str(s))
         nd = get_def(str(nb))
         if nd is None:
             connections[d] = True
             continue
-        if is_full_solid(nd) or is_fence_like(nd) or _is_wall_like(nd):
+
+        if is_full_solid(nd) or _is_fence(nd) or _is_wall_like(nd):
             connections[d] = True
+            continue
+
+        if _is_fence_gate(nd):
+            side_from_gate = opposite_cardinal(str(d))
+            facing = str(np.get("facing", "south"))
+            if fence_gate_connects_to_side(facing=facing, side_from_gate=side_from_gate):
+                connections[d] = True
 
     post = LocalBox(6.0 / 16.0, 0.0, 6.0 / 16.0, 10.0 / 16.0, 1.0, 10.0 / 16.0)
     boxes = [post]
