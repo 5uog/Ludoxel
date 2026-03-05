@@ -6,6 +6,7 @@ in vec2 v_uv;
 in vec4 v_uvRect;
 in vec4 v_lightPos;
 in float v_shade;
+in float v_sel;
 
 uniform sampler2D u_atlas;
 
@@ -20,6 +21,9 @@ uniform float u_shadowBiasSlope;
 uniform vec3 u_sunDir;
 uniform int u_debugShadow;
 
+uniform int   u_selMode;   // 0 none, 1 outline, 2 tint
+uniform float u_selTint;   // 0..1
+
 out vec4 fragColor;
 
 float shadow_factor(float ndl) {
@@ -30,19 +34,14 @@ float shadow_factor(float ndl) {
     vec3 ndc = v_lightPos.xyz / max(v_lightPos.w, 1e-6);
     vec3 uvz = ndc * 0.5 + 0.5;
 
-    // Outside => lit.
     if (uvz.x < 0.0 || uvz.x > 1.0 || uvz.y < 0.0 || uvz.y > 1.0) return 1.0;
     if (uvz.z < 0.0 || uvz.z > 1.0) return 1.0;
 
-    // Base slope bias.
     float bias = max(u_shadowBiasMin, u_shadowBiasSlope * (1.0 - ndl));
 
-    // Small extra bias in depth units to suppress acne without noticeable detachment.
-    // (0.25 texel in UV roughly maps to a conservative depth tolerance here.)
     float tex = max(u_shadowTexel.x, u_shadowTexel.y);
     bias += 0.25 * tex;
 
-    // Hardware PCF (2x2) via GL_LINEAR + sampler2DShadow.
     float lit = texture(u_shadowMap, vec3(uvz.xy, uvz.z - bias));
 
     return mix(u_shadowDarkMul, 1.0, lit);
@@ -58,8 +57,6 @@ void main() {
 
     float ndl = max(dot(n, l), 0.0);
 
-    // Shadowing is applied only to the direct light component.
-    // The ambient term remains unshadowed to avoid crushing all dark regions to black.
     float sh = (ndl > 1e-6) ? shadow_factor(ndl) : 1.0;
 
     if (u_debugShadow != 0) {
@@ -75,5 +72,11 @@ void main() {
 
     float lit = amb_term + dir_term * sh;
 
-    fragColor = vec4(tex.rgb * lit, tex.a);
+    vec3 base = tex.rgb;
+    if (u_selMode == 2 && v_sel > 0.5) {
+        float t = clamp(u_selTint, 0.0, 1.0);
+        base = mix(base, vec3(1.0), t);
+    }
+
+    fragColor = vec4(base * lit, tex.a);
 }

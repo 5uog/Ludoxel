@@ -6,11 +6,31 @@ from pathlib import Path
 
 import numpy as np
 from OpenGL.GL import (
-    glCreateProgram, glCreateShader, glShaderSource, glCompileShader, glGetShaderiv, 
-    glGetShaderInfoLog, glAttachShader, glLinkProgram, glGetProgramiv, glGetProgramInfoLog, 
-    glDeleteShader, glUseProgram, glGetUniformLocation, glUniformMatrix4fv, glUniform3f, 
-    glUniform2f, glUniform1i, glUniform1f, glDeleteProgram,
-    GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPILE_STATUS, GL_LINK_STATUS,
+    glCreateProgram,
+    glCreateShader,
+    glShaderSource,
+    glCompileShader,
+    glGetShaderiv,
+    glGetShaderInfoLog,
+    glAttachShader,
+    glLinkProgram,
+    glGetProgramiv,
+    glGetProgramInfoLog,
+    glDeleteShader,
+    glUseProgram,
+    glGetUniformLocation,
+    glUniformMatrix4fv,
+    glUniform3f,
+    glUniform2f,
+    glUniform1i,
+    glUniform1f,
+    glUniform3i,
+    glUniform4f,
+    glDeleteProgram,
+    GL_VERTEX_SHADER,
+    GL_FRAGMENT_SHADER,
+    GL_COMPILE_STATUS,
+    GL_LINK_STATUS,
 )
 
 def _load_text(path: Path) -> str:
@@ -58,13 +78,10 @@ class ShaderProgram:
         glUseProgram(self.program)
 
     def uniform_loc(self, name: str) -> int:
-        # Uniform lookup is performed per call for simplicity.
-        # Location caching can be added later without changing call sites if profiling shows pressure.
         return glGetUniformLocation(self.program, name)
 
     def set_mat4(self, name: str, m: np.ndarray) -> None:
         loc = self.uniform_loc(name)
-        # transpose=True makes a row-major NumPy matrix behave as a column-major GLSL matrix.
         glUniformMatrix4fv(loc, 1, True, m.astype(np.float32))
 
     def set_vec3(self, name: str, x: float, y: float, z: float) -> None:
@@ -75,9 +92,17 @@ class ShaderProgram:
         loc = self.uniform_loc(name)
         glUniform2f(loc, float(x), float(y))
 
+    def set_vec4(self, name: str, x: float, y: float, z: float, w: float) -> None:
+        loc = self.uniform_loc(name)
+        glUniform4f(loc, float(x), float(y), float(z), float(w))
+
     def set_int(self, name: str, v: int) -> None:
         loc = self.uniform_loc(name)
         glUniform1i(loc, int(v))
+
+    def set_ivec3(self, name: str, x: int, y: int, z: int) -> None:
+        loc = self.uniform_loc(name)
+        glUniform3i(loc, int(x), int(y), int(z))
 
     def set_float(self, name: str, v: float) -> None:
         loc = self.uniform_loc(name)

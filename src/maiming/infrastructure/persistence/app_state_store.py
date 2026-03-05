@@ -15,6 +15,8 @@ class PersistedSettings:
     invert_x: bool = False
     invert_y: bool = False
 
+    outline_selection: bool = True
+
     world_wireframe: bool = False
     shadow_enabled: bool = True
 
@@ -36,6 +38,7 @@ class PersistedSettings:
             "mouse_sens_deg_per_px": float(self.mouse_sens_deg_per_px),
             "invert_x": bool(self.invert_x),
             "invert_y": bool(self.invert_y),
+            "outline_selection": bool(self.outline_selection),
             "world_wireframe": bool(self.world_wireframe),
             "shadow_enabled": bool(self.shadow_enabled),
             "sun_az_deg": float(self.sun_az_deg),
@@ -76,6 +79,7 @@ class PersistedSettings:
             mouse_sens_deg_per_px=g_float("mouse_sens_deg_per_px", 0.09),
             invert_x=g_bool("invert_x", False),
             invert_y=g_bool("invert_y", False),
+            outline_selection=g_bool("outline_selection", True),
             world_wireframe=g_bool("world_wireframe", False),
             shadow_enabled=g_bool("shadow_enabled", True),
             sun_az_deg=g_float("sun_az_deg", 45.0),

@@ -19,6 +19,7 @@ class GLResources:
     shadow_prog: ShaderProgram
     sun_prog: ShaderProgram
     cloud_prog: ShaderProgram
+    selection_prog: ShaderProgram
 
     cloud_mesh: MeshBuffer
 
@@ -35,6 +36,10 @@ class GLResources:
         shadow_prog = ShaderProgram.from_files(shader_dir / "shadow.vert", shader_dir / "shadow.frag")
         sun_prog = ShaderProgram.from_files(shader_dir / "sun.vert", shader_dir / "sun.frag")
         cloud_prog = ShaderProgram.from_files(shader_dir / "cloud_box.vert", shader_dir / "cloud_box.frag")
+        selection_prog = ShaderProgram.from_files(
+            shader_dir / "selection_line.vert",
+            shader_dir / "selection_line.frag",
+        )
 
         cloud_mesh = MeshBuffer.create_cube_instanced()
 
@@ -55,6 +60,7 @@ class GLResources:
             shadow_prog=shadow_prog,
             sun_prog=sun_prog,
             cloud_prog=cloud_prog,
+            selection_prog=selection_prog,
             cloud_mesh=cloud_mesh,
             atlas=atlas,
             empty_vao=empty_vao,
@@ -69,6 +75,7 @@ class GLResources:
         self.shadow_prog.destroy()
         self.sun_prog.destroy()
         self.cloud_prog.destroy()
+        self.selection_prog.destroy()
 
         if int(self.empty_vao) != 0:
             glDeleteVertexArrays(1, [int(self.empty_vao)])

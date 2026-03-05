@@ -37,6 +37,8 @@ def apply_persisted_state_if_present(
         runtime.invert_x = bool(ps.invert_x)
         runtime.invert_y = bool(ps.invert_y)
 
+        runtime.outline_selection = bool(ps.outline_selection)
+
         runtime.world_wire = bool(ps.world_wireframe)
         runtime.shadow_enabled = bool(ps.shadow_enabled)
 
@@ -76,6 +78,7 @@ def apply_persisted_state_if_present(
 
     runtime.normalize()
 
+    renderer.set_outline_selection_enabled(bool(runtime.outline_selection))
     renderer.set_world_wireframe(bool(runtime.world_wire))
     renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
     renderer.set_sun_angles(float(runtime.sun_az_deg), float(runtime.sun_el_deg))
@@ -91,6 +94,7 @@ def _coerce_runtime(
     runtime: ViewportRuntimeState | None,
     invert_x: bool | None,
     invert_y: bool | None,
+    outline_selection: bool | None,
     cloud_enabled: bool | None,
     cloud_density: int | None,
     cloud_seed: int | None,
@@ -106,6 +110,7 @@ def _coerce_runtime(
         out = ViewportRuntimeState(
             invert_x=bool(runtime.invert_x),
             invert_y=bool(runtime.invert_y),
+            outline_selection=bool(runtime.outline_selection),
             cloud_wire=bool(runtime.cloud_wire),
             cloud_enabled=bool(runtime.cloud_enabled),
             cloud_density=int(runtime.cloud_density),
@@ -132,6 +137,8 @@ def _coerce_runtime(
         out.invert_x = bool(invert_x)
     if invert_y is not None:
         out.invert_y = bool(invert_y)
+    if outline_selection is not None:
+        out.outline_selection = bool(outline_selection)
 
     if cloud_enabled is not None:
         out.cloud_enabled = bool(cloud_enabled)
@@ -169,6 +176,7 @@ def save_state(
     runtime: ViewportRuntimeState | None = None,
     invert_x: bool | None = None,
     invert_y: bool | None = None,
+    outline_selection: bool | None = None,
     cloud_enabled: bool | None = None,
     cloud_density: int | None = None,
     cloud_seed: int | None = None,
@@ -186,6 +194,7 @@ def save_state(
         runtime=runtime,
         invert_x=invert_x,
         invert_y=invert_y,
+        outline_selection=outline_selection,
         cloud_enabled=cloud_enabled,
         cloud_density=cloud_density,
         cloud_seed=cloud_seed,
@@ -205,6 +214,7 @@ def save_state(
         mouse_sens_deg_per_px=float(session.settings.mouse_sens_deg_per_px),
         invert_x=bool(state_runtime.invert_x),
         invert_y=bool(state_runtime.invert_y),
+        outline_selection=bool(state_runtime.outline_selection),
         world_wireframe=bool(state_runtime.world_wire),
         shadow_enabled=bool(state_runtime.shadow_enabled),
         sun_az_deg=float(state_runtime.sun_az_deg),

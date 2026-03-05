@@ -7,10 +7,22 @@ from typing import Dict
 import numpy as np
 
 from OpenGL.GL import (
-    glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glBindVertexArray, glDrawArraysInstanced,
+    glActiveTexture,
+    glBindTexture,
+    glEnable,
+    glDisable,
+    glCullFace,
+    glBindVertexArray,
+    glDrawArraysInstanced,
     glPolygonMode,
-    GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_TRIANGLES,
-    GL_FRONT_AND_BACK, GL_LINE,
+    GL_TEXTURE0,
+    GL_TEXTURE1,
+    GL_TEXTURE_2D,
+    GL_CULL_FACE,
+    GL_BACK,
+    GL_TRIANGLES,
+    GL_FRONT_AND_BACK,
+    GL_LINE,
 )
 
 from maiming.core.math.vec3 import Vec3
@@ -37,6 +49,12 @@ class WorldDrawInputs:
 
     camera_chunk: ChunkKey
     render_distance_chunks: int
+
+    sel_mode: int
+    sel_x: int
+    sel_y: int
+    sel_z: int
+    sel_tint: float
 
 @dataclass
 class _ChunkFaces:
@@ -135,6 +153,10 @@ class WorldPass:
             self._prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
             self._prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
             self._prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
+
+            self._prog.set_int("u_selMode", int(inp.sel_mode))
+            self._prog.set_ivec3("u_selBlock", int(inp.sel_x), int(inp.sel_y), int(inp.sel_z))
+            self._prog.set_float("u_selTint", float(inp.sel_tint))
 
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, int(self._atlas.tex_id))

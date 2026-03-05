@@ -8,6 +8,8 @@ class ViewportRuntimeState:
     invert_x: bool = False
     invert_y: bool = False
 
+    outline_selection: bool = True
+
     cloud_wire: bool = False
     cloud_enabled: bool = True
     cloud_density: int = 1

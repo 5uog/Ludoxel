@@ -3,8 +3,15 @@ from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QSlider, QCheckBox, QFrame, QSizePolicy
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSlider,
+    QCheckBox,
+    QFrame,
+    QSizePolicy,
 )
 
 from maiming.presentation.config.pause_overlay_params import PauseOverlayParams, DEFAULT_PAUSE_OVERLAY_PARAMS
@@ -15,6 +22,8 @@ class PauseOverlay(QWidget):
     sens_changed = pyqtSignal(float)
     invert_x_changed = pyqtSignal(bool)
     invert_y_changed = pyqtSignal(bool)
+
+    outline_selection_changed = pyqtSignal(bool)
 
     cloud_wireframe_changed = pyqtSignal(bool)
     clouds_enabled_changed = pyqtSignal(bool)
@@ -129,6 +138,13 @@ class PauseOverlay(QWidget):
         inv_row.addStretch(1)
         pv.addLayout(inv_row)
 
+        sel_row = QHBoxLayout()
+        self._cb_outline_sel = QCheckBox("Outline selection", panel)
+        self._cb_outline_sel.toggled.connect(self.outline_selection_changed.emit)
+        sel_row.addWidget(self._cb_outline_sel)
+        sel_row.addStretch(1)
+        pv.addLayout(sel_row)
+
         dbg_row = QHBoxLayout()
         self._cb_cloud_wire = QCheckBox("Cloud wireframe", panel)
         self._cb_world_wire = QCheckBox("World wireframe", panel)
@@ -195,6 +211,7 @@ class PauseOverlay(QWidget):
         sens_deg_per_px: float,
         inv_x: bool,
         inv_y: bool,
+        outline_selection: bool,
         cloud_wire: bool,
         clouds_enabled: bool,
         cloud_density: int,
@@ -250,6 +267,10 @@ class PauseOverlay(QWidget):
         self._cb_inv_y.setChecked(bool(inv_y))
         self._cb_inv_x.blockSignals(False)
         self._cb_inv_y.blockSignals(False)
+
+        self._cb_outline_sel.blockSignals(True)
+        self._cb_outline_sel.setChecked(bool(outline_selection))
+        self._cb_outline_sel.blockSignals(False)
 
         self._cb_cloud_wire.blockSignals(True)
         self._cb_cloud_wire.setChecked(bool(cloud_wire))
@@ -317,4 +338,4 @@ class PauseOverlay(QWidget):
     def _on_cloud_seed(self, v: int) -> None:
         sv = int(v)
         self._lbl_cloud_seed.setText(f"Cloud seed: {sv}")
-        self.cloud_seed_changed.emit(int(sv))
+        self.cloud_seed_changed.emit(float(sv))

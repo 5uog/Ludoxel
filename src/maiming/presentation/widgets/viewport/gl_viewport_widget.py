@@ -68,6 +68,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.sens_changed.connect(self._set_sens)
         self._overlay.invert_x_changed.connect(self._set_invert_x)
         self._overlay.invert_y_changed.connect(self._set_invert_y)
+        self._overlay.outline_selection_changed.connect(self._set_outline_selection)
         self._overlay.cloud_wireframe_changed.connect(self._set_cloud_wire)
         self._overlay.clouds_enabled_changed.connect(self._set_cloud_enabled)
         self._overlay.cloud_density_changed.connect(self._set_cloud_density)
@@ -141,6 +142,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.normalize()
 
         self._renderer.set_debug_shadow(bool(self._state.debug_shadow))
+
+        self._renderer.set_outline_selection_enabled(bool(self._state.outline_selection))
 
         self._renderer.set_cloud_wireframe(bool(self._state.cloud_wire))
         self._renderer.set_cloud_enabled(bool(self._state.cloud_enabled))
@@ -280,6 +283,34 @@ class GLViewportWidget(QOpenGLWidget):
             render_distance_chunks=int(self._state.render_distance_chunks),
         )
 
+        from maiming.domain.systems.build_system import pick_block
+
+        hit = pick_block(
+            self._session.world,
+            origin=eye,
+            direction=self._session.player.view_forward(),
+            reach=float(self._state.reach),
+        )
+        if hit is None:
+            self._renderer.clear_selection()
+        else:
+            hx, hy, hz = hit.hit
+            st = self._session.world.blocks.get((int(hx), int(hy), int(hz)))
+            if st is None:
+                self._renderer.clear_selection()
+            else:
+                def get_state(x: int, y: int, z: int) -> str | None:
+                    return self._session.world.blocks.get((int(x), int(y), int(z)))
+
+                self._renderer.set_selection_target(
+                    x=int(hx),
+                    y=int(hy),
+                    z=int(hz),
+                    state_str=str(st),
+                    get_state=get_state,
+                    world_revision=int(self._session.world.revision),
+                )
+
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
@@ -309,6 +340,7 @@ class GLViewportWidget(QOpenGLWidget):
             sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px,
             inv_x=self._state.invert_x,
             inv_y=self._state.invert_y,
+            outline_selection=self._state.outline_selection,
             cloud_wire=self._state.cloud_wire,
             clouds_enabled=self._state.cloud_enabled,
             cloud_density=int(self._state.cloud_density),
@@ -340,6 +372,10 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_invert_y(self, on: bool) -> None:
         self._state.invert_y = bool(on)
+
+    def _set_outline_selection(self, on: bool) -> None:
+        self._state.outline_selection = bool(on)
+        self._renderer.set_outline_selection_enabled(bool(self._state.outline_selection))
 
     def _set_cloud_wire(self, on: bool) -> None:
         self._state.cloud_wire = bool(on)
