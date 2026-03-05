@@ -191,6 +191,7 @@ class HudController:
         session: SessionManager,
         renderer: GLRenderer,
         auto_jump_enabled: bool,
+        auto_sprint_enabled: bool,
         build_mode: bool,
         inventory_open: bool,
         selected_block_id: str,
@@ -263,7 +264,10 @@ class HudController:
         lines.append(f"Facing {card}  Yaw {p.yaw_deg:.1f}  Pitch {p.pitch_deg:.1f}")
         lines.append("")
         lines.append(f"RenderDist {rd} chunks")
-        lines.append(f"Mode build={int(bool(build_mode))} inv={int(bool(inventory_open))} autoJump={int(bool(auto_jump_enabled))} reach={float(reach):.2f}")
+        lines.append(
+            f"Mode build={int(bool(build_mode))} inv={int(bool(inventory_open))} "
+            f"autoJump={int(bool(auto_jump_enabled))} autoSprint={int(bool(auto_sprint_enabled))} reach={float(reach):.2f}"
+        )
         lines.append(f"Select {str(sel_name)}  ({str(selected_block_id)})")
         lines.append(f"Cloud en={int(bool(cloud_enabled))} den={int(cloud_density)} seed={int(cloud_seed)} wire={int(bool(cloud_wire))}")
         lines.append(f"World wire={int(bool(world_wire))} shadow={int(bool(shadow_ok))} size={int(shadow_size)} dbg={int(bool(debug_shadow))} sun={float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}")

@@ -38,6 +38,7 @@ class PauseOverlay(QWidget):
 
     build_mode_changed = pyqtSignal(bool)
     auto_jump_changed = pyqtSignal(bool)
+    auto_sprint_changed = pyqtSignal(bool)
 
     render_distance_changed = pyqtSignal(int)
 
@@ -201,6 +202,13 @@ class PauseOverlay(QWidget):
         aj_row.addStretch(1)
         pv.addLayout(aj_row)
 
+        as_row = QHBoxLayout()
+        self._cb_auto_sprint = QCheckBox("Auto-Sprint (forward input)", panel)
+        self._cb_auto_sprint.toggled.connect(self.auto_sprint_changed.emit)
+        as_row.addWidget(self._cb_auto_sprint)
+        as_row.addStretch(1)
+        pv.addLayout(as_row)
+
         root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addStretch(1)
 
@@ -222,6 +230,7 @@ class PauseOverlay(QWidget):
         sun_el_deg: float,
         build_mode: bool,
         auto_jump_enabled: bool,
+        auto_sprint_enabled: bool,
         render_distance_chunks: int,
     ) -> None:
         fov_i = int(round(float(fov_deg)))
@@ -307,6 +316,10 @@ class PauseOverlay(QWidget):
         self._cb_auto_jump.blockSignals(True)
         self._cb_auto_jump.setChecked(bool(auto_jump_enabled))
         self._cb_auto_jump.blockSignals(False)
+
+        self._cb_auto_sprint.blockSignals(True)
+        self._cb_auto_sprint.setChecked(bool(auto_sprint_enabled))
+        self._cb_auto_sprint.blockSignals(False)
 
     def _on_fov(self, v: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(v)}")

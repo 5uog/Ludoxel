@@ -29,8 +29,12 @@ class PersistedSettings:
 
     build_mode: bool = False
     auto_jump_enabled: bool = False
+    auto_sprint_enabled: bool = False
 
     render_distance_chunks: int = 6
+
+    # This value may be persisted, but startup policy may still force HUD off.
+    hud_visible: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -48,7 +52,9 @@ class PersistedSettings:
             "cloud_seed": int(self.cloud_seed),
             "build_mode": bool(self.build_mode),
             "auto_jump_enabled": bool(self.auto_jump_enabled),
+            "auto_sprint_enabled": bool(self.auto_sprint_enabled),
             "render_distance_chunks": int(self.render_distance_chunks),
+            "hud_visible": bool(self.hud_visible),
         }
 
     @staticmethod
@@ -89,7 +95,9 @@ class PersistedSettings:
             cloud_seed=g_int("cloud_seed", 1337),
             build_mode=g_bool("build_mode", False),
             auto_jump_enabled=g_bool("auto_jump_enabled", False),
+            auto_sprint_enabled=g_bool("auto_sprint_enabled", False),
             render_distance_chunks=int(rd),
+            hud_visible=g_bool("hud_visible", True),
         )
 
 @dataclass(frozen=True)

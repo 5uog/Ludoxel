@@ -51,6 +51,7 @@ def apply_persisted_state_if_present(
 
         runtime.build_mode = bool(ps.build_mode)
         runtime.auto_jump_enabled = bool(ps.auto_jump_enabled)
+        runtime.auto_sprint_enabled = bool(getattr(ps, "auto_sprint_enabled", False))
         runtime.render_distance_chunks = int(ps.render_distance_chunks)
 
         pp = st.player
@@ -78,6 +79,9 @@ def apply_persisted_state_if_present(
 
     runtime.normalize()
 
+    # Startup policy requirement: HUD must be hidden until F3 is pressed.
+    runtime.hud_visible = False
+
     renderer.set_outline_selection_enabled(bool(runtime.outline_selection))
     renderer.set_world_wireframe(bool(runtime.world_wire))
     renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
@@ -100,6 +104,7 @@ def _coerce_runtime(
     cloud_seed: int | None,
     build_mode: bool | None,
     auto_jump_enabled: bool | None,
+    auto_sprint_enabled: bool | None,
     world_wire: bool | None,
     shadow_enabled: bool | None,
     sun_az_deg: float | None,
@@ -121,6 +126,7 @@ def _coerce_runtime(
             selected_block_id=str(runtime.selected_block_id),
             reach=float(runtime.reach),
             auto_jump_enabled=bool(runtime.auto_jump_enabled),
+            auto_sprint_enabled=bool(runtime.auto_sprint_enabled),
             render_distance_chunks=int(runtime.render_distance_chunks),
             sun_az_deg=float(runtime.sun_az_deg),
             sun_el_deg=float(runtime.sun_el_deg),
@@ -151,6 +157,8 @@ def _coerce_runtime(
         out.build_mode = bool(build_mode)
     if auto_jump_enabled is not None:
         out.auto_jump_enabled = bool(auto_jump_enabled)
+    if auto_sprint_enabled is not None:
+        out.auto_sprint_enabled = bool(auto_sprint_enabled)
 
     if world_wire is not None:
         out.world_wire = bool(world_wire)
@@ -182,6 +190,7 @@ def save_state(
     cloud_seed: int | None = None,
     build_mode: bool | None = None,
     auto_jump_enabled: bool | None = None,
+    auto_sprint_enabled: bool | None = None,
     world_wire: bool | None = None,
     shadow_enabled: bool | None = None,
     sun_az_deg: float | None = None,
@@ -200,6 +209,7 @@ def save_state(
         cloud_seed=cloud_seed,
         build_mode=build_mode,
         auto_jump_enabled=auto_jump_enabled,
+        auto_sprint_enabled=auto_sprint_enabled,
         world_wire=world_wire,
         shadow_enabled=shadow_enabled,
         sun_az_deg=sun_az_deg,
@@ -224,7 +234,9 @@ def save_state(
         cloud_seed=int(state_runtime.cloud_seed),
         build_mode=bool(state_runtime.build_mode),
         auto_jump_enabled=bool(state_runtime.auto_jump_enabled),
+        auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled),
         render_distance_chunks=int(state_runtime.render_distance_chunks),
+        hud_visible=bool(state_runtime.hud_visible),
     )
 
     pl = session.player

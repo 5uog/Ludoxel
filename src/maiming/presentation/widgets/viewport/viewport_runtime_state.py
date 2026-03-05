@@ -22,6 +22,7 @@ class ViewportRuntimeState:
     selected_block_id: str = "minecraft:grass_block"
     reach: float = 5.0
     auto_jump_enabled: bool = False
+    auto_sprint_enabled: bool = False
 
     render_distance_chunks: int = 6
 
@@ -30,7 +31,9 @@ class ViewportRuntimeState:
 
     debug_shadow: bool = False
     vsync_on: bool = False
-    hud_visible: bool = True
+
+    # Startup policy: HUD is hidden until F3 is pressed.
+    hud_visible: bool = False
 
     def normalize(self) -> None:
         self.cloud_density = int(max(0, min(4, int(self.cloud_density))))

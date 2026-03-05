@@ -79,6 +79,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.sun_elevation_changed.connect(self._set_sun_elevation)
         self._overlay.build_mode_changed.connect(self._set_build_mode)
         self._overlay.auto_jump_changed.connect(self._set_auto_jump)
+        self._overlay.auto_sprint_changed.connect(self._set_auto_sprint)
         self._overlay.render_distance_changed.connect(self._set_render_distance)
 
         self._death = DeathOverlay(self)
@@ -351,6 +352,7 @@ class GLViewportWidget(QOpenGLWidget):
             sun_el_deg=self._state.sun_el_deg,
             build_mode=self._state.build_mode,
             auto_jump_enabled=self._state.auto_jump_enabled,
+            auto_sprint_enabled=self._state.auto_sprint_enabled,
             render_distance_chunks=int(self._state.render_distance_chunks),
         )
 
@@ -427,6 +429,9 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_auto_jump(self, on: bool) -> None:
         self._state.auto_jump_enabled = bool(on)
 
+    def _set_auto_sprint(self, on: bool) -> None:
+        self._state.auto_sprint_enabled = bool(on)
+
     def _set_render_distance(self, v: int) -> None:
         self._state.render_distance_chunks = int(v)
         self._state.normalize()
@@ -451,13 +456,18 @@ class GLViewportWidget(QOpenGLWidget):
             self._overlays.set_dead(True)
             return
 
+        sprint = bool(fr.sprint)
+        if bool(self._state.auto_sprint_enabled):
+            if float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
+                sprint = True
+
         self._session.step(
             dt=float(dt),
             move_f=fr.move_f,
             move_s=fr.move_s,
             jump_held=bool(fr.jump_held),
             jump_pressed=bool(fr.jump_pressed),
-            sprint=bool(fr.sprint),
+            sprint=bool(sprint),
             crouch=bool(fr.crouch),
             mdx=float(md.dx),
             mdy=float(md.dy),
@@ -482,6 +492,7 @@ class GLViewportWidget(QOpenGLWidget):
             session=self._session,
             renderer=self._renderer,
             auto_jump_enabled=self._state.auto_jump_enabled,
+            auto_sprint_enabled=self._state.auto_sprint_enabled,
             build_mode=self._state.build_mode,
             inventory_open=self._overlays.inventory_open(),
             selected_block_id=self._state.selected_block_id,
