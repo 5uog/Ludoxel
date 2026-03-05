@@ -86,6 +86,20 @@ def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: Moveme
                 bz = float(wish.z) * float(params.sprint_jump_boost)
                 vx += bx
                 vz += bz
+        else:
+            """
+            When no movement input is present, the exponential acceleration model can leave a tiny 
+            residual horizontal velocity that is physically negligible yet mechanically harmful 
+            around ledges. This clamp emulates static friction by snapping near-zero ground motion 
+            to rest, preventing unintended drift after crouch release while preserving normal 
+            deceleration for larger speeds.
+            """
+            if wish.length() <= 1e-9:
+                stop_v = 0.03
+                if abs(float(vx)) < stop_v:
+                    vx = 0.0
+                if abs(float(vz)) < stop_v:
+                    vz = 0.0
     else:
         vy = vy - float(params.gravity) * float(dt)
         if vy < -float(params.fall_speed_max):

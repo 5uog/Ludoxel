@@ -93,47 +93,6 @@ def _backoff(delta: float, step: float) -> float:
         return max(0.0, v)
     return min(0.0, v)
 
-def _apply_sneak_edge_clamp(
-    player: PlayerEntity,
-    world: WorldState,
-    pos: Vec3,
-    delta: Vec3,
-    params: CollisionParams,
-) -> Vec3:
-    step = float(params.sneak_step)
-    dx = float(delta.x)
-    dz = float(delta.z)
-
-    for _ in range(128):
-        if dx == 0.0:
-            break
-        cand = Vec3(pos.x + dx, pos.y, pos.z)
-        if _has_support_at(player, world, cand, params):
-            break
-        dx = _backoff(dx, step)
-
-    for _ in range(128):
-        if dz == 0.0:
-            break
-        cand = Vec3(pos.x + dx, pos.y, pos.z + dz)
-        if _has_support_at(player, world, cand, params):
-            break
-        dz = _backoff(dz, step)
-
-    for _ in range(256):
-        if dx == 0.0 or dz == 0.0:
-            break
-        cand = Vec3(pos.x + dx, pos.y, pos.z + dz)
-        if _has_support_at(player, world, cand, params):
-            break
-
-        if abs(dx) >= abs(dz):
-            dx = _backoff(dx, step)
-        else:
-            dz = _backoff(dz, step)
-
-    return Vec3(dx, delta.y, dz)
-
 def _resolve_downward_snap(
     player: PlayerEntity,
     world: WorldState,
@@ -158,6 +117,56 @@ def _resolve_downward_snap(
                 hit_ground = True
 
     return pos_y, bool(hit_ground)
+
+def _has_support_within_drop(player: PlayerEntity, world: WorldState, pos: Vec3, max_drop: float, params: CollisionParams) -> bool:
+    _p, hit = _resolve_downward_snap(player, world, pos, float(max_drop), params)
+    return bool(hit)
+
+def _has_sneak_support(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams) -> bool:
+    if _has_support_at(player, world, pos, params):
+        return True
+    return _has_support_within_drop(player, world, pos, float(params.step_height), params)
+
+def _apply_sneak_edge_clamp(
+    player: PlayerEntity,
+    world: WorldState,
+    pos: Vec3,
+    delta: Vec3,
+    params: CollisionParams,
+) -> Vec3:
+    step = float(params.sneak_step)
+    dx = float(delta.x)
+    dz = float(delta.z)
+
+    for _ in range(128):
+        if dx == 0.0:
+            break
+        cand = Vec3(pos.x + dx, pos.y, pos.z)
+        if _has_sneak_support(player, world, cand, params):
+            break
+        dx = _backoff(dx, step)
+
+    for _ in range(128):
+        if dz == 0.0:
+            break
+        cand = Vec3(pos.x + dx, pos.y, pos.z + dz)
+        if _has_sneak_support(player, world, cand, params):
+            break
+        dz = _backoff(dz, step)
+
+    for _ in range(256):
+        if dx == 0.0 or dz == 0.0:
+            break
+        cand = Vec3(pos.x + dx, pos.y, pos.z + dz)
+        if _has_sneak_support(player, world, cand, params):
+            break
+
+        if abs(dx) >= abs(dz):
+            dx = _backoff(dx, step)
+        else:
+            dz = _backoff(dz, step)
+
+    return Vec3(dx, delta.y, dz)
 
 def _try_step_up_height(
     player: PlayerEntity,
@@ -223,7 +232,7 @@ def integrate_with_collisions(
     if supported_before and bool(crouch) and (not bool(jump_pressed)):
         delta = _apply_sneak_edge_clamp(player, world, pos, delta, params)
 
-    allow_step = bool(supported_before) and (not bool(crouch)) and (not bool(jump_pressed)) and float(delta.y) <= 1e-9
+    allow_step = bool(supported_before) and (not bool(jump_pressed)) and float(delta.y) <= 1e-9
 
     hit_ground = False
     stepped_up = False
@@ -316,6 +325,12 @@ def integrate_with_collisions(
                         player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
                         aabb = player.aabb_at(pos_z)
             pos = pos_z
+
+    if bool(supported_before) and (not bool(jump_pressed)) and (not bool(hit_ground)) and float(player.velocity.y) <= 1e-9:
+        snapped, snap_hit = _resolve_downward_snap(player, world, pos, float(params.step_height), params)
+        if bool(snap_hit):
+            pos = snapped
+            hit_ground = True
 
     player.position = pos
     supported_after = bool(hit_ground) or _ground_probe(player, world, params)

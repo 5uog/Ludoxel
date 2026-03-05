@@ -1,6 +1,7 @@
 # FILE: src/maiming/application/session/session_manager.py
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 from maiming.core.math.vec3 import Vec3, clampf
@@ -71,6 +72,26 @@ class SessionManager:
         p.auto_jump_pending = False
         p.auto_jump_start_y = float(p.position.y)
         p.auto_jump_cooldown_s = 0.0
+
+    @staticmethod
+    def _exp_alpha(rate: float, dt: float) -> float:
+        r = float(max(0.0, rate))
+        t = float(max(0.0, dt))
+        if r <= 1e-9 or t <= 1e-9:
+            return 0.0
+        return 1.0 - math.exp(-r * t)
+
+    def _update_crouch_eye(self, dt: float, crouch: bool) -> None:
+        p = self.player
+        target = float(p.crouch_eye_drop) if bool(crouch) else 0.0
+        cur = float(p.crouch_eye_offset)
+
+        rate = 18.0
+        a = self._exp_alpha(rate, float(dt))
+
+        nxt = cur + (target - cur) * a
+        nxt = max(0.0, min(float(p.crouch_eye_drop), float(nxt)))
+        p.crouch_eye_offset = float(nxt)
 
     def step(
         self,
@@ -160,6 +181,8 @@ class SessionManager:
             if dy >= float(self.settings.movement.auto_jump_success_dy):
                 self.player.auto_jump_cooldown_s = float(self.settings.movement.auto_jump_cooldown_s)
             self.player.auto_jump_pending = False
+
+        self._update_crouch_eye(float(dt), bool(crouch))
 
     def make_snapshot(self) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()
