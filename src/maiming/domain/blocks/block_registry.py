@@ -8,11 +8,22 @@ from maiming.domain.blocks.block_definition import BlockDefinition
 @dataclass
 class BlockRegistry:
     _by_id: dict[str, BlockDefinition]
+    _sealed: bool
 
     def __init__(self) -> None:
         self._by_id = {}
+        self._sealed = False
+
+    def seal(self) -> None:
+        self._sealed = True
+
+    def is_sealed(self) -> bool:
+        return bool(self._sealed)
 
     def register(self, block: BlockDefinition) -> None:
+        if self._sealed:
+            raise RuntimeError("BlockRegistry is sealed and cannot be mutated")
+
         bid = str(block.block_id)
         if not bid:
             raise ValueError("block_id must be non-empty")
@@ -35,7 +46,6 @@ class BlockRegistry:
             names.add(str(b.textures.neg_y))
             names.add(str(b.textures.pos_z))
             names.add(str(b.textures.neg_z))
-        out = sorted(names)
-        if "default" not in out:
-            out.append("default")
-        return out
+
+        names.add("default")
+        return sorted(names)

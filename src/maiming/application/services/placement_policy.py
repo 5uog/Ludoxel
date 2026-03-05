@@ -1,0 +1,124 @@
+# FILE: src/maiming/application/services/placement_policy.py
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from maiming.core.math.vec3 import Vec3
+from maiming.core.geometry.aabb import AABB
+
+from maiming.domain.entities.player_entity import PlayerEntity
+from maiming.domain.world.world_state import WorldState
+
+from maiming.domain.blocks.block_registry import BlockRegistry
+from maiming.domain.blocks.state_codec import format_state
+from maiming.domain.blocks.connectivity import make_wall_state, make_fence_gate_state
+from maiming.domain.blocks.models.api import collision_boxes_for_block
+
+@dataclass(frozen=True)
+class PlacementPolicy:
+    block_registry: BlockRegistry
+
+    def _player_cardinal(self, player: PlayerEntity) -> str:
+        f = player.view_forward()
+        ax = abs(float(f.x))
+        az = abs(float(f.z))
+
+        if ax >= az:
+            return "east" if float(f.x) > 0.0 else "west"
+        return "south" if float(f.z) > 0.0 else "north"
+
+    @staticmethod
+    def _choose_half_type(hit_face: int, hit_point: Vec3) -> str:
+        if int(hit_face) == 2:
+            return "bottom"
+        if int(hit_face) == 3:
+            return "top"
+
+        fy = float(hit_point.y) - float(int(hit_point.y))
+        return "top" if fy >= 0.5 else "bottom"
+
+    def resolve_place_state(
+        self,
+        *,
+        player: PlayerEntity,
+        block_id: str,
+        hit_face: int,
+        hit_point: Vec3,
+    ) -> str | None:
+        base_sel = str(block_id)
+        defn = self.block_registry.get(base_sel)
+        if defn is None:
+            return None
+
+        props: dict[str, str] = {}
+
+        if defn.kind == "slab":
+            props["type"] = self._choose_half_type(int(hit_face), hit_point)
+            return format_state(base_sel, props)
+
+        if defn.kind == "stairs":
+            props["facing"] = self._player_cardinal(player)
+            props["half"] = self._choose_half_type(int(hit_face), hit_point)
+            return format_state(base_sel, props)
+
+        if defn.kind == "fence_gate":
+            return make_fence_gate_state(
+                base_sel,
+                self._player_cardinal(player),
+                open_state=False,
+            )
+
+        if defn.kind == "wall":
+            return make_wall_state(base_sel, waterlogged=False)
+
+        return format_state(base_sel, props)
+
+    def placement_intersects_player(
+        self,
+        *,
+        player: PlayerEntity,
+        world: WorldState,
+        px: int,
+        py: int,
+        pz: int,
+        place_state: str,
+    ) -> bool:
+        pa = player.aabb_at(player.position)
+
+        def get_state(x: int, y: int, z: int) -> str | None:
+            k = (int(x), int(y), int(z))
+            if k == (int(px), int(py), int(pz)):
+                return str(place_state)
+            return world.blocks.get(k)
+
+        def get_def(base_id: str):
+            return self.block_registry.get(str(base_id))
+
+        boxes = collision_boxes_for_block(
+            str(place_state),
+            get_state,
+            get_def,
+            int(px),
+            int(py),
+            int(pz),
+        )
+        if not boxes:
+            return False
+
+        for b in boxes:
+            ba = AABB(
+                mn=Vec3(
+                    float(px) + float(b.mn_x),
+                    float(py) + float(b.mn_y),
+                    float(pz) + float(b.mn_z),
+                ),
+                mx=Vec3(
+                    float(px) + float(b.mx_x),
+                    float(py) + float(b.mx_y),
+                    float(pz) + float(b.mx_z),
+                ),
+            )
+            if pa.intersects(ba):
+                return True
+
+        return False

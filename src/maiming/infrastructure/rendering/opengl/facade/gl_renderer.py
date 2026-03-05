@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/_internal/facade/gl_renderer.py
+# FILE: src/maiming/infrastructure/rendering/opengl/facade/gl_renderer.py
 from __future__ import annotations
 
 import math
@@ -84,6 +84,19 @@ class GLRenderer:
         self._gl_version = self._gl_get_string(GL_VERSION)
         self._glsl_version = self._gl_get_string(GL_SHADING_LANGUAGE_VERSION)
 
+    def destroy(self) -> None:
+        self._shadow.destroy()
+        self._world.destroy()
+
+        if self._res is not None:
+            self._res.destroy()
+            self._res = None
+
+        self._gl_vendor = ""
+        self._gl_renderer = ""
+        self._gl_version = ""
+        self._glsl_version = ""
+
     @staticmethod
     def _gl_get_string(name: int) -> str:
         try:
@@ -97,7 +110,12 @@ class GLRenderer:
             return ""
 
     def gl_info(self) -> tuple[str, str, str, str]:
-        return (str(self._gl_vendor), str(self._gl_renderer), str(self._gl_version), str(self._glsl_version))
+        return (
+            str(self._gl_vendor),
+            str(self._gl_renderer),
+            str(self._gl_version),
+            str(self._glsl_version),
+        )
 
     def set_cloud_wireframe(self, on: bool) -> None:
         self._cloud.set_wireframe(bool(on))
@@ -127,6 +145,7 @@ class GLRenderer:
         az = float(azimuth_deg) % 360.0
         if az < 0.0:
             az += 360.0
+
         el = float(elevation_deg)
         el = max(0.0, min(90.0, el))
 
@@ -160,6 +179,7 @@ class GLRenderer:
         uv = self._res.atlas.uv.get(str(tex_name))
         if uv is None:
             uv = self._res.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
+
         return (float(uv[0]), float(uv[1]), float(uv[2]), float(uv[3]))
 
     def world_build_tools(self):
@@ -189,8 +209,17 @@ class GLRenderer:
     ) -> None:
         if self._res is None:
             return
-        self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
-        self._shadow.set_chunk_casters(chunk_key=chunk_key, world_revision=int(world_revision), casters=casters)
+
+        self._world.upload_chunk(
+            chunk_key=chunk_key,
+            world_revision=int(world_revision),
+            faces=faces,
+        )
+        self._shadow.set_chunk_casters(
+            chunk_key=chunk_key,
+            world_revision=int(world_revision),
+            casters=casters,
+        )
 
     def render(
         self,

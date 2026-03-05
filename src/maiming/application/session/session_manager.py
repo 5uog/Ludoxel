@@ -1,29 +1,25 @@
 # FILE: src/maiming/application/session/session_manager.py
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from maiming.core.math.vec3 import Vec3, clampf
-from maiming.core.geometry.aabb import AABB
 
-from maiming.domain.world.world_gen import WorldState, generate_test_map
+from maiming.domain.world.world_state import WorldState
+from maiming.domain.world.world_gen import generate_test_map
 from maiming.domain.entities.player_entity import PlayerEntity
 from maiming.domain.systems.movement_system import MoveInput, step_bedrock
-from maiming.domain.systems.collision_system import integrate_with_collisions, can_auto_jump_one_block
-from maiming.domain.systems.build_system import pick_block
+from maiming.domain.systems.collision_system import (
+    integrate_with_collisions,
+    can_auto_jump_one_block,
+)
 
-from maiming.domain.blocks.state_codec import parse_state, format_state
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.default_registry import create_default_registry
-from maiming.domain.blocks.connectivity import (
-    make_wall_state,
-    make_fence_gate_state,
-    refresh_structural_neighbors,
-)
-from maiming.domain.blocks.models.api import collision_boxes_for_block
 
 from maiming.application.session.session_settings import SessionSettings
 from maiming.application.session.render_snapshot import CameraDTO, RenderSnapshotDTO
+from maiming.application.services.interaction_service import InteractionService
 
 @dataclass
 class SessionManager:
@@ -31,6 +27,15 @@ class SessionManager:
     world: WorldState
     player: PlayerEntity
     block_registry: BlockRegistry
+
+    interaction: InteractionService = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.interaction = InteractionService.create(
+            world=self.world,
+            player=self.player,
+            block_registry=self.block_registry,
+        )
 
     @staticmethod
     def create_default(seed: int = 0) -> "SessionManager":
@@ -51,7 +56,11 @@ class SessionManager:
 
     def respawn(self) -> None:
         p = self.player
-        p.position = Vec3(float(self.settings.spawn_x), float(self.settings.spawn_y), float(self.settings.spawn_z))
+        p.position = Vec3(
+            float(self.settings.spawn_x),
+            float(self.settings.spawn_y),
+            float(self.settings.spawn_z),
+        )
         p.velocity = Vec3(0.0, 0.0, 0.0)
         p.yaw_deg = 0.0
         p.pitch_deg = 0.0
@@ -102,10 +111,12 @@ class SessionManager:
                     s = clampf(move_s, -1.0, 1.0)
                     if abs(float(f)) + abs(float(s)) > 1e-6:
                         from maiming.domain.systems.movement_system import _wish_dir
+
                         wish = _wish_dir(self.player, f, s)
                         probe = float(self.settings.movement.auto_jump_probe)
                         dx = float(wish.x) * probe
                         dz = float(wish.z) * probe
+
                         if can_auto_jump_one_block(
                             self.player,
                             self.world,
@@ -160,141 +171,16 @@ class SessionManager:
             pitch_deg=self.player.pitch_deg,
             fov_deg=self.settings.fov_deg,
         )
-        return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=cam)
+        return RenderSnapshotDTO(
+            world_revision=int(self.world.revision),
+            camera=cam,
+        )
 
     def break_block(self, reach: float = 5.0) -> bool:
-        eye = self.player.eye_pos()
-        d = self.player.view_forward()
-        hit = pick_block(self.world, origin=eye, direction=d, reach=float(reach))
-        if hit is None:
-            return False
-
-        hx, hy, hz = hit.hit
-        self.world.remove_block(int(hx), int(hy), int(hz))
-        refresh_structural_neighbors(self.world, int(hx), int(hy), int(hz))
-        return True
-
-    def _player_cardinal(self) -> str:
-        f = self.player.view_forward()
-        ax = abs(float(f.x))
-        az = abs(float(f.z))
-        if ax >= az:
-            return "east" if float(f.x) > 0.0 else "west"
-        return "south" if float(f.z) > 0.0 else "north"
-
-    def _choose_half_type(self, hit_face: int, hit_point: Vec3) -> str:
-        if int(hit_face) == 2:
-            return "bottom"
-        if int(hit_face) == 3:
-            return "top"
-        fy = float(hit_point.y) - float(int(hit_point.y))
-        return "top" if fy >= 0.5 else "bottom"
-
-    def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> bool:
-        k = (int(hit_cell[0]), int(hit_cell[1]), int(hit_cell[2]))
-        st = self.world.blocks.get(k)
-        if st is None:
-            return False
-
-        base, props = parse_state(st)
-        d = self.block_registry.get(str(base))
-        if d is None or d.kind != "fence_gate":
-            return False
-
-        is_open = str(props.get("open", "false")).strip().lower() in ("1", "true", "yes", "on")
-        facing = str(props.get("facing", "south"))
-        powered = str(props.get("powered", "false")).strip().lower() in ("1", "true", "yes", "on")
-        in_wall = str(props.get("in_wall", "false")).strip().lower() in ("1", "true", "yes", "on")
-        waterlogged = str(props.get("waterlogged", "false")).strip().lower() in ("1", "true", "yes", "on")
-
-        next_state = make_fence_gate_state(
-            str(base),
-            str(facing),
-            open_state=(not bool(is_open)),
-            powered=bool(powered),
-            in_wall=bool(in_wall),
-            waterlogged=bool(waterlogged),
-        )
-        self.world.set_block(k[0], k[1], k[2], next_state)
-        refresh_structural_neighbors(self.world, k[0], k[1], k[2])
-        return True
-
-    def _placement_intersects_player(self, px: int, py: int, pz: int, place_state: str) -> bool:
-        pa = self.player.aabb_at(self.player.position)
-
-        def get_state(x: int, y: int, z: int) -> str | None:
-            k = (int(x), int(y), int(z))
-            if k == (int(px), int(py), int(pz)):
-                return str(place_state)
-            return self.world.blocks.get(k)
-
-        def get_def(base_id: str):
-            return self.block_registry.get(str(base_id))
-
-        boxes = collision_boxes_for_block(
-            str(place_state),
-            get_state,
-            get_def,
-            int(px),
-            int(py),
-            int(pz),
-        )
-        if not boxes:
-            return False
-
-        for b in boxes:
-            ba = AABB(
-                mn=Vec3(float(px) + float(b.mn_x), float(py) + float(b.mn_y), float(pz) + float(b.mn_z)),
-                mx=Vec3(float(px) + float(b.mx_x), float(py) + float(b.mx_y), float(pz) + float(b.mx_z)),
-            )
-            if pa.intersects(ba):
-                return True
-        return False
+        return self.interaction.break_block(reach=float(reach))
 
     def place_block(self, block_id: str, reach: float = 5.0) -> bool:
-        eye = self.player.eye_pos()
-        d = self.player.view_forward()
-        hit = pick_block(self.world, origin=eye, direction=d, reach=float(reach))
-        if hit is None:
-            return False
-
-        if self._toggle_fence_gate_if_hit(hit.hit):
-            return True
-
-        if hit.place is None:
-            return False
-
-        px, py, pz = hit.place
-        k = (int(px), int(py), int(pz))
-
-        if k in self.world.blocks:
-            return False
-
-        base_sel = str(block_id)
-        defn = self.block_registry.get(base_sel)
-
-        if defn is None:
-            return False
-
-        props: dict[str, str] = {}
-
-        if defn.kind == "slab":
-            props["type"] = self._choose_half_type(int(hit.face), hit.hit_point)
-            place_state = format_state(base_sel, props)
-        elif defn.kind == "stairs":
-            props["facing"] = self._player_cardinal()
-            props["half"] = self._choose_half_type(int(hit.face), hit.hit_point)
-            place_state = format_state(base_sel, props)
-        elif defn.kind == "fence_gate":
-            place_state = make_fence_gate_state(base_sel, self._player_cardinal(), open_state=False)
-        elif defn.kind == "wall":
-            place_state = make_wall_state(base_sel, waterlogged=False)
-        else:
-            place_state = format_state(base_sel, props)
-
-        if self._placement_intersects_player(int(px), int(py), int(pz), str(place_state)):
-            return False
-
-        self.world.set_block(int(px), int(py), int(pz), str(place_state))
-        refresh_structural_neighbors(self.world, int(px), int(py), int(pz))
-        return True
+        return self.interaction.place_block(
+            block_id=str(block_id),
+            reach=float(reach),
+        )

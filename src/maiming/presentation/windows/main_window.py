@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e) -> None:
         try:
-            self._screen.viewport.save_state()
+            self._screen.viewport.shutdown()
         except Exception:
             pass
         super().closeEvent(e)
