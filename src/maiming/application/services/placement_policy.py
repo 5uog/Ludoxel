@@ -10,7 +10,7 @@ from maiming.domain.entities.player_entity import PlayerEntity
 from maiming.domain.world.world_state import WorldState
 
 from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.state_codec import format_state
+from maiming.domain.blocks.state_codec import format_state, parse_state
 from maiming.domain.blocks.connectivity import make_wall_state, make_fence_gate_state
 from maiming.domain.blocks.models.api import collision_boxes_for_block
 
@@ -36,6 +36,75 @@ class PlacementPolicy:
 
         fy = float(hit_point.y) - float(int(hit_point.y))
         return "top" if fy >= 0.5 else "bottom"
+
+    @staticmethod
+    def _slab_type(props: dict[str, str]) -> str:
+        t = str(props.get("type", "bottom"))
+        if t in ("bottom", "top", "double"):
+            return t
+        return "bottom"
+
+    def _try_merge_same_slab(
+        self,
+        *,
+        existing_state: str,
+        block_id: str,
+        desired_type: str,
+    ) -> str | None:
+        base, props = parse_state(str(existing_state))
+        if str(base) != str(block_id):
+            return None
+
+        defn = self.block_registry.get(str(base))
+        if defn is None or defn.kind != "slab":
+            return None
+
+        want = str(desired_type)
+        if want not in ("bottom", "top"):
+            return None
+
+        cur = self._slab_type(props)
+        if cur == "double" or cur == want:
+            return None
+
+        return format_state(str(base), {"type": "double"})
+
+    def resolve_slab_merge_state(
+        self,
+        *,
+        existing_state: str,
+        block_id: str,
+        hit_face: int,
+        hit_point: Vec3,
+    ) -> str | None:
+        desired_type = self._choose_half_type(int(hit_face), hit_point)
+        return self._try_merge_same_slab(
+            existing_state=str(existing_state),
+            block_id=str(block_id),
+            desired_type=str(desired_type),
+        )
+
+    def resolve_slab_merge_state_from_hit(
+        self,
+        *,
+        existing_state: str,
+        block_id: str,
+        hit_face: int,
+    ) -> str | None:
+        face = int(hit_face)
+
+        if face == 2:
+            desired_type = "top"
+        elif face == 3:
+            desired_type = "bottom"
+        else:
+            return None
+
+        return self._try_merge_same_slab(
+            existing_state=str(existing_state),
+            block_id=str(block_id),
+            desired_type=str(desired_type),
+        )
 
     def resolve_place_state(
         self,

@@ -1,3 +1,4 @@
+# FILE: src/maiming/domain/blocks/connectivity.py
 from __future__ import annotations
 
 from maiming.domain.blocks.block_definition import BlockDefinition

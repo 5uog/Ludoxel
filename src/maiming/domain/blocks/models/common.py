@@ -1,3 +1,4 @@
+# FILE: src/maiming/domain/blocks/models/common.py
 from __future__ import annotations
 
 from dataclasses import dataclass

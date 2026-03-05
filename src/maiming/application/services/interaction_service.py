@@ -1,3 +1,4 @@
+# FILE: src/maiming/application/services/interaction_service.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -144,31 +145,8 @@ class InteractionService:
         refresh_structural_neighbors(self.world, int(k[0]), int(k[1]), int(k[2]))
         return True
 
-    def place_block(self, block_id: str, reach: float = 5.0) -> bool:
-        hit = self._pick_target(reach=float(reach))
-        if hit is None:
-            return False
-
-        if self._toggle_fence_gate_if_hit(hit.hit):
-            return True
-
-        if hit.place is None:
-            return False
-
-        px, py, pz = hit.place
-        k = (int(px), int(py), int(pz))
-
-        if k in self.world.blocks:
-            return False
-
-        place_state = self.placement_policy.resolve_place_state(
-            player=self.player,
-            block_id=str(block_id),
-            hit_face=int(hit.face),
-            hit_point=hit.hit_point,
-        )
-        if place_state is None:
-            return False
+    def _apply_place_state(self, *, cell: tuple[int, int, int], place_state: str) -> bool:
+        px, py, pz = (int(cell[0]), int(cell[1]), int(cell[2]))
 
         if self.placement_policy.placement_intersects_player(
             player=self.player,
@@ -183,3 +161,63 @@ class InteractionService:
         self.world.set_block(int(px), int(py), int(pz), str(place_state))
         refresh_structural_neighbors(self.world, int(px), int(py), int(pz))
         return True
+
+    def place_block(self, block_id: str, reach: float = 5.0) -> bool:
+        hit = self._pick_target(reach=float(reach))
+        if hit is None:
+            return False
+
+        if self._toggle_fence_gate_if_hit(hit.hit):
+            return True
+
+        hx, hy, hz = hit.hit
+        hit_cell = (int(hx), int(hy), int(hz))
+        hit_state = self.world.blocks.get(hit_cell)
+
+        if hit_state is not None:
+            merge_hit_state = self.placement_policy.resolve_slab_merge_state_from_hit(
+                existing_state=str(hit_state),
+                block_id=str(block_id),
+                hit_face=int(hit.face),
+            )
+            if merge_hit_state is not None:
+                return self._apply_place_state(
+                    cell=hit_cell,
+                    place_state=str(merge_hit_state),
+                )
+
+        if hit.place is None:
+            return False
+
+        px, py, pz = hit.place
+        place_cell = (int(px), int(py), int(pz))
+        existing_place_state = self.world.blocks.get(place_cell)
+
+        if existing_place_state is not None:
+            merge_place_state = self.placement_policy.resolve_slab_merge_state(
+                existing_state=str(existing_place_state),
+                block_id=str(block_id),
+                hit_face=int(hit.face),
+                hit_point=hit.hit_point,
+            )
+            if merge_place_state is None:
+                return False
+
+            return self._apply_place_state(
+                cell=place_cell,
+                place_state=str(merge_place_state),
+            )
+
+        place_state = self.placement_policy.resolve_place_state(
+            player=self.player,
+            block_id=str(block_id),
+            hit_face=int(hit.face),
+            hit_point=hit.hit_point,
+        )
+        if place_state is None:
+            return False
+
+        return self._apply_place_state(
+            cell=place_cell,
+            place_state=str(place_state),
+        )
