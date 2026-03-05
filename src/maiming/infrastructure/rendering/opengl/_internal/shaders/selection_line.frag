@@ -1,5 +1,5 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/selection_line.frag
-#version 330 core
+#version 150
 
 out vec4 fragColor;
 

@@ -1,3 +1,3 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/shadow.frag
-#version 330 core
+#version 150
 void main() { }

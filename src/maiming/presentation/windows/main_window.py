@@ -1,8 +1,10 @@
 # FILE: src/maiming/presentation/windows/main_window.py
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
+from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtGui import QSurfaceFormat
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
@@ -11,8 +13,16 @@ from maiming.presentation.theme.fonts import install_minecraft_fonts, apply_appl
 
 def _set_default_gl_format() -> None:
     fmt = QSurfaceFormat()
-    fmt.setVersion(3, 3)
+    fmt.setRenderableType(QSurfaceFormat.RenderableType.OpenGL)
     fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+
+    if sys.platform == "darwin":
+        fmt.setMajorVersion(3)
+        fmt.setMinorVersion(2)
+    else:
+        fmt.setMajorVersion(3)
+        fmt.setMinorVersion(3)
+
     fmt.setDepthBufferSize(24)
     fmt.setStencilBufferSize(8)
     fmt.setSamples(4)
@@ -34,6 +44,7 @@ class MainWindow(QMainWindow):
         super().closeEvent(e)
 
 def run_app(*, project_root: Path) -> None:
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     _set_default_gl_format()
 
     root = Path(project_root)
