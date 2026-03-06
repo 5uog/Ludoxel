@@ -13,20 +13,25 @@ def is_full_solid(defn: BlockDefinition | None) -> bool:
         return False
     return bool(defn.is_full_cube) and bool(defn.is_solid)
 
-def is_wall(defn: BlockDefinition | None) -> bool:
+def _is_family(defn: BlockDefinition | None, family: str) -> bool:
     if defn is None:
         return False
-    return str(defn.kind) == "wall" or defn.has_tag("wall")
+    return defn.is_family(str(family))
+
+def is_slab(defn: BlockDefinition | None) -> bool:
+    return _is_family(defn, "slab")
+
+def is_stairs(defn: BlockDefinition | None) -> bool:
+    return _is_family(defn, "stairs")
+
+def is_wall(defn: BlockDefinition | None) -> bool:
+    return _is_family(defn, "wall")
 
 def is_fence(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return str(defn.kind) == "fence" or defn.has_tag("fence")
+    return _is_family(defn, "fence")
 
 def is_fence_gate(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return str(defn.kind) == "fence_gate" or defn.has_tag("fence_gate")
+    return _is_family(defn, "fence_gate")
 
 def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
     f = str(facing)

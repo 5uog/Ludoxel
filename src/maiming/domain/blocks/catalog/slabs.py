@@ -22,8 +22,9 @@ def register_slabs(reg: BlockRegistry) -> None:
                 display_name=name,
                 textures=tex,
                 kind="slab",
+                family="slab",
                 is_full_cube=False,
                 is_solid=True,
-                tags=("slab", "wood"),
+                tags=("wood",),
             )
         )

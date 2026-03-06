@@ -5,6 +5,7 @@ from typing import Dict, List
 
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw, cardinal_turns_from_facing
+from maiming.domain.blocks.structural_rules import is_stairs
 
 def _stairs_shape(
     props: Dict[str, str],
@@ -29,7 +30,7 @@ def _stairs_shape(
 
         b, p = parse_state(s)
         d = get_def(str(b))
-        if d is None or d.kind != "stairs":
+        if d is None or (not is_stairs(d)):
             return (False, "east")
 
         nh = str(p.get("half", "bottom"))

@@ -21,8 +21,9 @@ def register_fences(reg: BlockRegistry) -> None:
                 display_name=f"{w.display} Fence",
                 textures=tex,
                 kind="fence",
+                family="fence",
                 is_full_cube=False,
                 is_solid=True,
-                tags=("fence", "wood"),
+                tags=("wood",),
             )
         )

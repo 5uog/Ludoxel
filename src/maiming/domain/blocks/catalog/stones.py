@@ -43,6 +43,7 @@ def _register_base(reg: BlockRegistry, v: StoneType) -> None:
             display_name=str(v.display),
             textures=v.textures,
             kind=str(v.kind),
+            family="block",
             is_full_cube=bool(v.is_full_cube),
             is_solid=True,
             tags=("stone_like",),
@@ -59,9 +60,10 @@ def _register_slab(reg: BlockRegistry, v: StoneType) -> None:
             display_name=_variant_display(str(v.display), "Slab"),
             textures=v.textures,
             kind="slab",
+            family="slab",
             is_full_cube=False,
             is_solid=True,
-            tags=("slab", "stone_like"),
+            tags=("stone_like",),
         )
     )
 
@@ -75,9 +77,10 @@ def _register_stairs(reg: BlockRegistry, v: StoneType) -> None:
             display_name=_variant_display(str(v.display), "Stairs"),
             textures=v.textures,
             kind="stairs",
+            family="stairs",
             is_full_cube=False,
             is_solid=True,
-            tags=("stairs", "stone_like"),
+            tags=("stone_like",),
         )
     )
 
@@ -91,9 +94,10 @@ def _register_wall(reg: BlockRegistry, v: StoneType) -> None:
             display_name=_variant_display(str(v.display), "Wall"),
             textures=v.textures,
             kind="wall",
+            family="wall",
             is_full_cube=False,
             is_solid=True,
-            tags=("wall", "stone_like"),
+            tags=("stone_like",),
         )
     )
 
@@ -107,9 +111,10 @@ def _register_fence(reg: BlockRegistry, v: StoneType) -> None:
             display_name=_variant_display(str(v.display), "Fence"),
             textures=v.textures,
             kind="fence",
+            family="fence",
             is_full_cube=False,
             is_solid=True,
-            tags=("fence", "stone_like"),
+            tags=("stone_like",),
         )
     )
 

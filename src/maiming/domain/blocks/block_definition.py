@@ -11,6 +11,14 @@ FACE_NEG_Y: int = 3
 FACE_POS_Z: int = 4
 FACE_NEG_Z: int = 5
 
+def _normalize_kind(kind: str) -> str:
+    s = str(kind).strip()
+    return s if s else "cube"
+
+def _normalize_family(family: str) -> str:
+    s = str(family).strip()
+    return s if s else "block"
+
 @dataclass(frozen=True)
 class BlockTextures:
     pos_x: str
@@ -43,12 +51,22 @@ class BlockDefinition:
     textures: BlockTextures
 
     kind: str = "cube"
+    family: str = "block"
     is_full_cube: bool = True
     is_solid: bool = True
     tags: Tuple[str, ...] = ()
 
+    def kind_name(self) -> str:
+        return _normalize_kind(str(self.kind))
+
+    def family_name(self) -> str:
+        return _normalize_family(str(self.family))
+
     def texture_for_face(self, face_idx: int) -> str:
         return self.textures.texture_for_face(int(face_idx))
+
+    def is_family(self, family: str) -> bool:
+        return self.family_name() == _normalize_family(str(family))
 
     def has_tag(self, tag: str) -> bool:
         t = str(tag)

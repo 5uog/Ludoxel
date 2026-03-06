@@ -9,11 +9,8 @@ from maiming.domain.entities.player_entity import PlayerEntity
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.cardinal import opposite_cardinal, facing_vec_xz
-from maiming.domain.blocks.connectivity import (
-    make_fence_gate_state,
-    canonical_fence_gate_state,
-    refresh_structural_neighbors,
-)
+from maiming.domain.blocks.connectivity import make_fence_gate_state, canonical_fence_gate_state, refresh_structural_neighbors
+from maiming.domain.blocks.structural_rules import is_fence_gate
 
 from maiming.domain.systems.build_system import BlockPick, pick_block
 
@@ -79,7 +76,7 @@ class InteractionService:
 
         base, props = parse_state(st)
         d = self.block_registry.get(str(base))
-        if d is None or d.kind != "fence_gate":
+        if d is None or (not is_fence_gate(d)):
             return False
 
         is_open = str(props.get("open", "false")).strip().lower() in ("1", "true", "yes", "on")

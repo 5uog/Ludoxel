@@ -22,8 +22,9 @@ def register_stairs(reg: BlockRegistry) -> None:
                 display_name=name,
                 textures=tex,
                 kind="stairs",
+                family="stairs",
                 is_full_cube=False,
                 is_solid=True,
-                tags=("stairs", "wood"),
+                tags=("wood",),
             )
         )

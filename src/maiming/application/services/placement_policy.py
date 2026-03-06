@@ -13,6 +13,7 @@ from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import format_state, parse_state
 from maiming.domain.blocks.connectivity import make_wall_state, make_fence_gate_state
 from maiming.domain.blocks.models.api import collision_boxes_for_block
+from maiming.domain.blocks.structural_rules import is_slab, is_stairs, is_wall, is_fence_gate
 
 @dataclass(frozen=True)
 class PlacementPolicy:
@@ -56,7 +57,7 @@ class PlacementPolicy:
             return None
 
         defn = self.block_registry.get(str(base))
-        if defn is None or defn.kind != "slab":
+        if defn is None or (not is_slab(defn)):
             return None
 
         want = str(desired_type)
@@ -121,23 +122,23 @@ class PlacementPolicy:
 
         props: dict[str, str] = {}
 
-        if defn.kind == "slab":
+        if is_slab(defn):
             props["type"] = self._choose_half_type(int(hit_face), hit_point)
             return format_state(base_sel, props)
 
-        if defn.kind == "stairs":
+        if is_stairs(defn):
             props["facing"] = self._player_cardinal(player)
             props["half"] = self._choose_half_type(int(hit_face), hit_point)
             return format_state(base_sel, props)
 
-        if defn.kind == "fence_gate":
+        if is_fence_gate(defn):
             return make_fence_gate_state(
                 base_sel,
                 self._player_cardinal(player),
                 open_state=False,
             )
 
-        if defn.kind == "wall":
+        if is_wall(defn):
             return make_wall_state(base_sel, waterlogged=False)
 
         return format_state(base_sel, props)

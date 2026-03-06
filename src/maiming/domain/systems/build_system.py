@@ -14,6 +14,7 @@ from maiming.domain.blocks.block_definition import FACE_POS_Y
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import pick_boxes_for_block
+from maiming.domain.blocks.structural_rules import is_fence, is_wall
 
 @dataclass(frozen=True)
 class BlockPick:
@@ -119,9 +120,8 @@ def pick_block(
 
         base_id, _props = parse_state(str(st))
         defn = get_def(str(base_id))
-        kind = str(defn.kind) if defn is not None else "cube"
 
-        if kind in ("fence", "wall"):
+        if is_fence(defn) or is_wall(defn):
             local_y = float(best_point.y) - float(cy)
             if float(d.y) < -1e-6 and local_y >= (1.0 - 1e-6):
                 face = int(FACE_POS_Y)
