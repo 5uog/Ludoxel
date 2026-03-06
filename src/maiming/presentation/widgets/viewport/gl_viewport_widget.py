@@ -239,14 +239,6 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._apply_runtime_to_renderer()
 
-        eye0 = self._session.player.eye_pos()
-        self._upload.bootstrap_resident(
-            world=self._session.world,
-            renderer=self._renderer,
-            eye=eye0,
-            render_distance_chunks=int(self._state.render_distance_chunks),
-        )
-
         self._runner.start()
         self._sim_timer.start()
         self._render_timer.start()

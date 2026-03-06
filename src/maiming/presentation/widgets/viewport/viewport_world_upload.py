@@ -21,7 +21,7 @@ class _BuildResult:
     chunk: ChunkKey
     chunk_rev: int
     faces: list[np.ndarray]
-    casters: np.ndarray
+    shadow_faces: list[np.ndarray]
 
 class WorldUploadTracker:
     def __init__(self) -> None:
@@ -48,7 +48,7 @@ class WorldUploadTracker:
                 chunk_key=r.chunk,
                 world_revision=int(r.chunk_rev),
                 faces=r.faces,
-                casters=r.casters,
+                shadow_faces=r.shadow_faces,
             )
             self._resident_rev[r.chunk] = int(r.chunk_rev)
 
@@ -73,6 +73,37 @@ class WorldUploadTracker:
                         out.append(ck)
         out.sort(key=lambda k: (abs(int(k[0]) - cx) + abs(int(k[2]) - cz), abs(int(k[1]) - cy)))
         return out
+
+    @staticmethod
+    def _retained_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, y_pad: int = 2, margin: int = 4) -> set[ChunkKey]:
+        keep = WorldUploadTracker._needed_chunks(
+            existing,
+            center,
+            int(max(0, int(rd))) + int(max(0, int(margin))),
+            y_pad=int(max(0, int(y_pad))),
+        )
+        return set(keep)
+
+    def _evict_far_chunks(self, *, renderer: GLRenderer, keep: set[ChunkKey]) -> None:
+        keep_n = {(int(k[0]), int(k[1]), int(k[2])) for k in keep}
+
+        renderer.evict_chunks(keep_chunks=keep_n)
+
+        for ck in list(self._resident_rev.keys()):
+            if ck not in keep_n:
+                del self._resident_rev[ck]
+
+        for ck in list(self._want_rev.keys()):
+            if ck not in keep_n:
+                del self._want_rev[ck]
+
+        for ck in list(self._pending.keys()):
+            if ck not in keep_n:
+                fut = self._pending.pop(ck)
+                try:
+                    fut.cancel()
+                except Exception:
+                    pass
 
     def bootstrap_resident(
         self,
@@ -104,13 +135,18 @@ class WorldUploadTracker:
             def get_state(x: int, y: int, z: int) -> str | None:
                 return state_at.get((int(x), int(y), int(z)))
 
-            faces, casters = build_chunk_mesh_cpu(
+            faces, shadow_faces = build_chunk_mesh_cpu(
                 blocks=blocks_local,
                 get_state=get_state,
                 uv_lookup=uv_lookup,
                 def_lookup=def_lookup,
             )
-            renderer.submit_chunk(chunk_key=ck, world_revision=int(cr), faces=faces, casters=casters)
+            renderer.submit_chunk(
+                chunk_key=ck,
+                world_revision=int(cr),
+                faces=faces,
+                shadow_faces=shadow_faces,
+            )
             self._resident_rev[ck] = int(cr)
 
     def _schedule_build(
@@ -141,13 +177,18 @@ class WorldUploadTracker:
             return state_at.get((int(x), int(y), int(z)))
 
         def _task(chunk_key_local: ChunkKey, rev_local: int, blocks_local_in: list[tuple[int, int, int, str]]):
-            faces, casters = build_chunk_mesh_cpu(
+            faces, shadow_faces = build_chunk_mesh_cpu(
                 blocks=blocks_local_in,
                 get_state=get_state,
                 uv_lookup=uv_lookup,
                 def_lookup=def_lookup,
             )
-            return _BuildResult(chunk=chunk_key_local, chunk_rev=int(rev_local), faces=faces, casters=casters)
+            return _BuildResult(
+                chunk=chunk_key_local,
+                chunk_rev=int(rev_local),
+                faces=faces,
+                shadow_faces=shadow_faces,
+            )
 
         fut = self._executor.submit(_task, ck, int(chunk_rev), blocks_local)
 
@@ -180,6 +221,9 @@ class WorldUploadTracker:
 
         visible = self._needed_chunks(existing, center, rd, y_pad=1)
         prefetch = self._needed_chunks(existing, center, rd + 2, y_pad=1)
+
+        keep = self._retained_chunks(existing, center, rd, y_pad=2, margin=4)
+        self._evict_far_chunks(renderer=renderer, keep=keep)
 
         dirty_map = world.consume_dirty_chunks_with_rev()
         for ck, cr in dirty_map.items():
@@ -224,11 +268,16 @@ class WorldUploadTracker:
             def get_state(x: int, y: int, z: int) -> str | None:
                 return state_at.get((int(x), int(y), int(z)))
 
-            faces, casters = build_chunk_mesh_cpu(
+            faces, shadow_faces = build_chunk_mesh_cpu(
                 blocks=blocks_local,
                 get_state=get_state,
                 uv_lookup=uv_lookup,
                 def_lookup=def_lookup,
             )
-            renderer.submit_chunk(chunk_key=ck, world_revision=int(cr), faces=faces, casters=casters)
+            renderer.submit_chunk(
+                chunk_key=ck,
+                world_revision=int(cr),
+                faces=faces,
+                shadow_faces=shadow_faces,
+            )
             self._resident_rev[ck] = int(cr)

@@ -19,7 +19,7 @@ def build_chunk_mesh_cpu(
     get_state: GetState,
     uv_lookup: UVLookup,
     def_lookup: DefLookup,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
     return build_chunk_mesh(
         blocks=blocks,
         get_state=get_state,

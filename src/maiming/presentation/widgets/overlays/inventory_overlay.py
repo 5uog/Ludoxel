@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtWidgets import (
     QWidget,
@@ -73,6 +73,14 @@ class InventoryOverlay(QWidget):
 
         self._selected_block_id: str | None = None
         self._slot_buttons: list[_SlotButton] = []
+
+        self._icons_loaded: bool = False
+        self._next_icon_slot: int = 0
+        self._icon_batch_size: int = 24
+
+        self._icon_timer = QTimer(self)
+        self._icon_timer.setSingleShot(True)
+        self._icon_timer.timeout.connect(self._load_icon_batch)
 
         self.setVisible(False)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -165,16 +173,54 @@ class InventoryOverlay(QWidget):
             btn = _SlotButton(bid, name, self)
             btn.clicked.connect(self._on_slot_clicked)
 
-            pm = self._photos.pixmap_for_block(bid)
-            btn.set_icon_pixmap(pm)
-
             self._slot_buttons.append(btn)
 
             r = i // cols
             c = i % cols
             self._grid_layout.addWidget(btn, r, c)
 
+        self._icons_loaded = False
+        self._next_icon_slot = 0
+
         self._update_selection_visuals()
+
+        if self.isVisible():
+            self._schedule_icon_loading()
+
+    def _schedule_icon_loading(self) -> None:
+        if bool(self._icons_loaded):
+            return
+        if self._icon_timer.isActive():
+            return
+        self._icon_timer.start(0)
+
+    def _load_icon_batch(self) -> None:
+        total = len(self._slot_buttons)
+        if total <= 0:
+            self._icons_loaded = True
+            return
+
+        start = int(self._next_icon_slot)
+        end = min(total, start + int(self._icon_batch_size))
+
+        for i in range(start, end):
+            btn = self._slot_buttons[i]
+            pm = self._photos.pixmap_for_block(btn.block_id())
+            btn.set_icon_pixmap(pm)
+
+        self._next_icon_slot = int(end)
+
+        if self._next_icon_slot >= total:
+            self._icons_loaded = True
+            self._update_selection_visuals()
+            return
+
+        self._icon_timer.start(0)
+
+    def showEvent(self, e) -> None:
+        super().showEvent(e)
+
+        self._schedule_icon_loading()
 
     def _set_selected_block(self, block_id: str | None) -> None:
         self._selected_block_id = str(block_id) if block_id is not None else None

@@ -46,6 +46,7 @@ from maiming.infrastructure.rendering.opengl._internal.passes.sun_pass import Su
 from maiming.infrastructure.rendering.opengl._internal.passes.cloud_pass import CloudPass
 from maiming.infrastructure.rendering.opengl._internal.passes.selection_pass import SelectionPass
 from maiming.infrastructure.rendering.opengl._internal.pipeline.light_space import compute_light_view_proj
+from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
 
 GetState = Callable[[int, int, int], str | None]
 
@@ -165,6 +166,10 @@ class GLRenderer:
         self._sel_outline_key = None
         if not bool(self._outline_selection_enabled):
             self._select.clear()
+
+    def evict_chunks(self, *, keep_chunks: set[ChunkKey]) -> None:
+        self._world.evict_except(keep_chunks)
+        self._shadow.evict_except(keep_chunks)
 
     def clear_selection(self) -> None:
         self._sel_block = None
@@ -327,6 +332,17 @@ class GLRenderer:
                 if (bi, fi) in internal:
                     continue
 
+                if is_block_face_occluded(
+                    x=int(x),
+                    y=int(y),
+                    z=int(z),
+                    box=b,
+                    face_idx=int(fi),
+                    get_state=get_state,
+                    def_lookup=get_def,
+                ):
+                    continue
+
                 pts, n = face_pts(mn, mx, int(fi))
                 ox, oy, oz = float(n[0]) * eps, float(n[1]) * eps, float(n[2]) * eps
                 p = [(px + ox, py + oy, pz + oz) for (px, py, pz) in pts]
@@ -412,7 +428,7 @@ class GLRenderer:
         chunk_key: ChunkKey,
         world_revision: int,
         faces: list[np.ndarray],
-        casters: np.ndarray,
+        shadow_faces: list[np.ndarray],
     ) -> None:
         if self._res is None:
             return
@@ -422,10 +438,10 @@ class GLRenderer:
             world_revision=int(world_revision),
             faces=faces,
         )
-        self._shadow.set_chunk_casters(
+        self._shadow.set_chunk_faces(
             chunk_key=chunk_key,
             world_revision=int(world_revision),
-            casters=casters,
+            faces=shadow_faces,
         )
 
     def render(

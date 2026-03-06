@@ -6,8 +6,10 @@ from typing import Callable, Iterable
 import numpy as np
 
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import render_boxes_for_block, LocalBox
+from maiming.domain.blocks.models.api import render_boxes_for_block
+from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.block_definition import BlockDefinition
+from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
@@ -127,9 +129,8 @@ def build_chunk_mesh(
     get_state: GetState,
     uv_lookup: UVLookup,
     def_lookup: DefLookup,
-) -> tuple[list[np.ndarray], np.ndarray]:
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
     faces_rows: list[list[list[float]]] = [[], [], [], [], [], []]
-    caster_rows: list[list[float]] = []
 
     for (x, y, z, state_str) in blocks:
         x = int(x)
@@ -152,14 +153,6 @@ def build_chunk_mesh(
             mxx = float(x) + float(b.mx_x)
             mxy = float(y) + float(b.mx_y)
             mxz = float(z) + float(b.mx_z)
-
-            cx = (mnx + mxx) * 0.5
-            cy = (mny + mxy) * 0.5
-            cz = (mnz + mxz) * 0.5
-            sx = max(0.0, float(mxx - mnx))
-            sy = max(0.0, float(mxy - mny))
-            sz = max(0.0, float(mxz - mnz))
-            caster_rows.append([cx, cy, cz, sx, sy, sz, 0.0])
 
             for fi in range(6):
                 if (bi, fi) in internal:
@@ -184,8 +177,19 @@ def build_chunk_mesh(
                     if nst is not None:
                         nb, _np = parse_state(str(nst))
                         nd = def_lookup(str(nb))
-                        if nd is None or (bool(nd.is_full_cube) and bool(nd.is_solid)):
+                        if nd is not None and bool(nd.is_full_cube) and bool(nd.is_solid):
                             continue
+
+                if is_block_face_occluded(
+                    x=int(x),
+                    y=int(y),
+                    z=int(z),
+                    box=b,
+                    face_idx=int(fi),
+                    get_state=get_state,
+                    def_lookup=def_lookup,
+                ):
+                    continue
 
                 atlas = uv_lookup(str(state_str), int(fi))
 
@@ -211,5 +215,5 @@ def build_chunk_mesh(
         else:
             faces_np.append(np.asarray(rows, dtype=np.float32))
 
-    casters_np = np.zeros((0, 7), dtype=np.float32) if not caster_rows else np.asarray(caster_rows, dtype=np.float32)
-    return faces_np, casters_np
+    shadow_faces_np = list(faces_np)
+    return faces_np, shadow_faces_np

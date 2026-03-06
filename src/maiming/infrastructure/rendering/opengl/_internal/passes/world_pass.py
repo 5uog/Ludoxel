@@ -91,6 +91,20 @@ class WorldPass:
         self._chunks[k] = ch
         return ch
 
+    def remove_chunk(self, chunk_key: ChunkKey) -> None:
+        ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
+        ch = self._chunks.pop(ck, None)
+        if ch is None:
+            return
+        for mesh in ch.meshes:
+            mesh.destroy()
+
+    def evict_except(self, keep: set[ChunkKey]) -> None:
+        keep_n = {(int(k[0]), int(k[1]), int(k[2])) for k in keep}
+        doomed = [ck for ck in self._chunks.keys() if ck not in keep_n]
+        for ck in doomed:
+            self.remove_chunk(ck)
+
     def upload_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         if len(faces) != 6:
             return
