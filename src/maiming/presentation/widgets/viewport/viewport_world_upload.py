@@ -13,7 +13,10 @@ from maiming.core.math.vec3 import Vec3
 from maiming.domain.world.chunking import ChunkKey, chunk_key
 from maiming.domain.world.world_state import WorldState
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from maiming.infrastructure.rendering.opengl.facade.world_mesh_builder import build_chunk_mesh_cpu
+from maiming.infrastructure.rendering.opengl.facade.world_mesh_builder import (
+    build_chunk_mesh_cpu,
+    build_chunk_mesh_cpu_with_gpu_sources,
+)
 
 @dataclass(frozen=True)
 class _BuildResult:
@@ -21,6 +24,8 @@ class _BuildResult:
     chunk_rev: int
     faces: list[np.ndarray]
     shadow_faces: list[np.ndarray]
+    gpu_face_sources: np.ndarray
+    gpu_bucket_counts: tuple[int, int, int, int, int, int]
 
 class WorldUploadTracker:
     def __init__(self) -> None:
@@ -48,6 +53,8 @@ class WorldUploadTracker:
                 world_revision=int(r.chunk_rev),
                 faces=r.faces,
                 shadow_faces=r.shadow_faces,
+                gpu_face_sources=r.gpu_face_sources,
+                gpu_bucket_counts=r.gpu_bucket_counts,
             )
             self._resident_rev[r.chunk] = int(r.chunk_rev)
 
@@ -134,7 +141,7 @@ class WorldUploadTracker:
             def get_state(x: int, y: int, z: int) -> str | None:
                 return state_at.get((int(x), int(y), int(z)))
 
-            faces, shadow_faces = build_chunk_mesh_cpu(
+            faces, shadow_faces, gpu_face_sources, gpu_bucket_counts = build_chunk_mesh_cpu_with_gpu_sources(
                 blocks=blocks_local,
                 get_state=get_state,
                 uv_lookup=uv_lookup,
@@ -145,6 +152,8 @@ class WorldUploadTracker:
                 world_revision=int(cr),
                 faces=faces,
                 shadow_faces=shadow_faces,
+                gpu_face_sources=gpu_face_sources,
+                gpu_bucket_counts=gpu_bucket_counts,
             )
             self._resident_rev[ck] = int(cr)
 
@@ -176,7 +185,7 @@ class WorldUploadTracker:
             return state_at.get((int(x), int(y), int(z)))
 
         def _task(chunk_key_local: ChunkKey, rev_local: int, blocks_local_in: list[tuple[int, int, int, str]]):
-            faces, shadow_faces = build_chunk_mesh_cpu(
+            faces, shadow_faces, gpu_face_sources, gpu_bucket_counts = build_chunk_mesh_cpu_with_gpu_sources(
                 blocks=blocks_local_in,
                 get_state=get_state,
                 uv_lookup=uv_lookup,
@@ -187,6 +196,8 @@ class WorldUploadTracker:
                 chunk_rev=int(rev_local),
                 faces=faces,
                 shadow_faces=shadow_faces,
+                gpu_face_sources=gpu_face_sources,
+                gpu_bucket_counts=gpu_bucket_counts,
             )
 
         fut = self._executor.submit(_task, ck, int(chunk_rev), blocks_local)

@@ -20,6 +20,7 @@ class GLResources:
     cloud_prog: ShaderProgram
     selection_prog: ShaderProgram
     compute_probe_prog: ShaderProgram
+    chunk_face_payload_prog: ShaderProgram
 
     cloud_mesh: MeshBuffer
 
@@ -41,6 +42,7 @@ class GLResources:
             shader_dir / "selection_line.frag",
         )
         compute_probe_prog = ShaderProgram.from_compute_file(shader_dir / "compute_probe.comp")
+        chunk_face_payload_prog = ShaderProgram.from_compute_file(shader_dir / "chunk_face_payload.comp")
 
         cloud_mesh = MeshBuffer.create_cube_instanced()
 
@@ -62,6 +64,7 @@ class GLResources:
             cloud_prog=cloud_prog,
             selection_prog=selection_prog,
             compute_probe_prog=compute_probe_prog,
+            chunk_face_payload_prog=chunk_face_payload_prog,
             cloud_mesh=cloud_mesh,
             atlas=atlas,
             empty_vao=empty_vao,
@@ -78,6 +81,7 @@ class GLResources:
         self.cloud_prog.destroy()
         self.selection_prog.destroy()
         self.compute_probe_prog.destroy()
+        self.chunk_face_payload_prog.destroy()
 
         if int(self.empty_vao) != 0:
             glDeleteVertexArrays(1, [int(self.empty_vao)])

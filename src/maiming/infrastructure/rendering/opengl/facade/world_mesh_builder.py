@@ -6,7 +6,13 @@ from typing import Callable, Iterable
 import numpy as np
 
 from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.infrastructure.rendering.opengl._internal.scene.world_face_builder import build_chunk_mesh
+from maiming.infrastructure.rendering.opengl._internal.scene.world_face_builder import (
+    build_chunk_mesh,
+    build_chunk_mesh_with_sources,
+)
+from maiming.infrastructure.rendering.opengl._internal.scene.world_face_source_builder import (
+    BucketCounts,
+)
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
@@ -21,6 +27,20 @@ def build_chunk_mesh_cpu(
     def_lookup: DefLookup,
 ) -> tuple[list[np.ndarray], list[np.ndarray]]:
     return build_chunk_mesh(
+        blocks=blocks,
+        get_state=get_state,
+        uv_lookup=uv_lookup,
+        def_lookup=def_lookup,
+    )
+
+def build_chunk_mesh_cpu_with_gpu_sources(
+    *,
+    blocks: Iterable[tuple[int, int, int, str]],
+    get_state: GetState,
+    uv_lookup: UVLookup,
+    def_lookup: DefLookup,
+) -> tuple[list[np.ndarray], list[np.ndarray], np.ndarray, BucketCounts]:
+    return build_chunk_mesh_with_sources(
         blocks=blocks,
         get_state=get_state,
         uv_lookup=uv_lookup,

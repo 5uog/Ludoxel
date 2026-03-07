@@ -15,15 +15,15 @@ from maiming.core.math.vec3 import Vec3
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.world.chunking import ChunkKey
+from maiming.infrastructure.rendering.opengl._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
 from maiming.infrastructure.rendering.opengl._internal.passes.cloud_pass import CloudPass
 from maiming.infrastructure.rendering.opengl._internal.passes.selection_pass import SelectionPass
 from maiming.infrastructure.rendering.opengl._internal.passes.shadow_map_pass import ShadowMapPass
 from maiming.infrastructure.rendering.opengl._internal.passes.sun_pass import SunPass
 from maiming.infrastructure.rendering.opengl._internal.passes.world_pass import WorldPass
 from maiming.infrastructure.rendering.opengl._internal.pipeline.frame_pipeline import FramePipeline
-from maiming.infrastructure.rendering.opengl._internal.scene.selection_outline_builder import (
-    SelectionOutlineBuilder,
-)
+from maiming.infrastructure.rendering.opengl._internal.scene.selection_outline_builder import SelectionOutlineBuilder
+from maiming.infrastructure.rendering.opengl._internal.scene.world_face_source_builder import BucketCounts
 from maiming.infrastructure.rendering.opengl.facade.block_visual_resolver import BlockVisualResolver
 from maiming.infrastructure.rendering.opengl.facade.gl_info_probe import GLInfoSnapshot, probe_gl_info
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams
@@ -92,6 +92,7 @@ class RendererBackend:
         self._sun = SunPass(self._cfg.sun)
         self._cloud = CloudPass(self._cfg.clouds, self._cfg.camera)
         self._selection_pass = SelectionPass()
+        self._gpu_payload_builder = ChunkFacePayloadBuilder()
 
         self._selection: SelectionController | None = None
         self._pipeline: FramePipeline | None = None
@@ -104,8 +105,9 @@ class RendererBackend:
             self._res = GLResources.load(assets_dir, blocks=block_registry)
         except Exception as exc:
             raise RuntimeError(
-                "Step 1 shader initialization failed while compiling or linking the new compute probe "
-                f"program or another required shader resource. {_format_context_details(self._gl_info)}\n"
+                "OpenGL 4.3 initialization failed while compiling or linking the Step 1 compute probe "
+                "program, the Step 2 chunk face payload compute program, or another required shader "
+                f"resource. {_format_context_details(self._gl_info)}\n"
                 f"Original error:\n{exc}"
             ) from exc
 
@@ -122,6 +124,7 @@ class RendererBackend:
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
         self._selection_pass.initialize(self._res.selection_prog)
+        self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
         self._selection = SelectionController(
             outline_pass=self._selection_pass,
@@ -143,6 +146,7 @@ class RendererBackend:
         self.apply_runtime_state()
 
     def destroy(self) -> None:
+        self._gpu_payload_builder.destroy()
         self._shadow.destroy()
         self._world.destroy()
         self._selection_pass.destroy()
@@ -211,6 +215,7 @@ class RendererBackend:
     def evict_chunks(self, *, keep_chunks: set[ChunkKey]) -> None:
         self._world.evict_except(keep_chunks)
         self._shadow.evict_except(keep_chunks)
+        self._gpu_payload_builder.evict_except(keep_chunks)
 
     def clear_selection(self) -> None:
         if self._selection is not None:
@@ -245,6 +250,8 @@ class RendererBackend:
         world_revision: int,
         faces: list[np.ndarray],
         shadow_faces: list[np.ndarray],
+        gpu_face_sources: np.ndarray | None = None,
+        gpu_bucket_counts: BucketCounts | None = None,
     ) -> None:
         if self._res is None:
             return
@@ -259,6 +266,14 @@ class RendererBackend:
             world_revision=int(world_revision),
             faces=shadow_faces,
         )
+
+        if gpu_face_sources is not None and gpu_bucket_counts is not None:
+            self._gpu_payload_builder.build_and_store(
+                chunk_key=chunk_key,
+                world_revision=int(world_revision),
+                face_sources=gpu_face_sources,
+                bucket_counts=gpu_bucket_counts,
+            )
 
     def render(
         self,

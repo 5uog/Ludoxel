@@ -148,12 +148,16 @@ class GLRenderer:
         world_revision: int,
         faces,
         shadow_faces,
+        gpu_face_sources=None,
+        gpu_bucket_counts=None,
     ) -> None:
         self._backend.submit_chunk(
             chunk_key=chunk_key,
             world_revision=int(world_revision),
             faces=faces,
             shadow_faces=shadow_faces,
+            gpu_face_sources=gpu_face_sources,
+            gpu_bucket_counts=gpu_bucket_counts,
         )
 
     def render(
