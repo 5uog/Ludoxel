@@ -3,18 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-_VALID_CLOUD_FLOW_DIRECTIONS = (
-    "east_to_west",
-    "west_to_east",
-    "south_to_north",
-    "north_to_south",
+from maiming.infrastructure.rendering.opengl.facade.cloud_flow_direction import (
+    normalize_cloud_flow_direction,
 )
-
-def _normalize_cloud_flow_direction(raw: str) -> str:
-    s = str(raw).strip().lower()
-    if s in _VALID_CLOUD_FLOW_DIRECTIONS:
-        return s
-    return "west_to_east"
 
 @dataclass
 class ViewportRuntimeState:
@@ -51,7 +42,7 @@ class ViewportRuntimeState:
     def normalize(self) -> None:
         self.cloud_density = int(max(0, min(4, int(self.cloud_density))))
         self.cloud_seed = int(max(0, min(9999, int(self.cloud_seed))))
-        self.cloud_flow_direction = _normalize_cloud_flow_direction(str(self.cloud_flow_direction))
+        self.cloud_flow_direction = normalize_cloud_flow_direction(str(self.cloud_flow_direction))
 
         self.render_distance_chunks = int(max(2, min(16, int(self.render_distance_chunks))))
 

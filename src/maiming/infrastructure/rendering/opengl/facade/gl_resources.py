@@ -19,7 +19,6 @@ class GLResources:
     sun_prog: ShaderProgram
     cloud_prog: ShaderProgram
     selection_prog: ShaderProgram
-    compute_probe_prog: ShaderProgram
     chunk_face_payload_prog: ShaderProgram
 
     cloud_mesh: MeshBuffer
@@ -41,8 +40,9 @@ class GLResources:
             shader_dir / "selection_line.vert",
             shader_dir / "selection_line.frag",
         )
-        compute_probe_prog = ShaderProgram.from_compute_file(shader_dir / "compute_probe.comp")
-        chunk_face_payload_prog = ShaderProgram.from_compute_file(shader_dir / "chunk_face_payload.comp")
+        chunk_face_payload_prog = ShaderProgram.from_compute_file(
+            shader_dir / "chunk_face_payload.comp"
+        )
 
         cloud_mesh = MeshBuffer.create_cube_instanced()
 
@@ -63,7 +63,6 @@ class GLResources:
             sun_prog=sun_prog,
             cloud_prog=cloud_prog,
             selection_prog=selection_prog,
-            compute_probe_prog=compute_probe_prog,
             chunk_face_payload_prog=chunk_face_payload_prog,
             cloud_mesh=cloud_mesh,
             atlas=atlas,
@@ -80,7 +79,6 @@ class GLResources:
         self.sun_prog.destroy()
         self.cloud_prog.destroy()
         self.selection_prog.destroy()
-        self.compute_probe_prog.destroy()
         self.chunk_face_payload_prog.destroy()
 
         if int(self.empty_vao) != 0:

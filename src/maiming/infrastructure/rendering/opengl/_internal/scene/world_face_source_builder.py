@@ -8,8 +8,8 @@ import numpy as np
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.infrastructure.rendering.opengl._internal.scene.fast_visible_faces import (
-    iter_fast_visible_faces,
+from maiming.infrastructure.rendering.opengl._internal.scene.visible_faces import (
+    iter_visible_faces,
 )
 
 UVRect = tuple[float, float, float, float]
@@ -134,13 +134,14 @@ def build_chunk_face_sources(
         base, _p = parse_state(str(state_str))
         defn = def_lookup(str(base))
 
-        for face in iter_fast_visible_faces(
+        for face in iter_visible_faces(
             x=int(x),
             y=int(y),
             z=int(z),
             state_str=str(state_str),
             get_state=get_state,
             def_lookup=def_lookup,
+            fast_boundary_full_cube_only=True,
         ):
             fi = int(face.face_idx)
             if fi < 0 or fi >= 6:

@@ -5,20 +5,8 @@ import math
 from dataclasses import dataclass
 
 from maiming.core.math.vec3 import Vec3
+from ...facade.cloud_flow_direction import normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams
-
-_VALID_CLOUD_FLOW_DIRECTIONS = (
-    "east_to_west",
-    "west_to_east",
-    "south_to_north",
-    "north_to_south",
-)
-
-def normalize_cloud_flow_direction(raw: str) -> str:
-    s = str(raw).strip().lower()
-    if s in _VALID_CLOUD_FLOW_DIRECTIONS:
-        return s
-    return "west_to_east"
 
 @dataclass(frozen=True)
 class CloudBox:
@@ -29,9 +17,9 @@ class CloudBox:
 @dataclass(frozen=True)
 class _RectXZ:
     min_x: int
-    max_x: int  # exclusive
+    max_x: int
     min_z: int
-    max_z: int  # exclusive
+    max_z: int
 
 class CloudField:
     def __init__(self, cfg: CloudParams) -> None:

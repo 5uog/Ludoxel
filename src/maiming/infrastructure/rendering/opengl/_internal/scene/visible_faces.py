@@ -6,18 +6,27 @@ from typing import Callable, Iterator
 
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.api import render_boxes_for_block
+from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded, is_local_face_occluded
+from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import (
+    is_block_face_occluded,
+    is_local_face_occluded,
+)
 
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
+_EPS = 1e-7
+
 @dataclass(frozen=True)
 class VisibleFace:
-    box: object
+    box: LocalBox
     face_idx: int
     mn: tuple[float, float, float]
     mx: tuple[float, float, float]
+
+def _eq(a: float, b: float) -> bool:
+    return abs(float(a) - float(b)) <= _EPS
 
 def _neighbor_cell(x: int, y: int, z: int, face_idx: int) -> tuple[int, int, int]:
     fi = int(face_idx)
@@ -33,6 +42,21 @@ def _neighbor_cell(x: int, y: int, z: int, face_idx: int) -> tuple[int, int, int
     if fi == 4:
         return (int(x), int(y), int(z + 1))
     return (int(x), int(y), int(z - 1))
+
+def _face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
+    fi = int(face_idx)
+
+    if fi == 0:
+        return _eq(float(box.mx_x), 1.0)
+    if fi == 1:
+        return _eq(float(box.mn_x), 0.0)
+    if fi == 2:
+        return _eq(float(box.mx_y), 1.0)
+    if fi == 3:
+        return _eq(float(box.mn_y), 0.0)
+    if fi == 4:
+        return _eq(float(box.mx_z), 1.0)
+    return _eq(float(box.mn_z), 0.0)
 
 def _neighbor_is_full_cube_solid(
     *,
@@ -55,6 +79,28 @@ def _neighbor_is_full_cube_solid(
 
     return bool(nd.is_full_cube) and bool(nd.is_solid)
 
+def _boundary_neighbor_is_full_cube_solid(
+    *,
+    x: int,
+    y: int,
+    z: int,
+    face_idx: int,
+    box: LocalBox,
+    get_state: GetState,
+    def_lookup: DefLookup,
+) -> bool:
+    if not _face_touches_cell_boundary(int(face_idx), box):
+        return False
+
+    return _neighbor_is_full_cube_solid(
+        x=int(x),
+        y=int(y),
+        z=int(z),
+        face_idx=int(face_idx),
+        get_state=get_state,
+        def_lookup=def_lookup,
+    )
+
 def iter_visible_faces(
     *,
     x: int,
@@ -63,6 +109,7 @@ def iter_visible_faces(
     state_str: str,
     get_state: GetState,
     def_lookup: DefLookup,
+    fast_boundary_full_cube_only: bool = False,
 ) -> Iterator[VisibleFace]:
     base, _props = parse_state(str(state_str))
     defn = def_lookup(str(base))
@@ -77,6 +124,10 @@ def iter_visible_faces(
     )
     if not boxes:
         return
+
+    full_cube_fast_path = bool(
+        defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid)
+    )
 
     for box in boxes:
         mn = (
@@ -98,8 +149,19 @@ def iter_visible_faces(
             ):
                 continue
 
-            if defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid):
-                if _neighbor_is_full_cube_solid(
+            if bool(fast_boundary_full_cube_only):
+                if _boundary_neighbor_is_full_cube_solid(
+                    x=int(x),
+                    y=int(y),
+                    z=int(z),
+                    face_idx=int(fi),
+                    box=box,
+                    get_state=get_state,
+                    def_lookup=def_lookup,
+                ):
+                    continue
+            else:
+                if full_cube_fast_path and _neighbor_is_full_cube_solid(
                     x=int(x),
                     y=int(y),
                     z=int(z),
@@ -109,16 +171,16 @@ def iter_visible_faces(
                 ):
                     continue
 
-            if is_block_face_occluded(
-                x=int(x),
-                y=int(y),
-                z=int(z),
-                box=box,
-                face_idx=int(fi),
-                get_state=get_state,
-                def_lookup=def_lookup,
-            ):
-                continue
+                if is_block_face_occluded(
+                    x=int(x),
+                    y=int(y),
+                    z=int(z),
+                    box=box,
+                    face_idx=int(fi),
+                    get_state=get_state,
+                    def_lookup=def_lookup,
+                ):
+                    continue
 
             yield VisibleFace(
                 box=box,

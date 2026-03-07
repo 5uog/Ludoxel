@@ -50,20 +50,20 @@ def _format_context_details(info: GLInfoSnapshot) -> str:
 def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
     if not info.is_version_at_least(4, 3):
         raise RuntimeError(
-            "Step 1 requires an active OpenGL 4.3 Core Profile context before the compute probe "
-            f"program is introduced, but the active context version is insufficient. {_format_context_details(info)}"
+            "The active context does not satisfy the OpenGL 4.3 requirement for the compute-backed "
+            f"chunk face payload path. {_format_context_details(info)}"
         )
 
     if not info.is_core_profile():
         raise RuntimeError(
-            "Step 1 requires an active OpenGL 4.3 Core Profile context before the compute probe "
-            f"program is introduced, but the active context is not Core Profile. {_format_context_details(info)}"
+            "The active context is not Core Profile, but the renderer requires OpenGL 4.3 Core "
+            f"Profile for the compute-backed chunk face payload path. {_format_context_details(info)}"
         )
 
     if not info.is_glsl_at_least(4, 30):
         raise RuntimeError(
-            "Step 1 requires GLSL 4.30 or newer for the compute probe program, but the active GLSL "
-            f"version is insufficient. {_format_context_details(info)}"
+            "The active GLSL version is insufficient for the compute-backed chunk face payload path. "
+            f"{_format_context_details(info)}"
         )
 
 class RendererBackend:
@@ -111,9 +111,9 @@ class RendererBackend:
             self._res = GLResources.load(assets_dir, blocks=block_registry)
         except Exception as exc:
             raise RuntimeError(
-                "OpenGL 4.3 initialization failed while compiling or linking the Step 1 compute probe "
-                "program, the Step 2 chunk face payload compute program, or another required shader "
-                f"resource. {_format_context_details(self._gl_info)}\n"
+                "OpenGL 4.3 initialization failed while compiling or linking one or more required "
+                "shader resources for the renderer, including the compute-backed chunk face payload "
+                f"program. {_format_context_details(self._gl_info)}\n"
                 f"Original error:\n{exc}"
             ) from exc
 
