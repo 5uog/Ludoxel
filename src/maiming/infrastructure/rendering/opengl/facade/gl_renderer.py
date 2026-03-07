@@ -6,10 +6,8 @@ from pathlib import Path
 from maiming.core.math.vec3 import Vec3
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.world.chunking import ChunkKey
-from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import (
-    GLRendererParams,
-    default_gl_renderer_params,
-)
+from maiming.infrastructure.rendering.opengl._internal.compute.chunk_payload_validator import ChunkPayloadValidationReport
+from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams, default_gl_renderer_params
 from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
 from maiming.infrastructure.rendering.opengl.facade.renderer_backend import RendererBackend
 
@@ -128,6 +126,9 @@ class GLRenderer:
     def shadow_status_text(self) -> str:
         ok, _size = self.shadow_info()
         return "SHADOWMAP_ON" if ok else "SHADOWMAP_OFF"
+
+    def payload_validation_report(self) -> ChunkPayloadValidationReport | None:
+        return self._backend.payload_validation_report()
 
     def atlas_uv_face(self, block_state_id: str, face_idx: int) -> tuple[float, float, float, float]:
         return self._backend.atlas_uv_face(

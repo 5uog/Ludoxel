@@ -20,8 +20,8 @@ from maiming.infrastructure.rendering.opengl._internal.scene.world_face_source_b
     empty_face_buckets,
 )
 
-@dataclass
-class _GpuChunkPayload:
+@dataclass(frozen=True)
+class ChunkFacePayloadSnapshot:
     world_faces: list[np.ndarray]
     shadow_faces: list[np.ndarray]
     last_rev: int
@@ -32,7 +32,7 @@ class ChunkFacePayloadBuilder:
         self._src: StorageBuffer | None = None
         self._dst: StorageBuffer | None = None
         self._local_size_x = int(max(1, int(local_size_x)))
-        self._chunks: dict[ChunkKey, _GpuChunkPayload] = {}
+        self._chunks: dict[ChunkKey, ChunkFacePayloadSnapshot] = {}
 
     def initialize(self, prog: ShaderProgram) -> None:
         self._prog = prog
@@ -163,11 +163,11 @@ class ChunkFacePayloadBuilder:
         world_revision: int,
         face_sources: np.ndarray,
         bucket_counts: BucketCounts,
-    ) -> None:
+    ) -> ChunkFacePayloadSnapshot:
         ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
         prev = self._chunks.get(ck)
         if prev is not None and int(prev.last_rev) == int(world_revision):
-            return
+            return prev
 
         world_faces = self._build_faces(
             face_sources=face_sources,
@@ -178,8 +178,10 @@ class ChunkFacePayloadBuilder:
             for arr in world_faces
         ]
 
-        self._chunks[ck] = _GpuChunkPayload(
+        snap = ChunkFacePayloadSnapshot(
             world_faces=world_faces,
             shadow_faces=shadow_faces,
             last_rev=int(world_revision),
         )
+        self._chunks[ck] = snap
+        return snap
