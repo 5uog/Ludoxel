@@ -266,16 +266,8 @@ class RendererBackend:
         if self._res is None:
             return
 
-        self._world.upload_chunk(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=faces,
-        )
-        self._shadow.set_chunk_faces(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=shadow_faces,
-        )
+        authoritative_world_faces = faces
+        authoritative_shadow_faces = shadow_faces
 
         if gpu_face_sources is not None and gpu_bucket_counts is not None:
             gpu_payload = self._gpu_payload_builder.build_and_store(
@@ -299,6 +291,22 @@ class RendererBackend:
                 raise
             else:
                 self._last_payload_validation = report
+
+            authoritative_world_faces = gpu_payload.world_faces
+            authoritative_shadow_faces = gpu_payload.shadow_faces
+        else:
+            self._last_payload_validation = None
+
+        self._world.upload_chunk(
+            chunk_key=chunk_key,
+            world_revision=int(world_revision),
+            faces=authoritative_world_faces,
+        )
+        self._shadow.set_chunk_faces(
+            chunk_key=chunk_key,
+            world_revision=int(world_revision),
+            faces=authoritative_shadow_faces,
+        )
 
     def render(
         self,
