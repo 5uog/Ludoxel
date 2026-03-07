@@ -7,6 +7,19 @@ from dataclasses import dataclass
 from maiming.core.math.vec3 import Vec3
 from ...facade.gl_renderer_params import CloudParams
 
+_VALID_CLOUD_FLOW_DIRECTIONS = (
+    "east_to_west",
+    "west_to_east",
+    "south_to_north",
+    "north_to_south",
+)
+
+def normalize_cloud_flow_direction(raw: str) -> str:
+    s = str(raw).strip().lower()
+    if s in _VALID_CLOUD_FLOW_DIRECTIONS:
+        return s
+    return "west_to_east"
+
 @dataclass(frozen=True)
 class CloudBox:
     center: Vec3
@@ -27,6 +40,10 @@ class CloudField:
         self._enabled_density: int = int(max(0, int(cfg.rects_per_cell)))
         self._seed: int = int(cfg.seed)
 
+        self._flow_direction: str = normalize_cloud_flow_direction("west_to_east")
+        self._flow_epoch_s: float = 0.0
+        self._flow_base_shift: Vec3 = Vec3(0.0, 0.0, 0.0)
+
         self._anchor_key: tuple[int, int] | None = None
         self._boxes_cache: list[CloudBox] = []
 
@@ -46,10 +63,46 @@ class CloudField:
         self._anchor_key = None
         self._boxes_cache = []
 
+    def set_flow_direction(self, direction: str, *, t_seconds: float = 0.0) -> None:
+        nxt = normalize_cloud_flow_direction(str(direction))
+        ts = float(max(0.0, t_seconds))
+
+        cur = self.shift(ts)
+
+        self._flow_direction = str(nxt)
+        self._flow_epoch_s = float(ts)
+        self._flow_base_shift = Vec3(float(cur.x), 0.0, float(cur.z))
+
+    def _flow_speed(self) -> float:
+        sx = abs(float(self._cfg.speed_x))
+        sz = abs(float(self._cfg.speed_z))
+        sp = math.hypot(sx, sz)
+        if sp > 1e-9:
+            return float(sp)
+        return float(max(sx, sz, 0.0))
+
+    def _flow_velocity(self, direction: str) -> tuple[float, float]:
+        sp = float(self._flow_speed())
+        d = normalize_cloud_flow_direction(str(direction))
+
+        if d == "east_to_west":
+            return (-sp, 0.0)
+        if d == "west_to_east":
+            return (sp, 0.0)
+        if d == "south_to_north":
+            return (0.0, -sp)
+        return (0.0, sp)
+
     def shift(self, t_seconds: float) -> Vec3:
-        sx = float(t_seconds) * float(self._cfg.speed_x)
-        sz = float(t_seconds) * float(self._cfg.speed_z)
-        return Vec3(sx, 0.0, sz)
+        ts = float(max(0.0, t_seconds))
+        dt = float(max(0.0, ts - float(self._flow_epoch_s)))
+
+        vx, vz = self._flow_velocity(self._flow_direction)
+        return Vec3(
+            float(self._flow_base_shift.x) + vx * dt,
+            0.0,
+            float(self._flow_base_shift.z) + vz * dt,
+        )
 
     def ensure_cache(self, eye: Vec3, shift: Vec3) -> None:
         if int(self._enabled_density) <= 0:

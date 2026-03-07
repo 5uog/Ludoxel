@@ -19,7 +19,7 @@ from OpenGL.GL import (
 from maiming.core.math.vec3 import Vec3
 from maiming.infrastructure.rendering.opengl._internal.gl.shader_program import ShaderProgram
 from maiming.infrastructure.rendering.opengl._internal.gl.mesh_buffer import MeshBuffer
-from ..scene.cloud_field import CloudField
+from ..scene.cloud_field import CloudField, normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams, CameraParams
 
 class CloudPass:
@@ -37,15 +37,30 @@ class CloudPass:
 
         self._density = int(max(0, int(self._cfg.rects_per_cell)))
         self._seed = int(self._cfg.seed)
+        self._flow_direction = normalize_cloud_flow_direction("west_to_east")
+
+        self._motion_paused = False
+        self._time_accum = 0.0
+        self._last_clock = time.perf_counter()
 
         self._field.set_density(int(self._density))
         self._field.set_seed(int(self._seed))
-
-        self._t0 = time.perf_counter()
+        self._field.set_flow_direction(self._flow_direction, t_seconds=0.0)
 
     def initialize(self, prog: ShaderProgram, mesh: MeshBuffer) -> None:
         self._prog = prog
         self._mesh = mesh
+        self._time_accum = 0.0
+        self._last_clock = time.perf_counter()
+        self._field.set_flow_direction(self._flow_direction, t_seconds=0.0)
+
+    def _advance_clock(self) -> None:
+        now = time.perf_counter()
+        dt = max(0.0, min(0.25, now - self._last_clock))
+        self._last_clock = now
+
+        if not bool(self._motion_paused):
+            self._time_accum += float(dt)
 
     def set_wireframe(self, on: bool) -> None:
         self._wireframe = bool(on)
@@ -67,7 +82,21 @@ class CloudPass:
         self._seed = s
         self._field.set_seed(int(self._seed))
 
+    def set_flow_direction(self, direction: str) -> None:
+        self._advance_clock()
+        nxt = normalize_cloud_flow_direction(str(direction))
+        if str(nxt) == str(self._flow_direction):
+            return
+        self._flow_direction = str(nxt)
+        self._field.set_flow_direction(str(self._flow_direction), t_seconds=float(self._time_accum))
+
+    def set_motion_paused(self, on: bool) -> None:
+        self._advance_clock()
+        self._motion_paused = bool(on)
+
     def draw(self, eye: Vec3, view_proj: np.ndarray, forward: Vec3, fov_deg: float, aspect: float, sun_dir: Vec3) -> None:
+        self._advance_clock()
+
         if not bool(self._enabled):
             return
         if int(self._density) <= 0:
@@ -75,9 +104,7 @@ class CloudPass:
         if self._prog is None or self._mesh is None:
             return
 
-        t = float(time.perf_counter() - self._t0)
-
-        shift = self._field.shift(t)
+        shift = self._field.shift(float(self._time_accum))
 
         boxes = self._field.visible_boxes(
             eye=eye,

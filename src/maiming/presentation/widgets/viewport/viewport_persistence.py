@@ -53,6 +53,7 @@ def apply_persisted_state_if_present(
         runtime.cloud_enabled = bool(ps.cloud_enabled)
         runtime.cloud_density = int(ps.cloud_density)
         runtime.cloud_seed = int(ps.cloud_seed)
+        runtime.cloud_flow_direction = str(getattr(ps, "cloud_flow_direction", "west_to_east"))
 
         runtime.build_mode = bool(ps.build_mode)
         runtime.auto_jump_enabled = bool(ps.auto_jump_enabled)
@@ -94,6 +95,7 @@ def apply_persisted_state_if_present(
     renderer.set_cloud_enabled(bool(runtime.cloud_enabled))
     renderer.set_cloud_density(int(runtime.cloud_density))
     renderer.set_cloud_seed(int(runtime.cloud_seed))
+    renderer.set_cloud_flow_direction(str(runtime.cloud_flow_direction))
 
     return runtime
 
@@ -106,6 +108,7 @@ def _coerce_runtime(
     cloud_enabled: bool | None,
     cloud_density: int | None,
     cloud_seed: int | None,
+    cloud_flow_direction: str | None,
     build_mode: bool | None,
     auto_jump_enabled: bool | None,
     auto_sprint_enabled: bool | None,
@@ -124,6 +127,7 @@ def _coerce_runtime(
             cloud_enabled=bool(runtime.cloud_enabled),
             cloud_density=int(runtime.cloud_density),
             cloud_seed=int(runtime.cloud_seed),
+            cloud_flow_direction=str(runtime.cloud_flow_direction),
             world_wire=bool(runtime.world_wire),
             shadow_enabled=bool(runtime.shadow_enabled),
             build_mode=bool(runtime.build_mode),
@@ -156,6 +160,8 @@ def _coerce_runtime(
         out.cloud_density = int(cloud_density)
     if cloud_seed is not None:
         out.cloud_seed = int(cloud_seed)
+    if cloud_flow_direction is not None:
+        out.cloud_flow_direction = str(cloud_flow_direction)
 
     if build_mode is not None:
         out.build_mode = bool(build_mode)
@@ -192,6 +198,7 @@ def save_state(
     cloud_enabled: bool | None = None,
     cloud_density: int | None = None,
     cloud_seed: int | None = None,
+    cloud_flow_direction: str | None = None,
     build_mode: bool | None = None,
     auto_jump_enabled: bool | None = None,
     auto_sprint_enabled: bool | None = None,
@@ -211,6 +218,7 @@ def save_state(
         cloud_enabled=cloud_enabled,
         cloud_density=cloud_density,
         cloud_seed=cloud_seed,
+        cloud_flow_direction=cloud_flow_direction,
         build_mode=build_mode,
         auto_jump_enabled=auto_jump_enabled,
         auto_sprint_enabled=auto_sprint_enabled,
@@ -236,6 +244,7 @@ def save_state(
         cloud_enabled=bool(state_runtime.cloud_enabled),
         cloud_density=int(state_runtime.cloud_density),
         cloud_seed=int(state_runtime.cloud_seed),
+        cloud_flow_direction=str(state_runtime.cloud_flow_direction),
         build_mode=bool(state_runtime.build_mode),
         auto_jump_enabled=bool(state_runtime.auto_jump_enabled),
         auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled),

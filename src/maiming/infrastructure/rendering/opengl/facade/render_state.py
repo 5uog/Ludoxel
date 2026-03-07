@@ -6,6 +6,19 @@ from dataclasses import dataclass, field
 from maiming.core.math.vec3 import Vec3
 from maiming.core.math.view_angles import sun_dir_from_az_el_deg
 
+_VALID_CLOUD_FLOW_DIRECTIONS = (
+    "east_to_west",
+    "west_to_east",
+    "south_to_north",
+    "north_to_south",
+)
+
+def _normalize_cloud_flow_direction(raw: str) -> str:
+    s = str(raw).strip().lower()
+    if s in _VALID_CLOUD_FLOW_DIRECTIONS:
+        return s
+    return "west_to_east"
+
 @dataclass
 class RendererRuntimeState:
     debug_shadow: bool = False
@@ -17,6 +30,7 @@ class RendererRuntimeState:
     cloud_enabled: bool = True
     cloud_density: int = 1
     cloud_seed: int = 1337
+    cloud_flow_direction: str = "west_to_east"
 
     sun_azimuth_deg: float = 45.0
     sun_elevation_deg: float = 60.0
@@ -29,6 +43,7 @@ class RendererRuntimeState:
         )
         self.set_cloud_density(int(self.cloud_density))
         self.set_cloud_seed(int(self.cloud_seed))
+        self.set_cloud_flow_direction(str(self.cloud_flow_direction))
 
     def set_sun_angles(self, azimuth_deg: float, elevation_deg: float) -> None:
         az = float(azimuth_deg) % 360.0
@@ -49,3 +64,6 @@ class RendererRuntimeState:
 
     def set_cloud_seed(self, seed: int) -> None:
         self.cloud_seed = int(seed)
+
+    def set_cloud_flow_direction(self, direction: str) -> None:
+        self.cloud_flow_direction = _normalize_cloud_flow_direction(str(direction))

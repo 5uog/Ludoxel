@@ -3,6 +3,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+_VALID_CLOUD_FLOW_DIRECTIONS = (
+    "east_to_west",
+    "west_to_east",
+    "south_to_north",
+    "north_to_south",
+)
+
+def _normalize_cloud_flow_direction(raw: str) -> str:
+    s = str(raw).strip().lower()
+    if s in _VALID_CLOUD_FLOW_DIRECTIONS:
+        return s
+    return "west_to_east"
+
 @dataclass
 class ViewportRuntimeState:
     invert_x: bool = False
@@ -14,6 +27,7 @@ class ViewportRuntimeState:
     cloud_enabled: bool = True
     cloud_density: int = 1
     cloud_seed: int = 1337
+    cloud_flow_direction: str = "west_to_east"
 
     world_wire: bool = False
     shadow_enabled: bool = True
@@ -32,12 +46,12 @@ class ViewportRuntimeState:
     debug_shadow: bool = False
     vsync_on: bool = False
 
-    # Startup policy: HUD is hidden until F3 is pressed.
     hud_visible: bool = False
 
     def normalize(self) -> None:
         self.cloud_density = int(max(0, min(4, int(self.cloud_density))))
         self.cloud_seed = int(max(0, min(9999, int(self.cloud_seed))))
+        self.cloud_flow_direction = _normalize_cloud_flow_direction(str(self.cloud_flow_direction))
 
         self.render_distance_chunks = int(max(2, min(16, int(self.render_distance_chunks))))
 

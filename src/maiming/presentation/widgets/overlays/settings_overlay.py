@@ -15,12 +15,20 @@ from PyQt6.QtWidgets import (
     QStackedWidget,
     QScrollArea,
     QDoubleSpinBox,
+    QComboBox,
 )
 
 from maiming.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from maiming.presentation.config.pause_overlay_params import (
     PauseOverlayParams,
     DEFAULT_PAUSE_OVERLAY_PARAMS,
+)
+
+_CLOUD_FLOW_DIRECTIONS: tuple[tuple[str, str], ...] = (
+    ("east_to_west", "East → West"),
+    ("west_to_east", "West → East"),
+    ("south_to_north", "South → North"),
+    ("north_to_south", "North → South"),
 )
 
 class AdvancedScalarControl(QWidget):
@@ -155,6 +163,7 @@ class SettingsOverlay(QWidget):
     clouds_enabled_changed = pyqtSignal(bool)
     cloud_density_changed = pyqtSignal(int)
     cloud_seed_changed = pyqtSignal(int)
+    cloud_flow_direction_changed = pyqtSignal(str)
 
     world_wireframe_changed = pyqtSignal(bool)
     shadow_enabled_changed = pyqtSignal(bool)
@@ -289,6 +298,20 @@ class SettingsOverlay(QWidget):
         lbl.setObjectName("sectionTitle")
         return lbl
 
+    @staticmethod
+    def _cloud_flow_index_for_value(value: str) -> int:
+        raw = str(value).strip().lower()
+        for i, (v, _label) in enumerate(_CLOUD_FLOW_DIRECTIONS):
+            if raw == str(v):
+                return i
+        return 1
+
+    def _current_cloud_flow_value(self) -> str:
+        data = self._cmb_cloud_flow.currentData()
+        if data is None:
+            return "west_to_east"
+        return str(data)
+
     def _build_visual_tab(self) -> None:
         scroll, host, lay = self._make_scroll_page()
 
@@ -357,6 +380,19 @@ class SettingsOverlay(QWidget):
 
         clouds_toggle_row.addStretch(1)
         lay.addLayout(clouds_toggle_row)
+
+        cloud_flow_row = QHBoxLayout()
+        self._lbl_cloud_flow = QLabel("Cloud flow direction", host)
+        self._lbl_cloud_flow.setObjectName("valueLabel")
+        cloud_flow_row.addWidget(self._lbl_cloud_flow)
+
+        self._cmb_cloud_flow = QComboBox(host)
+        for value, label in _CLOUD_FLOW_DIRECTIONS:
+            self._cmb_cloud_flow.addItem(str(label), userData=str(value))
+        self._cmb_cloud_flow.currentIndexChanged.connect(self._on_cloud_flow_direction)
+        cloud_flow_row.addWidget(self._cmb_cloud_flow)
+        cloud_flow_row.addStretch(1)
+        lay.addLayout(cloud_flow_row)
 
         cloud_density_row = QVBoxLayout()
         self._lbl_cloud_density = QLabel("Cloud density: 1", host)
@@ -555,6 +591,7 @@ class SettingsOverlay(QWidget):
         clouds_enabled: bool,
         cloud_density: int,
         cloud_seed: int,
+        cloud_flow_direction: str,
         world_wire: bool,
         shadow_enabled: bool,
         sun_az_deg: float,
@@ -641,6 +678,11 @@ class SettingsOverlay(QWidget):
         self._cb_clouds_enabled.setChecked(bool(clouds_enabled))
         self._cb_clouds_enabled.blockSignals(False)
 
+        idx = self._cloud_flow_index_for_value(str(cloud_flow_direction))
+        self._cmb_cloud_flow.blockSignals(True)
+        self._cmb_cloud_flow.setCurrentIndex(int(idx))
+        self._cmb_cloud_flow.blockSignals(False)
+
         cd = int(max(0, min(4, int(cloud_density))))
         self._sld_cloud_density.blockSignals(True)
         self._sld_cloud_density.setValue(cd)
@@ -702,6 +744,9 @@ class SettingsOverlay(QWidget):
         sv = int(v)
         self._lbl_cloud_seed.setText(f"Cloud seed: {sv}")
         self.cloud_seed_changed.emit(int(sv))
+
+    def _on_cloud_flow_direction(self, _index: int) -> None:
+        self.cloud_flow_direction_changed.emit(str(self._current_cloud_flow_value()))
 
     def keyPressEvent(self, e) -> None:
         if int(e.key()) == int(Qt.Key.Key_Escape):

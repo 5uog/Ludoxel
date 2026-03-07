@@ -27,6 +27,7 @@ class PersistedSettings:
     cloud_enabled: bool = True
     cloud_density: int = 1
     cloud_seed: int = 1337
+    cloud_flow_direction: str = "west_to_east"
 
     build_mode: bool = False
     auto_jump_enabled: bool = False
@@ -56,6 +57,7 @@ class PersistedSettings:
             "cloud_enabled": bool(self.cloud_enabled),
             "cloud_density": int(self.cloud_density),
             "cloud_seed": int(self.cloud_seed),
+            "cloud_flow_direction": str(self.cloud_flow_direction),
             "build_mode": bool(self.build_mode),
             "auto_jump_enabled": bool(self.auto_jump_enabled),
             "auto_sprint_enabled": bool(self.auto_sprint_enabled),
@@ -88,6 +90,12 @@ class PersistedSettings:
             v = d.get(k, default)
             return bool(v) if isinstance(v, (bool, int)) else bool(default)
 
+        def g_str(k: str, default: str) -> str:
+            v = d.get(k, default)
+            if v is None:
+                return str(default)
+            return str(v)
+
         rd = g_int("render_distance_chunks", 6)
         rd = int(max(2, min(16, rd)))
 
@@ -104,6 +112,7 @@ class PersistedSettings:
             cloud_enabled=g_bool("cloud_enabled", True),
             cloud_density=g_int("cloud_density", 1),
             cloud_seed=g_int("cloud_seed", 1337),
+            cloud_flow_direction=g_str("cloud_flow_direction", "west_to_east"),
             build_mode=g_bool("build_mode", False),
             auto_jump_enabled=g_bool("auto_jump_enabled", False),
             auto_sprint_enabled=g_bool("auto_sprint_enabled", False),

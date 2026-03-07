@@ -111,9 +111,13 @@ class RendererBackend:
         self._cloud.set_enabled(bool(self._state.cloud_enabled))
         self._cloud.set_density(int(self._state.cloud_density))
         self._cloud.set_seed(int(self._state.cloud_seed))
+        self._cloud.set_flow_direction(str(self._state.cloud_flow_direction))
 
         if self._selection is not None:
             self._selection.set_outline_enabled(bool(self._state.outline_selection_enabled))
+
+    def set_cloud_motion_paused(self, on: bool) -> None:
+        self._cloud.set_motion_paused(bool(on))
 
     def gl_info(self) -> tuple[str, str, str, str]:
         return (

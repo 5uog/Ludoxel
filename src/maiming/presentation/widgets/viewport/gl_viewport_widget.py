@@ -78,6 +78,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._settings.clouds_enabled_changed.connect(self._set_cloud_enabled)
         self._settings.cloud_density_changed.connect(self._set_cloud_density)
         self._settings.cloud_seed_changed.connect(self._set_cloud_seed)
+        self._settings.cloud_flow_direction_changed.connect(self._set_cloud_flow_direction)
         self._settings.world_wireframe_changed.connect(self._set_world_wire)
         self._settings.shadow_enabled_changed.connect(self._set_shadow_enabled)
         self._settings.sun_azimuth_changed.connect(self._set_sun_azimuth)
@@ -164,12 +165,16 @@ class GLViewportWidget(QOpenGLWidget):
         self._renderer.set_cloud_enabled(bool(self._state.cloud_enabled))
         self._renderer.set_cloud_density(int(self._state.cloud_density))
         self._renderer.set_cloud_seed(int(self._state.cloud_seed))
+        self._renderer.set_cloud_flow_direction(str(self._state.cloud_flow_direction))
         self._renderer.set_shadow_enabled(bool(self._state.shadow_enabled))
         self._renderer.set_world_wireframe(bool(self._state.world_wire))
         self._renderer.set_sun_angles(
             float(self._state.sun_az_deg),
             float(self._state.sun_el_deg),
         )
+
+    def _sync_cloud_motion_pause(self) -> None:
+        self._renderer.set_cloud_motion_paused(bool(self._overlays.paused()))
 
     def save_state(self) -> None:
         self._sync_state_from_renderer_sun()
@@ -253,6 +258,7 @@ class GLViewportWidget(QOpenGLWidget):
                 self._state.vsync_on = False
 
         self._apply_runtime_to_renderer()
+        self._sync_cloud_motion_pause()
 
         self._runner.start()
         self._sim_timer.start()
@@ -343,8 +349,6 @@ class GLViewportWidget(QOpenGLWidget):
             return
         if self._overlays.paused():
             return
-        if self._overlays.inventory_open():
-            return
         if self._overlays.settings_open():
             return
         self._runner.update()
@@ -362,6 +366,7 @@ class GLViewportWidget(QOpenGLWidget):
             clouds_enabled=self._state.cloud_enabled,
             cloud_density=int(self._state.cloud_density),
             cloud_seed=int(self._state.cloud_seed),
+            cloud_flow_direction=str(self._state.cloud_flow_direction),
             world_wire=self._state.world_wire,
             shadow_enabled=self._state.shadow_enabled,
             sun_az_deg=self._state.sun_az_deg,
@@ -383,14 +388,17 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _resume_from_overlay(self) -> None:
         self._overlays.set_paused(False)
+        self._sync_cloud_motion_pause()
 
     def _open_settings_from_pause(self) -> None:
         self._sync_settings_values()
         self._overlays.set_settings_open(True)
+        self._sync_cloud_motion_pause()
 
     def _back_from_settings(self) -> None:
         self._sync_settings_values()
         self._overlays.set_settings_open(False)
+        self._sync_cloud_motion_pause()
 
     def _set_fov(self, fov: float) -> None:
         self._session.settings.set_fov(float(fov))
@@ -425,6 +433,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.cloud_seed = int(v)
         self._state.normalize()
         self._renderer.set_cloud_seed(int(self._state.cloud_seed))
+
+    def _set_cloud_flow_direction(self, direction: str) -> None:
+        self._state.cloud_flow_direction = str(direction)
+        self._state.normalize()
+        self._renderer.set_cloud_flow_direction(str(self._state.cloud_flow_direction))
 
     def _set_world_wire(self, on: bool) -> None:
         self._state.world_wire = bool(on)
@@ -595,9 +608,11 @@ class GLViewportWidget(QOpenGLWidget):
 
             if self._overlays.paused():
                 self._overlays.set_paused(False)
+                self._sync_cloud_motion_pause()
             else:
                 self._sync_settings_values()
                 self._overlays.set_paused(True)
+                self._sync_cloud_motion_pause()
             return
 
         if int(e.key()) == int(Qt.Key.Key_B) and (not self._overlays.paused()) and (not self._overlays.dead()):

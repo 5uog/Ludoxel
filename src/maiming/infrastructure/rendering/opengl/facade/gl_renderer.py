@@ -26,6 +26,7 @@ class GLRenderer:
             cloud_enabled=True,
             cloud_density=int(self._cfg.clouds.rects_per_cell),
             cloud_seed=int(self._cfg.clouds.seed),
+            cloud_flow_direction="west_to_east",
             sun_azimuth_deg=float(self._cfg.sun.azimuth_deg),
             sun_elevation_deg=float(self._cfg.sun.elevation_deg),
         )
@@ -60,6 +61,13 @@ class GLRenderer:
     def set_cloud_seed(self, seed: int) -> None:
         self._state.set_cloud_seed(int(seed))
         self._backend.apply_runtime_state()
+
+    def set_cloud_flow_direction(self, direction: str) -> None:
+        self._state.set_cloud_flow_direction(str(direction))
+        self._backend.apply_runtime_state()
+
+    def set_cloud_motion_paused(self, on: bool) -> None:
+        self._backend.set_cloud_motion_paused(bool(on))
 
     def set_world_wireframe(self, on: bool) -> None:
         self._state.world_wireframe = bool(on)
