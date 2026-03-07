@@ -33,6 +33,36 @@ def is_fence(defn: BlockDefinition | None) -> bool:
 def is_fence_gate(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "fence_gate")
 
+def _slab_type(props: dict[str, str]) -> str:
+    t = str(props.get("type", "bottom"))
+    if t in ("bottom", "top", "double"):
+        return t
+    return "bottom"
+
+def _state_is_full_solid_parts(defn: BlockDefinition | None, props: dict[str, str]) -> bool:
+    if defn is None:
+        return False
+
+    if is_full_solid(defn):
+        return True
+
+    if is_slab(defn) and _slab_type(props) == "double":
+        return True
+
+    return False
+
+def block_state_is_full_solid(
+    state_str: str | None,
+    *,
+    get_def: DefLookup,
+) -> bool:
+    if state_str is None:
+        return False
+
+    base, props = parse_state(str(state_str))
+    defn = get_def(str(base))
+    return _state_is_full_solid_parts(defn, props)
+
 def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
     f = str(facing)
     s = str(side_from_gate)
@@ -57,7 +87,7 @@ def fence_connects_to_neighbor_state(
     if nd is None:
         return True
 
-    if is_full_solid(nd) or is_fence(nd):
+    if _state_is_full_solid_parts(nd, props) or is_fence(nd):
         return True
 
     if is_fence_gate(nd):
@@ -95,7 +125,7 @@ def wall_side_from_neighbor_state(
             return "low"
         return "none"
 
-    if is_full_solid(nd):
+    if _state_is_full_solid_parts(nd, props):
         return "tall"
 
     return "none"
@@ -106,10 +136,17 @@ def wall_up_rule(
     east: str,
     south: str,
     west: str,
-    above_def: BlockDefinition | None,
+    above_state: str | None,
+    get_def: DefLookup,
 ) -> bool:
-    if is_full_solid(above_def) or is_wall(above_def):
+    if block_state_is_full_solid(above_state, get_def=get_def):
         return True
+
+    if above_state is not None:
+        base, _props = parse_state(str(above_state))
+        above_def = get_def(str(base))
+        if is_wall(above_def):
+            return True
 
     ns_line = (north != "none") and (south != "none") and (east == "none") and (west == "none")
     ew_line = (east != "none") and (west != "none") and (north == "none") and (south == "none")

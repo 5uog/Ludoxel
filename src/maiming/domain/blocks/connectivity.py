@@ -96,13 +96,14 @@ def canonical_wall_state(
         block_registry=block_registry,
     )
 
-    above_def = _def_from_state(_state_at(world, int(x), int(y + 1), int(z)), block_registry)
+    above_state = _state_at(world, int(x), int(y + 1), int(z))
     up = wall_up_rule(
         north=str(north),
         east=str(east),
         south=str(south),
         west=str(west),
-        above_def=above_def,
+        above_state=above_state,
+        get_def=block_registry.get,
     )
 
     return format_state(

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw
 from maiming.domain.blocks.models.dimensions import (
     WALL_POST,
@@ -60,17 +59,13 @@ def boxes_for_wall(
         up = str(props.get("up", "true")).strip().lower() in ("1", "true", "yes", "on")
     else:
         s_above = get_state(int(x), int(y + 1), int(z))
-        above = None
-        if s_above is not None:
-            b_above, _p_above = parse_state(str(s_above))
-            above = get_def(str(b_above))
-
         up = wall_up_rule(
             north=str(north),
             east=str(east),
             south=str(south),
             west=str(west),
-            above_def=above,
+            above_state=s_above,
+            get_def=get_def,
         )
 
     out: list[LocalBox] = []
