@@ -11,7 +11,7 @@ from maiming.presentation.theme.fonts import install_minecraft_fonts, apply_appl
 
 def _set_default_gl_format() -> None:
     fmt = QSurfaceFormat()
-    fmt.setVersion(3, 3)
+    fmt.setVersion(4, 3)
     fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
     fmt.setDepthBufferSize(24)
     fmt.setStencilBufferSize(8)

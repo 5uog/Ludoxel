@@ -6,6 +6,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QSurfaceFormat
+from PyQt6.QtWidgets import QMessageBox
 
 from maiming.core.math.vec3 import Vec3
 from maiming.application.session.fixed_step_runner import FixedStepRunner
@@ -135,7 +136,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._render_timer.timeout.connect(self.update)
 
         fmt = QSurfaceFormat()
-        fmt.setVersion(3, 3)
+        fmt.setVersion(4, 3)
         fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
         fmt.setDepthBufferSize(24)
         self.setFormat(fmt)
@@ -286,10 +287,33 @@ class GLViewportWidget(QOpenGLWidget):
         self._selection_target = (int(hx), int(hy), int(hz), str(st))
 
     def initializeGL(self) -> None:
-        self._renderer.initialize(
-            self._assets_dir,
-            block_registry=self._session.block_registry,
-        )
+        try:
+            self._renderer.initialize(
+                self._assets_dir,
+                block_registry=self._session.block_registry,
+            )
+        except Exception as exc:
+            try:
+                self._sim_timer.stop()
+            except Exception:
+                pass
+
+            try:
+                self._render_timer.stop()
+            except Exception:
+                pass
+
+            try:
+                self._inp.set_mouse_capture(False)
+            except Exception:
+                pass
+
+            QMessageBox.critical(
+                self,
+                "OpenGL 4.3 initialization failed",
+                str(exc) if str(exc).strip() else "Unknown OpenGL initialization error.",
+            )
+            raise
 
         ctx = self.context()
         if ctx is not None:

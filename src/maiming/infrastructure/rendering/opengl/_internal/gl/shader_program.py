@@ -29,12 +29,23 @@ from OpenGL.GL import (
     glDeleteProgram,
     GL_VERTEX_SHADER,
     GL_FRAGMENT_SHADER,
+    GL_COMPUTE_SHADER,
     GL_COMPILE_STATUS,
     GL_LINK_STATUS,
 )
 
 def _load_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+def _shader_stage_name(shader_type: int) -> str:
+    st = int(shader_type)
+    if st == int(GL_VERTEX_SHADER):
+        return "vertex"
+    if st == int(GL_FRAGMENT_SHADER):
+        return "fragment"
+    if st == int(GL_COMPUTE_SHADER):
+        return "compute"
+    return f"shader({st})"
 
 def _compile(shader_type: int, src: str) -> int:
     sid = glCreateShader(shader_type)
@@ -43,8 +54,25 @@ def _compile(shader_type: int, src: str) -> int:
     ok = glGetShaderiv(sid, GL_COMPILE_STATUS)
     if not ok:
         log = glGetShaderInfoLog(sid).decode("utf-8", errors="replace")
-        raise RuntimeError(f"Shader compile failed:\n{log}")
+        stage = _shader_stage_name(int(shader_type))
+        raise RuntimeError(f"{stage.capitalize()} shader compile failed:\n{log}")
     return sid
+
+def _link_program(shader_ids: list[int]) -> int:
+    pid = glCreateProgram()
+    for sid in shader_ids:
+        glAttachShader(pid, int(sid))
+    glLinkProgram(pid)
+
+    ok = glGetProgramiv(pid, GL_LINK_STATUS)
+    if not ok:
+        log = glGetProgramInfoLog(pid).decode("utf-8", errors="replace")
+        raise RuntimeError(f"Program link failed:\n{log}")
+
+    for sid in shader_ids:
+        glDeleteShader(int(sid))
+
+    return int(pid)
 
 @dataclass
 class ShaderProgram:
@@ -54,20 +82,14 @@ class ShaderProgram:
     def from_files(vert_path: Path, frag_path: Path) -> "ShaderProgram":
         vs = _compile(GL_VERTEX_SHADER, _load_text(vert_path))
         fs = _compile(GL_FRAGMENT_SHADER, _load_text(frag_path))
+        pid = _link_program([vs, fs])
+        return ShaderProgram(program=int(pid))
 
-        pid = glCreateProgram()
-        glAttachShader(pid, vs)
-        glAttachShader(pid, fs)
-        glLinkProgram(pid)
-
-        ok = glGetProgramiv(pid, GL_LINK_STATUS)
-        if not ok:
-            log = glGetProgramInfoLog(pid).decode("utf-8", errors="replace")
-            raise RuntimeError(f"Program link failed:\n{log}")
-
-        glDeleteShader(vs)
-        glDeleteShader(fs)
-        return ShaderProgram(program=pid)
+    @staticmethod
+    def from_compute_file(compute_path: Path) -> "ShaderProgram":
+        cs = _compile(GL_COMPUTE_SHADER, _load_text(compute_path))
+        pid = _link_program([cs])
+        return ShaderProgram(program=int(pid))
 
     def destroy(self) -> None:
         if int(self.program) != 0:

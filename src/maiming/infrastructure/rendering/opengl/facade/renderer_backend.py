@@ -31,6 +31,36 @@ from maiming.infrastructure.rendering.opengl.facade.gl_resources import GLResour
 from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
 from maiming.infrastructure.rendering.opengl.facade.selection_controller import SelectionController
 
+def _format_context_details(info: GLInfoSnapshot) -> str:
+    return (
+        f"OpenGL={info.version or 'unknown'}; "
+        f"GLSL={info.glsl_version or 'unknown'}; "
+        f"parsed_version={int(info.major_version)}.{int(info.minor_version)}; "
+        f"parsed_glsl={int(info.glsl_major_version)}.{int(info.glsl_minor_version)}; "
+        f"profile={info.profile_name()}; "
+        f"vendor={info.vendor or 'unknown'}; "
+        f"renderer={info.renderer or 'unknown'}"
+    )
+
+def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
+    if not info.is_version_at_least(4, 3):
+        raise RuntimeError(
+            "Step 1 requires an active OpenGL 4.3 Core Profile context before the compute probe "
+            f"program is introduced, but the active context version is insufficient. {_format_context_details(info)}"
+        )
+
+    if not info.is_core_profile():
+        raise RuntimeError(
+            "Step 1 requires an active OpenGL 4.3 Core Profile context before the compute probe "
+            f"program is introduced, but the active context is not Core Profile. {_format_context_details(info)}"
+        )
+
+    if not info.is_glsl_at_least(4, 30):
+        raise RuntimeError(
+            "Step 1 requires GLSL 4.30 or newer for the compute probe program, but the active GLSL "
+            f"version is insufficient. {_format_context_details(info)}"
+        )
+
 class RendererBackend:
     def __init__(
         self,
@@ -45,7 +75,17 @@ class RendererBackend:
 
         self._res: GLResources | None = None
         self._visuals: BlockVisualResolver | None = None
-        self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="")
+        self._gl_info = GLInfoSnapshot(
+            vendor="",
+            renderer="",
+            version="",
+            glsl_version="",
+            major_version=0,
+            minor_version=0,
+            glsl_major_version=0,
+            glsl_minor_version=0,
+            context_profile_mask=0,
+        )
 
         self._shadow = ShadowMapPass(self._cfg.shadow)
         self._world = WorldPass()
@@ -57,7 +97,18 @@ class RendererBackend:
         self._pipeline: FramePipeline | None = None
 
     def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
-        self._res = GLResources.load(assets_dir, blocks=block_registry)
+        self._gl_info = probe_gl_info()
+        _require_gl43_core_context(self._gl_info)
+
+        try:
+            self._res = GLResources.load(assets_dir, blocks=block_registry)
+        except Exception as exc:
+            raise RuntimeError(
+                "Step 1 shader initialization failed while compiling or linking the new compute probe "
+                f"program or another required shader resource. {_format_context_details(self._gl_info)}\n"
+                f"Original error:\n{exc}"
+            ) from exc
+
         self._visuals = BlockVisualResolver(
             atlas=self._res.atlas,
             blocks=self._res.blocks,
@@ -90,7 +141,6 @@ class RendererBackend:
         )
 
         self.apply_runtime_state()
-        self._gl_info = probe_gl_info()
 
     def destroy(self) -> None:
         self._shadow.destroy()
@@ -104,7 +154,17 @@ class RendererBackend:
         self._visuals = None
         self._selection = None
         self._pipeline = None
-        self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="")
+        self._gl_info = GLInfoSnapshot(
+            vendor="",
+            renderer="",
+            version="",
+            glsl_version="",
+            major_version=0,
+            minor_version=0,
+            glsl_major_version=0,
+            glsl_minor_version=0,
+            context_profile_mask=0,
+        )
 
     def apply_runtime_state(self) -> None:
         self._cloud.set_wireframe(bool(self._state.cloud_wireframe))
