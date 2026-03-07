@@ -217,7 +217,7 @@ def refresh_structural_neighbors(
         (int(x), int(y), int(z - 1)),
     }
 
-    updates: list[tuple[int, int, int, str]] = []
+    updates: dict[tuple[int, int, int], str] = {}
 
     for tx, ty, tz in targets:
         st = _state_at(world, int(tx), int(ty), int(tz))
@@ -244,7 +244,7 @@ def refresh_structural_neighbors(
             )
 
         if nxt is not None and str(nxt) != str(st):
-            updates.append((int(tx), int(ty), int(tz), str(nxt)))
+            updates[(int(tx), int(ty), int(tz))] = str(nxt)
 
-    for tx, ty, tz, nxt in updates:
-        world.set_block(int(tx), int(ty), int(tz), str(nxt))
+    if updates:
+        world.set_blocks_bulk(updates=updates)

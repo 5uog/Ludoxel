@@ -119,6 +119,61 @@ class WorldState:
             self.revision += 1
             self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
 
+    def set_blocks_bulk(
+        self,
+        *,
+        updates: Dict[BlockKey, str] | None = None,
+        removals: Iterable[BlockKey] = (),
+    ) -> None:
+        upd_in = updates or {}
+
+        norm_updates: Dict[BlockKey, str] = {}
+        for k0, v0 in upd_in.items():
+            kk = (int(k0[0]), int(k0[1]), int(k0[2]))
+            norm_updates[kk] = str(v0)
+
+        norm_removals: set[BlockKey] = set()
+        for k0 in removals:
+            kk = (int(k0[0]), int(k0[1]), int(k0[2]))
+            if kk in norm_updates:
+                continue
+            norm_removals.add(kk)
+
+        if not norm_updates and not norm_removals:
+            return
+
+        dirty_keys: set[ChunkKey] = set()
+        changed = False
+
+        with self._lock:
+            for k in norm_removals:
+                if k not in self.blocks:
+                    continue
+
+                del self.blocks[k]
+                self._index_remove(k)
+                dirty_keys.update(neighbor_chunk_keys_for_cell(int(k[0]), int(k[1]), int(k[2])))
+                changed = True
+
+            for k, v in norm_updates.items():
+                prev = self.blocks.get(k)
+                if prev == str(v):
+                    continue
+
+                existed = k in self.blocks
+                self.blocks[k] = str(v)
+                if not existed:
+                    self._index_add(k)
+
+                dirty_keys.update(neighbor_chunk_keys_for_cell(int(k[0]), int(k[1]), int(k[2])))
+                changed = True
+
+            if not changed:
+                return
+
+            self.revision += 1
+            self._mark_chunks_dirty(dirty_keys)
+
     def iter_blocks(self) -> Iterable[tuple[int, int, int, str]]:
         with self._lock:
             items = list(self.blocks.items())

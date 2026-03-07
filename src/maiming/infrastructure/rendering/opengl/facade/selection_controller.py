@@ -15,7 +15,7 @@ class SelectionController:
     outline_enabled: bool = True
 
     _selected_block: tuple[int, int, int] | None = field(default=None, init=False, repr=False)
-    _outline_key: tuple[int, int, int, str, int] | None = field(default=None, init=False, repr=False)
+    _outline_key: tuple[object, ...] | None = field(default=None, init=False, repr=False)
 
     def clear(self) -> None:
         self._selected_block = None
@@ -30,6 +30,33 @@ class SelectionController:
         if not bool(self.outline_enabled):
             self.outline_pass.clear()
 
+    @staticmethod
+    def _outline_signature(
+        *,
+        x: int,
+        y: int,
+        z: int,
+        state_str: str,
+        get_state: GetState,
+    ) -> tuple[str, ...]:
+        sx = int(x)
+        sy = int(y)
+        sz = int(z)
+
+        def gs(px: int, py: int, pz: int) -> str:
+            s = get_state(int(px), int(py), int(pz))
+            return "" if s is None else str(s)
+
+        return (
+            str(state_str),
+            gs(sx + 1, sy, sz),
+            gs(sx - 1, sy, sz),
+            gs(sx, sy + 1, sz),
+            gs(sx, sy - 1, sz),
+            gs(sx, sy, sz + 1),
+            gs(sx, sy, sz - 1),
+        )
+
     def set_target(
         self,
         *,
@@ -40,6 +67,8 @@ class SelectionController:
         get_state: GetState,
         world_revision: int,
     ) -> None:
+        _ = int(world_revision)
+
         cell = (int(x), int(y), int(z))
         self._selected_block = cell
 
@@ -48,12 +77,18 @@ class SelectionController:
             self._outline_key = None
             return
 
-        key = (
+        sig = self._outline_signature(
+            x=int(cell[0]),
+            y=int(cell[1]),
+            z=int(cell[2]),
+            state_str=str(state_str),
+            get_state=get_state,
+        )
+        key: tuple[object, ...] = (
             int(cell[0]),
             int(cell[1]),
             int(cell[2]),
-            str(state_str),
-            int(world_revision),
+            *sig,
         )
         if self._outline_key == key:
             return

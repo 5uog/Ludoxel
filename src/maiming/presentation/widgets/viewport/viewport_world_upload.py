@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Dict
 import math
 import queue
-import time
 from concurrent.futures import ThreadPoolExecutor, Future
 
 import numpy as np
@@ -25,7 +24,7 @@ class _BuildResult:
 
 class WorldUploadTracker:
     def __init__(self) -> None:
-        self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="WorldMeshBuild")
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorldMeshBuild")
         self._pending: Dict[ChunkKey, Future] = {}
 
         self._want_rev: Dict[ChunkKey, int] = {}
@@ -245,39 +244,3 @@ class WorldUploadTracker:
                 self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
 
         self._drain_results(renderer)
-
-        t0 = time.perf_counter()
-        budget_s = 0.0035
-
-        tools = renderer.world_build_tools()
-        if tools is None:
-            return
-        uv_lookup, def_lookup = tools
-
-        for ck in visible:
-            cr = int(world.chunk_mesh_revision(ck))
-            if cr <= 0:
-                continue
-            if int(self._resident_rev.get(ck, -1)) == int(cr):
-                continue
-            if (time.perf_counter() - t0) > budget_s:
-                break
-
-            blocks_local, state_at = world.snapshot_for_chunk_build(ck)
-
-            def get_state(x: int, y: int, z: int) -> str | None:
-                return state_at.get((int(x), int(y), int(z)))
-
-            faces, shadow_faces = build_chunk_mesh_cpu(
-                blocks=blocks_local,
-                get_state=get_state,
-                uv_lookup=uv_lookup,
-                def_lookup=def_lookup,
-            )
-            renderer.submit_chunk(
-                chunk_key=ck,
-                world_revision=int(cr),
-                faces=faces,
-                shadow_faces=shadow_faces,
-            )
-            self._resident_rev[ck] = int(cr)

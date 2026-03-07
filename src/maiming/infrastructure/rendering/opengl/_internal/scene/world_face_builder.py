@@ -8,7 +8,7 @@ import numpy as np
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.infrastructure.rendering.opengl._internal.scene.visible_faces import iter_visible_faces
+from maiming.infrastructure.rendering.opengl._internal.scene.fast_visible_faces import iter_fast_visible_faces
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
@@ -95,7 +95,7 @@ def build_chunk_mesh(
         base, _p = parse_state(str(state_str))
         defn = def_lookup(str(base))
 
-        for face in iter_visible_faces(
+        for face in iter_fast_visible_faces(
             x=int(x),
             y=int(y),
             z=int(z),

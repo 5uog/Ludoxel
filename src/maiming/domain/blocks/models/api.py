@@ -34,22 +34,6 @@ def _raise_boxes_to_min_height(boxes: list[LocalBox], min_height: float) -> list
     return out
 
 def _gate_interact_hull(props: dict[str, str]) -> LocalBox:
-    """
-    The fence-gate interaction volume is intentionally decoupled from both the
-    rendered bars and the closed-state collision barrier. The prior full-block
-    hull solved usability at the cost of semantic corruption: right-click rays
-    were captured by an artificial one-block-thick slab of space, so the user
-    could target regions that are visually and mechanically too distant from the
-    actual gate plane. The correct engineering compromise is to preserve the
-    actionable central opening while constraining capture thickness to a narrow
-    planar band aligned with the gate's own axis.
-
-    The hull therefore spans the central aperture in width and the practical
-    interaction height of the gate, yet remains thin along the gate plane. This
-    retains the required behavior that the gate reacts when the player aims at
-    the central air region, including the opened state, while preventing the
-    exaggerated front/back reach introduced by the previous 1×1×1.5 proxy.
-    """
     facing = str(props.get("facing", "south"))
 
     if facing in ("north", "south"):

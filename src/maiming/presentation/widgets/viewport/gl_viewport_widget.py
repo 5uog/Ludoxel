@@ -22,10 +22,7 @@ from maiming.presentation.config.game_loop_params import GameLoopParams, DEFAULT
 
 from maiming.presentation.widgets.viewport.viewport_input import ViewportInput
 from maiming.presentation.widgets.viewport.viewport_overlays import ViewportOverlays, OverlayRefs
-from maiming.presentation.widgets.viewport.viewport_persistence import (
-    apply_persisted_state_if_present,
-    save_state,
-)
+from maiming.presentation.widgets.viewport.viewport_persistence import apply_persisted_state_if_present, save_state
 from maiming.presentation.widgets.viewport.viewport_world_upload import WorldUploadTracker
 from maiming.presentation.widgets.viewport.viewport_runtime_state import ViewportRuntimeState
 
@@ -60,6 +57,9 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._state = ViewportRuntimeState()
         self._sync_state_from_renderer_sun()
+
+        self._selection_target: tuple[int, int, int, str] | None = None
+        self._selection_cache_key: tuple[float, float, float, float, float, int, float] | None = None
 
         self._shutdown_done = False
 
@@ -244,6 +244,47 @@ class GLViewportWidget(QOpenGLWidget):
             self._hud.show()
             self._hud.raise_()
 
+    def _selection_key(self) -> tuple[float, float, float, float, float, int, float]:
+        eye = self._session.player.eye_pos()
+        return (
+            round(float(eye.x), 4),
+            round(float(eye.y), 4),
+            round(float(eye.z), 4),
+            round(float(self._session.player.yaw_deg), 3),
+            round(float(self._session.player.pitch_deg), 3),
+            int(self._session.world.revision),
+            round(float(self._state.reach), 3),
+        )
+
+    def _update_selection_target(self, *, force: bool = False) -> None:
+        key = self._selection_key()
+        if (not bool(force)) and self._selection_cache_key == key:
+            return
+
+        self._selection_cache_key = key
+
+        from maiming.domain.systems.build_system import pick_block
+
+        eye = self._session.player.eye_pos()
+        hit = pick_block(
+            self._session.world,
+            origin=eye,
+            direction=self._session.player.view_forward(),
+            reach=float(self._state.reach),
+            block_registry=self._session.block_registry,
+        )
+        if hit is None:
+            self._selection_target = None
+            return
+
+        hx, hy, hz = hit.hit
+        st = self._session.world.blocks.get((int(hx), int(hy), int(hz)))
+        if st is None:
+            self._selection_target = None
+            return
+
+        self._selection_target = (int(hx), int(hy), int(hz), str(st))
+
     def initializeGL(self) -> None:
         self._renderer.initialize(
             self._assets_dir,
@@ -300,34 +341,24 @@ class GLViewportWidget(QOpenGLWidget):
             render_distance_chunks=int(self._state.render_distance_chunks),
         )
 
-        from maiming.domain.systems.build_system import pick_block
+        self._update_selection_target()
 
-        hit = pick_block(
-            self._session.world,
-            origin=eye,
-            direction=self._session.player.view_forward(),
-            reach=float(self._state.reach),
-            block_registry=self._session.block_registry,
-        )
-        if hit is None:
+        if self._selection_target is None:
             self._renderer.clear_selection()
         else:
-            hx, hy, hz = hit.hit
-            st = self._session.world.blocks.get((int(hx), int(hy), int(hz)))
-            if st is None:
-                self._renderer.clear_selection()
-            else:
-                def get_state(x: int, y: int, z: int) -> str | None:
-                    return self._session.world.blocks.get((int(x), int(y), int(z)))
+            hx, hy, hz, st = self._selection_target
 
-                self._renderer.set_selection_target(
-                    x=int(hx),
-                    y=int(hy),
-                    z=int(hz),
-                    state_str=str(st),
-                    get_state=get_state,
-                    world_revision=int(self._session.world.revision),
-                )
+            def get_state(x: int, y: int, z: int) -> str | None:
+                return self._session.world.blocks.get((int(x), int(y), int(z)))
+
+            self._renderer.set_selection_target(
+                x=int(hx),
+                y=int(hy),
+                z=int(hz),
+                state_str=str(st),
+                get_state=get_state,
+                world_revision=int(self._session.world.revision),
+            )
 
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
@@ -384,6 +415,9 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _respawn(self) -> None:
         self._session.respawn()
+        self._selection_target = None
+        self._selection_cache_key = None
+        self._renderer.clear_selection()
         self._overlays.set_dead(False)
 
     def _resume_from_overlay(self) -> None:
@@ -538,6 +572,8 @@ class GLViewportWidget(QOpenGLWidget):
             jump_started=bool(jump_started),
         )
 
+        self._update_selection_target()
+
         if float(self._session.player.position.y) < -64.0:
             self._overlays.set_dead(True)
             return
@@ -654,12 +690,14 @@ class GLViewportWidget(QOpenGLWidget):
             b = e.button()
             if b == Qt.MouseButton.LeftButton:
                 self._session.break_block(reach=float(self._state.reach))
+                self._update_selection_target(force=True)
             elif b == Qt.MouseButton.RightButton:
                 self._session.place_block(
                     block_id=self._state.selected_block_id,
                     reach=float(self._state.reach),
                     crouching=bool(self._inp.crouch_held()),
                 )
+                self._update_selection_target(force=True)
 
         super().mousePressEvent(e)
 
