@@ -13,10 +13,7 @@ from maiming.core.math.vec3 import Vec3
 from maiming.domain.world.chunking import ChunkKey, chunk_key
 from maiming.domain.world.world_state import WorldState
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from maiming.infrastructure.rendering.opengl.facade.world_mesh_builder import (
-    build_chunk_mesh_cpu,
-    build_chunk_mesh_cpu_with_gpu_sources,
-)
+from maiming.infrastructure.rendering.opengl.facade.world_mesh_builder import build_chunk_mesh_cpu_with_gpu_sources
 
 @dataclass(frozen=True)
 class _BuildResult:
@@ -111,51 +108,36 @@ class WorldUploadTracker:
                 except Exception:
                     pass
 
-    def bootstrap_resident(
-        self,
-        *,
-        world: WorldState,
-        renderer: GLRenderer,
-        eye: Vec3,
-        render_distance_chunks: int,
-    ) -> None:
-        tools = renderer.world_build_tools()
-        if tools is None:
-            return
-        uv_lookup, def_lookup = tools
+    @staticmethod
+    def _make_state_getter(state_at: dict[tuple[int, int, int], str]):
+        def get_state(x: int, y: int, z: int) -> str | None:
+            return state_at.get((int(x), int(y), int(z)))
 
-        existing = world.existing_chunk_keys()
-        center = self._center_chunk(eye)
-        rd = int(max(2, min(16, int(render_distance_chunks))))
-        need = self._needed_chunks(existing, center, rd, y_pad=1)
+        return get_state
 
-        for ck in need:
-            cr = int(world.chunk_mesh_revision(ck))
-            if cr <= 0:
-                continue
-            if int(self._resident_rev.get(ck, -1)) == int(cr):
-                continue
-
-            blocks_local, state_at = world.snapshot_for_chunk_build(ck)
-
-            def get_state(x: int, y: int, z: int) -> str | None:
-                return state_at.get((int(x), int(y), int(z)))
-
-            faces, shadow_faces, gpu_face_sources, gpu_bucket_counts = build_chunk_mesh_cpu_with_gpu_sources(
-                blocks=blocks_local,
-                get_state=get_state,
-                uv_lookup=uv_lookup,
-                def_lookup=def_lookup,
-            )
-            renderer.submit_chunk(
-                chunk_key=ck,
-                world_revision=int(cr),
-                faces=faces,
-                shadow_faces=shadow_faces,
-                gpu_face_sources=gpu_face_sources,
-                gpu_bucket_counts=gpu_bucket_counts,
-            )
-            self._resident_rev[ck] = int(cr)
+    @staticmethod
+    def _build_result_for_snapshot(
+        chunk_key: ChunkKey,
+        chunk_rev: int,
+        blocks_local: list[tuple[int, int, int, str]],
+        get_state,
+        uv_lookup,
+        def_lookup,
+    ) -> _BuildResult:
+        faces, shadow_faces, gpu_face_sources, gpu_bucket_counts = build_chunk_mesh_cpu_with_gpu_sources(
+            blocks=blocks_local,
+            get_state=get_state,
+            uv_lookup=uv_lookup,
+            def_lookup=def_lookup,
+        )
+        return _BuildResult(
+            chunk=chunk_key,
+            chunk_rev=int(chunk_rev),
+            faces=faces,
+            shadow_faces=shadow_faces,
+            gpu_face_sources=gpu_face_sources,
+            gpu_bucket_counts=gpu_bucket_counts,
+        )
 
     def _schedule_build(
         self,
@@ -180,27 +162,17 @@ class WorldUploadTracker:
         self._want_rev[ck] = int(chunk_rev)
 
         blocks_local, state_at = world.snapshot_for_chunk_build(ck)
+        get_state = self._make_state_getter(state_at)
 
-        def get_state(x: int, y: int, z: int) -> str | None:
-            return state_at.get((int(x), int(y), int(z)))
-
-        def _task(chunk_key_local: ChunkKey, rev_local: int, blocks_local_in: list[tuple[int, int, int, str]]):
-            faces, shadow_faces, gpu_face_sources, gpu_bucket_counts = build_chunk_mesh_cpu_with_gpu_sources(
-                blocks=blocks_local_in,
-                get_state=get_state,
-                uv_lookup=uv_lookup,
-                def_lookup=def_lookup,
-            )
-            return _BuildResult(
-                chunk=chunk_key_local,
-                chunk_rev=int(rev_local),
-                faces=faces,
-                shadow_faces=shadow_faces,
-                gpu_face_sources=gpu_face_sources,
-                gpu_bucket_counts=gpu_bucket_counts,
-            )
-
-        fut = self._executor.submit(_task, ck, int(chunk_rev), blocks_local)
+        fut = self._executor.submit(
+            self._build_result_for_snapshot,
+            ck,
+            int(chunk_rev),
+            blocks_local,
+            get_state,
+            uv_lookup,
+            def_lookup,
+        )
 
         def _on_done(done_fut: Future):
             try:
