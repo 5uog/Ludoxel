@@ -41,7 +41,7 @@ SANDSTONE_TYPES: tuple[StoneType, ...] = (
     StoneType(
         key="chiseled_red_sandstone",
         display="Chiseled Red Sandstone",
-        textures=cube_textures("red_sandstone_carved"),
+        textures=side_top_bottom_textures("red_sandstone_carved", "red_sandstone_top", "red_sandstone_top"),
     ),
     StoneType(
         key="cut_red_sandstone",

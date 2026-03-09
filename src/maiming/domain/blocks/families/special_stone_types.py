@@ -144,7 +144,7 @@ SPECIAL_STONE_TYPES: tuple[StoneType, ...] = (
     StoneType(
         key="chiseled_quartz_block",
         display="Chiseled Quartz Block",
-        textures=cube_textures("quartz_block_chiseled"),
+        textures=side_top_bottom_textures("quartz_block_chiseled", "quartz_block_chiseled_top", "quartz_block_chiseled_top"),
     ),
     StoneType(
         key="smooth_quartz",
