@@ -3,21 +3,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtGui import QSurfaceFormat
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
+from maiming.presentation.config.gl_surface_format import install_default_gl_surface_format
 from maiming.presentation.screens.game_screen import GameScreen
 from maiming.presentation.theme.fonts import install_minecraft_fonts, apply_application_font
-
-def _set_default_gl_format() -> None:
-    fmt = QSurfaceFormat()
-    fmt.setVersion(4, 3)
-    fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-    fmt.setDepthBufferSize(24)
-    fmt.setStencilBufferSize(8)
-    fmt.setSamples(4)
-    fmt.setSwapBehavior(QSurfaceFormat.SwapBehavior.DoubleBuffer)
-    QSurfaceFormat.setDefaultFormat(fmt)
 
 class MainWindow(QMainWindow):
     def __init__(self, project_root: Path) -> None:
@@ -34,7 +24,7 @@ class MainWindow(QMainWindow):
         super().closeEvent(e)
 
 def run_app(*, project_root: Path) -> None:
-    _set_default_gl_format()
+    install_default_gl_surface_format()
 
     root = Path(project_root)
 

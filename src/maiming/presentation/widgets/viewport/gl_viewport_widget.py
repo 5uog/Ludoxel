@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QSurfaceFormat
+from PyQt6.QtGui import QMouseEvent, QKeyEvent
 from PyQt6.QtWidgets import QMessageBox
 
 from maiming.core.math.vec3 import Vec3
@@ -15,20 +15,19 @@ from maiming.application.session.session_manager import SessionManager
 from maiming.infrastructure.platform.qt_input_adapter import QtInputAdapter
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 
+from maiming.presentation.config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
+from maiming.presentation.config.gl_surface_format import build_gl_surface_format
+from maiming.presentation.hud.hud_controller import HudController
+from maiming.presentation.widgets.hud.crosshair_widget import CrosshairWidget
+from maiming.presentation.widgets.overlays.death_overlay import DeathOverlay
+from maiming.presentation.widgets.overlays.inventory_overlay import InventoryOverlay
 from maiming.presentation.widgets.overlays.pause_overlay import PauseOverlay
 from maiming.presentation.widgets.overlays.settings_overlay import SettingsOverlay
-from maiming.presentation.widgets.hud.crosshair_widget import CrosshairWidget
-from maiming.presentation.widgets.overlays.inventory_overlay import InventoryOverlay
-from maiming.presentation.widgets.overlays.death_overlay import DeathOverlay
-from maiming.presentation.config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
-
 from maiming.presentation.widgets.viewport.viewport_input import ViewportInput
 from maiming.presentation.widgets.viewport.viewport_overlays import ViewportOverlays, OverlayRefs
 from maiming.presentation.widgets.viewport.viewport_persistence import apply_persisted_state_if_present, save_state
-from maiming.presentation.widgets.viewport.viewport_world_upload import WorldUploadTracker
 from maiming.presentation.widgets.viewport.viewport_runtime_state import ViewportRuntimeState
-
-from maiming.presentation.hud.hud_controller import HudController
+from maiming.presentation.widgets.viewport.viewport_world_upload import WorldUploadTracker
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -139,11 +138,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._render_timer.setInterval(int(max(0, int(self._loop.render_timer_interval_ms))))
         self._render_timer.timeout.connect(self.update)
 
-        fmt = QSurfaceFormat()
-        fmt.setVersion(4, 3)
-        fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-        fmt.setDepthBufferSize(24)
-        self.setFormat(fmt)
+        self.setFormat(build_gl_surface_format())
 
         self._state = apply_persisted_state_if_present(
             project_root=self._project_root,
@@ -705,7 +700,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         super().keyPressEvent(e)
 
-    def keyReleaseEvent(self, e: QKeyEvent) -> None:
+    def keyReleaseEvent(self, e) -> None:
         self._inp.on_key_release(e)
         super().keyReleaseEvent(e)
 

@@ -8,6 +8,10 @@ from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.state_codec import parse_state
+from maiming.infrastructure.rendering.opengl._internal.scene.face_axes import (
+    face_neighbor_offset,
+    face_touches_cell_boundary,
+)
 from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import (
     is_block_face_occluded,
     is_local_face_occluded,
@@ -16,47 +20,12 @@ from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion impo
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
-_EPS = 1e-7
-
 @dataclass(frozen=True)
 class VisibleFace:
     box: LocalBox
     face_idx: int
     mn: tuple[float, float, float]
     mx: tuple[float, float, float]
-
-def _eq(a: float, b: float) -> bool:
-    return abs(float(a) - float(b)) <= _EPS
-
-def _neighbor_cell(x: int, y: int, z: int, face_idx: int) -> tuple[int, int, int]:
-    fi = int(face_idx)
-
-    if fi == 0:
-        return (int(x + 1), int(y), int(z))
-    if fi == 1:
-        return (int(x - 1), int(y), int(z))
-    if fi == 2:
-        return (int(x), int(y + 1), int(z))
-    if fi == 3:
-        return (int(x), int(y - 1), int(z))
-    if fi == 4:
-        return (int(x), int(y), int(z + 1))
-    return (int(x), int(y), int(z - 1))
-
-def _face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
-    fi = int(face_idx)
-
-    if fi == 0:
-        return _eq(float(box.mx_x), 1.0)
-    if fi == 1:
-        return _eq(float(box.mn_x), 0.0)
-    if fi == 2:
-        return _eq(float(box.mx_y), 1.0)
-    if fi == 3:
-        return _eq(float(box.mn_y), 0.0)
-    if fi == 4:
-        return _eq(float(box.mx_z), 1.0)
-    return _eq(float(box.mn_z), 0.0)
 
 def _neighbor_is_full_cube_solid(
     *,
@@ -67,7 +36,11 @@ def _neighbor_is_full_cube_solid(
     get_state: GetState,
     def_lookup: DefLookup,
 ) -> bool:
-    nx, ny, nz = _neighbor_cell(int(x), int(y), int(z), int(face_idx))
+    dx, dy, dz = face_neighbor_offset(int(face_idx))
+    nx = int(x) + int(dx)
+    ny = int(y) + int(dy)
+    nz = int(z) + int(dz)
+
     nst = get_state(int(nx), int(ny), int(nz))
     if nst is None:
         return False
@@ -89,7 +62,7 @@ def _boundary_neighbor_is_full_cube_solid(
     get_state: GetState,
     def_lookup: DefLookup,
 ) -> bool:
-    if not _face_touches_cell_boundary(int(face_idx), box):
+    if not face_touches_cell_boundary(int(face_idx), box):
         return False
 
     return _neighbor_is_full_cube_solid(

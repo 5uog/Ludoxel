@@ -27,6 +27,7 @@ from OpenGL.GL import (
     glDepthMask,
     glDepthFunc,
     glPolygonOffset,
+    glCullFace,
     GL_FRAMEBUFFER,
     GL_FRAMEBUFFER_COMPLETE,
     GL_DEPTH_ATTACHMENT,
@@ -51,6 +52,7 @@ from OpenGL.GL import (
     GL_LESS,
     GL_DEPTH_BUFFER_BIT,
     GL_CULL_FACE,
+    GL_FRONT,
     GL_POLYGON_OFFSET_FILL,
 )
 
@@ -213,14 +215,19 @@ class ShadowMapPass:
             capture_framebuffer=True,
             capture_viewport=True,
             capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL),
-            capture_cull_mode=False,
+            capture_cull_mode=True,
             capture_polygon_mode=False,
         ):
             glBindFramebuffer(GL_FRAMEBUFFER, int(self._fbo))
             glViewport(0, 0, s, s)
 
             glDisable(GL_BLEND)
-            glDisable(GL_CULL_FACE)
+
+            if bool(self._cfg.cull_front):
+                glEnable(GL_CULL_FACE)
+                glCullFace(GL_FRONT)
+            else:
+                glDisable(GL_CULL_FACE)
 
             glEnable(GL_DEPTH_TEST)
             glDepthMask(True)

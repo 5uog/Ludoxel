@@ -7,58 +7,22 @@ from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
+from maiming.infrastructure.rendering.opengl._internal.scene.face_axes import (
+    approx_eq,
+    face_neighbor_offset,
+    face_rect,
+    face_touches_cell_boundary,
+)
 
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
 _EPS = 1e-7
 
-def _eq(a: float, b: float) -> bool:
-    return abs(float(a) - float(b)) <= _EPS
-
 def _face_boundary_offset(face_idx: int, box: LocalBox) -> tuple[int, int, int] | None:
-    fi = int(face_idx)
-
-    if fi == 0 and _eq(float(box.mx_x), 1.0):
-        return (1, 0, 0)
-    if fi == 1 and _eq(float(box.mn_x), 0.0):
-        return (-1, 0, 0)
-    if fi == 2 and _eq(float(box.mx_y), 1.0):
-        return (0, 1, 0)
-    if fi == 3 and _eq(float(box.mn_y), 0.0):
-        return (0, -1, 0)
-    if fi == 4 and _eq(float(box.mx_z), 1.0):
-        return (0, 0, 1)
-    if fi == 5 and _eq(float(box.mn_z), 0.0):
-        return (0, 0, -1)
-
-    return None
-
-def _face_rect(face_idx: int, box: LocalBox) -> tuple[float, float, float, float]:
-    fi = int(face_idx)
-
-    if fi in (0, 1):
-        return (
-            float(box.mn_y),
-            float(box.mx_y),
-            float(box.mn_z),
-            float(box.mx_z),
-        )
-
-    if fi in (2, 3):
-        return (
-            float(box.mn_x),
-            float(box.mx_x),
-            float(box.mn_z),
-            float(box.mx_z),
-        )
-
-    return (
-        float(box.mn_x),
-        float(box.mx_x),
-        float(box.mn_y),
-        float(box.mx_y),
-    )
+    if not face_touches_cell_boundary(int(face_idx), box):
+        return None
+    return face_neighbor_offset(int(face_idx))
 
 def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[float, float, float, float]]:
     fi = int(face_idx)
@@ -66,32 +30,32 @@ def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[fl
 
     for b in boxes:
         if fi == 0:
-            if _eq(float(b.mn_x), 0.0):
+            if approx_eq(float(b.mn_x), 0.0):
                 out.append((float(b.mn_y), float(b.mx_y), float(b.mn_z), float(b.mx_z)))
             continue
 
         if fi == 1:
-            if _eq(float(b.mx_x), 1.0):
+            if approx_eq(float(b.mx_x), 1.0):
                 out.append((float(b.mn_y), float(b.mx_y), float(b.mn_z), float(b.mx_z)))
             continue
 
         if fi == 2:
-            if _eq(float(b.mn_y), 0.0):
+            if approx_eq(float(b.mn_y), 0.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_z), float(b.mx_z)))
             continue
 
         if fi == 3:
-            if _eq(float(b.mx_y), 1.0):
+            if approx_eq(float(b.mx_y), 1.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_z), float(b.mx_z)))
             continue
 
         if fi == 4:
-            if _eq(float(b.mn_z), 0.0):
+            if approx_eq(float(b.mn_z), 0.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_y), float(b.mx_y)))
             continue
 
         if fi == 5:
-            if _eq(float(b.mx_z), 1.0):
+            if approx_eq(float(b.mx_z), 1.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_y), float(b.mx_y)))
 
     return out
@@ -109,32 +73,32 @@ def _local_cover_rects(
             continue
 
         if fi == 0:
-            if _eq(float(other.mn_x), float(box.mx_x)):
+            if approx_eq(float(other.mn_x), float(box.mx_x)):
                 out.append((float(other.mn_y), float(other.mx_y), float(other.mn_z), float(other.mx_z)))
             continue
 
         if fi == 1:
-            if _eq(float(other.mx_x), float(box.mn_x)):
+            if approx_eq(float(other.mx_x), float(box.mn_x)):
                 out.append((float(other.mn_y), float(other.mx_y), float(other.mn_z), float(other.mx_z)))
             continue
 
         if fi == 2:
-            if _eq(float(other.mn_y), float(box.mx_y)):
+            if approx_eq(float(other.mn_y), float(box.mx_y)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_z), float(other.mx_z)))
             continue
 
         if fi == 3:
-            if _eq(float(other.mx_y), float(box.mn_y)):
+            if approx_eq(float(other.mx_y), float(box.mn_y)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_z), float(other.mx_z)))
             continue
 
         if fi == 4:
-            if _eq(float(other.mn_z), float(box.mx_z)):
+            if approx_eq(float(other.mn_z), float(box.mx_z)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_y), float(other.mx_y)))
             continue
 
         if fi == 5:
-            if _eq(float(other.mx_z), float(box.mn_z)):
+            if approx_eq(float(other.mx_z), float(box.mn_z)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_y), float(other.mx_y)))
 
     return out
@@ -221,7 +185,7 @@ def is_local_face_occluded(
     face_idx: int,
     boxes: list[LocalBox],
 ) -> bool:
-    target = _face_rect(int(face_idx), box)
+    target = face_rect(int(face_idx), box)
     rects = _local_cover_rects(int(face_idx), box, boxes)
     if not rects:
         return False
@@ -266,7 +230,7 @@ def is_block_face_occluded(
     if not nboxes:
         return False
 
-    target = _face_rect(int(face_idx), box)
+    target = face_rect(int(face_idx), box)
     rects = _neighbor_cover_rects(int(face_idx), nboxes)
     if not rects:
         return False
