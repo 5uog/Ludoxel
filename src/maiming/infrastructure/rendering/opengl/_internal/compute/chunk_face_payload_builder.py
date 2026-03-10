@@ -8,9 +8,9 @@ import numpy as np
 from OpenGL.GL import glDispatchCompute, glMemoryBarrier, GL_SHADER_STORAGE_BARRIER_BIT, GL_BUFFER_UPDATE_BARRIER_BIT
 
 from ......domain.world.chunking import ChunkKey
+from ..face_bucket_layout import FACE_COUNT, BucketCounts, bucket_offsets, empty_face_bucket_arrays, normalize_bucket_counts
 from ..gl.shader_program import ShaderProgram
 from ..gl.storage_buffer import StorageBuffer
-from ..scene.world_face_source_builder import BucketCounts, empty_face_buckets
 
 @dataclass(frozen=True)
 class ChunkFacePayloadSnapshot:
@@ -52,26 +52,14 @@ class ChunkFacePayloadBuilder:
         for ck in doomed:
             self.remove_chunk(ck)
 
-    @staticmethod
-    def _norm_bucket_counts(bucket_counts: BucketCounts) -> BucketCounts:
-        vals = tuple(int(max(0, int(v))) for v in bucket_counts[:6])
-        if len(vals) < 6:
-            vals = vals + (0,) * (6 - len(vals))
-        return (int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]), int(vals[4]), int(vals[5]))
-
-    @staticmethod
-    def _offsets(bucket_counts: BucketCounts) -> tuple[int, int, int, int, int, int]:
-        c0, c1, c2, c3, c4, c5 = (int(bucket_counts[i]) for i in range(6))
-        return (0, int(c0), int(c0 + c1), int(c0 + c1 + c2), int(c0 + c1 + c2 + c3), int(c0 + c1 + c2 + c3 + c4))
-
     def _build_faces(self, *, face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
         if self._prog is None or self._src is None or self._dst is None:
-            return empty_face_buckets()
+            return empty_face_bucket_arrays(12)
 
-        counts = self._norm_bucket_counts(bucket_counts)
+        counts = normalize_bucket_counts(bucket_counts)
         total_rows = int(sum(int(c) for c in counts))
         if total_rows <= 0 or face_sources.size <= 0:
-            return empty_face_buckets()
+            return empty_face_bucket_arrays(12)
 
         src = face_sources
         if src.dtype != np.float32:
@@ -84,9 +72,9 @@ class ChunkFacePayloadBuilder:
 
         face_count = int(src.shape[0])
         if face_count <= 0:
-            return empty_face_buckets()
+            return empty_face_bucket_arrays(12)
 
-        offsets = self._offsets(counts)
+        offsets = bucket_offsets(counts)
         out_bytes = int(total_rows) * 12 * 4
 
         self._src.upload_array(src.reshape(-1))
@@ -116,8 +104,8 @@ class ChunkFacePayloadBuilder:
         raw = raw.reshape((int(total_rows), 12))
 
         out: list[np.ndarray] = []
-        for fi, cnt in enumerate(counts):
-            n = int(cnt)
+        for fi in range(FACE_COUNT):
+            n = int(counts[fi])
             if n <= 0:
                 out.append(np.zeros((0, 12), dtype=np.float32))
                 continue

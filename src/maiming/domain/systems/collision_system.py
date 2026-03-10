@@ -22,6 +22,13 @@ class CollisionReport:
     step_up_dy: float
     y_correction_dy: float
 
+@dataclass(frozen=True)
+class _HorizontalMoveResult:
+    pos: Vec3
+    hit_ground: bool
+    stepped_up: bool
+    step_up_dy: float
+
 def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
     pxz = int(params.nearby_xz_pad)
     pyd = int(params.nearby_y_down_pad)
@@ -165,6 +172,51 @@ def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: 
 
     return landed
 
+def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry) -> Vec3:
+    eps = float(params.eps)
+    pos_axis = pos_try
+    aabb = player.aabb_at(pos_axis)
+
+    for bx, by, bz in _iter_nearby_blocks(world, aabb, params):
+        for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry):
+            if not aabb.intersects(ba):
+                continue
+
+            if str(axis) == "x":
+                if float(delta) > 0.0:
+                    pos_axis = Vec3(ba.mn.x - (player.width * 0.5) - eps, pos_axis.y, pos_axis.z)
+                else:
+                    pos_axis = Vec3(ba.mx.x + (player.width * 0.5) + eps, pos_axis.y, pos_axis.z)
+                player.velocity = Vec3(0.0, player.velocity.y, player.velocity.z)
+            else:
+                if float(delta) > 0.0:
+                    pos_axis = Vec3(pos_axis.x, pos_axis.y, ba.mn.z - (player.width * 0.5) - eps)
+                else:
+                    pos_axis = Vec3(pos_axis.x, pos_axis.y, ba.mx.z + (player.width * 0.5) + eps)
+                player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
+
+            aabb = player.aabb_at(pos_axis)
+
+    return pos_axis
+
+def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: Vec3, *, axis: str, delta: float, allow_step: bool, params: CollisionParams, block_registry: BlockRegistry) -> _HorizontalMoveResult:
+    if str(axis) == "x":
+        pos_try = Vec3(pos.x + float(delta), pos.y, pos.z)
+        step_dx = float(delta)
+        step_dz = 0.0
+    else:
+        pos_try = Vec3(pos.x, pos.y, pos.z + float(delta))
+        step_dx = 0.0
+        step_dz = float(delta)
+
+    if allow_step and _any_intersection(world, player.aabb_at(pos_try), params, block_registry=block_registry):
+        stepped = _try_step_up_height(player, world, pos, float(step_dx), float(step_dz), float(params.step_height), params, block_registry=block_registry)
+        if stepped is not None:
+            return _HorizontalMoveResult(pos=stepped, hit_ground=True, stepped_up=True, step_up_dy=float(stepped.y - pos.y))
+
+    pos_axis = _axis_collision_position(player, world, pos_try, axis=str(axis), delta=float(delta), params=params, block_registry=block_registry)
+    return _HorizontalMoveResult(pos=pos_axis, hit_ground=False, stepped_up=False, step_up_dy=0.0)
+
 def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, dz: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS) -> bool:
     pos = player.position
     if abs(float(dx)) + abs(float(dz)) <= 1e-9:
@@ -179,8 +231,6 @@ def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, 
     return True
 
 def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, crouch: bool = False, jump_pressed: bool = False) -> CollisionReport:
-    eps = float(params.eps)
-
     supported_before = bool(player.on_ground) or _ground_probe(player, world, params, block_registry=block_registry)
 
     delta = player.velocity * float(dt)
@@ -199,42 +249,15 @@ def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float
     step_up_dy = 0.0
 
     if abs(delta.x) > 0.0:
-        pos_try = Vec3(pos.x + delta.x, pos.y, pos.z)
-        if allow_step and _any_intersection(world, player.aabb_at(pos_try), params, block_registry=block_registry):
-            stepped = _try_step_up_height(player, world, pos, float(delta.x), 0.0, float(params.step_height), params, block_registry=block_registry)
-            if stepped is not None:
-                step_up_dy = float(stepped.y - pos.y)
-                pos = stepped
-                hit_ground = True
-                stepped_up = True
-            else:
-                pos_x = pos_try
-                aabb = player.aabb_at(pos_x)
-                for bx, by, bz in _iter_nearby_blocks(world, aabb, params):
-                    for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry):
-                        if aabb.intersects(ba):
-                            if delta.x > 0.0:
-                                pos_x = Vec3(ba.mn.x - (player.width * 0.5) - eps, pos_x.y, pos_x.z)
-                            else:
-                                pos_x = Vec3(ba.mx.x + (player.width * 0.5) + eps, pos_x.y, pos_x.z)
-                            player.velocity = Vec3(0.0, player.velocity.y, player.velocity.z)
-                            aabb = player.aabb_at(pos_x)
-                pos = pos_x
-        else:
-            pos_x = pos_try
-            aabb = player.aabb_at(pos_x)
-            for bx, by, bz in _iter_nearby_blocks(world, aabb, params):
-                for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry):
-                    if aabb.intersects(ba):
-                        if delta.x > 0.0:
-                            pos_x = Vec3(ba.mn.x - (player.width * 0.5) - eps, pos_x.y, pos_x.z)
-                        else:
-                            pos_x = Vec3(ba.mx.x + (player.width * 0.5) + eps, pos_x.y, pos_x.z)
-                        player.velocity = Vec3(0.0, player.velocity.y, player.velocity.z)
-                        aabb = player.aabb_at(pos_x)
-            pos = pos_x
+        x_result = _resolve_horizontal_axis_move(player, world, pos, axis="x", delta=float(delta.x), allow_step=bool(allow_step), params=params, block_registry=block_registry)
+        pos = x_result.pos
+        hit_ground = bool(hit_ground or x_result.hit_ground)
+        if bool(x_result.stepped_up):
+            stepped_up = True
+            step_up_dy = float(x_result.step_up_dy)
 
     if abs(delta.y) > 0.0:
+        eps = float(params.eps)
         pos_y = Vec3(pos.x, pos.y + delta.y, pos.z)
         aabb = player.aabb_at(pos_y)
         for bx, by, bz in _iter_nearby_blocks(world, aabb, params):
@@ -251,40 +274,12 @@ def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float
         pos = pos_y
 
     if abs(delta.z) > 0.0:
-        pos_try = Vec3(pos.x, pos.y, pos.z + delta.z)
-        if allow_step and _any_intersection(world, player.aabb_at(pos_try), params, block_registry=block_registry):
-            stepped = _try_step_up_height(player, world, pos, 0.0, float(delta.z), float(params.step_height), params, block_registry=block_registry)
-            if stepped is not None:
-                step_up_dy = float(stepped.y - pos.y)
-                pos = stepped
-                hit_ground = True
-                stepped_up = True
-            else:
-                pos_z = pos_try
-                aabb = player.aabb_at(pos_z)
-                for bx, by, bz in _iter_nearby_blocks(world, aabb, params):
-                    for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry):
-                        if aabb.intersects(ba):
-                            if delta.z > 0.0:
-                                pos_z = Vec3(pos_z.x, pos_z.y, ba.mn.z - (player.width * 0.5) - eps)
-                            else:
-                                pos_z = Vec3(pos_z.x, pos_z.y, ba.mx.z + (player.width * 0.5) + eps)
-                            player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
-                            aabb = player.aabb_at(pos_z)
-                pos = pos_z
-        else:
-            pos_z = pos_try
-            aabb = player.aabb_at(pos_z)
-            for bx, by, bz in _iter_nearby_blocks(world, aabb, params):
-                for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry):
-                    if aabb.intersects(ba):
-                        if delta.z > 0.0:
-                            pos_z = Vec3(pos_z.x, pos_z.y, ba.mn.z - (player.width * 0.5) - eps)
-                        else:
-                            pos_z = Vec3(pos_z.x, pos_z.y, ba.mx.z + (player.width * 0.5) + eps)
-                        player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
-                        aabb = player.aabb_at(pos_z)
-            pos = pos_z
+        z_result = _resolve_horizontal_axis_move(player, world, pos, axis="z", delta=float(delta.z), allow_step=bool(allow_step), params=params, block_registry=block_registry)
+        pos = z_result.pos
+        hit_ground = bool(hit_ground or z_result.hit_ground)
+        if bool(z_result.stepped_up):
+            stepped_up = True
+            step_up_dy = float(z_result.step_up_dy)
 
     if bool(supported_before) and (not bool(jump_pressed)) and (not bool(hit_ground)) and float(player.velocity.y) <= 1e-9:
         snapped, snap_hit = _resolve_downward_snap(player, world, pos, float(params.step_height), params, block_registry=block_registry)

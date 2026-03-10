@@ -1,9 +1,10 @@
 # FILE: src/maiming/domain/blocks/catalog/planks.py
 from __future__ import annotations
 
-from ..block_definition import BlockDefinition, BlockTextures
+from ..block_definition import BlockTextures
 from ..block_registry import BlockRegistry
 from ..families.wood_types import MOSAIC_TYPES, WOOD_TYPES, WoodType, fence_gate_id, fence_id, planks_id, slab_id, stairs_id
+from .common import register_block_variant
 
 _WOOD_TAGS = ("wood",)
 _PLANK_TAGS = ("planks", "wood")
@@ -15,26 +16,23 @@ def _wood_textures(w: WoodType) -> BlockTextures:
 def _all_plank_variants() -> tuple[WoodType, ...]:
     return WOOD_TYPES + MOSAIC_TYPES
 
-def _register_variant(reg: BlockRegistry, *, block_id: str, display_name: str, textures: BlockTextures, kind: str, family: str, is_full_cube: bool, tags: tuple[str, ...]) -> None:
-    reg.register(BlockDefinition(block_id=str(block_id), display_name=str(display_name), textures=textures, kind=str(kind), family=str(family), is_full_cube=bool(is_full_cube), is_solid=True, tags=tuple(str(x) for x in tags)))
-
 def _register_plank(reg: BlockRegistry, w: WoodType) -> None:
     display = f"{w.display} Planks" if w.key != "bamboo_mosaic" else w.display
-    _register_variant(reg, block_id=planks_id(w), display_name=display, textures=_wood_textures(w), kind="cube", family="block", is_full_cube=True, tags=_PLANK_TAGS)
+    register_block_variant(reg, block_id=planks_id(w), display_name=display, textures=_wood_textures(w), kind="cube", family="block", is_full_cube=True, tags=_PLANK_TAGS)
 
 def _register_slab(reg: BlockRegistry, w: WoodType) -> None:
     display = f"{w.display} Slab" if w.key != "bamboo_mosaic" else "Bamboo Mosaic Slab"
-    _register_variant(reg, block_id=slab_id(w), display_name=display, textures=_wood_textures(w), kind="slab", family="slab", is_full_cube=False, tags=_WOOD_TAGS)
+    register_block_variant(reg, block_id=slab_id(w), display_name=display, textures=_wood_textures(w), kind="slab", family="slab", is_full_cube=False, tags=_WOOD_TAGS)
 
 def _register_stair(reg: BlockRegistry, w: WoodType) -> None:
     display = f"{w.display} Stairs" if w.key != "bamboo_mosaic" else "Bamboo Mosaic Stairs"
-    _register_variant(reg, block_id=stairs_id(w), display_name=display, textures=_wood_textures(w), kind="stairs", family="stairs", is_full_cube=False, tags=_WOOD_TAGS)
+    register_block_variant(reg, block_id=stairs_id(w), display_name=display, textures=_wood_textures(w), kind="stairs", family="stairs", is_full_cube=False, tags=_WOOD_TAGS)
 
 def _register_fence(reg: BlockRegistry, w: WoodType) -> None:
-    _register_variant(reg, block_id=fence_id(w), display_name=f"{w.display} Fence", textures=_wood_textures(w), kind="fence", family="fence", is_full_cube=False, tags=_WOOD_TAGS)
+    register_block_variant(reg, block_id=fence_id(w), display_name=f"{w.display} Fence", textures=_wood_textures(w), kind="fence", family="fence", is_full_cube=False, tags=_WOOD_TAGS)
 
 def _register_fence_gate(reg: BlockRegistry, w: WoodType) -> None:
-    _register_variant(reg, block_id=fence_gate_id(w), display_name=f"{w.display} Fence Gate", textures=_wood_textures(w), kind="fence_gate", family="fence_gate", is_full_cube=False, tags=_WOOD_TAGS)
+    register_block_variant(reg, block_id=fence_gate_id(w), display_name=f"{w.display} Fence Gate", textures=_wood_textures(w), kind="fence_gate", family="fence_gate", is_full_cube=False, tags=_WOOD_TAGS)
 
 def register_planks(reg: BlockRegistry) -> None:
     for w in _all_plank_variants():

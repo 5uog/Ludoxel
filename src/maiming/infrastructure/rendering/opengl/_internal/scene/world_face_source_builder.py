@@ -8,13 +8,13 @@ import numpy as np
 from ......domain.blocks.block_definition import BlockDefinition
 from ......domain.blocks.models.common import LocalBox
 from ......domain.blocks.state_codec import parse_state
+from ..face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
 from .visible_faces import iter_visible_faces
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 GetState = Callable[[int, int, int], str | None]
-BucketCounts = tuple[int, int, int, int, int, int]
 
 def _lerp(a: float, c: float, t: float) -> float:
     return float(a) + (float(c) - float(a)) * float(t)
@@ -75,10 +75,10 @@ def _fence_gate_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
     return _uv_rect(atlas, u0, v0, u1, v1)
 
 def empty_face_buckets() -> list[np.ndarray]:
-    return [np.zeros((0, 12), dtype=np.float32) for _ in range(6)]
+    return empty_face_bucket_arrays(12)
 
 def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
-    counts = tuple(int(max(0, int(c))) for c in bucket_counts[:6])
+    counts = normalize_bucket_counts(bucket_counts)
     out = [np.zeros((int(c), 12), dtype=np.float32) for c in counts]
 
     if face_sources.size <= 0:
@@ -97,7 +97,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
         fi = int(round(float(row[12])))
         slot = int(round(float(row[13])))
 
-        if fi < 0 or fi >= 6:
+        if fi < 0 or fi >= FACE_COUNT:
             continue
         if slot < 0 or slot >= int(counts[fi]):
             continue
@@ -108,7 +108,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
 
 def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
     rows: list[list[float]] = []
-    bucket_counts = [0, 0, 0, 0, 0, 0]
+    bucket_counts = [0 for _ in range(FACE_COUNT)]
 
     for (x, y, z, state_str) in blocks:
         x = int(x)
@@ -120,7 +120,7 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
 
         for face in iter_visible_faces(x=int(x), y=int(y), z=int(z), state_str=str(state_str), get_state=get_state, def_lookup=def_lookup, fast_boundary_full_cube_only=True):
             fi = int(face.face_idx)
-            if fi < 0 or fi >= 6:
+            if fi < 0 or fi >= FACE_COUNT:
                 continue
 
             slot = int(bucket_counts[fi])
@@ -139,7 +139,7 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
 
             rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), 1.0, 0.0, float(fi), float(slot)])
 
-    counts: BucketCounts = (int(bucket_counts[0]), int(bucket_counts[1]), int(bucket_counts[2]), int(bucket_counts[3]), int(bucket_counts[4]), int(bucket_counts[5]))
+    counts = normalize_bucket_counts(bucket_counts)
 
     if not rows:
         return np.zeros((0, 14), dtype=np.float32), counts

@@ -7,9 +7,10 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from OpenGL.GL import glGenBuffers, glDeleteBuffers, glBindBuffer, glBindVertexArray, glMultiDrawArraysIndirect, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
+from OpenGL.GL import glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect, glBindBuffer, glBindVertexArray, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
 
 from ......domain.world.chunking import ChunkKey
+from ..face_bucket_layout import FACE_COUNT
 from ..gl.buffer_upload import as_float32_c_array, as_uint32_c_array, upload_array_buffer
 from ..gl.mesh_buffer import MeshBuffer
 
@@ -25,7 +26,7 @@ class AggregatedFaceBatch:
 
         self._meshes: list[MeshBuffer] = []
         self._indirect_buffers: list[int] = []
-        self._indirect_caps: list[int] = [0, 0, 0, 0, 0, 0]
+        self._indirect_caps: list[int] = [0 for _ in range(FACE_COUNT)]
 
         self._source_faces: dict[ChunkKey, list[np.ndarray]] = {}
         self._source_revs: dict[ChunkKey, int] = {}
@@ -50,7 +51,7 @@ class AggregatedFaceBatch:
     @staticmethod
     def _chunk_total(faces: list[np.ndarray]) -> int:
         total = 0
-        for arr in faces[:6]:
+        for arr in faces[:FACE_COUNT]:
             total += int(arr.shape[0])
         return int(total)
 
@@ -58,9 +59,9 @@ class AggregatedFaceBatch:
         if bool(self._initialized):
             return
 
-        self._meshes = [MeshBuffer.create_quad_instanced(i) for i in range(6)]
-        self._indirect_buffers = [int(glGenBuffers(1)) for _ in range(6)]
-        self._indirect_caps = [0, 0, 0, 0, 0, 0]
+        self._meshes = [MeshBuffer.create_quad_instanced(i) for i in range(FACE_COUNT)]
+        self._indirect_buffers = [int(glGenBuffers(1)) for _ in range(FACE_COUNT)]
+        self._indirect_caps = [0 for _ in range(FACE_COUNT)]
 
         self._initialized = True
         self._dirty = True
@@ -74,7 +75,7 @@ class AggregatedFaceBatch:
             if int(buf) != 0:
                 glDeleteBuffers(1, [int(buf)])
         self._indirect_buffers = []
-        self._indirect_caps = [0, 0, 0, 0, 0, 0]
+        self._indirect_caps = [0 for _ in range(FACE_COUNT)]
 
         self._initialized = False
         self._dirty = True
@@ -83,7 +84,7 @@ class AggregatedFaceBatch:
         return int(self._source_instance_total)
 
     def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
-        if len(faces) != 6:
+        if len(faces) != FACE_COUNT:
             return
 
         ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
@@ -131,18 +132,18 @@ class AggregatedFaceBatch:
             return
 
         ordered = tuple(sorted(self._source_faces.keys()))
-        merged: list[list[np.ndarray]] = [[] for _ in range(6)]
-        offsets = [0, 0, 0, 0, 0, 0]
+        merged: list[list[np.ndarray]] = [[] for _ in range(FACE_COUNT)]
+        offsets = [0 for _ in range(FACE_COUNT)]
         slices: dict[ChunkKey, _ChunkSlice] = {}
 
         for ck in ordered:
             faces = self._source_faces[ck]
-            counts = tuple(int(arr.shape[0]) for arr in faces[:6])
-            slice_offsets = tuple(int(v) for v in offsets[:6])
+            counts = tuple(int(arr.shape[0]) for arr in faces[:FACE_COUNT])
+            slice_offsets = tuple(int(v) for v in offsets[:FACE_COUNT])
 
             slices[ck] = _ChunkSlice(offsets=slice_offsets, counts=(int(counts[0]), int(counts[1]), int(counts[2]), int(counts[3]), int(counts[4]), int(counts[5])), last_rev=int(self._source_revs.get(ck, -1)))
 
-            for fi in range(6):
+            for fi in range(FACE_COUNT):
                 arr = faces[fi]
                 if int(arr.shape[0]) > 0:
                     merged[fi].append(arr)
@@ -152,7 +153,7 @@ class AggregatedFaceBatch:
         self._chunk_slices = slices
 
         if bool(self._initialized):
-            for fi in range(6):
+            for fi in range(FACE_COUNT):
                 if merged[fi]:
                     data = np.concatenate(merged[fi], axis=0)
                 else:
@@ -168,7 +169,7 @@ class AggregatedFaceBatch:
     def build_commands(self, chunks: Iterable[ChunkKey]) -> list[np.ndarray]:
         self.prepare()
 
-        rows: list[list[tuple[int, int, int, int]]] = [[] for _ in range(6)]
+        rows: list[list[tuple[int, int, int, int]]] = [[] for _ in range(FACE_COUNT)]
 
         for ck0 in chunks:
             ck = (int(ck0[0]), int(ck0[1]), int(ck0[2]))
@@ -176,7 +177,7 @@ class AggregatedFaceBatch:
             if sl is None:
                 continue
 
-            for fi in range(6):
+            for fi in range(FACE_COUNT):
                 cnt = int(sl.counts[fi])
                 if cnt <= 0:
                     continue
@@ -184,7 +185,7 @@ class AggregatedFaceBatch:
                 rows[fi].append((int(self._meshes[fi].vertex_count) if self._meshes else 6, int(cnt), 0, int(sl.offsets[fi])))
 
         out: list[np.ndarray] = []
-        for fi in range(6):
+        for fi in range(FACE_COUNT):
             if not rows[fi]:
                 out.append(np.zeros((0, 4), dtype=np.uint32))
                 continue
@@ -211,7 +212,7 @@ class AggregatedFaceBatch:
         draw_calls = 0
         instances = 0
 
-        for fi in range(min(6, len(commands))):
+        for fi in range(min(FACE_COUNT, len(commands))):
             cmd = commands[fi]
             if cmd.size <= 0 or int(cmd.shape[0]) <= 0:
                 continue
