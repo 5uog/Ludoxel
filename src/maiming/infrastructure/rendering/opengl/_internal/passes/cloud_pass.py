@@ -5,20 +5,13 @@ import time
 import numpy as np
 
 from OpenGL.GL import (
-    glEnable, glDisable, glDepthMask, glDepthFunc,
-    glBlendFunc, glBlendEquation,
-    glCullFace, glPolygonMode,
-    glBindVertexArray, glDrawArraysInstanced,
-    GL_DEPTH_TEST, GL_LESS,
-    GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-    GL_CULL_FACE, GL_BACK,
-    GL_FRONT_AND_BACK, GL_LINE, GL_FILL,
-    GL_TRIANGLES,
+    glEnable, glDisable, glDepthMask, glDepthFunc, glBlendFunc, glBlendEquation, glCullFace, glPolygonMode, glBindVertexArray, glDrawArraysInstanced,
+    GL_DEPTH_TEST, GL_LESS, GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE, GL_FILL, GL_TRIANGLES
 )
 
-from maiming.core.math.vec3 import Vec3
-from maiming.infrastructure.rendering.opengl._internal.gl.shader_program import ShaderProgram
-from maiming.infrastructure.rendering.opengl._internal.gl.mesh_buffer import MeshBuffer
+from ......core.math.vec3 import Vec3
+from ..gl.shader_program import ShaderProgram
+from ..gl.mesh_buffer import MeshBuffer
 from ..scene.cloud_field import CloudField, normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams, CameraParams
 
@@ -106,21 +99,11 @@ class CloudPass:
 
         shift = self._field.shift(float(self._time_accum))
 
-        boxes = self._field.visible_boxes(
-            eye=eye,
-            shift=shift,
-            forward=forward,
-            fov_deg=float(fov_deg),
-            aspect=float(aspect),
-            z_far=float(self._cam.z_far),
-        )
+        boxes = self._field.visible_boxes(eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(aspect), z_far=float(self._cam.z_far))
         if not boxes:
             return
 
-        data = np.array(
-            [[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul] for b in boxes],
-            dtype=np.float32,
-        )
+        data = np.array([[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul] for b in boxes], dtype=np.float32)
         self._mesh.upload_instances(data)
         inst_count = int(data.shape[0])
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 
-from maiming.core.math.vec3 import Vec3
+from .vec3 import Vec3
 
 def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> Vec3:
     yaw = math.radians(float(yaw_deg))

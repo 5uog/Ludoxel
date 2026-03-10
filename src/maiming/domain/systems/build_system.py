@@ -3,18 +3,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.core.math.vec3 import Vec3
-from maiming.core.grid.voxel_dda import dda_grid_traverse
-from maiming.core.grid.face_index import face_neighbor_offset
-from maiming.core.geometry.ray import Ray
-from maiming.core.geometry.intersection import ray_aabb_face
+from ...core.math.vec3 import Vec3
+from ...core.grid.voxel_dda import dda_grid_traverse
+from ...core.grid.face_index import face_neighbor_offset
+from ...core.geometry.ray import Ray
+from ...core.geometry.intersection import ray_aabb_face
 
-from maiming.domain.world.world_state import WorldState
-from maiming.domain.blocks.block_definition import FACE_POS_Y
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import pick_aabbs_for_block
-from maiming.domain.blocks.structural_rules import is_fence, is_wall
+from ..world.world_state import WorldState
+from ..blocks.block_definition import FACE_POS_Y
+from ..blocks.block_registry import BlockRegistry
+from ..blocks.state_codec import parse_state
+from ..blocks.models.api import pick_aabbs_for_block
+from ..blocks.structural_rules import is_fence, is_wall
 
 @dataclass(frozen=True)
 class BlockPick:
@@ -24,14 +24,7 @@ class BlockPick:
     face: int
     hit_point: Vec3
 
-def pick_block(
-    world: WorldState,
-    origin: Vec3,
-    direction: Vec3,
-    reach: float,
-    *,
-    block_registry: BlockRegistry,
-) -> BlockPick | None:
+def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float, *, block_registry: BlockRegistry) -> BlockPick | None:
     d = direction.normalized()
     if d.length() <= 1e-12:
         return None
@@ -61,14 +54,7 @@ def pick_block(
             prev_cell = k
             continue
 
-        aabbs = pick_aabbs_for_block(
-            str(st),
-            get_state,
-            get_def,
-            x=int(cx),
-            y=int(cy),
-            z=int(cz),
-        )
+        aabbs = pick_aabbs_for_block(str(st), get_state, get_def, x=int(cx), y=int(cy), z=int(cz))
         if not aabbs:
             prev_cell = k
             continue
@@ -115,12 +101,6 @@ def pick_block(
         if place is not None and place in world.blocks:
             place = None
 
-        return BlockPick(
-            hit=(int(cx), int(cy), int(cz)),
-            place=place,
-            t=float(best_t),
-            face=int(face),
-            hit_point=best_point,
-        )
+        return BlockPick(hit=(int(cx), int(cy), int(cz)), place=place, t=float(best_t), face=int(face), hit_point=best_point)
 
     return None

@@ -9,7 +9,7 @@ import math
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPainter, QColor
 from OpenGL.GL import (
-    glGenTextures, glBindTexture, glTexImage2D, glTexParameteri, glDeleteTextures,
+    glGenTextures, glTexImage2D, glBindTexture, glTexParameteri, glDeleteTextures,
     GL_TEXTURE_2D, GL_RGBA, GL_UNSIGNED_BYTE,
     GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_NEAREST,
     GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE,
@@ -25,12 +25,7 @@ class TextureAtlas:
     height: int
 
     @staticmethod
-    def build_from_dir(
-        block_dir: Path,
-        tile_size: int = 64,
-        names: Iterable[str] | None = None,
-        pad: int = 1,
-    ) -> "TextureAtlas":
+    def build_from_dir(block_dir: Path, tile_size: int = 64, names: Iterable[str] | None = None, pad: int = 1) -> "TextureAtlas":
         items = _collect_images(block_dir, tile_size, names=names, pad=pad)
 
         has_default = any(n == "default" for (n, _img) in items)
@@ -98,12 +93,7 @@ def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None
     def _prep(img: QImage) -> QImage:
         img = img.convertToFormat(QImage.Format.Format_RGBA8888)
         if img.width() != tile_size or img.height() != tile_size:
-            img = img.scaled(
-                tile_size,
-                tile_size,
-                Qt.AspectRatioMode.IgnoreAspectRatio,
-                Qt.TransformationMode.FastTransformation,
-            )
+            img = img.scaled(tile_size, tile_size, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation)
 
         img = img.mirrored(False, True)
 

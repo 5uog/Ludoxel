@@ -3,16 +3,12 @@ from __future__ import annotations
 
 from typing import Callable
 
-from maiming.core.grid.face_index import face_neighbor_offset
-from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import render_boxes_for_block
-from maiming.domain.blocks.models.common import LocalBox
-from maiming.infrastructure.rendering.opengl._internal.scene.face_axes import (
-    approx_eq,
-    face_rect,
-    face_touches_cell_boundary,
-)
+from ......core.grid.face_index import face_neighbor_offset
+from ......domain.blocks.block_definition import BlockDefinition
+from ......domain.blocks.state_codec import parse_state
+from ......domain.blocks.models.api import render_boxes_for_block
+from ......domain.blocks.models.common import LocalBox
+from .face_axes import approx_eq, face_rect, face_touches_cell_boundary
 
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
@@ -55,11 +51,7 @@ def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[fl
 
     return out
 
-def _local_cover_rects(
-    face_idx: int,
-    box: LocalBox,
-    boxes: list[LocalBox],
-) -> list[tuple[float, float, float, float]]:
+def _local_cover_rects(face_idx: int, box: LocalBox, boxes: list[LocalBox]) -> list[tuple[float, float, float, float]]:
     fi = int(face_idx)
     out: list[tuple[float, float, float, float]] = []
 
@@ -98,10 +90,7 @@ def _sorted_unique(values: list[float]) -> list[float]:
         q[int(round(float(v) / _EPS))] = float(v)
     return [q[k] for k in sorted(q.keys())]
 
-def _fully_covered(
-    target_rect: tuple[float, float, float, float],
-    cover_rects: list[tuple[float, float, float, float]],
-) -> bool:
+def _fully_covered(target_rect: tuple[float, float, float, float], cover_rects: list[tuple[float, float, float, float]]) -> bool:
     tu0, tu1, tv0, tv1 = target_rect
 
     if (tu1 - tu0) <= _EPS or (tv1 - tv0) <= _EPS:
@@ -154,12 +143,7 @@ def _fully_covered(
 
             covered = False
             for ru0, ru1, rv0, rv1 in clipped:
-                if (
-                    uc >= (float(ru0) - _EPS)
-                    and uc <= (float(ru1) + _EPS)
-                    and vc >= (float(rv0) - _EPS)
-                    and vc <= (float(rv1) + _EPS)
-                ):
+                if (uc >= (float(ru0) - _EPS) and uc <= (float(ru1) + _EPS) and vc >= (float(rv0) - _EPS) and vc <= (float(rv1) + _EPS)):
                     covered = True
                     break
 
@@ -168,28 +152,14 @@ def _fully_covered(
 
     return True
 
-def is_local_face_occluded(
-    *,
-    box: LocalBox,
-    face_idx: int,
-    boxes: list[LocalBox],
-) -> bool:
+def is_local_face_occluded(*, box: LocalBox, face_idx: int, boxes: list[LocalBox]) -> bool:
     target = face_rect(int(face_idx), box)
     rects = _local_cover_rects(int(face_idx), box, boxes)
     if not rects:
         return False
     return _fully_covered(target, rects)
 
-def is_block_face_occluded(
-    *,
-    x: int,
-    y: int,
-    z: int,
-    box: LocalBox,
-    face_idx: int,
-    get_state: GetState,
-    def_lookup: DefLookup,
-) -> bool:
+def is_block_face_occluded(*, x: int, y: int, z: int, box: LocalBox, face_idx: int, get_state: GetState, def_lookup: DefLookup) -> bool:
     off = _face_boundary_offset(int(face_idx), box)
     if off is None:
         return False
@@ -208,16 +178,7 @@ def is_block_face_occluded(
     if nb_def is None or (not bool(nb_def.is_solid)):
         return False
 
-    nboxes = list(
-        render_boxes_for_block(
-            str(nst),
-            get_state,
-            def_lookup,
-            int(nx),
-            int(ny),
-            int(nz),
-        )
-    )
+    nboxes = list(render_boxes_for_block(str(nst), get_state, def_lookup, int(nx), int(ny), int(nz)))
     if not nboxes:
         return False
 

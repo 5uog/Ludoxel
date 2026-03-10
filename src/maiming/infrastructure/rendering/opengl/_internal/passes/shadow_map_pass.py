@@ -7,61 +7,18 @@ from dataclasses import dataclass
 import numpy as np
 
 from OpenGL.GL import (
-    glGenFramebuffers,
-    glDeleteFramebuffers,
-    glBindFramebuffer,
-    glCheckFramebufferStatus,
-    glGenTextures,
-    glDeleteTextures,
-    glBindTexture,
-    glTexImage2D,
-    glTexParameteri,
-    glTexParameterfv,
-    glFramebufferTexture2D,
-    glDrawBuffer,
-    glReadBuffer,
-    glViewport,
-    glClear,
-    glEnable,
-    glDisable,
-    glDepthMask,
-    glDepthFunc,
-    glPolygonOffset,
-    glCullFace,
-    GL_FRAMEBUFFER,
-    GL_FRAMEBUFFER_COMPLETE,
-    GL_DEPTH_ATTACHMENT,
-    GL_TEXTURE_2D,
-    GL_DEPTH_COMPONENT24,
-    GL_DEPTH_COMPONENT,
-    GL_UNSIGNED_INT,
-    GL_TEXTURE_MIN_FILTER,
-    GL_TEXTURE_MAG_FILTER,
-    GL_LINEAR,
-    GL_TEXTURE_WRAP_S,
-    GL_TEXTURE_WRAP_T,
-    GL_CLAMP_TO_BORDER,
-    GL_TEXTURE_BORDER_COLOR,
-    GL_TEXTURE_COMPARE_MODE,
-    GL_TEXTURE_COMPARE_FUNC,
-    GL_COMPARE_REF_TO_TEXTURE,
-    GL_LEQUAL,
-    GL_NONE,
-    GL_BLEND,
-    GL_DEPTH_TEST,
-    GL_LESS,
-    GL_DEPTH_BUFFER_BIT,
-    GL_CULL_FACE,
-    GL_FRONT,
-    GL_POLYGON_OFFSET_FILL,
+    glGenFramebuffers, glDeleteFramebuffers, glGenTextures, glTexImage2D, glTexParameterfv,
+    glBindFramebuffer, glCheckFramebufferStatus, glDeleteTextures, glBindTexture, glTexParameteri, glFramebufferTexture2D, glDrawBuffer, glReadBuffer, glViewport, glClear, glEnable, glDisable, glDepthMask, glDepthFunc, glPolygonOffset, glCullFace,
+    GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER, GL_TEXTURE_BORDER_COLOR, GL_TEXTURE_COMPARE_MODE, GL_TEXTURE_COMPARE_FUNC, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL, GL_NONE, GL_BLEND, GL_DEPTH_TEST, GL_LESS, GL_DEPTH_BUFFER_BIT, GL_CULL_FACE, GL_FRONT, GL_POLYGON_OFFSET_FILL
 )
 
+from ......domain.world.chunking import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
+from ..scene.chunk_visibility import chunk_intersects_clip_volume
 from ...facade.gl_renderer_params import ShadowParams
 from ...facade.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
-from maiming.domain.world.chunking import ChunkKey, chunk_bounds
 
 @dataclass
 class ShadowMapInfo:
@@ -101,12 +58,7 @@ class ShadowMapPass:
         self._last_metrics = PassFrameMetrics()
 
     def info(self) -> ShadowMapInfo:
-        return ShadowMapInfo(
-            ok=bool(self._ok),
-            size=int(self._size),
-            tex_id=int(self._tex),
-            inst_count=int(self._batch.total_instances()),
-        )
+        return ShadowMapInfo(ok=bool(self._ok), size=int(self._size), tex_id=int(self._tex), inst_count=int(self._batch.total_instances()))
 
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
         self._batch.remove_chunk(chunk_key)
@@ -117,11 +69,7 @@ class ShadowMapPass:
         self._dirty = True
 
     def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
-        self._batch.set_chunk_faces(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=faces,
-        )
+        self._batch.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
         self._dirty = True
 
     def should_render(self, light_vp: np.ndarray) -> bool:
@@ -139,45 +87,6 @@ class ShadowMapPass:
             return True
 
         return not bool(np.array_equal(a, b))
-
-    @staticmethod
-    def _chunk_intersects_light_volume(chunk_key: ChunkKey, light_vp: np.ndarray) -> bool:
-        x0, x1, y0, y1, z0, z1 = chunk_bounds(chunk_key)
-
-        corners = np.asarray(
-            [
-                [float(x0), float(y0), float(z0), 1.0],
-                [float(x1), float(y0), float(z0), 1.0],
-                [float(x0), float(y1), float(z0), 1.0],
-                [float(x1), float(y1), float(z0), 1.0],
-                [float(x0), float(y0), float(z1), 1.0],
-                [float(x1), float(y0), float(z1), 1.0],
-                [float(x0), float(y1), float(z1), 1.0],
-                [float(x1), float(y1), float(z1), 1.0],
-            ],
-            dtype=np.float32,
-        )
-
-        clip = (light_vp @ corners.T).T
-        xs = clip[:, 0]
-        ys = clip[:, 1]
-        zs = clip[:, 2]
-        ws = clip[:, 3]
-
-        if bool(np.all(xs < (-ws))):
-            return False
-        if bool(np.all(xs > ws)):
-            return False
-        if bool(np.all(ys < (-ws))):
-            return False
-        if bool(np.all(ys > ws)):
-            return False
-        if bool(np.all(zs < (-ws))):
-            return False
-        if bool(np.all(zs > ws)):
-            return False
-
-        return True
 
     def render(self, light_vp: np.ndarray) -> PassFrameMetrics:
         t0 = time.perf_counter()
@@ -202,7 +111,7 @@ class ShadowMapPass:
 
         visible_chunks: list[ChunkKey] = []
         for ck in self._batch.chunk_keys():
-            if not self._chunk_intersects_light_volume(ck, vp):
+            if not chunk_intersects_clip_volume(ck, vp):
                 continue
             visible_chunks.append(ck)
 
@@ -211,13 +120,7 @@ class ShadowMapPass:
         draw_calls = 0
         instances = 0
 
-        with GLStateGuard(
-            capture_framebuffer=True,
-            capture_viewport=True,
-            capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL),
-            capture_cull_mode=True,
-            capture_polygon_mode=False,
-        ):
+        with GLStateGuard(capture_framebuffer=True, capture_viewport=True, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL), capture_cull_mode=True, capture_polygon_mode=False):
             glBindFramebuffer(GL_FRAMEBUFFER, int(self._fbo))
             glViewport(0, 0, s, s)
 
@@ -241,21 +144,13 @@ class ShadowMapPass:
             self._prog.use()
             self._prog.set_mat4("u_lightViewProj", vp)
 
-            draw_calls, instances = self._batch.draw(
-                commands,
-                before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)),
-            )
+            draw_calls, instances = self._batch.draw(commands, before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)))
 
             glDisable(GL_POLYGON_OFFSET_FILL)
 
         self._last_vp_rendered = vp.copy()
         self._dirty = False
-        self._last_metrics = PassFrameMetrics(
-            cpu_ms=float((time.perf_counter() - t0) * 1000.0),
-            draw_calls=int(draw_calls),
-            instances=int(instances),
-            rendered=True,
-        )
+        self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=int(draw_calls), instances=int(instances), rendered=True)
         return self._last_metrics
 
     def _destroy_shadow_map(self) -> None:
@@ -278,17 +173,7 @@ class ShadowMapPass:
         tex = int(glGenTextures(1))
         glBindTexture(GL_TEXTURE_2D, tex)
 
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_DEPTH_COMPONENT24,
-            size_i,
-            size_i,
-            0,
-            GL_DEPTH_COMPONENT,
-            GL_UNSIGNED_INT,
-            None,
-        )
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, size_i, size_i, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, None)
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)

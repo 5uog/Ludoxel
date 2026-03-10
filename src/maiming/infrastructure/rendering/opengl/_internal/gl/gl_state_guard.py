@@ -4,10 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
-from OpenGL.GL import (
-    glGetIntegerv, glIsEnabled, glEnable, glDisable, glBindFramebuffer, glViewport, glCullFace, glPolygonMode,
-    GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_VIEWPORT, GL_CULL_FACE_MODE, GL_POLYGON_MODE, GL_FRONT_AND_BACK,
-)
+from OpenGL.GL import glGetIntegerv, glIsEnabled, glEnable, glDisable, glBindFramebuffer, glViewport, glCullFace, glPolygonMode, GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_VIEWPORT, GL_CULL_FACE_MODE, GL_POLYGON_MODE, GL_FRONT_AND_BACK
 
 @dataclass(frozen=True)
 class _EnableCapState:
@@ -15,15 +12,7 @@ class _EnableCapState:
     enabled: bool
 
 class GLStateGuard:
-    def __init__(
-        self,
-        *,
-        capture_framebuffer: bool = True,
-        capture_viewport: bool = True,
-        capture_enables: Sequence[int] = (),
-        capture_cull_mode: bool = False,
-        capture_polygon_mode: bool = False,
-    ) -> None:
+    def __init__(self, *, capture_framebuffer: bool = True, capture_viewport: bool = True, capture_enables: Sequence[int] = (), capture_cull_mode: bool = False, capture_polygon_mode: bool = False) -> None:
         self._cap_fb = bool(capture_framebuffer)
         self._cap_vp = bool(capture_viewport)
         self._cap_en = tuple(int(x) for x in capture_enables)
@@ -35,7 +24,6 @@ class GLStateGuard:
         self._prev_en: list[_EnableCapState] = []
         self._prev_cull_mode: int | None = None
 
-        # Stored as a single mode restored with GL_FRONT_AND_BACK.
         self._prev_poly_mode: int | None = None
 
     def __enter__(self) -> "GLStateGuard":
@@ -57,8 +45,7 @@ class GLStateGuard:
 
         if self._cap_poly:
             pm = glGetIntegerv(GL_POLYGON_MODE)
-            # GL_POLYGON_MODE typically returns [frontMode, backMode].
-            # We restore via GL_FRONT_AND_BACK with a single mode to avoid profile-specific enum issues.
+
             if pm is None:
                 self._prev_poly_mode = None
             elif hasattr(pm, "__len__") and len(pm) >= 1:

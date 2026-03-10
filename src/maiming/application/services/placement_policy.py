@@ -3,18 +3,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.core.math.vec3 import Vec3
-from maiming.core.geometry.aabb import AABB
+from ...core.math.vec3 import Vec3
 
-from maiming.domain.entities.player_entity import PlayerEntity
-from maiming.domain.world.world_state import WorldState
+from ...domain.entities.player_entity import PlayerEntity
+from ...domain.world.world_state import WorldState
 
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.state_codec import format_state, parse_state
-from maiming.domain.blocks.state_values import slab_type_value
-from maiming.domain.blocks.connectivity import make_wall_state, make_fence_gate_state
-from maiming.domain.blocks.models.api import collision_boxes_for_block
-from maiming.domain.blocks.structural_rules import is_slab, is_stairs, is_wall, is_fence_gate
+from ...domain.blocks.block_registry import BlockRegistry
+from ...domain.blocks.state_codec import format_state, parse_state
+from ...domain.blocks.state_values import slab_type_value
+from ...domain.blocks.connectivity import make_wall_state, make_fence_gate_state
+from ...domain.blocks.models.api import collision_aabbs_for_block
+from ...domain.blocks.structural_rules import is_slab, is_stairs, is_wall, is_fence_gate
 
 @dataclass(frozen=True)
 class PlacementPolicy:
@@ -39,13 +38,7 @@ class PlacementPolicy:
         fy = float(hit_point.y) - float(int(hit_point.y))
         return "top" if fy >= 0.5 else "bottom"
 
-    def _try_merge_same_slab(
-        self,
-        *,
-        existing_state: str,
-        block_id: str,
-        desired_type: str,
-    ) -> str | None:
+    def _try_merge_same_slab(self, *, existing_state: str, block_id: str, desired_type: str) -> str | None:
         base, props = parse_state(str(existing_state))
         if str(base) != str(block_id):
             return None
@@ -64,28 +57,11 @@ class PlacementPolicy:
 
         return format_state(str(base), {"type": "double"})
 
-    def resolve_slab_merge_state(
-        self,
-        *,
-        existing_state: str,
-        block_id: str,
-        hit_face: int,
-        hit_point: Vec3,
-    ) -> str | None:
+    def resolve_slab_merge_state(self, *, existing_state: str, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         desired_type = self._choose_half_type(int(hit_face), hit_point)
-        return self._try_merge_same_slab(
-            existing_state=str(existing_state),
-            block_id=str(block_id),
-            desired_type=str(desired_type),
-        )
+        return self._try_merge_same_slab(existing_state=str(existing_state), block_id=str(block_id), desired_type=str(desired_type))
 
-    def resolve_slab_merge_state_from_hit(
-        self,
-        *,
-        existing_state: str,
-        block_id: str,
-        hit_face: int,
-    ) -> str | None:
+    def resolve_slab_merge_state_from_hit(self, *, existing_state: str, block_id: str, hit_face: int) -> str | None:
         face = int(hit_face)
 
         if face == 2:
@@ -95,20 +71,9 @@ class PlacementPolicy:
         else:
             return None
 
-        return self._try_merge_same_slab(
-            existing_state=str(existing_state),
-            block_id=str(block_id),
-            desired_type=str(desired_type),
-        )
+        return self._try_merge_same_slab(existing_state=str(existing_state), block_id=str(block_id), desired_type=str(desired_type))
 
-    def resolve_place_state(
-        self,
-        *,
-        player: PlayerEntity,
-        block_id: str,
-        hit_face: int,
-        hit_point: Vec3,
-    ) -> str | None:
+    def resolve_place_state(self, *, player: PlayerEntity, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         base_sel = str(block_id)
         defn = self.block_registry.get(base_sel)
         if defn is None:
@@ -126,27 +91,14 @@ class PlacementPolicy:
             return format_state(base_sel, props)
 
         if is_fence_gate(defn):
-            return make_fence_gate_state(
-                base_sel,
-                self._player_cardinal(player),
-                open_state=False,
-            )
+            return make_fence_gate_state(base_sel, self._player_cardinal(player), open_state=False)
 
         if is_wall(defn):
             return make_wall_state(base_sel, waterlogged=False)
 
         return format_state(base_sel, props)
 
-    def placement_intersects_player(
-        self,
-        *,
-        player: PlayerEntity,
-        world: WorldState,
-        px: int,
-        py: int,
-        pz: int,
-        place_state: str,
-    ) -> bool:
+    def placement_intersects_player(self, *, player: PlayerEntity, world: WorldState, px: int, py: int, pz: int, place_state: str) -> bool:
         pa = player.aabb_at(player.position)
 
         def get_state(x: int, y: int, z: int) -> str | None:
@@ -155,33 +107,7 @@ class PlacementPolicy:
                 return str(place_state)
             return world.blocks.get(k)
 
-        def get_def(base_id: str):
-            return self.block_registry.get(str(base_id))
-
-        boxes = collision_boxes_for_block(
-            str(place_state),
-            get_state,
-            get_def,
-            int(px),
-            int(py),
-            int(pz),
-        )
-        if not boxes:
-            return False
-
-        for b in boxes:
-            ba = AABB(
-                mn=Vec3(
-                    float(px) + float(b.mn_x),
-                    float(py) + float(b.mn_y),
-                    float(pz) + float(b.mn_z),
-                ),
-                mx=Vec3(
-                    float(px) + float(b.mx_x),
-                    float(py) + float(b.mx_y),
-                    float(pz) + float(b.mx_z),
-                ),
-            )
+        for ba in collision_aabbs_for_block(str(place_state), get_state, self.block_registry.get, int(px), int(py), int(pz)):
             if pa.intersects(ba):
                 return True
 

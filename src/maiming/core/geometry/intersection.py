@@ -3,11 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.core.math.vec3 import Vec3
-from maiming.core.geometry.aabb import AABB
-from maiming.core.geometry.ray import Ray
+from ..math.vec3 import Vec3
+from .aabb import AABB
+from .ray import Ray
 
-# Face index convention is aligned with maiming.domain.blocks.block_definition.
 _FACE_POS_X: int = 0
 _FACE_NEG_X: int = 1
 _FACE_POS_Y: int = 2
@@ -44,13 +43,7 @@ def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
     enter_face: int = -1
     exit_face: int = -1
 
-    for axis, (o_comp, d_comp, mn, mx) in enumerate(
-        (
-            (o.x, d.x, aabb.mn.x, aabb.mx.x),
-            (o.y, d.y, aabb.mn.y, aabb.mx.y),
-            (o.z, d.z, aabb.mn.z, aabb.mx.z),
-        )
-    ):
+    for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
         if abs(d_comp) < 1e-12:
             if o_comp < mn or o_comp > mx:
                 return None

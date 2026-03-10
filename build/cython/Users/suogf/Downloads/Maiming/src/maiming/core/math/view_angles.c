@@ -2276,7 +2276,7 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_codeobj_tab[2];
-  PyObject *__pyx_string_tab[47];
+  PyObject *__pyx_string_tab[48];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
 PyTypeObject *__pyx_CommonTypesMetaclassType;
@@ -2319,24 +2319,24 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 /* #### Code section: constant_name_defines ### */
 #define __pyx_kp_u_ __pyx_string_tab[0]
 #define __pyx_kp_u__2 __pyx_string_tab[1]
-#define __pyx_kp_u_src_maiming_core_math_view_angle __pyx_string_tab[2]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[3]
-#define __pyx_n_u_Vec3 __pyx_string_tab[4]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[5]
-#define __pyx_n_u_az __pyx_string_tab[6]
-#define __pyx_n_u_azimuth_deg __pyx_string_tab[7]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[8]
-#define __pyx_n_u_cos __pyx_string_tab[9]
-#define __pyx_n_u_cp __pyx_string_tab[10]
-#define __pyx_n_u_cy __pyx_string_tab[11]
-#define __pyx_n_u_el __pyx_string_tab[12]
-#define __pyx_n_u_elevation_deg __pyx_string_tab[13]
-#define __pyx_n_u_float __pyx_string_tab[14]
-#define __pyx_n_u_forward_from_yaw_pitch_deg __pyx_string_tab[15]
-#define __pyx_n_u_func __pyx_string_tab[16]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[17]
-#define __pyx_n_u_items __pyx_string_tab[18]
-#define __pyx_n_u_maiming_core_math_vec3 __pyx_string_tab[19]
+#define __pyx_kp_u_maiming_core_math_vec3 __pyx_string_tab[2]
+#define __pyx_kp_u_src_maiming_core_math_view_angle __pyx_string_tab[3]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[4]
+#define __pyx_n_u_Vec3 __pyx_string_tab[5]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[6]
+#define __pyx_n_u_az __pyx_string_tab[7]
+#define __pyx_n_u_azimuth_deg __pyx_string_tab[8]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[9]
+#define __pyx_n_u_cos __pyx_string_tab[10]
+#define __pyx_n_u_cp __pyx_string_tab[11]
+#define __pyx_n_u_cy __pyx_string_tab[12]
+#define __pyx_n_u_el __pyx_string_tab[13]
+#define __pyx_n_u_elevation_deg __pyx_string_tab[14]
+#define __pyx_n_u_float __pyx_string_tab[15]
+#define __pyx_n_u_forward_from_yaw_pitch_deg __pyx_string_tab[16]
+#define __pyx_n_u_func __pyx_string_tab[17]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[18]
+#define __pyx_n_u_items __pyx_string_tab[19]
 #define __pyx_n_u_maiming_core_math_view_angles __pyx_string_tab[20]
 #define __pyx_n_u_main __pyx_string_tab[21]
 #define __pyx_n_u_math __pyx_string_tab[22]
@@ -2357,13 +2357,14 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_sy __pyx_string_tab[37]
 #define __pyx_n_u_test __pyx_string_tab[38]
 #define __pyx_n_u_values __pyx_string_tab[39]
-#define __pyx_n_u_x __pyx_string_tab[40]
-#define __pyx_n_u_y __pyx_string_tab[41]
-#define __pyx_n_u_yaw __pyx_string_tab[42]
-#define __pyx_n_u_yaw_deg __pyx_string_tab[43]
-#define __pyx_n_u_z __pyx_string_tab[44]
-#define __pyx_kp_b_iso88591_A_hauAQ_D_aq_T_T_T_T_4q_Bd_4s_C __pyx_string_tab[45]
-#define __pyx_kp_b_iso88591_j_XQe1A_XQe1A_D_Rt4q_D_D_Rt4q_4 __pyx_string_tab[46]
+#define __pyx_n_u_vec3 __pyx_string_tab[40]
+#define __pyx_n_u_x __pyx_string_tab[41]
+#define __pyx_n_u_y __pyx_string_tab[42]
+#define __pyx_n_u_yaw __pyx_string_tab[43]
+#define __pyx_n_u_yaw_deg __pyx_string_tab[44]
+#define __pyx_n_u_z __pyx_string_tab[45]
+#define __pyx_kp_b_iso88591_A_hauAQ_D_aq_T_T_T_T_4q_Bd_4s_C __pyx_string_tab[46]
+#define __pyx_kp_b_iso88591_j_XQe1A_XQe1A_D_Rt4q_D_D_Rt4q_4 __pyx_string_tab[47]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2379,7 +2380,7 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   __Pyx_State_RemoveModule(NULL);
   #endif
   for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<47; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<48; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
 Py_CLEAR(clear_module_state->__pyx_CommonTypesMetaclassType);
@@ -2403,7 +2404,7 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
   for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<47; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<48; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
 Py_VISIT(traverse_module_state->__pyx_CommonTypesMetaclassType);
@@ -2418,7 +2419,7 @@ return 0;
 /* #### Code section: module_code ### */
 
 /* "maiming/core/math/view_angles.py":8
- * from maiming.core.math.vec3 import Vec3
+ * from .vec3 import Vec3
  * 
  * def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> Vec3:             # <<<<<<<<<<<<<<
  *     yaw = math.radians(float(yaw_deg))
@@ -2822,7 +2823,7 @@ static PyObject *__pyx_pf_7maiming_4core_4math_11view_angles_forward_from_yaw_pi
   goto __pyx_L0;
 
   /* "maiming/core/math/view_angles.py":8
- * from maiming.core.math.vec3 import Vec3
+ * from .vec3 import Vec3
  * 
  * def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> Vec3:             # <<<<<<<<<<<<<<
  *     yaw = math.radians(float(yaw_deg))
@@ -3646,7 +3647,7 @@ __Pyx_RefNannySetupContext("PyInit_view_angles", 0);
  * 
  * import math             # <<<<<<<<<<<<<<
  * 
- * from maiming.core.math.vec3 import Vec3
+ * from .vec3 import Vec3
 */
   __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
@@ -3657,13 +3658,13 @@ __Pyx_RefNannySetupContext("PyInit_view_angles", 0);
   /* "maiming/core/math/view_angles.py":6
  * import math
  * 
- * from maiming.core.math.vec3 import Vec3             # <<<<<<<<<<<<<<
+ * from .vec3 import Vec3             # <<<<<<<<<<<<<<
  * 
  * def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> Vec3:
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Vec3};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_maiming_core_math_vec3, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_vec3, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_math_vec3, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -3679,7 +3680,7 @@ __Pyx_RefNannySetupContext("PyInit_view_angles", 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "maiming/core/math/view_angles.py":8
- * from maiming.core.math.vec3 import Vec3
+ * from .vec3 import Vec3
  * 
  * def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> Vec3:             # <<<<<<<<<<<<<<
  *     yaw = math.radians(float(yaw_deg))
@@ -3793,42 +3794,42 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 7; } index[] = {{1},{1},{36},{20},{4},{18},{2},{11},{18},{3},{2},{2},{2},{13},{5},{26},{8},{13},{5},{22},{29},{8},{4},{10},{8},{10},{5},{9},{3},{12},{7},{6},{12},{10},{3},{2},{22},{2},{8},{6},{1},{1},{3},{7},{1},{113},{110}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (421 bytes) */
-const char* const cstring = "(\265/\375`p\001\335\014\000\206\330Q+Pu\033p\311$\351\033Fa/\231\343\335\364\t\263^W{\245\314\375\264\260\366\205\312\263\n\362\212\373\237\030\342\263\214\331G\343\031#D\000@\000D\000y\377\265_\257\365(\251r_\332\341g\3079N]\257\335!\316\230n\330\322+\3529\2415\324\325\317^U\316oj7+\261\363/\202\233\256\036\351\316WU\233\212\224v\315\230FH\327~v~\021\232\365e\013\336\3742\256\337\274\377\377\325\0139\374\177\355\374\376'\264\246\266m\323_\335\366\265\375\177z\303\356\237n\013\276j\212\377\341\334=\227\247*\343nO\354u\027\333=S^\025)H5\246':G\225\316\035\323C>y\211t\220\005M\206yA\\\225G\354\001\210\215\342J\327\320\233\251\377\255\353\376\027\265W\177\234\331r\177C\r\352k\365\366\302\331UnW\375\177s\270k\326wZnfo\206\250\177\020\203\\\035m\222\322\320G|\302\0052\204,P\2426\377p\305\206\324\310\2016\303tI\257\334\303E\001\230\311ea\264X\245\246l\224\272S:\243s<\303\023<\300Q$\2054h3\031\203#8\210T\220\004m\206\352\263/z\240\017\370\206<h2O! @\304 \247\362\375\0100\246\030\327\210\021\240\221\003F\334O}t4/W\006\302\033\033\016\000\344@\200\010\357u\307\332-\003\232U\300b\240V@.\031\300G\010\313\300Q\214\220w=cX\261+\353\266J*\277\261\334\202J\034\210\0064\000\2740";
-    PyObject *data = __Pyx_DecompressString(cstring, 421, 3);
+    const struct { const unsigned int length: 7; } index[] = {{1},{1},{22},{36},{20},{4},{18},{2},{11},{18},{3},{2},{2},{2},{13},{5},{26},{8},{13},{5},{29},{8},{4},{10},{8},{10},{5},{9},{3},{12},{7},{6},{12},{10},{3},{2},{22},{2},{8},{6},{4},{1},{1},{3},{7},{1},{113},{110}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (424 bytes) */
+const char* const cstring = "(\265/\375`t\001\365\014\000F\030Q*`Y\007d0\026`6\2446\264r\231>b4\332Rc\224\362\265\352\270\345Rb\001\220\201\265\236L>\021\016\370GWu -D\000?\000C\000\331+\365O\226f\347\246\034\202\324\365\256\307\263\322\034ZKe\025\361\213\274\t\312\255\331\361,)\247%z\334\305T\004\317\257T\337Y\223\256$\022\211D^L\221s\0251\345\007#\363Z\031)U\n\322\0071\221\251n\272\350\367\340\265\023\374\352\356>\277\260\263\356\225>\350\216\301\231\251c\352\356\262\206\236\273\3144\345\254\027\035\264\327\363\356>\353Z/\277\375\274ji\376\3257E\231\222\330J\224|\322\224\177\003\237\235\331\241~m\032\035c\201\263ef\020\231\345Q{\000j.\326\213b\013\317\360\373\225{\3063\273\213\370\233\356\372K;\257!N\341Jq\376\302\367f\227'v\2577\314\363\342\372\264\373\373}\250rO\331\023\230a\2234E\013l\010[\000\246\312\032\244\025\234\221\033\007\334-\263'{\352\217\036\005h'\331\205\021{\3016\260\006\014\357\312f\354NktB\007\264j\254\214\006\356fch\204\016\215\212\221\300\335T\373\367b\007\366@s\306\003g\013# @\304 f\353\001\375\004\030\241\030\327\210\001\240\021\002F\354\247::\332.W\016a$\033\344\240\315\025\013B\320\203;\321\301\0324\202b\010\\\255\225\227|\300'\010K\201w4BU\257\333*\251\360\306\022\013j\200`\203\250\020l_\000\337\002;\356\201\321\331\312\003";
+    PyObject *data = __Pyx_DecompressString(cstring, 424, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (484 bytes) */
-const char* const cstring = "BZh91AY&SY\351^|V\000\000#\377\377l|.\0004Q\254\021\274\001u@\277\377\377\370\000@@@@\000@@@@@@@\0000\001\231\265\246!\241H\364\002OG\244\3652\023\324\006\200\323\021\201\032z\200\323i\351 \320\201\t\344\230i#i\251\352\000\000\000\000\007\2444\004\246\251\351I\372\243\311\251\246&\2322h\320\323@\320\323#F\2004\310z%\005\377\260\317\242\204\372u$\206B\376jm\004\301\025 \3162\034\242@\214%&4\360\344=\362\031\262\220\361\203\315\262@\236q\333\214\275!\251R\215\021\013-\002\226\211\010\007\221\206/B\007\034\360\306\252>in\006\243\222m\003<\222\007\036v+\367\363\010<\300\304n2\0168]\334hA\265\250\224*{]\017\000\354\313'\227n{\367\022D\034\225,\221&\240l\211\033\035\334\317\304\340S\033\343;J\333\n\213\276\364\254\372\324\"l4\346\240\302\322\350\211\331\021\205\"\261\226W\224\315\006Bg\n\311\034U3\327,\266\332\226\246\301\270\325\246yu\267Z}~h\275\205TOL\275\211h\206\255\360\313xR\234V\222=\003e\231[\3249w0\024\241h\206\313%\n\256\222\264\305F\301\004\233g%\226E\231\206\271O\225m\251\344\207\034a\013 \220\321\302J\352\3676\304\350\204\370\245\221V\210\3167HHF\214\263\314+q\212~U\256P\3740\263\001\240\200Nw\334\213}\344\354\201Wl)\217\206\034\335\332\013H-Z\307\241l\332\013\347\354c\3500g\300\r\240R\005?\r\020\017,\2654j\0233\326<}c\304~\345\244p\3358\210\347\030\250\376o\026\327_\037\253{\303:\\$\2700\034\213_\370\273\222)\302\204\207J\363\342\260";
-    PyObject *data = __Pyx_DecompressString(cstring, 484, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (478 bytes) */
+const char* const cstring = "BZh91AY&SY\302=\025\232\000\000#\377\377l|.\0004Q\254\021\274\001u@\277\377\377\370\000@@@@\000@@@@@@@\0000\001\230\266\253!\244P\304\320\030\2152\r\000\003@\006A\240\006h\203H\tO\320j\237\250\332)\346\246\247\250`\004\006A\246\200\006\206\201\246\240\231S\306\210\323M hd\320\000\003@\001\262\215\222Z8t\001]\226\225\335\250\222\020\203\245%F\024\001\305A\026\020\205\213T\003\231\030\220]\273\234|g\037\236a\236,\\\223\006$ \026\231Fe\rE\256\265\300bF\006\330\240\300=\210k-Pq\232\023\256\366\213\361VV_\035\242\307\2748\330\325\335\246\270J@\220\270\240q\247'\360\307 \210\322$\204*<\342\200&\323\004\243\0137]s\3239R\205\2029\332p?<\350\241V\364\262D\n3J\366\254\241A:\317\276\001F\336\022%\315Tn0I\354xj\236>n\t\305l\225$F!\005\026\005\004\214\223\327\200bJLs\353\n\222\211\027\034Z\351\007\3619xM\360W(\265G\200\366m\263WhB\"(\021\3458[#FgD\233\024\t\201'9\225C\002'\270P\"\202\321\005G\232\2544\322\335\241\221&\330dTJ\2124\316\024\225\007\2258?\005\031LT\233\320n'\271m#\032h\2108\214zU\3047\"\225\261\363\316\360\311$\247z\361\320#\025\232\010\253mL\30596e\245YQX\315\344\336\\\001qxm'\372\002\357\344;x\300\306\210\016\200@\004\035\220\025\032\034\205\003\210i\236T\035\3003\217z\240\021|lO3c\013\237Q\"#\216O\013~\014\336\224G\\X3\222\237\361w$S\205\t\014#\321Y\240";
+    PyObject *data = __Pyx_DecompressString(cstring, 478, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (414 bytes) */
-const char* const cstring = "x\332\205P\275n\023A\020\306\342\212@h\"\302\003\030QD\024gEIE\0012\244F$B\021\335h\2627g/\354\355\236\367\307\366\035/p\345\226[\372\021(SR\246L\351\322\217\302\234\235\004\tEB\253\335\235\235\237\357g\363\017\316\212Q\205\262\222z2\022\306\022?\374t4\227\264\000\324\023E.\257\033\200/\315\222\367\231\024\036>\323\322_PyI\342\004]\243\20549\317\231\340\245&\207-\266\262\n~\n\005M\204\342\024H\r\336\242\240+\024?\204q\242\026\r)^s\364\322\350\276\257T\006}i\354\002m\001\2455\0254\270\200Zz\261\205\001(\203\026\000 \035<0IO\225\273\323\335\363S\336\353\316\347\254\352\221\354_7\000\\\326\375\311\032\2412EP\304\320\240\261\342[\033[\241\222-\025[\366\007\t\265\251\001f\001\325\256\315b!Q;K>X\306r\344\357\3469*\250\304\240\274\223\332\325.\260?iw\236\260\005R=\230\343\377\364\344<\300\034U \267l\330n\357\230k\355\355\223\243\333\243w\327o\177\217\327\331\363\356M7\215\030C\032\247\363u\366\242;\213{i\220^%L\263M\366\254;\354\276\306\2038\\\377/\334d\373\335i7\213\203\3702~\214E\032\246\323\344V\257W\237V?\177\r\267\204\357\257\277\337\014v\023\337\342y\244t\234\306\377<7\331^\227\261\202A<\214\027\3213\304l\305#\367\311\203\365c\365{\346\247\361$^\245\375\325\361\037\370\205\365D";
-    PyObject *data = __Pyx_DecompressString(cstring, 414, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (418 bytes) */
+const char* const cstring = "x\332\205P=O\033A\020\215\225+HH\203B~\200#\nDq\026\202*E\"'\324Q@\021\242\033\r{s\366&\373q\336\017\333w\371\003Wn\271\345\375\004J\312\224\224\224.\375S\262g\003\221\"\244h\265\273\263\373f\336\2337\371'\211\\r5\311\2316\224Kt\323|N\354\304\0326z@F=2\352\221\321\234\323\002PM\004\331\274\252\001\276\325\313\264\3178s\360\225\226\356\202\312\313T\213\266V\214\353\236Q{\307\025Yl\260\341\322\273)\0244a\"}\001W\340\0142\272F\366\223i\313*V\223Hk\216\216k\325\347\225B\243+\265Y\240)\2404ZB\215\013\250\270c\033\032\200\322+\006\000\334\302\223\022w$\3553\216\376\366\r\220`\325\237\251\033\220\272\360\202\022\t(\224\351V\332H\024\274\241b\243\363$V\351\n`\346Ql\323\014\026\034\2255\344\274I\\\226\334C}\212\n*\321\013g\271\262\225\365\311\t7\333\356\261\001\022=\231M\223sd\035\300\034\205'\333\317{Y's\275\277\2047\367/\016\357\017?\334\036\375\036\257\262\327\355A;\r\030|\034\307\363U\366\246=\013;q\020\337E\214\263u\366\252\335o\277\207\2750\\\375/\\g\273\355i;\013\203\3606|\016E\034\306\323h\273\367\335\227\356\327\315p#\370\361\366\307\335`[q\025\316\003\305\3438\376\347\271\316v\332,u0\010\373\341\"\270D1\353R\311\343\347\336\3529\374Q\371e8\t\327q\267;\376\003A\323\366\265";
+    PyObject *data = __Pyx_DecompressString(cstring, 418, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (624 bytes) */
-const char* const bytes = ".?src/maiming/core/math/view_angles.py__Pyx_PyDict_NextRefVec3asyncio.coroutinesazazimuth_degcline_in_tracebackcoscpcyelelevation_degfloatforward_from_yaw_pitch_deg__func___is_coroutineitemsmaiming.core.math.vec3maiming.core.math.view_angles__main__math__module____name__normalizedpitchpitch_degpop__qualname__radiansreturn__set_name__setdefaultsinspsun_dir_from_az_el_degsy__test__valuesxyyawyaw_degz\320\000(\320(:\270*\300A\330\004\n\210$\210h\220a\220u\230A\230Q\330\004\014\210D\220\010\230\001\230\025\230a\230q\340\004\t\210\024\210T\220\021\220!\330\004\t\210\024\210T\220\021\220!\330\004\t\210\024\210T\220\021\220!\330\004\t\210\024\210T\220\021\220!\340\004\013\2104\210q\220\001\220\023\220B\220d\230!\2304\230s\240\"\240C\240{\260!\320\000(\320(>\270j\310\001\330\004\t\210\024\210X\220Q\220e\2301\230A\330\004\t\210\024\210X\220Q\220e\2301\230A\340\004\010\210\004\210D\220\001\220\024\220R\220t\2304\230q\240\001\330\004\010\210\004\210D\220\001\220\021\330\004\010\210\004\210D\220\001\220\024\220R\220t\2304\230q\240\001\340\004\013\2104\210q\220\003\2203\220b\230\013\2401";
+    #else /* compression: none (628 bytes) */
+const char* const bytes = ".?maiming.core.math.vec3src/maiming/core/math/view_angles.py__Pyx_PyDict_NextRefVec3asyncio.coroutinesazazimuth_degcline_in_tracebackcoscpcyelelevation_degfloatforward_from_yaw_pitch_deg__func___is_coroutineitemsmaiming.core.math.view_angles__main__math__module____name__normalizedpitchpitch_degpop__qualname__radiansreturn__set_name__setdefaultsinspsun_dir_from_az_el_degsy__test__valuesvec3xyyawyaw_degz\320\000(\320(:\270*\300A\330\004\n\210$\210h\220a\220u\230A\230Q\330\004\014\210D\220\010\230\001\230\025\230a\230q\340\004\t\210\024\210T\220\021\220!\330\004\t\210\024\210T\220\021\220!\330\004\t\210\024\210T\220\021\220!\330\004\t\210\024\210T\220\021\220!\340\004\013\2104\210q\220\001\220\023\220B\220d\230!\2304\230s\240\"\240C\240{\260!\320\000(\320(>\270j\310\001\330\004\t\210\024\210X\220Q\220e\2301\230A\330\004\t\210\024\210X\220Q\220e\2301\230A\340\004\010\210\004\210D\220\001\220\024\220R\220t\2304\230q\240\001\330\004\010\210\004\210D\220\001\220\021\330\004\010\210\004\210D\220\001\220\024\220R\220t\2304\230q\240\001\340\004\013\2104\210q\220\003\2203\220b\230\013\2401";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 45; i++) {
+    for (int i = 0; i < 46; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 3) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 4) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -3836,7 +3837,7 @@ const char* const bytes = ".?src/maiming/core/math/view_angles.py__Pyx_PyDict_Ne
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 45; i < 47; i++) {
+    for (int i = 46; i < 48; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -3847,14 +3848,14 @@ const char* const bytes = ".?src/maiming/core/math/view_angles.py__Pyx_PyDict_Ne
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 47; i++) {
+    for (Py_ssize_t i = 0; i < 48; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 45;
+      PyObject **table = stringtab + 46;
       for (Py_ssize_t i=0; i<2; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         #if PY_VERSION_HEX < 0x030E0000

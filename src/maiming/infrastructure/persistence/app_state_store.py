@@ -5,8 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from maiming.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
-from maiming.infrastructure.persistence.json_file_store import JsonFileStore
+from ...domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
+from ...domain.world.world_state import WorldState
+from .json_file_store import JsonFileStore
 
 @dataclass(frozen=True)
 class PersistedSettings:
@@ -67,7 +68,7 @@ class PersistedSettings:
             "jump_v0": float(self.jump_v0),
             "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
             "render_distance_chunks": int(self.render_distance_chunks),
-            "hud_visible": bool(self.hud_visible),
+            "hud_visible": bool(self.hud_visible)
         }
 
     @staticmethod
@@ -196,39 +197,13 @@ class PersistedWorld:
     blocks: Dict[Tuple[int, int, int], str]
 
     def to_dict(self) -> dict[str, Any]:
-        items: list[list[Any]] = []
-        for (x, y, z), s in self.blocks.items():
-            items.append([int(x), int(y), int(z), str(s)])
-
-        return {
-            "revision": int(self.revision),
-            "blocks": items,
-        }
+        world = WorldState(blocks=dict(self.blocks), revision=int(self.revision))
+        return world.to_persisted_dict()
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedWorld":
-        rev = d.get("revision", 0)
-        try:
-            revision = int(rev)
-        except Exception:
-            revision = 0
-
-        out: Dict[Tuple[int, int, int], str] = {}
-        raw = d.get("blocks", [])
-        if isinstance(raw, list):
-            for it in raw:
-                if not isinstance(it, list) or len(it) != 4:
-                    continue
-                try:
-                    x = int(it[0])
-                    y = int(it[1])
-                    z = int(it[2])
-                    s = str(it[3])
-                except Exception:
-                    continue
-                out[(x, y, z)] = s
-
-        return PersistedWorld(revision=int(max(0, revision)), blocks=out)
+        world = WorldState.from_persisted_dict(d)
+        return PersistedWorld(revision=int(world.revision), blocks=world.snapshot_blocks())
 
 @dataclass(frozen=True)
 class AppState:
@@ -238,21 +213,11 @@ class AppState:
     world: PersistedWorld
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "version": int(self.version),
-            "settings": self.settings.to_dict(),
-            "player": self.player.to_dict(),
-            "world": self.world.to_dict(),
-        }
+        return {"version": int(self.version), "settings": self.settings.to_dict(), "player": self.player.to_dict(), "world": self.world.to_dict()}
 
     @staticmethod
     def default() -> "AppState":
-        return AppState(
-            version=4,
-            settings=PersistedSettings(),
-            player=PersistedPlayer(),
-            world=PersistedWorld(revision=0, blocks={}),
-        )
+        return AppState(version=4, settings=PersistedSettings(), player=PersistedPlayer(), world=PersistedWorld(revision=0, blocks={}))
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "AppState":

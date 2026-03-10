@@ -2685,7 +2685,7 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_codeobj_tab[2];
-  PyObject *__pyx_string_tab[72];
+  PyObject *__pyx_string_tab[73];
   PyObject *__pyx_number_tab[6];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
@@ -2746,72 +2746,73 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_enable __pyx_string_tab[3]
 #define __pyx_kp_u_gc __pyx_string_tab[4]
 #define __pyx_kp_u_isenabled __pyx_string_tab[5]
-#define __pyx_kp_u_src_maiming_core_grid_voxel_dda __pyx_string_tab[6]
-#define __pyx_n_u_DDAHit __pyx_string_tab[7]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[8]
-#define __pyx_n_u_Vec3 __pyx_string_tab[9]
-#define __pyx_n_u_annotations __pyx_string_tab[10]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[11]
-#define __pyx_n_u_cell_size __pyx_string_tab[12]
-#define __pyx_n_u_cell_x __pyx_string_tab[13]
-#define __pyx_n_u_cell_y __pyx_string_tab[14]
-#define __pyx_n_u_cell_z __pyx_string_tab[15]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[16]
-#define __pyx_n_u_close __pyx_string_tab[17]
-#define __pyx_n_u_d __pyx_string_tab[18]
-#define __pyx_n_u_dataclass __pyx_string_tab[19]
-#define __pyx_n_u_dataclasses __pyx_string_tab[20]
-#define __pyx_n_u_dda_grid_traverse __pyx_string_tab[21]
-#define __pyx_n_u_dda_grid_traverse_locals_int_bou __pyx_string_tab[22]
-#define __pyx_n_u_direction __pyx_string_tab[23]
-#define __pyx_n_u_doc __pyx_string_tab[24]
-#define __pyx_n_u_ds __pyx_string_tab[25]
-#define __pyx_n_u_enter_face __pyx_string_tab[26]
-#define __pyx_n_u_float __pyx_string_tab[27]
-#define __pyx_n_u_floor __pyx_string_tab[28]
-#define __pyx_n_u_frozen __pyx_string_tab[29]
-#define __pyx_n_u_func __pyx_string_tab[30]
-#define __pyx_n_u_int __pyx_string_tab[31]
-#define __pyx_n_u_int_bound __pyx_string_tab[32]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[33]
-#define __pyx_n_u_items __pyx_string_tab[34]
-#define __pyx_n_u_maiming_core_grid_voxel_dda __pyx_string_tab[35]
-#define __pyx_n_u_maiming_core_math_vec3 __pyx_string_tab[36]
+#define __pyx_kp_u_maiming_core_math_vec3 __pyx_string_tab[6]
+#define __pyx_kp_u_src_maiming_core_grid_voxel_dda __pyx_string_tab[7]
+#define __pyx_n_u_DDAHit __pyx_string_tab[8]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[9]
+#define __pyx_n_u_Vec3 __pyx_string_tab[10]
+#define __pyx_n_u_annotations __pyx_string_tab[11]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[12]
+#define __pyx_n_u_cell_size __pyx_string_tab[13]
+#define __pyx_n_u_cell_x __pyx_string_tab[14]
+#define __pyx_n_u_cell_y __pyx_string_tab[15]
+#define __pyx_n_u_cell_z __pyx_string_tab[16]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[17]
+#define __pyx_n_u_close __pyx_string_tab[18]
+#define __pyx_n_u_d __pyx_string_tab[19]
+#define __pyx_n_u_dataclass __pyx_string_tab[20]
+#define __pyx_n_u_dataclasses __pyx_string_tab[21]
+#define __pyx_n_u_dda_grid_traverse __pyx_string_tab[22]
+#define __pyx_n_u_dda_grid_traverse_locals_int_bou __pyx_string_tab[23]
+#define __pyx_n_u_direction __pyx_string_tab[24]
+#define __pyx_n_u_doc __pyx_string_tab[25]
+#define __pyx_n_u_ds __pyx_string_tab[26]
+#define __pyx_n_u_enter_face __pyx_string_tab[27]
+#define __pyx_n_u_float __pyx_string_tab[28]
+#define __pyx_n_u_floor __pyx_string_tab[29]
+#define __pyx_n_u_frozen __pyx_string_tab[30]
+#define __pyx_n_u_func __pyx_string_tab[31]
+#define __pyx_n_u_int __pyx_string_tab[32]
+#define __pyx_n_u_int_bound __pyx_string_tab[33]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[34]
+#define __pyx_n_u_items __pyx_string_tab[35]
+#define __pyx_n_u_maiming_core_grid_voxel_dda __pyx_string_tab[36]
 #define __pyx_n_u_main __pyx_string_tab[37]
 #define __pyx_n_u_math __pyx_string_tab[38]
-#define __pyx_n_u_metaclass __pyx_string_tab[39]
-#define __pyx_n_u_module __pyx_string_tab[40]
-#define __pyx_n_u_name __pyx_string_tab[41]
-#define __pyx_n_u_next __pyx_string_tab[42]
-#define __pyx_n_u_origin __pyx_string_tab[43]
-#define __pyx_n_u_pop __pyx_string_tab[44]
-#define __pyx_n_u_prepare __pyx_string_tab[45]
-#define __pyx_n_u_qualname __pyx_string_tab[46]
-#define __pyx_n_u_return __pyx_string_tab[47]
-#define __pyx_n_u_s __pyx_string_tab[48]
-#define __pyx_n_u_send __pyx_string_tab[49]
-#define __pyx_n_u_set_name __pyx_string_tab[50]
-#define __pyx_n_u_setdefault __pyx_string_tab[51]
-#define __pyx_n_u_step_x __pyx_string_tab[52]
-#define __pyx_n_u_step_y __pyx_string_tab[53]
-#define __pyx_n_u_step_z __pyx_string_tab[54]
-#define __pyx_n_u_t __pyx_string_tab[55]
-#define __pyx_n_u_t_max __pyx_string_tab[56]
-#define __pyx_n_u_tdx __pyx_string_tab[57]
-#define __pyx_n_u_tdy __pyx_string_tab[58]
-#define __pyx_n_u_tdz __pyx_string_tab[59]
-#define __pyx_n_u_test __pyx_string_tab[60]
-#define __pyx_n_u_throw __pyx_string_tab[61]
-#define __pyx_n_u_tmx __pyx_string_tab[62]
-#define __pyx_n_u_tmy __pyx_string_tab[63]
-#define __pyx_n_u_tmz __pyx_string_tab[64]
-#define __pyx_n_u_value __pyx_string_tab[65]
-#define __pyx_n_u_values __pyx_string_tab[66]
-#define __pyx_n_u_x __pyx_string_tab[67]
-#define __pyx_n_u_y __pyx_string_tab[68]
-#define __pyx_n_u_z __pyx_string_tab[69]
-#define __pyx_kp_b_iso88591_3b_D_aq_D_Rq_D_aq_2S __pyx_string_tab[70]
-#define __pyx_kp_b_iso88591_G_a __pyx_string_tab[71]
+#define __pyx_n_u_math_vec3 __pyx_string_tab[39]
+#define __pyx_n_u_metaclass __pyx_string_tab[40]
+#define __pyx_n_u_module __pyx_string_tab[41]
+#define __pyx_n_u_name __pyx_string_tab[42]
+#define __pyx_n_u_next __pyx_string_tab[43]
+#define __pyx_n_u_origin __pyx_string_tab[44]
+#define __pyx_n_u_pop __pyx_string_tab[45]
+#define __pyx_n_u_prepare __pyx_string_tab[46]
+#define __pyx_n_u_qualname __pyx_string_tab[47]
+#define __pyx_n_u_return __pyx_string_tab[48]
+#define __pyx_n_u_s __pyx_string_tab[49]
+#define __pyx_n_u_send __pyx_string_tab[50]
+#define __pyx_n_u_set_name __pyx_string_tab[51]
+#define __pyx_n_u_setdefault __pyx_string_tab[52]
+#define __pyx_n_u_step_x __pyx_string_tab[53]
+#define __pyx_n_u_step_y __pyx_string_tab[54]
+#define __pyx_n_u_step_z __pyx_string_tab[55]
+#define __pyx_n_u_t __pyx_string_tab[56]
+#define __pyx_n_u_t_max __pyx_string_tab[57]
+#define __pyx_n_u_tdx __pyx_string_tab[58]
+#define __pyx_n_u_tdy __pyx_string_tab[59]
+#define __pyx_n_u_tdz __pyx_string_tab[60]
+#define __pyx_n_u_test __pyx_string_tab[61]
+#define __pyx_n_u_throw __pyx_string_tab[62]
+#define __pyx_n_u_tmx __pyx_string_tab[63]
+#define __pyx_n_u_tmy __pyx_string_tab[64]
+#define __pyx_n_u_tmz __pyx_string_tab[65]
+#define __pyx_n_u_value __pyx_string_tab[66]
+#define __pyx_n_u_values __pyx_string_tab[67]
+#define __pyx_n_u_x __pyx_string_tab[68]
+#define __pyx_n_u_y __pyx_string_tab[69]
+#define __pyx_n_u_z __pyx_string_tab[70]
+#define __pyx_kp_b_iso88591_3b_D_aq_D_Rq_D_aq_2S __pyx_string_tab[71]
+#define __pyx_kp_b_iso88591_G_a __pyx_string_tab[72]
 #define __pyx_float_0_0 __pyx_number_tab[0]
 #define __pyx_float_1e30 __pyx_number_tab[1]
 #define __pyx_float_1eneg_12 __pyx_number_tab[2]
@@ -2835,7 +2836,7 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse);
   Py_CLEAR(clear_module_state->__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse);
   for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<72; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<73; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<6; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
@@ -2865,7 +2866,7 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   Py_VISIT(traverse_module_state->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse);
   Py_VISIT(traverse_module_state->__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse);
   for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<72; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<73; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<6; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
@@ -4915,7 +4916,7 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
  * from __future__ import annotations
  * import math             # <<<<<<<<<<<<<<
  * from dataclasses import dataclass
- * from maiming.core.math.vec3 import Vec3
+ * from ..math.vec3 import Vec3
 */
   __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
@@ -4927,7 +4928,7 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
  * from __future__ import annotations
  * import math
  * from dataclasses import dataclass             # <<<<<<<<<<<<<<
- * from maiming.core.math.vec3 import Vec3
+ * from ..math.vec3 import Vec3
  * 
 */
   {
@@ -4950,13 +4951,13 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
   /* "maiming/core/grid/voxel_dda.py":5
  * import math
  * from dataclasses import dataclass
- * from maiming.core.math.vec3 import Vec3             # <<<<<<<<<<<<<<
+ * from ..math.vec3 import Vec3             # <<<<<<<<<<<<<<
  * 
  * @dataclass(frozen=True)
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Vec3};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_maiming_core_math_vec3, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math_vec3, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_math_vec3, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -5000,7 +5001,7 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
   if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_enter_face, __pyx_mstate_global->__pyx_int_neg_1) < (0)) __PYX_ERR(0, 13, __pyx_L1_error)
 
   /* "maiming/core/grid/voxel_dda.py":7
- * from maiming.core.math.vec3 import Vec3
+ * from ..math.vec3 import Vec3
  * 
  * @dataclass(frozen=True)             # <<<<<<<<<<<<<<
  * class DDAHit:
@@ -5156,42 +5157,42 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 7; } index[] = {{1},{1},{7},{6},{2},{9},{34},{6},{20},{4},{15},{18},{9},{6},{6},{6},{18},{5},{1},{9},{11},{17},{36},{9},{7},{2},{10},{5},{5},{6},{8},{3},{9},{13},{5},{27},{22},{8},{4},{13},{10},{8},{4},{6},{3},{11},{12},{6},{1},{4},{12},{10},{6},{6},{6},{1},{5},{3},{3},{3},{8},{5},{3},{3},{3},{5},{6},{1},{1},{1},{72},{14}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (432 bytes) */
-const char* const cstring = "(\265/\375`\205\0015\r\000\306ZT/pO:\204\326\366\270\256<O\374\372\273\004bo7\262S\222d\313$\350\024\311NR&\274\312.\235\001\261\366(\323\n1\350s\222HG\350\007E\000@\000@\000\374\022\214\220=\220YS\256\231\336\220_\037vk\346\004\333\017h;~\332\215|\306\227\211\342\310|\326\300\270\\\250\350\321\326\322\355\0047\226\3061c\331\010\231%\323\374X\237\205Eo\316,\323\273\016\243\316\355\342\tP\204\257\320A\313\024\312\270\337\353\014\266L\266\221[k\tb\362\233\037\013w\312\240\253x\326\343nR[\363uW\307\364\265\265u\350\230\010S\3142\215\237\315\271\315\216U\324\264\025{:\267\314\267\003\0255e\264\357\357$\205\266\375zf\353u\357(\375F\247\222&j\2641\312\214`\324\234\341\010\177\332}\332\353\244\006_f\346f\366\346\ty}\317\363\370\333\347t\316o\316d-A\231\275\025\214\001\252B\221\222\201Brbq\3408\000p\024\256\200\313\303\222\260\026V4W\307\025q\t0 t4\227^\004\327\305\202\260\004\254\004\204N\200\205)\231(9(\350<\234\030\230\200X\r\003\234\212\232|%\247\233\352=\365~z?\002c\310\373~f\325\236j?\351\313\377&(`\310,\242:\200Pn\201i9_\016w\001\310\nv\317\361J~g\340_\326A\304x\330\223V#\325/M\2409\313\202\221\234r-\230cv/\\\004\272I\214\034LP\200\366\321!\305\304\376\375\326C*\"\336\227d\312u\373KW9\330{\001";
-    PyObject *data = __Pyx_DecompressString(cstring, 432, 3);
+    const struct { const unsigned int length: 7; } index[] = {{1},{1},{7},{6},{2},{9},{22},{34},{6},{20},{4},{15},{18},{9},{6},{6},{6},{18},{5},{1},{9},{11},{17},{36},{9},{7},{2},{10},{5},{5},{6},{8},{3},{9},{13},{5},{27},{8},{4},{9},{13},{10},{8},{4},{6},{3},{11},{12},{6},{1},{4},{12},{10},{6},{6},{6},{1},{5},{3},{3},{3},{8},{5},{3},{3},{3},{5},{6},{1},{1},{1},{72},{14}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (441 bytes) */
+const char* const cstring = "(\265/\375`\216\001}\r\000\366[W1`O\322\001D`\013!\016\261\251\\\300`B\351\004b\033\221r7\262\367\"\366oD\356]\366#\017\205\345\275\273\234C\271N\014\3276p\n\"C\007J\000C\000@\000\222\224\216E\212\365\347(]k\313\030\365\277\260\365\200\226\243\247\325x3\207\231\250\215\277]\306\005\006CE\217\266\366\267\223\344X\232\233\032\213\305\302&_\330r\036\220V\370\354\224\354\321D\007\235\302\306\216i\342\356\313(\273f\361\004\320\224\255\362A\313\024\372\334\216\313\355g\262\375l\247k-J2\363\216\356\251\340\247L>\212gy.\347\332\032/\263>\246\255\255-\313\307B\230f\226\351\354G\367\215\356\261\212\232\266r\374\367\226\361F\327\001\335\0255=\332\346~\222B\333z\371oq\231\343\224z\347Si35\332\031\375\221\214\242\323\270){\332\370/\324\270Oj\022\376\377\302\377\217N\341\3770\334vg\367\216\356gQ\202\376\270\225\234\001\2322\201\202q2bbq\3508\000t\024\256\200\253\303\222\260\026V6\027\307\025q\t0 \250l.\275\010.\214\005a\tX\t\010*\001V\206\344BrP\240\362`bP\362a5\014t*j\342\225\236r*\330\024\354\t\266\210\234 \3757o\377Uk\252\365\324zR\370!(@\204XSc\007@T\316\202\245\345\217p\030eh5\205\354\327\006\376\262\316'\217F\333\375\030\221\230\002^\222]4\013\212-R\246\233Xr\310\000(\246\323\006\023\372\327\254\247U\244\276]\304\220\002F\365I\363\031^\334\304(rL\367\002";
+    PyObject *data = __Pyx_DecompressString(cstring, 441, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (494 bytes) */
-const char* const cstring = "BZh91AY&SYV\206\234i\000\000\020\177\377u\\n\0018\001\230\r\244\301Y\010\277\357\377\362\000@@@@@\000@@@@@@\0000\001\214\263\023\rD\312z\215\244\310\003@\032\032\000\003@\001\247\251\246\233Ph\232\r&P\332\247\223S\3224\000\000\000\000\000\323@\323HA\222\236\231\251\2222h\321\240\000\320\000\003\322i\220\375\204\212Q\nb\211\"if$\341(\242l\264\306\220\215\232w\016\206|\247\337\002\017\001\256$\3029\037\371=\003\360J\237\271\261\246{\035\350Z\215\322\240)HV3/\325d\261mu\306\323\251\357\004>\340\301\240\342\022\254\304JIA!\020hc\311'\371\210\327\227\327s\323@\032c\250%\2228\333\204`\342\363!3[\006tP\242FE\304\0342\331P(\235\333(y\000;\035\321\321\3063H\304A\213H`{\230\306:\327z\270:\267\024(W\0362\253'\346\226\203\324(\373\304\251\035\020\200N+\204\302\025G \255L\254\302oO\247\255\014+\321\244\333-\306\341\002\334R\027\200\330\270R\230VwE\202\306\026}\323\026(x\n\221\334Eh\032\3313\226\262B&1\242\222\030\206\372s\302\244\306\255\0046\364\220\310\345\022#JO\256\263\340Q)\023\330p0.X\244\327\2245\366\210& e\240\007S\030\345GP\226\314\221\252\247\267\010\006\3027\366 /\302\250\006\241\320+[q\314\256LB'\032\365oF\245\362\222\205\200\200\233\024ET\226jG@\222nx\304\340U\353O:\n\343eb\206 \271\0362\261\330&\300p}V\245\227\346\202\033\336\332\006=T\260\206\265\366\314\367q\324y\364\241\022\277g$3>\250Y\033$\211\345\255ra\205s\263\223\370\273\222)\302\204\202\2644\343H";
-    PyObject *data = __Pyx_DecompressString(cstring, 494, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (515 bytes) */
+const char* const cstring = "BZh91AY&SYB\300IR\000\000\020\177\377u\\n\0018\001\230\r\244\301Y\010\277\357\377\362\000@@@@@\000@@@@@@\000@\001\256hF\021\024\375)\351\036\220\320\000\006\203@\320h\320\000i\352z\231\224\032A3@\224\363I?TyF\232\032\000\000\000\320\003M\0070&&\203\t\223&L\214&\t\246\231\030\230\002\030\006\232A1&\232e=\002444\000h\000\001\201\004\217\021)!D\240\2656\301#\201,\2419\244F\200<\032\367\207Q\310Sp\010NhF\372\004\221\257'\321\351\032\204\311\373\227\022g\261\336\245\250\335j\002\224\236\241\225~\352&\362\265\331\215\323\371)\002%\2300i3\211\226\004LI@\362'hd\211'\371\2006FW3I4\201\256\257\320e\\\253$\310m8\237\031\005P[2p\306\305\223\244\206\t\256\2303#\000\324\317\260<k]s\221\020E\210(xr\227X\357\226\274\\rMR^7RXul\212\337\001\001\246\23027\303\000\265\030RC\022Fq\006\263\022\333/f\207\302\242 \3665\033\261e\327\t\200\311\004\030\000mn\026\323\n\305\325\260X\302\315\026\353b\211\000\251^4V\201F\356r\326<\210J\273\\\264\250z\033\023\242\212\223mZ\010mO\243\033\224=\032R8\0267\324LDi7\330\023\226\342=$\205\276\202\005\254\020\330\201Us\236R\252%C)\331c\327\200\010\304\201MX\013\241d\002\324\213A\255tDJ\233\266\007\241\366\344\275KU\361\201\203hh\222L8\314\216&\002&\025\005\350s\220\322\267f:\024&\354V\013P\032x\006\014i\252QHCX\3755]~v\204\2479\251\t\253\242Q\333\333\336\323\276\003\260z\366\220Rd|\221L\374\220\270\020-N\261\214[\3211\307\311\374]\311\024\341BA\013\001%H";
+    PyObject *data = __Pyx_DecompressString(cstring, 515, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (428 bytes) */
-const char* const cstring = "x\332]Q=o\324@\020%Q\204\020\244 \002\332H\220\336\226H\031\004B:\t*\024\005\211&\305hnw|\267b?|\273\343\303\266D\237\322\245K\312\374\004JJ\312+\257\314Oa\2749\235\024,\373\371y\346\215g\346m\361A\233\204sK\344'\\(\223\356\231NQ\225\016\2153~Q\252\020\251\\D\243\313uh\311\202\326X\324\335l\366\361\263a\200\313\256\225gf\024\303\027j\371\212\252o\244\316\001\320\373\300\310&\370$\037\251\363\312\204B~\025\0326\236\222\"k!\231\2362i3v\031{eE\000\306\003GT4G\365]\331\220H\3322*\213)\355\t%\t\3024\332\244]S\314\252\207\201\342\235\r\nmz_\030\3170\017\215\327\332DR\323d\000:(\001\331\232)B%\355*\033\220\005B\254b\350I$U\343E#\305\373z0\t\366\233\030&\227vVM\373Q1\265/\366V=H9\344e\261\316\376H\334O\310KA\332-\004r\271\240\033K\023\363\350\344\355\305\325\020\315\302\370:\324\000u\244\032c\316\257\032\264\367\232H\334D/\206\310p\220\210w\245\3024U\330XNL5\264\031\273\214=\2634oY\313\335\261\356\001\230\222\034'/c\370\301\256e\327\261\353\327h\033\312\220\332\256\337\034\275\032\256\177=\275}\275}\362\354\346\374f>\034l\217\237\017\207\303\233a6>\036q\\m\217_\n=\034\317\306\253qu\367\177\356\305\360v\370:\036\214'\233G\247\233\323\362\366\347\357O\177.\376\342?\320\345\002\372";
-    PyObject *data = __Pyx_DecompressString(cstring, 428, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (430 bytes) */
+const char* const cstring = "x\332]Q=o\324@\020%\021B\010R\200\2006\022\320\333\022)A \244\223\240BQ\220hR\214\346v\307w+\366\303\267;>lK\364)]\272\244\314O\240\244\244\274\362\312\374\024f\235\223\245`\331\317o\367\275\321\314\276->h\223pi\211|\306\2252\351\226i\207\306\031\277*T\210T8\344u\261%u\226\242*\017J\231\225r\025\215.\267\241%\013ZcQw\213\305\307\317\206\001\316\273V\276\205Q\014_\250\345\013\252\276I=\000z\037\030\331\004\237d\221:\257L\310MB\303\306SRd-$\323\323D\332\t\273\t{e\305\000\306\003GT\264D\365]\331\220H\3322*\213)\315\204\222lB\036-{\267\024'\327\335\215\342\235\r\nmz_\030\317\260\014\215\327\332DRy2\000\035\224\200d\301\024\241\222v\225\r\310\002!V1\364$\226\252\361\342\221\342\271\036L\202\371$\206\311\245;!\346\366\305\034\025\200\210>#\257\347xeI\2073\200<.\350\306Rf\036\235\374\275\004\031\242Y\031_\207\032\240\216Tc\234\364M\203\366\326\023\211\233\350%\003\231\007\022\361\241T\230\246\n\033\313\211\251\206v\302n\302\236Y\246hY\313\333\261\356\001\230\222\334 \257c\370\301\256e\327\261\353\267h\033\232 \265]\277\273\377b\270\374\365\350\372\345\376\341\343\253\263\253\345p\264?y2\034\017\257\206\305\370`\304q\263?y.\364x|=^\214\233\233\377\265g\303\233\341\353x4>\335\335;\335\235\226\327?\177\177\372\363\366/\376\003\320\330\006C";
+    PyObject *data = __Pyx_DecompressString(cstring, 430, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (645 bytes) */
-const char* const bytes = ".?disableenablegcisenabledsrc/maiming/core/grid/voxel_dda.pyDDAHit__Pyx_PyDict_NextRefVec3__annotations__asyncio.coroutinescell_sizecell_xcell_ycell_zcline_in_tracebackcloseddataclassdataclassesdda_grid_traversedda_grid_traverse.<locals>.int_bounddirection__doc__dsenter_facefloatfloorfrozen__func__intint_bound_is_coroutineitemsmaiming.core.grid.voxel_ddamaiming.core.math.vec3__main__math__metaclass____module____name__nextoriginpop__prepare____qualname__returnssend__set_name__setdefaultstep_xstep_ystep_ztt_maxtdxtdytdz__test__throwtmxtmytmzvaluevaluesxyz\320\004\025\220[\240\n\250!\330\010\013\2103\210b\220\001\330\014\020\220\002\220\"\220D\230\006\230a\230q\330\014\024\220D\230\002\230#\230R\230q\340\014\020\220\002\220\"\220D\230\006\230a\230q\330\014\023\2202\220S\230\001\230\021\320\000\036\320\036/\250}\270G\300;\310a";
+    #else /* compression: none (654 bytes) */
+const char* const bytes = ".?disableenablegcisenabledmaiming.core.math.vec3src/maiming/core/grid/voxel_dda.pyDDAHit__Pyx_PyDict_NextRefVec3__annotations__asyncio.coroutinescell_sizecell_xcell_ycell_zcline_in_tracebackcloseddataclassdataclassesdda_grid_traversedda_grid_traverse.<locals>.int_bounddirection__doc__dsenter_facefloatfloorfrozen__func__intint_bound_is_coroutineitemsmaiming.core.grid.voxel_dda__main__mathmath.vec3__metaclass____module____name__nextoriginpop__prepare____qualname__returnssend__set_name__setdefaultstep_xstep_ystep_ztt_maxtdxtdytdz__test__throwtmxtmytmzvaluevaluesxyz\320\004\025\220[\240\n\250!\330\010\013\2103\210b\220\001\330\014\020\220\002\220\"\220D\230\006\230a\230q\330\014\024\220D\230\002\230#\230R\230q\340\014\020\220\002\220\"\220D\230\006\230a\230q\330\014\023\2202\220S\230\001\230\021\320\000\036\320\036/\250}\270G\300;\310a";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 70; i++) {
+    for (int i = 0; i < 71; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 7) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 8) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -5199,7 +5200,7 @@ const char* const bytes = ".?disableenablegcisenabledsrc/maiming/core/grid/voxel
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 70; i < 72; i++) {
+    for (int i = 71; i < 73; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -5210,14 +5211,14 @@ const char* const bytes = ".?disableenablegcisenabledsrc/maiming/core/grid/voxel
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 72; i++) {
+    for (Py_ssize_t i = 0; i < 73; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 70;
+      PyObject **table = stringtab + 71;
       for (Py_ssize_t i=0; i<2; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         #if PY_VERSION_HEX < 0x030E0000

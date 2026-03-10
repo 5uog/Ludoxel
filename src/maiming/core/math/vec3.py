@@ -24,11 +24,7 @@ class Vec3:
         return self.x * o.x + self.y * o.y + self.z * o.z
 
     def cross(self, o: "Vec3") -> "Vec3":
-        return Vec3(
-            self.y * o.z - self.z * o.y,
-            self.z * o.x - self.x * o.z,
-            self.x * o.y - self.y * o.x,
-        )
+        return Vec3(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
 
     def length(self) -> float:
         return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)

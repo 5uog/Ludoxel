@@ -3,16 +3,9 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw
-from maiming.domain.blocks.models.dimensions import (
-    WALL_POST,
-    WALL_ARM_LOW_NORTH,
-    WALL_ARM_TALL_NORTH,
-)
-from maiming.domain.blocks.structural_rules import (
-    wall_side_from_neighbor_state,
-    wall_up_rule,
-)
+from .common import LocalBox, GetState, GetDef, rotate_box_y_cw
+from .dimensions import WALL_POST, WALL_ARM_LOW_NORTH, WALL_ARM_TALL_NORTH
+from ..structural_rules import wall_side_from_neighbor_state, wall_up_rule
 
 def _norm_side(s: str) -> str:
     t = str(s)
@@ -25,48 +18,17 @@ def _arm_north(kind: str) -> LocalBox:
         return WALL_ARM_TALL_NORTH
     return WALL_ARM_LOW_NORTH
 
-def boxes_for_wall(
-    *,
-    props: Dict[str, str],
-    get_state: GetState,
-    get_def: GetDef,
-    x: int,
-    y: int,
-    z: int,
-) -> List[LocalBox]:
-    north = _norm_side(str(props.get("north", ""))) if "north" in props else wall_side_from_neighbor_state(
-        get_state(int(x), int(y), int(z - 1)),
-        side_from_neighbor="south",
-        get_def=get_def,
-    )
-    east = _norm_side(str(props.get("east", ""))) if "east" in props else wall_side_from_neighbor_state(
-        get_state(int(x + 1), int(y), int(z)),
-        side_from_neighbor="west",
-        get_def=get_def,
-    )
-    south = _norm_side(str(props.get("south", ""))) if "south" in props else wall_side_from_neighbor_state(
-        get_state(int(x), int(y), int(z + 1)),
-        side_from_neighbor="north",
-        get_def=get_def,
-    )
-    west = _norm_side(str(props.get("west", ""))) if "west" in props else wall_side_from_neighbor_state(
-        get_state(int(x - 1), int(y), int(z)),
-        side_from_neighbor="east",
-        get_def=get_def,
-    )
+def boxes_for_wall(*, props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
+    north = _norm_side(str(props.get("north", ""))) if "north" in props else wall_side_from_neighbor_state(get_state(int(x), int(y), int(z - 1)), side_from_neighbor="south", get_def=get_def)
+    east = _norm_side(str(props.get("east", ""))) if "east" in props else wall_side_from_neighbor_state(get_state(int(x + 1), int(y), int(z)), side_from_neighbor="west", get_def=get_def)
+    south = _norm_side(str(props.get("south", ""))) if "south" in props else wall_side_from_neighbor_state(get_state(int(x), int(y), int(z + 1)), side_from_neighbor="north", get_def=get_def)
+    west = _norm_side(str(props.get("west", ""))) if "west" in props else wall_side_from_neighbor_state(get_state(int(x - 1), int(y), int(z)), side_from_neighbor="east", get_def=get_def)
 
     if "up" in props:
         up = str(props.get("up", "true")).strip().lower() in ("1", "true", "yes", "on")
     else:
         s_above = get_state(int(x), int(y + 1), int(z))
-        up = wall_up_rule(
-            north=str(north),
-            east=str(east),
-            south=str(south),
-            west=str(west),
-            above_state=s_above,
-            get_def=get_def,
-        )
+        up = wall_up_rule(north=str(north), east=str(east), south=str(south), west=str(west), above_state=s_above, get_def=get_def)
 
     out: list[LocalBox] = []
 

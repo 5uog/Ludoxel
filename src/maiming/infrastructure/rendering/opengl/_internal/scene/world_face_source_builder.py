@@ -5,12 +5,10 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.blocks.models.common import LocalBox
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.infrastructure.rendering.opengl._internal.scene.visible_faces import (
-    iter_visible_faces,
-)
+from ......domain.blocks.block_definition import BlockDefinition
+from ......domain.blocks.models.common import LocalBox
+from ......domain.blocks.state_codec import parse_state
+from .visible_faces import iter_visible_faces
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
@@ -35,12 +33,7 @@ def _uv_rect(atlas: UVRect, u0: float, v0: float, u1: float, v1: float) -> UVRec
     vv0 = _clamp01(v0)
     uu1 = _clamp01(u1)
     vv1 = _clamp01(v1)
-    return (
-        _lerp(uA0, uA1, uu0),
-        _lerp(vA0, vA1, vv0),
-        _lerp(uA0, uA1, uu1),
-        _lerp(vA0, vA1, vv1),
-    )
+    return (_lerp(uA0, uA1, uu0), _lerp(vA0, vA1, vv0), _lerp(uA0, uA1, uu1), _lerp(vA0, vA1, vv1))
 
 def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
     fi = int(face_idx)
@@ -84,10 +77,7 @@ def _fence_gate_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
 def empty_face_buckets() -> list[np.ndarray]:
     return [np.zeros((0, 12), dtype=np.float32) for _ in range(6)]
 
-def split_face_sources_to_buckets(
-    face_sources: np.ndarray,
-    bucket_counts: BucketCounts,
-) -> list[np.ndarray]:
+def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
     counts = tuple(int(max(0, int(c))) for c in bucket_counts[:6])
     out = [np.zeros((int(c), 12), dtype=np.float32) for c in counts]
 
@@ -116,13 +106,7 @@ def split_face_sources_to_buckets(
 
     return out
 
-def build_chunk_face_sources(
-    *,
-    blocks: Iterable[tuple[int, int, int, str]],
-    get_state: GetState,
-    uv_lookup: UVLookup,
-    def_lookup: DefLookup,
-) -> tuple[np.ndarray, BucketCounts]:
+def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
     rows: list[list[float]] = []
     bucket_counts = [0, 0, 0, 0, 0, 0]
 
@@ -134,15 +118,7 @@ def build_chunk_face_sources(
         base, _p = parse_state(str(state_str))
         defn = def_lookup(str(base))
 
-        for face in iter_visible_faces(
-            x=int(x),
-            y=int(y),
-            z=int(z),
-            state_str=str(state_str),
-            get_state=get_state,
-            def_lookup=def_lookup,
-            fast_boundary_full_cube_only=True,
-        ):
+        for face in iter_visible_faces(x=int(x), y=int(y), z=int(z), state_str=str(state_str), get_state=get_state, def_lookup=def_lookup, fast_boundary_full_cube_only=True):
             fi = int(face.face_idx)
             if fi < 0 or fi >= 6:
                 continue
@@ -161,33 +137,9 @@ def build_chunk_face_sources(
             else:
                 u0, v0, u1, v1 = _sub_uv_rect(atlas, int(fi), face.box)
 
-            rows.append(
-                [
-                    float(mnx),
-                    float(mny),
-                    float(mnz),
-                    float(mxx),
-                    float(mxy),
-                    float(mxz),
-                    float(u0),
-                    float(v0),
-                    float(u1),
-                    float(v1),
-                    1.0,
-                    0.0,
-                    float(fi),
-                    float(slot),
-                ]
-            )
+            rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), 1.0, 0.0, float(fi), float(slot)])
 
-    counts: BucketCounts = (
-        int(bucket_counts[0]),
-        int(bucket_counts[1]),
-        int(bucket_counts[2]),
-        int(bucket_counts[3]),
-        int(bucket_counts[4]),
-        int(bucket_counts[5]),
-    )
+    counts: BucketCounts = (int(bucket_counts[0]), int(bucket_counts[1]), int(bucket_counts[2]), int(bucket_counts[3]), int(bucket_counts[4]), int(bucket_counts[5]))
 
     if not rows:
         return np.zeros((0, 14), dtype=np.float32), counts

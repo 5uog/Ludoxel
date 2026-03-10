@@ -4,8 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import ClassVar
 
-from maiming.domain.config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS
-from maiming.domain.config.collision_params import CollisionParams, DEFAULT_COLLISION_PARAMS
+from ...domain.config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS
+from ...domain.config.collision_params import CollisionParams, DEFAULT_COLLISION_PARAMS
 
 @dataclass
 class SessionSettings:
@@ -63,20 +63,8 @@ class SessionSettings:
         self.movement = replace(self.movement, jump_v0=v)
 
     def set_auto_jump_cooldown_s(self, cooldown_s: float) -> None:
-        v = float(
-            max(
-                self.AUTO_JUMP_COOLDOWN_MIN,
-                min(self.AUTO_JUMP_COOLDOWN_MAX, float(cooldown_s)),
-            )
-        )
+        v = float(max(self.AUTO_JUMP_COOLDOWN_MIN, min(self.AUTO_JUMP_COOLDOWN_MAX, float(cooldown_s))))
         self.movement = replace(self.movement, auto_jump_cooldown_s=v)
 
     def reset_advanced_movement_defaults(self) -> None:
-        self.movement = replace(
-            self.movement,
-            gravity=float(DEFAULT_MOVEMENT_PARAMS.gravity),
-            walk_speed=float(DEFAULT_MOVEMENT_PARAMS.walk_speed),
-            sprint_speed=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed),
-            jump_v0=float(DEFAULT_MOVEMENT_PARAMS.jump_v0),
-            auto_jump_cooldown_s=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s),
-        )
+        self.movement = replace(self.movement, gravity=float(DEFAULT_MOVEMENT_PARAMS.gravity), walk_speed=float(DEFAULT_MOVEMENT_PARAMS.walk_speed), sprint_speed=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed), jump_v0=float(DEFAULT_MOVEMENT_PARAMS.jump_v0), auto_jump_cooldown_s=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s))

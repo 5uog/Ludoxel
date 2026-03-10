@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.core.math.vec3 import Vec3, clampf
-from maiming.core.geometry.aabb import AABB
-from maiming.core.math.view_angles import forward_from_yaw_pitch_deg
+from ...core.math.vec3 import Vec3, clampf
+from ...core.geometry.aabb import AABB
+from ...core.math.view_angles import forward_from_yaw_pitch_deg
 
 @dataclass
 class PlayerEntity:
@@ -32,11 +32,7 @@ class PlayerEntity:
     auto_jump_cooldown_s: float = 0.0
 
     def eye_pos(self) -> Vec3:
-        return Vec3(
-            self.position.x,
-            self.position.y + (self.eye_height - self.crouch_eye_offset) + self.step_eye_offset,
-            self.position.z,
-        )
+        return Vec3(self.position.x, self.position.y + (self.eye_height - self.crouch_eye_offset) + self.step_eye_offset, self.position.z)
 
     def view_forward(self) -> Vec3:
         return forward_from_yaw_pitch_deg(self.yaw_deg, self.pitch_deg)

@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from maiming.domain.blocks.block_definition import BlockDefinition
+from ..block_definition import BlockDefinition
 
 @dataclass(frozen=True)
 class LocalBox:
@@ -20,15 +20,7 @@ class LocalBox:
         def c(v: float) -> float:
             return 0.0 if v < 0.0 else 1.0 if v > 1.0 else float(v)
 
-        return LocalBox(
-            mn_x=c(self.mn_x),
-            mn_y=c(self.mn_y),
-            mn_z=c(self.mn_z),
-            mx_x=c(self.mx_x),
-            mx_y=c(self.mx_y),
-            mx_z=c(self.mx_z),
-            uv_hint=str(self.uv_hint),
-        )
+        return LocalBox(mn_x=c(self.mn_x), mn_y=c(self.mn_y), mn_z=c(self.mn_z), mx_x=c(self.mx_x), mx_y=c(self.mx_y), mx_z=c(self.mx_z), uv_hint=str(self.uv_hint))
 
 GetState = Callable[[int, int, int], str | None]
 GetDef = Callable[[str], BlockDefinition | None]
@@ -60,15 +52,7 @@ def rotate_box_y_cw(b: LocalBox, turns: int) -> LocalBox:
     mnz = min(p[1] for p in pts)
     mxz = max(p[1] for p in pts)
 
-    return LocalBox(
-        mn_x=mnx,
-        mn_y=b.mn_y,
-        mn_z=mnz,
-        mx_x=mxx,
-        mx_y=b.mx_y,
-        mx_z=mxz,
-        uv_hint=str(b.uv_hint),
-    )
+    return LocalBox(mn_x=mnx, mn_y=b.mn_y, mn_z=mnz, mx_x=mxx, mx_y=b.mx_y, mx_z=mxz, uv_hint=str(b.uv_hint))
 
 def cardinal_turns_from_facing(facing: str) -> int:
     f = str(facing)

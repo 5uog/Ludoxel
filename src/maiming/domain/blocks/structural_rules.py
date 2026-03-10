@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from typing import Callable
 
-from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.state_values import slab_type_value
+from .block_definition import BlockDefinition
+from .state_codec import parse_state
+from .state_values import slab_type_value
 
 DefLookup = Callable[[str], BlockDefinition | None]
 
@@ -46,11 +46,7 @@ def _state_is_full_solid_parts(defn: BlockDefinition | None, props: dict[str, st
 
     return False
 
-def block_state_is_full_solid(
-    state_str: str | None,
-    *,
-    get_def: DefLookup,
-) -> bool:
+def block_state_is_full_solid(state_str: str | None, *, get_def: DefLookup) -> bool:
     if state_str is None:
         return False
 
@@ -68,12 +64,7 @@ def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
         return s in ("north", "south")
     return s in ("east", "west")
 
-def fence_connects_to_neighbor_state(
-    state_str: str | None,
-    *,
-    side_from_neighbor: str,
-    get_def: DefLookup,
-) -> bool:
+def fence_connects_to_neighbor_state(state_str: str | None, *, side_from_neighbor: str, get_def: DefLookup) -> bool:
     if state_str is None:
         return False
 
@@ -87,19 +78,11 @@ def fence_connects_to_neighbor_state(
 
     if is_fence_gate(nd):
         facing = str(props.get("facing", "south"))
-        return fence_gate_connects_to_side(
-            facing=str(facing),
-            side_from_gate=str(side_from_neighbor),
-        )
+        return fence_gate_connects_to_side(facing=str(facing), side_from_gate=str(side_from_neighbor))
 
     return False
 
-def wall_side_from_neighbor_state(
-    state_str: str | None,
-    *,
-    side_from_neighbor: str,
-    get_def: DefLookup,
-) -> str:
+def wall_side_from_neighbor_state(state_str: str | None, *, side_from_neighbor: str, get_def: DefLookup) -> str:
     if state_str is None:
         return "none"
 
@@ -113,10 +96,7 @@ def wall_side_from_neighbor_state(
 
     if is_fence_gate(nd):
         facing = str(props.get("facing", "south"))
-        if fence_gate_connects_to_side(
-            facing=str(facing),
-            side_from_gate=str(side_from_neighbor),
-        ):
+        if fence_gate_connects_to_side(facing=str(facing), side_from_gate=str(side_from_neighbor)):
             return "low"
         return "none"
 
@@ -125,15 +105,7 @@ def wall_side_from_neighbor_state(
 
     return "none"
 
-def wall_up_rule(
-    *,
-    north: str,
-    east: str,
-    south: str,
-    west: str,
-    above_state: str | None,
-    get_def: DefLookup,
-) -> bool:
+def wall_up_rule(*, north: str, east: str, south: str, west: str, above_state: str | None, get_def: DefLookup) -> bool:
     if block_state_is_full_solid(above_state, get_def=get_def):
         return True
 

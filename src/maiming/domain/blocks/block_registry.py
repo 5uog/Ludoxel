@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.domain.blocks.block_definition import BlockDefinition
+from .block_definition import BlockDefinition
 
 @dataclass
 class BlockRegistry:

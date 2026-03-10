@@ -5,20 +5,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from OpenGL.GL import (
-    glDispatchCompute,
-    glMemoryBarrier,
-    GL_SHADER_STORAGE_BARRIER_BIT,
-    GL_BUFFER_UPDATE_BARRIER_BIT,
-)
+from OpenGL.GL import glDispatchCompute, glMemoryBarrier, GL_SHADER_STORAGE_BARRIER_BIT, GL_BUFFER_UPDATE_BARRIER_BIT
 
-from maiming.domain.world.chunking import ChunkKey
-from maiming.infrastructure.rendering.opengl._internal.gl.shader_program import ShaderProgram
-from maiming.infrastructure.rendering.opengl._internal.gl.storage_buffer import StorageBuffer
-from maiming.infrastructure.rendering.opengl._internal.scene.world_face_source_builder import (
-    BucketCounts,
-    empty_face_buckets,
-)
+from ......domain.world.chunking import ChunkKey
+from ..gl.shader_program import ShaderProgram
+from ..gl.storage_buffer import StorageBuffer
+from ..scene.world_face_source_builder import BucketCounts, empty_face_buckets
 
 @dataclass(frozen=True)
 class ChunkFacePayloadSnapshot:
@@ -65,33 +57,14 @@ class ChunkFacePayloadBuilder:
         vals = tuple(int(max(0, int(v))) for v in bucket_counts[:6])
         if len(vals) < 6:
             vals = vals + (0,) * (6 - len(vals))
-        return (
-            int(vals[0]),
-            int(vals[1]),
-            int(vals[2]),
-            int(vals[3]),
-            int(vals[4]),
-            int(vals[5]),
-        )
+        return (int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]), int(vals[4]), int(vals[5]))
 
     @staticmethod
     def _offsets(bucket_counts: BucketCounts) -> tuple[int, int, int, int, int, int]:
         c0, c1, c2, c3, c4, c5 = (int(bucket_counts[i]) for i in range(6))
-        return (
-            0,
-            int(c0),
-            int(c0 + c1),
-            int(c0 + c1 + c2),
-            int(c0 + c1 + c2 + c3),
-            int(c0 + c1 + c2 + c3 + c4),
-        )
+        return (0, int(c0), int(c0 + c1), int(c0 + c1 + c2), int(c0 + c1 + c2 + c3), int(c0 + c1 + c2 + c3 + c4))
 
-    def _build_faces(
-        self,
-        *,
-        face_sources: np.ndarray,
-        bucket_counts: BucketCounts,
-    ) -> list[np.ndarray]:
+    def _build_faces(self, *, face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
         if self._prog is None or self._src is None or self._dst is None:
             return empty_face_buckets()
 
@@ -155,27 +128,14 @@ class ChunkFacePayloadBuilder:
 
         return out
 
-    def build_and_store(
-        self,
-        *,
-        chunk_key: ChunkKey,
-        world_revision: int,
-        face_sources: np.ndarray,
-        bucket_counts: BucketCounts,
-    ) -> ChunkFacePayloadSnapshot:
+    def build_and_store(self, *, chunk_key: ChunkKey, world_revision: int, face_sources: np.ndarray, bucket_counts: BucketCounts) -> ChunkFacePayloadSnapshot:
         ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
         prev = self._chunks.get(ck)
         if prev is not None and int(prev.last_rev) == int(world_revision):
             return prev
 
-        face_buckets = self._build_faces(
-            face_sources=face_sources,
-            bucket_counts=bucket_counts,
-        )
+        face_buckets = self._build_faces(face_sources=face_sources, bucket_counts=bucket_counts)
 
-        snap = ChunkFacePayloadSnapshot(
-            face_buckets=face_buckets,
-            last_rev=int(world_revision),
-        )
+        snap = ChunkFacePayloadSnapshot(face_buckets=face_buckets, last_rev=int(world_revision))
         self._chunks[ck] = snap
         return snap

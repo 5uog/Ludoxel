@@ -92,6 +92,8 @@ The intended Windows development sequence is the following.
 
     python -m venv .venv
     .\.venv\Scripts\Activate.ps1
+    Get-ChildItem .\src -Recurse -Filter *.pyd | Select-Object FullName
+    Remove-Item .\build -Recurse -Force -ErrorAction SilentlyContinue
     python -m pip install --upgrade pip setuptools wheel
     python -m pip install -e ".[dev]" --no-build-isolation
     python .\setup.py build_ext --inplace

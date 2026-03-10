@@ -5,7 +5,7 @@ import threading
 from dataclasses import dataclass, field
 from typing import Dict, Tuple, Iterable, Any
 
-from maiming.domain.world.chunking import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
+from .chunking import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
 
 BlockKey = Tuple[int, int, int]
 
@@ -124,12 +124,7 @@ class WorldState:
             self.revision += 1
             self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
 
-    def set_blocks_bulk(
-        self,
-        *,
-        updates: Dict[BlockKey, str] | None = None,
-        removals: Iterable[BlockKey] = (),
-    ) -> None:
+    def set_blocks_bulk(self, *, updates: Dict[BlockKey, str] | None = None, removals: Iterable[BlockKey] = ()) -> None:
         upd_in = updates or {}
 
         norm_updates: Dict[BlockKey, str] = {}

@@ -7,30 +7,20 @@ from dataclasses import dataclass
 import numpy as np
 
 from OpenGL.GL import (
-    glActiveTexture,
-    glBindTexture,
-    glEnable,
-    glDisable,
-    glCullFace,
-    glPolygonMode,
-    GL_TEXTURE0,
-    GL_TEXTURE1,
-    GL_TEXTURE_2D,
-    GL_CULL_FACE,
-    GL_BACK,
-    GL_FRONT_AND_BACK,
-    GL_LINE,
+    glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glPolygonMode,
+    GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE,
 )
 
-from maiming.core.math.vec3 import Vec3
+from ......core.math.vec3 import Vec3
+from ......domain.world.chunking import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas
+from ..scene.chunk_visibility import chunk_intersects_clip_volume
 from ...facade.gl_renderer_params import ShadowParams
 from ...facade.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
 from .shadow_map_pass import ShadowMapInfo
-from maiming.domain.world.chunking import ChunkKey, chunk_bounds
 
 @dataclass(frozen=True)
 class WorldDrawInputs:
@@ -79,11 +69,7 @@ class WorldPass:
         self._batch.evict_except(keep)
 
     def upload_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
-        self._batch.set_chunk_faces(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=faces,
-        )
+        self._batch.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
 
     @staticmethod
     def _within_render_distance(ck: ChunkKey, cam: ChunkKey, rd: int) -> bool:
@@ -91,45 +77,6 @@ class WorldPass:
         dz = abs(int(ck[2]) - int(cam[2]))
         dy = abs(int(ck[1]) - int(cam[1]))
         return (dx <= int(rd)) and (dz <= int(rd)) and (dy <= 1)
-
-    @staticmethod
-    def _chunk_intersects_view_volume(chunk_key: ChunkKey, view_proj: np.ndarray) -> bool:
-        x0, x1, y0, y1, z0, z1 = chunk_bounds(chunk_key)
-
-        corners = np.asarray(
-            [
-                [float(x0), float(y0), float(z0), 1.0],
-                [float(x1), float(y0), float(z0), 1.0],
-                [float(x0), float(y1), float(z0), 1.0],
-                [float(x1), float(y1), float(z0), 1.0],
-                [float(x0), float(y0), float(z1), 1.0],
-                [float(x1), float(y0), float(z1), 1.0],
-                [float(x0), float(y1), float(z1), 1.0],
-                [float(x1), float(y1), float(z1), 1.0],
-            ],
-            dtype=np.float32,
-        )
-
-        clip = (view_proj @ corners.T).T
-        xs = clip[:, 0]
-        ys = clip[:, 1]
-        zs = clip[:, 2]
-        ws = clip[:, 3]
-
-        if bool(np.all(xs < (-ws))):
-            return False
-        if bool(np.all(xs > ws)):
-            return False
-        if bool(np.all(ys < (-ws))):
-            return False
-        if bool(np.all(ys > ws)):
-            return False
-        if bool(np.all(zs < (-ws))):
-            return False
-        if bool(np.all(zs > ws)):
-            return False
-
-        return True
 
     def draw(self, inp: WorldDrawInputs) -> PassFrameMetrics:
         t0 = time.perf_counter()
@@ -148,30 +95,19 @@ class WorldPass:
         for ck in self._batch.chunk_keys():
             if not self._within_render_distance(ck, cam, rd):
                 continue
-            if not self._chunk_intersects_view_volume(ck, view_proj):
+            if not chunk_intersects_clip_volume(ck, view_proj):
                 continue
             visible_chunks.append(ck)
 
         commands = self._batch.build_commands(visible_chunks)
         if not any(int(cmd.shape[0]) > 0 for cmd in commands):
-            self._last_metrics = PassFrameMetrics(
-                cpu_ms=float((time.perf_counter() - t0) * 1000.0),
-                draw_calls=0,
-                instances=0,
-                rendered=False,
-            )
+            self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=0, instances=0, rendered=False)
             return self._last_metrics
 
         draw_calls = 0
         instances = 0
 
-        with GLStateGuard(
-            capture_framebuffer=False,
-            capture_viewport=False,
-            capture_enables=(GL_CULL_FACE,),
-            capture_cull_mode=True,
-            capture_polygon_mode=True,
-        ):
+        with GLStateGuard(capture_framebuffer=False, capture_viewport=False, capture_enables=(GL_CULL_FACE,), capture_cull_mode=True, capture_polygon_mode=True):
             if bool(inp.world_wireframe):
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
@@ -182,12 +118,7 @@ class WorldPass:
             self._prog.set_int("u_atlas", 0)
             self._prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
 
-            shadow_sampling_ok = bool(
-                inp.shadow_enabled
-                and inp.shadow_info.ok
-                and int(inp.shadow_info.tex_id) != 0
-                and int(inp.shadow_info.inst_count) > 0
-            )
+            shadow_sampling_ok = bool(inp.shadow_enabled and inp.shadow_info.ok and int(inp.shadow_info.tex_id) != 0 and int(inp.shadow_info.inst_count) > 0)
             self._prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)
             self._prog.set_int("u_shadowMap", 1)
 
@@ -210,10 +141,7 @@ class WorldPass:
             glEnable(GL_CULL_FACE)
             glCullFace(GL_BACK)
 
-            draw_calls, instances = self._batch.draw(
-                commands,
-                before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)),
-            )
+            draw_calls, instances = self._batch.draw(commands, before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)))
 
             glDisable(GL_CULL_FACE)
 
@@ -222,10 +150,5 @@ class WorldPass:
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, 0)
 
-        self._last_metrics = PassFrameMetrics(
-            cpu_ms=float((time.perf_counter() - t0) * 1000.0),
-            draw_calls=int(draw_calls),
-            instances=int(instances),
-            rendered=bool(draw_calls > 0),
-        )
+        self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=int(draw_calls), instances=int(instances), rendered=bool(draw_calls > 0))
         return self._last_metrics

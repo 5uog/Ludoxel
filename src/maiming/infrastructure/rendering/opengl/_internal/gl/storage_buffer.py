@@ -3,25 +3,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from OpenGL.GL import (
-    glGenBuffers,
-    glDeleteBuffers,
-    glBindBuffer,
-    glBindBufferBase,
-    glBufferData,
-    glBufferSubData,
-    glGetBufferSubData,
-    GL_SHADER_STORAGE_BUFFER,
-    GL_DYNAMIC_DRAW,
-)
+from OpenGL.GL import glGenBuffers, glDeleteBuffers, glBindBuffer, glBindBufferBase, glBufferData, glGetBufferSubData, GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW
+
+from .buffer_upload import upload_array_buffer, upload_bytes_buffer
 
 class StorageBuffer:
-    def __init__(
-        self,
-        *,
-        target: int = GL_SHADER_STORAGE_BUFFER,
-        usage: int = GL_DYNAMIC_DRAW,
-    ) -> None:
+    def __init__(self, *, target: int = GL_SHADER_STORAGE_BUFFER, usage: int = GL_DYNAMIC_DRAW) -> None:
         self._target = int(target)
         self._usage = int(usage)
         self.buffer = int(glGenBuffers(1))
@@ -51,28 +38,13 @@ class StorageBuffer:
         glBindBuffer(self._target, 0)
 
     def upload_bytes(self, data: bytes) -> None:
-        payload = bytes(data)
-        nbytes = int(len(payload))
-
-        glBindBuffer(self._target, int(self.buffer))
-        if nbytes <= 0:
-            glBufferData(self._target, 0, None, self._usage)
-            self.capacity_bytes = 0
-            glBindBuffer(self._target, 0)
-            return
-
-        if nbytes > int(self.capacity_bytes):
-            glBufferData(self._target, nbytes, payload, self._usage)
-            self.capacity_bytes = int(nbytes)
-        else:
-            glBufferSubData(self._target, 0, nbytes, payload)
-        glBindBuffer(self._target, 0)
+        self.capacity_bytes = upload_bytes_buffer(target=self._target, buffer=int(self.buffer), usage=self._usage, data=bytes(data), capacity_bytes=int(self.capacity_bytes))
 
     def upload_array(self, data: np.ndarray) -> None:
         arr = data
         if not arr.flags["C_CONTIGUOUS"]:
             arr = np.ascontiguousarray(arr)
-        self.upload_bytes(arr.tobytes())
+        self.capacity_bytes = upload_array_buffer(target=self._target, buffer=int(self.buffer), usage=self._usage, data=arr, capacity_bytes=int(self.capacity_bytes))
 
     def bind_base(self, index: int) -> None:
         glBindBufferBase(self._target, int(index), int(self.buffer))

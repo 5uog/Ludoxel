@@ -3,14 +3,9 @@ from __future__ import annotations
 
 from typing import Dict
 
-from maiming.domain.world.world_state import WorldState, BlockKey
+from .world_state import WorldState, BlockKey
 
-def generate_flat_world(
-    *,
-    half_extent: int = 32,
-    ground_y: int = 0,
-    block_id: str = "minecraft:grass_block",
-) -> WorldState:
+def generate_flat_world(*, half_extent: int = 32, ground_y: int = 0, block_id: str = "minecraft:grass_block") -> WorldState:
     blocks: Dict[BlockKey, str] = {}
     e = int(max(1, half_extent))
     gy = int(ground_y)

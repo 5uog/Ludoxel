@@ -3,14 +3,9 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from maiming.domain.blocks.models.common import LocalBox, rotate_box_y_cw, gate_turns_from_facing
-from maiming.domain.blocks.models.dimensions import (
-    FENCE_GATE_CLOSED,
-    FENCE_GATE_OPEN,
-    FENCE_GATE_WALL_CLOSED,
-    FENCE_GATE_WALL_OPEN,
-)
-from maiming.domain.blocks.state_values import prop_as_bool
+from .common import LocalBox, rotate_box_y_cw, gate_turns_from_facing
+from .dimensions import FENCE_GATE_CLOSED, FENCE_GATE_OPEN, FENCE_GATE_WALL_CLOSED, FENCE_GATE_WALL_OPEN
+from ..state_values import prop_as_bool
 
 def boxes_for_fence_gate(props: Dict[str, str]) -> List[LocalBox]:
     facing = str(props.get("facing", "south"))

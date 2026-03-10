@@ -4,10 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from maiming.core.math.vec3 import Vec3, clampf
-from maiming.core.math.smoothing import exp_alpha
-from maiming.domain.entities.player_entity import PlayerEntity
-from maiming.domain.config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS
+from ...core.math.vec3 import Vec3, clampf
+from ...core.math.smoothing import exp_alpha
+from ..entities.player_entity import PlayerEntity
+from ..config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS
 
 @dataclass(frozen=True)
 class MoveInput:
@@ -36,12 +36,7 @@ def _wish_dir(player: PlayerEntity, forward: float, strafe: float) -> Vec3:
         return Vec3(0.0, 0.0, 0.0)
     return v.normalized()
 
-def step_bedrock(
-    player: PlayerEntity,
-    inp: MoveInput,
-    dt: float,
-    params: MovementParams = DEFAULT_MOVEMENT_PARAMS,
-) -> None:
+def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams = DEFAULT_MOVEMENT_PARAMS) -> None:
     player.yaw_deg += float(inp.yaw_delta_deg)
     player.pitch_deg += float(inp.pitch_delta_deg)
     player.clamp_pitch()

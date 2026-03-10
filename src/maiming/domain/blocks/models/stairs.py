@@ -3,18 +3,11 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw, cardinal_turns_from_facing
-from maiming.domain.blocks.structural_rules import is_stairs
+from ..state_codec import parse_state
+from .common import LocalBox, GetState, GetDef, rotate_box_y_cw, cardinal_turns_from_facing
+from ..structural_rules import is_stairs
 
-def _stairs_shape(
-    props: Dict[str, str],
-    get_state: GetState,
-    get_def: GetDef,
-    x: int,
-    y: int,
-    z: int,
-) -> str:
+def _stairs_shape(props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> str:
     facing = str(props.get("facing", "east"))
     if facing not in ("north", "east", "south", "west"):
         facing = "east"
@@ -45,12 +38,7 @@ def _stairs_shape(
 
         return (True, nf)
 
-    dir_vec: dict[str, tuple[int, int]] = {
-        "east": (1, 0),
-        "south": (0, 1),
-        "west": (-1, 0),
-        "north": (0, -1),
-    }
+    dir_vec: dict[str, tuple[int, int]] = {"east": (1, 0), "south": (0, 1), "west": (-1, 0), "north": (0, -1)}
     left = {"east": "north", "north": "west", "west": "south", "south": "east"}[facing]
     right = {"east": "south", "south": "west", "west": "north", "north": "east"}[facing]
 
@@ -72,16 +60,7 @@ def _stairs_shape(
 
     return "straight"
 
-def boxes_for_stairs(
-    *,
-    base_id: str,
-    props: Dict[str, str],
-    get_state: GetState,
-    get_def: GetDef,
-    x: int,
-    y: int,
-    z: int,
-) -> List[LocalBox]:
+def boxes_for_stairs(*, base_id: str, props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
     _ = base_id
 
     facing = str(props.get("facing", "east"))
@@ -101,12 +80,7 @@ def boxes_for_stairs(
     def base_q(x0: float, x1: float, z0: float, z1: float) -> LocalBox:
         return LocalBox(float(x0), float(base_y0), float(z0), float(x1), float(base_y1), float(z1))
 
-    base_boxes: list[LocalBox] = [
-        base_q(0.0, 0.5, 0.0, 0.5),
-        base_q(0.5, 1.0, 0.0, 0.5),
-        base_q(0.0, 0.5, 0.5, 1.0),
-        base_q(0.5, 1.0, 0.5, 1.0),
-    ]
+    base_boxes: list[LocalBox] = [base_q(0.0, 0.5, 0.0, 0.5), base_q(0.5, 1.0, 0.0, 0.5), base_q(0.0, 0.5, 0.5, 1.0), base_q(0.5, 1.0, 0.5, 1.0)]
 
     def step_box(x0: float, x1: float, z0: float, z1: float) -> LocalBox:
         return LocalBox(float(x0), float(step_y0), float(z0), float(x1), float(step_y1), float(z1))

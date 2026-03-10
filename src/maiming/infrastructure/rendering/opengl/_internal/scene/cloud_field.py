@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from maiming.core.math.vec3 import Vec3
+from ......core.math.vec3 import Vec3
 from ...facade.cloud_flow_direction import normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams
 
@@ -86,11 +86,7 @@ class CloudField:
         dt = float(max(0.0, ts - float(self._flow_epoch_s)))
 
         vx, vz = self._flow_velocity(self._flow_direction)
-        return Vec3(
-            float(self._flow_base_shift.x) + vx * dt,
-            0.0,
-            float(self._flow_base_shift.z) + vz * dt,
-        )
+        return Vec3(float(self._flow_base_shift.x) + vx * dt, 0.0, float(self._flow_base_shift.z) + vz * dt)
 
     def ensure_cache(self, eye: Vec3, shift: Vec3) -> None:
         if int(self._enabled_density) <= 0:
@@ -112,15 +108,7 @@ class CloudField:
         self._anchor_key = key
         self._boxes_cache = self._build_cloud_boxes(anchor_mx=ax, anchor_mz=az)
 
-    def visible_boxes(
-        self,
-        eye: Vec3,
-        shift: Vec3,
-        forward: Vec3,
-        fov_deg: float,
-        aspect: float,
-        z_far: float,
-    ) -> list[CloudBox]:
+    def visible_boxes(self, eye: Vec3, shift: Vec3, forward: Vec3, fov_deg: float, aspect: float, z_far: float) -> list[CloudBox]:
         self.ensure_cache(eye=eye, shift=shift)
 
         if not self._boxes_cache:
@@ -215,17 +203,9 @@ class CloudField:
                     y0 = float(int(self._cfg.y) + int(lane))
                     cy = y0 + size_y * 0.5
 
-                    a = float(self._cfg.alpha_min) + float(self._cfg.alpha_range) * self._hash3(
-                        mx, mz, ridx, int(self._seed) ^ 0xB5297A4D
-                    )
+                    a = float(self._cfg.alpha_min) + float(self._cfg.alpha_range) * self._hash3(mx, mz, ridx, int(self._seed) ^ 0xB5297A4D)
 
-                    boxes.append(
-                        CloudBox(
-                            center=Vec3(bx, cy, bz),
-                            size=Vec3(size_x, size_y, size_z),
-                            alpha_mul=float(a),
-                        )
-                    )
+                    boxes.append(CloudBox(center=Vec3(bx, cy, bz), size=Vec3(size_x, size_y, size_z), alpha_mul=float(a)))
 
         return boxes
 

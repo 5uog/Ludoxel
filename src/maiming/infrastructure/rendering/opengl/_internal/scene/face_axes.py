@@ -1,7 +1,7 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/face_axes.py
 from __future__ import annotations
 
-from maiming.domain.blocks.models.common import LocalBox
+from ......domain.blocks.models.common import LocalBox
 
 _EPS = 1e-7
 
@@ -27,24 +27,9 @@ def face_rect(face_idx: int, box: LocalBox) -> tuple[float, float, float, float]
     fi = int(face_idx)
 
     if fi in (0, 1):
-        return (
-            float(box.mn_y),
-            float(box.mx_y),
-            float(box.mn_z),
-            float(box.mx_z),
-        )
+        return (float(box.mn_y), float(box.mx_y), float(box.mn_z), float(box.mx_z))
 
     if fi in (2, 3):
-        return (
-            float(box.mn_x),
-            float(box.mx_x),
-            float(box.mn_z),
-            float(box.mx_z),
-        )
+        return (float(box.mn_x), float(box.mx_x), float(box.mn_z), float(box.mx_z))
 
-    return (
-        float(box.mn_x),
-        float(box.mx_x),
-        float(box.mn_y),
-        float(box.mx_y),
-    )
+    return (float(box.mn_x), float(box.mx_x), float(box.mn_y), float(box.mx_y))

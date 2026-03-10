@@ -129,15 +129,9 @@ def _windows_total_mem_bytes() -> int | None:
         import ctypes
         class MEMORYSTATUSEX(ctypes.Structure):
             _fields_ = [
-                ("dwLength", ctypes.c_uint32),
-                ("dwMemoryLoad", ctypes.c_uint32),
-                ("ullTotalPhys", ctypes.c_uint64),
-                ("ullAvailPhys", ctypes.c_uint64),
-                ("ullTotalPageFile", ctypes.c_uint64),
-                ("ullAvailPageFile", ctypes.c_uint64),
-                ("ullTotalVirtual", ctypes.c_uint64),
-                ("ullAvailVirtual", ctypes.c_uint64),
-                ("ullAvailExtendedVirtual", ctypes.c_uint64),
+                ("dwLength", ctypes.c_uint32), ("dwMemoryLoad", ctypes.c_uint32), ("ullTotalPhys", ctypes.c_uint64), 
+                ("ullAvailPhys", ctypes.c_uint64), ("ullTotalPageFile", ctypes.c_uint64), ("ullAvailPageFile", ctypes.c_uint64), 
+                ("ullTotalVirtual", ctypes.c_uint64), ("ullAvailVirtual", ctypes.c_uint64), ("ullAvailExtendedVirtual", ctypes.c_uint64)
             ]
         ms = MEMORYSTATUSEX()
         ms.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
@@ -155,16 +149,8 @@ def _windows_rss_bytes_psapi() -> int | None:
 
         class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
             _fields_ = [
-                ("cb", wt.DWORD),
-                ("PageFaultCount", wt.DWORD),
-                ("PeakWorkingSetSize", wt.SIZE_T),
-                ("WorkingSetSize", wt.SIZE_T),
-                ("QuotaPeakPagedPoolUsage", wt.SIZE_T),
-                ("QuotaPagedPoolUsage", wt.SIZE_T),
-                ("QuotaPeakNonPagedPoolUsage", wt.SIZE_T),
-                ("QuotaNonPagedPoolUsage", wt.SIZE_T),
-                ("PagefileUsage", wt.SIZE_T),
-                ("PeakPagefileUsage", wt.SIZE_T),
+                ("cb", wt.DWORD), ("PageFaultCount", wt.DWORD), ("PeakWorkingSetSize", wt.SIZE_T), ("WorkingSetSize", wt.SIZE_T), ("QuotaPeakPagedPoolUsage", wt.SIZE_T), 
+                ("QuotaPagedPoolUsage", wt.SIZE_T), ("QuotaPeakNonPagedPoolUsage", wt.SIZE_T), ("QuotaNonPagedPoolUsage", wt.SIZE_T), ("PagefileUsage", wt.SIZE_T), ("PeakPagefileUsage", wt.SIZE_T)
             ]
 
         counters = PROCESS_MEMORY_COUNTERS()
@@ -184,12 +170,7 @@ def _windows_rss_bytes_psapi() -> int | None:
 def _windows_rss_bytes_tasklist() -> int | None:
     try:
         pid = str(os.getpid())
-        out = subprocess.check_output(
-            ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=0.8,
-        )
+        out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
         line = str(out).strip()
         if not line or "INFO:" in line:
             return None
@@ -247,12 +228,7 @@ def read_system_info() -> SystemInfo:
     if not cpu_name:
         cpu_name = str(platform.processor() or "").strip()
 
-    return SystemInfo(
-        cpu_threads=int(max(0, threads)),
-        cpu_name=str(cpu_name),
-        cpu_speed_ghz=cpu_ghz,
-        total_mem_bytes=total_mem,
-    )
+    return SystemInfo(cpu_threads=int(max(0, threads)), cpu_name=str(cpu_name), cpu_speed_ghz=cpu_ghz, total_mem_bytes=total_mem)
 
 def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnapshot:
     plat = sys.platform
@@ -286,12 +262,7 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 
 def _nvidia_smi_util_percent() -> float | None:
     try:
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=0.8,
-        )
+        out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
         line = str(out).strip().splitlines()[0].strip()
         v = float(line)
         if v < 0.0:

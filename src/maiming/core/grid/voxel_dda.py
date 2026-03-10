@@ -2,7 +2,7 @@
 from __future__ import annotations
 import math
 from dataclasses import dataclass
-from maiming.core.math.vec3 import Vec3
+from ..math.vec3 import Vec3
 
 @dataclass(frozen=True)
 class DDAHit:

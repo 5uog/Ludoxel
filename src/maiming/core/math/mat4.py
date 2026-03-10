@@ -2,7 +2,7 @@
 from __future__ import annotations
 import math
 import numpy as np
-from maiming.core.math.vec3 import Vec3
+from .vec3 import Vec3
 
 def identity() -> np.ndarray:
     return np.identity(4, dtype=np.float32)
@@ -35,8 +35,6 @@ def ortho(left: float, right: float, bottom: float, top: float, z_near: float, z
 
 def look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3 = Vec3(0.0, 1.0, 0.0)) -> np.ndarray:
     f = forward.normalized()
-
-    # Fix handedness: right = up x forward (not forward x up)
     r = up_hint.cross(f).normalized()
     u = f.cross(r).normalized()
 

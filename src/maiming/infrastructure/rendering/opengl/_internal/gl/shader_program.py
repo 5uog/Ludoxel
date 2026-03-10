@@ -3,36 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-
 import numpy as np
-from OpenGL.GL import (
-    glCreateProgram,
-    glCreateShader,
-    glShaderSource,
-    glCompileShader,
-    glGetShaderiv,
-    glGetShaderInfoLog,
-    glAttachShader,
-    glLinkProgram,
-    glGetProgramiv,
-    glGetProgramInfoLog,
-    glDeleteShader,
-    glUseProgram,
-    glGetUniformLocation,
-    glUniformMatrix4fv,
-    glUniform3f,
-    glUniform2f,
-    glUniform1i,
-    glUniform1f,
-    glUniform3i,
-    glUniform4f,
-    glDeleteProgram,
-    GL_VERTEX_SHADER,
-    GL_FRAGMENT_SHADER,
-    GL_COMPUTE_SHADER,
-    GL_COMPILE_STATUS,
-    GL_LINK_STATUS,
-)
+
+from OpenGL.GL import glCreateProgram, glCreateShader, glShaderSource, glCompileShader, glGetShaderiv, glGetShaderInfoLog, glAttachShader, glLinkProgram, glGetProgramiv, glGetProgramInfoLog, glDeleteShader, glUseProgram, glGetUniformLocation, glUniformMatrix4fv, glUniform3f, glUniform2f, glUniform1i, glUniform1f, glUniform3i, glUniform4f, glDeleteProgram, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_COMPILE_STATUS, GL_LINK_STATUS
 
 def _load_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")

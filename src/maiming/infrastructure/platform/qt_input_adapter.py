@@ -75,16 +75,7 @@ class QtInputAdapter(QObject):
         jump_held = (int(Qt.Key.Key_Space) in self._keys)
         jump_pressed = bool(self._jump_pressed_edge)
 
-        out = InputFrame(
-            move_f=float(f),
-            move_s=float(s),
-            jump_held=bool(jump_held),
-            jump_pressed=bool(jump_pressed),
-            sprint=bool(sprint),
-            crouch=bool(crouch),
-            mdx=float(self._mdx),
-            mdy=float(self._mdy),
-        )
+        out = InputFrame(move_f=float(f), move_s=float(s), jump_held=bool(jump_held), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), mdx=float(self._mdx), mdy=float(self._mdy))
 
         self._jump_pressed_edge = False
         self._mdx = 0.0

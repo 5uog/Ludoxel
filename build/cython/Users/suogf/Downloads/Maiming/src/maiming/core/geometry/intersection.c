@@ -2540,7 +2540,7 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_codeobj_tab[3];
-  PyObject *__pyx_string_tab[78];
+  PyObject *__pyx_string_tab[79];
   PyObject *__pyx_number_tab[12];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
@@ -2587,79 +2587,80 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_RayHitFace_None __pyx_string_tab[2]
 #define __pyx_kp_u__2 __pyx_string_tab[3]
 #define __pyx_kp_u_add_note __pyx_string_tab[4]
-#define __pyx_kp_u_src_maiming_core_geometry_inters __pyx_string_tab[5]
-#define __pyx_n_u_AABB __pyx_string_tab[6]
-#define __pyx_n_u_FACE_NEG_X __pyx_string_tab[7]
-#define __pyx_n_u_FACE_NEG_Y __pyx_string_tab[8]
-#define __pyx_n_u_FACE_NEG_Z __pyx_string_tab[9]
-#define __pyx_n_u_FACE_POS_X __pyx_string_tab[10]
-#define __pyx_n_u_FACE_POS_Y __pyx_string_tab[11]
-#define __pyx_n_u_FACE_POS_Z __pyx_string_tab[12]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[13]
-#define __pyx_n_u_Ray __pyx_string_tab[14]
-#define __pyx_n_u_RayHitFace __pyx_string_tab[15]
-#define __pyx_n_u_Vec3 __pyx_string_tab[16]
-#define __pyx_n_u_aabb __pyx_string_tab[17]
-#define __pyx_n_u_annotations __pyx_string_tab[18]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[19]
-#define __pyx_n_u_axis __pyx_string_tab[20]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[21]
-#define __pyx_n_u_d __pyx_string_tab[22]
-#define __pyx_n_u_d_comp __pyx_string_tab[23]
-#define __pyx_n_u_dataclass __pyx_string_tab[24]
-#define __pyx_n_u_dataclasses __pyx_string_tab[25]
-#define __pyx_n_u_direction __pyx_string_tab[26]
-#define __pyx_n_u_doc __pyx_string_tab[27]
-#define __pyx_n_u_enter_face __pyx_string_tab[28]
-#define __pyx_n_u_enter_face_for_axis __pyx_string_tab[29]
-#define __pyx_n_u_enumerate __pyx_string_tab[30]
-#define __pyx_n_u_exit_face __pyx_string_tab[31]
-#define __pyx_n_u_exit_face_for_axis __pyx_string_tab[32]
-#define __pyx_n_u_face __pyx_string_tab[33]
-#define __pyx_n_u_float __pyx_string_tab[34]
-#define __pyx_n_u_frozen __pyx_string_tab[35]
-#define __pyx_n_u_func __pyx_string_tab[36]
-#define __pyx_n_u_int __pyx_string_tab[37]
-#define __pyx_n_u_inv __pyx_string_tab[38]
-#define __pyx_n_u_inv_dir __pyx_string_tab[39]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[40]
-#define __pyx_n_u_items __pyx_string_tab[41]
-#define __pyx_n_u_maiming_core_geometry_aabb __pyx_string_tab[42]
-#define __pyx_n_u_maiming_core_geometry_intersecti __pyx_string_tab[43]
-#define __pyx_n_u_maiming_core_geometry_ray __pyx_string_tab[44]
-#define __pyx_n_u_maiming_core_math_vec3 __pyx_string_tab[45]
+#define __pyx_kp_u_maiming_core_geometry_aabb __pyx_string_tab[5]
+#define __pyx_kp_u_maiming_core_geometry_ray __pyx_string_tab[6]
+#define __pyx_kp_u_maiming_core_math_vec3 __pyx_string_tab[7]
+#define __pyx_kp_u_src_maiming_core_geometry_inters __pyx_string_tab[8]
+#define __pyx_n_u_AABB __pyx_string_tab[9]
+#define __pyx_n_u_FACE_NEG_X __pyx_string_tab[10]
+#define __pyx_n_u_FACE_NEG_Y __pyx_string_tab[11]
+#define __pyx_n_u_FACE_NEG_Z __pyx_string_tab[12]
+#define __pyx_n_u_FACE_POS_X __pyx_string_tab[13]
+#define __pyx_n_u_FACE_POS_Y __pyx_string_tab[14]
+#define __pyx_n_u_FACE_POS_Z __pyx_string_tab[15]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[16]
+#define __pyx_n_u_Ray __pyx_string_tab[17]
+#define __pyx_n_u_RayHitFace __pyx_string_tab[18]
+#define __pyx_n_u_Vec3 __pyx_string_tab[19]
+#define __pyx_n_u_aabb __pyx_string_tab[20]
+#define __pyx_n_u_annotations __pyx_string_tab[21]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[22]
+#define __pyx_n_u_axis __pyx_string_tab[23]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[24]
+#define __pyx_n_u_d __pyx_string_tab[25]
+#define __pyx_n_u_d_comp __pyx_string_tab[26]
+#define __pyx_n_u_dataclass __pyx_string_tab[27]
+#define __pyx_n_u_dataclasses __pyx_string_tab[28]
+#define __pyx_n_u_direction __pyx_string_tab[29]
+#define __pyx_n_u_doc __pyx_string_tab[30]
+#define __pyx_n_u_enter_face __pyx_string_tab[31]
+#define __pyx_n_u_enter_face_for_axis __pyx_string_tab[32]
+#define __pyx_n_u_enumerate __pyx_string_tab[33]
+#define __pyx_n_u_exit_face __pyx_string_tab[34]
+#define __pyx_n_u_exit_face_for_axis __pyx_string_tab[35]
+#define __pyx_n_u_face __pyx_string_tab[36]
+#define __pyx_n_u_float __pyx_string_tab[37]
+#define __pyx_n_u_frozen __pyx_string_tab[38]
+#define __pyx_n_u_func __pyx_string_tab[39]
+#define __pyx_n_u_int __pyx_string_tab[40]
+#define __pyx_n_u_inv __pyx_string_tab[41]
+#define __pyx_n_u_inv_dir __pyx_string_tab[42]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[43]
+#define __pyx_n_u_items __pyx_string_tab[44]
+#define __pyx_n_u_maiming_core_geometry_intersecti __pyx_string_tab[45]
 #define __pyx_n_u_main __pyx_string_tab[46]
-#define __pyx_n_u_metaclass __pyx_string_tab[47]
-#define __pyx_n_u_mn __pyx_string_tab[48]
-#define __pyx_n_u_module __pyx_string_tab[49]
-#define __pyx_n_u_mx __pyx_string_tab[50]
-#define __pyx_n_u_name __pyx_string_tab[51]
-#define __pyx_n_u_o __pyx_string_tab[52]
-#define __pyx_n_u_o_comp __pyx_string_tab[53]
-#define __pyx_n_u_origin __pyx_string_tab[54]
-#define __pyx_n_u_p __pyx_string_tab[55]
-#define __pyx_n_u_point __pyx_string_tab[56]
-#define __pyx_n_u_pop __pyx_string_tab[57]
-#define __pyx_n_u_prepare __pyx_string_tab[58]
-#define __pyx_n_u_qualname __pyx_string_tab[59]
-#define __pyx_n_u_ray __pyx_string_tab[60]
-#define __pyx_n_u_ray_aabb_face __pyx_string_tab[61]
-#define __pyx_n_u_return __pyx_string_tab[62]
-#define __pyx_n_u_set_name __pyx_string_tab[63]
-#define __pyx_n_u_setdefault __pyx_string_tab[64]
-#define __pyx_n_u_t1 __pyx_string_tab[65]
-#define __pyx_n_u_t2 __pyx_string_tab[66]
-#define __pyx_n_u_t_enter __pyx_string_tab[67]
-#define __pyx_n_u_test __pyx_string_tab[68]
-#define __pyx_n_u_tmax __pyx_string_tab[69]
-#define __pyx_n_u_tmin __pyx_string_tab[70]
-#define __pyx_n_u_values __pyx_string_tab[71]
-#define __pyx_n_u_x __pyx_string_tab[72]
-#define __pyx_n_u_y __pyx_string_tab[73]
-#define __pyx_n_u_z __pyx_string_tab[74]
-#define __pyx_kp_b_iso88591_1_1_1_1_1_q_a_xxt7_1_Qd_4t3d_c __pyx_string_tab[75]
-#define __pyx_kp_b_iso88591_Zq_uCq_hc_uCq_hc_Ya __pyx_string_tab[76]
-#define __pyx_kp_b_iso88591_nJa_uCq_hc_uCq_hc_Ya __pyx_string_tab[77]
+#define __pyx_n_u_math_vec3 __pyx_string_tab[47]
+#define __pyx_n_u_metaclass __pyx_string_tab[48]
+#define __pyx_n_u_mn __pyx_string_tab[49]
+#define __pyx_n_u_module __pyx_string_tab[50]
+#define __pyx_n_u_mx __pyx_string_tab[51]
+#define __pyx_n_u_name __pyx_string_tab[52]
+#define __pyx_n_u_o __pyx_string_tab[53]
+#define __pyx_n_u_o_comp __pyx_string_tab[54]
+#define __pyx_n_u_origin __pyx_string_tab[55]
+#define __pyx_n_u_p __pyx_string_tab[56]
+#define __pyx_n_u_point __pyx_string_tab[57]
+#define __pyx_n_u_pop __pyx_string_tab[58]
+#define __pyx_n_u_prepare __pyx_string_tab[59]
+#define __pyx_n_u_qualname __pyx_string_tab[60]
+#define __pyx_n_u_ray __pyx_string_tab[61]
+#define __pyx_n_u_ray_aabb_face __pyx_string_tab[62]
+#define __pyx_n_u_return __pyx_string_tab[63]
+#define __pyx_n_u_set_name __pyx_string_tab[64]
+#define __pyx_n_u_setdefault __pyx_string_tab[65]
+#define __pyx_n_u_t1 __pyx_string_tab[66]
+#define __pyx_n_u_t2 __pyx_string_tab[67]
+#define __pyx_n_u_t_enter __pyx_string_tab[68]
+#define __pyx_n_u_test __pyx_string_tab[69]
+#define __pyx_n_u_tmax __pyx_string_tab[70]
+#define __pyx_n_u_tmin __pyx_string_tab[71]
+#define __pyx_n_u_values __pyx_string_tab[72]
+#define __pyx_n_u_x __pyx_string_tab[73]
+#define __pyx_n_u_y __pyx_string_tab[74]
+#define __pyx_n_u_z __pyx_string_tab[75]
+#define __pyx_kp_b_iso88591_1_1_1_1_1_q_a_xxt7_2Qat1D_Ct4sR __pyx_string_tab[76]
+#define __pyx_kp_b_iso88591_Zq_uCq_hc_uCq_hc_Ya __pyx_string_tab[77]
+#define __pyx_kp_b_iso88591_nJa_uCq_hc_uCq_hc_Ya __pyx_string_tab[78]
 #define __pyx_float_0_0 __pyx_number_tab[0]
 #define __pyx_float_1_0 __pyx_number_tab[1]
 #define __pyx_float_neg_1e30 __pyx_number_tab[2]
@@ -2687,7 +2688,7 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   __Pyx_State_RemoveModule(NULL);
   #endif
   for (int i=0; i<3; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<78; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<79; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<12; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
@@ -2712,7 +2713,7 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
   for (int i=0; i<3; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<78; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<79; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<12; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
@@ -2727,7 +2728,7 @@ return 0;
 #endif
 /* #### Code section: module_code ### */
 
-/* "maiming/core/geometry/intersection.py":24
+/* "maiming/core/geometry/intersection.py":23
  *     face: int
  * 
  * def _enter_face_for_axis(axis: int, inv_dir: float) -> int:             # <<<<<<<<<<<<<<
@@ -2775,40 +2776,40 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_axis,&__pyx_mstate_global->__pyx_n_u_inv_dir,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 24, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 23, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 24, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 23, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 24, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 23, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_enter_face_for_axis", 0) < (0)) __PYX_ERR(0, 24, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_enter_face_for_axis", 0) < (0)) __PYX_ERR(0, 23, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_enter_face_for_axis", 1, 2, 2, i); __PYX_ERR(0, 24, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_enter_face_for_axis", 1, 2, 2, i); __PYX_ERR(0, 23, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 24, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 23, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 24, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 23, __pyx_L3_error)
     }
-    if (__Pyx_PyInt_FromNumber(&values[0], "axis", 0) < (0)) __PYX_ERR(0, 24, __pyx_L3_error)
+    if (__Pyx_PyInt_FromNumber(&values[0], "axis", 0) < (0)) __PYX_ERR(0, 23, __pyx_L3_error)
     __pyx_v_axis = ((PyObject*)values[0]);
-    __pyx_v_inv_dir = __Pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_inv_dir == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 24, __pyx_L3_error)
+    __pyx_v_inv_dir = __Pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_inv_dir == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_enter_face_for_axis", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 24, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_enter_face_for_axis", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 23, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -2819,7 +2820,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_axis), (&PyLong_Type), 0, "axis", 2))) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_axis), (&PyLong_Type), 0, "axis", 2))) __PYX_ERR(0, 23, __pyx_L1_error)
   __pyx_r = __pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_for_axis(__pyx_self, __pyx_v_axis, __pyx_v_inv_dir);
 
   /* function exit code */
@@ -2850,17 +2851,17 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_enter_face_for_axis", 0);
 
-  /* "maiming/core/geometry/intersection.py":25
+  /* "maiming/core/geometry/intersection.py":24
  * 
  * def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
  *     if axis == 0:             # <<<<<<<<<<<<<<
  *         return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X
  *     if axis == 1:
 */
-  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_0, 0, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_0, 0, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 24, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "maiming/core/geometry/intersection.py":26
+    /* "maiming/core/geometry/intersection.py":25
  * def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
  *     if axis == 0:
  *         return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X             # <<<<<<<<<<<<<<
@@ -2870,15 +2871,15 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_1 = (__pyx_v_inv_dir >= 0.0);
     if (__pyx_t_1) {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 25, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 26, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 25, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     } else {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 25, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 26, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 25, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     }
@@ -2886,7 +2887,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "maiming/core/geometry/intersection.py":25
+    /* "maiming/core/geometry/intersection.py":24
  * 
  * def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
  *     if axis == 0:             # <<<<<<<<<<<<<<
@@ -2895,17 +2896,17 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
 */
   }
 
-  /* "maiming/core/geometry/intersection.py":27
+  /* "maiming/core/geometry/intersection.py":26
  *     if axis == 0:
  *         return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X
  *     if axis == 1:             # <<<<<<<<<<<<<<
  *         return _FACE_NEG_Y if inv_dir >= 0.0 else _FACE_POS_Y
  *     return _FACE_NEG_Z if inv_dir >= 0.0 else _FACE_POS_Z
 */
-  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_1, 1, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 27, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_1, 1, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 26, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "maiming/core/geometry/intersection.py":28
+    /* "maiming/core/geometry/intersection.py":27
  *         return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X
  *     if axis == 1:
  *         return _FACE_NEG_Y if inv_dir >= 0.0 else _FACE_POS_Y             # <<<<<<<<<<<<<<
@@ -2915,15 +2916,15 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_1 = (__pyx_v_inv_dir >= 0.0);
     if (__pyx_t_1) {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 27, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 27, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     } else {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 27, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 27, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     }
@@ -2931,7 +2932,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "maiming/core/geometry/intersection.py":27
+    /* "maiming/core/geometry/intersection.py":26
  *     if axis == 0:
  *         return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X
  *     if axis == 1:             # <<<<<<<<<<<<<<
@@ -2940,7 +2941,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
 */
   }
 
-  /* "maiming/core/geometry/intersection.py":29
+  /* "maiming/core/geometry/intersection.py":28
  *     if axis == 1:
  *         return _FACE_NEG_Y if inv_dir >= 0.0 else _FACE_POS_Y
  *     return _FACE_NEG_Z if inv_dir >= 0.0 else _FACE_POS_Z             # <<<<<<<<<<<<<<
@@ -2950,15 +2951,15 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = (__pyx_v_inv_dir >= 0.0);
   if (__pyx_t_1) {
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 29, __pyx_L1_error)
+    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
     __pyx_t_2 = __pyx_t_3;
     __pyx_t_3 = 0;
   } else {
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 29, __pyx_L1_error)
+    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
     __pyx_t_2 = __pyx_t_3;
     __pyx_t_3 = 0;
   }
@@ -2966,7 +2967,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "maiming/core/geometry/intersection.py":24
+  /* "maiming/core/geometry/intersection.py":23
  *     face: int
  * 
  * def _enter_face_for_axis(axis: int, inv_dir: float) -> int:             # <<<<<<<<<<<<<<
@@ -2986,7 +2987,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection__enter_face_fo
   return __pyx_r;
 }
 
-/* "maiming/core/geometry/intersection.py":31
+/* "maiming/core/geometry/intersection.py":30
  *     return _FACE_NEG_Z if inv_dir >= 0.0 else _FACE_POS_Z
  * 
  * def _exit_face_for_axis(axis: int, inv_dir: float) -> int:             # <<<<<<<<<<<<<<
@@ -3034,40 +3035,40 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_axis,&__pyx_mstate_global->__pyx_n_u_inv_dir,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 31, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 30, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 31, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 30, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 31, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 30, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_exit_face_for_axis", 0) < (0)) __PYX_ERR(0, 31, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_exit_face_for_axis", 0) < (0)) __PYX_ERR(0, 30, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_exit_face_for_axis", 1, 2, 2, i); __PYX_ERR(0, 31, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_exit_face_for_axis", 1, 2, 2, i); __PYX_ERR(0, 30, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 31, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 30, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 31, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 30, __pyx_L3_error)
     }
-    if (__Pyx_PyInt_FromNumber(&values[0], "axis", 0) < (0)) __PYX_ERR(0, 31, __pyx_L3_error)
+    if (__Pyx_PyInt_FromNumber(&values[0], "axis", 0) < (0)) __PYX_ERR(0, 30, __pyx_L3_error)
     __pyx_v_axis = ((PyObject*)values[0]);
-    __pyx_v_inv_dir = __Pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_inv_dir == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 31, __pyx_L3_error)
+    __pyx_v_inv_dir = __Pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_inv_dir == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 30, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_exit_face_for_axis", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 31, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_exit_face_for_axis", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 30, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3078,7 +3079,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_axis), (&PyLong_Type), 0, "axis", 2))) __PYX_ERR(0, 31, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_axis), (&PyLong_Type), 0, "axis", 2))) __PYX_ERR(0, 30, __pyx_L1_error)
   __pyx_r = __pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_for_axis(__pyx_self, __pyx_v_axis, __pyx_v_inv_dir);
 
   /* function exit code */
@@ -3109,17 +3110,17 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_exit_face_for_axis", 0);
 
-  /* "maiming/core/geometry/intersection.py":32
+  /* "maiming/core/geometry/intersection.py":31
  * 
  * def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
  *     if axis == 0:             # <<<<<<<<<<<<<<
  *         return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X
  *     if axis == 1:
 */
-  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_0, 0, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_0, 0, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 31, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "maiming/core/geometry/intersection.py":33
+    /* "maiming/core/geometry/intersection.py":32
  * def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
  *     if axis == 0:
  *         return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X             # <<<<<<<<<<<<<<
@@ -3129,15 +3130,15 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_1 = (__pyx_v_inv_dir >= 0.0);
     if (__pyx_t_1) {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 33, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 32, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 33, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 32, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     } else {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 33, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_X); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 32, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 33, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 32, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     }
@@ -3145,7 +3146,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "maiming/core/geometry/intersection.py":32
+    /* "maiming/core/geometry/intersection.py":31
  * 
  * def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
  *     if axis == 0:             # <<<<<<<<<<<<<<
@@ -3154,17 +3155,17 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
 */
   }
 
-  /* "maiming/core/geometry/intersection.py":34
+  /* "maiming/core/geometry/intersection.py":33
  *     if axis == 0:
  *         return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X
  *     if axis == 1:             # <<<<<<<<<<<<<<
  *         return _FACE_POS_Y if inv_dir >= 0.0 else _FACE_NEG_Y
  *     return _FACE_POS_Z if inv_dir >= 0.0 else _FACE_NEG_Z
 */
-  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_1, 1, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyLong_BoolEqObjC(__pyx_v_axis, __pyx_mstate_global->__pyx_int_1, 1, 0)); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 33, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "maiming/core/geometry/intersection.py":35
+    /* "maiming/core/geometry/intersection.py":34
  *         return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X
  *     if axis == 1:
  *         return _FACE_POS_Y if inv_dir >= 0.0 else _FACE_NEG_Y             # <<<<<<<<<<<<<<
@@ -3174,15 +3175,15 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_1 = (__pyx_v_inv_dir >= 0.0);
     if (__pyx_t_1) {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     } else {
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
       __pyx_t_2 = __pyx_t_3;
       __pyx_t_3 = 0;
     }
@@ -3190,7 +3191,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "maiming/core/geometry/intersection.py":34
+    /* "maiming/core/geometry/intersection.py":33
  *     if axis == 0:
  *         return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X
  *     if axis == 1:             # <<<<<<<<<<<<<<
@@ -3199,7 +3200,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
 */
   }
 
-  /* "maiming/core/geometry/intersection.py":36
+  /* "maiming/core/geometry/intersection.py":35
  *     if axis == 1:
  *         return _FACE_POS_Y if inv_dir >= 0.0 else _FACE_NEG_Y
  *     return _FACE_POS_Z if inv_dir >= 0.0 else _FACE_NEG_Z             # <<<<<<<<<<<<<<
@@ -3209,15 +3210,15 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = (__pyx_v_inv_dir >= 0.0);
   if (__pyx_t_1) {
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_POS_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 36, __pyx_L1_error)
+    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
     __pyx_t_2 = __pyx_t_3;
     __pyx_t_3 = 0;
   } else {
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 36, __pyx_L1_error)
+    if (__Pyx_PyInt_FromNumber(&__pyx_t_3, NULL, 1) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
     __pyx_t_2 = __pyx_t_3;
     __pyx_t_3 = 0;
   }
@@ -3225,7 +3226,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "maiming/core/geometry/intersection.py":31
+  /* "maiming/core/geometry/intersection.py":30
  *     return _FACE_NEG_Z if inv_dir >= 0.0 else _FACE_POS_Z
  * 
  * def _exit_face_for_axis(axis: int, inv_dir: float) -> int:             # <<<<<<<<<<<<<<
@@ -3245,7 +3246,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_2_exit_face_fo
   return __pyx_r;
 }
 
-/* "maiming/core/geometry/intersection.py":38
+/* "maiming/core/geometry/intersection.py":37
  *     return _FACE_POS_Z if inv_dir >= 0.0 else _FACE_NEG_Z
  * 
  * def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:             # <<<<<<<<<<<<<<
@@ -3293,39 +3294,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_ray,&__pyx_mstate_global->__pyx_n_u_aabb,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 38, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 37, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 38, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 37, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 38, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 37, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "ray_aabb_face", 0) < (0)) __PYX_ERR(0, 38, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "ray_aabb_face", 0) < (0)) __PYX_ERR(0, 37, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("ray_aabb_face", 1, 2, 2, i); __PYX_ERR(0, 38, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("ray_aabb_face", 1, 2, 2, i); __PYX_ERR(0, 37, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 38, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 37, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 38, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 37, __pyx_L3_error)
     }
     __pyx_v_ray = values[0];
     __pyx_v_aabb = values[1];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("ray_aabb_face", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 38, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("ray_aabb_face", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 37, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3387,31 +3388,31 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("ray_aabb_face", 0);
 
-  /* "maiming/core/geometry/intersection.py":39
+  /* "maiming/core/geometry/intersection.py":38
  * 
  * def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
  *     d = ray.direction             # <<<<<<<<<<<<<<
  *     o = ray.origin
  * 
 */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ray, __pyx_mstate_global->__pyx_n_u_direction); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ray, __pyx_mstate_global->__pyx_n_u_direction); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_d = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "maiming/core/geometry/intersection.py":40
+  /* "maiming/core/geometry/intersection.py":39
  * def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
  *     d = ray.direction
  *     o = ray.origin             # <<<<<<<<<<<<<<
  * 
  *     tmin = -1e30
 */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ray, __pyx_mstate_global->__pyx_n_u_origin); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ray, __pyx_mstate_global->__pyx_n_u_origin); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_o = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "maiming/core/geometry/intersection.py":42
+  /* "maiming/core/geometry/intersection.py":41
  *     o = ray.origin
  * 
  *     tmin = -1e30             # <<<<<<<<<<<<<<
@@ -3421,7 +3422,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
   __Pyx_INCREF(__pyx_mstate_global->__pyx_float_neg_1e30);
   __pyx_v_tmin = __pyx_mstate_global->__pyx_float_neg_1e30;
 
-  /* "maiming/core/geometry/intersection.py":43
+  /* "maiming/core/geometry/intersection.py":42
  * 
  *     tmin = -1e30
  *     tmax = 1e30             # <<<<<<<<<<<<<<
@@ -3431,7 +3432,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
   __Pyx_INCREF(__pyx_mstate_global->__pyx_float_1e30);
   __pyx_v_tmax = __pyx_mstate_global->__pyx_float_1e30;
 
-  /* "maiming/core/geometry/intersection.py":44
+  /* "maiming/core/geometry/intersection.py":43
  *     tmin = -1e30
  *     tmax = 1e30
  *     enter_face: int = -1             # <<<<<<<<<<<<<<
@@ -3441,160 +3442,120 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
   __Pyx_INCREF(__pyx_mstate_global->__pyx_int_neg_1);
   __pyx_v_enter_face = __pyx_mstate_global->__pyx_int_neg_1;
 
-  /* "maiming/core/geometry/intersection.py":45
+  /* "maiming/core/geometry/intersection.py":44
  *     tmax = 1e30
  *     enter_face: int = -1
  *     exit_face: int = -1             # <<<<<<<<<<<<<<
  * 
- *     for axis, (o_comp, d_comp, mn, mx) in enumerate(
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
 */
   __Pyx_INCREF(__pyx_mstate_global->__pyx_int_neg_1);
   __pyx_v_exit_face = __pyx_mstate_global->__pyx_int_neg_1;
 
-  /* "maiming/core/geometry/intersection.py":47
+  /* "maiming/core/geometry/intersection.py":46
  *     exit_face: int = -1
  * 
- *     for axis, (o_comp, d_comp, mn, mx) in enumerate(             # <<<<<<<<<<<<<<
- *         (
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):             # <<<<<<<<<<<<<<
+ *         if abs(d_comp) < 1e-12:
+ *             if o_comp < mn or o_comp > mx:
 */
   __Pyx_INCREF(__pyx_mstate_global->__pyx_int_0);
   __pyx_t_1 = __pyx_mstate_global->__pyx_int_0;
-
-  /* "maiming/core/geometry/intersection.py":49
- *     for axis, (o_comp, d_comp, mn, mx) in enumerate(
- *         (
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),             # <<<<<<<<<<<<<<
- *             (o.y, d.y, aabb.mn.y, aabb.mx.y),
- *             (o.z, d.z, aabb.mn.z, aabb.mx.z),
-*/
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_o, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_o, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mn); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mn); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mx); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mx); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_5);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 2, __pyx_t_5) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 2, __pyx_t_5) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_6);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 3, __pyx_t_6) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 3, __pyx_t_6) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __pyx_t_2 = 0;
   __pyx_t_3 = 0;
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-
-  /* "maiming/core/geometry/intersection.py":50
- *         (
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),
- *             (o.y, d.y, aabb.mn.y, aabb.mx.y),             # <<<<<<<<<<<<<<
- *             (o.z, d.z, aabb.mn.z, aabb.mx.z),
- *         )
-*/
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_o, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_o, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mn); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mn); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mx); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mx); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_6);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 50, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_5);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 50, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_5) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_t_2) != (0)) __PYX_ERR(0, 50, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_t_2) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_7);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_7) != (0)) __PYX_ERR(0, 50, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_7) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __pyx_t_6 = 0;
   __pyx_t_5 = 0;
   __pyx_t_2 = 0;
   __pyx_t_7 = 0;
-
-  /* "maiming/core/geometry/intersection.py":51
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),
- *             (o.y, d.y, aabb.mn.y, aabb.mx.y),
- *             (o.z, d.z, aabb.mn.z, aabb.mx.z),             # <<<<<<<<<<<<<<
- *         )
- *     ):
-*/
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_o, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_o, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mn); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mn); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mx); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_aabb, __pyx_mstate_global->__pyx_n_u_mx); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_7);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 51, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_7) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 51, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_6);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_t_6) != (0)) __PYX_ERR(0, 51, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_t_6) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_8);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 3, __pyx_t_8) != (0)) __PYX_ERR(0, 51, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 3, __pyx_t_8) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __pyx_t_7 = 0;
   __pyx_t_2 = 0;
   __pyx_t_6 = 0;
   __pyx_t_8 = 0;
-
-  /* "maiming/core/geometry/intersection.py":49
- *     for axis, (o_comp, d_comp, mn, mx) in enumerate(
- *         (
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),             # <<<<<<<<<<<<<<
- *             (o.y, d.y, aabb.mn.y, aabb.mx.y),
- *             (o.z, d.z, aabb.mn.z, aabb.mx.z),
-*/
-  __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_4) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_4) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_t_3) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_5);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 2, __pyx_t_5) != (0)) __PYX_ERR(0, 49, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 2, __pyx_t_5) != (0)) __PYX_ERR(0, 46, __pyx_L1_error);
   __pyx_t_4 = 0;
   __pyx_t_3 = 0;
   __pyx_t_5 = 0;
-
-  /* "maiming/core/geometry/intersection.py":47
- *     exit_face: int = -1
- * 
- *     for axis, (o_comp, d_comp, mn, mx) in enumerate(             # <<<<<<<<<<<<<<
- *         (
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),
-*/
   __pyx_t_5 = __pyx_t_8; __Pyx_INCREF(__pyx_t_5);
   __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -3606,7 +3567,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
     __pyx_t_8 = __Pyx_PySequence_ITEM(__pyx_t_5, __pyx_t_9);
     #endif
     ++__pyx_t_9;
-    if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 47, __pyx_L1_error)
+    if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 46, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     if ((likely(PyTuple_CheckExact(__pyx_t_8))) || (PyList_CheckExact(__pyx_t_8))) {
       PyObject* sequence = __pyx_t_8;
@@ -3614,7 +3575,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
       if (unlikely(size != 4)) {
         if (size > 4) __Pyx_RaiseTooManyValuesError(4);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 47, __pyx_L1_error)
+        __PYX_ERR(0, 46, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -3628,16 +3589,16 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
         __Pyx_INCREF(__pyx_t_2);
       } else {
         __pyx_t_3 = __Pyx_PyList_GetItemRefFast(sequence, 0, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 47, __pyx_L1_error)
+        if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
         __Pyx_XGOTREF(__pyx_t_3);
         __pyx_t_4 = __Pyx_PyList_GetItemRefFast(sequence, 1, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 47, __pyx_L1_error)
+        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
         __Pyx_XGOTREF(__pyx_t_4);
         __pyx_t_6 = __Pyx_PyList_GetItemRefFast(sequence, 2, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 47, __pyx_L1_error)
+        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 46, __pyx_L1_error)
         __Pyx_XGOTREF(__pyx_t_6);
         __pyx_t_2 = __Pyx_PyList_GetItemRefFast(sequence, 3, __Pyx_ReferenceSharing_SharedReference);
-        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
+        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
         __Pyx_XGOTREF(__pyx_t_2);
       }
       #else
@@ -3645,7 +3606,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
         Py_ssize_t i;
         PyObject** temps[4] = {&__pyx_t_3,&__pyx_t_4,&__pyx_t_6,&__pyx_t_2};
         for (i=0; i < 4; i++) {
-          PyObject* item = __Pyx_PySequence_ITEM(sequence, i); if (unlikely(!item)) __PYX_ERR(0, 47, __pyx_L1_error)
+          PyObject* item = __Pyx_PySequence_ITEM(sequence, i); if (unlikely(!item)) __PYX_ERR(0, 46, __pyx_L1_error)
           __Pyx_GOTREF(item);
           *(temps[i]) = item;
         }
@@ -3655,7 +3616,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
     } else {
       Py_ssize_t index = -1;
       PyObject** temps[4] = {&__pyx_t_3,&__pyx_t_4,&__pyx_t_6,&__pyx_t_2};
-      __pyx_t_7 = PyObject_GetIter(__pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 47, __pyx_L1_error)
+      __pyx_t_7 = PyObject_GetIter(__pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 46, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __pyx_t_10 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_7);
@@ -3664,7 +3625,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
         __Pyx_GOTREF(item);
         *(temps[index]) = item;
       }
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_7), 4) < (0)) __PYX_ERR(0, 47, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_7), 4) < (0)) __PYX_ERR(0, 46, __pyx_L1_error)
       __pyx_t_10 = NULL;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       goto __pyx_L6_unpacking_done;
@@ -3672,7 +3633,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __pyx_t_10 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 47, __pyx_L1_error)
+      __PYX_ERR(0, 46, __pyx_L1_error)
       __pyx_L6_unpacking_done:;
     }
     __Pyx_XDECREF_SET(__pyx_v_o_comp, __pyx_t_3);
@@ -3685,50 +3646,50 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
     __pyx_t_2 = 0;
     __Pyx_INCREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_axis, __pyx_t_1);
-    __pyx_t_8 = __Pyx_PyLong_AddObjC(__pyx_t_1, __pyx_mstate_global->__pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 47, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyLong_AddObjC(__pyx_t_1, __pyx_mstate_global->__pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 46, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_1);
     __pyx_t_1 = __pyx_t_8;
     __pyx_t_8 = 0;
 
-    /* "maiming/core/geometry/intersection.py":54
- *         )
- *     ):
+    /* "maiming/core/geometry/intersection.py":47
+ * 
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
  *         if abs(d_comp) < 1e-12:             # <<<<<<<<<<<<<<
  *             if o_comp < mn or o_comp > mx:
  *                 return None
 */
-    __pyx_t_8 = __Pyx_PyNumber_Absolute(__pyx_v_d_comp); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyNumber_Absolute(__pyx_v_d_comp); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 47, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_2 = PyObject_RichCompare(__pyx_t_8, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_t_8, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 47, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_11) {
 
-      /* "maiming/core/geometry/intersection.py":55
- *     ):
+      /* "maiming/core/geometry/intersection.py":48
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
  *         if abs(d_comp) < 1e-12:
  *             if o_comp < mn or o_comp > mx:             # <<<<<<<<<<<<<<
  *                 return None
  *             continue
 */
-      __pyx_t_2 = PyObject_RichCompare(__pyx_v_o_comp, __pyx_v_mn, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 55, __pyx_L1_error)
-      __pyx_t_12 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_12 < 0))) __PYX_ERR(0, 55, __pyx_L1_error)
+      __pyx_t_2 = PyObject_RichCompare(__pyx_v_o_comp, __pyx_v_mn, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 48, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_12 < 0))) __PYX_ERR(0, 48, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       if (!__pyx_t_12) {
       } else {
         __pyx_t_11 = __pyx_t_12;
         goto __pyx_L9_bool_binop_done;
       }
-      __pyx_t_2 = PyObject_RichCompare(__pyx_v_o_comp, __pyx_v_mx, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 55, __pyx_L1_error)
-      __pyx_t_12 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_12 < 0))) __PYX_ERR(0, 55, __pyx_L1_error)
+      __pyx_t_2 = PyObject_RichCompare(__pyx_v_o_comp, __pyx_v_mx, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 48, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_12 < 0))) __PYX_ERR(0, 48, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_11 = __pyx_t_12;
       __pyx_L9_bool_binop_done:;
       if (__pyx_t_11) {
 
-        /* "maiming/core/geometry/intersection.py":56
+        /* "maiming/core/geometry/intersection.py":49
  *         if abs(d_comp) < 1e-12:
  *             if o_comp < mn or o_comp > mx:
  *                 return None             # <<<<<<<<<<<<<<
@@ -3741,8 +3702,8 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         goto __pyx_L0;
 
-        /* "maiming/core/geometry/intersection.py":55
- *     ):
+        /* "maiming/core/geometry/intersection.py":48
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
  *         if abs(d_comp) < 1e-12:
  *             if o_comp < mn or o_comp > mx:             # <<<<<<<<<<<<<<
  *                 return None
@@ -3750,7 +3711,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
       }
 
-      /* "maiming/core/geometry/intersection.py":57
+      /* "maiming/core/geometry/intersection.py":50
  *             if o_comp < mn or o_comp > mx:
  *                 return None
  *             continue             # <<<<<<<<<<<<<<
@@ -3759,70 +3720,70 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
       goto __pyx_L3_continue;
 
-      /* "maiming/core/geometry/intersection.py":54
- *         )
- *     ):
+      /* "maiming/core/geometry/intersection.py":47
+ * 
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
  *         if abs(d_comp) < 1e-12:             # <<<<<<<<<<<<<<
  *             if o_comp < mn or o_comp > mx:
  *                 return None
 */
     }
 
-    /* "maiming/core/geometry/intersection.py":59
+    /* "maiming/core/geometry/intersection.py":52
  *             continue
  * 
  *         inv = 1.0 / d_comp             # <<<<<<<<<<<<<<
  *         t1 = (mn - o_comp) * inv
  *         t2 = (mx - o_comp) * inv
 */
-    __pyx_t_2 = __Pyx_PyFloat_TrueDivideCObj(__pyx_mstate_global->__pyx_float_1_0, __pyx_v_d_comp, 1.0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyFloat_TrueDivideCObj(__pyx_mstate_global->__pyx_float_1_0, __pyx_v_d_comp, 1.0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 52, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_inv, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "maiming/core/geometry/intersection.py":60
+    /* "maiming/core/geometry/intersection.py":53
  * 
  *         inv = 1.0 / d_comp
  *         t1 = (mn - o_comp) * inv             # <<<<<<<<<<<<<<
  *         t2 = (mx - o_comp) * inv
  * 
 */
-    __pyx_t_2 = PyNumber_Subtract(__pyx_v_mn, __pyx_v_o_comp); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 60, __pyx_L1_error)
+    __pyx_t_2 = PyNumber_Subtract(__pyx_v_mn, __pyx_v_o_comp); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_8 = PyNumber_Multiply(__pyx_t_2, __pyx_v_inv); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 60, __pyx_L1_error)
+    __pyx_t_8 = PyNumber_Multiply(__pyx_t_2, __pyx_v_inv); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 53, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF_SET(__pyx_v_t1, __pyx_t_8);
     __pyx_t_8 = 0;
 
-    /* "maiming/core/geometry/intersection.py":61
+    /* "maiming/core/geometry/intersection.py":54
  *         inv = 1.0 / d_comp
  *         t1 = (mn - o_comp) * inv
  *         t2 = (mx - o_comp) * inv             # <<<<<<<<<<<<<<
  * 
  *         if t1 > t2:
 */
-    __pyx_t_8 = PyNumber_Subtract(__pyx_v_mx, __pyx_v_o_comp); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_8 = PyNumber_Subtract(__pyx_v_mx, __pyx_v_o_comp); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_2 = PyNumber_Multiply(__pyx_t_8, __pyx_v_inv); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_2 = PyNumber_Multiply(__pyx_t_8, __pyx_v_inv); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_XDECREF_SET(__pyx_v_t2, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "maiming/core/geometry/intersection.py":63
+    /* "maiming/core/geometry/intersection.py":56
  *         t2 = (mx - o_comp) * inv
  * 
  *         if t1 > t2:             # <<<<<<<<<<<<<<
  *             t1, t2 = t2, t1
  * 
 */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_t1, __pyx_v_t2, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 63, __pyx_L1_error)
-    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 63, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_t1, __pyx_v_t2, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 56, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_11) {
 
-      /* "maiming/core/geometry/intersection.py":64
+      /* "maiming/core/geometry/intersection.py":57
  * 
  *         if t1 > t2:
  *             t1, t2 = t2, t1             # <<<<<<<<<<<<<<
@@ -3836,7 +3797,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
       __pyx_v_t2 = __pyx_t_14;
       __pyx_t_14 = 0;
 
-      /* "maiming/core/geometry/intersection.py":63
+      /* "maiming/core/geometry/intersection.py":56
  *         t2 = (mx - o_comp) * inv
  * 
  *         if t1 > t2:             # <<<<<<<<<<<<<<
@@ -3845,19 +3806,19 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
     }
 
-    /* "maiming/core/geometry/intersection.py":66
+    /* "maiming/core/geometry/intersection.py":59
  *             t1, t2 = t2, t1
  * 
  *         if t1 > tmin:             # <<<<<<<<<<<<<<
  *             tmin = t1
  *             enter_face = _enter_face_for_axis(int(axis), float(inv))
 */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_t1, __pyx_v_tmin, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
-    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 66, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_t1, __pyx_v_tmin, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 59, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_11) {
 
-      /* "maiming/core/geometry/intersection.py":67
+      /* "maiming/core/geometry/intersection.py":60
  * 
  *         if t1 > tmin:
  *             tmin = t1             # <<<<<<<<<<<<<<
@@ -3867,7 +3828,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
       __Pyx_INCREF(__pyx_v_t1);
       __Pyx_DECREF_SET(__pyx_v_tmin, __pyx_v_t1);
 
-      /* "maiming/core/geometry/intersection.py":68
+      /* "maiming/core/geometry/intersection.py":61
  *         if t1 > tmin:
  *             tmin = t1
  *             enter_face = _enter_face_for_axis(int(axis), float(inv))             # <<<<<<<<<<<<<<
@@ -3875,11 +3836,11 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
  *         if t2 < tmax:
 */
       __pyx_t_8 = NULL;
-      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_enter_face_for_axis); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 68, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_enter_face_for_axis); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 61, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_axis); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 68, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_axis); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_3 = __Pyx_PyNumber_Float(__pyx_v_inv); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 68, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyNumber_Float(__pyx_v_inv); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 61, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_15 = 1;
       #if CYTHON_UNPACK_METHODS
@@ -3900,14 +3861,14 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 68, __pyx_L1_error)
+        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 61, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       }
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_2, NULL, 1) < (0)) __PYX_ERR(0, 68, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_2, NULL, 1) < (0)) __PYX_ERR(0, 61, __pyx_L1_error)
       __Pyx_DECREF_SET(__pyx_v_enter_face, ((PyObject*)__pyx_t_2));
       __pyx_t_2 = 0;
 
-      /* "maiming/core/geometry/intersection.py":66
+      /* "maiming/core/geometry/intersection.py":59
  *             t1, t2 = t2, t1
  * 
  *         if t1 > tmin:             # <<<<<<<<<<<<<<
@@ -3916,19 +3877,19 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
     }
 
-    /* "maiming/core/geometry/intersection.py":70
+    /* "maiming/core/geometry/intersection.py":63
  *             enter_face = _enter_face_for_axis(int(axis), float(inv))
  * 
  *         if t2 < tmax:             # <<<<<<<<<<<<<<
  *             tmax = t2
  *             exit_face = _exit_face_for_axis(int(axis), float(inv))
 */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_t2, __pyx_v_tmax, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 70, __pyx_L1_error)
-    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 70, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_t2, __pyx_v_tmax, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 63, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 63, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_11) {
 
-      /* "maiming/core/geometry/intersection.py":71
+      /* "maiming/core/geometry/intersection.py":64
  * 
  *         if t2 < tmax:
  *             tmax = t2             # <<<<<<<<<<<<<<
@@ -3938,7 +3899,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
       __Pyx_INCREF(__pyx_v_t2);
       __Pyx_DECREF_SET(__pyx_v_tmax, __pyx_v_t2);
 
-      /* "maiming/core/geometry/intersection.py":72
+      /* "maiming/core/geometry/intersection.py":65
  *         if t2 < tmax:
  *             tmax = t2
  *             exit_face = _exit_face_for_axis(int(axis), float(inv))             # <<<<<<<<<<<<<<
@@ -3946,11 +3907,11 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
  *         if tmin > tmax:
 */
       __pyx_t_6 = NULL;
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_exit_face_for_axis); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 72, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_exit_face_for_axis); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_axis); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 72, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_axis); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_8 = __Pyx_PyNumber_Float(__pyx_v_inv); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 72, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyNumber_Float(__pyx_v_inv); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __pyx_t_15 = 1;
       #if CYTHON_UNPACK_METHODS
@@ -3971,14 +3932,14 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 72, __pyx_L1_error)
+        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 65, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       }
-      if (__Pyx_PyInt_FromNumber(&__pyx_t_2, NULL, 1) < (0)) __PYX_ERR(0, 72, __pyx_L1_error)
+      if (__Pyx_PyInt_FromNumber(&__pyx_t_2, NULL, 1) < (0)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_DECREF_SET(__pyx_v_exit_face, ((PyObject*)__pyx_t_2));
       __pyx_t_2 = 0;
 
-      /* "maiming/core/geometry/intersection.py":70
+      /* "maiming/core/geometry/intersection.py":63
  *             enter_face = _enter_face_for_axis(int(axis), float(inv))
  * 
  *         if t2 < tmax:             # <<<<<<<<<<<<<<
@@ -3987,19 +3948,19 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
     }
 
-    /* "maiming/core/geometry/intersection.py":74
+    /* "maiming/core/geometry/intersection.py":67
  *             exit_face = _exit_face_for_axis(int(axis), float(inv))
  * 
  *         if tmin > tmax:             # <<<<<<<<<<<<<<
  *             return None
  * 
 */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_tmin, __pyx_v_tmax, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
-    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 74, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_tmin, __pyx_v_tmax, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 67, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 67, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_11) {
 
-      /* "maiming/core/geometry/intersection.py":75
+      /* "maiming/core/geometry/intersection.py":68
  * 
  *         if tmin > tmax:
  *             return None             # <<<<<<<<<<<<<<
@@ -4012,7 +3973,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       goto __pyx_L0;
 
-      /* "maiming/core/geometry/intersection.py":74
+      /* "maiming/core/geometry/intersection.py":67
  *             exit_face = _exit_face_for_axis(int(axis), float(inv))
  * 
  *         if tmin > tmax:             # <<<<<<<<<<<<<<
@@ -4021,31 +3982,31 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
     }
 
-    /* "maiming/core/geometry/intersection.py":47
+    /* "maiming/core/geometry/intersection.py":46
  *     exit_face: int = -1
  * 
- *     for axis, (o_comp, d_comp, mn, mx) in enumerate(             # <<<<<<<<<<<<<<
- *         (
- *             (o.x, d.x, aabb.mn.x, aabb.mx.x),
+ *     for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):             # <<<<<<<<<<<<<<
+ *         if abs(d_comp) < 1e-12:
+ *             if o_comp < mn or o_comp > mx:
 */
     __pyx_L3_continue:;
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "maiming/core/geometry/intersection.py":77
+  /* "maiming/core/geometry/intersection.py":70
  *             return None
  * 
  *     if tmax < 0.0:             # <<<<<<<<<<<<<<
  *         return None
  * 
 */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_tmax, __pyx_mstate_global->__pyx_float_0_0, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
-  __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 77, __pyx_L1_error)
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_tmax, __pyx_mstate_global->__pyx_float_0_0, Py_LT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_11) {
 
-    /* "maiming/core/geometry/intersection.py":78
+    /* "maiming/core/geometry/intersection.py":71
  * 
  *     if tmax < 0.0:
  *         return None             # <<<<<<<<<<<<<<
@@ -4056,7 +4017,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
     __pyx_r = Py_None; __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "maiming/core/geometry/intersection.py":77
+    /* "maiming/core/geometry/intersection.py":70
  *             return None
  * 
  *     if tmax < 0.0:             # <<<<<<<<<<<<<<
@@ -4065,41 +4026,41 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
 */
   }
 
-  /* "maiming/core/geometry/intersection.py":80
+  /* "maiming/core/geometry/intersection.py":73
  *         return None
  * 
  *     if tmin >= 0.0:             # <<<<<<<<<<<<<<
  *         t_enter = float(tmin)
  *         face = int(enter_face)
 */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_tmin, __pyx_mstate_global->__pyx_float_0_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
-  __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_tmin, __pyx_mstate_global->__pyx_float_0_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_11) {
 
-    /* "maiming/core/geometry/intersection.py":81
+    /* "maiming/core/geometry/intersection.py":74
  * 
  *     if tmin >= 0.0:
  *         t_enter = float(tmin)             # <<<<<<<<<<<<<<
  *         face = int(enter_face)
  *     else:
 */
-    __pyx_t_16 = __Pyx_PyObject_AsDouble(__pyx_v_tmin); if (unlikely(__PYX_CHECK_FLOAT_EXCEPTION(__pyx_t_16, ((double)((double)-1))) && PyErr_Occurred())) __PYX_ERR(0, 81, __pyx_L1_error)
+    __pyx_t_16 = __Pyx_PyObject_AsDouble(__pyx_v_tmin); if (unlikely(__PYX_CHECK_FLOAT_EXCEPTION(__pyx_t_16, ((double)((double)-1))) && PyErr_Occurred())) __PYX_ERR(0, 74, __pyx_L1_error)
     __pyx_v_t_enter = __pyx_t_16;
 
-    /* "maiming/core/geometry/intersection.py":82
+    /* "maiming/core/geometry/intersection.py":75
  *     if tmin >= 0.0:
  *         t_enter = float(tmin)
  *         face = int(enter_face)             # <<<<<<<<<<<<<<
  *     else:
  *         t_enter = float(tmax)
 */
-    __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_v_enter_face); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 82, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_v_enter_face); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 75, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_face = ((PyObject*)__pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "maiming/core/geometry/intersection.py":80
+    /* "maiming/core/geometry/intersection.py":73
  *         return None
  * 
  *     if tmin >= 0.0:             # <<<<<<<<<<<<<<
@@ -4109,7 +4070,7 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
     goto __pyx_L17;
   }
 
-  /* "maiming/core/geometry/intersection.py":84
+  /* "maiming/core/geometry/intersection.py":77
  *         face = int(enter_face)
  *     else:
  *         t_enter = float(tmax)             # <<<<<<<<<<<<<<
@@ -4117,52 +4078,52 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
  * 
 */
   /*else*/ {
-    __pyx_t_16 = __Pyx_PyObject_AsDouble(__pyx_v_tmax); if (unlikely(__PYX_CHECK_FLOAT_EXCEPTION(__pyx_t_16, ((double)((double)-1))) && PyErr_Occurred())) __PYX_ERR(0, 84, __pyx_L1_error)
+    __pyx_t_16 = __Pyx_PyObject_AsDouble(__pyx_v_tmax); if (unlikely(__PYX_CHECK_FLOAT_EXCEPTION(__pyx_t_16, ((double)((double)-1))) && PyErr_Occurred())) __PYX_ERR(0, 77, __pyx_L1_error)
     __pyx_v_t_enter = __pyx_t_16;
 
-    /* "maiming/core/geometry/intersection.py":85
+    /* "maiming/core/geometry/intersection.py":78
  *     else:
  *         t_enter = float(tmax)
  *         face = int(exit_face)             # <<<<<<<<<<<<<<
  * 
  *     p = o + d * float(t_enter)
 */
-    __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_v_exit_face); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 85, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_v_exit_face); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_face = ((PyObject*)__pyx_t_1);
     __pyx_t_1 = 0;
   }
   __pyx_L17:;
 
-  /* "maiming/core/geometry/intersection.py":87
+  /* "maiming/core/geometry/intersection.py":80
  *         face = int(exit_face)
  * 
  *     p = o + d * float(t_enter)             # <<<<<<<<<<<<<<
  *     return RayHitFace(t_enter=float(t_enter), point=p, face=int(face))
 */
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_t_enter); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_t_enter); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = PyNumber_Multiply(__pyx_v_d, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_5 = PyNumber_Multiply(__pyx_v_d, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyNumber_Add(__pyx_v_o, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_1 = PyNumber_Add(__pyx_v_o, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_v_p = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "maiming/core/geometry/intersection.py":88
+  /* "maiming/core/geometry/intersection.py":81
  * 
  *     p = o + d * float(t_enter)
  *     return RayHitFace(t_enter=float(t_enter), point=p, face=int(face))             # <<<<<<<<<<<<<<
 */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_5 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RayHitFace); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RayHitFace); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_t_enter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_t_enter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 81, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_8 = __Pyx_PyNumber_Int(__pyx_v_face); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyNumber_Int(__pyx_v_face); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 81, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_15 = 1;
   #if CYTHON_UNPACK_METHODS
@@ -4178,25 +4139,25 @@ static PyObject *__pyx_pf_7maiming_4core_8geometry_12intersection_4ray_aabb_face
   #endif
   {
     PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 3 : 0)] = {__pyx_t_5, NULL};
-    __pyx_t_4 = __Pyx_MakeVectorcallBuilderKwds(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_MakeVectorcallBuilderKwds(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_t_enter, __pyx_t_3, __pyx_t_4, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 88, __pyx_L1_error)
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_point, __pyx_v_p, __pyx_t_4, __pyx_callargs+1, 1) < (0)) __PYX_ERR(0, 88, __pyx_L1_error)
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_face, __pyx_t_8, __pyx_t_4, __pyx_callargs+1, 2) < (0)) __PYX_ERR(0, 88, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_t_enter, __pyx_t_3, __pyx_t_4, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 81, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_point, __pyx_v_p, __pyx_t_4, __pyx_callargs+1, 1) < (0)) __PYX_ERR(0, 81, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_face, __pyx_t_8, __pyx_t_4, __pyx_callargs+1, 2) < (0)) __PYX_ERR(0, 81, __pyx_L1_error)
     __pyx_t_1 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_2, __pyx_callargs+__pyx_t_15, (1-__pyx_t_15) | (__pyx_t_15*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_4);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "maiming/core/geometry/intersection.py":38
+  /* "maiming/core/geometry/intersection.py":37
  *     return _FACE_POS_Z if inv_dir >= 0.0 else _FACE_NEG_Z
  * 
  * def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:             # <<<<<<<<<<<<<<
@@ -4599,7 +4560,7 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
  * 
  * from dataclasses import dataclass             # <<<<<<<<<<<<<<
  * 
- * from maiming.core.math.vec3 import Vec3
+ * from ..math.vec3 import Vec3
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_dataclass};
@@ -4621,13 +4582,13 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
   /* "maiming/core/geometry/intersection.py":6
  * from dataclasses import dataclass
  * 
- * from maiming.core.math.vec3 import Vec3             # <<<<<<<<<<<<<<
- * from maiming.core.geometry.aabb import AABB
- * from maiming.core.geometry.ray import Ray
+ * from ..math.vec3 import Vec3             # <<<<<<<<<<<<<<
+ * from .aabb import AABB
+ * from .ray import Ray
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Vec3};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_maiming_core_math_vec3, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math_vec3, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_math_vec3, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -4644,14 +4605,14 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
 
   /* "maiming/core/geometry/intersection.py":7
  * 
- * from maiming.core.math.vec3 import Vec3
- * from maiming.core.geometry.aabb import AABB             # <<<<<<<<<<<<<<
- * from maiming.core.geometry.ray import Ray
+ * from ..math.vec3 import Vec3
+ * from .aabb import AABB             # <<<<<<<<<<<<<<
+ * from .ray import Ray
  * 
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_AABB};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_maiming_core_geometry_aabb, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 7, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_aabb, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_geometry_aabb, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 7, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -4667,15 +4628,15 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "maiming/core/geometry/intersection.py":8
- * from maiming.core.math.vec3 import Vec3
- * from maiming.core.geometry.aabb import AABB
- * from maiming.core.geometry.ray import Ray             # <<<<<<<<<<<<<<
+ * from ..math.vec3 import Vec3
+ * from .aabb import AABB
+ * from .ray import Ray             # <<<<<<<<<<<<<<
  * 
- * # Face index convention is aligned with maiming.domain.blocks.block_definition.
+ * _FACE_POS_X: int = 0
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Ray};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_maiming_core_geometry_ray, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_ray, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_geometry_ray, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -4690,78 +4651,78 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "maiming/core/geometry/intersection.py":11
+  /* "maiming/core/geometry/intersection.py":10
+ * from .ray import Ray
  * 
- * # Face index convention is aligned with maiming.domain.blocks.block_definition.
  * _FACE_POS_X: int = 0             # <<<<<<<<<<<<<<
  * _FACE_NEG_X: int = 1
  * _FACE_POS_Y: int = 2
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_POS_X, __pyx_mstate_global->__pyx_int_0) < (0)) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_POS_X, __pyx_mstate_global->__pyx_int_0) < (0)) __PYX_ERR(0, 10, __pyx_L1_error)
 
-  /* "maiming/core/geometry/intersection.py":12
- * # Face index convention is aligned with maiming.domain.blocks.block_definition.
+  /* "maiming/core/geometry/intersection.py":11
+ * 
  * _FACE_POS_X: int = 0
  * _FACE_NEG_X: int = 1             # <<<<<<<<<<<<<<
  * _FACE_POS_Y: int = 2
  * _FACE_NEG_Y: int = 3
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_NEG_X, __pyx_mstate_global->__pyx_int_1) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_NEG_X, __pyx_mstate_global->__pyx_int_1) < (0)) __PYX_ERR(0, 11, __pyx_L1_error)
 
-  /* "maiming/core/geometry/intersection.py":13
+  /* "maiming/core/geometry/intersection.py":12
  * _FACE_POS_X: int = 0
  * _FACE_NEG_X: int = 1
  * _FACE_POS_Y: int = 2             # <<<<<<<<<<<<<<
  * _FACE_NEG_Y: int = 3
  * _FACE_POS_Z: int = 4
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_POS_Y, __pyx_mstate_global->__pyx_int_2) < (0)) __PYX_ERR(0, 13, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_POS_Y, __pyx_mstate_global->__pyx_int_2) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
 
-  /* "maiming/core/geometry/intersection.py":14
+  /* "maiming/core/geometry/intersection.py":13
  * _FACE_NEG_X: int = 1
  * _FACE_POS_Y: int = 2
  * _FACE_NEG_Y: int = 3             # <<<<<<<<<<<<<<
  * _FACE_POS_Z: int = 4
  * _FACE_NEG_Z: int = 5
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Y, __pyx_mstate_global->__pyx_int_3) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Y, __pyx_mstate_global->__pyx_int_3) < (0)) __PYX_ERR(0, 13, __pyx_L1_error)
 
-  /* "maiming/core/geometry/intersection.py":15
+  /* "maiming/core/geometry/intersection.py":14
  * _FACE_POS_Y: int = 2
  * _FACE_NEG_Y: int = 3
  * _FACE_POS_Z: int = 4             # <<<<<<<<<<<<<<
  * _FACE_NEG_Z: int = 5
  * 
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_POS_Z, __pyx_mstate_global->__pyx_int_4) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_POS_Z, __pyx_mstate_global->__pyx_int_4) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
 
-  /* "maiming/core/geometry/intersection.py":16
+  /* "maiming/core/geometry/intersection.py":15
  * _FACE_NEG_Y: int = 3
  * _FACE_POS_Z: int = 4
  * _FACE_NEG_Z: int = 5             # <<<<<<<<<<<<<<
  * 
  * @dataclass(frozen=True)
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Z, __pyx_mstate_global->__pyx_int_5) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FACE_NEG_Z, __pyx_mstate_global->__pyx_int_5) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
 
-  /* "maiming/core/geometry/intersection.py":19
+  /* "maiming/core/geometry/intersection.py":18
  * 
  * @dataclass(frozen=True)
  * class RayHitFace:             # <<<<<<<<<<<<<<
  *     t_enter: float
  *     point: Vec3
 */
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_mstate_global->__pyx_empty_tuple, __pyx_mstate_global->__pyx_n_u_RayHitFace, __pyx_mstate_global->__pyx_n_u_RayHitFace, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, (PyObject *) NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_mstate_global->__pyx_empty_tuple, __pyx_mstate_global->__pyx_n_u_RayHitFace, __pyx_mstate_global->__pyx_n_u_RayHitFace, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, (PyObject *) NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_t_enter, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_point, __pyx_mstate_global->__pyx_n_u_Vec3) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_face, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_annotations, __pyx_t_4) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_t_enter, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_point, __pyx_mstate_global->__pyx_n_u_Vec3) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_face, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_annotations, __pyx_t_4) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "maiming/core/geometry/intersection.py":18
+  /* "maiming/core/geometry/intersection.py":17
  * _FACE_NEG_Z: int = 5
  * 
  * @dataclass(frozen=True)             # <<<<<<<<<<<<<<
@@ -4770,30 +4731,30 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
 */
   __pyx_t_5 = NULL;
   __pyx_t_7 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_dataclass); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_dataclass); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_9 = 1;
   {
     PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 1 : 0)] = {__pyx_t_7, NULL};
-    __pyx_t_10 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 18, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 17, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_frozen, Py_True, __pyx_t_10, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_frozen, Py_True, __pyx_t_10, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 17, __pyx_L1_error)
     __pyx_t_6 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_8, __pyx_callargs+__pyx_t_9, (1-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_10);
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 18, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 17, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
   }
 
-  /* "maiming/core/geometry/intersection.py":19
+  /* "maiming/core/geometry/intersection.py":18
  * 
  * @dataclass(frozen=True)
  * class RayHitFace:             # <<<<<<<<<<<<<<
  *     t_enter: float
  *     point: Vec3
 */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_mstate_global->__pyx_n_u_RayHitFace, __pyx_mstate_global->__pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_mstate_global->__pyx_n_u_RayHitFace, __pyx_mstate_global->__pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_8);
@@ -4805,77 +4766,77 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 18, __pyx_L1_error)
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   }
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RayHitFace, __pyx_t_4) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RayHitFace, __pyx_t_4) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "maiming/core/geometry/intersection.py":24
+  /* "maiming/core/geometry/intersection.py":23
  *     face: int
  * 
  * def _enter_face_for_axis(axis: int, inv_dir: float) -> int:             # <<<<<<<<<<<<<<
  *     if axis == 0:
  *         return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_axis, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_inv_dir, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_8geometry_12intersection_1_enter_face_for_axis, 0, __pyx_mstate_global->__pyx_n_u_enter_face_for_axis, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_axis, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_inv_dir, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_8geometry_12intersection_1_enter_face_for_axis, 0, __pyx_mstate_global->__pyx_n_u_enter_face_for_axis, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_enter_face_for_axis, __pyx_t_4) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_enter_face_for_axis, __pyx_t_4) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "maiming/core/geometry/intersection.py":31
+  /* "maiming/core/geometry/intersection.py":30
  *     return _FACE_NEG_Z if inv_dir >= 0.0 else _FACE_POS_Z
  * 
  * def _exit_face_for_axis(axis: int, inv_dir: float) -> int:             # <<<<<<<<<<<<<<
  *     if axis == 0:
  *         return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X
 */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_axis, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 31, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_inv_dir, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 31, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 31, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_8geometry_12intersection_3_exit_face_for_axis, 0, __pyx_mstate_global->__pyx_n_u_exit_face_for_axis, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 31, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_axis, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 30, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_inv_dir, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 30, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 30, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_8geometry_12intersection_3_exit_face_for_axis, 0, __pyx_mstate_global->__pyx_n_u_exit_face_for_axis, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_4);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_exit_face_for_axis, __pyx_t_2) < (0)) __PYX_ERR(0, 31, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_exit_face_for_axis, __pyx_t_2) < (0)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "maiming/core/geometry/intersection.py":38
+  /* "maiming/core/geometry/intersection.py":37
  *     return _FACE_POS_Z if inv_dir >= 0.0 else _FACE_NEG_Z
  * 
  * def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:             # <<<<<<<<<<<<<<
  *     d = ray.direction
  *     o = ray.origin
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ray, __pyx_mstate_global->__pyx_n_u_Ray) < (0)) __PYX_ERR(0, 38, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_aabb, __pyx_mstate_global->__pyx_n_u_AABB) < (0)) __PYX_ERR(0, 38, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_RayHitFace_None) < (0)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_8geometry_12intersection_5ray_aabb_face, 0, __pyx_mstate_global->__pyx_n_u_ray_aabb_face, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 38, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ray, __pyx_mstate_global->__pyx_n_u_Ray) < (0)) __PYX_ERR(0, 37, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_aabb, __pyx_mstate_global->__pyx_n_u_AABB) < (0)) __PYX_ERR(0, 37, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_RayHitFace_None) < (0)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_8geometry_12intersection_5ray_aabb_face, 0, __pyx_mstate_global->__pyx_n_u_ray_aabb_face, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_geometry_intersecti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_ray_aabb_face, __pyx_t_4) < (0)) __PYX_ERR(0, 38, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_ray_aabb_face, __pyx_t_4) < (0)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "maiming/core/geometry/intersection.py":1
@@ -4930,7 +4891,7 @@ __Pyx_RefNannySetupContext("PyInit_intersection", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(0, 46, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_items.type = (PyObject*)&PyDict_Type;
@@ -4957,42 +4918,42 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 9; } index[] = {{1},{179},{17},{1},{8},{41},{4},{11},{11},{11},{11},{11},{11},{20},{3},{10},{4},{4},{15},{18},{4},{18},{1},{6},{9},{11},{9},{7},{10},{20},{9},{9},{19},{4},{5},{6},{8},{3},{3},{7},{13},{5},{26},{34},{25},{22},{8},{13},{2},{10},{2},{8},{1},{6},{6},{1},{5},{3},{11},{12},{3},{13},{6},{12},{10},{2},{2},{7},{8},{4},{4},{6},{1},{1},{1},{403},{66},{66}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (832 bytes) */
-const char* const cstring = "(\265/\375`k\004\265\031\000\206m\2308 us\000\\\260\352\007\000&\013D\"\010\321\2130\312\"\244\t\274B;\205,\021\371Z\032\333\264\222\354\177\323,:\177\354\341W\031\274\220\267\3733\366\237UL\364\362\256?|\000\200\000\211\000\267v\"\366\323N5\255\2528\3163\263h\272\255.\177a\302z\203r\315U\027\017\272o\375\273\332\354\360\301\227\342|\277~\306\270v\314w=\261\267^Wo\346\237\232;\236`\016\347\0263Q\332\275\360'\276\317]\2205\267<\265k]9\313\002\365\324o\375\307\277\251\341:KPJBjZj&\376\374\355\375^\317\220\363\257\237\263.\347\332\324w\342\334\372p5\277\266~\372\347\031T\177\251\276\224\006\341\373\370Rj1\270Q\212}(\177\333\327\314m\177_\336\201\330\351\2277\267u\243N\251\315\032\2458k\257_5\257\313\026\310V\226\333\372=\305\227rV\337W\325\216\357\203\371\313\026\225\257\305\241\326\224\262X\265\222X\327\331\374\346_>C\337^\226WXCyv(\016MM\017\317\016}i\231\241-+\225\013]YQ\251B\017e]\177\376\370\212\204\337{\227\335G\304\277lE\272\"\211xB\0000XZP(\035H\013\333\200i#\311\370\273dclM\264\021\025NJ\251\330\007y\002\373\361\265_\342\201R\335\022\004\245kO$\020(\211\003\242\211\240L\221\0370\242=\0010\033\n_\332A\256v\377\252\335k\177\372#\237\372\347\300\272\271\366\256)\305\037\370\376Q\256\202.\377\252\347\237G\251\227\275\3077{\036\276>\367\3139w\025S\372r\016\3242vJ1\245$\326\203P\255\257]X?\024\n\245;\0175&C\342\321\002`VI\036\230\006\314cT\301\210U\264\306\243\322\025\353!\215\306\013\200Y@\222K\266Z\3056R\006\226\202\371\330J\251\333\206\225!\n`l\0350\2726\307~0\225.q\345\022\031Le\025WD\020\351\000c\013l\023\231J\006\306\016b.rE\246H\020\212\031\205KVe\021\262\216\230C\314\2226dH\305\254\342T\2466\204\303\230\263\013v\303\251\014\330\254\004\223\222\31582\242\354\207mK\325\3160))\234\032J\027\354\006\34630\262\266\220\310p*\035\306\257\006_(0\2048U\307\003b\273\220Q\304$\241J\n\212\355?s\\\\L\3616\331\260\351(*@\211j\373\244\"\276xBv\201\235\037A\240\0300l(Q\nN\214\004\240\3273w\326\022t\253J\014\371\200?\004\004\240\3447S2e$\237\303\371\3749@p\323(h$\245\303\320f""\315r\201\304\360\n\0227\313\231\240k\001\304\204c\037=\242\265p\317;\305\0030\364\035\216\255\367\334:%\007\030\233\240G\300\277\2703;\205\\\264\316=\335\354\233u\300gH\214\376@\032\311\364 \03641\257\307h\244AC.\303Lr\331\377W\033\226\267\373\212#\000\240?\335\210\310\001\360\005\257`\214\025<\341\347\304\225t\224\007S\204\3443\222\013*\216\220Y\350\001";
-    PyObject *data = __Pyx_DecompressString(cstring, 832, 3);
+    const struct { const unsigned int length: 9; } index[] = {{1},{179},{17},{1},{8},{26},{25},{22},{41},{4},{11},{11},{11},{11},{11},{11},{20},{3},{10},{4},{4},{15},{18},{4},{18},{1},{6},{9},{11},{9},{7},{10},{20},{9},{9},{19},{4},{5},{6},{8},{3},{3},{7},{13},{5},{34},{8},{9},{13},{2},{10},{2},{8},{1},{6},{6},{1},{5},{3},{11},{12},{3},{13},{6},{12},{10},{2},{2},{7},{8},{4},{4},{6},{1},{1},{1},{451},{66},{66}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (897 bytes) */
+const char* const cstring = "(\265/\375`\244\004\275\033\000\266\261\2478\000wu\374\377\227\373\275\177\325\036\225\270\3775*q\377k\356\337#.0\022Y\362E\320\352#\246\273\314\226\007!F\026`k\007G\375\323\270\204\020\006J\213\013\217\031A\033\213\000\215\000\236\000\367\242H\361\035\324\376\203rQs(\020_\320_g\333u\367\304\263\226\321\2144\347.\313c\027\362\326\240|\177\227\305\205\360s.\342N\323\370\311\330f\215\377\276\316\371jh\357[\313\336\372}]\232~\255s\317\332\250I\315{\321P\333]\344k\031\377\207\307M\363\264\266}\357\373q\333\270\265\375\234\003\271\250u\371j\"%\"\036\254\025\226\226E\177\016\213\2775\362\363\277\242o\370\363N\333X\313\272\365\344J\373\333z\315_\313\240\002\242\326\032\274\331\332\227\177c\247\335\332\r\372c\273\261\265B\031\277\345\362\350Y\233\235H\213\336_\375y\217_\356\177E\007\307\354V\324\236s\327\263n-\247;k\263\336~\377v.PsA\334\335\234\273\342\333\214\355\307m\374\272\3333\376Qk\314erokq<\257\371\227\313\330\347\260\312\213d\331\035\035k3\303\342\331\321\261-+2ve\245b\261))*\025\351Bq\276E\377\214?>>>8q\207p.\204j\375\005\311+n[:YNNvs\223\261XYLL\366\362\222\255\254d\252L\225\241\234NMHEj\021\221J\364\352\207j\010\252 V\261\247z\233\272\371\250>=j\317\216\272\243\243\352\324\250{Id\351\225VJ\002J*\261T\354\323\233\322\244 )\007J\002\373\363e\276J\002\246kB\010\254\241\031a \300T\006\224\005\002k\n\345\200\025\231\021'\225\210|m\037\277\013\376\353\202\277\375\355\203|\352\377\033\257\347\335\373\2666\213\343\273h\311+~w\014\255\213\327\345\242\313Z\227v}\306\332\345\312\370\007\0077\205A\363IqR/\272\003\303\200m\234'\026\351\004\312\301Z'\322\032\246<\350\321YqR\001\224\302\330j\225z(\014,\005\363\263erM\232\355\242\314,\314\rp\206f\206\331P\260\206\345*,\025\n\326[\246\224c\022\201\205\231\231#41UlL\t\322\020]\241)\264CB\225\010c7\366\020\323H\031R\016\245A=&\324\211\2035e:0\2347\346\200\271p\260\002\230\033\023\315\tr\226\230\r&\267\252\314\013\263+\023\n\230\020\016\026\326\020V\003\3739C\316\200s3\207J\205\203\225\341\024o\031R\032\024\254Yd(`DJU\331\001\362""\032OA\344\234\220%)\343\376w\\\254\230Fl\312)\343@9\325\036\223I<rB\357\0022o\363C\025`fh{\212N\244\001\234\206oX\276\023%H\231\275\000q\230\311\313Z\242z\034o\344 \303\r\230G\321\270N\220\327c]\265 \333\313\3273I\252gI\267\251\372\305&\013\245\007\204I\210\217>\264Z\270\360-{\005\263\234}\221\312!\t\316/\312\321\206R\202\316\035\335\232\253\022\024\034\260n\010E\317@\002\337\253&~z\214FciHo\340#\234\010\177\355\017\364\002\306k\"Q\331q\00186\2044*-D\260 \271\274\352\315@\202+\240\214\244\315\342\306e\361\231hl\026\230#\031\250\"\210O\000.\2509B\023\257\007";
+    PyObject *data = __Pyx_DecompressString(cstring, 897, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (923 bytes) */
-const char* const cstring = "BZh91AY&SY\316{\020 \000\000_\177\377\377\357\373\341\376\353\276\320\277\361\375p\277\377\377\375\300@@@@@@@@\000@@@\000@\000@\003\034\266\221\000L\303HJi\206\232\215\000a\006\215\000\001\350\0041\003\023\004\000\036\246\236\243&\321\250\332z\203A\0044\320\214M#&\"\r=F\200\320\000\000\000\000\001\223@\310\000p\000\000\3204444\310\000\320\000\006\200hh\000\001\220\000\002I&\2020\215\004\364\t\000\304\323A\240\003M\000\032\000\304\003 \000\375P\315\021n/\001\271YZ\255\230v\\\240\303\0140\236oP(\262\304\021\014\3113<&b\3402{\300\272\305\362\0230`s\004\016\222l\2434$\344+zS\034\367!3\260\016\201\345m\225\377\376\346\373\376\307R\342\035\260\243j\006\237\277A\335:z\214\262\031\300\032!\222@\301\236Kq\206\335\257\350\344S\261\032\347\002\305%;\311\264\326.\325\264P+*\3003\276\333\341\341\240 <}\350\323\354c\200\202f&\363l\013:(=\021\016\026'\"\232c\261\355X\265\305\246+\345\235\224\360\227\340\340\027y)=XB5\007\340\024K\014\321\217\254\245\266p\030\014@\305\233\033?\024K\345\003/\313\375\233&fh$1\251\037\226\365u\014\375*\255\230\367\rOZ\213\240\024kg\233\360\327\234\204p3Q\000\366g\262\037#\222\262fQ\006=%\236f\205\226&\225m\326-8\355\320\271y\334\333U\025\241\320\336-\225Oh\246\251\007\376\024k\217\241\207\223\240\366\300d\304\260\237\267\325\030G,\205\314\026P3)\006\246\223 m9\323\226\0211\242\2252\276\243\024\265\317\206\355\020\271\324\316\032\305\211\3717r\340!R\246M\"P\030n\334{\314\376\366>l\266\314\307\253D\177W\312\034\240\036\340)\322\202\207\0143\242\214\250\036f\004\224\303^\333\266\332\320$4\006&<s\202\312Y\263A\340\264\320\014\177j\205\374\304\036qr\213,!th}\231\035%\306C\021f\177\000\266\301\214.7\202\274\211{T\356j7GKGZ\312,\214\2457F\320\"A\257\n\"\217Uj\031\245\232\014c\264\016h\312\327Z`\004QH{\031\002@\014\313\024B2\027Q\r\031@\3004\345,\306\"\354!\304\020\305!\307z\262\246\023\305\242Z\226I\355\267 \313\237:\352\220<\350\312E@\305\264 \252x\344y\014R\n\353\226gc1\205\201\200U\"\254\310,F)\242b\2701\205=\001n} \215\244iX4\207\315\3436(}\030\036$\027""\302\032\005uD\031CD@\301z\300\371\003\214\315\361\2205c8\016\225\034\332\313,\1772\21154\350\216\033e\037\340Y\003E\270\323B\354R\253\351\255\302]\247\030d\353F\210\360\\ \324\207\035\353SI\206\200\331\026\260k\354z\206\326r\\O\243#\317\251\334d\336\303\374\312\372=\301U\247\006z\3767\247H\3154U\346\3326\327\331\016/0\331\262\031\276v\205\241\033\300\214u\306N\335\372\243\314n\224ib)O2@\270\263M\210e\202J\263\351\266?\211`,k\0218\343\217(2\233#Q+\305V\320\030\025\253\213fK\317\236Qm*r,\301\322\326:1%\214$\250\025f\261\262\006\202\255\t\357\n\030\206m7+\023\252\300\277\361w$S\205\t\014\347\261\002\000";
-    PyObject *data = __Pyx_DecompressString(cstring, 923, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1030 bytes) */
+const char* const cstring = "BZh91AY&SY\304{\026D\000\000f\377\377\376\317\373\341\372\353\276\320\377\365\375\363\277\377\377\375\300@@@@@@@@@@@@\000@\000P\003/wlM\032\333\034a\251\251@\337\252\217P\323\324\001\246\214\200h\000\365=LF\200z\206CA\2404d\323G\250\311\275S\324\336\247\252\rM\023TzO4\324\365O\0244z\233P\000\320\014CC@\000\000\000\006\215\000\001\240h\0214\324eO\365I\372&\322\217P1\006j\r\036\220\320\302\003# \3104\0324\323\324\003#C!\306\206\2004\0004\000\000\000\032\000\000\000\001\220\000\000\304\001(\221\246S&\020\325?MLj=\"hh\311\240\r\001\240\000\000\000\000\003\020i\242\300\nC\000\tu\322\022\215\206\343\356n\360;\312\223\226ffff.\026\260\010\020 A\023JT$[m\210\024UDU\204LH*0\014\220\010\252\014cn\020\217!-\371\207+\026\343\217|\004Q\353\373a\354\357|\373\236\377\277i\277\013\r\246\3750\374\321B\243\337\025\266+\000\370\245P\020\357\242\230\202k\362m\362\227IO\272\004\0102\t\207\246\022\322)\302\363\326\245\001\240\000\2115\243\003\321\241\007\177\263\271\014\226FA2\226\234j5|\302_|\036G\214\022\306!N\007i\306\313\267}I\307\330\005\326\005tQ\230Q\023\316\326\351f\200\016\311\260Nt\356y\n\204%\304\022\277f\236\\\245\262R\225\027UDxC\340\210 :\3501\033l\360\265\347\273\n%\302\221\226\364\333XL\314\322\007\211\365\350_\31131\262\250\350\236\351\251\340\246\365\200\243\006\\\177n\230\340&S:T1\233\031\023A\t#+\232\013x\211\246g\204j]\221>;Br]D\311\307\337\353O\204\332A\215\244\240\303)9{\013\310tQ\311\303\324\323\304\316\004+Y\223\022f\033\032M\255\340\375\211cJq]@UK\202\340\300K\002\221\316\261 \301B\374\007\334jP\211\317\205Y@\362Nv**\250\356[\204\301h<r\314\200!X\266U\316U\332\300\350\355\2468]\003R_\345\344\223\236\016\210'\311$\004F\033\254\202\326\016U\007\317&\267#\017m\255\007\2534\025\204\213e\023\tje\313+\3214\030\026l_)\312\205\017d\356\200\252\244+\232wU\233\023\363\025\014\211\225\332\211\262)\212-&<L\014e\370V\266\261\246L}\032\250\025Y\201N\325\001`\203\224(\271e]3\231P!\245U\242\276\263\215\023\271\366\214\002\003 \350\033\"0\025S\034\303!\223\014\322b\270\025\031n""\005\253,U\221 \305'\"&>e\270\352\222$ICn\303\016Db\322cs\032\2740+\343\246H`!\\\263\206<\270\352\314\"\200\265jx\277\214b\353\006\002PU\212\014Te4K\325\206b\263H[})\002\235\344iI\256\310%\373\33443e\374B8yH\305`\260E}\n\032\223\005x*\"rD+\245x\330%\272\021\\dM\315\317\263_\367yd#\336h\321=\230n\033\202]\032Uh\314u\331\"T\213CL\353\331\301oA\310;\025\362\016\213l\247\035\016d\272\261\344\2406\375\002w\203\247\347\364\212\240h\375\211\003=\322Az\243\001\002\200\030L\260\006b\022S\264D1\0065!\356\217\260\300j\223\345_\351L$U\031\240\233\rhS\232'\210\262G\014U\201Z\345/\210\316ko\314|2\004\334\240\024\245@\336\246\272\"\"\365\3422\360\026\031\231\014\316\213\2163C\016H\276yv\260\032\237Z\314\352;mc\363\006UHU^n\027t\353\3307w\344\332\"\262T\n\275\333\274\207\333\017\005\214\205\010\00637\033\325\351\300\330\"E\377\027rE8P\220\304{\026D";
+    PyObject *data = __Pyx_DecompressString(cstring, 1030, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (818 bytes) */
-const char* const cstring = "x\332\235RAo\334D\024N\332@\026eC\232V\320\346\002\223\002\nU\325\215\266\t\242\342Rm\226\004\350!$\001!\222\313hl?g\007\354\031{f\034\326\005\001G\037\347\350\243\217>\372\270G~\302\036}\334\237\300O\340y\263\311\246P$\204d{\276y\363\275\357\275\367\215;\207\322\0001\003fH?5\003)\010\327\304\203\200;\240\230\201 %\332(\356\032P\rI\220\243\375\243'\273\317v\t\023\036Q\360\003\270F\023\2358n\300\264\006M\244O\234\204\007\206\013b\322\010t\207|\345\223T&D\000x\304H\022!\357f\202\031\200 \032L\003\310\026\023B\032f\270\024\024\323\2718\337\"\036WX\204_@\223}\300\002\r\235\023\226~\311\315\001s\201\374B\016\245\200\347\314\363(f\202V\356v\310x\210\231\333\256T\260}\0162\004\243\322m.p\004\335(I\321\211\322^oo\217\036\364\372\373\364p\377\013\372\375\034\236\316\341\331%<\372\372\233+B\003O\347\360\214\322\243t\210\357\347h\020=\204\2419\001\037\233\233\367\367\035\270;\2149\016\245\363\3114nt*\\.;\330\242L\320+\320l\310\265\033 \242\034GW\230\3520\367G\234\312\225a\3441\303\246~]\003\3203[\320(\352I\227Rh\346\243>&\336\204\276T\264\221\006\221\204\323\373\204!73\3265\272\"5\033?\220\314\370J\276\004\024\366\023\201\312\350\034\027\027\370P\254I\271\246\327]s\003\241\236\331\335\314\002\235+\273;\315\320\257?\271y\021\257g(\226\276r\02023\350\\\240\223\224b\034\373\302\025fF \304@(\275$\000\\\207\224\n\026\"\222r\352\234T\374\234\213(\222X5\222\021\245\221\202\210)h4\342\204\005\227d,\210\017\235^Tc\202\002\223(\224\305\337r&\207\310\003\237%\2011]\363\324\314,\246\370\303\031\374\206lh\260\335\013\026$\240\207\351\313\361\302}\373s\361\250\354\326K\255\354vv\265L\226V\032<\375\334\267q\275\364\256e\023<Z\316\206v\230\233\342\323\362Q\325\235\264W\263\343\314\263\233v\327\232|'\367\212\017\013\267\\\257W\337\376\217\301?\337\\x\253\235\355d\014UU\276^\267\327\262\237\254\223\337F\306yqR\304\365\235\246v{u\322j\222\037\332^\215\300\265w\355\263\374i~\374\312f\322ZA!\307.\326\355;\366\r\373m\276~#r\317v\353\366\306x\343Iy\\\272\325z\2655zg\304F\361\337\031\017\306\017\036""\227\335\262_\306\325r\225\214z\243\251\352'\366\226\335\2342&K\313\277'\331^\306\352\326Z\026_\356\372Y\\\267\356\332\217l\234/6a\2153v'\377\214\240w\267\262\207\230\354`w\307\2265\336~\206`\220C\321-^\224~\325\307\222\375Q\374\307\342x\341\375\374\327\362\254B\327\257+\254e\277\345\003\264l\243\332\374\267\350J\366<\377\270\370\2408-\331x\341\275\\\224/*\366\277\025\376\002\244\022\034[";
-    PyObject *data = __Pyx_DecompressString(cstring, 818, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (886 bytes) */
+const char* const cstring = "x\332\235RAo\3336\024vT\0171\220li:\254m.\033\323a\310\212\241\016\234dX\261K\347\270\316\226\242\310\234,X\343\000-AIT\314N\"%\221\312\254dXw\324QG\035}\324QG\037s\354QG\037\375\023\366\023\366\3508q\272v\227\001\022\337G\276\357=\276\367=\326\367\204\242H\365\210B\255X\365\004GL\"\233\272\314\244!Q\324\215\221T!\263\024\r5\211\243N\273\363h\353\361\026\"\334F!}M-%\221\214L\313%RR\211\204\203\314\210\271\212q\244b\237\312:\332uP,\"\304)\265\221\022\310\007\336\315\000\325\243\034I\2524@k\204s\241\210b\202c\010g\374d\r\331,\204K\330)\325\321;\304\225\264~@\342\237\230\332!\026E\177\240=\301\351\023b\333\030\"\251G\230\007QuK\204\264~B\205GU\030\327\t1\315\017{B\022\277\343\360\210\352\325O\251\265)Ck}\352Y\327\236\365\253\220u\306A\013\251K\022\274\356\307\315\346\3666\336i\266\332x\257\375#>\232\301\356\014\036_\302\316\317\277\\\0214\354\316\3401\306\235\270\017\377SP\032\357\321\276:\240\016t9k\364W\250I\267\201\361L\"\t\033\031s\213\t]\274\210@t*I\237I\313\005\204\031h\030B\250I\254\337@\036Kx\276M\024\231\010\177\r\250\234\352\013\212c[X\030S\335\037v \360&tD\210uj\312#o\3620h\237\251)\353\032]\221\364\306q\005QN(\316($v\"\016\231A9\306O\341\303p'f\022_W\315`r\362\303\023\272)7\306\300\231\254\323)\001\244\323F\000j\217\260#\227\202\355c\314\211\007H\210I\347\"d'\214\373\276\200|\276\3601\366C\352\223\020\010\030\007\021q/\311\360\034\340\303\023\241u\023!UQ\010i\341}N\323\001\262\251C\"W\251\206\332PS\211\260\242R\301\352\221\276\202\036N\211\033Q\331\217\317\312\312\275\364|\3600o\214\252\265\344Vre\306\325\005\215'\313\2754\030U\357\246d\014\256\371\244\237\36635\370.\177Xl\024\373\005)\324\2601|zQ\275h]\250\267[oeypT\036u\313\356\313\362\345\253\362\225Y\232N\351\260\222y\245\027\224\201*\325Yyv^\236\277\371\273R\371\301h\032`\232F[\233\266\261\253\315\256\361\\\233\347FG\233\216q\250\315\241\361B\233\027\306\2211\252-$\233\t\201*\302ly\264\270\224\374\236\232\331\255l3;\031\034\014\202\321m]\353\342\307\343\332'\211\235>H\233#\000Vz'}\234md\373\357l\306""\223Df:7Z\274\235~\224\036f\3137N>M\033\243\305\225r\345Q\276\237[\305r\2616\374lH\206\301\277\031\367\313\373\337\344\215\274\225\007\305|\021\r\233\303I\326oS#]\2350\306\325\371\277\242d;!\243\332R\022\\\356ZI0\252\335I\277J\203lN\037\313t\025\210\357\237\200\326F\362\000\202M\250n?%z\026\337\003\350et\320\030<\313\235\242\005W\266\206\301\305\\Y\371\"\3733?.`J\3277,%o\262\336\300\312W\212\325\377:]H\236d_\017\276\034tsRV>\317x\376\254 \377;\303?9\2430\243";
+    PyObject *data = __Pyx_DecompressString(cstring, 886, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (1387 bytes) */
-const char* const bytes = ".Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.RayHitFace | None?add_notesrc/maiming/core/geometry/intersection.pyAABB_FACE_NEG_X_FACE_NEG_Y_FACE_NEG_Z_FACE_POS_X_FACE_POS_Y_FACE_POS_Z__Pyx_PyDict_NextRefRayRayHitFaceVec3aabb__annotations__asyncio.coroutinesaxiscline_in_tracebackdd_compdataclassdataclassesdirection__doc__enter_face_enter_face_for_axisenumerateexit_face_exit_face_for_axisfacefloatfrozen__func__intinvinv_dir_is_coroutineitemsmaiming.core.geometry.aabbmaiming.core.geometry.intersectionmaiming.core.geometry.raymaiming.core.math.vec3__main____metaclass__mn__module__mx__name__oo_comporiginppointpop__prepare____qualname__rayray_aabb_facereturn__set_name__setdefaultt1t2t_enter__test__tmaxtminvaluesxyz\320\000\027\220{\240)\2501\330\004\010\210\003\2101\330\004\010\210\003\2101\340\004\013\2101\330\004\013\2101\330\004\027\220q\330\004\026\220a\340\004\010\210\007\210x\220x\230t\2407\250)\2601\340\014\r\210Q\210d\220!\2204\220t\2303\230d\240$\240c\250\021\330\r\016\210d\220!\2204\220t\2303\230d\240$\240c\250\021\330\r\016\210d\220!\2204\220t\2303\230d\240$\240c\250\021\360\006\000\t\014\2103\210a\210x\220r\230\021\330\014\017\210w\220b\230\003\2303\230g\240R\240q\330\020\027\220q\330\014\r\340\010\016\210d\220\"\220A\330\010\016\210c\220\022\2208\2302\230Q\330\010\016\210c\220\022\2208\2302\230Q\340\010\013\2103\210b\220\001\330\014\020\220\005\220T\230\021\340\010\013\2103\210b\220\001\330\014\023\2201\330\014\031\320\031-\250Q\250c\260\021\260'\270\025\270a\270q\340\010\013\2103\210b\220\001\330\014\023\2201\330\014\030\320\030+\2501\250C\250q\260\007\260u\270A\270Q\340\010\013\2105\220\002\220!\330\014\023\2201\340\004\007\200u\210B\210a\330\010\017\210q\340\004\007\200u\210C\210q\330\010\022\220%\220q\230\001\330\010\017\210s\220!\2201\340\010\022\220%\220q\230\001\330\010\017\210s\220!\2201\340\004\010\210\002\210\"\210B""\210b\220\005\220Q\220a\330\004\013\210:\220Q\220h\230e\2401\240J\250f\260C\260u\270C\270q\300\001\320\000\037\230~\250Z\260q\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\013\210?\230(\240#\240Y\250a\320\000\036\230n\250J\260a\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\013\210?\230(\240#\240Y\250a";
+    #else /* compression: none (1444 bytes) */
+const char* const bytes = ".Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.RayHitFace | None?add_notemaiming.core.geometry.aabbmaiming.core.geometry.raymaiming.core.math.vec3src/maiming/core/geometry/intersection.pyAABB_FACE_NEG_X_FACE_NEG_Y_FACE_NEG_Z_FACE_POS_X_FACE_POS_Y_FACE_POS_Z__Pyx_PyDict_NextRefRayRayHitFaceVec3aabb__annotations__asyncio.coroutinesaxiscline_in_tracebackdd_compdataclassdataclassesdirection__doc__enter_face_enter_face_for_axisenumerateexit_face_exit_face_for_axisfacefloatfrozen__func__intinvinv_dir_is_coroutineitemsmaiming.core.geometry.intersection__main__math.vec3__metaclass__mn__module__mx__name__oo_comporiginppointpop__prepare____qualname__rayray_aabb_facereturn__set_name__setdefaultt1t2t_enter__test__tmaxtminvaluesxyz\320\000\027\220{\240)\2501\330\004\010\210\003\2101\330\004\010\210\003\2101\340\004\013\2101\330\004\013\2101\330\004\027\220q\330\004\026\220a\340\004\010\210\007\210x\220x\230t\2407\250)\2602\260Q\260a\260t\2701\270D\300\004\300C\300t\3104\310s\320RX\320XY\320Y]\320]^\320^b\320bf\320fi\320im\320mq\320qt\320tz\320z{\320{\177\360\000\000@\002A\002\360\000\000A\002E\002\360\000\000E\002I\002\360\000\000I\002L\002\360\000\000L\002P\002\360\000\000P\002T\002\360\000\000T\002W\002\360\000\000W\002X\002\330\010\013\2103\210a\210x\220r\230\021\330\014\017\210w\220b\230\003\2303\230g\240R\240q\330\020\027\220q\330\014\r\340\010\016\210d\220\"\220A\330\010\016\210c\220\022\2208\2302\230Q\330\010\016\210c\220\022\2208\2302\230Q\340\010\013\2103\210b\220\001\330\014\020\220\005\220T\230\021\340\010\013\2103\210b\220\001\330\014\023\2201\330\014\031\320\031-\250Q\250c\260\021\260'\270\025\270a\270q\340\010\013\2103\210b\220\001\330\014\023\2201\330\014\030\320\030+\2501\250C\250q\260\007\260u\270A\270Q\340\010\013\2105\220\002\220!\330\014\023\2201\340\004\007\200u\210B\210a\330\010\017\210q\340\004\007\200u\210C\210q\330\010\022""\220%\220q\230\001\330\010\017\210s\220!\2201\340\010\022\220%\220q\230\001\330\010\017\210s\220!\2201\340\004\010\210\002\210\"\210B\210b\220\005\220Q\220a\330\004\013\210:\220Q\220h\230e\2401\240J\250f\260C\260u\270C\270q\300\001\320\000\037\230~\250Z\260q\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\013\210?\230(\240#\240Y\250a\320\000\036\230n\250J\260a\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\007\200u\210C\210q\330\010\017\210\177\230h\240c\250\031\260!\330\004\013\210?\230(\240#\240Y\250a";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 75; i++) {
+    for (int i = 0; i < 76; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 6) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 9) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -5000,7 +4961,7 @@ const char* const bytes = ".Note that Cython is deliberately stricter than PEP-4
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 75; i < 78; i++) {
+    for (int i = 76; i < 79; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -5011,14 +4972,14 @@ const char* const bytes = ".Note that Cython is deliberately stricter than PEP-4
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 78; i++) {
+    for (Py_ssize_t i = 0; i < 79; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 75;
+      PyObject **table = stringtab + 76;
       for (Py_ssize_t i=0; i<3; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         #if PY_VERSION_HEX < 0x030E0000
@@ -5099,19 +5060,19 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 24};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 23};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_axis, __pyx_mstate->__pyx_n_u_inv_dir};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_maiming_core_geometry_inters, __pyx_mstate->__pyx_n_u_enter_face_for_axis, __pyx_mstate->__pyx_kp_b_iso88591_Zq_uCq_hc_uCq_hc_Ya, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 31};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 30};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_axis, __pyx_mstate->__pyx_n_u_inv_dir};
     __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_maiming_core_geometry_inters, __pyx_mstate->__pyx_n_u_exit_face_for_axis, __pyx_mstate->__pyx_kp_b_iso88591_nJa_uCq_hc_uCq_hc_Ya, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 19, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 38};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 19, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 37};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_ray, __pyx_mstate->__pyx_n_u_aabb, __pyx_mstate->__pyx_n_u_d, __pyx_mstate->__pyx_n_u_o, __pyx_mstate->__pyx_n_u_tmin, __pyx_mstate->__pyx_n_u_tmax, __pyx_mstate->__pyx_n_u_enter_face, __pyx_mstate->__pyx_n_u_exit_face, __pyx_mstate->__pyx_n_u_axis, __pyx_mstate->__pyx_n_u_o_comp, __pyx_mstate->__pyx_n_u_d_comp, __pyx_mstate->__pyx_n_u_mn, __pyx_mstate->__pyx_n_u_mx, __pyx_mstate->__pyx_n_u_inv, __pyx_mstate->__pyx_n_u_t1, __pyx_mstate->__pyx_n_u_t2, __pyx_mstate->__pyx_n_u_t_enter, __pyx_mstate->__pyx_n_u_face, __pyx_mstate->__pyx_n_u_p};
-    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_maiming_core_geometry_inters, __pyx_mstate->__pyx_n_u_ray_aabb_face, __pyx_mstate->__pyx_kp_b_iso88591_1_1_1_1_1_q_a_xxt7_1_Qd_4t3d_c, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_maiming_core_geometry_inters, __pyx_mstate->__pyx_n_u_ray_aabb_face, __pyx_mstate->__pyx_kp_b_iso88591_1_1_1_1_1_q_a_xxt7_2Qat1D_Ct4sR, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;

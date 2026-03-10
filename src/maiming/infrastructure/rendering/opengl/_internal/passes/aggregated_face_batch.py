@@ -7,21 +7,11 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from OpenGL.GL import (
-    glGenBuffers,
-    glDeleteBuffers,
-    glBindBuffer,
-    glBufferData,
-    glBufferSubData,
-    glBindVertexArray,
-    glMultiDrawArraysIndirect,
-    GL_DRAW_INDIRECT_BUFFER,
-    GL_STREAM_DRAW,
-    GL_TRIANGLES,
-)
+from OpenGL.GL import glGenBuffers, glDeleteBuffers, glBindBuffer, glBindVertexArray, glMultiDrawArraysIndirect, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
 
-from maiming.domain.world.chunking import ChunkKey
-from maiming.infrastructure.rendering.opengl._internal.gl.mesh_buffer import MeshBuffer
+from ......domain.world.chunking import ChunkKey
+from ..gl.buffer_upload import as_float32_c_array, as_uint32_c_array, upload_array_buffer
+from ..gl.mesh_buffer import MeshBuffer
 
 @dataclass(frozen=True)
 class _ChunkSlice:
@@ -52,18 +42,10 @@ class AggregatedFaceBatch:
 
     @staticmethod
     def _norm_face_array(arr: np.ndarray) -> np.ndarray:
-        src = arr
-        if src.dtype != np.float32:
-            src = src.astype(np.float32, copy=False)
-        if not src.flags["C_CONTIGUOUS"]:
-            src = np.ascontiguousarray(src, dtype=np.float32)
-        else:
-            src = src.copy()
-
+        src = as_float32_c_array(arr)
         if src.ndim != 2 or src.shape[1] != 12:
             raise ValueError("Aggregated face payload rows must be float32 Nx12 arrays")
-
-        return src
+        return np.array(src, dtype=np.float32, copy=True, order="C")
 
     @staticmethod
     def _chunk_total(faces: list[np.ndarray]) -> int:
@@ -100,13 +82,7 @@ class AggregatedFaceBatch:
     def total_instances(self) -> int:
         return int(self._source_instance_total)
 
-    def set_chunk_faces(
-        self,
-        *,
-        chunk_key: ChunkKey,
-        world_revision: int,
-        faces: list[np.ndarray],
-    ) -> None:
+    def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         if len(faces) != 6:
             return
 
@@ -164,18 +140,7 @@ class AggregatedFaceBatch:
             counts = tuple(int(arr.shape[0]) for arr in faces[:6])
             slice_offsets = tuple(int(v) for v in offsets[:6])
 
-            slices[ck] = _ChunkSlice(
-                offsets=slice_offsets,
-                counts=(
-                    int(counts[0]),
-                    int(counts[1]),
-                    int(counts[2]),
-                    int(counts[3]),
-                    int(counts[4]),
-                    int(counts[5]),
-                ),
-                last_rev=int(self._source_revs.get(ck, -1)),
-            )
+            slices[ck] = _ChunkSlice(offsets=slice_offsets, counts=(int(counts[0]), int(counts[1]), int(counts[2]), int(counts[3]), int(counts[4]), int(counts[5])), last_rev=int(self._source_revs.get(ck, -1)))
 
             for fi in range(6):
                 arr = faces[fi]
@@ -216,14 +181,7 @@ class AggregatedFaceBatch:
                 if cnt <= 0:
                     continue
 
-                rows[fi].append(
-                    (
-                        int(self._meshes[fi].vertex_count) if self._meshes else 6,
-                        int(cnt),
-                        0,
-                        int(sl.offsets[fi]),
-                    )
-                )
+                rows[fi].append((int(self._meshes[fi].vertex_count) if self._meshes else 6, int(cnt), 0, int(sl.offsets[fi])))
 
         out: list[np.ndarray] = []
         for fi in range(6):
@@ -243,37 +201,10 @@ class AggregatedFaceBatch:
         if fi < 0 or fi >= len(self._indirect_buffers):
             return
 
-        arr = commands
-        if arr.dtype != np.uint32:
-            arr = arr.astype(np.uint32, copy=False)
-        if not arr.flags["C_CONTIGUOUS"]:
-            arr = np.ascontiguousarray(arr, dtype=np.uint32)
+        arr = as_uint32_c_array(commands)
+        self._indirect_caps[fi] = upload_array_buffer(target=GL_DRAW_INDIRECT_BUFFER, buffer=int(self._indirect_buffers[fi]), usage=GL_STREAM_DRAW, data=arr, capacity_bytes=int(self._indirect_caps[fi]))
 
-        nbytes = int(arr.nbytes)
-        buf = int(self._indirect_buffers[fi])
-
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buf)
-        if nbytes <= 0:
-            glBufferData(GL_DRAW_INDIRECT_BUFFER, 0, None, GL_STREAM_DRAW)
-            self._indirect_caps[fi] = 0
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0)
-            return
-
-        cap = int(self._indirect_caps[fi])
-        if cap > 0 and nbytes <= cap:
-            glBufferSubData(GL_DRAW_INDIRECT_BUFFER, 0, nbytes, arr)
-        else:
-            glBufferData(GL_DRAW_INDIRECT_BUFFER, nbytes, arr, GL_STREAM_DRAW)
-            self._indirect_caps[fi] = int(nbytes)
-
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0)
-
-    def draw(
-        self,
-        commands: list[np.ndarray],
-        *,
-        before_face_draw: Callable[[int], None] | None = None,
-    ) -> tuple[int, int]:
+    def draw(self, commands: list[np.ndarray], *, before_face_draw: Callable[[int], None] | None = None) -> tuple[int, int]:
         if not bool(self._initialized):
             return (0, 0)
 
