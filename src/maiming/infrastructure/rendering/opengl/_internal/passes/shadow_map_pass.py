@@ -15,7 +15,7 @@ from OpenGL.GL import (
 from ......domain.world.chunking import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
-from ..scene.chunk_visibility import chunk_intersects_clip_volume
+from ..scene.chunk_selection import select_visible_chunks
 from ...facade.gl_renderer_params import ShadowParams
 from ...facade.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
@@ -39,9 +39,6 @@ class ShadowMapPass:
         self._ok: bool = False
 
         self._batch = AggregatedFaceBatch()
-
-        self._last_vp_rendered: np.ndarray | None = None
-        self._dirty: bool = True
         self._last_metrics = PassFrameMetrics()
 
     def initialize(self, prog: ShaderProgram, size: int) -> None:
@@ -53,8 +50,6 @@ class ShadowMapPass:
         self._batch.destroy()
         self._destroy_shadow_map()
         self._prog = None
-        self._last_vp_rendered = None
-        self._dirty = True
         self._last_metrics = PassFrameMetrics()
 
     def info(self) -> ShadowMapInfo:
@@ -62,31 +57,12 @@ class ShadowMapPass:
 
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
         self._batch.remove_chunk(chunk_key)
-        self._dirty = True
 
     def evict_except(self, keep: set[ChunkKey]) -> None:
         self._batch.evict_except(keep)
-        self._dirty = True
 
     def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         self._batch.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
-        self._dirty = True
-
-    def should_render(self, light_vp: np.ndarray) -> bool:
-        if int(self._batch.total_instances()) <= 0:
-            return False
-        if bool(self._dirty):
-            return True
-        if self._last_vp_rendered is None:
-            return True
-
-        a = light_vp.astype(np.float32, copy=False)
-        b = self._last_vp_rendered.astype(np.float32, copy=False)
-
-        if a.shape != b.shape:
-            return True
-
-        return not bool(np.array_equal(a, b))
 
     def render(self, light_vp: np.ndarray) -> PassFrameMetrics:
         t0 = time.perf_counter()
@@ -109,12 +85,7 @@ class ShadowMapPass:
         s = int(self._size)
         vp = light_vp.astype(np.float32, copy=False)
 
-        visible_chunks: list[ChunkKey] = []
-        for ck in self._batch.chunk_keys():
-            if not chunk_intersects_clip_volume(ck, vp):
-                continue
-            visible_chunks.append(ck)
-
+        visible_chunks = select_visible_chunks(self._batch.chunk_keys(), vp)
         commands = self._batch.build_commands(visible_chunks)
 
         draw_calls = 0
@@ -148,8 +119,6 @@ class ShadowMapPass:
 
             glDisable(GL_POLYGON_OFFSET_FILL)
 
-        self._last_vp_rendered = vp.copy()
-        self._dirty = False
         self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=int(draw_calls), instances=int(instances), rendered=True)
         return self._last_metrics
 
@@ -161,8 +130,6 @@ class ShadowMapPass:
             glDeleteFramebuffers(1, [int(self._fbo)])
             self._fbo = 0
         self._ok = False
-        self._last_vp_rendered = None
-        self._dirty = True
 
     def _create_shadow_map(self, size: int) -> None:
         size_i = int(max(64, min(8192, int(size))))
@@ -203,10 +170,8 @@ class ShadowMapPass:
             self._tex = 0
             self._fbo = 0
             self._ok = False
-            self._dirty = True
             return
 
         self._tex = tex
         self._fbo = fbo
         self._ok = True
-        self._dirty = True

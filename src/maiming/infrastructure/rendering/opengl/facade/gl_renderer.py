@@ -5,13 +5,13 @@ from pathlib import Path
 
 import numpy as np
 
-from maiming.core.math.vec3 import Vec3
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.world.chunking import ChunkKey
-from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams, default_gl_renderer_params
-from maiming.infrastructure.rendering.opengl.facade.render_metrics import RendererFrameMetrics
-from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
-from maiming.infrastructure.rendering.opengl.facade.renderer_backend import RendererBackend
+from .....core.math.vec3 import Vec3
+from .....domain.blocks.block_registry import BlockRegistry
+from .....domain.world.chunking import ChunkKey
+from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
+from .render_metrics import RendererFrameMetrics
+from .render_state import RendererRuntimeState
+from .renderer_backend import RendererBackend
 
 class GLRenderer:
     def __init__(self, params: GLRendererParams | None = None) -> None:
@@ -91,36 +91,14 @@ class GLRenderer:
     def clear_selection(self) -> None:
         self._backend.clear_selection()
 
-    def set_selection_target(
-        self,
-        *,
-        x: int,
-        y: int,
-        z: int,
-        state_str: str,
-        get_state,
-        world_revision: int,
-    ) -> None:
-        self._backend.set_selection_target(
-            x=int(x),
-            y=int(y),
-            z=int(z),
-            state_str=str(state_str),
-            get_state=get_state,
-            world_revision=int(world_revision),
-        )
+    def set_selection_target(self, *, x: int, y: int, z: int, state_str: str, get_state, world_revision: int) -> None:
+        self._backend.set_selection_target(x=int(x), y=int(y), z=int(z), state_str=str(state_str), get_state=get_state, world_revision=int(world_revision))
 
     def sun_angles(self) -> tuple[float, float]:
-        return (
-            float(self._state.sun_azimuth_deg),
-            float(self._state.sun_elevation_deg),
-        )
+        return (float(self._state.sun_azimuth_deg), float(self._state.sun_elevation_deg))
 
     def set_sun_angles(self, azimuth_deg: float, elevation_deg: float) -> None:
-        self._state.set_sun_angles(
-            float(azimuth_deg),
-            float(elevation_deg),
-        )
+        self._state.set_sun_angles(float(azimuth_deg), float(elevation_deg))
 
     def sun_dir(self) -> Vec3:
         return self._state.sun_dir
@@ -136,10 +114,7 @@ class GLRenderer:
         return self._backend.payload_validation_report()
 
     def atlas_uv_face(self, block_state_id: str, face_idx: int) -> tuple[float, float, float, float]:
-        return self._backend.atlas_uv_face(
-            str(block_state_id),
-            int(face_idx),
-        )
+        return self._backend.atlas_uv_face(str(block_state_id), int(face_idx))
 
     def world_build_tools(self):
         return self._backend.world_build_tools()
@@ -147,42 +122,8 @@ class GLRenderer:
     def block_display_name(self, block_state_or_id: str) -> str:
         return self._backend.block_display_name(str(block_state_or_id))
 
-    def submit_chunk(
-        self,
-        *,
-        chunk_key: ChunkKey,
-        world_revision: int,
-        faces: list[np.ndarray] | None = None,
-        shadow_faces: list[np.ndarray] | None = None,
-        gpu_face_sources=None,
-        gpu_bucket_counts=None,
-    ) -> None:
-        self._backend.submit_chunk(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=faces,
-            shadow_faces=shadow_faces,
-            gpu_face_sources=gpu_face_sources,
-            gpu_bucket_counts=gpu_bucket_counts,
-        )
+    def submit_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None) -> None:
+        self._backend.submit_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces, shadow_faces=shadow_faces, gpu_face_sources=gpu_face_sources, gpu_bucket_counts=gpu_bucket_counts)
 
-    def render(
-        self,
-        *,
-        w: int,
-        h: int,
-        eye: Vec3,
-        yaw_deg: float,
-        pitch_deg: float,
-        fov_deg: float,
-        render_distance_chunks: int,
-    ) -> None:
-        self._backend.render(
-            w=int(w),
-            h=int(h),
-            eye=eye,
-            yaw_deg=float(yaw_deg),
-            pitch_deg=float(pitch_deg),
-            fov_deg=float(fov_deg),
-            render_distance_chunks=int(render_distance_chunks),
-        )
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int) -> None:
+        self._backend.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks))

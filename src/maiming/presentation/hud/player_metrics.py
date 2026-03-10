@@ -5,8 +5,8 @@ import math
 from collections import deque
 from dataclasses import dataclass, field
 
-from maiming.application.session.session_settings import SessionSettings
-from maiming.domain.entities.player_entity import PlayerEntity
+from ...application.session.session_settings import SessionSettings
+from ...domain.entities.player_entity import PlayerEntity
 
 @dataclass(frozen=True)
 class ScalarMetricSnapshot:
@@ -124,13 +124,7 @@ class PlayerMetricsTracker:
         self._v_recent = _RollingWeightedSeries(window_s=w)
         self._jump_recent = _RollingEventSeries(window_s=w)
 
-    def observe_step(
-        self,
-        *,
-        dt_s: float,
-        player: PlayerEntity,
-        jump_started: bool,
-    ) -> None:
+    def observe_step(self, *, dt_s: float, player: PlayerEntity, jump_started: bool) -> None:
         dt = float(max(0.0, dt_s))
         if dt <= 1e-9:
             return
@@ -180,27 +174,9 @@ class PlayerMetricsTracker:
             j_mean = None
 
         return PlayerMetricsSnapshot(
-            horiz_speed=ScalarMetricSnapshot(
-                current=float(self._h_current),
-                mean=float(h_mean),
-                recent_mean=float(self._h_recent.mean()),
-            ),
-            vert_speed=ScalarMetricSnapshot(
-                current=float(self._v_current),
-                mean=float(v_mean),
-                recent_mean=float(self._v_recent.mean()),
-            ),
-            jump_interval=OptionalScalarMetricSnapshot(
-                current=self._jump_interval_current,
-                mean=j_mean,
-                recent_mean=self._jump_recent.mean(),
-            ),
-            applied=AppliedMovementSnapshot(
-                gravity=float(settings.movement.gravity),
-                walk_speed=float(settings.movement.walk_speed),
-                sprint_speed=float(settings.movement.sprint_speed),
-                jump_v0=float(settings.movement.jump_v0),
-                auto_jump_cooldown_s=float(settings.movement.auto_jump_cooldown_s),
-            ),
+            horiz_speed=ScalarMetricSnapshot(current=float(self._h_current), mean=float(h_mean), recent_mean=float(self._h_recent.mean())),
+            vert_speed=ScalarMetricSnapshot(current=float(self._v_current), mean=float(v_mean), recent_mean=float(self._v_recent.mean())),
+            jump_interval=OptionalScalarMetricSnapshot(current=self._jump_interval_current, mean=j_mean, recent_mean=self._jump_recent.mean()),
+            applied=AppliedMovementSnapshot(gravity=float(settings.movement.gravity), walk_speed=float(settings.movement.walk_speed), sprint_speed=float(settings.movement.sprint_speed), jump_v0=float(settings.movement.jump_v0), auto_jump_cooldown_s=float(settings.movement.auto_jump_cooldown_s)),
             recent_window_s=float(self.recent_window_s),
         )

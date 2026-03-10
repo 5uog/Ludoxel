@@ -3,27 +3,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from maiming.core.math.vec3 import Vec3
-from maiming.application.session.session_manager import SessionManager
-from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from maiming.infrastructure.persistence.app_state_store import (
-    AppStateStore,
-    PersistedSettings,
-    PersistedPlayer,
-    PersistedWorld,
-    AppState,
-)
+from ....core.math.vec3 import Vec3
+from ....application.session.session_manager import SessionManager
+from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
+from ....infrastructure.persistence.app_state_store import AppStateStore, PersistedSettings, PersistedPlayer, PersistedWorld, AppState
 
-from maiming.presentation.widgets.viewport.viewport_runtime_state import ViewportRuntimeState
+from .viewport_runtime_state import ViewportRuntimeState
 
 PersistedRuntime = ViewportRuntimeState
 
-def apply_persisted_state_if_present(
-    *,
-    project_root: Path,
-    session: SessionManager,
-    renderer: GLRenderer,
-) -> ViewportRuntimeState:
+def apply_persisted_state_if_present(*, project_root: Path, session: SessionManager, renderer: GLRenderer) -> ViewportRuntimeState:
     runtime = ViewportRuntimeState()
 
     store = AppStateStore(project_root=Path(project_root))
@@ -68,9 +57,7 @@ def apply_persisted_state_if_present(
         p.pitch_deg = float(pp.pitch_deg)
         p.clamp_pitch()
         p.on_ground = bool(pp.on_ground)
-        p.crouch_eye_offset = float(
-            max(0.0, min(float(p.crouch_eye_drop), float(pp.crouch_eye_offset)))
-        )
+        p.crouch_eye_offset = float(max(0.0, min(float(p.crouch_eye_drop), float(pp.crouch_eye_offset))))
         p.hold_jump_queued = False
         p.auto_jump_pending = False
         p.auto_jump_cooldown_s = float(max(0.0, float(pp.auto_jump_cooldown_s)))
@@ -78,10 +65,7 @@ def apply_persisted_state_if_present(
 
         pw = st.world
         if pw.blocks:
-            session.world.replace_all(
-                blocks={k: str(v) for (k, v) in pw.blocks.items()},
-                revision=int(max(1, int(pw.revision))),
-            )
+            session.world.replace_all(blocks={k: str(v) for (k, v) in pw.blocks.items()}, revision=int(max(1, int(pw.revision))))
 
     runtime.normalize()
 
@@ -99,49 +83,9 @@ def apply_persisted_state_if_present(
 
     return runtime
 
-def _coerce_runtime(
-    *,
-    runtime: ViewportRuntimeState | None,
-    invert_x: bool | None,
-    invert_y: bool | None,
-    outline_selection: bool | None,
-    cloud_enabled: bool | None,
-    cloud_density: int | None,
-    cloud_seed: int | None,
-    cloud_flow_direction: str | None,
-    build_mode: bool | None,
-    auto_jump_enabled: bool | None,
-    auto_sprint_enabled: bool | None,
-    world_wire: bool | None,
-    shadow_enabled: bool | None,
-    sun_az_deg: float | None,
-    sun_el_deg: float | None,
-    render_distance_chunks: int | None,
-) -> ViewportRuntimeState:
+def _coerce_runtime(*, runtime: ViewportRuntimeState | None, invert_x: bool | None, invert_y: bool | None, outline_selection: bool | None, cloud_enabled: bool | None, cloud_density: int | None, cloud_seed: int | None, cloud_flow_direction: str | None, build_mode: bool | None, auto_jump_enabled: bool | None, auto_sprint_enabled: bool | None, world_wire: bool | None, shadow_enabled: bool | None, sun_az_deg: float | None, sun_el_deg: float | None, render_distance_chunks: int | None) -> ViewportRuntimeState:
     if runtime is not None:
-        out = ViewportRuntimeState(
-            invert_x=bool(runtime.invert_x),
-            invert_y=bool(runtime.invert_y),
-            outline_selection=bool(runtime.outline_selection),
-            cloud_wire=bool(runtime.cloud_wire),
-            cloud_enabled=bool(runtime.cloud_enabled),
-            cloud_density=int(runtime.cloud_density),
-            cloud_seed=int(runtime.cloud_seed),
-            cloud_flow_direction=str(runtime.cloud_flow_direction),
-            world_wire=bool(runtime.world_wire),
-            shadow_enabled=bool(runtime.shadow_enabled),
-            build_mode=bool(runtime.build_mode),
-            selected_block_id=str(runtime.selected_block_id),
-            reach=float(runtime.reach),
-            auto_jump_enabled=bool(runtime.auto_jump_enabled),
-            auto_sprint_enabled=bool(runtime.auto_sprint_enabled),
-            render_distance_chunks=int(runtime.render_distance_chunks),
-            sun_az_deg=float(runtime.sun_az_deg),
-            sun_el_deg=float(runtime.sun_el_deg),
-            debug_shadow=bool(runtime.debug_shadow),
-            vsync_on=bool(runtime.vsync_on),
-            hud_visible=bool(runtime.hud_visible),
-        )
+        out = ViewportRuntimeState(invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), build_mode=bool(runtime.build_mode), selected_block_id=str(runtime.selected_block_id), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible))
         out.normalize()
         return out
 
@@ -186,97 +130,20 @@ def _coerce_runtime(
     out.normalize()
     return out
 
-def save_state(
-    *,
-    project_root: Path,
-    session: SessionManager,
-    renderer: GLRenderer,
-    runtime: ViewportRuntimeState | None = None,
-    invert_x: bool | None = None,
-    invert_y: bool | None = None,
-    outline_selection: bool | None = None,
-    cloud_enabled: bool | None = None,
-    cloud_density: int | None = None,
-    cloud_seed: int | None = None,
-    cloud_flow_direction: str | None = None,
-    build_mode: bool | None = None,
-    auto_jump_enabled: bool | None = None,
-    auto_sprint_enabled: bool | None = None,
-    world_wire: bool | None = None,
-    shadow_enabled: bool | None = None,
-    sun_az_deg: float | None = None,
-    sun_el_deg: float | None = None,
-    render_distance_chunks: int | None = None,
-) -> None:
+def save_state(*, project_root: Path, session: SessionManager, renderer: GLRenderer, runtime: ViewportRuntimeState | None = None, invert_x: bool | None = None, invert_y: bool | None = None, outline_selection: bool | None = None, cloud_enabled: bool | None = None, cloud_density: int | None = None, cloud_seed: int | None = None, cloud_flow_direction: str | None = None, build_mode: bool | None = None, auto_jump_enabled: bool | None = None, auto_sprint_enabled: bool | None = None, world_wire: bool | None = None, shadow_enabled: bool | None = None, sun_az_deg: float | None = None, sun_el_deg: float | None = None, render_distance_chunks: int | None = None) -> None:
     _ = renderer
 
-    state_runtime = _coerce_runtime(
-        runtime=runtime,
-        invert_x=invert_x,
-        invert_y=invert_y,
-        outline_selection=outline_selection,
-        cloud_enabled=cloud_enabled,
-        cloud_density=cloud_density,
-        cloud_seed=cloud_seed,
-        cloud_flow_direction=cloud_flow_direction,
-        build_mode=build_mode,
-        auto_jump_enabled=auto_jump_enabled,
-        auto_sprint_enabled=auto_sprint_enabled,
-        world_wire=world_wire,
-        shadow_enabled=shadow_enabled,
-        sun_az_deg=sun_az_deg,
-        sun_el_deg=sun_el_deg,
-        render_distance_chunks=render_distance_chunks,
-    )
+    state_runtime = _coerce_runtime(runtime=runtime, invert_x=invert_x, invert_y=invert_y, outline_selection=outline_selection, cloud_enabled=cloud_enabled, cloud_density=cloud_density, cloud_seed=cloud_seed, cloud_flow_direction=cloud_flow_direction, build_mode=build_mode, auto_jump_enabled=auto_jump_enabled, auto_sprint_enabled=auto_sprint_enabled, world_wire=world_wire, shadow_enabled=shadow_enabled, sun_az_deg=sun_az_deg, sun_el_deg=sun_el_deg,  render_distance_chunks=render_distance_chunks)
 
     store = AppStateStore(project_root=Path(project_root))
 
-    settings = PersistedSettings(
-        fov_deg=float(session.settings.fov_deg),
-        mouse_sens_deg_per_px=float(session.settings.mouse_sens_deg_per_px),
-        invert_x=bool(state_runtime.invert_x),
-        invert_y=bool(state_runtime.invert_y),
-        outline_selection=bool(state_runtime.outline_selection),
-        world_wireframe=bool(state_runtime.world_wire),
-        shadow_enabled=bool(state_runtime.shadow_enabled),
-        sun_az_deg=float(state_runtime.sun_az_deg),
-        sun_el_deg=float(state_runtime.sun_el_deg),
-        cloud_enabled=bool(state_runtime.cloud_enabled),
-        cloud_density=int(state_runtime.cloud_density),
-        cloud_seed=int(state_runtime.cloud_seed),
-        cloud_flow_direction=str(state_runtime.cloud_flow_direction),
-        build_mode=bool(state_runtime.build_mode),
-        auto_jump_enabled=bool(state_runtime.auto_jump_enabled),
-        auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled),
-        gravity=float(session.settings.movement.gravity),
-        walk_speed=float(session.settings.movement.walk_speed),
-        sprint_speed=float(session.settings.movement.sprint_speed),
-        jump_v0=float(session.settings.movement.jump_v0),
-        auto_jump_cooldown_s=float(session.settings.movement.auto_jump_cooldown_s),
-        render_distance_chunks=int(state_runtime.render_distance_chunks),
-        hud_visible=bool(state_runtime.hud_visible),
-    )
+    settings = PersistedSettings(fov_deg=float(session.settings.fov_deg), mouse_sens_deg_per_px=float(session.settings.mouse_sens_deg_per_px), invert_x=bool(state_runtime.invert_x), invert_y=bool(state_runtime.invert_y), outline_selection=bool(state_runtime.outline_selection), world_wireframe=bool(state_runtime.world_wire), shadow_enabled=bool(state_runtime.shadow_enabled), sun_az_deg=float(state_runtime.sun_az_deg), sun_el_deg=float(state_runtime.sun_el_deg), cloud_enabled=bool(state_runtime.cloud_enabled), cloud_density=int(state_runtime.cloud_density), cloud_seed=int(state_runtime.cloud_seed), cloud_flow_direction=str(state_runtime.cloud_flow_direction), build_mode=bool(state_runtime.build_mode), auto_jump_enabled=bool(state_runtime.auto_jump_enabled), auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled), gravity=float(session.settings.movement.gravity), walk_speed=float(session.settings.movement.walk_speed), sprint_speed=float(session.settings.movement.sprint_speed), jump_v0=float(session.settings.movement.jump_v0), auto_jump_cooldown_s=float(session.settings.movement.auto_jump_cooldown_s), render_distance_chunks=int(state_runtime.render_distance_chunks), hud_visible=bool(state_runtime.hud_visible))
 
     pl = session.player
-    player = PersistedPlayer(
-        pos_x=float(pl.position.x),
-        pos_y=float(pl.position.y),
-        pos_z=float(pl.position.z),
-        vel_x=float(pl.velocity.x),
-        vel_y=float(pl.velocity.y),
-        vel_z=float(pl.velocity.z),
-        yaw_deg=float(pl.yaw_deg),
-        pitch_deg=float(pl.pitch_deg),
-        on_ground=bool(pl.on_ground),
-        auto_jump_cooldown_s=float(max(0.0, float(pl.auto_jump_cooldown_s))),
-        crouch_eye_offset=float(max(0.0, min(float(pl.crouch_eye_drop), float(pl.crouch_eye_offset)))),
-    )
+    player = PersistedPlayer(pos_x=float(pl.position.x), pos_y=float(pl.position.y), pos_z=float(pl.position.z), vel_x=float(pl.velocity.x), vel_y=float(pl.velocity.y), vel_z=float(pl.velocity.z), yaw_deg=float(pl.yaw_deg), pitch_deg=float(pl.pitch_deg), on_ground=bool(pl.on_ground), auto_jump_cooldown_s=float(max(0.0, float(pl.auto_jump_cooldown_s))), crouch_eye_offset=float(max(0.0, min(float(pl.crouch_eye_drop), float(pl.crouch_eye_offset)))))
 
     snap = session.world.snapshot_blocks()
-    world = PersistedWorld(
-        revision=int(session.world.revision),
-        blocks={k: str(v) for (k, v) in snap.items()},
-    )
+    world = PersistedWorld(revision=int(session.world.revision), blocks={k: str(v) for (k, v) in snap.items()})
 
     state = AppState(version=4, settings=settings, player=player, world=world)
     store.save(state)

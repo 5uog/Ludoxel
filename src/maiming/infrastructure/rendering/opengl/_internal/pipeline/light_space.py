@@ -29,7 +29,6 @@ def compute_light_view_proj(*, center: Vec3, sun_dir: Vec3, sun: SunParams, shad
         r = float(sun.ortho_radius)
         s = float(max(1, int(shadow_size)))
         texel = (2.0 * r) / s
-        depth_quantum = float(max(16.0, texel))
 
         cx = right.dot(center)
         cy = up.dot(center)
@@ -37,9 +36,8 @@ def compute_light_view_proj(*, center: Vec3, sun_dir: Vec3, sun: SunParams, shad
 
         sx = _snap(float(cx), float(texel))
         sy = _snap(float(cy), float(texel))
-        sz = _snap(float(cz), float(depth_quantum))
 
-        anchor_center = (right * float(sx)) + (up * float(sy)) + (light_axis * float(sz))
+        anchor_center = (right * float(sx)) + (up * float(sy)) + (light_axis * float(cz))
 
     ld = float(sun.light_distance)
     light_pos = Vec3(float(anchor_center.x) + float(sdir.x) * ld, float(anchor_center.y) + float(sdir.y) * ld, float(anchor_center.z) + float(sdir.z) * ld)

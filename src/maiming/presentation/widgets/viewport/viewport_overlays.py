@@ -6,8 +6,8 @@ from typing import Callable
 
 from PyQt6.QtWidgets import QWidget
 
-from maiming.application.session.fixed_step_runner import FixedStepRunner
-from maiming.presentation.widgets.viewport.viewport_input import ViewportInput
+from ....application.session.fixed_step_runner import FixedStepRunner
+from .viewport_input import ViewportInput
 
 @dataclass
 class OverlayRefs:

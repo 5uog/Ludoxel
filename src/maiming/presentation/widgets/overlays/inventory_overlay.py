@@ -5,20 +5,10 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt6.QtGui import QPixmap, QIcon
-from PyQt6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QFrame,
-    QSizePolicy,
-    QGridLayout,
-    QScrollArea,
-)
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
 
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.presentation.widgets.overlays.item_photo_provider import ItemPhotoProvider
+from ....domain.blocks.block_registry import BlockRegistry
+from .item_photo_provider import ItemPhotoProvider
 
 class _SlotButton(QPushButton):
     def __init__(self, block_id: str, display_name: str, parent: QWidget | None = None) -> None:
@@ -57,13 +47,7 @@ class InventoryOverlay(QWidget):
     closed = pyqtSignal()
     block_selected = pyqtSignal(str)
 
-    def __init__(
-        self,
-        *,
-        parent: QWidget | None = None,
-        project_root: Path,
-        registry: BlockRegistry,
-    ) -> None:
+    def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
         self._reg = registry

@@ -4,10 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.infrastructure.rendering.opengl._internal.resources.texture_atlas import TextureAtlas
+from .....domain.blocks.block_definition import BlockDefinition
+from .....domain.blocks.block_registry import BlockRegistry
+from .....domain.blocks.state_codec import parse_state
+from .._internal.resources.texture_atlas import TextureAtlas
 
 UVRect = tuple[float, float, float, float]
 DefLookup = Callable[[str], BlockDefinition | None]

@@ -16,7 +16,7 @@ from ......domain.world.chunking import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas
-from ..scene.chunk_visibility import chunk_intersects_clip_volume
+from ..scene.chunk_selection import select_visible_chunks, within_render_distance
 from ...facade.gl_renderer_params import ShadowParams
 from ...facade.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
@@ -71,13 +71,6 @@ class WorldPass:
     def upload_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         self._batch.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
 
-    @staticmethod
-    def _within_render_distance(ck: ChunkKey, cam: ChunkKey, rd: int) -> bool:
-        dx = abs(int(ck[0]) - int(cam[0]))
-        dz = abs(int(ck[2]) - int(cam[2]))
-        dy = abs(int(ck[1]) - int(cam[1]))
-        return (dx <= int(rd)) and (dz <= int(rd)) and (dy <= 1)
-
     def draw(self, inp: WorldDrawInputs) -> PassFrameMetrics:
         t0 = time.perf_counter()
 
@@ -91,13 +84,7 @@ class WorldPass:
         cam = inp.camera_chunk
         view_proj = inp.view_proj.astype(np.float32, copy=False)
 
-        visible_chunks: list[ChunkKey] = []
-        for ck in self._batch.chunk_keys():
-            if not self._within_render_distance(ck, cam, rd):
-                continue
-            if not chunk_intersects_clip_volume(ck, view_proj):
-                continue
-            visible_chunks.append(ck)
+        visible_chunks = select_visible_chunks(self._batch.chunk_keys(), view_proj, predicate=lambda ck: within_render_distance(ck, cam, rd))
 
         commands = self._batch.build_commands(visible_chunks)
         if not any(int(cmd.shape[0]) > 0 for cmd in commands):

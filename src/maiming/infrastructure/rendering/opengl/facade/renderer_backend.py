@@ -11,26 +11,26 @@ from OpenGL.GL import (
     GL_LESS,
 )
 
-from maiming.core.math.vec3 import Vec3
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.world.chunking import ChunkKey
-from maiming.infrastructure.rendering.opengl._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
-from maiming.infrastructure.rendering.opengl._internal.passes.cloud_pass import CloudPass
-from maiming.infrastructure.rendering.opengl._internal.passes.selection_pass import SelectionPass
-from maiming.infrastructure.rendering.opengl._internal.passes.shadow_map_pass import ShadowMapPass
-from maiming.infrastructure.rendering.opengl._internal.passes.sun_pass import SunPass
-from maiming.infrastructure.rendering.opengl._internal.passes.world_pass import WorldPass
-from maiming.infrastructure.rendering.opengl._internal.pipeline.frame_pipeline import FramePipeline
-from maiming.infrastructure.rendering.opengl._internal.scene.selection_outline_builder import SelectionOutlineBuilder
-from maiming.infrastructure.rendering.opengl._internal.scene.world_face_source_builder import BucketCounts
-from maiming.infrastructure.rendering.opengl.facade.block_visual_resolver import BlockVisualResolver
-from maiming.infrastructure.rendering.opengl.facade.gl_info_probe import GLInfoSnapshot, probe_gl_info
-from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams
-from maiming.infrastructure.rendering.opengl.facade.gl_resources import GLResources
-from maiming.infrastructure.rendering.opengl.facade.render_metrics import RendererFrameMetrics
-from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
-from maiming.infrastructure.rendering.opengl.facade.selection_controller import SelectionController
+from .....core.math.vec3 import Vec3
+from .....domain.blocks.block_registry import BlockRegistry
+from .....domain.blocks.state_codec import parse_state
+from .....domain.world.chunking import ChunkKey
+from .._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
+from .._internal.passes.cloud_pass import CloudPass
+from .._internal.passes.selection_pass import SelectionPass
+from .._internal.passes.shadow_map_pass import ShadowMapPass
+from .._internal.passes.sun_pass import SunPass
+from .._internal.passes.world_pass import WorldPass
+from .._internal.pipeline.frame_pipeline import FramePipeline
+from .._internal.scene.selection_outline_builder import SelectionOutlineBuilder
+from .._internal.scene.world_face_source_builder import BucketCounts
+from .block_visual_resolver import BlockVisualResolver
+from .gl_info_probe import GLInfoSnapshot, probe_gl_info
+from .gl_renderer_params import GLRendererParams
+from .gl_resources import GLResources
+from .render_metrics import RendererFrameMetrics
+from .render_state import RendererRuntimeState
+from .selection_controller import SelectionController
 
 def _format_context_details(info: GLInfoSnapshot) -> str:
     return (
@@ -63,13 +63,7 @@ def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
         )
 
 class RendererBackend:
-    def __init__(
-        self,
-        *,
-        cfg: GLRendererParams,
-        state: RendererRuntimeState,
-        sel_tint_strength: float = 0.55,
-    ) -> None:
+    def __init__(self, *, cfg: GLRendererParams, state: RendererRuntimeState, sel_tint_strength: float = 0.55) -> None:
         self._cfg = cfg
         self._state = state
         self._sel_tint_strength = float(sel_tint_strength)
@@ -114,10 +108,7 @@ class RendererBackend:
                 f"Original error:\n{exc}"
             ) from exc
 
-        self._visuals = BlockVisualResolver(
-            atlas=self._res.atlas,
-            blocks=self._res.blocks,
-        )
+        self._visuals = BlockVisualResolver(atlas=self._res.atlas, blocks=self._res.blocks)
 
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
@@ -129,22 +120,8 @@ class RendererBackend:
         self._selection_pass.initialize(self._res.selection_prog)
         self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
-        self._selection = SelectionController(
-            outline_pass=self._selection_pass,
-            outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup),
-            outline_enabled=bool(self._state.outline_selection_enabled),
-        )
-
-        self._pipeline = FramePipeline(
-            cfg=self._cfg,
-            state=self._state,
-            shadow_pass=self._shadow,
-            world_pass=self._world,
-            sun_pass=self._sun,
-            cloud_pass=self._cloud,
-            selection=self._selection,
-            sel_tint_strength=float(self._sel_tint_strength),
-        )
+        self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
+        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, sun_pass=self._sun, cloud_pass=self._cloud, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
 
         self.apply_runtime_state()
 
@@ -163,17 +140,7 @@ class RendererBackend:
         self._pipeline = None
         self._last_payload_validation = None
         self._last_frame_metrics = RendererFrameMetrics()
-        self._gl_info = GLInfoSnapshot(
-            vendor="",
-            renderer="",
-            version="",
-            glsl_version="",
-            major_version=0,
-            minor_version=0,
-            glsl_major_version=0,
-            glsl_minor_version=0,
-            context_profile_mask=0,
-        )
+        self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="", major_version=0, minor_version=0, glsl_major_version=0, glsl_minor_version=0, context_profile_mask=0)
 
     def apply_runtime_state(self) -> None:
         self._cloud.set_wireframe(bool(self._state.cloud_wireframe))
@@ -189,12 +156,7 @@ class RendererBackend:
         self._cloud.set_motion_paused(bool(on))
 
     def gl_info(self) -> tuple[str, str, str, str]:
-        return (
-            str(self._gl_info.vendor),
-            str(self._gl_info.renderer),
-            str(self._gl_info.version),
-            str(self._gl_info.glsl_version),
-        )
+        return (str(self._gl_info.vendor), str(self._gl_info.renderer), str(self._gl_info.version), str(self._gl_info.glsl_version))
 
     def shadow_info(self) -> tuple[bool, int]:
         if self._pipeline is None:
@@ -232,38 +194,13 @@ class RendererBackend:
         if self._selection is not None:
             self._selection.clear()
 
-    def set_selection_target(
-        self,
-        *,
-        x: int,
-        y: int,
-        z: int,
-        state_str: str,
-        get_state,
-        world_revision: int,
-    ) -> None:
+    def set_selection_target(self, *, x: int, y: int, z: int, state_str: str, get_state, world_revision: int) -> None:
         if self._selection is None:
             return
 
-        self._selection.set_target(
-            x=int(x),
-            y=int(y),
-            z=int(z),
-            state_str=str(state_str),
-            get_state=get_state,
-            world_revision=int(world_revision),
-        )
+        self._selection.set_target(x=int(x), y=int(y), z=int(z), state_str=str(state_str), get_state=get_state, world_revision=int(world_revision))
 
-    def submit_chunk(
-        self,
-        *,
-        chunk_key: ChunkKey,
-        world_revision: int,
-        faces: list[np.ndarray] | None = None,
-        shadow_faces: list[np.ndarray] | None = None,
-        gpu_face_sources: np.ndarray | None = None,
-        gpu_bucket_counts: BucketCounts | None = None,
-    ) -> None:
+    def submit_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources: np.ndarray | None = None, gpu_bucket_counts: BucketCounts | None = None) -> None:
         if self._res is None:
             return
 
@@ -271,12 +208,7 @@ class RendererBackend:
         authoritative_shadow_faces: list[np.ndarray] | None = None
 
         if gpu_face_sources is not None and gpu_bucket_counts is not None:
-            gpu_payload = self._gpu_payload_builder.build_and_store(
-                chunk_key=chunk_key,
-                world_revision=int(world_revision),
-                face_sources=gpu_face_sources,
-                bucket_counts=gpu_bucket_counts,
-            )
+            gpu_payload = self._gpu_payload_builder.build_and_store(chunk_key=chunk_key, world_revision=int(world_revision), face_sources=gpu_face_sources, bucket_counts=gpu_bucket_counts)
             authoritative_world_faces = gpu_payload.face_buckets
             authoritative_shadow_faces = authoritative_world_faces
             self._last_payload_validation = None
@@ -287,38 +219,12 @@ class RendererBackend:
             authoritative_shadow_faces = shadow_faces if shadow_faces is not None else faces
             self._last_payload_validation = None
 
-        self._world.upload_chunk(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=authoritative_world_faces,
-        )
-        self._shadow.set_chunk_faces(
-            chunk_key=chunk_key,
-            world_revision=int(world_revision),
-            faces=authoritative_shadow_faces,
-        )
+        self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_world_faces)
+        self._shadow.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_shadow_faces)
 
-    def render(
-        self,
-        *,
-        w: int,
-        h: int,
-        eye: Vec3,
-        yaw_deg: float,
-        pitch_deg: float,
-        fov_deg: float,
-        render_distance_chunks: int,
-    ) -> None:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int) -> None:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return
 
-        self._last_frame_metrics = self._pipeline.render(
-            w=int(w),
-            h=int(h),
-            eye=eye,
-            yaw_deg=float(yaw_deg),
-            pitch_deg=float(pitch_deg),
-            fov_deg=float(fov_deg),
-            render_distance_chunks=int(render_distance_chunks),
-        )
+        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks))

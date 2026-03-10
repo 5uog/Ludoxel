@@ -31,14 +31,13 @@ class CrosshairWidget(QWidget):
 
         def draw_with_pen(pen: QPen) -> None:
             p.setPen(pen)
-            # Horizontal
+
             p.drawLine(int(cx - self._gap - self._arm), int(cy), int(cx - self._gap), int(cy))
             p.drawLine(int(cx + self._gap), int(cy), int(cx + self._gap + self._arm), int(cy))
-            # Vertical
+
             p.drawLine(int(cx), int(cy - self._gap - self._arm), int(cx), int(cy - self._gap))
             p.drawLine(int(cx), int(cy + self._gap), int(cx), int(cy + self._gap + self._arm))
 
-        # Outline first for readability.
         outline_pen = QPen(QColor(0, 0, 0, 200))
         outline_pen.setWidth(max(1, int(self._outline)))
         draw_with_pen(outline_pen)

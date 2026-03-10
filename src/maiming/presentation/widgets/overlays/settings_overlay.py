@@ -2,49 +2,17 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QSlider,
-    QCheckBox,
-    QFrame,
-    QSizePolicy,
-    QStackedWidget,
-    QScrollArea,
-    QDoubleSpinBox,
-    QComboBox,
-)
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QCheckBox, QFrame, QSizePolicy, QStackedWidget, QScrollArea, QDoubleSpinBox, QComboBox
 
-from maiming.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
-from maiming.presentation.config.pause_overlay_params import (
-    PauseOverlayParams,
-    DEFAULT_PAUSE_OVERLAY_PARAMS,
-)
+from ....domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
+from ...config.pause_overlay_params import PauseOverlayParams, DEFAULT_PAUSE_OVERLAY_PARAMS
 
-_CLOUD_FLOW_DIRECTIONS: tuple[tuple[str, str], ...] = (
-    ("east_to_west", "East → West"),
-    ("west_to_east", "West → East"),
-    ("south_to_north", "South → North"),
-    ("north_to_south", "North → South"),
-)
+_CLOUD_FLOW_DIRECTIONS: tuple[tuple[str, str], ...] = (("east_to_west", "East → West"), ("west_to_east", "West → East"), ("south_to_north", "South → North"), ("north_to_south", "North → South"))
 
 class AdvancedScalarControl(QWidget):
     value_changed = pyqtSignal(float)
 
-    def __init__(
-        self,
-        *,
-        title: str,
-        min_value: float,
-        max_value: float,
-        slider_scale: float,
-        decimals: int,
-        default_value: float,
-        parent: QWidget | None = None,
-    ) -> None:
+    def __init__(self, *, title: str, min_value: float, max_value: float, slider_scale: float, decimals: int, default_value: float, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._title = str(title)
@@ -68,10 +36,7 @@ class AdvancedScalarControl(QWidget):
         row.setSpacing(8)
 
         self._slider = QSlider(Qt.Orientation.Horizontal, self)
-        self._slider.setRange(
-            int(round(float(self._min) * float(self._scale))),
-            int(round(float(self._max) * float(self._scale))),
-        )
+        self._slider.setRange(int(round(float(self._min) * float(self._scale))), int(round(float(self._max) * float(self._scale))))
         row.addWidget(self._slider, stretch=1)
 
         self._spin = QDoubleSpinBox(self)
@@ -184,11 +149,7 @@ class SettingsOverlay(QWidget):
 
     render_distance_changed = pyqtSignal(int)
 
-    def __init__(
-        self,
-        parent: QWidget | None = None,
-        params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS,
-    ) -> None:
+    def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
         super().__init__(parent)
         self._params = params
 
@@ -226,10 +187,7 @@ class SettingsOverlay(QWidget):
 
         pv.addLayout(title_row)
 
-        subtitle = QLabel(
-            "Visual, Controls, and Game & Player (Advanced) now live in separate tabs.",
-            panel,
-        )
+        subtitle = QLabel("Visual, Controls, and Game & Player (Advanced) now live in separate tabs.", panel)
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         pv.addWidget(subtitle)
@@ -321,10 +279,7 @@ class SettingsOverlay(QWidget):
         self._lbl_fov = QLabel("FOV: 80", host)
         self._lbl_fov.setObjectName("valueLabel")
         self._sld_fov = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_fov.setRange(
-            int(self._params.fov_min),
-            int(self._params.fov_max),
-        )
+        self._sld_fov.setRange(int(self._params.fov_min), int(self._params.fov_max))
         self._sld_fov.valueChanged.connect(self._on_fov)
         fov_row.addWidget(self._lbl_fov)
         fov_row.addWidget(self._sld_fov)
@@ -338,10 +293,7 @@ class SettingsOverlay(QWidget):
         self._lbl_rd = QLabel("Render distance: 6 chunks", host)
         self._lbl_rd.setObjectName("valueLabel")
         self._sld_rd = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_rd.setRange(
-            int(self._params.render_dist_min),
-            int(self._params.render_dist_max),
-        )
+        self._sld_rd.setRange(int(self._params.render_dist_min), int(self._params.render_dist_max))
         self._sld_rd.valueChanged.connect(self._on_rd)
         rd_row.addWidget(self._lbl_rd)
         rd_row.addWidget(self._sld_rd)
@@ -422,10 +374,7 @@ class SettingsOverlay(QWidget):
         self._lbl_sun_az = QLabel("Sun azimuth: 45 deg", host)
         self._lbl_sun_az.setObjectName("valueLabel")
         self._sld_sun_az = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_sun_az.setRange(
-            int(self._params.sun_az_min),
-            int(self._params.sun_az_max),
-        )
+        self._sld_sun_az.setRange(int(self._params.sun_az_min), int(self._params.sun_az_max))
         self._sld_sun_az.valueChanged.connect(self._on_sun_az)
         sun_az_row.addWidget(self._lbl_sun_az)
         sun_az_row.addWidget(self._sld_sun_az)
@@ -435,10 +384,7 @@ class SettingsOverlay(QWidget):
         self._lbl_sun_el = QLabel("Sun elevation: 60 deg", host)
         self._lbl_sun_el.setObjectName("valueLabel")
         self._sld_sun_el = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_sun_el.setRange(
-            int(self._params.sun_el_min),
-            int(self._params.sun_el_max),
-        )
+        self._sld_sun_el.setRange(int(self._params.sun_el_min), int(self._params.sun_el_max))
         self._sld_sun_el.valueChanged.connect(self._on_sun_el)
         sun_el_row.addWidget(self._lbl_sun_el)
         sun_el_row.addWidget(self._sld_sun_el)
@@ -456,10 +402,7 @@ class SettingsOverlay(QWidget):
         self._lbl_sens = QLabel("Mouse sensitivity: 0.090 deg/px", host)
         self._lbl_sens.setObjectName("valueLabel")
         self._sld_sens = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_sens.setRange(
-            int(self._params.sens_milli_min),
-            int(self._params.sens_milli_max),
-        )
+        self._sld_sens.setRange(int(self._params.sens_milli_min), int(self._params.sens_milli_max))
         self._sld_sens.valueChanged.connect(self._on_sens)
         sens_row.addWidget(self._lbl_sens)
         sens_row.addWidget(self._sld_sens)
@@ -498,63 +441,23 @@ class SettingsOverlay(QWidget):
         lay.addWidget(self._sep(host))
         lay.addWidget(self._section(host, "Movement Parameters"))
 
-        self._ctl_gravity = AdvancedScalarControl(
-            title="Gravity",
-            min_value=float(self._params.gravity_milli_min) / float(self._params.gravity_scale),
-            max_value=float(self._params.gravity_milli_max) / float(self._params.gravity_scale),
-            slider_scale=float(self._params.gravity_scale),
-            decimals=int(self._params.gravity_decimals),
-            default_value=float(DEFAULT_MOVEMENT_PARAMS.gravity),
-            parent=host,
-        )
+        self._ctl_gravity = AdvancedScalarControl(title="Gravity", min_value=float(self._params.gravity_milli_min) / float(self._params.gravity_scale), max_value=float(self._params.gravity_milli_max) / float(self._params.gravity_scale), slider_scale=float(self._params.gravity_scale), decimals=int(self._params.gravity_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.gravity), parent=host)
         self._ctl_gravity.value_changed.connect(self.gravity_changed.emit)
         lay.addWidget(self._ctl_gravity)
 
-        self._ctl_walk_speed = AdvancedScalarControl(
-            title="Walk speed",
-            min_value=float(self._params.walk_speed_milli_min) / float(self._params.walk_speed_scale),
-            max_value=float(self._params.walk_speed_milli_max) / float(self._params.walk_speed_scale),
-            slider_scale=float(self._params.walk_speed_scale),
-            decimals=int(self._params.walk_speed_decimals),
-            default_value=float(DEFAULT_MOVEMENT_PARAMS.walk_speed),
-            parent=host,
-        )
+        self._ctl_walk_speed = AdvancedScalarControl(title="Walk speed", min_value=float(self._params.walk_speed_milli_min) / float(self._params.walk_speed_scale), max_value=float(self._params.walk_speed_milli_max) / float(self._params.walk_speed_scale), slider_scale=float(self._params.walk_speed_scale), decimals=int(self._params.walk_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.walk_speed), parent=host)
         self._ctl_walk_speed.value_changed.connect(self.walk_speed_changed.emit)
         lay.addWidget(self._ctl_walk_speed)
 
-        self._ctl_sprint_speed = AdvancedScalarControl(
-            title="Sprint speed",
-            min_value=float(self._params.sprint_speed_milli_min) / float(self._params.sprint_speed_scale),
-            max_value=float(self._params.sprint_speed_milli_max) / float(self._params.sprint_speed_scale),
-            slider_scale=float(self._params.sprint_speed_scale),
-            decimals=int(self._params.sprint_speed_decimals),
-            default_value=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed),
-            parent=host,
-        )
+        self._ctl_sprint_speed = AdvancedScalarControl(title="Sprint speed", min_value=float(self._params.sprint_speed_milli_min) / float(self._params.sprint_speed_scale), max_value=float(self._params.sprint_speed_milli_max) / float(self._params.sprint_speed_scale), slider_scale=float(self._params.sprint_speed_scale), decimals=int(self._params.sprint_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed), parent=host)
         self._ctl_sprint_speed.value_changed.connect(self.sprint_speed_changed.emit)
         lay.addWidget(self._ctl_sprint_speed)
 
-        self._ctl_jump_v0 = AdvancedScalarControl(
-            title="Jump velocity",
-            min_value=float(self._params.jump_v0_milli_min) / float(self._params.jump_v0_scale),
-            max_value=float(self._params.jump_v0_milli_max) / float(self._params.jump_v0_scale),
-            slider_scale=float(self._params.jump_v0_scale),
-            decimals=int(self._params.jump_v0_decimals),
-            default_value=float(DEFAULT_MOVEMENT_PARAMS.jump_v0),
-            parent=host,
-        )
+        self._ctl_jump_v0 = AdvancedScalarControl(title="Jump velocity", min_value=float(self._params.jump_v0_milli_min) / float(self._params.jump_v0_scale), max_value=float(self._params.jump_v0_milli_max) / float(self._params.jump_v0_scale), slider_scale=float(self._params.jump_v0_scale), decimals=int(self._params.jump_v0_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.jump_v0), parent=host)
         self._ctl_jump_v0.value_changed.connect(self.jump_v0_changed.emit)
         lay.addWidget(self._ctl_jump_v0)
 
-        self._ctl_auto_jump_cooldown = AdvancedScalarControl(
-            title="Auto-jump cooldown",
-            min_value=float(self._params.auto_jump_cooldown_milli_min) / float(self._params.auto_jump_cooldown_scale),
-            max_value=float(self._params.auto_jump_cooldown_milli_max) / float(self._params.auto_jump_cooldown_scale),
-            slider_scale=float(self._params.auto_jump_cooldown_scale),
-            decimals=int(self._params.auto_jump_cooldown_decimals),
-            default_value=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s),
-            parent=host,
-        )
+        self._ctl_auto_jump_cooldown = AdvancedScalarControl(title="Auto-jump cooldown", min_value=float(self._params.auto_jump_cooldown_milli_min) / float(self._params.auto_jump_cooldown_scale), max_value=float(self._params.auto_jump_cooldown_milli_max) / float(self._params.auto_jump_cooldown_scale), slider_scale=float(self._params.auto_jump_cooldown_scale), decimals=int(self._params.auto_jump_cooldown_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s), parent=host)
         self._ctl_auto_jump_cooldown.value_changed.connect(self.auto_jump_cooldown_changed.emit)
         lay.addWidget(self._ctl_auto_jump_cooldown)
 
@@ -579,33 +482,7 @@ class SettingsOverlay(QWidget):
         self._tab_controls.setChecked(i == 1)
         self._tab_game.setChecked(i == 2)
 
-    def sync_values(
-        self,
-        *,
-        fov_deg: float,
-        sens_deg_per_px: float,
-        inv_x: bool,
-        inv_y: bool,
-        outline_selection: bool,
-        cloud_wire: bool,
-        clouds_enabled: bool,
-        cloud_density: int,
-        cloud_seed: int,
-        cloud_flow_direction: str,
-        world_wire: bool,
-        shadow_enabled: bool,
-        sun_az_deg: float,
-        sun_el_deg: float,
-        build_mode: bool,
-        auto_jump_enabled: bool,
-        auto_sprint_enabled: bool,
-        gravity: float,
-        walk_speed: float,
-        sprint_speed: float,
-        jump_v0: float,
-        auto_jump_cooldown_s: float,
-        render_distance_chunks: int,
-    ) -> None:
+    def sync_values(self, *, fov_deg: float, sens_deg_per_px: float, inv_x: bool, inv_y: bool, outline_selection: bool, cloud_wire: bool, clouds_enabled: bool, cloud_density: int, cloud_seed: int, cloud_flow_direction: str, world_wire: bool, shadow_enabled: bool, sun_az_deg: float, sun_el_deg: float, build_mode: bool, auto_jump_enabled: bool, auto_sprint_enabled: bool, gravity: float, walk_speed: float, sprint_speed: float, jump_v0: float, auto_jump_cooldown_s: float, render_distance_chunks: int) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
         self._sld_fov.blockSignals(True)
@@ -613,10 +490,7 @@ class SettingsOverlay(QWidget):
         self._sld_fov.blockSignals(False)
         self._lbl_fov.setText(f"FOV: {fov_i}")
 
-        s = max(
-            float(self._params.sens_min),
-            min(float(self._params.sens_max), float(sens_deg_per_px)),
-        )
+        s = max(float(self._params.sens_min), min(float(self._params.sens_max), float(sens_deg_per_px)))
         si = int(round(s * float(self._params.sens_scale)))
         si = max(int(self._params.sens_milli_min), min(int(self._params.sens_milli_max), si))
         self._sld_sens.blockSignals(True)
@@ -624,12 +498,7 @@ class SettingsOverlay(QWidget):
         self._sld_sens.blockSignals(False)
         self._lbl_sens.setText(f"Mouse sensitivity: {s:.3f} deg/px")
 
-        rd = int(
-            max(
-                int(self._params.render_dist_min),
-                min(int(self._params.render_dist_max), int(render_distance_chunks)),
-            )
-        )
+        rd = int(max(int(self._params.render_dist_min), min(int(self._params.render_dist_max), int(render_distance_chunks))))
         self._sld_rd.blockSignals(True)
         self._sld_rd.setValue(rd)
         self._sld_rd.blockSignals(False)

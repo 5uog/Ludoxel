@@ -7,19 +7,13 @@ import tracemalloc
 import threading
 from dataclasses import dataclass
 
-from maiming.core.math.vec3 import Vec3
-from maiming.application.session.session_manager import SessionManager
-from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from maiming.infrastructure.metrics import (
-    SystemInfo,
-    ProcessMemorySnapshot,
-    GpuUtilizationSampler,
-    read_system_info,
-    read_process_memory,
-)
-from maiming.presentation.hud.hud_payload import HudPayload
-from maiming.presentation.hud.player_metrics import PlayerMetricsTracker
-from maiming.meta import __version__
+from ...core.math.vec3 import Vec3
+from ...application.session.session_manager import SessionManager
+from ...infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
+from ...infrastructure.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
+from .hud_payload import HudPayload
+from .player_metrics import PlayerMetricsTracker
+from ...meta import __version__
 
 @dataclass(frozen=True)
 class HudFps:
@@ -61,22 +55,11 @@ class HudController:
 
         now = time.perf_counter()
         cur, peak = tracemalloc.get_traced_memory()
-        self._py = _PyAllocState(
-            cur_bytes=int(cur),
-            peak_bytes=int(peak),
-            rate_mib_s=0.0,
-            last_bytes=int(cur),
-            last_t=float(now),
-        )
+        self._py = _PyAllocState(cur_bytes=int(cur), peak_bytes=int(peak), rate_mib_s=0.0, last_bytes=int(cur), last_t=float(now))
         self._py_last_sample_t: float = float(now)
 
         self._ext_lock = threading.Lock()
-        self._ext = _ExternalMetrics(
-            gpu_util_percent=None,
-            rss_bytes=None,
-            total_bytes=self._sys.total_mem_bytes,
-            updated_t=0.0,
-        )
+        self._ext = _ExternalMetrics(gpu_util_percent=None, rss_bytes=None, total_bytes=self._sys.total_mem_bytes, updated_t=0.0)
 
         self._ext_thread = threading.Thread(target=self._external_probe_loop, name="HudExternalProbe", daemon=True)
         self._ext_thread.start()
@@ -95,12 +78,7 @@ class HudController:
 
             t = time.perf_counter()
             with self._ext_lock:
-                self._ext = _ExternalMetrics(
-                    gpu_util_percent=gpu,
-                    rss_bytes=snap.rss_bytes,
-                    total_bytes=snap.total_bytes if snap.total_bytes is not None else self._sys.total_mem_bytes,
-                    updated_t=float(t),
-                )
+                self._ext = _ExternalMetrics(gpu_util_percent=gpu, rss_bytes=snap.rss_bytes, total_bytes=snap.total_bytes if snap.total_bytes is not None else self._sys.total_mem_bytes, updated_t=float(t))
 
             time.sleep(1.0)
 
@@ -111,11 +89,7 @@ class HudController:
     def on_sim_step(self, *, dt: float, player, jump_started: bool) -> None:
         self._fps_sim_steps += 1
         self._maybe_update_fps()
-        self._metrics.observe_step(
-            dt_s=float(dt),
-            player=player,
-            jump_started=bool(jump_started),
-        )
+        self._metrics.observe_step(dt_s=float(dt), player=player, jump_started=bool(jump_started))
 
     def _maybe_update_fps(self) -> None:
         now = time.perf_counter()
@@ -174,13 +148,7 @@ class HudController:
         if rate < 0.0:
             rate = 0.0
 
-        self._py = _PyAllocState(
-            cur_bytes=int(cur),
-            peak_bytes=int(peak),
-            rate_mib_s=float(rate),
-            last_bytes=int(cur),
-            last_t=float(now),
-        )
+        self._py = _PyAllocState(cur_bytes=int(cur), peak_bytes=int(peak), rate_mib_s=float(rate), last_bytes=int(cur), last_t=float(now))
 
     @staticmethod
     def _cardinal(forward: Vec3) -> str:
@@ -198,35 +166,7 @@ class HudController:
         r = int(b - c * 16)
         return c, r
 
-    def _build_left_text(
-        self,
-        *,
-        session: SessionManager,
-        renderer: GLRenderer,
-        auto_jump_enabled: bool,
-        auto_sprint_enabled: bool,
-        build_mode: bool,
-        inventory_open: bool,
-        selected_block_id: str,
-        reach: float,
-        sun_az_deg: float,
-        sun_el_deg: float,
-        shadow_enabled: bool,
-        world_wire: bool,
-        cloud_wire: bool,
-        cloud_enabled: bool,
-        cloud_density: int,
-        cloud_seed: int,
-        debug_shadow: bool,
-        fb_w: int,
-        fb_h: int,
-        dpr: float,
-        vsync_on: bool,
-        render_timer_interval_ms: int,
-        render_distance_chunks: int,
-        paint_ms: float,
-        selection_pick_ms: float,
-    ) -> str:
+    def _build_left_text(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, build_mode: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> str:
         fps = self.fps()
         t_txt = "inf" if int(render_timer_interval_ms) <= 0 else f"{(1000.0 / float(render_timer_interval_ms)):.0f}"
         vs = "vsync" if bool(vsync_on) else "nosync"
@@ -333,64 +273,9 @@ class HudController:
         lines.append(f"auto_jump_cooldown_s  {metrics.applied.auto_jump_cooldown_s:.3f}")
         return "\n".join(lines).rstrip()
 
-    def build_payload(
-        self,
-        *,
-        session: SessionManager,
-        renderer: GLRenderer,
-        auto_jump_enabled: bool,
-        auto_sprint_enabled: bool,
-        build_mode: bool,
-        inventory_open: bool,
-        selected_block_id: str,
-        reach: float,
-        sun_az_deg: float,
-        sun_el_deg: float,
-        shadow_enabled: bool,
-        world_wire: bool,
-        cloud_wire: bool,
-        cloud_enabled: bool,
-        cloud_density: int,
-        cloud_seed: int,
-        debug_shadow: bool,
-        fb_w: int,
-        fb_h: int,
-        dpr: float,
-        vsync_on: bool,
-        render_timer_interval_ms: int,
-        sim_hz: float,
-        render_distance_chunks: int,
-        paint_ms: float,
-        selection_pick_ms: float,
-    ) -> HudPayload:
+    def build_payload(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, build_mode: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, sim_hz: float, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> HudPayload:
         _ = float(sim_hz)
 
-        left = self._build_left_text(
-            session=session,
-            renderer=renderer,
-            auto_jump_enabled=bool(auto_jump_enabled),
-            auto_sprint_enabled=bool(auto_sprint_enabled),
-            build_mode=bool(build_mode),
-            inventory_open=bool(inventory_open),
-            selected_block_id=str(selected_block_id),
-            reach=float(reach),
-            sun_az_deg=float(sun_az_deg),
-            sun_el_deg=float(sun_el_deg),
-            shadow_enabled=bool(shadow_enabled),
-            world_wire=bool(world_wire),
-            cloud_wire=bool(cloud_wire),
-            cloud_enabled=bool(cloud_enabled),
-            cloud_density=int(cloud_density),
-            cloud_seed=int(cloud_seed),
-            debug_shadow=bool(debug_shadow),
-            fb_w=int(fb_w),
-            fb_h=int(fb_h),
-            dpr=float(dpr),
-            vsync_on=bool(vsync_on),
-            render_timer_interval_ms=int(render_timer_interval_ms),
-            render_distance_chunks=int(render_distance_chunks),
-            paint_ms=float(paint_ms),
-            selection_pick_ms=float(selection_pick_ms),
-        )
+        left = self._build_left_text(session=session, renderer=renderer, auto_jump_enabled=bool(auto_jump_enabled), auto_sprint_enabled=bool(auto_sprint_enabled), build_mode=bool(build_mode), inventory_open=bool(inventory_open), selected_block_id=str(selected_block_id), reach=float(reach), sun_az_deg=float(sun_az_deg), sun_el_deg=float(sun_el_deg), shadow_enabled=bool(shadow_enabled), world_wire=bool(world_wire), cloud_wire=bool(cloud_wire), cloud_enabled=bool(cloud_enabled), cloud_density=int(cloud_density), cloud_seed=int(cloud_seed), debug_shadow=bool(debug_shadow), fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr), vsync_on=bool(vsync_on), render_timer_interval_ms=int(render_timer_interval_ms), render_distance_chunks=int(render_distance_chunks), paint_ms=float(paint_ms), selection_pick_ms=float(selection_pick_ms))
         right = self._build_right_text(session=session)
         return HudPayload(left_text=str(left), right_text=str(right))

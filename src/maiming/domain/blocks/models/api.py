@@ -8,6 +8,7 @@ from typing import Sequence
 from ....core.geometry.aabb import AABB
 from ....core.math.vec3 import Vec3
 
+from ..neighborhood import six_neighbor_state_signature
 from ..state_codec import parse_state
 from ..state_values import prop_as_bool
 
@@ -58,22 +59,11 @@ def _callable_cache_token(fn: object) -> int:
         return int(id(owner))
     return int(id(fn))
 
-def _state_sig_value(get_state: GetState, x: int, y: int, z: int) -> str:
-    s = get_state(int(x), int(y), int(z))
-    if s is None:
-        return ""
-    return str(s)
-
 def _shape_signature(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[object, ...]:
     return (
         int(_callable_cache_token(get_def)),
         str(state_str),
-        _state_sig_value(get_state, int(x + 1), int(y), int(z)),
-        _state_sig_value(get_state, int(x - 1), int(y), int(z)),
-        _state_sig_value(get_state, int(x), int(y + 1), int(z)),
-        _state_sig_value(get_state, int(x), int(y - 1), int(z)),
-        _state_sig_value(get_state, int(x), int(y), int(z + 1)),
-        _state_sig_value(get_state, int(x), int(y), int(z - 1)),
+        *six_neighbor_state_signature(get_state, int(x), int(y), int(z)),
     )
 
 def _raise_boxes_to_min_height(boxes: Sequence[LocalBox], min_height: float) -> tuple[LocalBox, ...]:

@@ -5,9 +5,9 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
-from maiming.presentation.config.gl_surface_format import install_default_gl_surface_format
-from maiming.presentation.screens.game_screen import GameScreen
-from maiming.presentation.theme.fonts import install_minecraft_fonts, apply_application_font
+from ..config.gl_surface_format import install_default_gl_surface_format
+from ..screens.game_screen import GameScreen
+from ..theme.fonts import install_minecraft_fonts, apply_application_font
 
 class MainWindow(QMainWindow):
     def __init__(self, project_root: Path) -> None:

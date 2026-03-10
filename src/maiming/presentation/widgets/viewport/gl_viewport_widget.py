@@ -9,35 +9,30 @@ from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtGui import QMouseEvent, QKeyEvent
 from PyQt6.QtWidgets import QMessageBox
 
-from maiming.core.math.vec3 import Vec3
-from maiming.application.session.fixed_step_runner import FixedStepRunner
-from maiming.application.session.session_manager import SessionManager
-from maiming.infrastructure.platform.qt_input_adapter import QtInputAdapter
-from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
+from ....core.math.vec3 import Vec3
+from ....application.session.fixed_step_runner import FixedStepRunner
+from ....application.session.session_manager import SessionManager
+from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
+from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 
-from maiming.presentation.config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
-from maiming.presentation.config.gl_surface_format import build_gl_surface_format
-from maiming.presentation.hud.hud_controller import HudController
-from maiming.presentation.widgets.hud.crosshair_widget import CrosshairWidget
-from maiming.presentation.widgets.overlays.death_overlay import DeathOverlay
-from maiming.presentation.widgets.overlays.inventory_overlay import InventoryOverlay
-from maiming.presentation.widgets.overlays.pause_overlay import PauseOverlay
-from maiming.presentation.widgets.overlays.settings_overlay import SettingsOverlay
-from maiming.presentation.widgets.viewport.viewport_input import ViewportInput
-from maiming.presentation.widgets.viewport.viewport_overlays import ViewportOverlays, OverlayRefs
-from maiming.presentation.widgets.viewport.viewport_persistence import apply_persisted_state_if_present, save_state
-from maiming.presentation.widgets.viewport.viewport_runtime_state import ViewportRuntimeState
-from maiming.presentation.widgets.viewport.viewport_world_upload import WorldUploadTracker
+from ...config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
+from ...config.gl_surface_format import build_gl_surface_format
+from ...hud.hud_controller import HudController
+from ..hud.crosshair_widget import CrosshairWidget
+from ..overlays.death_overlay import DeathOverlay
+from ..overlays.inventory_overlay import InventoryOverlay
+from ..overlays.pause_overlay import PauseOverlay
+from ..overlays.settings_overlay import SettingsOverlay
+from .viewport_input import ViewportInput
+from .viewport_overlays import ViewportOverlays, OverlayRefs
+from .viewport_persistence import apply_persisted_state_if_present, save_state
+from .viewport_runtime_state import ViewportRuntimeState
+from .viewport_world_upload import WorldUploadTracker
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
 
-    def __init__(
-        self,
-        project_root: Path,
-        parent=None,
-        loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS,
-    ) -> None:
+    def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
 
         self._project_root = Path(project_root)
@@ -104,26 +99,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(True)
 
-        self._inventory = InventoryOverlay(
-            parent=self,
-            project_root=self._project_root,
-            registry=self._session.block_registry,
-        )
+        self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
         self._inventory.block_selected.connect(self._on_inventory_selected)
         self._inventory.closed.connect(self._on_inventory_closed)
 
-        self._overlays = ViewportOverlays(
-            refs=OverlayRefs(
-                pause=self._overlay,
-                settings=self._settings,
-                inventory=self._inventory,
-                death=self._death,
-                crosshair=self._crosshair,
-                hud_getter=lambda: self._hud,
-            ),
-            runner=self._runner,
-            inp=self._inp,
-        )
+        self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hud_getter=lambda: self._hud), runner=self._runner, inp=self._inp)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
@@ -140,11 +120,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self.setFormat(build_gl_surface_format())
 
-        self._state = apply_persisted_state_if_present(
-            project_root=self._project_root,
-            session=self._session,
-            renderer=self._renderer,
-        )
+        self._state = apply_persisted_state_if_present(project_root=self._project_root, session=self._session, renderer=self._renderer)
         self._apply_runtime_to_renderer()
 
         if not bool(self._state.build_mode):
@@ -168,22 +144,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._renderer.set_cloud_flow_direction(str(self._state.cloud_flow_direction))
         self._renderer.set_shadow_enabled(bool(self._state.shadow_enabled))
         self._renderer.set_world_wireframe(bool(self._state.world_wire))
-        self._renderer.set_sun_angles(
-            float(self._state.sun_az_deg),
-            float(self._state.sun_el_deg),
-        )
+        self._renderer.set_sun_angles(float(self._state.sun_az_deg), float(self._state.sun_el_deg))
 
     def _sync_cloud_motion_pause(self) -> None:
         self._renderer.set_cloud_motion_paused(bool(self._overlays.paused()))
 
     def save_state(self) -> None:
         self._sync_state_from_renderer_sun()
-        save_state(
-            project_root=self._project_root,
-            session=self._session,
-            renderer=self._renderer,
-            runtime=self._state,
-        )
+        save_state(project_root=self._project_root, session=self._session, renderer=self._renderer, runtime=self._state)
 
     def shutdown(self) -> None:
         if self._shutdown_done:
@@ -246,15 +214,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _selection_key(self) -> tuple[float, float, float, float, float, int, float]:
         eye = self._session.player.eye_pos()
-        return (
-            round(float(eye.x), 4),
-            round(float(eye.y), 4),
-            round(float(eye.z), 4),
-            round(float(self._session.player.yaw_deg), 3),
-            round(float(self._session.player.pitch_deg), 3),
-            int(self._session.world.revision),
-            round(float(self._state.reach), 3),
-        )
+        return (round(float(eye.x), 4), round(float(eye.y), 4), round(float(eye.z), 4), round(float(self._session.player.yaw_deg), 3), round(float(self._session.player.pitch_deg), 3), int(self._session.world.revision), round(float(self._state.reach), 3))
 
     def _invalidate_selection_target(self) -> None:
         self._selection_cache_key = None
@@ -271,13 +231,7 @@ class GLViewportWidget(QOpenGLWidget):
         from maiming.domain.systems.build_system import pick_block
 
         eye = self._session.player.eye_pos()
-        hit = pick_block(
-            self._session.world,
-            origin=eye,
-            direction=self._session.player.view_forward(),
-            reach=float(self._state.reach),
-            block_registry=self._session.block_registry,
-        )
+        hit = pick_block(self._session.world, origin=eye, direction=self._session.player.view_forward(), reach=float(self._state.reach), block_registry=self._session.block_registry)
         if hit is None:
             self._selection_target = None
             return float((time.perf_counter() - t0) * 1000.0)
@@ -293,10 +247,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def initializeGL(self) -> None:
         try:
-            self._renderer.initialize(
-                self._assets_dir,
-                block_registry=self._session.block_registry,
-            )
+            self._renderer.initialize(self._assets_dir, block_registry=self._session.block_registry)
         except Exception as exc:
             try:
                 self._sim_timer.stop()
@@ -313,11 +264,7 @@ class GLViewportWidget(QOpenGLWidget):
             except Exception:
                 pass
 
-            QMessageBox.critical(
-                self,
-                "OpenGL 4.3 initialization failed",
-                str(exc) if str(exc).strip() else "Unknown OpenGL initialization error.",
-            )
+            QMessageBox.critical(self, "OpenGL 4.3 initialization failed", str(exc) if str(exc).strip() else "Unknown OpenGL initialization error.")
             raise
 
         ctx = self.context()
@@ -364,12 +311,7 @@ class GLViewportWidget(QOpenGLWidget):
         snap = self._session.make_snapshot()
         eye = Vec3(snap.camera.eye_x, snap.camera.eye_y, snap.camera.eye_z)
 
-        self._upload.upload_if_needed(
-            world=self._session.world,
-            renderer=self._renderer,
-            eye=eye,
-            render_distance_chunks=int(self._state.render_distance_chunks),
-        )
+        self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
 
         self._last_selection_pick_ms = self._update_selection_target()
 
@@ -381,29 +323,14 @@ class GLViewportWidget(QOpenGLWidget):
             def get_state(x: int, y: int, z: int) -> str | None:
                 return self._session.world.blocks.get((int(x), int(y), int(z)))
 
-            self._renderer.set_selection_target(
-                x=int(hx),
-                y=int(hy),
-                z=int(hz),
-                state_str=str(st),
-                get_state=get_state,
-                world_revision=int(self._session.world.revision),
-            )
+            self._renderer.set_selection_target(x=int(hx), y=int(hy), z=int(hz), state_str=str(st), get_state=get_state, world_revision=int(self._session.world.revision))
 
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
         cam = snap.camera
-        self._renderer.render(
-            w=fb_w,
-            h=fb_h,
-            eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z),
-            yaw_deg=cam.yaw_deg,
-            pitch_deg=cam.pitch_deg,
-            fov_deg=cam.fov_deg,
-            render_distance_chunks=int(self._state.render_distance_chunks),
-        )
+        self._renderer.render(w=fb_w, h=fb_h, eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z), yaw_deg=cam.yaw_deg, pitch_deg=cam.pitch_deg, fov_deg=cam.fov_deg, render_distance_chunks=int(self._state.render_distance_chunks))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
@@ -514,18 +441,12 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_sun_azimuth(self, az_deg: float) -> None:
         self._state.sun_az_deg = float(az_deg)
         self._state.normalize()
-        self._renderer.set_sun_angles(
-            float(self._state.sun_az_deg),
-            float(self._state.sun_el_deg),
-        )
+        self._renderer.set_sun_angles(float(self._state.sun_az_deg), float(self._state.sun_el_deg))
 
     def _set_sun_elevation(self, el_deg: float) -> None:
         self._state.sun_el_deg = float(el_deg)
         self._state.normalize()
-        self._renderer.set_sun_angles(
-            float(self._state.sun_az_deg),
-            float(self._state.sun_el_deg),
-        )
+        self._renderer.set_sun_angles(float(self._state.sun_az_deg), float(self._state.sun_el_deg))
 
     def _set_build_mode(self, on: bool) -> None:
         self._state.build_mode = bool(on)
@@ -570,10 +491,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _on_step(self, dt: float) -> None:
         self._inp.poll_relative_mouse_delta()
-        fr, md = self._inp.consume(
-            invert_x=self._state.invert_x,
-            invert_y=self._state.invert_y,
-        )
+        fr, md = self._inp.consume(invert_x=self._state.invert_x, invert_y=self._state.invert_y)
 
         if float(self._session.player.position.y) < -64.0:
             self._overlays.set_dead(True)
@@ -584,23 +502,8 @@ class GLViewportWidget(QOpenGLWidget):
             if float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
                 sprint = True
 
-        jump_started = self._session.step(
-            dt=float(dt),
-            move_f=fr.move_f,
-            move_s=fr.move_s,
-            jump_held=bool(fr.jump_held),
-            jump_pressed=bool(fr.jump_pressed),
-            sprint=bool(sprint),
-            crouch=bool(fr.crouch),
-            mdx=float(md.dx),
-            mdy=float(md.dy),
-            auto_jump_enabled=bool(self._state.auto_jump_enabled),
-        )
-        self._hud_ctl.on_sim_step(
-            dt=float(dt),
-            player=self._session.player,
-            jump_started=bool(jump_started),
-        )
+        jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), auto_jump_enabled=bool(self._state.auto_jump_enabled))
+        self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
 
         if float(self._session.player.position.y) < -64.0:
             self._overlays.set_dead(True)
@@ -686,12 +589,7 @@ class GLViewportWidget(QOpenGLWidget):
             self._sync_settings_values()
             return
 
-        if (
-            int(e.key()) == int(Qt.Key.Key_E)
-            and (not self._overlays.paused())
-            and (not self._overlays.dead())
-            and bool(self._state.build_mode)
-        ):
+        if (int(e.key()) == int(Qt.Key.Key_E) and (not self._overlays.paused()) and (not self._overlays.dead()) and bool(self._state.build_mode)):
             self._overlays.set_inventory_open(not self._overlays.inventory_open())
             return
 
@@ -722,22 +620,13 @@ class GLViewportWidget(QOpenGLWidget):
                 self._session.break_block(reach=float(self._state.reach))
                 self._invalidate_selection_target()
             elif b == Qt.MouseButton.RightButton:
-                self._session.place_block(
-                    block_id=self._state.selected_block_id,
-                    reach=float(self._state.reach),
-                    crouching=bool(self._inp.crouch_held()),
-                )
+                self._session.place_block(block_id=self._state.selected_block_id, reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()))
                 self._invalidate_selection_target()
 
         super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if (
-            self._overlays.paused()
-            or self._overlays.inventory_open()
-            or self._overlays.dead()
-            or (not self._inp.captured())
-        ):
+        if (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or (not self._inp.captured())):
             super().mouseMoveEvent(e)
             return
 

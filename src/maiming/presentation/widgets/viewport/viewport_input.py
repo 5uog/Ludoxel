@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QCursor, QKeyEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 
-from maiming.infrastructure.platform.qt_input_adapter import QtInputAdapter, InputFrame
+from ....infrastructure.platform.qt_input_adapter import QtInputAdapter, InputFrame
 
 @dataclass
 class MouseDelta:

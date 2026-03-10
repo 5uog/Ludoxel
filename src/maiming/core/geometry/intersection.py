@@ -3,16 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..grid.face_index import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
 from ..math.vec3 import Vec3
 from .aabb import AABB
 from .ray import Ray
-
-_FACE_POS_X: int = 0
-_FACE_NEG_X: int = 1
-_FACE_POS_Y: int = 2
-_FACE_NEG_Y: int = 3
-_FACE_POS_Z: int = 4
-_FACE_NEG_Z: int = 5
 
 @dataclass(frozen=True)
 class RayHitFace:
@@ -22,17 +16,17 @@ class RayHitFace:
 
 def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
     if axis == 0:
-        return _FACE_NEG_X if inv_dir >= 0.0 else _FACE_POS_X
+        return FACE_NEG_X if inv_dir >= 0.0 else FACE_POS_X
     if axis == 1:
-        return _FACE_NEG_Y if inv_dir >= 0.0 else _FACE_POS_Y
-    return _FACE_NEG_Z if inv_dir >= 0.0 else _FACE_POS_Z
+        return FACE_NEG_Y if inv_dir >= 0.0 else FACE_POS_Y
+    return FACE_NEG_Z if inv_dir >= 0.0 else FACE_POS_Z
 
 def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
     if axis == 0:
-        return _FACE_POS_X if inv_dir >= 0.0 else _FACE_NEG_X
+        return FACE_POS_X if inv_dir >= 0.0 else FACE_NEG_X
     if axis == 1:
-        return _FACE_POS_Y if inv_dir >= 0.0 else _FACE_NEG_Y
-    return _FACE_POS_Z if inv_dir >= 0.0 else _FACE_NEG_Z
+        return FACE_POS_Y if inv_dir >= 0.0 else FACE_NEG_Y
+    return FACE_POS_Z if inv_dir >= 0.0 else FACE_NEG_Z
 
 def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
     d = ray.direction

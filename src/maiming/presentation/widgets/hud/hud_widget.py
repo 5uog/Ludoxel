@@ -157,20 +157,5 @@ class HUDWidget(QWidget):
         else:
             panel_w = max(1, min(int(self._max_panel_w), int(aw)))
 
-        self._apply_label(
-            label=self._lbl_left,
-            text=self._raw_left_text,
-            x=int(m),
-            y=int(m),
-            w=int(panel_w),
-            h_max=int(ah),
-        )
-
-        self._apply_label(
-            label=self._lbl_right,
-            text=self._raw_right_text,
-            x=int(w - m - panel_w),
-            y=int(m),
-            w=int(panel_w),
-            h_max=int(ah),
-        )
+        self._apply_label(label=self._lbl_left, text=self._raw_left_text, x=int(m), y=int(m), w=int(panel_w), h_max=int(ah))
+        self._apply_label(label=self._lbl_right, text=self._raw_right_text, x=int(w - m - panel_w), y=int(m), w=int(panel_w), h_max=int(ah))

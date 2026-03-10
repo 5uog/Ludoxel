@@ -15,12 +15,7 @@ class FontInstallResult:
 def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
     d = Path(font_dir)
 
-    candidates = (
-        d / "MinecraftBold-nMK1.otf",
-        d / "MinecraftBoldItalic-1y1e.otf",
-        d / "MinecraftItalic-R8Mo.otf",
-        d / "MinecraftRegular-Bmg3.otf",
-    )
+    candidates = (d / "MinecraftBold-nMK1.otf", d / "MinecraftBoldItalic-1y1e.otf", d / "MinecraftItalic-R8Mo.otf", d / "MinecraftRegular-Bmg3.otf")
 
     families: list[str] = []
     for p in candidates:

@@ -4,12 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple
 
-FACE_POS_X: int = 0
-FACE_NEG_X: int = 1
-FACE_POS_Y: int = 2
-FACE_NEG_Y: int = 3
-FACE_POS_Z: int = 4
-FACE_NEG_Z: int = 5
+from ...core.grid.face_index import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
 
 def _normalize_kind(kind: str) -> str:
     s = str(kind).strip()

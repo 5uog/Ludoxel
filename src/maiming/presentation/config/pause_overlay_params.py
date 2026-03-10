@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.application.session.session_settings import SessionSettings
+from ...application.session.session_settings import SessionSettings
 
 @dataclass(frozen=True)
 class PauseOverlayParams:

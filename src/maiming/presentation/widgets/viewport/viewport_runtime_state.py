@@ -3,9 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from maiming.infrastructure.rendering.opengl.facade.cloud_flow_direction import (
-    normalize_cloud_flow_direction,
-)
+from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import normalize_cloud_flow_direction
 
 @dataclass
 class ViewportRuntimeState:

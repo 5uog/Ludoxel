@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
-from maiming.presentation.widgets.viewport.gl_viewport_widget import GLViewportWidget
-from maiming.presentation.widgets.hud.hud_widget import HUDWidget
+from ..widgets.viewport.gl_viewport_widget import GLViewportWidget
+from ..widgets.hud.hud_widget import HUDWidget
 
 class GameScreen(QWidget):
     def __init__(self, project_root: Path, parent=None) -> None:

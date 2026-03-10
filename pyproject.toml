@@ -67,6 +67,7 @@ maiming = [
     "infrastructure/rendering/opengl/_internal/shaders/*.vert",
     "infrastructure/rendering/opengl/_internal/shaders/*.frag",
     "infrastructure/rendering/opengl/_internal/shaders/*.comp",
+    "infrastructure/rendering/opengl/_internal/shaders/common/*.glsl",
 ]
 
 [tool.setuptools.packages.find]

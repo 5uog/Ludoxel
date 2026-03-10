@@ -7,8 +7,8 @@ from pathlib import Path
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap
 
-from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.state_codec import parse_state
+from ....domain.blocks.block_registry import BlockRegistry
+from ....domain.blocks.state_codec import parse_state
 
 @dataclass(frozen=True)
 class PhotoPaths:
@@ -60,12 +60,7 @@ class ItemPhotoProvider:
 
         img = img.convertToFormat(QImage.Format.Format_RGBA8888)
         if img.width() != self._icon or img.height() != self._icon:
-            img = img.scaled(
-                self._icon,
-                self._icon,
-                Qt.AspectRatioMode.IgnoreAspectRatio,
-                Qt.TransformationMode.FastTransformation,
-            )
+            img = img.scaled(self._icon, self._icon, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation)
 
         pm = QPixmap.fromImage(img)
         self._pix_cache[bid] = pm

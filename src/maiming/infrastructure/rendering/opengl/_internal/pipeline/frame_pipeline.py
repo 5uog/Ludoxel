@@ -47,7 +47,7 @@ class FramePipeline:
         light_vp = compute_light_view_proj(center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))))
 
         shadow_metrics = PassFrameMetrics()
-        if bool(self.state.shadow_enabled) and self.shadow_pass.should_render(light_vp):
+        if bool(self.state.shadow_enabled):
             shadow_metrics = self.shadow_pass.render(light_vp)
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)

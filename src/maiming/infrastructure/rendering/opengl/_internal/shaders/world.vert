@@ -25,6 +25,8 @@ out vec4 v_lightPos;
 out float v_shade;
 out float v_sel;
 
+#include "common/face_instance.glsl"
+
 vec2 rot_uv(vec2 uv, float r) {
     int k = int(floor(r + 0.5)) & 3;
     if (k == 0) return uv;
@@ -38,21 +40,7 @@ void main() {
     vec3 mn = i_mn;
     vec3 mx = i_mx;
 
-    vec3 worldPos;
-
-    if (u_face == 0) {
-        worldPos = vec3(mx.x, mix(mn.y, mx.y, uv.y), mix(mn.z, mx.z, uv.x));
-    } else if (u_face == 1) {
-        worldPos = vec3(mn.x, mix(mn.y, mx.y, uv.y), mix(mx.z, mn.z, uv.x));
-    } else if (u_face == 2) {
-        worldPos = vec3(mix(mn.x, mx.x, uv.x), mx.y, mix(mn.z, mx.z, uv.y));
-    } else if (u_face == 3) {
-        worldPos = vec3(mix(mn.x, mx.x, uv.x), mn.y, mix(mx.z, mn.z, uv.y));
-    } else if (u_face == 4) {
-        worldPos = vec3(mix(mx.x, mn.x, uv.x), mix(mn.y, mx.y, uv.y), mx.z);
-    } else {
-        worldPos = vec3(mix(mn.x, mx.x, uv.x), mix(mn.y, mx.y, uv.y), mn.z);
-    }
+    vec3 worldPos = face_world_pos(int(u_face), uv, mn, mx);
 
     gl_Position = u_viewProj * vec4(worldPos, 1.0);
 

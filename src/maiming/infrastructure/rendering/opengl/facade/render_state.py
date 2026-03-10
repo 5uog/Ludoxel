@@ -3,11 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from maiming.core.math.vec3 import Vec3
-from maiming.core.math.view_angles import sun_dir_from_az_el_deg
-from maiming.infrastructure.rendering.opengl.facade.cloud_flow_direction import (
-    normalize_cloud_flow_direction,
-)
+from .....core.math.vec3 import Vec3
+from .....core.math.view_angles import sun_dir_from_az_el_deg
+from .cloud_flow_direction import normalize_cloud_flow_direction
 
 @dataclass
 class RendererRuntimeState:
@@ -27,10 +25,7 @@ class RendererRuntimeState:
     sun_dir: Vec3 = field(init=False)
 
     def __post_init__(self) -> None:
-        self.set_sun_angles(
-            float(self.sun_azimuth_deg),
-            float(self.sun_elevation_deg),
-        )
+        self.set_sun_angles(float(self.sun_azimuth_deg), float(self.sun_elevation_deg))
         self.set_cloud_density(int(self.cloud_density))
         self.set_cloud_seed(int(self.cloud_seed))
         self.set_cloud_flow_direction(str(self.cloud_flow_direction))
@@ -44,10 +39,7 @@ class RendererRuntimeState:
 
         self.sun_azimuth_deg = float(az)
         self.sun_elevation_deg = float(el)
-        self.sun_dir = sun_dir_from_az_el_deg(
-            float(self.sun_azimuth_deg),
-            float(self.sun_elevation_deg),
-        )
+        self.sun_dir = sun_dir_from_az_el_deg(float(self.sun_azimuth_deg), float(self.sun_elevation_deg))
 
     def set_cloud_density(self, density: int) -> None:
         self.cloud_density = int(max(0, int(density)))

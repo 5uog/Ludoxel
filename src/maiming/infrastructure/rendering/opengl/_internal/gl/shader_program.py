@@ -3,12 +3,46 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
+
 import numpy as np
 
 from OpenGL.GL import glCreateProgram, glCreateShader, glShaderSource, glCompileShader, glGetShaderiv, glGetShaderInfoLog, glAttachShader, glLinkProgram, glGetProgramiv, glGetProgramInfoLog, glDeleteShader, glUseProgram, glGetUniformLocation, glUniformMatrix4fv, glUniform3f, glUniform2f, glUniform1i, glUniform1f, glUniform3i, glUniform4f, glDeleteProgram, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_COMPILE_STATUS, GL_LINK_STATUS
 
+_INCLUDE_RE = re.compile(r'^\s*#include\s+"([^"]+)"\s*$')
+
 def _load_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+    return _load_text_recursive(Path(path).resolve(), stack=())
+
+def _load_text_recursive(path: Path, *, stack: tuple[Path, ...]) -> str:
+    p = Path(path).resolve()
+
+    if p in stack:
+        chain = " -> ".join(str(x) for x in (*stack, p))
+        raise RuntimeError(f"Shader include cycle detected: {chain}")
+
+    try:
+        raw = p.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeError(f"Unable to read shader source: {p}") from exc
+
+    next_stack = (*stack, p)
+    out_lines: list[str] = []
+
+    for raw_line in raw.splitlines(keepends=True):
+        line = raw_line.rstrip("\r\n")
+        m = _INCLUDE_RE.match(str(line))
+        if m is None:
+            out_lines.append(raw_line)
+            continue
+
+        include_path = (p.parent / str(m.group(1))).resolve()
+        included = _load_text_recursive(include_path, stack=next_stack)
+        if included and (not included.endswith("\n")):
+            included += "\n"
+        out_lines.append(included)
+
+    return "".join(out_lines)
 
 def _shader_stage_name(shader_type: int) -> str:
     st = int(shader_type)
