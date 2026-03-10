@@ -204,7 +204,6 @@ class _HotbarSlotButton(QPushButton):
         self.slot_selected.emit(int(self._slot_index))
         e.acceptProposedAction()
 
-
 class InventoryOverlay(QWidget):
     closed = pyqtSignal()
     block_selected = pyqtSignal(str)
@@ -257,11 +256,7 @@ class InventoryOverlay(QWidget):
         title_row.addWidget(btn_close)
         pv.addLayout(title_row)
 
-        sub = QLabel(
-            "Click assigns the hovered block to the currently selected hotbar slot. "
-            "Drag blocks onto any hotbar slot, or hover a block and press 1-9.",
-            panel
-        )
+        sub = QLabel("Click assigns the hovered block to the currently selected hotbar slot. Drag blocks onto any hotbar slot, or hover a block and press 1-9.", panel)
         sub.setObjectName("subtitle")
         sub.setWordWrap(True)
         pv.addWidget(sub)

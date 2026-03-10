@@ -173,10 +173,4 @@ class PlayerMetricsTracker:
         else:
             j_mean = None
 
-        return PlayerMetricsSnapshot(
-            horiz_speed=ScalarMetricSnapshot(current=float(self._h_current), mean=float(h_mean), recent_mean=float(self._h_recent.mean())),
-            vert_speed=ScalarMetricSnapshot(current=float(self._v_current), mean=float(v_mean), recent_mean=float(self._v_recent.mean())),
-            jump_interval=OptionalScalarMetricSnapshot(current=self._jump_interval_current, mean=j_mean, recent_mean=self._jump_recent.mean()),
-            applied=AppliedMovementSnapshot(gravity=float(settings.movement.gravity), walk_speed=float(settings.movement.walk_speed), sprint_speed=float(settings.movement.sprint_speed), jump_v0=float(settings.movement.jump_v0), auto_jump_cooldown_s=float(settings.movement.auto_jump_cooldown_s)),
-            recent_window_s=float(self.recent_window_s),
-        )
+        return PlayerMetricsSnapshot(horiz_speed=ScalarMetricSnapshot(current=float(self._h_current), mean=float(h_mean), recent_mean=float(self._h_recent.mean())), vert_speed=ScalarMetricSnapshot(current=float(self._v_current), mean=float(v_mean), recent_mean=float(self._v_recent.mean())), jump_interval=OptionalScalarMetricSnapshot(current=self._jump_interval_current, mean=j_mean, recent_mean=self._jump_recent.mean()), applied=AppliedMovementSnapshot(gravity=float(settings.movement.gravity), walk_speed=float(settings.movement.walk_speed), sprint_speed=float(settings.movement.sprint_speed), jump_v0=float(settings.movement.jump_v0), auto_jump_cooldown_s=float(settings.movement.auto_jump_cooldown_s)), recent_window_s=float(self.recent_window_s))

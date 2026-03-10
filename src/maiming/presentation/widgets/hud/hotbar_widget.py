@@ -96,12 +96,7 @@ class HotbarWidget(QWidget):
 
         for i, btn in enumerate(self._slots):
             bid = str(norm[i]).strip()
-            btn.set_slot_state(
-                block_id=bid,
-                tooltip=self._tooltip_for_slot(i, bid),
-                selected=(int(i) == int(idx)),
-                photos=self._photos,
-            )
+            btn.set_slot_state(block_id=bid, tooltip=self._tooltip_for_slot(i, bid), selected=(int(i) == int(idx)), photos=self._photos)
 
         self._panel.adjustSize()
         self.update()
