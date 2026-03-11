@@ -13,7 +13,7 @@ from OpenGL.GL import (
     GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
 )
 
-from ......domain.world.chunking import ChunkKey
+from ......domain.world.chunking import ChunkKey, normalize_chunk_key
 from ..face_bucket_layout import FACE_COUNT
 from ..gl.array_view import as_uint32_rows, copy_float32_rows
 from ..gl.buffer_upload import upload_array_buffer
@@ -89,7 +89,7 @@ class AggregatedFaceBatch:
         if len(faces) != FACE_COUNT:
             return
 
-        ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
+        ck = normalize_chunk_key(chunk_key)
         prev_rev = self._source_revs.get(ck)
         if prev_rev is not None and int(prev_rev) == int(world_revision):
             return
@@ -105,7 +105,7 @@ class AggregatedFaceBatch:
         self._dirty = True
 
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
-        ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
+        ck = normalize_chunk_key(chunk_key)
         prev_faces = self._source_faces.pop(ck, None)
         self._source_revs.pop(ck, None)
         self._chunk_slices.pop(ck, None)
@@ -115,7 +115,7 @@ class AggregatedFaceBatch:
             self._dirty = True
 
     def evict_except(self, keep: set[ChunkKey]) -> None:
-        keep_n = {(int(k[0]), int(k[1]), int(k[2])) for k in keep}
+        keep_n = {normalize_chunk_key(k) for k in keep}
         doomed = [ck for ck in self._source_faces.keys() if ck not in keep_n]
         if not doomed:
             return
@@ -174,7 +174,7 @@ class AggregatedFaceBatch:
         rows: list[list[tuple[int, int, int, int]]] = [[] for _ in range(FACE_COUNT)]
 
         for ck0 in chunks:
-            ck = (int(ck0[0]), int(ck0[1]), int(ck0[2]))
+            ck = normalize_chunk_key(ck0)
             sl = self._chunk_slices.get(ck)
             if sl is None:
                 continue

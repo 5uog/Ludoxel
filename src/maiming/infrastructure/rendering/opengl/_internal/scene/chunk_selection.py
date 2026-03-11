@@ -5,17 +5,14 @@ from collections.abc import Callable, Iterable
 
 import numpy as np
 
-from ......domain.world.chunking import ChunkKey
+from ......domain.world.chunking import ChunkKey, normalize_chunk_key
 from .chunk_visibility import chunk_intersects_clip_volume
 
 ChunkPredicate = Callable[[ChunkKey], bool]
 
-def _normalize_chunk_key(chunk_key: ChunkKey) -> ChunkKey:
-    return (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
-
 def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_distance_chunks: int) -> bool:
-    ck = _normalize_chunk_key(chunk_key)
-    cam = _normalize_chunk_key(camera_chunk)
+    ck = normalize_chunk_key(chunk_key)
+    cam = normalize_chunk_key(camera_chunk)
     rd = int(render_distance_chunks)
 
     dx = abs(int(ck[0]) - int(cam[0]))
@@ -27,7 +24,7 @@ def select_visible_chunks(chunk_keys: Iterable[ChunkKey], matrix: np.ndarray, *,
     out: list[ChunkKey] = []
 
     for chunk_key in chunk_keys:
-        ck = _normalize_chunk_key(chunk_key)
+        ck = normalize_chunk_key(chunk_key)
 
         if predicate is not None and (not bool(predicate(ck))):
             continue

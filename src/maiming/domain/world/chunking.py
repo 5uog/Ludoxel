@@ -6,11 +6,14 @@ from typing import Tuple, Set
 CHUNK_SIZE: int = 16
 ChunkKey = Tuple[int, int, int]
 
+def normalize_chunk_key(k: ChunkKey) -> ChunkKey:
+    return (int(k[0]), int(k[1]), int(k[2]))
+
 def chunk_key(x: int, y: int, z: int) -> ChunkKey:
     return (int(x) // CHUNK_SIZE, int(y) // CHUNK_SIZE, int(z) // CHUNK_SIZE)
 
 def chunk_bounds(k: ChunkKey) -> tuple[int, int, int, int, int, int]:
-    cx, cy, cz = (int(k[0]), int(k[1]), int(k[2]))
+    cx, cy, cz = normalize_chunk_key(k)
     x0 = cx * CHUNK_SIZE
     y0 = cy * CHUNK_SIZE
     z0 = cz * CHUNK_SIZE

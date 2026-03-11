@@ -1,33 +1,24 @@
 # FILE: src/maiming/domain/blocks/connectivity.py
 from __future__ import annotations
 
-from .block_definition import BlockDefinition
 from .block_registry import BlockRegistry
 from .cardinal import normalize_cardinal
 from .state_codec import parse_state, format_state
 from .state_values import bool_str, str_as_bool
 from .structural_rules import is_wall, is_fence_gate, wall_side_from_neighbor_state, wall_up_rule
+from .state_view import def_from_state, world_state_at
 from ..world.world_state import WorldState
-
-def _state_at(world: WorldState, x: int, y: int, z: int) -> str | None:
-    return world.blocks.get((int(x), int(y), int(z)))
-
-def _def_from_state(state_str: str | None, block_registry: BlockRegistry) -> BlockDefinition | None:
-    if state_str is None:
-        return None
-    base, _props = parse_state(str(state_str))
-    return block_registry.get(str(base))
 
 def make_wall_state(base_id: str, waterlogged: bool = False) -> str:
     return format_state(str(base_id), {"east": "none", "north": "none", "south": "none", "up": "true", "waterlogged": bool_str(bool(waterlogged)), "west": "none"})
 
 def _wall_side_from_neighbor(world: WorldState, nb_x: int, nb_y: int, nb_z: int, *, side_from_neighbor: str, block_registry: BlockRegistry) -> str:
-    st = _state_at(world, int(nb_x), int(nb_y), int(nb_z))
+    st = world_state_at(world, int(nb_x), int(nb_y), int(nb_z))
     return wall_side_from_neighbor_state(st, side_from_neighbor=str(side_from_neighbor), get_def=block_registry.get)
 
 def canonical_wall_state(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry) -> str | None:
-    st = _state_at(world, int(x), int(y), int(z))
-    d = _def_from_state(st, block_registry)
+    st = world_state_at(world, int(x), int(y), int(z))
+    d = def_from_state(st, block_registry)
     if st is None or (not is_wall(d)):
         return None
 
@@ -39,7 +30,7 @@ def canonical_wall_state(world: WorldState, x: int, y: int, z: int, *, block_reg
     south = _wall_side_from_neighbor(world, int(x), int(y), int(z + 1), side_from_neighbor="north", block_registry=block_registry)
     west = _wall_side_from_neighbor(world, int(x - 1), int(y), int(z), side_from_neighbor="east", block_registry=block_registry)
 
-    above_state = _state_at(world, int(x), int(y + 1), int(z))
+    above_state = world_state_at(world, int(x), int(y + 1), int(z))
     up = wall_up_rule(north=str(north), east=str(east), south=str(south), west=str(west), above_state=above_state, get_def=block_registry.get)
 
     return format_state(str(base), {"east": str(east), "north": str(north), "south": str(south), "up": bool_str(bool(up)), "waterlogged": bool_str(bool(waterlogged)), "west": str(west)})
@@ -50,17 +41,17 @@ def make_fence_gate_state(base_id: str, facing: str, *, open_state: bool = False
 def _gate_in_wall(world: WorldState, x: int, y: int, z: int, facing: str, *, block_registry: BlockRegistry) -> bool:
     f = str(facing)
     if f in ("north", "south"):
-        a = is_wall(_def_from_state(_state_at(world, int(x - 1), int(y), int(z)), block_registry))
-        b = is_wall(_def_from_state(_state_at(world, int(x + 1), int(y), int(z)), block_registry))
+        a = is_wall(def_from_state(world_state_at(world, int(x - 1), int(y), int(z)), block_registry))
+        b = is_wall(def_from_state(world_state_at(world, int(x + 1), int(y), int(z)), block_registry))
         return bool(a or b)
 
-    a = is_wall(_def_from_state(_state_at(world, int(x), int(y), int(z - 1)), block_registry))
-    b = is_wall(_def_from_state(_state_at(world, int(x), int(y), int(z + 1)), block_registry))
+    a = is_wall(def_from_state(world_state_at(world, int(x), int(y), int(z - 1)), block_registry))
+    b = is_wall(def_from_state(world_state_at(world, int(x), int(y), int(z + 1)), block_registry))
     return bool(a or b)
 
 def canonical_fence_gate_state(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry, facing_override: str | None = None, open_override: bool | None = None) -> str | None:
-    st = _state_at(world, int(x), int(y), int(z))
-    d = _def_from_state(st, block_registry)
+    st = world_state_at(world, int(x), int(y), int(z))
+    d = def_from_state(st, block_registry)
     if st is None or (not is_fence_gate(d)):
         return None
 
@@ -84,8 +75,8 @@ def refresh_structural_neighbors(world: WorldState, x: int, y: int, z: int, *, b
     updates: dict[tuple[int, int, int], str] = {}
 
     for tx, ty, tz in targets:
-        st = _state_at(world, int(tx), int(ty), int(tz))
-        d = _def_from_state(st, block_registry)
+        st = world_state_at(world, int(tx), int(ty), int(tz))
+        d = def_from_state(st, block_registry)
         if st is None or d is None:
             continue
 

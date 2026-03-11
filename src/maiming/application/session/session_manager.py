@@ -9,7 +9,7 @@ from ...core.math.smoothing import exp_alpha
 from ...domain.world.world_state import WorldState
 from ...domain.world.world_gen import generate_test_map
 from ...domain.entities.player_entity import PlayerEntity
-from ...domain.systems.movement_system import MoveInput, step_bedrock, step_flying
+from ...domain.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
 from ...domain.systems.collision_system import integrate_with_collisions, can_auto_jump_one_block
 
 from ...domain.blocks.block_registry import BlockRegistry
@@ -20,6 +20,7 @@ from .render_snapshot import CameraDTO, RenderSnapshotDTO
 from ..services.interaction_service import InteractionService
 
 _FLIGHT_TOGGLE_WINDOW_S = 0.25
+
 @dataclass
 class SessionManager:
     settings: SessionSettings
@@ -160,9 +161,7 @@ class SessionManager:
                     f = clampf(move_f, -1.0, 1.0)
                     s = clampf(move_s, -1.0, 1.0)
                     if abs(float(f)) + abs(float(s)) > 1e-6:
-                        from maiming.domain.systems.movement_system import _wish_dir
-
-                        wish = _wish_dir(self.player, f, s)
+                        wish = wish_dir_from_input(self.player, f, s)
                         probe = float(self.settings.movement.auto_jump_probe)
                         dx = float(wish.x) * probe
                         dz = float(wish.z) * probe

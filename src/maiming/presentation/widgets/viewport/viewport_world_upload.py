@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, Future
 import numpy as np
 
 from ....core.math.vec3 import Vec3
-from ....domain.world.chunking import ChunkKey, chunk_key
+from ....domain.world.chunking import ChunkKey, chunk_key, normalize_chunk_key
 from ....domain.world.world_state import WorldState
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ....infrastructure.rendering.opengl.facade.world_mesh_builder import build_chunk_face_payload_sources
@@ -47,15 +47,16 @@ class WorldUploadTracker:
             except queue.Empty:
                 break
 
-            want = self._want_rev.get(r.chunk)
+            ck = normalize_chunk_key(r.chunk)
+            want = self._want_rev.get(ck)
             if want is None or int(want) != int(r.chunk_rev):
                 continue
 
-            if int(self._resident_rev.get(r.chunk, -1)) == int(r.chunk_rev):
+            if int(self._resident_rev.get(ck, -1)) == int(r.chunk_rev):
                 continue
 
-            renderer.submit_chunk(chunk_key=r.chunk, world_revision=int(r.chunk_rev), gpu_face_sources=r.gpu_face_sources, gpu_bucket_counts=r.gpu_bucket_counts)
-            self._resident_rev[r.chunk] = int(r.chunk_rev)
+            renderer.submit_chunk(chunk_key=ck, world_revision=int(r.chunk_rev), gpu_face_sources=r.gpu_face_sources, gpu_bucket_counts=r.gpu_bucket_counts)
+            self._resident_rev[ck] = int(r.chunk_rev)
 
         self._retire_finished()
 
@@ -64,18 +65,18 @@ class WorldUploadTracker:
         bx = int(math.floor(float(eye.x)))
         by = int(math.floor(float(eye.y)))
         bz = int(math.floor(float(eye.z)))
-        return chunk_key(bx, by, bz)
+        return normalize_chunk_key(chunk_key(bx, by, bz))
 
     @staticmethod
     def _needed_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, y_pad: int = 1) -> list[ChunkKey]:
-        cx, cy, cz = (int(center[0]), int(center[1]), int(center[2]))
+        cx, cy, cz = normalize_chunk_key(center)
         r = int(max(0, rd))
 
         out: list[ChunkKey] = []
         for dx in range(-r, r + 1):
             for dz in range(-r, r + 1):
                 for dy in range(-int(y_pad), int(y_pad) + 1):
-                    ck = (cx + dx, cy + dy, cz + dz)
+                    ck = normalize_chunk_key((cx + dx, cy + dy, cz + dz))
                     if ck in existing:
                         out.append(ck)
         out.sort(key=lambda k: (abs(int(k[0]) - cx) + abs(int(k[2]) - cz), abs(int(k[1]) - cy)))
@@ -87,7 +88,7 @@ class WorldUploadTracker:
         return set(keep)
 
     def _evict_far_chunks(self, *, renderer: GLRenderer, keep: set[ChunkKey]) -> None:
-        keep_n = {(int(k[0]), int(k[1]), int(k[2])) for k in keep}
+        keep_n = {normalize_chunk_key(k) for k in keep}
 
         renderer.evict_chunks(keep_chunks=keep_n)
 
@@ -116,10 +117,12 @@ class WorldUploadTracker:
 
     @staticmethod
     def _build_result_for_snapshot(chunk_key: ChunkKey, chunk_rev: int, blocks_local: list[tuple[int, int, int, str]], get_state, uv_lookup, def_lookup) -> _BuildResult:
+        ck = normalize_chunk_key(chunk_key)
         gpu_face_sources, gpu_bucket_counts = build_chunk_face_payload_sources(blocks=blocks_local, get_state=get_state, uv_lookup=uv_lookup, def_lookup=def_lookup)
-        return _BuildResult(chunk=chunk_key, chunk_rev=int(chunk_rev), gpu_face_sources=gpu_face_sources, gpu_bucket_counts=gpu_bucket_counts)
+        return _BuildResult(chunk=ck, chunk_rev=int(chunk_rev), gpu_face_sources=gpu_face_sources, gpu_bucket_counts=gpu_bucket_counts)
 
     def _schedule_build(self, *, world: WorldState, renderer: GLRenderer, ck: ChunkKey, chunk_rev: int) -> None:
+        ck = normalize_chunk_key(ck)
         tools = renderer.world_build_tools()
         if tools is None:
             return
@@ -158,7 +161,8 @@ class WorldUploadTracker:
         self._pending_rev[ck] = int(chunk_rev)
 
     def _schedule_chunks_if_stale(self, *, world: WorldState, renderer: GLRenderer, chunks: list[ChunkKey]) -> None:
-        for ck in chunks:
+        for ck0 in chunks:
+            ck = normalize_chunk_key(ck0)
             cr = int(world.chunk_mesh_revision(ck))
             if cr <= 0:
                 continue
@@ -169,7 +173,7 @@ class WorldUploadTracker:
     def upload_if_needed(self, *, world: WorldState, renderer: GLRenderer, eye: Vec3, render_distance_chunks: int) -> None:
         self._drain_results(renderer)
 
-        existing = world.existing_chunk_keys()
+        existing = {normalize_chunk_key(ck) for ck in world.existing_chunk_keys()}
         if not existing:
             return
 
@@ -183,7 +187,8 @@ class WorldUploadTracker:
         self._evict_far_chunks(renderer=renderer, keep=keep)
 
         dirty_map = world.consume_dirty_chunks_with_rev()
-        for ck, cr in dirty_map.items():
+        for ck0, cr in dirty_map.items():
+            ck = normalize_chunk_key(ck0)
             if ck in existing:
                 self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
 

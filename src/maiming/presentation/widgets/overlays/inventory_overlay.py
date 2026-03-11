@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLa
 
 from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
-from ..common import hotbar_index_from_key, refresh_widget_style
+from ..common import hotbar_index_from_key, refresh_widget_style, hotbar_slot_tooltip
 from .item_photo_provider import ItemPhotoProvider
 
 _MIME_BLOCK_ID = "application/x-maiming-block-id"
@@ -287,22 +287,6 @@ class InventoryOverlay(QWidget):
         self._subtitle_label.setText("Creative block selection is unavailable in Survival Mode. Use 1-9 to select a hotbar slot, or drag between hotbar slots.")
         self._catalog_scroll.setVisible(False)
 
-    def _display_name(self, block_id: str) -> str:
-        bid = str(block_id).strip()
-        if not bid:
-            return "Empty Hand"
-
-        block = self._reg.get(bid)
-        if block is None:
-            return bid
-        return str(block.display_name)
-
-    def _hotbar_tooltip(self, slot_index: int, block_id: str) -> str:
-        bid = str(block_id).strip()
-        if not bid:
-            return f"Hotbar Slot {int(slot_index) + 1}\nEmpty Hand"
-        return f"Hotbar Slot {int(slot_index) + 1}\n{self._display_name(bid)}\n{bid}"
-
     def _rebuild_grid(self) -> None:
         while self._grid_layout.count() > 0:
             item = self._grid_layout.takeAt(0)
@@ -335,7 +319,7 @@ class InventoryOverlay(QWidget):
         for i, btn in enumerate(self._hotbar_buttons):
             bid = str(self._hotbar_slots[i]).strip()
             pm = self._photos.pixmap_for_block(bid) if bid else None
-            btn.set_slot_state(block_id=bid, selected=(int(i) == int(self._selected_hotbar_index)), tooltip=self._hotbar_tooltip(i, bid), pixmap=pm)
+            btn.set_slot_state(block_id=bid, selected=(int(i) == int(self._selected_hotbar_index)), tooltip=hotbar_slot_tooltip(self._reg, slot_index=i, block_id=bid), pixmap=pm)
 
     def sync_hotbar(self, *, slots: tuple[str, ...] | list[str], selected_index: int) -> None:
         norm = normalize_hotbar_slots(slots, size=HOTBAR_SIZE)

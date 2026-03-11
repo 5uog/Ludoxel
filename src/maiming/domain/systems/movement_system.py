@@ -29,7 +29,7 @@ def _basis_from_yaw_deg(yaw_deg: float) -> tuple[Vec3, Vec3]:
     rgt = Vec3(math.cos(yaw), 0.0, math.sin(yaw))
     return fwd, rgt
 
-def _wish_dir(player: PlayerEntity, forward: float, strafe: float) -> Vec3:
+def wish_dir_from_input(player: PlayerEntity, forward: float, strafe: float) -> Vec3:
     fwd, rgt = _basis_from_yaw_deg(player.yaw_deg)
     v = (fwd * float(forward)) + (rgt * float(strafe))
     if v.length() <= 1e-9:
@@ -44,7 +44,7 @@ def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: Movemen
     f = clampf(inp.forward, -1.0, 1.0)
     s = clampf(inp.strafe, -1.0, 1.0)
 
-    wish = _wish_dir(player, f, s)
+    wish = wish_dir_from_input(player, f, s)
 
     if wish.length() <= 1e-9:
         target_x = 0.0
@@ -85,7 +85,7 @@ def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: Moveme
     f = clampf(inp.forward, -1.0, 1.0)
     s = clampf(inp.strafe, -1.0, 1.0)
 
-    wish = _wish_dir(player, f, s)
+    wish = wish_dir_from_input(player, f, s)
 
     want_sprint = bool(inp.sprint) and (float(f) > 1e-6) and (not bool(inp.crouch))
     max_speed = float(params.sprint_speed) if want_sprint else float(params.walk_speed)

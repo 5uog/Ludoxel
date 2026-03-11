@@ -10,8 +10,8 @@ from ..world.world_state import WorldState
 from ..config.collision_params import CollisionParams, DEFAULT_COLLISION_PARAMS
 
 from ..blocks.block_registry import BlockRegistry
-from ..blocks.state_codec import parse_state
 from ..blocks.models.api import collision_aabbs_for_block
+from ..blocks.state_view import def_from_state, world_state_at
 
 @dataclass(frozen=True)
 class CollisionReport:
@@ -47,20 +47,16 @@ def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
                 if (x, y, z) in world.blocks:
                     yield x, y, z
 
-def _world_get_state(world: WorldState, x: int, y: int, z: int) -> str | None:
-    return world.blocks.get((int(x), int(y), int(z)))
-
 def _iter_block_aabbs(world: WorldState, bx: int, by: int, bz: int, *, block_registry: BlockRegistry):
-    st = world.blocks.get((int(bx), int(by), int(bz)))
+    st = world_state_at(world, int(bx), int(by), int(bz))
     if st is None:
         return
 
-    base, _p = parse_state(st)
-    defn = block_registry.get(str(base))
+    defn = def_from_state(st, block_registry)
     if defn is not None and (not bool(defn.is_solid)):
         return
 
-    for ba in collision_aabbs_for_block(st, lambda x, y, z: _world_get_state(world, x, y, z), block_registry.get, int(bx), int(by), int(bz)):
+    for ba in collision_aabbs_for_block(st, lambda x, y, z: world_state_at(world, x, y, z), block_registry.get, int(bx), int(by), int(bz)):
         yield ba
 
 def _any_intersection(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:

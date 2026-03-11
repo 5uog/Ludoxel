@@ -12,6 +12,7 @@ from ...core.geometry.intersection import ray_aabb_face
 from ..world.world_state import WorldState
 from ..blocks.block_registry import BlockRegistry
 from ..blocks.state_codec import parse_state
+from ..blocks.state_view import registry_def_lookup, world_state_getter
 from ..blocks.models.api import pick_aabbs_for_block
 from ..blocks.structural_rules import is_fence, is_wall
 
@@ -36,11 +37,8 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float, *
     o = origin + d * eps
     ray = Ray(origin=o, direction=d)
 
-    def get_state(x: int, y: int, z: int) -> str | None:
-        return world.blocks.get((int(x), int(y), int(z)))
-
-    def get_def(base_id: str):
-        return block_registry.get(str(base_id))
+    get_state = world_state_getter(world)
+    get_def = registry_def_lookup(block_registry)
 
     prev_cell: tuple[int, int, int] | None = None
 

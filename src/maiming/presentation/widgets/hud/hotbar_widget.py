@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QWidget, QFrame, QHBoxLayout, QPushButton
 
 from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
-from ..common import refresh_widget_style
+from ..common import refresh_widget_style, hotbar_slot_tooltip
 from ..overlays.item_photo_provider import ItemPhotoProvider
 
 class _DisplaySlot(QPushButton):
@@ -65,29 +65,13 @@ class HotbarWidget(QWidget):
 
         self.sync_hotbar(slots=normalize_hotbar_slots(None, size=HOTBAR_SIZE), selected_index=0)
 
-    def _display_name(self, block_id: str) -> str:
-        bid = str(block_id).strip()
-        if not bid:
-            return "Empty Hand"
-
-        block = self._registry.get(bid)
-        if block is None:
-            return bid
-        return str(block.display_name)
-
-    def _tooltip_for_slot(self, slot_index: int, block_id: str) -> str:
-        bid = str(block_id).strip()
-        if not bid:
-            return f"Hotbar Slot {int(slot_index) + 1}\nEmpty Hand"
-        return f"Hotbar Slot {int(slot_index) + 1}\n{self._display_name(bid)}\n{bid}"
-
     def sync_hotbar(self, *, slots: tuple[str, ...] | list[str], selected_index: int) -> None:
         norm = normalize_hotbar_slots(slots, size=HOTBAR_SIZE)
         idx = normalize_hotbar_index(selected_index, size=HOTBAR_SIZE)
 
         for i, btn in enumerate(self._slots):
             bid = str(norm[i]).strip()
-            btn.set_slot_state(block_id=bid, tooltip=self._tooltip_for_slot(i, bid), selected=(int(i) == int(idx)), photos=self._photos)
+            btn.set_slot_state(block_id=bid, tooltip=hotbar_slot_tooltip(self._registry, slot_index=i, block_id=bid), selected=(int(i) == int(idx)), photos=self._photos)
 
         self._panel.adjustSize()
         self.update()
