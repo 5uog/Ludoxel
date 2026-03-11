@@ -25,9 +25,11 @@ class ViewportRuntimeState:
     world_wire: bool = False
     shadow_enabled: bool = True
 
-    build_mode: bool = False
-    hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots)
-    selected_hotbar_index: int = 0
+    creative_mode: bool = False
+    creative_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots)
+    creative_selected_hotbar_index: int = 0
+    survival_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots)
+    survival_selected_hotbar_index: int = 0
     reach: float = 5.0
     auto_jump_enabled: bool = False
     auto_sprint_enabled: bool = False
@@ -60,25 +62,48 @@ class ViewportRuntimeState:
         el = float(self.sun_el_deg)
         self.sun_el_deg = max(0.0, min(90.0, el))
 
-        self.hotbar_slots = list(normalize_hotbar_slots(self.hotbar_slots, size=HOTBAR_SIZE))
-        self.selected_hotbar_index = normalize_hotbar_index(self.selected_hotbar_index, size=HOTBAR_SIZE)
+        self.creative_hotbar_slots = list(normalize_hotbar_slots(self.creative_hotbar_slots, size=HOTBAR_SIZE))
+        self.creative_selected_hotbar_index = normalize_hotbar_index(self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
+        self.survival_hotbar_slots = list(normalize_hotbar_slots(self.survival_hotbar_slots, size=HOTBAR_SIZE))
+        self.survival_selected_hotbar_index = normalize_hotbar_index(self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
+
+    def _active_hotbar_slots(self) -> list[str]:
+        self.normalize()
+        if bool(self.creative_mode):
+            return self.creative_hotbar_slots
+        return self.survival_hotbar_slots
+
+    def _active_hotbar_index(self) -> int:
+        self.normalize()
+        if bool(self.creative_mode):
+            return int(self.creative_selected_hotbar_index)
+        return int(self.survival_selected_hotbar_index)
 
     def hotbar_snapshot(self) -> tuple[str, ...]:
         self.normalize()
-        return normalize_hotbar_slots(self.hotbar_slots, size=HOTBAR_SIZE)
+        return normalize_hotbar_slots(self._active_hotbar_slots(), size=HOTBAR_SIZE)
 
     def current_block_id(self) -> str | None:
         self.normalize()
-        return current_hotbar_block_id(self.hotbar_slots, self.selected_hotbar_index, size=HOTBAR_SIZE)
+        return current_hotbar_block_id(self._active_hotbar_slots(), self._active_hotbar_index(), size=HOTBAR_SIZE)
 
     def set_hotbar_slot(self, index: int, block_id: str | None) -> None:
         self.normalize()
-        self.hotbar_slots = list(with_hotbar_assignment(self.hotbar_slots, index, block_id, size=HOTBAR_SIZE))
+        if bool(self.creative_mode):
+            self.creative_hotbar_slots = list(with_hotbar_assignment(self.creative_hotbar_slots, index, block_id, size=HOTBAR_SIZE))
+            return
+        self.survival_hotbar_slots = list(with_hotbar_assignment(self.survival_hotbar_slots, index, block_id, size=HOTBAR_SIZE))
 
     def select_hotbar_index(self, index: int) -> None:
         self.normalize()
-        self.selected_hotbar_index = normalize_hotbar_index(index, size=HOTBAR_SIZE)
+        if bool(self.creative_mode):
+            self.creative_selected_hotbar_index = normalize_hotbar_index(index, size=HOTBAR_SIZE)
+            return
+        self.survival_selected_hotbar_index = normalize_hotbar_index(index, size=HOTBAR_SIZE)
 
     def cycle_hotbar(self, delta_steps: int) -> None:
         self.normalize()
-        self.selected_hotbar_index = cycle_hotbar_index(self.selected_hotbar_index, delta_steps, size=HOTBAR_SIZE)
+        if bool(self.creative_mode):
+            self.creative_selected_hotbar_index = cycle_hotbar_index(self.creative_selected_hotbar_index, delta_steps, size=HOTBAR_SIZE)
+            return
+        self.survival_selected_hotbar_index = cycle_hotbar_index(self.survival_selected_hotbar_index, delta_steps, size=HOTBAR_SIZE)

@@ -50,4 +50,19 @@ class PauseOverlayParams:
     auto_jump_cooldown_scale: float = 1000.0
     auto_jump_cooldown_decimals: int = 3
 
+    fly_speed_milli_min: int = int(SessionSettings.FLY_SPEED_MIN * 1000.0)
+    fly_speed_milli_max: int = int(SessionSettings.FLY_SPEED_MAX * 1000.0)
+    fly_speed_scale: float = 1000.0
+    fly_speed_decimals: int = 3
+
+    fly_ascend_speed_milli_min: int = int(SessionSettings.FLY_ASCEND_SPEED_MIN * 1000.0)
+    fly_ascend_speed_milli_max: int = int(SessionSettings.FLY_ASCEND_SPEED_MAX * 1000.0)
+    fly_ascend_speed_scale: float = 1000.0
+    fly_ascend_speed_decimals: int = 3
+
+    fly_descend_speed_milli_min: int = int(SessionSettings.FLY_DESCEND_SPEED_MIN * 1000.0)
+    fly_descend_speed_milli_max: int = int(SessionSettings.FLY_DESCEND_SPEED_MAX * 1000.0)
+    fly_descend_speed_scale: float = 1000.0
+    fly_descend_speed_decimals: int = 3
+
 DEFAULT_PAUSE_OVERLAY_PARAMS = PauseOverlayParams()

@@ -40,6 +40,15 @@ class SessionSettings:
     AUTO_JUMP_COOLDOWN_MIN: ClassVar[float] = 0.0
     AUTO_JUMP_COOLDOWN_MAX: ClassVar[float] = 2.0
 
+    FLY_SPEED_MIN: ClassVar[float] = 0.10
+    FLY_SPEED_MAX: ClassVar[float] = 32.0
+
+    FLY_ASCEND_SPEED_MIN: ClassVar[float] = 0.10
+    FLY_ASCEND_SPEED_MAX: ClassVar[float] = 32.0
+
+    FLY_DESCEND_SPEED_MIN: ClassVar[float] = 0.10
+    FLY_DESCEND_SPEED_MAX: ClassVar[float] = 32.0
+
     def set_fov(self, fov: float) -> None:
         self.fov_deg = float(max(self.FOV_MIN, min(self.FOV_MAX, float(fov))))
 
@@ -66,5 +75,17 @@ class SessionSettings:
         v = float(max(self.AUTO_JUMP_COOLDOWN_MIN, min(self.AUTO_JUMP_COOLDOWN_MAX, float(cooldown_s))))
         self.movement = replace(self.movement, auto_jump_cooldown_s=v)
 
+    def set_fly_speed(self, fly_speed: float) -> None:
+        v = float(max(self.FLY_SPEED_MIN, min(self.FLY_SPEED_MAX, float(fly_speed))))
+        self.movement = replace(self.movement, fly_speed=v)
+
+    def set_fly_ascend_speed(self, fly_ascend_speed: float) -> None:
+        v = float(max(self.FLY_ASCEND_SPEED_MIN, min(self.FLY_ASCEND_SPEED_MAX, float(fly_ascend_speed))))
+        self.movement = replace(self.movement, fly_ascend_speed=v)
+
+    def set_fly_descend_speed(self, fly_descend_speed: float) -> None:
+        v = float(max(self.FLY_DESCEND_SPEED_MIN, min(self.FLY_DESCEND_SPEED_MAX, float(fly_descend_speed))))
+        self.movement = replace(self.movement, fly_descend_speed=v)
+
     def reset_advanced_movement_defaults(self) -> None:
-        self.movement = replace(self.movement, gravity=float(DEFAULT_MOVEMENT_PARAMS.gravity), walk_speed=float(DEFAULT_MOVEMENT_PARAMS.walk_speed), sprint_speed=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed), jump_v0=float(DEFAULT_MOVEMENT_PARAMS.jump_v0), auto_jump_cooldown_s=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s))
+        self.movement = replace(self.movement, gravity=float(DEFAULT_MOVEMENT_PARAMS.gravity), walk_speed=float(DEFAULT_MOVEMENT_PARAMS.walk_speed), sprint_speed=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed), jump_v0=float(DEFAULT_MOVEMENT_PARAMS.jump_v0), auto_jump_cooldown_s=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s), fly_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_speed), fly_ascend_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed), fly_descend_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed))

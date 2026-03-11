@@ -9,7 +9,7 @@ from ...core.math.smoothing import exp_alpha
 from ...domain.world.world_state import WorldState
 from ...domain.world.world_gen import generate_test_map
 from ...domain.entities.player_entity import PlayerEntity
-from ...domain.systems.movement_system import MoveInput, step_bedrock
+from ...domain.systems.movement_system import MoveInput, step_bedrock, step_flying
 from ...domain.systems.collision_system import integrate_with_collisions, can_auto_jump_one_block
 
 from ...domain.blocks.block_registry import BlockRegistry
@@ -19,6 +19,7 @@ from .session_settings import SessionSettings
 from .render_snapshot import CameraDTO, RenderSnapshotDTO
 from ..services.interaction_service import InteractionService
 
+_FLIGHT_TOGGLE_WINDOW_S = 0.25
 @dataclass
 class SessionManager:
     settings: SessionSettings
@@ -27,6 +28,8 @@ class SessionManager:
     block_registry: BlockRegistry
 
     interaction: InteractionService = field(init=False, repr=False)
+    _sim_time_s: float = field(default=0.0, init=False, repr=False)
+    _last_jump_press_s: float | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.interaction = InteractionService.create(world=self.world, player=self.player, block_registry=self.block_registry)
@@ -45,6 +48,7 @@ class SessionManager:
         p.yaw_deg = 0.0
         p.pitch_deg = 0.0
         p.on_ground = False
+        p.flying = False
 
         p.crouch_eye_offset = 0.0
         p.step_eye_offset = 0.0
@@ -52,6 +56,7 @@ class SessionManager:
         p.auto_jump_pending = False
         p.auto_jump_start_y = float(p.position.y)
         p.auto_jump_cooldown_s = 0.0
+        self._last_jump_press_s = None
 
     def _update_crouch_eye(self, dt: float, crouch: bool) -> None:
         p = self.player
@@ -80,15 +85,64 @@ class SessionManager:
             nxt = 0.0
         p.step_eye_offset = float(nxt)
 
-    def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, auto_jump_enabled: bool) -> bool:
+    def _update_creative_flight_toggle(self, *, creative_mode: bool, jump_pressed: bool) -> None:
+        if not bool(creative_mode):
+            self.player.flying = False
+            self._last_jump_press_s = None
+            return
+
+        if not bool(jump_pressed):
+            return
+
+        now = float(self._sim_time_s)
+        last = self._last_jump_press_s
+        self._last_jump_press_s = float(now)
+
+        if last is None:
+            return
+
+        if (float(now) - float(last)) > float(_FLIGHT_TOGGLE_WINDOW_S):
+            return
+
+        self.player.flying = not bool(self.player.flying)
+        self._last_jump_press_s = None
+
+        if bool(self.player.flying):
+            self.player.velocity = Vec3(float(self.player.velocity.x), 0.0, float(self.player.velocity.z))
+            self.player.on_ground = False
+            self.player.hold_jump_queued = False
+            self.player.auto_jump_pending = False
+            self.player.auto_jump_cooldown_s = 0.0
+            return
+
+        self.player.velocity = Vec3(float(self.player.velocity.x), min(0.0, float(self.player.velocity.y)), float(self.player.velocity.z))
+
+    def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> bool:
+        self._sim_time_s += float(dt)
+
         prev_on_ground = bool(self.player.on_ground)
         prev_vy = float(self.player.velocity.y)
 
         yaw_delta = (-float(mdx)) * float(self.settings.mouse_sens_deg_per_px)
         pitch_delta = (float(mdy)) * float(self.settings.mouse_sens_deg_per_px)
 
+        self._update_creative_flight_toggle(creative_mode=bool(creative_mode), jump_pressed=bool(jump_pressed))
+
         if not bool(jump_held):
             self.player.hold_jump_queued = False
+
+        if bool(self.player.flying):
+            mi = MoveInput(forward=clampf(move_f, -1.0, 1.0), strafe=clampf(move_s, -1.0, 1.0), sprint=bool(sprint), crouch=bool(crouch), jump_pulse=False, jump_held=bool(jump_held), yaw_delta_deg=float(yaw_delta), pitch_delta_deg=float(pitch_delta))
+
+            step_flying(self.player, mi, float(dt), params=self.settings.movement)
+            integrate_with_collisions(self.player, self.world, float(dt), block_registry=self.block_registry, params=self.settings.collision, crouch=False, jump_pressed=False, flying=True)
+
+            self.player.hold_jump_queued = False
+            self.player.auto_jump_pending = False
+
+            self._update_crouch_eye(float(dt), False)
+            self._update_step_eye(float(dt))
+            return False
 
         jump_pulse = False
 
@@ -122,7 +176,7 @@ class SessionManager:
 
         step_bedrock(self.player, mi, float(dt), params=self.settings.movement)
 
-        report = integrate_with_collisions(self.player, self.world, float(dt), block_registry=self.block_registry, params=self.settings.collision, crouch=bool(crouch), jump_pressed=bool(jump_pulse))
+        report = integrate_with_collisions(self.player, self.world, float(dt), block_registry=self.block_registry, params=self.settings.collision, crouch=bool(crouch), jump_pressed=bool(jump_pulse), flying=False)
 
         landed_now = (not prev_on_ground) and bool(report.supported_after) and (float(prev_vy) <= 0.0)
 

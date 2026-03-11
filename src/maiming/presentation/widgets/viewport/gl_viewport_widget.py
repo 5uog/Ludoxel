@@ -84,7 +84,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._settings.shadow_enabled_changed.connect(self._set_shadow_enabled)
         self._settings.sun_azimuth_changed.connect(self._set_sun_azimuth)
         self._settings.sun_elevation_changed.connect(self._set_sun_elevation)
-        self._settings.build_mode_changed.connect(self._set_build_mode)
+        self._settings.creative_mode_changed.connect(self._set_creative_mode)
         self._settings.auto_jump_changed.connect(self._set_auto_jump)
         self._settings.auto_sprint_changed.connect(self._set_auto_sprint)
         self._settings.gravity_changed.connect(self._set_gravity)
@@ -92,6 +92,9 @@ class GLViewportWidget(QOpenGLWidget):
         self._settings.sprint_speed_changed.connect(self._set_sprint_speed)
         self._settings.jump_v0_changed.connect(self._set_jump_v0)
         self._settings.auto_jump_cooldown_changed.connect(self._set_auto_jump_cooldown_s)
+        self._settings.fly_speed_changed.connect(self._set_fly_speed)
+        self._settings.fly_ascend_speed_changed.connect(self._set_fly_ascend_speed)
+        self._settings.fly_descend_speed_changed.connect(self._set_fly_descend_speed)
         self._settings.advanced_reset_requested.connect(self._reset_advanced_defaults)
         self._settings.render_distance_changed.connect(self._set_render_distance)
 
@@ -131,9 +134,6 @@ class GLViewportWidget(QOpenGLWidget):
         self._apply_runtime_to_renderer()
         self._sync_hotbar_widgets()
 
-        if not bool(self._state.build_mode):
-            self._overlays.set_inventory_open(False)
-
     def _sync_state_from_renderer_sun(self) -> None:
         az, el = self._renderer.sun_angles()
         self._state.sun_az_deg = float(az)
@@ -160,7 +160,8 @@ class GLViewportWidget(QOpenGLWidget):
     def _sync_hotbar_widgets(self) -> None:
         self._state.normalize()
         slots = self._state.hotbar_snapshot()
-        idx = int(self._state.selected_hotbar_index)
+        idx = int(self._state.creative_selected_hotbar_index if bool(self._state.creative_mode) else self._state.survival_selected_hotbar_index)
+        self._inventory.set_creative_mode(bool(self._state.creative_mode))
         self._inventory.sync_hotbar(slots=slots, selected_index=idx)
         self._hotbar.sync_hotbar(slots=slots, selected_index=idx)
 
@@ -352,7 +353,7 @@ class GLViewportWidget(QOpenGLWidget):
     def _sync_settings_values(self) -> None:
         self._sync_state_from_renderer_sun()
 
-        self._settings.sync_values(fov_deg=self._session.settings.fov_deg, sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px, inv_x=self._state.invert_x, inv_y=self._state.invert_y, outline_selection=self._state.outline_selection, cloud_wire=self._state.cloud_wire, clouds_enabled=self._state.cloud_enabled, cloud_density=int(self._state.cloud_density), cloud_seed=int(self._state.cloud_seed), cloud_flow_direction=str(self._state.cloud_flow_direction), world_wire=self._state.world_wire, shadow_enabled=self._state.shadow_enabled, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, build_mode=self._state.build_mode, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, gravity=float(self._session.settings.movement.gravity), walk_speed=float(self._session.settings.movement.walk_speed), sprint_speed=float(self._session.settings.movement.sprint_speed), jump_v0=float(self._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s), render_distance_chunks=int(self._state.render_distance_chunks))
+        self._settings.sync_values(fov_deg=self._session.settings.fov_deg, sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px, inv_x=self._state.invert_x, inv_y=self._state.invert_y, outline_selection=self._state.outline_selection, cloud_wire=self._state.cloud_wire, clouds_enabled=self._state.cloud_enabled, cloud_density=int(self._state.cloud_density), cloud_seed=int(self._state.cloud_seed), cloud_flow_direction=str(self._state.cloud_flow_direction), world_wire=self._state.world_wire, shadow_enabled=self._state.shadow_enabled, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, creative_mode=self._state.creative_mode, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, gravity=float(self._session.settings.movement.gravity), walk_speed=float(self._session.settings.movement.walk_speed), sprint_speed=float(self._session.settings.movement.sprint_speed), jump_v0=float(self._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(self._session.settings.movement.fly_speed), fly_ascend_speed=float(self._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(self._session.settings.movement.fly_descend_speed), render_distance_chunks=int(self._state.render_distance_chunks))
 
     def _respawn(self) -> None:
         self._session.respawn()
@@ -431,10 +432,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.normalize()
         self._renderer.set_sun_angles(float(self._state.sun_az_deg), float(self._state.sun_el_deg))
 
-    def _set_build_mode(self, on: bool) -> None:
-        self._state.build_mode = bool(on)
-        if not bool(self._state.build_mode):
-            self._overlays.set_inventory_open(False)
+    def _set_creative_mode(self, on: bool) -> None:
+        self._state.creative_mode = bool(on)
+        if not bool(self._state.creative_mode):
+            self._session.player.flying = False
+        self._sync_hotbar_widgets()
 
     def _set_auto_jump(self, on: bool) -> None:
         self._state.auto_jump_enabled = bool(on)
@@ -457,6 +459,15 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_auto_jump_cooldown_s(self, cooldown_s: float) -> None:
         self._session.settings.set_auto_jump_cooldown_s(float(cooldown_s))
 
+    def _set_fly_speed(self, fly_speed: float) -> None:
+        self._session.settings.set_fly_speed(float(fly_speed))
+
+    def _set_fly_ascend_speed(self, fly_ascend_speed: float) -> None:
+        self._session.settings.set_fly_ascend_speed(float(fly_ascend_speed))
+
+    def _set_fly_descend_speed(self, fly_descend_speed: float) -> None:
+        self._session.settings.set_fly_descend_speed(float(fly_descend_speed))
+
     def _reset_advanced_defaults(self) -> None:
         self._session.settings.reset_advanced_movement_defaults()
         self._sync_settings_values()
@@ -466,7 +477,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.normalize()
 
     def _on_inventory_selected(self, block_id: str) -> None:
-        self._state.set_hotbar_slot(int(self._state.selected_hotbar_index), str(block_id))
+        if not bool(self._state.creative_mode):
+            return
+        active_index = int(self._state.creative_selected_hotbar_index if bool(self._state.creative_mode) else self._state.survival_selected_hotbar_index)
+        self._state.set_hotbar_slot(int(active_index), str(block_id))
         self._sync_hotbar_widgets()
 
     def _on_inventory_closed(self) -> None:
@@ -485,7 +499,7 @@ class GLViewportWidget(QOpenGLWidget):
             if float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
                 sprint = True
 
-        jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), auto_jump_enabled=bool(self._state.auto_jump_enabled))
+        jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
 
         if float(self._session.player.position.y) < -64.0:
@@ -502,7 +516,7 @@ class GLViewportWidget(QOpenGLWidget):
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, build_mode=self._state.build_mode, inventory_open=self._overlays.inventory_open(), selected_block_id=self._current_block_id() or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
+        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, creative_mode=self._state.creative_mode, flying=bool(self._session.player.flying), inventory_open=self._overlays.inventory_open(), selected_block_id=self._current_block_id() or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
@@ -547,11 +561,11 @@ class GLViewportWidget(QOpenGLWidget):
             return
 
         if int(e.key()) == int(Qt.Key.Key_B) and (not self._overlays.paused()) and (not self._overlays.dead()):
-            self._set_build_mode(not self._state.build_mode)
+            self._set_creative_mode(not self._state.creative_mode)
             self._sync_settings_values()
             return
 
-        if int(e.key()) == int(Qt.Key.Key_E) and (not self._overlays.paused()) and (not self._overlays.dead()) and bool(self._state.build_mode):
+        if int(e.key()) == int(Qt.Key.Key_E) and (not self._overlays.paused()) and (not self._overlays.dead()):
             self._overlays.set_inventory_open(not self._overlays.inventory_open())
             return
 
@@ -594,7 +608,7 @@ class GLViewportWidget(QOpenGLWidget):
             super().mousePressEvent(e)
             return
 
-        if bool(self._state.build_mode):
+        if bool(self._state.creative_mode):
             b = e.button()
             if b == Qt.MouseButton.LeftButton:
                 self._session.break_block(reach=float(self._state.reach))

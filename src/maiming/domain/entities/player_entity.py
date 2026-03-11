@@ -15,6 +15,7 @@ class PlayerEntity:
     pitch_deg: float
 
     on_ground: bool = False
+    flying: bool = False
 
     width: float = 0.6
     height: float = 1.8

@@ -127,6 +127,39 @@ QWidget#settingsRoot QPushButton#tabBtn:checked {
     border-bottom: 2px solid #223713;
 }
 
+QWidget#settingsRoot QPushButton#modeToggle {
+    color: #f4f4f4;
+    background: #5a5a5a;
+    border-top: 2px solid #8e8e8e;
+    border-left: 2px solid #8e8e8e;
+    border-right: 2px solid #262626;
+    border-bottom: 2px solid #262626;
+    padding: 10px 14px;
+    border-radius: 0px;
+    min-height: 22px;
+    text-align: left;
+}
+
+QWidget#settingsRoot QPushButton#modeToggle:hover {
+    background: #686868;
+}
+
+QWidget#settingsRoot QPushButton#modeToggle:checked {
+    color: #ffffff;
+    background: #6aa038;
+    border-top: 2px solid #9ad65d;
+    border-left: 2px solid #9ad65d;
+    border-right: 2px solid #253713;
+    border-bottom: 2px solid #253713;
+}
+
+QWidget#settingsRoot QPushButton#modeToggle:pressed {
+    border-top: 2px solid #262626;
+    border-left: 2px solid #262626;
+    border-right: 2px solid #8e8e8e;
+    border-bottom: 2px solid #8e8e8e;
+}
+
 QWidget#settingsRoot QCheckBox {
     color: #ffffff;
     spacing: 8px;

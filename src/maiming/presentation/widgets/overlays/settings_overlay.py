@@ -136,7 +136,7 @@ class SettingsOverlay(QWidget):
     sun_azimuth_changed = pyqtSignal(float)
     sun_elevation_changed = pyqtSignal(float)
 
-    build_mode_changed = pyqtSignal(bool)
+    creative_mode_changed = pyqtSignal(bool)
     auto_jump_changed = pyqtSignal(bool)
     auto_sprint_changed = pyqtSignal(bool)
 
@@ -145,6 +145,9 @@ class SettingsOverlay(QWidget):
     sprint_speed_changed = pyqtSignal(float)
     jump_v0_changed = pyqtSignal(float)
     auto_jump_cooldown_changed = pyqtSignal(float)
+    fly_speed_changed = pyqtSignal(float)
+    fly_ascend_speed_changed = pyqtSignal(float)
+    fly_descend_speed_changed = pyqtSignal(float)
     advanced_reset_requested = pyqtSignal()
 
     render_distance_changed = pyqtSignal(int)
@@ -424,11 +427,16 @@ class SettingsOverlay(QWidget):
     def _build_game_tab(self) -> None:
         scroll, host, lay = self._make_scroll_page()
 
-        lay.addWidget(self._section(host, "Game & Player (Advanced)"))
+        lay.addWidget(self._section(host, "Game Mode"))
 
-        self._cb_build_mode = QCheckBox("Build mode", host)
-        self._cb_build_mode.toggled.connect(self.build_mode_changed.emit)
-        lay.addWidget(self._cb_build_mode)
+        self._btn_mode_toggle = QPushButton(host)
+        self._btn_mode_toggle.setObjectName("modeToggle")
+        self._btn_mode_toggle.setCheckable(True)
+        self._btn_mode_toggle.clicked.connect(self._on_mode_toggle_clicked)
+        lay.addWidget(self._btn_mode_toggle)
+
+        lay.addWidget(self._sep(host))
+        lay.addWidget(self._section(host, "Player Options"))
 
         self._cb_auto_jump = QCheckBox("Auto-Jump (Bedrock-style)", host)
         self._cb_auto_jump.toggled.connect(self.auto_jump_changed.emit)
@@ -461,6 +469,21 @@ class SettingsOverlay(QWidget):
         self._ctl_auto_jump_cooldown.value_changed.connect(self.auto_jump_cooldown_changed.emit)
         lay.addWidget(self._ctl_auto_jump_cooldown)
 
+        lay.addWidget(self._sep(host))
+        lay.addWidget(self._section(host, "Flight Parameters"))
+
+        self._ctl_fly_speed = AdvancedScalarControl(title="Flight speed", min_value=float(self._params.fly_speed_milli_min) / float(self._params.fly_speed_scale), max_value=float(self._params.fly_speed_milli_max) / float(self._params.fly_speed_scale), slider_scale=float(self._params.fly_speed_scale), decimals=int(self._params.fly_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_speed), parent=host)
+        self._ctl_fly_speed.value_changed.connect(self.fly_speed_changed.emit)
+        lay.addWidget(self._ctl_fly_speed)
+
+        self._ctl_fly_ascend_speed = AdvancedScalarControl(title="Ascend speed", min_value=float(self._params.fly_ascend_speed_milli_min) / float(self._params.fly_ascend_speed_scale), max_value=float(self._params.fly_ascend_speed_milli_max) / float(self._params.fly_ascend_speed_scale), slider_scale=float(self._params.fly_ascend_speed_scale), decimals=int(self._params.fly_ascend_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed), parent=host)
+        self._ctl_fly_ascend_speed.value_changed.connect(self.fly_ascend_speed_changed.emit)
+        lay.addWidget(self._ctl_fly_ascend_speed)
+
+        self._ctl_fly_descend_speed = AdvancedScalarControl(title="Descend speed", min_value=float(self._params.fly_descend_speed_milli_min) / float(self._params.fly_descend_speed_scale), max_value=float(self._params.fly_descend_speed_milli_max) / float(self._params.fly_descend_speed_scale), slider_scale=float(self._params.fly_descend_speed_scale), decimals=int(self._params.fly_descend_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed), parent=host)
+        self._ctl_fly_descend_speed.value_changed.connect(self.fly_descend_speed_changed.emit)
+        lay.addWidget(self._ctl_fly_descend_speed)
+
         row_reset = QHBoxLayout()
         row_reset.addStretch(1)
 
@@ -474,6 +497,16 @@ class SettingsOverlay(QWidget):
         lay.addStretch(1)
         self._stack.addWidget(scroll)
 
+    def _update_mode_toggle_text(self, creative_mode: bool) -> None:
+        if bool(creative_mode):
+            self._btn_mode_toggle.setText("Game Mode: Creative")
+            return
+        self._btn_mode_toggle.setText("Game Mode: Survival")
+
+    def _on_mode_toggle_clicked(self, checked: bool) -> None:
+        self._update_mode_toggle_text(bool(checked))
+        self.creative_mode_changed.emit(bool(checked))
+
     def _set_tab(self, index: int) -> None:
         i = int(max(0, min(2, int(index))))
         self._stack.setCurrentIndex(i)
@@ -482,7 +515,7 @@ class SettingsOverlay(QWidget):
         self._tab_controls.setChecked(i == 1)
         self._tab_game.setChecked(i == 2)
 
-    def sync_values(self, *, fov_deg: float, sens_deg_per_px: float, inv_x: bool, inv_y: bool, outline_selection: bool, cloud_wire: bool, clouds_enabled: bool, cloud_density: int, cloud_seed: int, cloud_flow_direction: str, world_wire: bool, shadow_enabled: bool, sun_az_deg: float, sun_el_deg: float, build_mode: bool, auto_jump_enabled: bool, auto_sprint_enabled: bool, gravity: float, walk_speed: float, sprint_speed: float, jump_v0: float, auto_jump_cooldown_s: float, render_distance_chunks: int) -> None:
+    def sync_values(self, *, fov_deg: float, sens_deg_per_px: float, inv_x: bool, inv_y: bool, outline_selection: bool, cloud_wire: bool, clouds_enabled: bool, cloud_density: int, cloud_seed: int, cloud_flow_direction: str, world_wire: bool, shadow_enabled: bool, sun_az_deg: float, sun_el_deg: float, creative_mode: bool, auto_jump_enabled: bool, auto_sprint_enabled: bool, gravity: float, walk_speed: float, sprint_speed: float, jump_v0: float, auto_jump_cooldown_s: float, fly_speed: float, fly_ascend_speed: float, fly_descend_speed: float, render_distance_chunks: int) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
         self._sld_fov.blockSignals(True)
@@ -564,9 +597,10 @@ class SettingsOverlay(QWidget):
         self._sld_cloud_seed.blockSignals(False)
         self._lbl_cloud_seed.setText(f"Cloud seed: {cs}")
 
-        self._cb_build_mode.blockSignals(True)
-        self._cb_build_mode.setChecked(bool(build_mode))
-        self._cb_build_mode.blockSignals(False)
+        self._btn_mode_toggle.blockSignals(True)
+        self._btn_mode_toggle.setChecked(bool(creative_mode))
+        self._btn_mode_toggle.blockSignals(False)
+        self._update_mode_toggle_text(bool(creative_mode))
 
         self._cb_auto_jump.blockSignals(True)
         self._cb_auto_jump.setChecked(bool(auto_jump_enabled))
@@ -581,6 +615,9 @@ class SettingsOverlay(QWidget):
         self._ctl_sprint_speed.set_value(float(sprint_speed))
         self._ctl_jump_v0.set_value(float(jump_v0))
         self._ctl_auto_jump_cooldown.set_value(float(auto_jump_cooldown_s))
+        self._ctl_fly_speed.set_value(float(fly_speed))
+        self._ctl_fly_ascend_speed.set_value(float(fly_ascend_speed))
+        self._ctl_fly_descend_speed.set_value(float(fly_descend_speed))
 
     def _on_fov(self, v: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(v)}")

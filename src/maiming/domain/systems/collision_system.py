@@ -230,19 +230,20 @@ def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, 
 
     return True
 
-def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, crouch: bool = False, jump_pressed: bool = False) -> CollisionReport:
-    supported_before = bool(player.on_ground) or _ground_probe(player, world, params, block_registry=block_registry)
+def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, crouch: bool = False, jump_pressed: bool = False, flying: bool = False) -> CollisionReport:
+    is_flying = bool(flying)
+    supported_before = False if bool(is_flying) else (bool(player.on_ground) or _ground_probe(player, world, params, block_registry=block_registry))
 
     delta = player.velocity * float(dt)
     pos0 = player.position
     pos = pos0
 
-    if supported_before and bool(crouch) and (not bool(jump_pressed)):
+    if supported_before and bool(crouch) and (not bool(jump_pressed)) and (not bool(is_flying)):
         delta = _apply_sneak_edge_clamp(player, world, pos, delta, params, block_registry=block_registry)
 
     intended_y = float(pos0.y) + float(delta.y)
 
-    allow_step = bool(supported_before) and (not bool(jump_pressed)) and float(delta.y) <= 1e-9
+    allow_step = (not bool(is_flying)) and bool(supported_before) and (not bool(jump_pressed)) and float(delta.y) <= 1e-9
 
     hit_ground = False
     stepped_up = False
@@ -281,17 +282,17 @@ def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float
             stepped_up = True
             step_up_dy = float(z_result.step_up_dy)
 
-    if bool(supported_before) and (not bool(jump_pressed)) and (not bool(hit_ground)) and float(player.velocity.y) <= 1e-9:
+    if (not bool(is_flying)) and bool(supported_before) and (not bool(jump_pressed)) and (not bool(hit_ground)) and float(player.velocity.y) <= 1e-9:
         snapped, snap_hit = _resolve_downward_snap(player, world, pos, float(params.step_height), params, block_registry=block_registry)
         if bool(snap_hit):
             pos = snapped
             hit_ground = True
 
     player.position = pos
-    supported_after = bool(hit_ground) or _ground_probe(player, world, params, block_registry=block_registry)
+    supported_after = bool(hit_ground) if bool(is_flying) else (bool(hit_ground) or _ground_probe(player, world, params, block_registry=block_registry))
     player.on_ground = supported_after
 
-    landed_now = (not bool(supported_before)) and bool(supported_after)
+    landed_now = (not bool(is_flying)) and (not bool(supported_before)) and bool(supported_after)
 
     y_correction = float(pos.y) - float(intended_y)
 

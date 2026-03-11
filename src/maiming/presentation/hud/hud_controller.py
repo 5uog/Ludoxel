@@ -166,7 +166,7 @@ class HudController:
         r = int(b - c * 16)
         return c, r
 
-    def _build_left_text(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, build_mode: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> str:
+    def _build_left_text(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, creative_mode: bool, flying: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> str:
         fps = self.fps()
         t_txt = "inf" if int(render_timer_interval_ms) <= 0 else f"{(1000.0 / float(render_timer_interval_ms)):.0f}"
         vs = "vsync" if bool(vsync_on) else "nosync"
@@ -237,7 +237,7 @@ class HudController:
         lines.append("")
         lines.append(f"RenderDist {rd} chunks")
         lines.append(
-            f"Mode build={int(bool(build_mode))} inv={int(bool(inventory_open))} "
+            f"Mode creative={int(bool(creative_mode))} flying={int(bool(flying))} inv={int(bool(inventory_open))} "
             f"autoJump={int(bool(auto_jump_enabled))} autoSprint={int(bool(auto_sprint_enabled))} reach={float(reach):.2f}"
         )
         lines.append(str(sel_line))
@@ -279,9 +279,9 @@ class HudController:
         lines.append(f"auto_jump_cooldown_s  {metrics.applied.auto_jump_cooldown_s:.3f}")
         return "\n".join(lines).rstrip()
 
-    def build_payload(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, build_mode: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, sim_hz: float, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> HudPayload:
+    def build_payload(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, creative_mode: bool, flying: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, sim_hz: float, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> HudPayload:
         _ = float(sim_hz)
 
-        left = self._build_left_text(session=session, renderer=renderer, auto_jump_enabled=bool(auto_jump_enabled), auto_sprint_enabled=bool(auto_sprint_enabled), build_mode=bool(build_mode), inventory_open=bool(inventory_open), selected_block_id=str(selected_block_id), reach=float(reach), sun_az_deg=float(sun_az_deg), sun_el_deg=float(sun_el_deg), shadow_enabled=bool(shadow_enabled), world_wire=bool(world_wire), cloud_wire=bool(cloud_wire), cloud_enabled=bool(cloud_enabled), cloud_density=int(cloud_density), cloud_seed=int(cloud_seed), debug_shadow=bool(debug_shadow), fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr), vsync_on=bool(vsync_on), render_timer_interval_ms=int(render_timer_interval_ms), render_distance_chunks=int(render_distance_chunks), paint_ms=float(paint_ms), selection_pick_ms=float(selection_pick_ms))
+        left = self._build_left_text(session=session, renderer=renderer, auto_jump_enabled=bool(auto_jump_enabled), auto_sprint_enabled=bool(auto_sprint_enabled), creative_mode=bool(creative_mode), flying=bool(flying), inventory_open=bool(inventory_open), selected_block_id=str(selected_block_id), reach=float(reach), sun_az_deg=float(sun_az_deg), sun_el_deg=float(sun_el_deg), shadow_enabled=bool(shadow_enabled), world_wire=bool(world_wire), cloud_wire=bool(cloud_wire), cloud_enabled=bool(cloud_enabled), cloud_density=int(cloud_density), cloud_seed=int(cloud_seed), debug_shadow=bool(debug_shadow), fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr), vsync_on=bool(vsync_on), render_timer_interval_ms=int(render_timer_interval_ms), render_distance_chunks=int(render_distance_chunks), paint_ms=float(paint_ms), selection_pick_ms=float(selection_pick_ms))
         right = self._build_right_text(session=session)
         return HudPayload(left_text=str(left), right_text=str(right))

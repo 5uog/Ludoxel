@@ -26,4 +26,8 @@ class MovementParams:
     auto_jump_success_dy: float = 0.90
     auto_jump_cooldown_s: float = 0.12
 
+    fly_speed: float = 10.92
+    fly_ascend_speed: float = 10.92
+    fly_descend_speed: float = 10.92
+
 DEFAULT_MOVEMENT_PARAMS = MovementParams()

@@ -36,6 +36,47 @@ def _wish_dir(player: PlayerEntity, forward: float, strafe: float) -> Vec3:
         return Vec3(0.0, 0.0, 0.0)
     return v.normalized()
 
+def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams = DEFAULT_MOVEMENT_PARAMS) -> None:
+    player.yaw_deg += float(inp.yaw_delta_deg)
+    player.pitch_deg += float(inp.pitch_delta_deg)
+    player.clamp_pitch()
+
+    f = clampf(inp.forward, -1.0, 1.0)
+    s = clampf(inp.strafe, -1.0, 1.0)
+
+    wish = _wish_dir(player, f, s)
+
+    if wish.length() <= 1e-9:
+        target_x = 0.0
+        target_z = 0.0
+    else:
+        fly_speed = float(params.fly_speed)
+        target_x = float(wish.x) * fly_speed
+        target_z = float(wish.z) * fly_speed
+
+    if bool(inp.jump_held) and (not bool(inp.crouch)):
+        target_y = float(params.fly_ascend_speed)
+    elif bool(inp.crouch) and (not bool(inp.jump_held)):
+        target_y = -float(params.fly_descend_speed)
+    else:
+        target_y = 0.0
+
+    rate = max(float(params.accel_ground), 20.0)
+    a = exp_alpha(rate, dt)
+
+    vx = float(player.velocity.x) + (float(target_x) - float(player.velocity.x)) * a
+    vy = float(player.velocity.y) + (float(target_y) - float(player.velocity.y)) * a
+    vz = float(player.velocity.z) + (float(target_z) - float(player.velocity.z)) * a
+
+    if abs(float(target_x)) <= 1e-6 and abs(float(vx)) < 0.03:
+        vx = 0.0
+    if abs(float(target_y)) <= 1e-6 and abs(float(vy)) < 0.03:
+        vy = 0.0
+    if abs(float(target_z)) <= 1e-6 and abs(float(vz)) < 0.03:
+        vz = 0.0
+
+    player.velocity = Vec3(float(vx), float(vy), float(vz))
+
 def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams = DEFAULT_MOVEMENT_PARAMS) -> None:
     player.yaw_deg += float(inp.yaw_delta_deg)
     player.pitch_deg += float(inp.pitch_delta_deg)

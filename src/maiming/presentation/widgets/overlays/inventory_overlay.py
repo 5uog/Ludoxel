@@ -196,6 +196,7 @@ class InventoryOverlay(QWidget):
         self._hovered_block_id: str | None = None
         self._hotbar_slots: list[str] = list(normalize_hotbar_slots(None, size=HOTBAR_SIZE))
         self._selected_hotbar_index: int = 0
+        self._creative_mode: bool = False
 
         self._slot_buttons: list[_InventoryBlockButton] = []
         self._hotbar_buttons: list[_HotbarSlotButton] = []
@@ -220,9 +221,9 @@ class InventoryOverlay(QWidget):
         pv.setSpacing(12)
 
         title_row = QHBoxLayout()
-        title = QLabel("INVENTORY", panel)
-        title.setObjectName("title")
-        title_row.addWidget(title)
+        self._title_label = QLabel("INVENTORY", panel)
+        self._title_label.setObjectName("title")
+        title_row.addWidget(self._title_label)
 
         title_row.addStretch(1)
 
@@ -232,23 +233,23 @@ class InventoryOverlay(QWidget):
         title_row.addWidget(btn_close)
         pv.addLayout(title_row)
 
-        sub = QLabel("Click assigns the hovered block to the currently selected hotbar slot. Drag blocks onto any hotbar slot, or hover a block and press 1-9.", panel)
-        sub.setObjectName("subtitle")
-        sub.setWordWrap(True)
-        pv.addWidget(sub)
+        self._subtitle_label = QLabel("Click assigns the hovered block to the currently selected hotbar slot. Drag blocks onto any hotbar slot, or hover a block and press 1-9.", panel)
+        self._subtitle_label.setObjectName("subtitle")
+        self._subtitle_label.setWordWrap(True)
+        pv.addWidget(self._subtitle_label)
 
-        scroll = QScrollArea(panel)
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._catalog_scroll = QScrollArea(panel)
+        self._catalog_scroll.setWidgetResizable(True)
+        self._catalog_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        scroll_host = QWidget(scroll)
+        scroll_host = QWidget(self._catalog_scroll)
         self._grid_layout = QGridLayout(scroll_host)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
         self._grid_layout.setHorizontalSpacing(6)
         self._grid_layout.setVerticalSpacing(6)
 
-        scroll.setWidget(scroll_host)
-        pv.addWidget(scroll, stretch=1)
+        self._catalog_scroll.setWidget(scroll_host)
+        pv.addWidget(self._catalog_scroll, stretch=1)
 
         hotbar = QWidget(panel)
         hl = QGridLayout(hotbar)
@@ -269,7 +270,22 @@ class InventoryOverlay(QWidget):
         root.addStretch(1)
 
         self._rebuild_grid()
+        self.set_creative_mode(False)
         self.sync_hotbar(slots=self._hotbar_slots, selected_index=self._selected_hotbar_index)
+
+    def set_creative_mode(self, on: bool) -> None:
+        self._creative_mode = bool(on)
+
+        if bool(self._creative_mode):
+            self._title_label.setText("CREATIVE INVENTORY")
+            self._subtitle_label.setText("Click assigns the hovered block to the currently selected hotbar slot. Drag blocks onto any hotbar slot, or hover a block and press 1-9.")
+            self._catalog_scroll.setVisible(True)
+            return
+
+        self._hovered_block_id = None
+        self._title_label.setText("SURVIVAL INVENTORY")
+        self._subtitle_label.setText("Creative block selection is unavailable in Survival Mode. Use 1-9 to select a hotbar slot, or drag between hotbar slots.")
+        self._catalog_scroll.setVisible(False)
 
     def _display_name(self, block_id: str) -> str:
         bid = str(block_id).strip()
@@ -336,6 +352,8 @@ class InventoryOverlay(QWidget):
         self._hovered_block_id = None
 
     def _on_block_activated(self, block_id: str) -> None:
+        if not bool(self._creative_mode):
+            return
         self.block_selected.emit(str(block_id))
         self._close()
 
@@ -360,7 +378,7 @@ class InventoryOverlay(QWidget):
         idx = hotbar_index_from_key(k)
         if idx is not None:
             self.hotbar_slot_selected.emit(int(idx))
-            if self._hovered_block_id is not None:
+            if bool(self._creative_mode) and self._hovered_block_id is not None:
                 self.hotbar_slot_assigned.emit(int(idx), str(self._hovered_block_id))
             return
 
