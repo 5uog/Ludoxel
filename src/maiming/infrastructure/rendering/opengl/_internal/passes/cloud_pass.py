@@ -12,7 +12,8 @@ from OpenGL.GL import (
 from ......core.math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram
 from ..gl.mesh_buffer import MeshBuffer
-from ..scene.cloud_field import CloudField, normalize_cloud_flow_direction
+from ..scene.cloud_field import CloudField
+from ...facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams, CameraParams
 
 class CloudPass:
@@ -30,7 +31,7 @@ class CloudPass:
 
         self._density = int(max(0, int(self._cfg.rects_per_cell)))
         self._seed = int(self._cfg.seed)
-        self._flow_direction = normalize_cloud_flow_direction("west_to_east")
+        self._flow_direction = normalize_cloud_flow_direction(DEFAULT_CLOUD_FLOW_DIRECTION)
 
         self._motion_paused = False
         self._time_accum = 0.0

@@ -12,7 +12,8 @@ from OpenGL.GL import (
     GL_ARRAY_BUFFER, GL_STREAM_DRAW, GL_FLOAT, GL_LINES, GL_DEPTH_TEST, GL_LEQUAL, GL_BLEND, GL_CULL_FACE
 )
 
-from ..gl.buffer_upload import as_float32_c_array, upload_array_buffer
+from ..gl.array_view import as_float32_c_array
+from ..gl.buffer_upload import upload_array_buffer
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
 

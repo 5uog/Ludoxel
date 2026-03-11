@@ -8,35 +8,10 @@ from PyQt6.QtGui import QPixmap, QIcon, QDrag, QMouseEvent
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
 
 from ....domain.blocks.block_registry import BlockRegistry
+from ..common import hotbar_index_from_key, refresh_widget_style
 from .item_photo_provider import ItemPhotoProvider
 
 _MIME_BLOCK_ID = "application/x-maiming-block-id"
-
-def _refresh_widget_style(widget: QWidget) -> None:
-    widget.style().unpolish(widget)
-    widget.style().polish(widget)
-    widget.update()
-
-def _hotbar_index_from_key(key: int) -> int | None:
-    if key == int(Qt.Key.Key_1):
-        return 0
-    if key == int(Qt.Key.Key_2):
-        return 1
-    if key == int(Qt.Key.Key_3):
-        return 2
-    if key == int(Qt.Key.Key_4):
-        return 3
-    if key == int(Qt.Key.Key_5):
-        return 4
-    if key == int(Qt.Key.Key_6):
-        return 5
-    if key == int(Qt.Key.Key_7):
-        return 6
-    if key == int(Qt.Key.Key_8):
-        return 7
-    if key == int(Qt.Key.Key_9):
-        return 8
-    return None
 
 def _block_id_from_mime(mime: QMimeData) -> str | None:
     if mime.hasFormat(_MIME_BLOCK_ID):
@@ -160,7 +135,7 @@ class _HotbarSlotButton(QPushButton):
 
         self.setToolTip(str(tooltip))
         self.setProperty("selected", bool(selected))
-        _refresh_widget_style(self)
+        refresh_widget_style(self)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         if e.button() == Qt.MouseButton.LeftButton:
@@ -389,7 +364,7 @@ class InventoryOverlay(QWidget):
             self._close()
             return
 
-        idx = _hotbar_index_from_key(k)
+        idx = hotbar_index_from_key(k)
         if idx is not None:
             self.hotbar_slot_selected.emit(int(idx))
             if self._hovered_block_id is not None:

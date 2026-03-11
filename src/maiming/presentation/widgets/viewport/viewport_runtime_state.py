@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import normalize_cloud_flow_direction
+from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 def _default_hotbar_slots() -> list[str]:
     return ["", "", "", "", "", "", "", "", ""]
@@ -19,7 +19,7 @@ class ViewportRuntimeState:
     cloud_enabled: bool = True
     cloud_density: int = 1
     cloud_seed: int = 1337
-    cloud_flow_direction: str = "west_to_east"
+    cloud_flow_direction: str = DEFAULT_CLOUD_FLOW_DIRECTION
 
     world_wire: bool = False
     shadow_enabled: bool = True

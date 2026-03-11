@@ -9,6 +9,7 @@ from ...domain.entities.player_entity import PlayerEntity
 from ...domain.world.world_state import WorldState
 
 from ...domain.blocks.block_registry import BlockRegistry
+from ...domain.blocks.cardinal import cardinal_from_xz
 from ...domain.blocks.state_codec import format_state, parse_state
 from ...domain.blocks.state_values import slab_type_value
 from ...domain.blocks.connectivity import make_wall_state, make_fence_gate_state
@@ -21,12 +22,7 @@ class PlacementPolicy:
 
     def _player_cardinal(self, player: PlayerEntity) -> str:
         f = player.view_forward()
-        ax = abs(float(f.x))
-        az = abs(float(f.z))
-
-        if ax >= az:
-            return "east" if float(f.x) > 0.0 else "west"
-        return "south" if float(f.z) > 0.0 else "north"
+        return cardinal_from_xz(float(f.x), float(f.z), default="south")
 
     @staticmethod
     def _choose_half_type(hit_face: int, hit_point: Vec3) -> str:

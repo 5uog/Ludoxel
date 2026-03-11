@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from ..block_definition import BlockDefinition
+from ..cardinal import cardinal_turns_from_facing, gate_turns_from_facing
 
 @dataclass(frozen=True)
 class LocalBox:
@@ -53,27 +54,3 @@ def rotate_box_y_cw(b: LocalBox, turns: int) -> LocalBox:
     mxz = max(p[1] for p in pts)
 
     return LocalBox(mn_x=mnx, mn_y=b.mn_y, mn_z=mnz, mx_x=mxx, mx_y=b.mx_y, mx_z=mxz, uv_hint=str(b.uv_hint))
-
-def cardinal_turns_from_facing(facing: str) -> int:
-    f = str(facing)
-    if f == "east":
-        return 0
-    if f == "south":
-        return 1
-    if f == "west":
-        return 2
-    if f == "north":
-        return 3
-    return 0
-
-def gate_turns_from_facing(facing: str) -> int:
-    f = str(facing)
-    if f == "south":
-        return 0
-    if f == "west":
-        return 1
-    if f == "north":
-        return 2
-    if f == "east":
-        return 3
-    return 0

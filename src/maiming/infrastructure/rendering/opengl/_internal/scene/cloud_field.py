@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 
 from ......core.math.vec3 import Vec3
-from ...facade.cloud_flow_direction import normalize_cloud_flow_direction
+from ...facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class CloudField:
         self._enabled_density: int = int(max(0, int(cfg.rects_per_cell)))
         self._seed: int = int(cfg.seed)
 
-        self._flow_direction: str = normalize_cloud_flow_direction("west_to_east")
+        self._flow_direction: str = normalize_cloud_flow_direction(DEFAULT_CLOUD_FLOW_DIRECTION)
         self._flow_epoch_s: float = 0.0
         self._flow_base_shift: Vec3 = Vec3(0.0, 0.0, 0.0)
 

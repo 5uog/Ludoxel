@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from .....core.math.vec3 import Vec3
 from .....core.math.view_angles import sun_dir_from_az_el_deg
-from .cloud_flow_direction import normalize_cloud_flow_direction
+from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 @dataclass
 class RendererRuntimeState:
@@ -18,7 +18,7 @@ class RendererRuntimeState:
     cloud_enabled: bool = True
     cloud_density: int = 1
     cloud_seed: int = 1337
-    cloud_flow_direction: str = "west_to_east"
+    cloud_flow_direction: str = DEFAULT_CLOUD_FLOW_DIRECTION
 
     sun_azimuth_deg: float = 45.0
     sun_elevation_deg: float = 60.0

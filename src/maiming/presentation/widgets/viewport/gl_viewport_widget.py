@@ -18,6 +18,7 @@ from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ...config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
 from ...config.gl_surface_format import build_gl_surface_format
 from ...hud.hud_controller import HudController
+from ..common import hotbar_index_from_key
 from ..hud.crosshair_widget import CrosshairWidget
 from ..hud.hotbar_widget import HotbarWidget
 from ..overlays.death_overlay import DeathOverlay
@@ -30,27 +31,6 @@ from .viewport_persistence import apply_persisted_state_if_present, save_state
 from .viewport_runtime_state import ViewportRuntimeState
 from .viewport_selection_state import ViewportSelectionState
 from .viewport_world_upload import WorldUploadTracker
-
-def _hotbar_index_from_key(key: int) -> int | None:
-    if key == int(Qt.Key.Key_1):
-        return 0
-    if key == int(Qt.Key.Key_2):
-        return 1
-    if key == int(Qt.Key.Key_3):
-        return 2
-    if key == int(Qt.Key.Key_4):
-        return 3
-    if key == int(Qt.Key.Key_5):
-        return 4
-    if key == int(Qt.Key.Key_6):
-        return 5
-    if key == int(Qt.Key.Key_7):
-        return 6
-    if key == int(Qt.Key.Key_8):
-        return 7
-    if key == int(Qt.Key.Key_9):
-        return 8
-    return None
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -526,7 +506,7 @@ class GLViewportWidget(QOpenGLWidget):
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
-        hotbar_idx = _hotbar_index_from_key(int(e.key()))
+        hotbar_idx = hotbar_index_from_key(int(e.key()))
         if hotbar_idx is not None and (not self._overlays.paused()) and (not self._overlays.dead()) and (not self._overlays.settings_open()):
             if not self._overlays.inventory_open():
                 self._select_hotbar_slot(int(hotbar_idx))

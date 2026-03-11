@@ -5,12 +5,11 @@ from dataclasses import dataclass
 
 from ...core.math.vec3 import Vec3
 from ...core.grid.voxel_dda import dda_grid_traverse
-from ...core.grid.face_index import face_neighbor_offset
+from ...core.grid.face_index import face_neighbor_offset, FACE_POS_Y
 from ...core.geometry.ray import Ray
 from ...core.geometry.intersection import ray_aabb_face
 
 from ..world.world_state import WorldState
-from ..blocks.block_definition import FACE_POS_Y
 from ..blocks.block_registry import BlockRegistry
 from ..blocks.state_codec import parse_state
 from ..blocks.models.api import pick_aabbs_for_block

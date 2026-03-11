@@ -8,6 +8,7 @@ import numpy as np
 from .....core.math.vec3 import Vec3
 from .....domain.blocks.block_registry import BlockRegistry
 from .....domain.world.chunking import ChunkKey
+from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
 from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
 from .render_metrics import RendererFrameMetrics
 from .render_state import RendererRuntimeState
@@ -17,25 +18,9 @@ class GLRenderer:
     def __init__(self, params: GLRendererParams | None = None) -> None:
         self._cfg = params or default_gl_renderer_params()
 
-        self._state = RendererRuntimeState(
-            debug_shadow=False,
-            shadow_enabled=True,
-            world_wireframe=False,
-            outline_selection_enabled=True,
-            cloud_wireframe=False,
-            cloud_enabled=True,
-            cloud_density=int(self._cfg.clouds.rects_per_cell),
-            cloud_seed=int(self._cfg.clouds.seed),
-            cloud_flow_direction="west_to_east",
-            sun_azimuth_deg=float(self._cfg.sun.azimuth_deg),
-            sun_elevation_deg=float(self._cfg.sun.elevation_deg),
-        )
+        self._state = RendererRuntimeState(debug_shadow=False, shadow_enabled=True, world_wireframe=False, outline_selection_enabled=True, cloud_wireframe=False, cloud_enabled=True, cloud_density=int(self._cfg.clouds.rects_per_cell), cloud_seed=int(self._cfg.clouds.seed), cloud_flow_direction=DEFAULT_CLOUD_FLOW_DIRECTION, sun_azimuth_deg=float(self._cfg.sun.azimuth_deg), sun_elevation_deg=float(self._cfg.sun.elevation_deg))
 
-        self._backend = RendererBackend(
-            cfg=self._cfg,
-            state=self._state,
-            sel_tint_strength=0.55,
-        )
+        self._backend = RendererBackend(cfg=self._cfg, state=self._state, sel_tint_strength=0.55)
 
     def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
         self._backend.initialize(Path(assets_dir), block_registry=block_registry)

@@ -8,12 +8,8 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QFrame, QHBoxLayout, QPushButton
 
 from ....domain.blocks.block_registry import BlockRegistry
+from ..common import refresh_widget_style
 from ..overlays.item_photo_provider import ItemPhotoProvider
-
-def _refresh_widget_style(widget: QWidget) -> None:
-    widget.style().unpolish(widget)
-    widget.style().polish(widget)
-    widget.update()
 
 class _DisplaySlot(QPushButton):
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -37,7 +33,7 @@ class _DisplaySlot(QPushButton):
 
         self.setToolTip(str(tooltip))
         self.setProperty("selected", bool(selected))
-        _refresh_widget_style(self)
+        refresh_widget_style(self)
 
 class HotbarWidget(QWidget):
     def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:
