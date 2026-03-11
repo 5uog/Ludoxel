@@ -5,21 +5,7 @@ import numpy as np
 
 from OpenGL.GL import glBindBuffer, glBufferData, glBufferSubData
 
-def as_float32_c_array(data: np.ndarray) -> np.ndarray:
-    arr = data
-    if arr.dtype != np.float32:
-        arr = arr.astype(np.float32, copy=False)
-    if not arr.flags["C_CONTIGUOUS"]:
-        arr = np.ascontiguousarray(arr, dtype=np.float32)
-    return arr
-
-def as_uint32_c_array(data: np.ndarray) -> np.ndarray:
-    arr = data
-    if arr.dtype != np.uint32:
-        arr = arr.astype(np.uint32, copy=False)
-    if not arr.flags["C_CONTIGUOUS"]:
-        arr = np.ascontiguousarray(arr, dtype=np.uint32)
-    return arr
+from .array_view import as_float32_c_array, as_uint32_c_array
 
 def upload_array_buffer(*, target: int, buffer: int, usage: int, data: np.ndarray | None, capacity_bytes: int) -> int:
     nbytes = 0 if data is None else int(data.nbytes)

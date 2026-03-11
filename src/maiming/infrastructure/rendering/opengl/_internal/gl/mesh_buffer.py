@@ -7,12 +7,13 @@ from dataclasses import dataclass
 import numpy as np
 
 from OpenGL.GL import (
-    glGenVertexArrays, glGenBuffers, glDeleteBuffers, glDeleteVertexArrays, 
-    glBindVertexArray, glBindBuffer, glBufferData, glEnableVertexAttribArray, glVertexAttribPointer, glVertexAttribDivisor, 
+    glGenVertexArrays, glGenBuffers, glDeleteBuffers, glDeleteVertexArrays,
+    glBindVertexArray, glBindBuffer, glBufferData, glEnableVertexAttribArray, glVertexAttribPointer, glVertexAttribDivisor,
     GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_STREAM_DRAW, GL_FLOAT
 )
 
-from .buffer_upload import as_float32_c_array, upload_array_buffer
+from .array_view import as_float32_c_array, as_float32_rows
+from .buffer_upload import upload_array_buffer
 
 def _enable_vertex_attr(location: int, size: int, stride_bytes: int, offset_bytes: int, *, divisor: int = 0) -> None:
     glEnableVertexAttribArray(int(location))
@@ -21,9 +22,7 @@ def _enable_vertex_attr(location: int, size: int, stride_bytes: int, offset_byte
         glVertexAttribDivisor(int(location), int(divisor))
 
 def _create_static_vertex_buffer(vertices: np.ndarray) -> tuple[int, int, int]:
-    v = as_float32_c_array(vertices)
-    if v.ndim != 2 or v.shape[1] != 8:
-        raise ValueError("Static mesh vertices must be a float32 Nx8 array")
+    v = as_float32_rows(vertices, cols=8, label="Static mesh vertices")
 
     vao = int(glGenVertexArrays(1))
     glBindVertexArray(int(vao))

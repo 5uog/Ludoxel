@@ -9,6 +9,7 @@ from OpenGL.GL import glDispatchCompute, glMemoryBarrier, GL_SHADER_STORAGE_BARR
 
 from ......domain.world.chunking import ChunkKey
 from ..face_bucket_layout import FACE_COUNT, BucketCounts, bucket_offsets, empty_face_bucket_arrays, normalize_bucket_counts
+from ..gl.array_view import as_float32_rows
 from ..gl.shader_program import ShaderProgram
 from ..gl.storage_buffer import StorageBuffer
 
@@ -61,14 +62,7 @@ class ChunkFacePayloadBuilder:
         if total_rows <= 0 or face_sources.size <= 0:
             return empty_face_bucket_arrays(12)
 
-        src = face_sources
-        if src.dtype != np.float32:
-            src = src.astype(np.float32, copy=False)
-        if not src.flags["C_CONTIGUOUS"]:
-            src = np.ascontiguousarray(src, dtype=np.float32)
-
-        if src.ndim != 2 or src.shape[1] != 14:
-            raise ValueError("GPU face payload sources must be a float32 Nx14 array")
+        src = as_float32_rows(face_sources, cols=14, label="GPU face payload sources")
 
         face_count = int(src.shape[0])
         if face_count <= 0:

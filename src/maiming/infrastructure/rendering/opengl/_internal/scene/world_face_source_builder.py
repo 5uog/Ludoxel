@@ -9,6 +9,7 @@ from ......domain.blocks.block_definition import BlockDefinition
 from ......domain.blocks.models.common import LocalBox
 from ......domain.blocks.state_codec import parse_state
 from ..face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
+from ..gl.array_view import as_float32_rows
 from .visible_faces import iter_visible_faces
 
 UVRect = tuple[float, float, float, float]
@@ -84,14 +85,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
     if face_sources.size <= 0:
         return out
 
-    src = face_sources
-    if src.dtype != np.float32:
-        src = src.astype(np.float32, copy=False)
-    if not src.flags["C_CONTIGUOUS"]:
-        src = np.ascontiguousarray(src, dtype=np.float32)
-
-    if src.ndim != 2 or src.shape[1] != 14:
-        raise ValueError("face_sources must be a float32 Nx14 array")
+    src = as_float32_rows(face_sources, cols=14, label="face_sources")
 
     for row in src:
         fi = int(round(float(row[12])))

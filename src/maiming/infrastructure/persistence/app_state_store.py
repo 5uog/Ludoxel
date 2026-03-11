@@ -8,6 +8,7 @@ from typing import Any, ClassVar, Dict, Tuple
 from ...domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from ...domain.world.world_state import WorldState
 from .json_file_store import JsonFileStore
+from .scalar_coercion import coerce_bool, coerce_float, coerce_int, coerce_str, mapping_bool, mapping_float, mapping_int, mapping_str
 
 @dataclass(frozen=True)
 class PersistedSettings:
@@ -49,34 +50,10 @@ class PersistedSettings:
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedSettings":
-        def g_float(k: str, default: float) -> float:
-            v = d.get(k, default)
-            try:
-                return float(v)
-            except Exception:
-                return float(default)
-
-        def g_int(k: str, default: int) -> int:
-            v = d.get(k, default)
-            try:
-                return int(v)
-            except Exception:
-                return int(default)
-
-        def g_bool(k: str, default: bool) -> bool:
-            v = d.get(k, default)
-            return bool(v) if isinstance(v, (bool, int)) else bool(default)
-
-        def g_str(k: str, default: str) -> str:
-            v = d.get(k, default)
-            if v is None:
-                return str(default)
-            return str(v)
-
-        rd = g_int("render_distance_chunks", 6)
+        rd = mapping_int(d, "render_distance_chunks", 6)
         rd = int(max(2, min(16, rd)))
 
-        return PersistedSettings(fov_deg=g_float("fov_deg", 80.0), mouse_sens_deg_per_px=g_float("mouse_sens_deg_per_px", 0.09), invert_x=g_bool("invert_x", False), invert_y=g_bool("invert_y", False), outline_selection=g_bool("outline_selection", True), world_wireframe=g_bool("world_wireframe", False), shadow_enabled=g_bool("shadow_enabled", True), sun_az_deg=g_float("sun_az_deg", 45.0), sun_el_deg=g_float("sun_el_deg", 60.0), cloud_enabled=g_bool("cloud_enabled", True), cloud_density=g_int("cloud_density", 1), cloud_seed=g_int("cloud_seed", 1337), cloud_flow_direction=g_str("cloud_flow_direction", "west_to_east"), build_mode=g_bool("build_mode", False), auto_jump_enabled=g_bool("auto_jump_enabled", False), auto_sprint_enabled=g_bool("auto_sprint_enabled", False), gravity=g_float("gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)), walk_speed=g_float("walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)), sprint_speed=g_float("sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)), jump_v0=g_float("jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)), auto_jump_cooldown_s=g_float("auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)), render_distance_chunks=int(rd), hud_visible=g_bool("hud_visible", True))
+        return PersistedSettings(fov_deg=mapping_float(d, "fov_deg", 80.0), mouse_sens_deg_per_px=mapping_float(d, "mouse_sens_deg_per_px", 0.09), invert_x=mapping_bool(d, "invert_x", False), invert_y=mapping_bool(d, "invert_y", False), outline_selection=mapping_bool(d, "outline_selection", True), world_wireframe=mapping_bool(d, "world_wireframe", False), shadow_enabled=mapping_bool(d, "shadow_enabled", True), sun_az_deg=mapping_float(d, "sun_az_deg", 45.0), sun_el_deg=mapping_float(d, "sun_el_deg", 60.0), cloud_enabled=mapping_bool(d, "cloud_enabled", True), cloud_density=mapping_int(d, "cloud_density", 1), cloud_seed=mapping_int(d, "cloud_seed", 1337), cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"), build_mode=mapping_bool(d, "build_mode", False), auto_jump_enabled=mapping_bool(d, "auto_jump_enabled", False), auto_sprint_enabled=mapping_bool(d, "auto_sprint_enabled", False), gravity=mapping_float(d, "gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)), walk_speed=mapping_float(d, "walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)), sprint_speed=mapping_float(d, "sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)), jump_v0=mapping_float(d, "jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)), auto_jump_cooldown_s=mapping_float(d, "auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)), render_distance_chunks=int(rd), hud_visible=mapping_bool(d, "hud_visible", True))
 
 @dataclass(frozen=True)
 class PersistedInventory:
@@ -109,11 +86,7 @@ class PersistedInventory:
         raw_slots = d.get("hotbar_slots", [])
         slots = PersistedInventory._normalize_slots(raw_slots)
 
-        raw_idx = d.get("selected_hotbar_index", 0)
-        try:
-            idx = int(raw_idx)
-        except Exception:
-            idx = 0
+        idx = coerce_int(d.get("selected_hotbar_index", 0), 0)
         idx = int(max(0, min(PersistedInventory.HOTBAR_SIZE - 1, idx)))
 
         return PersistedInventory(hotbar_slots=slots, selected_hotbar_index=int(idx))
@@ -140,17 +113,6 @@ class PersistedPlayer:
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedPlayer":
-        def g_float(v: Any, default: float) -> float:
-            try:
-                return float(v)
-            except Exception:
-                return float(default)
-
-        def g_bool(v: Any, default: bool) -> bool:
-            if isinstance(v, (bool, int)):
-                return bool(v)
-            return bool(default)
-
         pos = d.get("pos", [0.0, 1.0, -10.0])
         vel = d.get("vel", [0.0, 0.0, 0.0])
 
@@ -161,7 +123,7 @@ class PersistedPlayer:
 
         cooldown_raw = d.get("auto_jump_cooldown_s", d.get("jump_cooldown_s", 0.0))
 
-        return PersistedPlayer(pos_x=g_float(pos[0], 0.0), pos_y=g_float(pos[1], 1.0), pos_z=g_float(pos[2], -10.0), vel_x=g_float(vel[0], 0.0), vel_y=g_float(vel[1], 0.0), vel_z=g_float(vel[2], 0.0), yaw_deg=g_float(d.get("yaw_deg", 0.0), 0.0), pitch_deg=g_float(d.get("pitch_deg", 0.0), 0.0), on_ground=g_bool(d.get("on_ground", False), False), auto_jump_cooldown_s=g_float(cooldown_raw, 0.0), crouch_eye_offset=g_float(d.get("crouch_eye_offset", 0.0), 0.0))
+        return PersistedPlayer(pos_x=coerce_float(pos[0], 0.0), pos_y=coerce_float(pos[1], 1.0), pos_z=coerce_float(pos[2], -10.0), vel_x=coerce_float(vel[0], 0.0), vel_y=coerce_float(vel[1], 0.0), vel_z=coerce_float(vel[2], 0.0), yaw_deg=coerce_float(d.get("yaw_deg", 0.0), 0.0), pitch_deg=coerce_float(d.get("pitch_deg", 0.0), 0.0), on_ground=coerce_bool(d.get("on_ground", False), False), auto_jump_cooldown_s=coerce_float(cooldown_raw, 0.0), crouch_eye_offset=coerce_float(d.get("crouch_eye_offset", 0.0), 0.0))
 
 @dataclass(frozen=True)
 class PersistedWorld:
@@ -191,10 +153,7 @@ class PlayerStateFile:
         if not isinstance(d, dict):
             return PlayerStateFile()
 
-        try:
-            version = int(d.get("version", 1))
-        except Exception:
-            version = 1
+        version = coerce_int(d.get("version", 1), 1)
 
         raw_settings = d.get("settings", {})
         raw_inventory = d.get("inventory", {})
@@ -218,10 +177,7 @@ class WorldStateFile:
         if not isinstance(d, dict):
             return WorldStateFile()
 
-        try:
-            version = int(d.get("version", 1))
-        except Exception:
-            version = 1
+        version = coerce_int(d.get("version", 1), 1)
 
         raw_player = d.get("player", {})
         raw_world = d.get("world", {})

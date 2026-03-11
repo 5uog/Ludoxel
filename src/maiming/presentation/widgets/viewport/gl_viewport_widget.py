@@ -28,6 +28,7 @@ from .viewport_input import ViewportInput
 from .viewport_overlays import ViewportOverlays, OverlayRefs
 from .viewport_persistence import apply_persisted_state_if_present, save_state
 from .viewport_runtime_state import ViewportRuntimeState
+from .viewport_selection_state import ViewportSelectionState
 from .viewport_world_upload import WorldUploadTracker
 
 def _hotbar_index_from_key(key: int) -> int | None:
@@ -76,8 +77,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._state = ViewportRuntimeState()
         self._sync_state_from_renderer_sun()
 
-        self._selection_target: tuple[int, int, int, str] | None = None
-        self._selection_cache_key: tuple[float, float, float, float, float, int, float] | None = None
+        self._selection_state = ViewportSelectionState()
 
         self._last_paint_ms: float = 0.0
         self._last_selection_pick_ms: float = 0.0
@@ -265,38 +265,8 @@ class GLViewportWidget(QOpenGLWidget):
             self._crosshair.raise_()
             self._hud.raise_()
 
-    def _selection_key(self) -> tuple[float, float, float, float, float, int, float]:
-        eye = self._session.player.eye_pos()
-        return (round(float(eye.x), 4), round(float(eye.y), 4), round(float(eye.z), 4), round(float(self._session.player.yaw_deg), 3), round(float(self._session.player.pitch_deg), 3), int(self._session.world.revision), round(float(self._state.reach), 3))
-
     def _invalidate_selection_target(self) -> None:
-        self._selection_cache_key = None
-        self._selection_target = None
-
-    def _update_selection_target(self, *, force: bool = False) -> float:
-        key = self._selection_key()
-        if (not bool(force)) and self._selection_cache_key == key:
-            return 0.0
-
-        t0 = time.perf_counter()
-        self._selection_cache_key = key
-
-        from maiming.domain.systems.build_system import pick_block
-
-        eye = self._session.player.eye_pos()
-        hit = pick_block(self._session.world, origin=eye, direction=self._session.player.view_forward(), reach=float(self._state.reach), block_registry=self._session.block_registry)
-        if hit is None:
-            self._selection_target = None
-            return float((time.perf_counter() - t0) * 1000.0)
-
-        hx, hy, hz = hit.hit
-        st = self._session.world.blocks.get((int(hx), int(hy), int(hz)))
-        if st is None:
-            self._selection_target = None
-            return float((time.perf_counter() - t0) * 1000.0)
-
-        self._selection_target = (int(hx), int(hy), int(hz), str(st))
-        return float((time.perf_counter() - t0) * 1000.0)
+        self._selection_state.invalidate()
 
     def initializeGL(self) -> None:
         try:
@@ -369,12 +339,13 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
 
-        self._last_selection_pick_ms = self._update_selection_target()
+        self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach))
 
-        if self._selection_target is None:
+        selection_target = self._selection_state.target()
+        if selection_target is None:
             self._renderer.clear_selection()
         else:
-            hx, hy, hz, st = self._selection_target
+            hx, hy, hz, st = selection_target
 
             def get_state(x: int, y: int, z: int) -> str | None:
                 return self._session.world.blocks.get((int(x), int(y), int(z)))

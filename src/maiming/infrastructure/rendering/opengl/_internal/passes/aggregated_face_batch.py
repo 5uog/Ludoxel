@@ -7,11 +7,16 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from OpenGL.GL import glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect, glBindBuffer, glBindVertexArray, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
+from OpenGL.GL import (
+    glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect,
+    glBindBuffer, glBindVertexArray,
+    GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
+)
 
 from ......domain.world.chunking import ChunkKey
 from ..face_bucket_layout import FACE_COUNT
-from ..gl.buffer_upload import as_float32_c_array, as_uint32_c_array, upload_array_buffer
+from ..gl.array_view import as_uint32_rows, copy_float32_rows
+from ..gl.buffer_upload import upload_array_buffer
 from ..gl.mesh_buffer import MeshBuffer
 
 @dataclass(frozen=True)
@@ -43,10 +48,7 @@ class AggregatedFaceBatch:
 
     @staticmethod
     def _norm_face_array(arr: np.ndarray) -> np.ndarray:
-        src = as_float32_c_array(arr)
-        if src.ndim != 2 or src.shape[1] != 12:
-            raise ValueError("Aggregated face payload rows must be float32 Nx12 arrays")
-        return np.array(src, dtype=np.float32, copy=True, order="C")
+        return copy_float32_rows(arr, cols=12, label="Aggregated face payload rows")
 
     @staticmethod
     def _chunk_total(faces: list[np.ndarray]) -> int:
@@ -191,9 +193,7 @@ class AggregatedFaceBatch:
                 continue
 
             arr = np.asarray(rows[fi], dtype=np.uint32)
-            if not arr.flags["C_CONTIGUOUS"]:
-                arr = np.ascontiguousarray(arr, dtype=np.uint32)
-            out.append(arr)
+            out.append(as_uint32_rows(arr, cols=4, label="Indirect draw commands"))
 
         return out
 
@@ -202,7 +202,7 @@ class AggregatedFaceBatch:
         if fi < 0 or fi >= len(self._indirect_buffers):
             return
 
-        arr = as_uint32_c_array(commands)
+        arr = as_uint32_rows(commands, cols=4, label="Indirect draw commands")
         self._indirect_caps[fi] = upload_array_buffer(target=GL_DRAW_INDIRECT_BUFFER, buffer=int(self._indirect_buffers[fi]), usage=GL_STREAM_DRAW, data=arr, capacity_bytes=int(self._indirect_caps[fi]))
 
     def draw(self, commands: list[np.ndarray], *, before_face_draw: Callable[[int], None] | None = None) -> tuple[int, int]:
