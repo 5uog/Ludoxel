@@ -94,8 +94,8 @@ def _mat_rot_y(rad: float) -> np.ndarray:
     s = float(math.sin(float(rad)))
     m = _mat_identity()
     m[0, 0] = c
-    m[0, 2] = s
-    m[2, 0] = -s
+    m[0, 2] = -s
+    m[2, 0] = s
     m[2, 2] = c
     return m
 
@@ -176,7 +176,7 @@ def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
     shadow_rows = np.ascontiguousarray(np.vstack(rows), dtype=np.float32)
 
     if bool(state.is_first_person):
-        world_rows = np.ascontiguousarray(np.vstack(rows[1:]), dtype=np.float32)
+        world_rows = empty
     else:
         world_rows = shadow_rows
 

@@ -35,6 +35,13 @@ def wish_dir_from_input(player: PlayerEntity, forward: float, strafe: float) -> 
         return Vec3(0.0, 0.0, 0.0)
     return v.normalized()
 
+def _flight_sprint_multiplier(params: MovementParams) -> float:
+    walk = float(params.walk_speed)
+    sprint = float(params.sprint_speed)
+    if walk <= 1e-9:
+        return 1.0
+    return max(1.0, sprint / walk)
+
 def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams = DEFAULT_MOVEMENT_PARAMS) -> None:
     player.yaw_deg += float(inp.yaw_delta_deg)
     player.pitch_deg += float(inp.pitch_delta_deg)
@@ -42,6 +49,7 @@ def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: Movemen
 
     f = clampf(inp.forward, -1.0, 1.0)
     s = clampf(inp.strafe, -1.0, 1.0)
+    want_sprint = bool(inp.sprint) and (float(f) > 1e-6) and (not bool(inp.crouch))
 
     wish = wish_dir_from_input(player, f, s)
 
@@ -50,6 +58,8 @@ def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: Movemen
         target_z = 0.0
     else:
         fly_speed = float(params.fly_speed)
+        if bool(want_sprint):
+            fly_speed *= float(_flight_sprint_multiplier(params))
         target_x = float(wish.x) * fly_speed
         target_z = float(wish.z) * fly_speed
 

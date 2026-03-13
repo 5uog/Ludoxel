@@ -124,9 +124,6 @@ class SessionManager:
 
     def _update_player_walk_phase(self, dt: float) -> None:
         p = self.player
-        if bool(p.flying) or (not bool(p.on_ground)):
-            return
-
         speed = math.hypot(float(p.velocity.x), float(p.velocity.z))
         if speed <= 1e-6:
             return
@@ -160,6 +157,7 @@ class SessionManager:
 
             self._update_crouch_eye(float(dt), False)
             self._update_step_eye(float(dt))
+            self._update_player_walk_phase(float(dt))
             return False
 
         jump_pulse = False
@@ -226,11 +224,8 @@ class SessionManager:
         if float(p.crouch_eye_drop) > 1e-9:
             crouch_amount = float(max(0.0, min(1.0, float(p.crouch_eye_offset) / float(p.crouch_eye_drop))))
 
-        if bool(p.flying) or (not bool(p.on_ground)):
-            limb_swing_amount = 0.0
-        else:
-            walk_speed = max(1e-6, float(self.settings.movement.walk_speed))
-            limb_swing_amount = 0.5 * min(float(_PLAYER_WALK_MAX_SWING_SCALE), float(speed) / float(walk_speed))
+        walk_speed = max(1e-6, float(self.settings.movement.walk_speed))
+        limb_swing_amount = 0.5 * min(float(_PLAYER_WALK_MAX_SWING_SCALE), float(speed) / float(walk_speed))
 
         player_model = PlayerModelSnapshotDTO(base_x=float(p.position.x), base_y=float(p.position.y), base_z=float(p.position.z), body_yaw_deg=float(p.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(p.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), is_first_person=True)
 
