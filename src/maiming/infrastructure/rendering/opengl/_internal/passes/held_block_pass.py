@@ -41,5 +41,5 @@ class HeldBlockPass:
         if self._face_pass is None or self._atlas is None or self._uv_lookup is None or self._def_lookup is None:
             return (0, 0)
 
-        rows = build_first_person_held_block_face_rows(first_person, uv_lookup=self._uv_lookup, def_lookup=self._def_lookup)
+        rows = build_first_person_held_block_face_rows(first_person, projection=view_proj, uv_lookup=self._uv_lookup, def_lookup=self._def_lookup)
         return self._face_pass.draw(face_rows=rows, view_proj=view_proj, tex_id=int(self._atlas.tex_id), sun_dir=sun_dir)

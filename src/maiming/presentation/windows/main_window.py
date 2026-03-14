@@ -41,6 +41,7 @@ def run_app(*, project_root: Path) -> None:
     w = MainWindow(project_root=root)
     w.setWindowTitle("Maiming")
     w.resize(1280, 720)
+    w.setMinimumSize(1280, 720)
     w.show()
 
     app.exec()

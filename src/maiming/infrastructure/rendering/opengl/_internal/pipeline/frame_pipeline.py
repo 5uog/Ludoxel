@@ -25,6 +25,15 @@ from ...facade.render_metrics import PassFrameMetrics, RendererFrameMetrics
 from ...facade.render_state import RendererRuntimeState
 from ...facade.selection_controller import SelectionController
 
+_FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
+_FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20
+
+def _first_person_viewmodel_fov_deg(world_fov_deg: float) -> float:
+    fov = float(world_fov_deg)
+    if fov <= float(_FIRST_PERSON_REFERENCE_FOV_DEG):
+        return fov
+    return float(_FIRST_PERSON_REFERENCE_FOV_DEG) + (fov - float(_FIRST_PERSON_REFERENCE_FOV_DEG)) * float(_FIRST_PERSON_HIGH_FOV_WEIGHT)
+
 @dataclass(frozen=True)
 class FramePipeline:
     cfg: GLRendererParams
@@ -100,7 +109,8 @@ class FramePipeline:
         first_person = None if player_state is None else player_state.first_person
         if first_person is not None and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
-            hand_vp = mat4.perspective(fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
+            hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
+            hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
             if first_person.visible_block_id is not None:
                 self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             else:

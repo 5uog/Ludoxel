@@ -31,5 +31,5 @@ class FirstPersonArmPass:
         if self._face_pass is None or self._skin_texture is None:
             return (0, 0)
 
-        rows = build_first_person_arm_face_rows(first_person, skin_width=int(self._skin_texture.width), skin_height=int(self._skin_texture.height))
+        rows = build_first_person_arm_face_rows(first_person, projection=view_proj, skin_width=int(self._skin_texture.width), skin_height=int(self._skin_texture.height))
         return self._face_pass.draw(face_rows=rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir)
