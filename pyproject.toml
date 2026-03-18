@@ -41,14 +41,14 @@ dependencies = ["PyQt6>=6.6,<7", "numpy>=1.26,<3", "PyOpenGL>=3.1.7,<4"]
 dev = ["build>=1.2,<2", "Cython>=3.0,<4", "setuptools>=82", "wheel>=0.45"]
 
 [project.scripts]
-ludoxel = "ludoxel.api.run:run_app"
+ludoxel = "ludoxel.application.apis:run_app"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = { attr = "ludoxel.meta.version.__version__" }
+version = { attr = "ludoxel.application.meta.version.__version__" }
 
 [tool.setuptools.package-data]
 ludoxel = [

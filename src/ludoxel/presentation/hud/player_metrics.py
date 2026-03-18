@@ -8,7 +8,7 @@ import math
 from collections import deque
 from dataclasses import dataclass, field
 
-from ...application.session.session_settings import SessionSettings
+from ...application.context.runtime.session_settings import SessionSettings
 from ...domain.entities.player_entity import PlayerEntity
 
 

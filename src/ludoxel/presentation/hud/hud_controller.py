@@ -11,13 +11,13 @@ import threading
 from dataclasses import dataclass
 
 from ...core.math.vec3 import Vec3
-from ...application.session.session_manager import SessionManager
+from ...application.managers.session_manager import SessionManager
 from ...domain.config.render_distance import clamp_render_distance_chunks
 from ...infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ...infrastructure.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
 from .hud_payload import HudPayload
 from .player_metrics import PlayerMetricsTracker
-from ...meta import __version__
+from ...application.meta import __version__
 
 
 @dataclass(frozen=True)
@@ -241,7 +241,7 @@ class HudController:
         lines.append(str(sel_line))
         lines.append(f"Cloud: {int(bool(cloud_enabled))} | Density: {int(cloud_density)} |\nSeed: {int(cloud_seed)} | Cloud Wireflame: {int(bool(cloud_wire))} |\n")
         lines.append(f"World Wireflame: {int(bool(world_wire))} | Shadow: {int(bool(shadow_ok))} | Size: {int(shadow_size)} | DBG: {int(bool(debug_shadow))} | Sun: {float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}\n")
-        lines.append(f"ludoxel v{__version__} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
+        lines.append(f"Ludoxel v{__version__} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
 
         gl_vendor, gl_rend, gl_ver, _glsl = renderer.gl_info()
         if gl_rend:

@@ -8,7 +8,7 @@ from PyQt6.QtCore import QPoint, QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFocusEvent, QMouseEvent, QPainter, QPaintEvent, QPen, QWheelEvent
 from PyQt6.QtWidgets import QAbstractButton, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QSlider, QWidget
 
-from ....application.session.keybinds import display_text_for_binding, normalize_binding_text, normalize_key_code
+from ....application.handlers.keybinds import display_text_for_binding, normalize_binding_text, normalize_key_code
 
 
 def _draw_bedrock_frame(painter: QPainter, rect: QRect, *, fill: QColor, top_left: QColor, bottom_right: QColor, outline: QColor) -> None:

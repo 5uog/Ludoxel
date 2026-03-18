@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...application.session.audio_preferences import (
+from ...application.context.runtime.audio_preferences import (
     AUDIO_CATEGORY_AMBIENT,
     AUDIO_CATEGORY_BLOCK,
     AUDIO_CATEGORY_PLAYER,

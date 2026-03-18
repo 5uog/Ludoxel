@@ -7,7 +7,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from ....application.session.session_manager import SessionManager
+from ....application.managers.session_manager import SessionManager
 from ....core.math.vec3 import Vec3
 from ....core.math.view_angles import forward_from_yaw_pitch_deg
 

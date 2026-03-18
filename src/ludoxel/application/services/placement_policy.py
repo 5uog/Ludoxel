@@ -5,19 +5,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 from ...core.math.vec3 import Vec3
-
 from ...domain.entities.player_entity import PlayerEntity
 from ...domain.world.world_state import WorldState
-
 from ...domain.blocks.block_registry import BlockRegistry
 from ...domain.blocks.cardinal import cardinal_from_xz
+from ...domain.blocks.connectivity import make_fence_gate_state, make_wall_state
+from ...domain.blocks.models.api import collision_aabbs_for_block
 from ...domain.blocks.state_codec import format_state, parse_state
 from ...domain.blocks.state_values import slab_type_value
-from ...domain.blocks.connectivity import make_wall_state, make_fence_gate_state
-from ...domain.blocks.models.api import collision_aabbs_for_block
-from ...domain.blocks.structural_rules import is_slab, is_stairs, is_wall, is_fence_gate
+from ...domain.blocks.structural_rules import is_fence_gate, is_slab, is_stairs, is_wall
 
 
 @dataclass(frozen=True)
@@ -35,7 +34,9 @@ class PlacementPolicy:
         if int(hit_face) == 3:
             return "top"
 
-        fy = float(hit_point.y) - float(int(hit_point.y))
+        base_y = math.floor(float(hit_point.y))
+        fy = float(hit_point.y) - float(base_y)
+        fy = max(0.0, min(1.0, float(fy)))
         return "top" if fy >= 0.5 else "bottom"
 
     def _try_merge_same_slab(self, *, existing_state: str, block_id: str, desired_type: str) -> str | None:
@@ -59,7 +60,11 @@ class PlacementPolicy:
 
     def resolve_slab_merge_state(self, *, existing_state: str, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         desired_type = self._choose_half_type(int(hit_face), hit_point)
-        return self._try_merge_same_slab(existing_state=str(existing_state), block_id=str(block_id), desired_type=str(desired_type))
+        return self._try_merge_same_slab(
+            existing_state=str(existing_state),
+            block_id=str(block_id),
+            desired_type=str(desired_type),
+        )
 
     def resolve_slab_merge_state_from_hit(self, *, existing_state: str, block_id: str, hit_face: int) -> str | None:
         face = int(hit_face)
@@ -71,7 +76,11 @@ class PlacementPolicy:
         else:
             return None
 
-        return self._try_merge_same_slab(existing_state=str(existing_state), block_id=str(block_id), desired_type=str(desired_type))
+        return self._try_merge_same_slab(
+            existing_state=str(existing_state),
+            block_id=str(block_id),
+            desired_type=str(desired_type),
+        )
 
     def resolve_place_state(self, *, player: PlayerEntity, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         base_sel = str(block_id)
@@ -98,7 +107,16 @@ class PlacementPolicy:
 
         return format_state(base_sel, props)
 
-    def placement_intersects_player(self, *, player: PlayerEntity, world: WorldState, px: int, py: int, pz: int, place_state: str) -> bool:
+    def placement_intersects_player(
+        self,
+        *,
+        player: PlayerEntity,
+        world: WorldState,
+        px: int,
+        py: int,
+        pz: int,
+        place_state: str,
+    ) -> bool:
         pa = player.aabb_at(player.position)
 
         def get_state(x: int, y: int, z: int) -> str | None:
@@ -107,7 +125,14 @@ class PlacementPolicy:
                 return str(place_state)
             return world.blocks.get(k)
 
-        for ba in collision_aabbs_for_block(str(place_state), get_state, self.block_registry.get, int(px), int(py), int(pz)):
+        for ba in collision_aabbs_for_block(
+            str(place_state),
+            get_state,
+            self.block_registry.get,
+            int(px),
+            int(py),
+            int(pz),
+        ):
             if pa.intersects(ba):
                 return True
 

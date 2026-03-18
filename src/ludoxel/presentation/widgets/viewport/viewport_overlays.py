@@ -9,7 +9,7 @@ from typing import Callable
 
 from PyQt6.QtWidgets import QWidget
 
-from ....application.session.fixed_step_runner import FixedStepRunner
+from ....application.tasks.fixed_step_runner import FixedStepRunner
 from .viewport_input import ViewportInput
 
 

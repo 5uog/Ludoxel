@@ -12,9 +12,9 @@ from PyQt6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtWidgets import QMessageBox
 
-from ....application.othello.othello_match_controller import OthelloMatchController
-from ....application.session.fixed_step_runner import FixedStepRunner
-from ....application.session.play_space_sessions import PlaySpaceSessions
+from ....application.managers.othello_match_manager import OthelloMatchController
+from ....application.tasks.fixed_step_runner import FixedStepRunner
+from ....application.context.play_space_context import PlaySpaceSessions
 from ....core.math.vec3 import Vec3
 from ....core.math.view_angles import forward_from_yaw_pitch_deg
 from ....infrastructure.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
@@ -36,8 +36,8 @@ from .first_person_motion import FirstPersonMotionController
 from . import viewport_event_handlers, viewport_othello_controller, viewport_settings_controller
 from .viewport_input import ViewportInput
 from .viewport_overlays import OverlayRefs, ViewportOverlays
-from ....application.session.runtime_persistence import apply_persisted_state_if_present, save_state
-from ....application.session.runtime_preferences import ViewportRuntimeState
+from ....application.tasks.runtime_persistence import apply_persisted_state_if_present, save_state
+from ....application.context.runtime.runtime_preferences import ViewportRuntimeState
 from .viewport_selection_state import ViewportSelectionState
 from .viewport_world_upload import WorldUploadTracker
 from .player_render_state_composer import compose_player_render_state

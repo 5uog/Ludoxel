@@ -13,7 +13,7 @@ import time
 from PyQt6.QtCore import QObject, QUrl
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer, QSoundEffect
 
-from ...application.session.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
+from ...application.context.runtime.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
 from ...core.math.vec3 import Vec3
 from ...domain.blocks.block_registry import BlockRegistry
 from ...domain.blocks.sound_groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
@@ -92,7 +92,7 @@ class AudioManager(QObject):
         self._listener_angular_epsilon_deg = 1.0
 
         self._small_landing_threshold_blocks = 6.0
-        self._big_landing_threshold_blocks = 20.0
+        self._big_landing_threshold_blocks = 12.0
 
         self._build_source_cache()
         self.prime_effects()

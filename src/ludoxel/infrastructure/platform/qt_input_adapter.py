@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from PyQt6.QtCore import QObject
 from PyQt6.QtGui import QKeyEvent
 
-from ...application.session.keybinds import (
+from ...application.handlers.keybinds import (
     ACTION_CROUCH,
     ACTION_JUMP,
     ACTION_MOVE_BACKWARD,

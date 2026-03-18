@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Tuple
 
-from ...application.session.audio_preferences import AudioPreferences
-from ...application.session.keybinds import KeybindSettings
+from ...application.context.runtime.audio_preferences import AudioPreferences
+from ...application.handlers.keybinds import KeybindSettings
 from ...domain.config.render_distance import clamp_render_distance_chunks
 from ...domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from ...domain.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
@@ -287,11 +287,11 @@ class AppStateStore:
     project_root: Path
 
     def _player_store(self) -> JsonFileStore:
-        p = Path(self.project_root) / "user_data" / "player_state.json"
+        p = Path(self.project_root) / "configs" / "player_state.json"
         return JsonFileStore(path=p)
 
     def _world_store(self) -> JsonFileStore:
-        p = Path(self.project_root) / "user_data" / "world_state.json"
+        p = Path(self.project_root) / "configs" / "world_state.json"
         return JsonFileStore(path=p)
 
     def load(self) -> AppState | None:

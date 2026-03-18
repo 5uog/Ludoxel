@@ -4,7 +4,7 @@
 # FILE: src/ludoxel/presentation/widgets/viewport/player_render_state_composer.py
 from __future__ import annotations
 
-from ....application.session.render_snapshot import PlayerModelSnapshotDTO, RenderSnapshotDTO
+from ....application.context.runtime.render_snapshot import PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ....domain.blocks.block_registry import BlockRegistry
 from ....infrastructure.rendering.opengl.facade.player_render_state import FirstPersonRenderState, PlayerRenderState
 from .first_person_motion import FirstPersonMotionSample

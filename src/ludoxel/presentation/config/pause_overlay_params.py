@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...application.session.session_settings import SessionSettings
+from ...application.context.runtime.session_settings import SessionSettings
 from ...domain.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, RENDER_DISTANCE_MIN_CHUNKS
 
 

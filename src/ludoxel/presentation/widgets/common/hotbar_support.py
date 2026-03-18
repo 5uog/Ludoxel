@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import QWidget
 
-from ....application.session.keybinds import KeybindSettings, action_for_key, display_text_for_binding, hotbar_action_for_index, hotbar_index_for_action
+from ....application.handlers.keybinds import KeybindSettings, action_for_key, display_text_for_binding, hotbar_action_for_index, hotbar_index_for_action
 
 
 def refresh_widget_style(widget: QWidget) -> None:
