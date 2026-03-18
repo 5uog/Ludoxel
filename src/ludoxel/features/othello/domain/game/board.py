@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/features/othello/domain/othello/board.py
+# FILE: src/ludoxel/features/othello/domain/game/board.py
 from __future__ import annotations
 
 import math

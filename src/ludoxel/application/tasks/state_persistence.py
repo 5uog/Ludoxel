@@ -7,12 +7,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...shared.core.math.vec3 import Vec3
-from ...features.othello.domain.othello.board import (
+from ...features.othello.domain.game.board import (
     OTHELLO_BOARD_SURFACE_Y,
     ensure_othello_board_layout,
     is_othello_board_footprint,
 )
-from ...features.othello.domain.othello.types import OthelloGameState
+from ...features.othello.domain.game.types import OthelloGameState
 from ...shared.domain.play_space import normalize_play_space_id
 from ...infrastructure.persistence.app_state_store import (
     AppState,

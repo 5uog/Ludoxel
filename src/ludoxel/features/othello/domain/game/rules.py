@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/features/othello/domain/othello/rules.py
+# FILE: src/ludoxel/features/othello/domain/game/rules.py
 from __future__ import annotations
 
 from .board import BOARD_SIZE, row_col_to_square_index as row_col_to_index, square_index_to_row_col as index_to_row_col

@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ....shared.domain.blocks.registry.block_registry import BlockRegistry
-from ....features.othello.domain.othello.board import ensure_othello_board_layout
+from ....features.othello.domain.game.board import ensure_othello_board_layout
 from ....shared.domain.world.world_gen import generate_flat_world
 from ....shared.domain.world.world_state import WorldState
 from ...managers.session_manager import SessionManager

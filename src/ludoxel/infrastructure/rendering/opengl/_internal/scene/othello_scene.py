@@ -8,8 +8,8 @@ import math
 
 import numpy as np
 
-from ......features.othello.domain.othello.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, square_center
-from ......features.othello.domain.othello.types import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side
+from ......features.othello.domain.game.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, square_center
+from ......features.othello.domain.game.types import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side
 from ...facade.othello_render_state import OthelloRenderState
 from .transform_matrices import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
 

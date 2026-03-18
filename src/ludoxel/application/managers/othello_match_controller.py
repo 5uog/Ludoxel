@@ -6,14 +6,14 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ...features.othello.domain.othello.rules import (
+from ...features.othello.domain.game.rules import (
     apply_move,
     counts_for_board,
     create_initial_board,
     find_legal_moves,
     winner_for_board,
 )
-from ...features.othello.domain.othello.types import (
+from ...features.othello.domain.game.types import (
     OTHELLO_GAME_STATE_AI_TURN,
     OTHELLO_GAME_STATE_ANIMATING,
     OTHELLO_GAME_STATE_FINISHED,

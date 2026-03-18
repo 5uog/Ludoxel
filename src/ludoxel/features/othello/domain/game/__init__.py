@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/features/othello/domain/othello/__init__.py
+# FILE: src/ludoxel/features/othello/domain/game/__init__.py
 from __future__ import annotations
 
 from .ai import choose_ai_move

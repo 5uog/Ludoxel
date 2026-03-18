@@ -11,7 +11,7 @@ from ....shared.domain.inventory.hotbar import HOTBAR_SIZE, cycle_hotbar_index, 
 from ....shared.domain.inventory.hotbar_defaults import default_hotbar_slots
 from ....features.othello.domain.inventory.hotbar_defaults import default_othello_hotbar_slots
 from ....features.othello.domain.inventory.special_items import is_special_item_id
-from ....features.othello.domain.othello.types import OthelloSettings
+from ....features.othello.domain.game.types import OthelloSettings
 from ....shared.domain.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
 from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ...handlers.keybinds import KeybindSettings

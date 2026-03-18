@@ -15,7 +15,7 @@ from ...shared.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from ...shared.domain.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ...shared.domain.inventory.hotbar_defaults import default_hotbar_slots
 from ...features.othello.domain.inventory.hotbar_defaults import default_othello_hotbar_slots
-from ...features.othello.domain.othello.types import OthelloGameState, OthelloSettings
+from ...features.othello.domain.game.types import OthelloGameState, OthelloSettings
 from ...shared.domain.play_space import PLAY_SPACE_MY_WORLD, normalize_play_space_id
 from ...shared.domain.world.world_state import WorldState
 from .json_file_store import JsonFileStore
