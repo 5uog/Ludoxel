@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/presentation/widgets/viewport/viewport_overlays.py
+# FILE: src/ludoxel/presentation/widgets/viewport/runtime/overlay_controller.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,8 +9,8 @@ from typing import Callable
 
 from PyQt6.QtWidgets import QWidget
 
-from ....application.tasks.fixed_step_runner import FixedStepRunner
-from .viewport_input import ViewportInput
+from .....application.tasks.fixed_step_runner import FixedStepRunner
+from .input_controller import ViewportInput
 
 
 @dataclass
@@ -56,7 +56,13 @@ class ViewportOverlays:
         return bool(self._othello_settings_open)
 
     def any_modal_open(self) -> bool:
-        return bool(self._paused or self._inventory_open or self._settings_open or self._othello_settings_open or self._dead)
+        return bool(
+            self._paused
+            or self._inventory_open
+            or self._settings_open
+            or self._othello_settings_open
+            or self._dead
+        )
 
     def _raise_game_hud(self) -> None:
         self._r.hotbar.setVisible(True)
@@ -99,7 +105,12 @@ class ViewportOverlays:
         self._r.death.setVisible(False)
         self._runner.start()
 
-        if (not self._paused) and (not self._inventory_open) and (not self._settings_open) and (not self._othello_settings_open):
+        if (
+            not self._paused
+            and not self._inventory_open
+            and not self._settings_open
+            and not self._othello_settings_open
+        ):
             self._inp.set_mouse_capture(True)
             self._r.hotbar.setVisible(True)
 
@@ -129,7 +140,7 @@ class ViewportOverlays:
             self._r.pause.setFocus()
             return
 
-        if (not self._paused) and (not self._settings_open) and (not self._othello_settings_open):
+        if not self._paused and not self._settings_open and not self._othello_settings_open:
             return
 
         self._paused = False
@@ -258,7 +269,7 @@ class ViewportOverlays:
 
         self._r.inventory.setVisible(False)
 
-        if (not self._paused) and (not self._dead) and (not self._settings_open) and (not self._othello_settings_open):
+        if not self._paused and not self._dead and not self._settings_open and not self._othello_settings_open:
             self._runner.start()
             self._inp.set_mouse_capture(True)
             self._r.hotbar.setVisible(True)

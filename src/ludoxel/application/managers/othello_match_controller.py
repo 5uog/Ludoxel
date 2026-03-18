@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/application/managers/othello_match_manager.py
+# FILE: src/ludoxel/application/managers/othello_match_controller.py
 from __future__ import annotations
 
 from dataclasses import replace
@@ -36,7 +36,7 @@ def _turn_status_for_player_side(player_side: int, current_turn: int) -> str:
     return OTHELLO_GAME_STATE_AI_TURN
 
 
-class OthelloMatchManager:
+class OthelloMatchController:
 
     def __init__(
         self,
@@ -304,6 +304,3 @@ class OthelloMatchManager:
             message=message,
         ).normalized()
         return self.game_state()
-
-
-OthelloMatchController = OthelloMatchManager

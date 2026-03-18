@@ -1,25 +1,25 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/presentation/widgets/viewport/viewport_settings_controller.py
+# FILE: src/ludoxel/presentation/widgets/viewport/controllers/settings_controller.py
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....application.context.runtime.audio_preferences import AudioPreferences
-from ....application.handlers.keybinds import KeybindSettings
-from ....application.pipelines.runtime_state_pipeline import apply_runtime_to_renderer as apply_runtime_to_renderer_state, sync_runtime_sun_from_renderer
-from .view_model_visibility import view_model_visible
+from .....application.context.runtime.audio_preferences import AudioPreferences
+from .....application.handlers.keybinds import KeybindSettings
+from .....application.pipelines.runtime_state_pipeline import apply_runtime_to_renderer as apply_runtime_to_renderer_state
+from .....application.pipelines.runtime_state_pipeline import sync_runtime_sun_from_renderer
 
 if TYPE_CHECKING:
-    from .gl_viewport_widget import GLViewportWidget
+    from ..gl_viewport_widget import GLViewportWidget
 
 
 def bind_settings_overlay(viewport: "GLViewportWidget") -> None:
-    from . import viewport_event_handlers
+    from . import interaction_controller
 
     overlay = viewport._settings
-    overlay.back_requested.connect(lambda: viewport_event_handlers.back_from_settings(viewport))
+    overlay.back_requested.connect(lambda: interaction_controller.back_from_settings(viewport))
     overlay.fov_changed.connect(lambda value: set_fov(viewport, float(value)))
     overlay.sens_changed.connect(lambda value: set_sens(viewport, float(value)))
     overlay.invert_x_changed.connect(lambda on: set_invert_x(viewport, bool(on)))
@@ -91,7 +91,14 @@ def inventory_available(viewport: "GLViewportWidget") -> bool:
 def sync_hotbar_widgets(viewport: "GLViewportWidget") -> None:
     viewport._state.normalize()
     slots = viewport._state.hotbar_snapshot()
-    selected_index = viewport._state.othello_selected_hotbar_index if viewport._state.is_othello_space() else (viewport._state.creative_selected_hotbar_index if bool(viewport._state.creative_mode) else viewport._state.survival_selected_hotbar_index)
+
+    if viewport._state.is_othello_space():
+        selected_index = viewport._state.othello_selected_hotbar_index
+    elif bool(viewport._state.creative_mode):
+        selected_index = viewport._state.creative_selected_hotbar_index
+    else:
+        selected_index = viewport._state.survival_selected_hotbar_index
+
     viewport._inventory.set_creative_mode(bool(viewport._state.creative_mode and inventory_available(viewport)))
     viewport._inventory.set_keybinds(viewport._state.keybinds)
     viewport._inventory.set_animations_enabled(bool(viewport._state.animated_textures_enabled))
@@ -111,8 +118,7 @@ def current_block_id(viewport: "GLViewportWidget") -> str | None:
 
 
 def sync_view_model_visibility(viewport: "GLViewportWidget") -> None:
-    visible = view_model_visible(hide_hand=bool(viewport._state.hide_hand))
-    viewport._first_person_motion.set_view_model_visible(bool(visible))
+    viewport._first_person_motion.set_view_model_visible(bool(viewport._state.view_model_visible()))
 
 
 def sync_first_person_target(viewport: "GLViewportWidget") -> None:
@@ -146,7 +152,47 @@ def clear_selected_hotbar_slot(viewport: "GLViewportWidget") -> None:
 
 def sync_settings_values(viewport: "GLViewportWidget") -> None:
     sync_state_from_renderer_sun(viewport)
-    viewport._settings.sync_values(fov_deg=viewport._session.settings.fov_deg, sens_deg_per_px=viewport._session.settings.mouse_sens_deg_per_px, inv_x=viewport._state.invert_x, inv_y=viewport._state.invert_y, fullscreen=viewport._state.fullscreen, hide_hud=viewport._state.hide_hud, hide_hand=viewport._state.hide_hand, view_bobbing_enabled=viewport._state.view_bobbing_enabled, camera_shake_enabled=viewport._state.camera_shake_enabled, view_bobbing_strength=float(viewport._state.view_bobbing_strength), camera_shake_strength=float(viewport._state.camera_shake_strength), animated_textures_enabled=bool(viewport._state.animated_textures_enabled), outline_selection=viewport._state.outline_selection, cloud_wire=viewport._state.cloud_wire, clouds_enabled=viewport._state.cloud_enabled, cloud_density=int(viewport._state.cloud_density), cloud_seed=int(viewport._state.cloud_seed), cloud_flow_direction=str(viewport._state.cloud_flow_direction), world_wire=viewport._state.world_wire, shadow_enabled=viewport._state.shadow_enabled, sun_az_deg=viewport._state.sun_az_deg, sun_el_deg=viewport._state.sun_el_deg, creative_mode=viewport._state.creative_mode, auto_jump_enabled=viewport._state.auto_jump_enabled, auto_sprint_enabled=viewport._state.auto_sprint_enabled, gravity=float(viewport._session.settings.movement.gravity), walk_speed=float(viewport._session.settings.movement.walk_speed), sprint_speed=float(viewport._session.settings.movement.sprint_speed), jump_v0=float(viewport._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(viewport._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(viewport._session.settings.movement.fly_speed), fly_ascend_speed=float(viewport._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(viewport._session.settings.movement.fly_descend_speed), render_distance_chunks=int(viewport._state.render_distance_chunks), keybinds=viewport._state.keybinds, audio_master=float(viewport._state.audio.master), audio_ambient=float(viewport._state.audio.ambient), audio_block=float(viewport._state.audio.block), audio_player=float(viewport._state.audio.player))
+    viewport._settings.sync_values(
+        fov_deg=viewport._session.settings.fov_deg,
+        sens_deg_per_px=viewport._session.settings.mouse_sens_deg_per_px,
+        inv_x=viewport._state.invert_x,
+        inv_y=viewport._state.invert_y,
+        fullscreen=viewport._state.fullscreen,
+        hide_hud=viewport._state.hide_hud,
+        hide_hand=viewport._state.hide_hand,
+        view_bobbing_enabled=viewport._state.view_bobbing_enabled,
+        camera_shake_enabled=viewport._state.camera_shake_enabled,
+        view_bobbing_strength=float(viewport._state.view_bobbing_strength),
+        camera_shake_strength=float(viewport._state.camera_shake_strength),
+        animated_textures_enabled=bool(viewport._state.animated_textures_enabled),
+        outline_selection=viewport._state.outline_selection,
+        cloud_wire=viewport._state.cloud_wire,
+        clouds_enabled=viewport._state.cloud_enabled,
+        cloud_density=int(viewport._state.cloud_density),
+        cloud_seed=int(viewport._state.cloud_seed),
+        cloud_flow_direction=str(viewport._state.cloud_flow_direction),
+        world_wire=viewport._state.world_wire,
+        shadow_enabled=viewport._state.shadow_enabled,
+        sun_az_deg=viewport._state.sun_az_deg,
+        sun_el_deg=viewport._state.sun_el_deg,
+        creative_mode=viewport._state.creative_mode,
+        auto_jump_enabled=viewport._state.auto_jump_enabled,
+        auto_sprint_enabled=viewport._state.auto_sprint_enabled,
+        gravity=float(viewport._session.settings.movement.gravity),
+        walk_speed=float(viewport._session.settings.movement.walk_speed),
+        sprint_speed=float(viewport._session.settings.movement.sprint_speed),
+        jump_v0=float(viewport._session.settings.movement.jump_v0),
+        auto_jump_cooldown_s=float(viewport._session.settings.movement.auto_jump_cooldown_s),
+        fly_speed=float(viewport._session.settings.movement.fly_speed),
+        fly_ascend_speed=float(viewport._session.settings.movement.fly_ascend_speed),
+        fly_descend_speed=float(viewport._session.settings.movement.fly_descend_speed),
+        render_distance_chunks=int(viewport._state.render_distance_chunks),
+        keybinds=viewport._state.keybinds,
+        audio_master=float(viewport._state.audio.master),
+        audio_ambient=float(viewport._state.audio.ambient),
+        audio_block=float(viewport._state.audio.block),
+        audio_player=float(viewport._state.audio.player),
+    )
 
 
 def set_fov(viewport: "GLViewportWidget", fov: float) -> None:
@@ -253,13 +299,19 @@ def set_shadow_enabled(viewport: "GLViewportWidget", on: bool) -> None:
 def set_sun_azimuth(viewport: "GLViewportWidget", azimuth_deg: float) -> None:
     viewport._state.sun_az_deg = float(azimuth_deg)
     viewport._state.normalize()
-    viewport._renderer.set_sun_angles(float(viewport._state.sun_az_deg), float(viewport._state.sun_el_deg))
+    viewport._renderer.set_sun_angles(
+        float(viewport._state.sun_az_deg),
+        float(viewport._state.sun_el_deg),
+    )
 
 
 def set_sun_elevation(viewport: "GLViewportWidget", elevation_deg: float) -> None:
     viewport._state.sun_el_deg = float(elevation_deg)
     viewport._state.normalize()
-    viewport._renderer.set_sun_angles(float(viewport._state.sun_az_deg), float(viewport._state.sun_el_deg))
+    viewport._renderer.set_sun_angles(
+        float(viewport._state.sun_az_deg),
+        float(viewport._state.sun_el_deg),
+    )
 
 
 def set_creative_mode(viewport: "GLViewportWidget", on: bool) -> None:
@@ -336,9 +388,21 @@ def reset_keybinds(viewport: "GLViewportWidget") -> None:
     sync_settings_values(viewport)
 
 
-def _replace_audio_preferences(viewport: "GLViewportWidget", *, master: float | None=None, ambient: float | None=None, block: float | None=None, player: float | None=None) -> None:
+def _replace_audio_preferences(
+    viewport: "GLViewportWidget",
+    *,
+    master: float | None = None,
+    ambient: float | None = None,
+    block: float | None = None,
+    player: float | None = None,
+) -> None:
     current = viewport._state.audio.normalized()
-    viewport._state.audio = AudioPreferences(master=float(current.master if master is None else master), ambient=float(current.ambient if ambient is None else ambient), block=float(current.block if block is None else block), player=float(current.player if player is None else player)).normalized()
+    viewport._state.audio = AudioPreferences(
+        master=float(current.master if master is None else master),
+        ambient=float(current.ambient if ambient is None else ambient),
+        block=float(current.block if block is None else block),
+        player=float(current.player if player is None else player),
+    ).normalized()
     sync_audio_preferences(viewport)
 
 

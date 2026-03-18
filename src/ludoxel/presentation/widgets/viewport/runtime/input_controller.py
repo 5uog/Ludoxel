@@ -1,16 +1,16 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/presentation/widgets/viewport/viewport_input.py
+# FILE: src/ludoxel/presentation/widgets/viewport/runtime/input_controller.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QCursor, QKeyEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 
-from ....infrastructure.platform.qt_input_adapter import QtInputAdapter, InputFrame
+from .....infrastructure.platform.qt_input_adapter import InputFrame, QtInputAdapter
 
 
 @dataclass

@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/application/tasks/runtime_persistence.py
+# FILE: src/ludoxel/application/tasks/state_persistence.py
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,8 +32,6 @@ from ..pipelines.runtime_state_pipeline import (
     persisted_settings_from_runtime,
     runtime_preferences_from_app_state,
 )
-
-PersistedRuntime = RuntimePreferences
 
 
 def _load_player_into_session(

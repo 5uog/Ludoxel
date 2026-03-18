@@ -5,6 +5,6 @@
 from __future__ import annotations
 
 from .fixed_step_runner import FixedStepRunner
-from .runtime_persistence import PersistedRuntime, apply_persisted_state_if_present, save_state
+from .state_persistence import apply_persisted_state_if_present, save_state
 
-__all__ = ["FixedStepRunner", "PersistedRuntime", "apply_persisted_state_if_present", "save_state"]
+__all__ = ["FixedStepRunner", "apply_persisted_state_if_present", "save_state"]

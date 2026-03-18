@@ -10,7 +10,7 @@ from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.world.world_gen import generate_test_map
 from ....domain.world.world_state import WorldState
 from ...managers.session_manager import SessionManager
-from ..session_factory_support import make_player_entity, make_session_settings
+from ..session_builders import make_player_entity, make_session_settings
 
 MY_WORLD_SPAWN: tuple[float, float, float] = (0.0, 1.0, -10.0)
 MY_WORLD_YAW_DEG: float = 0.0

@@ -11,7 +11,7 @@ from ....domain.othello.board import ensure_othello_board_layout
 from ....domain.world.world_gen import generate_flat_world
 from ....domain.world.world_state import WorldState
 from ...managers.session_manager import SessionManager
-from ..session_factory_support import make_player_entity, make_session_settings
+from ..session_builders import make_player_entity, make_session_settings
 
 OTHELLO_SPAWN: tuple[float, float, float] = (0.0, 1.0, -12.0)
 OTHELLO_YAW_DEG: float = 0.0

@@ -62,6 +62,3 @@ class PlaySpaceContext:
 
     def known_space_ids(self) -> tuple[str, ...]:
         return PLAY_SPACE_IDS
-
-
-PlaySpaceSessions = PlaySpaceContext

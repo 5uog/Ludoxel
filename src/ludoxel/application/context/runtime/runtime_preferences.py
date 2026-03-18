@@ -13,7 +13,6 @@ from ....domain.inventory.special_items import is_special_item_id
 from ....domain.othello.types import OthelloSettings
 from ....domain.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
 from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
-from ....presentation.widgets.viewport.view_model_visibility import view_model_visible
 from ...handlers.keybinds import KeybindSettings
 from .audio_preferences import AudioPreferences
 
@@ -131,7 +130,7 @@ class RuntimePreferences:
         return is_othello_space(self.current_space_id)
 
     def view_model_visible(self) -> bool:
-        return view_model_visible(hide_hand=bool(self.hide_hand))
+        return not bool(self.hide_hand)
 
     def _active_hotbar_slots(self) -> list[str]:
         if self.is_othello_space():
@@ -222,9 +221,6 @@ class RuntimePreferences:
     def clear_selected_hotbar_slot(self) -> None:
         self.normalize()
         self.set_hotbar_slot(self._active_hotbar_index(), None)
-
-
-ViewportRuntimeState = RuntimePreferences
 
 
 def coerce_runtime_preferences(
