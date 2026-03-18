@@ -102,22 +102,13 @@ class RuntimePreferences:
         self.sun_el_deg = max(0.0, min(90.0, float(self.sun_el_deg)))
 
         self.creative_hotbar_slots = list(normalize_hotbar_slots(self.creative_hotbar_slots, size=HOTBAR_SIZE))
-        self.creative_selected_hotbar_index = normalize_hotbar_index(
-            self.creative_selected_hotbar_index,
-            size=HOTBAR_SIZE,
-        )
+        self.creative_selected_hotbar_index = normalize_hotbar_index(self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
 
         self.survival_hotbar_slots = list(normalize_hotbar_slots(self.survival_hotbar_slots, size=HOTBAR_SIZE))
-        self.survival_selected_hotbar_index = normalize_hotbar_index(
-            self.survival_selected_hotbar_index,
-            size=HOTBAR_SIZE,
-        )
+        self.survival_selected_hotbar_index = normalize_hotbar_index(self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
 
         self.othello_hotbar_slots = list(normalize_hotbar_slots(self.othello_hotbar_slots, size=HOTBAR_SIZE))
-        self.othello_selected_hotbar_index = normalize_hotbar_index(
-            self.othello_selected_hotbar_index,
-            size=HOTBAR_SIZE,
-        )
+        self.othello_selected_hotbar_index = normalize_hotbar_index(self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
 
         self.othello_settings = self.othello_settings.normalized()
         self.keybinds = self.keybinds.normalized()
@@ -132,19 +123,20 @@ class RuntimePreferences:
     def view_model_visible(self) -> bool:
         return not bool(self.hide_hand)
 
-    def _active_hotbar_slots(self) -> list[str]:
+    def _active_hotbar_state_attrs(self) -> tuple[str, str]:
         if self.is_othello_space():
-            return self.othello_hotbar_slots
+            return ("othello_hotbar_slots", "othello_selected_hotbar_index")
         if bool(self.creative_mode):
-            return self.creative_hotbar_slots
-        return self.survival_hotbar_slots
+            return ("creative_hotbar_slots", "creative_selected_hotbar_index")
+        return ("survival_hotbar_slots", "survival_selected_hotbar_index")
+
+    def _active_hotbar_slots(self) -> list[str]:
+        slots_attr, _index_attr = self._active_hotbar_state_attrs()
+        return getattr(self, slots_attr)
 
     def _active_hotbar_index(self) -> int:
-        if self.is_othello_space():
-            return int(self.othello_selected_hotbar_index)
-        if bool(self.creative_mode):
-            return int(self.creative_selected_hotbar_index)
-        return int(self.survival_selected_hotbar_index)
+        _slots_attr, index_attr = self._active_hotbar_state_attrs()
+        return int(getattr(self, index_attr))
 
     def active_hotbar_index(self) -> int:
         return int(self._active_hotbar_index())
@@ -172,51 +164,20 @@ class RuntimePreferences:
 
     def set_hotbar_slot(self, index: int, item_id: str | None) -> None:
         self.normalize()
-        if self.is_othello_space():
-            self.othello_hotbar_slots = list(
-                with_hotbar_assignment(self.othello_hotbar_slots, index, item_id, size=HOTBAR_SIZE)
-            )
-            return
-        if bool(self.creative_mode):
-            self.creative_hotbar_slots = list(
-                with_hotbar_assignment(self.creative_hotbar_slots, index, item_id, size=HOTBAR_SIZE)
-            )
-            return
-        self.survival_hotbar_slots = list(
-            with_hotbar_assignment(self.survival_hotbar_slots, index, item_id, size=HOTBAR_SIZE)
-        )
+        slots_attr, _index_attr = self._active_hotbar_state_attrs()
+        active_slots = getattr(self, slots_attr)
+        setattr(self, slots_attr, list(with_hotbar_assignment(active_slots, index, item_id, size=HOTBAR_SIZE)))
 
     def select_hotbar_index(self, index: int) -> None:
         self.normalize()
-        if self.is_othello_space():
-            self.othello_selected_hotbar_index = normalize_hotbar_index(index, size=HOTBAR_SIZE)
-            return
-        if bool(self.creative_mode):
-            self.creative_selected_hotbar_index = normalize_hotbar_index(index, size=HOTBAR_SIZE)
-            return
-        self.survival_selected_hotbar_index = normalize_hotbar_index(index, size=HOTBAR_SIZE)
+        _slots_attr, index_attr = self._active_hotbar_state_attrs()
+        setattr(self, index_attr, normalize_hotbar_index(index, size=HOTBAR_SIZE))
 
     def cycle_hotbar(self, delta_steps: int) -> None:
         self.normalize()
-        if self.is_othello_space():
-            self.othello_selected_hotbar_index = cycle_hotbar_index(
-                self.othello_selected_hotbar_index,
-                delta_steps,
-                size=HOTBAR_SIZE,
-            )
-            return
-        if bool(self.creative_mode):
-            self.creative_selected_hotbar_index = cycle_hotbar_index(
-                self.creative_selected_hotbar_index,
-                delta_steps,
-                size=HOTBAR_SIZE,
-            )
-            return
-        self.survival_selected_hotbar_index = cycle_hotbar_index(
-            self.survival_selected_hotbar_index,
-            delta_steps,
-            size=HOTBAR_SIZE,
-        )
+        _slots_attr, index_attr = self._active_hotbar_state_attrs()
+        current_index = int(getattr(self, index_attr))
+        setattr(self, index_attr, cycle_hotbar_index(current_index, delta_steps, size=HOTBAR_SIZE))
 
     def clear_selected_hotbar_slot(self) -> None:
         self.normalize()

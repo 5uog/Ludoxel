@@ -62,14 +62,14 @@ def build_video_tab(overlay) -> None:
 
     overlay._tg_animated_textures = overlay._add_toggle(layout, host, "Animated Textures", overlay.animated_textures_changed.emit)
     overlay._tg_outline_sel = overlay._add_toggle(layout, host, "Outline selection", overlay.outline_selection_changed.emit)
-    overlay._tg_world_wire = overlay._add_toggle(layout, host, "World wireflame", overlay.world_wireframe_changed.emit)
+    overlay._tg_world_wire = overlay._add_toggle(layout, host, "World wireframe", overlay.world_wireframe_changed.emit)
     overlay._tg_shadow_enabled = overlay._add_toggle(layout, host, "Shadow map", overlay.shadow_enabled_changed.emit)
 
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Clouds"))
 
     overlay._tg_clouds_enabled = overlay._add_toggle(layout, host, "Show clouds", overlay.clouds_enabled_changed.emit)
-    overlay._tg_cloud_wire = overlay._add_toggle(layout, host, "Cloud wireflame", overlay.cloud_wireframe_changed.emit)
+    overlay._tg_cloud_wire = overlay._add_toggle(layout, host, "Cloud wireframe", overlay.cloud_wireframe_changed.emit)
 
     cloud_flow_row = QHBoxLayout()
     overlay._lbl_cloud_flow = QLabel("Cloud flow direction", host)

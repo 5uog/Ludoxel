@@ -8,6 +8,7 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
+from ...application.meta import __version__
 from ..config.gl_surface_format import install_default_gl_surface_format
 from ..screens.game_screen import GameScreen
 from ..theme.fonts import install_minecraft_fonts, apply_application_font
@@ -48,7 +49,7 @@ def run_app(*, project_root: Path) -> None:
     root = Path(project_root)
 
     app = QApplication([])
-    app.setApplicationName("Ludoxel v3")
+    app.setApplicationName(f"Ludoxel v{__version__}")
 
     fonts = install_minecraft_fonts(font_dir=(root / "assets" / "fonts"))
     if bool(fonts.ok):
@@ -59,7 +60,7 @@ def run_app(*, project_root: Path) -> None:
         app.setStyleSheet(qss.read_text(encoding="utf-8"))
 
     w = MainWindow(project_root=root)
-    w.setWindowTitle("Ludoxel")
+    w.setWindowTitle(f"Ludoxel v{__version__}")
     w.resize(1280, 720)
     w.setMinimumSize(1280, 720)
     if bool(w.wants_fullscreen()):

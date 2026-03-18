@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/presentation/widgets/overlays/item_photo_provider.py
+# FILE: src/ludoxel/presentation/widgets/common/item_photo_provider.py
 from __future__ import annotations
 
 from dataclasses import dataclass

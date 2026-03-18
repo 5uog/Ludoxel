@@ -239,8 +239,8 @@ class HudController:
         lines.append(f"Mode Creative: {int(bool(creative_mode))} | Flying: {int(bool(flying))} | Inventory: {int(bool(inventory_open))} |")
         lines.append(f"Auto Jump: {int(bool(auto_jump_enabled))} | Auto Sprint: {int(bool(auto_sprint_enabled))} | Reach: {float(reach):.2f} |\n")
         lines.append(str(sel_line))
-        lines.append(f"Cloud: {int(bool(cloud_enabled))} | Density: {int(cloud_density)} |\nSeed: {int(cloud_seed)} | Cloud Wireflame: {int(bool(cloud_wire))} |\n")
-        lines.append(f"World Wireflame: {int(bool(world_wire))} | Shadow: {int(bool(shadow_ok))} | Size: {int(shadow_size)} | DBG: {int(bool(debug_shadow))} | Sun: {float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}\n")
+        lines.append(f"Cloud: {int(bool(cloud_enabled))} | Density: {int(cloud_density)} |\nSeed: {int(cloud_seed)} | Cloud Wireframe: {int(bool(cloud_wire))} |\n")
+        lines.append(f"World Wireframe: {int(bool(world_wire))} | Shadow: {int(bool(shadow_ok))} | Size: {int(shadow_size)} | DBG: {int(bool(debug_shadow))} | Sun: {float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}\n")
         lines.append(f"Ludoxel v{__version__} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
 
         gl_vendor, gl_rend, gl_ver, _glsl = renderer.gl_info()

@@ -91,13 +91,7 @@ def inventory_available(viewport: "GLViewportWidget") -> bool:
 def sync_hotbar_widgets(viewport: "GLViewportWidget") -> None:
     viewport._state.normalize()
     slots = viewport._state.hotbar_snapshot()
-
-    if viewport._state.is_othello_space():
-        selected_index = viewport._state.othello_selected_hotbar_index
-    elif bool(viewport._state.creative_mode):
-        selected_index = viewport._state.creative_selected_hotbar_index
-    else:
-        selected_index = viewport._state.survival_selected_hotbar_index
+    selected_index = viewport._state.active_hotbar_index()
 
     viewport._inventory.set_creative_mode(bool(viewport._state.creative_mode and inventory_available(viewport)))
     viewport._inventory.set_keybinds(viewport._state.keybinds)

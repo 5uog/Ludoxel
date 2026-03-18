@@ -96,11 +96,7 @@ def on_inventory_selected(viewport: "GLViewportWidget", block_id: str) -> None:
     if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
         return
 
-    active_index = int(
-        viewport._state.creative_selected_hotbar_index
-        if bool(viewport._state.creative_mode)
-        else viewport._state.survival_selected_hotbar_index
-    )
+    active_index = viewport._state.active_hotbar_index()
     viewport._state.set_hotbar_slot(int(active_index), str(block_id))
     settings_controller.sync_hotbar_widgets(viewport)
     settings_controller.sync_first_person_target(viewport)

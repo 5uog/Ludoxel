@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import QWidget, QFrame, QHBoxLayout, QPushButton
 
 from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
-from ..common import apply_item_slot_state, hotbar_slot_tooltip
-from ..overlays.item_photo_provider import ItemPhotoProvider
+from ..common import ItemPhotoProvider, apply_item_slot_state, hotbar_slot_tooltip
 
 
 class _DisplaySlot(QPushButton):
