@@ -7,9 +7,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from .....domain.blocks.block_definition import BlockDefinition
-from .....domain.blocks.block_registry import BlockRegistry
-from .....domain.blocks.state_codec import parse_state
+from .....shared.domain.blocks.block_definition import BlockDefinition
+from .....shared.domain.blocks.registry.block_registry import BlockRegistry
+from .....shared.domain.blocks.state.state_codec import parse_state
 from .._internal.resources.texture_atlas import TextureAtlas
 
 UVRect = tuple[float, float, float, float]

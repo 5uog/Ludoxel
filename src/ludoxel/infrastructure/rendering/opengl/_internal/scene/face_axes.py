@@ -4,7 +4,7 @@
 # FILE: src/ludoxel/infrastructure/rendering/opengl/_internal/scene/face_axes.py
 from __future__ import annotations
 
-from ......domain.blocks.models.common import LocalBox
+from ......shared.domain.blocks.models.common import LocalBox
 
 _EPS = 1e-7
 

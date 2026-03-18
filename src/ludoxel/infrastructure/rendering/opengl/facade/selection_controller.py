@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from .....domain.blocks.neighborhood import six_neighbor_state_signature
+from .....shared.domain.blocks.structure.neighborhood import six_neighbor_state_signature
 from .._internal.passes.selection_pass import SelectionPass
 from .._internal.scene.selection_outline_builder import GetState, SelectionOutlineBuilder
 

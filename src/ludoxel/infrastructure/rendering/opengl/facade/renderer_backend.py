@@ -10,10 +10,10 @@ import time
 import numpy as np
 from OpenGL.GL import glEnable, glDepthFunc, GL_DEPTH_TEST, GL_LESS
 
-from .....core.math.vec3 import Vec3
-from .....domain.blocks.block_registry import BlockRegistry
-from .....domain.blocks.state_codec import parse_state
-from .....domain.world.chunking import ChunkKey
+from .....shared.core.math.vec3 import Vec3
+from .....shared.domain.blocks.registry.block_registry import BlockRegistry
+from .....shared.domain.blocks.state.state_codec import parse_state
+from .....shared.domain.world.chunking import ChunkKey
 from .._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
 from .._internal.passes.cloud_pass import CloudPass
 from .._internal.passes.first_person_arm_pass import FirstPersonArmPass

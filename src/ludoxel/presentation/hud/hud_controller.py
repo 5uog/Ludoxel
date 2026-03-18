@@ -10,9 +10,9 @@ import tracemalloc
 import threading
 from dataclasses import dataclass
 
-from ...core.math.vec3 import Vec3
+from ...shared.core.math.vec3 import Vec3
 from ...application.managers.session_manager import SessionManager
-from ...domain.config.render_distance import clamp_render_distance_chunks
+from ...shared.domain.config.render_distance import clamp_render_distance_chunks
 from ...infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ...infrastructure.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
 from .hud_payload import HudPayload

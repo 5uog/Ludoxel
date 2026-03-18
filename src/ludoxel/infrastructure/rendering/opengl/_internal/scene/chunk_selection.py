@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable
 
 import numpy as np
 
-from ......domain.world.chunking import ChunkKey, normalize_chunk_key
+from ......shared.domain.world.chunking import ChunkKey, normalize_chunk_key
 from .chunk_visibility import chunk_intersects_clip_volume
 
 ChunkPredicate = Callable[[ChunkKey], bool]

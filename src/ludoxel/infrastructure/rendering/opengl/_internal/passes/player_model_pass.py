@@ -10,7 +10,7 @@ import numpy as np
 
 from OpenGL.GL import glActiveTexture, glBindTexture, glBindVertexArray, glDrawArraysInstanced, glEnable, glDisable, glDepthFunc, glDepthMask, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_DEPTH_TEST, GL_LESS, GL_BLEND, GL_CULL_FACE, GL_TRIANGLES
 
-from ......core.math.vec3 import Vec3
+from ......shared.core.math.vec3 import Vec3
 from ..gl.gl_state_guard import GLStateGuard
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.shader_program import ShaderProgram

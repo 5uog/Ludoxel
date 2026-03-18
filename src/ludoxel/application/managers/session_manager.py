@@ -7,19 +7,19 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import math
 
-from ...core.math.smoothing import exp_alpha
-from ...core.math.vec3 import Vec3, clampf
-from ...domain.blocks.block_registry import BlockRegistry
-from ...domain.blocks.default_registry import create_default_registry
-from ...domain.entities.player_entity import PlayerEntity
-from ...domain.systems.collision_system import (
+from ...shared.core.math.smoothing import exp_alpha
+from ...shared.core.math.vec3 import Vec3, clampf
+from ...shared.domain.blocks.registry.block_registry import BlockRegistry
+from ...shared.domain.blocks.registry.default_registry import create_default_registry
+from ...shared.domain.entities.player_entity import PlayerEntity
+from ...shared.domain.systems.collision_system import (
     can_auto_jump_one_block,
     integrate_with_collisions,
     support_block_beneath,
 )
-from ...domain.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
-from ...domain.world.world_gen import generate_test_map
-from ...domain.world.world_state import WorldState
+from ...shared.domain.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
+from ...features.my_world.domain.world.world_gen import generate_test_map
+from ...shared.domain.world.world_state import WorldState
 from ..context.runtime.render_snapshot import CameraDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ..context.runtime.session_settings import SessionSettings
 from ..services.interaction_service import InteractionService

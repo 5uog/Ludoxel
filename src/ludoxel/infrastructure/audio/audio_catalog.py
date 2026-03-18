@@ -11,7 +11,7 @@ from ...application.context.runtime.audio_preferences import (
     AUDIO_CATEGORY_BLOCK,
     AUDIO_CATEGORY_PLAYER,
 )
-from ...domain.blocks.sound_groups import (
+from ...shared.domain.blocks.sound_groups import (
     SOUND_GROUP_ANCIENT_DEBRIS,
     SOUND_GROUP_BAMBOO_WOOD,
     SOUND_GROUP_BASALT,

@@ -44,7 +44,7 @@ def collect_pycache_dirs(root: Path, include_venv_caches: bool) -> list[Path]:
 
 
 def collect_pyd_files(root: Path) -> list[Path]:
-    core_root = root / "src" / "ludoxel" / "core"
+    core_root = root / "src" / "ludoxel" / "shared" / "core"
     if not core_root.is_dir():
         return []
 

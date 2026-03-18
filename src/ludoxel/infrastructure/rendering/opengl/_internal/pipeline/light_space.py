@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from ......core.math.vec3 import Vec3
-from ......core.math import mat4
+from ......shared.core.math.vec3 import Vec3
+from ......shared.core.math import mat4
 from ...facade.gl_renderer_params import SunParams, ShadowParams
 
 

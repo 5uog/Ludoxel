@@ -9,8 +9,8 @@ from typing import Callable
 
 import numpy as np
 
-from ......core.math.vec3 import Vec3
-from ......domain.blocks.block_definition import BlockDefinition
+from ......shared.core.math.vec3 import Vec3
+from ......shared.domain.blocks.block_definition import BlockDefinition
 from ..resources.texture_atlas import TextureAtlas
 from ..scene.first_person_geometry import build_first_person_held_block_face_rows
 from ...facade.player_render_state import FirstPersonRenderState

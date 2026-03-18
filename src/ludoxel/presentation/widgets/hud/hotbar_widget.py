@@ -9,8 +9,8 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import QWidget, QFrame, QHBoxLayout, QPushButton
 
-from ....domain.blocks.block_registry import BlockRegistry
-from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
+from ....shared.domain.blocks.registry.block_registry import BlockRegistry
+from ....shared.domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import ItemPhotoProvider, apply_item_slot_state, hotbar_slot_tooltip
 
 

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .....domain.othello.types import OthelloAnimationState
+from .....features.othello.domain.othello.types import OthelloAnimationState
 
 
 @dataclass(frozen=True)

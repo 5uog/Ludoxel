@@ -12,10 +12,10 @@ import queue
 
 import numpy as np
 
-from .....core.math.vec3 import Vec3
-from .....domain.config.render_distance import clamp_render_distance_chunks
-from .....domain.world.chunking import ChunkKey, chunk_key, normalize_chunk_key
-from .....domain.world.world_state import WorldState
+from .....shared.core.math.vec3 import Vec3
+from .....shared.domain.config.render_distance import clamp_render_distance_chunks
+from .....shared.domain.world.chunking import ChunkKey, chunk_key, normalize_chunk_key
+from .....shared.domain.world.world_state import WorldState
 from .....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from .....infrastructure.rendering.opengl.facade.world_mesh_builder import build_chunk_face_payload_sources
 

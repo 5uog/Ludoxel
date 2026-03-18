@@ -14,12 +14,12 @@ from PyQt6.QtCore import QObject, QUrl
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer, QSoundEffect
 
 from ...application.context.runtime.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
-from ...core.math.vec3 import Vec3
-from ...domain.blocks.block_registry import BlockRegistry
-from ...domain.blocks.sound_groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
-from ...domain.blocks.state_codec import parse_state
-from ...domain.blocks.state_values import prop_as_bool
-from ...domain.play_space import is_my_world_space
+from ...shared.core.math.vec3 import Vec3
+from ...shared.domain.blocks.registry.block_registry import BlockRegistry
+from ...shared.domain.blocks.sound_groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
+from ...shared.domain.blocks.state.state_codec import parse_state
+from ...shared.domain.blocks.state.state_values import prop_as_bool
+from ...shared.domain.play_space import is_my_world_space
 from .audio_catalog import (
     AMBIENT_KEY_MY_WORLD,
     AMBIENT_SOUND_CATALOG,

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ......domain.world.chunking import ChunkKey, chunk_bounds
+from ......shared.domain.world.chunking import ChunkKey, chunk_bounds
 
 
 def chunk_corners_homogeneous(chunk_key: ChunkKey) -> np.ndarray:

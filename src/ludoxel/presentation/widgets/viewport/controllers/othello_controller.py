@@ -9,16 +9,16 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QTimer
 
-from .....domain.inventory.special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
-from .....domain.othello.board import OTHELLO_BOARD_SURFACE_Y, raycast_board_square, square_center
-from .....domain.othello.rules import counts_for_board
-from .....domain.othello.types import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_WHITE
+from .....features.othello.domain.inventory.special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
+from .....features.othello.domain.othello.board import OTHELLO_BOARD_SURFACE_Y, raycast_board_square, square_center
+from .....features.othello.domain.othello.rules import counts_for_board
+from .....features.othello.domain.othello.types import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_WHITE
 from .....infrastructure.audio import PLAYER_EVENT_OTHELLO_FLIP, PLAYER_EVENT_OTHELLO_PLACE
 from .....infrastructure.rendering.opengl.facade.othello_render_state import OthelloRenderState
 from . import settings_controller
 
 if TYPE_CHECKING:
-    from .....core.math.vec3 import Vec3
+    from .....shared.core.math.vec3 import Vec3
     from ..gl_viewport_widget import GLViewportWidget
 
 

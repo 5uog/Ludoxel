@@ -9,10 +9,10 @@ from dataclasses import dataclass
 
 from OpenGL.GL import glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS
 
-from ......core.math import mat4
-from ......core.math.vec3 import Vec3
-from ......core.math.view_angles import forward_from_yaw_pitch_deg
-from ......domain.world.chunking import chunk_key
+from ......shared.core.math import mat4
+from ......shared.core.math.vec3 import Vec3
+from ......shared.core.math.view_angles import forward_from_yaw_pitch_deg
+from ......shared.domain.world.chunking import chunk_key
 from ..passes.cloud_pass import CloudPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
 from ..passes.held_block_pass import HeldBlockPass

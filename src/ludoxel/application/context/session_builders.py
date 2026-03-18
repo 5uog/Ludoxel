@@ -4,8 +4,8 @@
 # FILE: src/ludoxel/application/context/session_builders.py
 from __future__ import annotations
 
-from ...core.math.vec3 import Vec3
-from ...domain.entities.player_entity import PlayerEntity
+from ...shared.core.math.vec3 import Vec3
+from ...shared.domain.entities.player_entity import PlayerEntity
 from .runtime.session_settings import SessionSettings
 
 

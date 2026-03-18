@@ -7,16 +7,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from ...core.math.vec3 import Vec3
-from ...domain.entities.player_entity import PlayerEntity
-from ...domain.world.world_state import WorldState
-from ...domain.blocks.block_registry import BlockRegistry
-from ...domain.blocks.cardinal import cardinal_from_xz
-from ...domain.blocks.connectivity import make_fence_gate_state, make_wall_state
-from ...domain.blocks.models.api import collision_aabbs_for_block
-from ...domain.blocks.state_codec import format_state, parse_state
-from ...domain.blocks.state_values import slab_type_value
-from ...domain.blocks.structural_rules import is_fence_gate, is_slab, is_stairs, is_wall
+from ...shared.core.math.vec3 import Vec3
+from ...shared.domain.entities.player_entity import PlayerEntity
+from ...shared.domain.world.world_state import WorldState
+from ...shared.domain.blocks.registry.block_registry import BlockRegistry
+from ...shared.domain.blocks.structure.cardinal import cardinal_from_xz
+from ...shared.domain.blocks.structure.connectivity import make_fence_gate_state, make_wall_state
+from ...shared.domain.blocks.models.api import collision_aabbs_for_block
+from ...shared.domain.blocks.state.state_codec import format_state, parse_state
+from ...shared.domain.blocks.state.state_values import slab_type_value
+from ...shared.domain.blocks.structure.structural_rules import is_fence_gate, is_slab, is_stairs, is_wall
 
 
 @dataclass(frozen=True)

@@ -11,14 +11,14 @@ import math
 
 import numpy as np
 
-from ......core.grid.face_index import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
-from ......domain.blocks.block_definition import BlockDefinition
-from ......domain.blocks.models.common import LocalBox
-from ......domain.blocks.models.dimensions import px_box
-from ......domain.blocks.models.wall import boxes_for_wall
-from ......domain.blocks.models.fence_gate import boxes_for_fence_gate
-from ......domain.blocks.models.slab import boxes_for_slab
-from ......domain.blocks.models.stairs import boxes_for_stairs
+from ......shared.core.spatial.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
+from ......shared.domain.blocks.block_definition import BlockDefinition
+from ......shared.domain.blocks.models.common import LocalBox
+from ......shared.domain.blocks.models.dimensions import px_box
+from ......shared.domain.blocks.models.wall import boxes_for_wall
+from ......shared.domain.blocks.models.fence_gate import boxes_for_fence_gate
+from ......shared.domain.blocks.models.slab import boxes_for_slab
+from ......shared.domain.blocks.models.stairs import boxes_for_stairs
 from .face_occlusion import is_local_face_occluded
 from .transform_matrices import clampf, compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
 from .uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect

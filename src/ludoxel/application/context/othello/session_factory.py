@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ....domain.blocks.block_registry import BlockRegistry
-from ....domain.othello.board import ensure_othello_board_layout
-from ....domain.world.world_gen import generate_flat_world
-from ....domain.world.world_state import WorldState
+from ....shared.domain.blocks.registry.block_registry import BlockRegistry
+from ....features.othello.domain.othello.board import ensure_othello_board_layout
+from ....shared.domain.world.world_gen import generate_flat_world
+from ....shared.domain.world.world_state import WorldState
 from ...managers.session_manager import SessionManager
 from ..session_builders import make_player_entity, make_session_settings
 

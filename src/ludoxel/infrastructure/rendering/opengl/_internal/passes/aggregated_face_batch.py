@@ -12,7 +12,7 @@ import numpy as np
 
 from OpenGL.GL import glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect, glBindBuffer, glBindVertexArray, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
 
-from ......domain.world.chunking import ChunkKey, normalize_chunk_key
+from ......shared.domain.world.chunking import ChunkKey, normalize_chunk_key
 from ..face_bucket_layout import FACE_COUNT
 from ..gl.array_view import as_uint32_rows, copy_float32_rows
 from ..gl.buffer_upload import upload_array_buffer

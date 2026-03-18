@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .....core.math.vec3 import Vec3
-from .....core.math.view_angles import sun_dir_from_az_el_deg
+from .....shared.core.math.vec3 import Vec3
+from .....shared.core.math.view_angles import sun_dir_from_az_el_deg
 from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 

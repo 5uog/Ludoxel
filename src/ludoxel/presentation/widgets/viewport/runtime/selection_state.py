@@ -8,8 +8,8 @@ import time
 from dataclasses import dataclass
 
 from .....application.managers.session_manager import SessionManager
-from .....core.math.vec3 import Vec3
-from .....core.math.view_angles import forward_from_yaw_pitch_deg
+from .....shared.core.math.vec3 import Vec3
+from .....shared.core.math.view_angles import forward_from_yaw_pitch_deg
 
 SelectionTarget = tuple[int, int, int, str]
 
@@ -71,7 +71,7 @@ class ViewportSelectionState:
         t0 = time.perf_counter()
         self._cache_key = key
 
-        from ludoxel.domain.systems.build_system import pick_block
+        from ludoxel.features.my_world.domain.systems.build_system import pick_block
 
         origin = session.player.eye_pos() if eye is None else eye
         yaw = float(session.player.yaw_deg) if yaw_deg is None else float(yaw_deg)

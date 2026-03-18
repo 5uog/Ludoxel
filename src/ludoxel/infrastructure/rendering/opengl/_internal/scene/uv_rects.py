@@ -4,8 +4,8 @@
 # FILE: src/ludoxel/infrastructure/rendering/opengl/_internal/scene/uv_rects.py
 from __future__ import annotations
 
-from ......core.grid.face_index import FACE_NEG_X, FACE_NEG_Y, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
-from ......domain.blocks.models.common import LocalBox
+from ......shared.core.spatial.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
+from ......shared.domain.blocks.models.common import LocalBox
 
 UVRect = tuple[float, float, float, float]
 

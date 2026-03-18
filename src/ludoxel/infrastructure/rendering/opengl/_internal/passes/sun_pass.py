@@ -10,7 +10,7 @@ import numpy as np
 
 from OpenGL.GL import glDisable, glEnable, glDepthMask, glBlendFunc, glBlendEquation, glBindVertexArray, glDrawArraysInstanced, GL_DEPTH_TEST, GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_TRIANGLES
 
-from ......core.math.vec3 import Vec3
+from ......shared.core.math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram
 from ...facade.gl_renderer_params import SunParams
 

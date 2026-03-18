@@ -8,7 +8,7 @@ import multiprocessing
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
-from ....domain.othello.ai import choose_ai_move
+from ....features.othello.domain.othello.ai import choose_ai_move
 
 
 def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int) -> int | None:

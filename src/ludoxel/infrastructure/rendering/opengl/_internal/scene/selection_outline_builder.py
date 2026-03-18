@@ -9,7 +9,7 @@ from typing import Callable
 
 import numpy as np
 
-from ......domain.blocks.block_definition import BlockDefinition
+from ......shared.domain.blocks.block_definition import BlockDefinition
 from .visible_faces import iter_visible_faces
 
 GetState = Callable[[int, int, int], str | None]

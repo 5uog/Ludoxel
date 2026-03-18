@@ -17,8 +17,8 @@ from ....application.context.runtime.runtime_preferences import RuntimePreferenc
 from ....application.managers.othello_match_controller import OthelloMatchController
 from ....application.tasks.fixed_step_runner import FixedStepRunner
 from ....application.tasks.state_persistence import apply_persisted_state_if_present, save_state
-from ....core.math.vec3 import Vec3
-from ....core.math.view_angles import forward_from_yaw_pitch_deg
+from ....shared.core.math.vec3 import Vec3
+from ....shared.core.math.view_angles import forward_from_yaw_pitch_deg
 from ....infrastructure.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer

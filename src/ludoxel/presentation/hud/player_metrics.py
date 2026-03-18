@@ -9,7 +9,7 @@ from collections import deque
 from dataclasses import dataclass, field
 
 from ...application.context.runtime.session_settings import SessionSettings
-from ...domain.entities.player_entity import PlayerEntity
+from ...shared.domain.entities.player_entity import PlayerEntity
 
 
 @dataclass(frozen=True)

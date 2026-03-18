@@ -7,11 +7,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterator
 
-from ......core.grid.face_index import face_neighbor_offset
-from ......domain.blocks.block_definition import BlockDefinition
-from ......domain.blocks.models.api import render_boxes_for_block
-from ......domain.blocks.models.common import LocalBox
-from ......domain.blocks.state_codec import parse_state
+from ......shared.core.spatial.voxel.voxel_faces import face_neighbor_offset
+from ......shared.domain.blocks.block_definition import BlockDefinition
+from ......shared.domain.blocks.models.api import render_boxes_for_block
+from ......shared.domain.blocks.models.common import LocalBox
+from ......shared.domain.blocks.state.state_codec import parse_state
 
 from .face_axes import face_touches_cell_boundary
 from .face_occlusion import is_block_face_occluded, is_local_face_occluded

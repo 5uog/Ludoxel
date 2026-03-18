@@ -11,7 +11,7 @@ from setuptools import Extension, setup
 _ROOT = Path(__file__).resolve().parent
 _SRC = _ROOT / "src"
 _CYTHON_BUILD_DIR = _ROOT / "build" / "cython"
-_CYTHON_MODULES: tuple[str, ...] = ("ludoxel.core.geometry.intersection", "ludoxel.core.grid.voxel_dda", "ludoxel.core.math.view_angles")
+_CYTHON_MODULES: tuple[str, ...] = ("ludoxel.shared.core.spatial.geometry.ray_aabb", "ludoxel.shared.core.spatial.voxel.voxel_dda", "ludoxel.shared.core.math.view_angles")
 
 
 def _wants_build_ext(argv: list[str]) -> bool:

@@ -11,9 +11,9 @@ import numpy as np
 
 from OpenGL.GL import glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glPolygonMode, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE
 
-from ......core.math.vec3 import Vec3
-from ......domain.config.render_distance import clamp_render_distance_chunks
-from ......domain.world.chunking import ChunkKey
+from ......shared.core.math.vec3 import Vec3
+from ......shared.domain.config.render_distance import clamp_render_distance_chunks
+from ......shared.domain.world.chunking import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas

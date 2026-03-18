@@ -11,8 +11,8 @@ from PyQt6.QtGui import QPixmap, QMouseEvent
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
 
 from ....application.handlers.keybinds import ACTION_TOGGLE_INVENTORY, KeybindSettings, action_for_key
-from ....domain.blocks.block_registry import BlockRegistry
-from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
+from ....shared.domain.blocks.registry.block_registry import BlockRegistry
+from ....shared.domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import DraggableItemButton, ItemPhotoProvider, apply_item_slot_state, hotbar_index_from_key, hotbar_slot_tooltip, item_id_from_mime
 
 

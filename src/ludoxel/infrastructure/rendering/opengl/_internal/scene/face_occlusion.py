@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Callable
 
-from ......core.grid.face_index import face_neighbor_offset
-from ......domain.blocks.block_definition import BlockDefinition
-from ......domain.blocks.state_codec import parse_state
-from ......domain.blocks.models.api import render_boxes_for_block
-from ......domain.blocks.models.common import LocalBox
+from ......shared.core.spatial.voxel.voxel_faces import face_neighbor_offset
+from ......shared.domain.blocks.block_definition import BlockDefinition
+from ......shared.domain.blocks.state.state_codec import parse_state
+from ......shared.domain.blocks.models.api import render_boxes_for_block
+from ......shared.domain.blocks.models.common import LocalBox
 from .face_axes import approx_eq, face_rect, face_touches_cell_boundary
 
 GetState = Callable[[int, int, int], str | None]

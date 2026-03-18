@@ -10,9 +10,9 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QMovie, QPainter, QPainterPath, QPen, QPixmap
 
-from ....domain.blocks.block_registry import BlockRegistry
-from ....domain.inventory.special_items import get_special_item_descriptor
-from ....domain.blocks.state_codec import parse_state
+from ....shared.domain.blocks.registry.block_registry import BlockRegistry
+from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
+from ....shared.domain.blocks.state.state_codec import parse_state
 
 
 @dataclass(frozen=True)

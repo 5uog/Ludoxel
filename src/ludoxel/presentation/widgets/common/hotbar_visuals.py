@@ -4,8 +4,8 @@
 # FILE: src/ludoxel/presentation/widgets/common/hotbar_visuals.py
 from __future__ import annotations
 
-from ....domain.blocks.block_registry import BlockRegistry
-from ....domain.inventory.special_items import get_special_item_descriptor
+from ....shared.domain.blocks.registry.block_registry import BlockRegistry
+from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
 
 
 def _block_display_name(registry: BlockRegistry, block_id: str | None) -> str:

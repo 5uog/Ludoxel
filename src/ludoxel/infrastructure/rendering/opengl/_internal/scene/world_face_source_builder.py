@@ -8,8 +8,8 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from ......domain.blocks.block_definition import BlockDefinition
-from ......domain.blocks.state_codec import parse_state
+from ......shared.domain.blocks.block_definition import BlockDefinition
+from ......shared.domain.blocks.state.state_codec import parse_state
 from ..face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
 from ..gl.array_view import as_float32_rows
 from .uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect

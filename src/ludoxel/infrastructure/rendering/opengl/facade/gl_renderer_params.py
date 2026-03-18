@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .....core.math.vec3 import Vec3
+from .....shared.core.math.vec3 import Vec3
 
 
 @dataclass(frozen=True)

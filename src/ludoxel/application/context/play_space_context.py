@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...domain.blocks.default_registry import create_default_registry
-from ...domain.play_space import (
+from ...shared.domain.blocks.registry.default_registry import create_default_registry
+from ...shared.domain.play_space import (
     PLAY_SPACE_IDS,
     PLAY_SPACE_MY_WORLD,
     PLAY_SPACE_OTHELLO,

@@ -8,9 +8,9 @@ from pathlib import Path
 
 import numpy as np
 
-from .....core.math.vec3 import Vec3
-from .....domain.blocks.block_registry import BlockRegistry
-from .....domain.world.chunking import ChunkKey
+from .....shared.core.math.vec3 import Vec3
+from .....shared.domain.blocks.registry.block_registry import BlockRegistry
+from .....shared.domain.world.chunking import ChunkKey
 from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
 from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
 from .othello_render_state import OthelloRenderState

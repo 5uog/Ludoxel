@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ......core.math.vec3 import Vec3
+from ......shared.core.math.vec3 import Vec3
 from ..resources.image_texture import ImageTexture
 from ..scene.first_person_geometry import build_first_person_arm_face_rows
 from ...facade.player_render_state import FirstPersonRenderState

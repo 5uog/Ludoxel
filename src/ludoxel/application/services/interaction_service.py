@@ -6,18 +6,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ...core.math.vec3 import Vec3
-from ...domain.world.world_state import WorldState
-from ...domain.entities.player_entity import PlayerEntity
+from ...shared.core.math.vec3 import Vec3
+from ...shared.domain.world.world_state import WorldState
+from ...shared.domain.entities.player_entity import PlayerEntity
 
-from ...domain.blocks.block_registry import BlockRegistry
-from ...domain.blocks.state_codec import parse_state
-from ...domain.blocks.cardinal import normalize_cardinal, opposite_cardinal, facing_vec_xz
-from ...domain.blocks.connectivity import make_fence_gate_state, canonical_fence_gate_state, refresh_structural_neighbors
-from ...domain.blocks.structural_rules import is_fence_gate
-from ...domain.blocks.state_values import prop_as_bool
+from ...shared.domain.blocks.registry.block_registry import BlockRegistry
+from ...shared.domain.blocks.state.state_codec import parse_state
+from ...shared.domain.blocks.structure.cardinal import normalize_cardinal, opposite_cardinal, facing_vec_xz
+from ...shared.domain.blocks.structure.connectivity import make_fence_gate_state, canonical_fence_gate_state, refresh_structural_neighbors
+from ...shared.domain.blocks.structure.structural_rules import is_fence_gate
+from ...shared.domain.blocks.state.state_values import prop_as_bool
 
-from ...domain.systems.build_system import BlockPick, pick_block
+from ...features.my_world.domain.systems.build_system import BlockPick, pick_block
 
 from .placement_policy import PlacementPolicy
 

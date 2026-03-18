@@ -7,8 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import ClassVar
 
-from ....domain.config.collision_params import DEFAULT_COLLISION_PARAMS, CollisionParams
-from ....domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS, MovementParams
+from ....shared.domain.config.collision_params import DEFAULT_COLLISION_PARAMS, CollisionParams
+from ....shared.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS, MovementParams
 
 
 @dataclass

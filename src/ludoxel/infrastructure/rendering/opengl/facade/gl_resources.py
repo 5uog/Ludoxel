@@ -9,7 +9,7 @@ from pathlib import Path
 
 from OpenGL.GL import glGenVertexArrays, glDeleteVertexArrays
 
-from .....domain.blocks.block_registry import BlockRegistry
+from .....shared.domain.blocks.registry.block_registry import BlockRegistry
 from .._internal.gl.shader_program import ShaderProgram
 from .._internal.gl.mesh_buffer import MeshBuffer
 from .._internal.resources.image_texture import ImageTexture

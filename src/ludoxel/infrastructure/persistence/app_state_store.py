@@ -10,13 +10,14 @@ from typing import Any, ClassVar, Dict, Tuple
 
 from ...application.context.runtime.audio_preferences import AudioPreferences
 from ...application.handlers.keybinds import KeybindSettings
-from ...domain.config.render_distance import clamp_render_distance_chunks
-from ...domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
-from ...domain.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
-from ...domain.inventory.hotbar_defaults import default_hotbar_slots, default_othello_hotbar_slots
-from ...domain.othello.types import OthelloGameState, OthelloSettings
-from ...domain.play_space import PLAY_SPACE_MY_WORLD, normalize_play_space_id
-from ...domain.world.world_state import WorldState
+from ...shared.domain.config.render_distance import clamp_render_distance_chunks
+from ...shared.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
+from ...shared.domain.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
+from ...shared.domain.inventory.hotbar_defaults import default_hotbar_slots
+from ...features.othello.domain.inventory.hotbar_defaults import default_othello_hotbar_slots
+from ...features.othello.domain.othello.types import OthelloGameState, OthelloSettings
+from ...shared.domain.play_space import PLAY_SPACE_MY_WORLD, normalize_play_space_id
+from ...shared.domain.world.world_state import WorldState
 from .json_file_store import JsonFileStore
 from .scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 

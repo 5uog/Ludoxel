@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from ......core.math.vec3 import Vec3
+from ......shared.core.math.vec3 import Vec3
 from ...facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ...facade.gl_renderer_params import CloudParams
 

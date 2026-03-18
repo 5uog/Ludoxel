@@ -8,7 +8,7 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from .....domain.blocks.block_definition import BlockDefinition
+from .....shared.domain.blocks.block_definition import BlockDefinition
 from .._internal.scene.world_face_source_builder import BucketCounts, build_chunk_face_sources, split_face_sources_to_buckets
 
 UVRect = tuple[float, float, float, float]

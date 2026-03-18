@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import Qt
 
 from .....application.handlers.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_INVENTORY, action_for_key
-from .....domain.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
+from .....shared.domain.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
 from ...common import hotbar_index_from_key
 from . import othello_controller, settings_controller
 
