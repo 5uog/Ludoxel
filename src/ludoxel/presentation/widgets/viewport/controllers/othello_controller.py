@@ -115,21 +115,8 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
     ai_color = "White" if int(state.ai_side) == int(SIDE_WHITE) else "Black"
     difficulty = str(state.settings.difficulty).title()
 
-    viewport._othello_hud.set_text(
-        "\n".join(
-            [
-                str(turn_text),
-                f"Black {int(black_count)}  White {int(white_count)}",
-                f"AI {difficulty}  You {player_color}  AI {ai_color}",
-                f"Black clock: {_format_clock(state.black_time_remaining_s)}",
-                f"White clock: {_format_clock(state.white_time_remaining_s)}",
-                str(state.message),
-            ]
-        )
-    )
-    viewport._othello_hud.set_title_text(
-        title_text(viewport, black_count=int(black_count), white_count=int(white_count))
-    )
+    viewport._othello_hud.set_text("\n".join([str(turn_text), f"Black {int(black_count)}  White {int(white_count)}", f"AI {difficulty}  You {player_color}  AI {ai_color}", f"Black clock: {_format_clock(state.black_time_remaining_s)}", f"White clock: {_format_clock(state.white_time_remaining_s)}", str(state.message)]))
+    viewport._othello_hud.set_title_text(title_text(viewport, black_count=int(black_count), white_count=int(white_count)))
 
 
 def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | None:
@@ -139,14 +126,7 @@ def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | Non
     game_state = viewport._othello_match.game_state()
     legal_moves = game_state.legal_moves if game_state.status == OTHELLO_GAME_STATE_PLAYER_TURN else ()
 
-    return OthelloRenderState(
-        enabled=True,
-        board=tuple(game_state.board),
-        legal_move_indices=tuple(int(index) for index in tuple(legal_moves)),
-        hover_square_index=viewport._othello_hover_square,
-        last_move_index=game_state.last_move_index,
-        animations=tuple(game_state.animations),
-    )
+    return OthelloRenderState(enabled=True, board=tuple(game_state.board), legal_move_indices=tuple(int(index) for index in tuple(legal_moves)), hover_square_index=viewport._othello_hover_square, last_move_index=game_state.last_move_index, animations=tuple(game_state.animations))
 
 
 def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
@@ -158,9 +138,7 @@ def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
     if game_state.status != OTHELLO_GAME_STATE_PLAYER_TURN:
         return
 
-    render_eye, _yaw, _pitch, _roll, render_direction = viewport._effective_camera_from_snapshot(
-        snapshot
-    )
+    render_eye, _yaw, _pitch, _roll, render_direction = viewport._effective_camera_from_snapshot(snapshot)
     square_index = raycast_board_square(render_eye, render_direction)
     if square_index is None or int(square_index) not in set(game_state.legal_moves):
         return
@@ -174,16 +152,10 @@ def sync_settings_values(viewport: "GLViewportWidget") -> None:
 def _play_move_audio(viewport: "GLViewportWidget", state) -> None:
     if state.last_move_index is not None:
         place_x, place_z = square_center(int(state.last_move_index))
-        viewport._audio.play_othello_event(
-            event_name=PLAYER_EVENT_OTHELLO_PLACE,
-            position=(float(place_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(place_z)),
-        )
+        viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_PLACE, position=(float(place_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(place_z)))
     for animation in tuple(state.animations):
         flip_x, flip_z = square_center(int(animation.square_index))
-        viewport._audio.play_othello_event(
-            event_name=PLAYER_EVENT_OTHELLO_FLIP,
-            position=(float(flip_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(flip_z)),
-        )
+        viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_FLIP, position=(float(flip_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(flip_z)))
 
 
 def apply_settings(viewport: "GLViewportWidget", settings) -> None:
@@ -206,20 +178,11 @@ def clear_state_for_space_switch(viewport: "GLViewportWidget") -> None:
 def maybe_request_ai(viewport: "GLViewportWidget") -> None:
     if not viewport._state.is_othello_space():
         return
-    if (
-        viewport._overlays.paused()
-        or viewport._overlays.settings_open()
-        or viewport._overlays.othello_settings_open()
-        or viewport._overlays.dead()
-    ):
+    if (viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead()):
         return
 
     state = viewport._othello_match.game_state()
-    if (
-        state.status != OTHELLO_GAME_STATE_AI_TURN
-        or bool(state.thinking)
-        or bool(viewport._othello_ai_request_armed)
-    ):
+    if (state.status != OTHELLO_GAME_STATE_AI_TURN or bool(state.thinking) or bool(viewport._othello_ai_request_armed)):
         return
 
     viewport._othello_match.set_ai_thinking(True)
@@ -233,65 +196,27 @@ def maybe_request_ai(viewport: "GLViewportWidget") -> None:
     seed = int(state.match_generation * 257 + state.move_count * 17 + 3)
 
     viewport._othello_ai_request_armed = True
-    QTimer.singleShot(
-        0,
-        lambda generation=generation, board=board, side=side, difficulty=difficulty, seed=seed: dispatch_ai_request(
-            viewport,
-            generation=generation,
-            board=board,
-            side=side,
-            difficulty=difficulty,
-            seed=seed,
-        ),
-    )
+    QTimer.singleShot(0, lambda generation=generation, board=board, side=side, difficulty=difficulty, seed=seed: dispatch_ai_request(viewport, generation=generation, board=board, side=side, difficulty=difficulty, seed=seed))
 
 
-def dispatch_ai_request(
-    viewport: "GLViewportWidget",
-    *,
-    generation: int,
-    board: tuple[int, ...],
-    side: int,
-    difficulty: str,
-    seed: int,
-) -> None:
+def dispatch_ai_request(viewport: "GLViewportWidget", *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int) -> None:
     viewport._othello_ai_request_armed = False
     if not viewport._state.is_othello_space():
         return
-    if (
-        viewport._overlays.paused()
-        or viewport._overlays.settings_open()
-        or viewport._overlays.othello_settings_open()
-        or viewport._overlays.dead()
-    ):
+    if (viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead()):
         return
 
     state = viewport._othello_match.game_state()
-    if (
-        int(state.match_generation) != int(generation)
-        or state.status != OTHELLO_GAME_STATE_AI_TURN
-        or not bool(state.thinking)
-    ):
+    if (int(state.match_generation) != int(generation) or state.status != OTHELLO_GAME_STATE_AI_TURN or not bool(state.thinking)):
         return
 
-    viewport._othello_ai.request_move(
-        generation=int(generation),
-        board=tuple(board),
-        side=int(side),
-        difficulty=str(difficulty),
-        seed=int(seed),
-    )
+    viewport._othello_ai.request_move(generation=int(generation), board=tuple(board), side=int(side), difficulty=str(difficulty), seed=int(seed))
 
 
 def consume_pending_ai_result(viewport: "GLViewportWidget") -> None:
     if viewport._pending_othello_ai_result is None:
         return
-    if (
-        viewport._overlays.paused()
-        or viewport._overlays.settings_open()
-        or viewport._overlays.othello_settings_open()
-        or viewport._overlays.dead()
-    ):
+    if (viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead()):
         return
 
     generation, move_index = viewport._pending_othello_ai_result
@@ -312,12 +237,7 @@ def apply_ai_result(viewport: "GLViewportWidget", generation: int, move_index: i
 
 def on_ai_move_ready(viewport: "GLViewportWidget", generation: int, move_index: object) -> None:
     result = None if move_index is None else int(move_index)
-    if (
-        viewport._overlays.paused()
-        or viewport._overlays.settings_open()
-        or viewport._overlays.othello_settings_open()
-        or viewport._overlays.dead()
-    ):
+    if (viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead()):
         viewport._pending_othello_ai_result = (int(generation), result)
         return
     apply_ai_result(viewport, int(generation), result)

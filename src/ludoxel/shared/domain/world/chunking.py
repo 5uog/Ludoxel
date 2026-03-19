@@ -28,6 +28,6 @@ def chunk_bounds(k: ChunkKey) -> tuple[int, int, int, int, int, int]:
 
 def neighbor_chunk_keys_for_cell(x: int, y: int, z: int) -> Set[ChunkKey]:
     keys: Set[ChunkKey] = {chunk_key(int(x), int(y), int(z))}
-    for dx, dy, dz in ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)):
+    for dx, dy, dz in ((1, 0, 0),(-1, 0, 0),(0, 1, 0),(0, -1, 0),(0, 0, 1),(0, 0, -1)):
         keys.add(chunk_key(int(x + dx), int(y + dy), int(z + dz)))
     return keys

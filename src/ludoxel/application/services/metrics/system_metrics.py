@@ -96,12 +96,7 @@ def _linux_rss_bytes_proc() -> int | None:
 def _posix_rss_bytes_ps() -> int | None:
     try:
         pid = str(os.getpid())
-        out = subprocess.check_output(
-            ["ps", "-o", "rss=", "-p", pid],
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=0.6,
-        )
+        out = subprocess.check_output(["ps", "-o", "rss=", "-p", pid], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
         s = str(out).strip()
         if not s:
             return None
@@ -115,12 +110,7 @@ def _posix_rss_bytes_ps() -> int | None:
 
 def _mac_sysctl_str(name: str) -> str:
     try:
-        out = subprocess.check_output(
-            ["sysctl", "-n", name],
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=0.6,
-        )
+        out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
         return str(out).strip()
     except Exception:
         return ""
@@ -138,10 +128,7 @@ def _windows_cpu_name() -> str:
     try:
         import winreg  # type: ignore
 
-        k = winreg.OpenKey(
-            winreg.HKEY_LOCAL_MACHINE,
-            r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
-        )
+        k = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
         v, _t = winreg.QueryValueEx(k, "ProcessorNameString")
         return str(v).strip()
     except Exception:
@@ -152,10 +139,7 @@ def _windows_cpu_mhz() -> int | None:
     try:
         import winreg  # type: ignore
 
-        k = winreg.OpenKey(
-            winreg.HKEY_LOCAL_MACHINE,
-            r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
-        )
+        k = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
         v, _t = winreg.QueryValueEx(k, "~MHz")
         return int(v)
     except Exception:
@@ -167,17 +151,7 @@ def _windows_total_mem_bytes() -> int | None:
         import ctypes
 
         class MEMORYSTATUSEX(ctypes.Structure):
-            _fields_ = [
-                ("dwLength", ctypes.c_uint32),
-                ("dwMemoryLoad", ctypes.c_uint32),
-                ("ullTotalPhys", ctypes.c_uint64),
-                ("ullAvailPhys", ctypes.c_uint64),
-                ("ullTotalPageFile", ctypes.c_uint64),
-                ("ullAvailPageFile", ctypes.c_uint64),
-                ("ullTotalVirtual", ctypes.c_uint64),
-                ("ullAvailVirtual", ctypes.c_uint64),
-                ("ullAvailExtendedVirtual", ctypes.c_uint64),
-            ]
+            _fields_ = [("dwLength", ctypes.c_uint32),("dwMemoryLoad", ctypes.c_uint32),("ullTotalPhys", ctypes.c_uint64),("ullAvailPhys", ctypes.c_uint64),("ullTotalPageFile", ctypes.c_uint64),("ullAvailPageFile", ctypes.c_uint64),("ullTotalVirtual", ctypes.c_uint64),("ullAvailVirtual", ctypes.c_uint64),("ullAvailExtendedVirtual", ctypes.c_uint64)]
 
         ms = MEMORYSTATUSEX()
         ms.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
@@ -195,18 +169,7 @@ def _windows_rss_bytes_psapi() -> int | None:
         import ctypes.wintypes as wt
 
         class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
-            _fields_ = [
-                ("cb", wt.DWORD),
-                ("PageFaultCount", wt.DWORD),
-                ("PeakWorkingSetSize", ctypes.c_size_t),
-                ("WorkingSetSize", ctypes.c_size_t),
-                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
-                ("PagefileUsage", ctypes.c_size_t),
-                ("PeakPagefileUsage", ctypes.c_size_t),
-            ]
+            _fields_ = [("cb", wt.DWORD),("PageFaultCount", wt.DWORD),("PeakWorkingSetSize", ctypes.c_size_t),("WorkingSetSize", ctypes.c_size_t),("QuotaPeakPagedPoolUsage", ctypes.c_size_t),("QuotaPagedPoolUsage", ctypes.c_size_t),("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),("QuotaNonPagedPoolUsage", ctypes.c_size_t),("PagefileUsage", ctypes.c_size_t),("PeakPagefileUsage", ctypes.c_size_t)]
 
         counters = PROCESS_MEMORY_COUNTERS()
         counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
@@ -227,12 +190,7 @@ def _windows_rss_bytes_psapi() -> int | None:
 def _windows_rss_bytes_tasklist() -> int | None:
     try:
         pid = str(os.getpid())
-        out = subprocess.check_output(
-            ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=0.8,
-        )
+        out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
         line = str(out).strip()
         if not line or "INFO:" in line:
             return None
@@ -291,12 +249,7 @@ def read_system_info() -> SystemInfo:
     if not cpu_name:
         cpu_name = str(platform.processor() or "").strip()
 
-    return SystemInfo(
-        cpu_threads=int(max(0, threads)),
-        cpu_name=str(cpu_name),
-        cpu_speed_ghz=cpu_ghz,
-        total_mem_bytes=total_mem,
-    )
+    return SystemInfo(cpu_threads=int(max(0, threads)), cpu_name=str(cpu_name), cpu_speed_ghz=cpu_ghz, total_mem_bytes=total_mem)
 
 
 def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnapshot:
@@ -332,16 +285,7 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 
 def _nvidia_smi_util_percent() -> float | None:
     try:
-        out = subprocess.check_output(
-            [
-                "nvidia-smi",
-                "--query-gpu=utilization.gpu",
-                "--format=csv,noheader,nounits",
-            ],
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=0.8,
-        )
+        out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
         line = str(out).strip().splitlines()[0].strip()
         value = float(line)
         if value < 0.0:

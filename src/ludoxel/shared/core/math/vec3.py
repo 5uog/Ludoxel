@@ -124,11 +124,7 @@ class Vec3:
         When the operands are parallel or nearly parallel, the result may collapse to the zero vector 
         or to a numerically tiny vector, and any fallback policy remains outside this method.
         """
-        return Vec3(
-            self.y * o.z - self.z * o.y,
-            self.z * o.x - self.x * o.z,
-            self.x * o.y - self.y * o.x,
-        )
+        return Vec3(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
 
     def length(self) -> float:
         """

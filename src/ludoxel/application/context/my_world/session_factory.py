@@ -31,11 +31,4 @@ def _make_world(seed: int) -> WorldState:
 
 def create_my_world_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
     session_seed = MyWorldSessionSeed(seed=int(seed))
-    return make_session_manager(
-        seed=int(session_seed.seed),
-        spawn=tuple(session_seed.spawn),
-        yaw_deg=float(session_seed.yaw_deg),
-        pitch_deg=float(session_seed.pitch_deg),
-        world=_make_world(seed=int(session_seed.seed)),
-        block_registry=block_registry,
-    )
+    return make_session_manager(seed=int(session_seed.seed), spawn=tuple(session_seed.spawn), yaw_deg=float(session_seed.yaw_deg), pitch_deg=float(session_seed.pitch_deg), world=_make_world(seed=int(session_seed.seed)), block_registry=block_registry)

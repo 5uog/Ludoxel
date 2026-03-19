@@ -27,22 +27,11 @@ class OthelloSessionSeed:
 
 
 def _make_world() -> WorldState:
-    world = generate_flat_world(
-        half_extent=48,
-        ground_y=0,
-        block_id="minecraft:grass_block",
-    )
+    world = generate_flat_world(half_extent=48, ground_y=0, block_id="minecraft:grass_block")
     ensure_othello_board_layout(world)
     return world
 
 
 def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
     spec = OthelloSessionSeed(seed=int(seed))
-    return make_session_manager(
-        seed=int(spec.seed),
-        spawn=tuple(spec.spawn),
-        yaw_deg=float(spec.yaw_deg),
-        pitch_deg=float(spec.pitch_deg),
-        world=_make_world(),
-        block_registry=block_registry,
-    )
+    return make_session_manager(seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=_make_world(), block_registry=block_registry)

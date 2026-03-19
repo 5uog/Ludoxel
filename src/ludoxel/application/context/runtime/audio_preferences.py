@@ -60,9 +60,4 @@ class AudioPreferences:
     def from_dict(data: object) -> "AudioPreferences":
         if not isinstance(data, dict):
             return AudioPreferences()
-        return AudioPreferences(
-            master=_clamp_volume(data.get(AUDIO_CATEGORY_MASTER, 1.0)),
-            ambient=_clamp_volume(data.get(AUDIO_CATEGORY_AMBIENT, 1.0)),
-            block=_clamp_volume(data.get(AUDIO_CATEGORY_BLOCK, 1.0)),
-            player=_clamp_volume(data.get(AUDIO_CATEGORY_PLAYER, 1.0)),
-        )
+        return AudioPreferences(master=_clamp_volume(data.get(AUDIO_CATEGORY_MASTER, 1.0)), ambient=_clamp_volume(data.get(AUDIO_CATEGORY_AMBIENT, 1.0)), block=_clamp_volume(data.get(AUDIO_CATEGORY_BLOCK, 1.0)), player=_clamp_volume(data.get(AUDIO_CATEGORY_PLAYER, 1.0)))

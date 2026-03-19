@@ -25,20 +25,7 @@ ACTION_CLEAR_SELECTED_SLOT = "clear_selected_slot"
 
 HOTBAR_ACTIONS: tuple[str, ...] = tuple(f"hotbar_slot_{int(index) + 1}" for index in range(9))
 
-KEYBIND_ACTION_ORDER: tuple[str, ...] = (
-    ACTION_MOVE_FORWARD,
-    ACTION_MOVE_BACKWARD,
-    ACTION_MOVE_LEFT,
-    ACTION_MOVE_RIGHT,
-    ACTION_JUMP,
-    ACTION_CROUCH,
-    ACTION_SPRINT,
-    ACTION_TOGGLE_INVENTORY,
-    ACTION_TOGGLE_CREATIVE_MODE,
-    ACTION_TOGGLE_DEBUG_HUD,
-    ACTION_TOGGLE_DEBUG_SHADOW,
-    ACTION_CLEAR_SELECTED_SLOT,
-) + HOTBAR_ACTIONS
+KEYBIND_ACTION_ORDER: tuple[str, ...] = (ACTION_MOVE_FORWARD, ACTION_MOVE_BACKWARD, ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT, ACTION_JUMP, ACTION_CROUCH, ACTION_SPRINT, ACTION_TOGGLE_INVENTORY, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_CLEAR_SELECTED_SLOT) + HOTBAR_ACTIONS
 
 KEYBIND_DISPLAY_NAMES: dict[str, str] = {
     ACTION_MOVE_FORWARD: "Move Forward",
@@ -57,22 +44,8 @@ KEYBIND_DISPLAY_NAMES: dict[str, str] = {
 for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
     KEYBIND_DISPLAY_NAMES[_action] = f"Hotbar Slot {int(_index)}"
 
-CONTROL_SECTION_MOVEMENT: tuple[str, ...] = (
-    ACTION_MOVE_FORWARD,
-    ACTION_MOVE_BACKWARD,
-    ACTION_MOVE_LEFT,
-    ACTION_MOVE_RIGHT,
-    ACTION_JUMP,
-    ACTION_CROUCH,
-    ACTION_SPRINT,
-)
-CONTROL_SECTION_GAMEPLAY: tuple[str, ...] = (
-    ACTION_TOGGLE_INVENTORY,
-    ACTION_TOGGLE_CREATIVE_MODE,
-    ACTION_CLEAR_SELECTED_SLOT,
-    ACTION_TOGGLE_DEBUG_HUD,
-    ACTION_TOGGLE_DEBUG_SHADOW,
-)
+CONTROL_SECTION_MOVEMENT: tuple[str, ...] = (ACTION_MOVE_FORWARD, ACTION_MOVE_BACKWARD, ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT, ACTION_JUMP, ACTION_CROUCH, ACTION_SPRINT)
+CONTROL_SECTION_GAMEPLAY: tuple[str, ...] = (ACTION_TOGGLE_INVENTORY, ACTION_TOGGLE_CREATIVE_MODE, ACTION_CLEAR_SELECTED_SLOT, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW)
 
 DEFAULT_KEYBINDS: dict[str, str] = {
     ACTION_MOVE_FORWARD: "W",
@@ -255,10 +228,7 @@ class KeybindSettings:
                 continue
             seeded[normalized_action] = "" if value is None else str(value)
 
-        canonical = _normalized_bindings_from_items(
-            (str(action), str(seeded.get(str(action), "")))
-            for action in KEYBIND_ACTION_ORDER
-        )
+        canonical = _normalized_bindings_from_items((str(action), str(seeded.get(str(action), ""))) for action in KEYBIND_ACTION_ORDER)
         object.__setattr__(self, "bindings", canonical)
 
         keys_by_action, action_by_key = _key_maps_for_bindings(canonical)

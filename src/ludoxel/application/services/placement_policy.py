@@ -60,11 +60,7 @@ class PlacementPolicy:
 
     def resolve_slab_merge_state(self, *, existing_state: str, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         desired_type = self._choose_half_type(int(hit_face), hit_point)
-        return self._try_merge_same_slab(
-            existing_state=str(existing_state),
-            block_id=str(block_id),
-            desired_type=str(desired_type),
-        )
+        return self._try_merge_same_slab(existing_state=str(existing_state), block_id=str(block_id), desired_type=str(desired_type))
 
     def resolve_slab_merge_state_from_hit(self, *, existing_state: str, block_id: str, hit_face: int) -> str | None:
         face = int(hit_face)
@@ -76,11 +72,7 @@ class PlacementPolicy:
         else:
             return None
 
-        return self._try_merge_same_slab(
-            existing_state=str(existing_state),
-            block_id=str(block_id),
-            desired_type=str(desired_type),
-        )
+        return self._try_merge_same_slab(existing_state=str(existing_state), block_id=str(block_id), desired_type=str(desired_type))
 
     def resolve_place_state(self, *, player: PlayerEntity, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         base_sel = str(block_id)
@@ -107,16 +99,7 @@ class PlacementPolicy:
 
         return format_state(base_sel, props)
 
-    def placement_intersects_player(
-        self,
-        *,
-        player: PlayerEntity,
-        world: WorldState,
-        px: int,
-        py: int,
-        pz: int,
-        place_state: str,
-    ) -> bool:
+    def placement_intersects_player(self, *, player: PlayerEntity, world: WorldState, px: int, py: int, pz: int, place_state: str) -> bool:
         pa = player.aabb_at(player.position)
 
         def get_state(x: int, y: int, z: int) -> str | None:
@@ -125,14 +108,7 @@ class PlacementPolicy:
                 return str(place_state)
             return world.blocks.get(k)
 
-        for ba in collision_aabbs_for_block(
-            str(place_state),
-            get_state,
-            self.block_registry.get,
-            int(px),
-            int(py),
-            int(pz),
-        ):
+        for ba in collision_aabbs_for_block(str(place_state), get_state, self.block_registry.get, int(px), int(py), int(pz)):
             if pa.intersects(ba):
                 return True
 

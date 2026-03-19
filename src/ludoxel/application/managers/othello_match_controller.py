@@ -6,28 +6,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ...features.othello.domain.game.rules import (
-    apply_move,
-    counts_for_board,
-    create_initial_board,
-    find_legal_moves,
-    winner_for_board,
-)
-from ...features.othello.domain.game.types import (
-    OTHELLO_GAME_STATE_AI_TURN,
-    OTHELLO_GAME_STATE_ANIMATING,
-    OTHELLO_GAME_STATE_FINISHED,
-    OTHELLO_GAME_STATE_IDLE,
-    OTHELLO_GAME_STATE_PLAYER_TURN,
-    OTHELLO_TIME_CONTROL_NONE,
-    SIDE_BLACK,
-    SIDE_WHITE,
-    OthelloAnimationState,
-    OthelloGameState,
-    OthelloSettings,
-    other_side,
-    side_name,
-)
+from ...features.othello.domain.game.rules import (apply_move, counts_for_board, create_initial_board, find_legal_moves, winner_for_board)
+from ...features.othello.domain.game.types import (OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_ANIMATING, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_IDLE, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_TIME_CONTROL_NONE, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, OthelloGameState, OthelloSettings, other_side, side_name)
 
 
 def _turn_status_for_player_side(player_side: int, current_turn: int) -> str:
@@ -38,12 +18,7 @@ def _turn_status_for_player_side(player_side: int, current_turn: int) -> str:
 
 class OthelloMatchController:
 
-    def __init__(
-        self,
-        *,
-        default_settings: OthelloSettings | None = None,
-        game_state: OthelloGameState | None = None,
-    ) -> None:
+    def __init__(self, *, default_settings: OthelloSettings | None = None, game_state: OthelloGameState | None = None) -> None:
         self._default_settings = (default_settings or OthelloSettings()).normalized()
         self._state = (game_state or OthelloGameState()).normalized()
         self._state = self._coerce_loaded_state(self._state)
@@ -61,9 +36,7 @@ class OthelloMatchController:
         self._state = self._coerce_loaded_state(game_state.normalized())
 
     def reset_to_idle(self) -> None:
-        self._state = OthelloGameState(
-            message="Right-click Start to begin a match. Use left click to place a disc."
-        ).normalized()
+        self._state = OthelloGameState(message="Right-click Start to begin a match. Use left click to place a disc.").normalized()
 
     def start_new_match(self) -> OthelloGameState:
         settings = self._default_settings.normalized()
@@ -72,25 +45,7 @@ class OthelloMatchController:
         current_turn = int(SIDE_BLACK)
         time_limit_s = settings.default_time_limit_s()
 
-        self._state = OthelloGameState(
-            status=OTHELLO_GAME_STATE_IDLE,
-            board=create_initial_board(),
-            settings=settings,
-            player_side=player_side,
-            ai_side=ai_side,
-            current_turn=current_turn,
-            black_time_remaining_s=time_limit_s,
-            white_time_remaining_s=time_limit_s,
-            move_count=0,
-            consecutive_passes=0,
-            winner=None,
-            message="Match initialized.",
-            last_move_index=None,
-            animations=(),
-            match_generation=int(self._state.match_generation) + 1,
-            legal_moves=(),
-            thinking=False,
-        ).normalized()
+        self._state = OthelloGameState(status=OTHELLO_GAME_STATE_IDLE, board=create_initial_board(), settings=settings, player_side=player_side, ai_side=ai_side, current_turn=current_turn, black_time_remaining_s=time_limit_s, white_time_remaining_s=time_limit_s, move_count=0, consecutive_passes=0, winner=None, message="Match initialized.", last_move_index=None, animations=(), match_generation=int(self._state.match_generation) + 1, legal_moves=(), thinking=False).normalized()
         self._state = self._resolve_turn_transition(message_prefix="Match started.")
         return self.game_state()
 
@@ -99,10 +54,7 @@ class OthelloMatchController:
 
     def can_player_move(self, square_index: int) -> bool:
         state = self._state.normalized()
-        return bool(
-            state.status == OTHELLO_GAME_STATE_PLAYER_TURN
-            and int(square_index) in set(state.legal_moves)
-        )
+        return bool(state.status == OTHELLO_GAME_STATE_PLAYER_TURN and int(square_index) in set(state.legal_moves))
 
     def set_ai_thinking(self, thinking: bool) -> None:
         self._state = replace(self._state, thinking=bool(thinking)).normalized()
@@ -126,9 +78,7 @@ class OthelloMatchController:
                 advanced = animation.normalized()
                 elapsed = min(float(advanced.duration_s), float(advanced.elapsed_s) + step)
                 if elapsed + 1e-9 < float(advanced.duration_s):
-                    next_animations.append(
-                        replace(advanced, elapsed_s=float(elapsed)).normalized()
-                    )
+                    next_animations.append(replace(advanced, elapsed_s=float(elapsed)).normalized())
             if next_animations:
                 self._state = replace(state, animations=tuple(next_animations)).normalized()
                 return self.game_state()
@@ -140,10 +90,7 @@ class OthelloMatchController:
             self._state = state
             return self.game_state()
 
-        if state.status not in (
-            OTHELLO_GAME_STATE_PLAYER_TURN,
-            OTHELLO_GAME_STATE_AI_TURN,
-        ):
+        if state.status not in (OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_GAME_STATE_AI_TURN):
             self._state = state
             return self.game_state()
 
@@ -159,30 +106,11 @@ class OthelloMatchController:
         elif state.current_turn == SIDE_WHITE and white_time is not None:
             white_time = max(0.0, float(white_time) - step)
 
-        timed_state = replace(
-            state,
-            black_time_remaining_s=black_time,
-            white_time_remaining_s=white_time,
-        ).normalized()
+        timed_state = replace(state, black_time_remaining_s=black_time, white_time_remaining_s=white_time).normalized()
 
-        if (
-            timed_state.current_turn == SIDE_BLACK
-            and black_time is not None
-            and black_time <= 1e-9
-        ) or (
-            timed_state.current_turn == SIDE_WHITE
-            and white_time is not None
-            and white_time <= 1e-9
-        ):
+        if (timed_state.current_turn == SIDE_BLACK and black_time is not None and black_time <= 1e-9) or (timed_state.current_turn == SIDE_WHITE and white_time is not None and white_time <= 1e-9):
             winner = side_name(other_side(timed_state.current_turn))
-            self._state = replace(
-                timed_state,
-                status=OTHELLO_GAME_STATE_FINISHED,
-                legal_moves=(),
-                winner=winner,
-                thinking=False,
-                message=f"{side_name(timed_state.current_turn).title()} ran out of time.",
-            ).normalized()
+            self._state = replace(timed_state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, message=f"{side_name(timed_state.current_turn).title()} ran out of time.").normalized()
             return self.game_state()
 
         self._state = timed_state
@@ -218,28 +146,9 @@ class OthelloMatchController:
     def _apply_turn_move(self, *, side: int, square_index: int) -> None:
         state = self._state.normalized()
         next_board, flipped = apply_move(state.board, side=side, index=int(square_index))
-        animations = tuple(
-            OthelloAnimationState(
-                square_index=int(index),
-                from_side=other_side(side),
-                to_side=side,
-            ).normalized()
-            for index in flipped
-        )
+        animations = tuple(OthelloAnimationState(square_index=int(index), from_side=other_side(side), to_side=side).normalized() for index in flipped)
 
-        updated = replace(
-            state,
-            board=next_board,
-            current_turn=other_side(side),
-            move_count=int(state.move_count) + 1,
-            consecutive_passes=0,
-            last_move_index=int(square_index),
-            animations=animations,
-            status=OTHELLO_GAME_STATE_ANIMATING if animations else OTHELLO_GAME_STATE_IDLE,
-            thinking=False,
-            legal_moves=(),
-            message=f"{side_name(side).title()} moved to {int(square_index)}.",
-        ).normalized()
+        updated = replace(state, board=next_board, current_turn=other_side(side), move_count=int(state.move_count) + 1, consecutive_passes=0, last_move_index=int(square_index), animations=animations, status=OTHELLO_GAME_STATE_ANIMATING if animations else OTHELLO_GAME_STATE_IDLE, thinking=False, legal_moves=(), message=f"{side_name(side).title()} moved to {int(square_index)}.").normalized()
         self._state = updated
         if not animations:
             self._state = self._resolve_turn_transition(message_prefix="Move applied.")
@@ -266,13 +175,7 @@ class OthelloMatchController:
         if legal_moves:
             next_status = _turn_status_for_player_side(state.player_side, current_side)
             message = f"{message_prefix} {side_name(current_side).title()} to move."
-            self._state = replace(
-                state,
-                status=next_status,
-                legal_moves=tuple(legal_moves),
-                thinking=False,
-                message=message,
-            ).normalized()
+            self._state = replace(state, status=next_status, legal_moves=tuple(legal_moves), thinking=False, message=message).normalized()
             return self.game_state()
 
         other = int(other_side(current_side))
@@ -280,27 +183,11 @@ class OthelloMatchController:
         if other_legal_moves:
             message = f"{message_prefix} {side_name(current_side).title()} must pass."
             next_status = _turn_status_for_player_side(state.player_side, other)
-            self._state = replace(
-                state,
-                current_turn=other,
-                legal_moves=tuple(other_legal_moves),
-                consecutive_passes=min(2, int(state.consecutive_passes) + 1),
-                status=next_status,
-                thinking=False,
-                message=message,
-            ).normalized()
+            self._state = replace(state, current_turn=other, legal_moves=tuple(other_legal_moves), consecutive_passes=min(2, int(state.consecutive_passes) + 1), status=next_status, thinking=False, message=message).normalized()
             return self.game_state()
 
         winner = winner_for_board(state.board)
         black, white = counts_for_board(state.board)
         message = f"{message_prefix} Match finished. Black {int(black)} - White {int(white)}."
-        self._state = replace(
-            state,
-            status=OTHELLO_GAME_STATE_FINISHED,
-            legal_moves=(),
-            winner=winner,
-            thinking=False,
-            animations=(),
-            message=message,
-        ).normalized()
+        self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, animations=(), message=message).normalized()
         return self.game_state()

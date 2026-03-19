@@ -47,12 +47,7 @@ class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
     fullscreen_changed = pyqtSignal(bool)
 
-    def __init__(
-        self,
-        project_root: Path,
-        parent=None,
-        loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS,
-    ) -> None:
+    def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
 
         self._project_root = Path(project_root)
@@ -118,34 +113,12 @@ class GLViewportWidget(QOpenGLWidget):
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(True)
 
-        self._hotbar = HotbarWidget(
-            parent=self,
-            project_root=self._project_root,
-            registry=self._session.block_registry,
-        )
+        self._hotbar = HotbarWidget(parent=self, project_root=self._project_root, registry=self._session.block_registry)
         self._hotbar.setVisible(True)
 
-        self._inventory = InventoryOverlay(
-            parent=self,
-            project_root=self._project_root,
-            registry=self._session.block_registry,
-        )
+        self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
 
-        self._overlays = ViewportOverlays(
-            refs=OverlayRefs(
-                pause=self._overlay,
-                settings=self._settings,
-                othello_settings=self._othello_settings,
-                inventory=self._inventory,
-                death=self._death,
-                crosshair=self._crosshair,
-                hotbar=self._hotbar,
-                hud_getter=lambda: self._hud,
-                othello_hud_getter=lambda: self._othello_hud,
-            ),
-            runner=self._runner,
-            inp=self._inp,
-        )
+        self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud), runner=self._runner, inp=self._inp)
         settings_controller.bind_settings_overlay(self)
         othello_controller.bind_othello_controls(self)
         interaction_controller.bind_overlay_actions(self)
@@ -165,20 +138,12 @@ class GLViewportWidget(QOpenGLWidget):
 
         self.setFormat(build_gl_surface_format())
 
-        self._state, persisted_othello_state = apply_persisted_state_if_present(
-            project_root=self._project_root,
-            sessions=self._sessions,
-            renderer=self._renderer,
-        )
+        self._state, persisted_othello_state = apply_persisted_state_if_present(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer)
         self._session = self._sessions.set_active_space(self._state.current_space_id)
         self._othello_match.set_default_settings(self._state.othello_settings)
         self._othello_match.set_game_state(persisted_othello_state)
         self._overlay.set_current_space(self._state.current_space_id)
-        self._audio = AudioManager(
-            project_root=self._project_root,
-            block_registry=self._session.block_registry,
-            parent=self,
-        )
+        self._audio = AudioManager(project_root=self._project_root, block_registry=self._session.block_registry, parent=self)
 
         settings_controller.apply_runtime_to_renderer(self)
         settings_controller.sync_input_bindings(self)
@@ -196,13 +161,7 @@ class GLViewportWidget(QOpenGLWidget):
     def save_state(self) -> None:
         settings_controller.sync_state_from_renderer_sun(self)
         settled_othello_state = self._othello_match.settle_animations()
-        save_state(
-            project_root=self._project_root,
-            sessions=self._sessions,
-            renderer=self._renderer,
-            runtime=self._state,
-            othello_game_state=settled_othello_state,
-        )
+        save_state(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state)
 
     def shutdown(self) -> None:
         if self._shutdown_done:
@@ -278,21 +237,12 @@ class GLViewportWidget(QOpenGLWidget):
         return bool(self._state.fullscreen)
 
     def _make_render_snapshot(self):
-        return self._session.make_snapshot(
-            enable_view_bobbing=bool(self._state.view_bobbing_enabled),
-            enable_camera_shake=bool(self._state.camera_shake_enabled),
-            view_bobbing_strength=float(self._state.view_bobbing_strength),
-            camera_shake_strength=float(self._state.camera_shake_strength),
-        )
+        return self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength))
 
     @staticmethod
     def _effective_camera_from_snapshot(snapshot) -> tuple[Vec3, float, float, float, Vec3]:
         cam = snapshot.camera
-        eye = Vec3(
-            float(cam.eye_x) + float(cam.shake_tx),
-            float(cam.eye_y) + float(cam.shake_ty),
-            float(cam.eye_z) + float(cam.shake_tz),
-        )
+        eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
         yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
         pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
         roll_deg = float(cam.shake_roll_deg)
@@ -300,14 +250,7 @@ class GLViewportWidget(QOpenGLWidget):
         return (eye, float(yaw_deg), float(pitch_deg), float(roll_deg), direction)
 
     def _gameplay_hud_active(self) -> bool:
-        return (
-            (not bool(self._state.hide_hud))
-            and (not self._overlays.dead())
-            and (not self._overlays.paused())
-            and (not self._overlays.settings_open())
-            and (not self._overlays.othello_settings_open())
-            and (not self._overlays.inventory_open())
-        )
+        return ((not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
 
     def _debug_hud_active(self) -> bool:
         return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
@@ -332,10 +275,7 @@ class GLViewportWidget(QOpenGLWidget):
                 self._othello_hud.raise_()
             if self._hud is not None and bool(self._debug_hud_active()):
                 self._hud.raise_()
-        self._audio.set_ambient_active(
-            current_space_id=self._state.current_space_id,
-            enabled=bool(show_gameplay_hud),
-        )
+        self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
 
     def _set_dead_overlay(self, on: bool) -> None:
         self._overlays.set_dead(bool(on))
@@ -420,9 +360,7 @@ class GLViewportWidget(QOpenGLWidget):
             return True
         if not self._state.is_othello_space() and self._selection_state.target() is None:
             return True
-        if (now - float(self._last_selection_refresh_time_s)) >= float(
-            self._selection_refresh_interval_s
-        ):
+        if (now - float(self._last_selection_refresh_time_s)) >= float(self._selection_refresh_interval_s):
             px, py, pz, pyaw, ppitch = self._last_selection_pose
             dx = float(eye.x) - float(px)
             dy = float(eye.y) - float(py)
@@ -439,13 +377,7 @@ class GLViewportWidget(QOpenGLWidget):
         return False
 
     def _mark_selection(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> None:
-        self._last_selection_pose = (
-            float(eye.x),
-            float(eye.y),
-            float(eye.z),
-            float(yaw_deg),
-            float(pitch_deg),
-        )
+        self._last_selection_pose = (float(eye.x), float(eye.y), float(eye.z), float(yaw_deg), float(pitch_deg))
         self._last_selection_space_id = str(self._state.current_space_id)
         self._last_selection_world_revision = int(self._session.world.revision)
         self._last_selection_refresh_time_s = time.perf_counter()
@@ -466,13 +398,7 @@ class GLViewportWidget(QOpenGLWidget):
                 self._inp.set_mouse_capture(False)
             except Exception:
                 pass
-            QMessageBox.critical(
-                self,
-                "OpenGL 4.3 initialization failed",
-                str(exc).strip()
-                if str(exc).strip()
-                else "Unknown OpenGL initialization error.",
-            )
+            QMessageBox.critical(self, "OpenGL 4.3 initialization failed", str(exc).strip() if str(exc).strip() else "Unknown OpenGL initialization error.")
             raise
 
         ctx = self.context()
@@ -541,54 +467,24 @@ class GLViewportWidget(QOpenGLWidget):
 
         snap = self._make_render_snapshot()
         eye = Vec3(snap.camera.eye_x, snap.camera.eye_y, snap.camera.eye_z)
-        render_eye, render_yaw_deg, render_pitch_deg, render_roll_deg, _render_direction = (
-            self._effective_camera_from_snapshot(snap)
-        )
-        self._audio.cache_listener_pose(
-            eye=render_eye,
-            yaw_deg=float(render_yaw_deg),
-            pitch_deg=float(render_pitch_deg),
-            roll_deg=float(render_roll_deg),
-        )
+        render_eye, render_yaw_deg, render_pitch_deg, render_roll_deg, _render_direction = (self._effective_camera_from_snapshot(snap))
+        self._audio.cache_listener_pose(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
 
         if self._upload_due(eye=eye):
-            self._upload.upload_if_needed(
-                world=self._session.world,
-                renderer=self._renderer,
-                eye=eye,
-                render_distance_chunks=int(self._state.render_distance_chunks),
-            )
+            self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
             self._mark_upload(eye=eye)
 
         if self._state.is_othello_space():
-            if self._selection_due(
-                eye=render_eye,
-                yaw_deg=float(render_yaw_deg),
-                pitch_deg=float(render_pitch_deg),
-            ):
+            if self._selection_due(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg)):
                 self._last_selection_pick_ms = 0.0
                 self._invalidate_selection_target()
                 self._renderer.clear_selection()
                 othello_controller.refresh_hover_square(self, snap)
-                self._mark_selection(
-                    eye=render_eye,
-                    yaw_deg=float(render_yaw_deg),
-                    pitch_deg=float(render_pitch_deg),
-                )
+                self._mark_selection(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
         else:
             self._othello_hover_square = None
-            if self._selection_due(
-                eye=render_eye,
-                yaw_deg=float(render_yaw_deg),
-                pitch_deg=float(render_pitch_deg),
-            ):
-                self._last_selection_pick_ms = self._selection_state.refresh(
-                    session=self._session,
-                    reach=float(self._state.reach),
-                    eye=render_eye,
-                    yaw_deg=float(render_yaw_deg),
-                    pitch_deg=float(render_pitch_deg),
-                )
+            if self._selection_due(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg)):
+                self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
                 selection_target = self._selection_state.target()
                 if selection_target is None:
                     self._renderer.clear_selection()
@@ -598,52 +494,21 @@ class GLViewportWidget(QOpenGLWidget):
                     def get_state(x: int, y: int, z: int) -> str | None:
                         return self._session.world.blocks.get((int(x), int(y), int(z)))
 
-                    self._renderer.set_selection_target(
-                        x=int(hx),
-                        y=int(hy),
-                        z=int(hz),
-                        state_str=str(st),
-                        get_state=get_state,
-                        world_revision=int(self._session.world.revision),
-                    )
-                self._mark_selection(
-                    eye=render_eye,
-                    yaw_deg=float(render_yaw_deg),
-                    pitch_deg=float(render_pitch_deg),
-                )
+                    self._renderer.set_selection_target(x=int(hx), y=int(hy), z=int(hz), state_str=str(st), get_state=get_state, world_revision=int(self._session.world.revision))
+                self._mark_selection(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
 
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
         cam = snap.camera
-        player_state = compose_player_render_state(
-            snapshot=snap,
-            motion=self._first_person_motion.sample(),
-            block_registry=self._session.block_registry,
-        )
+        player_state = compose_player_render_state(snapshot=snap, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
 
-        self._renderer.render(
-            w=fb_w,
-            h=fb_h,
-            eye=render_eye,
-            yaw_deg=float(render_yaw_deg),
-            pitch_deg=float(render_pitch_deg),
-            roll_deg=float(render_roll_deg),
-            fov_deg=float(cam.fov_deg),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-            player_state=player_state,
-            othello_state=othello_controller.build_render_state(self),
-        )
+        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
-        if (
-            self._overlays.dead()
-            or self._overlays.paused()
-            or self._overlays.settings_open()
-            or self._overlays.othello_settings_open()
-        ):
+        if (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
             return
         self._runner.update()
 
@@ -661,41 +526,16 @@ class GLViewportWidget(QOpenGLWidget):
         if bool(self._state.auto_sprint_enabled) and float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
             sprint = True
 
-        step_result = self._session.step(
-            dt=float(dt),
-            move_f=fr.move_f,
-            move_s=fr.move_s,
-            jump_held=bool(fr.jump_held),
-            jump_pressed=bool(fr.jump_pressed),
-            sprint=bool(sprint),
-            crouch=bool(fr.crouch),
-            mdx=float(md.dx),
-            mdy=float(md.dy),
-            creative_mode=bool(self._state.creative_mode),
-            auto_jump_enabled=bool(self._state.auto_jump_enabled),
-        )
+        step_result = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
         settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))
-        self._hud_ctl.on_sim_step(
-            dt=float(dt),
-            player=self._session.player,
-            jump_started=bool(step_result.jump_started),
-        )
+        self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(step_result.jump_started))
 
         if bool(step_result.footstep_triggered):
-            self._audio.play_surface_event(
-                event_name=PLAYER_EVENT_STEP,
-                support_block_state=step_result.support_block_state,
-                position=step_result.support_position,
-            )
+            self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
 
         if bool(step_result.landed):
-            self._audio.play_surface_event(
-                event_name=PLAYER_EVENT_LAND,
-                support_block_state=step_result.support_block_state,
-                position=step_result.support_position,
-                fall_distance_blocks=float(step_result.fall_distance_blocks),
-            )
+            self._audio.play_surface_event(event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks))
 
         if self._state.is_othello_space():
             self._othello_match.tick(float(dt), paused=False)
@@ -713,35 +553,7 @@ class GLViewportWidget(QOpenGLWidget):
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        payload = self._hud_ctl.build_payload(
-            session=self._session,
-            renderer=self._renderer,
-            auto_jump_enabled=self._state.auto_jump_enabled,
-            auto_sprint_enabled=self._state.auto_sprint_enabled,
-            creative_mode=self._state.creative_mode,
-            flying=bool(self._session.player.flying),
-            inventory_open=self._overlays.inventory_open(),
-            selected_block_id=settings_controller.current_item_id(self) or "",
-            reach=self._state.reach,
-            sun_az_deg=self._state.sun_az_deg,
-            sun_el_deg=self._state.sun_el_deg,
-            shadow_enabled=self._state.shadow_enabled,
-            world_wire=self._state.world_wire,
-            cloud_wire=self._state.cloud_wire,
-            cloud_enabled=self._state.cloud_enabled,
-            cloud_density=self._state.cloud_density,
-            cloud_seed=self._state.cloud_seed,
-            debug_shadow=self._state.debug_shadow,
-            fb_w=fb_w,
-            fb_h=fb_h,
-            dpr=dpr,
-            vsync_on=self._state.vsync_on,
-            render_timer_interval_ms=int(self._render_timer.interval()),
-            sim_hz=float(self._loop.sim_hz),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-            paint_ms=float(self._last_paint_ms),
-            selection_pick_ms=float(self._last_selection_pick_ms),
-        )
+        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, creative_mode=self._state.creative_mode, flying=bool(self._session.player.flying), inventory_open=self._overlays.inventory_open(), selected_block_id=settings_controller.current_item_id(self) or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
@@ -763,14 +575,7 @@ class GLViewportWidget(QOpenGLWidget):
         super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if (
-            self._overlays.paused()
-            or self._overlays.inventory_open()
-            or self._overlays.dead()
-            or self._overlays.settings_open()
-            or self._overlays.othello_settings_open()
-            or (not self._inp.captured())
-        ):
+        if (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):
             super().mouseMoveEvent(e)
             return
         e.accept()

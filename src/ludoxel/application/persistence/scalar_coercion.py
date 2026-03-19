@@ -23,7 +23,7 @@ def coerce_int(value: object, default: int) -> int:
 
 
 def coerce_bool(value: object, default: bool) -> bool:
-    if isinstance(value, (bool, int)):
+    if isinstance(value,(bool, int)):
         return bool(value)
     return bool(default)
 

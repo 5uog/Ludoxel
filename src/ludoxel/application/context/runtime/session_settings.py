@@ -92,14 +92,4 @@ class SessionSettings:
         self.movement = replace(self.movement, fly_descend_speed=value)
 
     def reset_advanced_movement_defaults(self) -> None:
-        self.movement = replace(
-            self.movement,
-            gravity=float(DEFAULT_MOVEMENT_PARAMS.gravity),
-            walk_speed=float(DEFAULT_MOVEMENT_PARAMS.walk_speed),
-            sprint_speed=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed),
-            jump_v0=float(DEFAULT_MOVEMENT_PARAMS.jump_v0),
-            auto_jump_cooldown_s=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s),
-            fly_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_speed),
-            fly_ascend_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed),
-            fly_descend_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed),
-        )
+        self.movement = replace(self.movement, gravity=float(DEFAULT_MOVEMENT_PARAMS.gravity), walk_speed=float(DEFAULT_MOVEMENT_PARAMS.walk_speed), sprint_speed=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed), jump_v0=float(DEFAULT_MOVEMENT_PARAMS.jump_v0), auto_jump_cooldown_s=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s), fly_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_speed), fly_ascend_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed), fly_descend_speed=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed))

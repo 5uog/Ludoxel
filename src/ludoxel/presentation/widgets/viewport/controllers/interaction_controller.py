@@ -110,13 +110,7 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
     hotbar_idx = hotbar_index_from_key(int(e.key()), viewport._state.keybinds)
 
-    if (
-        hotbar_idx is not None
-        and not viewport._overlays.paused()
-        and not viewport._overlays.dead()
-        and not viewport._overlays.settings_open()
-        and not viewport._overlays.othello_settings_open()
-    ):
+    if (hotbar_idx is not None and not viewport._overlays.paused() and not viewport._overlays.dead() and not viewport._overlays.settings_open() and not viewport._overlays.othello_settings_open()):
         if not viewport._overlays.inventory_open():
             settings_controller.select_hotbar_slot(viewport, int(hotbar_idx))
             return True
@@ -163,36 +157,17 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
             viewport._set_inventory_overlay(not viewport._overlays.inventory_open())
         return True
 
-    if (
-        bound_action == ACTION_CLEAR_SELECTED_SLOT
-        and is_my_world_space(viewport._state.current_space_id)
-        and not viewport._overlays.paused()
-        and not viewport._overlays.inventory_open()
-        and not viewport._overlays.dead()
-        and not viewport._overlays.settings_open()
-        and not viewport._overlays.othello_settings_open()
-    ):
+    if (bound_action == ACTION_CLEAR_SELECTED_SLOT and is_my_world_space(viewport._state.current_space_id) and not viewport._overlays.paused() and not viewport._overlays.inventory_open() and not viewport._overlays.dead() and not viewport._overlays.settings_open() and not viewport._overlays.othello_settings_open()):
         settings_controller.clear_selected_hotbar_slot(viewport)
         return True
 
-    if (
-        not viewport._overlays.paused()
-        and not viewport._overlays.inventory_open()
-        and not viewport._overlays.dead()
-        and not viewport._overlays.othello_settings_open()
-    ):
+    if (not viewport._overlays.paused() and not viewport._overlays.inventory_open() and not viewport._overlays.dead() and not viewport._overlays.othello_settings_open()):
         viewport._inp.on_key_press(e)
     return False
 
 
 def handle_wheel(viewport: "GLViewportWidget", e: "QWheelEvent") -> bool:
-    if (
-        viewport._overlays.paused()
-        or viewport._overlays.inventory_open()
-        or viewport._overlays.dead()
-        or viewport._overlays.settings_open()
-        or viewport._overlays.othello_settings_open()
-    ):
+    if (viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open()):
         return False
 
     delta_y = int(e.angleDelta().y())
@@ -210,13 +185,7 @@ def handle_wheel(viewport: "GLViewportWidget", e: "QWheelEvent") -> bool:
 def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
     viewport.setFocus(Qt.FocusReason.MouseFocusReason)
 
-    if (
-        viewport._overlays.paused()
-        or viewport._overlays.inventory_open()
-        or viewport._overlays.dead()
-        or viewport._overlays.settings_open()
-        or viewport._overlays.othello_settings_open()
-    ):
+    if (viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open()):
         return False
 
     if not viewport._inp.captured():
@@ -224,9 +193,7 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
         return False
 
     snapshot = viewport._make_render_snapshot()
-    render_eye, _yaw, _pitch, _roll, render_direction = viewport._effective_camera_from_snapshot(
-        snapshot
-    )
+    render_eye, _yaw, _pitch, _roll, render_direction = viewport._effective_camera_from_snapshot(snapshot)
 
     if viewport._state.is_othello_space():
         if e.button() == Qt.MouseButton.LeftButton:
@@ -238,36 +205,18 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
     if e.button() == Qt.MouseButton.LeftButton:
         break_outcome = None
         if bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id):
-            break_outcome = viewport._session.break_block(
-                reach=float(viewport._state.reach),
-                origin=render_eye,
-                direction=render_direction,
-            )
+            break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=render_eye, direction=render_direction)
         viewport._first_person_motion.trigger_left_swing()
         if break_outcome is not None and bool(break_outcome.success):
-            viewport._audio.play_interaction(
-                action=break_outcome.action,
-                block_state=break_outcome.target_block_state,
-                position=break_outcome.target_position,
-            )
+            viewport._audio.play_interaction(action=break_outcome.action, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
             viewport._invalidate_selection_target()
         return True
 
     if e.button() == Qt.MouseButton.RightButton:
-        outcome = viewport._session.place_block(
-            block_id=settings_controller.current_block_id(viewport),
-            reach=float(viewport._state.reach),
-            crouching=bool(viewport._inp.crouch_held()),
-            origin=render_eye,
-            direction=render_direction,
-        )
+        outcome = viewport._session.place_block(block_id=settings_controller.current_block_id(viewport), reach=float(viewport._state.reach), crouching=bool(viewport._inp.crouch_held()), origin=render_eye, direction=render_direction)
         viewport._first_person_motion.trigger_right_swing(success=bool(outcome.success))
         if bool(outcome.success):
-            viewport._audio.play_interaction(
-                action=outcome.action,
-                block_state=outcome.target_block_state,
-                position=outcome.target_position,
-            )
+            viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)
             viewport._invalidate_selection_target()
         return True
 

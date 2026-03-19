@@ -9,16 +9,7 @@ from dataclasses import dataclass
 from PyQt6.QtCore import QObject
 from PyQt6.QtGui import QKeyEvent
 
-from ...application.handlers.keybinds import (
-    ACTION_CROUCH,
-    ACTION_JUMP,
-    ACTION_MOVE_BACKWARD,
-    ACTION_MOVE_FORWARD,
-    ACTION_MOVE_LEFT,
-    ACTION_MOVE_RIGHT,
-    ACTION_SPRINT,
-    KeybindSettings,
-)
+from ...application.handlers.keybinds import (ACTION_CROUCH, ACTION_JUMP, ACTION_MOVE_BACKWARD, ACTION_MOVE_FORWARD, ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT, ACTION_SPRINT, KeybindSettings)
 
 
 @dataclass
@@ -117,16 +108,7 @@ class QtInputAdapter(QObject):
         jump_held = self._action_pressed(ACTION_JUMP)
         jump_pressed = bool(self._jump_pressed_edge)
 
-        out = InputFrame(
-            move_f=float(f),
-            move_s=float(s),
-            jump_held=bool(jump_held),
-            jump_pressed=bool(jump_pressed),
-            sprint=bool(sprint),
-            crouch=bool(crouch),
-            mdx=float(self._mdx),
-            mdy=float(self._mdy),
-        )
+        out = InputFrame(move_f=float(f), move_s=float(s), jump_held=bool(jump_held), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), mdx=float(self._mdx), mdy=float(self._mdy))
 
         self._jump_pressed_edge = False
         self._mdx = 0.0

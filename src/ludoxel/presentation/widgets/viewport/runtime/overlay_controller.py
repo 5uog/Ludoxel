@@ -56,13 +56,7 @@ class ViewportOverlays:
         return bool(self._othello_settings_open)
 
     def any_modal_open(self) -> bool:
-        return bool(
-            self._paused
-            or self._inventory_open
-            or self._settings_open
-            or self._othello_settings_open
-            or self._dead
-        )
+        return bool(self._paused or self._inventory_open or self._settings_open or self._othello_settings_open or self._dead)
 
     def _raise_game_hud(self) -> None:
         self._r.hotbar.setVisible(True)
@@ -105,12 +99,7 @@ class ViewportOverlays:
         self._r.death.setVisible(False)
         self._runner.start()
 
-        if (
-            not self._paused
-            and not self._inventory_open
-            and not self._settings_open
-            and not self._othello_settings_open
-        ):
+        if (not self._paused and not self._inventory_open and not self._settings_open and not self._othello_settings_open):
             self._inp.set_mouse_capture(True)
             self._r.hotbar.setVisible(True)
 

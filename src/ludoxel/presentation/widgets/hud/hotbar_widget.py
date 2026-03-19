@@ -80,12 +80,7 @@ class HotbarWidget(QWidget):
         for i, btn in enumerate(self._slots):
             bid = str(norm[i]).strip()
             self._slot_item_ids[i] = str(bid)
-            btn.set_slot_state(
-                block_id=bid,
-                tooltip=hotbar_slot_tooltip(self._registry, slot_index=i, block_id=bid),
-                selected=(int(i) == int(idx)),
-                photos=self._photos,
-            )
+            btn.set_slot_state(block_id=bid, tooltip=hotbar_slot_tooltip(self._registry, slot_index=i, block_id=bid), selected=(int(i) == int(idx)), photos=self._photos)
 
         self._panel.adjustSize()
         self.update()
@@ -95,7 +90,7 @@ class HotbarWidget(QWidget):
         self._panel.adjustSize()
         pw = int(self._panel.sizeHint().width())
         ph = int(self._panel.sizeHint().height())
-        x = max(0, (int(self.width()) - pw) // 2)
+        x = max(0,(int(self.width()) - pw) // 2)
         y = max(0, int(self.height()) - ph - 18)
         self._panel.setGeometry(x, y, pw, ph)
 
@@ -106,9 +101,4 @@ class HotbarWidget(QWidget):
         for index, btn in enumerate(self._slots):
             if str(self._slot_item_ids[index]).strip() != normalized:
                 continue
-            btn.set_slot_state(
-                block_id=normalized,
-                tooltip=hotbar_slot_tooltip(self._registry, slot_index=index, block_id=normalized),
-                selected=bool(btn.property("selected")),
-                photos=self._photos,
-            )
+            btn.set_slot_state(block_id=normalized, tooltip=hotbar_slot_tooltip(self._registry, slot_index=index, block_id=normalized), selected=bool(btn.property("selected")), photos=self._photos)

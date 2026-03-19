@@ -85,7 +85,7 @@ class FramePipeline:
         view = mat4.look_dir(eye, forward)
         if abs(float(roll_deg)) > 1e-6:
             view = mat4.mul(rotate_z_deg_matrix(float(roll_deg)), view)
-        proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(self.cfg.camera.z_near), float(self.cfg.camera.z_far))
+        proj = mat4.perspective(fov_deg,(w / max(h, 1)), float(self.cfg.camera.z_near), float(self.cfg.camera.z_far))
         vp = mat4.mul(proj, view)
 
         glViewport(0, 0, w, h)
@@ -126,7 +126,7 @@ class FramePipeline:
         if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
             hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
-            hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
+            hand_vp = mat4.perspective(hand_fov_deg,(w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
             if first_person.visible_block_id is not None:
                 self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             else:

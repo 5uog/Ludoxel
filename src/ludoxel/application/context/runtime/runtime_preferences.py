@@ -185,52 +185,9 @@ class RuntimePreferences:
         self.set_hotbar_slot(self._active_hotbar_index(), None)
 
 
-def coerce_runtime_preferences(
-    *,
-    runtime: RuntimePreferences | None = None,
-    **overrides,
-) -> RuntimePreferences:
+def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
     if runtime is not None:
-        out = RuntimePreferences(
-            current_space_id=str(runtime.current_space_id),
-            invert_x=bool(runtime.invert_x),
-            invert_y=bool(runtime.invert_y),
-            outline_selection=bool(runtime.outline_selection),
-            cloud_wire=bool(runtime.cloud_wire),
-            cloud_enabled=bool(runtime.cloud_enabled),
-            cloud_density=int(runtime.cloud_density),
-            cloud_seed=int(runtime.cloud_seed),
-            cloud_flow_direction=str(runtime.cloud_flow_direction),
-            world_wire=bool(runtime.world_wire),
-            shadow_enabled=bool(runtime.shadow_enabled),
-            creative_mode=bool(runtime.creative_mode),
-            creative_hotbar_slots=list(runtime.creative_hotbar_slots),
-            creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index),
-            survival_hotbar_slots=list(runtime.survival_hotbar_slots),
-            survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index),
-            othello_hotbar_slots=list(runtime.othello_hotbar_slots),
-            othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index),
-            othello_settings=runtime.othello_settings.normalized(),
-            reach=float(runtime.reach),
-            auto_jump_enabled=bool(runtime.auto_jump_enabled),
-            auto_sprint_enabled=bool(runtime.auto_sprint_enabled),
-            hide_hud=bool(runtime.hide_hud),
-            hide_hand=bool(runtime.hide_hand),
-            fullscreen=bool(runtime.fullscreen),
-            view_bobbing_enabled=bool(runtime.view_bobbing_enabled),
-            camera_shake_enabled=bool(runtime.camera_shake_enabled),
-            view_bobbing_strength=float(runtime.view_bobbing_strength),
-            camera_shake_strength=float(runtime.camera_shake_strength),
-            animated_textures_enabled=bool(runtime.animated_textures_enabled),
-            render_distance_chunks=int(runtime.render_distance_chunks),
-            sun_az_deg=float(runtime.sun_az_deg),
-            sun_el_deg=float(runtime.sun_el_deg),
-            debug_shadow=bool(runtime.debug_shadow),
-            vsync_on=bool(runtime.vsync_on),
-            hud_visible=bool(runtime.hud_visible),
-            keybinds=runtime.keybinds.normalized(),
-            audio=runtime.audio.normalized(),
-        )
+        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
     else:
         out = RuntimePreferences()
 

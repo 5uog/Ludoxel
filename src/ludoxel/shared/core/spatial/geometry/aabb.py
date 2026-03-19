@@ -47,11 +47,4 @@ class AABB:
         reject block placements only when the candidate collision box intrudes into the player's box
         rather than merely touching it.
         """
-        return not (
-            self.mx.x <= o.mn.x or
-            self.mn.x >= o.mx.x or
-            self.mx.y <= o.mn.y or
-            self.mn.y >= o.mx.y or
-            self.mx.z <= o.mn.z or
-            self.mn.z >= o.mx.z
-        )
+        return not (self.mx.x <= o.mn.x or self.mn.x >= o.mx.x or self.mx.y <= o.mn.y or self.mn.y >= o.mx.y or self.mx.z <= o.mn.z or self.mn.z >= o.mx.z)

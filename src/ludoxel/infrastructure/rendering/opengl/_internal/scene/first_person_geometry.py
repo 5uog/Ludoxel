@@ -86,7 +86,7 @@ _FIRST_PERSON_SCALE_SEARCH_STEPS = 18
 _FIRST_PERSON_FIT_EPSILON = 1e-6
 
 _ARM_BASE_BOX = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.0, 2.0 * _PX)
-_ARM_SLEEVE_BOX = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX, (1.5 + 0.25) * _PX, 0.25 * _PX, (2.0 + 0.25) * _PX)
+_ARM_SLEEVE_BOX = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
 
 
 @dataclass(frozen=True)
@@ -235,8 +235,8 @@ def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projectio
     for point in points:
         depth = max(-float(point[2]), _FIRST_PERSON_FIT_EPSILON)
         current_ndc = proj * float(point[axis_index]) / depth
-        lower = max(lower, ((float(ndc_min) - current_ndc) * depth) / proj)
-        upper = min(upper, ((float(ndc_max) - current_ndc) * depth) / proj)
+        lower = max(lower,((float(ndc_min) - current_ndc) * depth) / proj)
+        upper = min(upper,((float(ndc_max) - current_ndc) * depth) / proj)
     return (float(lower), float(upper))
 
 
@@ -379,7 +379,7 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ARM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
 
-    for box, uv_map in ((arm_boxes[0], _ALEX_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], _ALEX_RIGHT_ARM_SLEEVE_UV_PX)):
+    for box, uv_map in ((arm_boxes[0], _ALEX_RIGHT_ARM_BASE_UV_PX),(arm_boxes[1], _ALEX_RIGHT_ARM_SLEEVE_UV_PX)):
         model = _model_matrix_for_box(parent_transform, box)
         for face_idx in range(6):
             uv_rect = _skin_uv_rect(uv_map[int(face_idx)], int(skin_width), int(skin_height))
@@ -400,16 +400,16 @@ def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray
 
 def rotation_only(matrix: np.ndarray) -> np.ndarray:
     out = identity_matrix()
-    linear = np.asarray(matrix, dtype=np.float32)[:3,:3].copy()
+    linear = np.asarray(matrix, dtype=np.float32)[:3, :3].copy()
     for column in range(3):
         length = float(np.linalg.norm(linear[:, column]))
         if length > 1e-6:
             linear[:, column] /= length
-    out[:3,:3] = linear
+    out[:3, :3] = linear
     return out
 
 
 def rotation_scale_only(matrix: np.ndarray) -> np.ndarray:
     out = identity_matrix()
-    out[:3,:3] = np.asarray(matrix, dtype=np.float32)[:3,:3]
+    out[:3, :3] = np.asarray(matrix, dtype=np.float32)[:3, :3]
     return out

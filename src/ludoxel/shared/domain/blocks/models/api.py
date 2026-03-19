@@ -139,11 +139,7 @@ def _render_boxes_uncached(state_str: str, get_state: GetState, get_def: GetDef,
 
 def render_boxes_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[LocalBox]:
     key = _local_box_cache_key("render", str(state_str), get_state, get_def, int(x), int(y), int(z))
-    return _cache_get_or_build(
-        _RENDER_BOX_CACHE,
-        key,
-        lambda: _render_boxes_uncached(str(state_str), get_state, get_def, int(x), int(y), int(z)),
-    )
+    return _cache_get_or_build(_RENDER_BOX_CACHE, key, lambda: _render_boxes_uncached(str(state_str), get_state, get_def, int(x), int(y), int(z)))
 
 
 def _tall_structural_boxes(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[LocalBox, ...]:
@@ -211,27 +207,9 @@ def _translate_boxes_to_aabbs(boxes: Sequence[LocalBox], x: int, y: int, z: int)
 
 def collision_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[AABB]:
     key = _world_aabb_cache_key("collision_aabb", str(state_str), get_state, get_def, int(x), int(y), int(z))
-    return _cache_get_or_build(
-        _COLLISION_AABB_CACHE,
-        key,
-        lambda: _translate_boxes_to_aabbs(
-            collision_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)),
-            int(x),
-            int(y),
-            int(z),
-        ),
-    )
+    return _cache_get_or_build(_COLLISION_AABB_CACHE, key, lambda: _translate_boxes_to_aabbs(collision_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)), int(x), int(y), int(z)))
 
 
 def pick_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[AABB]:
     key = _world_aabb_cache_key("pick_aabb", str(state_str), get_state, get_def, int(x), int(y), int(z))
-    return _cache_get_or_build(
-        _PICK_AABB_CACHE,
-        key,
-        lambda: _translate_boxes_to_aabbs(
-            pick_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)),
-            int(x),
-            int(y),
-            int(z),
-        ),
-    )
+    return _cache_get_or_build(_PICK_AABB_CACHE, key, lambda: _translate_boxes_to_aabbs(pick_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)), int(x), int(y), int(z)))

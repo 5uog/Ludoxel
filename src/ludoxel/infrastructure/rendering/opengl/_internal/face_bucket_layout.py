@@ -20,14 +20,7 @@ def normalize_bucket_counts(bucket_counts: Sequence[int]) -> BucketCounts:
 
 def bucket_offsets(bucket_counts: Sequence[int]) -> BucketCounts:
     c0, c1, c2, c3, c4, _c5 = normalize_bucket_counts(bucket_counts)
-    return (
-        0,
-        int(c0),
-        int(c0 + c1),
-        int(c0 + c1 + c2),
-        int(c0 + c1 + c2 + c3),
-        int(c0 + c1 + c2 + c3 + c4),
-    )
+    return (0, int(c0), int(c0 + c1), int(c0 + c1 + c2), int(c0 + c1 + c2 + c3), int(c0 + c1 + c2 + c3 + c4))
 
 
 def empty_face_bucket_arrays(row_width: int, *, dtype: object=np.float32) -> list[np.ndarray]:

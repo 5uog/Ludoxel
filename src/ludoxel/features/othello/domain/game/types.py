@@ -159,11 +159,7 @@ class OthelloSettings:
     player_side: int = SIDE_BLACK
 
     def normalized(self) -> "OthelloSettings":
-        return OthelloSettings(
-            difficulty=normalize_difficulty(self.difficulty),
-            time_control=normalize_time_control(self.time_control),
-            player_side=normalize_player_side(self.player_side)
-        )
+        return OthelloSettings(difficulty=normalize_difficulty(self.difficulty), time_control=normalize_time_control(self.time_control), player_side=normalize_player_side(self.player_side))
 
     def default_time_limit_s(self) -> float | None:
         if normalize_time_control(self.time_control) == OTHELLO_TIME_CONTROL_NONE:
@@ -182,11 +178,7 @@ class OthelloSettings:
     def from_dict(data: dict[str, Any]) -> "OthelloSettings":
         if not isinstance(data, dict):
             return OthelloSettings()
-        return OthelloSettings(
-            difficulty=normalize_difficulty(data.get("difficulty", OTHELLO_DIFFICULTY_MEDIUM)),
-            time_control=normalize_time_control(data.get("time_control", OTHELLO_TIME_CONTROL_PER_SIDE_20M)),
-            player_side=normalize_player_side(data.get("player_side", SIDE_BLACK))
-        )
+        return OthelloSettings(difficulty=normalize_difficulty(data.get("difficulty", OTHELLO_DIFFICULTY_MEDIUM)), time_control=normalize_time_control(data.get("time_control", OTHELLO_TIME_CONTROL_PER_SIDE_20M)), player_side=normalize_player_side(data.get("player_side", SIDE_BLACK)))
 
 
 @dataclass(frozen=True)
@@ -209,14 +201,7 @@ class OthelloAnimationState:
         duration = max(1e-6, float(self.duration_s))
         lift = max(0.0, float(self.lift_height))
 
-        return OthelloAnimationState(
-            square_index=int(square_index),
-            from_side=normalize_side(self.from_side),
-            to_side=normalize_side(self.to_side),
-            elapsed_s=float(elapsed),
-            duration_s=float(duration),
-            lift_height=float(lift)
-        )
+        return OthelloAnimationState(square_index=int(square_index), from_side=normalize_side(self.from_side), to_side=normalize_side(self.to_side), elapsed_s=float(elapsed), duration_s=float(duration), lift_height=float(lift))
 
     def to_dict(self) -> dict[str, Any]:
         normalized = self.normalized()
@@ -232,19 +217,8 @@ class OthelloAnimationState:
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "OthelloAnimationState":
         if not isinstance(data, dict):
-            return OthelloAnimationState(
-                square_index=0,
-                from_side=SIDE_EMPTY,
-                to_side=SIDE_EMPTY
-            )
-        return OthelloAnimationState(
-            square_index=int(data.get("square_index", 0)),
-            from_side=normalize_side(data.get("from_side", SIDE_EMPTY)),
-            to_side=normalize_side(data.get("to_side", SIDE_EMPTY)),
-            elapsed_s=float(data.get("elapsed_s", 0.0)),
-            duration_s=float(data.get("duration_s", 0.22)),
-            lift_height=float(data.get("lift_height", 0.075))
-        ).normalized()
+            return OthelloAnimationState(square_index=0, from_side=SIDE_EMPTY, to_side=SIDE_EMPTY)
+        return OthelloAnimationState(square_index=int(data.get("square_index", 0)), from_side=normalize_side(data.get("from_side", SIDE_EMPTY)), to_side=normalize_side(data.get("to_side", SIDE_EMPTY)), elapsed_s=float(data.get("elapsed_s", 0.0)), duration_s=float(data.get("duration_s", 0.22)), lift_height=float(data.get("lift_height", 0.075))).normalized()
 
 
 @dataclass(frozen=True)
@@ -322,24 +296,7 @@ class OthelloGameState:
         if winner not in (None, "black", "white", OTHELLO_WINNER_DRAW):
             winner = None
 
-        return OthelloGameState(
-            status=str(status),
-            board=coerce_board(self.board),
-            settings=settings,
-            player_side=int(player_side),
-            ai_side=int(ai_side),
-            current_turn=int(current_turn),
-            black_time_remaining_s=black_time,
-            white_time_remaining_s=white_time,
-            move_count=int(move_count),
-            consecutive_passes=int(consecutive_passes),
-            winner=winner, message=str(self.message),
-            last_move_index=last_move,
-            animations=animations,
-            match_generation=int(generation),
-            legal_moves=tuple(legal_moves),
-            thinking=bool(self.thinking)
-        )
+        return OthelloGameState(status=str(status), board=coerce_board(self.board), settings=settings, player_side=int(player_side), ai_side=int(ai_side), current_turn=int(current_turn), black_time_remaining_s=black_time, white_time_remaining_s=white_time, move_count=int(move_count), consecutive_passes=int(consecutive_passes), winner=winner, message=str(self.message), last_move_index=last_move, animations=animations, match_generation=int(generation), legal_moves=tuple(legal_moves), thinking=bool(self.thinking))
 
     def to_dict(self) -> dict[str, Any]:
         normalized = self.normalized()
@@ -369,14 +326,14 @@ class OthelloGameState:
 
         settings = OthelloSettings.from_dict(data.get("settings", {}))
 
-        animations_raw = data.get("animations", [])
+        animations_raw = data.get("animations",[])
         animations: list[OthelloAnimationState] = []
         if isinstance(animations_raw, list):
             for value in animations_raw:
                 if isinstance(value, dict):
                     animations.append(OthelloAnimationState.from_dict(value))
 
-        legal_moves_raw = data.get("legal_moves", [])
+        legal_moves_raw = data.get("legal_moves",[])
         legal_moves: list[int] = []
         if isinstance(legal_moves_raw, list):
             for value in legal_moves_raw:
@@ -387,24 +344,7 @@ class OthelloGameState:
                 if 0 <= index < BOARD_CELL_COUNT:
                     legal_moves.append(index)
 
-        return OthelloGameState(
-            status=normalize_game_status(data.get("status", OTHELLO_GAME_STATE_IDLE)),
-            board=coerce_board(data.get("board", "")),
-            settings=settings,
-            player_side=normalize_player_side(data.get("player_side", settings.player_side)),
-            ai_side=normalize_player_side(data.get("ai_side", other_side(settings.player_side)), default=SIDE_WHITE),
-            current_turn=normalize_side(data.get("current_turn", SIDE_BLACK), default=SIDE_BLACK),
-            black_time_remaining_s=data.get("black_time_remaining_s", settings.default_time_limit_s()),
-            white_time_remaining_s=data.get("white_time_remaining_s", settings.default_time_limit_s()),
-            move_count=int(data.get("move_count", 0)),
-            consecutive_passes=int(data.get("consecutive_passes", 0)),
-            winner=data.get("winner", None),
-            message=str(data.get("message", "Right-click Start to begin a match. Use left click to place a disc.")),
-            last_move_index=data.get("last_move_index", None),
-            animations=tuple(animations),
-            match_generation=int(data.get("match_generation", 0)),
-            legal_moves=tuple(legal_moves)
-        ).normalized()
+        return OthelloGameState(status=normalize_game_status(data.get("status", OTHELLO_GAME_STATE_IDLE)), board=coerce_board(data.get("board", "")), settings=settings, player_side=normalize_player_side(data.get("player_side", settings.player_side)), ai_side=normalize_player_side(data.get("ai_side", other_side(settings.player_side)), default=SIDE_WHITE), current_turn=normalize_side(data.get("current_turn", SIDE_BLACK), default=SIDE_BLACK), black_time_remaining_s=data.get("black_time_remaining_s", settings.default_time_limit_s()), white_time_remaining_s=data.get("white_time_remaining_s", settings.default_time_limit_s()), move_count=int(data.get("move_count", 0)), consecutive_passes=int(data.get("consecutive_passes", 0)), winner=data.get("winner", None), message=str(data.get("message", "Right-click Start to begin a match. Use left click to place a disc.")), last_move_index=data.get("last_move_index", None), animations=tuple(animations), match_generation=int(data.get("match_generation", 0)), legal_moves=tuple(legal_moves)).normalized()
 
 
 def empty_othello_game_state() -> OthelloGameState:

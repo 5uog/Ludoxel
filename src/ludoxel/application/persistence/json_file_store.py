@@ -40,12 +40,7 @@ class JsonFileStore:
 
         tmp = p.with_suffix(p.suffix + ".tmp")
 
-        data = json.dumps(
-            obj,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
+        data = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
         f = None
         try:
