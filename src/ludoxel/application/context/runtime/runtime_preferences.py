@@ -26,6 +26,12 @@ def _default_othello_hotbar_slots_list() -> list[str]:
     return list(default_othello_hotbar_slots(size=HOTBAR_SIZE))
 
 
+def _normalize_hotbar_state(slots: object, index: object, *, size: int = HOTBAR_SIZE) -> tuple[list[str], int]:
+    normalized_slots = list(normalize_hotbar_slots(slots, size=int(size)))
+    normalized_index = normalize_hotbar_index(index, size=int(size))
+    return normalized_slots, int(normalized_index)
+
+
 @dataclass
 class RuntimePreferences:
     current_space_id: str = PLAY_SPACE_MY_WORLD
@@ -102,14 +108,9 @@ class RuntimePreferences:
         self.sun_az_deg = azimuth if azimuth >= 0.0 else azimuth + 360.0
         self.sun_el_deg = max(0.0, min(90.0, float(self.sun_el_deg)))
 
-        self.creative_hotbar_slots = list(normalize_hotbar_slots(self.creative_hotbar_slots, size=HOTBAR_SIZE))
-        self.creative_selected_hotbar_index = normalize_hotbar_index(self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
-
-        self.survival_hotbar_slots = list(normalize_hotbar_slots(self.survival_hotbar_slots, size=HOTBAR_SIZE))
-        self.survival_selected_hotbar_index = normalize_hotbar_index(self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
-
-        self.othello_hotbar_slots = list(normalize_hotbar_slots(self.othello_hotbar_slots, size=HOTBAR_SIZE))
-        self.othello_selected_hotbar_index = normalize_hotbar_index(self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
+        self.creative_hotbar_slots, self.creative_selected_hotbar_index = _normalize_hotbar_state(self.creative_hotbar_slots, self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
+        self.survival_hotbar_slots, self.survival_selected_hotbar_index = _normalize_hotbar_state(self.survival_hotbar_slots, self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
+        self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
 
         self.othello_settings = self.othello_settings.normalized()
         self.keybinds = self.keybinds.normalized()

@@ -7,6 +7,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+_BOOL_TRUE_TOKENS = frozenset({"1", "true", "yes", "on"})
+_BOOL_FALSE_TOKENS = frozenset({"0", "false", "no", "off"})
+
 
 def coerce_float(value: object, default: float) -> float:
     try:
@@ -23,8 +26,16 @@ def coerce_int(value: object, default: int) -> int:
 
 
 def coerce_bool(value: object, default: bool) -> bool:
-    if isinstance(value,(bool, int)):
+    if isinstance(value, bool):
         return bool(value)
+    if isinstance(value,(int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        token = str(value).strip().lower()
+        if token in _BOOL_TRUE_TOKENS:
+            return True
+        if token in _BOOL_FALSE_TOKENS:
+            return False
     return bool(default)
 
 

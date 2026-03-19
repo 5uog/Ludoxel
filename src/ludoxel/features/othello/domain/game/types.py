@@ -296,7 +296,7 @@ class OthelloGameState:
         if not isinstance(data, dict):
             return OthelloGameState()
 
-        settings = OthelloSettings.from_dict(data.get("settings", {}))
+        settings = OthelloSettings.from_dict(data.get("settings",{}))
 
         animations_raw = data.get("animations",[])
         animations: list[OthelloAnimationState] = []

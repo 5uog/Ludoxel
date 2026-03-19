@@ -14,7 +14,7 @@ from ...world.world_state import WorldState
 
 
 def make_wall_state(base_id: str, waterlogged: bool=False) -> str:
-    return format_state(str(base_id), {"east": "none", "north": "none", "south": "none", "up": "true", "waterlogged": bool_str(bool(waterlogged)), "west": "none"})
+    return format_state(str(base_id),{"east": "none", "north": "none", "south": "none", "up": "true", "waterlogged": bool_str(bool(waterlogged)), "west": "none"})
 
 
 def _wall_side_from_neighbor(world: WorldState, nb_x: int, nb_y: int, nb_z: int, *, side_from_neighbor: str, block_registry: BlockRegistry) -> str:
@@ -39,11 +39,11 @@ def canonical_wall_state(world: WorldState, x: int, y: int, z: int, *, block_reg
     above_state = world_state_at(world, int(x), int(y + 1), int(z))
     up = wall_up_rule(north=str(north), east=str(east), south=str(south), west=str(west), above_state=above_state, get_def=block_registry.get)
 
-    return format_state(str(base), {"east": str(east), "north": str(north), "south": str(south), "up": bool_str(bool(up)), "waterlogged": bool_str(bool(waterlogged)), "west": str(west)})
+    return format_state(str(base),{"east": str(east), "north": str(north), "south": str(south), "up": bool_str(bool(up)), "waterlogged": bool_str(bool(waterlogged)), "west": str(west)})
 
 
 def make_fence_gate_state(base_id: str, facing: str, *, open_state: bool=False, powered: bool=False, in_wall: bool=False, waterlogged: bool=False) -> str:
-    return format_state(str(base_id), {"facing": str(facing), "in_wall": bool_str(bool(in_wall)), "open": bool_str(bool(open_state)), "powered": bool_str(bool(powered)), "waterlogged": bool_str(bool(waterlogged))})
+    return format_state(str(base_id),{"facing": str(facing), "in_wall": bool_str(bool(in_wall)), "open": bool_str(bool(open_state)), "powered": bool_str(bool(powered)), "waterlogged": bool_str(bool(waterlogged))})
 
 
 def _gate_in_wall(world: WorldState, x: int, y: int, z: int, facing: str, *, block_registry: BlockRegistry) -> bool:
@@ -80,7 +80,7 @@ def canonical_fence_gate_state(world: WorldState, x: int, y: int, z: int, *, blo
 
 
 def refresh_structural_neighbors(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry) -> None:
-    targets = {(int(x), int(y), int(z)), (int(x), int(y - 1), int(z)), (int(x + 1), int(y), int(z)), (int(x - 1), int(y), int(z)), (int(x), int(y), int(z + 1)), (int(x), int(y), int(z - 1))}
+    targets = {(int(x), int(y), int(z)),(int(x), int(y - 1), int(z)),(int(x + 1), int(y), int(z)),(int(x - 1), int(y), int(z)),(int(x), int(y), int(z + 1)),(int(x), int(y), int(z - 1))}
 
     updates: dict[tuple[int, int, int], str] = {}
 
