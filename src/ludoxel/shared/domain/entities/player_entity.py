@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...core.math.vec3 import Vec3, clampf
+from ...core.math.scalars import clampf
+from ...core.math.vec3 import Vec3
 from ...core.spatial.geometry.aabb import AABB
 from ...core.math.view_angles import forward_from_yaw_pitch_deg
 

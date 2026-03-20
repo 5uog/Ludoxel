@@ -4,14 +4,14 @@
 # FILE: src/ludoxel/shared/application/rendering/texture_animation_controller.py
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
-import math
 
 from PyQt6.QtGui import QImage
 
 from ludoxel.shared.presentation.opengl.resources.texture_atlas import TextureAtlas
-from ludoxel.shared.application.rendering.texture_animation_catalog import AnimatedTextureTrack, default_texture_animation_tracks
+from ludoxel.shared.presentation.opengl.runtime.texture_animation_catalog import AnimatedTextureTrack, default_texture_animation_tracks
 
 
 @dataclass
@@ -31,8 +31,7 @@ class _RuntimeAnimatedTrack:
 
 
 class TextureAnimationController:
-
-    def __init__(self, *, block_dir: Path, atlas: TextureAtlas, tracks: tuple[AnimatedTextureTrack, ...] | None=None) -> None:
+    def __init__(self, *, block_dir: Path, atlas: TextureAtlas, tracks: tuple[AnimatedTextureTrack, ...] | None = None) -> None:
         self._block_dir = Path(block_dir)
         self._atlas = atlas
         self._origin_s: float | None = None

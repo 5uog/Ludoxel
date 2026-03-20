@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 
 from ludoxel.shared.core.math.vec3 import Vec3
 from ludoxel.shared.core.math.view_angles import sun_dir_from_az_el_deg
-from ludoxel.shared.application.rendering.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 
 @dataclass

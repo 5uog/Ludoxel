@@ -13,7 +13,7 @@ from OpenGL.GL import glActiveTexture, glBindTexture, glEnable, glDisable, glCul
 
 from ....core.math.vec3 import Vec3
 from ....domain.config.render_distance import clamp_render_distance_chunks
-from ....domain.world.chunking import ChunkKey
+from ....core.spatial.chunking.chunk_grid import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas

@@ -53,10 +53,12 @@ version = { attr = "ludoxel.application.meta.version.__version__" }
 [tool.setuptools.package-data]
 ludoxel = [
     "presentation/theme/*.qss",
-    "infrastructure/rendering/opengl/_internal/shaders/*.vert",
-    "infrastructure/rendering/opengl/_internal/shaders/*.frag",
-    "infrastructure/rendering/opengl/_internal/shaders/*.comp",
-    "infrastructure/rendering/opengl/_internal/shaders/common/*.glsl",
+    "shared/presentation/opengl/shaders/*.vert",
+    "shared/presentation/opengl/shaders/*.frag",
+    "shared/presentation/opengl/shaders/*.comp",
+    "shared/presentation/opengl/shaders/common/*.glsl",
+    "features/othello/presentation/opengl/shaders/*.vert",
+    "features/othello/presentation/opengl/shaders/*.frag",
 ]
 
 [tool.setuptools.packages.find]

@@ -12,8 +12,8 @@ from OpenGL.GL import glEnable, glDisable, glDepthMask, glDepthFunc, glBlendFunc
 from ludoxel.shared.core.math.vec3 import Vec3
 from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
 from ludoxel.shared.presentation.opengl.gl.mesh_buffer import MeshBuffer
-from ludoxel.shared.application.rendering.cloud_field import CloudField
-from ludoxel.shared.application.rendering.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ludoxel.shared.presentation.opengl.runtime.cloud_field import CloudField
+from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import CloudParams, CameraParams
 
 

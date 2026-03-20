@@ -10,9 +10,9 @@ import numpy as np
 
 from ludoxel.shared.core.math.vec3 import Vec3
 from ludoxel.shared.domain.blocks.registry.block_registry import BlockRegistry
-from ludoxel.shared.domain.world.chunking import ChunkKey
-from ludoxel.shared.application.rendering.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
+from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey
 from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import GLRendererParams, default_gl_renderer_params
+from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
 from ludoxel.features.othello.application.rendering.othello_render_state import OthelloRenderState
 from ludoxel.shared.application.rendering.player_render_state import PlayerRenderState
 from ludoxel.shared.presentation.opengl.runtime.render_metrics import RendererFrameMetrics

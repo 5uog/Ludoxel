@@ -1,16 +1,16 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/shared/application/rendering/selection_controller.py
+# FILE: src/ludoxel/shared/presentation/opengl/runtime/selection_controller.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 import numpy as np
 
+from ludoxel.shared.application.rendering.selection_outline_builder import GetState, SelectionOutlineBuilder
 from ludoxel.shared.domain.blocks.structure.neighborhood import six_neighbor_state_signature
 from ludoxel.shared.presentation.opengl.passes.selection_pass import SelectionPass
-from ludoxel.shared.application.rendering.selection_outline_builder import GetState, SelectionOutlineBuilder
 
 
 @dataclass

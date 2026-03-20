@@ -5,17 +5,7 @@
 from __future__ import annotations
 
 import math
-
 import numpy as np
-
-
-def clampf(x: float, lo: float, hi: float) -> float:
-    value = float(x)
-    if value < float(lo):
-        return float(lo)
-    if value > float(hi):
-        return float(hi)
-    return float(value)
 
 
 def identity_matrix() -> np.ndarray:

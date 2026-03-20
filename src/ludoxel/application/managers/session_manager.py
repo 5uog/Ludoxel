@@ -8,7 +8,8 @@ from dataclasses import dataclass, field
 import math
 
 from ...shared.core.math.smoothing import exp_alpha
-from ...shared.core.math.vec3 import Vec3, clampf
+from ...shared.core.math.vec3 import Vec3
+from ...shared.core.math.scalars import clampf
 from ...shared.domain.blocks.registry.block_registry import BlockRegistry
 from ...shared.domain.entities.player_entity import PlayerEntity
 from ...shared.domain.systems.collision_system import can_auto_jump_one_block, integrate_with_collisions, support_block_beneath

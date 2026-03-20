@@ -8,7 +8,8 @@ from dataclasses import dataclass
 
 import math
 
-from ...core.math.vec3 import Vec3, clampf
+from ...core.math.scalars import clampf
+from ...core.math.vec3 import Vec3
 from ...core.math.smoothing import exp_alpha
 from ..entities.player_entity import PlayerEntity
 from ..config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS

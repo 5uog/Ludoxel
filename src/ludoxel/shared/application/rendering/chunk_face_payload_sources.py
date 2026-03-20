@@ -10,7 +10,6 @@ import numpy as np
 
 from ludoxel.shared.domain.blocks.block_definition import BlockDefinition
 from ludoxel.shared.domain.blocks.state.state_codec import parse_state
-from ludoxel.shared.presentation.opengl.gl.array_view import as_float32_rows
 from ludoxel.shared.rendering.face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
 from ludoxel.shared.application.rendering.uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
 from ludoxel.shared.application.rendering.visible_faces import iter_visible_faces
@@ -18,6 +17,15 @@ from ludoxel.shared.application.rendering.visible_faces import iter_visible_face
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 GetState = Callable[[int, int, int], str | None]
+
+
+def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
+    arr = np.asarray(face_sources, dtype=np.float32)
+    if arr.ndim != 2 or int(arr.shape[1]) != 14:
+        raise ValueError("face_sources must be a float32 Nx14 array")
+    if not arr.flags["C_CONTIGUOUS"]:
+        arr = np.ascontiguousarray(arr, dtype=np.float32)
+    return arr
 
 
 def empty_face_buckets() -> list[np.ndarray]:
@@ -31,7 +39,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
     if face_sources.size <= 0:
         return out
 
-    src = as_float32_rows(face_sources, cols=14, label="face_sources")
+    src = _as_face_source_rows(face_sources)
 
     for row in src:
         fi = int(round(float(row[12])))

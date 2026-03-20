@@ -13,7 +13,7 @@ from ludoxel.shared.core.math import mat4
 from ludoxel.shared.core.math.vec3 import Vec3
 from ludoxel.shared.core.math.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.shared.core.math.transform_matrices import rotate_z_deg_matrix
-from ludoxel.shared.domain.world.chunking import chunk_key
+from ludoxel.shared.core.spatial.chunking.chunk_grid import chunk_key
 from ludoxel.shared.presentation.opengl.passes.cloud_pass import CloudPass
 from ludoxel.shared.presentation.opengl.passes.first_person_arm_pass import FirstPersonArmPass
 from ludoxel.shared.presentation.opengl.passes.held_block_pass import HeldBlockPass
@@ -22,7 +22,7 @@ from ludoxel.shared.presentation.opengl.passes.player_model_pass import PlayerMo
 from ludoxel.shared.presentation.opengl.passes.shadow_map_pass import ShadowMapPass
 from ludoxel.shared.presentation.opengl.passes.sun_pass import SunPass
 from ludoxel.shared.presentation.opengl.passes.world_pass import WorldDrawInputs, WorldPass
-from ludoxel.shared.application.rendering.light_space import compute_light_view_proj
+from ludoxel.shared.presentation.opengl.runtime.light_space import compute_light_view_proj
 from ludoxel.shared.application.rendering.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ludoxel.shared.application.rendering.player_model_pose import build_player_model_pose
 from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import GLRendererParams
@@ -30,7 +30,7 @@ from ludoxel.features.othello.application.rendering.othello_render_state import 
 from ludoxel.shared.application.rendering.player_render_state import PlayerRenderState
 from ludoxel.shared.presentation.opengl.runtime.render_metrics import PassFrameMetrics, RendererFrameMetrics
 from ludoxel.shared.presentation.opengl.runtime.render_state import RendererRuntimeState
-from ludoxel.shared.application.rendering.selection_controller import SelectionController
+from ludoxel.shared.presentation.opengl.runtime.selection_controller import SelectionController
 
 _FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
 _FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20

@@ -1,15 +1,15 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/shared/application/rendering/cloud_field.py
+# FILE: src/ludoxel/shared/presentation/opengl/runtime/cloud_field.py
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 
-from ...core.math.vec3 import Vec3
-from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
-from ...presentation.opengl.runtime.gl_renderer_params import CloudParams
+from ludoxel.shared.core.math.vec3 import Vec3
+from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import CloudParams
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,6 @@ class _RectXZ:
 
 
 class CloudField:
-
     def __init__(self, cfg: CloudParams) -> None:
         self._cfg = cfg
 
@@ -58,7 +57,7 @@ class CloudField:
         self._anchor_key = None
         self._boxes_cache = []
 
-    def set_flow_direction(self, direction: str, *, t_seconds: float=0.0) -> None:
+    def set_flow_direction(self, direction: str, *, t_seconds: float = 0.0) -> None:
         nxt = normalize_cloud_flow_direction(str(direction))
         ts = float(max(0.0, t_seconds))
 
@@ -159,9 +158,9 @@ class CloudField:
 
     def _build_cloud_boxes(self, anchor_mx: int, anchor_mz: int) -> list[CloudBox]:
         m = int(self._cfg.macro)
-        R = int(self._cfg.view_radius)
+        r = int(self._cfg.view_radius)
 
-        span = int(math.ceil(float(R) / float(m))) + 1
+        span = int(math.ceil(float(r) / float(m))) + 1
 
         size_y = float(max(1, int(self._cfg.thickness)))
 

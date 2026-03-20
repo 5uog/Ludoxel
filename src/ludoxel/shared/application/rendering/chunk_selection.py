@@ -8,8 +8,8 @@ from collections.abc import Callable, Iterable
 
 import numpy as np
 
-from ...domain.world.chunking import ChunkKey, normalize_chunk_key
-from .chunk_visibility import chunk_intersects_clip_volume
+from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey, normalize_chunk_key
+from ludoxel.shared.core.spatial.frustum.chunk_clip import chunk_intersects_clip_volume
 
 ChunkPredicate = Callable[[ChunkKey], bool]
 

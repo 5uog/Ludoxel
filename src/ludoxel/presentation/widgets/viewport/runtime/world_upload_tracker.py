@@ -14,7 +14,7 @@ import numpy as np
 
 from .....shared.core.math.vec3 import Vec3
 from .....shared.domain.config.render_distance import clamp_render_distance_chunks
-from .....shared.domain.world.chunking import ChunkKey, chunk_key, normalize_chunk_key
+from .....shared.core.spatial.chunking.chunk_grid import ChunkKey, chunk_key, normalize_chunk_key
 from .....shared.domain.world.world_state import WorldState
 from .....shared.presentation.opengl.runtime.gl_renderer import GLRenderer
 from .....shared.application.rendering.chunk_face_payload_cpu import build_chunk_face_payload_sources

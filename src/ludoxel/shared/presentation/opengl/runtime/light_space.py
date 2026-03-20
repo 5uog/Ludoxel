@@ -1,14 +1,14 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/shared/application/rendering/light_space.py
+# FILE: src/ludoxel/shared/presentation/opengl/runtime/light_space.py
 from __future__ import annotations
 
 import numpy as np
 
-from ludoxel.shared.core.math.vec3 import Vec3
 from ludoxel.shared.core.math import mat4
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import SunParams, ShadowParams
+from ludoxel.shared.core.math.vec3 import Vec3
+from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import ShadowParams, SunParams
 
 
 def _snap(value: float, quantum: float) -> float:
