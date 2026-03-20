@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFrame, Q
 
 from ....shared.domain.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, is_my_world_space, normalize_play_space_id
 
-
 class PauseOverlay(QWidget):
     resume_requested = pyqtSignal()
     settings_requested = pyqtSignal()

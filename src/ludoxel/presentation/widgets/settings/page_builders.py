@@ -11,7 +11,6 @@ from ....shared.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from .cloud_flow_options import CLOUD_FLOW_OPTIONS
 from .advanced_scalar_control import AdvancedScalarControl
 
-
 def build_video_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
     layout.addWidget(overlay._section(host, "Display"))
@@ -125,7 +124,6 @@ def build_video_tab(overlay) -> None:
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)
 
-
 def build_controls_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
     layout.addWidget(overlay._section(host, "Mouse"))
@@ -175,7 +173,6 @@ def build_controls_tab(overlay) -> None:
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)
 
-
 def build_audio_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
     layout.addWidget(overlay._section(host, "Mixer"))
@@ -210,7 +207,6 @@ def build_audio_tab(overlay) -> None:
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)
-
 
 def build_game_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()

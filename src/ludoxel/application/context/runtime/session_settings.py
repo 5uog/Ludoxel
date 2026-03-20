@@ -10,7 +10,6 @@ from typing import ClassVar
 from ....shared.domain.config.collision_params import DEFAULT_COLLISION_PARAMS, CollisionParams
 from ....shared.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS, MovementParams
 
-
 @dataclass
 class SessionSettings:
     seed: int = 0

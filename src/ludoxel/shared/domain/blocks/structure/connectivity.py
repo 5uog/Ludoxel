@@ -12,15 +12,12 @@ from .structural_rules import is_wall, is_fence_gate, wall_side_from_neighbor_st
 from ..state.state_view import def_from_state, world_state_at
 from ...world.world_state import WorldState
 
-
 def make_wall_state(base_id: str, waterlogged: bool=False) -> str:
     return format_state(str(base_id),{"east": "none", "north": "none", "south": "none", "up": "true", "waterlogged": bool_str(bool(waterlogged)), "west": "none"})
-
 
 def _wall_side_from_neighbor(world: WorldState, nb_x: int, nb_y: int, nb_z: int, *, side_from_neighbor: str, block_registry: BlockRegistry) -> str:
     st = world_state_at(world, int(nb_x), int(nb_y), int(nb_z))
     return wall_side_from_neighbor_state(st, side_from_neighbor=str(side_from_neighbor), get_def=block_registry.get)
-
 
 def canonical_wall_state(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry) -> str | None:
     st = world_state_at(world, int(x), int(y), int(z))
@@ -41,10 +38,8 @@ def canonical_wall_state(world: WorldState, x: int, y: int, z: int, *, block_reg
 
     return format_state(str(base),{"east": str(east), "north": str(north), "south": str(south), "up": bool_str(bool(up)), "waterlogged": bool_str(bool(waterlogged)), "west": str(west)})
 
-
 def make_fence_gate_state(base_id: str, facing: str, *, open_state: bool=False, powered: bool=False, in_wall: bool=False, waterlogged: bool=False) -> str:
     return format_state(str(base_id),{"facing": str(facing), "in_wall": bool_str(bool(in_wall)), "open": bool_str(bool(open_state)), "powered": bool_str(bool(powered)), "waterlogged": bool_str(bool(waterlogged))})
-
 
 def _gate_in_wall(world: WorldState, x: int, y: int, z: int, facing: str, *, block_registry: BlockRegistry) -> bool:
     f = str(facing)
@@ -56,7 +51,6 @@ def _gate_in_wall(world: WorldState, x: int, y: int, z: int, facing: str, *, blo
     a = is_wall(def_from_state(world_state_at(world, int(x), int(y), int(z - 1)), block_registry))
     b = is_wall(def_from_state(world_state_at(world, int(x), int(y), int(z + 1)), block_registry))
     return bool(a or b)
-
 
 def canonical_fence_gate_state(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry, facing_override: str | None=None, open_override: bool | None=None) -> str | None:
     st = world_state_at(world, int(x), int(y), int(z))
@@ -77,7 +71,6 @@ def canonical_fence_gate_state(world: WorldState, x: int, y: int, z: int, *, blo
     in_wall = _gate_in_wall(world, int(x), int(y), int(z), str(facing), block_registry=block_registry)
 
     return make_fence_gate_state(str(base), str(facing), open_state=bool(open_state), powered=bool(powered), in_wall=bool(in_wall), waterlogged=bool(waterlogged))
-
 
 def refresh_structural_neighbors(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry) -> None:
     targets = {(int(x), int(y), int(z)),(int(x), int(y - 1), int(z)),(int(x + 1), int(y), int(z)),(int(x - 1), int(y), int(z)),(int(x), int(y), int(z + 1)),(int(x), int(y), int(z - 1))}

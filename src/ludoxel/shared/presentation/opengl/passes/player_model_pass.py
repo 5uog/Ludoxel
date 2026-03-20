@@ -19,7 +19,6 @@ from ..runtime.gl_renderer_params import ShadowParams
 from ..runtime.render_metrics import PassFrameMetrics
 from .shadow_map_pass import ShadowMapInfo
 
-
 @dataclass
 class PlayerModelPass:
     _world_prog: ShaderProgram | None = None

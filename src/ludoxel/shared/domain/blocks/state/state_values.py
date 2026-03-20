@@ -6,10 +6,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-
 def bool_str(v: bool) -> str:
     return "true" if bool(v) else "false"
-
 
 def str_as_bool(raw: str | None, default: bool=False) -> bool:
     if raw is None:
@@ -22,17 +20,14 @@ def str_as_bool(raw: str | None, default: bool=False) -> bool:
         return False
     return bool(default)
 
-
 def prop_as_bool(props: Mapping[str, str], key: str, default: bool=False) -> bool:
     return str_as_bool(props.get(str(key)), default)
-
 
 def prop_as_str(props: Mapping[str, str], key: str, default: str="") -> str:
     raw = props.get(str(key))
     if raw is None:
         return str(default)
     return str(raw)
-
 
 def slab_type_value(props: Mapping[str, str], default: str="bottom") -> str:
     t = prop_as_str(props, "type", default).strip().lower()

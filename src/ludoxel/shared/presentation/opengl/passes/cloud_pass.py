@@ -16,9 +16,7 @@ from ..runtime.cloud_field import CloudField
 from ..runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ..runtime.gl_renderer_params import CloudParams, CameraParams
 
-
 class CloudPass:
-
     def __init__(self, clouds: CloudParams, camera: CameraParams) -> None:
         self._cfg = clouds
         self._cam = camera

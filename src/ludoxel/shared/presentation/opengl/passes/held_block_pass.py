@@ -19,7 +19,6 @@ from ..gl.shader_program import ShaderProgram
 
 UVRect = tuple[float, float, float, float]
 
-
 @dataclass
 class HeldBlockPass:
     _face_pass: TexturedFacePass | None = None

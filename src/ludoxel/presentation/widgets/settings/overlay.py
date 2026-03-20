@@ -14,7 +14,6 @@ from ..common.settings_controls import BedrockToggleRow, KeybindRow, WheelPassth
 from .page_builders import build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
 from .value_sync import sync_overlay_values
 
-
 class SettingsOverlay(QWidget):
     back_requested = pyqtSignal()
     fov_changed = pyqtSignal(float)

@@ -8,7 +8,6 @@ import numpy as np
 
 from OpenGL.GL import glBindBuffer, glBufferData, glBufferSubData
 
-
 def upload_array_buffer(*, target: int, buffer: int, usage: int, data: np.ndarray | None, capacity_bytes: int) -> int:
     nbytes = 0 if data is None else int(data.nbytes)
 
@@ -27,7 +26,6 @@ def upload_array_buffer(*, target: int, buffer: int, usage: int, data: np.ndarra
     glBufferData(int(target), nbytes, data, int(usage))
     glBindBuffer(int(target), 0)
     return int(nbytes)
-
 
 def upload_bytes_buffer(*, target: int, buffer: int, usage: int, data: bytes, capacity_bytes: int) -> int:
     payload = bytes(data)

@@ -18,16 +18,13 @@ from ..gl.array_view import as_uint32_rows, copy_float32_rows
 from ..gl.buffer_upload import upload_array_buffer
 from ..gl.mesh_buffer import MeshBuffer
 
-
 @dataclass(frozen=True)
 class _ChunkSlice:
     offsets: tuple[int, int, int, int, int, int]
     counts: tuple[int, int, int, int, int, int]
     last_rev: int
 
-
 class AggregatedFaceBatch:
-
     def __init__(self) -> None:
         self._initialized = False
 

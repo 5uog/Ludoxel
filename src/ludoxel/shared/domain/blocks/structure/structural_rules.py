@@ -13,38 +13,30 @@ from .cardinal import normalize_cardinal
 
 DefLookup = Callable[[str], BlockDefinition | None]
 
-
 def is_full_solid(defn: BlockDefinition | None) -> bool:
     if defn is None:
         return False
     return bool(defn.is_full_cube) and bool(defn.is_solid)
-
 
 def _is_family(defn: BlockDefinition | None, family: str) -> bool:
     if defn is None:
         return False
     return defn.is_family(str(family))
 
-
 def is_slab(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "slab")
-
 
 def is_stairs(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "stairs")
 
-
 def is_wall(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "wall")
-
 
 def is_fence(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "fence")
 
-
 def is_fence_gate(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "fence_gate")
-
 
 def _state_is_full_solid_parts(defn: BlockDefinition | None, props: dict[str, str]) -> bool:
     if defn is None:
@@ -58,7 +50,6 @@ def _state_is_full_solid_parts(defn: BlockDefinition | None, props: dict[str, st
 
     return False
 
-
 def block_state_is_full_solid(state_str: str | None, *, get_def: DefLookup) -> bool:
     if state_str is None:
         return False
@@ -66,7 +57,6 @@ def block_state_is_full_solid(state_str: str | None, *, get_def: DefLookup) -> b
     base, props = parse_state(str(state_str))
     defn = get_def(str(base))
     return _state_is_full_solid_parts(defn, props)
-
 
 def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
     f = normalize_cardinal(str(facing), default="south")
@@ -77,7 +67,6 @@ def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
     if f in ("east", "west"):
         return s in ("north", "south")
     return s in ("east", "west")
-
 
 def fence_connects_to_neighbor_state(state_str: str | None, *, side_from_neighbor: str, get_def: DefLookup) -> bool:
     if state_str is None:
@@ -96,7 +85,6 @@ def fence_connects_to_neighbor_state(state_str: str | None, *, side_from_neighbo
         return fence_gate_connects_to_side(facing=str(facing), side_from_gate=str(side_from_neighbor))
 
     return False
-
 
 def wall_side_from_neighbor_state(state_str: str | None, *, side_from_neighbor: str, get_def: DefLookup) -> str:
     if state_str is None:
@@ -120,7 +108,6 @@ def wall_side_from_neighbor_state(state_str: str | None, *, side_from_neighbor: 
         return "tall"
 
     return "none"
-
 
 def wall_up_rule(*, north: str, east: str, south: str, west: str, above_state: str | None, get_def: DefLookup) -> bool:
     if block_state_is_full_solid(above_state, get_def=get_def):

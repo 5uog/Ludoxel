@@ -10,12 +10,10 @@ from types import TracebackType
 
 from OpenGL.GL import glGetIntegerv, glIsEnabled, glEnable, glDisable, glBindFramebuffer, glViewport, glCullFace, glPolygonMode, GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_VIEWPORT, GL_CULL_FACE_MODE, GL_POLYGON_MODE, GL_FRONT_AND_BACK
 
-
 @dataclass(frozen=True)
 class _EnableCapState:
     cap: int
     enabled: bool
-
 
 class GLStateGuard:
 

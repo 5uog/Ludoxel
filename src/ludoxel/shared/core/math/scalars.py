@@ -4,7 +4,6 @@
 # FILE: src/ludoxel/shared/core/math/scalars.py
 from __future__ import annotations
 
-
 def clampf(x: float, lo: float, hi: float) -> float:
     value = float(x)
     low = float(lo)

@@ -24,7 +24,6 @@ _PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED = 8.0
 _PLAYER_WALK_MAX_SWING_SCALE = 1.35
 _PLAYER_FOOTSTEP_MIN_SPEED = 0.15
 
-
 @dataclass(frozen=True)
 class SessionStepResult:
     jump_started: bool
@@ -33,7 +32,6 @@ class SessionStepResult:
     support_block_state: str | None
     support_position: tuple[int, int, int] | None
     fall_distance_blocks: float | None
-
 
 @dataclass
 class SessionManager:
@@ -60,7 +58,6 @@ class SessionManager:
         player.pitch_deg = 0.0
         player.on_ground = False
         player.flying = False
-
         player.crouch_eye_offset = 0.0
         player.step_eye_offset = 0.0
         player.hold_jump_queued = False

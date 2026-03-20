@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class CameraDTO:
     eye_x: float
@@ -22,20 +21,16 @@ class CameraDTO:
     shake_pitch_deg: float = 0.0
     shake_roll_deg: float = 0.0
 
-
 @dataclass(frozen=True)
 class PlayerModelSnapshotDTO:
     base_x: float
     base_y: float
     base_z: float
-
     body_yaw_deg: float
     head_yaw_deg: float
     head_pitch_deg: float
-
     limb_phase_rad: float
     limb_swing_amount: float
-
     crouch_amount: float
     first_person_tx: float = 0.0
     first_person_ty: float = 0.0
@@ -43,9 +38,7 @@ class PlayerModelSnapshotDTO:
     first_person_yaw_deg: float = 0.0
     first_person_pitch_deg: float = 0.0
     first_person_roll_deg: float = 0.0
-
     is_first_person: bool = True
-
 
 @dataclass(frozen=True)
 class RenderSnapshotDTO:

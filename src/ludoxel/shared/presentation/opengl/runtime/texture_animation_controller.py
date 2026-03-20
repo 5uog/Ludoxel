@@ -13,7 +13,6 @@ from PyQt6.QtGui import QImage
 from ..resources.texture_atlas import TextureAtlas
 from .texture_animation_catalog import AnimatedTextureTrack, default_texture_animation_tracks
 
-
 @dataclass
 class _RuntimeAnimatedTrack:
     logical_name: str
@@ -28,7 +27,6 @@ class _RuntimeAnimatedTrack:
     def sequence_step_at(self, elapsed_s: float) -> int:
         duration = max(1e-6, float(self.frame_duration_s))
         return int(math.floor(float(elapsed_s) / duration))
-
 
 class TextureAnimationController:
     def __init__(self, *, block_dir: Path, atlas: TextureAtlas, tracks: tuple[AnimatedTextureTrack, ...] | None = None) -> None:

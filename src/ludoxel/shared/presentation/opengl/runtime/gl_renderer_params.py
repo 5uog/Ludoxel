@@ -8,12 +8,10 @@ from dataclasses import dataclass, field
 
 from ....core.math.vec3 import Vec3
 
-
 @dataclass(frozen=True)
 class CameraParams:
     z_near: float = 0.05
     z_far: float = 200.0
-
 
 @dataclass(frozen=True)
 class ShadowParams:
@@ -32,7 +30,6 @@ class ShadowParams:
     poly_offset_factor: float = 0.50
     poly_offset_units: float = 0.75
 
-
 @dataclass(frozen=True)
 class SunParams:
     azimuth_deg: float = 45.0
@@ -47,7 +44,6 @@ class SunParams:
     ortho_radius: float = 30.0
     ortho_near: float = 0.1
     ortho_far: float = 140.0
-
 
 @dataclass(frozen=True)
 class CloudParams:
@@ -83,11 +79,9 @@ class CloudParams:
     alpha_min: float = 0.88
     alpha_range: float = 0.12
 
-
 @dataclass(frozen=True)
 class SkyParams:
     clear_color: Vec3 = Vec3(0.55, 0.72, 0.98)
-
 
 @dataclass(frozen=True)
 class GLRendererParams:
@@ -96,7 +90,6 @@ class GLRendererParams:
     sun: SunParams = field(default_factory=SunParams)
     clouds: CloudParams = field(default_factory=CloudParams)
     sky: SkyParams = field(default_factory=SkyParams)
-
 
 def default_gl_renderer_params() -> GLRendererParams:
     return GLRendererParams()

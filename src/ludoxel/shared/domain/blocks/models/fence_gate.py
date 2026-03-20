@@ -11,7 +11,6 @@ from ..structure.cardinal import gate_turns_from_facing
 from .dimensions import FENCE_GATE_CLOSED, FENCE_GATE_OPEN, FENCE_GATE_WALL_CLOSED, FENCE_GATE_WALL_OPEN
 from ..state.state_values import prop_as_bool
 
-
 def boxes_for_fence_gate(props: Dict[str, str]) -> List[LocalBox]:
     facing = str(props.get("facing", "south"))
     is_open = prop_as_bool(props, "open", False)

@@ -27,9 +27,9 @@ from ...config.gl_surface_format import build_gl_surface_format
 from ...hud.hud_controller import HudController
 from ..hud.crosshair_widget import CrosshairWidget
 from ..hud.hotbar_widget import HotbarWidget
-from ..othello.ai_worker import OthelloAiWorker
-from ..othello.hud_widget import OthelloHudWidget
-from ..othello.settings_overlay import OthelloSettingsOverlay
+from ....features.othello.domain.game.ai_worker import OthelloAiWorker
+from ....features.othello.presentation.qt.widgets.hud_widget import OthelloHudWidget
+from ....features.othello.presentation.qt.overlays.settings_overlay import OthelloSettingsOverlay
 from ..overlays.death_overlay import DeathOverlay
 from ..overlays.inventory_overlay import InventoryOverlay
 from ..overlays.pause_overlay import PauseOverlay
@@ -41,7 +41,6 @@ from .runtime.input_controller import ViewportInput
 from .runtime.overlay_controller import OverlayRefs, ViewportOverlays
 from .runtime.selection_state import ViewportSelectionState
 from .runtime.world_upload_tracker import WorldUploadTracker
-
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)

@@ -11,7 +11,6 @@ from .common import LocalBox, GetState, GetDef, rotate_box_y_cw
 from ..structure.cardinal import cardinal_turns_from_facing
 from ..structure.structural_rules import is_stairs
 
-
 def _stairs_shape(props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> str:
     facing = str(props.get("facing", "east"))
     if facing not in ("north", "east", "south", "west"):
@@ -64,7 +63,6 @@ def _stairs_shape(props: Dict[str, str], get_state: GetState, get_def: GetDef, x
             return "inner_right"
 
     return "straight"
-
 
 def boxes_for_stairs(*, base_id: str, props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
     _ = base_id

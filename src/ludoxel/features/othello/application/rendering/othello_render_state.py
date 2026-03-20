@@ -8,7 +8,6 @@ from dataclasses import dataclass
 
 from ...domain.game.types import OthelloAnimationState
 
-
 @dataclass(frozen=True)
 class OthelloRenderState:
     enabled: bool = False

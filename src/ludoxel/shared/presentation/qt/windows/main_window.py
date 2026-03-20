@@ -1,21 +1,19 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/presentation/windows/main_window.py
+# FILE: src/ludoxel/shared/presentation/qt/windows/main_window.py
 from __future__ import annotations
 
 from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
-from ...application.meta import __version__
-from ..config.gl_surface_format import install_default_gl_surface_format
-from ..screens.game_screen import GameScreen
+from .....application.meta import __version__
+from .....presentation.config.gl_surface_format import install_default_gl_surface_format
+from .....presentation.screens.game_screen import GameScreen
 from ..theme.fonts import install_minecraft_fonts, apply_application_font
 
-
 class MainWindow(QMainWindow):
-
     def __init__(self, project_root: Path) -> None:
         super().__init__()
         self._project_root = Path(project_root)
@@ -41,7 +39,6 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
         super().closeEvent(e)
-
 
 def run_app(*, project_root: Path) -> None:
     install_default_gl_surface_format()

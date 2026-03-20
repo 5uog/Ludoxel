@@ -8,7 +8,6 @@ from dataclasses import dataclass
 
 from ..block_definition import BlockDefinition
 
-
 @dataclass
 class BlockRegistry:
     _by_id: dict[str, BlockDefinition]

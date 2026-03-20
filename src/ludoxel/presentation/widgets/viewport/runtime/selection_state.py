@@ -13,7 +13,6 @@ from .....shared.core.math.view_angles import forward_from_yaw_pitch_deg
 
 SelectionTarget = tuple[int, int, int, str]
 
-
 @dataclass
 class ViewportSelectionState:
     _target: SelectionTarget | None = None

@@ -15,7 +15,6 @@ from ....application.rendering.player_render_state import FirstPersonRenderState
 from .textured_face_pass import TexturedFacePass
 from ..gl.shader_program import ShaderProgram
 
-
 @dataclass
 class FirstPersonArmPass:
     _face_pass: TexturedFacePass | None = None

@@ -18,12 +18,10 @@ DefLookup = Callable[[str], BlockDefinition | None]
 
 _EPS = 1e-7
 
-
 def _face_boundary_offset(face_idx: int, box: LocalBox) -> tuple[int, int, int] | None:
     if not face_touches_cell_boundary(int(face_idx), box):
         return None
     return face_neighbor_offset(int(face_idx))
-
 
 def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[float, float, float, float]]:
     fi = int(face_idx)
@@ -55,7 +53,6 @@ def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[fl
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_y), float(b.mx_y)))
 
     return out
-
 
 def _local_cover_rects(face_idx: int, box: LocalBox, boxes: list[LocalBox]) -> list[tuple[float, float, float, float]]:
     fi = int(face_idx)
@@ -90,13 +87,11 @@ def _local_cover_rects(face_idx: int, box: LocalBox, boxes: list[LocalBox]) -> l
 
     return out
 
-
 def _sorted_unique(values: list[float]) -> list[float]:
     q: dict[int, float] = {}
     for v in values:
         q[int(round(float(v) / _EPS))] = float(v)
     return [q[k] for k in sorted(q.keys())]
-
 
 def _fully_covered(target_rect: tuple[float, float, float, float], cover_rects: list[tuple[float, float, float, float]]) -> bool:
     tu0, tu1, tv0, tv1 = target_rect
@@ -160,14 +155,12 @@ def _fully_covered(target_rect: tuple[float, float, float, float], cover_rects: 
 
     return True
 
-
 def is_local_face_occluded(*, box: LocalBox, face_idx: int, boxes: list[LocalBox]) -> bool:
     target = face_rect(int(face_idx), box)
     rects = _local_cover_rects(int(face_idx), box, boxes)
     if not rects:
         return False
     return _fully_covered(target, rects)
-
 
 def is_block_face_occluded(*, x: int, y: int, z: int, box: LocalBox, face_idx: int, get_state: GetState, def_lookup: DefLookup) -> bool:
     off = _face_boundary_offset(int(face_idx), box)

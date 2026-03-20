@@ -12,7 +12,6 @@ from ...core.spatial.chunking.chunk_grid import ChunkKey, chunk_key, neighbor_ch
 
 BlockKey = Tuple[int, int, int]
 
-
 @dataclass
 class WorldState:
     blocks: Dict[BlockKey, str]

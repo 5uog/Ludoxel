@@ -16,10 +16,8 @@ UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 GetState = Callable[[int, int, int], str | None]
 
-
 def build_chunk_face_payload_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
     return build_chunk_face_sources(blocks=blocks, get_state=get_state, uv_lookup=uv_lookup, def_lookup=def_lookup)
-
 
 def build_chunk_mesh_cpu(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[list[np.ndarray], list[np.ndarray]]:
     face_sources, bucket_counts = build_chunk_face_payload_sources(blocks=blocks, get_state=get_state, uv_lookup=uv_lookup, def_lookup=def_lookup)

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class FirstPersonRenderState:
     visible_block_id: str | None
@@ -26,21 +25,16 @@ class FirstPersonRenderState:
     view_bob_pitch_deg: float = 0.0
     view_bob_roll_deg: float = 0.0
 
-
 @dataclass(frozen=True)
 class PlayerRenderState:
     base_x: float
     base_y: float
     base_z: float
-
     body_yaw_deg: float
     head_yaw_deg: float
     head_pitch_deg: float
-
     limb_phase_rad: float
     limb_swing_amount: float
-
     crouch_amount: float
-
     is_first_person: bool = True
     first_person: FirstPersonRenderState | None = None

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 __all__ = ["GLRenderer", "CameraParams", "ShadowParams", "SunParams", "CloudParams", "SkyParams", "GLRendererParams", "default_gl_renderer_params", "GLResources", "build_chunk_mesh_cpu"]
 
-
 def __getattr__(name: str):
     if str(name) == "GLRenderer":
         from ludoxel.shared.presentation.opengl.runtime.gl_renderer import GLRenderer

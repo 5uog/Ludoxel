@@ -11,7 +11,6 @@ import subprocess
 import sys
 import time
 
-
 @dataclass(frozen=True)
 class SystemInfo:
     cpu_threads: int
@@ -19,19 +18,16 @@ class SystemInfo:
     cpu_speed_ghz: float | None
     total_mem_bytes: int | None
 
-
 @dataclass(frozen=True)
 class ProcessMemorySnapshot:
     rss_bytes: int | None
     total_bytes: int | None
-
 
 def _safe_float(x: object) -> float | None:
     try:
         return float(x)
     except Exception:
         return None
-
 
 def _posix_total_mem_bytes_sysconf() -> int | None:
     try:
@@ -47,7 +43,6 @@ def _posix_total_mem_bytes_sysconf() -> int | None:
         return None
     return None
 
-
 def _linux_read_first_cpu_field(key: str) -> str:
     p = "/proc/cpuinfo"
     try:
@@ -61,7 +56,6 @@ def _linux_read_first_cpu_field(key: str) -> str:
     except Exception:
         return ""
     return ""
-
 
 def _linux_total_mem_bytes() -> int | None:
     p = "/proc/meminfo"
@@ -77,7 +71,6 @@ def _linux_total_mem_bytes() -> int | None:
         return None
     return None
 
-
 def _linux_rss_bytes_proc() -> int | None:
     p = "/proc/self/status"
     try:
@@ -91,7 +84,6 @@ def _linux_rss_bytes_proc() -> int | None:
     except Exception:
         return None
     return None
-
 
 def _posix_rss_bytes_ps() -> int | None:
     try:
@@ -107,7 +99,6 @@ def _posix_rss_bytes_ps() -> int | None:
     except Exception:
         return None
 
-
 def _mac_sysctl_str(name: str) -> str:
     try:
         out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
@@ -115,14 +106,12 @@ def _mac_sysctl_str(name: str) -> str:
     except Exception:
         return ""
 
-
 def _mac_sysctl_int(name: str) -> int | None:
     s = _mac_sysctl_str(name)
     try:
         return int(s)
     except Exception:
         return None
-
 
 def _windows_cpu_name() -> str:
     try:
@@ -134,7 +123,6 @@ def _windows_cpu_name() -> str:
     except Exception:
         return ""
 
-
 def _windows_cpu_mhz() -> int | None:
     try:
         import winreg  # type: ignore
@@ -144,7 +132,6 @@ def _windows_cpu_mhz() -> int | None:
         return int(v)
     except Exception:
         return None
-
 
 def _windows_total_mem_bytes() -> int | None:
     try:
@@ -161,7 +148,6 @@ def _windows_total_mem_bytes() -> int | None:
         return int(ms.ullTotalPhys)
     except Exception:
         return None
-
 
 def _windows_rss_bytes_psapi() -> int | None:
     try:
@@ -186,7 +172,6 @@ def _windows_rss_bytes_psapi() -> int | None:
     except Exception:
         return None
 
-
 def _windows_rss_bytes_tasklist() -> int | None:
     try:
         pid = str(os.getpid())
@@ -210,7 +195,6 @@ def _windows_rss_bytes_tasklist() -> int | None:
         return kb * 1024
     except Exception:
         return None
-
 
 def read_system_info() -> SystemInfo:
     threads = int(os.cpu_count() or 0)
@@ -251,7 +235,6 @@ def read_system_info() -> SystemInfo:
 
     return SystemInfo(cpu_threads=int(max(0, threads)), cpu_name=str(cpu_name), cpu_speed_ghz=cpu_ghz, total_mem_bytes=total_mem)
 
-
 def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnapshot:
     plat = sys.platform
 
@@ -282,7 +265,6 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 
     return ProcessMemorySnapshot(rss_bytes=rss, total_bytes=total)
 
-
 def _nvidia_smi_util_percent() -> float | None:
     try:
         out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
@@ -295,7 +277,6 @@ def _nvidia_smi_util_percent() -> float | None:
         return float(value)
     except Exception:
         return None
-
 
 @dataclass
 class GpuUtilizationSampler:

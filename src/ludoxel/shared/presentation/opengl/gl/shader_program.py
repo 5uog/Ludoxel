@@ -14,10 +14,8 @@ from OpenGL.GL import glCreateProgram, glCreateShader, glCompileShader, glGetSha
 
 _INCLUDE_RE = re.compile(r'^\s*#include\s+"([^"]+)"\s*$')
 
-
 def _load_text(path: Path) -> str:
     return _load_text_recursive(Path(path).resolve(), stack=())
-
 
 def _load_text_recursive(path: Path, *, stack: tuple[Path, ...]) -> str:
     p = Path(path).resolve()
@@ -49,7 +47,6 @@ def _load_text_recursive(path: Path, *, stack: tuple[Path, ...]) -> str:
 
     return "".join(out_lines)
 
-
 def _shader_stage_name(shader_type: int) -> str:
     st = int(shader_type)
     if st == int(GL_VERTEX_SHADER):
@@ -59,7 +56,6 @@ def _shader_stage_name(shader_type: int) -> str:
     if st == int(GL_COMPUTE_SHADER):
         return "compute"
     return f"shader({st})"
-
 
 def _compile(shader_type: int, src: str) -> int:
     sid = glCreateShader(shader_type)
@@ -71,7 +67,6 @@ def _compile(shader_type: int, src: str) -> int:
         stage = _shader_stage_name(int(shader_type))
         raise RuntimeError(f"{stage.capitalize()} shader compile failed:\n{log}")
     return sid
-
 
 def _link_program(shader_ids: list[int]) -> int:
     pid = glCreateProgram()
@@ -88,7 +83,6 @@ def _link_program(shader_ids: list[int]) -> int:
         glDeleteShader(int(sid))
 
     return int(pid)
-
 
 @dataclass
 class ShaderProgram:

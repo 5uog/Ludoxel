@@ -20,7 +20,6 @@ from ..runtime.gl_renderer_params import ShadowParams
 from ..runtime.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
 
-
 @dataclass
 class ShadowMapInfo:
     ok: bool
@@ -28,12 +27,9 @@ class ShadowMapInfo:
     tex_id: int
     inst_count: int
 
-
 ExtraShadowDraw = Callable[[np.ndarray], tuple[int, int]]
 
-
 class ShadowMapPass:
-
     def __init__(self, cfg: ShadowParams) -> None:
         self._cfg = cfg
 
@@ -97,9 +93,6 @@ class ShadowMapPass:
 
         visible_chunks = select_visible_chunks(self._batch.chunk_keys(), vp)
         commands = self._batch.build_commands(visible_chunks)
-
-        # draw_calls = 0
-        # instances = 0
 
         with GLStateGuard(capture_framebuffer=True, capture_viewport=True, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL), capture_cull_mode=True, capture_polygon_mode=False):
             glBindFramebuffer(GL_FRAMEBUFFER, int(self._fbo))

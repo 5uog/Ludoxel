@@ -11,7 +11,6 @@ from OpenGL.GL import glGetString, glGetIntegerv, GL_VENDOR, GL_RENDERER, GL_VER
 
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)")
 
-
 @dataclass(frozen=True)
 class GLInfoSnapshot:
     vendor: str
@@ -55,7 +54,6 @@ class GLInfoSnapshot:
             return "unknown"
         return f"mask=0x{mask:X}"
 
-
 def _gl_get_string(name: int) -> str:
     try:
         raw = glGetString(int(name))
@@ -69,7 +67,6 @@ def _gl_get_string(name: int) -> str:
         return raw.decode("utf-8", errors="replace")
 
     return str(raw)
-
 
 def _gl_get_int(name: int) -> int | None:
     try:
@@ -89,7 +86,6 @@ def _gl_get_int(name: int) -> int | None:
     except Exception:
         return None
 
-
 def _parse_version_pair(raw: str) -> tuple[int, int]:
     s = str(raw)
     m = _VERSION_RE.search(s)
@@ -99,7 +95,6 @@ def _parse_version_pair(raw: str) -> tuple[int, int]:
         return (int(m.group(1)), int(m.group(2)))
     except Exception:
         return (0, 0)
-
 
 def probe_gl_info() -> GLInfoSnapshot:
     version = _gl_get_string(GL_VERSION)

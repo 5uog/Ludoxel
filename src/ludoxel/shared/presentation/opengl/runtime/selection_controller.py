@@ -12,7 +12,6 @@ from ....application.rendering.selection_outline_builder import GetState, Select
 from ....domain.blocks.structure.neighborhood import six_neighbor_state_signature
 from ..passes.selection_pass import SelectionPass
 
-
 @dataclass
 class SelectionController:
     outline_pass: SelectionPass

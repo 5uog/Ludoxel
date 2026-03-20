@@ -10,13 +10,11 @@ _EQUIP_RATE_PER_SECOND = 8.0
 _SWAP_THRESHOLD = 0.05
 _SWING_DURATION_S = 6.0 / 20.0
 
-
 def _normalize_block_id(block_id: str | None) -> str | None:
     if block_id is None:
         return None
     text = str(block_id).strip()
     return text if text else None
-
 
 @dataclass(frozen=True)
 class FirstPersonMotionSample:
@@ -29,7 +27,6 @@ class FirstPersonMotionSample:
     show_arm: bool
     show_view_model: bool
     slim_arm: bool
-
 
 class FirstPersonMotionController:
 

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class CollisionParams:
     eps: float = 1e-4
@@ -19,6 +18,5 @@ class CollisionParams:
     nearby_y_up_pad: int = 1
 
     sneak_step: float = 0.05
-
 
 DEFAULT_COLLISION_PARAMS = CollisionParams()

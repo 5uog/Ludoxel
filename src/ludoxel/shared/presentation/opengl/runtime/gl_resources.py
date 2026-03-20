@@ -15,7 +15,6 @@ from ..gl.mesh_buffer import MeshBuffer
 from ..resources.image_texture import ImageTexture
 from ..resources.texture_atlas import TextureAtlas
 
-
 @dataclass
 class GLResources:
     world_prog: ShaderProgram

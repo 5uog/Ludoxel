@@ -6,16 +6,13 @@ from __future__ import annotations
 
 from .cloud_flow_options import cloud_flow_index_for_value
 
-
 def _block_signals_set_value(widget, value) -> None:
     widget.blockSignals(True)
     widget.setValue(value)
     widget.blockSignals(False)
 
-
 def _sync_toggle(row, checked: bool) -> None:
     row.sync_checked(bool(checked))
-
 
 def sync_overlay_values(overlay, **values) -> None:
     fov_int = int(round(float(values["fov_deg"])))

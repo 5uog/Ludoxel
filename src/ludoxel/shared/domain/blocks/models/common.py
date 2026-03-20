@@ -9,7 +9,6 @@ from typing import Callable
 
 from ..block_definition import BlockDefinition
 
-
 @dataclass(frozen=True)
 class LocalBox:
     mn_x: float
@@ -27,10 +26,8 @@ class LocalBox:
 
         return LocalBox(mn_x=c(self.mn_x), mn_y=c(self.mn_y), mn_z=c(self.mn_z), mx_x=c(self.mx_x), mx_y=c(self.mx_y), mx_z=c(self.mx_z), uv_hint=str(self.uv_hint))
 
-
 GetState = Callable[[int, int, int], str | None]
 GetDef = Callable[[str], BlockDefinition | None]
-
 
 def _rot_y_cw(p_x: float, p_z: float, turns: int) -> tuple[float, float]:
     t = int(turns) & 3
@@ -44,7 +41,6 @@ def _rot_y_cw(p_x: float, p_z: float, turns: int) -> tuple[float, float]:
     if t == 2:
         return 1.0 - x, 1.0 - z
     return z, 1.0 - x
-
 
 def rotate_box_y_cw(b: LocalBox, turns: int) -> LocalBox:
     xs = [b.mn_x, b.mx_x]

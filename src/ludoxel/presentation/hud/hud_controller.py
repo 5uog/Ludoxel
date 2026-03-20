@@ -19,12 +19,10 @@ from .hud_payload import HudPayload
 from .player_metrics import PlayerMetricsTracker
 from ...application.meta import __version__
 
-
 @dataclass(frozen=True)
 class HudFps:
     render_fps: float
     sim_fps: float
-
 
 @dataclass
 class _PyAllocState:
@@ -34,14 +32,12 @@ class _PyAllocState:
     last_bytes: int
     last_t: float
 
-
 @dataclass(frozen=True)
 class _ExternalMetrics:
     gpu_util_percent: float | None
     rss_bytes: int | None
     total_bytes: int | None
     updated_t: float
-
 
 class HudController:
 

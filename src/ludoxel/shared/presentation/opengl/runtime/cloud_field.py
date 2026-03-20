@@ -11,13 +11,11 @@ from ....core.math.vec3 import Vec3
 from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from .gl_renderer_params import CloudParams
 
-
 @dataclass(frozen=True)
 class CloudBox:
     center: Vec3
     size: Vec3
     alpha_mul: float
-
 
 @dataclass(frozen=True)
 class _RectXZ:
@@ -25,7 +23,6 @@ class _RectXZ:
     max_x: int
     min_z: int
     max_z: int
-
 
 class CloudField:
     def __init__(self, cfg: CloudParams) -> None:

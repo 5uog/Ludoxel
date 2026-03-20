@@ -25,12 +25,10 @@ from .audio_types import AudioSamplePool, SELECTION_ROUND_ROBIN
 from .catalog.material_audio_catalog import BLOCK_EVENT_BREAK, BLOCK_EVENT_INTERACT_CLOSE, BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_PLACE, BLOCK_SOUND_CATALOG, PLAYER_EVENT_STEP, PLAYER_SURFACE_SOUND_CATALOG
 from .catalog.player_audio_catalog import PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
 
-
 @dataclass
 class _EffectVoiceSlot:
     effect: QSoundEffect
     source_key: str
-
 
 @dataclass
 class _PreparedSource:
@@ -39,7 +37,6 @@ class _PreparedSource:
     desired_slots: int = 1
     slots: list[_EffectVoiceSlot] = field(default_factory=list)
     cursor: int = 0
-
 
 class AudioManager(QObject):
     def __init__(self, *, project_root: Path, block_registry: BlockRegistry, parent: QObject | None = None) -> None:

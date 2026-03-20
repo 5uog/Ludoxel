@@ -14,7 +14,6 @@ from ...core.math.smoothing import exp_alpha
 from ..entities.player_entity import PlayerEntity
 from ..config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS
 
-
 @dataclass(frozen=True)
 class MoveInput:
     forward: float
@@ -29,13 +28,11 @@ class MoveInput:
     yaw_delta_deg: float
     pitch_delta_deg: float
 
-
 def _basis_from_yaw_deg(yaw_deg: float) -> tuple[Vec3, Vec3]:
     yaw = math.radians(float(yaw_deg))
     fwd = Vec3(-math.sin(yaw), 0.0, math.cos(yaw))
     rgt = Vec3(math.cos(yaw), 0.0, math.sin(yaw))
     return fwd, rgt
-
 
 def wish_dir_from_input(player: PlayerEntity, forward: float, strafe: float) -> Vec3:
     fwd, rgt = _basis_from_yaw_deg(player.yaw_deg)
@@ -44,14 +41,12 @@ def wish_dir_from_input(player: PlayerEntity, forward: float, strafe: float) -> 
         return Vec3(0.0, 0.0, 0.0)
     return v.normalized()
 
-
 def _flight_sprint_multiplier(params: MovementParams) -> float:
     walk = float(params.walk_speed)
     sprint = float(params.sprint_speed)
     if walk <= 1e-9:
         return 1.0
     return max(1.0, sprint / walk)
-
 
 def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams=DEFAULT_MOVEMENT_PARAMS) -> None:
     player.yaw_deg += float(inp.yaw_delta_deg)
@@ -96,7 +91,6 @@ def step_flying(player: PlayerEntity, inp: MoveInput, dt: float, params: Movemen
         vz = 0.0
 
     player.velocity = Vec3(float(vx), float(vy), float(vz))
-
 
 def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams=DEFAULT_MOVEMENT_PARAMS) -> None:
     player.yaw_deg += float(inp.yaw_delta_deg)

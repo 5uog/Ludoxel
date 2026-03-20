@@ -1,19 +1,17 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/presentation/widgets/othello/ai_worker.py
+# FILE: src/ludoxel/features/othello/domain/game/ai_worker.py
 from __future__ import annotations
 from concurrent.futures import Future, ProcessPoolExecutor
 import multiprocessing
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
-from ....features.othello.domain.game.ai import choose_ai_move
-
+from .ai import choose_ai_move
 
 def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int) -> int | None:
     return choose_ai_move(board, side, difficulty, random_seed=int(seed))
-
 
 class OthelloAiWorker(QObject):
     move_ready = pyqtSignal(int, object)

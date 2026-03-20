@@ -41,20 +41,16 @@ _CROUCH_ARM_ROT_Z = 0.1
 _CROUCH_LEG_POS_Z = -3.4500310377 * _PX
 _ARM_SWAY_Z = math.pi * 0.02
 
-
 @dataclass(frozen=True)
 class PlayerModelPose:
     world_rows: np.ndarray
     shadow_rows: np.ndarray
 
-
 def _lerp(a: float, b: float, t: float) -> float:
     return float(a) + (float(b) - float(a)) * float(t)
 
-
 def _as_rows(m: np.ndarray) -> np.ndarray:
     return np.asarray(m, dtype=np.float32).reshape(16)
-
 
 def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
     swing = clampf(float(swing_progress), 0.0, 1.0)
@@ -68,7 +64,6 @@ def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
     attack_y = -0.35 * root
     attack_z = -0.4 * full
     return (float(attack_x), float(attack_y), float(attack_z))
-
 
 def _build_part_rows(state: PlayerRenderState) -> tuple[np.ndarray, ...]:
     crouch = clampf(float(state.crouch_amount), 0.0, 1.0)
@@ -120,7 +115,6 @@ def _build_part_rows(state: PlayerRenderState) -> tuple[np.ndarray, ...]:
                 rows.extend([row for row in block_rows])
 
     return tuple(rows)
-
 
 def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
     empty = np.zeros((0, 16), dtype=np.float32)

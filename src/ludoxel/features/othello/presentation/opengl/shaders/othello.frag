@@ -52,12 +52,15 @@ float shadow_factor(float ndl) {
 void main() {
     vec3 n = normalize(v_normal);
     vec3 light_dir = normalize(u_sunDir);
+
     float lambert = max(dot(n, light_dir), 0.0);
     float sh = (lambert > 1e-6) ? shadow_factor(lambert) : 1.0;
+
     if (u_debugShadow != 0) {
         fragColor = vec4(sh, sh, sh, v_alpha);
         return;
     }
+
     float ambient = 0.28;
     float lighting = ambient + ((1.0 - ambient) * lambert) * sh;
     fragColor = vec4(v_color * lighting, v_alpha);

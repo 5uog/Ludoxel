@@ -6,21 +6,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ASSETS_ROOT = PROJECT_ROOT / "assets"
 
-_EXCLUDED_RELATIVE_PREFIXES: tuple[Path, ...] = (
-    Path("ambient/my_world"),
-    Path("audio/ambient/my_world"),
-)
-
+_EXCLUDED_RELATIVE_PREFIXES: tuple[Path, ...] = (Path("ambient/my_world"), Path("audio/ambient/my_world"))
 
 def require_ffmpeg() -> None:
     if shutil.which("ffmpeg") is None:
         print("error: ffmpeg was not found on PATH", file=sys.stderr)
         raise SystemExit(1)
-
 
 def require_assets_root() -> None:
     if not ASSETS_ROOT.exists():
@@ -29,7 +23,6 @@ def require_assets_root() -> None:
     if not ASSETS_ROOT.is_dir():
         print(f"error: assets path is not a directory: {ASSETS_ROOT}", file=sys.stderr)
         raise SystemExit(1)
-
 
 def is_excluded(src: Path) -> bool:
     try:
@@ -43,49 +36,20 @@ def is_excluded(src: Path) -> bool:
             return True
     return False
 
-
 def collect_ogg_files() -> list[Path]:
-    files = [
-        path
-        for path in ASSETS_ROOT.rglob("*")
-        if path.is_file()
-        and path.suffix.lower() == ".ogg"
-        and not is_excluded(path)
-    ]
+    files = [path for path in ASSETS_ROOT.rglob("*") if path.is_file() and path.suffix.lower() == ".ogg" and not is_excluded(path)]
     files.sort()
     return files
-
 
 def destination_for(src: Path) -> Path:
     return src.with_suffix(".wav")
 
-
 def convert_one(src: Path, dst: Path) -> bool:
     dst.parent.mkdir(parents=True, exist_ok=True)
 
-    command = [
-        "ffmpeg",
-        "-y",
-        "-v",
-        "error",
-        "-i",
-        str(src),
-        "-ar",
-        "44100",
-        "-ac",
-        "2",
-        "-c:a",
-        "pcm_s16le",
-        str(dst),
-    ]
+    command = ["ffmpeg", "-y", "-v", "error", "-i", str(src), "-ar", "44100", "-ac", "2", "-c:a", "pcm_s16le", str(dst)]
 
-    result = subprocess.run(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        check=False,
-    )
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
 
     if result.returncode != 0:
         print(f"failed: {src}", file=sys.stderr)
@@ -106,7 +70,6 @@ def convert_one(src: Path, dst: Path) -> bool:
 
     print(f"ok: {src} -> {dst} (source deleted)")
     return True
-
 
 def main() -> int:
     require_ffmpeg()
@@ -130,7 +93,6 @@ def main() -> int:
 
     print(f"done: success={success_count} failed={failure_count}")
     return 0 if failure_count == 0 else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

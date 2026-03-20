@@ -8,9 +8,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QPen, QColor
 from PyQt6.QtWidgets import QWidget
 
-
 class CrosshairWidget(QWidget):
-
     def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)

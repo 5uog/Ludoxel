@@ -35,14 +35,11 @@ _LEGAL_HINT = (0.44, 0.86, 0.95, 0.34)
 _HOVER_HINT = (0.96, 0.90, 0.44, 0.55)
 _LAST_MOVE_HINT = (0.96, 0.70, 0.18, 0.38)
 
-
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
     return np.asarray(matrix, dtype=np.float32).reshape(16)
 
-
 def _instance_row(matrix: np.ndarray, tint: tuple[float, float, float, float]) -> np.ndarray:
     return np.asarray([*_as_rows(matrix), float(tint[0]), float(tint[1]), float(tint[2]), float(tint[3])], dtype=np.float32)
-
 
 def _cube_vertices_with_color(color: tuple[float, float, float]) -> np.ndarray:
     r, g, b = (float(color[0]), float(color[1]), float(color[2]))
@@ -61,10 +58,8 @@ def _cube_vertices_with_color(color: tuple[float, float, float]) -> np.ndarray:
     faces.extend(face(0, 0, -1,[(-p, -p, -p),(p, -p, -p),(p, p, -p),(-p, p, -p)]))
     return np.asarray(faces, dtype=np.float32)
 
-
 def build_othello_board_vertices() -> np.ndarray:
     return _cube_vertices_with_color((1.0, 1.0, 1.0))
-
 
 def build_othello_piece_vertices(*, segments: int=48) -> np.ndarray:
     segs = max(12, int(segments))
@@ -109,10 +104,8 @@ def build_othello_piece_vertices(*, segments: int=48) -> np.ndarray:
 
     return np.asarray(vertices, dtype=np.float32)
 
-
 def _piece_angle_deg_for_side(side: int) -> float:
     return 0.0 if int(normalize_side(side)) == int(SIDE_BLACK) else 180.0
-
 
 def _animation_progress(animation: OthelloAnimationState) -> tuple[float, float]:
     duration = max(1e-6, float(animation.duration_s))
@@ -120,7 +113,6 @@ def _animation_progress(animation: OthelloAnimationState) -> tuple[float, float]
     eased = 3.0 * t * t - 2.0 * t * t * t
     lift = math.sin(t * math.pi) * float(animation.lift_height)
     return (float(eased), float(lift))
-
 
 def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if not bool(render_state.enabled):

@@ -8,7 +8,6 @@ from typing import Dict, List
 
 from .common import LocalBox
 
-
 def boxes_for_slab(props: Dict[str, str]) -> List[LocalBox]:
     t = str(props.get("type", "bottom"))
     if t == "top":

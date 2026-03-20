@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import Callable
 import time
 
-
 @dataclass
 class FixedStepRunner:
     step_dt: float

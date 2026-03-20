@@ -12,7 +12,6 @@ from OpenGL.GL import GL_ARRAY_BUFFER, glBindBuffer, glBindVertexArray
 
 from .instanced_mesh_common import attach_instance_buffer, create_static_vertex_buffer, destroy_mesh_handles, upload_instance_rows
 
-
 @dataclass
 class ColoredMeshBuffer:
     vao: int

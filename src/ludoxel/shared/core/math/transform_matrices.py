@@ -7,10 +7,8 @@ from __future__ import annotations
 import math
 import numpy as np
 
-
 def identity_matrix() -> np.ndarray:
     return np.identity(4, dtype=np.float32)
-
 
 def translate_matrix(x: float, y: float, z: float) -> np.ndarray:
     matrix = identity_matrix()
@@ -19,14 +17,12 @@ def translate_matrix(x: float, y: float, z: float) -> np.ndarray:
     matrix[2, 3] = float(z)
     return matrix
 
-
 def scale_matrix(x: float, y: float, z: float) -> np.ndarray:
     matrix = identity_matrix()
     matrix[0, 0] = float(x)
     matrix[1, 1] = float(y)
     matrix[2, 2] = float(z)
     return matrix
-
 
 def rotate_x_rad_matrix(rad: float) -> np.ndarray:
     matrix = identity_matrix()
@@ -38,7 +34,6 @@ def rotate_x_rad_matrix(rad: float) -> np.ndarray:
     matrix[2, 2] = float(c)
     return matrix
 
-
 def rotate_y_rad_matrix(rad: float) -> np.ndarray:
     matrix = identity_matrix()
     c = math.cos(float(rad))
@@ -48,7 +43,6 @@ def rotate_y_rad_matrix(rad: float) -> np.ndarray:
     matrix[2, 0] = float(s)
     matrix[2, 2] = float(c)
     return matrix
-
 
 def rotate_z_rad_matrix(rad: float) -> np.ndarray:
     matrix = identity_matrix()
@@ -60,18 +54,14 @@ def rotate_z_rad_matrix(rad: float) -> np.ndarray:
     matrix[1, 1] = float(c)
     return matrix
 
-
 def rotate_x_deg_matrix(deg: float) -> np.ndarray:
     return rotate_x_rad_matrix(math.radians(float(deg)))
-
 
 def rotate_y_deg_matrix(deg: float) -> np.ndarray:
     return rotate_y_rad_matrix(math.radians(float(deg)))
 
-
 def rotate_z_deg_matrix(deg: float) -> np.ndarray:
     return rotate_z_rad_matrix(math.radians(float(deg)))
-
 
 def compose_matrices(*matrices: np.ndarray) -> np.ndarray:
     out = identity_matrix()

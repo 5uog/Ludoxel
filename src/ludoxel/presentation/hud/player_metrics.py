@@ -11,20 +11,17 @@ from dataclasses import dataclass, field
 from ...application.context.runtime.session_settings import SessionSettings
 from ...shared.domain.entities.player_entity import PlayerEntity
 
-
 @dataclass(frozen=True)
 class ScalarMetricSnapshot:
     current: float
     mean: float
     recent_mean: float
 
-
 @dataclass(frozen=True)
 class OptionalScalarMetricSnapshot:
     current: float | None
     mean: float | None
     recent_mean: float | None
-
 
 @dataclass(frozen=True)
 class AppliedMovementSnapshot:
@@ -34,7 +31,6 @@ class AppliedMovementSnapshot:
     jump_v0: float
     auto_jump_cooldown_s: float
 
-
 @dataclass(frozen=True)
 class PlayerMetricsSnapshot:
     horiz_speed: ScalarMetricSnapshot
@@ -42,7 +38,6 @@ class PlayerMetricsSnapshot:
     jump_interval: OptionalScalarMetricSnapshot
     applied: AppliedMovementSnapshot
     recent_window_s: float
-
 
 @dataclass
 class _RollingWeightedSeries:
@@ -78,7 +73,6 @@ class _RollingWeightedSeries:
             return 0.0
         return float(self._weighted_sum) / float(self._duration_sum)
 
-
 @dataclass
 class _RollingEventSeries:
     window_s: float
@@ -104,7 +98,6 @@ class _RollingEventSeries:
         if not self._samples:
             return None
         return float(self._sum) / float(len(self._samples))
-
 
 @dataclass
 class PlayerMetricsTracker:

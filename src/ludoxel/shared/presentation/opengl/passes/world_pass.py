@@ -23,7 +23,6 @@ from ..runtime.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
 from .shadow_map_pass import ShadowMapInfo
 
-
 @dataclass(frozen=True)
 class WorldDrawInputs:
     view_proj: np.ndarray
@@ -46,9 +45,7 @@ class WorldDrawInputs:
     sel_z: int
     sel_tint: float
 
-
 class WorldPass:
-
     def __init__(self) -> None:
         self._shadow_prog: ShaderProgram | None = None
         self._no_shadow_prog: ShaderProgram | None = None
@@ -97,9 +94,6 @@ class WorldPass:
         if not any(int(cmd.shape[0]) > 0 for cmd in commands):
             self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=0, instances=0, rendered=False)
             return self._last_metrics
-
-        # draw_calls = 0
-        # instances = 0
 
         use_shadow_program = bool(inp.shadow_enabled or inp.debug_shadow)
         prog = self._shadow_prog if bool(use_shadow_program) else self._no_shadow_prog

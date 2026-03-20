@@ -17,7 +17,7 @@ from ....core.spatial.chunking.chunk_grid import chunk_key
 from ..passes.cloud_pass import CloudPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
 from ..passes.held_block_pass import HeldBlockPass
-from .....features.othello.presentation.opengl.othello_pass import OthelloPass
+from .....features.othello.presentation.opengl.passes.othello_pass import OthelloPass
 from ..passes.player_model_pass import PlayerModelPass
 from ..passes.shadow_map_pass import ShadowMapPass
 from ..passes.sun_pass import SunPass
@@ -35,13 +35,11 @@ from ..runtime.selection_controller import SelectionController
 _FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
 _FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20
 
-
 def _first_person_viewmodel_fov_deg(world_fov_deg: float) -> float:
     fov = float(world_fov_deg)
     if fov <= float(_FIRST_PERSON_REFERENCE_FOV_DEG):
         return fov
     return float(_FIRST_PERSON_REFERENCE_FOV_DEG) + (fov - float(_FIRST_PERSON_REFERENCE_FOV_DEG)) * float(_FIRST_PERSON_HIGH_FOV_WEIGHT)
-
 
 @dataclass(frozen=True)
 class FramePipeline:

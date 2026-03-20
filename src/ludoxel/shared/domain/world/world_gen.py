@@ -8,7 +8,6 @@ from typing import Dict
 
 from .world_state import WorldState, BlockKey
 
-
 def generate_flat_world(*, half_extent: int=32, ground_y: int=0, block_id: str="minecraft:grass_block") -> WorldState:
     blocks: Dict[BlockKey, str] = {}
     e = int(max(1, half_extent))

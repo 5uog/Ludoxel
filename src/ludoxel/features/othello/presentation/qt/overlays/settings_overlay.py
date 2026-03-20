@@ -7,8 +7,7 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
-from ....features.othello.domain.game.types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_STRONG, OTHELLO_DIFFICULTY_WEAK, OTHELLO_TIME_CONTROL_NONE, OTHELLO_TIME_CONTROL_PER_SIDE_20M, SIDE_BLACK, SIDE_WHITE, OthelloSettings
-
+from ....domain.game.types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_STRONG, OTHELLO_DIFFICULTY_WEAK, OTHELLO_TIME_CONTROL_NONE, OTHELLO_TIME_CONTROL_PER_SIDE_20M, SIDE_BLACK, SIDE_WHITE, OthelloSettings
 
 class OthelloSettingsOverlay(QWidget):
     back_requested = pyqtSignal()

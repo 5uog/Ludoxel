@@ -15,7 +15,6 @@ from ..resources.texture_atlas import TextureAtlas
 UVRect = tuple[float, float, float, float]
 DefLookup = Callable[[str], BlockDefinition | None]
 
-
 @dataclass(frozen=True)
 class BlockVisualResolver:
     atlas: TextureAtlas

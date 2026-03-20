@@ -14,9 +14,7 @@ from ....core.math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram
 from ..runtime.gl_renderer_params import SunParams
 
-
 class SunPass:
-
     def __init__(self, cfg: SunParams) -> None:
         self._cfg = cfg
         self._prog: ShaderProgram | None = None

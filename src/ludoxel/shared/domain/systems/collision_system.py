@@ -16,7 +16,6 @@ from ..blocks.registry.block_registry import BlockRegistry
 from ..blocks.models.api import collision_aabbs_for_block
 from ..blocks.state.state_view import def_from_state, world_state_at
 
-
 @dataclass(frozen=True)
 class CollisionReport:
     supported_before: bool
@@ -26,13 +25,11 @@ class CollisionReport:
     step_up_dy: float
     y_correction_dy: float
 
-
 @dataclass(frozen=True)
 class SupportBlockContact:
     cell: tuple[int, int, int]
     block_state: str
     support_y: float
-
 
 @dataclass(frozen=True)
 class _HorizontalMoveResult:
@@ -40,7 +37,6 @@ class _HorizontalMoveResult:
     hit_ground: bool
     stepped_up: bool
     step_up_dy: float
-
 
 def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
     pxz = int(params.nearby_xz_pad)
@@ -60,7 +56,6 @@ def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
                 if (x, y, z) in world.blocks:
                     yield x, y, z
 
-
 def _iter_block_aabbs(world: WorldState, bx: int, by: int, bz: int, *, block_registry: BlockRegistry):
     st = world_state_at(world, int(bx), int(by), int(bz))
     if st is None:
@@ -73,14 +68,12 @@ def _iter_block_aabbs(world: WorldState, bx: int, by: int, bz: int, *, block_reg
     for ba in collision_aabbs_for_block(st, lambda x, y, z: world_state_at(world, x, y, z), block_registry.get, int(bx), int(by), int(bz)):
         yield ba
 
-
 def _any_intersection(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:
     for bx, by, bz in _iter_nearby_blocks(world, probe, params):
         for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry):
             if probe.intersects(ba):
                 return True
     return False
-
 
 def _has_support_at(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:
     eps = float(params.eps)
@@ -90,10 +83,8 @@ def _has_support_at(player: PlayerEntity, world: WorldState, pos: Vec3, params: 
     probe = AABB(mn=Vec3(aabb.mn.x, aabb.mn.y - gp, aabb.mn.z), mx=Vec3(aabb.mx.x, aabb.mn.y + eps, aabb.mx.z))
     return _any_intersection(world, probe, params, block_registry=block_registry)
 
-
 def _ground_probe(player: PlayerEntity, world: WorldState, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:
     return _has_support_at(player, world, player.position, params, block_registry=block_registry)
-
 
 def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS) -> SupportBlockContact | None:
     feet_y = float(player.position.y)
@@ -128,7 +119,6 @@ def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_regi
 
     return best_contact
 
-
 def _backoff(delta: float, step: float) -> float:
     if abs(delta) <= step:
         return 0.0
@@ -137,7 +127,6 @@ def _backoff(delta: float, step: float) -> float:
     if s > 0.0:
         return max(0.0, v)
     return min(0.0, v)
-
 
 def _resolve_downward_snap(player: PlayerEntity, world: WorldState, pos: Vec3, drop: float, params: CollisionParams, *, block_registry: BlockRegistry) -> tuple[Vec3, bool]:
     eps = float(params.eps)
@@ -158,17 +147,14 @@ def _resolve_downward_snap(player: PlayerEntity, world: WorldState, pos: Vec3, d
 
     return pos_y, bool(hit_ground)
 
-
 def _has_support_within_drop(player: PlayerEntity, world: WorldState, pos: Vec3, max_drop: float, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:
     _p, hit = _resolve_downward_snap(player, world, pos, float(max_drop), params, block_registry=block_registry)
     return bool(hit)
-
 
 def _has_sneak_support(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:
     if _has_support_at(player, world, pos, params, block_registry=block_registry):
         return True
     return _has_support_within_drop(player, world, pos, float(params.step_height), params, block_registry=block_registry)
-
 
 def _apply_sneak_edge_clamp(player: PlayerEntity, world: WorldState, pos: Vec3, delta: Vec3, params: CollisionParams, *, block_registry: BlockRegistry) -> Vec3:
     step = float(params.sneak_step)
@@ -205,7 +191,6 @@ def _apply_sneak_edge_clamp(player: PlayerEntity, world: WorldState, pos: Vec3, 
 
     return Vec3(dx, delta.y, dz)
 
-
 def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: float, dz: float, height: float, params: CollisionParams, *, block_registry: BlockRegistry) -> Vec3 | None:
     sh = float(max(0.0, height))
     if sh <= 1e-6:
@@ -224,7 +209,6 @@ def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: 
         return None
 
     return landed
-
 
 def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry) -> Vec3:
     eps = float(params.eps)
@@ -253,7 +237,6 @@ def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: V
 
     return pos_axis
 
-
 def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: Vec3, *, axis: str, delta: float, allow_step: bool, params: CollisionParams, block_registry: BlockRegistry) -> _HorizontalMoveResult:
     if str(axis) == "x":
         pos_try = Vec3(pos.x + float(delta), pos.y, pos.z)
@@ -272,7 +255,6 @@ def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: 
     pos_axis = _axis_collision_position(player, world, pos_try, axis=str(axis), delta=float(delta), params=params, block_registry=block_registry)
     return _HorizontalMoveResult(pos=pos_axis, hit_ground=False, stepped_up=False, step_up_dy=0.0)
 
-
 def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, dz: float, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS) -> bool:
     pos = player.position
     if abs(float(dx)) + abs(float(dz)) <= 1e-9:
@@ -285,7 +267,6 @@ def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, 
         return False
 
     return True
-
 
 def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS, crouch: bool=False, jump_pressed: bool=False, flying: bool=False) -> CollisionReport:
     is_flying = bool(flying)

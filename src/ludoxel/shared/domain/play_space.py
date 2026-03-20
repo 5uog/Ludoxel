@@ -9,7 +9,6 @@ PLAY_SPACE_OTHELLO: str = "othello"
 
 PLAY_SPACE_IDS: tuple[str, ...] = (PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO)
 
-
 def normalize_play_space_id(value: object, *, default: str=PLAY_SPACE_MY_WORLD) -> str:
     raw = str(value).strip().lower()
     if raw in PLAY_SPACE_IDS:
@@ -19,10 +18,8 @@ def normalize_play_space_id(value: object, *, default: str=PLAY_SPACE_MY_WORLD) 
         return fallback
     return PLAY_SPACE_MY_WORLD
 
-
 def is_othello_space(space_id: object) -> bool:
     return normalize_play_space_id(space_id) == PLAY_SPACE_OTHELLO
-
 
 def is_my_world_space(space_id: object) -> bool:
     return normalize_play_space_id(space_id) == PLAY_SPACE_MY_WORLD

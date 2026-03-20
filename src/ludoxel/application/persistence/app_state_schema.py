@@ -19,24 +19,20 @@ from ...shared.domain.play_space import PLAY_SPACE_MY_WORLD, normalize_play_spac
 from ...shared.domain.world.world_state import WorldState
 from .scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 
-
 def _inventory_branch_to_dict(*, slots: object, selected_index: object, size: int) -> tuple[list[str], int]:
     normalized_slots = normalize_hotbar_slots(slots, size=int(size))
     normalized_index = normalize_hotbar_index(coerce_int(selected_index, 0), size=int(size))
     return [str(value) for value in normalized_slots], int(normalized_index)
-
 
 def _inventory_branch_from_dict(raw_slots: object, raw_index: object, *, size: int, default_slots: tuple[str, ...], default_index: int) -> tuple[tuple[str, ...], int]:
     normalized_slots = normalize_hotbar_slots(default_slots if raw_slots is None else raw_slots, size=int(size))
     normalized_index = normalize_hotbar_index(coerce_int(raw_index, default_index), size=int(size))
     return normalized_slots, int(normalized_index)
 
-
 def _coerce_xyz_triplet(raw: object, *, default: tuple[float, float, float]) -> tuple[float, float, float]:
     if not isinstance(raw,(list, tuple)) or len(raw) != 3:
         raw = default
     return (coerce_float(raw[0], default[0]), coerce_float(raw[1], default[1]), coerce_float(raw[2], default[2]))
-
 
 @dataclass(frozen=True)
 class PersistedSettings:
@@ -98,7 +94,6 @@ class PersistedSettings:
 
         return PersistedSettings(fov_deg=mapping_float(d, "fov_deg", 80.0), mouse_sens_deg_per_px=mapping_float(d, "mouse_sens_deg_per_px", 0.09), invert_x=mapping_bool(d, "invert_x", False), invert_y=mapping_bool(d, "invert_y", False), outline_selection=mapping_bool(d, "outline_selection", True), cloud_wireframe=mapping_bool(d, "cloud_wireframe", mapping_bool(d, "cloud_wire", False)), world_wireframe=mapping_bool(d, "world_wireframe", mapping_bool(d, "world_wire", False)), shadow_enabled=mapping_bool(d, "shadow_enabled", True), sun_az_deg=mapping_float(d, "sun_az_deg", 45.0), sun_el_deg=mapping_float(d, "sun_el_deg", 60.0), cloud_enabled=mapping_bool(d, "cloud_enabled", True), cloud_density=mapping_int(d, "cloud_density", 1), cloud_seed=mapping_int(d, "cloud_seed", 1337), cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"), creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)), auto_jump_enabled=mapping_bool(d, "auto_jump_enabled", False), auto_sprint_enabled=mapping_bool(d, "auto_sprint_enabled", False), hide_hud=mapping_bool(d, "hide_hud", False), hide_hand=mapping_bool(d, "hide_hand", False), fullscreen=mapping_bool(d, "fullscreen", False), view_bobbing_enabled=mapping_bool(d, "view_bobbing_enabled", True), camera_shake_enabled=mapping_bool(d, "camera_shake_enabled", True), view_bobbing_strength=mapping_float(d, "view_bobbing_strength", 0.35), camera_shake_strength=mapping_float(d, "camera_shake_strength", 0.20), animated_textures_enabled=mapping_bool(d, "animated_textures_enabled", True), gravity=mapping_float(d, "gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)), walk_speed=mapping_float(d, "walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)), sprint_speed=mapping_float(d, "sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)), jump_v0=mapping_float(d, "jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)), auto_jump_cooldown_s=mapping_float(d, "auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)), fly_speed=mapping_float(d, "fly_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_speed)), fly_ascend_speed=mapping_float(d, "fly_ascend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)), fly_descend_speed=mapping_float(d, "fly_descend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)), render_distance_chunks=int(rd), debug_shadow=mapping_bool(d, "debug_shadow", False), vsync_on=mapping_bool(d, "vsync_on", False), hud_visible=mapping_bool(d, "hud_visible", False), keybinds=KeybindSettings.from_dict(d.get("keybinds",{})), audio=AudioPreferences.from_dict(d.get("audio",{})))
 
-
 @dataclass(frozen=True)
 class PersistedInventory:
     HOTBAR_SIZE: ClassVar[int] = DOMAIN_HOTBAR_SIZE
@@ -125,7 +120,6 @@ class PersistedInventory:
         othello_slots, othello_idx = _inventory_branch_from_dict(d.get("othello_hotbar_slots", default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)), d.get("othello_selected_hotbar_index", 0), size=PersistedInventory.HOTBAR_SIZE, default_slots=default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE), default_index=0)
 
         return PersistedInventory(creative_hotbar_slots=creative_slots, creative_selected_hotbar_index=int(creative_idx), survival_hotbar_slots=survival_slots, survival_selected_hotbar_index=int(survival_idx), othello_hotbar_slots=othello_slots, othello_selected_hotbar_index=int(othello_idx))
-
 
 @dataclass(frozen=True)
 class PersistedPlayer:
@@ -157,7 +151,6 @@ class PersistedPlayer:
 
         return PersistedPlayer(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, vel_x=vel_x, vel_y=vel_y, vel_z=vel_z, yaw_deg=coerce_float(d.get("yaw_deg", 0.0), 0.0), pitch_deg=coerce_float(d.get("pitch_deg", 0.0), 0.0), on_ground=coerce_bool(d.get("on_ground", False), False), flying=coerce_bool(d.get("flying", False), False), auto_jump_cooldown_s=coerce_float(cooldown_raw, 0.0), crouch_eye_offset=coerce_float(d.get("crouch_eye_offset", 0.0), 0.0))
 
-
 @dataclass(frozen=True)
 class PersistedWorld:
     revision: int = 0
@@ -171,7 +164,6 @@ class PersistedWorld:
     def from_dict(d: dict[str, Any]) -> "PersistedWorld":
         world = WorldState.from_persisted_dict(d)
         return PersistedWorld(revision=int(world.revision), blocks=world.snapshot_blocks())
-
 
 @dataclass(frozen=True)
 class PersistedPlaySpace:
@@ -189,7 +181,6 @@ class PersistedPlaySpace:
         raw_player = data.get("player",{})
         raw_world = data.get("world",{})
         return PersistedPlaySpace(player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(), world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld())
-
 
 @dataclass(frozen=True)
 class PersistedOthelloSpace:
@@ -209,7 +200,6 @@ class PersistedOthelloSpace:
         raw_world = data.get("world",{})
         raw_game = data.get("othello_game_state",{})
         return PersistedOthelloSpace(player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(), world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(), othello_game_state=(OthelloGameState.from_dict(raw_game) if isinstance(raw_game, dict) else OthelloGameState()))
-
 
 @dataclass(frozen=True)
 class PlayerStateFile:
@@ -237,7 +227,6 @@ class PlayerStateFile:
         othello_settings = (OthelloSettings.from_dict(raw_othello_settings) if isinstance(raw_othello_settings, dict) else OthelloSettings())
 
         return PlayerStateFile(version=int(max(1, version)), current_space_id=normalize_play_space_id(d.get("current_space_id", PLAY_SPACE_MY_WORLD)), settings=settings, inventory=inventory, othello_settings=othello_settings)
-
 
 @dataclass(frozen=True)
 class WorldStateFile:
@@ -272,7 +261,6 @@ class WorldStateFile:
         othello_space = (PersistedOthelloSpace.from_dict(raw_othello) if isinstance(raw_othello, dict) else PersistedOthelloSpace())
 
         return WorldStateFile(version=int(max(2, version)), my_world=my_world, othello_space=othello_space)
-
 
 @dataclass(frozen=True)
 class AppState:

@@ -19,7 +19,6 @@ from .....shared.domain.world.world_state import WorldState
 from .....shared.presentation.opengl.runtime.gl_renderer import GLRenderer
 from .....shared.application.rendering.chunk_face_payload_cpu import build_chunk_face_payload_sources
 
-
 @dataclass(frozen=True)
 class _BuildResult:
     chunk: ChunkKey
@@ -27,9 +26,7 @@ class _BuildResult:
     gpu_face_sources: np.ndarray
     gpu_bucket_counts: tuple[int, int, int, int, int, int]
 
-
 class WorldUploadTracker:
-
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorldMeshBuild")
         self._pending: Dict[ChunkKey, Future] = {}

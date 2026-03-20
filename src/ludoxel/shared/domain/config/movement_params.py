@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class MovementParams:
     tick_hz: float = 20.0
@@ -33,6 +32,5 @@ class MovementParams:
     fly_speed: float = 10.92
     fly_ascend_speed: float = 10.92
     fly_descend_speed: float = 10.92
-
 
 DEFAULT_MOVEMENT_PARAMS = MovementParams()

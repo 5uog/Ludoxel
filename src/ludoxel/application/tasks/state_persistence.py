@@ -16,7 +16,6 @@ from ..context.runtime.runtime_preferences import RuntimePreferences, coerce_run
 from ..managers.session_manager import SessionManager
 from ..pipelines.runtime_state_pipeline import apply_persisted_settings_to_session, apply_runtime_to_renderer, persisted_inventory_from_runtime, persisted_settings_from_runtime, runtime_preferences_from_app_state
 
-
 def _load_player_into_session(*, session: SessionManager, player: PersistedPlayer, allow_flying: bool) -> None:
     runtime_player = session.player
     runtime_player.position = Vec3(float(player.pos_x), float(player.pos_y), float(player.pos_z))
@@ -32,12 +31,10 @@ def _load_player_into_session(*, session: SessionManager, player: PersistedPlaye
     runtime_player.auto_jump_cooldown_s = float(max(0.0, float(player.auto_jump_cooldown_s)))
     runtime_player.auto_jump_start_y = float(runtime_player.position.y)
 
-
 def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
     if not persisted_world.blocks and int(persisted_world.revision) <= 0:
         return
     session.world.replace_all(blocks={key: str(value) for (key, value) in persisted_world.blocks.items()}, revision=int(max(1, int(persisted_world.revision))))
-
 
 def _lift_player_above_othello_board_if_needed(session: SessionManager) -> None:
     player = session.player
@@ -51,16 +48,13 @@ def _lift_player_above_othello_board_if_needed(session: SessionManager) -> None:
     player.on_ground = False
     player.auto_jump_start_y = float(player.position.y)
 
-
 def _persisted_player_from_session(session: SessionManager, *, allow_flying: bool) -> PersistedPlayer:
     player = session.player
     return PersistedPlayer(pos_x=float(player.position.x), pos_y=float(player.position.y), pos_z=float(player.position.z), vel_x=float(player.velocity.x), vel_y=float(player.velocity.y), vel_z=float(player.velocity.z), yaw_deg=float(player.yaw_deg), pitch_deg=float(player.pitch_deg), on_ground=bool(player.on_ground), flying=bool(player.flying and allow_flying), auto_jump_cooldown_s=float(max(0.0, float(player.auto_jump_cooldown_s))), crouch_eye_offset=float(max(0.0, min(float(player.crouch_eye_drop), float(player.crouch_eye_offset)))))
 
-
 def _persisted_world_from_session(session: SessionManager) -> PersistedWorld:
     snapshot = session.world.snapshot_blocks()
     return PersistedWorld(revision=int(session.world.revision), blocks={key: str(value) for (key, value) in snapshot.items()})
-
 
 def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceContext, renderer) -> tuple[RuntimePreferences, OthelloGameState]:
     runtime = RuntimePreferences()
@@ -88,7 +82,6 @@ def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceC
     sessions.set_active_space(runtime.current_space_id)
     apply_runtime_to_renderer(runtime, renderer)
     return (runtime, othello_game_state)
-
 
 def save_state(*, project_root: Path, sessions: PlaySpaceContext, renderer, runtime: RuntimePreferences | None = None, othello_game_state: OthelloGameState | None = None, **overrides) -> None:
     _ = renderer

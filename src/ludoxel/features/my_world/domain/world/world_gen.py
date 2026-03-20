@@ -7,7 +7,6 @@ from __future__ import annotations
 from .....shared.domain.world.world_gen import generate_flat_world
 from .....shared.domain.world.world_state import WorldState
 
-
 def generate_test_map(seed: int=0, params=None) -> WorldState:
     _ = int(seed)
     _ = params

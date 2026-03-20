@@ -12,10 +12,8 @@ from ..registry.block_registry import BlockRegistry
 from ..sound_groups import DEFAULT_BLOCK_SOUND_GROUP
 from .common import register_block_variant
 
-
 def _resolve(value, entry):
     return value(entry) if callable(value) else value
-
 
 @dataclass(frozen=True)
 class CatalogVariantRecipe:
@@ -25,7 +23,6 @@ class CatalogVariantRecipe:
     family: str
     is_full_cube: bool | Callable[[object], bool]
     is_solid: bool = True
-
 
 def register_catalog_variants(reg: BlockRegistry, entry: object, *, textures: BlockTextures, tags: tuple[str, ...], recipes: tuple[CatalogVariantRecipe, ...], sound_group=DEFAULT_BLOCK_SOUND_GROUP) -> None:
     for recipe in recipes:

@@ -12,7 +12,6 @@ from ..managers.session_manager import SessionManager
 from .my_world.session_factory import create_my_world_session
 from .othello.session_factory import create_othello_session
 
-
 @dataclass
 class PlaySpaceContext:
     my_world: SessionManager

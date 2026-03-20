@@ -9,21 +9,17 @@ from typing import Tuple
 
 from ...core.spatial.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
 
-
 def _normalize_kind(kind: str) -> str:
     s = str(kind).strip()
     return s if s else "cube"
-
 
 def _normalize_family(family: str) -> str:
     s = str(family).strip()
     return s if s else "block"
 
-
 def _normalize_sound_group(sound_group: str) -> str:
     s = str(sound_group).strip()
     return s if s else "block"
-
 
 @dataclass(frozen=True)
 class BlockTextures:
@@ -49,7 +45,6 @@ class BlockTextures:
         if i == FACE_NEG_Z:
             return str(self.neg_z)
         return str(self.pos_y)
-
 
 @dataclass(frozen=True)
 class BlockDefinition:

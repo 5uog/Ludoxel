@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBox
 
 from ..common.settings_controls import WheelPassthroughDoubleSpinBox, WheelPassthroughSlider
 
-
 class AdvancedScalarControl(QWidget):
     value_changed = pyqtSignal(float)
 

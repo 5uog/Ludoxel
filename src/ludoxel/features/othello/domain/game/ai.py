@@ -14,12 +14,10 @@ from .types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_WEAK, SIDE_BLAC
 
 _POSITION_WEIGHTS: tuple[int, ...] = (120, -20, 20, 5, 5, 20, -20, 120, -20, -40, -5, -5, -5, -5, -40, -20, 20, -5, 15, 3, 3, 15, -5, 20, 5, -5, 3, 3, 3, 3, -5, 5, 5, -5, 3, 3, 3, 3, -5, 5, 20, -5, 15, 3, 3, 15, -5, 20, -20, -40, -5, -5, -5, -5, -40, -20, 120, -20, 20, 5, 5, 20, -20, 120)
 
-
 @dataclass(frozen=True)
 class _SearchResult:
     score: float
     move_index: int | None
-
 
 def _frontier_count(board: tuple[int, ...], side: int) -> int:
     target = normalize_side(side)
@@ -45,7 +43,6 @@ def _frontier_count(board: tuple[int, ...], side: int) -> int:
         if frontier:
             count += 1
     return int(count)
-
 
 def _evaluate(board: tuple[int, ...], side: int) -> float:
     my_side = normalize_side(side)
@@ -86,7 +83,6 @@ def _evaluate(board: tuple[int, ...], side: int) -> float:
     frontier_penalty = -5.0 * float(_frontier_count(board, my_side) - _frontier_count(board, enemy))
     return float(positional) + float(mobility) + float(corner_score) + float(disc_diff) + float(frontier_penalty)
 
-
 def _terminal_score(board: tuple[int, ...], side: int) -> float:
     black, white = counts_for_board(board)
     my_side = normalize_side(side)
@@ -97,7 +93,6 @@ def _terminal_score(board: tuple[int, ...], side: int) -> float:
     if enemy_count > my_count:
         return -100000.0 - float(enemy_count - my_count)
     return 0.0
-
 
 def _alpha_beta(board: tuple[int, ...], side_to_move: int, root_side: int, depth: int, alpha: float, beta: float, deadline_s: float | None, pass_count: int) -> float:
     if deadline_s is not None and time.perf_counter() >= float(deadline_s):
@@ -140,7 +135,6 @@ def _alpha_beta(board: tuple[int, ...], side_to_move: int, root_side: int, depth
                 break
     return float(best)
 
-
 def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, rng: random.Random | None = None) -> _SearchResult:
     moves = find_legal_moves(board, side)
     if not moves:
@@ -168,7 +162,6 @@ def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: flo
 
     chooser = rng if rng is not None else random.Random(0)
     return _SearchResult(score=float(best_score), move_index=int(chooser.choice(best_moves)))
-
 
 def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: str, *, random_seed: int = 0, strong_time_budget_s: float = 1.5) -> int | None:
     materialized = coerce_board(board)

@@ -16,7 +16,6 @@ MY_WORLD_SPAWN: tuple[float, float, float] = (0.0, 1.0, -10.0)
 MY_WORLD_YAW_DEG: float = 0.0
 MY_WORLD_PITCH_DEG: float = 0.0
 
-
 @dataclass(frozen=True)
 class MyWorldSessionSeed:
     seed: int = 0
@@ -24,10 +23,8 @@ class MyWorldSessionSeed:
     yaw_deg: float = MY_WORLD_YAW_DEG
     pitch_deg: float = MY_WORLD_PITCH_DEG
 
-
 def _make_world(seed: int) -> WorldState:
     return generate_test_map(seed=int(seed))
-
 
 def create_my_world_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
     session_seed = MyWorldSessionSeed(seed=int(seed))

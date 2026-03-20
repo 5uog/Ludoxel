@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from .....shared.core.math.vec3 import Vec3
     from ..gl_viewport_widget import GLViewportWidget
 
-
 def bind_othello_controls(viewport: "GLViewportWidget") -> None:
     from . import interaction_controller
 
@@ -29,13 +28,11 @@ def bind_othello_controls(viewport: "GLViewportWidget") -> None:
     viewport._othello_settings.back_requested.connect(lambda: interaction_controller.back_from_othello_settings(viewport))
     viewport._othello_settings.settings_applied.connect(lambda settings: apply_settings(viewport, settings))
 
-
 def _format_clock(seconds_remaining: float | None) -> str:
     if seconds_remaining is None:
         return "No limit"
     seconds = max(0, int(round(float(seconds_remaining))))
     return f"{seconds // 60:02d}:{seconds % 60:02d}"
-
 
 def set_title_flash(viewport: "GLViewportWidget", text: str, *, duration_s: float) -> None:
     body = str(text).strip()
@@ -44,11 +41,9 @@ def set_title_flash(viewport: "GLViewportWidget", text: str, *, duration_s: floa
     viewport._othello_title_flash_text = body
     viewport._othello_title_flash_until_s = time.perf_counter() + max(0.0, float(duration_s))
 
-
 def clear_title_flash(viewport: "GLViewportWidget") -> None:
     viewport._othello_title_flash_text = ""
     viewport._othello_title_flash_until_s = 0.0
-
 
 def track_message_for_title(viewport: "GLViewportWidget", message: str) -> None:
     body = str(message).strip()
@@ -60,7 +55,6 @@ def track_message_for_title(viewport: "GLViewportWidget", message: str) -> None:
         set_title_flash(viewport, body, duration_s=1.75)
     elif "match started" in lower:
         set_title_flash(viewport, "Match started", duration_s=1.10)
-
 
 def title_text(viewport: "GLViewportWidget", *, black_count: int, white_count: int) -> str:
     if not viewport._state.is_othello_space():
@@ -91,7 +85,6 @@ def title_text(viewport: "GLViewportWidget", *, black_count: int, white_count: i
             seen.add(line)
     return "\n".join(unique)
 
-
 def sync_hud_text(viewport: "GLViewportWidget") -> None:
     if not viewport._state.is_othello_space():
         viewport._othello_hud.set_text("")
@@ -118,7 +111,6 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
     viewport._othello_hud.set_text("\n".join([str(turn_text), f"Black {int(black_count)}  White {int(white_count)}", f"AI {difficulty}  You {player_color}  AI {ai_color}", f"Black clock: {_format_clock(state.black_time_remaining_s)}", f"White clock: {_format_clock(state.white_time_remaining_s)}", str(state.message)]))
     viewport._othello_hud.set_title_text(title_text(viewport, black_count=int(black_count), white_count=int(white_count)))
 
-
 def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | None:
     if not viewport._state.is_othello_space():
         return None
@@ -127,7 +119,6 @@ def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | Non
     legal_moves = game_state.legal_moves if game_state.status == OTHELLO_GAME_STATE_PLAYER_TURN else ()
 
     return OthelloRenderState(enabled=True, board=tuple(game_state.board), legal_move_indices=tuple(int(index) for index in tuple(legal_moves)), hover_square_index=viewport._othello_hover_square, last_move_index=game_state.last_move_index, animations=tuple(game_state.animations))
-
 
 def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
     viewport._othello_hover_square = None
@@ -144,10 +135,8 @@ def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
         return
     viewport._othello_hover_square = int(square_index)
 
-
 def sync_settings_values(viewport: "GLViewportWidget") -> None:
     viewport._othello_settings.sync_values(viewport._state.othello_settings)
-
 
 def _play_move_audio(viewport: "GLViewportWidget", state) -> None:
     if state.last_move_index is not None:
@@ -157,14 +146,12 @@ def _play_move_audio(viewport: "GLViewportWidget", state) -> None:
         flip_x, flip_z = square_center(int(animation.square_index))
         viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_FLIP, position=(float(flip_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(flip_z)))
 
-
 def apply_settings(viewport: "GLViewportWidget", settings) -> None:
     viewport._state.othello_settings = settings.normalized()
     viewport._state.normalize()
     viewport._othello_match.set_default_settings(viewport._state.othello_settings)
     sync_hud_text(viewport)
     viewport.save_state()
-
 
 def clear_state_for_space_switch(viewport: "GLViewportWidget") -> None:
     viewport._othello_match.settle_animations()
@@ -173,7 +160,6 @@ def clear_state_for_space_switch(viewport: "GLViewportWidget") -> None:
     viewport._othello_hover_square = None
     clear_title_flash(viewport)
     viewport._last_othello_message = ""
-
 
 def maybe_request_ai(viewport: "GLViewportWidget") -> None:
     if not viewport._state.is_othello_space():
@@ -198,7 +184,6 @@ def maybe_request_ai(viewport: "GLViewportWidget") -> None:
     viewport._othello_ai_request_armed = True
     QTimer.singleShot(0, lambda generation=generation, board=board, side=side, difficulty=difficulty, seed=seed: dispatch_ai_request(viewport, generation=generation, board=board, side=side, difficulty=difficulty, seed=seed))
 
-
 def dispatch_ai_request(viewport: "GLViewportWidget", *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int) -> None:
     viewport._othello_ai_request_armed = False
     if not viewport._state.is_othello_space():
@@ -212,7 +197,6 @@ def dispatch_ai_request(viewport: "GLViewportWidget", *, generation: int, board:
 
     viewport._othello_ai.request_move(generation=int(generation), board=tuple(board), side=int(side), difficulty=str(difficulty), seed=int(seed))
 
-
 def consume_pending_ai_result(viewport: "GLViewportWidget") -> None:
     if viewport._pending_othello_ai_result is None:
         return
@@ -222,7 +206,6 @@ def consume_pending_ai_result(viewport: "GLViewportWidget") -> None:
     generation, move_index = viewport._pending_othello_ai_result
     viewport._pending_othello_ai_result = None
     apply_ai_result(viewport, int(generation), move_index)
-
 
 def apply_ai_result(viewport: "GLViewportWidget", generation: int, move_index: int | None) -> None:
     state = viewport._othello_match.game_state()
@@ -234,14 +217,12 @@ def apply_ai_result(viewport: "GLViewportWidget", generation: int, move_index: i
         _play_move_audio(viewport, viewport._othello_match.game_state())
     sync_hud_text(viewport)
 
-
 def on_ai_move_ready(viewport: "GLViewportWidget", generation: int, move_index: object) -> None:
     result = None if move_index is None else int(move_index)
     if (viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead()):
         viewport._pending_othello_ai_result = (int(generation), result)
         return
     apply_ai_result(viewport, int(generation), result)
-
 
 def handle_left_click(viewport: "GLViewportWidget", render_eye: "Vec3", render_direction: "Vec3") -> None:
     viewport._first_person_motion.trigger_left_swing()
@@ -250,7 +231,6 @@ def handle_left_click(viewport: "GLViewportWidget", render_eye: "Vec3", render_d
         _play_move_audio(viewport, viewport._othello_match.game_state())
         sync_hud_text(viewport)
         maybe_request_ai(viewport)
-
 
 def handle_right_click(viewport: "GLViewportWidget") -> None:
     from . import interaction_controller

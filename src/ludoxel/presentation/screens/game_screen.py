@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from ..widgets.viewport.gl_viewport_widget import GLViewportWidget
 from ..widgets.hud.hud_widget import HUDWidget
 
-
 class GameScreen(QWidget):
 
     def __init__(self, project_root: Path, parent=None) -> None:

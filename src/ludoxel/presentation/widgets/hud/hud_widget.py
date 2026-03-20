@@ -10,12 +10,10 @@ from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QFont, QFontMetrics
 from PyQt6.QtWidgets import QWidget, QLabel
 
-
 @dataclass(frozen=True)
 class _FitResult:
     text: str
     h: int
-
 
 class HUDWidget(QWidget):
 

@@ -18,7 +18,6 @@ from ...shared.domain.blocks.state.state_codec import format_state, parse_state
 from ...shared.domain.blocks.state.state_values import slab_type_value
 from ...shared.domain.blocks.structure.structural_rules import is_fence_gate, is_slab, is_stairs, is_wall
 
-
 @dataclass(frozen=True)
 class PlacementPolicy:
     block_registry: BlockRegistry

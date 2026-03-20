@@ -18,7 +18,7 @@ from ..compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
 from ..passes.cloud_pass import CloudPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
 from ..passes.held_block_pass import HeldBlockPass
-from .....features.othello.presentation.opengl.othello_pass import OthelloPass
+from .....features.othello.presentation.opengl.passes.othello_pass import OthelloPass
 from ..passes.player_model_pass import PlayerModelPass
 from ..passes.selection_pass import SelectionPass
 from ..passes.shadow_map_pass import ShadowMapPass
@@ -38,11 +38,8 @@ from .block_visual_resolver import BlockVisualResolver
 from .selection_controller import SelectionController
 from .texture_animation_controller import TextureAnimationController
 
-
-
 def _format_context_details(info: GLInfoSnapshot) -> str:
     return (f"OpenGL={info.version or 'unknown'}; GLSL={info.glsl_version or 'unknown'}; parsed_version={int(info.major_version)}.{int(info.minor_version)}; parsed_glsl={int(info.glsl_major_version)}.{int(info.glsl_minor_version)}; profile={info.profile_name()}; vendor={info.vendor or 'unknown'}; renderer={info.renderer or 'unknown'}")
-
 
 def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
     if not info.is_version_at_least(4, 3):
@@ -54,9 +51,7 @@ def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
     if not info.is_glsl_at_least(4, 30):
         raise RuntimeError(f"The active GLSL version is insufficient for the compute-backed chunk face payload path. {_format_context_details(info)}")
 
-
 class RendererBackend:
-
     def __init__(self, *, cfg: GLRendererParams, state: RendererRuntimeState, sel_tint_strength: float=0.55) -> None:
         self._cfg = cfg
         self._state = state

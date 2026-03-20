@@ -15,7 +15,6 @@ from ....shared.domain.blocks.registry.block_registry import BlockRegistry
 from ....shared.domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import DraggableItemButton, ItemPhotoProvider, apply_item_slot_state, hotbar_index_from_key, hotbar_slot_tooltip, item_id_from_mime
 
-
 class _InventoryBlockButton(DraggableItemButton):
     activated = pyqtSignal(str)
     hovered_block = pyqtSignal(str)
@@ -50,7 +49,6 @@ class _InventoryBlockButton(DraggableItemButton):
     def leaveEvent(self, e) -> None:
         self.hover_left.emit()
         super().leaveEvent(e)
-
 
 class _HotbarSlotButton(DraggableItemButton):
     slot_selected = pyqtSignal(int)
@@ -109,7 +107,6 @@ class _HotbarSlotButton(DraggableItemButton):
         self.block_dropped.emit(int(self._slot_index), str(bid))
         self.slot_selected.emit(int(self._slot_index))
         e.acceptProposedAction()
-
 
 class InventoryOverlay(QWidget):
     closed = pyqtSignal()

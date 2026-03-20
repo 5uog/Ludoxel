@@ -5,7 +5,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class GameLoopParams:
     sim_hz: float = 120.0
@@ -15,6 +14,5 @@ class GameLoopParams:
     def step_dt(self) -> float:
         hz = float(self.sim_hz)
         return 1.0 / max(hz, 1e-6)
-
 
 DEFAULT_GAME_LOOP_PARAMS = GameLoopParams()

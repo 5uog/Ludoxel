@@ -11,7 +11,6 @@ from PyQt6.QtGui import QKeyEvent
 
 from ....application.handlers.keybinds import ACTION_CROUCH, ACTION_JUMP, ACTION_MOVE_BACKWARD, ACTION_MOVE_FORWARD, ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT, ACTION_SPRINT, KeybindSettings
 
-
 @dataclass
 class InputFrame:
     move_f: float = 0.0
@@ -25,7 +24,6 @@ class InputFrame:
 
     mdx: float = 0.0
     mdy: float = 0.0
-
 
 class QtInputAdapter(QObject):
 

@@ -15,7 +15,6 @@ from ..gl.gl_state_guard import GLStateGuard
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.shader_program import ShaderProgram
 
-
 @dataclass
 class TexturedFacePass:
     _prog: ShaderProgram | None = None

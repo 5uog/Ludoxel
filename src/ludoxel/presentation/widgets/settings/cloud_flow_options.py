@@ -10,7 +10,6 @@ _LABELS: dict[str, str] = {"east_to_west": "East -> West", "west_to_east": "West
 
 CLOUD_FLOW_OPTIONS: tuple[tuple[str, str], ...] = tuple((value, _LABELS.get(str(value), str(value).replace("_", " ").title())) for value in CLOUD_FLOW_DIRECTIONS)
 
-
 def cloud_flow_index_for_value(value: str) -> int:
     normalized = normalize_cloud_flow_direction(str(value))
     for index, (entry, _label) in enumerate(CLOUD_FLOW_OPTIONS):

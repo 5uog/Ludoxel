@@ -89,12 +89,10 @@ _FIRST_PERSON_FIT_EPSILON = 1e-6
 _ARM_BASE_BOX = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.0, 2.0 * _PX)
 _ARM_SLEEVE_BOX = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
 
-
 @dataclass(frozen=True)
 class TexturedBox:
     box: LocalBox
     face_uv_pixels: dict[int, tuple[float, float, float, float]] | None = None
-
 
 _FENCE_INVENTORY_BOXES: tuple[TexturedBox, ...] = (TexturedBox(box=px_box(6, 0, 6, 10, 16, 10), face_uv_pixels={FACE_POS_X: (10.0, 0.0, 14.0, 16.0), FACE_NEG_X: (6.0, 0.0, 10.0, 16.0), FACE_POS_Y: (6.0, 6.0, 10.0, 10.0), FACE_NEG_Y: (10.0, 6.0, 14.0, 10.0), FACE_POS_Z: (6.0, 0.0, 10.0, 16.0), FACE_NEG_Z: (14.0, 0.0, 10.0, 16.0)}), TexturedBox(box=px_box(7, 6, -2, 9, 9, 18), face_uv_pixels={FACE_POS_X: (9.0, 6.0, 11.0, 9.0), FACE_NEG_X: (7.0, 6.0, 9.0, 9.0), FACE_POS_Y: (7.0, 0.0, 9.0, 4.0), FACE_NEG_Y: (9.0, 0.0, 11.0, 4.0), FACE_POS_Z: (7.0, 4.0, 9.0, 7.0), FACE_NEG_Z: (11.0, 4.0, 13.0, 7.0)}), TexturedBox(box=px_box(7, 12, -2, 9, 15, 18), face_uv_pixels={FACE_POS_X: (9.0, 12.0, 11.0, 15.0), FACE_NEG_X: (7.0, 12.0, 9.0, 15.0), FACE_POS_Y: (7.0, 7.0, 9.0, 11.0), FACE_NEG_Y: (9.0, 7.0, 11.0, 11.0), FACE_POS_Z: (7.0, 9.0, 9.0, 12.0), FACE_NEG_Z: (11.0, 9.0, 13.0, 12.0)}))
 _WALL_INVENTORY_BOXES: tuple[TexturedBox, ...] = tuple(TexturedBox(box=b) for b in boxes_for_wall(props={"north": "low", "south": "low", "east": "none", "west": "none", "up": "true"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0))
@@ -103,19 +101,16 @@ _HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0
 _ALEX_RIGHT_ARM_BASE_UV_PX = {FACE_POS_X: (40.0, 20.0, 44.0, 32.0), FACE_NEG_X: (47.0, 20.0, 51.0, 32.0), FACE_POS_Y: (44.0, 16.0, 47.0, 20.0), FACE_NEG_Y: (47.0, 16.0, 50.0, 20.0), FACE_POS_Z: (44.0, 20.0, 47.0, 32.0), FACE_NEG_Z: (51.0, 20.0, 54.0, 32.0)}
 _ALEX_RIGHT_ARM_SLEEVE_UV_PX = {FACE_POS_X: (40.0, 36.0, 44.0, 48.0), FACE_NEG_X: (47.0, 36.0, 51.0, 48.0), FACE_POS_Y: (44.0, 32.0, 47.0, 36.0), FACE_NEG_Y: (47.0, 32.0, 50.0, 36.0), FACE_POS_Z: (44.0, 36.0, 47.0, 48.0), FACE_NEG_Z: (51.0, 36.0, 54.0, 48.0)}
 
-
 def _uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float]) -> UVRect:
     u0_a, v0_a, u1_a, v1_a = texture_uv
     px0, py0, px1, py1 = px_rect
     return (float(u0_a + (u1_a - u0_a) * (float(px0) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py0) / 16.0)), float(u0_a + (u1_a - u0_a) * (float(px1) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py1) / 16.0)))
-
 
 def _skin_uv_rect(px_rect: tuple[float, float, float, float], width: int, height: int) -> UVRect:
     px0, py0, px1, py1 = px_rect
     w = max(1.0, float(width))
     h = max(1.0, float(height))
     return (float(px0) / w, 1.0 - float(py1) / h, float(px1) / w, 1.0 - float(py0) / h)
-
 
 def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float, float, float]:
     swing = clampf(float(first_person.swing_progress), 0.0, 1.0)
@@ -125,30 +120,24 @@ def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float
     twice = math.sin(math.sqrt(swing) * math.pi * 2.0)
     return (float(root), float(squared), float(full), float(twice))
 
-
 def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
     return compose_matrices(translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)), rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)), rotate_y_deg_matrix(float(first_person.view_bob_yaw_deg)), rotate_x_deg_matrix(float(first_person.view_bob_pitch_deg)))
-
 
 def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np.ndarray:
     root, squared, full, twice = _arm_swing_terms(first_person)
     return compose_matrices(translate_matrix(float(_ITEM_SWING_X_POS_SCALE) * float(root), float(_ITEM_SWING_Y_POS_SCALE) * float(twice), float(_ITEM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ITEM_POS_X), float(_ITEM_POS_Y), float(_ITEM_POS_Z)), rotate_y_deg_matrix(float(_ITEM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ITEM_SWING_Y_ROT_AMOUNT_DEG) * float(squared)), rotate_z_deg_matrix(float(_ITEM_SWING_Z_ROT_AMOUNT_DEG) * float(root)), rotate_x_deg_matrix(float(_ITEM_SWING_X_ROT_AMOUNT_DEG) * float(root)))
 
-
 def build_first_person_item_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float=1.0) -> np.ndarray:
     uniform_scale = float(render_scale_multiplier)
     return compose_matrices(_view_bob_transform(first_person), build_main_hand_common_transform(first_person), translate_matrix(float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[2]) * _PX), rotate_x_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[0])), rotate_y_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[1])), rotate_z_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[2])), scale_matrix(float(_BLOCK_FIRSTPERSON_SCALE[0]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[1]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[2]) * uniform_scale), translate_matrix(-0.5, -0.5, -0.5))
 
-
 def build_third_person_item_hand_transform() -> np.ndarray:
     return compose_matrices(translate_matrix(float(_BLOCK_THIRDPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[2]) * _PX), rotate_x_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[0])), rotate_y_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[1])), rotate_z_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[2])), scale_matrix(float(_BLOCK_THIRDPERSON_SCALE[0]), float(_BLOCK_THIRDPERSON_SCALE[1]), float(_BLOCK_THIRDPERSON_SCALE[2])), translate_matrix(-0.5, -0.5, -0.5))
-
 
 def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float=1.0) -> np.ndarray:
     root, squared, full, twice = _arm_swing_terms(first_person)
     arm_scale = float(_ARM_FIRSTPERSON_SCALE) * float(render_scale_multiplier)
     return compose_matrices(_view_bob_transform(first_person), translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)), rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ARM_SWING_Y_ROT_AMOUNT_DEG) * float(root)), rotate_z_deg_matrix(float(_ARM_SWING_Z_ROT_AMOUNT_DEG) * float(squared)), translate_matrix(float(_ARM_PREROTATION_X_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Y_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Z_OFFSET_PX) * _PX), rotate_z_deg_matrix(float(_ARM_ROT_Z_DEG)), rotate_x_deg_matrix(float(_ARM_ROT_X_DEG)), rotate_y_deg_matrix(float(_ARM_ROT_Y_DEG)), translate_matrix(float(_ARM_POSTROTATION_X_OFFSET_PX) * _PX, 0.0, 0.0), scale_matrix(arm_scale, arm_scale, arm_scale))
-
 
 def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple[TexturedBox, ...]:
     if block_id is None:
@@ -159,7 +148,6 @@ def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple
         return ()
 
     return held_block_model_boxes_for_kind(block_def.kind_name())
-
 
 def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]:
     normalized = "" if kind is None else str(kind).strip().lower()
@@ -176,21 +164,17 @@ def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]
         return tuple(TexturedBox(box=b) for b in boxes_for_fence_gate({"facing": "south", "open": "false", "in_wall": "false"}))
     return (TexturedBox(box=LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)),)
 
-
 def _held_block_kind_scale_multiplier(kind: str | None) -> float:
     normalized = "" if kind is None else str(kind).strip().lower()
     return float(_HELD_BLOCK_KIND_SCALE_MULTIPLIERS.get(normalized, 1.0))
 
-
 def _empty_face_rows() -> tuple[np.ndarray, ...]:
     return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
-
 
 def _append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: UVRect) -> None:
     row = list(np.asarray(model, dtype=np.float32).reshape(16))
     row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
     buffers[int(face_idx)].append(row)
-
 
 def _face_uv_from_atlas(textured_box: TexturedBox, face_idx: int, texture_uv: UVRect, *, kind: str) -> UVRect:
     face_uv_pixels = textured_box.face_uv_pixels
@@ -203,7 +187,6 @@ def _face_uv_from_atlas(textured_box: TexturedBox, face_idx: int, texture_uv: UV
         return fence_gate_uv_rect(texture_uv, int(face_idx), textured_box.box)
     return sub_uv_rect(texture_uv, int(face_idx), textured_box.box)
 
-
 def _model_matrix_for_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
     center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
     center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
@@ -213,10 +196,8 @@ def _model_matrix_for_box(parent_transform: np.ndarray, box: LocalBox) -> np.nda
     size_z = float(box.mx_z) - float(box.mn_z)
     return compose_matrices(parent_transform, translate_matrix(center_x, center_y, center_z), scale_matrix(size_x, size_y, size_z))
 
-
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
     return np.asarray([[float(x), float(y), float(z), 1.0] for x in (box.mn_x, box.mx_x) for y in (box.mn_y, box.mx_y) for z in (box.mn_z, box.mx_z)], dtype=np.float32)
-
 
 def _camera_space_points(parent_transform: np.ndarray, boxes: Sequence[LocalBox]) -> np.ndarray:
     points = []
@@ -227,7 +208,6 @@ def _camera_space_points(parent_transform: np.ndarray, boxes: Sequence[LocalBox]
     if not points:
         return np.zeros((0, 4), dtype=np.float32)
     return np.ascontiguousarray(np.vstack(points), dtype=np.float32)
-
 
 def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projection_scale: float, ndc_min: float, ndc_max: float) -> tuple[float, float]:
     lower = -math.inf
@@ -240,7 +220,6 @@ def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projectio
         upper = min(upper,((float(ndc_max) - current_ndc) * depth) / proj)
     return (float(lower), float(upper))
 
-
 def _fit_intervals(parent_transform: np.ndarray, boxes: Sequence[LocalBox], projection: np.ndarray, safe_frame: SafeFrame) -> tuple[tuple[float, float], tuple[float, float]]:
     projection_matrix = np.asarray(projection, dtype=np.float32)
     min_x, max_x, min_y, max_y = (float(safe_frame[0]), float(safe_frame[1]), float(safe_frame[2]), float(safe_frame[3]))
@@ -249,10 +228,8 @@ def _fit_intervals(parent_transform: np.ndarray, boxes: Sequence[LocalBox], proj
     y_interval = _axis_translation_interval(points, axis_index=1, projection_scale=float(projection_matrix[1, 1]), ndc_min=min_y, ndc_max=max_y)
     return (x_interval, y_interval)
 
-
 def _interval_is_feasible(interval: tuple[float, float]) -> bool:
     return float(interval[0]) <= float(interval[1])
-
 
 def _projection_uniform_scale_multiplier(projection: np.ndarray, *, exponent: float) -> float:
     exp = float(exponent)
@@ -261,7 +238,6 @@ def _projection_uniform_scale_multiplier(projection: np.ndarray, *, exponent: fl
     projection_matrix = np.asarray(projection, dtype=np.float32)
     current_projection_y = max(float(projection_matrix[1, 1]), _FIRST_PERSON_FIT_EPSILON)
     return float(pow(float(_FIRST_PERSON_REFERENCE_PROJECTION_Y) / current_projection_y, exp))
-
 
 def _anchored_value_in_interval(value: float, interval: tuple[float, float], anchor_mode: AnchorMode) -> float:
     low, high = float(interval[0]), float(interval[1])
@@ -275,7 +251,6 @@ def _anchored_value_in_interval(value: float, interval: tuple[float, float], anc
         return high
     return float(value)
 
-
 def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> float:
     low, high = float(interval[0]), float(interval[1])
     if float(value) < low:
@@ -284,10 +259,8 @@ def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> flo
         return high
     return float(value)
 
-
 def _neutral_swing_state(first_person: FirstPersonRenderState) -> FirstPersonRenderState:
     return replace(first_person, swing_progress=0.0, prev_swing_progress=0.0)
-
 
 def _equip_hide_transform(first_person: FirstPersonRenderState, *, hide_distance: float) -> np.ndarray:
     hidden = 1.0 - clampf(float(first_person.equip_progress), 0.0, 1.0)
@@ -295,7 +268,6 @@ def _equip_hide_transform(first_person: FirstPersonRenderState, *, hide_distance
     if eased <= _FIRST_PERSON_FIT_EPSILON:
         return identity_matrix()
     return translate_matrix(0.0, -float(hide_distance) * eased, 0.0)
-
 
 def _fitted_first_person_parent_transform(*, boxes: Sequence[LocalBox], projection: np.ndarray, safe_frame: SafeFrame, transform_builder: TransformBuilder, projection_scale_exponent: float, x_anchor_mode: AnchorMode, y_anchor_mode: AnchorMode, reference_transform_builder: TransformBuilder | None=None) -> np.ndarray:
     projection_scale_multiplier = _projection_uniform_scale_multiplier(projection, exponent=float(projection_scale_exponent))
@@ -342,7 +314,6 @@ def _fitted_first_person_parent_transform(*, boxes: Sequence[LocalBox], projecti
     ty = _clamp_value_to_interval(target_ty, y_interval) if _interval_is_feasible(y_interval) else 0.0
     return compose_matrices(translate_matrix(float(tx), float(ty), 0.0), transform)
 
-
 def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, ...]:
     if first_person is None or first_person.visible_block_id is None:
         return _empty_face_rows()
@@ -370,7 +341,6 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
 
     return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
 
-
 def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray, skin_width: int, skin_height: int) -> tuple[np.ndarray, ...]:
     if first_person is None or (not bool(first_person.show_arm)):
         return _empty_face_rows()
@@ -388,7 +358,6 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
 
     return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
 
-
 def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray) -> np.ndarray:
     if not boxes:
         return np.zeros((0, 16), dtype=np.float32)
@@ -397,7 +366,6 @@ def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray
     for box in boxes:
         rows.append(np.asarray(_model_matrix_for_box(parent_transform, box), dtype=np.float32).reshape(16))
     return np.ascontiguousarray(np.vstack(rows), dtype=np.float32)
-
 
 def rotation_only(matrix: np.ndarray) -> np.ndarray:
     out = identity_matrix()
@@ -408,7 +376,6 @@ def rotation_only(matrix: np.ndarray) -> np.ndarray:
             linear[:, column] /= length
     out[:3, :3] = linear
     return out
-
 
 def rotation_scale_only(matrix: np.ndarray) -> np.ndarray:
     out = identity_matrix()

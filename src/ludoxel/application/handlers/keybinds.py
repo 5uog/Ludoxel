@@ -38,26 +38,21 @@ DEFAULT_KEYBINDS: dict[str, str] = {ACTION_MOVE_FORWARD: "W", ACTION_MOVE_BACKWA
 for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
     DEFAULT_KEYBINDS[_action] = str(int(_index))
 
-
 def keybind_actions() -> tuple[str, ...]:
     return KEYBIND_ACTION_ORDER
-
 
 def default_keybinds_map() -> dict[str, str]:
     return dict(DEFAULT_KEYBINDS)
 
-
 def action_display_name(action: str) -> str:
     normalized = str(action).strip()
     return str(KEYBIND_DISPLAY_NAMES.get(normalized, normalized))
-
 
 def hotbar_action_for_index(index: int) -> str | None:
     idx = int(index)
     if 0 <= idx < len(HOTBAR_ACTIONS):
         return str(HOTBAR_ACTIONS[idx])
     return None
-
 
 def hotbar_index_for_action(action: str | None) -> int | None:
     normalized = "" if action is None else str(action).strip()
@@ -66,12 +61,10 @@ def hotbar_index_for_action(action: str | None) -> int | None:
             return int(index)
     return None
 
-
 @lru_cache(maxsize=256)
 def portable_text_for_key(key: int) -> str:
     sequence = QKeySequence(int(key))
     return str(sequence.toString(QKeySequence.SequenceFormat.PortableText)).strip()
-
 
 def normalize_key_code(key: int) -> str:
     try:
@@ -81,7 +74,6 @@ def normalize_key_code(key: int) -> str:
     if normalized_key <= 0:
         return ""
     return portable_text_for_key(int(normalized_key))
-
 
 @lru_cache(maxsize=512)
 def _normalize_binding_text_cached(raw: str) -> str:
@@ -106,10 +98,8 @@ def _normalize_binding_text_cached(raw: str) -> str:
         return ""
     return portable_text_for_key(int(key))
 
-
 def normalize_binding_text(value: object) -> str:
     return _normalize_binding_text_cached(str(value))
-
 
 @lru_cache(maxsize=512)
 def _binding_to_key_cached(normalized_binding: str) -> int | None:
@@ -130,11 +120,9 @@ def _binding_to_key_cached(normalized_binding: str) -> int | None:
         return None
     return key if key > 0 else None
 
-
 def binding_to_key(binding: str | None) -> int | None:
     normalized = normalize_binding_text("" if binding is None else binding)
     return _binding_to_key_cached(str(normalized))
-
 
 @lru_cache(maxsize=512)
 def _display_text_for_binding_cached(normalized_binding: str) -> str:
@@ -148,11 +136,9 @@ def _display_text_for_binding_cached(normalized_binding: str) -> str:
     native = str(sequence.toString(QKeySequence.SequenceFormat.NativeText)).strip()
     return native or str(normalized_binding)
 
-
 def display_text_for_binding(binding: str | None) -> str:
     normalized = normalize_binding_text("" if binding is None else binding)
     return _display_text_for_binding_cached(str(normalized))
-
 
 def _normalized_bindings_from_items(items: Iterable[tuple[str, str]]) -> dict[str, str]:
     normalized = {str(action): "" for action in KEYBIND_ACTION_ORDER}
@@ -174,7 +160,6 @@ def _normalized_bindings_from_items(items: Iterable[tuple[str, str]]) -> dict[st
 
     return normalized
 
-
 def _key_maps_for_bindings(bindings: dict[str, str]) -> tuple[dict[str, int | None], dict[int, str]]:
     keys_by_action: dict[str, int | None] = {}
     action_by_key: dict[int, str] = {}
@@ -186,7 +171,6 @@ def _key_maps_for_bindings(bindings: dict[str, str]) -> tuple[dict[str, int | No
             action_by_key[int(key)] = str(action)
 
     return keys_by_action, action_by_key
-
 
 @dataclass(frozen=True)
 class KeybindSettings:
@@ -248,7 +232,6 @@ class KeybindSettings:
                 if action in data:
                     seeded[str(action)] = "" if data[action] is None else str(data[action])
         return KeybindSettings(bindings=seeded)
-
 
 def action_for_key(key: int, bindings: "KeybindSettings") -> str | None:
     return bindings.normalized().action_for_key_code(int(key))

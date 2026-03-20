@@ -14,10 +14,8 @@ from .state_codec import parse_state
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
-
 def world_state_at(world: WorldState, x: int, y: int, z: int) -> str | None:
     return world.blocks.get((int(x), int(y), int(z)))
-
 
 def world_state_getter(world: WorldState) -> GetState:
 
@@ -26,14 +24,12 @@ def world_state_getter(world: WorldState) -> GetState:
 
     return get_state
 
-
 def registry_def_lookup(block_registry: BlockRegistry) -> DefLookup:
 
     def get_def(block_id: str) -> BlockDefinition | None:
         return block_registry.get(str(block_id))
 
     return get_def
-
 
 def def_from_state(state_str: str | None, block_registry: BlockRegistry) -> BlockDefinition | None:
     if state_str is None:

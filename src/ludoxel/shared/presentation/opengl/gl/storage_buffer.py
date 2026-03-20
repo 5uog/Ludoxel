@@ -10,9 +10,7 @@ from OpenGL.GL import glGenBuffers, glDeleteBuffers, glBindBuffer, glBindBufferB
 
 from .buffer_upload import upload_array_buffer, upload_bytes_buffer
 
-
 class StorageBuffer:
-
     def __init__(self, *, target: int=GL_SHADER_STORAGE_BUFFER, usage: int=GL_DYNAMIC_DRAW) -> None:
         self._target = int(target)
         self._usage = int(usage)

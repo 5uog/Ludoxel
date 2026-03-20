@@ -11,7 +11,6 @@ from ...core.math.vec3 import Vec3
 from ...core.spatial.geometry.aabb import AABB
 from ...core.math.view_angles import forward_from_yaw_pitch_deg
 
-
 @dataclass
 class PlayerEntity:
     position: Vec3

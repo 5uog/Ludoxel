@@ -12,7 +12,6 @@ from .hotbar_support import refresh_widget_style
 
 ITEM_SLOT_MIME_TYPE = "application/x-ludoxel-block-id"
 
-
 def item_id_from_mime(mime: QMimeData) -> str | None:
     if mime.hasFormat(ITEM_SLOT_MIME_TYPE):
         try:
@@ -25,7 +24,6 @@ def item_id_from_mime(mime: QMimeData) -> str | None:
         item_id = str(mime.text()).strip()
         return item_id if item_id else None
     return None
-
 
 def start_item_drag(source: QPushButton, item_id: str) -> None:
     normalized = str(item_id).strip()
@@ -44,7 +42,6 @@ def start_item_drag(source: QPushButton, item_id: str) -> None:
 
     drag.exec(Qt.DropAction.CopyAction)
 
-
 def apply_item_slot_state(button: QPushButton, *, item_id: str | None, tooltip: str, selected: bool, pixmap: QPixmap | None) -> None:
     normalized_item_id = "" if item_id is None else str(item_id).strip()
 
@@ -57,7 +54,6 @@ def apply_item_slot_state(button: QPushButton, *, item_id: str | None, tooltip: 
     button.setProperty("itemId", normalized_item_id)
     button.setProperty("selected", bool(selected))
     refresh_widget_style(button)
-
 
 class DraggableItemButton(QPushButton):
 

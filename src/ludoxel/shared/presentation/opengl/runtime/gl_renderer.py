@@ -19,7 +19,6 @@ from .render_metrics import RendererFrameMetrics
 from .render_state import RendererRuntimeState
 from .renderer_backend import RendererBackend
 
-
 class GLRenderer:
 
     def __init__(self, params: GLRendererParams | None=None) -> None:

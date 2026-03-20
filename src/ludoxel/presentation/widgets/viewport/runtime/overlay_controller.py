@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import QWidget
 from .....application.tasks.fixed_step_runner import FixedStepRunner
 from .input_controller import ViewportInput
 
-
 @dataclass
 class OverlayRefs:
     pause: QWidget
@@ -25,9 +24,7 @@ class OverlayRefs:
     hud_getter: Callable[[], QWidget | None]
     othello_hud_getter: Callable[[], QWidget | None]
 
-
 class ViewportOverlays:
-
     def __init__(self, *, refs: OverlayRefs, runner: FixedStepRunner, inp: ViewportInput) -> None:
         self._r = refs
         self._runner = runner

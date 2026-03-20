@@ -12,15 +12,12 @@ from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 
 from .....shared.presentation.qt.qt_input_adapter import InputFrame, QtInputAdapter
 
-
 @dataclass
 class MouseDelta:
     dx: float
     dy: float
 
-
 class ViewportInput:
-
     def __init__(self, *, widget: QOpenGLWidget, adapter: QtInputAdapter) -> None:
         self._w = widget
         self._a = adapter

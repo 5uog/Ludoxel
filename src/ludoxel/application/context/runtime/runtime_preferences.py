@@ -17,20 +17,16 @@ from ....shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_
 from ...handlers.keybinds import KeybindSettings
 from .audio_preferences import AudioPreferences
 
-
 def _default_hotbar_slots_list() -> list[str]:
     return list(default_hotbar_slots(size=HOTBAR_SIZE))
 
-
 def _default_othello_hotbar_slots_list() -> list[str]:
     return list(default_othello_hotbar_slots(size=HOTBAR_SIZE))
-
 
 def _normalize_hotbar_state(slots: object, index: object, *, size: int = HOTBAR_SIZE) -> tuple[list[str], int]:
     normalized_slots = list(normalize_hotbar_slots(slots, size=int(size)))
     normalized_index = normalize_hotbar_index(index, size=int(size))
     return normalized_slots, int(normalized_index)
-
 
 @dataclass
 class RuntimePreferences:
@@ -184,7 +180,6 @@ class RuntimePreferences:
     def clear_selected_hotbar_slot(self) -> None:
         self.normalize()
         self.set_hotbar_slot(self._active_hotbar_index(), None)
-
 
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
     if runtime is not None:

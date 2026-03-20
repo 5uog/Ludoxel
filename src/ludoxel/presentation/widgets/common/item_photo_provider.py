@@ -14,7 +14,6 @@ from ....shared.domain.blocks.registry.block_registry import BlockRegistry
 from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
 from ....shared.domain.blocks.state.state_codec import parse_state
 
-
 @dataclass(frozen=True)
 class PhotoPaths:
     project_root: Path
@@ -24,7 +23,6 @@ class PhotoPaths:
 
     def mc_item_dir(self) -> Path:
         return self.project_root / "assets" / "minecraft" / "textures" / "item"
-
 
 class ItemPhotoProvider(QObject):
     pixmap_changed = pyqtSignal(str)

@@ -16,7 +16,6 @@ from ..gl.buffer_upload import upload_array_buffer
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
 
-
 @dataclass
 class SelectionPass:
     _prog: ShaderProgram | None = None

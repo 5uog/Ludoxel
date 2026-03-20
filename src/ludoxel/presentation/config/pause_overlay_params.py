@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from ...application.context.runtime.session_settings import SessionSettings
 from ...shared.domain.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, RENDER_DISTANCE_MIN_CHUNKS
 
-
 @dataclass(frozen=True)
 class PauseOverlayParams:
     fov_min: int = int(SessionSettings.FOV_MIN)
@@ -75,6 +74,5 @@ class PauseOverlayParams:
     fly_descend_speed_milli_max: int = int(SessionSettings.FLY_DESCEND_SPEED_MAX * 1000.0)
     fly_descend_speed_scale: float = 1000.0
     fly_descend_speed_decimals: int = 3
-
 
 DEFAULT_PAUSE_OVERLAY_PARAMS = PauseOverlayParams()

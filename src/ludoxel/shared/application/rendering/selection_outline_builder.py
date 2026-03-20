@@ -15,7 +15,6 @@ from .visible_faces import iter_visible_faces
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
-
 @dataclass(frozen=True)
 class SelectionOutlineBuilder:
     def_lookup: DefLookup

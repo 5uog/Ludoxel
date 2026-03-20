@@ -11,7 +11,6 @@ from .block_registry import BlockRegistry
 _DEFAULT_REGISTRY: BlockRegistry | None = None
 _DEFAULT_REGISTRY_LOCK = Lock()
 
-
 def _build_default_registry() -> BlockRegistry:
     reg = BlockRegistry()
 
@@ -23,7 +22,6 @@ def _build_default_registry() -> BlockRegistry:
 
     reg.seal()
     return reg
-
 
 def create_default_registry() -> BlockRegistry:
     global _DEFAULT_REGISTRY

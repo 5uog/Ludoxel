@@ -11,7 +11,6 @@ from .common import LocalBox, GetState, GetDef, rotate_box_y_cw
 from .dimensions import FENCE_POST, FENCE_ARM_LOW_NORTH, FENCE_ARM_HIGH_NORTH
 from ..structure.structural_rules import fence_connects_to_neighbor_state
 
-
 def boxes_for_fence(*, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
     connections = {"north": False, "south": False, "east": False, "west": False}
 

@@ -15,12 +15,10 @@ from ..gl.array_view import as_float32_rows
 from ..gl.shader_program import ShaderProgram
 from ..gl.storage_buffer import StorageBuffer
 
-
 @dataclass(frozen=True)
 class ChunkFacePayloadSnapshot:
     face_buckets: list[np.ndarray]
     last_rev: int
-
 
 class ChunkFacePayloadBuilder:
 

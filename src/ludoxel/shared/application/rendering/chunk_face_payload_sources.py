@@ -18,7 +18,6 @@ UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 GetState = Callable[[int, int, int], str | None]
 
-
 def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
     arr = np.asarray(face_sources, dtype=np.float32)
     if arr.ndim != 2 or int(arr.shape[1]) != 14:
@@ -27,10 +26,8 @@ def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
         arr = np.ascontiguousarray(arr, dtype=np.float32)
     return arr
 
-
 def empty_face_buckets() -> list[np.ndarray]:
     return empty_face_bucket_arrays(12)
-
 
 def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
     counts = normalize_bucket_counts(bucket_counts)
@@ -53,7 +50,6 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
         out[fi][slot, :] = row[:12]
 
     return out
-
 
 def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
     rows: list[list[float]] = []

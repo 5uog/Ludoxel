@@ -6,7 +6,6 @@ from __future__ import annotations
 
 _CARDINALS: tuple[str, str, str, str] = ("north", "east", "south", "west")
 
-
 def normalize_cardinal(facing: str, default: str="south") -> str:
     s = str(facing).strip().lower()
     if s in _CARDINALS:
@@ -18,7 +17,6 @@ def normalize_cardinal(facing: str, default: str="south") -> str:
 
     return "south"
 
-
 def opposite_cardinal(facing: str) -> str:
     s = normalize_cardinal(str(facing))
     if s == "north":
@@ -29,7 +27,6 @@ def opposite_cardinal(facing: str) -> str:
         return "west"
     return "east"
 
-
 def facing_vec_xz(facing: str) -> tuple[float, float]:
     s = normalize_cardinal(str(facing))
     if s == "north":
@@ -39,7 +36,6 @@ def facing_vec_xz(facing: str) -> tuple[float, float]:
     if s == "east":
         return (1.0, 0.0)
     return (-1.0, 0.0)
-
 
 def cardinal_from_xz(x: float, z: float, *, default: str="south") -> str:
     fx = float(x)
@@ -52,7 +48,6 @@ def cardinal_from_xz(x: float, z: float, *, default: str="south") -> str:
         return "east" if fx > 0.0 else "west"
     return "south" if fz > 0.0 else "north"
 
-
 def cardinal_turns_from_facing(facing: str) -> int:
     s = normalize_cardinal(str(facing), default="east")
     if s == "east":
@@ -62,7 +57,6 @@ def cardinal_turns_from_facing(facing: str) -> int:
     if s == "west":
         return 2
     return 3
-
 
 def gate_turns_from_facing(facing: str) -> int:
     s = normalize_cardinal(str(facing), default="south")
