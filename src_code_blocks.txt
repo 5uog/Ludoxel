@@ -2,7 +2,7 @@ SOURCE_ROOT: C:/Users/suogf/Downloads/Ludoxel/src
 FILE_COUNT: 238
 FILE: ludoxel/application/audio/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ __all__ = ["AMBIENT_KEY_MY_WORLD", "AudioManager", "BLOCK_EVENT_BREAK", "BLOCK_E
 
 FILE: ludoxel/application/audio/audio_manager.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -519,7 +519,7 @@ class AudioManager(QObject):
 
 FILE: ludoxel/application/audio/audio_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -555,7 +555,7 @@ def indexed_paths(prefix: str, stem: str, count: int, *, ext: str = "wav", start
 
 FILE: ludoxel/application/audio/catalog/ambient_audio_catalog.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -569,7 +569,7 @@ AMBIENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {AMBIENT_KEY_MY_WORLD: make_
 
 FILE: ludoxel/application/audio/catalog/material_audio_catalog.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -606,7 +606,7 @@ PLAYER_SURFACE_SOUND_CATALOG: dict[str, dict[str, AudioSamplePool]] = {SOUND_GRO
 
 FILE: ludoxel/application/audio/catalog/player_audio_catalog.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -624,7 +624,7 @@ PLAYER_EVENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {PLAYER_EVENT_LAND_SMAL
 
 FILE: ludoxel/application/boot/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -635,7 +635,7 @@ __all__ = ["run_app"]
 
 FILE: ludoxel/application/boot/meta/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -646,7 +646,7 @@ __all__ = ["__version__"]
 
 FILE: ludoxel/application/boot/meta/version.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -655,7 +655,7 @@ __version__ = "3.5.0"
 
 FILE: ludoxel/application/boot/run_app.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -703,7 +703,7 @@ def run_app() -> None:
 
 FILE: ludoxel/application/runtime/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -714,7 +714,7 @@ __all__ = ["ACTION_CLEAR_SELECTED_SLOT", "ACTION_CROUCH", "ACTION_JUMP", "ACTION
 
 FILE: ludoxel/application/runtime/context/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -734,7 +734,7 @@ def __dir__() -> list[str]:
 
 FILE: ludoxel/application/runtime/context/my_world/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -745,7 +745,7 @@ __all__ = ["MY_WORLD_PITCH_DEG", "MY_WORLD_SPAWN", "MY_WORLD_YAW_DEG", "MyWorldS
 
 FILE: ludoxel/application/runtime/context/my_world/session_factory.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -778,7 +778,7 @@ def create_my_world_session(*, seed: int = 0, block_registry: BlockRegistry) -> 
 
 FILE: ludoxel/application/runtime/context/othello/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -789,7 +789,7 @@ __all__ = ["OTHELLO_PITCH_DEG", "OTHELLO_SPAWN", "OTHELLO_YAW_DEG", "OthelloSess
 
 FILE: ludoxel/application/runtime/context/othello/session_factory.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -825,7 +825,7 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
 
 FILE: ludoxel/application/runtime/context/play_space_context.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -875,7 +875,7 @@ class PlaySpaceContext:
 
 FILE: ludoxel/application/runtime/context/session_builders.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -898,7 +898,7 @@ def make_session_manager(*, seed: int, spawn: tuple[float, float, float], world:
 
 FILE: ludoxel/application/runtime/keybinds.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -1138,7 +1138,7 @@ def action_for_key(key: int, bindings: "KeybindSettings") -> str | None:
 
 FILE: ludoxel/application/runtime/managers/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -1158,7 +1158,7 @@ def __dir__() -> list[str]:
 
 FILE: ludoxel/application/runtime/managers/session_manager.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -1502,7 +1502,7 @@ class SessionManager:
 
 FILE: ludoxel/application/runtime/metrics/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -1513,7 +1513,7 @@ __all__ = ["GpuUtilizationSampler", "ProcessMemorySnapshot", "SystemInfo", "read
 
 FILE: ludoxel/application/runtime/metrics/system_metrics.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -1809,7 +1809,7 @@ class GpuUtilizationSampler:
 
 FILE: ludoxel/application/runtime/persistence/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -1821,7 +1821,7 @@ __all__ = ["AppState", "AppStateStore", "PersistedInventory", "PersistedOthelloS
 
 FILE: ludoxel/application/runtime/persistence/app_state_schema.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -2110,7 +2110,7 @@ class AppState:
 
 FILE: ludoxel/application/runtime/persistence/app_state_store.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2154,7 +2154,7 @@ class AppStateStore:
 
 FILE: ludoxel/application/runtime/persistence/json_file_store.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass
@@ -2219,7 +2219,7 @@ class JsonFileStore:
 
 FILE: ludoxel/application/runtime/persistence/scalar_coercion.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from collections.abc import Mapping
@@ -2273,7 +2273,7 @@ def mapping_str(d: Mapping[str, Any], key: str, default: str) -> str:
 
 FILE: ludoxel/application/runtime/pipelines/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2284,7 +2284,7 @@ __all__ = ["apply_persisted_settings_to_session", "apply_runtime_to_renderer", "
 
 FILE: ludoxel/application/runtime/pipelines/runtime_state_pipeline.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2348,7 +2348,7 @@ def persisted_inventory_from_runtime(runtime: RuntimePreferences) -> PersistedIn
 
 FILE: ludoxel/application/runtime/state/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2362,7 +2362,7 @@ __all__ = ["AUDIO_CATEGORY_AMBIENT", "AUDIO_CATEGORY_BLOCK", "AUDIO_CATEGORY_MAS
 
 FILE: ludoxel/application/runtime/state/audio_preferences.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2420,7 +2420,7 @@ class AudioPreferences:
 
 FILE: ludoxel/application/runtime/state/camera_perspective.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2455,7 +2455,7 @@ def is_first_person_camera_perspective(value: object) -> bool:
 
 FILE: ludoxel/application/runtime/state/render_snapshot.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2512,7 +2512,7 @@ class RenderSnapshotDTO:
 
 FILE: ludoxel/application/runtime/state/runtime_preferences.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -2762,7 +2762,7 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
 
 FILE: ludoxel/application/runtime/state/session_settings.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2858,7 +2858,7 @@ class SessionSettings:
 
 FILE: ludoxel/application/runtime/tasks/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2870,7 +2870,7 @@ __all__ = ["FixedStepRunner", "apply_persisted_state_if_present", "save_state"]
 
 FILE: ludoxel/application/runtime/tasks/fixed_step_runner.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -2923,7 +2923,7 @@ class FixedStepRunner:
 
 FILE: ludoxel/application/runtime/tasks/state_persistence.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3024,7 +3024,7 @@ def save_state(*, project_root: Path, sessions: PlaySpaceContext, renderer, runt
 
 FILE: ludoxel/features/othello/application/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3035,7 +3035,7 @@ __all__ = ["OthelloMatchController"]
 
 FILE: ludoxel/features/othello/application/othello_match_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3230,7 +3230,7 @@ class OthelloMatchController:
 
 FILE: ludoxel/features/othello/application/rendering/othello_render_state.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3250,7 +3250,7 @@ class OthelloRenderState:
 
 FILE: ludoxel/features/othello/application/rendering/othello_scene.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3411,7 +3411,7 @@ def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.nd
 
 FILE: ludoxel/features/othello/domain/game/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3425,7 +3425,7 @@ __all__ = ["BOARD_SIZE", "OTHELLO_BOARD_BLOCK_Y", "OTHELLO_BOARD_DARK_BLOCK_ID",
 
 FILE: ludoxel/features/othello/domain/game/ai.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3630,7 +3630,7 @@ def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: st
 
 FILE: ludoxel/features/othello/domain/game/ai_worker.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3733,7 +3733,7 @@ class OthelloAiWorker(QObject):
 
 FILE: ludoxel/features/othello/domain/game/board.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -3812,7 +3812,7 @@ def raycast_board_square(origin: Vec3, direction: Vec3) -> int | None:
 
 FILE: ludoxel/features/othello/domain/game/insane_engine.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -4233,7 +4233,7 @@ def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_
 
 FILE: ludoxel/features/othello/domain/game/opening_book.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -4412,7 +4412,7 @@ def load_opening_book() -> OpeningBook:
 
 FILE: ludoxel/features/othello/domain/game/rules.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -4519,7 +4519,7 @@ def winner_for_board(board: tuple[int, ...] | list[int]) -> str:
 
 FILE: ludoxel/features/othello/domain/game/types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -4831,7 +4831,7 @@ def empty_othello_game_state() -> OthelloGameState:
 
 FILE: ludoxel/features/othello/domain/inventory/hotbar_defaults.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -4844,7 +4844,7 @@ def default_othello_hotbar_slots(*, size: int=HOTBAR_SIZE) -> tuple[str, ...]:
 
 FILE: ludoxel/features/othello/domain/inventory/special_items.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -4880,7 +4880,7 @@ def special_item_display_name(item_id: object) -> str | None:
 
 FILE: ludoxel/features/othello/opengl/othello_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5174,7 +5174,7 @@ void main() {
 
 FILE: ludoxel/features/othello/ui/hud_widget.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5240,7 +5240,7 @@ class OthelloHudWidget(QWidget):
 
 FILE: ludoxel/features/othello/ui/settings_overlay.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5351,7 +5351,7 @@ class OthelloSettingsOverlay(QWidget):
 
 FILE: ludoxel/features/othello/ui/special_item_art.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5416,7 +5416,7 @@ def _paint_settings_icon(painter: QPainter, rect) -> None:
 
 FILE: ludoxel/features/othello/ui/viewport/othello_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5668,7 +5668,7 @@ def handle_right_click(viewport: "GLViewportWidget") -> None:
 
 FILE: ludoxel/shared/blocks/block_definition.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5749,7 +5749,7 @@ class BlockDefinition:
 
 FILE: ludoxel/shared/blocks/catalog/common.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5763,7 +5763,7 @@ def register_block_variant(reg: BlockRegistry, *, block_id: str, display_name: s
 
 FILE: ludoxel/shared/blocks/catalog/planks.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5820,7 +5820,7 @@ def register_wood_blocks(reg: BlockRegistry) -> None:
 
 FILE: ludoxel/shared/blocks/catalog/stones.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5856,7 +5856,7 @@ def register_stones(reg: BlockRegistry) -> None:
 
 FILE: ludoxel/shared/blocks/catalog/variant_recipes.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5890,7 +5890,7 @@ def register_catalog_variants(reg: BlockRegistry, entry: object, *, textures: Bl
 
 FILE: ludoxel/shared/blocks/families/decorative_stone_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5902,7 +5902,7 @@ DECORATIVE_STONE_TYPES: tuple[StoneType, ...] = (StoneType(key="stone_bricks", d
 
 FILE: ludoxel/shared/blocks/families/ore_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5914,7 +5914,7 @@ ORE_TYPES: tuple[StoneType, ...] = (StoneType(key="iron_ore", display="Iron Ore"
 
 FILE: ludoxel/shared/blocks/families/sandstone_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5925,7 +5925,7 @@ SANDSTONE_TYPES: tuple[StoneType, ...] = (StoneType(key="sandstone", display="Sa
 
 FILE: ludoxel/shared/blocks/families/special_dirt_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5938,7 +5938,7 @@ SPECIAL_DIRT_TYPES: tuple[StoneType, ...] = (StoneType(key="crimson_nylium", dis
 
 FILE: ludoxel/shared/blocks/families/special_stone_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -5950,7 +5950,7 @@ SPECIAL_STONE_TYPES: tuple[StoneType, ...] = (StoneType(key="cobblestone", displ
 
 FILE: ludoxel/shared/blocks/families/stone_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6016,7 +6016,7 @@ STONE_TYPES: tuple[StoneType, ...] = (StoneType(key="stone", display="Stone", te
 
 FILE: ludoxel/shared/blocks/families/wood_types.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6059,7 +6059,7 @@ def fence_gate_id(w: WoodType) -> str:
 
 FILE: ludoxel/shared/blocks/models/api.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6283,7 +6283,7 @@ def pick_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x
 
 FILE: ludoxel/shared/blocks/models/common.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6344,7 +6344,7 @@ def rotate_box_y_cw(b: LocalBox, turns: int) -> LocalBox:
 
 FILE: ludoxel/shared/blocks/models/dimensions.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6379,7 +6379,7 @@ WALL_ARM_TALL_NORTH = px_box(5, 0, 0, 11, 16, 11)
 
 FILE: ludoxel/shared/blocks/models/fence.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6417,7 +6417,7 @@ def boxes_for_fence(*, get_state: GetState, get_def: GetDef, x: int, y: int, z: 
 
 FILE: ludoxel/shared/blocks/models/fence_gate.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6444,7 +6444,7 @@ def boxes_for_fence_gate(props: Dict[str, str]) -> List[LocalBox]:
 
 FILE: ludoxel/shared/blocks/models/slab.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6463,7 +6463,7 @@ def boxes_for_slab(props: Dict[str, str]) -> List[LocalBox]:
 
 FILE: ludoxel/shared/blocks/models/stairs.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6575,7 +6575,7 @@ def boxes_for_stairs(*, base_id: str, props: Dict[str, str], get_state: GetState
 
 FILE: ludoxel/shared/blocks/models/wall.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6630,7 +6630,7 @@ def boxes_for_wall(*, props: Dict[str, str], get_state: GetState, get_def: GetDe
 
 FILE: ludoxel/shared/blocks/registry/block_registry.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6686,7 +6686,7 @@ class BlockRegistry:
 
 FILE: ludoxel/shared/blocks/registry/default_registry.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6726,7 +6726,7 @@ def create_default_registry() -> BlockRegistry:
 
 FILE: ludoxel/shared/blocks/sound_groups.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6788,7 +6788,7 @@ def iter_sound_group_candidates(sound_group: str) -> tuple[str, ...]:
 
 FILE: ludoxel/shared/blocks/state/state_codec.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6838,7 +6838,7 @@ def format_state(base_id: str, props: Dict[str, str] | None) -> str:
 
 FILE: ludoxel/shared/blocks/state/state_values.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6881,7 +6881,7 @@ def slab_type_value(props: Mapping[str, str], default: str="bottom") -> str:
 
 FILE: ludoxel/shared/blocks/state/state_view.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6922,7 +6922,7 @@ def def_from_state(state_str: str | None, block_registry: BlockRegistry) -> Bloc
 
 FILE: ludoxel/shared/blocks/structure/cardinal.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6993,7 +6993,7 @@ def gate_turns_from_facing(facing: str) -> int:
 
 FILE: ludoxel/shared/blocks/structure/connectivity.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7133,7 +7133,7 @@ def refresh_structural_neighbors(world: WorldState, x: int, y: int, z: int, *, b
 
 FILE: ludoxel/shared/blocks/structure/neighborhood.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7156,7 +7156,7 @@ def six_neighbor_state_signature(get_state: GetState, x: int, y: int, z: int) ->
 
 FILE: ludoxel/shared/blocks/structure/structural_rules.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7287,7 +7287,7 @@ def wall_up_rule(*, north: str, east: str, south: str, west: str, above_state: s
 
 FILE: ludoxel/shared/math/chunking/chunk_grid.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7318,7 +7318,7 @@ def neighbor_chunk_keys_for_cell(x: int, y: int, z: int) -> Set[ChunkKey]:
 
 FILE: ludoxel/shared/math/frustum/chunk_clip.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7357,7 +7357,7 @@ def chunk_intersects_clip_volume(chunk_key: ChunkKey, matrix: np.ndarray) -> boo
 
 FILE: ludoxel/shared/math/geometry/aabb.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7376,7 +7376,7 @@ class AABB:
 
 FILE: ludoxel/shared/math/geometry/ray.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7392,7 +7392,7 @@ class Ray:
 
 FILE: ludoxel/shared/math/geometry/ray_aabb.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7472,7 +7472,7 @@ def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
 
 FILE: ludoxel/shared/math/mat4.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7531,7 +7531,7 @@ def mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 FILE: ludoxel/shared/math/scalars.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7548,7 +7548,7 @@ def clampf(x: float, lo: float, hi: float) -> float:
 
 FILE: ludoxel/shared/math/smoothing.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7566,7 +7566,7 @@ def exp_alpha(rate: float, dt: float) -> float:
 
 FILE: ludoxel/shared/math/transform_matrices.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7638,7 +7638,7 @@ def compose_matrices(*matrices: np.ndarray) -> np.ndarray:
 
 FILE: ludoxel/shared/math/vec3.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7682,7 +7682,7 @@ class Vec3:
 
 FILE: ludoxel/shared/math/view_angles.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7720,7 +7720,7 @@ def sun_dir_from_az_el_deg(azimuth_deg: float, elevation_deg: float) -> Vec3:
 
 FILE: ludoxel/shared/math/voxel/voxel_dda.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7792,7 +7792,7 @@ def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: fl
 
 FILE: ludoxel/shared/math/voxel/voxel_faces.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7821,7 +7821,7 @@ def face_neighbor_offset(face_idx: int) -> tuple[int, int, int]:
 
 FILE: ludoxel/shared/opengl/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7849,7 +7849,7 @@ def __getattr__(name: str):
 
 FILE: ludoxel/shared/opengl/compute/chunk_face_payload_builder.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7978,7 +7978,7 @@ class ChunkFacePayloadBuilder:
 
 FILE: ludoxel/shared/opengl/gl/array_view.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8016,7 +8016,7 @@ def copy_float32_rows(data: np.ndarray, *, cols: int, label: str) -> np.ndarray:
 
 FILE: ludoxel/shared/opengl/gl/buffer_upload.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8079,7 +8079,7 @@ def upload_bytes_buffer(*, target: int, buffer: int, usage: int, data: bytes, ca
 
 FILE: ludoxel/shared/opengl/gl/colored_mesh_buffer.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8122,7 +8122,7 @@ class ColoredMeshBuffer:
 
 FILE: ludoxel/shared/opengl/gl/gl_state_guard.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8205,7 +8205,7 @@ class GLStateGuard:
 
 FILE: ludoxel/shared/opengl/gl/instanced_mesh_common.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8263,7 +8263,7 @@ def destroy_mesh_handles(*, vao: int, buffers: tuple[int, ...]) -> None:
 
 FILE: ludoxel/shared/opengl/gl/mesh_buffer.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8376,7 +8376,7 @@ def _cube_vertices():
 
 FILE: ludoxel/shared/opengl/gl/shader_program.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8519,7 +8519,7 @@ class ShaderProgram:
 
 FILE: ludoxel/shared/opengl/gl/storage_buffer.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8590,7 +8590,7 @@ class StorageBuffer:
 
 FILE: ludoxel/shared/opengl/passes/aggregated_face_batch.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8910,7 +8910,7 @@ class AggregatedFaceBatch:
 
 FILE: ludoxel/shared/opengl/passes/cloud_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9055,7 +9055,7 @@ class CloudPass:
 
 FILE: ludoxel/shared/opengl/passes/falling_block_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9106,7 +9106,7 @@ class FallingBlockPass:
 
 FILE: ludoxel/shared/opengl/passes/first_person_arm_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9150,7 +9150,7 @@ class FirstPersonArmPass:
 
 FILE: ludoxel/shared/opengl/passes/held_block_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9201,7 +9201,7 @@ class HeldBlockPass:
 
 FILE: ludoxel/shared/opengl/passes/player_model_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9386,7 +9386,7 @@ class PlayerModelPass:
 
 FILE: ludoxel/shared/opengl/passes/selection_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9493,7 +9493,7 @@ class SelectionPass:
 
 FILE: ludoxel/shared/opengl/passes/shadow_map_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9681,7 +9681,7 @@ class ShadowMapPass:
 
 FILE: ludoxel/shared/opengl/passes/special_item_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9730,7 +9730,7 @@ class SpecialItemPass:
 
 FILE: ludoxel/shared/opengl/passes/sun_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9800,7 +9800,7 @@ class SunPass:
 
 FILE: ludoxel/shared/opengl/passes/textured_face_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9870,7 +9870,7 @@ class TexturedFacePass:
 
 FILE: ludoxel/shared/opengl/passes/world_pass.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10021,7 +10021,7 @@ class WorldPass:
 
 FILE: ludoxel/shared/opengl/pipeline/frame_pipeline.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10171,7 +10171,7 @@ class FramePipeline:
 
 FILE: ludoxel/shared/opengl/resources/image_texture.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10225,7 +10225,7 @@ class ImageTexture:
 
 FILE: ludoxel/shared/opengl/resources/texture_atlas.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10431,7 +10431,7 @@ def _placeholder(tile: int, c: QColor, pad: int=1) -> QImage:
 
 FILE: ludoxel/shared/opengl/runtime/block_visual_resolver.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10478,7 +10478,7 @@ class BlockVisualResolver:
 
 FILE: ludoxel/shared/opengl/runtime/cloud_field.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10764,7 +10764,7 @@ class CloudField:
 
 FILE: ludoxel/shared/opengl/runtime/cloud_flow_direction.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10780,7 +10780,7 @@ def normalize_cloud_flow_direction(raw: str) -> str:
 
 FILE: ludoxel/shared/opengl/runtime/gl_info_probe.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10900,7 +10900,7 @@ def probe_gl_info() -> GLInfoSnapshot:
 
 FILE: ludoxel/shared/opengl/runtime/gl_renderer.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11038,7 +11038,7 @@ class GLRenderer:
 
 FILE: ludoxel/shared/opengl/runtime/gl_renderer_params.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11135,7 +11135,7 @@ def default_gl_renderer_params() -> GLRendererParams:
 
 FILE: ludoxel/shared/opengl/runtime/gl_resources.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11233,7 +11233,7 @@ class GLResources:
 
 FILE: ludoxel/shared/opengl/runtime/light_space.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11293,7 +11293,7 @@ def compute_light_view_proj(*, center: Vec3, sun_dir: Vec3, sun: SunParams, shad
 
 FILE: ludoxel/shared/opengl/runtime/render_metrics.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11314,7 +11314,7 @@ class RendererFrameMetrics:
 
 FILE: ludoxel/shared/opengl/runtime/render_state.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11371,7 +11371,7 @@ class RendererRuntimeState:
 
 FILE: ludoxel/shared/opengl/runtime/renderer_backend.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11721,7 +11721,7 @@ class RendererBackend:
 
 FILE: ludoxel/shared/opengl/runtime/selection_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11797,7 +11797,7 @@ class SelectionController:
 
 FILE: ludoxel/shared/opengl/runtime/texture_animation_catalog.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11819,7 +11819,7 @@ def default_texture_animation_tracks() -> tuple[AnimatedTextureTrack, ...]:
 
 FILE: ludoxel/shared/opengl/runtime/texture_animation_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11951,7 +11951,7 @@ class TextureAnimationController:
 
 FILE: ludoxel/shared/opengl/runtime/world_upload_tracker.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12829,7 +12829,7 @@ void main() {
 
 FILE: ludoxel/shared/rendering/chunk_face_payload_cpu.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12858,7 +12858,7 @@ def build_chunk_mesh_cpu(*, blocks: Iterable[tuple[int, int, int, str]], get_sta
 
 FILE: ludoxel/shared/rendering/chunk_face_payload_sources.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12952,7 +12952,7 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
 
 FILE: ludoxel/shared/rendering/chunk_selection.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12994,7 +12994,7 @@ def select_visible_chunks(chunk_keys: Iterable[ChunkKey], matrix: np.ndarray, *,
 
 FILE: ludoxel/shared/rendering/face_axes.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13033,7 +13033,7 @@ def face_rect(face_idx: int, box: LocalBox) -> tuple[float, float, float, float]
 
 FILE: ludoxel/shared/rendering/face_bucket_layout.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13061,7 +13061,7 @@ def empty_face_bucket_arrays(row_width: int, *, dtype: object=np.float32) -> lis
 
 FILE: ludoxel/shared/rendering/face_occlusion.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13256,7 +13256,7 @@ def is_block_face_occluded(*, x: int, y: int, z: int, box: LocalBox, face_idx: i
 
 FILE: ludoxel/shared/rendering/falling_block_face_rows.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13325,7 +13325,7 @@ def build_falling_block_face_rows(*, samples: tuple[FallingBlockRenderSampleDTO,
 
 FILE: ludoxel/shared/rendering/first_person_geometry.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13725,7 +13725,7 @@ def rotation_scale_only(matrix: np.ndarray) -> np.ndarray:
 
 FILE: ludoxel/shared/rendering/first_person_motion.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13854,7 +13854,7 @@ class FirstPersonMotionController:
 
 FILE: ludoxel/shared/rendering/player_model_pose.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14110,7 +14110,7 @@ def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
 
 FILE: ludoxel/shared/rendering/player_render_state.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass
@@ -14153,7 +14153,7 @@ class PlayerRenderState:
 
 FILE: ludoxel/shared/rendering/player_render_state_composer.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14175,7 +14175,7 @@ def compose_player_render_state_from_parts(*, player_model: PlayerModelSnapshotD
 
 FILE: ludoxel/shared/rendering/player_skin.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14239,7 +14239,7 @@ def delete_custom_player_skin(project_root: Path) -> None:
 
 FILE: ludoxel/shared/rendering/selection_outline_builder.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14319,7 +14319,7 @@ class SelectionOutlineBuilder:
 
 FILE: ludoxel/shared/rendering/third_person_camera.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14393,7 +14393,7 @@ def _resolve_camera_collision(*, world: WorldState, block_registry: BlockRegistr
 
 FILE: ludoxel/shared/rendering/uv_rects.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14453,7 +14453,7 @@ def fence_gate_uv_rect(atlas: UVRect, face_idx: int, box: LocalBox) -> UVRect:
 
 FILE: ludoxel/shared/rendering/visible_faces.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14535,7 +14535,7 @@ def iter_visible_faces(*, x: int, y: int, z: int, state_str: str, get_state: Get
 
 FILE: ludoxel/shared/systems/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14547,7 +14547,7 @@ __all__ = ["PlacementPolicy", "InteractionService"]
 
 FILE: ludoxel/shared/systems/block_pick.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14655,7 +14655,7 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float, *
 
 FILE: ludoxel/shared/systems/collision_system.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15119,7 +15119,7 @@ def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float
 
 FILE: ludoxel/shared/systems/gravity_system.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15348,7 +15348,7 @@ class GravitySystem:
 
 FILE: ludoxel/shared/systems/interaction_service.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15556,7 +15556,7 @@ class InteractionService:
 
 FILE: ludoxel/shared/systems/movement_system.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15708,7 +15708,7 @@ def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: Moveme
 
 FILE: ludoxel/shared/systems/placement_policy.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15824,7 +15824,7 @@ class PlacementPolicy:
 
 FILE: ludoxel/shared/ui/common/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15838,7 +15838,7 @@ __all__ = ["DraggableItemButton", "ITEM_SLOT_MIME_TYPE", "ItemPhotoProvider", "P
 
 FILE: ludoxel/shared/ui/common/hotbar_support.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15866,7 +15866,7 @@ def hotbar_binding_text(index: int, keybinds: KeybindSettings | None=None) -> st
 
 FILE: ludoxel/shared/ui/common/hotbar_visuals.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15896,7 +15896,7 @@ def hotbar_slot_tooltip(registry: BlockRegistry, *, slot_index: int, block_id: s
 
 FILE: ludoxel/shared/ui/common/item_photo_provider.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16085,7 +16085,7 @@ class ItemPhotoProvider(QObject):
 
 FILE: ludoxel/shared/ui/common/item_slots.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16173,7 +16173,7 @@ class DraggableItemButton(QPushButton):
 
 FILE: ludoxel/shared/ui/common/settings_controls.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16428,7 +16428,7 @@ class KeybindRow(QWidget):
 
 FILE: ludoxel/shared/ui/config/game_loop_params.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16449,7 +16449,7 @@ DEFAULT_GAME_LOOP_PARAMS = GameLoopParams()
 
 FILE: ludoxel/shared/ui/config/gl_surface_format.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16471,7 +16471,7 @@ def install_default_gl_surface_format() -> None:
 
 FILE: ludoxel/shared/ui/config/pause_overlay_params.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16551,7 +16551,7 @@ DEFAULT_PAUSE_OVERLAY_PARAMS = PauseOverlayParams()
 
 FILE: ludoxel/shared/ui/game_screen.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16643,7 +16643,7 @@ class GameScreen(QWidget):
 
 FILE: ludoxel/shared/ui/hud/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16671,7 +16671,7 @@ def __getattr__(name: str):
 
 FILE: ludoxel/shared/ui/hud/crosshair_art.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16750,7 +16750,7 @@ def _fill_scaled_pixel(image: QImage, x: int, y: int, scale: int, color: QColor)
 
 FILE: ludoxel/shared/ui/hud/crosshair_widget.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16794,7 +16794,7 @@ class CrosshairWidget(QWidget):
 
 FILE: ludoxel/shared/ui/hud/hotbar_widget.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16896,7 +16896,7 @@ class HotbarWidget(QWidget):
 
 FILE: ludoxel/shared/ui/hud/hud_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17175,7 +17175,7 @@ class HudController:
 
 FILE: ludoxel/shared/ui/hud/hud_payload.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17193,7 +17193,7 @@ class HudPayload:
 
 FILE: ludoxel/shared/ui/hud/hud_widget.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17365,7 +17365,7 @@ class HUDWidget(QWidget):
 
 FILE: ludoxel/shared/ui/hud/player_metrics.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17547,7 +17547,7 @@ class PlayerMetricsTracker:
 
 FILE: ludoxel/shared/ui/main_window.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17735,7 +17735,7 @@ def run_app(*, project_root: Path) -> None:
 
 FILE: ludoxel/shared/ui/overlays/death_overlay.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17787,7 +17787,7 @@ class DeathOverlay(QWidget):
 
 FILE: ludoxel/shared/ui/overlays/inventory_overlay.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18110,7 +18110,7 @@ class InventoryOverlay(QWidget):
 
 FILE: ludoxel/shared/ui/overlays/pause_overlay.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18300,7 +18300,7 @@ class PauseOverlay(QWidget):
 
 FILE: ludoxel/shared/ui/overlays/player_skin_preview_widget.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18409,7 +18409,7 @@ class PlayerSkinPreviewWidget(QWidget):
 
 FILE: ludoxel/shared/ui/qt_input_adapter.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18521,7 +18521,7 @@ class QtInputAdapter(QObject):
 
 FILE: ludoxel/shared/ui/settings/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18533,7 +18533,7 @@ __all__ = ["AdvancedScalarControl", "SettingsOverlay"]
 
 FILE: ludoxel/shared/ui/settings/advanced_scalar_control.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18650,7 +18650,7 @@ class AdvancedScalarControl(QWidget):
 
 FILE: ludoxel/shared/ui/settings/cloud_flow_options.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18673,7 +18673,7 @@ def cloud_flow_index_for_value(value: str) -> int:
 
 FILE: ludoxel/shared/ui/settings/crosshair_widgets.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18824,7 +18824,7 @@ class CrosshairPixelEditor(QWidget):
 
 FILE: ludoxel/shared/ui/settings/overlay.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19121,7 +19121,7 @@ class SettingsOverlay(QWidget):
 
 FILE: ludoxel/shared/ui/settings/page_builders.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19442,7 +19442,7 @@ def build_game_tab(overlay) -> None:
 
 FILE: ludoxel/shared/ui/settings/value_sync.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19576,7 +19576,7 @@ def sync_overlay_values(overlay, **values) -> None:
 
 FILE: ludoxel/shared/ui/theme/fonts.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19702,7 +19702,7 @@ QWidget#othelloSettingsRoot QComboBox QAbstractItemView { color: #ffffff; backgr
 
 FILE: ludoxel/shared/ui/viewport/controllers/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19711,7 +19711,7 @@ __all__ = ["interaction_controller", "settings_controller"]
 
 FILE: ludoxel/shared/ui/viewport/controllers/interaction_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19937,7 +19937,7 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
 
 FILE: ludoxel/shared/ui/viewport/controllers/settings_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -20313,7 +20313,7 @@ def reset_player_skin(viewport: "GLViewportWidget") -> None:
 
 FILE: ludoxel/shared/ui/viewport/gl_viewport_widget.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21126,7 +21126,7 @@ class GLViewportWidget(QOpenGLWidget):
 
 FILE: ludoxel/shared/ui/viewport/runtime/__init__.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21140,7 +21140,7 @@ __all__ = ["OverlayRefs", "ViewportInput", "ViewportOverlays", "ViewportSelectio
 
 FILE: ludoxel/shared/ui/viewport/runtime/input_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21254,7 +21254,7 @@ class ViewportInput:
 
 FILE: ludoxel/shared/ui/viewport/runtime/overlay_controller.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21518,7 +21518,7 @@ class ViewportOverlays:
 
 FILE: ludoxel/shared/ui/viewport/runtime/selection_state.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21582,7 +21582,7 @@ class ViewportSelectionState:
 
 FILE: ludoxel/shared/world/config/collision_params.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21603,7 +21603,7 @@ DEFAULT_COLLISION_PARAMS = CollisionParams()
 
 FILE: ludoxel/shared/world/config/movement_params.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21633,7 +21633,7 @@ DEFAULT_MOVEMENT_PARAMS = MovementParams()
 
 FILE: ludoxel/shared/world/config/render_distance.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21646,7 +21646,7 @@ def clamp_render_distance_chunks(value: int) -> int:
 
 FILE: ludoxel/shared/world/entities/player_entity.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21702,7 +21702,7 @@ class PlayerEntity:
 
 FILE: ludoxel/shared/world/inventory/hotbar.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21761,7 +21761,7 @@ def with_hotbar_assignment(slots: Sequence[object] | None, index: int, block_id:
 
 FILE: ludoxel/shared/world/inventory/hotbar_defaults.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21773,7 +21773,7 @@ def default_hotbar_slots(*, size: int=HOTBAR_SIZE) -> tuple[str, ...]:
 
 FILE: ludoxel/shared/world/play_space.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21800,7 +21800,7 @@ def is_my_world_space(space_id: object) -> bool:
 
 FILE: ludoxel/shared/world/test_map.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21815,7 +21815,7 @@ def generate_test_map(seed: int=0, params=None) -> WorldState:
 
 FILE: ludoxel/shared/world/world_gen.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -21837,7 +21837,7 @@ def generate_flat_world(*, half_extent: int=32, ground_y: int=0, block_id: str="
 
 FILE: ludoxel/shared/world/world_state.py
 ```py
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 

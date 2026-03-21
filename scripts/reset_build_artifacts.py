@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,14 +8,17 @@ import argparse
 import shutil
 import sys
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=("Remove repository-local __pycache__ directories, the top-level build directory, and generated .pyd files under src/ludoxel/shared/math."))
     parser.add_argument("--dry-run", action="store_true", help="Print deletion targets without removing them.")
     parser.add_argument("--include-venv-caches", action="store_true", help="Also remove __pycache__ directories inside common virtual-environment directories.")
     return parser.parse_args()
 
+
 def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
+
 
 def should_skip_path(path: Path, include_venv_caches: bool) -> bool:
     parts = set(path.parts)
@@ -27,6 +30,7 @@ def should_skip_path(path: Path, include_venv_caches: bool) -> bool:
         return False
 
     return any(name in parts for name in (".venv", "venv", "env"))
+
 
 def collect_pycache_dirs(root: Path, include_venv_caches: bool) -> list[Path]:
     matches: list[Path] = []
@@ -40,6 +44,7 @@ def collect_pycache_dirs(root: Path, include_venv_caches: bool) -> list[Path]:
     matches.sort()
     return matches
 
+
 def collect_pyd_files(root: Path) -> list[Path]:
     math_root = root / "src" / "ludoxel" / "shared" / "math"
     if not math_root.is_dir():
@@ -48,6 +53,7 @@ def collect_pyd_files(root: Path) -> list[Path]:
     matches = [path for path in math_root.rglob("*.pyd") if path.is_file()]
     matches.sort()
     return matches
+
 
 def remove_directory(path: Path, dry_run: bool) -> bool:
     if dry_run:
@@ -65,6 +71,7 @@ def remove_directory(path: Path, dry_run: bool) -> bool:
         print(f"failed to remove directory: {path}: {exc}", file=sys.stderr)
         return False
 
+
 def remove_file(path: Path, dry_run: bool) -> bool:
     if dry_run:
         print(f"would remove file: {path}")
@@ -80,6 +87,7 @@ def remove_file(path: Path, dry_run: bool) -> bool:
     except Exception as exc:
         print(f"failed to remove file: {path}: {exc}", file=sys.stderr)
         return False
+
 
 def main() -> int:
     args = parse_args()
@@ -107,6 +115,7 @@ def main() -> int:
 
     print(f"pycache_dirs: {len(pycache_dirs)} " f"pyd_files: {len(pyd_files)} " f"failures: {failure_count}")
     return 0 if failure_count == 0 else 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

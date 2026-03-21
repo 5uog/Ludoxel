@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from ..runtime.gl_renderer_params import ShadowParams
 from ..runtime.render_metrics import PassFrameMetrics
 from .aggregated_face_batch import AggregatedFaceBatch
 from .shadow_map_pass import ShadowMapInfo
+
 
 @dataclass(frozen=True)
 class WorldDrawInputs:
@@ -43,7 +44,9 @@ class WorldDrawInputs:
     sel_z: int
     sel_tint: float
 
+
 class WorldPass:
+
     def __init__(self) -> None:
         self._shadow_prog: ShaderProgram | None = None
         self._no_shadow_prog: ShaderProgram | None = None

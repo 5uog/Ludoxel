@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from ..world.world_state import WorldState
 
 _THIRD_PERSON_DISTANCE = 4.0
 _THIRD_PERSON_COLLISION_MARGIN = 0.16
+
 
 def resolve_camera(*, world: WorldState, block_registry: BlockRegistry, anchor_eye: Vec3, yaw_deg: float, pitch_deg: float, perspective: str) -> tuple[Vec3, float, float, Vec3]:
     normalized_perspective = normalize_camera_perspective(perspective)
@@ -34,6 +35,7 @@ def resolve_camera(*, world: WorldState, block_registry: BlockRegistry, anchor_e
         look_direction = Vec3(-float(forward.x), -float(forward.y), -float(forward.z)).normalized()
     look_yaw_deg, look_pitch_deg = yaw_pitch_deg_from_forward(look_direction)
     return (resolved_eye, float(look_yaw_deg), float(look_pitch_deg), look_direction)
+
 
 def _resolve_camera_collision(*, world: WorldState, block_registry: BlockRegistry, anchor_eye: Vec3, desired_eye: Vec3, collision_margin: float) -> Vec3:
     delta = desired_eye - anchor_eye

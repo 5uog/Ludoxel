@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from ...rendering.falling_block_face_rows import build_falling_block_face_rows
 from .textured_face_pass import TexturedFacePass
 
 UVRect = tuple[float, float, float, float]
+
 
 @dataclass
 class FallingBlockPass:

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,8 +12,10 @@ from .ai import InsaneSearchCache, choose_ai_move
 _PROCESS_CACHE = InsaneSearchCache()
 _FALLBACK_CACHE = InsaneSearchCache()
 
+
 def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int) -> int | None:
     return choose_ai_move(board, side, difficulty, random_seed=int(seed), match_generation=int(generation), insane_cache=_PROCESS_CACHE)
+
 
 class OthelloAiWorker(QObject):
     move_ready = pyqtSignal(int, object)

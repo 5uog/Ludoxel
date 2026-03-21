@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from ..gl.array_view import as_float32_c_array
 from ..gl.buffer_upload import upload_array_buffer
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
+
 
 @dataclass
 class SelectionPass:
@@ -47,10 +48,10 @@ class SelectionPass:
 
     def destroy(self) -> None:
         if int(self._vbo) != 0:
-            glDeleteBuffers(1,[int(self._vbo)])
+            glDeleteBuffers(1, [int(self._vbo)])
             self._vbo = 0
         if int(self._vao) != 0:
-            glDeleteVertexArrays(1,[int(self._vao)])
+            glDeleteVertexArrays(1, [int(self._vao)])
             self._vao = 0
         self._prog = None
         self._vertex_count = 0

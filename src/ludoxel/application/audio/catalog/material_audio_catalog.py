@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,7 +13,8 @@ BLOCK_EVENT_INTERACT_CLOSE = "interact_close"
 
 PLAYER_EVENT_STEP = "step"
 
-def _block_material_catalog(material: str, *, place_count: int = 4, break_count: int = 4, open_count: int = 0, close_count: int = 0, place_polyphony: int = 4, break_polyphony: int = 4, interact_polyphony: int = 2) -> dict[str, AudioSamplePool]:
+
+def _block_material_catalog(material: str, *, place_count: int=4, break_count: int=4, open_count: int=0, close_count: int=0, place_polyphony: int=4, break_polyphony: int=4, interact_polyphony: int=2) -> dict[str, AudioSamplePool]:
     base = f"assets/audio/block/{material}"
     catalog: dict[str, AudioSamplePool] = {BLOCK_EVENT_PLACE: make_audio_pool(*indexed_paths(f"{base}/place", "place", place_count), category=AUDIO_CATEGORY_BLOCK, max_polyphony=place_polyphony), BLOCK_EVENT_BREAK: make_audio_pool(*indexed_paths(f"{base}/break", "break", break_count), category=AUDIO_CATEGORY_BLOCK, max_polyphony=break_polyphony)}
 
@@ -25,8 +26,10 @@ def _block_material_catalog(material: str, *, place_count: int = 4, break_count:
 
     return catalog
 
-def _step_pool(material: str, *, count: int = 6, cooldown_s: float = 0.045, max_polyphony: int = 4) -> AudioSamplePool:
+
+def _step_pool(material: str, *, count: int=6, cooldown_s: float=0.045, max_polyphony: int=4) -> AudioSamplePool:
     return make_audio_pool(*indexed_paths(f"assets/audio/player/footstep/{material}", "step", count), category=AUDIO_CATEGORY_PLAYER, selection_mode=SELECTION_ROUND_ROBIN, spatial=False, distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF, size=0.0, max_polyphony=max_polyphony, cooldown_s=cooldown_s)
+
 
 BLOCK_SOUND_CATALOG: dict[str, dict[str, AudioSamplePool]] = {SOUND_GROUP_WOOD: _block_material_catalog(SOUND_GROUP_WOOD, open_count=2, close_count=2), SOUND_GROUP_CHERRY_WOOD: _block_material_catalog(SOUND_GROUP_CHERRY_WOOD, open_count=2, close_count=2), SOUND_GROUP_BAMBOO_WOOD: _block_material_catalog(SOUND_GROUP_BAMBOO_WOOD, open_count=2, close_count=2), SOUND_GROUP_NETHER_WOOD: _block_material_catalog(SOUND_GROUP_NETHER_WOOD, open_count=2, close_count=2), SOUND_GROUP_STONE: _block_material_catalog(SOUND_GROUP_STONE), SOUND_GROUP_DEEPSLATE: _block_material_catalog(SOUND_GROUP_DEEPSLATE), SOUND_GROUP_DEEPSLATE_BRICKS: _block_material_catalog(SOUND_GROUP_DEEPSLATE_BRICKS), SOUND_GROUP_TUFF: _block_material_catalog(SOUND_GROUP_TUFF), SOUND_GROUP_CALCITE: _block_material_catalog(SOUND_GROUP_CALCITE), SOUND_GROUP_BASALT: _block_material_catalog(SOUND_GROUP_BASALT), SOUND_GROUP_GILDED_BLACKSTONE: _block_material_catalog(SOUND_GROUP_GILDED_BLACKSTONE), SOUND_GROUP_LODESTONE: _block_material_catalog(SOUND_GROUP_LODESTONE), SOUND_GROUP_RESIN: _block_material_catalog(SOUND_GROUP_RESIN), SOUND_GROUP_METAL: _block_material_catalog(SOUND_GROUP_METAL), SOUND_GROUP_NETHERITE: _block_material_catalog(SOUND_GROUP_NETHERITE), SOUND_GROUP_GRASS: _block_material_catalog(SOUND_GROUP_GRASS, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_DIRT: _block_material_catalog(SOUND_GROUP_DIRT, place_count=3, break_count=6, place_polyphony=3, break_polyphony=3), SOUND_GROUP_ROOTED_DIRT: _block_material_catalog(SOUND_GROUP_ROOTED_DIRT, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_GRAVEL: _block_material_catalog(SOUND_GROUP_GRAVEL, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_SAND: _block_material_catalog(SOUND_GROUP_SAND, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_MUD: _block_material_catalog(SOUND_GROUP_MUD, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_NYLIUM: _block_material_catalog(SOUND_GROUP_NYLIUM, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_SOUL_SAND: _block_material_catalog(SOUND_GROUP_SOUL_SAND, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_SOUL_SOIL: _block_material_catalog(SOUND_GROUP_SOUL_SOIL, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3), SOUND_GROUP_NETHERRACK: _block_material_catalog(SOUND_GROUP_NETHERRACK), SOUND_GROUP_NETHER_BRICKS: _block_material_catalog(SOUND_GROUP_NETHER_BRICKS), SOUND_GROUP_NETHER_ORE: _block_material_catalog(SOUND_GROUP_NETHER_ORE), SOUND_GROUP_NETHER_GOLD_ORE: _block_material_catalog(SOUND_GROUP_NETHER_GOLD_ORE), SOUND_GROUP_ANCIENT_DEBRIS: _block_material_catalog(SOUND_GROUP_ANCIENT_DEBRIS), SOUND_GROUP_CORAL_BLOCK: _block_material_catalog(SOUND_GROUP_CORAL_BLOCK)}
 

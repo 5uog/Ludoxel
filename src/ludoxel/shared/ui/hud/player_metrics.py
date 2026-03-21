@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,17 +10,20 @@ import math
 from ....application.runtime.state.session_settings import SessionSettings
 from ...world.entities.player_entity import PlayerEntity
 
+
 @dataclass(frozen=True)
 class ScalarMetricSnapshot:
     current: float
     mean: float
     recent_mean: float
 
+
 @dataclass(frozen=True)
 class OptionalScalarMetricSnapshot:
     current: float | None
     mean: float | None
     recent_mean: float | None
+
 
 @dataclass(frozen=True)
 class AppliedMovementSnapshot:
@@ -30,6 +33,7 @@ class AppliedMovementSnapshot:
     jump_v0: float
     auto_jump_cooldown_s: float
 
+
 @dataclass(frozen=True)
 class PlayerMetricsSnapshot:
     horiz_speed: ScalarMetricSnapshot
@@ -37,6 +41,7 @@ class PlayerMetricsSnapshot:
     jump_interval: OptionalScalarMetricSnapshot
     applied: AppliedMovementSnapshot
     recent_window_s: float
+
 
 @dataclass
 class _RollingWeightedSeries:
@@ -72,6 +77,7 @@ class _RollingWeightedSeries:
             return 0.0
         return float(self._weighted_sum) / float(self._duration_sum)
 
+
 @dataclass
 class _RollingEventSeries:
     window_s: float
@@ -97,6 +103,7 @@ class _RollingEventSeries:
         if not self._samples:
             return None
         return float(self._sum) / float(len(self._samples))
+
 
 @dataclass
 class PlayerMetricsTracker:

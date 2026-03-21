@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from .common import LocalBox, rotate_box_y_cw
 from ..structure.cardinal import gate_turns_from_facing
 from .dimensions import FENCE_GATE_CLOSED, FENCE_GATE_OPEN, FENCE_GATE_WALL_CLOSED, FENCE_GATE_WALL_OPEN
 from ..state.state_values import prop_as_bool
+
 
 def boxes_for_fence_gate(props: Dict[str, str]) -> List[LocalBox]:
     facing = str(props.get("facing", "south"))

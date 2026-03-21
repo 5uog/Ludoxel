@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 from OpenGL.GL import glGetString, glGetIntegerv, GL_VENDOR, GL_RENDERER, GL_VERSION, GL_SHADING_LANGUAGE_VERSION, GL_MAJOR_VERSION, GL_MINOR_VERSION, GL_CONTEXT_PROFILE_MASK, GL_CONTEXT_CORE_PROFILE_BIT, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
 
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)")
+
 
 @dataclass(frozen=True)
 class GLInfoSnapshot:
@@ -53,6 +54,7 @@ class GLInfoSnapshot:
             return "unknown"
         return f"mask=0x{mask:X}"
 
+
 def _gl_get_string(name: int) -> str:
     try:
         raw = glGetString(int(name))
@@ -62,10 +64,11 @@ def _gl_get_string(name: int) -> str:
     if raw is None:
         return ""
 
-    if isinstance(raw,(bytes, bytearray)):
+    if isinstance(raw, (bytes, bytearray)):
         return raw.decode("utf-8", errors="replace")
 
     return str(raw)
+
 
 def _gl_get_int(name: int) -> int | None:
     try:
@@ -77,13 +80,14 @@ def _gl_get_int(name: int) -> int | None:
         return None
 
     try:
-        if hasattr(raw, "__len__") and (not isinstance(raw,(str, bytes, bytearray))):
+        if hasattr(raw, "__len__") and (not isinstance(raw, (str, bytes, bytearray))):
             if len(raw) <= 0:
                 return None
             return int(raw[0])
         return int(raw)
     except Exception:
         return None
+
 
 def _parse_version_pair(raw: str) -> tuple[int, int]:
     s = str(raw)
@@ -94,6 +98,7 @@ def _parse_version_pair(raw: str) -> tuple[int, int]:
         return (int(m.group(1)), int(m.group(2)))
     except Exception:
         return (0, 0)
+
 
 def probe_gl_info() -> GLInfoSnapshot:
     version = _gl_get_string(GL_VERSION)

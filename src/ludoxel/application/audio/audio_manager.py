@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -24,10 +24,12 @@ from .audio_types import AudioSamplePool, SELECTION_ROUND_ROBIN
 from .catalog.material_audio_catalog import BLOCK_EVENT_BREAK, BLOCK_EVENT_INTERACT_CLOSE, BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_PLACE, BLOCK_SOUND_CATALOG, PLAYER_EVENT_STEP, PLAYER_SURFACE_SOUND_CATALOG
 from .catalog.player_audio_catalog import PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
 
+
 @dataclass
 class _EffectVoiceSlot:
     effect: QSoundEffect
     source_key: str
+
 
 @dataclass
 class _PreparedSource:
@@ -37,8 +39,10 @@ class _PreparedSource:
     slots: list[_EffectVoiceSlot] = field(default_factory=list)
     cursor: int = 0
 
+
 class AudioManager(QObject):
-    def __init__(self, *, project_root: Path, block_registry: BlockRegistry, parent: QObject | None = None) -> None:
+
+    def __init__(self, *, project_root: Path, block_registry: BlockRegistry, parent: QObject | None=None) -> None:
         super().__init__(parent)
         self._root = Path(project_root)
         self._block_registry = block_registry
@@ -130,13 +134,13 @@ class AudioManager(QObject):
 
         self._effects_primed = True
 
-    def cache_listener_pose(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float = 0.0) -> None:
+    def cache_listener_pose(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0) -> None:
         new_pose = (float(eye.x), float(eye.y), float(eye.z), float(yaw_deg), float(pitch_deg), float(roll_deg))
         if self._listener_pose is not None and self._pose_almost_equal(self._listener_pose, new_pose):
             return
         self._listener_pose = new_pose
 
-    def update_listener(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float = 0.0) -> None:
+    def update_listener(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0) -> None:
         self.cache_listener_pose(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg))
 
     def set_ambient_active(self, *, current_space_id: str, enabled: bool) -> None:
@@ -173,7 +177,7 @@ class AudioManager(QObject):
             if self._play_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool, position=world_position):
                 return
 
-    def play_surface_event(self, *, event_name: str, support_block_state: str | None, position: tuple[int, int, int] | None, fall_distance_blocks: float | None = None) -> None:
+    def play_surface_event(self, *, event_name: str, support_block_state: str | None, position: tuple[int, int, int] | None, fall_distance_blocks: float | None=None) -> None:
         if support_block_state is None or position is None:
             return
 

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from ..blocks.models.api import collision_aabbs_for_block
 from ..blocks.state.state_codec import format_state, parse_state
 from ..blocks.state.state_values import slab_type_value
 from ..blocks.structure.structural_rules import is_fence_gate, is_slab, is_stairs, is_wall
+
 
 @dataclass(frozen=True)
 class PlacementPolicy:
@@ -53,7 +54,7 @@ class PlacementPolicy:
         if cur == "double" or cur == want:
             return None
 
-        return format_state(str(base),{"type": "double"})
+        return format_state(str(base), {"type": "double"})
 
     def resolve_slab_merge_state(self, *, existing_state: str, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         desired_type = self._choose_half_type(int(hit_face), hit_point)

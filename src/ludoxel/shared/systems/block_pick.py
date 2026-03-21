@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from ..blocks.state.state_view import registry_def_lookup, world_state_getter
 from ..blocks.models.api import pick_aabbs_for_block
 from ..blocks.structure.structural_rules import is_fence, is_wall
 
+
 @dataclass(frozen=True)
 class BlockPick:
     hit: tuple[int, int, int]
@@ -24,6 +25,7 @@ class BlockPick:
     t: float
     face: int
     hit_point: Vec3
+
 
 def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float, *, block_registry: BlockRegistry) -> BlockPick | None:
     d = direction.normalized()

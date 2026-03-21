@@ -1,7 +1,8 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from functools import lru_cache
 import math
 import numpy as np
 
@@ -32,11 +33,14 @@ _LEGAL_HINT = (0.44, 0.86, 0.95, 0.34)
 _HOVER_HINT = (0.96, 0.90, 0.44, 0.55)
 _LAST_MOVE_HINT = (0.96, 0.70, 0.18, 0.38)
 
+
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
     return np.asarray(matrix, dtype=np.float32).reshape(16)
 
+
 def _instance_row(matrix: np.ndarray, tint: tuple[float, float, float, float]) -> np.ndarray:
     return np.asarray([*_as_rows(matrix), float(tint[0]), float(tint[1]), float(tint[2]), float(tint[3])], dtype=np.float32)
+
 
 def _cube_vertices_with_color(color: tuple[float, float, float]) -> np.ndarray:
     r, g, b = (float(color[0]), float(color[1]), float(color[2]))
@@ -44,19 +48,21 @@ def _cube_vertices_with_color(color: tuple[float, float, float]) -> np.ndarray:
 
     def face(nx, ny, nz, corners):
         (a, c0, c1, d0) = corners
-        return [(*a, nx, ny, nz, r, g, b),(*c0, nx, ny, nz, r, g, b),(*c1, nx, ny, nz, r, g, b),(*a, nx, ny, nz, r, g, b),(*c1, nx, ny, nz, r, g, b),(*d0, nx, ny, nz, r, g, b)]
+        return [(*a, nx, ny, nz, r, g, b), (*c0, nx, ny, nz, r, g, b), (*c1, nx, ny, nz, r, g, b), (*a, nx, ny, nz, r, g, b), (*c1, nx, ny, nz, r, g, b), (*d0, nx, ny, nz, r, g, b)]
 
     faces: list[tuple[float, ...]] = []
-    faces.extend(face(1, 0, 0,[(p, -p, -p),(p, -p, p),(p, p, p),(p, p, -p)]))
-    faces.extend(face(-1, 0, 0,[(-p, -p, p),(-p, -p, -p),(-p, p, -p),(-p, p, p)]))
-    faces.extend(face(0, 1, 0,[(-p, p, -p),(p, p, -p),(p, p, p),(-p, p, p)]))
-    faces.extend(face(0, -1, 0,[(-p, -p, p),(p, -p, p),(p, -p, -p),(-p, -p, -p)]))
-    faces.extend(face(0, 0, 1,[(p, -p, p),(-p, -p, p),(-p, p, p),(p, p, p)]))
-    faces.extend(face(0, 0, -1,[(-p, -p, -p),(p, -p, -p),(p, p, -p),(-p, p, -p)]))
+    faces.extend(face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)]))
+    faces.extend(face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)]))
+    faces.extend(face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)]))
+    faces.extend(face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)]))
+    faces.extend(face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)]))
+    faces.extend(face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)]))
     return np.asarray(faces, dtype=np.float32)
+
 
 def build_othello_board_vertices() -> np.ndarray:
     return _cube_vertices_with_color((1.0, 1.0, 1.0))
+
 
 def build_othello_piece_vertices(*, segments: int=48) -> np.ndarray:
     segs = max(12, int(segments))
@@ -91,18 +97,20 @@ def build_othello_piece_vertices(*, segments: int=48) -> np.ndarray:
         p0_bottom = (x0, -half_h, z0)
         p1_bottom = (x1, -half_h, z1)
 
-        add_triangle(center_top, p0_top, p1_top,(0.0, 1.0, 0.0), top_color)
-        add_triangle(center_bottom, p1_bottom, p0_bottom,(0.0, -1.0, 0.0), bottom_color)
+        add_triangle(center_top, p0_top, p1_top, (0.0, 1.0, 0.0), top_color)
+        add_triangle(center_bottom, p1_bottom, p0_bottom, (0.0, -1.0, 0.0), bottom_color)
 
         nx0 = math.cos((a0 + a1) * 0.5)
         nz0 = math.sin((a0 + a1) * 0.5)
-        add_triangle(p0_top, p0_bottom, p1_bottom,(nx0, 0.0, nz0), rim_color)
-        add_triangle(p0_top, p1_bottom, p1_top,(nx0, 0.0, nz0), rim_color)
+        add_triangle(p0_top, p0_bottom, p1_bottom, (nx0, 0.0, nz0), rim_color)
+        add_triangle(p0_top, p1_bottom, p1_top, (nx0, 0.0, nz0), rim_color)
 
     return np.asarray(vertices, dtype=np.float32)
 
+
 def _piece_angle_deg_for_side(side: int) -> float:
     return 0.0 if int(normalize_side(side)) == int(SIDE_BLACK) else 180.0
+
 
 def _animation_progress(animation: OthelloAnimationState) -> tuple[float, float]:
     duration = max(1e-6, float(animation.duration_s))
@@ -111,7 +119,9 @@ def _animation_progress(animation: OthelloAnimationState) -> tuple[float, float]
     lift = math.sin(t * math.pi) * float(animation.lift_height)
     return (float(eased), float(lift))
 
-def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+@lru_cache(maxsize=64)
+def _build_othello_instance_rows_cached(render_state: OthelloRenderState) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if not bool(render_state.enabled):
         empty = np.zeros((0, 20), dtype=np.float32)
         return (empty, empty, empty)
@@ -155,3 +165,7 @@ def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.nd
         piece_rows.append(_instance_row(matrix, _TINT_WHITE))
 
     return (np.ascontiguousarray(np.vstack(board_rows), dtype=np.float32) if board_rows else np.zeros((0, 20), dtype=np.float32), np.ascontiguousarray(np.vstack(highlight_rows), dtype=np.float32) if highlight_rows else np.zeros((0, 20), dtype=np.float32), np.ascontiguousarray(np.vstack(piece_rows), dtype=np.float32) if piece_rows else np.zeros((0, 20), dtype=np.float32))
+
+
+def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    return _build_othello_instance_rows_cached(render_state)

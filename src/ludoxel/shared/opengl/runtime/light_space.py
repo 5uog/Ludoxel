@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,15 +8,18 @@ from ...math import mat4
 from ...math.vec3 import Vec3
 from .gl_renderer_params import ShadowParams, SunParams
 
+
 def _snap(value: float, quantum: float) -> float:
     q = float(max(1e-9, float(quantum)))
     return float(np.round(float(value) / q) * q)
+
 
 def _light_up_hint(light_forward: Vec3) -> Vec3:
     world_up = Vec3(0.0, 1.0, 0.0)
     if abs(light_forward.dot(world_up)) < 0.999:
         return world_up
     return Vec3(0.0, 0.0, 1.0) if abs(float(light_forward.z)) < 0.999 else Vec3(1.0, 0.0, 0.0)
+
 
 def compute_light_view_proj(*, center: Vec3, sun_dir: Vec3, sun: SunParams, shadow: ShadowParams, shadow_size: int) -> np.ndarray:
     sdir = sun_dir.normalized()

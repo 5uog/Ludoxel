@@ -1,11 +1,13 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QWidget
 
+
 class OthelloHudWidget(QWidget):
+
     def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
 
@@ -28,11 +30,17 @@ class OthelloHudWidget(QWidget):
         self._title_label.setText("")
 
     def set_text(self, text: str) -> None:
-        self._label.setText(str(text))
+        next_text = str(text)
+        if next_text == str(self._label.text()):
+            return
+        self._label.setText(next_text)
         self._relayout()
 
     def set_title_text(self, text: str) -> None:
-        self._title_label.setText(str(text))
+        next_text = str(text)
+        if next_text == str(self._title_label.text()):
+            return
+        self._title_label.setText(next_text)
         self._relayout()
 
     def resizeEvent(self, _event) -> None:
@@ -53,8 +61,8 @@ class OthelloHudWidget(QWidget):
         if title_text:
             width = min(680, max(320, self.width() // 2))
             height = max(64, self._title_label.sizeHint().height() + 18)
-            x = max(0,(self.width() - int(width)) // 2)
-            y = max(0,(self.height() - int(height)) // 2)
+            x = max(0, (self.width() - int(width)) // 2)
+            y = max(0, (self.height() - int(height)) // 2)
             self._title_label.setGeometry(int(x), int(y), int(width), int(height))
             self._title_label.setVisible(True)
             self._title_label.raise_()

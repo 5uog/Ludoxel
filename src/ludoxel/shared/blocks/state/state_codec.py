@@ -1,8 +1,9 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from typing import Dict, Tuple
+
 
 def parse_state(s: str) -> Tuple[str, Dict[str, str]]:
     raw = str(s)
@@ -31,6 +32,7 @@ def parse_state(s: str) -> Tuple[str, Dict[str, str]]:
         props[str(k)] = str(v)
 
     return base, props
+
 
 def format_state(base_id: str, props: Dict[str, str] | None) -> str:
     base = str(base_id)

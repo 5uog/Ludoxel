@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import ClassVar
 
 from ....shared.world.config.collision_params import DEFAULT_COLLISION_PARAMS, CollisionParams
 from ....shared.world.config.movement_params import DEFAULT_MOVEMENT_PARAMS, MovementParams
+
 
 @dataclass
 class SessionSettings:

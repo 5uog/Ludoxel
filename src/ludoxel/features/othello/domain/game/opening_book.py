@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,12 +12,15 @@ from .types import BOARD_CELL_COUNT, SIDE_BLACK, coerce_board, encode_board, nor
 
 _BOARD_SIZE = 8
 
+
 def _index_to_row_col(index: int) -> tuple[int, int]:
     idx = int(index)
     return (idx // _BOARD_SIZE, idx % _BOARD_SIZE)
 
+
 def _row_col_to_index(row: int, col: int) -> int:
     return int(row) * _BOARD_SIZE + int(col)
+
 
 def _transform_row_col(transform_id: int, row: int, col: int) -> tuple[int, int]:
     tid = int(transform_id) & 7
@@ -39,6 +42,7 @@ def _transform_row_col(transform_id: int, row: int, col: int) -> tuple[int, int]
         return (_BOARD_SIZE - 1 - r, c)
     return (c, r)
 
+
 def _build_transform_tables() -> tuple[tuple[tuple[int, ...], ...], tuple[tuple[int, ...], ...]]:
     forward_tables: list[tuple[int, ...]] = []
     inverse_tables: list[tuple[int, ...]] = []
@@ -57,7 +61,9 @@ def _build_transform_tables() -> tuple[tuple[tuple[int, ...], ...], tuple[tuple[
 
     return (tuple(forward_tables), tuple(inverse_tables))
 
+
 _FORWARD_TABLES, _INVERSE_TABLES = _build_transform_tables()
+
 
 def transform_index(index: int, transform_id: int) -> int:
     idx = int(index)
@@ -65,11 +71,13 @@ def transform_index(index: int, transform_id: int) -> int:
         raise ValueError(f"Square index out of range: {index}")
     return int(_FORWARD_TABLES[int(transform_id) & 7][idx])
 
+
 def inverse_transform_index(index: int, transform_id: int) -> int:
     idx = int(index)
     if idx < 0 or idx >= BOARD_CELL_COUNT:
         raise ValueError(f"Square index out of range: {index}")
     return int(_INVERSE_TABLES[int(transform_id) & 7][idx])
+
 
 def transform_board(board: tuple[int, ...] | list[int], transform_id: int) -> tuple[int, ...]:
     source = coerce_board(board)
@@ -78,6 +86,7 @@ def transform_board(board: tuple[int, ...] | list[int], transform_id: int) -> tu
     for index, value in enumerate(source):
         transformed[int(forward[index])] = int(value)
     return tuple(transformed)
+
 
 def canonical_position_key(board: tuple[int, ...] | list[int], side: int) -> tuple[str, int]:
     source = coerce_board(board)
@@ -97,6 +106,7 @@ def canonical_position_key(board: tuple[int, ...] | list[int], side: int) -> tup
 
     return (str(best_key), int(best_transform))
 
+
 @dataclass(frozen=True)
 class OpeningBook:
     moves_by_key: dict[str, tuple[int, ...]]
@@ -108,8 +118,10 @@ class OpeningBook:
             return ()
         return tuple(int(inverse_transform_index(move, transform_id)) for move in canonical_moves)
 
+
 def _book_file_path() -> Path:
     return Path(__file__).resolve().parents[2] / "data" / "opening_book.json"
+
 
 def _normalize_line(raw_line: object) -> tuple[int, ...]:
     if not isinstance(raw_line, list):
@@ -124,6 +136,7 @@ def _normalize_line(raw_line: object) -> tuple[int, ...]:
             return ()
         out.append(int(index))
     return tuple(out)
+
 
 def _record_line(mapping: dict[str, set[int]], line: tuple[int, ...]) -> None:
     if not line:
@@ -149,6 +162,7 @@ def _record_line(mapping: dict[str, set[int]], line: tuple[int, ...]) -> None:
             if find_legal_moves(board, other):
                 side_to_move = other
 
+
 def _load_opening_book_from_disk() -> OpeningBook:
     path = _book_file_path()
     if not path.exists():
@@ -169,6 +183,7 @@ def _load_opening_book_from_disk() -> OpeningBook:
 
     frozen = {str(key): tuple(sorted(int(move) for move in moves)) for key, moves in mapping.items() if moves}
     return OpeningBook(moves_by_key=frozen)
+
 
 @lru_cache(maxsize=1)
 def load_opening_book() -> OpeningBook:

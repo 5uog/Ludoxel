@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14,10 +14,12 @@ _EMPTY_ROW = "0" * CROSSHAIR_GRID_SIZE
 DEFAULT_CROSSHAIR_PIXELS: tuple[str, ...] = (_EMPTY_ROW, _EMPTY_ROW, "0000000100000000", "0000000100000000", "0000000100000000", "0000000100000000", "0000000100000000", "0011111111111000", "0000000100000000", "0000000100000000", "0000000100000000", "0000000100000000", "0000000100000000", _EMPTY_ROW, _EMPTY_ROW, _EMPTY_ROW)
 EMPTY_CROSSHAIR_PIXELS: tuple[str, ...] = tuple(_EMPTY_ROW for _ in range(CROSSHAIR_GRID_SIZE))
 
+
 def normalize_crosshair_mode(value: object) -> str:
     if str(value or "").strip().lower() == CROSSHAIR_MODE_CUSTOM:
         return CROSSHAIR_MODE_CUSTOM
     return CROSSHAIR_MODE_DEFAULT
+
 
 def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
     rows: list[str] = []
@@ -31,12 +33,14 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
         rows.append(_EMPTY_ROW)
     return tuple(rows[:CROSSHAIR_GRID_SIZE])
 
+
 def active_crosshair_pixels(mode: object, custom_pixels: object) -> tuple[str, ...]:
     if normalize_crosshair_mode(mode) == CROSSHAIR_MODE_CUSTOM:
         return normalize_crosshair_pixels(custom_pixels)
     return DEFAULT_CROSSHAIR_PIXELS
 
-def render_crosshair_image(mode: object, custom_pixels: object, *, scale: int = 2, fill: QColor | None = None, outline: QColor | None = None) -> QImage:
+
+def render_crosshair_image(mode: object, custom_pixels: object, *, scale: int=2, fill: QColor | None=None, outline: QColor | None=None) -> QImage:
     pixels = active_crosshair_pixels(mode, custom_pixels)
     pixel_scale = max(1, int(scale))
     image = QImage(int(CROSSHAIR_GRID_SIZE) * pixel_scale, int(CROSSHAIR_GRID_SIZE) * pixel_scale, QImage.Format.Format_RGBA8888)
@@ -65,6 +69,7 @@ def render_crosshair_image(mode: object, custom_pixels: object, *, scale: int = 
                 _fill_scaled_pixel(image, x, y, pixel_scale, fill_color)
 
     return image
+
 
 def _fill_scaled_pixel(image: QImage, x: int, y: int, scale: int, color: QColor) -> None:
     base_x = int(x) * int(scale)

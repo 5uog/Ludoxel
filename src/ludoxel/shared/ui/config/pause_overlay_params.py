@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from ....application.runtime.state.session_settings import SessionSettings
 from ...world.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, RENDER_DISTANCE_MIN_CHUNKS
+
 
 @dataclass(frozen=True)
 class PauseOverlayParams:
@@ -72,5 +73,6 @@ class PauseOverlayParams:
     fly_descend_speed_milli_max: int = int(SessionSettings.FLY_DESCEND_SPEED_MAX * 1000.0)
     fly_descend_speed_scale: float = 1000.0
     fly_descend_speed_decimals: int = 3
+
 
 DEFAULT_PAUSE_OVERLAY_PARAMS = PauseOverlayParams()

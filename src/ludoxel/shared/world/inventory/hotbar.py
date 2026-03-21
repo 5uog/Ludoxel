@@ -1,10 +1,11 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from collections.abc import Sequence
 
 HOTBAR_SIZE: int = 9
+
 
 def normalize_hotbar_slots(raw: Sequence[object] | None, *, size: int=HOTBAR_SIZE) -> tuple[str, ...]:
     width = int(max(1, int(size)))
@@ -22,6 +23,7 @@ def normalize_hotbar_slots(raw: Sequence[object] | None, *, size: int=HOTBAR_SIZ
 
     return tuple(out[:width])
 
+
 def normalize_hotbar_index(index: int, *, size: int=HOTBAR_SIZE) -> int:
     width = int(max(1, int(size)))
 
@@ -31,6 +33,7 @@ def normalize_hotbar_index(index: int, *, size: int=HOTBAR_SIZE) -> int:
         idx = 0
 
     return max(0, min(width - 1, idx))
+
 
 def cycle_hotbar_index(selected_index: int, delta_steps: int, *, size: int=HOTBAR_SIZE) -> int:
     width = int(max(1, int(size)))
@@ -42,11 +45,13 @@ def cycle_hotbar_index(selected_index: int, delta_steps: int, *, size: int=HOTBA
 
     return int((idx + step) % width)
 
+
 def current_hotbar_block_id(slots: Sequence[object] | None, selected_index: int, *, size: int=HOTBAR_SIZE) -> str | None:
     norm = normalize_hotbar_slots(slots, size=int(size))
     idx = normalize_hotbar_index(int(selected_index), size=int(size))
     bid = str(norm[idx]).strip()
     return bid if bid else None
+
 
 def with_hotbar_assignment(slots: Sequence[object] | None, index: int, block_id: str | None, *, size: int=HOTBAR_SIZE) -> tuple[str, ...]:
     out = list(normalize_hotbar_slots(slots, size=int(size)))

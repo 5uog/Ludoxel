@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,11 +8,13 @@ _EQUIP_RATE_PER_SECOND = 8.0
 _SWAP_THRESHOLD = 0.05
 _SWING_DURATION_S = 6.0 / 20.0
 
+
 def _normalize_item_id(item_id: str | None) -> str | None:
     if item_id is None:
         return None
     text = str(item_id).strip()
     return text if text else None
+
 
 @dataclass(frozen=True)
 class FirstPersonMotionSample:
@@ -25,6 +27,7 @@ class FirstPersonMotionSample:
     show_arm: bool
     show_view_model: bool
     slim_arm: bool
+
 
 class FirstPersonMotionController:
 

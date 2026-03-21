@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -50,8 +50,10 @@ _PREVIEW_FOV_DEG = 26.0
 _PREVIEW_NEAR = 0.1
 _PREVIEW_FAR = 10.0
 
+
 def _format_context_details(info: GLInfoSnapshot) -> str:
     return (f"OpenGL={info.version or 'unknown'}; GLSL={info.glsl_version or 'unknown'}; parsed_version={int(info.major_version)}.{int(info.minor_version)}; parsed_glsl={int(info.glsl_major_version)}.{int(info.glsl_minor_version)}; profile={info.profile_name()}; vendor={info.vendor or 'unknown'}; renderer={info.renderer or 'unknown'}")
+
 
 def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
     if not info.is_version_at_least(4, 3):
@@ -63,7 +65,9 @@ def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
     if not info.is_glsl_at_least(4, 30):
         raise RuntimeError(f"The active GLSL version is insufficient for the compute-backed chunk face payload path. {_format_context_details(info)}")
 
+
 class RendererBackend:
+
     def __init__(self, *, cfg: GLRendererParams, state: RendererRuntimeState, sel_tint_strength: float=0.55) -> None:
         self._cfg = cfg
         self._state = state
@@ -241,7 +245,7 @@ class RendererBackend:
         self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_world_faces)
         self._shadow.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_shadow_faces)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = ()) -> None:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...]=()) -> None:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 
+
 @dataclass(frozen=True)
 class SystemInfo:
     cpu_threads: int
@@ -17,16 +18,19 @@ class SystemInfo:
     cpu_speed_ghz: float | None
     total_mem_bytes: int | None
 
+
 @dataclass(frozen=True)
 class ProcessMemorySnapshot:
     rss_bytes: int | None
     total_bytes: int | None
+
 
 def _safe_float(x: object) -> float | None:
     try:
         return float(x)
     except Exception:
         return None
+
 
 def _posix_total_mem_bytes_sysconf() -> int | None:
     try:
@@ -42,6 +46,7 @@ def _posix_total_mem_bytes_sysconf() -> int | None:
         return None
     return None
 
+
 def _linux_read_first_cpu_field(key: str) -> str:
     p = "/proc/cpuinfo"
     try:
@@ -55,6 +60,7 @@ def _linux_read_first_cpu_field(key: str) -> str:
     except Exception:
         return ""
     return ""
+
 
 def _linux_total_mem_bytes() -> int | None:
     p = "/proc/meminfo"
@@ -70,6 +76,7 @@ def _linux_total_mem_bytes() -> int | None:
         return None
     return None
 
+
 def _linux_rss_bytes_proc() -> int | None:
     p = "/proc/self/status"
     try:
@@ -83,6 +90,7 @@ def _linux_rss_bytes_proc() -> int | None:
     except Exception:
         return None
     return None
+
 
 def _posix_rss_bytes_ps() -> int | None:
     try:
@@ -98,6 +106,7 @@ def _posix_rss_bytes_ps() -> int | None:
     except Exception:
         return None
 
+
 def _mac_sysctl_str(name: str) -> str:
     try:
         out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
@@ -105,12 +114,14 @@ def _mac_sysctl_str(name: str) -> str:
     except Exception:
         return ""
 
+
 def _mac_sysctl_int(name: str) -> int | None:
     s = _mac_sysctl_str(name)
     try:
         return int(s)
     except Exception:
         return None
+
 
 def _windows_cpu_name() -> str:
     try:
@@ -122,6 +133,7 @@ def _windows_cpu_name() -> str:
     except Exception:
         return ""
 
+
 def _windows_cpu_mhz() -> int | None:
     try:
         import winreg  # type: ignore
@@ -132,12 +144,13 @@ def _windows_cpu_mhz() -> int | None:
     except Exception:
         return None
 
+
 def _windows_total_mem_bytes() -> int | None:
     try:
         import ctypes
 
         class MEMORYSTATUSEX(ctypes.Structure):
-            _fields_ = [("dwLength", ctypes.c_uint32),("dwMemoryLoad", ctypes.c_uint32),("ullTotalPhys", ctypes.c_uint64),("ullAvailPhys", ctypes.c_uint64),("ullTotalPageFile", ctypes.c_uint64),("ullAvailPageFile", ctypes.c_uint64),("ullTotalVirtual", ctypes.c_uint64),("ullAvailVirtual", ctypes.c_uint64),("ullAvailExtendedVirtual", ctypes.c_uint64)]
+            _fields_ = [("dwLength", ctypes.c_uint32), ("dwMemoryLoad", ctypes.c_uint32), ("ullTotalPhys", ctypes.c_uint64), ("ullAvailPhys", ctypes.c_uint64), ("ullTotalPageFile", ctypes.c_uint64), ("ullAvailPageFile", ctypes.c_uint64), ("ullTotalVirtual", ctypes.c_uint64), ("ullAvailVirtual", ctypes.c_uint64), ("ullAvailExtendedVirtual", ctypes.c_uint64)]
 
         ms = MEMORYSTATUSEX()
         ms.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
@@ -148,13 +161,14 @@ def _windows_total_mem_bytes() -> int | None:
     except Exception:
         return None
 
+
 def _windows_rss_bytes_psapi() -> int | None:
     try:
         import ctypes
         import ctypes.wintypes as wt
 
         class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
-            _fields_ = [("cb", wt.DWORD),("PageFaultCount", wt.DWORD),("PeakWorkingSetSize", ctypes.c_size_t),("WorkingSetSize", ctypes.c_size_t),("QuotaPeakPagedPoolUsage", ctypes.c_size_t),("QuotaPagedPoolUsage", ctypes.c_size_t),("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),("QuotaNonPagedPoolUsage", ctypes.c_size_t),("PagefileUsage", ctypes.c_size_t),("PeakPagefileUsage", ctypes.c_size_t)]
+            _fields_ = [("cb", wt.DWORD), ("PageFaultCount", wt.DWORD), ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t), ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t), ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t), ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
 
         counters = PROCESS_MEMORY_COUNTERS()
         counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
@@ -170,6 +184,7 @@ def _windows_rss_bytes_psapi() -> int | None:
         return value if value > 0 else None
     except Exception:
         return None
+
 
 def _windows_rss_bytes_tasklist() -> int | None:
     try:
@@ -194,6 +209,7 @@ def _windows_rss_bytes_tasklist() -> int | None:
         return kb * 1024
     except Exception:
         return None
+
 
 def read_system_info() -> SystemInfo:
     threads = int(os.cpu_count() or 0)
@@ -234,7 +250,8 @@ def read_system_info() -> SystemInfo:
 
     return SystemInfo(cpu_threads=int(max(0, threads)), cpu_name=str(cpu_name), cpu_speed_ghz=cpu_ghz, total_mem_bytes=total_mem)
 
-def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnapshot:
+
+def read_process_memory(total_mem_bytes: int | None=None) -> ProcessMemorySnapshot:
     plat = sys.platform
 
     rss: int | None = None
@@ -264,6 +281,7 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 
     return ProcessMemorySnapshot(rss_bytes=rss, total_bytes=total)
 
+
 def _nvidia_smi_util_percent() -> float | None:
     try:
         out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
@@ -276,6 +294,7 @@ def _nvidia_smi_util_percent() -> float | None:
         return float(value)
     except Exception:
         return None
+
 
 @dataclass
 class GpuUtilizationSampler:

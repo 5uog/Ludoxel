@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14,7 +14,9 @@ from ..runtime.cloud_field import CloudField
 from ..runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ..runtime.gl_renderer_params import CloudParams, CameraParams
 
+
 class CloudPass:
+
     def __init__(self, clouds: CloudParams, camera: CameraParams) -> None:
         self._cfg = clouds
         self._cam = camera
@@ -34,6 +36,8 @@ class CloudPass:
         self._motion_paused = False
         self._time_accum = 0.0
         self._last_clock = time.perf_counter()
+        self._visible_signature: tuple[int, ...] | None = None
+        self._visible_instance_count: int = 0
 
         self._field.set_density(int(self._density))
         self._field.set_seed(int(self._seed))
@@ -44,6 +48,8 @@ class CloudPass:
         self._mesh = mesh
         self._time_accum = 0.0
         self._last_clock = time.perf_counter()
+        self._visible_signature = None
+        self._visible_instance_count = 0
         self._field.set_flow_direction(self._flow_direction, t_seconds=0.0)
 
     def _advance_clock(self) -> None:
@@ -65,6 +71,8 @@ class CloudPass:
         if d == int(self._density):
             return
         self._density = d
+        self._visible_signature = None
+        self._visible_instance_count = 0
         self._field.set_density(int(self._density))
 
     def set_seed(self, seed: int) -> None:
@@ -72,6 +80,8 @@ class CloudPass:
         if s == int(self._seed):
             return
         self._seed = s
+        self._visible_signature = None
+        self._visible_instance_count = 0
         self._field.set_seed(int(self._seed))
 
     def set_flow_direction(self, direction: str) -> None:
@@ -100,11 +110,17 @@ class CloudPass:
 
         boxes = self._field.visible_boxes(eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(aspect), z_far=float(self._cam.z_far))
         if not boxes:
+            self._visible_signature = None
+            self._visible_instance_count = 0
             return
 
-        data = np.array([[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul] for b in boxes], dtype=np.float32)
-        self._mesh.upload_instances(data)
-        inst_count = int(data.shape[0])
+        signature = tuple(int(id(box)) for box in boxes)
+        if self._visible_signature != signature:
+            data = np.array([[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul] for b in boxes], dtype=np.float32)
+            self._mesh.upload_instances(data)
+            self._visible_signature = signature
+            self._visible_instance_count = int(data.shape[0])
+        inst_count = int(self._visible_instance_count)
 
         glEnable(GL_DEPTH_TEST)
         glDepthMask(True)

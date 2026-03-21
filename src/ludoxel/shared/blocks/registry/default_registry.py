@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from ludoxel.shared.blocks.registry.block_registry import BlockRegistry
 
 _DEFAULT_REGISTRY: BlockRegistry | None = None
 _DEFAULT_REGISTRY_LOCK = Lock()
+
 
 def _build_default_registry() -> BlockRegistry:
     reg = BlockRegistry()
@@ -20,6 +21,7 @@ def _build_default_registry() -> BlockRegistry:
 
     reg.seal()
     return reg
+
 
 def create_default_registry() -> BlockRegistry:
     global _DEFAULT_REGISTRY

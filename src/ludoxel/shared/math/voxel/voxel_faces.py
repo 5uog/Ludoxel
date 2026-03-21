@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ FACE_POS_Y: int = 2
 FACE_NEG_Y: int = 3
 FACE_POS_Z: int = 4
 FACE_NEG_Z: int = 5
+
 
 def face_neighbor_offset(face_idx: int) -> tuple[int, int, int]:
     fi = int(face_idx)

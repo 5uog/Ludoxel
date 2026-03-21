@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6,8 +6,10 @@ from ..blocks.models.common import LocalBox
 
 _EPS = 1e-7
 
+
 def approx_eq(a: float, b: float) -> bool:
     return abs(float(a) - float(b)) <= _EPS
+
 
 def face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
     fi = int(face_idx)
@@ -23,6 +25,7 @@ def face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
     if fi == 4:
         return approx_eq(float(box.mx_z), 1.0)
     return approx_eq(float(box.mn_z), 0.0)
+
 
 def face_rect(face_idx: int, box: LocalBox) -> tuple[float, float, float, float]:
     fi = int(face_idx)

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from ....features.othello.ui.special_item_art import build_special_item_icon_ima
 from ..gl.shader_program import ShaderProgram
 from ..resources.image_texture import ImageTexture
 from .textured_face_pass import TexturedFacePass
+
 
 @dataclass
 class SpecialItemPass:

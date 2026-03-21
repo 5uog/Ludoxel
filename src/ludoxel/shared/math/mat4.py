@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7,8 +7,10 @@ import numpy as np
 
 from .vec3 import Vec3
 
+
 def identity() -> np.ndarray:
     return np.identity(4, dtype=np.float32)
+
 
 def perspective(fov_y_deg: float, aspect: float, z_near: float, z_far: float) -> np.ndarray:
     f = 1.0 / math.tan(math.radians(fov_y_deg) * 0.5)
@@ -19,6 +21,7 @@ def perspective(fov_y_deg: float, aspect: float, z_near: float, z_far: float) ->
     m[2, 3] = (2.0 * z_far * z_near) / (z_near - z_far)
     m[3, 2] = -1.0
     return m
+
 
 def ortho(left: float, right: float, bottom: float, top: float, z_near: float, z_far: float) -> np.ndarray:
     m = np.zeros((4, 4), dtype=np.float32)
@@ -36,6 +39,7 @@ def ortho(left: float, right: float, bottom: float, top: float, z_near: float, z
     m[2, 3] = -(z_far + z_near) / fn
     return m
 
+
 def look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3=Vec3(0.0, 1.0, 0.0)) -> np.ndarray:
     f = forward.normalized()
     r = up_hint.cross(f).normalized()
@@ -50,6 +54,7 @@ def look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3=Vec3(0.0, 1.0, 0.0)) -> np.
     m[1, 3] = -u.dot(eye)
     m[2, 3] = f.dot(eye)
     return m
+
 
 def mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return (a @ b).astype(np.float32)

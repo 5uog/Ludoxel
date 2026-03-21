@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from PyQt6.QtGui import QImage
 
 from ..resources.texture_atlas import TextureAtlas
 from .texture_animation_catalog import AnimatedTextureTrack, default_texture_animation_tracks
+
 
 @dataclass
 class _RuntimeAnimatedTrack:
@@ -26,8 +27,10 @@ class _RuntimeAnimatedTrack:
         duration = max(1e-6, float(self.frame_duration_s))
         return int(math.floor(float(elapsed_s) / duration))
 
+
 class TextureAnimationController:
-    def __init__(self, *, block_dir: Path, atlas: TextureAtlas, tracks: tuple[AnimatedTextureTrack, ...] | None = None) -> None:
+
+    def __init__(self, *, block_dir: Path, atlas: TextureAtlas, tracks: tuple[AnimatedTextureTrack, ...] | None=None) -> None:
         self._block_dir = Path(block_dir)
         self._atlas = atlas
         self._origin_s: float | None = None

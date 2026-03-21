@@ -1,17 +1,20 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_ORDER
 from .cloud_flow_options import cloud_flow_index_for_value
 
+
 def _block_signals_set_value(widget, value) -> None:
     widget.blockSignals(True)
     widget.setValue(value)
     widget.blockSignals(False)
 
+
 def _sync_toggle(row, checked: bool) -> None:
     row.sync_checked(bool(checked))
+
 
 def sync_overlay_values(overlay, **values) -> None:
     fov_int = int(round(float(values["fov_deg"])))

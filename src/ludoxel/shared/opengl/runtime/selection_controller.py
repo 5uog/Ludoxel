@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import numpy as np
 from ...rendering.selection_outline_builder import GetState, SelectionOutlineBuilder
 from ...blocks.structure.neighborhood import six_neighbor_state_signature
 from ..passes.selection_pass import SelectionPass
+
 
 @dataclass
 class SelectionController:

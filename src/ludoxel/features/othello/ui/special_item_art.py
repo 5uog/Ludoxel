@@ -1,9 +1,10 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
+
 
 def build_special_item_icon_image(icon_key: str, *, size: int) -> QImage:
     icon_size = int(max(16, int(size)))
@@ -29,6 +30,7 @@ def build_special_item_icon_image(icon_key: str, *, size: int) -> QImage:
     painter.end()
     return image
 
+
 def _paint_start_icon(painter: QPainter, rect) -> None:
     painter.setPen(QPen(QColor("#14360b"), 1))
     painter.setBrush(QColor("#71b442"))
@@ -44,6 +46,7 @@ def _paint_start_icon(painter: QPainter, rect) -> None:
     path.lineTo(left + width * 0.76, top + height * 0.50)
     path.closeSubpath()
     painter.drawPath(path)
+
 
 def _paint_settings_icon(painter: QPainter, rect) -> None:
     width = float(rect.width())

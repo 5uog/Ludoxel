@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11,12 +11,14 @@ AUDIO_CATEGORY_PLAYER = "player"
 
 AUDIO_CATEGORY_ORDER: tuple[str, ...] = (AUDIO_CATEGORY_MASTER, AUDIO_CATEGORY_AMBIENT, AUDIO_CATEGORY_BLOCK, AUDIO_CATEGORY_PLAYER)
 
-def _clamp_volume(value: object, *, default: float = 1.0) -> float:
+
+def _clamp_volume(value: object, *, default: float=1.0) -> float:
     try:
         numeric = float(value)
     except Exception:
         numeric = float(default)
     return float(max(0.0, min(1.0, numeric)))
+
 
 @dataclass(frozen=True)
 class AudioPreferences:

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ _PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED = 8.0
 _PLAYER_WALK_MAX_SWING_SCALE = 1.35
 _PLAYER_FOOTSTEP_MIN_SPEED = 0.15
 
+
 @dataclass(frozen=True)
 class SessionStepResult:
     jump_started: bool
@@ -31,6 +32,7 @@ class SessionStepResult:
     support_block_state: str | None
     support_position: tuple[int, int, int] | None
     fall_distance_blocks: float | None
+
 
 @dataclass
 class SessionManager:
@@ -255,7 +257,7 @@ class SessionManager:
         support_state, support_position = self._support_contact()
         return SessionStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position, fall_distance_blocks=fall_distance_blocks)
 
-    def make_snapshot(self, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20, is_first_person_view: bool = True) -> RenderSnapshotDTO:
+    def make_snapshot(self, *, enable_view_bobbing: bool=True, enable_camera_shake: bool=True, view_bobbing_strength: float=0.35, camera_shake_strength: float=0.20, is_first_person_view: bool=True) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()
         cam_shake_tz = 0.0
         cam_shake_yaw_deg = 0.0
@@ -333,8 +335,8 @@ class SessionManager:
         falling_blocks = tuple(FallingBlockRenderSampleDTO(state_str=str(sample.state_str), x=float(sample.x), y=float(sample.y), z=float(sample.z)) for sample in self.gravity.render_samples())
         return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=camera, player_model=player_model, falling_blocks=falling_blocks)
 
-    def break_block(self, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
+    def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None):
         return self.interaction.break_block(reach=float(reach), origin=origin, direction=direction)
 
-    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None):
+    def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None):
         return self.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)

@@ -1,10 +1,11 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 import numpy as np
 
 from OpenGL.GL import glBindBuffer, glBufferData, glBufferSubData
+
 
 def upload_array_buffer(*, target: int, buffer: int, usage: int, data: np.ndarray | None, capacity_bytes: int) -> int:
     nbytes = 0 if data is None else int(data.nbytes)
@@ -25,6 +26,7 @@ def upload_array_buffer(*, target: int, buffer: int, usage: int, data: np.ndarra
     glBindBuffer(int(target), 0)
     return int(nbytes)
 
+
 def upload_array_buffer_range(*, target: int, buffer: int, data: np.ndarray | None, offset_bytes: int, capacity_bytes: int) -> int:
     nbytes = 0 if data is None else int(data.nbytes)
     if nbytes <= 0:
@@ -37,6 +39,7 @@ def upload_array_buffer_range(*, target: int, buffer: int, data: np.ndarray | No
     glBufferSubData(int(target), int(offset_bytes), int(nbytes), data)
     glBindBuffer(int(target), 0)
     return int(capacity_bytes)
+
 
 def upload_bytes_buffer(*, target: int, buffer: int, usage: int, data: bytes, capacity_bytes: int) -> int:
     payload = bytes(data)

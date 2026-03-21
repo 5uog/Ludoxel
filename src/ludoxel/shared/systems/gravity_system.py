@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -19,7 +19,9 @@ _FALLING_BLOCK_GRAVITY_PER_TICK = 0.04
 _FALLING_BLOCK_DRAG = 0.98
 _FALLING_BLOCK_EPS = 1e-6
 
+
 def _overlay_state_getter(world: WorldState, *, updates: dict[BlockKey, str], removals: set[BlockKey]):
+
     def get_state(x: int, y: int, z: int) -> str | None:
         key = (int(x), int(y), int(z))
         if key in removals:
@@ -30,9 +32,11 @@ def _overlay_state_getter(world: WorldState, *, updates: dict[BlockKey, str], re
 
     return get_state
 
+
 @dataclass(frozen=True)
 class GravityStepResult:
     moved_cells: tuple[BlockKey, ...] = ()
+
 
 @dataclass(frozen=True)
 class FallingBlockRenderSample:
@@ -40,6 +44,7 @@ class FallingBlockRenderSample:
     x: float
     y: float
     z: float
+
 
 @dataclass
 class _ActiveFallingBlock:
@@ -50,6 +55,7 @@ class _ActiveFallingBlock:
     y: float
     prev_y: float
     velocity_y_per_tick: float = 0.0
+
 
 @dataclass
 class GravitySystem:
@@ -145,7 +151,7 @@ class GravitySystem:
                 return True
         return False
 
-    def _advance_active_blocks(self, world: WorldState, *, player: PlayerEntity | None = None) -> tuple[BlockKey, ...]:
+    def _advance_active_blocks(self, world: WorldState, *, player: PlayerEntity | None=None) -> tuple[BlockKey, ...]:
         if not self._active_blocks:
             return ()
 
@@ -192,7 +198,7 @@ class GravitySystem:
             player.gravity_block_overlap_exemptions = tuple(sorted(merged))
         return tuple(sorted(landed_cells))
 
-    def step(self, world: WorldState, dt: float, *, player: PlayerEntity | None = None) -> GravityStepResult:
+    def step(self, world: WorldState, dt: float, *, player: PlayerEntity | None=None) -> GravityStepResult:
         moved_cells: set[BlockKey] = set(self._spawn_pending_blocks(world))
         self._tick_accum_s = max(0.0, float(self._tick_accum_s) + max(0.0, float(dt)))
 

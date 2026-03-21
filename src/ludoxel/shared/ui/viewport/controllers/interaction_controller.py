@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     from ludoxel.shared.ui.viewport.gl_viewport_widget import GLViewportWidget
 
+
 def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
     viewport._overlay.resume_requested.connect(lambda: resume_from_overlay(viewport))
     viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
@@ -30,18 +31,21 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
     viewport._inventory.hotbar_slot_assigned.connect(lambda slot_index, item_id: settings_controller.assign_hotbar_slot(viewport, int(slot_index), str(item_id)))
     viewport._inventory.closed.connect(lambda: on_inventory_closed(viewport))
 
+
 def respawn(viewport: "GLViewportWidget") -> None:
     viewport._session.respawn()
     viewport._invalidate_selection_target()
     viewport._renderer.clear_selection()
     viewport._set_dead_overlay(False)
 
+
 def resume_from_overlay(viewport: "GLViewportWidget") -> None:
     viewport._set_paused_overlay(False)
     viewport.arm_resume_refresh()
     settings_controller.sync_cloud_motion_pause(viewport)
 
-def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bool = False) -> None:
+
+def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bool=False) -> None:
     normalized = normalize_play_space_id(space_id)
     if normalized == normalize_play_space_id(viewport._state.current_space_id):
         if resume:
@@ -69,24 +73,29 @@ def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bo
     othello_controller.maybe_request_ai(viewport)
     viewport.update()
 
+
 def open_settings_from_pause(viewport: "GLViewportWidget") -> None:
     settings_controller.sync_settings_values(viewport)
     viewport._set_settings_overlay(True)
     settings_controller.sync_cloud_motion_pause(viewport)
+
 
 def back_from_settings(viewport: "GLViewportWidget") -> None:
     settings_controller.sync_settings_values(viewport)
     viewport._set_settings_overlay(False)
     settings_controller.sync_cloud_motion_pause(viewport)
 
+
 def open_othello_settings_from_item(viewport: "GLViewportWidget") -> None:
     othello_controller.sync_settings_values(viewport)
     viewport._set_othello_settings_overlay(True)
     settings_controller.sync_cloud_motion_pause(viewport)
 
+
 def back_from_othello_settings(viewport: "GLViewportWidget") -> None:
     viewport._set_othello_settings_overlay(False)
     settings_controller.sync_cloud_motion_pause(viewport)
+
 
 def on_inventory_selected(viewport: "GLViewportWidget", block_id: str) -> None:
     if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
@@ -97,9 +106,11 @@ def on_inventory_selected(viewport: "GLViewportWidget", block_id: str) -> None:
     settings_controller.sync_hotbar_widgets(viewport)
     settings_controller.sync_first_person_target(viewport)
 
+
 def on_inventory_closed(viewport: "GLViewportWidget") -> None:
     viewport._set_inventory_overlay(False)
     viewport.arm_resume_refresh()
+
 
 def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
@@ -180,6 +191,7 @@ def handle_wheel(viewport: "GLViewportWidget", e: "QWheelEvent") -> bool:
         e.accept()
         return True
     return False
+
 
 def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
     viewport.setFocus(Qt.FocusReason.MouseFocusReason)

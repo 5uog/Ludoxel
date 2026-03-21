@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from PyQt6.QtGui import QColor, QFocusEvent, QMouseEvent, QPainter, QPaintEvent,
 from PyQt6.QtWidgets import QAbstractButton, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QSlider, QWidget
 
 from ....application.runtime.keybinds import display_text_for_binding, normalize_binding_text, normalize_key_code
+
 
 def _draw_bedrock_frame(painter: QPainter, rect: QRect, *, fill: QColor, top_left: QColor, bottom_right: QColor, outline: QColor) -> None:
     if rect.width() <= 0 or rect.height() <= 0:
@@ -25,15 +26,21 @@ def _draw_bedrock_frame(painter: QPainter, rect: QRect, *, fill: QColor, top_lef
         painter.drawLine(inner.bottomLeft(), inner.bottomRight())
         painter.drawLine(inner.topRight(), inner.bottomRight())
 
+
 class WheelPassthroughSlider(QSlider):
+
     def wheelEvent(self, event: QWheelEvent) -> None:
         event.ignore()
+
 
 class WheelPassthroughDoubleSpinBox(QDoubleSpinBox):
+
     def wheelEvent(self, event: QWheelEvent) -> None:
         event.ignore()
 
+
 class BedrockToggleSwitch(QAbstractButton):
+
     def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self.setCheckable(True)
@@ -101,6 +108,7 @@ class BedrockToggleSwitch(QAbstractButton):
 
         _draw_bedrock_frame(painter, thumb, fill=thumb_fill, top_left=thumb_light, bottom_right=thumb_dark, outline=QColor("#0b0b0b"))
 
+
 class BedrockToggleRow(QWidget):
     toggled = pyqtSignal(bool)
 
@@ -162,6 +170,7 @@ class BedrockToggleRow(QWidget):
             return
         super().keyPressEvent(event)
 
+
 class KeybindCaptureButton(QPushButton):
     binding_captured = pyqtSignal(str)
     capture_canceled = pyqtSignal()
@@ -218,6 +227,7 @@ class KeybindCaptureButton(QPushButton):
             self.setText(display_text_for_binding(self._binding_text))
             self.capture_canceled.emit()
         super().focusOutEvent(event)
+
 
 class KeybindRow(QWidget):
     binding_changed = pyqtSignal(str)

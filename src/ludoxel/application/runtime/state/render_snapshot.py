@@ -1,8 +1,9 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class CameraDTO:
@@ -18,6 +19,7 @@ class CameraDTO:
     shake_yaw_deg: float = 0.0
     shake_pitch_deg: float = 0.0
     shake_roll_deg: float = 0.0
+
 
 @dataclass(frozen=True)
 class PlayerModelSnapshotDTO:
@@ -38,12 +40,14 @@ class PlayerModelSnapshotDTO:
     first_person_roll_deg: float = 0.0
     is_first_person: bool = True
 
+
 @dataclass(frozen=True)
 class FallingBlockRenderSampleDTO:
     state_str: str
     x: float
     y: float
     z: float
+
 
 @dataclass(frozen=True)
 class RenderSnapshotDTO:

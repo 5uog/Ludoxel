@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -26,16 +26,20 @@ def _coerce_optional_int(value: object) -> int | None:
     except (TypeError, ValueError):
         return None
 
+
 def _default_hotbar_slots_list() -> list[str]:
     return list(default_hotbar_slots(size=HOTBAR_SIZE))
+
 
 def _default_othello_hotbar_slots_list() -> list[str]:
     return list(default_othello_hotbar_slots(size=HOTBAR_SIZE))
 
-def _normalize_hotbar_state(slots: object, index: object, *, size: int = HOTBAR_SIZE) -> tuple[list[str], int]:
+
+def _normalize_hotbar_state(slots: object, index: object, *, size: int=HOTBAR_SIZE) -> tuple[list[str], int]:
     normalized_slots = list(normalize_hotbar_slots(slots, size=int(size)))
     normalized_index = normalize_hotbar_index(index, size=int(size))
     return normalized_slots, int(normalized_index)
+
 
 @dataclass
 class RuntimePreferences:
@@ -151,7 +155,7 @@ class RuntimePreferences:
     def view_model_visible(self) -> bool:
         return bool(self.is_first_person_view()) and (not bool(self.hide_hand))
 
-    def cycle_camera_perspective(self, step: int = 1) -> None:
+    def cycle_camera_perspective(self, step: int=1) -> None:
         self.camera_perspective = cycle_camera_perspective(self.camera_perspective, step=int(step))
 
     def _active_hotbar_state_attrs(self) -> tuple[str, str]:
@@ -214,7 +218,8 @@ class RuntimePreferences:
         self.normalize()
         self.set_hotbar_slot(self._active_hotbar_index(), None)
 
-def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
+
+def coerce_runtime_preferences(*, runtime: RuntimePreferences | None=None, **overrides) -> RuntimePreferences:
     if runtime is not None:
         out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), crosshair_mode=str(runtime.crosshair_mode), crosshair_pixels=tuple(runtime.crosshair_pixels), player_skin_kind=str(runtime.player_skin_kind), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), window_left=_coerce_optional_int(runtime.window_left), window_top=_coerce_optional_int(runtime.window_top), window_width=int(runtime.window_width), window_height=int(runtime.window_height), window_screen_name=str(runtime.window_screen_name), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
     else:

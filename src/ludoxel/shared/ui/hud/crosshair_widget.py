@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,7 +10,9 @@ from .crosshair_art import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, rende
 
 _GAME_CROSSHAIR_SCALE = 2
 
+
 class CrosshairWidget(QWidget):
+
     def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)

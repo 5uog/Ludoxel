@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -25,7 +25,9 @@ _TALL_STRUCTURAL_MIN_HEIGHT = 1.5
 _LOCAL_BOX_CACHE_CAP = 32768
 _WORLD_AABB_CACHE_CAP = 32768
 
+
 class _TupleLruCache:
+
     def __init__(self, max_entries: int) -> None:
         self._max_entries = int(max(1, int(max_entries)))
         self._lock = RLock()
@@ -47,6 +49,7 @@ class _TupleLruCache:
                 self._data.popitem(last=False)
             return value
 
+
 _RENDER_BOX_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
 _COLLISION_BOX_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
 _PICK_BOX_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
@@ -55,20 +58,25 @@ _TOP_SUPPORT_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
 _COLLISION_AABB_CACHE = _TupleLruCache(_WORLD_AABB_CACHE_CAP)
 _PICK_AABB_CACHE = _TupleLruCache(_WORLD_AABB_CACHE_CAP)
 
+
 def _callable_cache_token(fn: object) -> int:
     owner = getattr(fn, "__self__", None)
     if owner is not None:
         return int(id(owner))
     return int(id(fn))
 
+
 def _shape_signature(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[object, ...]:
     return (int(_callable_cache_token(get_def)), str(state_str), *six_neighbor_state_signature(get_state, int(x), int(y), int(z)))
+
 
 def _local_box_cache_key(namespace: str, state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[object, ...]:
     return (str(namespace),) + _shape_signature(str(state_str), get_state, get_def, int(x), int(y), int(z))
 
+
 def _world_aabb_cache_key(namespace: str, state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[object, ...]:
     return (str(namespace), int(x), int(y), int(z)) + _shape_signature(str(state_str), get_state, get_def, int(x), int(y), int(z))
+
 
 def _cache_get_or_build(cache: _TupleLruCache, key: tuple[object, ...], builder) -> tuple[object, ...]:
     cached = cache.get(key)
@@ -77,11 +85,13 @@ def _cache_get_or_build(cache: _TupleLruCache, key: tuple[object, ...], builder)
     value = builder()
     return cache.set(key, value)
 
+
 def _resolve_block_kind(state_str: str, get_def: GetDef) -> tuple[str, dict[str, str], str]:
     base, props = parse_state(str(state_str))
     defn = get_def(str(base))
     kind = defn.kind if defn is not None else "cube"
     return (str(base), props, str(kind))
+
 
 def _raise_boxes_to_min_height(boxes: Sequence[LocalBox], min_height: float) -> tuple[LocalBox, ...]:
     out: list[LocalBox] = []
@@ -92,6 +102,7 @@ def _raise_boxes_to_min_height(boxes: Sequence[LocalBox], min_height: float) -> 
 
     return tuple(out)
 
+
 def _gate_interact_hull(props: dict[str, str]) -> LocalBox:
     facing = normalize_cardinal(str(props.get("facing", "south")), default="south")
 
@@ -99,6 +110,7 @@ def _gate_interact_hull(props: dict[str, str]) -> LocalBox:
         return LocalBox(mn_x=2.0 / 16.0, mn_y=0.0, mn_z=6.0 / 16.0, mx_x=14.0 / 16.0, mx_y=24.0 / 16.0, mx_z=10.0 / 16.0, uv_hint="interact")
 
     return LocalBox(mn_x=6.0 / 16.0, mn_y=0.0, mn_z=2.0 / 16.0, mx_x=10.0 / 16.0, mx_y=24.0 / 16.0, mx_z=14.0 / 16.0, uv_hint="interact")
+
 
 def _render_boxes_uncached(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[LocalBox, ...]:
     base, props, kind = _resolve_block_kind(str(state_str), get_def)
@@ -123,12 +135,15 @@ def _render_boxes_uncached(state_str: str, get_state: GetState, get_def: GetDef,
 
     return (LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0),)
 
+
 def render_boxes_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[LocalBox]:
     key = _local_box_cache_key("render", str(state_str), get_state, get_def, int(x), int(y), int(z))
     return _cache_get_or_build(_RENDER_BOX_CACHE, key, lambda: _render_boxes_uncached(str(state_str), get_state, get_def, int(x), int(y), int(z)))
 
+
 def _tall_structural_boxes(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[LocalBox, ...]:
     return _raise_boxes_to_min_height(render_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)), _TALL_STRUCTURAL_MIN_HEIGHT)
+
 
 def _fence_gate_pick_boxes(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[LocalBox, ...]:
     _base, props = parse_state(str(state_str))
@@ -140,6 +155,7 @@ def _fence_gate_pick_boxes(state_str: str, get_state: GetState, get_def: GetDef,
 
     out.append(_gate_interact_hull(props))
     return tuple(out)
+
 
 def collision_boxes_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[LocalBox]:
     key = _local_box_cache_key("collision", str(state_str), get_state, get_def, int(x), int(y), int(z))
@@ -158,6 +174,7 @@ def collision_boxes_for_block(state_str: str, get_state: GetState, get_def: GetD
         return tuple(render_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)))
 
     return _cache_get_or_build(_COLLISION_BOX_CACHE, key, _build)
+
 
 def pick_boxes_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[LocalBox]:
     key = _local_box_cache_key("pick", str(state_str), get_state, get_def, int(x), int(y), int(z))
@@ -201,6 +218,7 @@ def has_full_top_support_for_block(state_str: str, get_state: GetState, get_def:
 
     return bool(_cache_get_or_build(_TOP_SUPPORT_CACHE, key, _build)[0])
 
+
 def _translate_boxes_to_aabbs(boxes: Sequence[LocalBox], x: int, y: int, z: int) -> tuple[AABB, ...]:
     px = int(x)
     py = int(y)
@@ -211,9 +229,11 @@ def _translate_boxes_to_aabbs(boxes: Sequence[LocalBox], x: int, y: int, z: int)
         out.append(AABB(mn=Vec3(float(px) + float(b.mn_x), float(py) + float(b.mn_y), float(pz) + float(b.mn_z)), mx=Vec3(float(px) + float(b.mx_x), float(py) + float(b.mx_y), float(pz) + float(b.mx_z))))
     return tuple(out)
 
+
 def collision_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[AABB]:
     key = _world_aabb_cache_key("collision_aabb", str(state_str), get_state, get_def, int(x), int(y), int(z))
     return _cache_get_or_build(_COLLISION_AABB_CACHE, key, lambda: _translate_boxes_to_aabbs(collision_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)), int(x), int(y), int(z)))
+
 
 def pick_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[AABB]:
     key = _world_aabb_cache_key("pick_aabb", str(state_str), get_state, get_def, int(x), int(y), int(z))

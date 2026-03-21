@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from ...rendering.first_person_geometry import build_first_person_arm_face_rows
 from ...rendering.player_render_state import FirstPersonRenderState
 from .textured_face_pass import TexturedFacePass
 from ..gl.shader_program import ShaderProgram
+
 
 @dataclass
 class FirstPersonArmPass:

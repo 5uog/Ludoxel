@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import math
 
 from ..vec3 import Vec3
 
+
 @dataclass(frozen=True)
 class DDAHit:
     cell_x: int
@@ -15,6 +16,7 @@ class DDAHit:
     cell_z: int
     t: float
     enter_face: int = -1
+
 
 def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float=1.0):
     d = direction

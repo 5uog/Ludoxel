@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,7 +8,9 @@ from OpenGL.GL import glGenBuffers, glDeleteBuffers, glBindBuffer, glBindBufferB
 
 from .buffer_upload import upload_array_buffer, upload_bytes_buffer
 
+
 class StorageBuffer:
+
     def __init__(self, *, target: int=GL_SHADER_STORAGE_BUFFER, usage: int=GL_DYNAMIC_DRAW) -> None:
         self._target = int(target)
         self._usage = int(usage)
@@ -17,7 +19,7 @@ class StorageBuffer:
 
     def destroy(self) -> None:
         if int(self.buffer) != 0:
-            glDeleteBuffers(1,[int(self.buffer)])
+            glDeleteBuffers(1, [int(self.buffer)])
             self.buffer = 0
             self.capacity_bytes = 0
 
@@ -62,6 +64,6 @@ class StorageBuffer:
         raw = glGetBufferSubData(self._target, 0, size)
         glBindBuffer(self._target, 0)
 
-        if isinstance(raw,(bytes, bytearray)):
+        if isinstance(raw, (bytes, bytearray)):
             return bytes(raw)
         return bytes(raw)

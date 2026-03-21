@@ -1,8 +1,9 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 import math
 import numpy as np
@@ -53,17 +54,21 @@ _ARM_SWAY_Z = math.pi * 0.02
 _WORLD_SPECIAL_ITEM_BOX = LocalBox(1.0 * _PX, 1.0 * _PX, 7.5 * _PX, 15.0 * _PX, 15.0 * _PX, 8.5 * _PX)
 _WORLD_SPECIAL_ITEM_SCALE = 1.75
 
+
 def _skin_cube_uv_map(*, pos_x: tuple[float, float, float, float], neg_x: tuple[float, float, float, float], pos_y: tuple[float, float, float, float], neg_y: tuple[float, float, float, float], pos_z: tuple[float, float, float, float], neg_z: tuple[float, float, float, float]) -> dict[int, tuple[float, float, float, float]]:
     return {FACE_POS_X: pos_x, FACE_NEG_X: neg_x, FACE_POS_Y: pos_y, FACE_NEG_Y: neg_y, FACE_POS_Z: pos_z, FACE_NEG_Z: neg_z}
 
+
 def _rotate_uv_rect_180(px_rect: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
     return (float(px_rect[2]), float(px_rect[3]), float(px_rect[0]), float(px_rect[1]))
+
 
 def _uv_map_with_rotated_faces(uv_map: dict[int, tuple[float, float, float, float]], *faces: int) -> dict[int, tuple[float, float, float, float]]:
     out = {int(face_idx): tuple(rect) for face_idx, rect in uv_map.items()}
     for face_idx in faces:
         out[int(face_idx)] = _rotate_uv_rect_180(out[int(face_idx)])
     return out
+
 
 _HEAD_BASE_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 8.0, 8.0, 16.0), neg_x=(16.0, 8.0, 24.0, 16.0), pos_y=(8.0, 0.0, 16.0, 8.0), neg_y=(16.0, 0.0, 24.0, 8.0), pos_z=(8.0, 8.0, 16.0, 16.0), neg_z=(24.0, 8.0, 32.0, 16.0))
 _HEAD_HAT_UV_PX = _skin_cube_uv_map(pos_x=(32.0, 8.0, 40.0, 16.0), neg_x=(48.0, 8.0, 56.0, 16.0), pos_y=(40.0, 0.0, 48.0, 8.0), neg_y=(48.0, 0.0, 56.0, 8.0), pos_z=(40.0, 8.0, 48.0, 16.0), neg_z=(56.0, 8.0, 64.0, 16.0))
@@ -82,11 +87,13 @@ _RIGHT_LEG_PANTS_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 36.0, 4.0, 48.0), neg_x=(
 _LEFT_LEG_BASE_UV_PX = _skin_cube_uv_map(pos_x=(16.0, 52.0, 20.0, 64.0), neg_x=(24.0, 52.0, 28.0, 64.0), pos_y=(20.0, 48.0, 24.0, 52.0), neg_y=(24.0, 48.0, 28.0, 52.0), pos_z=(20.0, 52.0, 24.0, 64.0), neg_z=(28.0, 52.0, 32.0, 64.0))
 _LEFT_LEG_PANTS_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 52.0, 4.0, 64.0), neg_x=(8.0, 52.0, 12.0, 64.0), pos_y=(4.0, 48.0, 8.0, 52.0), neg_y=(8.0, 48.0, 12.0, 52.0), pos_z=(4.0, 52.0, 8.0, 64.0), neg_z=(12.0, 52.0, 16.0, 64.0))
 
+
 @dataclass(frozen=True)
 class HeldBlockPose:
     block_id: str
     block_kind: str | None
     parent_transform: np.ndarray
+
 
 @dataclass(frozen=True)
 class PlayerModelPose:
@@ -96,30 +103,38 @@ class PlayerModelPose:
     visible_special_item_icon: str | None
     shadow_rows: np.ndarray
 
+
 def _lerp(a: float, b: float, t: float) -> float:
     return float(a) + (float(b) - float(a)) * float(t)
+
 
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
     return np.asarray(matrix, dtype=np.float32).reshape(16)
 
+
 def _empty_face_rows() -> tuple[np.ndarray, ...]:
     return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
+
 
 def _skin_uv_rect(px_rect: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
     px0, py0, px1, py1 = px_rect
     return (float(px0) / float(_SKIN_WIDTH), 1.0 - float(py1) / float(_SKIN_HEIGHT), float(px1) / float(_SKIN_WIDTH), 1.0 - float(py0) / float(_SKIN_HEIGHT))
+
 
 def _append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: tuple[float, float, float, float]) -> None:
     row = list(np.asarray(model, dtype=np.float32).reshape(16))
     row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
     buffers[int(face_idx)].append(row)
 
+
 def _rows_from_buffers(buffers: list[list[list[float]]]) -> tuple[np.ndarray, ...]:
     return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+
 
 def _append_unit_cube_rows(buffers: list[list[list[float]]], model: np.ndarray, uv_map_pixels: dict[int, tuple[float, float, float, float]]) -> None:
     for face_idx in range(6):
         _append_face_instance(buffers, int(face_idx), model, _skin_uv_rect(uv_map_pixels[int(face_idx)]))
+
 
 def _model_matrix_for_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
     center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
@@ -129,6 +144,7 @@ def _model_matrix_for_box(parent_transform: np.ndarray, box: LocalBox) -> np.nda
     size_y = float(box.mx_y) - float(box.mn_y)
     size_z = float(box.mx_z) - float(box.mn_z)
     return compose_matrices(parent_transform, translate_matrix(center_x, center_y, center_z), scale_matrix(size_x, size_y, size_z))
+
 
 def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
     swing = clampf(float(swing_progress), 0.0, 1.0)
@@ -143,13 +159,16 @@ def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
     attack_z = -0.4 * full
     return (float(attack_x), float(attack_y), float(attack_z))
 
+
 def _attack_swing_weight(swing_progress: float) -> float:
     swing = clampf(float(swing_progress), 0.0, 1.0)
     if swing <= 1e-6:
         return 0.0
     return float(math.sin(math.sqrt(swing) * math.pi))
 
-def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
+
+@lru_cache(maxsize=64)
+def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerModelPose:
     empty_shadow = np.zeros((0, 16), dtype=np.float32)
     empty_faces = _empty_face_rows()
     if state is None:
@@ -246,7 +265,11 @@ def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
         return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, shadow_rows=shadow_rows)
 
     skin_buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    for model, uv_map in ((head, _HEAD_BASE_UV_PX),(hat, _HEAD_HAT_UV_PX),(body, _BODY_BASE_UV_PX),(jacket, _BODY_JACKET_UV_PX),(right_arm, _VISUAL_LEFT_ARM_BASE_UV_PX),(right_sleeve, _VISUAL_LEFT_ARM_SLEEVE_UV_PX),(left_arm, _VISUAL_RIGHT_ARM_BASE_UV_PX),(left_sleeve, _VISUAL_RIGHT_ARM_SLEEVE_UV_PX),(right_leg, _RIGHT_LEG_BASE_UV_PX),(right_pants, _RIGHT_LEG_PANTS_UV_PX),(left_leg, _LEFT_LEG_BASE_UV_PX),(left_pants, _LEFT_LEG_PANTS_UV_PX)):
+    for model, uv_map in ((head, _HEAD_BASE_UV_PX), (hat, _HEAD_HAT_UV_PX), (body, _BODY_BASE_UV_PX), (jacket, _BODY_JACKET_UV_PX), (right_arm, _VISUAL_LEFT_ARM_BASE_UV_PX), (right_sleeve, _VISUAL_LEFT_ARM_SLEEVE_UV_PX), (left_arm, _VISUAL_RIGHT_ARM_BASE_UV_PX), (left_sleeve, _VISUAL_RIGHT_ARM_SLEEVE_UV_PX), (right_leg, _RIGHT_LEG_BASE_UV_PX), (right_pants, _RIGHT_LEG_PANTS_UV_PX), (left_leg, _LEFT_LEG_BASE_UV_PX), (left_pants, _LEFT_LEG_PANTS_UV_PX)):
         _append_unit_cube_rows(skin_buffers, model, uv_map)
 
     return PlayerModelPose(skin_face_rows=_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, shadow_rows=shadow_rows)
+
+
+def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
+    return _build_player_model_pose_cached(state)

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from ...math.scalars import clampf
 from ...math.vec3 import Vec3
 from ...math.geometry.aabb import AABB
 from ...math.view_angles import forward_from_yaw_pitch_deg
+
 
 @dataclass
 class PlayerEntity:

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9,11 +9,13 @@ from ..vec3 import Vec3
 from .aabb import AABB
 from .ray import Ray
 
+
 @dataclass(frozen=True)
 class RayHitFace:
     t_enter: float
     point: Vec3
     face: int
+
 
 def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
     if axis == 0:
@@ -22,12 +24,14 @@ def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
         return FACE_NEG_Y if inv_dir >= 0.0 else FACE_POS_Y
     return FACE_NEG_Z if inv_dir >= 0.0 else FACE_POS_Z
 
+
 def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
     if axis == 0:
         return FACE_POS_X if inv_dir >= 0.0 else FACE_NEG_X
     if axis == 1:
         return FACE_POS_Y if inv_dir >= 0.0 else FACE_NEG_Y
     return FACE_POS_Z if inv_dir >= 0.0 else FACE_NEG_Z
+
 
 def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
     d = ray.direction
@@ -38,7 +42,7 @@ def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
     enter_face: int = -1
     exit_face: int = -1
 
-    for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x),(o.y, d.y, aabb.mn.y, aabb.mx.y),(o.z, d.z, aabb.mn.z, aabb.mx.z))):
+    for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
         if abs(d_comp) < 1e-12:
             if o_comp < mn or o_comp > mx:
                 return None

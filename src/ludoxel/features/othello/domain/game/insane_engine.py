@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -26,31 +26,41 @@ _BOUND_UPPER = -1
 _POSITION_WEIGHTS: tuple[int, ...] = (120, -20, 20, 5, 5, 20, -20, 120, -20, -40, -5, -5, -5, -5, -40, -20, 20, -5, 15, 3, 3, 15, -5, 20, 5, -5, 3, 3, 3, 3, -5, 5, 5, -5, 3, 3, 3, 3, -5, 5, 20, -5, 15, 3, 3, 15, -5, 20, -20, -40, -5, -5, -5, -5, -40, -20, 120, -20, 20, 5, 5, 20, -20, 120)
 _POSITION_SQUARE_MASKS: tuple[int, ...] = tuple(1 << index for index in range(BOARD_CELL_COUNT))
 
+
 def _shift_east(bits: int) -> int:
     return ((int(bits) & _NOT_FILE_H) << 1) & _FULL_MASK
+
 
 def _shift_west(bits: int) -> int:
     return ((int(bits) & _NOT_FILE_A) >> 1) & _FULL_MASK
 
+
 def _shift_south(bits: int) -> int:
     return (int(bits) << 8) & _FULL_MASK
+
 
 def _shift_north(bits: int) -> int:
     return (int(bits) >> 8) & _FULL_MASK
 
+
 def _shift_south_east(bits: int) -> int:
     return ((int(bits) & _NOT_FILE_H) << 9) & _FULL_MASK
+
 
 def _shift_south_west(bits: int) -> int:
     return ((int(bits) & _NOT_FILE_A) << 7) & _FULL_MASK
 
+
 def _shift_north_east(bits: int) -> int:
     return ((int(bits) & _NOT_FILE_H) >> 7) & _FULL_MASK
+
 
 def _shift_north_west(bits: int) -> int:
     return ((int(bits) & _NOT_FILE_A) >> 9) & _FULL_MASK
 
+
 _SHIFT_FUNCS = (_shift_east, _shift_west, _shift_south, _shift_north, _shift_south_east, _shift_south_west, _shift_north_east, _shift_north_west)
+
 
 def _bitboards_from_board(board: tuple[int, ...] | list[int]) -> tuple[int, int]:
     black = 0
@@ -62,6 +72,7 @@ def _bitboards_from_board(board: tuple[int, ...] | list[int]) -> tuple[int, int]
         elif int(value) == SIDE_WHITE:
             white |= mask
     return (int(black), int(white))
+
 
 def _legal_moves_bitboard(player_bits: int, opponent_bits: int) -> int:
     player = int(player_bits)
@@ -79,6 +90,7 @@ def _legal_moves_bitboard(player_bits: int, opponent_bits: int) -> int:
         moves |= shift(captured) & empty
     return int(moves)
 
+
 def _bitboard_to_moves(bits: int) -> tuple[int, ...]:
     out: list[int] = []
     remaining = int(bits)
@@ -87,6 +99,7 @@ def _bitboard_to_moves(bits: int) -> tuple[int, ...]:
         out.append(int(lsb.bit_length() - 1))
         remaining ^= lsb
     return tuple(out)
+
 
 def _capture_line(move_bit: int, player_bits: int, opponent_bits: int, shift) -> int:
     cursor = shift(int(move_bit))
@@ -98,6 +111,7 @@ def _capture_line(move_bit: int, player_bits: int, opponent_bits: int, shift) ->
         return int(flips)
     return 0
 
+
 def _apply_move_bits(player_bits: int, opponent_bits: int, move_index: int) -> tuple[int, int]:
     move_bit = 1 << int(move_index)
     flips = 0
@@ -107,8 +121,10 @@ def _apply_move_bits(player_bits: int, opponent_bits: int, move_index: int) -> t
     next_opponent = int(opponent_bits) & ~int(flips)
     return (int(next_player), int(next_opponent))
 
+
 def _bit_count(bits: int) -> int:
     return int(int(bits).bit_count())
+
 
 def _position_score(player_bits: int, opponent_bits: int) -> int:
     score = 0
@@ -119,6 +135,7 @@ def _position_score(player_bits: int, opponent_bits: int) -> int:
         elif int(opponent_bits) & mask:
             score -= int(weight)
     return int(score)
+
 
 def _corner_closeness_penalty(player_bits: int, opponent_bits: int) -> int:
     score = 0
@@ -135,9 +152,11 @@ def _corner_closeness_penalty(player_bits: int, opponent_bits: int) -> int:
                 score += 30
     return int(score)
 
+
 def _adjacent_bits(bits: int) -> int:
     src = int(bits)
     return int((_shift_east(src) | _shift_west(src) | _shift_south(src) | _shift_north(src) | _shift_south_east(src) | _shift_south_west(src) | _shift_north_east(src) | _shift_north_west(src)) & _FULL_MASK)
+
 
 def _frontier_score(player_bits: int, opponent_bits: int) -> int:
     empty = (~(int(player_bits) | int(opponent_bits))) & _FULL_MASK
@@ -145,6 +164,7 @@ def _frontier_score(player_bits: int, opponent_bits: int) -> int:
     player_frontier = _bit_count(int(player_bits) & int(adjacent_to_empty))
     opponent_frontier = _bit_count(int(opponent_bits) & int(adjacent_to_empty))
     return int((opponent_frontier - player_frontier) * 18)
+
 
 def _mobility_score(player_bits: int, opponent_bits: int) -> int:
     my_moves = _bit_count(_legal_moves_bitboard(int(player_bits), int(opponent_bits)))
@@ -160,6 +180,7 @@ def _mobility_score(player_bits: int, opponent_bits: int) -> int:
         potential = int(round(60.0 * float(potential_my - potential_enemy) / float(potential_my + potential_enemy)))
     return int(actual + potential)
 
+
 def _corner_score(player_bits: int, opponent_bits: int) -> int:
     player_corners = 0
     opponent_corners = 0
@@ -171,11 +192,13 @@ def _corner_score(player_bits: int, opponent_bits: int) -> int:
             opponent_corners += 1
     return int((player_corners - opponent_corners) * 600)
 
+
 def _parity_score(player_bits: int, opponent_bits: int) -> int:
     empties = BOARD_CELL_COUNT - _bit_count(int(player_bits) | int(opponent_bits))
     if empties <= 0:
         return 0
     return 22 if (empties & 1) == 1 else -22
+
 
 def _disc_score(player_bits: int, opponent_bits: int) -> int:
     player_count = _bit_count(player_bits)
@@ -185,6 +208,7 @@ def _disc_score(player_bits: int, opponent_bits: int) -> int:
         return 0
     return int(round(120.0 * float(player_count - opponent_count) / float(total)))
 
+
 def _terminal_score(player_bits: int, opponent_bits: int) -> int:
     delta = _bit_count(player_bits) - _bit_count(opponent_bits)
     if delta > 0:
@@ -192,6 +216,7 @@ def _terminal_score(player_bits: int, opponent_bits: int) -> int:
     if delta < 0:
         return int(_LOSS_SCORE + delta * 1024)
     return 0
+
 
 def _evaluate(player_bits: int, opponent_bits: int) -> int:
     empties = BOARD_CELL_COUNT - _bit_count(int(player_bits) | int(opponent_bits))
@@ -207,12 +232,14 @@ def _evaluate(player_bits: int, opponent_bits: int) -> int:
     score += int(round(_disc_score(int(player_bits), int(opponent_bits)) * float(disc_weight) / 100.0))
     return int(score)
 
+
 @dataclass(frozen=True)
 class _TranspositionEntry:
     depth: int
     score: int
     bound: int
     best_move: int | None
+
 
 @dataclass
 class InsaneSearchCache:
@@ -230,6 +257,7 @@ class InsaneSearchCache:
         self.transposition.clear()
         self.exact_transposition.clear()
 
+
 def _ordering_bonus(move_index: int) -> int:
     move = int(move_index)
     if move in _CORNERS:
@@ -240,7 +268,9 @@ def _ordering_bonus(move_index: int) -> int:
         return -4_500
     return int(_POSITION_WEIGHTS[move] * 32)
 
+
 def _ordered_moves(player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], tt_move: int | None) -> tuple[int, ...]:
+
     def sort_key(move_index: int) -> tuple[int, int]:
         next_player, next_opponent = _apply_move_bits(int(player_bits), int(opponent_bits), int(move_index))
         reply_count = _bit_count(_legal_moves_bitboard(int(next_opponent), int(next_player)))
@@ -251,9 +281,11 @@ def _ordered_moves(player_bits: int, opponent_bits: int, legal_moves: tuple[int,
 
     return tuple(sorted((int(move) for move in legal_moves), key=sort_key))
 
+
 def _check_deadline(deadline_s: float | None) -> None:
     if deadline_s is not None and time.perf_counter() >= float(deadline_s):
         raise TimeoutError
+
 
 def _solve_exact(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, alpha: int, beta: int, deadline_s: float | None, pass_count: int) -> int:
     _check_deadline(deadline_s)
@@ -283,6 +315,7 @@ def _solve_exact(cache: InsaneSearchCache, player_bits: int, opponent_bits: int,
 
     cache.exact_transposition[key] = int(best)
     return int(best)
+
 
 def _negamax(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, depth: int, alpha: int, beta: int, deadline_s: float | None, pass_count: int) -> int:
     _check_deadline(deadline_s)
@@ -337,7 +370,8 @@ def _negamax(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, dep
     cache.transposition[key] = _TranspositionEntry(depth=int(depth), score=int(best_score), bound=int(bound), best_move=best_move)
     return int(best_score)
 
-def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = 4.0, cache: InsaneSearchCache | None = None) -> int | None:
+
+def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int=0, time_budget_s: float=4.0, cache: InsaneSearchCache | None=None) -> int | None:
     materialized = coerce_board(board)
     normalized_side = normalize_side(side, default=SIDE_BLACK)
     if normalized_side not in (SIDE_BLACK, SIDE_WHITE):

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from .textured_face_pass import TexturedFacePass
 from ..gl.shader_program import ShaderProgram
 
 UVRect = tuple[float, float, float, float]
+
 
 @dataclass
 class HeldBlockPass:

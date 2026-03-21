@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QWidget
 
 from .....application.runtime.tasks.fixed_step_runner import FixedStepRunner
 from .input_controller import ViewportInput
+
 
 @dataclass
 class OverlayRefs:
@@ -22,7 +23,9 @@ class OverlayRefs:
     hud_getter: Callable[[], QWidget | None]
     othello_hud_getter: Callable[[], QWidget | None]
 
+
 class ViewportOverlays:
+
     def __init__(self, *, refs: OverlayRefs, runner: FixedStepRunner, inp: ViewportInput) -> None:
         self._r = refs
         self._runner = runner

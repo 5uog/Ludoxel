@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17,12 +17,15 @@ from ..application.rendering.othello_render_state import OthelloRenderState
 from ....shared.opengl.runtime.render_metrics import PassFrameMetrics
 from ....shared.opengl.passes.shadow_map_pass import ShadowMapInfo
 
+
 @dataclass
 class OthelloPass:
     _world_prog: ShaderProgram | None = None
     _shadow_prog: ShaderProgram | None = None
     _board_mesh: ColoredMeshBuffer | None = None
     _piece_mesh: ColoredMeshBuffer | None = None
+    _highlight_upload_key: tuple[object, ...] | None = None
+    _piece_upload_key: tuple[object, ...] | None = None
 
     def initialize(self, *, world_prog: ShaderProgram, shadow_prog: ShaderProgram) -> None:
         self._world_prog = world_prog
@@ -39,6 +42,16 @@ class OthelloPass:
         self._piece_mesh = None
         self._world_prog = None
         self._shadow_prog = None
+        self._highlight_upload_key = None
+        self._piece_upload_key = None
+
+    @staticmethod
+    def _highlight_key(render_state: OthelloRenderState) -> tuple[object, ...]:
+        return (bool(render_state.enabled), render_state.legal_move_indices, render_state.hover_square_index, render_state.last_move_index)
+
+    @staticmethod
+    def _piece_key(render_state: OthelloRenderState) -> tuple[object, ...]:
+        return (bool(render_state.enabled), render_state.board, render_state.animations)
 
     def draw(self, *, render_state: OthelloRenderState | None, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: ShadowParams, shadow_info: ShadowMapInfo) -> PassFrameMetrics:
         if self._world_prog is None or self._board_mesh is None or self._piece_mesh is None or render_state is None or not bool(render_state.enabled):
@@ -90,7 +103,10 @@ class OthelloPass:
                 instances += int(board_rows.shape[0])
 
             if int(piece_rows.shape[0]) > 0:
-                self._piece_mesh.upload_instances(piece_rows)
+                piece_key = self._piece_key(render_state)
+                if self._piece_upload_key != piece_key:
+                    self._piece_mesh.upload_instances(piece_rows)
+                    self._piece_upload_key = piece_key
                 glDepthMask(True)
                 glBindVertexArray(int(self._piece_mesh.vao))
                 glDrawArraysInstanced(GL_TRIANGLES, 0, int(self._piece_mesh.vertex_count), int(piece_rows.shape[0]))
@@ -99,7 +115,10 @@ class OthelloPass:
                 instances += int(piece_rows.shape[0])
 
             if int(highlight_rows.shape[0]) > 0:
-                self._board_mesh.upload_instances(highlight_rows)
+                highlight_key = self._highlight_key(render_state)
+                if self._highlight_upload_key != highlight_key:
+                    self._board_mesh.upload_instances(highlight_rows)
+                    self._highlight_upload_key = highlight_key
                 glDepthMask(False)
                 glBindVertexArray(int(self._board_mesh.vao))
                 glDrawArraysInstanced(GL_TRIANGLES, 0, int(self._board_mesh.vertex_count), int(highlight_rows.shape[0]))
@@ -122,7 +141,10 @@ class OthelloPass:
         if piece_rows.size <= 0 or int(piece_rows.shape[0]) <= 0:
             return (0, 0)
 
-        self._piece_mesh.upload_instances(piece_rows)
+        piece_key = self._piece_key(render_state)
+        if self._piece_upload_key != piece_key:
+            self._piece_mesh.upload_instances(piece_rows)
+            self._piece_upload_key = piece_key
 
         with GLStateGuard(capture_framebuffer=False, capture_viewport=False, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE), capture_cull_mode=False, capture_polygon_mode=False):
             glDisable(GL_BLEND)

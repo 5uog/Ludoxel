@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from ..blocks.state.state_view import def_from_state, world_state_at
 from ..blocks.structure.structural_rules import is_fence_gate
 from .gravity_system import GRAVITY_AFFECTED_TAG
 
+
 @dataclass(frozen=True)
 class CollisionReport:
     supported_before: bool
@@ -27,11 +28,13 @@ class CollisionReport:
     step_up_dy: float
     y_correction_dy: float
 
+
 @dataclass(frozen=True)
 class SupportBlockContact:
     cell: tuple[int, int, int]
     block_state: str
     support_y: float
+
 
 @dataclass(frozen=True)
 class _HorizontalMoveResult:
@@ -39,6 +42,7 @@ class _HorizontalMoveResult:
     hit_ground: bool
     stepped_up: bool
     step_up_dy: float
+
 
 def _normalize_exempt_cells(collision_exempt_cell: object) -> frozenset[tuple[int, int, int]]:
     if collision_exempt_cell is None:
@@ -54,6 +58,7 @@ def _normalize_exempt_cells(collision_exempt_cell: object) -> frozenset[tuple[in
                 out.add((int(cell[0]), int(cell[1]), int(cell[2])))
         return frozenset(out)
     return frozenset()
+
 
 def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
     pxz = int(params.nearby_xz_pad)
@@ -72,6 +77,7 @@ def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
             for z in range(z0, z1 + 1):
                 if (x, y, z) in world.blocks:
                     yield x, y, z
+
 
 def _active_fence_gate_overlap_exemption(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry) -> tuple[int, int, int] | None:
     cell = player.fence_gate_overlap_exemption
@@ -98,6 +104,7 @@ def _active_fence_gate_overlap_exemption(player: PlayerEntity, world: WorldState
     player.fence_gate_overlap_exemption = None
     return None
 
+
 def _active_gravity_block_overlap_exemptions(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry) -> frozenset[tuple[int, int, int]]:
     cells = tuple(player.gravity_block_overlap_exemptions)
     if not cells:
@@ -119,6 +126,7 @@ def _active_gravity_block_overlap_exemptions(player: PlayerEntity, world: WorldS
     player.gravity_block_overlap_exemptions = tuple(sorted(active))
     return frozenset(active)
 
+
 def _active_collision_exempt_cells(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry) -> frozenset[tuple[int, int, int]]:
     out: set[tuple[int, int, int]] = set()
     fence_gate_cell = _active_fence_gate_overlap_exemption(player, world, block_registry=block_registry)
@@ -127,7 +135,8 @@ def _active_collision_exempt_cells(player: PlayerEntity, world: WorldState, *, b
     out.update(_active_gravity_block_overlap_exemptions(player, world, block_registry=block_registry))
     return frozenset(out)
 
-def _iter_block_aabbs(world: WorldState, bx: int, by: int, bz: int, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None):
+
+def _iter_block_aabbs(world: WorldState, bx: int, by: int, bz: int, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None):
     if (int(bx), int(by), int(bz)) in _normalize_exempt_cells(collision_exempt_cell):
         return
 
@@ -142,18 +151,21 @@ def _iter_block_aabbs(world: WorldState, bx: int, by: int, bz: int, *, block_reg
     for ba in collision_aabbs_for_block(str(st), lambda x, y, z: world_state_at(world, x, y, z), block_registry.get, int(bx), int(by), int(bz)):
         yield ba
 
-def _iter_intersections(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None):
+
+def _iter_intersections(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None):
     for bx, by, bz in _iter_nearby_blocks(world, probe, params):
         for ba in _iter_block_aabbs(world, bx, by, bz, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
             if probe.intersects(ba):
                 yield (int(bx), int(by), int(bz), ba)
 
-def _any_intersection(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
+
+def _any_intersection(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> bool:
     for _bx, _by, _bz, _ba in _iter_intersections(world, probe, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
         return True
     return False
 
-def _depenetrate(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> tuple[Vec3, Vec3]:
+
+def _depenetrate(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> tuple[Vec3, Vec3]:
     eps = float(params.eps)
     current = Vec3(float(pos.x), float(pos.y), float(pos.z))
     total_shift = Vec3(0.0, 0.0, 0.0)
@@ -179,7 +191,8 @@ def _depenetrate(player: PlayerEntity, world: WorldState, pos: Vec3, params: Col
 
     return (current, total_shift)
 
-def _has_support_at(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
+
+def _has_support_at(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> bool:
     eps = float(params.eps)
     gp = float(params.ground_probe)
 
@@ -187,10 +200,12 @@ def _has_support_at(player: PlayerEntity, world: WorldState, pos: Vec3, params: 
     probe = AABB(mn=Vec3(aabb.mn.x, aabb.mn.y - gp, aabb.mn.z), mx=Vec3(aabb.mx.x, aabb.mn.y + eps, aabb.mx.z))
     return _any_intersection(world, probe, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
 
-def _ground_probe(player: PlayerEntity, world: WorldState, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
+
+def _ground_probe(player: PlayerEntity, world: WorldState, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> bool:
     return _has_support_at(player, world, player.position, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
 
-def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, collision_exempt_cell: tuple[int, int, int] | None = None) -> SupportBlockContact | None:
+
+def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS, collision_exempt_cell: tuple[int, int, int] | None=None) -> SupportBlockContact | None:
     feet_y = float(player.position.y)
     eps = float(max(float(params.eps), 1e-5))
     probe_depth = float(max(float(params.ground_probe), eps * 2.0, 0.25))
@@ -223,6 +238,7 @@ def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_regi
 
     return best_contact
 
+
 def _backoff(delta: float, step: float) -> float:
     if abs(delta) <= step:
         return 0.0
@@ -232,7 +248,8 @@ def _backoff(delta: float, step: float) -> float:
         return max(0.0, v)
     return min(0.0, v)
 
-def _resolve_downward_snap(player: PlayerEntity, world: WorldState, pos: Vec3, drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> tuple[Vec3, bool]:
+
+def _resolve_downward_snap(player: PlayerEntity, world: WorldState, pos: Vec3, drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> tuple[Vec3, bool]:
     eps = float(params.eps)
     dy = -float(max(0.0, drop))
     if dy >= 0.0:
@@ -251,16 +268,19 @@ def _resolve_downward_snap(player: PlayerEntity, world: WorldState, pos: Vec3, d
 
     return Vec3(pos_y.x, float(best_support_y) + eps, pos_y.z), True
 
-def _has_support_within_drop(player: PlayerEntity, world: WorldState, pos: Vec3, max_drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
+
+def _has_support_within_drop(player: PlayerEntity, world: WorldState, pos: Vec3, max_drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> bool:
     _p, hit = _resolve_downward_snap(player, world, pos, float(max_drop), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
     return bool(hit)
 
-def _has_sneak_support(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
+
+def _has_sneak_support(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> bool:
     if _has_support_at(player, world, pos, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
         return True
     return _has_support_within_drop(player, world, pos, float(params.step_height), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
 
-def _apply_sneak_edge_clamp(player: PlayerEntity, world: WorldState, pos: Vec3, delta: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> Vec3:
+
+def _apply_sneak_edge_clamp(player: PlayerEntity, world: WorldState, pos: Vec3, delta: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> Vec3:
     step = float(params.sneak_step)
     dx = float(delta.x)
     dz = float(delta.z)
@@ -295,7 +315,8 @@ def _apply_sneak_edge_clamp(player: PlayerEntity, world: WorldState, pos: Vec3, 
 
     return Vec3(dx, delta.y, dz)
 
-def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: float, dz: float, height: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> Vec3 | None:
+
+def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: float, dz: float, height: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> Vec3 | None:
     sh = float(max(0.0, height))
     if sh <= 1e-6:
         return None
@@ -314,7 +335,8 @@ def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: 
 
     return landed
 
-def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> Vec3:
+
+def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> Vec3:
     eps = float(params.eps)
     pos_axis = pos_try
     aabb = player.aabb_at(pos_axis)
@@ -337,7 +359,8 @@ def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: V
 
     return pos_axis
 
-def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: Vec3, *, axis: str, delta: float, allow_step: bool, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> _HorizontalMoveResult:
+
+def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: Vec3, *, axis: str, delta: float, allow_step: bool, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None=None) -> _HorizontalMoveResult:
     if str(axis) == "x":
         pos_try = Vec3(pos.x + float(delta), pos.y, pos.z)
         step_dx = float(delta)
@@ -355,7 +378,8 @@ def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: 
     pos_axis = _axis_collision_position(player, world, pos_try, axis=str(axis), delta=float(delta), params=params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
     return _HorizontalMoveResult(pos=pos_axis, hit_ground=False, stepped_up=False, step_up_dy=0.0)
 
-def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, dz: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS) -> bool:
+
+def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, dz: float, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS) -> bool:
     pos = player.position
     if abs(float(dx)) + abs(float(dz)) <= 1e-9:
         return False
@@ -370,7 +394,8 @@ def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, 
 
     return True
 
-def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, crouch: bool = False, jump_pressed: bool = False, flying: bool = False) -> CollisionReport:
+
+def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS, crouch: bool=False, jump_pressed: bool=False, flying: bool=False) -> CollisionReport:
     is_flying = bool(flying)
     collision_exempt_cell = _active_collision_exempt_cells(player, world, block_registry=block_registry)
     rising_eps = float(max(float(params.eps), 1e-6))

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .app_state_schema import AppState, PersistedOthelloSpace, PersistedPlaySpace, PlayerStateFile, WorldStateFile
 from .json_file_store import JsonFileStore
+
 
 @dataclass
 class AppStateStore:

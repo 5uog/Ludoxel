@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -25,21 +25,26 @@ from ..runtime.render_metrics import PassFrameMetrics
 from .shadow_map_pass import ShadowMapInfo
 from .textured_face_pass import TexturedFacePass
 
+
 def _empty_face_rows() -> tuple[np.ndarray, ...]:
     return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
+
 
 def _append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: UVRect) -> None:
     row = list(np.asarray(model, dtype=np.float32).reshape(16))
     row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
     buffers[int(face_idx)].append(row)
 
+
 def _rows_from_buffers(buffers: list[list[list[float]]]) -> tuple[np.ndarray, ...]:
     return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+
 
 def _uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float]) -> UVRect:
     u0_a, v0_a, u1_a, v1_a = texture_uv
     px0, py0, px1, py1 = px_rect
     return (float(u0_a + (u1_a - u0_a) * (float(px0) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py0) / 16.0)), float(u0_a + (u1_a - u0_a) * (float(px1) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py1) / 16.0)))
+
 
 def _face_uv_from_atlas(textured_box: TexturedBox, face_idx: int, texture_uv: UVRect, *, kind: str) -> UVRect:
     face_uv_pixels = textured_box.face_uv_pixels
@@ -52,6 +57,7 @@ def _face_uv_from_atlas(textured_box: TexturedBox, face_idx: int, texture_uv: UV
         return fence_gate_uv_rect(texture_uv, int(face_idx), textured_box.box)
     return sub_uv_rect(texture_uv, int(face_idx), textured_box.box)
 
+
 def _model_matrix_for_box(parent_transform: np.ndarray, box) -> np.ndarray:
     center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
     center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
@@ -63,6 +69,7 @@ def _model_matrix_for_box(parent_transform: np.ndarray, box) -> np.ndarray:
 
     return compose_matrices(parent_transform, translate_matrix(center_x, center_y, center_z), scale_matrix(size_x, size_y, size_z))
 
+
 @dataclass
 class PlayerModelPass:
     _face_pass: TexturedFacePass | None = None
@@ -72,6 +79,7 @@ class PlayerModelPass:
     _skin_texture: ImageTexture | None = None
     _uv_lookup: Callable[[str, int], UVRect] | None = None
     _special_item_textures: dict[str, ImageTexture] = field(default_factory=dict)
+    _shadow_upload_key: tuple[object, ...] | None = None
 
     def initialize(self, *, face_prog: ShaderProgram, shadow_prog: ShaderProgram, atlas: TextureAtlas, skin_texture: ImageTexture, uv_lookup: Callable[[str, int], UVRect]) -> None:
         self._face_pass = TexturedFacePass()
@@ -82,6 +90,7 @@ class PlayerModelPass:
         self._skin_texture = skin_texture
         self._uv_lookup = uv_lookup
         self._special_item_textures = {"start": ImageTexture.from_image(build_special_item_icon_image("start", size=192)), "settings": ImageTexture.from_image(build_special_item_icon_image("settings", size=192))}
+        self._shadow_upload_key = None
 
     def destroy(self) -> None:
         if self._face_pass is not None:
@@ -94,6 +103,7 @@ class PlayerModelPass:
         self._atlas = None
         self._skin_texture = None
         self._uv_lookup = None
+        self._shadow_upload_key = None
         for texture in self._special_item_textures.values():
             texture.destroy()
         self._special_item_textures.clear()
@@ -157,7 +167,10 @@ class PlayerModelPass:
         if rows.size <= 0 or int(rows.shape[0]) <= 0:
             return (0, 0)
 
-        self._shadow_mesh.upload_instances(rows)
+        shadow_upload_key = (id(rows), int(rows.shape[0]))
+        if self._shadow_upload_key != shadow_upload_key:
+            self._shadow_mesh.upload_instances(rows)
+            self._shadow_upload_key = shadow_upload_key
 
         with GLStateGuard(capture_framebuffer=False, capture_viewport=False, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE), capture_cull_mode=False, capture_polygon_mode=False):
             glDisable(GL_BLEND)

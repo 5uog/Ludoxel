@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,10 +10,11 @@ _HEAD_YAW_LIMIT_DEG = 55.0
 _HEAD_PITCH_LIMIT_DEG = 35.0
 _DRAG_YAW_SCALE_DEG_PER_PX = 0.9
 
+
 class PlayerSkinPreviewWidget(QWidget):
     view_changed = pyqtSignal()
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self._frame_image = QImage()
         self._body_yaw_deg = 0.0
@@ -40,6 +41,8 @@ class PlayerSkinPreviewWidget(QWidget):
     def set_frame_image(self, image: QImage) -> None:
         next_image = QImage(image)
         if next_image.isNull() and self._frame_image.isNull():
+            return
+        if (not next_image.isNull() and not self._frame_image.isNull() and int(next_image.cacheKey()) == int(self._frame_image.cacheKey()) and abs(float(next_image.devicePixelRatio()) - float(self._frame_image.devicePixelRatio())) <= 1e-9):
             return
         self._frame_image = next_image
         self.update()

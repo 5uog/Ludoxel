@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,8 +8,10 @@ from ..blocks.registry.block_registry import BlockRegistry
 from .player_render_state import FirstPersonRenderState, PlayerRenderState
 from .first_person_motion import FirstPersonMotionSample
 
+
 def compose_player_render_state(*, snapshot: RenderSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry) -> PlayerRenderState:
     return compose_player_render_state_from_parts(player_model=snapshot.player_model, motion=motion, block_registry=block_registry)
+
 
 def compose_player_render_state_from_parts(*, player_model: PlayerModelSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry) -> PlayerRenderState:
     visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from ..managers.session_manager import SessionManager
 from .my_world.session_factory import create_my_world_session
 from .othello.session_factory import create_othello_session
 
+
 @dataclass
 class PlaySpaceContext:
     my_world: SessionManager
@@ -17,7 +18,7 @@ class PlaySpaceContext:
     active_space_id: str = PLAY_SPACE_MY_WORLD
 
     @staticmethod
-    def create_default(seed: int = 0) -> "PlaySpaceContext":
+    def create_default(seed: int=0) -> "PlaySpaceContext":
         registry = create_default_registry()
 
         my_world = create_my_world_session(seed=int(seed), block_registry=registry)

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from .visible_faces import iter_visible_faces
 
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
+
 
 @dataclass(frozen=True)
 class SelectionOutlineBuilder:
@@ -36,16 +37,16 @@ class SelectionOutlineBuilder:
         mxx, mxy, mxz = mx
 
         if int(face_idx) == 0:
-            return ([(mxx, mny, mnz),(mxx, mxy, mnz),(mxx, mxy, mxz),(mxx, mny, mxz)],(1.0, 0.0, 0.0))
+            return ([(mxx, mny, mnz), (mxx, mxy, mnz), (mxx, mxy, mxz), (mxx, mny, mxz)], (1.0, 0.0, 0.0))
         if int(face_idx) == 1:
-            return ([(mnx, mny, mxz),(mnx, mxy, mxz),(mnx, mxy, mnz),(mnx, mny, mnz)],(-1.0, 0.0, 0.0))
+            return ([(mnx, mny, mxz), (mnx, mxy, mxz), (mnx, mxy, mnz), (mnx, mny, mnz)], (-1.0, 0.0, 0.0))
         if int(face_idx) == 2:
-            return ([(mnx, mxy, mnz),(mxx, mxy, mnz),(mxx, mxy, mxz),(mnx, mxy, mxz)],(0.0, 1.0, 0.0))
+            return ([(mnx, mxy, mnz), (mxx, mxy, mnz), (mxx, mxy, mxz), (mnx, mxy, mxz)], (0.0, 1.0, 0.0))
         if int(face_idx) == 3:
-            return ([(mnx, mny, mxz),(mxx, mny, mxz),(mxx, mny, mnz),(mnx, mny, mnz)],(0.0, -1.0, 0.0))
+            return ([(mnx, mny, mxz), (mxx, mny, mxz), (mxx, mny, mnz), (mnx, mny, mnz)], (0.0, -1.0, 0.0))
         if int(face_idx) == 4:
-            return ([(mnx, mny, mxz),(mnx, mxy, mxz),(mxx, mxy, mxz),(mxx, mny, mxz)],(0.0, 0.0, 1.0))
-        return ([(mxx, mny, mnz),(mxx, mxy, mnz),(mnx, mxy, mnz),(mnx, mny, mnz)],(0.0, 0.0, -1.0))
+            return ([(mnx, mny, mxz), (mnx, mxy, mxz), (mxx, mxy, mxz), (mxx, mny, mxz)], (0.0, 0.0, 1.0))
+        return ([(mxx, mny, mnz), (mxx, mxy, mnz), (mnx, mxy, mnz), (mnx, mny, mnz)], (0.0, 0.0, -1.0))
 
     def build(self, *, x: int, y: int, z: int, state_str: str, get_state: GetState) -> np.ndarray:
         seen: set[tuple[int, ...]] = set()
@@ -60,7 +61,7 @@ class SelectionOutlineBuilder:
             oz = float(normal[2]) * eps
 
             pushed = [(px + ox, py + oy, pz + oz) for (px, py, pz) in pts]
-            edges = ((pushed[0], pushed[1]),(pushed[1], pushed[2]),(pushed[2], pushed[3]),(pushed[3], pushed[0]))
+            edges = ((pushed[0], pushed[1]), (pushed[1], pushed[2]), (pushed[2], pushed[3]), (pushed[3], pushed[0]))
 
             for a, b in edges:
                 key = self._edge_key(a, b)

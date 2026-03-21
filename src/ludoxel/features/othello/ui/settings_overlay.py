@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ..domain.game.types import OTHELLO_DIFFICULTY_INSANE, OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_STRONG, OTHELLO_DIFFICULTY_WEAK, OTHELLO_TIME_CONTROL_NONE, OTHELLO_TIME_CONTROL_PER_SIDE_20M, SIDE_BLACK, SIDE_WHITE, OthelloSettings
+
 
 class OthelloSettingsOverlay(QWidget):
     back_requested = pyqtSignal()
@@ -54,9 +55,9 @@ class OthelloSettingsOverlay(QWidget):
         sep.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(sep)
 
-        self._difficulty = self._add_combo(layout, panel, "AI difficulty",((OTHELLO_DIFFICULTY_WEAK, "Weak"),(OTHELLO_DIFFICULTY_MEDIUM, "Medium"),(OTHELLO_DIFFICULTY_STRONG, "Strong"),(OTHELLO_DIFFICULTY_INSANE, "Insane")))
-        self._time_control = self._add_combo(layout, panel, "Time control",((OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"),(OTHELLO_TIME_CONTROL_NONE, "No limit")))
-        self._player_side = self._add_combo(layout, panel, "Player order",((SIDE_BLACK, "Player moves first"),(SIDE_WHITE, "Player moves second")))
+        self._difficulty = self._add_combo(layout, panel, "AI difficulty", ((OTHELLO_DIFFICULTY_WEAK, "Weak"), (OTHELLO_DIFFICULTY_MEDIUM, "Medium"), (OTHELLO_DIFFICULTY_STRONG, "Strong"), (OTHELLO_DIFFICULTY_INSANE, "Insane")))
+        self._time_control = self._add_combo(layout, panel, "Time control", ((OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"), (OTHELLO_TIME_CONTROL_NONE, "No limit")))
+        self._player_side = self._add_combo(layout, panel, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
 
         btn_save = QPushButton("Save", panel)
         btn_save.setObjectName("menuBtn")

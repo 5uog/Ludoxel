@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,10 +8,12 @@ from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QFont, QFontMetrics
 from PyQt6.QtWidgets import QWidget, QLabel
 
+
 @dataclass(frozen=True)
 class _FitResult:
     text: str
     h: int
+
 
 class HUDWidget(QWidget):
 
@@ -160,7 +162,7 @@ class HUDWidget(QWidget):
         right_on = bool(str(self._raw_right_text).strip())
 
         if left_on and right_on:
-            panel_w = max(1, min(int(self._max_panel_w),(int(aw) - int(self._panel_gap)) // 2))
+            panel_w = max(1, min(int(self._max_panel_w), (int(aw) - int(self._panel_gap)) // 2))
         else:
             panel_w = max(1, min(int(self._max_panel_w), int(aw)))
 

@@ -1,8 +1,9 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class CollisionParams:
@@ -13,5 +14,6 @@ class CollisionParams:
     nearby_y_down_pad: int = 2
     nearby_y_up_pad: int = 1
     sneak_step: float = 0.05
+
 
 DEFAULT_COLLISION_PARAMS = CollisionParams()

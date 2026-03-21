@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,8 +8,10 @@ from PyQt6.QtWidgets import QSizePolicy, QWidget
 
 from ..hud.crosshair_art import CROSSHAIR_GRID_SIZE, CROSSHAIR_MODE_CUSTOM, CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_pixels, render_crosshair_image
 
+
 class CrosshairPreviewWidget(QWidget):
-    def __init__(self, parent: QWidget | None = None) -> None:
+
+    def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self._mode: str = CROSSHAIR_MODE_DEFAULT
         self._custom_pixels: tuple[str, ...] = EMPTY_CROSSHAIR_PIXELS
@@ -43,10 +45,11 @@ class CrosshairPreviewWidget(QWidget):
         top = (int(self.height()) - int(image.height())) // 2
         painter.drawImage(int(left), int(top), image)
 
+
 class CrosshairPixelEditor(QWidget):
     pixels_changed = pyqtSignal(object)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self._pixels: tuple[str, ...] = EMPTY_CROSSHAIR_PIXELS
         self._drag_value: str | None = None

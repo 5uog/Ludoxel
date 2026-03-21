@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from ..gl.shader_program import ShaderProgram
 from ..gl.mesh_buffer import MeshBuffer
 from ..resources.image_texture import ImageTexture
 from ..resources.texture_atlas import TextureAtlas
+
 
 @dataclass
 class GLResources:
@@ -83,7 +84,7 @@ class GLResources:
         self.player_model_shadow_prog.destroy()
 
         if int(self.empty_vao) != 0:
-            glDeleteVertexArrays(1,[int(self.empty_vao)])
+            glDeleteVertexArrays(1, [int(self.empty_vao)])
             self.empty_vao = 0
 
     def replace_skin_texture(self, image: QImage) -> ImageTexture:

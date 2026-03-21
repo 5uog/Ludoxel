@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -38,11 +38,13 @@ _FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
 _FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20
 _THIRD_PERSON_WORLD_NEAR = 0.01
 
+
 def _first_person_viewmodel_fov_deg(world_fov_deg: float) -> float:
     fov = float(world_fov_deg)
     if fov <= float(_FIRST_PERSON_REFERENCE_FOV_DEG):
         return fov
     return float(_FIRST_PERSON_REFERENCE_FOV_DEG) + (fov - float(_FIRST_PERSON_REFERENCE_FOV_DEG)) * float(_FIRST_PERSON_HIGH_FOV_WEIGHT)
+
 
 @dataclass(frozen=True)
 class FramePipeline:
@@ -70,6 +72,11 @@ class FramePipeline:
         return (ok, int(info.size) if ok else 0)
 
     def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None, othello_state: OthelloRenderState | None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...]) -> RendererFrameMetrics:
+        bx = int(math.floor(float(eye.x)))
+        by = int(math.floor(float(eye.y)))
+        bz = int(math.floor(float(eye.z)))
+        cam_ck = chunk_key(bx, by, bz)
+
         use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
         if bool(use_light_space):
             shadow_info_pre = self.shadow_pass.info()
@@ -81,7 +88,8 @@ class FramePipeline:
 
         shadow_metrics = PassFrameMetrics()
         if bool(self.state.shadow_enabled):
-            shadow_metrics = self.shadow_pass.render(light_vp, extra_draw=(lambda vp: (lambda player_result, othello_result: (int(player_result[0]) + int(othello_result[0]), int(player_result[1]) + int(othello_result[1])))(self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp), self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp))))
+            othello_shadow_key = None if othello_state is None else (bool(othello_state.enabled), othello_state.board, othello_state.animations)
+            shadow_metrics = self.shadow_pass.render(light_vp, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), extra_draw=(lambda vp: (lambda player_result, othello_result: (int(player_result[0]) + int(othello_result[0]), int(player_result[1]) + int(othello_result[1])))(self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp), self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp))), extra_cache_key=(player_state, othello_shadow_key))
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
@@ -91,7 +99,7 @@ class FramePipeline:
         world_near = float(self.cfg.camera.z_near)
         if player_state is not None and not bool(player_state.is_first_person):
             world_near = min(float(world_near), float(_THIRD_PERSON_WORLD_NEAR))
-        proj = mat4.perspective(fov_deg,(w / max(h, 1)), float(world_near), float(self.cfg.camera.z_far))
+        proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(self.cfg.camera.z_far))
         vp = mat4.mul(proj, view)
 
         glViewport(0, 0, w, h)
@@ -106,11 +114,6 @@ class FramePipeline:
         glDepthFunc(GL_LESS)
 
         shadow_info = self.shadow_pass.info()
-
-        bx = int(math.floor(float(eye.x)))
-        by = int(math.floor(float(eye.y)))
-        bz = int(math.floor(float(eye.z)))
-        cam_ck = chunk_key(bx, by, bz)
 
         sel_mode, sx, sy, sz = self.selection.world_inputs()
 
@@ -135,7 +138,7 @@ class FramePipeline:
         if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None or first_person.visible_special_item_icon is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
             hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
-            hand_vp = mat4.perspective(hand_fov_deg,(w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
+            hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
             if first_person.visible_special_item_icon is not None:
                 self.special_item_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             elif first_person.visible_block_id is not None:

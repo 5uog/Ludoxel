@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,20 +13,24 @@ from ..gl.gl_state_guard import GLStateGuard
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.shader_program import ShaderProgram
 
+
 @dataclass
 class TexturedFacePass:
     _prog: ShaderProgram | None = None
     _meshes: tuple[MeshBuffer, ...] = ()
+    _upload_keys: tuple[tuple[object, ...] | None, ...] = ()
 
     def initialize(self, prog: ShaderProgram) -> None:
         self._prog = prog
         self._meshes = tuple(MeshBuffer.create_quad_transform_instanced(face) for face in range(6))
+        self._upload_keys = (None, None, None, None, None, None)
 
     def destroy(self) -> None:
         for mesh in self._meshes:
             mesh.destroy()
         self._meshes = ()
         self._prog = None
+        self._upload_keys = ()
 
     def draw(self, *, face_rows: tuple[np.ndarray, ...], view_proj: np.ndarray, tex_id: int, sun_dir: Vec3) -> tuple[int, int]:
         if self._prog is None or len(self._meshes) != 6 or int(tex_id) == 0:
@@ -54,7 +58,12 @@ class TexturedFacePass:
                 if rows.size <= 0 or int(rows.shape[0]) <= 0:
                     continue
                 mesh = self._meshes[int(face_idx)]
-                mesh.upload_instances(rows)
+                upload_key = (id(rows), int(rows.shape[0]))
+                if self._upload_keys[int(face_idx)] != upload_key:
+                    mesh.upload_instances(rows)
+                    upload_keys = list(self._upload_keys)
+                    upload_keys[int(face_idx)] = upload_key
+                    self._upload_keys = tuple(upload_keys)
                 glBindVertexArray(int(mesh.vao))
                 glDrawArraysInstanced(GL_TRIANGLES, 0, int(mesh.vertex_count), int(rows.shape[0]))
                 glBindVertexArray(0)

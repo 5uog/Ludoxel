@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -16,17 +16,19 @@ from ...world.config.render_distance import clamp_render_distance_chunks
 from ...math.chunking.chunk_grid import ChunkKey, chunk_key, normalize_chunk_key
 from ...world.world_state import WorldState
 from .gl_renderer import GLRenderer
-from ...rendering.chunk_face_payload_cpu import build_chunk_face_payload_sources
+from ...rendering.chunk_face_payload_cpu import build_chunk_mesh_cpu
+
 
 @dataclass(frozen=True)
 class _BuildResult:
     world_token: int
     chunk: ChunkKey
     chunk_rev: int
-    gpu_face_sources: np.ndarray
-    gpu_bucket_counts: tuple[int, int, int, int, int, int]
+    faces: tuple[np.ndarray, ...]
+
 
 class WorldUploadTracker:
+
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorldMeshBuild")
         self._pending: Dict[tuple[int, ChunkKey], Future] = {}
@@ -71,7 +73,7 @@ class WorldUploadTracker:
         while len(self._build_cache) > int(self._max_cached_results):
             self._build_cache.popitem(last=False)
 
-    def reset(self, renderer: GLRenderer, *, world: WorldState | None = None) -> None:
+    def reset(self, renderer: GLRenderer, *, world: WorldState | None=None) -> None:
         renderer.evict_chunks(keep_chunks=set())
         self._active_world_token = None if world is None else self._world_token(world)
         self._want_rev.clear()
@@ -123,7 +125,7 @@ class WorldUploadTracker:
             if int(self._resident_rev.get(ck, -1)) == int(r.chunk_rev):
                 continue
 
-            renderer.submit_chunk(chunk_key=ck, world_revision=int(r.chunk_rev), gpu_face_sources=r.gpu_face_sources, gpu_bucket_counts=r.gpu_bucket_counts)
+            renderer.submit_chunk(chunk_key=ck, world_revision=int(r.chunk_rev), faces=list(r.faces))
             self._resident_rev[ck] = int(r.chunk_rev)
             drained += 1
 
@@ -137,7 +139,7 @@ class WorldUploadTracker:
         return normalize_chunk_key(chunk_key(bx, by, bz))
 
     @staticmethod
-    def _needed_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, y_pad: int = 1) -> list[ChunkKey]:
+    def _needed_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, y_pad: int=1) -> list[ChunkKey]:
         cx, cy, cz = normalize_chunk_key(center)
         r = int(max(0, rd))
 
@@ -153,7 +155,7 @@ class WorldUploadTracker:
         return out
 
     @staticmethod
-    def _retained_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, y_pad: int = 2, margin: int = 4) -> set[ChunkKey]:
+    def _retained_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, y_pad: int=2, margin: int=4) -> set[ChunkKey]:
         keep = WorldUploadTracker._needed_chunks(existing, center, int(max(0, int(rd))) + int(max(0, int(margin))), y_pad=int(max(0, int(y_pad))))
         return set(keep)
 
@@ -184,6 +186,7 @@ class WorldUploadTracker:
 
     @staticmethod
     def _make_state_getter(state_at: dict[tuple[int, int, int], str]):
+
         def get_state(x: int, y: int, z: int) -> str | None:
             return state_at.get((int(x), int(y), int(z)))
 
@@ -192,8 +195,8 @@ class WorldUploadTracker:
     @staticmethod
     def _build_result_for_snapshot(world_token: int, chunk_key: ChunkKey, chunk_rev: int, blocks_local: list[tuple[int, int, int, str]], get_state, uv_lookup, def_lookup) -> _BuildResult:
         ck = normalize_chunk_key(chunk_key)
-        gpu_face_sources, gpu_bucket_counts = build_chunk_face_payload_sources(blocks=blocks_local, get_state=get_state, uv_lookup=uv_lookup, def_lookup=def_lookup)
-        return _BuildResult(world_token=int(world_token), chunk=ck, chunk_rev=int(chunk_rev), gpu_face_sources=gpu_face_sources, gpu_bucket_counts=gpu_bucket_counts)
+        faces_np, _shadow_faces_np = build_chunk_mesh_cpu(blocks=blocks_local, get_state=get_state, uv_lookup=uv_lookup, def_lookup=def_lookup)
+        return _BuildResult(world_token=int(world_token), chunk=ck, chunk_rev=int(chunk_rev), faces=tuple(faces_np))
 
     def _schedule_build(self, *, world: WorldState, renderer: GLRenderer, ck: ChunkKey, chunk_rev: int) -> None:
         ck = normalize_chunk_key(ck)
@@ -226,7 +229,13 @@ class WorldUploadTracker:
         if f is not None and not f.done():
             if int(self._pending_rev.get(pending_key, -1)) == int(chunk_rev):
                 return
-            return
+            try:
+                if not bool(f.cancel()):
+                    return
+            except Exception:
+                return
+            self._pending.pop(pending_key, None)
+            self._pending_rev.pop(pending_key, None)
 
         blocks_local, state_at = world.snapshot_for_chunk_build(ck)
         get_state = self._make_state_getter(state_at)

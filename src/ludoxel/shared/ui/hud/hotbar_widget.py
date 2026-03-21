@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11,8 +11,10 @@ from ...blocks.registry.block_registry import BlockRegistry
 from ...world.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import ItemPhotoProvider, apply_item_slot_state, hotbar_slot_tooltip
 
+
 class _DisplaySlot(QPushButton):
-    def __init__(self, parent: QWidget | None = None) -> None:
+
+    def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self.setObjectName("slot")
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -27,8 +29,10 @@ class _DisplaySlot(QPushButton):
         pixmap = photos.pixmap_for_block(bid) if bid else None
         apply_item_slot_state(self, item_id=bid, tooltip=tooltip, selected=selected, pixmap=pixmap)
 
+
 class HotbarWidget(QWidget):
-    def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:
+
+    def __init__(self, *, parent: QWidget | None=None, project_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
         self._registry = registry
@@ -84,7 +88,7 @@ class HotbarWidget(QWidget):
         self._panel.adjustSize()
         pw = int(self._panel.sizeHint().width())
         ph = int(self._panel.sizeHint().height())
-        x = max(0,(int(self.width()) - pw) // 2)
+        x = max(0, (int(self.width()) - pw) // 2)
         y = max(0, int(self.height()) - ph - 18)
         self._panel.setGeometry(x, y, pw, ph)
 

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -23,12 +23,14 @@ INTERACTION_ACTION_BREAK = "break"
 INTERACTION_ACTION_PLACE = "place"
 INTERACTION_ACTION_INTERACT = "interact"
 
+
 @dataclass(frozen=True)
 class InteractionOutcome:
     success: bool
     action: str | None = None
     target_block_state: str | None = None
     target_position: tuple[int, int, int] | None = None
+
 
 @dataclass
 class InteractionService:
@@ -44,12 +46,12 @@ class InteractionService:
     def create(cls, *, world: WorldState, player: PlayerEntity, block_registry: BlockRegistry) -> "InteractionService":
         return cls(world=world, player=player, block_registry=block_registry)
 
-    def _pick_target(self, reach: float, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> BlockPick | None:
+    def _pick_target(self, reach: float, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> BlockPick | None:
         eye = self.player.eye_pos() if origin is None else origin
         direction = self.player.view_forward() if direction is None else direction
         return pick_block(self.world, origin=eye, direction=direction, reach=float(reach), block_registry=self.block_registry)
 
-    def _commit_world_edit(self, *, updates: dict[tuple[int, int, int], str] | None = None, removals: tuple[tuple[int, int, int], ...] = ()) -> None:
+    def _commit_world_edit(self, *, updates: dict[tuple[int, int, int], str] | None=None, removals: tuple[tuple[int, int, int], ...]=()) -> None:
         normalized_updates = {(int(k[0]), int(k[1]), int(k[2])): str(v) for k, v in (updates or {}).items()}
         normalized_removals = tuple((int(k[0]), int(k[1]), int(k[2])) for k in removals)
         touched = set(normalized_updates.keys()) | set(normalized_removals)
@@ -61,7 +63,7 @@ class InteractionService:
         final_updates.update(structural_updates)
         self.world.set_blocks_bulk(updates=final_updates, removals=normalized_removals)
 
-    def break_block(self, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> InteractionOutcome:
+    def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> InteractionOutcome:
         hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
             return InteractionOutcome(success=False)
@@ -189,7 +191,7 @@ class InteractionService:
 
         return self._apply_place_state(cell=place_cell, place_state=str(place_state))
 
-    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None) -> InteractionOutcome:
+    def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None) -> InteractionOutcome:
         hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
             return InteractionOutcome(success=False)

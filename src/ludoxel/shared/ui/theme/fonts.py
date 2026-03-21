@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,10 +8,12 @@ from pathlib import Path
 from PyQt6.QtGui import QFont, QFontDatabase
 from PyQt6.QtWidgets import QApplication
 
+
 @dataclass(frozen=True)
 class FontInstallResult:
     ok: bool
     family: str
+
 
 def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
     d = Path(font_dir)
@@ -44,6 +46,7 @@ def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
         preferred = families[0]
 
     return FontInstallResult(ok=True, family=str(preferred))
+
 
 def apply_application_font(*, app: QApplication, family: str, point_size: int=12) -> None:
     fam = str(family)

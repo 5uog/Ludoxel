@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,12 +13,13 @@ from ...blocks.registry.block_registry import BlockRegistry
 from ...world.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import DraggableItemButton, ItemPhotoProvider, apply_item_slot_state, hotbar_index_from_key, hotbar_slot_tooltip, item_id_from_mime
 
+
 class _InventoryBlockButton(DraggableItemButton):
     activated = pyqtSignal(str)
     hovered_block = pyqtSignal(str)
     hover_left = pyqtSignal()
 
-    def __init__(self, block_id: str, display_name: str, parent: QWidget | None = None) -> None:
+    def __init__(self, block_id: str, display_name: str, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self._block_id = str(block_id)
         self._display_name = str(display_name)
@@ -48,11 +49,12 @@ class _InventoryBlockButton(DraggableItemButton):
         self.hover_left.emit()
         super().leaveEvent(e)
 
+
 class _HotbarSlotButton(DraggableItemButton):
     slot_selected = pyqtSignal(int)
     block_dropped = pyqtSignal(int, str)
 
-    def __init__(self, slot_index: int, parent: QWidget | None = None) -> None:
+    def __init__(self, slot_index: int, parent: QWidget | None=None) -> None:
         super().__init__(parent)
         self._slot_index = int(slot_index)
         self._block_id = ""
@@ -106,13 +108,14 @@ class _HotbarSlotButton(DraggableItemButton):
         self.slot_selected.emit(int(self._slot_index))
         e.acceptProposedAction()
 
+
 class InventoryOverlay(QWidget):
     closed = pyqtSignal()
     block_selected = pyqtSignal(str)
     hotbar_slot_selected = pyqtSignal(int)
     hotbar_slot_assigned = pyqtSignal(int, str)
 
-    def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:
+    def __init__(self, *, parent: QWidget | None=None, project_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
         self._reg = registry

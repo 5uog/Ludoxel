@@ -24,16 +24,17 @@ in float v_alpha;
 in vec4 v_lightPos;
 out vec4 fragColor;
 
+float shadow_sample(vec3 uvz, float bias) {
+    float z = uvz.z - bias;
+    return texture(u_shadowMap, vec3(uvz.xy, z));
+}
+
 float shadow_pcf4(vec3 uvz, float bias) {
     vec2 t = u_shadowTexel;
-
-    float z = uvz.z - bias;
-
-    float s0 = texture(u_shadowMap, vec3(uvz.xy + vec2(-0.5, -0.5) * t, z));
-    float s1 = texture(u_shadowMap, vec3(uvz.xy + vec2( 0.5, -0.5) * t, z));
-    float s2 = texture(u_shadowMap, vec3(uvz.xy + vec2(-0.5,  0.5) * t, z));
-    float s3 = texture(u_shadowMap, vec3(uvz.xy + vec2( 0.5,  0.5) * t, z));
-
+    float s0 = shadow_sample(vec3(uvz.xy + vec2(-0.5, -0.5) * t, uvz.z), bias);
+    float s1 = shadow_sample(vec3(uvz.xy + vec2(0.5, -0.5) * t, uvz.z), bias);
+    float s2 = shadow_sample(vec3(uvz.xy + vec2(-0.5, 0.5) * t, uvz.z), bias);
+    float s3 = shadow_sample(vec3(uvz.xy + vec2(0.5, 0.5) * t, uvz.z), bias);
     return 0.25 * (s0 + s1 + s2 + s3);
 }
 
@@ -58,7 +59,7 @@ float shadow_factor(float ndl) {
 
 void main() {
     vec3 n = normalize(v_normal);
-    vec3 light_dir = normalize(u_sunDir);
+    vec3 light_dir = u_sunDir;
 
     float lambert = max(dot(n, light_dir), 0.0);
     float sh = (lambert > 1e-6) ? shadow_factor(lambert) : 1.0;

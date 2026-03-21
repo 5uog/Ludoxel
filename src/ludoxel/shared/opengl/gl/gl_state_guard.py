@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,10 +8,12 @@ from types import TracebackType
 
 from OpenGL.GL import glGetIntegerv, glIsEnabled, glEnable, glDisable, glBindFramebuffer, glViewport, glCullFace, glPolygonMode, GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_VIEWPORT, GL_CULL_FACE_MODE, GL_POLYGON_MODE, GL_FRONT_AND_BACK
 
+
 @dataclass(frozen=True)
 class _EnableCapState:
     cap: int
     enabled: bool
+
 
 class GLStateGuard:
 

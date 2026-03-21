@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtGui import QKeyEvent
 
 from ...application.runtime.keybinds import ACTION_CROUCH, ACTION_JUMP, ACTION_MOVE_BACKWARD, ACTION_MOVE_FORWARD, ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT, ACTION_SPRINT, KeybindSettings
+
 
 @dataclass
 class InputFrame:
@@ -22,6 +23,7 @@ class InputFrame:
 
     mdx: float = 0.0
     mdy: float = 0.0
+
 
 class QtInputAdapter(QObject):
 

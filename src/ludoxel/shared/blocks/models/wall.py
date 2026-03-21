@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,16 +8,19 @@ from .common import LocalBox, GetState, GetDef, rotate_box_y_cw
 from .dimensions import WALL_POST, WALL_ARM_LOW_NORTH, WALL_ARM_TALL_NORTH
 from ..structure.structural_rules import wall_side_from_neighbor_state, wall_up_rule
 
+
 def _norm_side(s: str) -> str:
     t = str(s)
     if t in ("none", "low", "tall"):
         return t
     return "none"
 
+
 def _arm_north(kind: str) -> LocalBox:
     if str(kind) == "tall":
         return WALL_ARM_TALL_NORTH
     return WALL_ARM_LOW_NORTH
+
 
 def boxes_for_wall(*, props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
     north = _norm_side(str(props.get("north", ""))) if "north" in props else wall_side_from_neighbor_state(get_state(int(x), int(y), int(z - 1)), side_from_neighbor="south", get_def=get_def)

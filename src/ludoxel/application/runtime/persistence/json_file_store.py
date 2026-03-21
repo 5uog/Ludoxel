@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass
@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+
 
 @dataclass(frozen=True)
 class JsonFileStore:

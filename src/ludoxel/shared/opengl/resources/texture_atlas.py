@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -15,10 +15,12 @@ from OpenGL.GL import glGenTextures, glTexImage2D, glTexSubImage2D, glBindTextur
 
 UVRect = Tuple[float, float, float, float]
 
+
 @dataclass(frozen=True)
 class AtlasTile:
     x: int
     y: int
+
 
 @dataclass
 class TextureAtlas:
@@ -119,8 +121,9 @@ class TextureAtlas:
 
     def destroy(self) -> None:
         if int(self.tex_id) != 0:
-            glDeleteTextures(1,[int(self.tex_id)])
+            glDeleteTextures(1, [int(self.tex_id)])
             self.tex_id = 0
+
 
 def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None=None, pad: int=1) -> list[tuple[str, QImage]]:
     out: list[tuple[str, QImage]] = []
@@ -150,6 +153,7 @@ def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None
 
     return out
 
+
 def _prep_image(img: QImage, *, tile_size: int, pad: int) -> QImage:
     image = img.convertToFormat(QImage.Format.Format_RGBA8888)
     if image.width() != tile_size or image.height() != tile_size:
@@ -161,6 +165,7 @@ def _prep_image(img: QImage, *, tile_size: int, pad: int) -> QImage:
         return image
 
     return _pad_extrude(image, pad=int(pad))
+
 
 def _pad_extrude(src: QImage, pad: int) -> QImage:
     p = int(max(0, pad))
@@ -185,6 +190,7 @@ def _pad_extrude(src: QImage, pad: int) -> QImage:
 
     painter.end()
     return dst
+
 
 def _placeholder(tile: int, c: QColor, pad: int=1) -> QImage:
     img = QImage(tile, tile, QImage.Format.Format_RGBA8888)

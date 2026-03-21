@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 from PyQt6.QtGui import QImage
 
 from OpenGL.GL import glBindTexture, glDeleteTextures, glTexParameteri, glGenTextures, glTexImage2D, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_RGBA, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_UNSIGNED_BYTE
+
 
 @dataclass
 class ImageTexture:
@@ -46,5 +47,5 @@ class ImageTexture:
 
     def destroy(self) -> None:
         if int(self.tex_id) != 0:
-            glDeleteTextures(1,[int(self.tex_id)])
+            glDeleteTextures(1, [int(self.tex_id)])
             self.tex_id = 0

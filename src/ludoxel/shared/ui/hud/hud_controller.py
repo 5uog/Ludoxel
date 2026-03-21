@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18,10 +18,13 @@ from .hud_payload import HudPayload
 from .player_metrics import PlayerMetricsTracker
 from ....application.boot.meta import __version__
 
+
 @dataclass(frozen=True)
 class HudFps:
     render_fps: float
+    submit_fps: float
     sim_fps: float
+
 
 @dataclass
 class _PyAllocState:
@@ -31,6 +34,7 @@ class _PyAllocState:
     last_bytes: int
     last_t: float
 
+
 @dataclass(frozen=True)
 class _ExternalMetrics:
     gpu_util_percent: float | None
@@ -38,14 +42,19 @@ class _ExternalMetrics:
     total_bytes: int | None
     updated_t: float
 
+
 class HudController:
 
     def __init__(self) -> None:
         self._fps_render: float = 0.0
+        self._fps_submit: float = 0.0
         self._fps_sim: float = 0.0
         self._fps_window_t0: float = time.perf_counter()
         self._fps_render_frames: int = 0
+        self._fps_present_frames: int = 0
         self._fps_sim_steps: int = 0
+        self._last_present_t: float = 0.0
+        self._present_signal_seen: bool = False
 
         self._hud_emit_last_t: float = 0.0
         self._hud_emit_interval_s: float = 0.12
@@ -54,17 +63,27 @@ class HudController:
         self._gpu = GpuUtilizationSampler(min_interval_s=2.0)
         self._metrics = PlayerMetricsTracker(recent_window_s=3.0)
 
-        if not tracemalloc.is_tracing():
-            tracemalloc.start()
-
         now = time.perf_counter()
-        cur, peak = tracemalloc.get_traced_memory()
+        cur = 0
+        peak = 0
         self._py = _PyAllocState(cur_bytes=int(cur), peak_bytes=int(peak), rate_mib_s=0.0, last_bytes=int(cur), last_t=float(now))
         self._py_last_sample_t: float = float(now)
 
         self._ext_lock = threading.Lock()
         self._ext = _ExternalMetrics(gpu_util_percent=None, rss_bytes=None, total_bytes=self._sys.total_mem_bytes, updated_t=0.0)
+        self._external_metrics_started = False
+        self._ext_thread: threading.Thread | None = None
 
+    def _ensure_external_metrics_started(self) -> None:
+        if bool(self._external_metrics_started):
+            return
+        self._external_metrics_started = True
+        if not tracemalloc.is_tracing():
+            tracemalloc.start()
+        cur, peak = tracemalloc.get_traced_memory()
+        now = time.perf_counter()
+        self._py = _PyAllocState(cur_bytes=int(cur), peak_bytes=int(peak), rate_mib_s=0.0, last_bytes=int(cur), last_t=float(now))
+        self._py_last_sample_t = float(now)
         self._ext_thread = threading.Thread(target=self._external_probe_loop, name="HudExternalProbe", daemon=True)
         self._ext_thread.start()
 
@@ -90,6 +109,12 @@ class HudController:
         self._fps_render_frames += 1
         self._maybe_update_fps()
 
+    def on_present_frame(self) -> None:
+        self._fps_present_frames += 1
+        self._last_present_t = time.perf_counter()
+        self._present_signal_seen = True
+        self._maybe_update_fps()
+
     def on_sim_step(self, *, dt: float, player, jump_started: bool) -> None:
         self._fps_sim_steps += 1
         self._maybe_update_fps()
@@ -101,15 +126,21 @@ class HudController:
         if dt < 0.5:
             return
 
-        self._fps_render = float(self._fps_render_frames) / dt if dt > 1e-9 else 0.0
+        self._fps_submit = float(self._fps_render_frames) / dt if dt > 1e-9 else 0.0
+        present_recent = bool(self._present_signal_seen) and (float(now - self._last_present_t) <= 1.0)
+        if bool(present_recent):
+            self._fps_render = float(self._fps_present_frames) / dt if dt > 1e-9 else 0.0
+        else:
+            self._fps_render = float(self._fps_submit)
         self._fps_sim = float(self._fps_sim_steps) / dt if dt > 1e-9 else 0.0
 
         self._fps_window_t0 = now
         self._fps_render_frames = 0
+        self._fps_present_frames = 0
         self._fps_sim_steps = 0
 
     def fps(self) -> HudFps:
-        return HudFps(render_fps=float(self._fps_render), sim_fps=float(self._fps_sim))
+        return HudFps(render_fps=float(self._fps_render), submit_fps=float(self._fps_submit), sim_fps=float(self._fps_sim))
 
     def should_emit(self) -> bool:
         now = time.perf_counter()
@@ -140,6 +171,8 @@ class HudController:
         return f"{float(v):.{digits}f}"
 
     def _update_py_alloc(self) -> None:
+        if not bool(self._external_metrics_started) or not tracemalloc.is_tracing():
+            return
         now = time.perf_counter()
         if (now - float(self._py_last_sample_t)) < 0.35:
             return
@@ -171,6 +204,7 @@ class HudController:
         return c, r
 
     def _build_left_text(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, creative_mode: bool, flying: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> str:
+        self._ensure_external_metrics_started()
         fps = self.fps()
         t_txt = "inf" if int(render_timer_interval_ms) <= 0 else f"{(1000.0 / float(render_timer_interval_ms)):.0f}"
         vs = "vsync" if bool(vsync_on) else "nosync"
@@ -223,7 +257,7 @@ class HudController:
         rd = clamp_render_distance_chunks(int(render_distance_chunks))
 
         lines: list[str] = []
-        lines.append(f"FPS {fps.render_fps:.1f} | SIM {fps.sim_fps:.1f} | T {t_txt}  {vs}")
+        lines.append(f"FPS {fps.render_fps:.1f} | Submit {fps.submit_fps:.1f} | SIM {fps.sim_fps:.1f} | T {t_txt}  {vs}")
         lines.append("F4 shadow-debug  F3 HUD  ESC menu  Click capture\n")
         lines.append(f"GPU {gpu_txt} | {mem_line}\nAlloc {self._py.rate_mib_s:.1f} MiB/s")
         lines.append(f"CPU paint {float(paint_ms):.2f} ms\nworld {float(world_perf.cpu_ms):.2f} ms | shadow {float(shadow_perf.cpu_ms):.2f} ms | pick {float(selection_pick_ms):.2f} ms")

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolic
 
 from ...world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, is_my_world_space, normalize_play_space_id
 from .player_skin_preview_widget import PlayerSkinPreviewWidget
+
 
 class PauseOverlay(QWidget):
     resume_requested = pyqtSignal()

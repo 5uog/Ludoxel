@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from ....features.othello.domain.inventory.special_items import get_special_item
 from ....features.othello.ui.special_item_art import build_special_item_icon_image
 from ...blocks.state.state_codec import parse_state
 
+
 @dataclass(frozen=True)
 class PhotoPaths:
     project_root: Path
@@ -23,10 +24,11 @@ class PhotoPaths:
     def mc_item_dir(self) -> Path:
         return self.project_root / "assets" / "minecraft" / "textures" / "item"
 
+
 class ItemPhotoProvider(QObject):
     pixmap_changed = pyqtSignal(str)
 
-    def __init__(self, *, project_root: Path, registry: BlockRegistry, icon_size: int = 36) -> None:
+    def __init__(self, *, project_root: Path, registry: BlockRegistry, icon_size: int=36) -> None:
         super().__init__(None)
         self._root = Path(project_root)
         self._reg = registry

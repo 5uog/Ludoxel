@@ -2094,6 +2094,7 @@ src/ludoxel/shared/ui/common/hotbar_visuals.py
 src/ludoxel/shared/ui/common/item_photo_provider.py
 src/ludoxel/shared/ui/common/item_slots.py
 src/ludoxel/shared/ui/common/settings_controls.py
+src/ludoxel/shared/ui/common/status_overlay.py
 src/ludoxel/shared/ui/config/game_loop_params.py
 src/ludoxel/shared/ui/config/gl_surface_format.py
 src/ludoxel/shared/ui/config/pause_overlay_params.py
@@ -2123,6 +2124,7 @@ src/ludoxel/shared/ui/viewport/controllers/__init__.py
 src/ludoxel/shared/ui/viewport/controllers/interaction_controller.py
 src/ludoxel/shared/ui/viewport/controllers/settings_controller.py
 src/ludoxel/shared/ui/viewport/runtime/__init__.py
+src/ludoxel/shared/ui/viewport/runtime/frame_sync.py
 src/ludoxel/shared/ui/viewport/runtime/input_controller.py
 src/ludoxel/shared/ui/viewport/runtime/overlay_controller.py
 src/ludoxel/shared/ui/viewport/runtime/selection_state.py

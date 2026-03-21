@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from ..math.chunking.chunk_grid import ChunkKey, chunk_key, neighbor_chunk_keys_
 
 BlockKey = Tuple[int, int, int]
 ColumnKey = Tuple[int, int]
+
 
 @dataclass
 class WorldState:
@@ -204,7 +205,7 @@ class WorldState:
             self._mark_gravity_dirty_cell(int(x), int(y), int(z))
             self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))
 
-    def set_blocks_bulk(self, *, updates: Dict[BlockKey, str] | None = None, removals: Iterable[BlockKey] = ()) -> None:
+    def set_blocks_bulk(self, *, updates: Dict[BlockKey, str] | None=None, removals: Iterable[BlockKey]=()) -> None:
         upd_in = updates or {}
 
         norm_updates: Dict[BlockKey, str] = {}

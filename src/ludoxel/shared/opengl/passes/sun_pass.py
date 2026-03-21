@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,7 +12,9 @@ from ...math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram
 from ..runtime.gl_renderer_params import SunParams
 
+
 class SunPass:
+
     def __init__(self, cfg: SunParams) -> None:
         self._cfg = cfg
         self._prog: ShaderProgram | None = None

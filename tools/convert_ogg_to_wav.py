@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,10 +12,12 @@ ASSETS_ROOT = PROJECT_ROOT / "assets"
 
 _EXCLUDED_RELATIVE_PREFIXES: tuple[Path, ...] = (Path("ambient/my_world"), Path("audio/ambient/my_world"))
 
+
 def require_ffmpeg() -> None:
     if shutil.which("ffmpeg") is None:
         print("error: ffmpeg was not found on PATH", file=sys.stderr)
         raise SystemExit(1)
+
 
 def require_assets_root() -> None:
     if not ASSETS_ROOT.exists():
@@ -24,6 +26,7 @@ def require_assets_root() -> None:
     if not ASSETS_ROOT.is_dir():
         print(f"error: assets path is not a directory: {ASSETS_ROOT}", file=sys.stderr)
         raise SystemExit(1)
+
 
 def is_excluded(src: Path) -> bool:
     try:
@@ -37,13 +40,16 @@ def is_excluded(src: Path) -> bool:
             return True
     return False
 
+
 def collect_ogg_files() -> list[Path]:
     files = [path for path in ASSETS_ROOT.rglob("*") if path.is_file() and path.suffix.lower() == ".ogg" and not is_excluded(path)]
     files.sort()
     return files
 
+
 def destination_for(src: Path) -> Path:
     return src.with_suffix(".wav")
+
 
 def convert_one(src: Path, dst: Path) -> bool:
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -72,6 +78,7 @@ def convert_one(src: Path, dst: Path) -> bool:
     print(f"ok: {src} -> {dst} (source deleted)")
     return True
 
+
 def main() -> int:
     require_ffmpeg()
     require_assets_root()
@@ -94,6 +101,7 @@ def main() -> int:
 
     print(f"done: success={success_count} failed={failure_count}")
     return 0 if failure_count == 0 else 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

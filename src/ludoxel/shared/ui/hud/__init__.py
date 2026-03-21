@@ -1,8 +1,9 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 __all__ = ["HudPayload", "HudController", "PlayerMetricsSnapshot", "PlayerMetricsTracker"]
+
 
 def __getattr__(name: str):
     if str(name) == "HudPayload":

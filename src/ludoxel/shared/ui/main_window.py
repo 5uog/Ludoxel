@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -6,42 +6,16 @@ from pathlib import Path
 
 from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtGui import QScreen
-from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QMainWindow, QVBoxLayout
+from PyQt6.QtWidgets import QApplication, QMainWindow
 
 from ...application.boot.meta import __version__
+from .common.status_overlay import StatusOverlayFrame
 from .config.gl_surface_format import install_default_gl_surface_format
 from .game_screen import GameScreen
 from .theme.fonts import install_minecraft_fonts, apply_application_font
 
 _MIN_WINDOW_WIDTH = 980
 _MIN_WINDOW_HEIGHT = 620
-
-class _StartupSplash(QFrame):
-    def __init__(self, *, status_text: str) -> None:
-        super().__init__(None, Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen)
-        self.setObjectName("startupSplash")
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet("QFrame#startupSplash { background: #121212; }" "QLabel#startupTitle { color: #f4f4f4; font-size: 28px; font-weight: 700; }" "QLabel#startupStatus { color: #c8c8c8; font-size: 14px; }")
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
-        layout.addStretch(1)
-
-        title = QLabel("Ludoxel", self)
-        title.setObjectName("startupTitle")
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout.addWidget(title)
-
-        self._status = QLabel("", self)
-        self._status.setObjectName("startupStatus")
-        self._status.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout.addWidget(self._status)
-
-        layout.addStretch(1)
-        self.set_status_text(status_text)
-
-    def set_status_text(self, text: str) -> None:
-        self._status.setText(str(text).strip() or "Loading...")
 
 
 def _screen_for_restore(app: QApplication, *, screen_name: str, left: int | None, top: int | None, width: int, height: int) -> QScreen | None:
@@ -81,7 +55,9 @@ def _restored_window_geometry(screen: QScreen | None, *, left: int | None, top: 
 
     return QRect(int(clamped_left), int(clamped_top), int(clamped_width), int(clamped_height))
 
+
 class MainWindow(QMainWindow):
+
     def __init__(self, project_root: Path) -> None:
         super().__init__()
         self._project_root = Path(project_root)
@@ -137,6 +113,7 @@ class MainWindow(QMainWindow):
         if self.isVisible() and not self.isFullScreen():
             self._persist_window_geometry()
 
+
 def run_app(*, project_root: Path) -> None:
     install_default_gl_surface_format()
 
@@ -165,7 +142,7 @@ def run_app(*, project_root: Path) -> None:
         splash_geometry = restore_geometry
         w.setGeometry(restore_geometry)
 
-    splash = _StartupSplash(status_text="Preparing viewport...")
+    splash = StatusOverlayFrame(title_text="Ludoxel", status_text="Preparing viewport...", object_name="startupSplash", title_object_name="startupTitle", status_object_name="startupStatus", flags=Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen)
     splash.setGeometry(splash_geometry)
     splash.show()
     splash.raise_()

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -17,12 +17,14 @@ from .face_occlusion import is_block_face_occluded, is_local_face_occluded
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
+
 @dataclass(frozen=True)
 class VisibleFace:
     box: LocalBox
     face_idx: int
     mn: tuple[float, float, float]
     mx: tuple[float, float, float]
+
 
 def _neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, get_state: GetState, def_lookup: DefLookup) -> bool:
     dx, dy, dz = face_neighbor_offset(int(face_idx))
@@ -41,11 +43,13 @@ def _neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, get_s
 
     return bool(nd.is_full_cube) and bool(nd.is_solid)
 
+
 def _boundary_neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, box: LocalBox, get_state: GetState, def_lookup: DefLookup) -> bool:
     if not face_touches_cell_boundary(int(face_idx), box):
         return False
 
     return _neighbor_is_full_cube_solid(x=int(x), y=int(y), z=int(z), face_idx=int(face_idx), get_state=get_state, def_lookup=def_lookup)
+
 
 def iter_visible_faces(*, x: int, y: int, z: int, state_str: str, get_state: GetState, def_lookup: DefLookup, fast_boundary_full_cube_only: bool=False) -> Iterator[VisibleFace]:
     base, _props = parse_state(str(state_str))

@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -39,11 +39,13 @@ from ....features.othello.ui.viewport import othello_controller as othello_contr
 from ...rendering.first_person_motion import FirstPersonMotionController
 from ...rendering.player_skin import PLAYER_SKIN_KIND_ALEX, load_player_skin_image
 from ...rendering.player_render_state_composer import compose_player_render_state
+from .runtime.frame_sync import ViewportFrameSync
 from .runtime.input_controller import ViewportInput
 from .runtime.overlay_controller import OverlayRefs, ViewportOverlays
 from .runtime.selection_state import ViewportSelectionState
 from ...opengl.runtime.world_upload_tracker import WorldUploadTracker
 from ...rendering.third_person_camera import resolve_camera
+
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -52,7 +54,7 @@ class GLViewportWidget(QOpenGLWidget):
     loading_status_changed = pyqtSignal(str)
     loading_finished = pyqtSignal()
 
-    def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS) -> None:
+    def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams=DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
 
         self._project_root = Path(project_root)
@@ -87,36 +89,21 @@ class GLViewportWidget(QOpenGLWidget):
         self._othello_title_flash_text: str = ""
         self._othello_title_flash_until_s: float = 0.0
         self._last_othello_message: str = ""
+        self._othello_hud_signature: tuple[object, ...] | None = None
+        self._othello_render_state_cache_key: tuple[object, ...] | None = None
+        self._othello_render_state_cache = None
 
         self._last_paint_ms: float = 0.0
         self._last_selection_pick_ms: float = 0.0
         self._shutdown_done = False
         self._gl_initialized = False
         self._runtime_active = False
-        self._loading_active = True
-        self._loading_status = "Initializing renderer..."
-        self._loading_progress: tuple[int, int] = (-1, -1)
+        self._frame_sync = ViewportFrameSync()
         self._player_skin_image = QImage()
+        self._pause_preview_cache_key: tuple[object, ...] | None = None
+        self._pause_preview_frame = QImage()
         app = QGuiApplication.instance()
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
-
-        self._last_upload_eye: Vec3 | None = None
-        self._last_upload_world_revision: int = -1
-        self._last_upload_render_distance_chunks: int = -1
-        self._last_upload_session_token: int = -1
-        self._last_upload_time_s: float = 0.0
-        self._upload_interval_s: float = 1.0 / 20.0
-        self._upload_linear_threshold_sq: float = 1.0 * 1.0
-        self._force_upload_until_s: float = 0.0
-
-        self._last_selection_pose: tuple[float, float, float, float, float] | None = None
-        self._last_selection_space_id: str = ""
-        self._last_selection_world_revision: int = -1
-        self._last_selection_refresh_time_s: float = 0.0
-        self._selection_refresh_interval_s: float = 1.0 / 30.0
-        self._selection_linear_threshold_sq: float = 0.20 * 0.20
-        self._selection_angular_threshold_deg: float = 0.75
-        self._force_selection_until_s: float = 0.0
 
         self._overlay = PauseOverlay(self)
         self._settings = SettingsOverlay(self)
@@ -132,6 +119,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
 
         self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud), runner=self._runner, inp=self._inp)
+        self._overlay.preview_changed.connect(self._invalidate_pause_preview_cache)
         self._overlay.preview_changed.connect(self.update)
         settings_controller.bind_settings_overlay(self)
         othello_controller.bind_othello_controls(self)
@@ -139,6 +127,10 @@ class GLViewportWidget(QOpenGLWidget):
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
+        self.setUpdateBehavior(QOpenGLWidget.UpdateBehavior.NoPartialUpdate)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+        self.setAutoFillBackground(False)
 
         self._sim_timer = QTimer(self)
         self._sim_timer.setTimerType(Qt.TimerType.PreciseTimer)
@@ -149,8 +141,9 @@ class GLViewportWidget(QOpenGLWidget):
         self._render_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self._render_timer.setInterval(int(self._effective_render_timer_interval_ms()))
         self._render_timer.timeout.connect(self.update)
+        self.frameSwapped.connect(self._on_frame_swapped)
 
-        self.setFormat(build_gl_surface_format())
+        self.setFormat(build_gl_surface_format(vsync_on=False))
 
         self._state, persisted_othello_state = apply_persisted_state_if_present(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer)
         self._session = self._sessions.set_active_space(self._state.current_space_id)
@@ -184,7 +177,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.window_screen_name = str(screen_name or "")
         self._state.normalize()
 
-    def _push_player_skin_to_renderer(self, *, context_current: bool = False) -> None:
+    def _push_player_skin_to_renderer(self, *, context_current: bool=False) -> None:
         if self._player_skin_image.isNull() or self.context() is None:
             return
         if bool(context_current):
@@ -199,7 +192,7 @@ class GLViewportWidget(QOpenGLWidget):
             self.doneCurrent()
         self.update()
 
-    def _sync_player_skin_design(self, *, push_to_renderer: bool = False, context_current: bool = False) -> None:
+    def _sync_player_skin_design(self, *, push_to_renderer: bool=False, context_current: bool=False) -> None:
         try:
             image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind)
         except Exception:
@@ -209,6 +202,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._player_skin_image = QImage(image)
         self._overlay.set_player_skin(self._player_skin_image, slim_arm=True)
+        self._invalidate_pause_preview_cache()
         if bool(push_to_renderer):
             self._push_player_skin_to_renderer(context_current=bool(context_current))
 
@@ -218,48 +212,54 @@ class GLViewportWidget(QOpenGLWidget):
         save_state(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state)
 
     def loading_status_text(self) -> str:
-        return str(self._loading_status)
+        return self._frame_sync.loading.status_text()
 
     def loading_active(self) -> bool:
-        return bool(self._loading_active)
+        return bool(self._frame_sync.loading.active)
 
     def _set_loading_status(self, text: str) -> None:
-        next_text = str(text).strip() or "Loading..."
-        if next_text == str(self._loading_status):
+        if not self._frame_sync.loading.set_status(text):
             return
-        self._loading_status = str(next_text)
-        self.loading_status_changed.emit(str(self._loading_status))
+        self.loading_status_changed.emit(self._frame_sync.loading.status_text())
 
     def _begin_loading(self, text: str) -> None:
-        was_loading = bool(self._loading_active)
-        self._loading_active = True
-        self._loading_progress = (-1, -1)
+        became_active = self._frame_sync.loading.begin()
         self._set_loading_status(text)
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
-        if not bool(was_loading):
+        if bool(became_active):
             self.loading_state_changed.emit(True)
         self.update()
 
     def _finish_loading(self) -> None:
-        if not bool(self._loading_active):
+        if not self._frame_sync.loading.finish():
             return
-        self._loading_active = False
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
+        self._inp.ensure_mouse_capture_applied()
         self.loading_state_changed.emit(False)
         self.loading_finished.emit()
 
     def arm_resume_refresh(self) -> None:
-        now = time.perf_counter()
-        self._last_upload_eye = None
-        self._last_selection_pose = None
-        self._last_selection_space_id = ""
-        self._last_selection_world_revision = -1
+        self._frame_sync.arm_resume_refresh()
         self._last_selection_pick_ms = 0.0
-        self._force_upload_until_s = max(float(self._force_upload_until_s), float(now) + 0.18)
-        self._force_selection_until_s = max(float(self._force_selection_until_s), float(now) + 0.18)
         self.update()
+
+    def _invalidate_pause_preview_cache(self) -> None:
+        self._pause_preview_cache_key = None
+        self._pause_preview_frame = QImage()
+
+    def _clear_pause_preview_frame(self) -> None:
+        if self._pause_preview_cache_key is None and self._pause_preview_frame.isNull():
+            return
+        self._invalidate_pause_preview_cache()
+        self._overlay.set_player_preview_frame(QImage())
+
+    @staticmethod
+    def _pause_preview_key(*, player_state, width: int, height: int, device_pixel_ratio: float) -> tuple[object, ...] | None:
+        if player_state is None:
+            return None
+        return (int(width), int(height), round(float(device_pixel_ratio), 4), round(float(player_state.base_x), 4), round(float(player_state.base_y), 4), round(float(player_state.base_z), 4), round(float(player_state.body_yaw_deg), 4), round(float(player_state.head_yaw_deg), 4), round(float(player_state.head_pitch_deg), 4), round(float(player_state.limb_phase_rad), 4), round(float(player_state.limb_swing_amount), 4), round(float(player_state.crouch_amount), 4), bool(player_state.is_first_person))
 
     def _build_pause_preview_player_state(self, player_state) -> object:
         body_yaw_deg, head_yaw_deg, head_pitch_deg = self._overlay.player_preview_angles()
@@ -268,17 +268,23 @@ class GLViewportWidget(QOpenGLWidget):
         return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)
 
     def _update_pause_preview_frame(self, player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:
-        if not bool(self._overlays.paused()) or bool(self._loading_active):
-            self._overlay.set_player_preview_frame(QImage())
+        if not bool(self._overlays.paused()) or bool(self.loading_active()):
+            self._clear_pause_preview_frame()
             return
         preview_widget = self._overlay._skin_preview
         if int(preview_widget.width()) <= 1 or int(preview_widget.height()) <= 1:
-            self._overlay.set_player_preview_frame(QImage())
+            self._clear_pause_preview_frame()
             return
         w = max(1, int(round(float(preview_widget.width()) * max(1.0, float(dpr)))))
         h = max(1, int(round(float(preview_widget.height()) * max(1.0, float(dpr)))))
         preview_state = self._build_pause_preview_player_state(player_state)
+        preview_key = self._pause_preview_key(player_state=preview_state, width=int(w), height=int(h), device_pixel_ratio=float(dpr))
+        if preview_key is not None and self._pause_preview_cache_key == preview_key and not self._pause_preview_frame.isNull():
+            self._overlay.set_player_preview_frame(self._pause_preview_frame)
+            return
         frame = self._renderer.render_player_preview_frame(w=int(w), h=int(h), player_state=preview_state, restore_framebuffer=int(self.defaultFramebufferObject()), restore_viewport=(0, 0, int(fb_w), int(fb_h)), device_pixel_ratio=float(max(1.0, float(dpr))))
+        self._pause_preview_cache_key = preview_key
+        self._pause_preview_frame = QImage(frame)
         self._overlay.set_player_preview_frame(frame)
 
     def _on_application_state_changed(self, state) -> None:
@@ -297,6 +303,9 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _sync_runtime_activity(self) -> None:
         self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and bool(self._application_active) and (not bool(self._shutdown_done)))
+
+    def _on_frame_swapped(self) -> None:
+        self._hud_ctl.on_present_frame()
 
     def _set_runtime_active(self, active: bool) -> None:
         next_active = bool(active)
@@ -322,8 +331,7 @@ class GLViewportWidget(QOpenGLWidget):
         now = time.perf_counter()
         self._runner.start()
         self._last_paint_ms = 0.0
-        self._last_selection_refresh_time_s = float(now)
-        self._last_upload_time_s = float(now)
+        self._frame_sync.note_runtime_started(now=float(now))
         self.arm_resume_refresh()
         self._sim_timer.start()
         self._render_timer.start()
@@ -384,7 +392,8 @@ class GLViewportWidget(QOpenGLWidget):
         ms = int(self._loop.render_timer_interval_ms)
         if ms > 0:
             return ms
-        return 16
+        hz = max(120.0, float(self._loop.sim_hz))
+        return max(1, int(round(1000.0 / hz)))
 
     def set_hud(self, hud) -> None:
         self._hud = hud
@@ -394,10 +403,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _invalidate_selection_target(self) -> None:
         self._selection_state.invalidate()
-        self._last_selection_pose = None
-        self._last_selection_space_id = ""
-        self._last_selection_world_revision = -1
-        self._force_selection_until_s = time.perf_counter() + 0.12
+        self._frame_sync.selection.invalidate(force_duration_s=0.12)
 
     def fullscreen_enabled(self) -> bool:
         return bool(self._state.fullscreen)
@@ -423,7 +429,7 @@ class GLViewportWidget(QOpenGLWidget):
         return (eye, float(yaw_deg), float(pitch_deg), direction)
 
     def _gameplay_hud_active(self) -> bool:
-        return ((not bool(self._loading_active)) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
+        return ((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
 
     def _debug_hud_active(self) -> bool:
         return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
@@ -459,6 +465,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_paused_overlay(self, on: bool) -> None:
         self._overlays.set_paused(bool(on))
+        self._invalidate_pause_preview_cache()
         if not bool(on):
             self._overlay.set_player_preview_frame(QImage())
         self._sync_gameplay_hud_visibility()
@@ -481,92 +488,30 @@ class GLViewportWidget(QOpenGLWidget):
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
 
-    @staticmethod
-    def _angle_delta_deg(left: float, right: float) -> float:
-        delta = (float(left) - float(right) + 180.0) % 360.0 - 180.0
-        return abs(float(delta))
-
     def _arm_world_change_sync(self) -> None:
-        now = time.perf_counter()
-        self._force_upload_until_s = max(float(self._force_upload_until_s), now + 0.12)
-        self._force_selection_until_s = max(float(self._force_selection_until_s), now + 0.12)
+        self._frame_sync.arm_world_change_sync()
 
     def _upload_due(self, *, eye: Vec3) -> bool:
         session_token = int(id(self._session))
         world_revision = int(self._session.world.revision)
         render_distance = int(self._state.render_distance_chunks)
-        now = time.perf_counter()
-
-        if self._upload.has_ready_results():
-            return True
-        if not self._upload.visible_chunks_ready(world=self._session.world, eye=eye, render_distance_chunks=int(render_distance)):
-            return True
-        if world_revision != int(self._last_upload_world_revision):
+        if self._frame_sync.upload.world_revision_changed(world_revision=int(world_revision)):
             self._arm_world_change_sync()
-            return True
-        if now < float(self._force_upload_until_s):
-            return True
-        if session_token != int(self._last_upload_session_token):
-            return True
-        if render_distance != int(self._last_upload_render_distance_chunks):
-            return True
-        if self._last_upload_eye is None:
-            return True
-
-        dx = float(eye.x) - float(self._last_upload_eye.x)
-        dy = float(eye.y) - float(self._last_upload_eye.y)
-        dz = float(eye.z) - float(self._last_upload_eye.z)
-        moved_sq = (dx * dx) + (dy * dy) + (dz * dz)
-
-        if moved_sq < float(self._upload_linear_threshold_sq):
-            return False
-
-        return (now - float(self._last_upload_time_s)) >= float(self._upload_interval_s)
+        return self._frame_sync.upload.due(has_ready_results=self._upload.has_ready_results(), visible_chunks_ready=self._upload.visible_chunks_ready(world=self._session.world, eye=eye, render_distance_chunks=int(render_distance)), world_revision=int(world_revision), session_token=int(session_token), render_distance_chunks=int(render_distance), eye=eye)
 
     def _mark_upload(self, *, eye: Vec3) -> None:
-        self._last_upload_eye = Vec3(float(eye.x), float(eye.y), float(eye.z))
-        self._last_upload_world_revision = int(self._session.world.revision)
-        self._last_upload_render_distance_chunks = int(self._state.render_distance_chunks)
-        self._last_upload_session_token = int(id(self._session))
-        self._last_upload_time_s = time.perf_counter()
+        self._frame_sync.upload.mark(eye=eye, world_revision=int(self._session.world.revision), render_distance_chunks=int(self._state.render_distance_chunks), session_token=int(id(self._session)))
 
     def _selection_due(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> bool:
-        now = time.perf_counter()
         current_space_id = str(self._state.current_space_id)
         current_world_revision = int(self._session.world.revision)
 
-        if current_world_revision != int(self._last_selection_world_revision):
+        if self._frame_sync.selection.world_revision_changed(world_revision=int(current_world_revision)):
             self._arm_world_change_sync()
-            return True
-        if now < float(self._force_selection_until_s):
-            return True
-        if current_space_id != str(self._last_selection_space_id):
-            return True
-        if self._last_selection_pose is None:
-            return True
-        if not self._state.is_othello_space() and self._selection_state.target() is None:
-            return True
-        if (now - float(self._last_selection_refresh_time_s)) >= float(self._selection_refresh_interval_s):
-            px, py, pz, pyaw, ppitch = self._last_selection_pose
-            dx = float(eye.x) - float(px)
-            dy = float(eye.y) - float(py)
-            dz = float(eye.z) - float(pz)
-            moved_sq = (dx * dx) + (dy * dy) + (dz * dz)
-            yaw_delta = self._angle_delta_deg(float(yaw_deg), float(pyaw))
-            pitch_delta = self._angle_delta_deg(float(pitch_deg), float(ppitch))
-            if moved_sq >= float(self._selection_linear_threshold_sq):
-                return True
-            if yaw_delta >= float(self._selection_angular_threshold_deg):
-                return True
-            if pitch_delta >= float(self._selection_angular_threshold_deg):
-                return True
-        return False
+        return self._frame_sync.selection.due(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(current_space_id), current_world_revision=int(current_world_revision), target_present=(self._selection_state.target() is not None), is_othello_space=bool(self._state.is_othello_space()))
 
     def _mark_selection(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> None:
-        self._last_selection_pose = (float(eye.x), float(eye.y), float(eye.z), float(yaw_deg), float(pitch_deg))
-        self._last_selection_space_id = str(self._state.current_space_id)
-        self._last_selection_world_revision = int(self._session.world.revision)
-        self._last_selection_refresh_time_s = time.perf_counter()
+        self._frame_sync.selection.mark(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(self._state.current_space_id), current_world_revision=int(self._session.world.revision))
 
     def initializeGL(self) -> None:
         self._begin_loading("Initializing renderer...")
@@ -595,18 +540,7 @@ class GLViewportWidget(QOpenGLWidget):
             except Exception:
                 self._state.vsync_on = False
 
-        self._last_upload_eye = None
-        self._last_upload_world_revision = -1
-        self._last_upload_render_distance_chunks = -1
-        self._last_upload_session_token = -1
-        self._last_upload_time_s = 0.0
-        self._force_upload_until_s = time.perf_counter() + 0.12
-
-        self._last_selection_pose = None
-        self._last_selection_space_id = ""
-        self._last_selection_world_revision = -1
-        self._last_selection_refresh_time_s = 0.0
-        self._force_selection_until_s = time.perf_counter() + 0.12
+        self._frame_sync.reset_after_gl_initialize()
 
         self._sync_player_skin_design(push_to_renderer=True, context_current=True)
         settings_controller.apply_runtime_to_renderer(self)
@@ -653,6 +587,7 @@ class GLViewportWidget(QOpenGLWidget):
     def paintGL(self) -> None:
         paint_t0 = time.perf_counter()
         self._hud_ctl.on_render_frame()
+        self._inp.ensure_mouse_capture_applied()
 
         snap = self._make_render_snapshot()
         cam = snap.camera
@@ -665,11 +600,9 @@ class GLViewportWidget(QOpenGLWidget):
             self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=upload_eye, render_distance_chunks=int(self._state.render_distance_chunks))
             self._mark_upload(eye=upload_eye)
 
-        if bool(self._loading_active):
+        if bool(self.loading_active()):
             ready_chunks, total_chunks = self._upload.visible_load_progress(world=self._session.world, eye=upload_eye, render_distance_chunks=int(self._state.render_distance_chunks))
-            progress = (int(ready_chunks), int(total_chunks))
-            if progress != self._loading_progress:
-                self._loading_progress = progress
+            if self._frame_sync.loading.set_progress(ready_chunks=int(ready_chunks), total_chunks=int(total_chunks)):
                 if int(total_chunks) > 0:
                     self._set_loading_status(f"Loading world... {int(ready_chunks)}/{int(total_chunks)} chunks")
                 else:
@@ -677,7 +610,7 @@ class GLViewportWidget(QOpenGLWidget):
             if self._upload.visible_chunks_ready(world=self._session.world, eye=upload_eye, render_distance_chunks=int(self._state.render_distance_chunks)):
                 self._finish_loading()
 
-        if not bool(self._loading_active):
+        if not bool(self.loading_active()):
             if self._state.is_othello_space():
                 if self._selection_due(eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg)):
                     self._last_selection_pick_ms = 0.0
@@ -712,7 +645,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
-        if bool(self._loading_active) or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
+        if bool(self.loading_active()) or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
             return
         self._runner.update()
 
@@ -761,7 +694,7 @@ class GLViewportWidget(QOpenGLWidget):
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
-        if bool(self._loading_active):
+        if bool(self.loading_active()):
             e.accept()
             return
         if interaction_controller.handle_key_press(self, e):
@@ -769,14 +702,14 @@ class GLViewportWidget(QOpenGLWidget):
         super().keyPressEvent(e)
 
     def keyReleaseEvent(self, e) -> None:
-        if bool(self._loading_active):
+        if bool(self.loading_active()):
             e.accept()
             return
         self._inp.on_key_release(e)
         super().keyReleaseEvent(e)
 
     def wheelEvent(self, e: QWheelEvent) -> None:
-        if bool(self._loading_active):
+        if bool(self.loading_active()):
             e.accept()
             return
         if interaction_controller.handle_wheel(self, e):
@@ -784,14 +717,14 @@ class GLViewportWidget(QOpenGLWidget):
         super().wheelEvent(e)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
-        if bool(self._loading_active):
+        if bool(self.loading_active()):
             e.accept()
             return
         interaction_controller.handle_mouse_press(self, e)
         super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if bool(self._loading_active) or (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):
+        if bool(self.loading_active()) or (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):
             super().mouseMoveEvent(e)
             return
         e.accept()

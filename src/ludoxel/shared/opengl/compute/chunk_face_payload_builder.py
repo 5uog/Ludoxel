@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -14,10 +14,12 @@ from ..gl.array_view import as_float32_rows
 from ..gl.shader_program import ShaderProgram
 from ..gl.storage_buffer import StorageBuffer
 
+
 @dataclass(frozen=True)
 class ChunkFacePayloadSnapshot:
     face_buckets: list[np.ndarray]
     last_rev: int
+
 
 class ChunkFacePayloadBuilder:
 

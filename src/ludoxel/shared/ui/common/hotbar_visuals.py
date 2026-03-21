@@ -1,9 +1,10 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from ...blocks.registry.block_registry import BlockRegistry
 from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
+
 
 def _block_display_name(registry: BlockRegistry, block_id: str | None) -> str:
     bid = "" if block_id is None else str(block_id).strip()
@@ -18,6 +19,7 @@ def _block_display_name(registry: BlockRegistry, block_id: str | None) -> str:
     if block is None:
         return bid
     return str(block.display_name)
+
 
 def hotbar_slot_tooltip(registry: BlockRegistry, *, slot_index: int, block_id: str | None) -> str:
     bid = "" if block_id is None else str(block_id).strip()

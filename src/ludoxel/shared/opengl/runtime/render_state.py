@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from ...math.vec3 import Vec3
 from ...math.view_angles import sun_dir_from_az_el_deg
 from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+
 
 @dataclass
 class RendererRuntimeState:

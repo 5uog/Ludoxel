@@ -1,8 +1,9 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class MovementParams:
@@ -22,5 +23,6 @@ class MovementParams:
     fly_speed: float = 10.92
     fly_ascend_speed: float = 10.92
     fly_descend_speed: float = 10.92
+
 
 DEFAULT_MOVEMENT_PARAMS = MovementParams()

@@ -1,7 +1,8 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class FirstPersonRenderState:
@@ -23,6 +24,7 @@ class FirstPersonRenderState:
     view_bob_yaw_deg: float = 0.0
     view_bob_pitch_deg: float = 0.0
     view_bob_roll_deg: float = 0.0
+
 
 @dataclass(frozen=True)
 class PlayerRenderState:

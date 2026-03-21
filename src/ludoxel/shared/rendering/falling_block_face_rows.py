@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -18,8 +18,10 @@ from .uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 
+
 def _empty_face_rows() -> tuple[np.ndarray, ...]:
     return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
+
 
 def _model_matrix_for_box(*, base_x: float, base_y: float, base_z: float, box: LocalBox) -> np.ndarray:
     center_x = float(base_x) + 0.5 * (float(box.mn_x) + float(box.mx_x))
@@ -29,6 +31,7 @@ def _model_matrix_for_box(*, base_x: float, base_y: float, base_z: float, box: L
     size_y = float(box.mx_y) - float(box.mn_y)
     size_z = float(box.mx_z) - float(box.mn_z)
     return compose_matrices(translate_matrix(float(center_x), float(center_y), float(center_z)), scale_matrix(float(size_x), float(size_y), float(size_z)))
+
 
 def build_falling_block_face_rows(*, samples: tuple[FallingBlockRenderSampleDTO, ...], uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, ...]:
     if not samples:

@@ -1,21 +1,24 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 from PyQt6.QtCore import QPoint, Qt
-from PyQt6.QtGui import QCursor, QKeyEvent
+from PyQt6.QtGui import QCursor, QGuiApplication, QKeyEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 
 from ...qt_input_adapter import InputFrame, QtInputAdapter
+
 
 @dataclass
 class MouseDelta:
     dx: float
     dy: float
 
+
 class ViewportInput:
+
     def __init__(self, *, widget: QOpenGLWidget, adapter: QtInputAdapter) -> None:
         self._w = widget
         self._a = adapter
@@ -39,15 +42,39 @@ class ViewportInput:
         c = QPoint(self._w.width() // 2, self._w.height() // 2)
         return self._w.mapToGlobal(c)
 
+    @staticmethod
+    def _sync_override_cursor(*, hidden: bool) -> None:
+        app = QGuiApplication.instance()
+        if app is None:
+            return
+        override = app.overrideCursor()
+        blank = QCursor(Qt.CursorShape.BlankCursor)
+        if bool(hidden):
+            if override is None:
+                app.setOverrideCursor(blank)
+                return
+            if override.shape() != Qt.CursorShape.BlankCursor:
+                app.changeOverrideCursor(blank)
+            return
+        if override is not None and override.shape() == Qt.CursorShape.BlankCursor:
+            app.restoreOverrideCursor()
+
     def set_mouse_capture(self, on: bool) -> None:
         on = bool(on)
+        if bool(on) and bool(self._captured):
+            self.ensure_mouse_capture_applied()
+            return
         if on == self._captured:
             return
         self._captured = on
 
         if self._captured:
             self._w.setFocus(Qt.FocusReason.MouseFocusReason)
+            self._sync_override_cursor(hidden=True)
             self._w.setCursor(Qt.CursorShape.BlankCursor)
+            host_window = self._w.window()
+            if host_window is not None:
+                host_window.setCursor(Qt.CursorShape.BlankCursor)
             self._w.grabMouse()
             self._w.grabKeyboard()
             self._a.clear_mouse_delta()
@@ -57,13 +84,28 @@ class ViewportInput:
         else:
             self._w.releaseKeyboard()
             self._w.releaseMouse()
+            self._sync_override_cursor(hidden=False)
             self._w.unsetCursor()
+            host_window = self._w.window()
+            if host_window is not None:
+                host_window.unsetCursor()
             self._capture_sync_pending = False
             self._capture_sync_stable_polls = 0
+
+    def ensure_mouse_capture_applied(self) -> None:
+        if not bool(self._captured):
+            return
+        self._w.setFocus(Qt.FocusReason.MouseFocusReason)
+        self._sync_override_cursor(hidden=True)
+        self._w.setCursor(Qt.CursorShape.BlankCursor)
+        host_window = self._w.window()
+        if host_window is not None:
+            host_window.setCursor(Qt.CursorShape.BlankCursor)
 
     def poll_relative_mouse_delta(self) -> None:
         if not bool(self._captured):
             return
+        self.ensure_mouse_capture_applied()
         if self.capture_sync_pending():
             center = self._center_global()
             cur = QCursor.pos()

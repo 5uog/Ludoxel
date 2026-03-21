@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from ..resources.texture_atlas import TextureAtlas
 
 UVRect = tuple[float, float, float, float]
 DefLookup = Callable[[str], BlockDefinition | None]
+
 
 @dataclass(frozen=True)
 class BlockVisualResolver:
@@ -28,7 +29,7 @@ class BlockVisualResolver:
 
         uv = self.atlas.uv.get(str(tex_name))
         if uv is None:
-            uv = self.atlas.uv.get("default",(0.0, 0.0, 1.0, 1.0))
+            uv = self.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
 
         return (float(uv[0]), float(uv[1]), float(uv[2]), float(uv[3]))
 

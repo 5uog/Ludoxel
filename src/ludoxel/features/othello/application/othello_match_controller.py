@@ -1,4 +1,4 @@
-# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -7,25 +7,28 @@ from dataclasses import replace
 from ..domain.game.rules import apply_move, counts_for_board, create_initial_board, find_legal_moves, winner_for_board
 from ..domain.game.types import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_ANIMATING, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_IDLE, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_TIME_CONTROL_NONE, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, OthelloGameState, OthelloSettings, other_side, side_name
 
+
 def _turn_status_for_player_side(player_side: int, current_turn: int) -> str:
     if int(current_turn) == int(player_side):
         return OTHELLO_GAME_STATE_PLAYER_TURN
     return OTHELLO_GAME_STATE_AI_TURN
 
+
 class OthelloMatchController:
-    def __init__(self, *, default_settings: OthelloSettings | None = None, game_state: OthelloGameState | None = None) -> None:
+
+    def __init__(self, *, default_settings: OthelloSettings | None=None, game_state: OthelloGameState | None=None) -> None:
         self._default_settings = (default_settings or OthelloSettings()).normalized()
         self._state = (game_state or OthelloGameState()).normalized()
         self._state = self._coerce_loaded_state(self._state)
 
     def default_settings(self) -> OthelloSettings:
-        return self._default_settings.normalized()
+        return self._default_settings
 
     def set_default_settings(self, settings: OthelloSettings) -> None:
         self._default_settings = settings.normalized()
 
     def game_state(self) -> OthelloGameState:
-        return self._state.normalized()
+        return self._state
 
     def set_game_state(self, game_state: OthelloGameState) -> None:
         self._state = self._coerce_loaded_state(game_state.normalized())
