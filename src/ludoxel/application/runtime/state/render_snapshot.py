@@ -39,7 +39,15 @@ class PlayerModelSnapshotDTO:
     is_first_person: bool = True
 
 @dataclass(frozen=True)
+class FallingBlockRenderSampleDTO:
+    state_str: str
+    x: float
+    y: float
+    z: float
+
+@dataclass(frozen=True)
 class RenderSnapshotDTO:
     world_revision: int
     camera: CameraDTO
     player_model: PlayerModelSnapshotDTO
+    falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = ()

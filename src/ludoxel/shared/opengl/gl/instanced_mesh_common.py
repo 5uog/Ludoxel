@@ -9,7 +9,7 @@ import numpy as np
 from OpenGL.GL import GL_ARRAY_BUFFER, GL_FLOAT, GL_STATIC_DRAW, GL_STREAM_DRAW, glBindBuffer, glBindVertexArray, glBufferData, glDeleteBuffers, glDeleteVertexArrays, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glVertexAttribDivisor, glVertexAttribPointer
 
 from .array_view import as_float32_c_array, as_float32_rows
-from .buffer_upload import upload_array_buffer
+from .buffer_upload import upload_array_buffer, upload_array_buffer_range
 
 def enable_vertex_attr(location: int, size: int, stride_bytes: int, offset_bytes: int, *, divisor: int=0) -> None:
     glEnableVertexAttribArray(int(location))
@@ -41,6 +41,10 @@ def attach_instance_buffer(*, stride_bytes: int, attrs: tuple[tuple[int, int, in
 def upload_instance_rows(*, buffer: int, instance_data: np.ndarray, capacity_bytes: int) -> int:
     data = as_float32_c_array(instance_data)
     return upload_array_buffer(target=GL_ARRAY_BUFFER, buffer=int(buffer), usage=GL_STREAM_DRAW, data=data, capacity_bytes=int(capacity_bytes))
+
+def upload_instance_rows_range(*, buffer: int, instance_data: np.ndarray, capacity_bytes: int, row_offset: int, row_width: int) -> int:
+    data = as_float32_c_array(instance_data)
+    return upload_array_buffer_range(target=GL_ARRAY_BUFFER, buffer=int(buffer), data=data, offset_bytes=int(row_offset) * int(row_width) * 4, capacity_bytes=int(capacity_bytes))
 
 def destroy_mesh_handles(*, vao: int, buffers: tuple[int, ...]) -> None:
     for buffer in buffers:

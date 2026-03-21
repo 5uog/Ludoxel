@@ -3,11 +3,12 @@
 from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
-from typing import Dict, Tuple, Iterable, Any
+from typing import Any, Dict, Iterable, Tuple
 
 from ..math.chunking.chunk_grid import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
 
 BlockKey = Tuple[int, int, int]
+ColumnKey = Tuple[int, int]
 
 @dataclass
 class WorldState:
@@ -18,30 +19,48 @@ class WorldState:
 
     _dirty_chunks: set[ChunkKey] = field(default_factory=set, init=False, repr=False)
     _chunk_index: Dict[ChunkKey, set[BlockKey]] = field(default_factory=dict, init=False, repr=False)
+    _column_index: Dict[ColumnKey, set[int]] = field(default_factory=dict, init=False, repr=False)
 
     _chunk_mesh_rev: Dict[ChunkKey, int] = field(default_factory=dict, init=False, repr=False)
+    _gravity_dirty_columns: Dict[ColumnKey, int] = field(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self) -> None:
         with self._lock:
             self._rebuild_indexes_locked()
             self._reset_mesh_tracking_locked()
+            self._reset_gravity_tracking_locked()
 
     def _rebuild_indexes_locked(self) -> None:
         self._chunk_index.clear()
+        self._column_index.clear()
         for k in self.blocks.keys():
             kk = (int(k[0]), int(k[1]), int(k[2]))
             ck = chunk_key(int(kk[0]), int(kk[1]), int(kk[2]))
-            s = self._chunk_index.get(ck)
-            if s is None:
-                s = set()
-                self._chunk_index[ck] = s
-            s.add(kk)
+            chunk_members = self._chunk_index.get(ck)
+            if chunk_members is None:
+                chunk_members = set()
+                self._chunk_index[ck] = chunk_members
+            chunk_members.add(kk)
+
+            column_key = (int(kk[0]), int(kk[2]))
+            column_members = self._column_index.get(column_key)
+            if column_members is None:
+                column_members = set()
+                self._column_index[column_key] = column_members
+            column_members.add(int(kk[1]))
 
     def _reset_mesh_tracking_locked(self) -> None:
         self._chunk_mesh_rev.clear()
         for ck in self._chunk_index.keys():
             self._chunk_mesh_rev[ck] = 1
         self._dirty_chunks = set(self._chunk_index.keys())
+
+    def _reset_gravity_tracking_locked(self) -> None:
+        self._gravity_dirty_columns.clear()
+        for (x, z), ys in self._column_index.items():
+            if not ys:
+                continue
+            self._gravity_dirty_columns[(int(x), int(z))] = int(min(int(y) for y in ys))
 
     def existing_chunk_keys(self) -> set[ChunkKey]:
         with self._lock:
@@ -65,33 +84,71 @@ class WorldState:
             self._dirty_chunks.clear()
             return out
 
+    def consume_pending_gravity_columns(self) -> Dict[ColumnKey, int]:
+        with self._lock:
+            out = dict(self._gravity_dirty_columns)
+            self._gravity_dirty_columns.clear()
+            return out
+
     def snapshot_blocks(self) -> Dict[BlockKey, str]:
         with self._lock:
             return dict(self.blocks)
 
+    def snapshot_column(self, x: int, z: int) -> Dict[int, str]:
+        cx = int(x)
+        cz = int(z)
+        with self._lock:
+            ys = self._column_index.get((int(cx), int(cz)))
+            if not ys:
+                return {}
+            return {int(y): str(self.blocks[(int(cx), int(y), int(cz))]) for y in ys if (int(cx), int(y), int(cz)) in self.blocks}
+
+    def column_y_values(self, x: int, z: int) -> tuple[int, ...]:
+        with self._lock:
+            ys = self._column_index.get((int(x), int(z)))
+            if not ys:
+                return ()
+            return tuple(sorted(int(y) for y in ys))
+
     def _index_add(self, k: BlockKey) -> None:
         ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
-        s = self._chunk_index.get(ck)
-        if s is None:
-            s = set()
-            self._chunk_index[ck] = s
-        s.add((int(k[0]), int(k[1]), int(k[2])))
+        chunk_members = self._chunk_index.get(ck)
+        if chunk_members is None:
+            chunk_members = set()
+            self._chunk_index[ck] = chunk_members
+        chunk_members.add((int(k[0]), int(k[1]), int(k[2])))
+
+        column_key = (int(k[0]), int(k[2]))
+        column_members = self._column_index.get(column_key)
+        if column_members is None:
+            column_members = set()
+            self._column_index[column_key] = column_members
+        column_members.add(int(k[1]))
 
         if ck not in self._chunk_mesh_rev:
             self._chunk_mesh_rev[ck] = 1
 
     def _index_remove(self, k: BlockKey) -> None:
         ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
-        s = self._chunk_index.get(ck)
-        if s is None:
-            return
-        s.discard((int(k[0]), int(k[1]), int(k[2])))
-        if not s:
-            try:
-                del self._chunk_index[ck]
-            except KeyError:
-                pass
-            self._chunk_mesh_rev.pop(ck, None)
+        chunk_members = self._chunk_index.get(ck)
+        if chunk_members is not None:
+            chunk_members.discard((int(k[0]), int(k[1]), int(k[2])))
+            if not chunk_members:
+                try:
+                    del self._chunk_index[ck]
+                except KeyError:
+                    pass
+                self._chunk_mesh_rev.pop(ck, None)
+
+        column_key = (int(k[0]), int(k[2]))
+        column_members = self._column_index.get(column_key)
+        if column_members is not None:
+            column_members.discard(int(k[1]))
+            if not column_members:
+                try:
+                    del self._column_index[column_key]
+                except KeyError:
+                    pass
 
     def _mark_chunks_dirty(self, keys: Iterable[ChunkKey]) -> None:
         for ck0 in keys:
@@ -101,16 +158,35 @@ class WorldState:
             self._chunk_mesh_rev[ck] = int(nxt)
             self._dirty_chunks.add(ck)
 
+    def _mark_gravity_dirty_cell(self, x: int, y: int, z: int) -> None:
+        column_key = (int(x), int(z))
+        current = self._gravity_dirty_columns.get(column_key)
+        if current is None:
+            self._gravity_dirty_columns[column_key] = int(y)
+            return
+        self._gravity_dirty_columns[column_key] = min(int(current), int(y))
+
+    def _mark_gravity_dirty_cells(self, cells: Iterable[BlockKey]) -> None:
+        for x, y, z in cells:
+            self._mark_gravity_dirty_cell(int(x), int(y), int(z))
+
     def set_block(self, x: int, y: int, z: int, block_id: str) -> None:
         k = (int(x), int(y), int(z))
+        value = str(block_id)
         with self._lock:
+            prev = self.blocks.get(k)
+            if prev == value:
+                return
+
             existed = k in self.blocks
-            self.blocks[k] = str(block_id)
+            self.blocks[k] = value
             if not existed:
                 self._index_add(k)
 
             self.revision += 1
             self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
+            self._mark_gravity_dirty_cell(int(x), int(y), int(z))
+            self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))
 
     def remove_block(self, x: int, y: int, z: int) -> None:
         k = (int(x), int(y), int(z))
@@ -123,8 +199,10 @@ class WorldState:
 
             self.revision += 1
             self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
+            self._mark_gravity_dirty_cell(int(x), int(y), int(z))
+            self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))
 
-    def set_blocks_bulk(self, *, updates: Dict[BlockKey, str] | None=None, removals: Iterable[BlockKey]=()) -> None:
+    def set_blocks_bulk(self, *, updates: Dict[BlockKey, str] | None = None, removals: Iterable[BlockKey] = ()) -> None:
         upd_in = updates or {}
 
         norm_updates: Dict[BlockKey, str] = {}
@@ -143,6 +221,7 @@ class WorldState:
             return
 
         dirty_keys: set[ChunkKey] = set()
+        gravity_cells: set[BlockKey] = set()
         changed = False
 
         with self._lock:
@@ -153,6 +232,8 @@ class WorldState:
                 del self.blocks[k]
                 self._index_remove(k)
                 dirty_keys.update(neighbor_chunk_keys_for_cell(int(k[0]), int(k[1]), int(k[2])))
+                gravity_cells.add((int(k[0]), int(k[1]), int(k[2])))
+                gravity_cells.add((int(k[0]), int(k[1]) + 1, int(k[2])))
                 changed = True
 
             for k, v in norm_updates.items():
@@ -166,6 +247,8 @@ class WorldState:
                     self._index_add(k)
 
                 dirty_keys.update(neighbor_chunk_keys_for_cell(int(k[0]), int(k[1]), int(k[2])))
+                gravity_cells.add((int(k[0]), int(k[1]), int(k[2])))
+                gravity_cells.add((int(k[0]), int(k[1]) + 1, int(k[2])))
                 changed = True
 
             if not changed:
@@ -173,6 +256,7 @@ class WorldState:
 
             self.revision += 1
             self._mark_chunks_dirty(dirty_keys)
+            self._mark_gravity_dirty_cells(gravity_cells)
 
     def iter_blocks(self) -> Iterable[tuple[int, int, int, str]]:
         with self._lock:
@@ -232,7 +316,7 @@ class WorldState:
             revision = 0
 
         out: Dict[BlockKey, str] = {}
-        raw = d.get("blocks",[])
+        raw = d.get("blocks", [])
         if isinstance(raw, list):
             for it in raw:
                 if not isinstance(it, list) or len(it) != 4:
@@ -258,3 +342,4 @@ class WorldState:
             self.revision = int(max(0, int(revision)))
             self._rebuild_indexes_locked()
             self._reset_mesh_tracking_locked()
+            self._reset_gravity_tracking_locked()

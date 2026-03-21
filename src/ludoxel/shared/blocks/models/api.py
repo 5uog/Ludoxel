@@ -49,6 +49,7 @@ class _TupleLruCache:
 _RENDER_BOX_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
 _COLLISION_BOX_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
 _PICK_BOX_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
+_TOP_SUPPORT_CACHE = _TupleLruCache(_LOCAL_BOX_CACHE_CAP)
 
 _COLLISION_AABB_CACHE = _TupleLruCache(_WORLD_AABB_CACHE_CAP)
 _PICK_AABB_CACHE = _TupleLruCache(_WORLD_AABB_CACHE_CAP)
@@ -172,6 +173,32 @@ def pick_boxes_for_block(state_str: str, get_state: GetState, get_def: GetDef, x
         return tuple(render_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)))
 
     return _cache_get_or_build(_PICK_BOX_CACHE, key, _build)
+
+
+def has_full_top_support_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> bool:
+    key = _local_box_cache_key("top_support", str(state_str), get_state, get_def, int(x), int(y), int(z))
+
+    def _build() -> tuple[int, ...]:
+        coverage = [[False for _ in range(16)] for _ in range(16)]
+        for box in render_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)):
+            if float(box.mx_y) < (1.0 - 1e-6):
+                continue
+            start_x = max(0, min(16, int(round(float(box.mn_x) * 16.0))))
+            end_x = max(0, min(16, int(round(float(box.mx_x) * 16.0))))
+            start_z = max(0, min(16, int(round(float(box.mn_z) * 16.0))))
+            end_z = max(0, min(16, int(round(float(box.mx_z) * 16.0))))
+            if end_x <= start_x or end_z <= start_z:
+                continue
+            for gx in range(start_x, end_x):
+                for gz in range(start_z, end_z):
+                    coverage[gx][gz] = True
+        for gx in range(16):
+            for gz in range(16):
+                if not coverage[gx][gz]:
+                    return (0,)
+        return (1,)
+
+    return bool(_cache_get_or_build(_TOP_SUPPORT_CACHE, key, _build)[0])
 
 def _translate_boxes_to_aabbs(boxes: Sequence[LocalBox], x: int, y: int, z: int) -> tuple[AABB, ...]:
     px = int(x)

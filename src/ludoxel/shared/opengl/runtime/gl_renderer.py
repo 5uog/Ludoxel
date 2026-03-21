@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
 from ...math.vec3 import Vec3
 from ...blocks.registry.block_registry import BlockRegistry
 from ...math.chunking.chunk_grid import ChunkKey
@@ -118,5 +119,5 @@ class GLRenderer:
     def submit_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None=None, shadow_faces: list[np.ndarray] | None=None, gpu_face_sources=None, gpu_bucket_counts=None) -> None:
         self._backend.submit_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces, shadow_faces=shadow_faces, gpu_face_sources=gpu_face_sources, gpu_bucket_counts=gpu_bucket_counts)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None) -> None:
-        self._backend.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state)
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = ()) -> None:
+        self._backend.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state, falling_blocks=falling_blocks)

@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=("Remove repository-local __pycache__ directories, the top-level build directory, and generated .pyd files under src/ludoxel/core."))
+    parser = argparse.ArgumentParser(description=("Remove repository-local __pycache__ directories, the top-level build directory, and generated .pyd files under src/ludoxel/shared/math."))
     parser.add_argument("--dry-run", action="store_true", help="Print deletion targets without removing them.")
     parser.add_argument("--include-venv-caches", action="store_true", help="Also remove __pycache__ directories inside common virtual-environment directories.")
     return parser.parse_args()
@@ -37,11 +37,11 @@ def collect_pycache_dirs(root: Path, include_venv_caches: bool) -> list[Path]:
     return matches
 
 def collect_pyd_files(root: Path) -> list[Path]:
-    core_root = root / "src" / "ludoxel" / "shared" / "core"
-    if not core_root.is_dir():
+    math_root = root / "src" / "ludoxel" / "shared" / "math"
+    if not math_root.is_dir():
         return []
 
-    matches = [path for path in core_root.rglob("*.pyd") if path.is_file()]
+    matches = [path for path in math_root.rglob("*.pyd") if path.is_file()]
     matches.sort()
     return matches
 

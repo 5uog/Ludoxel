@@ -8,7 +8,7 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from OpenGL.GL import glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect, glBindBuffer, glBindVertexArray, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
+from OpenGL.GL import GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES, glBindBuffer, glBindVertexArray, glDeleteBuffers, glGenBuffers, glMultiDrawArraysIndirect
 
 from ...math.chunking.chunk_grid import ChunkKey, normalize_chunk_key
 from ...rendering.face_bucket_layout import FACE_COUNT
@@ -30,14 +30,16 @@ class AggregatedFaceBatch:
         self._indirect_buffers: list[int] = []
         self._indirect_caps: list[int] = [0 for _ in range(FACE_COUNT)]
 
-        self._source_faces: dict[ChunkKey, list[np.ndarray]] = {}
         self._source_revs: dict[ChunkKey, int] = {}
         self._source_instance_total: int = 0
 
-        self._ordered_chunks: tuple[ChunkKey, ...] = ()
         self._chunk_slices: dict[ChunkKey, _ChunkSlice] = {}
-
+        self._ordered_chunks: tuple[ChunkKey, ...] = ()
         self._dirty = True
+
+        self._face_storage: list[np.ndarray] = [np.zeros((0, 12), dtype=np.float32) for _ in range(FACE_COUNT)]
+        self._face_committed_rows: list[int] = [0 for _ in range(FACE_COUNT)]
+        self._free_ranges: list[list[tuple[int, int]]] = [[] for _ in range(FACE_COUNT)]
 
     @staticmethod
     def _empty_face_array() -> np.ndarray:
@@ -48,10 +50,12 @@ class AggregatedFaceBatch:
         return copy_float32_rows(arr, cols=12, label="Aggregated face payload rows")
 
     @staticmethod
-    def _chunk_total(faces: list[np.ndarray]) -> int:
+    def _chunk_total_from_slice(chunk_slice: _ChunkSlice | None) -> int:
+        if chunk_slice is None:
+            return 0
         total = 0
-        for arr in faces[:FACE_COUNT]:
-            total += int(arr.shape[0])
+        for count in chunk_slice.counts:
+            total += int(count)
         return int(total)
 
     def initialize(self) -> None:
@@ -63,6 +67,8 @@ class AggregatedFaceBatch:
         self._indirect_caps = [0 for _ in range(FACE_COUNT)]
 
         self._initialized = True
+        for fi in range(FACE_COUNT):
+            self._meshes[fi].upload_instances(self._face_storage[fi])
         self._dirty = True
 
     def destroy(self) -> None:
@@ -72,7 +78,7 @@ class AggregatedFaceBatch:
 
         for buf in self._indirect_buffers:
             if int(buf) != 0:
-                glDeleteBuffers(1,[int(buf)])
+                glDeleteBuffers(1, [int(buf)])
         self._indirect_buffers = []
         self._indirect_caps = [0 for _ in range(FACE_COUNT)]
 
@@ -81,6 +87,84 @@ class AggregatedFaceBatch:
 
     def total_instances(self) -> int:
         return int(self._source_instance_total)
+
+    def _merge_free_ranges(self, face_idx: int) -> None:
+        merged: list[tuple[int, int]] = []
+        for offset, length in sorted(self._free_ranges[int(face_idx)], key=lambda item: (int(item[0]), int(item[1]))):
+            if int(length) <= 0:
+                continue
+            if not merged:
+                merged.append((int(offset), int(length)))
+                continue
+            last_offset, last_length = merged[-1]
+            if int(last_offset) + int(last_length) == int(offset):
+                merged[-1] = (int(last_offset), int(last_length) + int(length))
+            else:
+                merged.append((int(offset), int(length)))
+        self._free_ranges[int(face_idx)] = merged
+
+    def _free_range(self, face_idx: int, offset: int, length: int) -> None:
+        if int(length) <= 0:
+            return
+        self._free_ranges[int(face_idx)].append((int(offset), int(length)))
+        self._merge_free_ranges(int(face_idx))
+
+    def _ensure_face_capacity(self, face_idx: int, required_rows: int) -> bool:
+        fi = int(face_idx)
+        if int(required_rows) <= int(self._face_storage[fi].shape[0]):
+            return False
+
+        current_rows = int(self._face_storage[fi].shape[0])
+        next_rows = max(int(required_rows), max(64, current_rows * 2))
+        expanded = np.zeros((int(next_rows), 12), dtype=np.float32)
+        if current_rows > 0:
+            expanded[:current_rows] = self._face_storage[fi][:current_rows]
+        self._face_storage[fi] = expanded
+        return True
+
+    def _allocate_range(self, face_idx: int, count: int) -> int:
+        fi = int(face_idx)
+        need = int(count)
+        if need <= 0:
+            return 0
+
+        best_idx: int | None = None
+        best_length = 0
+        for index, (offset, length) in enumerate(self._free_ranges[fi]):
+            if int(length) < need:
+                continue
+            if best_idx is None or int(length) < best_length:
+                best_idx = int(index)
+                best_length = int(length)
+
+        if best_idx is not None:
+            offset, length = self._free_ranges[fi].pop(int(best_idx))
+            if int(length) > need:
+                self._free_ranges[fi].append((int(offset) + need, int(length) - need))
+                self._merge_free_ranges(fi)
+            return int(offset)
+
+        offset = int(self._face_committed_rows[fi])
+        self._face_committed_rows[fi] = int(offset + need)
+        self._ensure_face_capacity(fi, int(self._face_committed_rows[fi]))
+        return int(offset)
+
+    def _store_face_rows(self, face_idx: int, offset: int, rows: np.ndarray) -> None:
+        fi = int(face_idx)
+        arr = self._norm_face_array(rows)
+        if int(arr.shape[0]) <= 0:
+            return
+
+        grew = self._ensure_face_capacity(fi, int(offset) + int(arr.shape[0]))
+        self._face_storage[fi][int(offset):int(offset) + int(arr.shape[0])] = arr
+
+        if not bool(self._initialized):
+            return
+        required_bytes = (int(offset) + int(arr.shape[0])) * 12 * 4
+        if bool(grew) or int(self._meshes[fi].instance_capacity) < int(required_bytes):
+            self._meshes[fi].upload_instances(self._face_storage[fi])
+            return
+        self._meshes[fi].upload_instances_subrange(arr, row_offset=int(offset))
 
     def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         if len(faces) != FACE_COUNT:
@@ -91,74 +175,74 @@ class AggregatedFaceBatch:
         if prev_rev is not None and int(prev_rev) == int(world_revision):
             return
 
-        prev_faces = self._source_faces.get(ck)
-        if prev_faces is not None:
-            self._source_instance_total -= self._chunk_total(prev_faces)
+        old_slice = self._chunk_slices.get(ck)
+        old_total = self._chunk_total_from_slice(old_slice)
+        new_offsets = [0 for _ in range(FACE_COUNT)]
+        new_counts = [0 for _ in range(FACE_COUNT)]
 
-        norm_faces = [self._norm_face_array(arr) for arr in faces]
-        self._source_faces[ck] = norm_faces
+        normalized_faces = [self._norm_face_array(arr) for arr in faces]
+
+        for fi in range(FACE_COUNT):
+            arr = normalized_faces[fi]
+            new_count = int(arr.shape[0])
+            old_offset = 0 if old_slice is None else int(old_slice.offsets[fi])
+            old_count = 0 if old_slice is None else int(old_slice.counts[fi])
+
+            if new_count > 0 and new_count == old_count and old_count > 0:
+                new_offsets[fi] = int(old_offset)
+                new_counts[fi] = int(new_count)
+                self._store_face_rows(fi, int(old_offset), arr)
+                continue
+
+            if old_count > 0:
+                self._free_range(fi, int(old_offset), int(old_count))
+
+            if new_count > 0:
+                new_offset = self._allocate_range(fi, int(new_count))
+                new_offsets[fi] = int(new_offset)
+                new_counts[fi] = int(new_count)
+                self._store_face_rows(fi, int(new_offset), arr)
+
+        new_total = sum(int(count) for count in new_counts)
+        self._source_instance_total += int(new_total) - int(old_total)
         self._source_revs[ck] = int(world_revision)
-        self._source_instance_total += self._chunk_total(norm_faces)
+
+        if int(new_total) <= 0:
+            self._chunk_slices.pop(ck, None)
+        else:
+            self._chunk_slices[ck] = _ChunkSlice(offsets=(int(new_offsets[0]), int(new_offsets[1]), int(new_offsets[2]), int(new_offsets[3]), int(new_offsets[4]), int(new_offsets[5])), counts=(int(new_counts[0]), int(new_counts[1]), int(new_counts[2]), int(new_counts[3]), int(new_counts[4]), int(new_counts[5])), last_rev=int(world_revision))
+
         self._dirty = True
 
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
         ck = normalize_chunk_key(chunk_key)
-        prev_faces = self._source_faces.pop(ck, None)
+        old_slice = self._chunk_slices.pop(ck, None)
         self._source_revs.pop(ck, None)
-        self._chunk_slices.pop(ck, None)
+        if old_slice is None:
+            return
 
-        if prev_faces is not None:
-            self._source_instance_total -= self._chunk_total(prev_faces)
-            self._dirty = True
+        for fi in range(FACE_COUNT):
+            count = int(old_slice.counts[fi])
+            if count <= 0:
+                continue
+            self._free_range(fi, int(old_slice.offsets[fi]), int(count))
+
+        self._source_instance_total -= self._chunk_total_from_slice(old_slice)
+        self._dirty = True
 
     def evict_except(self, keep: set[ChunkKey]) -> None:
         keep_n = {normalize_chunk_key(k) for k in keep}
-        doomed = [ck for ck in self._source_faces.keys() if ck not in keep_n]
+        doomed = [ck for ck in set(self._chunk_slices.keys()) | set(self._source_revs.keys()) if ck not in keep_n]
         if not doomed:
             return
 
         for ck in doomed:
-            prev_faces = self._source_faces.pop(ck, None)
-            self._source_revs.pop(ck, None)
-            self._chunk_slices.pop(ck, None)
-            if prev_faces is not None:
-                self._source_instance_total -= self._chunk_total(prev_faces)
-
-        self._dirty = True
+            self.remove_chunk(ck)
 
     def prepare(self) -> None:
         if not bool(self._dirty):
             return
-
-        ordered = tuple(sorted(self._source_faces.keys()))
-        merged: list[list[np.ndarray]] = [[] for _ in range(FACE_COUNT)]
-        offsets = [0 for _ in range(FACE_COUNT)]
-        slices: dict[ChunkKey, _ChunkSlice] = {}
-
-        for ck in ordered:
-            faces = self._source_faces[ck]
-            counts = tuple(int(arr.shape[0]) for arr in faces[:FACE_COUNT])
-            slice_offsets = tuple(int(v) for v in offsets[:FACE_COUNT])
-
-            slices[ck] = _ChunkSlice(offsets=slice_offsets, counts=(int(counts[0]), int(counts[1]), int(counts[2]), int(counts[3]), int(counts[4]), int(counts[5])), last_rev=int(self._source_revs.get(ck, -1)))
-
-            for fi in range(FACE_COUNT):
-                arr = faces[fi]
-                if int(arr.shape[0]) > 0:
-                    merged[fi].append(arr)
-                    offsets[fi] += int(arr.shape[0])
-
-        self._ordered_chunks = ordered
-        self._chunk_slices = slices
-
-        if bool(self._initialized):
-            for fi in range(FACE_COUNT):
-                if merged[fi]:
-                    data = np.concatenate(merged[fi], axis=0)
-                else:
-                    data = self._empty_face_array()
-                self._meshes[fi].upload_instances(data)
-
+        self._ordered_chunks = tuple(sorted(self._chunk_slices.keys()))
         self._dirty = False
 
     def chunk_keys(self) -> tuple[ChunkKey, ...]:
@@ -202,7 +286,7 @@ class AggregatedFaceBatch:
         arr = as_uint32_rows(commands, cols=4, label="Indirect draw commands")
         self._indirect_caps[fi] = upload_array_buffer(target=GL_DRAW_INDIRECT_BUFFER, buffer=int(self._indirect_buffers[fi]), usage=GL_STREAM_DRAW, data=arr, capacity_bytes=int(self._indirect_caps[fi]))
 
-    def draw(self, commands: list[np.ndarray], *, before_face_draw: Callable[[int], None] | None=None) -> tuple[int, int]:
+    def draw(self, commands: list[np.ndarray], *, before_face_draw: Callable[[int], None] | None = None) -> tuple[int, int]:
         if not bool(self._initialized):
             return (0, 0)
 

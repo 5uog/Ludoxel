@@ -6,10 +6,13 @@ import multiprocessing
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
-from .ai import choose_ai_move
+from .ai import InsaneSearchCache, choose_ai_move
 
-def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int) -> int | None:
-    return choose_ai_move(board, side, difficulty, random_seed=int(seed))
+_PROCESS_CACHE = InsaneSearchCache()
+_FALLBACK_CACHE = InsaneSearchCache()
+
+def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int) -> int | None:
+    return choose_ai_move(board, side, difficulty, random_seed=int(seed), match_generation=int(generation), insane_cache=_PROCESS_CACHE)
 
 class OthelloAiWorker(QObject):
     move_ready = pyqtSignal(int, object)
@@ -39,7 +42,7 @@ class OthelloAiWorker(QObject):
 
         def emit_result() -> None:
             try:
-                move_index = _compute_ai_move(board, side, difficulty, seed)
+                move_index = choose_ai_move(board, side, difficulty, random_seed=int(seed), match_generation=int(generation), insane_cache=_FALLBACK_CACHE)
             except Exception:
                 move_index = None
             self.move_ready.emit(int(generation), move_index)
@@ -56,7 +59,7 @@ class OthelloAiWorker(QObject):
             self._emit_fallback_result(generation=int(generation), board=normalized_board, side=normalized_side, difficulty=normalized_difficulty, seed=normalized_seed)
             return
         try:
-            future = executor.submit(_compute_ai_move, normalized_board, normalized_side, normalized_difficulty, normalized_seed)
+            future = executor.submit(_compute_ai_move, normalized_board, normalized_side, normalized_difficulty, normalized_seed, int(generation))
         except Exception:
             self._executor_unavailable = True
             try:

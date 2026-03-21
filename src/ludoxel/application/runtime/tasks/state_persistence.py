@@ -27,6 +27,8 @@ def _load_player_into_session(*, session: SessionManager, player: PersistedPlaye
     runtime_player.auto_jump_pending = False
     runtime_player.auto_jump_cooldown_s = float(max(0.0, float(player.auto_jump_cooldown_s)))
     runtime_player.auto_jump_start_y = float(runtime_player.position.y)
+    runtime_player.fence_gate_overlap_exemption = None
+    runtime_player.gravity_block_overlap_exemptions = ()
 
 def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
     if not persisted_world.blocks and int(persisted_world.revision) <= 0:
@@ -50,7 +52,7 @@ def _persisted_player_from_session(session: SessionManager, *, allow_flying: boo
     return PersistedPlayer(pos_x=float(player.position.x), pos_y=float(player.position.y), pos_z=float(player.position.z), vel_x=float(player.velocity.x), vel_y=float(player.velocity.y), vel_z=float(player.velocity.z), yaw_deg=float(player.yaw_deg), pitch_deg=float(player.pitch_deg), on_ground=bool(player.on_ground), flying=bool(player.flying and allow_flying), auto_jump_cooldown_s=float(max(0.0, float(player.auto_jump_cooldown_s))), crouch_eye_offset=float(max(0.0, min(float(player.crouch_eye_drop), float(player.crouch_eye_offset)))))
 
 def _persisted_world_from_session(session: SessionManager) -> PersistedWorld:
-    snapshot = session.world.snapshot_blocks()
+    snapshot = session.snapshot_world_blocks_for_persistence()
     return PersistedWorld(revision=int(session.world.revision), blocks={key: str(value) for (key, value) in snapshot.items()})
 
 def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceContext, renderer) -> tuple[RuntimePreferences, OthelloGameState]:

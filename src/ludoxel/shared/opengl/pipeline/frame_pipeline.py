@@ -7,12 +7,14 @@ from dataclasses import dataclass
 
 from OpenGL.GL import glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS
 
+from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
 from ...math import mat4
 from ...math.vec3 import Vec3
 from ...math.view_angles import forward_from_yaw_pitch_deg
 from ...math.transform_matrices import rotate_z_deg_matrix
 from ...math.chunking.chunk_grid import chunk_key
 from ..passes.cloud_pass import CloudPass
+from ..passes.falling_block_pass import FallingBlockPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
 from ..passes.held_block_pass import HeldBlockPass
 from ....features.othello.opengl.othello_pass import OthelloPass
@@ -45,6 +47,7 @@ class FramePipeline:
     state: RendererRuntimeState
     shadow_pass: ShadowMapPass
     world_pass: WorldPass
+    falling_block_pass: FallingBlockPass
     player_pass: PlayerModelPass
     first_person_arm_pass: FirstPersonArmPass
     held_block_pass: HeldBlockPass
@@ -62,7 +65,7 @@ class FramePipeline:
         ok = bool(self.cfg.shadow.enabled and info.ok and int(info.tex_id) != 0 and int(info.inst_count) > 0)
         return (ok, int(info.size) if ok else 0)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None, othello_state: OthelloRenderState | None) -> RendererFrameMetrics:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None, othello_state: OthelloRenderState | None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...]) -> RendererFrameMetrics:
         use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
         if bool(use_light_space):
             shadow_info_pre = self.shadow_pass.info()
@@ -105,6 +108,9 @@ class FramePipeline:
         sel_mode, sx, sy, sz = self.selection.world_inputs()
 
         world_metrics = self.world_pass.draw(WorldDrawInputs(view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), world_wireframe=bool(self.state.world_wireframe), shadow=self.cfg.shadow, shadow_info=shadow_info, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), sel_mode=int(sel_mode), sel_x=int(sx), sel_y=int(sy), sel_z=int(sz), sel_tint=float(self.sel_tint_strength)))
+
+        falling_dc, falling_inst = self.falling_block_pass.draw(samples=falling_blocks, view_proj=vp, sun_dir=self.state.sun_dir)
+        world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + falling_dc), instances=int(world_metrics.instances + falling_inst), rendered=bool(world_metrics.rendered or (falling_dc > 0)))
 
         player_dc, player_inst = self.player_pass.draw_world(pose=player_pose, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=self.cfg.shadow, shadow_info=shadow_info)
 

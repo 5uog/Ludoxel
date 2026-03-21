@@ -57,6 +57,7 @@ ludoxel = [
     "shared/opengl/shaders/common/*.glsl",
     "features/othello/opengl/shaders/*.vert",
     "features/othello/opengl/shaders/*.frag",
+    "features/othello/data/*.json",
 ]
 
 [tool.setuptools.packages.find]

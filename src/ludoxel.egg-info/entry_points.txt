@@ -1,0 +1,2 @@
+[console_scripts]
+ludoxel = ludoxel.application.boot:run_app

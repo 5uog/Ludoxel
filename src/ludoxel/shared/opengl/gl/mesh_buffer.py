@@ -8,7 +8,7 @@ import numpy as np
 
 from OpenGL.GL import GL_ARRAY_BUFFER, glBindBuffer, glBindVertexArray
 
-from .instanced_mesh_common import attach_instance_buffer, create_static_vertex_buffer, destroy_mesh_handles, upload_instance_rows
+from .instanced_mesh_common import attach_instance_buffer, create_static_vertex_buffer, destroy_mesh_handles, upload_instance_rows, upload_instance_rows_range
 
 def _create_default_vertex_buffer(vertices: np.ndarray) -> tuple[int, int, int]:
     return create_static_vertex_buffer(vertices=vertices, cols=8, label="Static mesh vertices", attrs=((0, 3, 0),(1, 3, 12),(2, 2, 24)))
@@ -19,6 +19,7 @@ class MeshBuffer:
     vbo: int
     vertex_count: int
     instance_vbo: int
+    instance_row_width: int
     instance_capacity: int = 0
 
     @staticmethod
@@ -29,7 +30,7 @@ class MeshBuffer:
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
+        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_row_width=7, instance_capacity=0)
 
     @staticmethod
     def create_cube_transform_instanced() -> "MeshBuffer":
@@ -39,7 +40,7 @@ class MeshBuffer:
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
+        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_row_width=16, instance_capacity=0)
 
     @staticmethod
     def create_quad_instanced(face: int) -> "MeshBuffer":
@@ -49,7 +50,7 @@ class MeshBuffer:
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
+        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_row_width=12, instance_capacity=0)
 
     @staticmethod
     def create_quad_transform_instanced(face: int) -> "MeshBuffer":
@@ -59,16 +60,20 @@ class MeshBuffer:
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
+        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_row_width=20, instance_capacity=0)
 
     def upload_instances(self, instance_data: np.ndarray) -> None:
         self.instance_capacity = upload_instance_rows(buffer=int(self.instance_vbo), instance_data=instance_data, capacity_bytes=int(self.instance_capacity))
+
+    def upload_instances_subrange(self, instance_data: np.ndarray, *, row_offset: int) -> None:
+        self.instance_capacity = upload_instance_rows_range(buffer=int(self.instance_vbo), instance_data=instance_data, capacity_bytes=int(self.instance_capacity), row_offset=int(row_offset), row_width=int(self.instance_row_width))
 
     def destroy(self) -> None:
         destroy_mesh_handles(vao=int(self.vao), buffers=(int(self.vbo), int(self.instance_vbo)))
         self.vbo = 0
         self.instance_vbo = 0
         self.vao = 0
+        self.instance_row_width = 0
         self.instance_capacity = 0
 
 def _face(nx, ny, nz, corners):

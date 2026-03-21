@@ -1,0 +1,9 @@
+PyQt6<7,>=6.6
+numpy<3,>=1.26
+PyOpenGL<4,>=3.1.7
+
+[dev]
+build<2,>=1.2
+Cython<4,>=3.0
+setuptools>=82
+wheel>=0.45

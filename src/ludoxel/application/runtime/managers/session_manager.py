@@ -11,9 +11,10 @@ from ....shared.math.scalars import clampf
 from ....shared.blocks.registry.block_registry import BlockRegistry
 from ....shared.world.entities.player_entity import PlayerEntity
 from ....shared.systems.collision_system import can_auto_jump_one_block, integrate_with_collisions, support_block_beneath
+from ....shared.systems.gravity_system import GravitySystem
 from ....shared.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
 from ....shared.world.world_state import WorldState
-from ..state.render_snapshot import CameraDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
+from ..state.render_snapshot import CameraDTO, FallingBlockRenderSampleDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ..state.session_settings import SessionSettings
 from ....shared.systems.interaction_service import InteractionService
 
@@ -39,6 +40,7 @@ class SessionManager:
     block_registry: BlockRegistry
 
     interaction: InteractionService = field(init=False, repr=False)
+    gravity: GravitySystem = field(init=False, repr=False)
     _sim_time_s: float = field(default=0.0, init=False, repr=False)
     _last_jump_press_s: float | None = field(default=None, init=False, repr=False)
     _player_walk_phase_rad: float = field(default=0.0, init=False, repr=False)
@@ -47,6 +49,7 @@ class SessionManager:
 
     def __post_init__(self) -> None:
         self.interaction = InteractionService.create(world=self.world, player=self.player, block_registry=self.block_registry)
+        self.gravity = GravitySystem(block_registry=self.block_registry)
 
     def respawn(self) -> None:
         player = self.player
@@ -62,6 +65,8 @@ class SessionManager:
         player.auto_jump_pending = False
         player.auto_jump_start_y = float(player.position.y)
         player.auto_jump_cooldown_s = 0.0
+        player.fence_gate_overlap_exemption = None
+        player.gravity_block_overlap_exemptions = ()
         self._last_jump_press_s = None
         self._player_walk_phase_rad = 0.0
         self._player_walk_phase_total_rad = 0.0
@@ -148,8 +153,12 @@ class SessionManager:
             return (None, None)
         return (str(contact.block_state), tuple(int(value) for value in contact.cell))
 
+    def snapshot_world_blocks_for_persistence(self) -> dict[tuple[int, int, int], str]:
+        return self.gravity.snapshot_blocks_for_persistence(self.world)
+
     def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> SessionStepResult:
         self._sim_time_s += float(dt)
+        self.gravity.step(self.world, float(dt), player=self.player)
 
         prev_on_ground = bool(self.player.on_ground)
         prev_vy = float(self.player.velocity.y)
@@ -321,7 +330,8 @@ class SessionManager:
 
         player_model = PlayerModelSnapshotDTO(base_x=float(player.position.x), base_y=float(player.position.y), base_z=float(player.position.z), body_yaw_deg=float(player.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(player.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), first_person_tx=float(fp_tx), first_person_ty=float(fp_ty), first_person_tz=float(fp_tz), first_person_yaw_deg=float(fp_yaw_deg), first_person_pitch_deg=float(fp_pitch_deg), first_person_roll_deg=float(fp_roll_deg), is_first_person=True)
 
-        return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=camera, player_model=player_model)
+        falling_blocks = tuple(FallingBlockRenderSampleDTO(state_str=str(sample.state_str), x=float(sample.x), y=float(sample.y), z=float(sample.z)) for sample in self.gravity.render_samples())
+        return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=camera, player_model=player_model, falling_blocks=falling_blocks)
 
     def break_block(self, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
         return self.interaction.break_block(reach=float(reach), origin=origin, direction=direction)

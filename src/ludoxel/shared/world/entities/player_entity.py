@@ -32,6 +32,8 @@ class PlayerEntity:
     auto_jump_pending: bool = False
     auto_jump_start_y: float = 0.0
     auto_jump_cooldown_s: float = 0.0
+    fence_gate_overlap_exemption: tuple[int, int, int] | None = None
+    gravity_block_overlap_exemptions: tuple[tuple[int, int, int], ...] = ()
 
     def eye_pos(self) -> Vec3:
         return Vec3(self.position.x, self.position.y + (self.eye_height - self.crouch_eye_offset) + self.step_eye_offset, self.position.z)

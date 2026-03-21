@@ -1,13 +1,15 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 import math
 import random
 import time
 from dataclasses import dataclass
 
+from .insane_engine import InsaneSearchCache, choose_insane_move
 from .rules import BOARD_SIZE, apply_move, counts_for_board, find_legal_moves, other_side
-from .types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_WEAK, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_difficulty, normalize_side
+from .types import OTHELLO_DIFFICULTY_INSANE, OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_WEAK, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_difficulty, normalize_side
 
 _POSITION_WEIGHTS: tuple[int, ...] = (120, -20, 20, 5, 5, 20, -20, 120, -20, -40, -5, -5, -5, -5, -40, -20, 20, -5, 15, 3, 3, 15, -5, 20, 5, -5, 3, 3, 3, 3, -5, 5, 5, -5, 3, 3, 3, 3, -5, 5, 20, -5, 15, 3, 3, 15, -5, 20, -20, -40, -5, -5, -5, -5, -40, -20, 120, -20, 20, 5, 5, 20, -20, 120)
 
@@ -160,7 +162,7 @@ def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: flo
     chooser = rng if rng is not None else random.Random(0)
     return _SearchResult(score=float(best_score), move_index=int(chooser.choice(best_moves)))
 
-def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: str, *, random_seed: int = 0, strong_time_budget_s: float = 1.5) -> int | None:
+def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: str, *, random_seed: int = 0, strong_time_budget_s: float = 1.5, insane_time_budget_s: float = 4.0, match_generation: int = 0, insane_cache: InsaneSearchCache | None = None) -> int | None:
     materialized = coerce_board(board)
     ai_side = normalize_side(side)
     if ai_side not in (SIDE_BLACK, SIDE_WHITE):
@@ -178,6 +180,11 @@ def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: st
 
     if mode == OTHELLO_DIFFICULTY_MEDIUM:
         return _best_move(materialized, ai_side, depth=3, deadline_s=None).move_index
+
+    if mode == OTHELLO_DIFFICULTY_INSANE:
+        active_cache = insane_cache or InsaneSearchCache()
+        active_cache.prepare(int(match_generation))
+        return choose_insane_move(materialized, ai_side, random_seed=int(random_seed), time_budget_s=float(insane_time_budget_s), cache=active_cache)
 
     deadline = time.perf_counter() + max(0.1, float(strong_time_budget_s))
     best_result = _SearchResult(score=-math.inf, move_index=int(legal_moves[0]))
