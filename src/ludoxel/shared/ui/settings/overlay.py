@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ....application.runtime.keybinds import action_display_name
+from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON
 from ..config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ...opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
 from ..common.settings_controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
@@ -20,6 +21,7 @@ class SettingsOverlay(QWidget):
     fullscreen_changed = pyqtSignal(bool)
     hide_hud_changed = pyqtSignal(bool)
     hide_hand_changed = pyqtSignal(bool)
+    camera_perspective_changed = pyqtSignal(str)
     view_bobbing_changed = pyqtSignal(bool)
     camera_shake_changed = pyqtSignal(bool)
     view_bobbing_strength_changed = pyqtSignal(float)
@@ -161,6 +163,10 @@ class SettingsOverlay(QWidget):
         data = self._cmb_cloud_flow.currentData()
         return str(DEFAULT_CLOUD_FLOW_DIRECTION) if data is None else str(data)
 
+    def _current_camera_perspective_value(self) -> str:
+        data = self._cmb_camera_perspective.currentData()
+        return str(CAMERA_PERSPECTIVE_FIRST_PERSON) if data is None else str(data)
+
     def _new_slider(self, parent: QWidget, min_value: int, max_value: int) -> WheelPassthroughSlider:
         slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, parent)
         slider.setRange(int(min_value), int(max_value))
@@ -226,6 +232,9 @@ class SettingsOverlay(QWidget):
         percent = int(max(int(self._params.shake_strength_percent_min), min(int(self._params.shake_strength_percent_max), int(value))))
         self._lbl_camera_shake_strength.setText(f"Camera Shake strength: {percent}%")
         self.camera_shake_strength_changed.emit(float(percent) / 100.0)
+
+    def _on_camera_perspective(self, _index: int) -> None:
+        self.camera_perspective_changed.emit(str(self._current_camera_perspective_value()))
 
     def _on_rd(self, value: int) -> None:
         render_distance = int(value)

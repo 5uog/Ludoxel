@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_ORDER
 from .cloud_flow_options import cloud_flow_index_for_value
 
 def _block_signals_set_value(widget, value) -> None:
@@ -47,6 +48,17 @@ def sync_overlay_values(overlay, **values) -> None:
     _sync_toggle(overlay._tg_fullscreen, bool(values["fullscreen"]))
     _sync_toggle(overlay._tg_hide_hud, bool(values["hide_hud"]))
     _sync_toggle(overlay._tg_hide_hand, bool(values["hide_hand"]))
+
+    camera_perspective = str(values.get("camera_perspective", CAMERA_PERSPECTIVE_FIRST_PERSON))
+    camera_index = 0
+    for index, candidate in enumerate(CAMERA_PERSPECTIVE_ORDER):
+        if camera_perspective == str(candidate):
+            camera_index = int(index)
+            break
+    overlay._cmb_camera_perspective.blockSignals(True)
+    overlay._cmb_camera_perspective.setCurrentIndex(int(camera_index))
+    overlay._cmb_camera_perspective.blockSignals(False)
+
     _sync_toggle(overlay._tg_view_bobbing, bool(values["view_bobbing_enabled"]))
     _sync_toggle(overlay._tg_camera_shake, bool(values["camera_shake_enabled"]))
     _sync_toggle(overlay._tg_animated_textures, bool(values["animated_textures_enabled"]))

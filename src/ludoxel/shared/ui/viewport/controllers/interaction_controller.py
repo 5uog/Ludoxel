@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 
-from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_INVENTORY, action_for_key
+from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_INVENTORY, action_for_key
 from ludoxel.shared.world.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
 from ludoxel.shared.ui.common import hotbar_index_from_key
 import ludoxel.features.othello.ui.viewport.othello_controller as othello_controller
@@ -44,12 +44,14 @@ def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bo
             resume_from_overlay(viewport)
         return
 
+    target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
     othello_controller.clear_state_for_space_switch(viewport)
     viewport._state.current_space_id = normalized
     viewport._state.normalize()
     viewport._session = viewport._sessions.set_active_space(normalized)
+    viewport._begin_loading(target_label)
     viewport._overlay.set_current_space(normalized)
-    viewport._upload.reset(viewport._renderer)
+    viewport._upload.reset(viewport._renderer, world=viewport._session.world)
     viewport._invalidate_selection_target()
     viewport._renderer.clear_selection()
     settings_controller.sync_hotbar_widgets(viewport)
@@ -61,6 +63,7 @@ def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bo
         resume_from_overlay(viewport)
 
     othello_controller.maybe_request_ai(viewport)
+    viewport.update()
 
 def open_settings_from_pause(viewport: "GLViewportWidget") -> None:
     settings_controller.sync_settings_values(viewport)
@@ -110,6 +113,10 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     if bound_action == ACTION_TOGGLE_DEBUG_HUD:
         viewport._state.hud_visible = not bool(viewport._state.hud_visible)
         viewport._sync_gameplay_hud_visibility()
+        return True
+
+    if bound_action == ACTION_CYCLE_CAMERA_PERSPECTIVE and not viewport._overlays.paused() and not viewport._overlays.dead() and not viewport._overlays.settings_open() and not viewport._overlays.othello_settings_open() and not viewport._overlays.inventory_open():
+        settings_controller.cycle_camera_perspective(viewport)
         return True
 
     if int(e.key()) == int(Qt.Key.Key_Escape):
@@ -179,11 +186,11 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
         return False
 
     snapshot = viewport._make_render_snapshot()
-    render_eye, _yaw, _pitch, _roll, render_direction = viewport._effective_camera_from_snapshot(snapshot)
+    interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose_from_snapshot(snapshot)
 
     if viewport._state.is_othello_space():
         if e.button() == Qt.MouseButton.LeftButton:
-            othello_controller.handle_left_click(viewport, render_eye, render_direction)
+            othello_controller.handle_left_click(viewport, interaction_eye, interaction_direction)
         elif e.button() == Qt.MouseButton.RightButton:
             othello_controller.handle_right_click(viewport)
         return True
@@ -191,7 +198,7 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
     if e.button() == Qt.MouseButton.LeftButton:
         break_outcome = None
         if bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id):
-            break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=render_eye, direction=render_direction)
+            break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
         viewport._first_person_motion.trigger_left_swing()
         if break_outcome is not None and bool(break_outcome.success):
             viewport._audio.play_interaction(action=break_outcome.action, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
@@ -199,7 +206,7 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
         return True
 
     if e.button() == Qt.MouseButton.RightButton:
-        outcome = viewport._session.place_block(block_id=settings_controller.current_block_id(viewport), reach=float(viewport._state.reach), crouching=bool(viewport._inp.crouch_held()), origin=render_eye, direction=render_direction)
+        outcome = viewport._session.place_block(block_id=settings_controller.current_block_id(viewport), reach=float(viewport._state.reach), crouching=bool(viewport._inp.crouch_held()), origin=interaction_eye, direction=interaction_direction)
         viewport._first_person_motion.trigger_right_swing(success=bool(outcome.success))
         if bool(outcome.success):
             viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)

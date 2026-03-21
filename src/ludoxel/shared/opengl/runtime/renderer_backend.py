@@ -1,7 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-
 from pathlib import Path
 import time
 
@@ -18,6 +17,7 @@ from ..passes.cloud_pass import CloudPass
 from ..passes.falling_block_pass import FallingBlockPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
 from ..passes.held_block_pass import HeldBlockPass
+from ..passes.special_item_pass import SpecialItemPass
 from ....features.othello.opengl.othello_pass import OthelloPass
 from ..passes.player_model_pass import PlayerModelPass
 from ..passes.selection_pass import SelectionPass
@@ -67,6 +67,7 @@ class RendererBackend:
         self._player = PlayerModelPass()
         self._first_person_arm = FirstPersonArmPass()
         self._held_block = HeldBlockPass()
+        self._special_item = SpecialItemPass()
         self._sun = SunPass(self._cfg.sun)
         self._cloud = CloudPass(self._cfg.clouds, self._cfg.camera)
         self._othello = OthelloPass()
@@ -96,9 +97,10 @@ class RendererBackend:
         self._shadow.initialize(self._res.shadow_prog, int(self._cfg.shadow.size))
         self._world.initialize(shadowed_prog=self._res.world_prog, no_shadow_prog=self._res.world_no_shadow_prog, atlas=self._res.atlas)
         self._falling_blocks.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
-        self._player.initialize(world_prog=self._res.player_model_prog, no_shadow_prog=self._res.player_model_no_shadow_prog, shadow_prog=self._res.player_model_shadow_prog, mesh=self._res.player_model_mesh)
+        self._player.initialize(face_prog=self._res.first_person_face_prog, shadow_prog=self._res.player_model_shadow_prog, atlas=self._res.atlas, skin_texture=self._res.skin_texture, uv_lookup=self._visuals.atlas_uv_face)
         self._first_person_arm.initialize(prog=self._res.first_person_face_prog, skin_texture=self._res.skin_texture)
         self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
+        self._special_item.initialize(prog=self._res.first_person_face_prog)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
         self._othello.initialize(world_prog=self._res.othello_prog, shadow_prog=self._res.othello_shadow_prog)
@@ -106,7 +108,7 @@ class RendererBackend:
         self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
         self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
-        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, falling_block_pass=self._falling_blocks, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, sun_pass=self._sun, cloud_pass=self._cloud, othello_pass=self._othello, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
+        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, falling_block_pass=self._falling_blocks, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, special_item_pass=self._special_item, sun_pass=self._sun, cloud_pass=self._cloud, othello_pass=self._othello, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
         self._texture_animations = TextureAnimationController(block_dir=Path(assets_dir) / "minecraft" / "textures" / "block", atlas=self._res.atlas)
 
         self.apply_runtime_state()
@@ -119,6 +121,7 @@ class RendererBackend:
         self._player.destroy()
         self._first_person_arm.destroy()
         self._held_block.destroy()
+        self._special_item.destroy()
         self._othello.destroy()
         self._selection_pass.destroy()
 

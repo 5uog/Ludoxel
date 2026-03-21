@@ -4,6 +4,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from ....application.runtime.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
+from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ...world.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from .cloud_flow_options import CLOUD_FLOW_OPTIONS
 from .advanced_scalar_control import AdvancedScalarControl
@@ -43,6 +44,18 @@ def build_video_tab(overlay) -> None:
     fov_row.addWidget(overlay._lbl_fov)
     fov_row.addWidget(overlay._sld_fov)
     layout.addLayout(fov_row)
+
+    camera_row = QHBoxLayout()
+    overlay._lbl_camera_perspective = QLabel("Camera perspective", host)
+    overlay._lbl_camera_perspective.setObjectName("valueLabel")
+    camera_row.addWidget(overlay._lbl_camera_perspective)
+    overlay._cmb_camera_perspective = QComboBox(host)
+    for value in CAMERA_PERSPECTIVE_ORDER:
+        overlay._cmb_camera_perspective.addItem(str(CAMERA_PERSPECTIVE_LABELS[str(value)]), userData=str(value))
+    overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_perspective)
+    camera_row.addWidget(overlay._cmb_camera_perspective)
+    camera_row.addStretch(1)
+    layout.addLayout(camera_row)
 
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "World"))

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from ludoxel.application.runtime.state.audio_preferences import AudioPreferences
 from ludoxel.application.runtime.keybinds import KeybindSettings
+from ludoxel.application.runtime.state.camera_perspective import normalize_camera_perspective
 from ludoxel.application.runtime.pipelines.runtime_state_pipeline import apply_runtime_to_renderer as apply_runtime_to_renderer_state
 from ludoxel.application.runtime.pipelines.runtime_state_pipeline import sync_runtime_sun_from_renderer
 
@@ -23,6 +24,7 @@ def bind_settings_overlay(viewport: "GLViewportWidget") -> None:
     overlay.fullscreen_changed.connect(lambda on: set_fullscreen(viewport, bool(on)))
     overlay.hide_hud_changed.connect(lambda on: set_hide_hud(viewport, bool(on)))
     overlay.hide_hand_changed.connect(lambda on: set_hide_hand(viewport, bool(on)))
+    overlay.camera_perspective_changed.connect(lambda value: set_camera_perspective(viewport, str(value)))
     overlay.view_bobbing_changed.connect(lambda on: set_view_bobbing_enabled(viewport, bool(on)))
     overlay.camera_shake_changed.connect(lambda on: set_camera_shake_enabled(viewport, bool(on)))
     overlay.view_bobbing_strength_changed.connect(lambda value: set_view_bobbing_strength(viewport, float(value)))
@@ -101,7 +103,7 @@ def sync_view_model_visibility(viewport: "GLViewportWidget") -> None:
     viewport._first_person_motion.set_view_model_visible(bool(viewport._state.view_model_visible()))
 
 def sync_first_person_target(viewport: "GLViewportWidget") -> None:
-    viewport._first_person_motion.set_target_block_id(current_block_id(viewport))
+    viewport._first_person_motion.set_target_item_id(current_item_id(viewport))
     sync_view_model_visibility(viewport)
 
 def select_hotbar_slot(viewport: "GLViewportWidget", slot_index: int) -> None:
@@ -126,7 +128,7 @@ def clear_selected_hotbar_slot(viewport: "GLViewportWidget") -> None:
 
 def sync_settings_values(viewport: "GLViewportWidget") -> None:
     sync_state_from_renderer_sun(viewport)
-    viewport._settings.sync_values(fov_deg=viewport._session.settings.fov_deg, sens_deg_per_px=viewport._session.settings.mouse_sens_deg_per_px, inv_x=viewport._state.invert_x, inv_y=viewport._state.invert_y, fullscreen=viewport._state.fullscreen, hide_hud=viewport._state.hide_hud, hide_hand=viewport._state.hide_hand, view_bobbing_enabled=viewport._state.view_bobbing_enabled, camera_shake_enabled=viewport._state.camera_shake_enabled, view_bobbing_strength=float(viewport._state.view_bobbing_strength), camera_shake_strength=float(viewport._state.camera_shake_strength), animated_textures_enabled=bool(viewport._state.animated_textures_enabled), outline_selection=viewport._state.outline_selection, cloud_wire=viewport._state.cloud_wire, clouds_enabled=viewport._state.cloud_enabled, cloud_density=int(viewport._state.cloud_density), cloud_seed=int(viewport._state.cloud_seed), cloud_flow_direction=str(viewport._state.cloud_flow_direction), world_wire=viewport._state.world_wire, shadow_enabled=viewport._state.shadow_enabled, sun_az_deg=viewport._state.sun_az_deg, sun_el_deg=viewport._state.sun_el_deg, creative_mode=viewport._state.creative_mode, auto_jump_enabled=viewport._state.auto_jump_enabled, auto_sprint_enabled=viewport._state.auto_sprint_enabled, gravity=float(viewport._session.settings.movement.gravity), walk_speed=float(viewport._session.settings.movement.walk_speed), sprint_speed=float(viewport._session.settings.movement.sprint_speed), jump_v0=float(viewport._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(viewport._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(viewport._session.settings.movement.fly_speed), fly_ascend_speed=float(viewport._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(viewport._session.settings.movement.fly_descend_speed), render_distance_chunks=int(viewport._state.render_distance_chunks), keybinds=viewport._state.keybinds, audio_master=float(viewport._state.audio.master), audio_ambient=float(viewport._state.audio.ambient), audio_block=float(viewport._state.audio.block), audio_player=float(viewport._state.audio.player))
+    viewport._settings.sync_values(fov_deg=viewport._session.settings.fov_deg, sens_deg_per_px=viewport._session.settings.mouse_sens_deg_per_px, inv_x=viewport._state.invert_x, inv_y=viewport._state.invert_y, fullscreen=viewport._state.fullscreen, hide_hud=viewport._state.hide_hud, hide_hand=viewport._state.hide_hand, camera_perspective=str(viewport._state.camera_perspective), view_bobbing_enabled=viewport._state.view_bobbing_enabled, camera_shake_enabled=viewport._state.camera_shake_enabled, view_bobbing_strength=float(viewport._state.view_bobbing_strength), camera_shake_strength=float(viewport._state.camera_shake_strength), animated_textures_enabled=bool(viewport._state.animated_textures_enabled), outline_selection=viewport._state.outline_selection, cloud_wire=viewport._state.cloud_wire, clouds_enabled=viewport._state.cloud_enabled, cloud_density=int(viewport._state.cloud_density), cloud_seed=int(viewport._state.cloud_seed), cloud_flow_direction=str(viewport._state.cloud_flow_direction), world_wire=viewport._state.world_wire, shadow_enabled=viewport._state.shadow_enabled, sun_az_deg=viewport._state.sun_az_deg, sun_el_deg=viewport._state.sun_el_deg, creative_mode=viewport._state.creative_mode, auto_jump_enabled=viewport._state.auto_jump_enabled, auto_sprint_enabled=viewport._state.auto_sprint_enabled, gravity=float(viewport._session.settings.movement.gravity), walk_speed=float(viewport._session.settings.movement.walk_speed), sprint_speed=float(viewport._session.settings.movement.sprint_speed), jump_v0=float(viewport._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(viewport._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(viewport._session.settings.movement.fly_speed), fly_ascend_speed=float(viewport._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(viewport._session.settings.movement.fly_descend_speed), render_distance_chunks=int(viewport._state.render_distance_chunks), keybinds=viewport._state.keybinds, audio_master=float(viewport._state.audio.master), audio_ambient=float(viewport._state.audio.ambient), audio_block=float(viewport._state.audio.block), audio_player=float(viewport._state.audio.player))
 
 def set_fov(viewport: "GLViewportWidget", fov: float) -> None:
     viewport._for_each_session(lambda session: session.settings.set_fov(float(fov)))
@@ -154,6 +156,22 @@ def set_hide_hud(viewport: "GLViewportWidget", on: bool) -> None:
 def set_hide_hand(viewport: "GLViewportWidget", on: bool) -> None:
     viewport._state.hide_hand = bool(on)
     sync_view_model_visibility(viewport)
+
+def set_camera_perspective(viewport: "GLViewportWidget", value: str) -> None:
+    viewport._state.camera_perspective = normalize_camera_perspective(value)
+    viewport._state.normalize()
+    sync_view_model_visibility(viewport)
+    viewport._sync_gameplay_hud_visibility()
+    sync_settings_values(viewport)
+    viewport._invalidate_selection_target()
+
+def cycle_camera_perspective(viewport: "GLViewportWidget") -> None:
+    viewport._state.cycle_camera_perspective()
+    viewport._state.normalize()
+    sync_view_model_visibility(viewport)
+    viewport._sync_gameplay_hud_visibility()
+    sync_settings_values(viewport)
+    viewport._invalidate_selection_target()
 
 def set_view_bobbing_enabled(viewport: "GLViewportWidget", on: bool) -> None:
     viewport._state.view_bobbing_enabled = bool(on)

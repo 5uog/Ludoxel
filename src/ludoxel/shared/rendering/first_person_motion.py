@@ -7,16 +7,16 @@ _EQUIP_RATE_PER_SECOND = 8.0
 _SWAP_THRESHOLD = 0.05
 _SWING_DURATION_S = 6.0 / 20.0
 
-def _normalize_block_id(block_id: str | None) -> str | None:
-    if block_id is None:
+def _normalize_item_id(item_id: str | None) -> str | None:
+    if item_id is None:
         return None
-    text = str(block_id).strip()
+    text = str(item_id).strip()
     return text if text else None
 
 @dataclass(frozen=True)
 class FirstPersonMotionSample:
-    visible_block_id: str | None
-    target_block_id: str | None
+    visible_item_id: str | None
+    target_item_id: str | None
     equip_progress: float
     prev_equip_progress: float
     swing_progress: float
@@ -28,8 +28,8 @@ class FirstPersonMotionSample:
 class FirstPersonMotionController:
 
     def __init__(self, *, slim_arm: bool=True) -> None:
-        self.visible_block_id: str | None = None
-        self.target_block_id: str | None = None
+        self.visible_item_id: str | None = None
+        self.target_item_id: str | None = None
 
         self.equip_progress: float = 1.0
         self.prev_equip_progress: float = 1.0
@@ -45,10 +45,10 @@ class FirstPersonMotionController:
         self._equip_raising: bool = False
         self._swing_active: bool = False
 
-    def prime(self, block_id: str | None) -> None:
-        normalized = _normalize_block_id(block_id)
-        self.visible_block_id = normalized
-        self.target_block_id = normalized
+    def prime(self, item_id: str | None) -> None:
+        normalized = _normalize_item_id(item_id)
+        self.visible_item_id = normalized
+        self.target_item_id = normalized
         self.equip_progress = 1.0
         self.prev_equip_progress = 1.0
         self.swing_progress = 0.0
@@ -58,13 +58,13 @@ class FirstPersonMotionController:
         self._equip_raising = False
         self._swing_active = False
 
-    def set_target_block_id(self, block_id: str | None) -> None:
-        normalized = _normalize_block_id(block_id)
-        if normalized == self.target_block_id:
+    def set_target_item_id(self, item_id: str | None) -> None:
+        normalized = _normalize_item_id(item_id)
+        if normalized == self.target_item_id:
             return
 
-        self.target_block_id = normalized
-        if self.visible_block_id != self.target_block_id:
+        self.target_item_id = normalized
+        if self.visible_item_id != self.target_item_id:
             self._equip_lowering = True
             self._equip_raising = False
 
@@ -89,7 +89,7 @@ class FirstPersonMotionController:
         self.prev_equip_progress = float(self.equip_progress)
         self.prev_swing_progress = float(self.swing_progress)
 
-        if (not self._equip_lowering) and (not self._equip_raising) and self.visible_block_id != self.target_block_id:
+        if (not self._equip_lowering) and (not self._equip_raising) and self.visible_item_id != self.target_item_id:
             self._equip_lowering = True
 
         if self._equip_lowering:
@@ -97,12 +97,12 @@ class FirstPersonMotionController:
             crossed_swap = float(self.equip_progress) > float(_SWAP_THRESHOLD) and float(next_progress) <= float(_SWAP_THRESHOLD)
             self.equip_progress = float(next_progress)
 
-            if (bool(crossed_swap) or float(self.equip_progress) <= float(_SWAP_THRESHOLD)) and self.visible_block_id != self.target_block_id:
-                self.visible_block_id = self.target_block_id
-                self.show_arm = self.visible_block_id is None
+            if (bool(crossed_swap) or float(self.equip_progress) <= float(_SWAP_THRESHOLD)) and self.visible_item_id != self.target_item_id:
+                self.visible_item_id = self.target_item_id
+                self.show_arm = self.visible_item_id is None
                 self._equip_lowering = False
                 self._equip_raising = True
-            elif float(self.equip_progress) <= 0.0 and self.visible_block_id == self.target_block_id:
+            elif float(self.equip_progress) <= 0.0 and self.visible_item_id == self.target_item_id:
                 self._equip_lowering = False
                 self._equip_raising = True
         elif self._equip_raising:
@@ -121,4 +121,4 @@ class FirstPersonMotionController:
                 self._swing_active = False
 
     def sample(self) -> FirstPersonMotionSample:
-        return FirstPersonMotionSample(visible_block_id=self.visible_block_id, target_block_id=self.target_block_id, equip_progress=float(self.equip_progress), prev_equip_progress=float(self.prev_equip_progress), swing_progress=float(self.swing_progress), prev_swing_progress=float(self.prev_swing_progress), show_arm=bool(self.show_arm), show_view_model=bool(self.show_view_model), slim_arm=bool(self.slim_arm))
+        return FirstPersonMotionSample(visible_item_id=self.visible_item_id, target_item_id=self.target_item_id, equip_progress=float(self.equip_progress), prev_equip_progress=float(self.prev_equip_progress), swing_progress=float(self.swing_progress), prev_swing_progress=float(self.prev_swing_progress), show_arm=bool(self.show_arm), show_view_model=bool(self.show_view_model), slim_arm=bool(self.slim_arm))

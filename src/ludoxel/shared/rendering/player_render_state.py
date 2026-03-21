@@ -5,9 +5,11 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FirstPersonRenderState:
+    visible_item_id: str | None
+    target_item_id: str | None
     visible_block_id: str | None
     visible_block_kind: str | None
-    target_block_id: str | None
+    visible_special_item_icon: str | None
     equip_progress: float
     prev_equip_progress: float
     swing_progress: float

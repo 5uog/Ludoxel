@@ -5,10 +5,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QImage, QMovie, QPainter, QPainterPath, QPen, QPixmap
+from PyQt6.QtGui import QImage, QMovie, QPixmap
 
 from ...blocks.registry.block_registry import BlockRegistry
 from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
+from ....features.othello.ui.special_item_art import build_special_item_icon_image
 from ...blocks.state.state_codec import parse_state
 
 @dataclass(frozen=True)
@@ -120,28 +121,7 @@ class ItemPhotoProvider(QObject):
         return bool(self._active) and bool(self._animations_enabled)
 
     def _render_special_item_pixmap(self, icon_key: str) -> QPixmap:
-        size = int(self._icon)
-        pm = QPixmap(size, size)
-        pm.fill(Qt.GlobalColor.transparent)
-
-        painter = QPainter(pm)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-
-        margin = max(2.0, float(size) * 0.08)
-        frame_rect = pm.rect().adjusted(int(margin), int(margin), -int(margin), -int(margin))
-
-        painter.setPen(QPen(QColor("#0f0f0f"), max(1, size // 18)))
-        painter.setBrush(QColor("#2a2a2a"))
-        painter.drawRoundedRect(frame_rect, 4.0, 4.0)
-
-        normalized = str(icon_key).strip().lower()
-        if normalized == "start":
-            self._paint_start_icon(painter, frame_rect)
-        else:
-            self._paint_settings_icon(painter, frame_rect)
-
-        painter.end()
-        return pm
+        return QPixmap.fromImage(build_special_item_icon_image(str(icon_key), size=int(self._icon)))
 
     def _movie_pixmap(self, movie: QMovie) -> QPixmap | None:
         pixmap = movie.currentPixmap()
@@ -202,36 +182,3 @@ class ItemPhotoProvider(QObject):
             return
         self._animated_pix_cache[str(block_id)] = QPixmap(pixmap)
         self.pixmap_changed.emit(str(block_id))
-
-    @staticmethod
-    def _paint_start_icon(painter: QPainter, rect) -> None:
-        painter.setPen(QPen(QColor("#14360b"), 1))
-        painter.setBrush(QColor("#71b442"))
-
-        width = float(rect.width())
-        height = float(rect.height())
-        left = float(rect.left())
-        top = float(rect.top())
-
-        path = QPainterPath()
-        path.moveTo(left + width * 0.30, top + height * 0.22)
-        path.lineTo(left + width * 0.30, top + height * 0.78)
-        path.lineTo(left + width * 0.76, top + height * 0.50)
-        path.closeSubpath()
-        painter.drawPath(path)
-
-    @staticmethod
-    def _paint_settings_icon(painter: QPainter, rect) -> None:
-        width = float(rect.width())
-        height = float(rect.height())
-        left = float(rect.left())
-        top = float(rect.top())
-
-        painter.setPen(QPen(QColor("#f1f1f1"), max(2, rect.width() // 12)))
-        for row_index, knob_offset in enumerate((0.30, 0.62, 0.44)):
-            y = top + height * (0.28 + 0.22 * row_index)
-            painter.drawLine(int(left + width * 0.20), int(y), int(left + width * 0.80), int(y))
-            painter.setBrush(QColor("#d5d5d5"))
-            x = left + width * float(knob_offset)
-            radius = max(2.0, width * 0.08)
-            painter.drawEllipse(int(x - radius), int(y - radius), int(radius * 2.0), int(radius * 2.0))

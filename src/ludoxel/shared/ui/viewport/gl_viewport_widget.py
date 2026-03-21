@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
+from PyQt6.QtGui import QGuiApplication, QKeyEvent, QMouseEvent, QWheelEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtWidgets import QMessageBox
 
@@ -39,10 +39,14 @@ from .runtime.input_controller import ViewportInput
 from .runtime.overlay_controller import OverlayRefs, ViewportOverlays
 from .runtime.selection_state import ViewportSelectionState
 from ...opengl.runtime.world_upload_tracker import WorldUploadTracker
+from ...rendering.third_person_camera import resolve_camera
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
     fullscreen_changed = pyqtSignal(bool)
+    loading_state_changed = pyqtSignal(bool)
+    loading_status_changed = pyqtSignal(str)
+    loading_finished = pyqtSignal()
 
     def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
@@ -83,6 +87,13 @@ class GLViewportWidget(QOpenGLWidget):
         self._last_paint_ms: float = 0.0
         self._last_selection_pick_ms: float = 0.0
         self._shutdown_done = False
+        self._gl_initialized = False
+        self._runtime_active = False
+        self._loading_active = True
+        self._loading_status = "Initializing renderer..."
+        self._loading_progress: tuple[int, int] = (-1, -1)
+        app = QGuiApplication.instance()
+        self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
         self._last_upload_eye: Vec3 | None = None
         self._last_upload_world_revision: int = -1
@@ -108,10 +119,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._death = DeathOverlay(self)
 
         self._crosshair = CrosshairWidget(self)
-        self._crosshair.setVisible(True)
+        self._crosshair.setVisible(False)
 
         self._hotbar = HotbarWidget(parent=self, project_root=self._project_root, registry=self._session.block_registry)
-        self._hotbar.setVisible(True)
+        self._hotbar.setVisible(False)
 
         self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
 
@@ -150,6 +161,8 @@ class GLViewportWidget(QOpenGLWidget):
         settings_controller.sync_view_model_visibility(self)
         othello_controller.sync_hud_text(self)
         self._sync_gameplay_hud_visibility()
+        if app is not None:
+            app.applicationStateChanged.connect(self._on_application_state_changed)
 
     def _for_each_session(self, fn) -> None:
         for session in self._sessions.all_sessions():
@@ -160,10 +173,93 @@ class GLViewportWidget(QOpenGLWidget):
         settled_othello_state = self._othello_match.settle_animations()
         save_state(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state)
 
+    def loading_status_text(self) -> str:
+        return str(self._loading_status)
+
+    def loading_active(self) -> bool:
+        return bool(self._loading_active)
+
+    def _set_loading_status(self, text: str) -> None:
+        next_text = str(text).strip() or "Loading..."
+        if next_text == str(self._loading_status):
+            return
+        self._loading_status = str(next_text)
+        self.loading_status_changed.emit(str(self._loading_status))
+
+    def _begin_loading(self, text: str) -> None:
+        was_loading = bool(self._loading_active)
+        self._loading_active = True
+        self._loading_progress = (-1, -1)
+        self._set_loading_status(text)
+        self._sync_gameplay_hud_visibility()
+        if not bool(was_loading):
+            self.loading_state_changed.emit(True)
+        self.update()
+
+    def _finish_loading(self) -> None:
+        if not bool(self._loading_active):
+            return
+        self._loading_active = False
+        self._sync_gameplay_hud_visibility()
+        self.loading_state_changed.emit(False)
+        self.loading_finished.emit()
+        self._prewarm_inactive_space_cache()
+
+    def _prewarm_inactive_space_cache(self) -> None:
+        if not bool(self._gl_initialized):
+            return
+        for session in self._sessions.all_sessions():
+            if session is self._session:
+                continue
+            try:
+                self._upload.prewarm_cache(world=session.world, renderer=self._renderer, eye=session.player.eye_pos(), render_distance_chunks=int(self._state.render_distance_chunks))
+            except Exception:
+                continue
+
+    def _on_application_state_changed(self, state) -> None:
+        self._application_active = bool(state == Qt.ApplicationState.ApplicationActive)
+        self._sync_runtime_activity()
+
+    def _sync_runtime_activity(self) -> None:
+        self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and bool(self._application_active) and (not bool(self._shutdown_done)))
+
+    def _set_runtime_active(self, active: bool) -> None:
+        next_active = bool(active)
+        if next_active == bool(self._runtime_active):
+            return
+
+        self._runtime_active = bool(next_active)
+        if not bool(next_active):
+            try:
+                self._sim_timer.stop()
+            except Exception:
+                pass
+            try:
+                self._render_timer.stop()
+            except Exception:
+                pass
+            try:
+                self._inp.set_mouse_capture(False)
+            except Exception:
+                pass
+            return
+
+        now = time.perf_counter()
+        self._runner.start()
+        self._last_paint_ms = 0.0
+        self._last_selection_pick_ms = 0.0
+        self._last_selection_refresh_time_s = float(now)
+        self._last_upload_time_s = float(now)
+        self._force_selection_until_s = max(float(self._force_selection_until_s), float(now) + 0.12)
+        self._sim_timer.start()
+        self._render_timer.start()
+        self.update()
+
     def shutdown(self) -> None:
         if self._shutdown_done:
             return
         self._shutdown_done = True
+        self._set_runtime_active(False)
         try:
             self._sim_timer.stop()
         except Exception:
@@ -234,20 +330,27 @@ class GLViewportWidget(QOpenGLWidget):
         return bool(self._state.fullscreen)
 
     def _make_render_snapshot(self):
-        return self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength))
+        return self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), is_first_person_view=bool(self._state.is_first_person_view()))
 
-    @staticmethod
-    def _effective_camera_from_snapshot(snapshot) -> tuple[Vec3, float, float, float, Vec3]:
+    def _effective_camera_from_snapshot(self, snapshot) -> tuple[Vec3, float, float, float, Vec3]:
+        cam = snapshot.camera
+        anchor_eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
+        yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
+        pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
+        roll_deg = float(cam.shake_roll_deg)
+        eye, resolved_yaw_deg, resolved_pitch_deg, direction = resolve_camera(world=self._session.world, block_registry=self._session.block_registry, anchor_eye=anchor_eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), perspective=str(self._state.camera_perspective))
+        return (eye, float(resolved_yaw_deg), float(resolved_pitch_deg), float(roll_deg), direction)
+
+    def _interaction_pose_from_snapshot(self, snapshot) -> tuple[Vec3, float, float, Vec3]:
         cam = snapshot.camera
         eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
         yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
         pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
-        roll_deg = float(cam.shake_roll_deg)
         direction = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
-        return (eye, float(yaw_deg), float(pitch_deg), float(roll_deg), direction)
+        return (eye, float(yaw_deg), float(pitch_deg), direction)
 
     def _gameplay_hud_active(self) -> bool:
-        return ((not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
+        return ((not bool(self._loading_active)) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
 
     def _debug_hud_active(self) -> bool:
         return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
@@ -255,8 +358,9 @@ class GLViewportWidget(QOpenGLWidget):
     def _sync_gameplay_hud_visibility(self) -> None:
         show_gameplay_hud = bool(self._gameplay_hud_active())
         show_othello_hud = bool(show_gameplay_hud and self._state.is_othello_space())
+        show_crosshair = bool(show_gameplay_hud and self._state.is_first_person_view())
 
-        self._crosshair.setVisible(bool(show_gameplay_hud))
+        self._crosshair.setVisible(bool(show_crosshair))
         self._hotbar.setVisible(bool(show_gameplay_hud))
         self._othello_hud.setVisible(bool(show_othello_hud))
 
@@ -267,7 +371,8 @@ class GLViewportWidget(QOpenGLWidget):
 
         if bool(show_gameplay_hud):
             self._hotbar.raise_()
-            self._crosshair.raise_()
+            if bool(show_crosshair):
+                self._crosshair.raise_()
             if bool(show_othello_hud):
                 self._othello_hud.raise_()
             if self._hud is not None and bool(self._debug_hud_active()):
@@ -312,6 +417,10 @@ class GLViewportWidget(QOpenGLWidget):
         render_distance = int(self._state.render_distance_chunks)
         now = time.perf_counter()
 
+        if self._upload.has_ready_results():
+            return True
+        if not self._upload.visible_chunks_ready(world=self._session.world, eye=eye, render_distance_chunks=int(render_distance)):
+            return True
         if world_revision != int(self._last_upload_world_revision):
             self._arm_world_change_sync()
             return True
@@ -380,6 +489,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._last_selection_refresh_time_s = time.perf_counter()
 
     def initializeGL(self) -> None:
+        self._begin_loading("Initializing renderer...")
         try:
             self._renderer.initialize(self._assets_dir, block_registry=self._session.block_registry)
         except Exception as exc:
@@ -425,9 +535,9 @@ class GLViewportWidget(QOpenGLWidget):
         settings_controller.sync_cloud_motion_pause(self)
         othello_controller.sync_hud_text(self)
         self._sync_gameplay_hud_visibility()
-        self._runner.start()
-        self._sim_timer.start()
-        self._render_timer.start()
+        self._gl_initialized = True
+        self._begin_loading("Loading world...")
+        self._sync_runtime_activity()
 
     def resizeGL(self, w: int, h: int) -> None:
         if self._hud is not None:
@@ -463,49 +573,63 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud_ctl.on_render_frame()
 
         snap = self._make_render_snapshot()
-        eye = Vec3(snap.camera.eye_x, snap.camera.eye_y, snap.camera.eye_z)
+        cam = snap.camera
+        upload_eye = Vec3(float(cam.eye_x), float(cam.eye_y), float(cam.eye_z))
         render_eye, render_yaw_deg, render_pitch_deg, render_roll_deg, _render_direction = (self._effective_camera_from_snapshot(snap))
+        interaction_eye, interaction_yaw_deg, interaction_pitch_deg, _interaction_direction = self._interaction_pose_from_snapshot(snap)
         self._audio.cache_listener_pose(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
 
-        if self._upload_due(eye=eye):
-            self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
-            self._mark_upload(eye=eye)
+        if self._upload_due(eye=upload_eye):
+            self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=upload_eye, render_distance_chunks=int(self._state.render_distance_chunks))
+            self._mark_upload(eye=upload_eye)
 
-        if self._state.is_othello_space():
-            if self._selection_due(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg)):
-                self._last_selection_pick_ms = 0.0
-                self._invalidate_selection_target()
-                self._renderer.clear_selection()
-                othello_controller.refresh_hover_square(self, snap)
-                self._mark_selection(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
-        else:
-            self._othello_hover_square = None
-            if self._selection_due(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg)):
-                self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
-                selection_target = self._selection_state.target()
-                if selection_target is None:
-                    self._renderer.clear_selection()
+        if bool(self._loading_active):
+            ready_chunks, total_chunks = self._upload.visible_load_progress(world=self._session.world, eye=upload_eye, render_distance_chunks=int(self._state.render_distance_chunks))
+            progress = (int(ready_chunks), int(total_chunks))
+            if progress != self._loading_progress:
+                self._loading_progress = progress
+                if int(total_chunks) > 0:
+                    self._set_loading_status(f"Loading world... {int(ready_chunks)}/{int(total_chunks)} chunks")
                 else:
-                    hx, hy, hz, st = selection_target
+                    self._set_loading_status("Loading world...")
+            if self._upload.visible_chunks_ready(world=self._session.world, eye=upload_eye, render_distance_chunks=int(self._state.render_distance_chunks)):
+                self._finish_loading()
 
-                    def get_state(x: int, y: int, z: int) -> str | None:
-                        return self._session.world.blocks.get((int(x), int(y), int(z)))
+        if not bool(self._loading_active):
+            if self._state.is_othello_space():
+                if self._selection_due(eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg)):
+                    self._last_selection_pick_ms = 0.0
+                    self._invalidate_selection_target()
+                    self._renderer.clear_selection()
+                    othello_controller.refresh_hover_square(self, snap)
+                    self._mark_selection(eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg))
+            else:
+                self._othello_hover_square = None
+                if self._selection_due(eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg)):
+                    self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg))
+                    selection_target = self._selection_state.target()
+                    if selection_target is None:
+                        self._renderer.clear_selection()
+                    else:
+                        hx, hy, hz, st = selection_target
 
-                    self._renderer.set_selection_target(x=int(hx), y=int(hy), z=int(hz), state_str=str(st), get_state=get_state, world_revision=int(self._session.world.revision))
-                self._mark_selection(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
+                        def get_state(x: int, y: int, z: int) -> str | None:
+                            return self._session.world.blocks.get((int(x), int(y), int(z)))
+
+                        self._renderer.set_selection_target(x=int(hx), y=int(hy), z=int(hz), state_str=str(st), get_state=get_state, world_revision=int(self._session.world.revision))
+                    self._mark_selection(eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg))
 
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        cam = snap.camera
         player_state = compose_player_render_state(snapshot=snap, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
 
         self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snap.falling_blocks))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
-        if (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
+        if bool(self._loading_active) or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
             return
         self._runner.update()
 
@@ -554,26 +678,46 @@ class GLViewportWidget(QOpenGLWidget):
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
+        if bool(self._loading_active):
+            e.accept()
+            return
         if interaction_controller.handle_key_press(self, e):
             return
         super().keyPressEvent(e)
 
     def keyReleaseEvent(self, e) -> None:
+        if bool(self._loading_active):
+            e.accept()
+            return
         self._inp.on_key_release(e)
         super().keyReleaseEvent(e)
 
     def wheelEvent(self, e: QWheelEvent) -> None:
+        if bool(self._loading_active):
+            e.accept()
+            return
         if interaction_controller.handle_wheel(self, e):
             return
         super().wheelEvent(e)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
+        if bool(self._loading_active):
+            e.accept()
+            return
         interaction_controller.handle_mouse_press(self, e)
         super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):
+        if bool(self._loading_active) or (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):
             super().mouseMoveEvent(e)
             return
         e.accept()
         return
+
+    def showEvent(self, e) -> None:
+        super().showEvent(e)
+        self._sync_runtime_activity()
+
+    def hideEvent(self, e) -> None:
+        self._set_runtime_active(False)
+        super().hideEvent(e)

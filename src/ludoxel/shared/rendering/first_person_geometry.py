@@ -65,9 +65,9 @@ _ARM_FIRSTPERSON_SCALE = 1.18
 _BLOCK_FIRSTPERSON_TRANSLATE_PX = (0.0, 2.5, 0.0)
 _BLOCK_FIRSTPERSON_ROTATE_DEG = (5.0, -45.0, 10.0)
 _BLOCK_FIRSTPERSON_SCALE = (0.5, 0.5, 0.5)
-_BLOCK_THIRDPERSON_TRANSLATE_PX = (0.0, 2.5, 0.0)
+_BLOCK_THIRDPERSON_TRANSLATE_PX = (0.0, 2.0, 5.0)
 _BLOCK_THIRDPERSON_ROTATE_DEG = (75.0, 45.0, 0.0)
-_BLOCK_THIRDPERSON_SCALE = (0.375, 0.375, 0.375)
+_BLOCK_THIRDPERSON_SCALE = (0.3125, 0.3125, 0.3125)
 
 _ARM_SAFE_FRAME: SafeFrame = (-0.98, 1.04, -1.74, 0.98)
 _ITEM_SAFE_FRAME: SafeFrame = (-0.98, 1.01, -1.01, 0.98)
@@ -83,6 +83,8 @@ _FIRST_PERSON_FIT_EPSILON = 1e-6
 
 _ARM_BASE_BOX = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.0, 2.0 * _PX)
 _ARM_SLEEVE_BOX = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
+_SPECIAL_ITEM_ICON_BOX = LocalBox(0.0, 0.0, 7.5 * _PX, 16.0 * _PX, 16.0 * _PX, 8.5 * _PX)
+_SPECIAL_ITEM_RENDER_SCALE = 1.55
 
 @dataclass(frozen=True)
 class TexturedBox:
@@ -351,6 +353,18 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
             uv_rect = _skin_uv_rect(uv_map[int(face_idx)], int(skin_width), int(skin_height))
             _append_face_instance(buffers, int(face_idx), model, uv_rect)
 
+    return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+
+def build_first_person_special_item_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray) -> tuple[np.ndarray, ...]:
+    if first_person is None or first_person.visible_special_item_icon is None:
+        return _empty_face_rows()
+
+    boxes = (_SPECIAL_ITEM_ICON_BOX,)
+    base_parent_transform = _fitted_first_person_parent_transform(boxes=boxes, projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))))
+    parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
+    model = _model_matrix_for_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
+    buffers: list[list[list[float]]] = [[] for _ in range(6)]
+    _append_face_instance(buffers, int(FACE_POS_Z), model, (0.0, 0.0, 1.0, 1.0))
     return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
 
 def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray) -> np.ndarray:

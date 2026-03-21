@@ -126,8 +126,8 @@ def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
     if game_state.status != OTHELLO_GAME_STATE_PLAYER_TURN:
         return
 
-    render_eye, _yaw, _pitch, _roll, render_direction = viewport._effective_camera_from_snapshot(snapshot)
-    square_index = raycast_board_square(render_eye, render_direction)
+    interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose_from_snapshot(snapshot)
+    square_index = raycast_board_square(interaction_eye, interaction_direction)
     if square_index is None or int(square_index) not in set(game_state.legal_moves):
         return
     viewport._othello_hover_square = int(square_index)

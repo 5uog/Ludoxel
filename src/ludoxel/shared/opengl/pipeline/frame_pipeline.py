@@ -1,7 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-
 import math
 from dataclasses import dataclass
 
@@ -17,6 +16,7 @@ from ..passes.cloud_pass import CloudPass
 from ..passes.falling_block_pass import FallingBlockPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
 from ..passes.held_block_pass import HeldBlockPass
+from ..passes.special_item_pass import SpecialItemPass
 from ....features.othello.opengl.othello_pass import OthelloPass
 from ..passes.player_model_pass import PlayerModelPass
 from ..passes.shadow_map_pass import ShadowMapPass
@@ -51,6 +51,7 @@ class FramePipeline:
     player_pass: PlayerModelPass
     first_person_arm_pass: FirstPersonArmPass
     held_block_pass: HeldBlockPass
+    special_item_pass: SpecialItemPass
     sun_pass: SunPass
     cloud_pass: CloudPass
     othello_pass: OthelloPass
@@ -125,11 +126,13 @@ class FramePipeline:
         self.selection.draw(view_proj=vp)
 
         first_person = None if player_state is None else player_state.first_person
-        if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
+        if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None or first_person.visible_special_item_icon is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
             hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
             hand_vp = mat4.perspective(hand_fov_deg,(w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
-            if first_person.visible_block_id is not None:
+            if first_person.visible_special_item_icon is not None:
+                self.special_item_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
+            elif first_person.visible_block_id is not None:
                 self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             else:
                 self.first_person_arm_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)

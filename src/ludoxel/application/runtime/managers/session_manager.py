@@ -255,7 +255,7 @@ class SessionManager:
         support_state, support_position = self._support_contact()
         return SessionStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position, fall_distance_blocks=fall_distance_blocks)
 
-    def make_snapshot(self, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20) -> RenderSnapshotDTO:
+    def make_snapshot(self, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20, is_first_person_view: bool = True) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()
         cam_shake_tz = 0.0
         cam_shake_yaw_deg = 0.0
@@ -328,7 +328,7 @@ class SessionManager:
 
         camera = CameraDTO(eye_x=eye.x, eye_y=eye.y, eye_z=eye.z, yaw_deg=self.player.yaw_deg, pitch_deg=self.player.pitch_deg, fov_deg=self.settings.fov_deg, shake_tx=float(cam_shake_tx), shake_ty=float(cam_shake_ty), shake_tz=float(cam_shake_tz), shake_yaw_deg=float(cam_shake_yaw_deg), shake_pitch_deg=float(cam_shake_pitch_deg), shake_roll_deg=float(cam_shake_roll_deg))
 
-        player_model = PlayerModelSnapshotDTO(base_x=float(player.position.x), base_y=float(player.position.y), base_z=float(player.position.z), body_yaw_deg=float(player.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(player.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), first_person_tx=float(fp_tx), first_person_ty=float(fp_ty), first_person_tz=float(fp_tz), first_person_yaw_deg=float(fp_yaw_deg), first_person_pitch_deg=float(fp_pitch_deg), first_person_roll_deg=float(fp_roll_deg), is_first_person=True)
+        player_model = PlayerModelSnapshotDTO(base_x=float(player.position.x), base_y=float(player.position.y) + float(step_eye_offset), base_z=float(player.position.z), body_yaw_deg=float(player.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(player.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), first_person_tx=float(fp_tx), first_person_ty=float(fp_ty), first_person_tz=float(fp_tz), first_person_yaw_deg=float(fp_yaw_deg), first_person_pitch_deg=float(fp_pitch_deg), first_person_roll_deg=float(fp_roll_deg), is_first_person=bool(is_first_person_view))
 
         falling_blocks = tuple(FallingBlockRenderSampleDTO(state_str=str(sample.state_str), x=float(sample.x), y=float(sample.y), z=float(sample.z)) for sample in self.gravity.render_samples())
         return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=camera, player_model=player_model, falling_blocks=falling_blocks)

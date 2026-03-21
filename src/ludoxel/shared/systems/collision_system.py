@@ -163,14 +163,7 @@ def _depenetrate(player: PlayerEntity, world: WorldState, pos: Vec3, params: Col
         best_abs = float("inf")
 
         for _bx, _by, _bz, block_aabb in _iter_intersections(world, aabb, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
-            shift_candidates = (
-                Vec3(float(block_aabb.mn.x) - float(aabb.mx.x) - eps, 0.0, 0.0),
-                Vec3(float(block_aabb.mx.x) - float(aabb.mn.x) + eps, 0.0, 0.0),
-                Vec3(0.0, float(block_aabb.mn.y) - float(aabb.mx.y) - eps, 0.0),
-                Vec3(0.0, float(block_aabb.mx.y) - float(aabb.mn.y) + eps, 0.0),
-                Vec3(0.0, 0.0, float(block_aabb.mn.z) - float(aabb.mx.z) - eps),
-                Vec3(0.0, 0.0, float(block_aabb.mx.z) - float(aabb.mn.z) + eps),
-            )
+            shift_candidates = (Vec3(float(block_aabb.mn.x) - float(aabb.mx.x) - eps, 0.0, 0.0), Vec3(float(block_aabb.mx.x) - float(aabb.mn.x) + eps, 0.0, 0.0), Vec3(0.0, float(block_aabb.mn.y) - float(aabb.mx.y) - eps, 0.0), Vec3(0.0, float(block_aabb.mx.y) - float(aabb.mn.y) + eps, 0.0), Vec3(0.0, 0.0, float(block_aabb.mn.z) - float(aabb.mx.z) - eps), Vec3(0.0, 0.0, float(block_aabb.mx.z) - float(aabb.mn.z) + eps))
             for shift in shift_candidates:
                 magnitude = abs(float(shift.x)) + abs(float(shift.y)) + abs(float(shift.z))
                 if magnitude < float(best_abs):
