@@ -1,4 +1,4 @@
-// Copyright 2026 Kento Konishi (https://github.com/5uog)
+// SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: Apache-2.0
 #version 330 core
 
@@ -11,7 +11,7 @@ in float v_sel;
 
 uniform sampler2D u_atlas;
 uniform vec3 u_sunDir;
-uniform int   u_selMode;
+uniform int u_selMode;
 uniform float u_selTint;
 
 out vec4 fragColor;
@@ -30,7 +30,9 @@ void main() {
     vec2 uv = mix(v_uvRect.xy, v_uvRect.zw, v_uv);
     vec4 tex = texture(u_atlas, uv);
 
-    if (tex.a < 0.01) discard;
+    if (tex.a < 0.01) {
+        discard;
+    }
 
     vec3 n = v_normal;
     vec3 l = u_sunDir;

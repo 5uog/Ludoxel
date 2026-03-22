@@ -1,13 +1,13 @@
-// Copyright 2026 Kento Konishi (https://github.com/5uog)
+// SPDX-FileCopyrightText: 2026 Kento Konishi
 // SPDX-License-Identifier: Apache-2.0
 #version 330 core
 
 in vec3 v_normal;
 in float v_alphaMul;
 
-uniform vec3  u_color;
+uniform vec3 u_color;
 uniform float u_alpha;
-uniform vec3  u_sunDir;
+uniform vec3 u_sunDir;
 
 out vec4 fragColor;
 

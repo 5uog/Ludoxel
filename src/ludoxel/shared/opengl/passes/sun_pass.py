@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-
 import numpy as np
 
 from OpenGL.GL import glDisable, glEnable, glDepthMask, glBlendFunc, glBlendEquation, glBindVertexArray, glDrawArraysInstanced, GL_DEPTH_TEST, GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_TRIANGLES

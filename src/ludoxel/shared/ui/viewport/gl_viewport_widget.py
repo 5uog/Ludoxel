@@ -14,37 +14,43 @@ from PyQt6.QtWidgets import QMessageBox
 
 from ....application.runtime.context.play_space_context import PlaySpaceContext
 from ....application.runtime.state.runtime_preferences import RuntimePreferences
-from ....features.othello.application.othello_match_controller import OthelloMatchController
 from ....application.runtime.tasks.fixed_step_runner import FixedStepRunner
 from ....application.runtime.tasks.state_persistence import apply_persisted_state_if_present, save_state
-from ...math.vec3 import Vec3
-from ...math.view_angles import forward_from_yaw_pitch_deg
 from ....application.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
-from ..qt_input_adapter import QtInputAdapter
-from ...opengl.runtime.gl_renderer import GLRenderer
-from ..config.game_loop_params import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
-from ..config.gl_surface_format import build_gl_surface_format
-from ..hud.hud_controller import HudController
-from ..hud.crosshair_widget import CrosshairWidget
-from ..hud.hotbar_widget import HotbarWidget
+
+from ....features.othello.application.othello_match_controller import OthelloMatchController
 from ....features.othello.domain.game.ai_worker import OthelloAiWorker
 from ....features.othello.ui.hud_widget import OthelloHudWidget
 from ....features.othello.ui.settings_overlay import OthelloSettingsOverlay
+from ....features.othello.ui.viewport import othello_controller as othello_controller
+
+from ...math.vec3 import Vec3
+from ...math.view_angles import forward_from_yaw_pitch_deg
+
+from ...opengl.runtime.gl_renderer import GLRenderer
+from ...opengl.runtime.world_upload_tracker import WorldUploadTracker
+from ...rendering.third_person_camera import resolve_camera
+from ...rendering.first_person_motion import FirstPersonMotionController
+from ...rendering.player_skin import PLAYER_SKIN_KIND_ALEX, load_player_skin_image
+from ...rendering.player_render_state_composer import compose_player_render_state
+
+from ..qt_input_adapter import QtInputAdapter
+
+from ..hud.hud_controller import HudController
+from ..hud.crosshair_widget import CrosshairWidget
+from ..hud.hotbar_widget import HotbarWidget
 from ..overlays.death_overlay import DeathOverlay
 from ..overlays.inventory_overlay import InventoryOverlay
 from ..overlays.pause_overlay import PauseOverlay
 from ..settings.overlay import SettingsOverlay
+from ..config.game_loop_params import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
+from ..config.gl_surface_format import build_gl_surface_format
 from .controllers import interaction_controller, settings_controller
-from ....features.othello.ui.viewport import othello_controller as othello_controller
-from ...rendering.first_person_motion import FirstPersonMotionController
-from ...rendering.player_skin import PLAYER_SKIN_KIND_ALEX, load_player_skin_image
-from ...rendering.player_render_state_composer import compose_player_render_state
+
 from .runtime.frame_sync import ViewportFrameSync
 from .runtime.input_controller import ViewportInput
 from .runtime.overlay_controller import OverlayRefs, ViewportOverlays
 from .runtime.selection_state import ViewportSelectionState
-from ...opengl.runtime.world_upload_tracker import WorldUploadTracker
-from ...rendering.third_person_camera import resolve_camera
 
 
 class GLViewportWidget(QOpenGLWidget):

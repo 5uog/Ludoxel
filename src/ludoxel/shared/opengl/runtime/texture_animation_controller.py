@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from pathlib import Path
+
+import math
 
 from PyQt6.QtGui import QImage
 

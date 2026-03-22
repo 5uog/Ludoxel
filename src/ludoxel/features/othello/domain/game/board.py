@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import math
 from typing import Dict
+
+import math
 
 from .....shared.math.vec3 import Vec3
 from .....shared.world.world_state import BlockKey, WorldState

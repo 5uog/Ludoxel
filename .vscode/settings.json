@@ -8,7 +8,7 @@
     "editor.dragAndDrop": false,
     "editor.fontFamily": "'Moralerspace Neon HWNF', Consolas, 'Courier New', monospace",
     "editor.fontSize": 14,
-    "editor.lineHeight": 1.5,
+    "editor.lineHeight": 21,
     "editor.minimap.enabled": true,
     "editor.minimap.maxColumn": 80,
     "editor.minimap.showSlider": "always",
@@ -32,15 +32,27 @@
     "editor.defaultFormatter": null,
     "editor.accessibilitySupport": "off",
     "editor.useTabStops": true,
-    "workbench.editor.editor.render-whitespace": "none",
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+
+    "[python]": {
+        "editor.formatOnSave": false,
+        "editor.wordWrap": "off",
+        "editor.rulers": [88, 100]
     },
-    "css.lint.unknownAtRules": "ignore",
-    "scss.lint.unknownAtRules": "ignore",
-    "less.lint.unknownAtRules": "ignore",
+
     "files.associations": {
-        "*.tsx": "typescriptreact",
-        "*.jsx": "javascriptreact"
+        "*.pyi": "python",
+        "*.qss": "css",
+        "*.glsl": "glsl",
+        "*.comp": "glsl",
+        "*.frag": "glsl",
+        "*.vert": "glsl",
+        "*.in": "plaintext",
+        "LICENCE": "plaintext",
+        "LICENSE": "plaintext",
+        "NOTICE": "plaintext"
     }
 }

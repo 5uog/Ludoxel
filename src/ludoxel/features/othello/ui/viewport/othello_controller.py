@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
+
+import time
 
 from PyQt6.QtCore import QTimer
 

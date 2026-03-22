@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import json
 from functools import lru_cache
 from pathlib import Path
+
+import json
 
 from .rules import apply_move, create_initial_board, find_legal_moves
 from .types import BOARD_CELL_COUNT, SIDE_BLACK, coerce_board, encode_board, normalize_side, other_side

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+
 import math
 import numpy as np
 
