@@ -47,7 +47,7 @@
 
     "files.associations": {
         "*.pyi": "python",
-        "*.qss": "css",
+        "*.qss": "plaintext",
         "*.glsl": "glsl",
         "*.comp": "glsl",
         "*.frag": "glsl",

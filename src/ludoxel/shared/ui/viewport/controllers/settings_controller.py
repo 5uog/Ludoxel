@@ -31,7 +31,6 @@ def bind_settings_overlay(viewport: "GLViewportWidget") -> None:
     overlay.hide_hud_changed.connect(lambda on: set_hide_hud(viewport, bool(on)))
     overlay.hide_hand_changed.connect(lambda on: set_hide_hand(viewport, bool(on)))
     overlay.crosshair_pixels_changed.connect(lambda pixels: set_crosshair_pixels(viewport, pixels))
-    overlay.crosshair_default_requested.connect(lambda: set_crosshair_default(viewport))
     overlay.crosshair_clear_requested.connect(lambda: clear_crosshair(viewport))
     overlay.camera_perspective_changed.connect(lambda value: set_camera_perspective(viewport, str(value)))
     overlay.view_bobbing_changed.connect(lambda on: set_view_bobbing_enabled(viewport, bool(on)))
@@ -79,7 +78,7 @@ def apply_runtime_to_renderer(viewport: "GLViewportWidget") -> None:
 
 
 def sync_cloud_motion_pause(viewport: "GLViewportWidget") -> None:
-    pause_motion = bool(viewport.loading_active()) or bool(viewport._overlays.any_modal_open()) or (not bool(viewport._application_active))
+    pause_motion = (bool(viewport.loading_active()) or bool(viewport._overlays.paused()) or bool(viewport._overlays.dead()) or bool(viewport._overlays.inventory_open()) or bool(viewport._overlays.othello_settings_open()) or (not bool(viewport._application_active)))
     viewport._renderer.set_cloud_motion_paused(bool(pause_motion))
     viewport._renderer.set_texture_animation_paused(bool(pause_motion))
 
@@ -209,14 +208,8 @@ def set_crosshair_pixels(viewport: "GLViewportWidget", pixels: object) -> None:
     sync_crosshair_widgets(viewport)
 
 
-def set_crosshair_default(viewport: "GLViewportWidget") -> None:
-    viewport._state.crosshair_mode = "default"
-    viewport._state.normalize()
-    sync_crosshair_widgets(viewport)
-
-
 def clear_crosshair(viewport: "GLViewportWidget") -> None:
-    viewport._state.crosshair_mode = "custom"
+    viewport._state.crosshair_mode = "default"
     viewport._state.crosshair_pixels = ()
     viewport._state.normalize()
     sync_crosshair_widgets(viewport)

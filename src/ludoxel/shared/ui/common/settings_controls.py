@@ -29,8 +29,90 @@ def _draw_bedrock_frame(painter: QPainter, rect: QRect, *, fill: QColor, top_lef
 
 class WheelPassthroughSlider(QSlider):
 
+    _TRACK_HEIGHT = 16
+    _HANDLE_SIZE = 24
+    _PREFERRED_HEIGHT = 34
+
+    def __init__(self, orientation: Qt.Orientation, parent: QWidget | None=None) -> None:
+        super().__init__(orientation, parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+        self.setMouseTracking(True)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setMinimumHeight(int(self._PREFERRED_HEIGHT))
+
+    def sizeHint(self) -> QSize:
+        return QSize(max(160, int(super().sizeHint().width())), int(self._PREFERRED_HEIGHT))
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(96, int(self._PREFERRED_HEIGHT))
+
     def wheelEvent(self, event: QWheelEvent) -> None:
         event.ignore()
+
+    def paintEvent(self, _event: QPaintEvent) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        painter.fillRect(self.rect(), self.palette().window())
+
+        if self.orientation() != Qt.Orientation.Horizontal:
+            super().paintEvent(_event)
+            return
+
+        handle_side = int(self._HANDLE_SIZE)
+        track_height = int(self._TRACK_HEIGHT)
+        half_handle = int(handle_side // 2)
+        track_left = int(half_handle)
+        track_right = int(max(track_left + 1, self.width() - half_handle))
+        track = QRect(int(track_left), int((self.height() - track_height) // 2), int(max(1, track_right - track_left)), int(track_height))
+
+        hovered = bool(self.underMouse())
+        enabled = bool(self.isEnabled())
+
+        off_fill = QColor("#505050")
+        off_light = QColor("#8C8C8C")
+        off_dark = QColor("#1A1A1A")
+        on_fill = QColor("#6FB03A")
+        on_light = QColor("#A9D46A")
+        on_dark = QColor("#254114")
+        thumb_fill = QColor("#E0E0E0")
+        thumb_light = QColor("#FFFFFF")
+        thumb_dark = QColor("#5C5C5C")
+
+        if hovered and enabled:
+            off_fill = off_fill.lighter(106)
+            on_fill = on_fill.lighter(106)
+            thumb_fill = thumb_fill.lighter(105)
+
+        if not enabled:
+            off_fill = QColor("#636363")
+            off_light = QColor("#8E8E8E")
+            off_dark = QColor("#303030")
+            on_fill = QColor("#7A8F65")
+            on_light = QColor("#A2B58F")
+            on_dark = QColor("#38442F")
+
+        _draw_bedrock_frame(painter, track, fill=off_fill, top_left=off_light, bottom_right=off_dark, outline=QColor("#0b0b0b"))
+
+        value_span = int(self.maximum() - self.minimum())
+        ratio = 0.0 if value_span <= 0 else float(self.value() - self.minimum()) / float(value_span)
+        ratio = max(0.0, min(1.0, float(ratio)))
+
+        inner = track.adjusted(1, 1, -1, -1)
+        if inner.width() > 0 and inner.height() > 0:
+            active_width = int(round(float(inner.width()) * float(ratio)))
+            if active_width > 0:
+                active = QRect(int(inner.x()), int(inner.y()), int(active_width), int(inner.height()))
+                painter.fillRect(active, on_fill)
+                if active.height() >= 2:
+                    painter.setPen(QPen(on_light, 1))
+                    painter.drawLine(active.topLeft(), active.topRight())
+                    painter.setPen(QPen(on_dark, 1))
+                    painter.drawLine(active.bottomLeft(), active.bottomRight())
+
+        handle_center_x = int(round(float(track.left()) + float(track.width()) * float(ratio)))
+        handle_x = int(handle_center_x - half_handle)
+        handle = QRect(int(handle_x), int((self.height() - handle_side) // 2), int(handle_side), int(handle_side))
+        _draw_bedrock_frame(painter, handle, fill=thumb_fill, top_left=thumb_light, bottom_right=thumb_dark, outline=QColor("#0b0b0b"))
 
 
 class WheelPassthroughDoubleSpinBox(QDoubleSpinBox):
@@ -47,6 +129,7 @@ class BedrockToggleSwitch(QAbstractButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
 
     def sizeHint(self) -> QSize:
         return QSize(74, 40)
@@ -60,6 +143,7 @@ class BedrockToggleSwitch(QAbstractButton):
     def paintEvent(self, _event: QPaintEvent) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        painter.fillRect(self.rect(), self.palette().window())
 
         frame = QRect(0, 0, 46, 16)
         frame.moveCenter(self.rect().center())

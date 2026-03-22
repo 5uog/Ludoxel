@@ -47,21 +47,22 @@ def render_crosshair_image(mode: object, custom_pixels: object, *, scale: int=2,
     image.fill(0)
 
     fill_color = QColor(255, 255, 255, 230) if fill is None else QColor(fill)
-    outline_color = QColor(0, 0, 0, 200) if outline is None else QColor(outline)
 
-    for y in range(CROSSHAIR_GRID_SIZE):
-        for x in range(CROSSHAIR_GRID_SIZE):
-            if pixels[y][x] != "1":
-                continue
-            for oy in (-1, 0, 1):
-                for ox in (-1, 0, 1):
-                    nx = int(x) + int(ox)
-                    ny = int(y) + int(oy)
-                    if int(nx) < 0 or int(ny) < 0 or int(nx) >= int(CROSSHAIR_GRID_SIZE) or int(ny) >= int(CROSSHAIR_GRID_SIZE):
-                        continue
-                    if pixels[ny][nx] == "1":
-                        continue
-                    _fill_scaled_pixel(image, nx, ny, pixel_scale, outline_color)
+    if outline is not None:
+        outline_color = QColor(outline)
+        for y in range(CROSSHAIR_GRID_SIZE):
+            for x in range(CROSSHAIR_GRID_SIZE):
+                if pixels[y][x] != "1":
+                    continue
+                for oy in (-1, 0, 1):
+                    for ox in (-1, 0, 1):
+                        nx = int(x) + int(ox)
+                        ny = int(y) + int(oy)
+                        if int(nx) < 0 or int(ny) < 0 or int(nx) >= int(CROSSHAIR_GRID_SIZE) or int(ny) >= int(CROSSHAIR_GRID_SIZE):
+                            continue
+                        if pixels[ny][nx] == "1":
+                            continue
+                        _fill_scaled_pixel(image, nx, ny, pixel_scale, outline_color)
 
     for y in range(CROSSHAIR_GRID_SIZE):
         for x in range(CROSSHAIR_GRID_SIZE):

@@ -17,6 +17,7 @@ class CrosshairPreviewWidget(QWidget):
         self._custom_pixels: tuple[str, ...] = EMPTY_CROSSHAIR_PIXELS
         self.setObjectName("crosshairPreview")
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
 
     def sizeHint(self) -> QSize:
         return QSize(96, 96)
@@ -57,6 +58,7 @@ class CrosshairPixelEditor(QWidget):
         self.setMouseTracking(True)
         self.setMinimumSize(256, 256)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
 
     def pixels(self) -> tuple[str, ...]:
         return self._pixels

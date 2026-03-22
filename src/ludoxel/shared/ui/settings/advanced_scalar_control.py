@@ -5,11 +5,14 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
+from ...math.scalars import clampf, round_clampi
 from ..common.settings_controls import WheelPassthroughDoubleSpinBox, WheelPassthroughSlider
 
 
 class AdvancedScalarControl(QWidget):
     value_changed = pyqtSignal(float)
+    _SPIN_WIDTH = 136
+    _RESET_WIDTH = 112
 
     def __init__(self, *, title: str, min_value: float, max_value: float, slider_scale: float, decimals: int, default_value: float, parent: QWidget | None=None) -> None:
         super().__init__(parent)
@@ -43,11 +46,12 @@ class AdvancedScalarControl(QWidget):
         self._spin.setRange(float(self._min), float(self._max))
         self._spin.setSingleStep(max(10.0 ** (-int(self._decimals)), 1.0 / float(self._scale)))
         self._spin.setKeyboardTracking(False)
-        self._spin.setMinimumWidth(110)
+        self._spin.setFixedWidth(int(self._SPIN_WIDTH))
         row.addWidget(self._spin)
 
         self._btn_reset = QPushButton("Reset", self)
         self._btn_reset.setObjectName("menuBtn")
+        self._btn_reset.setFixedWidth(int(self._RESET_WIDTH))
         self._btn_reset.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         row.addWidget(self._btn_reset)
 
@@ -63,11 +67,11 @@ class AdvancedScalarControl(QWidget):
         return float(slider_value) / float(self._scale)
 
     def _value_to_slider(self, value: float) -> int:
-        clamped = max(float(self._min), min(float(self._max), float(value)))
-        return int(round(clamped * float(self._scale)))
+        clamped = clampf(float(value), float(self._min), float(self._max))
+        return round_clampi(float(clamped) * float(self._scale), int(round(float(self._min) * float(self._scale))), int(round(float(self._max) * float(self._scale))))
 
     def set_value(self, value: float) -> None:
-        clamped = max(float(self._min), min(float(self._max), float(value)))
+        clamped = clampf(float(value), float(self._min), float(self._max))
         slider_value = self._value_to_slider(float(clamped))
 
         self._guard = True
@@ -101,7 +105,7 @@ class AdvancedScalarControl(QWidget):
         if bool(self._guard):
             return
 
-        value = max(float(self._min), min(float(self._max), float(spin_value)))
+        value = clampf(float(spin_value), float(self._min), float(self._max))
         slider_value = self._value_to_slider(float(value))
 
         self._guard = True

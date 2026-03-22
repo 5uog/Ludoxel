@@ -128,7 +128,12 @@ def run_app(*, project_root: Path) -> None:
 
     qss = Path(__file__).resolve().parent / "theme" / "main.qss"
     if qss.exists():
-        app.setStyleSheet(qss.read_text(encoding="utf-8"))
+        qss_text = qss.read_text(encoding="utf-8")
+        arrow_up = (root / "assets" / "ui" / "arrow_up.svg").resolve().as_posix()
+        arrow_down = (root / "assets" / "ui" / "arrow_down.svg").resolve().as_posix()
+        qss_text = qss_text.replace("__ARROW_UP__", str(arrow_up))
+        qss_text = qss_text.replace("__ARROW_DOWN__", str(arrow_down))
+        app.setStyleSheet(qss_text)
 
     w = MainWindow(project_root=root)
     w.setWindowTitle(f"Ludoxel v{__version__}")

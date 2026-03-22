@@ -20,6 +20,7 @@ from ....application.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_
 
 from ....features.othello.application.othello_match_controller import OthelloMatchController
 from ....features.othello.domain.game.ai_worker import OthelloAiWorker
+from ....features.othello.domain.game.types import OthelloAnalysis
 from ....features.othello.ui.hud_widget import OthelloHudWidget
 from ....features.othello.ui.settings_overlay import OthelloSettingsOverlay
 from ....features.othello.ui.viewport import othello_controller as othello_controller
@@ -98,6 +99,13 @@ class GLViewportWidget(QOpenGLWidget):
         self._othello_hud_signature: tuple[object, ...] | None = None
         self._othello_render_state_cache_key: tuple[object, ...] | None = None
         self._othello_render_state_cache = None
+        self._othello_analysis = OthelloAnalysis().normalized()
+        self._othello_analysis_request_signature: tuple[object, ...] | None = None
+        self._othello_book_learning_running: bool = False
+        self._othello_book_learning_status_text: str = ""
+        self._othello_book_summary_text: str = ""
+        self._othello_book_learning_progress: dict[str, object] | None = None
+        self._othello_last_passive_hud_sync_s: float = 0.0
 
         self._last_paint_ms: float = 0.0
         self._last_selection_pick_ms: float = 0.0
@@ -112,8 +120,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
         self._overlay = PauseOverlay(self)
-        self._settings = SettingsOverlay(self)
-        self._othello_settings = OthelloSettingsOverlay(self)
+        self._settings = SettingsOverlay(None, as_window=True)
+        self._othello_settings = OthelloSettingsOverlay(None, as_window=True)
         self._death = DeathOverlay(self)
 
         self._crosshair = CrosshairWidget(self)
@@ -166,6 +174,7 @@ class GLViewportWidget(QOpenGLWidget):
         settings_controller.sync_player_skin(self)
         settings_controller.sync_first_person_target(self)
         settings_controller.sync_view_model_visibility(self)
+        othello_controller.sync_settings_values(self)
         othello_controller.sync_hud_text(self)
         self._sync_gameplay_hud_visibility()
         if app is not None:
@@ -261,6 +270,36 @@ class GLViewportWidget(QOpenGLWidget):
         self._invalidate_pause_preview_cache()
         self._overlay.set_player_preview_frame(QImage())
 
+    def _position_settings_window(self) -> None:
+        if self._settings is None:
+            return
+        if hasattr(self._settings, "prepare_to_show"):
+            self._settings.prepare_to_show()
+        host = self.window()
+        self._settings.adjustSize()
+        size = self._settings.size()
+        if host is None:
+            return
+        frame = host.frameGeometry()
+        x = int(frame.x() + max(0, (frame.width() - size.width()) // 2))
+        y = int(frame.y() + max(0, (frame.height() - size.height()) // 2))
+        self._settings.move(int(x), int(y))
+
+    def _position_othello_settings_window(self) -> None:
+        if self._othello_settings is None:
+            return
+        if hasattr(self._othello_settings, "prepare_to_show"):
+            self._othello_settings.prepare_to_show()
+        host = self.window()
+        self._othello_settings.adjustSize()
+        size = self._othello_settings.size()
+        if host is None:
+            return
+        frame = host.frameGeometry()
+        x = int(frame.x() + max(0, (frame.width() - size.width()) // 2))
+        y = int(frame.y() + max(0, (frame.height() - size.height()) // 2))
+        self._othello_settings.move(int(x), int(y))
+
     @staticmethod
     def _pause_preview_key(*, player_state, width: int, height: int, device_pixel_ratio: float) -> tuple[object, ...] | None:
         if player_state is None:
@@ -302,6 +341,8 @@ class GLViewportWidget(QOpenGLWidget):
                 self._inp.set_mouse_capture(False)
             except Exception:
                 pass
+            if (not bool(self.loading_active())) and (not self._overlays.dead()):
+                interaction_controller.open_pause_menu(self)
         elif not bool(was_active):
             self.arm_resume_refresh()
         settings_controller.sync_cloud_motion_pause(self)
@@ -347,6 +388,14 @@ class GLViewportWidget(QOpenGLWidget):
             return
         self._shutdown_done = True
         self._set_runtime_active(False)
+        try:
+            self._settings.hide()
+        except Exception:
+            pass
+        try:
+            self._othello_settings.hide()
+        except Exception:
+            pass
         try:
             self._sim_timer.stop()
         except Exception:
@@ -435,14 +484,14 @@ class GLViewportWidget(QOpenGLWidget):
         return (eye, float(yaw_deg), float(pitch_deg), direction)
 
     def _gameplay_hud_active(self) -> bool:
-        return ((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
+        return ((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
 
     def _debug_hud_active(self) -> bool:
         return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
     def _sync_gameplay_hud_visibility(self) -> None:
         show_gameplay_hud = bool(self._gameplay_hud_active())
-        show_othello_hud = bool(show_gameplay_hud and self._state.is_othello_space())
+        show_othello_hud = bool((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.inventory_open()) and (not self._overlays.settings_open()) and self._state.is_othello_space() and (not bool(self._state.hud_visible)))
         show_crosshair = bool(show_gameplay_hud and self._state.is_first_person_view())
 
         self._crosshair.setVisible(bool(show_crosshair))
@@ -458,10 +507,10 @@ class GLViewportWidget(QOpenGLWidget):
             self._hotbar.raise_()
             if bool(show_crosshair):
                 self._crosshair.raise_()
-            if bool(show_othello_hud):
-                self._othello_hud.raise_()
             if self._hud is not None and bool(self._debug_hud_active()):
                 self._hud.raise_()
+        if bool(show_othello_hud):
+            self._othello_hud.raise_()
         self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
 
     def _set_dead_overlay(self, on: bool) -> None:
@@ -478,11 +527,15 @@ class GLViewportWidget(QOpenGLWidget):
         settings_controller.sync_cloud_motion_pause(self)
 
     def _set_settings_overlay(self, on: bool) -> None:
+        if bool(on):
+            self._position_settings_window()
         self._overlays.set_settings_open(bool(on))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
 
     def _set_othello_settings_overlay(self, on: bool) -> None:
+        if bool(on):
+            self._position_othello_settings_window()
         self._overlays.set_othello_settings_open(bool(on))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
@@ -567,8 +620,6 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._othello_hud.setGeometry(0, 0, max(1, w), max(1, h))
         self._overlay.setGeometry(0, 0, max(1, w), max(1, h))
-        self._settings.setGeometry(0, 0, max(1, w), max(1, h))
-        self._othello_settings.setGeometry(0, 0, max(1, w), max(1, h))
         self._crosshair.setGeometry(0, 0, max(1, w), max(1, h))
         self._hotbar.setGeometry(0, 0, max(1, w), max(1, h))
         self._inventory.setGeometry(0, 0, max(1, w), max(1, h))
@@ -577,9 +628,13 @@ class GLViewportWidget(QOpenGLWidget):
         if self._overlays.dead():
             self._death.raise_()
         elif self._overlays.othello_settings_open():
-            self._othello_settings.raise_()
+            if self._othello_settings.isVisible():
+                self._position_othello_settings_window()
+                self._othello_settings.raise_()
         elif self._overlays.settings_open():
-            self._settings.raise_()
+            if self._settings.isVisible():
+                self._position_settings_window()
+                self._settings.raise_()
         elif self._overlays.paused():
             self._overlay.raise_()
         elif self._overlays.inventory_open():
@@ -681,9 +736,18 @@ class GLViewportWidget(QOpenGLWidget):
             self._audio.play_surface_event(event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks))
 
         if self._state.is_othello_space():
-            self._othello_match.tick(float(dt), paused=False)
-            othello_controller.sync_hud_text(self)
-            othello_controller.maybe_request_ai(self)
+            state_before = self._othello_match.game_state()
+            state_after = self._othello_match.tick(float(dt), paused=False)
+            significant_othello_change = bool(state_before.status != state_after.status or state_before.board != state_after.board or state_before.current_turn != state_after.current_turn or state_before.legal_moves != state_after.legal_moves or state_before.thinking != state_after.thinking or state_before.last_move_index != state_after.last_move_index or state_before.animations != state_after.animations or state_before.message != state_after.message or state_before.winner != state_after.winner)
+            if bool(significant_othello_change):
+                othello_controller.sync_hud_text(self)
+                othello_controller.maybe_request_ai(self)
+                othello_controller.maybe_request_analysis(self)
+            else:
+                now = time.perf_counter()
+                if (float(now) - float(self._othello_last_passive_hud_sync_s)) >= 0.20:
+                    self._othello_last_passive_hud_sync_s = float(now)
+                    othello_controller.sync_hud_text(self)
 
         if float(self._session.player.position.y) < -64.0:
             self._set_dead_overlay(True)

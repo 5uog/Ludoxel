@@ -6,6 +6,8 @@ from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtWidgets import QSizePolicy, QWidget
 
+from ...math.scalars import clampf
+
 _HEAD_YAW_LIMIT_DEG = 55.0
 _HEAD_PITCH_LIMIT_DEG = 35.0
 _DRAG_YAW_SCALE_DEG_PER_PX = 0.9
@@ -70,6 +72,12 @@ class PlayerSkinPreviewWidget(QWidget):
         self._dragging = False
         self._update_head_tracking(x=float(x), y=float(y), area_width=int(area_width), area_height=int(area_height))
 
+    def note_pointer_left(self) -> None:
+        return
+
+    def note_pointer_entered(self, *, x: float, y: float, area_width: int, area_height: int) -> None:
+        self._update_head_tracking(x=float(x), y=float(y), area_width=int(area_width), area_height=int(area_height))
+
     def reset_head_tracking(self) -> None:
         if self._dragging:
             return
@@ -88,19 +96,19 @@ class PlayerSkinPreviewWidget(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.drawImage(self.rect(), self._frame_image)
 
-    def _update_head_tracking(self, *, x: float, y: float, area_width: int, area_height: int) -> None:
+    def _head_target_from_pointer(self, *, x: float, y: float, area_width: int, area_height: int) -> tuple[float, float]:
         if int(area_width) <= 1 or int(area_height) <= 1:
-            return
+            return (float(self._head_yaw_deg), float(self._head_pitch_deg))
         nx = ((float(x) / max(1.0, float(area_width))) - 0.5) * 2.0
         ny = ((float(y) / max(1.0, float(area_height))) - 0.5) * 2.0
-        yaw_offset = max(-float(_HEAD_YAW_LIMIT_DEG), min(float(_HEAD_YAW_LIMIT_DEG), nx * float(_HEAD_YAW_LIMIT_DEG)))
-        pitch = max(-float(_HEAD_PITCH_LIMIT_DEG), min(float(_HEAD_PITCH_LIMIT_DEG), ny * float(_HEAD_PITCH_LIMIT_DEG)))
-        next_head_yaw = float(yaw_offset)
-        next_head_pitch = float(pitch)
-        if float(next_head_yaw) == float(self._head_yaw_deg) and float(next_head_pitch) == float(self._head_pitch_deg):
+        return (float(clampf(nx * float(_HEAD_YAW_LIMIT_DEG), -float(_HEAD_YAW_LIMIT_DEG), float(_HEAD_YAW_LIMIT_DEG))), float(clampf(ny * float(_HEAD_PITCH_LIMIT_DEG), -float(_HEAD_PITCH_LIMIT_DEG), float(_HEAD_PITCH_LIMIT_DEG))))
+
+    def _update_head_tracking(self, *, x: float, y: float, area_width: int, area_height: int) -> None:
+        target_head_yaw_deg, target_head_pitch_deg = self._head_target_from_pointer(x=float(x), y=float(y), area_width=int(area_width), area_height=int(area_height))
+        if abs(float(target_head_yaw_deg) - float(self._head_yaw_deg)) <= 1e-6 and abs(float(target_head_pitch_deg) - float(self._head_pitch_deg)) <= 1e-6:
             return
-        self._head_yaw_deg = float(next_head_yaw)
-        self._head_pitch_deg = float(next_head_pitch)
+        self._head_yaw_deg = float(target_head_yaw_deg)
+        self._head_pitch_deg = float(target_head_pitch_deg)
         self._emit_view_changed()
 
     def _emit_view_changed(self) -> None:

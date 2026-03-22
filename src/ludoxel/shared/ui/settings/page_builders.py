@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout
 
 from ....application.runtime.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
@@ -63,7 +63,7 @@ def build_video_tab(overlay) -> None:
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Crosshair"))
 
-    overlay._lbl_crosshair_help = QLabel("Draw a custom 16x16 crosshair with the left mouse button, erase with the right mouse button, clear the custom design, or return to the default Minecraft-style crosshair.", host)
+    overlay._lbl_crosshair_help = QLabel("Draw a custom 16x16 crosshair with the left mouse button, erase with the right mouse button, or use Clear Board to restore the default Minecraft-style crosshair and reset the editor board.", host)
     overlay._lbl_crosshair_help.setObjectName("valueLabel")
     overlay._lbl_crosshair_help.setWordWrap(True)
     layout.addWidget(overlay._lbl_crosshair_help)
@@ -73,12 +73,7 @@ def build_video_tab(overlay) -> None:
     crosshair_preview_row.addWidget(overlay._crosshair_preview, stretch=0)
 
     crosshair_buttons = QVBoxLayout()
-    overlay._btn_crosshair_default = QPushButton("Use Default", host)
-    overlay._btn_crosshair_default.setObjectName("menuBtn")
-    overlay._btn_crosshair_default.clicked.connect(overlay.crosshair_default_requested.emit)
-    crosshair_buttons.addWidget(overlay._btn_crosshair_default)
-
-    overlay._btn_crosshair_clear = QPushButton("Clear Custom", host)
+    overlay._btn_crosshair_clear = QPushButton("Clear Board", host)
     overlay._btn_crosshair_clear.setObjectName("menuBtn")
     overlay._btn_crosshair_clear.clicked.connect(overlay.crosshair_clear_requested.emit)
     crosshair_buttons.addWidget(overlay._btn_crosshair_clear)
@@ -111,7 +106,7 @@ def build_video_tab(overlay) -> None:
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Clouds"))
 
-    overlay._tg_clouds_enabled = overlay._add_toggle(layout, host, "Show clouds", overlay.clouds_enabled_changed.emit)
+    overlay._tg_clouds_enabled = overlay._add_toggle(layout, host, "Show clouds", overlay._on_clouds_toggled)
     overlay._tg_cloud_wire = overlay._add_toggle(layout, host, "Cloud wireframe", overlay.cloud_wireframe_changed.emit)
 
     cloud_flow_row = QHBoxLayout()
@@ -167,8 +162,6 @@ def build_video_tab(overlay) -> None:
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)
-
-
 def build_controls_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
     layout.addWidget(overlay._section(host, "Mouse"))
@@ -217,8 +210,6 @@ def build_controls_tab(overlay) -> None:
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)
-
-
 def build_audio_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
     layout.addWidget(overlay._section(host, "Mixer"))
@@ -253,8 +244,6 @@ def build_audio_tab(overlay) -> None:
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)
-
-
 def build_game_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
     layout.addWidget(overlay._section(host, "Game Mode"))
@@ -294,7 +283,12 @@ def build_game_tab(overlay) -> None:
     overlay._ctl_auto_jump_cooldown.value_changed.connect(overlay.auto_jump_cooldown_changed.emit)
     layout.addWidget(overlay._ctl_auto_jump_cooldown)
 
-    layout.addWidget(overlay._sep(host))
+    btn_reset_adv = QPushButton("Reset Advanced to Defaults", host)
+    btn_reset_adv.setObjectName("menuBtn")
+    btn_reset_adv.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    btn_reset_adv.clicked.connect(overlay.advanced_reset_requested.emit)
+    layout.addWidget(btn_reset_adv)
+
     layout.addWidget(overlay._section(host, "Flight Parameters"))
 
     overlay._ctl_fly_speed = AdvancedScalarControl(title="Flight speed", min_value=float(overlay._params.fly_speed_milli_min) / float(overlay._params.fly_speed_scale), max_value=float(overlay._params.fly_speed_milli_max) / float(overlay._params.fly_speed_scale), slider_scale=float(overlay._params.fly_speed_scale), decimals=int(overlay._params.fly_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_speed), parent=host)
@@ -308,14 +302,6 @@ def build_game_tab(overlay) -> None:
     overlay._ctl_fly_descend_speed = AdvancedScalarControl(title="Descend speed", min_value=float(overlay._params.fly_descend_speed_milli_min) / float(overlay._params.fly_descend_speed_scale), max_value=float(overlay._params.fly_descend_speed_milli_max) / float(overlay._params.fly_descend_speed_scale), slider_scale=float(overlay._params.fly_descend_speed_scale), decimals=int(overlay._params.fly_descend_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed), parent=host)
     overlay._ctl_fly_descend_speed.value_changed.connect(overlay.fly_descend_speed_changed.emit)
     layout.addWidget(overlay._ctl_fly_descend_speed)
-
-    row_reset = QHBoxLayout()
-    row_reset.addStretch(1)
-    btn_reset_adv = QPushButton("Reset Advanced to Defaults", host)
-    btn_reset_adv.setObjectName("menuBtn")
-    btn_reset_adv.clicked.connect(overlay.advanced_reset_requested.emit)
-    row_reset.addWidget(btn_reset_adv)
-    layout.addLayout(row_reset)
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)

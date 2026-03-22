@@ -114,8 +114,10 @@ def _piece_angle_deg_for_side(side: int) -> float:
 
 
 def _animation_progress(animation: OthelloAnimationState) -> tuple[float, float]:
+    start_delay = max(0.0, float(animation.start_delay_s))
+    active_elapsed = max(0.0, float(animation.elapsed_s) - float(start_delay))
     duration = max(1e-6, float(animation.duration_s))
-    t = max(0.0, min(1.0, float(animation.elapsed_s) / duration))
+    t = max(0.0, min(1.0, float(active_elapsed) / duration))
     eased = 3.0 * t * t - 2.0 * t * t * t
     lift = math.sin(t * math.pi) * float(animation.lift_height)
     return (float(eased), float(lift))

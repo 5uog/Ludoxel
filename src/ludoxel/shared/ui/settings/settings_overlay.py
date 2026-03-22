@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QPalette
+from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ....application.runtime.keybinds import action_display_name
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON
@@ -14,7 +15,7 @@ from .page_builders import build_audio_tab, build_controls_tab, build_game_tab, 
 from .value_sync import sync_overlay_values
 
 
-class SettingsOverlay(QWidget):
+class SettingsOverlay(QDialog):
     back_requested = pyqtSignal()
     fov_changed = pyqtSignal(float)
     sens_changed = pyqtSignal(float)
@@ -24,7 +25,6 @@ class SettingsOverlay(QWidget):
     hide_hud_changed = pyqtSignal(bool)
     hide_hand_changed = pyqtSignal(bool)
     crosshair_pixels_changed = pyqtSignal(object)
-    crosshair_default_requested = pyqtSignal()
     crosshair_clear_requested = pyqtSignal()
     camera_perspective_changed = pyqtSignal(str)
     view_bobbing_changed = pyqtSignal(bool)
@@ -62,61 +62,80 @@ class SettingsOverlay(QWidget):
     block_volume_changed = pyqtSignal(float)
     player_volume_changed = pyqtSignal(float)
 
-    def __init__(self, parent: QWidget | None=None, params: PauseOverlayParams=DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
+    def __init__(self, parent: QWidget | None=None, params: PauseOverlayParams=DEFAULT_PAUSE_OVERLAY_PARAMS, *, as_window: bool=False) -> None:
         super().__init__(parent)
         self._params = params
         self._keybind_rows: dict[str, KeybindRow] = {}
+        self._deferred_reveal_pending: bool = False
         self.setVisible(False)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setObjectName("settingsRoot")
+        self._as_window = bool(as_window)
+        self.setProperty("detachedWindow", bool(self._as_window))
+        if bool(self._as_window):
+            self.setWindowFlag(Qt.WindowType.Dialog, True)
+            self.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
+            self.setWindowFlag(Qt.WindowType.WindowTitleHint, True)
+            self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, True)
+            self.setWindowModality(Qt.WindowModality.ApplicationModal)
+            self.setWindowTitle("Settings")
+            self.resize(1120, 780)
+            self.setMinimumSize(1000, 720)
+            self.setAutoFillBackground(True)
+            self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+            palette = self.palette()
+            palette.setColor(QPalette.ColorRole.Window, QColor("#181818"))
+            palette.setColor(QPalette.ColorRole.Base, QColor("#181818"))
+            self.setPalette(palette)
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.addStretch(1)
+        if bool(self._as_window):
+            root.setContentsMargins(0, 0, 0, 0)
+        else:
+            root.setContentsMargins(32, 28, 32, 28)
+        root.setSpacing(0)
+        if not bool(self._as_window):
+            root.addStretch(1)
 
         panel = QFrame(self)
         panel.setObjectName("panel")
-        panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         panel.setMinimumWidth(960)
         panel.setMinimumHeight(620)
 
-        panel_layout = QVBoxLayout(panel)
-        panel_layout.setContentsMargins(18, 16, 18, 16)
-        panel_layout.setSpacing(12)
+        panel_layout = QHBoxLayout(panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.setSpacing(0)
 
-        title_row = QHBoxLayout()
-        title = QLabel("SETTINGS", panel)
-        title.setObjectName("title")
-        title_row.addWidget(title)
-        title_row.addStretch(1)
+        self._sidebar = QWidget(panel)
+        self._sidebar.setObjectName("settingsSidebar")
+        self._sidebar.setMinimumWidth(236)
+        self._sidebar.setMaximumWidth(280)
+        sidebar_layout = QVBoxLayout(self._sidebar)
+        sidebar_layout.setContentsMargins(0, 12, 0, 12)
+        sidebar_layout.setSpacing(0)
+        self._tab_video = self._make_tab_button("Video", 0, self._sidebar)
+        self._tab_controls = self._make_tab_button("Controls", 1, self._sidebar)
+        self._tab_audio = self._make_tab_button("Audio", 2, self._sidebar)
+        self._tab_game = self._make_tab_button("Game Player", 3, self._sidebar)
+        sidebar_layout.addWidget(self._tab_video)
+        sidebar_layout.addWidget(self._tab_controls)
+        sidebar_layout.addWidget(self._tab_audio)
+        sidebar_layout.addWidget(self._tab_game)
+        sidebar_layout.addStretch(1)
 
-        btn_back = QPushButton("Back", panel)
-        btn_back.setObjectName("menuBtn")
-        btn_back.clicked.connect(self.back_requested.emit)
-        title_row.addWidget(btn_back)
-        panel_layout.addLayout(title_row)
+        self._content = QWidget(panel)
+        self._content.setObjectName("settingsContent")
+        content_layout = QVBoxLayout(self._content)
+        content_layout.setContentsMargins(18, 18, 18, 18)
+        content_layout.setSpacing(0)
+        self._stack = QStackedWidget(self._content)
+        self._stack.setObjectName("settingsStack")
+        content_layout.addWidget(self._stack, stretch=1)
 
-        subtitle = QLabel("Video, Controls, Audio, and Game Player settings are available in separate tabs.", panel)
-        subtitle.setObjectName("subtitle")
-        subtitle.setWordWrap(True)
-        panel_layout.addWidget(subtitle)
-
-        tab_row = QHBoxLayout()
-        tab_row.setSpacing(8)
-        self._tab_video = self._make_tab_button("Video", 0, panel)
-        self._tab_controls = self._make_tab_button("Controls", 1, panel)
-        self._tab_audio = self._make_tab_button("Audio", 2, panel)
-        self._tab_game = self._make_tab_button("Game Player", 3, panel)
-        tab_row.addWidget(self._tab_video)
-        tab_row.addWidget(self._tab_controls)
-        tab_row.addWidget(self._tab_audio)
-        tab_row.addWidget(self._tab_game)
-        tab_row.addStretch(1)
-        panel_layout.addLayout(tab_row)
-
-        self._stack = QStackedWidget(panel)
-        panel_layout.addWidget(self._stack, stretch=1)
+        panel_layout.addWidget(self._sidebar, stretch=2)
+        panel_layout.addWidget(self._content, stretch=8)
 
         build_video_tab(self)
         build_controls_tab(self)
@@ -124,14 +143,49 @@ class SettingsOverlay(QWidget):
         build_game_tab(self)
         self._set_tab(0)
 
-        root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
-        root.addStretch(1)
+        if bool(self._as_window):
+            root.addWidget(panel, stretch=1)
+        else:
+            root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
+            root.addStretch(1)
+
+    def prepare_to_show(self) -> None:
+        if not bool(self._as_window):
+            return
+        self._deferred_reveal_pending = True
+        self.setWindowOpacity(0.0)
+        self.winId()
+        self.ensurePolished()
+        layout = self.layout()
+        if layout is not None:
+            layout.activate()
+        self.adjustSize()
+        self.updateGeometry()
+
+    def showEvent(self, event) -> None:
+        if bool(self._as_window) and bool(self._deferred_reveal_pending):
+            self.setWindowOpacity(0.0)
+            QTimer.singleShot(0, self._finish_deferred_reveal)
+        super().showEvent(event)
+
+    def _finish_deferred_reveal(self) -> None:
+        if not bool(self._deferred_reveal_pending):
+            return
+        self._deferred_reveal_pending = False
+        if not self.isVisible():
+            return
+        self.setWindowOpacity(1.0)
 
     def _make_tab_button(self, text: str, index: int, parent: QWidget) -> QPushButton:
         button = QPushButton(text, parent)
-        button.setObjectName("tabBtn")
+        button.setObjectName("navBtn")
         button.setCheckable(True)
         button.setAutoExclusive(True)
+        button.setAutoDefault(False)
+        button.setDefault(False)
+        button.setFlat(True)
+        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        button.setFixedHeight(64)
         button.clicked.connect(lambda _checked=False, i=index: self._set_tab(i))
         return button
 
@@ -147,7 +201,6 @@ class SettingsOverlay(QWidget):
         layout = QVBoxLayout(host)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(12)
-
         scroll.setWidget(host)
         return scroll, host, layout
 
@@ -159,7 +212,9 @@ class SettingsOverlay(QWidget):
         return separator
 
     @staticmethod
-    def _section(parent: QWidget, text: str) -> QLabel:
+    def _section(parent: QWidget, text: str):
+        from PyQt6.QtWidgets import QLabel
+
         label = QLabel(text, parent)
         label.setObjectName("sectionTitle")
         return label
@@ -201,6 +256,14 @@ class SettingsOverlay(QWidget):
     def _set_tab(self, index: int) -> None:
         selected_index = int(max(0, min(3, int(index))))
         self._stack.setCurrentIndex(selected_index)
+        current_page = self._stack.currentWidget()
+        if isinstance(current_page, QScrollArea):
+            current_page.verticalScrollBar().setValue(0)
+            current_page.viewport().update()
+            page_host = current_page.widget()
+            if page_host is not None:
+                page_host.update()
+        self._stack.update()
         self._tab_video.setChecked(selected_index == 0)
         self._tab_controls.setChecked(selected_index == 1)
         self._tab_audio.setChecked(selected_index == 2)
@@ -227,6 +290,15 @@ class SettingsOverlay(QWidget):
         enabled = bool(on)
         self._sld_camera_shake_strength.setEnabled(enabled)
         self.camera_shake_changed.emit(enabled)
+
+    def _update_cloud_controls_enabled(self, enabled: bool) -> None:
+        self._sld_cloud_density.setEnabled(bool(enabled))
+        self._sld_cloud_seed.setEnabled(bool(enabled))
+
+    def _on_clouds_toggled(self, on: bool) -> None:
+        enabled = bool(on)
+        self._update_cloud_controls_enabled(enabled)
+        self.clouds_enabled_changed.emit(enabled)
 
     def _on_view_bobbing_strength(self, value: int) -> None:
         percent = int(max(int(self._params.bob_strength_percent_min), min(int(self._params.bob_strength_percent_max), int(value))))
@@ -292,3 +364,10 @@ class SettingsOverlay(QWidget):
             self.back_requested.emit()
             return
         super().keyPressEvent(e)
+
+    def closeEvent(self, event) -> None:
+        if bool(self._as_window):
+            event.ignore()
+            self.back_requested.emit()
+            return
+        super().closeEvent(event)

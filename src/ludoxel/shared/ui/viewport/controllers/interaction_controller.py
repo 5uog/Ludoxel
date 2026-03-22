@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QTimer, Qt
 
 from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_INVENTORY, action_for_key
 from ludoxel.shared.world.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
@@ -45,6 +45,22 @@ def resume_from_overlay(viewport: "GLViewportWidget") -> None:
     settings_controller.sync_cloud_motion_pause(viewport)
 
 
+def open_pause_menu(viewport: "GLViewportWidget") -> None:
+    if viewport._overlays.dead():
+        return
+    if viewport._overlays.inventory_open():
+        viewport._set_inventory_overlay(False)
+    if viewport._overlays.othello_settings_open():
+        back_from_othello_settings(viewport)
+    if viewport._overlays.settings_open():
+        back_from_settings(viewport)
+    settings_controller.sync_settings_values(viewport)
+    settings_controller.sync_player_skin(viewport)
+    viewport._overlay.set_current_space(viewport._state.current_space_id)
+    viewport._set_paused_overlay(True)
+    settings_controller.sync_cloud_motion_pause(viewport)
+
+
 def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bool=False) -> None:
     normalized = normalize_play_space_id(space_id)
     if normalized == normalize_play_space_id(viewport._state.current_space_id):
@@ -81,7 +97,6 @@ def open_settings_from_pause(viewport: "GLViewportWidget") -> None:
 
 
 def back_from_settings(viewport: "GLViewportWidget") -> None:
-    settings_controller.sync_settings_values(viewport)
     viewport._set_settings_overlay(False)
     settings_controller.sync_cloud_motion_pause(viewport)
 
@@ -94,6 +109,9 @@ def open_othello_settings_from_item(viewport: "GLViewportWidget") -> None:
 
 def back_from_othello_settings(viewport: "GLViewportWidget") -> None:
     viewport._set_othello_settings_overlay(False)
+    if viewport._state.is_othello_space():
+        viewport._othello_analysis_request_signature = None
+        QTimer.singleShot(120, lambda: othello_controller.maybe_request_analysis(viewport))
     settings_controller.sync_cloud_motion_pause(viewport)
 
 
@@ -151,11 +169,7 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
             viewport._set_paused_overlay(False)
             settings_controller.sync_cloud_motion_pause(viewport)
         else:
-            settings_controller.sync_settings_values(viewport)
-            settings_controller.sync_player_skin(viewport)
-            viewport._overlay.set_current_space(viewport._state.current_space_id)
-            viewport._set_paused_overlay(True)
-            settings_controller.sync_cloud_motion_pause(viewport)
+            open_pause_menu(viewport)
         return True
 
     if bound_action == ACTION_TOGGLE_CREATIVE_MODE and not viewport._overlays.paused() and not viewport._overlays.dead():

@@ -7,8 +7,9 @@ from dataclasses import dataclass, field
 import random
 import time
 
-from .opening_book import OpeningBook, load_opening_book
-from .types import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_side
+from .evaluation_profile import POSITION_WEIGHTS, evaluation_weights
+from .opening_book import OpeningBook, load_opening_book, normalize_project_root
+from .types import BOARD_CELL_COUNT, DEFAULT_OTHELLO_HASH_LEVEL, DEFAULT_OTHELLO_SACRIFICE_LEVEL, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_hash_level, normalize_sacrifice_level, normalize_side
 
 _FULL_MASK = (1 << BOARD_CELL_COUNT) - 1
 _FILE_A = 0x0101010101010101
@@ -24,7 +25,6 @@ _BOUND_EXACT = 0
 _BOUND_LOWER = 1
 _BOUND_UPPER = -1
 
-_POSITION_WEIGHTS: tuple[int, ...] = (120, -20, 20, 5, 5, 20, -20, 120, -20, -40, -5, -5, -5, -5, -40, -20, 20, -5, 15, 3, 3, 15, -5, 20, 5, -5, 3, 3, 3, 3, -5, 5, 5, -5, 3, 3, 3, 3, -5, 5, 20, -5, 15, 3, 3, 15, -5, 20, -20, -40, -5, -5, -5, -5, -40, -20, 120, -20, 20, 5, 5, 20, -20, 120)
 _POSITION_SQUARE_MASKS: tuple[int, ...] = tuple(1 << index for index in range(BOARD_CELL_COUNT))
 
 
@@ -129,7 +129,7 @@ def _bit_count(bits: int) -> int:
 
 def _position_score(player_bits: int, opponent_bits: int) -> int:
     score = 0
-    for index, weight in enumerate(_POSITION_WEIGHTS):
+    for index, weight in enumerate(POSITION_WEIGHTS):
         mask = _POSITION_SQUARE_MASKS[int(index)]
         if int(player_bits) & mask:
             score += int(weight)
@@ -140,7 +140,7 @@ def _position_score(player_bits: int, opponent_bits: int) -> int:
 
 def _corner_closeness_penalty(player_bits: int, opponent_bits: int) -> int:
     score = 0
-    corners = ((0,(1, 8, 9)),(7,(6, 14, 15)),(56,(48, 49, 57)),(63,(54, 55, 62)))
+    corners = ((0, (1, 8, 9)), (7, (6, 14, 15)), (56, (48, 49, 57)), (63, (54, 55, 62)))
     for corner, adjacent in corners:
         corner_mask = 1 << int(corner)
         if ((int(player_bits) | int(opponent_bits)) & corner_mask) != 0:
@@ -219,19 +219,21 @@ def _terminal_score(player_bits: int, opponent_bits: int) -> int:
     return 0
 
 
-def _evaluate(player_bits: int, opponent_bits: int) -> int:
+def _evaluate(player_bits: int, opponent_bits: int, *, sacrifice_level: int) -> int:
     empties = BOARD_CELL_COUNT - _bit_count(int(player_bits) | int(opponent_bits))
     stage = 1.0 - (float(empties) / float(BOARD_CELL_COUNT))
-    disc_weight = int(round(30.0 + stage * 90.0))
-    score = 0
-    score += _position_score(int(player_bits), int(opponent_bits))
-    score += _corner_score(int(player_bits), int(opponent_bits))
-    score += _corner_closeness_penalty(int(player_bits), int(opponent_bits))
-    score += _mobility_score(int(player_bits), int(opponent_bits))
-    score += _frontier_score(int(player_bits), int(opponent_bits))
-    score += _parity_score(int(player_bits), int(opponent_bits))
-    score += int(round(_disc_score(int(player_bits), int(opponent_bits)) * float(disc_weight) / 100.0))
-    return int(score)
+    disc_stage_weight = 0.30 + stage * 0.90
+    disc_weight, mobility_weight, corner_weight, frontier_weight = evaluation_weights(int(sacrifice_level))
+
+    score = 0.0
+    score += float(_position_score(int(player_bits), int(opponent_bits)))
+    score += float(_corner_score(int(player_bits), int(opponent_bits))) * float(corner_weight)
+    score += float(_corner_closeness_penalty(int(player_bits), int(opponent_bits)))
+    score += float(_mobility_score(int(player_bits), int(opponent_bits))) * float(mobility_weight)
+    score += float(_frontier_score(int(player_bits), int(opponent_bits))) * float(frontier_weight)
+    score += float(_parity_score(int(player_bits), int(opponent_bits)))
+    score += float(_disc_score(int(player_bits), int(opponent_bits))) * float(disc_stage_weight) * float(disc_weight)
+    return int(round(score))
 
 
 @dataclass(frozen=True)
@@ -242,21 +244,70 @@ class _TranspositionEntry:
     best_move: int | None
 
 
+@dataclass(frozen=True)
+class InsaneDepthSample:
+    depth: int
+    score: float
+    solved: bool = False
+
+
+@dataclass(frozen=True)
+class InsaneMoveEvaluation:
+    move_index: int
+    score: float
+    solved: bool = False
+    depth_reached: int = 0
+
+
+@dataclass(frozen=True)
+class InsaneAnalysis:
+    best_move_index: int | None = None
+    score: float = 0.0
+    solved: bool = False
+    depth_reached: int = 0
+    depth_samples: tuple[InsaneDepthSample, ...] = ()
+    move_evaluations: tuple[InsaneMoveEvaluation, ...] = ()
+
+
 @dataclass
 class InsaneSearchCache:
     generation: int = -1
+    hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL
+    sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL
+    project_root_key: str = ""
     transposition: dict[tuple[int, int], _TranspositionEntry] = field(default_factory=dict)
     exact_transposition: dict[tuple[int, int, int], int] = field(default_factory=dict)
     opening_book: OpeningBook = field(default_factory=load_opening_book)
     exact_threshold: int = 14
+    transposition_soft_limit: int = 1 << 15
 
-    def prepare(self, generation: int) -> None:
-        normalized = int(max(0, int(generation)))
-        if normalized == int(self.generation):
-            return
-        self.generation = int(normalized)
-        self.transposition.clear()
-        self.exact_transposition.clear()
+    def prepare(self, generation: int, *, project_root=None, hash_level: int=DEFAULT_OTHELLO_HASH_LEVEL, sacrifice_level: int=DEFAULT_OTHELLO_SACRIFICE_LEVEL) -> None:
+        normalized_generation = int(max(0, int(generation)))
+        normalized_hash_level = normalize_hash_level(hash_level, default=DEFAULT_OTHELLO_HASH_LEVEL)
+        normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=DEFAULT_OTHELLO_SACRIFICE_LEVEL)
+        normalized_project_root_key = str(normalize_project_root(project_root))
+        changed = bool(normalized_generation != int(self.generation) or normalized_hash_level != int(self.hash_level) or normalized_sacrifice_level != int(self.sacrifice_level) or normalized_project_root_key != str(self.project_root_key))
+
+        self.generation = int(normalized_generation)
+        self.hash_level = int(normalized_hash_level)
+        self.sacrifice_level = int(normalized_sacrifice_level)
+        self.project_root_key = str(normalized_project_root_key)
+        self.exact_threshold = 14
+        self.transposition_soft_limit = 0 if int(self.hash_level) <= 0 else int(1 << min(21, 11 + int(self.hash_level) * 2))
+        self.opening_book = load_opening_book(self.project_root_key)
+
+        if bool(changed):
+            self.transposition.clear()
+            self.exact_transposition.clear()
+
+
+def opening_book_moves(cache: InsaneSearchCache | None, board: tuple[int, ...] | list[int], side: int) -> tuple[int, ...]:
+    active_cache = cache or InsaneSearchCache()
+    materialized = coerce_board(board)
+    normalized_side = normalize_side(side, default=SIDE_BLACK)
+    if normalized_side not in (SIDE_BLACK, SIDE_WHITE):
+        return ()
+    return tuple(int(move) for move in active_cache.opening_book.moves_for(materialized, normalized_side))
 
 
 def _ordering_bonus(move_index: int) -> int:
@@ -267,7 +318,7 @@ def _ordering_bonus(move_index: int) -> int:
         return -9_000
     if move in _C_SQUARES:
         return -4_500
-    return int(_POSITION_WEIGHTS[move] * 32)
+    return int(POSITION_WEIGHTS[move] * 32)
 
 
 def _ordered_moves(player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], tt_move: int | None) -> tuple[int, ...]:
@@ -288,6 +339,22 @@ def _check_deadline(deadline_s: float | None) -> None:
         raise TimeoutError
 
 
+def _store_transposition(cache: InsaneSearchCache, key: tuple[int, int], entry: _TranspositionEntry) -> None:
+    if int(cache.hash_level) <= 0 or int(cache.transposition_soft_limit) <= 0:
+        return
+    if len(cache.transposition) >= int(cache.transposition_soft_limit):
+        cache.transposition.clear()
+    cache.transposition[key] = entry
+
+
+def _store_exact_transposition(cache: InsaneSearchCache, key: tuple[int, int, int], score: int) -> None:
+    if int(cache.hash_level) <= 1 or int(cache.transposition_soft_limit) <= 0:
+        return
+    if len(cache.exact_transposition) >= int(cache.transposition_soft_limit):
+        cache.exact_transposition.clear()
+    cache.exact_transposition[key] = int(score)
+
+
 def _solve_exact(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, alpha: int, beta: int, deadline_s: float | None, pass_count: int) -> int:
     _check_deadline(deadline_s)
 
@@ -299,7 +366,7 @@ def _solve_exact(cache: InsaneSearchCache, player_bits: int, opponent_bits: int,
         return -_solve_exact(cache, int(opponent_bits), int(player_bits), -int(beta), -int(alpha), deadline_s, int(pass_count) + 1)
 
     key = (int(player_bits), int(opponent_bits), int(pass_count))
-    cached = cache.exact_transposition.get(key)
+    cached = cache.exact_transposition.get(key) if int(cache.hash_level) > 1 else None
     if cached is not None:
         return int(cached)
 
@@ -314,7 +381,7 @@ def _solve_exact(cache: InsaneSearchCache, player_bits: int, opponent_bits: int,
         if int(alpha) >= int(beta):
             break
 
-    cache.exact_transposition[key] = int(best)
+    _store_exact_transposition(cache, key, int(best))
     return int(best)
 
 
@@ -334,11 +401,11 @@ def _negamax(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, dep
         return _solve_exact(cache, int(player_bits), int(opponent_bits), int(alpha), int(beta), deadline_s, int(pass_count))
 
     if int(depth) <= 0:
-        return _evaluate(int(player_bits), int(opponent_bits))
+        return _evaluate(int(player_bits), int(opponent_bits), sacrifice_level=int(cache.sacrifice_level))
 
     original_alpha = int(alpha)
     key = (int(player_bits), int(opponent_bits))
-    tt_entry = cache.transposition.get(key)
+    tt_entry = cache.transposition.get(key) if int(cache.hash_level) > 0 else None
     if tt_entry is not None and int(tt_entry.depth) >= int(depth):
         if int(tt_entry.bound) == _BOUND_EXACT:
             return int(tt_entry.score)
@@ -368,11 +435,106 @@ def _negamax(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, dep
     elif int(best_score) >= int(beta):
         bound = _BOUND_LOWER
 
-    cache.transposition[key] = _TranspositionEntry(depth=int(depth), score=int(best_score), bound=int(bound), best_move=best_move)
+    _store_transposition(cache, key, _TranspositionEntry(depth=int(depth), score=int(best_score), bound=int(bound), best_move=best_move))
     return int(best_score)
 
 
-def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int=0, time_budget_s: float=4.0, cache: InsaneSearchCache | None=None) -> int | None:
+def _choose_tied_best(move_evaluations: tuple[InsaneMoveEvaluation, ...], *, random_seed: int) -> int | None:
+    if not move_evaluations:
+        return None
+    best_score = float(move_evaluations[0].score)
+    tied = [int(evaluation.move_index) for evaluation in move_evaluations if abs(float(evaluation.score) - float(best_score)) <= 1e-9]
+    if not tied:
+        return int(move_evaluations[0].move_index)
+    chooser = random.Random(int(random_seed))
+    return int(chooser.choice(tuple(sorted(tied))))
+
+
+def _fallback_root_evaluations(player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], *, sacrifice_level: int) -> tuple[InsaneMoveEvaluation, ...]:
+    evaluations: list[InsaneMoveEvaluation] = []
+    for move_index in _ordered_moves(int(player_bits), int(opponent_bits), legal_moves, None):
+        next_player, next_opponent = _apply_move_bits(int(player_bits), int(opponent_bits), int(move_index))
+        score = -_evaluate(int(next_opponent), int(next_player), sacrifice_level=int(sacrifice_level))
+        evaluations.append(InsaneMoveEvaluation(move_index=int(move_index), score=float(score), solved=False, depth_reached=1))
+    return tuple(sorted(evaluations, key=lambda evaluation: (-float(evaluation.score), int(evaluation.move_index))))
+
+
+def _root_move_evaluations(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], *, depth: int, deadline_s: float | None, exact: bool) -> tuple[InsaneMoveEvaluation, ...]:
+    evaluations: list[InsaneMoveEvaluation] = []
+    tt_entry = cache.transposition.get((int(player_bits), int(opponent_bits))) if int(cache.hash_level) > 0 else None
+    for move_index in _ordered_moves(int(player_bits), int(opponent_bits), legal_moves, None if tt_entry is None else tt_entry.best_move):
+        _check_deadline(deadline_s)
+        next_player, next_opponent = _apply_move_bits(int(player_bits), int(opponent_bits), int(move_index))
+        if bool(exact):
+            score = -_solve_exact(cache, int(next_opponent), int(next_player), _LOSS_SCORE, _WIN_SCORE, deadline_s, 0)
+            solved = True
+            reached_depth = max(1, int(depth))
+        else:
+            score = -_negamax(cache, int(next_opponent), int(next_player), int(depth) - 1, _LOSS_SCORE, _WIN_SCORE, deadline_s, 0)
+            solved = abs(int(score)) >= int(_WIN_SCORE)
+            reached_depth = max(1, int(depth))
+        evaluations.append(InsaneMoveEvaluation(move_index=int(move_index), score=float(score), solved=bool(solved), depth_reached=int(reached_depth)))
+    return tuple(sorted(evaluations, key=lambda evaluation: (-float(evaluation.score), int(evaluation.move_index))))
+
+
+def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, random_seed: int=0, time_budget_s: float=4.0, cache: InsaneSearchCache | None=None) -> InsaneAnalysis:
+    materialized = coerce_board(board)
+    normalized_side = normalize_side(side, default=SIDE_BLACK)
+    if normalized_side not in (SIDE_BLACK, SIDE_WHITE):
+        return InsaneAnalysis()
+
+    black_bits, white_bits = _bitboards_from_board(materialized)
+    if normalized_side == SIDE_BLACK:
+        player_bits = int(black_bits)
+        opponent_bits = int(white_bits)
+    else:
+        player_bits = int(white_bits)
+        opponent_bits = int(black_bits)
+
+    legal_bb = _legal_moves_bitboard(int(player_bits), int(opponent_bits))
+    legal_moves = _bitboard_to_moves(legal_bb)
+    if not legal_moves:
+        return InsaneAnalysis(best_move_index=None, score=0.0, solved=False, depth_reached=0, depth_samples=(), move_evaluations=())
+
+    active_cache = cache or InsaneSearchCache()
+    deadline = time.perf_counter() + max(0.25, float(time_budget_s))
+    empties = BOARD_CELL_COUNT - _bit_count(int(player_bits) | int(opponent_bits))
+
+    if empties <= int(active_cache.exact_threshold):
+        move_evaluations = _root_move_evaluations(active_cache, int(player_bits), int(opponent_bits), legal_moves, depth=max(1, int(empties)), deadline_s=deadline, exact=True)
+        best_move_index = _choose_tied_best(move_evaluations, random_seed=int(random_seed))
+        best_score = 0.0 if not move_evaluations else float(move_evaluations[0].score)
+        depth_reached = max(1, int(empties))
+        return InsaneAnalysis(best_move_index=best_move_index, score=float(best_score), solved=True, depth_reached=int(depth_reached), depth_samples=(InsaneDepthSample(depth=int(depth_reached), score=float(best_score), solved=True),), move_evaluations=move_evaluations)
+
+    last_complete_evaluations: tuple[InsaneMoveEvaluation, ...] = ()
+    depth_samples: list[InsaneDepthSample] = []
+    max_depth = min(24, max(6, empties))
+
+    for depth in range(1, max_depth + 1):
+        try:
+            move_evaluations = _root_move_evaluations(active_cache, int(player_bits), int(opponent_bits), legal_moves, depth=int(depth), deadline_s=deadline, exact=False)
+        except TimeoutError:
+            break
+        last_complete_evaluations = move_evaluations
+        best_score = 0.0 if not move_evaluations else float(move_evaluations[0].score)
+        solved = bool(move_evaluations and move_evaluations[0].solved)
+        depth_samples.append(InsaneDepthSample(depth=int(depth), score=float(best_score), solved=bool(solved)))
+        if bool(solved):
+            break
+
+    if not last_complete_evaluations:
+        last_complete_evaluations = _fallback_root_evaluations(int(player_bits), int(opponent_bits), legal_moves, sacrifice_level=int(active_cache.sacrifice_level))
+        depth_samples.append(InsaneDepthSample(depth=1, score=float(last_complete_evaluations[0].score if last_complete_evaluations else 0.0), solved=False))
+
+    best_move_index = _choose_tied_best(last_complete_evaluations, random_seed=int(random_seed))
+    best_score = 0.0 if not last_complete_evaluations else float(last_complete_evaluations[0].score)
+    solved = bool(last_complete_evaluations and last_complete_evaluations[0].solved)
+    depth_reached = max((int(sample.depth) for sample in depth_samples), default=0)
+    return InsaneAnalysis(best_move_index=best_move_index, score=float(best_score), solved=bool(solved), depth_reached=int(depth_reached), depth_samples=tuple(depth_samples), move_evaluations=tuple(last_complete_evaluations))
+
+
+def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int=0, time_budget_s: float=4.0, cache: InsaneSearchCache | None=None, use_opening_book: bool=False) -> int | None:
     materialized = coerce_board(board)
     normalized_side = normalize_side(side, default=SIDE_BLACK)
     if normalized_side not in (SIDE_BLACK, SIDE_WHITE):
@@ -392,61 +554,11 @@ def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_
         return None
 
     active_cache = cache or InsaneSearchCache()
-    book_moves = tuple(move for move in active_cache.opening_book.moves_for(materialized, normalized_side) if move in set(legal_moves))
-    if book_moves:
+    legal_moves_set = set(legal_moves)
+    book_moves = tuple(move for move in opening_book_moves(active_cache, materialized, normalized_side) if move in legal_moves_set)
+    if bool(use_opening_book) and book_moves:
         chooser = random.Random(int(random_seed))
         return int(chooser.choice(tuple(sorted(int(move) for move in book_moves))))
 
-    deadline = time.perf_counter() + max(0.5, float(time_budget_s))
-    empties = BOARD_CELL_COUNT - _bit_count(int(player_bits) | int(opponent_bits))
-    if empties <= int(active_cache.exact_threshold):
-        best_score = _LOSS_SCORE
-        best_moves: list[int] = []
-        for move_index in _ordered_moves(int(player_bits), int(opponent_bits), legal_moves, None):
-            try:
-                next_player, next_opponent = _apply_move_bits(int(player_bits), int(opponent_bits), int(move_index))
-                score = -_solve_exact(active_cache, int(next_opponent), int(next_player), _LOSS_SCORE, _WIN_SCORE, deadline, 0)
-            except TimeoutError:
-                break
-            if score > int(best_score):
-                best_score = int(score)
-                best_moves = [int(move_index)]
-            elif score == int(best_score):
-                best_moves.append(int(move_index))
-        chooser = random.Random(int(random_seed))
-        return int(chooser.choice(tuple(sorted(best_moves))))
-
-    best_move = int(legal_moves[0])
-    best_score = _LOSS_SCORE
-    max_depth = min(24, max(6, empties))
-
-    for depth in range(1, max_depth + 1):
-        try:
-            _check_deadline(deadline)
-        except TimeoutError:
-            break
-        depth_best_score = _LOSS_SCORE
-        depth_best_moves: list[int] = []
-        for move_index in _ordered_moves(int(player_bits), int(opponent_bits), legal_moves, None):
-            try:
-                _check_deadline(deadline)
-                next_player, next_opponent = _apply_move_bits(int(player_bits), int(opponent_bits), int(move_index))
-                score = -_negamax(active_cache, int(next_opponent), int(next_player), int(depth) - 1, _LOSS_SCORE, _WIN_SCORE, deadline, 0)
-            except TimeoutError:
-                depth_best_moves = []
-                break
-            if score > int(depth_best_score):
-                depth_best_score = int(score)
-                depth_best_moves = [int(move_index)]
-            elif score == int(depth_best_score):
-                depth_best_moves.append(int(move_index))
-
-        if depth_best_moves:
-            chooser = random.Random(int(random_seed))
-            best_score = int(depth_best_score)
-            best_move = int(chooser.choice(tuple(sorted(depth_best_moves))))
-
-        if abs(int(best_score)) >= int(_WIN_SCORE):
-            break
-
-    return int(best_move)
+    analysis = analyze_insane_position(materialized, normalized_side, random_seed=int(random_seed), time_budget_s=float(time_budget_s), cache=active_cache)
+    return None if analysis.best_move_index is None else int(analysis.best_move_index)

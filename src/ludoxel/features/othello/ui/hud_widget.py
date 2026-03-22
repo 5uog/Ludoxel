@@ -3,68 +3,56 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QWidget
+from PyQt6.QtWidgets import QLabel
+
+from ....shared.ui.hud.hud_payload import HudPayload
+from ....shared.ui.hud.hud_widget import HUDWidget
 
 
-class OthelloHudWidget(QWidget):
+class OthelloHudWidget(HUDWidget):
 
-    def __init__(self, parent: QWidget | None=None) -> None:
-        super().__init__(parent)
-
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-
-        self._label = QLabel(self)
-        self._label.setObjectName("othelloHud")
-        self._label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self._label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._label.setWordWrap(True)
-        self._label.setText("")
+    def __init__(self, parent=None) -> None:
+        super().__init__()
+        if parent is not None:
+            self.setParent(parent)
 
         self._title_label = QLabel(self)
         self._title_label.setObjectName("othelloTitle")
         self._title_label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._title_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self._title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._title_label.setWordWrap(True)
         self._title_label.setText("")
 
-    def set_text(self, text: str) -> None:
-        next_text = str(text)
-        if next_text == str(self._label.text()):
-            return
-        self._label.setText(next_text)
-        self._relayout()
+        self._title_text = ""
 
-    def set_title_text(self, text: str) -> None:
-        next_text = str(text)
-        if next_text == str(self._title_label.text()):
-            return
-        self._title_label.setText(next_text)
-        self._relayout()
+    def set_texts(self, *, left_text: str, right_text: str="", title_text: str="") -> None:
+        next_title = str(title_text)
+        title_changed = bool(next_title != self._title_text)
+        self._title_text = next_title
+        self.set_payload(HudPayload(left_text=str(left_text), right_text=str(right_text)))
+        if bool(title_changed):
+            self._relayout_title()
 
-    def resizeEvent(self, _event) -> None:
-        self._relayout()
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._relayout_title()
 
     def _relayout(self) -> None:
-        hud_text = str(self._label.text()).strip()
-        title_text = str(self._title_label.text()).strip()
+        super()._relayout()
+        self._relayout_title()
 
-        if hud_text:
-            width = min(420, max(220, self.width() // 3))
-            self._label.setGeometry(14, 14, int(width), max(90, self._label.sizeHint().height() + 12))
-            self._label.setVisible(True)
-            self._label.raise_()
-        else:
-            self._label.setVisible(False)
-
-        if title_text:
-            width = min(680, max(320, self.width() // 2))
-            height = max(64, self._title_label.sizeHint().height() + 18)
-            x = max(0,(self.width() - int(width)) // 2)
-            y = max(0,(self.height() - int(height)) // 2)
-            self._title_label.setGeometry(int(x), int(y), int(width), int(height))
-            self._title_label.setVisible(True)
-            self._title_label.raise_()
-        else:
+    def _relayout_title(self) -> None:
+        title_text = str(self._title_text).strip()
+        self._title_label.setText(title_text)
+        if not title_text or int(self.width()) <= 1 or int(self.height()) <= 1:
             self._title_label.setVisible(False)
+            return
+
+        width = min(680, max(320, self.width() // 2))
+        height = max(64, self._title_label.sizeHint().height() + 18)
+        x = max(0, (self.width() - int(width)) // 2)
+        y = max(24, min(max(24, self.height() // 5), max(24, self.height() - int(height) - 24)))
+        self._title_label.setGeometry(int(x), int(y), int(width), int(height))
+        self._title_label.setVisible(True)
+        self._title_label.raise_()

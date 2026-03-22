@@ -6,6 +6,7 @@ from typing import Dict
 
 import math
 
+from .....shared.math.scalars import clampi
 from .....shared.math.vec3 import Vec3
 from .....shared.world.world_state import BlockKey, WorldState
 from .types import BOARD_CELL_COUNT
@@ -27,8 +28,15 @@ def row_col_to_square_index(row: int, col: int) -> int:
 
 
 def square_index_to_row_col(square_index: int) -> tuple[int, int]:
-    idx = max(0, min(BOARD_CELL_COUNT - 1, int(square_index)))
+    idx = clampi(int(square_index), 0, BOARD_CELL_COUNT - 1)
     return (idx // BOARD_SIZE, idx % BOARD_SIZE)
+
+
+def square_index_to_name(square_index: int) -> str:
+    row, col = square_index_to_row_col(square_index)
+    file_name = chr(ord("a") + int(col))
+    rank_name = str(int(row) + 1)
+    return f"{file_name}{rank_name}"
 
 
 def row_col_to_world_xz(row: int, col: int) -> tuple[int, int]:

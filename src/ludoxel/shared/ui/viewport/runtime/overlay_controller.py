@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QWidget
 
 from .....application.runtime.tasks.fixed_step_runner import FixedStepRunner
@@ -35,6 +36,7 @@ class ViewportOverlays:
         self._dead: bool = False
         self._inventory_open: bool = False
         self._settings_open: bool = False
+        self._settings_return_to_pause: bool = False
         self._othello_settings_open: bool = False
         self._othello_settings_return_to_pause: bool = False
 
@@ -69,6 +71,17 @@ class ViewportOverlays:
         if othello_hud is not None:
             othello_hud.raise_()
 
+    def _resume_gameplay(self) -> None:
+        if self._dead or self._paused or self._inventory_open or self._settings_open or self._othello_settings_open:
+            return
+        self._inp.set_mouse_capture(True)
+        self._runner.start()
+        self._r.hotbar.setVisible(True)
+        self._raise_game_hud()
+
+    def _resume_gameplay_deferred(self) -> None:
+        QTimer.singleShot(0, self._resume_gameplay)
+
     def set_dead(self, on: bool) -> None:
         on = bool(on)
         if on == self._dead:
@@ -80,6 +93,7 @@ class ViewportOverlays:
         if self._dead:
             self._paused = False
             self._settings_open = False
+            self._settings_return_to_pause = False
             self._othello_settings_open = False
             self._othello_settings_return_to_pause = False
 
@@ -97,9 +111,7 @@ class ViewportOverlays:
         self._r.death.setVisible(False)
 
         if (not self._paused and not self._inventory_open and not self._settings_open and not self._othello_settings_open):
-            self._inp.set_mouse_capture(True)
-            self._runner.start()
-            self._r.hotbar.setVisible(True)
+            self._resume_gameplay_deferred()
 
         self._raise_game_hud()
 
@@ -112,6 +124,7 @@ class ViewportOverlays:
         if on:
             self._paused = True
             self._settings_open = False
+            self._settings_return_to_pause = False
             self._othello_settings_open = False
             self._othello_settings_return_to_pause = False
             self._inp.reset()
@@ -132,6 +145,7 @@ class ViewportOverlays:
 
         self._paused = False
         self._settings_open = False
+        self._settings_return_to_pause = False
         self._othello_settings_open = False
         self._othello_settings_return_to_pause = False
         self._inp.reset()
@@ -160,33 +174,36 @@ class ViewportOverlays:
         self._inp.reset()
 
         if self._settings_open:
-            self._paused = True
+            self._settings_return_to_pause = bool(self._paused)
+            self._paused = False
             self._othello_settings_open = False
             self._othello_settings_return_to_pause = False
             self.set_inventory_open(False)
             self._inp.set_mouse_capture(False)
-            self._r.hotbar.setVisible(False)
 
             self._r.pause.setVisible(False)
             self._r.othello_settings.setVisible(False)
             self._r.settings.setVisible(True)
             self._r.settings.raise_()
+            if hasattr(self._r.settings, "activateWindow"):
+                self._r.settings.activateWindow()
             self._r.settings.setFocus()
             return
 
         self._r.settings.setVisible(False)
 
-        if self._paused:
+        if self._settings_return_to_pause:
+            self._paused = True
+            self._settings_return_to_pause = False
             self._r.pause.setVisible(True)
             self._r.pause.raise_()
             self._r.pause.setFocus()
             return
 
+        self._settings_return_to_pause = False
         if not self._inventory_open:
-            self._inp.set_mouse_capture(True)
-            self._runner.start()
-            self._r.hotbar.setVisible(True)
-
+            self._resume_gameplay_deferred()
+            return
         self._raise_game_hud()
 
     def set_othello_settings_open(self, on: bool) -> None:
@@ -212,6 +229,8 @@ class ViewportOverlays:
             self._r.settings.setVisible(False)
             self._r.othello_settings.setVisible(True)
             self._r.othello_settings.raise_()
+            if hasattr(self._r.othello_settings, "activateWindow"):
+                self._r.othello_settings.activateWindow()
             self._r.othello_settings.setFocus()
             return
 
@@ -227,10 +246,8 @@ class ViewportOverlays:
         self._othello_settings_return_to_pause = False
 
         if not self._inventory_open:
-            self._inp.set_mouse_capture(True)
-            self._runner.start()
-            self._r.hotbar.setVisible(True)
-
+            self._resume_gameplay_deferred()
+            return
         self._raise_game_hud()
 
     def set_inventory_open(self, on: bool) -> None:
@@ -257,7 +274,4 @@ class ViewportOverlays:
         self._r.inventory.setVisible(False)
 
         if not self._paused and not self._dead and not self._settings_open and not self._othello_settings_open:
-            self._inp.set_mouse_capture(True)
-            self._runner.start()
-            self._r.hotbar.setVisible(True)
-            self._raise_game_hud()
+            self._resume_gameplay_deferred()

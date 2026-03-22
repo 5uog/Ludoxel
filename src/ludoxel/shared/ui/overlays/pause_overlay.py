@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtGui import QImage
+from PyQt6.QtGui import QCursor, QImage
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ...world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, is_my_world_space, normalize_play_space_id
@@ -161,11 +161,18 @@ class PauseOverlay(QWidget):
             if pos is not None:
                 self._skin_preview.end_drag(x=float(pos.x()), y=float(pos.y()), area_width=int(self.width()), area_height=int(self.height()))
             else:
-                self._skin_preview.reset_head_tracking()
+                self._skin_preview.note_pointer_left()
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.preview_changed.emit()
+        elif event_type == QEvent.Type.Enter and watched is self:
+            cursor_pos = self.mapFromGlobal(QCursor.pos())
+            if self.rect().contains(cursor_pos):
+                self._skin_preview.note_pointer_entered(x=float(cursor_pos.x()), y=float(cursor_pos.y()), area_width=int(self.width()), area_height=int(self.height()))
+                self.preview_changed.emit()
         elif event_type == QEvent.Type.Leave and watched is self:
-            self._skin_preview.reset_head_tracking()
+            cursor_pos = self.mapFromGlobal(QCursor.pos())
+            if not self.rect().contains(cursor_pos):
+                self._skin_preview.note_pointer_left()
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.preview_changed.emit()
         return super().eventFilter(watched, event)

@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 from ..blocks.models.common import LocalBox
-from ..math.scalars import clampf
+from ..math.scalars import clampf, lerpf
 from ..math.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
 from ..math.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
 from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform, cube_rows_from_boxes, held_block_model_boxes_for_kind
@@ -102,10 +102,6 @@ class PlayerModelPose:
     special_item_face_rows: tuple[np.ndarray, ...]
     visible_special_item_icon: str | None
     shadow_rows: np.ndarray
-
-
-def _lerp(a: float, b: float, t: float) -> float:
-    return float(a) + (float(b) - float(a)) * float(t)
 
 
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
@@ -205,12 +201,12 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
         left_arm_rot_x = min(float(left_arm_rot_x), 0.08 * (1.0 - float(attack_weight)))
 
     root = compose_matrices(translate_matrix(float(state.base_x), float(state.base_y), float(state.base_z)), rotate_y_rad_matrix(float(body_yaw)), translate_matrix(0.0, float(_MODEL_FEET_OFFSET_Y), 0.0))
-    head_group_y = _lerp(float(_HEAD_GROUP_POS[1]), float(_CROUCH_HEAD_POS_Y), float(crouch))
-    body_group_y = _lerp(float(_BODY_GROUP_POS_STAND[1]), float(_CROUCH_BODY_POS_Y), float(crouch))
-    body_group_z = _lerp(0.0, float(_CROUCH_BODY_POS_Z), float(crouch))
-    arm_group_y = _lerp(float(_RIGHT_ARM_GROUP_POS_STAND[1]), float(_CROUCH_ARM_POS_Y), float(crouch))
-    arm_group_z = _lerp(0.0, float(_CROUCH_ARM_POS_Z), float(crouch))
-    leg_group_z = _lerp(0.0, float(_CROUCH_LEG_POS_Z), float(crouch))
+    head_group_y = lerpf(float(_HEAD_GROUP_POS[1]), float(_CROUCH_HEAD_POS_Y), float(crouch))
+    body_group_y = lerpf(float(_BODY_GROUP_POS_STAND[1]), float(_CROUCH_BODY_POS_Y), float(crouch))
+    body_group_z = lerpf(0.0, float(_CROUCH_BODY_POS_Z), float(crouch))
+    arm_group_y = lerpf(float(_RIGHT_ARM_GROUP_POS_STAND[1]), float(_CROUCH_ARM_POS_Y), float(crouch))
+    arm_group_z = lerpf(0.0, float(_CROUCH_ARM_POS_Z), float(crouch))
+    leg_group_z = lerpf(0.0, float(_CROUCH_LEG_POS_Z), float(crouch))
 
     head_parent = compose_matrices(root, translate_matrix(0.0, float(head_group_y), 0.0), rotate_y_rad_matrix(float(head_yaw)), rotate_x_rad_matrix(float(head_pitch)), translate_matrix(float(_HEAD_CENTER[0]), float(_HEAD_CENTER[1]), float(_HEAD_CENTER[2])))
     body_parent = compose_matrices(root, translate_matrix(0.0, float(body_group_y), float(body_group_z)), rotate_x_rad_matrix(float(_CROUCH_BODY_ROT_X) * float(crouch)))

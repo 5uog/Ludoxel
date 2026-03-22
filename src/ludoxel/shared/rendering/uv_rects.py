@@ -2,28 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from ..math.scalars import clamp01f, lerpf
 from ..math.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
 from ..blocks.models.common import LocalBox
 
 UVRect = tuple[float, float, float, float]
 
 
-def _lerp(a: float, b: float, t: float) -> float:
-    return float(a) + (float(b) - float(a)) * float(t)
-
-
-def _clamp01(x: float) -> float:
-    value = float(x)
-    if value < 0.0:
-        return 0.0
-    if value > 1.0:
-        return 1.0
-    return value
-
-
 def atlas_uv_rect(atlas: UVRect, u0: float, v0: float, u1: float, v1: float) -> UVRect:
     atlas_u0, atlas_v0, atlas_u1, atlas_v1 = atlas
-    return (_lerp(atlas_u0, atlas_u1, _clamp01(u0)), _lerp(atlas_v0, atlas_v1, _clamp01(v0)), _lerp(atlas_u0, atlas_u1, _clamp01(u1)), _lerp(atlas_v0, atlas_v1, _clamp01(v1)))
+    return (lerpf(atlas_u0, atlas_u1, clamp01f(u0)), lerpf(atlas_v0, atlas_v1, clamp01f(v0)), lerpf(atlas_u0, atlas_u1, clamp01f(u1)), lerpf(atlas_v0, atlas_v1, clamp01f(v1)))
 
 
 def sub_uv_rect(atlas: UVRect, face_idx: int, box: LocalBox) -> UVRect:
