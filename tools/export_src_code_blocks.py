@@ -113,10 +113,10 @@ def build_dump(src_root: Path, extensions: tuple[str, ...], exclude_parts: tuple
 
 def parse_args() -> argparse.Namespace:
     project_root = _project_root_from_script()
-    default_src = project_root / "src/"
-    default_output = project_root / "src_code_blocks.txt"
+    default_src = project_root / "src"
+    default_output = project_root / ".artifacts" / "code_dump" / "src_code_blocks.txt"
 
-    parser = argparse.ArgumentParser(description=("Collect code files under src/ and export them into a single txt file, " "wrapping each file in fenced code blocks."))
+    parser = argparse.ArgumentParser(description=("Collect code files under src/ and export them into a single txt file, wrapping each file in fenced code blocks."))
     parser.add_argument("--src", type=Path, default=default_src, help=f"source root to scan (default: {default_src})")
     parser.add_argument("--output", type=Path, default=default_output, help=f"output txt file path (default: {default_output})")
     parser.add_argument("--extensions", type=_parse_extensions, default=DEFAULT_EXTENSIONS, help=("comma-separated file extensions to include " f"(default: {','.join(DEFAULT_EXTENSIONS)})"))

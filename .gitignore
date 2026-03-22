@@ -1,2 +1,4 @@
 __pycache__/
-assets/
+/assets/
+/.artifacts/*
+!/.artifacts/.gitkeep
