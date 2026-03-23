@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QEvent, Qt, pyqtSignal
 from PyQt6.QtGui import QCursor, QImage
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ...world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, is_my_world_space, normalize_play_space_id
 from .player_skin_preview_widget import PlayerSkinPreviewWidget
@@ -45,20 +45,6 @@ class PauseOverlay(QWidget):
         panel_layout = QVBoxLayout(panel)
         panel_layout.setContentsMargins(20, 18, 20, 20)
         panel_layout.setSpacing(12)
-
-        title = QLabel("PAUSED", panel)
-        title.setObjectName("title")
-        panel_layout.addWidget(title)
-
-        subtitle = QLabel("Resume the session, switch play spaces, or open Settings.", panel)
-        subtitle.setObjectName("subtitle")
-        subtitle.setWordWrap(True)
-        panel_layout.addWidget(subtitle)
-
-        sep = QFrame(panel)
-        sep.setObjectName("sep")
-        sep.setFrameShape(QFrame.Shape.HLine)
-        panel_layout.addWidget(sep)
 
         btn_resume = QPushButton("Resume", panel)
         btn_resume.setObjectName("menuBtn")

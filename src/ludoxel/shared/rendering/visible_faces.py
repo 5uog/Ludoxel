@@ -2,24 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Callable, Iterator
 
-from ..math.voxel.voxel_faces import face_neighbor_offset
-from ..blocks.block_definition import BlockDefinition
 from ..blocks.models.api import render_boxes_for_block
 from ..blocks.models.common import LocalBox
 from ..blocks.state.state_codec import parse_state
-
+from ..math.voxel.voxel_faces import face_neighbor_offset
 from .face_axes import face_touches_cell_boundary
 from .face_occlusion import is_block_face_occluded, is_local_face_occluded
-
-GetState = Callable[[int, int, int], str | None]
-DefLookup = Callable[[str], BlockDefinition | None]
+from .render_types import DefLookup, GetState
 
 
 @dataclass(frozen=True)
 class VisibleFace:
+    """I define this record as the tuple (box, face_idx, mn, mx) describing one world-space face that survives every local and neighbor occlusion test. I use it as the canonical intermediate between model visibility analysis and later payload packing."""
     box: LocalBox
     face_idx: int
     mn: tuple[float, float, float]
@@ -27,6 +24,7 @@ class VisibleFace:
 
 
 def _neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, get_state: GetState, def_lookup: DefLookup) -> bool:
+    """I define F(face) as the predicate that the neighboring voxel in the face-normal direction resolves to a solid full cube. I use this fast path because such a neighbor guarantees complete occlusion of the contacting face without any finer geometry inspection."""
     dx, dy, dz = face_neighbor_offset(int(face_idx))
     nx = int(x) + int(dx)
     ny = int(y) + int(dy)
@@ -45,13 +43,15 @@ def _neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, get_s
 
 
 def _boundary_neighbor_is_full_cube_solid(*, x: int, y: int, z: int, face_idx: int, box: LocalBox, get_state: GetState, def_lookup: DefLookup) -> bool:
+    """I define B(face, box) as the full-cube-solid neighbor predicate additionally gated by the condition that the local face actually reaches the voxel boundary. I use this refinement to avoid asking neighboring cells about faces that are interior to a multi-box model."""
     if not face_touches_cell_boundary(int(face_idx), box):
         return False
 
     return _neighbor_is_full_cube_solid(x=int(x), y=int(y), z=int(z), face_idx=int(face_idx), get_state=get_state, def_lookup=def_lookup)
 
 
-def iter_visible_faces(*, x: int, y: int, z: int, state_str: str, get_state: GetState, def_lookup: DefLookup, fast_boundary_full_cube_only: bool=False) -> Iterator[VisibleFace]:
+def iter_visible_faces(*, x: int, y: int, z: int, state_str: str, get_state: GetState, def_lookup: DefLookup, fast_boundary_full_cube_only: bool = False) -> Iterator[VisibleFace]:
+    """I define V(state) as the iterator over all faces of the block model that remain after local-face suppression and either the boundary-only or full neighbor-occlusion regime. I use this generator as the single authoritative face-visibility walk for chunk payload synthesis and every other face-level renderer input builder."""
     base, _props = parse_state(str(state_str))
     defn = def_lookup(str(base))
     boxes = list(render_boxes_for_block(str(state_str), get_state, def_lookup, int(x), int(y), int(z)))

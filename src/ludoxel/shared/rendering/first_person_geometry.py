@@ -2,30 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
-from typing import Callable, Literal, Sequence
+from dataclasses import replace
+from typing import Literal
 
 import math
 import numpy as np
 
-from ..math.scalars import clampf
-from ..math.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
-from ..blocks.block_definition import BlockDefinition
 from ..blocks.models.common import LocalBox
-from ..blocks.models.dimensions import px_box
-from ..blocks.models.wall import boxes_for_wall
-from ..blocks.models.fence_gate import boxes_for_fence_gate
-from ..blocks.models.slab import boxes_for_slab
-from ..blocks.models.stairs import boxes_for_stairs
+from ..math.scalars import clampf
+from ..math.transform_matrices import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
+from ..math.voxel.voxel_faces import FACE_POS_Z
 from .face_occlusion import is_local_face_occluded
 from .face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
-from ..math.transform_matrices import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
-from .uv_rects import UVRect
+from .held_block_geometry import held_block_kind_scale_multiplier, held_block_model_boxes
 from .player_render_state import FirstPersonRenderState
+from .player_skin_uv_maps import SLIM_RIGHT_ARM_BASE_UV_PX, SLIM_RIGHT_ARM_SLEEVE_UV_PX
+from .render_types import DefLookup, UVLookup
 
-DefLookup = Callable[[str], BlockDefinition | None]
-UVLookup = Callable[[str, int], UVRect]
-TransformBuilder = Callable[[float], np.ndarray]
 SafeFrame = tuple[float, float, float, float]
 AnchorMode = Literal["nearest_zero", "min_edge", "max_edge"]
 
@@ -90,22 +83,8 @@ _SPECIAL_ITEM_ICON_BOX = LocalBox(0.0, 0.0, 7.5 * _PX, 16.0 * _PX, 16.0 * _PX, 8
 _SPECIAL_ITEM_RENDER_SCALE = 1.55
 
 
-@dataclass(frozen=True)
-class TexturedBox:
-    """I define this record as the pair (B, U), where B is a local cuboid and U is an optional per-face pixel-rectangle family over the six voxel faces. I use the record to carry enough information to derive both geometry and face-local atlas coordinates without coupling held-item rendering to any single block family implementation."""
-    box: LocalBox
-    face_uv_pixels: dict[int, tuple[float, float, float, float]] | None = None
-
-
-_FENCE_INVENTORY_BOXES: tuple[TexturedBox, ...] = (TexturedBox(box=px_box(6, 0, 6, 10, 16, 10), face_uv_pixels={FACE_POS_X: (10.0, 0.0, 14.0, 16.0), FACE_NEG_X: (6.0, 0.0, 10.0, 16.0), FACE_POS_Y: (6.0, 6.0, 10.0, 10.0), FACE_NEG_Y: (10.0, 6.0, 14.0, 10.0), FACE_POS_Z: (6.0, 0.0, 10.0, 16.0), FACE_NEG_Z: (14.0, 0.0, 10.0, 16.0)}), TexturedBox(box=px_box(7, 6, -2, 9, 9, 18), face_uv_pixels={FACE_POS_X: (9.0, 6.0, 11.0, 9.0), FACE_NEG_X: (7.0, 6.0, 9.0, 9.0), FACE_POS_Y: (7.0, 0.0, 9.0, 4.0), FACE_NEG_Y: (9.0, 0.0, 11.0, 4.0), FACE_POS_Z: (7.0, 4.0, 9.0, 7.0), FACE_NEG_Z: (11.0, 4.0, 13.0, 7.0)}), TexturedBox(box=px_box(7, 12, -2, 9, 15, 18), face_uv_pixels={FACE_POS_X: (9.0, 12.0, 11.0, 15.0), FACE_NEG_X: (7.0, 12.0, 9.0, 15.0), FACE_POS_Y: (7.0, 7.0, 9.0, 11.0), FACE_NEG_Y: (9.0, 7.0, 11.0, 11.0), FACE_POS_Z: (7.0, 9.0, 9.0, 12.0), FACE_NEG_Z: (11.0, 9.0, 13.0, 12.0)}))
-_WALL_INVENTORY_BOXES: tuple[TexturedBox, ...] = tuple(TexturedBox(box=b) for b in boxes_for_wall(props={"north": "low", "south": "low", "east": "none", "west": "none", "up": "true"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0))
-_HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0, "stairs": 1.0, "wall": 1.16, "fence": 1.12, "fence_gate": 1.72}
-
-_SLIM_RIGHT_ARM_BASE_UV_PX = {FACE_POS_X: (40.0, 20.0, 44.0, 32.0), FACE_NEG_X: (47.0, 20.0, 51.0, 32.0), FACE_POS_Y: (44.0, 16.0, 47.0, 20.0), FACE_NEG_Y: (47.0, 16.0, 50.0, 20.0), FACE_POS_Z: (44.0, 20.0, 47.0, 32.0), FACE_NEG_Z: (51.0, 20.0, 54.0, 32.0)}
-_SLIM_RIGHT_ARM_SLEEVE_UV_PX = {FACE_POS_X: (40.0, 36.0, 44.0, 48.0), FACE_NEG_X: (47.0, 36.0, 51.0, 48.0), FACE_POS_Y: (44.0, 32.0, 47.0, 36.0), FACE_NEG_Y: (47.0, 32.0, 50.0, 36.0), FACE_POS_Z: (44.0, 36.0, 47.0, 48.0), FACE_NEG_Z: (51.0, 36.0, 54.0, 48.0)}
-
-
 def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float, float, float]:
+    """I define (r,s,f,t) = (sin(pi*sqrt(p)), sin(pi*p^2), sin(pi*p), sin(2*pi*sqrt(p))) with p = clamp(swing_progress, 0, 1). I use this quartet because the hand and arm transforms couple different positional and rotational channels to differently eased phases of the same attack animation parameter."""
     swing = clampf(float(first_person.swing_progress), 0.0, 1.0)
     root = math.sin(math.sqrt(swing) * math.pi)
     squared = math.sin(swing * swing * math.pi)
@@ -115,66 +94,41 @@ def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float
 
 
 def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
+    """I define M_bob = T(tx,ty,tz) * Rz(roll) * Ry(yaw) * Rx(pitch) over the sampled first-person bob state. I use this prefix transform so that held-item and arm geometry inherit the same camera-space bobbing frame before their own pose-specific offsets are applied."""
     return compose_matrices(translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)), rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)), rotate_y_deg_matrix(float(first_person.view_bob_yaw_deg)), rotate_x_deg_matrix(float(first_person.view_bob_pitch_deg)))
 
 
 def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np.ndarray:
+    """I define M_hand as the ordered product of swing translations, nominal hand translation, and three preswing or swing-dependent rotations. I use this transform as the shared camera-space backbone for both held blocks and special first-person item quads."""
     root, squared, full, twice = _arm_swing_terms(first_person)
     return compose_matrices(translate_matrix(float(_ITEM_SWING_X_POS_SCALE) * float(root), float(_ITEM_SWING_Y_POS_SCALE) * float(twice), float(_ITEM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ITEM_POS_X), float(_ITEM_POS_Y), float(_ITEM_POS_Z)), rotate_y_deg_matrix(float(_ITEM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ITEM_SWING_Y_ROT_AMOUNT_DEG) * float(squared)), rotate_z_deg_matrix(float(_ITEM_SWING_Z_ROT_AMOUNT_DEG) * float(root)), rotate_x_deg_matrix(float(_ITEM_SWING_X_ROT_AMOUNT_DEG) * float(root)))
 
 
-def build_first_person_item_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float=1.0) -> np.ndarray:
+def build_first_person_item_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float = 1.0) -> np.ndarray:
+    """I define M_item = M_bob * M_hand * T_item * R_item * S_item * T(-1/2,-1/2,-1/2), with the scale term multiplied by the supplied render-scale correction. I use this transform to place held block geometry into camera space under one stable pivot convention regardless of block family."""
     uniform_scale = float(render_scale_multiplier)
     return compose_matrices(_view_bob_transform(first_person), build_main_hand_common_transform(first_person), translate_matrix(float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[2]) * _PX), rotate_x_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[0])), rotate_y_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[1])), rotate_z_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[2])), scale_matrix(float(_BLOCK_FIRSTPERSON_SCALE[0]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[1]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[2]) * uniform_scale), translate_matrix(-0.5, -0.5, -0.5))
 
 
 def build_third_person_item_hand_transform() -> np.ndarray:
+    """I define M_3p as the fixed third-person attachment transform applied after the animated hand anchor. I use this constant mapping so that every third-person held block shares one orientation, scale, and pivot basis relative to the player hand."""
     return compose_matrices(translate_matrix(float(_BLOCK_THIRDPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[2]) * _PX), rotate_x_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[0])), rotate_y_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[1])), rotate_z_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[2])), scale_matrix(float(_BLOCK_THIRDPERSON_SCALE[0]), float(_BLOCK_THIRDPERSON_SCALE[1]), float(_BLOCK_THIRDPERSON_SCALE[2])), translate_matrix(-0.5, -0.5, -0.5))
 
 
-def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float=1.0) -> np.ndarray:
+def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float = 1.0) -> np.ndarray:
+    """I define M_arm as the ordered product of bob transform, swing-dependent offsets, arm anchor translation, preswing yaw, swing rotations, prerotation offsets, fixed arm rotations, postrotation offset, and final uniform scale. I use this transform to reproduce the authored first-person slim-arm pose with a single matrix product."""
     root, squared, full, twice = _arm_swing_terms(first_person)
     arm_scale = float(_ARM_FIRSTPERSON_SCALE) * float(render_scale_multiplier)
     return compose_matrices(_view_bob_transform(first_person), translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)), rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ARM_SWING_Y_ROT_AMOUNT_DEG) * float(root)), rotate_z_deg_matrix(float(_ARM_SWING_Z_ROT_AMOUNT_DEG) * float(squared)), translate_matrix(float(_ARM_PREROTATION_X_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Y_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Z_OFFSET_PX) * _PX), rotate_z_deg_matrix(float(_ARM_ROT_Z_DEG)), rotate_x_deg_matrix(float(_ARM_ROT_X_DEG)), rotate_y_deg_matrix(float(_ARM_ROT_Y_DEG)), translate_matrix(float(_ARM_POSTROTATION_X_OFFSET_PX) * _PX, 0.0, 0.0), scale_matrix(arm_scale, arm_scale, arm_scale))
 
 
-def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple[TexturedBox, ...]:
-    if block_id is None:
-        return ()
-
-    block_def = def_lookup(str(block_id))
-    if block_def is None:
-        return ()
-
-    return held_block_model_boxes_for_kind(block_def.kind_name())
-
-
-def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]:
-    normalized = "" if kind is None else str(kind).strip().lower()
-    if normalized == "slab":
-        return tuple(TexturedBox(box=b) for b in boxes_for_slab({"type": "bottom"}))
-    if normalized == "stairs":
-        boxes = boxes_for_stairs(base_id="minecraft:stone_stairs", props={"facing": "east", "half": "bottom", "shape": "straight"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0)
-        return tuple(TexturedBox(box=b) for b in boxes)
-    if normalized == "wall":
-        return _WALL_INVENTORY_BOXES
-    if normalized == "fence":
-        return _FENCE_INVENTORY_BOXES
-    if normalized == "fence_gate":
-        return tuple(TexturedBox(box=b) for b in boxes_for_fence_gate({"facing": "south", "open": "false", "in_wall": "false"}))
-    return (TexturedBox(box=LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)),)
-
-
-def _held_block_kind_scale_multiplier(kind: str | None) -> float:
-    normalized = "" if kind is None else str(kind).strip().lower()
-    return float(_HELD_BLOCK_KIND_SCALE_MULTIPLIERS.get(normalized, 1.0))
-
-
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
+    """I define P(box) as the 8x4 homogeneous corner matrix generated by the cartesian product of the box minima and maxima on each axis. I use this matrix as the minimal finite witness set for camera-space fitting of convex cuboids."""
     return np.asarray([[float(x), float(y), float(z), 1.0] for x in (box.mn_x, box.mx_x) for y in (box.mn_y, box.mx_y) for z in (box.mn_z, box.mx_z)], dtype=np.float32)
 
 
-def _camera_space_points(parent_transform: np.ndarray, boxes: Sequence[LocalBox]) -> np.ndarray:
+def _camera_space_points(parent_transform: np.ndarray, boxes: tuple[LocalBox, ...] | list[LocalBox]) -> np.ndarray:
+    """I define Q = vstack(M * P(box_j)^T)^T over all local boxes box_j. I use this aggregated point cloud because clip-safe fitting only depends on transformed extremal corners, not on the interior of each cuboid."""
     points = []
     transform = np.asarray(parent_transform, dtype=np.float32)
     for box in boxes:
@@ -186,6 +140,7 @@ def _camera_space_points(parent_transform: np.ndarray, boxes: Sequence[LocalBox]
 
 
 def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projection_scale: float, ndc_min: float, ndc_max: float) -> tuple[float, float]:
+    """I define I_axis as the intersection over all points of the translation interval that keeps p_axis / (-p_z), scaled by the projection coefficient, inside [ndc_min, ndc_max]. I use this interval arithmetic to solve first-person fitting as a one-dimensional feasibility problem per screen axis."""
     lower = -math.inf
     upper = math.inf
     proj = max(float(projection_scale), _FIRST_PERSON_FIT_EPSILON)
@@ -197,7 +152,8 @@ def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projectio
     return (float(lower), float(upper))
 
 
-def _fit_intervals(parent_transform: np.ndarray, boxes: Sequence[LocalBox], projection: np.ndarray, safe_frame: SafeFrame) -> tuple[tuple[float, float], tuple[float, float]]:
+def _fit_intervals(parent_transform: np.ndarray, boxes: tuple[LocalBox, ...] | list[LocalBox], projection: np.ndarray, safe_frame: SafeFrame) -> tuple[tuple[float, float], tuple[float, float]]:
+    """I define (I_x, I_y) as the feasible translation intervals induced by the transformed box corners under the supplied projection and safe frame. I use this paired result to separate geometric fitting from the later anchoring policy that chooses one concrete translation inside the feasible set."""
     projection_matrix = np.asarray(projection, dtype=np.float32)
     min_x, max_x, min_y, max_y = (float(safe_frame[0]), float(safe_frame[1]), float(safe_frame[2]), float(safe_frame[3]))
     points = _camera_space_points(parent_transform, boxes)
@@ -207,10 +163,12 @@ def _fit_intervals(parent_transform: np.ndarray, boxes: Sequence[LocalBox], proj
 
 
 def _interval_is_feasible(interval: tuple[float, float]) -> bool:
+    """I define Feasible((l,u)) iff l <= u. I use this predicate as the exact admissibility criterion for the one-dimensional translation intervals generated by the fitting pass."""
     return float(interval[0]) <= float(interval[1])
 
 
 def _projection_uniform_scale_multiplier(projection: np.ndarray, *, exponent: float) -> float:
+    """I define m = (P_ref_y / P_cur_y)^e, where P_y is the projection-matrix y-scale and e is the configured exponent. I use this law to attenuate the apparent size drift of first-person items across field-of-view changes without forcing a rigid FOV lock."""
     exp = float(exponent)
     if abs(exp) <= _FIRST_PERSON_FIT_EPSILON:
         return 1.0
@@ -220,6 +178,7 @@ def _projection_uniform_scale_multiplier(projection: np.ndarray, *, exponent: fl
 
 
 def _anchored_value_in_interval(value: float, interval: tuple[float, float], anchor_mode: AnchorMode) -> float:
+    """I define A(value, [l,u], mode) as l for min_edge, u for max_edge, and clamp(value, l, u) for nearest_zero. I use this selector to express how the fitted geometry should bias itself within the feasible translation interval."""
     low, high = float(interval[0]), float(interval[1])
     if str(anchor_mode) == "min_edge":
         return low
@@ -233,6 +192,7 @@ def _anchored_value_in_interval(value: float, interval: tuple[float, float], anc
 
 
 def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> float:
+    """I define Clamp(value, [l,u]) = min(max(value, l), u). I use this final projection onto the feasible set when a reference transform suggests an anchored translation that still must honor the active transform's own interval."""
     low, high = float(interval[0]), float(interval[1])
     if float(value) < low:
         return low
@@ -242,10 +202,12 @@ def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> flo
 
 
 def _neutral_swing_state(first_person: FirstPersonRenderState) -> FirstPersonRenderState:
+    """I define state_0 as the state obtained by replacing both swing-progress channels with zero while preserving every other render parameter. I use this neutralized sample to derive a stable anchoring reference that is insensitive to transient swing excursions."""
     return replace(first_person, swing_progress=0.0, prev_swing_progress=0.0)
 
 
 def _equip_hide_transform(first_person: FirstPersonRenderState, *, hide_distance: float) -> np.ndarray:
+    """I define h = 1 - equip_progress, e = h^2 * (3 - 2h), and M_hide = T(0, -hide_distance * e, 0). I use this eased vertical displacement to lower or raise the arm and item payloads during equip transitions without introducing discontinuous velocity."""
     hidden = 1.0 - clampf(float(first_person.equip_progress), 0.0, 1.0)
     eased = float(hidden * hidden * (3.0 - 2.0 * hidden))
     if eased <= _FIRST_PERSON_FIT_EPSILON:
@@ -253,7 +215,8 @@ def _equip_hide_transform(first_person: FirstPersonRenderState, *, hide_distance
     return translate_matrix(0.0, -float(hide_distance) * eased, 0.0)
 
 
-def _fitted_first_person_parent_transform(*, boxes: Sequence[LocalBox], projection: np.ndarray, safe_frame: SafeFrame, transform_builder: TransformBuilder, projection_scale_exponent: float, x_anchor_mode: AnchorMode, y_anchor_mode: AnchorMode, reference_transform_builder: TransformBuilder | None=None) -> np.ndarray:
+def _fitted_first_person_parent_transform(*, boxes: tuple[LocalBox, ...] | list[LocalBox], projection: np.ndarray, safe_frame: SafeFrame, transform_builder, projection_scale_exponent: float, x_anchor_mode: AnchorMode, y_anchor_mode: AnchorMode, reference_transform_builder=None) -> np.ndarray:
+    """I define M_fit as the transform produced by projection-aware scale correction, interval feasibility search, and anchored translation selection inside the resulting safe-frame admissible region. I use this fitted parent transform to guarantee that first-person meshes remain inside the protected clip rectangle while retaining a reproducible edge bias."""
     projection_scale_multiplier = _projection_uniform_scale_multiplier(projection, exponent=float(projection_scale_exponent))
     best_scale = 1.0
     transform = np.asarray(transform_builder(projection_scale_multiplier), dtype=np.float32)
@@ -310,7 +273,7 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
 
     block_def = def_lookup(str(first_person.visible_block_id))
     kind = "" if block_def is None else str(block_def.kind_name())
-    kind_scale = _held_block_kind_scale_multiplier(kind)
+    kind_scale = held_block_kind_scale_multiplier(kind)
     base_parent_transform = _fitted_first_person_parent_transform(boxes=[textured_box.box for textured_box in boxes], projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(kind_scale))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(kind_scale))))
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
 
@@ -338,9 +301,7 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ARM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
 
-    base_uv_map = _SLIM_RIGHT_ARM_BASE_UV_PX
-    sleeve_uv_map = _SLIM_RIGHT_ARM_SLEEVE_UV_PX
-    for box, uv_map in ((arm_boxes[0], base_uv_map), (arm_boxes[1], sleeve_uv_map)):
+    for box, uv_map in ((arm_boxes[0], SLIM_RIGHT_ARM_BASE_UV_PX),(arm_boxes[1], SLIM_RIGHT_ARM_SLEEVE_UV_PX)):
         model = model_matrix_for_local_box(parent_transform, box)
         for face_idx in range(6):
             uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
@@ -359,22 +320,12 @@ def build_first_person_special_item_face_rows(first_person: FirstPersonRenderSta
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
     model = model_matrix_for_local_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    append_face_instance(buffers, int(FACE_POS_Z), model, (0.0, 0.0, 1.0, 1.0))
+    append_face_instance(buffers, int(FACE_POS_Z), model,(0.0, 0.0, 1.0, 1.0))
     return face_rows_from_buffers(buffers)
 
 
-def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray) -> np.ndarray:
-    """I define R_j = vec(M_parent * T(c_j) * S(s_j)) for each local box j, and I stack these 16-component rows into a contiguous matrix in R^(n x 16). This is the compact shadow-caster representation used when only the cuboid transform, not per-face UV data, is required."""
-    if not boxes:
-        return np.zeros((0, 16), dtype=np.float32)
-
-    rows = []
-    for box in boxes:
-        rows.append(np.asarray(model_matrix_for_local_box(parent_transform, box), dtype=np.float32).reshape(16))
-    return np.ascontiguousarray(np.vstack(rows), dtype=np.float32)
-
-
 def rotation_only(matrix: np.ndarray) -> np.ndarray:
+    """I define R(M) as the affine matrix whose linear block is obtained by column-wise normalizing the 3x3 block of M and whose translation block is zero. I use this operator when downstream consumers require orientation without inherited non-uniform scale or translation."""
     out = identity_matrix()
     linear = np.asarray(matrix, dtype=np.float32)[:3, :3].copy()
     for column in range(3):
@@ -386,6 +337,7 @@ def rotation_only(matrix: np.ndarray) -> np.ndarray:
 
 
 def rotation_scale_only(matrix: np.ndarray) -> np.ndarray:
+    """I define RS(M) as the affine matrix whose 3x3 block equals that of M and whose translation block is zero. I use this projection when I must preserve embedded scale but intentionally discard positional information."""
     out = identity_matrix()
     out[:3, :3] = np.asarray(matrix, dtype=np.float32)[:3, :3]
     return out

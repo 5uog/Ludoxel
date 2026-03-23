@@ -170,7 +170,7 @@ def user_opening_book_file_path(project_root: str | Path | None = None) -> Path:
 
 def _normalize_line(raw_line: object) -> tuple[int, ...]:
     """I define N_l(line) as the total validator for one opening line, with codomain tuple([0,63]^n). I reject the entire line if any move lies outside the board index domain because partial repair would silently alter the intended move sequence."""
-    if not isinstance(raw_line, (list, tuple)):
+    if not isinstance(raw_line,(list, tuple)):
         return ()
     out: list[int] = []
     for value in raw_line:
@@ -186,7 +186,7 @@ def _normalize_line(raw_line: object) -> tuple[int, ...]:
 
 def _normalize_lines(raw_lines: object) -> tuple[tuple[int, ...], ...]:
     """I define N_L(lines) as sequence normalization plus duplicate elimination with order preservation. This makes serialized line corpora stable under repeated write cycles and idempotent under import merges."""
-    if not isinstance(raw_lines, (list, tuple)):
+    if not isinstance(raw_lines,(list, tuple)):
         return ()
     normalized: list[tuple[int, ...]] = []
     seen: set[tuple[int, ...]] = set()
@@ -210,7 +210,7 @@ def _read_lines_from_path(path: Path) -> tuple[tuple[int, ...], ...]:
     if isinstance(raw, list):
         return _normalize_lines(raw)
     if isinstance(raw, dict):
-        return _normalize_lines(raw.get("lines", []))
+        return _normalize_lines(raw.get("lines",[]))
     return ()
 
 

@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from ..blocks.models.common import LocalBox
 
-_EPS = 1e-7
+FACE_EPSILON = 1e-7
 
 
 def approx_eq(a: float, b: float) -> bool:
-    return abs(float(a) - float(b)) <= _EPS
+    """I define a ~= b iff |a - b| <= eps, where eps = FACE_EPSILON. I use this tolerance relation to stabilize face-boundary tests against float noise introduced by model decomposition and affine composition."""
+    return abs(float(a) - float(b)) <= FACE_EPSILON
 
 
 def face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
+    """I define T(face, box) as the predicate that the requested box face lies on the unit-cell boundary associated with that face index. I use this boundary test to decide whether occlusion may depend on a neighboring voxel rather than only on intra-block geometry."""
     fi = int(face_idx)
 
     if fi == 0:
@@ -28,6 +30,7 @@ def face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
 
 
 def face_rect(face_idx: int, box: LocalBox) -> tuple[float, float, float, float]:
+    """I define R(face, box) as the 2D rectangle obtained by projecting the requested face onto its intrinsic coordinate plane. I use this rectangle as the canonical domain on which local and neighbor occlusion become pure cover problems."""
     fi = int(face_idx)
 
     if fi in (0, 1):

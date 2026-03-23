@@ -29,7 +29,7 @@ def coerce_bool(value: object, default: bool) -> bool:
     """I define C_B(value; d) as a total boolean decoder over {bool,int,float,str}. Numeric inputs follow the predicate x != 0, canonical string tokens are interpreted through two finite truth tables, and every non-decodable residue collapses to d."""
     if isinstance(value, bool):
         return bool(value)
-    if isinstance(value, (int, float)):
+    if isinstance(value,(int, float)):
         return bool(value)
     if isinstance(value, str):
         token = str(value).strip().lower()

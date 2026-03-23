@@ -12,9 +12,12 @@ from ..blocks.models.common import LocalBox
 from ..math.scalars import clampf, lerpf
 from ..math.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
 from ..math.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
+from .box_instance_rows import cube_rows_from_boxes
 from .face_row_utils import append_face_instance, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
-from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform, cube_rows_from_boxes, held_block_model_boxes_for_kind
+from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform
+from .held_block_geometry import held_block_model_boxes_for_kind
 from .player_render_state import PlayerRenderState
+from .player_skin_uv_maps import VISUAL_LEFT_ARM_BASE_UV_PX, VISUAL_LEFT_ARM_SLEEVE_UV_PX, VISUAL_RIGHT_ARM_BASE_UV_PX, VISUAL_RIGHT_ARM_SLEEVE_UV_PX
 
 _PX = 1.0 / 16.0
 _SKIN_WIDTH = 64.0
@@ -57,14 +60,17 @@ _WORLD_SPECIAL_ITEM_SCALE = 1.75
 
 
 def _skin_cube_uv_map(*, pos_x: tuple[float, float, float, float], neg_x: tuple[float, float, float, float], pos_y: tuple[float, float, float, float], neg_y: tuple[float, float, float, float], pos_z: tuple[float, float, float, float], neg_z: tuple[float, float, float, float]) -> dict[int, tuple[float, float, float, float]]:
+    """I define U = {+X,-X,+Y,-Y,+Z,-Z} -> R^4, where each face key is mapped onto its skin-space pixel rectangle. I use this constructor to encode the player-skin atlas layout in the same face-index basis consumed by the renderer."""
     return {FACE_POS_X: pos_x, FACE_NEG_X: neg_x, FACE_POS_Y: pos_y, FACE_NEG_Y: neg_y, FACE_POS_Z: pos_z, FACE_NEG_Z: neg_z}
 
 
 def _rotate_uv_rect_180(px_rect: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+    """I define R180(u0,v0,u1,v1) = (u1,v1,u0,v0). I apply this inversion to those skin rectangles whose rendered face orientation must be reversed to match the mesh basis."""
     return (float(px_rect[2]), float(px_rect[3]), float(px_rect[0]), float(px_rect[1]))
 
 
 def _uv_map_with_rotated_faces(uv_map: dict[int, tuple[float, float, float, float]], *faces: int) -> dict[int, tuple[float, float, float, float]]:
+    """I define U'(f) = R180(U(f)) for the selected face set and U'(g) = U(g) elsewhere. I use this local adjustment to keep the bulk of the atlas data declarative while still honoring renderer-side face orientation."""
     out = {int(face_idx): tuple(rect) for face_idx, rect in uv_map.items()}
     for face_idx in faces:
         out[int(face_idx)] = _rotate_uv_rect_180(out[int(face_idx)])
@@ -75,14 +81,6 @@ _HEAD_BASE_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 8.0, 8.0, 16.0), neg_x=(16.0, 8
 _HEAD_HAT_UV_PX = _skin_cube_uv_map(pos_x=(32.0, 8.0, 40.0, 16.0), neg_x=(48.0, 8.0, 56.0, 16.0), pos_y=(40.0, 0.0, 48.0, 8.0), neg_y=(48.0, 0.0, 56.0, 8.0), pos_z=(40.0, 8.0, 48.0, 16.0), neg_z=(56.0, 8.0, 64.0, 16.0))
 _BODY_BASE_UV_PX = _uv_map_with_rotated_faces(_skin_cube_uv_map(pos_x=(16.0, 20.0, 20.0, 32.0), neg_x=(28.0, 20.0, 32.0, 32.0), pos_y=(20.0, 16.0, 28.0, 20.0), neg_y=(28.0, 16.0, 36.0, 20.0), pos_z=(20.0, 20.0, 28.0, 32.0), neg_z=(32.0, 20.0, 40.0, 32.0)), FACE_POS_Y)
 _BODY_JACKET_UV_PX = _uv_map_with_rotated_faces(_skin_cube_uv_map(pos_x=(16.0, 36.0, 20.0, 48.0), neg_x=(28.0, 36.0, 32.0, 48.0), pos_y=(20.0, 32.0, 28.0, 36.0), neg_y=(28.0, 32.0, 36.0, 36.0), pos_z=(20.0, 36.0, 28.0, 48.0), neg_z=(32.0, 36.0, 40.0, 48.0)), FACE_POS_Y)
-_RIGHT_ARM_BASE_UV_PX = _skin_cube_uv_map(pos_x=(40.0, 20.0, 44.0, 32.0), neg_x=(47.0, 20.0, 51.0, 32.0), pos_y=(44.0, 16.0, 47.0, 20.0), neg_y=(47.0, 16.0, 50.0, 20.0), pos_z=(44.0, 20.0, 47.0, 32.0), neg_z=(51.0, 20.0, 54.0, 32.0))
-_RIGHT_ARM_SLEEVE_UV_PX = _skin_cube_uv_map(pos_x=(40.0, 36.0, 44.0, 48.0), neg_x=(47.0, 36.0, 51.0, 48.0), pos_y=(44.0, 32.0, 47.0, 36.0), neg_y=(47.0, 32.0, 50.0, 36.0), pos_z=(44.0, 36.0, 47.0, 48.0), neg_z=(51.0, 36.0, 54.0, 48.0))
-_LEFT_ARM_BASE_UV_PX = _skin_cube_uv_map(pos_x=(32.0, 52.0, 36.0, 64.0), neg_x=(39.0, 52.0, 43.0, 64.0), pos_y=(36.0, 48.0, 39.0, 52.0), neg_y=(39.0, 48.0, 42.0, 52.0), pos_z=(36.0, 52.0, 39.0, 64.0), neg_z=(43.0, 52.0, 46.0, 64.0))
-_LEFT_ARM_SLEEVE_UV_PX = _skin_cube_uv_map(pos_x=(48.0, 52.0, 52.0, 64.0), neg_x=(55.0, 52.0, 59.0, 64.0), pos_y=(52.0, 48.0, 55.0, 52.0), neg_y=(55.0, 48.0, 58.0, 52.0), pos_z=(52.0, 52.0, 55.0, 64.0), neg_z=(59.0, 52.0, 62.0, 64.0))
-_VISUAL_RIGHT_ARM_BASE_UV_PX = _uv_map_with_rotated_faces(_RIGHT_ARM_BASE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
-_VISUAL_RIGHT_ARM_SLEEVE_UV_PX = _uv_map_with_rotated_faces(_RIGHT_ARM_SLEEVE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
-_VISUAL_LEFT_ARM_BASE_UV_PX = _uv_map_with_rotated_faces(_LEFT_ARM_BASE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
-_VISUAL_LEFT_ARM_SLEEVE_UV_PX = _uv_map_with_rotated_faces(_LEFT_ARM_SLEEVE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
 _RIGHT_LEG_BASE_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 20.0, 4.0, 32.0), neg_x=(8.0, 20.0, 12.0, 32.0), pos_y=(4.0, 16.0, 8.0, 20.0), neg_y=(8.0, 16.0, 12.0, 20.0), pos_z=(4.0, 20.0, 8.0, 32.0), neg_z=(12.0, 20.0, 16.0, 32.0))
 _RIGHT_LEG_PANTS_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 36.0, 4.0, 48.0), neg_x=(8.0, 36.0, 12.0, 48.0), pos_y=(4.0, 32.0, 8.0, 36.0), neg_y=(8.0, 32.0, 12.0, 36.0), pos_z=(4.0, 36.0, 8.0, 48.0), neg_z=(12.0, 36.0, 16.0, 48.0))
 _LEFT_LEG_BASE_UV_PX = _skin_cube_uv_map(pos_x=(16.0, 52.0, 20.0, 64.0), neg_x=(24.0, 52.0, 28.0, 64.0), pos_y=(20.0, 48.0, 24.0, 52.0), neg_y=(24.0, 48.0, 28.0, 52.0), pos_z=(20.0, 52.0, 24.0, 64.0), neg_z=(28.0, 52.0, 32.0, 64.0))
@@ -108,15 +106,18 @@ class PlayerModelPose:
 
 
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
+    """I define vec16(M) as the row-major flattening of a 4x4 affine matrix into R^16. I use this compact encoding for the shadow pipeline because its cuboid instances require only transforms and not per-face UV metadata."""
     return np.asarray(matrix, dtype=np.float32).reshape(16)
 
 
 def _append_unit_cube_rows(buffers: list[list[list[float]]], model: np.ndarray, uv_map_pixels: dict[int, tuple[float, float, float, float]]) -> None:
+    """I append the six face rows of one unit cube transformed by model and textured by the supplied skin-rectangle family. I use this helper to keep body-part materialization declarative at the call site."""
     for face_idx in range(6):
         append_face_instance(buffers, int(face_idx), model, skin_uv_rect(uv_map_pixels[int(face_idx)], width=int(_SKIN_WIDTH), height=int(_SKIN_HEIGHT)))
 
 
 def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
+    """I define (ax, ay, az) as the right-arm attack contribution derived from the clamped swing parameter through eased sinusoidal laws. I use these angles only in the shadow pose so that the silhouette tracks attack motion even when the visible first-person model is suppressed."""
     swing = clampf(float(swing_progress), 0.0, 1.0)
     if swing <= 1e-6:
         return (0.0, 0.0, 0.0)
@@ -131,6 +132,7 @@ def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
 
 
 def _attack_swing_weight(swing_progress: float) -> float:
+    """I define w = sin(pi*sqrt(p)) for p = clamp(swing_progress, 0, 1), with w = 0 at rest. I use this weight to damp the ordinary walk cycle when the main-hand attack pose should dominate the arm kinematics."""
     swing = clampf(float(swing_progress), 0.0, 1.0)
     if swing <= 1e-6:
         return 0.0
@@ -226,7 +228,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
             if not bool(state.is_first_person):
                 buffers: list[list[list[float]]] = [[] for _ in range(6)]
                 special_model = model_matrix_for_local_box(special_parent, _WORLD_SPECIAL_ITEM_BOX)
-                append_face_instance(buffers, int(FACE_POS_Z), special_model, (0.0, 0.0, 1.0, 1.0))
+                append_face_instance(buffers, int(FACE_POS_Z), special_model,(0.0, 0.0, 1.0, 1.0))
                 special_item_face_rows = face_rows_from_buffers(buffers)
                 visible_special_item_icon = str(first_person.visible_special_item_icon)
 
@@ -236,7 +238,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
         return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, shadow_rows=shadow_rows)
 
     skin_buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    for model, uv_map in ((head, _HEAD_BASE_UV_PX),(hat, _HEAD_HAT_UV_PX),(body, _BODY_BASE_UV_PX),(jacket, _BODY_JACKET_UV_PX),(right_arm, _VISUAL_LEFT_ARM_BASE_UV_PX),(right_sleeve, _VISUAL_LEFT_ARM_SLEEVE_UV_PX),(left_arm, _VISUAL_RIGHT_ARM_BASE_UV_PX),(left_sleeve, _VISUAL_RIGHT_ARM_SLEEVE_UV_PX),(right_leg, _RIGHT_LEG_BASE_UV_PX),(right_pants, _RIGHT_LEG_PANTS_UV_PX),(left_leg, _LEFT_LEG_BASE_UV_PX),(left_pants, _LEFT_LEG_PANTS_UV_PX)):
+    for model, uv_map in ((head, _HEAD_BASE_UV_PX),(hat, _HEAD_HAT_UV_PX),(body, _BODY_BASE_UV_PX),(jacket, _BODY_JACKET_UV_PX),(right_arm, VISUAL_LEFT_ARM_BASE_UV_PX),(right_sleeve, VISUAL_LEFT_ARM_SLEEVE_UV_PX),(left_arm, VISUAL_RIGHT_ARM_BASE_UV_PX),(left_sleeve, VISUAL_RIGHT_ARM_SLEEVE_UV_PX),(right_leg, _RIGHT_LEG_BASE_UV_PX),(right_pants, _RIGHT_LEG_PANTS_UV_PX),(left_leg, _LEFT_LEG_BASE_UV_PX),(left_pants, _LEFT_LEG_PANTS_UV_PX)):
         _append_unit_cube_rows(skin_buffers, model, uv_map)
 
     return PlayerModelPose(skin_face_rows=face_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, shadow_rows=shadow_rows)

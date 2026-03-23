@@ -283,12 +283,6 @@ def build_game_tab(overlay) -> None:
     overlay._ctl_auto_jump_cooldown.value_changed.connect(overlay.auto_jump_cooldown_changed.emit)
     layout.addWidget(overlay._ctl_auto_jump_cooldown)
 
-    btn_reset_adv = QPushButton("Reset Advanced to Defaults", host)
-    btn_reset_adv.setObjectName("menuBtn")
-    btn_reset_adv.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-    btn_reset_adv.clicked.connect(overlay.advanced_reset_requested.emit)
-    layout.addWidget(btn_reset_adv)
-
     layout.addWidget(overlay._section(host, "Flight Parameters"))
 
     overlay._ctl_fly_speed = AdvancedScalarControl(title="Flight speed", min_value=float(overlay._params.fly_speed_milli_min) / float(overlay._params.fly_speed_scale), max_value=float(overlay._params.fly_speed_milli_max) / float(overlay._params.fly_speed_scale), slider_scale=float(overlay._params.fly_speed_scale), decimals=int(overlay._params.fly_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_speed), parent=host)
@@ -302,6 +296,14 @@ def build_game_tab(overlay) -> None:
     overlay._ctl_fly_descend_speed = AdvancedScalarControl(title="Descend speed", min_value=float(overlay._params.fly_descend_speed_milli_min) / float(overlay._params.fly_descend_speed_scale), max_value=float(overlay._params.fly_descend_speed_milli_max) / float(overlay._params.fly_descend_speed_scale), slider_scale=float(overlay._params.fly_descend_speed_scale), decimals=int(overlay._params.fly_descend_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed), parent=host)
     overlay._ctl_fly_descend_speed.value_changed.connect(overlay.fly_descend_speed_changed.emit)
     layout.addWidget(overlay._ctl_fly_descend_speed)
+
+    layout.addWidget(overlay._sep(host))
+
+    btn_reset_adv = QPushButton("Reset Advanced to Defaults", host)
+    btn_reset_adv.setObjectName("menuBtn")
+    btn_reset_adv.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    btn_reset_adv.clicked.connect(overlay.advanced_reset_requested.emit)
+    layout.addWidget(btn_reset_adv)
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)

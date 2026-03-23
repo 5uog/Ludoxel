@@ -2,23 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Callable, Iterable
+from collections.abc import Iterable
 
 import numpy as np
 
-from ..blocks.block_definition import BlockDefinition
 from ..blocks.state.state_codec import parse_state
 from .face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
 from .face_row_utils import atlas_face_uv
-from .uv_rects import UVRect
+from .render_types import DefLookup, GetState, UVLookup
 from .visible_faces import iter_visible_faces
-
-UVLookup = Callable[[str, int], UVRect]
-DefLookup = Callable[[str], BlockDefinition | None]
-GetState = Callable[[int, int, int], str | None]
 
 
 def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
+    """I define A = ascontiguousarray(face_sources) under the invariant shape A in R^(N x 14). I enforce this contract because every downstream bucket split assumes the row schema (bounds, UVs, flags, face index, slot) and a contiguous float32 storage layout."""
     arr = np.asarray(face_sources, dtype=np.float32)
     if arr.ndim != 2 or int(arr.shape[1]) != 14:
         raise ValueError("face_sources must be a float32 Nx14 array")
@@ -28,10 +24,12 @@ def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
 
 
 def empty_face_buckets() -> list[np.ndarray]:
+    """I define E_i = 0_(0x12) for each face bucket i in {0,...,5}. I use this constructor as the canonical empty realization of split face-source arrays after the metadata columns have been discarded."""
     return empty_face_bucket_arrays(12)
 
 
 def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
+    """I define B_i[s,:] = row[:12] whenever row[12] = i and row[13] = s, with every other bucket slot left at zero. I use this scatter to transform the flat source-row stream into six face-indexed payload matrices that match the renderer upload layout."""
     counts = normalize_bucket_counts(bucket_counts)
     out = [np.zeros((int(c), 12), dtype=np.float32) for c in counts]
 
@@ -55,6 +53,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
 
 
 def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
+    """I define R as the concatenation of per-face rows r = (mn, mx, uv, 1, 0, face_idx, slot) over all visible block faces in the chunk iterator. I pair R with the normalized six-face count vector so that later bucket materialization can remain a pure data rearrangement rather than a second visibility walk."""
     rows: list[list[float]] = []
     bucket_counts = [0 for _ in range(FACE_COUNT)]
 

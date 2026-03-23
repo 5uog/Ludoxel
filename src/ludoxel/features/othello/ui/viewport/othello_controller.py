@@ -193,7 +193,7 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
         if int(hover_square) in set(state.legal_moves):
             hover_text += " legal"
     if learning_progress is not None:
-        line = tuple(int(move) for move in tuple(learning_progress.get("line", ())))
+        line = tuple(int(move) for move in tuple(learning_progress.get("line",())))
         learning_line_text = _format_best_line(line, limit=12)
         learning_side = learning_progress.get("side_to_move", None)
         learning_side_text = "Black" if int(learning_side or SIDE_BLACK) == int(SIDE_BLACK) else "White"
@@ -244,8 +244,8 @@ def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | Non
     learning_progress = _book_learning_progress(viewport)
     if learning_progress is not None:
         learning_board = tuple(learning_progress.get("board", game_state.board))
-        learning_legal_moves = tuple(int(move) for move in tuple(learning_progress.get("legal_moves", ())))
-        learning_line = tuple(int(move) for move in tuple(learning_progress.get("line", ())))
+        learning_legal_moves = tuple(int(move) for move in tuple(learning_progress.get("legal_moves",())))
+        learning_line = tuple(int(move) for move in tuple(learning_progress.get("line",())))
         learning_last_move = None if not learning_line else int(learning_line[-1])
         cache_key = ("learning", learning_board, learning_legal_moves, learning_last_move)
         if viewport._othello_render_state_cache_key == cache_key and viewport._othello_render_state_cache is not None:
@@ -361,7 +361,7 @@ def on_book_learning_progress(viewport: "GLViewportWidget", payload: object) -> 
     if not isinstance(payload, dict):
         return
     viewport._othello_book_learning_progress = dict(payload)
-    line = tuple(int(move) for move in tuple(payload.get("line", ())))
+    line = tuple(int(move) for move in tuple(payload.get("line",())))
     explored_positions = int(payload.get("explored_positions", 0))
     remaining_depth = int(payload.get("remaining_depth", 0))
     if line:

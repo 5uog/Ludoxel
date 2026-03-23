@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class FirstPersonRenderState:
+    """I define this record as the immutable parameter vector consumed by first-person arm, held-block, and special-item renderers. I keep both visible and target identifiers together with temporal animation channels so that one sampled state suffices to reconstruct every view-model transform of the frame."""
     visible_item_id: str | None
     target_item_id: str | None
     visible_block_id: str | None
@@ -28,6 +30,7 @@ class FirstPersonRenderState:
 
 @dataclass(frozen=True)
 class PlayerRenderState:
+    """I define this record as the immutable player-pose input P = (base pose, locomotion phase, crouch, perspective flag, first-person extension). I use it as the cache key for player model synthesis because every visible body and shadow pose derives from exactly these fields."""
     base_x: float
     base_y: float
     base_z: float

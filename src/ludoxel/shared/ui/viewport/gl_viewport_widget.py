@@ -281,8 +281,8 @@ class GLViewportWidget(QOpenGLWidget):
         if host is None:
             return
         frame = host.frameGeometry()
-        x = int(frame.x() + max(0, (frame.width() - size.width()) // 2))
-        y = int(frame.y() + max(0, (frame.height() - size.height()) // 2))
+        x = int(frame.x() + max(0,(frame.width() - size.width()) // 2))
+        y = int(frame.y() + max(0,(frame.height() - size.height()) // 2))
         self._settings.move(int(x), int(y))
 
     def _position_othello_settings_window(self) -> None:
@@ -296,8 +296,8 @@ class GLViewportWidget(QOpenGLWidget):
         if host is None:
             return
         frame = host.frameGeometry()
-        x = int(frame.x() + max(0, (frame.width() - size.width()) // 2))
-        y = int(frame.y() + max(0, (frame.height() - size.height()) // 2))
+        x = int(frame.x() + max(0,(frame.width() - size.width()) // 2))
+        y = int(frame.y() + max(0,(frame.height() - size.height()) // 2))
         self._othello_settings.move(int(x), int(y))
 
     @staticmethod
