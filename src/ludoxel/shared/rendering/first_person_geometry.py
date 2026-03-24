@@ -78,7 +78,7 @@ _FIRST_PERSON_SCALE_SEARCH_STEPS = 18
 _FIRST_PERSON_FIT_EPSILON = 1e-6
 
 _ARM_BASE_BOX_SLIM = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.0, 2.0 * _PX)
-_ARM_SLEEVE_BOX_SLIM = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
+_ARM_SLEEVE_BOX_SLIM = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX, (1.5 + 0.25) * _PX, 0.25 * _PX, (2.0 + 0.25) * _PX)
 _SPECIAL_ITEM_ICON_BOX = LocalBox(0.0, 0.0, 7.5 * _PX, 16.0 * _PX, 16.0 * _PX, 8.5 * _PX)
 _SPECIAL_ITEM_RENDER_SCALE = 1.55
 
@@ -95,31 +95,72 @@ def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float
 
 def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
     """I define M_bob = T(tx,ty,tz) * Rz(roll) * Ry(yaw) * Rx(pitch) over the sampled first-person bob state. I use this prefix transform so that held-item and arm geometry inherit the same camera-space bobbing frame before their own pose-specific offsets are applied."""
-    return compose_matrices(translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)), rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)), rotate_y_deg_matrix(float(first_person.view_bob_yaw_deg)), rotate_x_deg_matrix(float(first_person.view_bob_pitch_deg)))
+    return compose_matrices(
+        translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)),
+        rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)),
+        rotate_y_deg_matrix(float(first_person.view_bob_yaw_deg)),
+        rotate_x_deg_matrix(float(first_person.view_bob_pitch_deg)),
+    )
 
 
 def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np.ndarray:
     """I define M_hand as the ordered product of swing translations, nominal hand translation, and three preswing or swing-dependent rotations. I use this transform as the shared camera-space backbone for both held blocks and special first-person item quads."""
     root, squared, full, twice = _arm_swing_terms(first_person)
-    return compose_matrices(translate_matrix(float(_ITEM_SWING_X_POS_SCALE) * float(root), float(_ITEM_SWING_Y_POS_SCALE) * float(twice), float(_ITEM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ITEM_POS_X), float(_ITEM_POS_Y), float(_ITEM_POS_Z)), rotate_y_deg_matrix(float(_ITEM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ITEM_SWING_Y_ROT_AMOUNT_DEG) * float(squared)), rotate_z_deg_matrix(float(_ITEM_SWING_Z_ROT_AMOUNT_DEG) * float(root)), rotate_x_deg_matrix(float(_ITEM_SWING_X_ROT_AMOUNT_DEG) * float(root)))
+    return compose_matrices(
+        translate_matrix(float(_ITEM_SWING_X_POS_SCALE) * float(root), float(_ITEM_SWING_Y_POS_SCALE) * float(twice), float(_ITEM_SWING_Z_POS_SCALE) * float(full)),
+        translate_matrix(float(_ITEM_POS_X), float(_ITEM_POS_Y), float(_ITEM_POS_Z)),
+        rotate_y_deg_matrix(float(_ITEM_PRESWING_ROT_Y_DEG)),
+        rotate_y_deg_matrix(float(_ITEM_SWING_Y_ROT_AMOUNT_DEG) * float(squared)),
+        rotate_z_deg_matrix(float(_ITEM_SWING_Z_ROT_AMOUNT_DEG) * float(root)),
+        rotate_x_deg_matrix(float(_ITEM_SWING_X_ROT_AMOUNT_DEG) * float(root)),
+    )
 
 
 def build_first_person_item_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float = 1.0) -> np.ndarray:
     """I define M_item = M_bob * M_hand * T_item * R_item * S_item * T(-1/2,-1/2,-1/2), with the scale term multiplied by the supplied render-scale correction. I use this transform to place held block geometry into camera space under one stable pivot convention regardless of block family."""
     uniform_scale = float(render_scale_multiplier)
-    return compose_matrices(_view_bob_transform(first_person), build_main_hand_common_transform(first_person), translate_matrix(float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[2]) * _PX), rotate_x_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[0])), rotate_y_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[1])), rotate_z_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[2])), scale_matrix(float(_BLOCK_FIRSTPERSON_SCALE[0]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[1]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[2]) * uniform_scale), translate_matrix(-0.5, -0.5, -0.5))
+    return compose_matrices(
+        _view_bob_transform(first_person),
+        build_main_hand_common_transform(first_person),
+        translate_matrix(float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[2]) * _PX),
+        rotate_x_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[0])),
+        rotate_y_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[1])),
+        rotate_z_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[2])),
+        scale_matrix(float(_BLOCK_FIRSTPERSON_SCALE[0]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[1]) * uniform_scale, float(_BLOCK_FIRSTPERSON_SCALE[2]) * uniform_scale),
+        translate_matrix(-0.5, -0.5, -0.5),
+    )
 
 
 def build_third_person_item_hand_transform() -> np.ndarray:
     """I define M_3p as the fixed third-person attachment transform applied after the animated hand anchor. I use this constant mapping so that every third-person held block shares one orientation, scale, and pivot basis relative to the player hand."""
-    return compose_matrices(translate_matrix(float(_BLOCK_THIRDPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[2]) * _PX), rotate_x_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[0])), rotate_y_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[1])), rotate_z_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[2])), scale_matrix(float(_BLOCK_THIRDPERSON_SCALE[0]), float(_BLOCK_THIRDPERSON_SCALE[1]), float(_BLOCK_THIRDPERSON_SCALE[2])), translate_matrix(-0.5, -0.5, -0.5))
+    return compose_matrices(
+        translate_matrix(float(_BLOCK_THIRDPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[2]) * _PX),
+        rotate_x_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[0])),
+        rotate_y_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[1])),
+        rotate_z_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[2])),
+        scale_matrix(float(_BLOCK_THIRDPERSON_SCALE[0]), float(_BLOCK_THIRDPERSON_SCALE[1]), float(_BLOCK_THIRDPERSON_SCALE[2])),
+        translate_matrix(-0.5, -0.5, -0.5),
+    )
 
 
 def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float = 1.0) -> np.ndarray:
     """I define M_arm as the ordered product of bob transform, swing-dependent offsets, arm anchor translation, preswing yaw, swing rotations, prerotation offsets, fixed arm rotations, postrotation offset, and final uniform scale. I use this transform to reproduce the authored first-person slim-arm pose with a single matrix product."""
     root, squared, full, twice = _arm_swing_terms(first_person)
     arm_scale = float(_ARM_FIRSTPERSON_SCALE) * float(render_scale_multiplier)
-    return compose_matrices(_view_bob_transform(first_person), translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)), rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ARM_SWING_Y_ROT_AMOUNT_DEG) * float(root)), rotate_z_deg_matrix(float(_ARM_SWING_Z_ROT_AMOUNT_DEG) * float(squared)), translate_matrix(float(_ARM_PREROTATION_X_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Y_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Z_OFFSET_PX) * _PX), rotate_z_deg_matrix(float(_ARM_ROT_Z_DEG)), rotate_x_deg_matrix(float(_ARM_ROT_X_DEG)), rotate_y_deg_matrix(float(_ARM_ROT_Y_DEG)), translate_matrix(float(_ARM_POSTROTATION_X_OFFSET_PX) * _PX, 0.0, 0.0), scale_matrix(arm_scale, arm_scale, arm_scale))
+    return compose_matrices(
+        _view_bob_transform(first_person),
+        translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)),
+        translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)),
+        rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)),
+        rotate_y_deg_matrix(float(_ARM_SWING_Y_ROT_AMOUNT_DEG) * float(root)),
+        rotate_z_deg_matrix(float(_ARM_SWING_Z_ROT_AMOUNT_DEG) * float(squared)),
+        translate_matrix(float(_ARM_PREROTATION_X_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Y_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Z_OFFSET_PX) * _PX),
+        rotate_z_deg_matrix(float(_ARM_ROT_Z_DEG)),
+        rotate_x_deg_matrix(float(_ARM_ROT_X_DEG)),
+        rotate_y_deg_matrix(float(_ARM_ROT_Y_DEG)),
+        translate_matrix(float(_ARM_POSTROTATION_X_OFFSET_PX) * _PX, 0.0, 0.0),
+        scale_matrix(arm_scale, arm_scale, arm_scale),
+    )
 
 
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
@@ -147,8 +188,8 @@ def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projectio
     for point in points:
         depth = max(-float(point[2]), _FIRST_PERSON_FIT_EPSILON)
         current_ndc = proj * float(point[axis_index]) / depth
-        lower = max(lower,((float(ndc_min) - current_ndc) * depth) / proj)
-        upper = min(upper,((float(ndc_max) - current_ndc) * depth) / proj)
+        lower = max(lower, ((float(ndc_min) - current_ndc) * depth) / proj)
+        upper = min(upper, ((float(ndc_max) - current_ndc) * depth) / proj)
     return (float(lower), float(upper))
 
 
@@ -274,7 +315,16 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
     block_def = def_lookup(str(first_person.visible_block_id))
     kind = "" if block_def is None else str(block_def.kind_name())
     kind_scale = held_block_kind_scale_multiplier(kind)
-    base_parent_transform = _fitted_first_person_parent_transform(boxes=[textured_box.box for textured_box in boxes], projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(kind_scale))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(kind_scale))))
+    base_parent_transform = _fitted_first_person_parent_transform(
+        boxes=[textured_box.box for textured_box in boxes],
+        projection=projection,
+        safe_frame=_ITEM_SAFE_FRAME,
+        transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(kind_scale))),
+        projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT),
+        x_anchor_mode=_RIGHT_EDGE_ANCHOR,
+        y_anchor_mode=_BOTTOM_EDGE_ANCHOR,
+        reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(kind_scale))),
+    )
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
 
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
@@ -297,11 +347,20 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
         return empty_textured_face_rows()
 
     arm_boxes = (_ARM_BASE_BOX_SLIM, _ARM_SLEEVE_BOX_SLIM)
-    base_parent_transform = _fitted_first_person_parent_transform(boxes=arm_boxes, projection=projection, safe_frame=_ARM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier))), projection_scale_exponent=float(_ARM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier))))
+    base_parent_transform = _fitted_first_person_parent_transform(
+        boxes=arm_boxes,
+        projection=projection,
+        safe_frame=_ARM_SAFE_FRAME,
+        transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier))),
+        projection_scale_exponent=float(_ARM_PROJECTION_SCALE_EXPONENT),
+        x_anchor_mode=_RIGHT_EDGE_ANCHOR,
+        y_anchor_mode=_BOTTOM_EDGE_ANCHOR,
+        reference_transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier))),
+    )
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ARM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
 
-    for box, uv_map in ((arm_boxes[0], SLIM_RIGHT_ARM_BASE_UV_PX),(arm_boxes[1], SLIM_RIGHT_ARM_SLEEVE_UV_PX)):
+    for box, uv_map in ((arm_boxes[0], SLIM_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], SLIM_RIGHT_ARM_SLEEVE_UV_PX)):
         model = model_matrix_for_local_box(parent_transform, box)
         for face_idx in range(6):
             uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
@@ -316,11 +375,20 @@ def build_first_person_special_item_face_rows(first_person: FirstPersonRenderSta
         return empty_textured_face_rows()
 
     boxes = (_SPECIAL_ITEM_ICON_BOX,)
-    base_parent_transform = _fitted_first_person_parent_transform(boxes=boxes, projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))))
+    base_parent_transform = _fitted_first_person_parent_transform(
+        boxes=boxes,
+        projection=projection,
+        safe_frame=_ITEM_SAFE_FRAME,
+        transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))),
+        projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT),
+        x_anchor_mode=_RIGHT_EDGE_ANCHOR,
+        y_anchor_mode=_BOTTOM_EDGE_ANCHOR,
+        reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))),
+    )
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
     model = model_matrix_for_local_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    append_face_instance(buffers, int(FACE_POS_Z), model,(0.0, 0.0, 1.0, 1.0))
+    append_face_instance(buffers, int(FACE_POS_Z), model, (0.0, 0.0, 1.0, 1.0))
     return face_rows_from_buffers(buffers)
 
 
