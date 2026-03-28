@@ -31,6 +31,11 @@ class PauseOverlayParams:
     block_place_repeat_interval_scale: float = 1000.0
     block_place_repeat_interval_decimals: int = 3
 
+    block_interact_repeat_interval_milli_min: int = int(RuntimePreferences.BLOCK_INTERACT_REPEAT_INTERVAL_MIN * 1000.0)
+    block_interact_repeat_interval_milli_max: int = int(RuntimePreferences.BLOCK_INTERACT_REPEAT_INTERVAL_MAX * 1000.0)
+    block_interact_repeat_interval_scale: float = 1000.0
+    block_interact_repeat_interval_decimals: int = 3
+
     block_break_particle_spawn_rate_milli_min: int = int(RuntimePreferences.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MIN * 1000.0)
     block_break_particle_spawn_rate_milli_max: int = int(RuntimePreferences.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MAX * 1000.0)
     block_break_particle_spawn_rate_scale: float = 1000.0

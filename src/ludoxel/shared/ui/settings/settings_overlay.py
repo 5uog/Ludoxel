@@ -118,6 +118,7 @@ def _sync_overlay_values(overlay, **values) -> None:
     _sync_toggle(overlay._tg_auto_sprint, bool(values["auto_sprint_enabled"]))
     overlay._ctl_block_break_repeat_interval.set_value(float(values["block_break_repeat_interval_s"]))
     overlay._ctl_block_place_repeat_interval.set_value(float(values["block_place_repeat_interval_s"]))
+    overlay._ctl_block_interact_repeat_interval.set_value(float(values["block_interact_repeat_interval_s"]))
 
     overlay._ctl_gravity.set_value(float(values["gravity"]))
     overlay._ctl_walk_speed.set_value(float(values["walk_speed"]))
@@ -423,6 +424,10 @@ def _build_game_tab(overlay) -> None:
     overlay._ctl_block_place_repeat_interval.value_changed.connect(overlay.block_place_repeat_interval_changed.emit)
     layout.addWidget(overlay._ctl_block_place_repeat_interval)
 
+    overlay._ctl_block_interact_repeat_interval = AdvancedScalarControl(title="Interact repeat interval", min_value=float(overlay._params.block_interact_repeat_interval_milli_min) / float(overlay._params.block_interact_repeat_interval_scale), max_value=float(overlay._params.block_interact_repeat_interval_milli_max) / float(overlay._params.block_interact_repeat_interval_scale), slider_scale=float(overlay._params.block_interact_repeat_interval_scale), decimals=int(overlay._params.block_interact_repeat_interval_decimals), default_value=float(RuntimePreferences.DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S), parent=host)
+    overlay._ctl_block_interact_repeat_interval.value_changed.connect(overlay.block_interact_repeat_interval_changed.emit)
+    layout.addWidget(overlay._ctl_block_interact_repeat_interval)
+
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Movement Parameters"))
 
@@ -504,6 +509,7 @@ class SettingsOverlay(QDialog):
     auto_sprint_changed = pyqtSignal(bool)
     block_break_repeat_interval_changed = pyqtSignal(float)
     block_place_repeat_interval_changed = pyqtSignal(float)
+    block_interact_repeat_interval_changed = pyqtSignal(float)
     block_break_particle_spawn_rate_changed = pyqtSignal(float)
     block_break_particle_speed_scale_changed = pyqtSignal(float)
     gravity_changed = pyqtSignal(float)

@@ -8,7 +8,7 @@ from ..registry.block_registry import BlockRegistry
 from .cardinal import normalize_cardinal
 from ..state.state_codec import parse_state, format_state
 from ..state.state_values import bool_str, str_as_bool
-from .structural_rules import is_wall, is_fence_gate, wall_side_from_neighbor_state, wall_up_rule
+from .structural_rules import is_wall, is_fence_gate, wall_side_from_neighbor_state, wall_side_with_top_support, wall_up_rule
 from ..state.state_view import def_from_state, world_state_at
 from ...world.world_state import WorldState
 
@@ -52,6 +52,10 @@ def _canonical_wall_state(get_state: GetState, x: int, y: int, z: int, *, block_
     west = _wall_side_from_neighbor(get_state, int(x - 1), int(y), int(z), side_from_neighbor="east", block_registry=block_registry)
 
     above_state = get_state(int(x), int(y + 1), int(z))
+    north = wall_side_with_top_support(str(north), side_name="north", above_state=above_state, get_def=block_registry.get)
+    east = wall_side_with_top_support(str(east), side_name="east", above_state=above_state, get_def=block_registry.get)
+    south = wall_side_with_top_support(str(south), side_name="south", above_state=above_state, get_def=block_registry.get)
+    west = wall_side_with_top_support(str(west), side_name="west", above_state=above_state, get_def=block_registry.get)
     up = wall_up_rule(north=str(north), east=str(east), south=str(south), west=str(west), above_state=above_state, get_def=block_registry.get)
 
     return format_state(str(base),{"east": str(east), "north": str(north), "south": str(south), "up": bool_str(bool(up)), "waterlogged": bool_str(bool(waterlogged)), "west": str(west)})

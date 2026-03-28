@@ -31,7 +31,7 @@ class BlockBreakParticlePass:
         self._atlas = None
 
     def draw(self, *, samples: tuple[BlockBreakParticleRenderSampleDTO, ...], view_proj: np.ndarray, sun_dir: Vec3, camera_forward: Vec3) -> tuple[int, int]:
-        if self._face_pass is None or self._atlas is None:
+        if self._face_pass is None or self._atlas is None or not samples:
             return (0, 0)
 
         rows = build_block_break_particle_face_rows(samples=samples, camera_forward=camera_forward)

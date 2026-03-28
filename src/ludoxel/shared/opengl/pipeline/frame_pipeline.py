@@ -66,7 +66,7 @@ class FramePipeline:
     sel_tint_strength: float = 0.55
 
     def shadow_info(self) -> tuple[bool, int]:
-        if not bool(self.state.shadow_enabled):
+        if not bool(self.state.shadow_enabled or self.state.debug_shadow):
             return (False, 0)
 
         info = self.shadow_pass.info()
@@ -89,7 +89,7 @@ class FramePipeline:
         player_pose = build_player_model_pose(player_state)
 
         shadow_metrics = PassFrameMetrics()
-        if bool(self.state.shadow_enabled):
+        if bool(self.state.shadow_enabled or self.state.debug_shadow):
             othello_shadow_key = None if othello_state is None else (bool(othello_state.enabled), othello_state.board, othello_state.animations)
             shadow_metrics = self.shadow_pass.render(light_vp, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), extra_draw=(lambda vp: (lambda player_result, othello_result: (int(player_result[0]) + int(othello_result[0]), int(player_result[1]) + int(othello_result[1])))(self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp), self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp))), extra_cache_key=(player_state, othello_shadow_key))
 

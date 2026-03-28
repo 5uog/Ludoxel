@@ -123,6 +123,17 @@ class GLViewportWidget(QOpenGLWidget):
         self._left_mouse_repeat_due_s: float = 0.0
         self._right_mouse_repeat_due_s: float = 0.0
         self._right_mouse_repeat_enabled: bool = False
+        self._right_mouse_repeat_mode: str | None = None
+        self._right_mouse_repeat_target_cell: tuple[int, int, int] | None = None
+        self._right_mouse_repeat_line_start: tuple[int, int, int] | None = None
+        self._right_mouse_repeat_line_step: tuple[int, int, int] | None = None
+        self._right_mouse_repeat_line_face: int | None = None
+        self._right_mouse_repeat_line_plane_normal: tuple[int, int, int] | None = None
+        self._right_mouse_repeat_line_plane_point: tuple[float, float, float] | None = None
+        self._right_mouse_repeat_line_min_progress: int = 0
+        self._right_mouse_repeat_line_max_progress: int = 0
+        self._right_mouse_repeat_support_face_mode: bool = False
+        self._right_mouse_repeat_visible_face_chain_mode: bool = False
         app = QGuiApplication.instance()
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
@@ -476,14 +487,15 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _make_render_snapshot(self):
         snapshot = self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), is_first_person_view=bool(self._state.is_first_person_view()))
+        if not self._block_break_particles:
+            return snapshot
         return replace(snapshot, block_break_particles=render_samples_from_block_break_particles(self._block_break_particles))
 
     def _reset_held_mouse_actions(self) -> None:
         self._left_mouse_held = False
         self._right_mouse_held = False
         self._left_mouse_repeat_due_s = 0.0
-        self._right_mouse_repeat_due_s = 0.0
-        self._right_mouse_repeat_enabled = False
+        self._disable_right_mouse_repeat()
 
     def _arm_left_mouse_repeat(self, *, now_s: float) -> None:
         self._left_mouse_held = True
@@ -491,11 +503,52 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _arm_right_mouse_repeat(self, *, now_s: float) -> None:
         self._right_mouse_held = True
-        self._right_mouse_repeat_due_s = float(now_s) + float(self._state.block_place_repeat_interval_s)
+        self._disable_right_mouse_repeat()
+
+    def _enable_right_mouse_interact_repeat(self, *, now_s: float, target_cell: tuple[int, int, int]) -> None:
         self._right_mouse_repeat_enabled = True
+        self._right_mouse_repeat_mode = "interact"
+        self._right_mouse_repeat_target_cell = (int(target_cell[0]), int(target_cell[1]), int(target_cell[2]))
+        self._right_mouse_repeat_line_start = None
+        self._right_mouse_repeat_line_step = None
+        self._right_mouse_repeat_line_face = None
+        self._right_mouse_repeat_line_plane_normal = None
+        self._right_mouse_repeat_line_plane_point = None
+        self._right_mouse_repeat_line_min_progress = 0
+        self._right_mouse_repeat_line_max_progress = 0
+        self._right_mouse_repeat_support_face_mode = False
+        self._right_mouse_repeat_visible_face_chain_mode = False
+        self._right_mouse_repeat_due_s = float(now_s) + float(self._state.block_interact_repeat_interval_s)
+
+    def _enable_right_mouse_place_repeat(self, *, now_s: float, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, plane_normal: tuple[int, int, int], plane_point: tuple[float, float, float], min_progress: int, max_progress: int, support_face_mode: bool, visible_face_chain_mode: bool) -> None:
+        self._right_mouse_repeat_enabled = True
+        self._right_mouse_repeat_mode = "place"
+        self._right_mouse_repeat_target_cell = None
+        self._right_mouse_repeat_line_start = (int(start_cell[0]), int(start_cell[1]), int(start_cell[2]))
+        self._right_mouse_repeat_line_step = (int(step[0]), int(step[1]), int(step[2]))
+        self._right_mouse_repeat_line_face = int(face)
+        self._right_mouse_repeat_line_plane_normal = (int(plane_normal[0]), int(plane_normal[1]), int(plane_normal[2]))
+        self._right_mouse_repeat_line_plane_point = (float(plane_point[0]), float(plane_point[1]), float(plane_point[2]))
+        self._right_mouse_repeat_line_min_progress = int(min_progress)
+        self._right_mouse_repeat_line_max_progress = int(max_progress)
+        self._right_mouse_repeat_support_face_mode = bool(support_face_mode)
+        self._right_mouse_repeat_visible_face_chain_mode = bool(visible_face_chain_mode)
+        self._right_mouse_repeat_due_s = float(now_s) + (1.0 / 120.0)
 
     def _disable_right_mouse_repeat(self) -> None:
+        self._right_mouse_repeat_due_s = 0.0
         self._right_mouse_repeat_enabled = False
+        self._right_mouse_repeat_mode = None
+        self._right_mouse_repeat_target_cell = None
+        self._right_mouse_repeat_line_start = None
+        self._right_mouse_repeat_line_step = None
+        self._right_mouse_repeat_line_face = None
+        self._right_mouse_repeat_line_plane_normal = None
+        self._right_mouse_repeat_line_plane_point = None
+        self._right_mouse_repeat_line_min_progress = 0
+        self._right_mouse_repeat_line_max_progress = 0
+        self._right_mouse_repeat_support_face_mode = False
+        self._right_mouse_repeat_visible_face_chain_mode = False
 
     def _clear_block_break_particles(self) -> None:
         self._block_break_particles = ()
@@ -506,6 +559,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._block_break_particles = tuple(self._block_break_particles) + tuple(particles)
 
     def _update_block_break_particles(self, dt: float) -> None:
+        if not self._block_break_particles:
+            return
         self._block_break_particles = advance_block_break_particles(tuple(self._block_break_particles), float(dt))
 
     def _effective_camera_from_snapshot(self, snapshot) -> tuple[Vec3, float, float, float, Vec3]:
@@ -519,6 +574,14 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _interaction_pose_from_snapshot(self, snapshot) -> tuple[Vec3, float, float, Vec3]:
         cam = snapshot.camera
+        eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
+        yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
+        pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
+        direction = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
+        return (eye, float(yaw_deg), float(pitch_deg), direction)
+
+    def _interaction_pose(self) -> tuple[Vec3, float, float, Vec3]:
+        cam = self._session.make_camera_snapshot(enable_camera_shake=bool(self._state.camera_shake_enabled), camera_shake_strength=float(self._state.camera_shake_strength))
         eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
         yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
         pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
@@ -775,6 +838,7 @@ class GLViewportWidget(QOpenGLWidget):
         if bool(self._state.auto_sprint_enabled) and float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
             sprint = True
 
+        interaction_controller.handle_held_mouse_buttons_pre_step(self)
         step_result = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
         settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))

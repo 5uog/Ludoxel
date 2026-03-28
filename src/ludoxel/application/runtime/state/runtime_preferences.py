@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from typing import ClassVar
 
 from ....shared.math.scalars import clampf, clampi
@@ -52,11 +53,15 @@ def _normalize_hotbar_state(slots: object, index: object, *, size: int=HOTBAR_SI
 class RuntimePreferences:
     """I model the mutable runtime preference manifold as P, which aggregates view, audio, cloud, hotbar, skin, space-selection, and Othello-default state. I normalize this object in place because it serves as the shared mutable bridge between persistence, Qt controls, renderer state, and active session logic."""
     DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S: ClassVar[float] = 0.30
-    DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 0.20
+    DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 1.0 / 120.0
+    LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 0.20
+    DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S: ClassVar[float] = 0.20
     BLOCK_BREAK_REPEAT_INTERVAL_MIN: ClassVar[float] = 0.0
     BLOCK_BREAK_REPEAT_INTERVAL_MAX: ClassVar[float] = 1.0
     BLOCK_PLACE_REPEAT_INTERVAL_MIN: ClassVar[float] = 0.0
     BLOCK_PLACE_REPEAT_INTERVAL_MAX: ClassVar[float] = 1.0
+    BLOCK_INTERACT_REPEAT_INTERVAL_MIN: ClassVar[float] = 0.0
+    BLOCK_INTERACT_REPEAT_INTERVAL_MAX: ClassVar[float] = 1.0
     DEFAULT_BLOCK_BREAK_PARTICLE_SPAWN_RATE: ClassVar[float] = 1.0
     DEFAULT_BLOCK_BREAK_PARTICLE_SPEED_SCALE: ClassVar[float] = 1.0
     BLOCK_BREAK_PARTICLE_SPAWN_RATE_MIN: ClassVar[float] = 0.0
@@ -86,6 +91,7 @@ class RuntimePreferences:
     reach: float = 5.0
     block_break_repeat_interval_s: float = DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S
     block_place_repeat_interval_s: float = DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S
+    block_interact_repeat_interval_s: float = DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S
     block_break_particle_spawn_rate: float = DEFAULT_BLOCK_BREAK_PARTICLE_SPAWN_RATE
     block_break_particle_speed_scale: float = DEFAULT_BLOCK_BREAK_PARTICLE_SPEED_SCALE
     auto_jump_enabled: bool = False
@@ -153,6 +159,9 @@ class RuntimePreferences:
         self.reach = max(0.0, float(self.reach))
         self.block_break_repeat_interval_s = clampf(float(self.block_break_repeat_interval_s), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MIN), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MAX))
         self.block_place_repeat_interval_s = clampf(float(self.block_place_repeat_interval_s), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MIN), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MAX))
+        if math.isclose(float(self.block_place_repeat_interval_s), float(self.LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S), rel_tol=0.0, abs_tol=1e-9):
+            self.block_place_repeat_interval_s = float(self.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
+        self.block_interact_repeat_interval_s = clampf(float(self.block_interact_repeat_interval_s), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MIN), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MAX))
         self.block_break_particle_spawn_rate = clampf(float(self.block_break_particle_spawn_rate), float(self.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MIN), float(self.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MAX))
         self.block_break_particle_speed_scale = clampf(float(self.block_break_particle_speed_scale), float(self.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MIN), float(self.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MAX))
         self.window_left = _coerce_optional_int(self.window_left)
@@ -269,7 +278,7 @@ class RuntimePreferences:
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None=None, **overrides) -> RuntimePreferences:
     """I define C_P(runtime, overrides) as total cloning plus fieldwise override over the runtime preference manifold. I use this constructor whenever I need a normalized copy that may selectively replace one or more projections."""
     if runtime is not None:
-        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), block_break_repeat_interval_s=float(runtime.block_break_repeat_interval_s), block_place_repeat_interval_s=float(runtime.block_place_repeat_interval_s), block_break_particle_spawn_rate=float(runtime.block_break_particle_spawn_rate), block_break_particle_speed_scale=float(runtime.block_break_particle_speed_scale), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), crosshair_mode=str(runtime.crosshair_mode), crosshair_pixels=tuple(runtime.crosshair_pixels), player_skin_kind=str(runtime.player_skin_kind), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), window_left=_coerce_optional_int(runtime.window_left), window_top=_coerce_optional_int(runtime.window_top), window_width=int(runtime.window_width), window_height=int(runtime.window_height), window_screen_name=str(runtime.window_screen_name), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
+        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), block_break_repeat_interval_s=float(runtime.block_break_repeat_interval_s), block_place_repeat_interval_s=float(runtime.block_place_repeat_interval_s), block_interact_repeat_interval_s=float(runtime.block_interact_repeat_interval_s), block_break_particle_spawn_rate=float(runtime.block_break_particle_spawn_rate), block_break_particle_speed_scale=float(runtime.block_break_particle_speed_scale), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), crosshair_mode=str(runtime.crosshair_mode), crosshair_pixels=tuple(runtime.crosshair_pixels), player_skin_kind=str(runtime.player_skin_kind), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), window_left=_coerce_optional_int(runtime.window_left), window_top=_coerce_optional_int(runtime.window_top), window_width=int(runtime.window_width), window_height=int(runtime.window_height), window_screen_name=str(runtime.window_screen_name), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
     else:
         out = RuntimePreferences()
 

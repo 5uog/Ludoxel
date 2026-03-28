@@ -116,7 +116,7 @@ class WorldPass:
             if bool(use_shadow_program):
                 prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
 
-                shadow_sampling_ok = bool(inp.shadow_enabled and inp.shadow_info.ok and int(inp.shadow_info.tex_id) != 0 and int(inp.shadow_info.inst_count) > 0)
+                shadow_sampling_ok = bool(inp.shadow_info.ok and int(inp.shadow_info.tex_id) != 0 and int(inp.shadow_info.inst_count) > 0)
                 prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)
                 prog.set_int("u_shadowMap", 1)
 

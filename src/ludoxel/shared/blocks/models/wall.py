@@ -6,7 +6,7 @@ from typing import Dict, List
 
 from .common import LocalBox, GetState, GetDef, rotate_box_y_cw
 from .dimensions import WALL_POST, WALL_ARM_LOW_NORTH, WALL_ARM_TALL_NORTH
-from ..structure.structural_rules import wall_side_from_neighbor_state, wall_up_rule
+from ..structure.structural_rules import wall_side_from_neighbor_state, wall_side_with_top_support, wall_up_rule
 
 
 def _norm_side(s: str) -> str:
@@ -27,11 +27,15 @@ def boxes_for_wall(*, props: Dict[str, str], get_state: GetState, get_def: GetDe
     east = _norm_side(str(props.get("east", ""))) if "east" in props else wall_side_from_neighbor_state(get_state(int(x + 1), int(y), int(z)), side_from_neighbor="west", get_def=get_def)
     south = _norm_side(str(props.get("south", ""))) if "south" in props else wall_side_from_neighbor_state(get_state(int(x), int(y), int(z + 1)), side_from_neighbor="north", get_def=get_def)
     west = _norm_side(str(props.get("west", ""))) if "west" in props else wall_side_from_neighbor_state(get_state(int(x - 1), int(y), int(z)), side_from_neighbor="east", get_def=get_def)
+    s_above = get_state(int(x), int(y + 1), int(z))
+    north = wall_side_with_top_support(str(north), side_name="north", above_state=s_above, get_def=get_def)
+    east = wall_side_with_top_support(str(east), side_name="east", above_state=s_above, get_def=get_def)
+    south = wall_side_with_top_support(str(south), side_name="south", above_state=s_above, get_def=get_def)
+    west = wall_side_with_top_support(str(west), side_name="west", above_state=s_above, get_def=get_def)
 
     if "up" in props:
         up = str(props.get("up", "true")).strip().lower() in ("1", "true", "yes", "on")
     else:
-        s_above = get_state(int(x), int(y + 1), int(z))
         up = wall_up_rule(north=str(north), east=str(east), south=str(south), west=str(west), above_state=s_above, get_def=get_def)
 
     out: list[LocalBox] = []

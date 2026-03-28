@@ -80,7 +80,7 @@ class OthelloPass:
             self._world_prog.set_vec3("u_sunDir", float(sun_dir.x), float(sun_dir.y), float(sun_dir.z))
 
             use_shadow_program = bool(shadow_enabled or debug_shadow)
-            shadow_sampling_ok = bool(use_shadow_program and shadow_enabled and shadow_info.ok and int(shadow_info.tex_id) != 0 and int(shadow_info.inst_count) > 0)
+            shadow_sampling_ok = bool(use_shadow_program and shadow_info.ok and int(shadow_info.tex_id) != 0 and int(shadow_info.inst_count) > 0)
             ss = float(max(1, int(shadow_info.size))) if shadow_sampling_ok else 1.0
             self._world_prog.set_int("u_shadowMap", 1)
             self._world_prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)

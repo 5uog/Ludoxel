@@ -40,7 +40,7 @@ float shadow_pcf4(vec3 uvz, float bias) {
 
 float shadow_factor(float ndl) {
     if (u_shadowEnabled == 0) {
-        return (u_debugShadow != 0) ? 0.0 : 1.0;
+        return 1.0;
     }
 
     vec3 ndc = v_lightPos.xyz / max(v_lightPos.w, 1e-6);
@@ -59,13 +59,15 @@ float shadow_factor(float ndl) {
 
 void main() {
     vec3 n = normalize(v_normal);
-    vec3 light_dir = u_sunDir;
+    vec3 light_dir = normalize(u_sunDir);
 
+    float debug_lambert = max(abs(dot(n, light_dir)), 1e-3);
+    float debug_sh = shadow_factor(debug_lambert);
     float lambert = max(dot(n, light_dir), 0.0);
     float sh = (lambert > 1e-6) ? shadow_factor(lambert) : 1.0;
 
     if (u_debugShadow != 0) {
-        fragColor = vec4(sh, sh, sh, v_alpha);
+        fragColor = vec4(debug_sh, debug_sh, debug_sh, v_alpha);
         return;
     }
 

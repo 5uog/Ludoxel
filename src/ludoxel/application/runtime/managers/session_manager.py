@@ -10,7 +10,7 @@ from ....shared.math.vec3 import Vec3
 from ....shared.math.scalars import clampf
 from ....shared.blocks.registry.block_registry import BlockRegistry
 from ....shared.world.entities.player_entity import PlayerEntity
-from ....shared.systems.collision_system import can_auto_jump_one_block, integrate_with_collisions, support_block_beneath
+from ....shared.systems.collision_system import SupportBlockContact, can_auto_jump_one_block, integrate_with_collisions, support_block_beneath
 from ....shared.systems.gravity_system import GravitySystem
 from ....shared.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
 from ....shared.world.world_state import WorldState
@@ -155,8 +155,44 @@ class SessionManager:
             return (None, None)
         return (str(contact.block_state), tuple(int(value) for value in contact.cell))
 
+    def support_block_contact(self) -> SupportBlockContact | None:
+        return support_block_beneath(self.player, self.world, block_registry=self.block_registry, params=self.settings.collision)
+
     def snapshot_world_blocks_for_persistence(self) -> dict[tuple[int, int, int], str]:
         return self.gravity.snapshot_blocks_for_persistence(self.world)
+
+    def make_camera_snapshot(self, *, enable_camera_shake: bool=True, camera_shake_strength: float=0.20) -> CameraDTO:
+        eye = self.player.eye_pos()
+        player = self.player
+        speed = math.hypot(float(player.velocity.x), float(player.velocity.z))
+        walk_speed = max(1e-6, float(self.settings.movement.walk_speed))
+        speed_ratio = clampf(float(speed) / float(walk_speed), 0.0, float(_PLAYER_WALK_MAX_SWING_SCALE))
+
+        bob = 0.5 * float(speed_ratio)
+        if bool(player.flying):
+            bob *= 0.40
+        elif not bool(player.on_ground):
+            bob *= 0.75
+
+        phase = float(self._player_walk_phase_rad)
+        sin_phase = math.sin(float(phase))
+        cos_phase = math.cos(float(phase))
+        pitch_wave = abs(math.cos(float(phase) - 0.2))
+        step_eye_offset = float(player.step_eye_offset)
+        camera_shake_scale = clampf(float(camera_shake_strength), 0.0, 1.0)
+
+        cam_shake_tx = float(sin_phase * bob * 0.04) * float(camera_shake_scale)
+        cam_shake_ty = float((-abs(cos_phase) * bob * 0.06) + step_eye_offset * 0.30) * float(camera_shake_scale)
+        cam_shake_pitch_deg = float(pitch_wave * bob * 5.0) * float(camera_shake_scale)
+        cam_shake_roll_deg = float(sin_phase * bob * 3.0) * float(camera_shake_scale)
+
+        if not bool(enable_camera_shake):
+            cam_shake_tx = 0.0
+            cam_shake_ty = 0.0
+            cam_shake_pitch_deg = 0.0
+            cam_shake_roll_deg = 0.0
+
+        return CameraDTO(eye_x=eye.x, eye_y=eye.y, eye_z=eye.z, yaw_deg=self.player.yaw_deg, pitch_deg=self.player.pitch_deg, fov_deg=self.settings.fov_deg, shake_tx=float(cam_shake_tx), shake_ty=float(cam_shake_ty), shake_tz=0.0, shake_yaw_deg=0.0, shake_pitch_deg=float(cam_shake_pitch_deg), shake_roll_deg=float(cam_shake_roll_deg))
 
     def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> SessionStepResult:
         self._sim_time_s += float(dt)
@@ -337,6 +373,15 @@ class SessionManager:
 
     def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None):
         return self.interaction.break_block(reach=float(reach), origin=origin, direction=direction)
+
+    def pick_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None):
+        return self.interaction.pick_block(reach=float(reach), origin=origin, direction=direction)
+
+    def interact_block_at_hit(self, hit_cell: tuple[int, int, int]):
+        return self.interaction.interact_block_at_hit(hit_cell)
+
+    def place_block_from_hit(self, hit, block_id: str | None):
+        return self.interaction.place_block_from_hit(hit, block_id)
 
     def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None):
         return self.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)

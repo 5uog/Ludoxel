@@ -46,6 +46,9 @@ class InteractionService:
     def create(cls, *, world: WorldState, player: PlayerEntity, block_registry: BlockRegistry) -> "InteractionService":
         return cls(world=world, player=player, block_registry=block_registry)
 
+    def pick_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> BlockPick | None:
+        return self._pick_target(reach=float(reach), origin=origin, direction=direction)
+
     def _pick_target(self, reach: float, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> BlockPick | None:
         eye = self.player.eye_pos() if origin is None else origin
         direction = self.player.view_forward() if direction is None else direction
@@ -142,6 +145,9 @@ class InteractionService:
 
         return InteractionOutcome(success=True, action=INTERACTION_ACTION_INTERACT, target_block_state=str(nxt), target_position=(int(k[0]), int(k[1]), int(k[2])))
 
+    def interact_block_at_hit(self, hit_cell: tuple[int, int, int]) -> InteractionOutcome:
+        return self._toggle_fence_gate_if_hit(hit_cell)
+
     def _apply_place_state(self, *, cell: tuple[int, int, int], place_state: str) -> InteractionOutcome:
         px, py, pz = (int(cell[0]), int(cell[1]), int(cell[2]))
 
@@ -191,16 +197,19 @@ class InteractionService:
 
         return self._apply_place_state(cell=place_cell, place_state=str(place_state))
 
+    def place_block_from_hit(self, hit: BlockPick, block_id: str | None) -> InteractionOutcome:
+        return self._place_from_hit(hit=hit, block_id=block_id)
+
     def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None) -> InteractionOutcome:
-        hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
+        hit = self.pick_block(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
             return InteractionOutcome(success=False)
 
         if bool(crouching):
-            return self._place_from_hit(hit=hit, block_id=block_id)
+            return self.place_block_from_hit(hit, block_id)
 
-        interact_outcome = self._toggle_fence_gate_if_hit(hit.hit)
+        interact_outcome = self.interact_block_at_hit(hit.hit)
         if bool(interact_outcome.success):
             return interact_outcome
 
-        return self._place_from_hit(hit=hit, block_id=block_id)
+        return self.place_block_from_hit(hit, block_id)
