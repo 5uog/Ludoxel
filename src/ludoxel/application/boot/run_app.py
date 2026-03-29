@@ -6,42 +6,7 @@ import os
 from pathlib import Path
 import sys
 
-
-def _start_directory(path: Path) -> Path:
-    resolved = Path(path).resolve()
-    return resolved.parent if resolved.is_file() else resolved
-
-
-def _is_project_root(path: Path) -> bool:
-    root = Path(path).resolve()
-    if (root / "pyproject.toml").is_file():
-        return True
-    return (root / "assets").is_dir() and (root / "src").is_dir()
-
-
-def _search_project_root(start: Path) -> Path | None:
-    cursor = _start_directory(start)
-
-    while True:
-        if _is_project_root(cursor):
-            return cursor
-
-        parent = cursor.parent
-        if parent == cursor:
-            return None
-        cursor = parent
-
-
-def _find_project_root(start: Path) -> Path:
-    module_root = _search_project_root(start)
-    if module_root is not None:
-        return module_root
-
-    working_root = _search_project_root(Path.cwd())
-    if working_root is not None:
-        return working_root
-
-    return _start_directory(start)
+from ...shared.project_paths import default_project_root, default_resource_root, is_frozen_application
 
 
 def _preferred_python_314(project_root: Path) -> Path | None:
@@ -66,6 +31,8 @@ def _preferred_python_314(project_root: Path) -> Path | None:
 
 
 def _ensure_python_314(project_root: Path) -> None:
+    if is_frozen_application():
+        return
     if sys.version_info[:2] == (3, 14):
         return
 
@@ -81,9 +48,10 @@ def _ensure_python_314(project_root: Path) -> None:
 
 
 def run_app() -> None:
-    project_root = _find_project_root(Path(__file__))
+    project_root = default_project_root(Path(__file__))
+    resource_root = default_resource_root(Path(__file__))
     _ensure_python_314(project_root)
 
     from ludoxel.shared.ui.main_window import run_app as _run
 
-    _run(project_root=project_root)
+    _run(project_root=project_root, resource_root=resource_root)

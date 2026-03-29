@@ -114,6 +114,11 @@ def main() -> int:
             failure_count += 1
 
     print(f"pycache_dirs: {len(pycache_dirs)} " f"pyd_files: {len(pyd_files)} " f"failures: {failure_count}")
+    if int(len(pyd_files)) > 0:
+        if bool(args.dry_run):
+            print("dry-run note: removing the generated hot-path extension modules would return the renderer to the pure-Python math kernels until scripts/build_native_extensions.py is rerun.")
+        else:
+            print("note: the generated hot-path extension modules were removed. Performance-sensitive runs should rebuild them with scripts/build_native_extensions.py before launching Ludoxel again.")
     return 0 if failure_count == 0 else 1
 
 

@@ -194,6 +194,8 @@ def set_fullscreen(viewport: "GLViewportWidget", on: bool) -> None:
     if enabled == bool(viewport._state.fullscreen):
         return
     viewport._state.fullscreen = enabled
+    if viewport._overlays.settings_open() or viewport._overlays.othello_settings_open():
+        return
     viewport.fullscreen_changed.emit(bool(viewport._state.fullscreen))
 
 

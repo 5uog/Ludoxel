@@ -21,9 +21,9 @@ def normalize_player_skin_kind(value: object) -> str:
     return PLAYER_SKIN_KIND_ALEX
 
 
-def default_player_skin_path(project_root: Path) -> Path:
-    """I define P_default(root) = root / 'assets' / 'minecraft' / 'skins' / 'alex.png'. I use this path constructor as the canonical location of the bundled fallback skin texture."""
-    return Path(project_root) / "assets" / "minecraft" / "skins" / "alex.png"
+def default_player_skin_path(resource_root: Path) -> Path:
+    """I define P_default(root_r) = root_r / 'assets' / 'minecraft' / 'skins' / 'alex.png'. I use this path constructor as the canonical location of the bundled fallback skin texture under the immutable resource root rather than under the writable runtime root."""
+    return Path(resource_root) / "assets" / "minecraft" / "skins" / "alex.png"
 
 
 def custom_player_skin_path(project_root: Path) -> Path:
@@ -41,8 +41,8 @@ def normalize_player_skin_image(image: QImage) -> QImage:
     return candidate.convertToFormat(QImage.Format.Format_RGBA8888)
 
 
-def load_player_skin_image(project_root: Path, *, kind: object) -> QImage:
-    """I define Load(root, kind) as the custom image when the custom variant exists and normalizes successfully, and otherwise as the bundled Alex image. I use this fallback order so that a broken user asset degrades to a valid default texture rather than poisoning the render path."""
+def load_player_skin_image(project_root: Path, *, kind: object, resource_root: Path | None = None) -> QImage:
+    """I define Load(root_w, kind, root_r) as the custom image at P_custom(root_w) when the custom variant exists and normalizes successfully, and otherwise as the bundled Alex image at P_default(root_r). I use this split-root fallback order so that mutable user state remains under the writable runtime tree while immutable packaged textures continue to load from the bundle data root."""
     normalized_kind = normalize_player_skin_kind(kind)
     if normalized_kind == PLAYER_SKIN_KIND_CUSTOM:
         custom_path = custom_player_skin_path(project_root)
@@ -52,7 +52,8 @@ def load_player_skin_image(project_root: Path, *, kind: object) -> QImage:
                 return normalize_player_skin_image(custom_image)
             except ValueError:
                 pass
-    default_image = QImage(str(default_player_skin_path(project_root)))
+    bundled_root = Path(project_root if resource_root is None else resource_root)
+    default_image = QImage(str(default_player_skin_path(bundled_root)))
     if default_image.isNull():
         raise RuntimeError("The bundled Alex skin texture could not be loaded.")
     return normalize_player_skin_image(default_image)

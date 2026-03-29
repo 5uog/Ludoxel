@@ -32,11 +32,11 @@ class _DisplaySlot(QPushButton):
 
 class HotbarWidget(QWidget):
 
-    def __init__(self, *, parent: QWidget | None=None, project_root: Path, registry: BlockRegistry) -> None:
+    def __init__(self, *, parent: QWidget | None=None, resource_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
         self._registry = registry
-        self._photos = ItemPhotoProvider(project_root=Path(project_root), registry=registry, icon_size=36)
+        self._photos = ItemPhotoProvider(resource_root=Path(resource_root), registry=registry, icon_size=36)
         self._photos.pixmap_changed.connect(self._on_item_pixmap_changed)
         self._photos.set_active(bool(self.isVisible()))
 

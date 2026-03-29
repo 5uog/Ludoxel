@@ -25,6 +25,7 @@ from ....features.othello.ui.hud_widget import OthelloHudWidget
 from ....features.othello.ui.settings_overlay import OthelloSettingsOverlay
 from ....features.othello.ui.viewport import othello_controller as othello_controller
 
+from ...math.scalars import clampf
 from ...math.vec3 import Vec3
 from ...math.view_angles import forward_from_yaw_pitch_deg
 
@@ -54,6 +55,9 @@ from .runtime.input_controller import ViewportInput
 from .runtime.overlay_controller import OverlayRefs, ViewportOverlays
 from .runtime.selection_state import ViewportSelectionState
 
+_APPLICATION_DEACTIVATION_PAUSE_DELAY_MS = 250
+_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG = 89.5
+
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -62,11 +66,12 @@ class GLViewportWidget(QOpenGLWidget):
     loading_status_changed = pyqtSignal(str)
     loading_finished = pyqtSignal()
 
-    def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams=DEFAULT_GAME_LOOP_PARAMS) -> None:
+    def __init__(self, project_root: Path, resource_root: Path, parent=None, loop_params: GameLoopParams=DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
 
         self._project_root = Path(project_root)
-        self._assets_dir = self._project_root / "assets"
+        self._resource_root = Path(resource_root)
+        self._assets_dir = self._resource_root / "assets"
         self._loop = loop_params
 
         self._adapter = QtInputAdapter(self)
@@ -134,6 +139,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_max_progress: int = 0
         self._right_mouse_repeat_support_face_mode: bool = False
         self._right_mouse_repeat_visible_face_chain_mode: bool = False
+        self._right_mouse_repeat_origin_player_y: float = 0.0
+        self._right_mouse_repeat_vertical_lock_sign: int = 0
+        self._recent_move_f: float = 0.0
+        self._recent_move_s: float = 0.0
+        self._recent_jump_held: bool = False
+        self._recent_jump_pressed: bool = False
+        self._recent_crouch_held: bool = False
+        self._recent_vertical_motion_sign: int = 0
         app = QGuiApplication.instance()
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
@@ -145,10 +158,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(False)
 
-        self._hotbar = HotbarWidget(parent=self, project_root=self._project_root, registry=self._session.block_registry)
+        self._hotbar = HotbarWidget(parent=self, resource_root=self._resource_root, registry=self._session.block_registry)
         self._hotbar.setVisible(False)
 
-        self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
+        self._inventory = InventoryOverlay(parent=self, resource_root=self._resource_root, registry=self._session.block_registry)
 
         self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud), runner=self._runner, inp=self._inp)
         self._overlay.preview_changed.connect(self._invalidate_pause_preview_cache)
@@ -174,6 +187,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._render_timer.setInterval(int(self._effective_render_timer_interval_ms()))
         self._render_timer.timeout.connect(self.update)
         self.frameSwapped.connect(self._on_frame_swapped)
+        self._deactivation_pause_timer = QTimer(self)
+        self._deactivation_pause_timer.setSingleShot(True)
+        self._deactivation_pause_timer.setInterval(int(_APPLICATION_DEACTIVATION_PAUSE_DELAY_MS))
+        self._deactivation_pause_timer.timeout.connect(self._pause_after_application_deactivation)
 
         self.setFormat(build_gl_surface_format(vsync_on=False))
 
@@ -182,7 +199,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._othello_match.set_default_settings(self._state.othello_settings)
         self._othello_match.set_game_state(persisted_othello_state)
         self._overlay.set_current_space(self._state.current_space_id)
-        self._audio = AudioManager(project_root=self._project_root, block_registry=self._session.block_registry, parent=self)
+        self._audio = AudioManager(resource_root=self._resource_root, block_registry=self._session.block_registry, parent=self)
 
         settings_controller.apply_runtime_to_renderer(self)
         settings_controller.sync_input_bindings(self)
@@ -227,11 +244,11 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _sync_player_skin_design(self, *, push_to_renderer: bool=False, context_current: bool=False) -> None:
         try:
-            image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind)
+            image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind, resource_root=self._resource_root)
         except Exception:
             self._state.player_skin_kind = PLAYER_SKIN_KIND_ALEX
             self._state.normalize()
-            image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind)
+            image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind, resource_root=self._resource_root)
 
         self._player_skin_image = QImage(image)
         self._overlay.set_player_skin(self._player_skin_image, slim_arm=True)
@@ -363,11 +380,21 @@ class GLViewportWidget(QOpenGLWidget):
             except Exception:
                 pass
             if (not bool(self.loading_active())) and (not self._overlays.dead()):
-                interaction_controller.open_pause_menu(self)
+                self._deactivation_pause_timer.start()
         elif not bool(was_active):
+            self._deactivation_pause_timer.stop()
             self.arm_resume_refresh()
+        else:
+            self._deactivation_pause_timer.stop()
         settings_controller.sync_cloud_motion_pause(self)
         self._sync_runtime_activity()
+
+    def _pause_after_application_deactivation(self) -> None:
+        if bool(self._application_active):
+            return
+        if bool(self.loading_active()) or self._overlays.dead():
+            return
+        interaction_controller.open_pause_menu(self)
 
     def _sync_runtime_activity(self) -> None:
         self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and bool(self._application_active) and (not bool(self._shutdown_done)))
@@ -533,7 +560,9 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_max_progress = int(max_progress)
         self._right_mouse_repeat_support_face_mode = bool(support_face_mode)
         self._right_mouse_repeat_visible_face_chain_mode = bool(visible_face_chain_mode)
-        self._right_mouse_repeat_due_s = float(now_s) + (1.0 / 120.0)
+        self._right_mouse_repeat_origin_player_y = float(self._session.player.position.y)
+        self._right_mouse_repeat_vertical_lock_sign = 0
+        self._right_mouse_repeat_due_s = float(now_s) + float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INITIAL_DELAY_S)
 
     def _disable_right_mouse_repeat(self) -> None:
         self._right_mouse_repeat_due_s = 0.0
@@ -549,6 +578,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_max_progress = 0
         self._right_mouse_repeat_support_face_mode = False
         self._right_mouse_repeat_visible_face_chain_mode = False
+        self._right_mouse_repeat_origin_player_y = 0.0
+        self._right_mouse_repeat_vertical_lock_sign = 0
 
     def _clear_block_break_particles(self) -> None:
         self._block_break_particles = ()
@@ -567,7 +598,7 @@ class GLViewportWidget(QOpenGLWidget):
         cam = snapshot.camera
         anchor_eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
         yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
-        pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
+        pitch_deg = clampf(float(cam.pitch_deg) + float(cam.shake_pitch_deg), -float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG), float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG))
         roll_deg = float(cam.shake_roll_deg)
         eye, resolved_yaw_deg, resolved_pitch_deg, direction = resolve_camera(world=self._session.world, block_registry=self._session.block_registry, anchor_eye=anchor_eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), perspective=str(self._state.camera_perspective))
         return (eye, float(resolved_yaw_deg), float(resolved_pitch_deg), float(roll_deg), direction)
@@ -576,7 +607,7 @@ class GLViewportWidget(QOpenGLWidget):
         cam = snapshot.camera
         eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
         yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
-        pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
+        pitch_deg = clampf(float(cam.pitch_deg) + float(cam.shake_pitch_deg), -float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG), float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG))
         direction = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
         return (eye, float(yaw_deg), float(pitch_deg), direction)
 
@@ -584,7 +615,7 @@ class GLViewportWidget(QOpenGLWidget):
         cam = self._session.make_camera_snapshot(enable_camera_shake=bool(self._state.camera_shake_enabled), camera_shake_strength=float(self._state.camera_shake_strength))
         eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
         yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
-        pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
+        pitch_deg = clampf(float(cam.pitch_deg) + float(cam.shake_pitch_deg), -float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG), float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG))
         direction = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
         return (eye, float(yaw_deg), float(pitch_deg), direction)
 
@@ -638,16 +669,24 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_settings_overlay(self, on: bool) -> None:
         if bool(on):
             self._reset_held_mouse_actions()
+            if bool(self._state.fullscreen):
+                self.fullscreen_changed.emit(False)
             self._position_settings_window()
         self._overlays.set_settings_open(bool(on))
+        if (not bool(on)) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()):
+            self.fullscreen_changed.emit(bool(self._state.fullscreen))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
 
     def _set_othello_settings_overlay(self, on: bool) -> None:
         if bool(on):
             self._reset_held_mouse_actions()
+            if bool(self._state.fullscreen):
+                self.fullscreen_changed.emit(False)
             self._position_othello_settings_window()
         self._overlays.set_othello_settings_open(bool(on))
+        if (not bool(on)) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()):
+            self.fullscreen_changed.emit(bool(self._state.fullscreen))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
 
@@ -838,8 +877,21 @@ class GLViewportWidget(QOpenGLWidget):
         if bool(self._state.auto_sprint_enabled) and float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
             sprint = True
 
+        self._recent_move_f = float(fr.move_f)
+        self._recent_move_s = float(fr.move_s)
+        self._recent_jump_held = bool(fr.jump_held)
+        self._recent_jump_pressed = bool(fr.jump_pressed)
+        self._recent_crouch_held = bool(fr.crouch)
+        prev_player_y = float(self._session.player.position.y)
         interaction_controller.handle_held_mouse_buttons_pre_step(self)
         step_result = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
+        delta_player_y = float(self._session.player.position.y) - float(prev_player_y)
+        if float(delta_player_y) >= 1e-4:
+            self._recent_vertical_motion_sign = 1
+        elif float(delta_player_y) <= -1e-4:
+            self._recent_vertical_motion_sign = -1
+        else:
+            self._recent_vertical_motion_sign = 0
         settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(step_result.jump_started))

@@ -31,7 +31,7 @@ def _cythonized_extensions() -> list[Extension]:
     try:
         from Cython.Build import cythonize
     except ModuleNotFoundError as exc:
-        raise RuntimeError("Cython is required for the explicit local native-extension build path. Run `python -m pip install -e \".[dev]\" --no-build-isolation` first, then rerun `python .\\setup.py build_ext --inplace`.") from exc
+        raise RuntimeError("Cython is required for the explicit local native-extension build path. Run `python -m pip install -e \".[dev]\" --no-build-isolation` first, then rerun `python .\\scripts\\build_native_extensions.py` or `python .\\setup.py build_ext --inplace`.") from exc
     return cythonize(_base_extensions(), build_dir=str(_CYTHON_BUILD_DIR), compiler_directives={"language_level": 3, "boundscheck": False, "wraparound": False, "initializedcheck": False}, annotate=False, nthreads=0)
 
 

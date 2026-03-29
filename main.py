@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import multiprocessing
 import sys
 
 _ROOT = Path(__file__).resolve().parent
@@ -15,4 +16,5 @@ if _SRC.exists():
 from ludoxel.application.boot import run_app  # noqa: E402
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     run_app()

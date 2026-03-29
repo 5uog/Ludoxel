@@ -143,12 +143,12 @@ class InventoryOverlay(QWidget):
     hotbar_slot_selected = pyqtSignal(int)
     hotbar_slot_assigned = pyqtSignal(int, str)
 
-    def __init__(self, *, parent: QWidget | None=None, project_root: Path, registry: BlockRegistry) -> None:
+    def __init__(self, *, parent: QWidget | None=None, resource_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
         self._reg = registry
-        self._project_root = Path(project_root)
-        self._photos = ItemPhotoProvider(project_root=self._project_root, registry=self._reg, icon_size=36)
+        self._resource_root = Path(resource_root)
+        self._photos = ItemPhotoProvider(resource_root=self._resource_root, registry=self._reg, icon_size=36)
         self._photos.pixmap_changed.connect(self._on_item_pixmap_changed)
         self._photos.set_active(False)
 

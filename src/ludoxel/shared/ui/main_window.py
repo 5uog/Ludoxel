@@ -3,19 +3,47 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 from PyQt6.QtCore import QPoint, QRect, Qt
-from PyQt6.QtGui import QScreen
+from PyQt6.QtGui import QIcon, QScreen
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
 from ...application.boot.meta import __version__
-from .common.status_overlay import StatusOverlayFrame
+from .common.status_overlay import StatusOverlayFrame, status_overlay_title_image_path
 from .config.gl_surface_format import install_default_gl_surface_format
 from .game_screen import GameScreen
 from .theme.fonts import install_minecraft_fonts, apply_application_font
 
 _MIN_WINDOW_WIDTH = 980
 _MIN_WINDOW_HEIGHT = 620
+_APP_ICON_CANDIDATE_NAMES = ("app_icon.ico", "app_icon.png", "app_icon.jpg", "app_icon.jpeg")
+
+
+def _application_icon_candidate_paths(resource_root: Path) -> tuple[Path, ...]:
+    base = Path(resource_root) / "assets" / "ui"
+    return tuple(base / name for name in _APP_ICON_CANDIDATE_NAMES)
+
+
+def _load_application_icon(resource_root: Path) -> QIcon | None:
+    for path in _application_icon_candidate_paths(resource_root):
+        if not path.is_file():
+            continue
+        icon = QIcon(str(path.resolve()))
+        if not icon.isNull():
+            return icon
+    return None
+
+
+def _set_windows_application_id() -> None:
+    if not sys.platform.startswith("win"):
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("KentoKonishi.Ludoxel")
+    except Exception:
+        pass
 
 
 def _screen_for_restore(app: QApplication, *, screen_name: str, left: int | None, top: int | None, width: int, height: int) -> QScreen | None:
@@ -58,10 +86,11 @@ def _restored_window_geometry(screen: QScreen | None, *, left: int | None, top: 
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, project_root: Path) -> None:
+    def __init__(self, project_root: Path, resource_root: Path) -> None:
         super().__init__()
         self._project_root = Path(project_root)
-        self._screen = GameScreen(project_root=self._project_root)
+        self._resource_root = Path(resource_root)
+        self._screen = GameScreen(project_root=self._project_root, resource_root=self._resource_root)
         self.setCentralWidget(self._screen)
         self.setMinimumSize(_MIN_WINDOW_WIDTH, _MIN_WINDOW_HEIGHT)
         self._screen.viewport.fullscreen_changed.connect(self._apply_fullscreen)
@@ -114,28 +143,35 @@ class MainWindow(QMainWindow):
             self._persist_window_geometry()
 
 
-def run_app(*, project_root: Path) -> None:
+def run_app(*, project_root: Path, resource_root: Path) -> None:
     install_default_gl_surface_format()
 
     root = Path(project_root)
+    bundled_root = Path(resource_root)
 
+    _set_windows_application_id()
     app = QApplication([])
     app.setApplicationName(f"Ludoxel v{__version__}")
+    app_icon = _load_application_icon(bundled_root)
+    if app_icon is not None:
+        app.setWindowIcon(app_icon)
 
-    fonts = install_minecraft_fonts(font_dir=(root / "assets" / "fonts"))
+    fonts = install_minecraft_fonts(font_dir=(bundled_root / "assets" / "fonts"))
     if bool(fonts.ok):
         apply_application_font(app=app, family=str(fonts.family), point_size=12)
 
     qss = Path(__file__).resolve().parent / "theme" / "main.qss"
     if qss.exists():
         qss_text = qss.read_text(encoding="utf-8")
-        arrow_up = (root / "assets" / "ui" / "arrow_up.svg").resolve().as_posix()
-        arrow_down = (root / "assets" / "ui" / "arrow_down.svg").resolve().as_posix()
+        arrow_up = (bundled_root / "assets" / "ui" / "arrow_up.svg").resolve().as_posix()
+        arrow_down = (bundled_root / "assets" / "ui" / "arrow_down.svg").resolve().as_posix()
         qss_text = qss_text.replace("__ARROW_UP__", str(arrow_up))
         qss_text = qss_text.replace("__ARROW_DOWN__", str(arrow_down))
         app.setStyleSheet(qss_text)
 
-    w = MainWindow(project_root=root)
+    w = MainWindow(project_root=root, resource_root=bundled_root)
+    if app_icon is not None:
+        w.setWindowIcon(app_icon)
     w.setWindowTitle(f"Ludoxel v{__version__}")
     prefs = w.runtime_preferences()
     restore_screen = _screen_for_restore(app, screen_name=str(prefs.window_screen_name), left=prefs.window_left, top=prefs.window_top, width=int(prefs.window_width), height=int(prefs.window_height))
@@ -147,7 +183,10 @@ def run_app(*, project_root: Path) -> None:
         splash_geometry = restore_geometry
         w.setGeometry(restore_geometry)
 
-    splash = StatusOverlayFrame(title_text="Ludoxel", status_text="Preparing viewport...", object_name="startupSplash", title_object_name="startupTitle", status_object_name="startupStatus", flags=Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen)
+    splash_title_image_path = status_overlay_title_image_path(bundled_root)
+    splash = StatusOverlayFrame(title_text="Ludoxel", status_text="Preparing viewport...", object_name="startupSplash", title_object_name="startupTitle", status_object_name="startupStatus", title_image_path=splash_title_image_path, flags=Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen)
+    if app_icon is not None:
+        splash.setWindowIcon(app_icon)
     splash.setGeometry(splash_geometry)
     splash.show()
     splash.raise_()

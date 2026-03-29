@@ -107,17 +107,9 @@ def spawn_block_break_particles(*, state_str: str, cell: tuple[int, int, int], u
             px0 = random.uniform(float(_PARTICLE_MIN_SUBPIXEL_ORIGIN_PX), float(_PARTICLE_MAX_SUBPIXEL_ORIGIN_PX))
             py0 = random.uniform(float(_PARTICLE_MIN_SUBPIXEL_ORIGIN_PX), float(_PARTICLE_MAX_SUBPIXEL_ORIGIN_PX))
             uv_rect = uv_rect_from_pixels(texture_uv, (float(px0), float(py0), float(px0) + float(_PARTICLE_FRAGMENT_SIZE_PX), float(py0) + float(_PARTICLE_FRAGMENT_SIZE_PX)))
-            jitter = Vec3(
-                random.uniform(-float(_PARTICLE_HORIZONTAL_JITTER), float(_PARTICLE_HORIZONTAL_JITTER)),
-                random.uniform(float(_PARTICLE_VERTICAL_JITTER_MIN), float(_PARTICLE_VERTICAL_JITTER_MAX)),
-                random.uniform(-float(_PARTICLE_HORIZONTAL_JITTER), float(_PARTICLE_HORIZONTAL_JITTER)),
-            )
+            jitter = Vec3(random.uniform(-float(_PARTICLE_HORIZONTAL_JITTER), float(_PARTICLE_HORIZONTAL_JITTER)), random.uniform(float(_PARTICLE_VERTICAL_JITTER_MIN), float(_PARTICLE_VERTICAL_JITTER_MAX)), random.uniform(-float(_PARTICLE_HORIZONTAL_JITTER), float(_PARTICLE_HORIZONTAL_JITTER)))
             vertical_bias = random.uniform(float(_PARTICLE_VERTICAL_BIAS_MIN), float(_PARTICLE_VERTICAL_BIAS_MAX))
-            velocity = Vec3(
-                (float(offset.x) * float(_PARTICLE_BASE_SPEED) + float(jitter.x)) * float(speed_multiplier),
-                (float(offset.y) * float(_PARTICLE_BASE_SPEED) + float(vertical_bias) + float(jitter.y)) * float(speed_multiplier),
-                (float(offset.z) * float(_PARTICLE_BASE_SPEED) + float(jitter.z)) * float(speed_multiplier),
-            )
+            velocity = Vec3((float(offset.x) * float(_PARTICLE_BASE_SPEED) + float(jitter.x)) * float(speed_multiplier),(float(offset.y) * float(_PARTICLE_BASE_SPEED) + float(vertical_bias) + float(jitter.y)) * float(speed_multiplier),(float(offset.z) * float(_PARTICLE_BASE_SPEED) + float(jitter.z)) * float(speed_multiplier))
             particles.append(BlockBreakParticleState(position=position, velocity=velocity, size=random.uniform(float(_PARTICLE_MIN_SIZE), float(_PARTICLE_MAX_SIZE)), age_s=0.0, lifetime_s=random.uniform(float(_PARTICLE_MIN_LIFETIME_S), float(_PARTICLE_MAX_LIFETIME_S)), uv_rect=uv_rect))
 
     return tuple(particles)

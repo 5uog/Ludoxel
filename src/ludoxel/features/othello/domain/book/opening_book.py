@@ -9,6 +9,7 @@ from pathlib import Path
 
 import json
 
+from .....shared.project_paths import default_project_root
 from ..game.rules import apply_move, create_initial_board, find_legal_moves
 from ..game.types import BOARD_CELL_COUNT, SIDE_BLACK, coerce_board, encode_board, normalize_side, other_side
 
@@ -17,7 +18,7 @@ _BOARD_SIZE = 8
 
 def _default_project_root() -> Path:
     """I define P_0 as the repository root inferred from the module path. I use this anchor whenever the caller omits an explicit project root, because user book persistence is rooted in the application workspace rather than in the package tree."""
-    return Path(__file__).resolve().parents[6]
+    return default_project_root(Path(__file__))
 
 
 def normalize_project_root(project_root: str | Path | None = None) -> Path:

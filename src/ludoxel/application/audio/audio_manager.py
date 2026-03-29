@@ -42,9 +42,9 @@ class _PreparedSource:
 
 class AudioManager(QObject):
 
-    def __init__(self, *, project_root: Path, block_registry: BlockRegistry, parent: QObject | None=None) -> None:
+    def __init__(self, *, resource_root: Path, block_registry: BlockRegistry, parent: QObject | None=None) -> None:
         super().__init__(parent)
-        self._root = Path(project_root)
+        self._resource_root = Path(resource_root)
         self._block_registry = block_registry
         self._preferences = AudioPreferences()
 
@@ -284,7 +284,7 @@ class AudioManager(QObject):
     def _resolve_existing_urls(self, pool: AudioSamplePool) -> tuple[QUrl, ...]:
         urls: list[QUrl] = []
         for relative_path in tuple(pool.relative_paths):
-            candidate = self._root / Path(relative_path)
+            candidate = self._resource_root / Path(relative_path)
             if candidate.is_file():
                 urls.append(QUrl.fromLocalFile(str(candidate)))
         return tuple(urls)

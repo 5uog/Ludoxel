@@ -32,6 +32,23 @@ def _safe_float(x: object) -> float | None:
         return None
 
 
+def _windows_hidden_subprocess_kwargs() -> dict[str, object]:
+    if not sys.platform.startswith("win"):
+        return {}
+    kwargs: dict[str, object] = {}
+    creationflags = int(getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    if creationflags != 0:
+        kwargs["creationflags"] = creationflags
+    try:
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= int(subprocess.STARTF_USESHOWWINDOW)
+        startupinfo.wShowWindow = 0
+        kwargs["startupinfo"] = startupinfo
+    except Exception:
+        pass
+    return kwargs
+
+
 def _posix_total_mem_bytes_sysconf() -> int | None:
     try:
         sysconf = getattr(os, "sysconf", None)
@@ -189,7 +206,7 @@ def _windows_rss_bytes_psapi() -> int | None:
 def _windows_rss_bytes_tasklist() -> int | None:
     try:
         pid = str(os.getpid())
-        out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
+        out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], stderr=subprocess.DEVNULL, text=True, timeout=0.8, **_windows_hidden_subprocess_kwargs())
         line = str(out).strip()
         if not line or "INFO:" in line:
             return None
@@ -284,7 +301,7 @@ def read_process_memory(total_mem_bytes: int | None=None) -> ProcessMemorySnapsh
 
 def _nvidia_smi_util_percent() -> float | None:
     try:
-        out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8)
+        out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8, **_windows_hidden_subprocess_kwargs())
         line = str(out).strip().splitlines()[0].strip()
         value = float(line)
         if value < 0.0:

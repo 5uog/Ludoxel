@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 graft assets
+graft scripts
 
 include main.py
 include README.md

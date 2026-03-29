@@ -16,24 +16,24 @@ from ...blocks.state.state_codec import parse_state
 
 @dataclass(frozen=True)
 class PhotoPaths:
-    project_root: Path
+    resource_root: Path
 
     def thumbs_dir(self) -> Path:
-        return self.project_root / "assets" / "minecraft" / "thumbnails" / "blocks"
+        return self.resource_root / "assets" / "minecraft" / "thumbnails" / "blocks"
 
     def mc_item_dir(self) -> Path:
-        return self.project_root / "assets" / "minecraft" / "textures" / "item"
+        return self.resource_root / "assets" / "minecraft" / "textures" / "item"
 
 
 class ItemPhotoProvider(QObject):
     pixmap_changed = pyqtSignal(str)
 
-    def __init__(self, *, project_root: Path, registry: BlockRegistry, icon_size: int=36) -> None:
+    def __init__(self, *, resource_root: Path, registry: BlockRegistry, icon_size: int=36) -> None:
         super().__init__(None)
-        self._root = Path(project_root)
+        self._resource_root = Path(resource_root)
         self._reg = registry
         self._icon = int(max(16, icon_size))
-        self._paths = PhotoPaths(project_root=self._root)
+        self._paths = PhotoPaths(resource_root=self._resource_root)
         self._animations_enabled = True
         self._active = False
 

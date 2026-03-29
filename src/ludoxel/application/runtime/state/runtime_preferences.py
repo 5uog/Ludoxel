@@ -53,6 +53,7 @@ def _normalize_hotbar_state(slots: object, index: object, *, size: int=HOTBAR_SI
 class RuntimePreferences:
     """I model the mutable runtime preference manifold as P, which aggregates view, audio, cloud, hotbar, skin, space-selection, and Othello-default state. I normalize this object in place because it serves as the shared mutable bridge between persistence, Qt controls, renderer state, and active session logic."""
     DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S: ClassVar[float] = 0.30
+    DEFAULT_BLOCK_PLACE_REPEAT_INITIAL_DELAY_S: ClassVar[float] = 0.20
     DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 1.0 / 120.0
     LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 0.20
     DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S: ClassVar[float] = 0.20
