@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPalette
-from PyQt6.QtWidgets import QComboBox, QDialog, QDoubleSpinBox, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QSpinBox, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSpinBox, QVBoxLayout, QWidget
 
+from ....shared.ui.common.sidebar_dialog import SidebarDialogBase
 from ..domain.game.types import DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR, DEFAULT_OTHELLO_BOOK_LEAF_ERROR, DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR, OTHELLO_AI_HASH_LEVEL_MAX, OTHELLO_AI_HASH_LEVEL_MIN, OTHELLO_AI_SACRIFICE_LEVEL_MAX, OTHELLO_AI_SACRIFICE_LEVEL_MIN, OTHELLO_AI_THREAD_MAX, OTHELLO_AI_THREAD_MIN, OTHELLO_ANIMATION_FAST, OTHELLO_ANIMATION_OFF, OTHELLO_ANIMATION_SLOW, OTHELLO_BOOK_LEARNING_DEPTH_MAX, OTHELLO_BOOK_LEARNING_DEPTH_MIN, OTHELLO_DIFFICULTY_INSANE, OTHELLO_DIFFICULTY_INSANE_PLUS, OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_STRONG, OTHELLO_DIFFICULTY_WEAK, OTHELLO_TIME_CONTROL_OFF, OTHELLO_TIME_CONTROL_PER_MOVE_10S, OTHELLO_TIME_CONTROL_PER_MOVE_30S, OTHELLO_TIME_CONTROL_PER_MOVE_5S, OTHELLO_TIME_CONTROL_PER_SIDE_10M, OTHELLO_TIME_CONTROL_PER_SIDE_1M, OTHELLO_TIME_CONTROL_PER_SIDE_20M, OTHELLO_TIME_CONTROL_PER_SIDE_3M, OTHELLO_TIME_CONTROL_PER_SIDE_5M, SIDE_BLACK, SIDE_WHITE, OthelloSettings
 
 
-class OthelloSettingsOverlay(QDialog):
+class OthelloSettingsOverlay(SidebarDialogBase):
     back_requested = pyqtSignal()
     settings_applied = pyqtSignal(object)
     book_learning_requested = pyqtSignal(object)
@@ -18,75 +18,14 @@ class OthelloSettingsOverlay(QDialog):
     book_export_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None, *, as_window: bool = False) -> None:
-        super().__init__(parent)
-
-        self.setVisible(False)
-        self._deferred_reveal_pending: bool = False
+        super().__init__(parent, as_window=as_window, root_object_name="othelloSettingsRoot", window_title="Othello Settings", window_size=(920, 780), minimum_window_size=(800, 720), panel_minimum_size=(760, 640), sidebar_object_name="othelloSettingsSidebar", content_object_name="othelloSettingsContent", stack_object_name="othelloSettingsStack")
         self._syncing_values: bool = False
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setObjectName("othelloSettingsRoot")
-        self._as_window = bool(as_window)
-        self.setProperty("detachedWindow", bool(self._as_window))
-        if bool(self._as_window):
-            self.setWindowFlag(Qt.WindowType.Dialog, True)
-            self.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
-            self.setWindowFlag(Qt.WindowType.WindowTitleHint, True)
-            self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, True)
-            self.setWindowModality(Qt.WindowModality.ApplicationModal)
-            self.setWindowTitle("Othello Settings")
-            self.resize(920, 780)
-            self.setMinimumSize(800, 720)
-            self.setAutoFillBackground(True)
-            self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
-            palette = self.palette()
-            palette.setColor(QPalette.ColorRole.Window, QColor("#181818"))
-            palette.setColor(QPalette.ColorRole.Base, QColor("#181818"))
-            self.setPalette(palette)
 
-        root = QVBoxLayout(self)
-        if bool(self._as_window):
-            root.setContentsMargins(0, 0, 0, 0)
-        else:
-            root.setContentsMargins(32, 28, 32, 28)
-        root.setSpacing(0)
-        if not bool(self._as_window):
-            root.addStretch(1)
-
-        panel = QFrame(self)
-        panel.setObjectName("panel")
-        panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        panel.setMinimumWidth(760)
-        panel.setMinimumHeight(640)
-
-        layout = QHBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self._sidebar = QWidget(panel)
-        self._sidebar.setObjectName("othelloSettingsSidebar")
-        self._sidebar.setMinimumWidth(236)
-        self._sidebar.setMaximumWidth(280)
-        sidebar_layout = QVBoxLayout(self._sidebar)
-        sidebar_layout.setContentsMargins(0, 12, 0, 12)
-        sidebar_layout.setSpacing(0)
-        self._tab_match = self._make_tab_button("Match", 0, self._sidebar)
-        self._tab_book = self._make_tab_button("Opening Book", 1, self._sidebar)
-        sidebar_layout.addWidget(self._tab_match)
-        sidebar_layout.addWidget(self._tab_book)
-        sidebar_layout.addStretch(1)
-
-        self._content = QWidget(panel)
-        self._content.setObjectName("othelloSettingsContent")
-        content_layout = QVBoxLayout(self._content)
-        content_layout.setContentsMargins(18, 18, 18, 18)
-        content_layout.setSpacing(0)
-        self._stack = QStackedWidget(self._content)
-        self._stack.setObjectName("othelloSettingsStack")
-        content_layout.addWidget(self._stack, stretch=1)
-
-        layout.addWidget(self._sidebar, stretch=2)
-        layout.addWidget(self._content, stretch=8)
+        self._tab_match = self._make_tab_button("Match", 0, self._set_page)
+        self._tab_book = self._make_tab_button("Opening Book", 1, self._set_page)
+        self._sidebar_layout.addWidget(self._tab_match)
+        self._sidebar_layout.addWidget(self._tab_book)
+        self._sidebar_layout.addStretch(1)
 
         self._build_match_page()
         self._build_book_page()
@@ -95,19 +34,13 @@ class OthelloSettingsOverlay(QDialog):
         self.set_book_summary_text("")
         self._set_page(0)
 
-        if bool(self._as_window):
-            root.addWidget(panel, stretch=1)
-        else:
-            root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
-            root.addStretch(1)
-
     def _build_match_page(self) -> None:
         scroll, host, layout = self._make_scroll_page()
 
-        self._difficulty = self._add_combo(layout, host, "AI difficulty",((OTHELLO_DIFFICULTY_WEAK, "Weak"),(OTHELLO_DIFFICULTY_MEDIUM, "Medium"),(OTHELLO_DIFFICULTY_STRONG, "Strong"),(OTHELLO_DIFFICULTY_INSANE, "Insane"),(OTHELLO_DIFFICULTY_INSANE_PLUS, "Insane+")))
-        self._time_control = self._add_combo(layout, host, "Time control",((OTHELLO_TIME_CONTROL_OFF, "Timer off"),(OTHELLO_TIME_CONTROL_PER_MOVE_5S, "1 move 5 seconds"),(OTHELLO_TIME_CONTROL_PER_MOVE_10S, "1 move 10 seconds"),(OTHELLO_TIME_CONTROL_PER_MOVE_30S, "1 move 30 seconds"),(OTHELLO_TIME_CONTROL_PER_SIDE_1M, "1 minute per side"),(OTHELLO_TIME_CONTROL_PER_SIDE_3M, "3 minutes per side"),(OTHELLO_TIME_CONTROL_PER_SIDE_5M, "5 minutes per side"),(OTHELLO_TIME_CONTROL_PER_SIDE_10M, "10 minutes per side"),(OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side")))
-        self._animation_mode = self._add_combo(layout, host, "Disc animation",((OTHELLO_ANIMATION_OFF, "Animation off"),(OTHELLO_ANIMATION_FAST, "Ripple fast"),(OTHELLO_ANIMATION_SLOW, "Ripple slow")))
-        self._player_side = self._add_combo(layout, host, "Player order",((SIDE_BLACK, "Player moves first"),(SIDE_WHITE, "Player moves second")))
+        self._difficulty = self._add_combo(layout, host, "AI difficulty", ((OTHELLO_DIFFICULTY_WEAK, "Weak"), (OTHELLO_DIFFICULTY_MEDIUM, "Medium"), (OTHELLO_DIFFICULTY_STRONG, "Strong"), (OTHELLO_DIFFICULTY_INSANE, "Insane"), (OTHELLO_DIFFICULTY_INSANE_PLUS, "Insane+")))
+        self._time_control = self._add_combo(layout, host, "Time control", ((OTHELLO_TIME_CONTROL_OFF, "Timer off"), (OTHELLO_TIME_CONTROL_PER_MOVE_5S, "1 move 5 seconds"), (OTHELLO_TIME_CONTROL_PER_MOVE_10S, "1 move 10 seconds"), (OTHELLO_TIME_CONTROL_PER_MOVE_30S, "1 move 30 seconds"), (OTHELLO_TIME_CONTROL_PER_SIDE_1M, "1 minute per side"), (OTHELLO_TIME_CONTROL_PER_SIDE_3M, "3 minutes per side"), (OTHELLO_TIME_CONTROL_PER_SIDE_5M, "5 minutes per side"), (OTHELLO_TIME_CONTROL_PER_SIDE_10M, "10 minutes per side"), (OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side")))
+        self._animation_mode = self._add_combo(layout, host, "Disc animation", ((OTHELLO_ANIMATION_OFF, "Animation off"), (OTHELLO_ANIMATION_FAST, "Ripple fast"), (OTHELLO_ANIMATION_SLOW, "Ripple slow")))
+        self._player_side = self._add_combo(layout, host, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
         self._sacrifice_level = self._add_spin(layout, host, "Sacrifice level", minimum=int(OTHELLO_AI_SACRIFICE_LEVEL_MIN), maximum=int(OTHELLO_AI_SACRIFICE_LEVEL_MAX))
         self._thread_count = self._add_spin(layout, host, "Worker count", minimum=int(OTHELLO_AI_THREAD_MIN), maximum=int(OTHELLO_AI_THREAD_MAX))
         self._hash_level = self._add_spin(layout, host, "Hash level", minimum=int(OTHELLO_AI_HASH_LEVEL_MIN), maximum=int(OTHELLO_AI_HASH_LEVEL_MAX))
@@ -170,67 +103,6 @@ class OthelloSettingsOverlay(QDialog):
         for spin in (self._book_per_move_error, self._book_cumulative_error, self._book_leaf_error):
             spin.valueChanged.connect(self._on_settings_field_changed)
 
-    def prepare_to_show(self) -> None:
-        if not bool(self._as_window):
-            return
-        self._deferred_reveal_pending = True
-        self.setWindowOpacity(0.0)
-        self.winId()
-        self.ensurePolished()
-        layout = self.layout()
-        if layout is not None:
-            layout.activate()
-        self.adjustSize()
-        self.updateGeometry()
-
-    def showEvent(self, event) -> None:
-        if bool(self._as_window) and bool(self._deferred_reveal_pending):
-            self.setWindowOpacity(0.0)
-            QTimer.singleShot(0, self._finish_deferred_reveal)
-        super().showEvent(event)
-
-    def _finish_deferred_reveal(self) -> None:
-        if not bool(self._deferred_reveal_pending):
-            return
-        self._deferred_reveal_pending = False
-        if not self.isVisible():
-            return
-        self.setWindowOpacity(1.0)
-
-    def _make_tab_button(self, text: str, index: int, parent: QWidget) -> QPushButton:
-        button = QPushButton(text, parent)
-        button.setObjectName("navBtn")
-        button.setCheckable(True)
-        button.setAutoExclusive(True)
-        button.setAutoDefault(False)
-        button.setDefault(False)
-        button.setFlat(True)
-        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        button.setFixedHeight(64)
-        button.clicked.connect(lambda _checked=False, i=index: self._set_page(i))
-        return button
-
-    def _make_scroll_page(self) -> tuple[QScrollArea, QWidget, QVBoxLayout]:
-        scroll = QScrollArea(self._stack)
-        scroll.setObjectName("settingsScroll")
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        viewport = scroll.viewport()
-        viewport.setObjectName("settingsViewport")
-        viewport.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        viewport.setAutoFillBackground(True)
-
-        host = QWidget(scroll)
-        host.setObjectName("settingsPage")
-        host.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        host.setAutoFillBackground(True)
-        layout = QVBoxLayout(host)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(12)
-        scroll.setWidget(host)
-        return scroll, host, layout
-
     @staticmethod
     def _add_combo(layout: QVBoxLayout, parent: QWidget, label_text: str, entries: tuple[tuple[object, str], ...]) -> QComboBox:
         label = QLabel(str(label_text), parent)
@@ -269,18 +141,7 @@ class OthelloSettingsOverlay(QDialog):
         return spin
 
     def _set_page(self, index: int) -> None:
-        selected_index = int(max(0, min(1, int(index))))
-        self._stack.setCurrentIndex(selected_index)
-        current_page = self._stack.currentWidget()
-        if isinstance(current_page, QScrollArea):
-            current_page.verticalScrollBar().setValue(0)
-            current_page.viewport().update()
-            page_host = current_page.widget()
-            if page_host is not None:
-                page_host.update()
-        self._stack.update()
-        self._tab_match.setChecked(selected_index == 0)
-        self._tab_book.setChecked(selected_index == 1)
+        self._set_stack_page(index=index, max_index=1, tab_buttons=(self._tab_match, self._tab_book))
 
     def sync_values(self, settings: OthelloSettings) -> None:
         normalized = settings.normalized()

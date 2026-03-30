@@ -9,7 +9,7 @@ import sys
 from ...shared.project_paths import default_project_root, default_resource_root, is_frozen_application
 
 
-def _preferred_python_314(project_root: Path) -> Path | None:
+def _preferred_python_314() -> Path | None:
     local_app_data = os.environ.get("LocalAppData", "").strip()
     candidates: list[Path] = []
     if local_app_data:
@@ -36,7 +36,7 @@ def _ensure_python_314(project_root: Path) -> None:
     if sys.version_info[:2] == (3, 14):
         return
 
-    candidate = _preferred_python_314(project_root)
+    candidate = _preferred_python_314()
     if candidate is None:
         return
 

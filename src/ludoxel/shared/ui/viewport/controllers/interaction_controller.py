@@ -285,7 +285,7 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
         return True
 
     if e.button() == Qt.MouseButton.RightButton:
-        viewport._arm_right_mouse_repeat(now_s=float(now_s))
+        viewport._arm_right_mouse_repeat()
         result = _perform_right_click(viewport)
         _apply_initial_right_mouse_repeat(viewport, now_s=float(now_s), result=result)
         return True
@@ -1120,7 +1120,7 @@ def _direct_visible_support_face_candidate(viewport: "GLViewportWidget", *, hit:
     return _support_face_repeat_candidate_hit(hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
 
 
-def _projected_frontier_support_face_candidate(viewport: "GLViewportWidget", *, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int, eye: Vec3, direction: Vec3, hit: BlockPick | None) -> tuple[BlockPick, int, int] | None:
+def _projected_frontier_support_face_candidate(viewport: "GLViewportWidget", *, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, max_progress: int, eye: Vec3, direction: Vec3, hit: BlockPick | None) -> tuple[BlockPick, int, int] | None:
     intent_direction = Vec3(float(direction.x), float(direction.y), float(direction.z))
     if math.hypot(float(direction.x), float(direction.z)) <= 0.25:
         horizontal_fallback = forward_from_yaw_pitch_deg(float(viewport._session.player.yaw_deg), 0.0)
@@ -1277,7 +1277,7 @@ def _perform_support_face_place_repeat(viewport: "GLViewportWidget", *, line: _P
     candidate = _direct_visible_support_face_candidate(viewport, hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
     support_face_hit = _support_face_place_hit(viewport, eye=interaction_eye, direction=interaction_direction, world_hit=hit)
     if candidate is None:
-        candidate = _projected_frontier_support_face_candidate(viewport, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress), eye=interaction_eye, direction=interaction_direction, hit=hit)
+        candidate = _projected_frontier_support_face_candidate(viewport, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), max_progress=int(max_progress), eye=interaction_eye, direction=interaction_direction, hit=hit)
     if candidate is None:
         candidate = _support_face_repeat_candidate_hit(hit=support_face_hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
     if candidate is None:

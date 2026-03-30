@@ -17,7 +17,7 @@ from .faces.face_row_utils import append_face_instance, empty_textured_face_rows
 from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform
 from .held_block_geometry import held_block_model_boxes_for_kind
 from .player_render_state import PlayerRenderState
-from .player_skin_uv_maps import VISUAL_LEFT_ARM_BASE_UV_PX, VISUAL_LEFT_ARM_SLEEVE_UV_PX, VISUAL_RIGHT_ARM_BASE_UV_PX, VISUAL_RIGHT_ARM_SLEEVE_UV_PX
+from .player_skin_uv_maps import VISUAL_LEFT_ARM_BASE_UV_PX, VISUAL_LEFT_ARM_SLEEVE_UV_PX, VISUAL_RIGHT_ARM_BASE_UV_PX, VISUAL_RIGHT_ARM_SLEEVE_UV_PX, skin_cube_uv_map, uv_map_with_rotated_faces
 
 _PX = 1.0 / 16.0
 _SKIN_WIDTH = 64.0
@@ -59,32 +59,14 @@ _WORLD_SPECIAL_ITEM_BOX = LocalBox(1.0 * _PX, 1.0 * _PX, 7.5 * _PX, 15.0 * _PX, 
 _WORLD_SPECIAL_ITEM_SCALE = 1.75
 
 
-def _skin_cube_uv_map(*, pos_x: tuple[float, float, float, float], neg_x: tuple[float, float, float, float], pos_y: tuple[float, float, float, float], neg_y: tuple[float, float, float, float], pos_z: tuple[float, float, float, float], neg_z: tuple[float, float, float, float]) -> dict[int, tuple[float, float, float, float]]:
-    """I define U = {+X,-X,+Y,-Y,+Z,-Z} -> R^4, where each face key is mapped onto its skin-space pixel rectangle. I use this constructor to encode the player-skin atlas layout in the same face-index basis consumed by the renderer."""
-    return {FACE_POS_X: pos_x, FACE_NEG_X: neg_x, FACE_POS_Y: pos_y, FACE_NEG_Y: neg_y, FACE_POS_Z: pos_z, FACE_NEG_Z: neg_z}
-
-
-def _rotate_uv_rect_180(px_rect: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
-    """I define R180(u0,v0,u1,v1) = (u1,v1,u0,v0). I apply this inversion to those skin rectangles whose rendered face orientation must be reversed to match the mesh basis."""
-    return (float(px_rect[2]), float(px_rect[3]), float(px_rect[0]), float(px_rect[1]))
-
-
-def _uv_map_with_rotated_faces(uv_map: dict[int, tuple[float, float, float, float]], *faces: int) -> dict[int, tuple[float, float, float, float]]:
-    """I define U'(f) = R180(U(f)) for the selected face set and U'(g) = U(g) elsewhere. I use this local adjustment to keep the bulk of the atlas data declarative while still honoring renderer-side face orientation."""
-    out = {int(face_idx): tuple(rect) for face_idx, rect in uv_map.items()}
-    for face_idx in faces:
-        out[int(face_idx)] = _rotate_uv_rect_180(out[int(face_idx)])
-    return out
-
-
-_HEAD_BASE_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 8.0, 8.0, 16.0), neg_x=(16.0, 8.0, 24.0, 16.0), pos_y=(8.0, 0.0, 16.0, 8.0), neg_y=(16.0, 0.0, 24.0, 8.0), pos_z=(8.0, 8.0, 16.0, 16.0), neg_z=(24.0, 8.0, 32.0, 16.0))
-_HEAD_HAT_UV_PX = _skin_cube_uv_map(pos_x=(32.0, 8.0, 40.0, 16.0), neg_x=(48.0, 8.0, 56.0, 16.0), pos_y=(40.0, 0.0, 48.0, 8.0), neg_y=(48.0, 0.0, 56.0, 8.0), pos_z=(40.0, 8.0, 48.0, 16.0), neg_z=(56.0, 8.0, 64.0, 16.0))
-_BODY_BASE_UV_PX = _uv_map_with_rotated_faces(_skin_cube_uv_map(pos_x=(16.0, 20.0, 20.0, 32.0), neg_x=(28.0, 20.0, 32.0, 32.0), pos_y=(20.0, 16.0, 28.0, 20.0), neg_y=(28.0, 16.0, 36.0, 20.0), pos_z=(20.0, 20.0, 28.0, 32.0), neg_z=(32.0, 20.0, 40.0, 32.0)), FACE_POS_Y)
-_BODY_JACKET_UV_PX = _uv_map_with_rotated_faces(_skin_cube_uv_map(pos_x=(16.0, 36.0, 20.0, 48.0), neg_x=(28.0, 36.0, 32.0, 48.0), pos_y=(20.0, 32.0, 28.0, 36.0), neg_y=(28.0, 32.0, 36.0, 36.0), pos_z=(20.0, 36.0, 28.0, 48.0), neg_z=(32.0, 36.0, 40.0, 48.0)), FACE_POS_Y)
-_RIGHT_LEG_BASE_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 20.0, 4.0, 32.0), neg_x=(8.0, 20.0, 12.0, 32.0), pos_y=(4.0, 16.0, 8.0, 20.0), neg_y=(8.0, 16.0, 12.0, 20.0), pos_z=(4.0, 20.0, 8.0, 32.0), neg_z=(12.0, 20.0, 16.0, 32.0))
-_RIGHT_LEG_PANTS_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 36.0, 4.0, 48.0), neg_x=(8.0, 36.0, 12.0, 48.0), pos_y=(4.0, 32.0, 8.0, 36.0), neg_y=(8.0, 32.0, 12.0, 36.0), pos_z=(4.0, 36.0, 8.0, 48.0), neg_z=(12.0, 36.0, 16.0, 48.0))
-_LEFT_LEG_BASE_UV_PX = _skin_cube_uv_map(pos_x=(16.0, 52.0, 20.0, 64.0), neg_x=(24.0, 52.0, 28.0, 64.0), pos_y=(20.0, 48.0, 24.0, 52.0), neg_y=(24.0, 48.0, 28.0, 52.0), pos_z=(20.0, 52.0, 24.0, 64.0), neg_z=(28.0, 52.0, 32.0, 64.0))
-_LEFT_LEG_PANTS_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 52.0, 4.0, 64.0), neg_x=(8.0, 52.0, 12.0, 64.0), pos_y=(4.0, 48.0, 8.0, 52.0), neg_y=(8.0, 48.0, 12.0, 52.0), pos_z=(4.0, 52.0, 8.0, 64.0), neg_z=(12.0, 52.0, 16.0, 64.0))
+_HEAD_BASE_UV_PX = skin_cube_uv_map(pos_x=(0.0, 8.0, 8.0, 16.0), neg_x=(16.0, 8.0, 24.0, 16.0), pos_y=(8.0, 0.0, 16.0, 8.0), neg_y=(16.0, 0.0, 24.0, 8.0), pos_z=(8.0, 8.0, 16.0, 16.0), neg_z=(24.0, 8.0, 32.0, 16.0))
+_HEAD_HAT_UV_PX = skin_cube_uv_map(pos_x=(32.0, 8.0, 40.0, 16.0), neg_x=(48.0, 8.0, 56.0, 16.0), pos_y=(40.0, 0.0, 48.0, 8.0), neg_y=(48.0, 0.0, 56.0, 8.0), pos_z=(40.0, 8.0, 48.0, 16.0), neg_z=(56.0, 8.0, 64.0, 16.0))
+_BODY_BASE_UV_PX = uv_map_with_rotated_faces(skin_cube_uv_map(pos_x=(16.0, 20.0, 20.0, 32.0), neg_x=(28.0, 20.0, 32.0, 32.0), pos_y=(20.0, 16.0, 28.0, 20.0), neg_y=(28.0, 16.0, 36.0, 20.0), pos_z=(20.0, 20.0, 28.0, 32.0), neg_z=(32.0, 20.0, 40.0, 32.0)), FACE_POS_Y)
+_BODY_JACKET_UV_PX = uv_map_with_rotated_faces(skin_cube_uv_map(pos_x=(16.0, 36.0, 20.0, 48.0), neg_x=(28.0, 36.0, 32.0, 48.0), pos_y=(20.0, 32.0, 28.0, 36.0), neg_y=(28.0, 32.0, 36.0, 36.0), pos_z=(20.0, 36.0, 28.0, 48.0), neg_z=(32.0, 36.0, 40.0, 48.0)), FACE_POS_Y)
+_RIGHT_LEG_BASE_UV_PX = skin_cube_uv_map(pos_x=(0.0, 20.0, 4.0, 32.0), neg_x=(8.0, 20.0, 12.0, 32.0), pos_y=(4.0, 16.0, 8.0, 20.0), neg_y=(8.0, 16.0, 12.0, 20.0), pos_z=(4.0, 20.0, 8.0, 32.0), neg_z=(12.0, 20.0, 16.0, 32.0))
+_RIGHT_LEG_PANTS_UV_PX = skin_cube_uv_map(pos_x=(0.0, 36.0, 4.0, 48.0), neg_x=(8.0, 36.0, 12.0, 48.0), pos_y=(4.0, 32.0, 8.0, 36.0), neg_y=(8.0, 32.0, 12.0, 36.0), pos_z=(4.0, 36.0, 8.0, 48.0), neg_z=(12.0, 36.0, 16.0, 48.0))
+_LEFT_LEG_BASE_UV_PX = skin_cube_uv_map(pos_x=(16.0, 52.0, 20.0, 64.0), neg_x=(24.0, 52.0, 28.0, 64.0), pos_y=(20.0, 48.0, 24.0, 52.0), neg_y=(24.0, 48.0, 28.0, 52.0), pos_z=(20.0, 52.0, 24.0, 64.0), neg_z=(28.0, 52.0, 32.0, 64.0))
+_LEFT_LEG_PANTS_UV_PX = skin_cube_uv_map(pos_x=(0.0, 52.0, 4.0, 64.0), neg_x=(8.0, 52.0, 12.0, 64.0), pos_y=(4.0, 48.0, 8.0, 52.0), neg_y=(8.0, 48.0, 12.0, 52.0), pos_z=(4.0, 52.0, 8.0, 64.0), neg_z=(12.0, 52.0, 16.0, 64.0))
 
 
 @dataclass(frozen=True)
