@@ -10,8 +10,9 @@ from ....shared.math.scalars import clampf, clampi
 from ....shared.world.config.render_distance import clamp_render_distance_chunks
 from ....shared.world.inventory.hotbar import HOTBAR_SIZE, cycle_hotbar_index, normalize_hotbar_index, normalize_hotbar_slots, with_hotbar_assignment
 from ....shared.world.inventory.hotbar_defaults import default_hotbar_slots
+from .ai_route_hotbar_defaults import default_ai_route_hotbar_slots
 from ....features.othello.domain.inventory.hotbar_defaults import default_othello_hotbar_slots
-from ....features.othello.domain.inventory.special_items import is_special_item_id
+from ....shared.world.inventory.special_items import is_special_item_id
 from ....features.othello.domain.game.types import OthelloSettings
 from ..player_name import normalize_player_name
 from ....shared.world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
@@ -41,6 +42,10 @@ def _default_hotbar_slots_list() -> list[str]:
 def _default_othello_hotbar_slots_list() -> list[str]:
     """I materialize the canonical mutable default hotbar for the Othello space."""
     return list(default_othello_hotbar_slots(size=HOTBAR_SIZE))
+
+
+def _default_route_hotbar_slots_list() -> list[str]:
+    return list(default_ai_route_hotbar_slots(size=HOTBAR_SIZE))
 
 
 def _normalize_hotbar_state(slots: object, index: object, *, size: int=HOTBAR_SIZE) -> tuple[list[str], int]:
@@ -96,6 +101,9 @@ class RuntimePreferences:
     survival_selected_hotbar_index: int = 0
     othello_hotbar_slots: list[str] = field(default_factory=_default_othello_hotbar_slots_list)
     othello_selected_hotbar_index: int = 0
+    route_hotbar_slots: list[str] = field(default_factory=_default_route_hotbar_slots_list)
+    route_selected_hotbar_index: int = 0
+    route_edit_active: bool = False
     othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
     reach: float = 5.0
     block_break_repeat_interval_s: float = DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S
@@ -148,6 +156,7 @@ class RuntimePreferences:
         self.world_wire = bool(self.world_wire)
         self.shadow_enabled = bool(self.shadow_enabled)
         self.creative_mode = bool(self.creative_mode)
+        self.route_edit_active = bool(self.route_edit_active)
         self.auto_jump_enabled = bool(self.auto_jump_enabled)
         self.auto_sprint_enabled = bool(self.auto_sprint_enabled)
         self.hide_hud = bool(self.hide_hud)
@@ -198,6 +207,7 @@ class RuntimePreferences:
         self.creative_hotbar_slots, self.creative_selected_hotbar_index = _normalize_hotbar_state(self.creative_hotbar_slots, self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
         self.survival_hotbar_slots, self.survival_selected_hotbar_index = _normalize_hotbar_state(self.survival_hotbar_slots, self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
         self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
+        self.route_hotbar_slots, self.route_selected_hotbar_index = _normalize_hotbar_state(self.route_hotbar_slots, self.route_selected_hotbar_index, size=HOTBAR_SIZE)
 
         self.othello_settings = self.othello_settings.normalized()
         self.keybinds = self.keybinds.normalized()
@@ -227,6 +237,8 @@ class RuntimePreferences:
         """I choose the active hotbar state projection as a function of play space and creative-mode state."""
         if self.is_othello_space():
             return ("othello_hotbar_slots", "othello_selected_hotbar_index")
+        if bool(self.route_edit_active):
+            return ("route_hotbar_slots", "route_selected_hotbar_index")
         if bool(self.creative_mode):
             return ("creative_hotbar_slots", "creative_selected_hotbar_index")
         return ("survival_hotbar_slots", "survival_selected_hotbar_index")
@@ -299,7 +311,7 @@ class RuntimePreferences:
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None=None, **overrides) -> RuntimePreferences:
     """I define C_P(runtime, overrides) as total cloning plus fieldwise override over the runtime preference manifold. I use this constructor whenever I need a normalized copy that may selectively replace one or more projections."""
     if runtime is not None:
-        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), block_break_repeat_interval_s=float(runtime.block_break_repeat_interval_s), block_place_repeat_interval_s=float(runtime.block_place_repeat_interval_s), block_interact_repeat_interval_s=float(runtime.block_interact_repeat_interval_s), block_break_particle_spawn_rate=float(runtime.block_break_particle_spawn_rate), block_break_particle_speed_scale=float(runtime.block_break_particle_speed_scale), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), player_name=str(runtime.player_name), resolved_player_name=str(runtime.resolved_player_name), crosshair_mode=str(runtime.crosshair_mode), crosshair_pixels=tuple(runtime.crosshair_pixels), player_skin_kind=str(runtime.player_skin_kind), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), arm_rotation_limit_min_deg=float(runtime.arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(runtime.arm_rotation_limit_max_deg), arm_swing_duration_s=float(runtime.arm_swing_duration_s), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), window_left=_coerce_optional_int(runtime.window_left), window_top=_coerce_optional_int(runtime.window_top), window_width=int(runtime.window_width), window_height=int(runtime.window_height), window_screen_name=str(runtime.window_screen_name), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
+        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), route_hotbar_slots=list(runtime.route_hotbar_slots), route_selected_hotbar_index=int(runtime.route_selected_hotbar_index), route_edit_active=bool(runtime.route_edit_active), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), block_break_repeat_interval_s=float(runtime.block_break_repeat_interval_s), block_place_repeat_interval_s=float(runtime.block_place_repeat_interval_s), block_interact_repeat_interval_s=float(runtime.block_interact_repeat_interval_s), block_break_particle_spawn_rate=float(runtime.block_break_particle_spawn_rate), block_break_particle_speed_scale=float(runtime.block_break_particle_speed_scale), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), player_name=str(runtime.player_name), resolved_player_name=str(runtime.resolved_player_name), crosshair_mode=str(runtime.crosshair_mode), crosshair_pixels=tuple(runtime.crosshair_pixels), player_skin_kind=str(runtime.player_skin_kind), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), arm_rotation_limit_min_deg=float(runtime.arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(runtime.arm_rotation_limit_max_deg), arm_swing_duration_s=float(runtime.arm_swing_duration_s), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), window_left=_coerce_optional_int(runtime.window_left), window_top=_coerce_optional_int(runtime.window_top), window_width=int(runtime.window_width), window_height=int(runtime.window_height), window_screen_name=str(runtime.window_screen_name), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
     else:
         out = RuntimePreferences()
 

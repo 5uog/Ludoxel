@@ -8,6 +8,8 @@ in vec4 v_uvRect;
 
 uniform sampler2D u_texture;
 uniform vec3 u_sunDir;
+uniform vec3 u_tintColor;
+uniform float u_tintMix;
 
 out vec4 fragColor;
 
@@ -34,6 +36,12 @@ void main() {
 
     float ndl = max(dot(n, l), 0.0);
     float lit = fallback_lighting(n, ndl);
+    vec3 shaded = tex.rgb * lit;
+    float tintMix = clamp(u_tintMix, 0.0, 1.0);
+    if (tintMix > 1e-6) {
+        vec3 tinted = vec3(max(shaded.r, u_tintColor.r), shaded.g * 0.42, shaded.b * 0.42);
+        shaded = mix(shaded, tinted, tintMix);
+    }
 
-    fragColor = vec4(tex.rgb * lit, tex.a);
+    fragColor = vec4(shaded, tex.a);
 }

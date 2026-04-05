@@ -9,8 +9,8 @@ from PyQt6.QtCore import QObject, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QImage, QMovie, QPixmap
 
 from ...blocks.registry.block_registry import BlockRegistry
-from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
-from ....features.othello.ui.special_item_art import build_special_item_icon_image
+from ...world.inventory.special_items import get_special_item_descriptor
+from .special_item_art import build_special_item_icon_image
 from ...blocks.state.state_codec import parse_state
 
 
@@ -57,8 +57,8 @@ class ItemPhotoProvider(QObject):
         for block_id, movie in self._movies.items():
             self._sync_movie_playback_state(str(block_id), movie)
 
-    def pixmap_for_block(self, block_state_or_id: str) -> QPixmap | None:
-        raw = str(block_state_or_id)
+    def pixmap_for_item(self, item_state_or_id: str) -> QPixmap | None:
+        raw = str(item_state_or_id)
         base_id, _p = parse_state(raw)
         bid = str(base_id)
 
@@ -104,14 +104,20 @@ class ItemPhotoProvider(QObject):
         self._pix_cache[bid] = pm
         return pm
 
-    def tooltip_for_block(self, block_id: str) -> str:
-        bid = str(block_id)
+    def tooltip_for_item(self, item_id: str) -> str:
+        bid = str(item_id)
         special = get_special_item_descriptor(bid)
         if special is not None:
             return f"{special.display_name}\n{special.item_id}"
         d = self._reg.get(bid)
         dn = str(d.display_name) if d is not None else bid
         return f"{dn}\n{bid}"
+
+    def pixmap_for_block(self, block_state_or_id: str) -> QPixmap | None:
+        return self.pixmap_for_item(block_state_or_id)
+
+    def tooltip_for_block(self, block_id: str) -> str:
+        return self.tooltip_for_item(block_id)
 
     @staticmethod
     def _basename_no_ns(block_id: str) -> str:

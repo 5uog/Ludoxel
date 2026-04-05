@@ -74,7 +74,7 @@ class ViewportOverlayMixin:
     def _pause_preview_key(*, player_state, width: int, height: int, device_pixel_ratio: float) -> tuple[object, ...] | None:
         if player_state is None:
             return None
-        return (int(width), int(height), round(float(device_pixel_ratio), 4), round(float(player_state.base_x), 4), round(float(player_state.base_y), 4), round(float(player_state.base_z), 4), round(float(player_state.body_yaw_deg), 4), round(float(player_state.head_yaw_deg), 4), round(float(player_state.head_pitch_deg), 4), round(float(player_state.limb_phase_rad), 4), round(float(player_state.limb_swing_amount), 4), round(float(player_state.crouch_amount), 4), bool(player_state.is_first_person))
+        return (int(width), int(height), round(float(device_pixel_ratio), 4), round(float(player_state.base_x), 4), round(float(player_state.base_y), 4), round(float(player_state.base_z), 4), round(float(player_state.body_yaw_deg), 4), round(float(player_state.head_yaw_deg), 4), round(float(player_state.head_pitch_deg), 4), round(float(player_state.limb_phase_rad), 4), round(float(player_state.limb_swing_amount), 4), round(float(player_state.crouch_amount), 4), round(float(player_state.hurt_tint_strength), 4), bool(player_state.is_first_person))
 
     def _build_pause_preview_player_state(self: "GLViewportWidget", player_state) -> object:
         body_yaw_deg, head_yaw_deg, head_pitch_deg = self._overlay.player_preview_angles()
@@ -110,6 +110,7 @@ class ViewportOverlayMixin:
         self._overlay.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._crosshair.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._hotbar.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+        self._route_overlay.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._inventory.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._death.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._sync_player_name_overlays()
@@ -129,6 +130,7 @@ class ViewportOverlayMixin:
             self._overlay.raise_()
         elif self._overlays.inventory_open():
             self._inventory.raise_()
+        self._route_overlay.raise_()
         self._sync_gameplay_hud_visibility()
 
     def _gameplay_hud_active(self: "GLViewportWidget") -> bool:
@@ -141,9 +143,11 @@ class ViewportOverlayMixin:
         show_gameplay_hud = bool(self._gameplay_hud_active())
         show_othello_hud = bool((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.inventory_open()) and (not self._overlays.settings_open()) and self._state.is_othello_space() and (not bool(self._state.hud_visible)))
         show_crosshair = bool(show_gameplay_hud and self._state.is_first_person_view())
+        show_route_overlay = bool((not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.inventory_open()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and ((not self._state.is_othello_space()) and (bool(self._state.route_edit_active) or len(self._session.ai_route_paths()) > 0)))
 
         self._crosshair.setVisible(bool(show_crosshair))
         self._hotbar.setVisible(bool(show_gameplay_hud))
+        self._route_overlay.setVisible(bool(show_route_overlay))
         self._othello_hud.setVisible(bool(show_othello_hud))
 
         if self._hud is not None:
@@ -157,6 +161,8 @@ class ViewportOverlayMixin:
                 self._crosshair.raise_()
             if self._hud is not None and bool(self._debug_hud_active()):
                 self._hud.raise_()
+        if bool(show_route_overlay):
+            self._route_overlay.raise_()
         if bool(show_othello_hud):
             self._othello_hud.raise_()
         self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))

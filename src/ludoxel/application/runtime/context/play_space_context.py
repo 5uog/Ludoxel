@@ -45,3 +45,7 @@ class PlaySpaceContext:
 
     def known_space_ids(self) -> tuple[str, ...]:
         return PLAY_SPACE_IDS
+
+    def shutdown(self) -> None:
+        for session in self.all_sessions():
+            session.shutdown()

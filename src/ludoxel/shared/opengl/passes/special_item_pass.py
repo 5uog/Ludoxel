@@ -9,7 +9,8 @@ import numpy as np
 from ...math.vec3 import Vec3
 from ...rendering.first_person_geometry import build_first_person_special_item_face_rows
 from ...rendering.player_render_state import FirstPersonRenderState
-from ....features.othello.ui.special_item_art import build_special_item_icon_image
+from ...ui.common.special_item_art import build_special_item_icon_image
+from ...world.inventory.special_items import special_item_icon_keys
 from ..gl.shader_program import ShaderProgram
 from ..resources.image_texture import ImageTexture
 from .textured_face_pass import TexturedFacePass
@@ -23,7 +24,7 @@ class SpecialItemPass:
     def initialize(self, *, prog: ShaderProgram) -> None:
         self._face_pass = TexturedFacePass()
         self._face_pass.initialize(prog)
-        self._textures = {"start": ImageTexture.from_image(build_special_item_icon_image("start", size=192)), "settings": ImageTexture.from_image(build_special_item_icon_image("settings", size=192))}
+        self._textures = {str(icon_key): ImageTexture.from_image(build_special_item_icon_image(str(icon_key), size=192)) for icon_key in special_item_icon_keys()}
 
     def destroy(self) -> None:
         if self._face_pass is not None:

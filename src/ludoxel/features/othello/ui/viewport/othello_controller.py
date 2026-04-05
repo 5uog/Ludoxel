@@ -13,9 +13,9 @@ from ludoxel.application.audio import PLAYER_EVENT_OTHELLO_FLIP, PLAYER_EVENT_OT
 from ludoxel.features.othello.rendering.othello_render_state import OthelloRenderState
 from ludoxel.features.othello.domain.game.board import OTHELLO_BOARD_SURFACE_Y, raycast_board_square, square_center, square_index_to_name
 from ludoxel.features.othello.domain.book.opening_book import export_opening_book_file, import_opening_book_file, opening_book_summary
+from ludoxel.features.othello.domain.inventory.special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
 from ludoxel.features.othello.domain.game.rules import counts_for_board
 from ludoxel.features.othello.domain.game.types import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_WINNER_DRAW, OthelloAnalysis, SIDE_BLACK, SIDE_WHITE, difficulty_display_name
-from ludoxel.features.othello.domain.inventory.special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
 import ludoxel.shared.ui.viewport.controllers.settings_controller as settings_controller
 
 if TYPE_CHECKING:

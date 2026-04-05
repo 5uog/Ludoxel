@@ -32,7 +32,7 @@ class TexturedFacePass:
         self._prog = None
         self._upload_keys = ()
 
-    def draw(self, *, face_rows: tuple[np.ndarray, ...], view_proj: np.ndarray, tex_id: int, sun_dir: Vec3) -> tuple[int, int]:
+    def draw(self, *, face_rows: tuple[np.ndarray, ...], view_proj: np.ndarray, tex_id: int, sun_dir: Vec3, tint_color: tuple[float, float, float]=(1.0, 0.32, 0.32), tint_mix: float=0.0) -> tuple[int, int]:
         if self._prog is None or len(self._meshes) != 6 or int(tex_id) == 0:
             return (0, 0)
 
@@ -50,6 +50,8 @@ class TexturedFacePass:
             self._prog.set_mat4("u_viewProj", view_proj.astype(np.float32, copy=False))
             self._prog.set_int("u_texture", 0)
             self._prog.set_vec3("u_sunDir", float(sun_dir.x), float(sun_dir.y), float(sun_dir.z))
+            self._prog.set_vec3("u_tintColor", float(tint_color[0]), float(tint_color[1]), float(tint_color[2]))
+            self._prog.set_float("u_tintMix", float(max(0.0, min(1.0, float(tint_mix)))))
 
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, int(tex_id))

@@ -194,11 +194,13 @@ class AudioManager(QObject):
         self._play_surface_step(sound_group=sound_group, position=world_position)
 
     def play_othello_event(self, *, event_name: str, position: tuple[float, float, float]) -> None:
+        self.play_player_event(event_name=str(event_name), position=tuple(position))
+
+    def play_player_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None=None) -> None:
         pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
         if pool is None:
             return
-
-        self._play_pool(pool_key=f"player_event:{event_name}", pool=pool, position=Vec3(float(position[0]), float(position[1]), float(position[2])))
+        self._play_pool(pool_key=f"player_event:{event_name}", pool=pool, position=self._normalize_world_position(position))
 
     def sound_group_for_block_state(self, block_state_or_id: str) -> str:
         base_id, _props = parse_state(str(block_state_or_id))
@@ -276,6 +278,16 @@ class AudioManager(QObject):
 
     def _block_center(self, position: tuple[int, int, int]) -> Vec3:
         return Vec3(float(position[0]) + 0.5, float(position[1]) + 0.5, float(position[2]) + 0.5)
+
+    def _normalize_world_position(self, position: tuple[float, float, float] | Vec3 | None) -> Vec3:
+        if isinstance(position, Vec3):
+            return Vec3(float(position.x), float(position.y), float(position.z))
+        if position is not None:
+            return Vec3(float(position[0]), float(position[1]), float(position[2]))
+        if self._listener_pose is not None:
+            x, y, z, _yaw_deg, _pitch_deg, _roll_deg = self._listener_pose
+            return Vec3(float(x), float(y), float(z))
+        return Vec3(0.0, 0.0, 0.0)
 
     def _build_source_cache(self) -> None:
         for pool_key, pool in self._pool_specs.items():

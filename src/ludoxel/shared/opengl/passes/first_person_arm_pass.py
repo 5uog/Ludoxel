@@ -33,9 +33,9 @@ class FirstPersonArmPass:
     def set_skin_texture(self, skin_texture: ImageTexture) -> None:
         self._skin_texture = skin_texture
 
-    def draw(self, *, first_person: FirstPersonRenderState | None, view_proj: np.ndarray, sun_dir: Vec3) -> tuple[int, int]:
+    def draw(self, *, first_person: FirstPersonRenderState | None, view_proj: np.ndarray, sun_dir: Vec3, hurt_tint_strength: float=0.0) -> tuple[int, int]:
         if self._face_pass is None or self._skin_texture is None:
             return (0, 0)
 
         rows = build_first_person_arm_face_rows(first_person, projection=view_proj, skin_width=int(self._skin_texture.width), skin_height=int(self._skin_texture.height))
-        return self._face_pass.draw(face_rows=rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir)
+        return self._face_pass.draw(face_rows=rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(hurt_tint_strength)))))

@@ -81,7 +81,8 @@ _ARM_BASE_BOX_SLIM = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.
 _ARM_SLEEVE_BOX_SLIM = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
 _SPECIAL_ITEM_ICON_BOX = LocalBox(0.0, 0.0, 7.5 * _PX, 16.0 * _PX, 16.0 * _PX, 8.5 * _PX)
 _SPECIAL_ITEM_RENDER_SCALE = 1.55
-_SPECIAL_ITEM_ROTATE_Z_DEG = 180.0
+_SPECIAL_ITEM_ROTATE_Z_DEG = 0.0
+_SPECIAL_ITEM_UV_RECT = (1.0, 0.0, 0.0, 1.0)
 
 
 def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float, float, float]:
@@ -322,7 +323,7 @@ def build_first_person_special_item_face_rows(first_person: FirstPersonRenderSta
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform, translate_matrix(8.0 * _PX, 8.0 * _PX, 8.0 * _PX), rotate_z_deg_matrix(float(_SPECIAL_ITEM_ROTATE_Z_DEG)), translate_matrix(-8.0 * _PX, -8.0 * _PX, -8.0 * _PX))
     model = model_matrix_for_local_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    append_face_instance(buffers, int(FACE_POS_Z), model,(0.0, 0.0, 1.0, 1.0))
+    append_face_instance(buffers, int(FACE_POS_Z), model,_SPECIAL_ITEM_UV_RECT)
     return face_rows_from_buffers(buffers)
 
 

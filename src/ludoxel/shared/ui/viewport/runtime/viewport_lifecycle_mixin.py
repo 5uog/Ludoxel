@@ -12,7 +12,7 @@ from ..controllers import interaction_controller
 from ..controllers import settings_controller
 
 if TYPE_CHECKING:
-                                                                from ..gl_viewport_widget import GLViewportWidget
+    from ..gl_viewport_widget import GLViewportWidget
 
 
 class ViewportLifecycleMixin:
@@ -112,6 +112,10 @@ class ViewportLifecycleMixin:
             pass
         try:
             self.save_state()
+        except Exception:
+            pass
+        try:
+            self._sessions.shutdown()
         except Exception:
             pass
         try:

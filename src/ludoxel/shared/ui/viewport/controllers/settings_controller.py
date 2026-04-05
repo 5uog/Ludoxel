@@ -89,7 +89,7 @@ def apply_runtime_to_renderer(viewport: "GLViewportWidget") -> None:
 
 
 def sync_cloud_motion_pause(viewport: "GLViewportWidget") -> None:
-    pause_motion = (bool(viewport.loading_active()) or bool(viewport._overlays.paused()) or bool(viewport._overlays.dead()) or bool(viewport._overlays.inventory_open()) or bool(viewport._overlays.othello_settings_open()) or (not bool(viewport._application_active)))
+    pause_motion = (bool(viewport.loading_active()) or bool(viewport._overlays.paused()) or bool(viewport._overlays.dead()) or bool(viewport._overlays.inventory_open()) or bool(viewport._overlays.othello_settings_open()) or bool(getattr(viewport, "_ai_settings_overlay_open", False)) or bool(getattr(viewport, "_transient_modal_active", lambda: False)()) or (not bool(viewport._application_active)))
     viewport._renderer.set_cloud_motion_paused(bool(pause_motion))
     viewport._renderer.set_texture_animation_paused(bool(pause_motion))
 
@@ -104,7 +104,12 @@ def sync_audio_preferences(viewport: "GLViewportWidget") -> None:
 
 
 def inventory_available(viewport: "GLViewportWidget") -> bool:
-    return not viewport._state.is_othello_space()
+    return (not viewport._state.is_othello_space()) and (not bool(viewport._state.route_edit_active))
+
+
+def sync_hotbar_status(viewport: "GLViewportWidget") -> None:
+    show_health = bool((not viewport._state.creative_mode) and (not viewport._state.is_othello_space()) and (not viewport._state.route_edit_active))
+    viewport._hotbar.set_status(show_health=bool(show_health), health=float(viewport._session.player.health), max_health=float(viewport._session.player.max_health))
 
 
 def sync_hotbar_widgets(viewport: "GLViewportWidget") -> None:
@@ -118,6 +123,7 @@ def sync_hotbar_widgets(viewport: "GLViewportWidget") -> None:
     viewport._hotbar.set_animations_enabled(bool(viewport._state.animated_textures_enabled))
     viewport._inventory.sync_hotbar(slots=slots, selected_index=int(selected_index))
     viewport._hotbar.sync_hotbar(slots=slots, selected_index=int(selected_index))
+    sync_hotbar_status(viewport)
 
 
 def sync_crosshair_widgets(viewport: "GLViewportWidget") -> None:

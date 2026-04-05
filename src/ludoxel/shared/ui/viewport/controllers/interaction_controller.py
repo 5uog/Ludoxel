@@ -11,6 +11,7 @@ import time
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QGuiApplication
 
+from ludoxel.application.audio import PLAYER_EVENT_ATTACK_STRONG, PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_DAMAGE_HIT
 from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_GAMEPLAY_HUD, ACTION_TOGGLE_INVENTORY, action_for_key
 from ludoxel.shared.blocks.models.api import has_full_top_support_for_block
 from ludoxel.shared.blocks.state.state_codec import parse_state
@@ -27,6 +28,7 @@ from ludoxel.shared.systems.interaction_service import INTERACTION_ACTION_INTERA
 from ludoxel.shared.world.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
 from ludoxel.shared.ui.common import hotbar_index_from_key
 import ludoxel.features.othello.ui.viewport.othello_controller as othello_controller
+import ludoxel.shared.ui.viewport.controllers.ai_controller as ai_controller
 import ludoxel.shared.ui.viewport.controllers.settings_controller as settings_controller
 
 if TYPE_CHECKING:
@@ -77,7 +79,7 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
     viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
     viewport._overlay.reset_skin_requested.connect(lambda: settings_controller.reset_player_skin(viewport))
     viewport._death.respawn_requested.connect(lambda: respawn(viewport))
-    viewport._inventory.block_selected.connect(lambda block_id: on_inventory_selected(viewport, str(block_id)))
+    viewport._inventory.item_selected.connect(lambda item_id: on_inventory_selected(viewport, str(item_id)))
     viewport._inventory.hotbar_slot_selected.connect(lambda slot_index: settings_controller.select_hotbar_slot(viewport, int(slot_index)))
     viewport._inventory.hotbar_slot_assigned.connect(lambda slot_index, item_id: settings_controller.assign_hotbar_slot(viewport, int(slot_index), str(item_id)))
     viewport._inventory.closed.connect(lambda: on_inventory_closed(viewport))
@@ -85,10 +87,12 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
 
 def respawn(viewport: "GLViewportWidget") -> None:
     viewport._reset_held_mouse_actions()
+    ai_controller.cancel_route_edit(viewport)
     viewport._session.respawn()
     viewport._invalidate_selection_target()
     viewport._renderer.clear_selection()
     viewport._set_dead_overlay(False)
+    settings_controller.sync_hotbar_widgets(viewport)
 
 
 def resume_from_overlay(viewport: "GLViewportWidget") -> None:
@@ -122,6 +126,7 @@ def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bo
 
     target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
     viewport._reset_held_mouse_actions()
+    ai_controller.cancel_route_edit(viewport)
     viewport._clear_block_break_particles()
     othello_controller.clear_state_for_space_switch(viewport)
     viewport._state.current_space_id = normalized
@@ -169,12 +174,12 @@ def back_from_othello_settings(viewport: "GLViewportWidget") -> None:
     settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def on_inventory_selected(viewport: "GLViewportWidget", block_id: str) -> None:
+def on_inventory_selected(viewport: "GLViewportWidget", item_id: str) -> None:
     if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
         return
 
     active_index = viewport._state.active_hotbar_index()
-    viewport._state.set_hotbar_slot(int(active_index), str(block_id))
+    viewport._state.set_hotbar_slot(int(active_index), str(item_id))
     settings_controller.sync_hotbar_widgets(viewport)
     settings_controller.sync_first_person_target(viewport)
 
@@ -286,6 +291,9 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
     if not viewport._inp.captured():
         viewport._inp.set_mouse_capture(True)
         return False
+
+    if e.button() == Qt.MouseButton.LeftButton and bool(ai_controller.handle_route_left_click(viewport)):
+        return True
 
     if viewport._state.is_othello_space():
         interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose()
@@ -421,13 +429,26 @@ def handle_held_mouse_buttons(viewport: "GLViewportWidget") -> None:
 def _perform_left_click(viewport: "GLViewportWidget"):
     interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose()
     break_outcome = None
+    attack_result = None
+    attack_success = False
+    if is_my_world_space(viewport._state.current_space_id):
+        attack_result = viewport._session.attack_ai_player(origin=interaction_eye, direction=interaction_direction)
+        attack_success = bool(attack_result.success)
     if bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id):
-        break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
+        if not bool(attack_success):
+            break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
     viewport._first_person_motion.trigger_left_swing()
     if break_outcome is not None and bool(break_outcome.success):
         _spawn_break_particles(viewport, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
         viewport._audio.play_interaction(action=break_outcome.action, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
         viewport._invalidate_selection_target()
+    if bool(attack_success):
+        viewport._audio.play_player_event(event_name=PLAYER_EVENT_ATTACK_STRONG)
+        if attack_result is not None and attack_result.target_position is not None:
+            viewport._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(attack_result.target_position))
+        return InteractionOutcome(success=True)
+    if break_outcome is None or (not bool(break_outcome.success)):
+        viewport._audio.play_player_event(event_name=PLAYER_EVENT_ATTACK_WEAK)
     return break_outcome
 
 
@@ -952,6 +973,10 @@ def _apply_initial_right_mouse_repeat(viewport: "GLViewportWidget", *, now_s: fl
 
 def _perform_right_click(viewport: "GLViewportWidget") -> _RightClickResult:
     interaction_eye, interaction_direction, hit = _current_interaction_hit(viewport)
+    special_outcome = ai_controller.handle_special_right_click(viewport, origin=interaction_eye, direction=interaction_direction, hit=hit)
+    if special_outcome is not None:
+        _finalize_right_click(viewport, special_outcome)
+        return _RightClickResult(outcome=special_outcome)
     outcome = InteractionOutcome(success=False)
     repeat_action: str | None = None
     interact_cell: tuple[int, int, int] | None = None

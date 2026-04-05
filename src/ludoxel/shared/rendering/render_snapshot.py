@@ -32,6 +32,7 @@ class PlayerModelSnapshotDTO:
     limb_phase_rad: float
     limb_swing_amount: float
     crouch_amount: float
+    hurt_tint_strength: float = 0.0
     first_person_tx: float = 0.0
     first_person_ty: float = 0.0
     first_person_tz: float = 0.0

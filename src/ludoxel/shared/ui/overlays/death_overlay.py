@@ -34,9 +34,9 @@ class DeathOverlay(QWidget):
         title.setObjectName("title")
         pv.addWidget(title)
 
-        msg = QLabel("You fell below the world. Respawn returns you to the session spawn position.", panel)
-        msg.setWordWrap(True)
-        pv.addWidget(msg)
+        self._message = QLabel("You died. Respawn returns you to the session spawn position.", panel)
+        self._message.setWordWrap(True)
+        pv.addWidget(self._message)
 
         btn_row = QHBoxLayout()
         btn = QPushButton("Respawn", panel)
@@ -47,3 +47,9 @@ class DeathOverlay(QWidget):
 
         root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addStretch(1)
+
+    def set_message(self, text: str) -> None:
+        body = str(text).strip()
+        if not body:
+            body = "You died. Respawn returns you to the session spawn position."
+        self._message.setText(body)

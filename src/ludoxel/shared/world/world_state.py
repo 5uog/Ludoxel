@@ -97,6 +97,30 @@ class WorldState:
         with self._lock:
             return dict(self.blocks)
 
+    def snapshot_block_window(self, *, min_x: int, max_x: int, min_y: int, max_y: int, min_z: int, max_z: int) -> tuple[tuple[int, int, int, str], ...]:
+        x0 = int(min(min_x, max_x))
+        x1 = int(max(min_x, max_x))
+        y0 = int(min(min_y, max_y))
+        y1 = int(max(min_y, max_y))
+        z0 = int(min(min_z, max_z))
+        z1 = int(max(min_z, max_z))
+        with self._lock:
+            out: list[tuple[int, int, int, str]] = []
+            for x in range(int(x0), int(x1) + 1):
+                for z in range(int(z0), int(z1) + 1):
+                    ys = self._column_index.get((int(x), int(z)))
+                    if not ys:
+                        continue
+                    for y in ys:
+                        iy = int(y)
+                        if int(iy) < int(y0) or int(iy) > int(y1):
+                            continue
+                        state_str = self.blocks.get((int(x), int(iy), int(z)))
+                        if state_str is None:
+                            continue
+                        out.append((int(x), int(iy), int(z), str(state_str)))
+            return tuple(out)
+
     def snapshot_column(self, x: int, z: int) -> Dict[int, str]:
         cx = int(x)
         cz = int(z)

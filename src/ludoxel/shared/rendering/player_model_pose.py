@@ -57,6 +57,7 @@ _ARM_SWAY_Z = math.pi * 0.02
 
 _WORLD_SPECIAL_ITEM_BOX = LocalBox(1.0 * _PX, 1.0 * _PX, 7.5 * _PX, 15.0 * _PX, 15.0 * _PX, 8.5 * _PX)
 _WORLD_SPECIAL_ITEM_SCALE = 1.75
+_WORLD_SPECIAL_ITEM_UV_RECT = (1.0, 0.0, 0.0, 1.0)
 
 
 _HEAD_BASE_UV_PX = skin_cube_uv_map(pos_x=(0.0, 8.0, 8.0, 16.0), neg_x=(16.0, 8.0, 24.0, 16.0), pos_y=(8.0, 0.0, 16.0, 8.0), neg_y=(16.0, 0.0, 24.0, 8.0), pos_z=(8.0, 8.0, 16.0, 16.0), neg_z=(24.0, 8.0, 32.0, 16.0))
@@ -84,6 +85,7 @@ class PlayerModelPose:
     held_block_pose: HeldBlockPose | None
     special_item_face_rows: tuple[np.ndarray, ...]
     visible_special_item_icon: str | None
+    hurt_tint_strength: float
     shadow_rows: np.ndarray
 
 
@@ -127,7 +129,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
     empty_shadow = np.zeros((0, 16), dtype=np.float32)
     empty_faces = empty_textured_face_rows()
     if state is None:
-        return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, shadow_rows=empty_shadow)
+        return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, hurt_tint_strength=0.0, shadow_rows=empty_shadow)
 
     crouch = clampf(float(state.crouch_amount), 0.0, 1.0)
     body_yaw = math.radians(float(state.body_yaw_deg))
@@ -207,27 +209,27 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
             if not bool(state.is_first_person):
                 held_block_pose = HeldBlockPose(block_id=str(first_person.visible_block_id), block_kind=str(first_person.visible_block_kind), parent_transform=np.asarray(held_parent, dtype=np.float32))
         elif first_person.visible_special_item_icon is not None:
-            special_parent = compose_matrices(hand_anchor, build_third_person_item_hand_transform(), scale_matrix(float(_WORLD_SPECIAL_ITEM_SCALE), float(_WORLD_SPECIAL_ITEM_SCALE), 1.0), translate_matrix(8.0 * _PX, 8.0 * _PX, 8.0 * _PX), rotate_z_rad_matrix(float(math.pi)), translate_matrix(-8.0 * _PX, -8.0 * _PX, -8.0 * _PX))
+            special_parent = compose_matrices(hand_anchor, build_third_person_item_hand_transform(), scale_matrix(float(_WORLD_SPECIAL_ITEM_SCALE), float(_WORLD_SPECIAL_ITEM_SCALE), 1.0))
             special_shadow_rows = cube_rows_from_boxes((_WORLD_SPECIAL_ITEM_BOX,), special_parent)
             if special_shadow_rows.size > 0:
                 shadow_rows_list.extend([row for row in special_shadow_rows])
             if not bool(state.is_first_person):
                 buffers: list[list[list[float]]] = [[] for _ in range(6)]
                 special_model = model_matrix_for_local_box(special_parent, _WORLD_SPECIAL_ITEM_BOX)
-                append_face_instance(buffers, int(FACE_POS_Z), special_model,(0.0, 0.0, 1.0, 1.0))
+                append_face_instance(buffers, int(FACE_POS_Z), special_model,_WORLD_SPECIAL_ITEM_UV_RECT)
                 special_item_face_rows = face_rows_from_buffers(buffers)
                 visible_special_item_icon = str(first_person.visible_special_item_icon)
 
     shadow_rows = np.ascontiguousarray(np.vstack(shadow_rows_list), dtype=np.float32)
 
     if bool(state.is_first_person):
-        return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, shadow_rows=shadow_rows)
+        return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, hurt_tint_strength=float(state.hurt_tint_strength), shadow_rows=shadow_rows)
 
     skin_buffers: list[list[list[float]]] = [[] for _ in range(6)]
     for model, uv_map in ((head, _HEAD_BASE_UV_PX),(hat, _HEAD_HAT_UV_PX),(body, _BODY_BASE_UV_PX),(jacket, _BODY_JACKET_UV_PX),(right_arm, VISUAL_LEFT_ARM_BASE_UV_PX),(right_sleeve, VISUAL_LEFT_ARM_SLEEVE_UV_PX),(left_arm, VISUAL_RIGHT_ARM_BASE_UV_PX),(left_sleeve, VISUAL_RIGHT_ARM_SLEEVE_UV_PX),(right_leg, _RIGHT_LEG_BASE_UV_PX),(right_pants, _RIGHT_LEG_PANTS_UV_PX),(left_leg, _LEFT_LEG_BASE_UV_PX),(left_pants, _LEFT_LEG_PANTS_UV_PX)):
         _append_unit_cube_rows(skin_buffers, model, uv_map)
 
-    return PlayerModelPose(skin_face_rows=face_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, shadow_rows=shadow_rows)
+    return PlayerModelPose(skin_face_rows=face_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, hurt_tint_strength=float(state.hurt_tint_strength), shadow_rows=shadow_rows)
 
 
 def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:

@@ -14,7 +14,7 @@ from ....shared.systems.gravity_system import GRAVITY_AFFECTED_TAG
 from ....features.othello.domain.game.board import OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint
 from ....features.othello.domain.game.types import OthelloGameState
 from ....shared.world.play_space import normalize_play_space_id
-from ..persistence import AppState, AppStateStore, PersistedOthelloSpace, PersistedPlaySpace, PersistedPlayer, PersistedWorld
+from ..persistence import AppState, AppStateStore, PersistedAiPlayer, PersistedOthelloSpace, PersistedPlaySpace, PersistedPlayer, PersistedWorld
 from ..context.play_space_context import PlaySpaceContext
 from ..state.runtime_preferences import RuntimePreferences, coerce_runtime_preferences
 from ..managers.session_manager import SessionManager
@@ -31,6 +31,10 @@ def _load_player_into_session(*, session: SessionManager, player: PersistedPlaye
     runtime_player.on_ground = bool(player.on_ground)
     runtime_player.flying = bool(getattr(player, "flying", False)) and bool(allow_flying)
     runtime_player.crouch_eye_offset = float(max(0.0, min(float(runtime_player.crouch_eye_drop), float(player.crouch_eye_offset))))
+    runtime_player.health = float(getattr(player, "health", 20.0))
+    runtime_player.max_health = float(max(1.0, getattr(player, "max_health", 20.0)))
+    runtime_player.hurt_cooldown_s = 0.0
+    runtime_player.clamp_health()
     runtime_player.hold_jump_queued = False
     runtime_player.auto_jump_pending = False
     runtime_player.auto_jump_cooldown_s = float(max(0.0, float(player.auto_jump_cooldown_s)))
@@ -110,7 +114,7 @@ def _restore_player_overlap_exemptions(session: SessionManager) -> None:
 
 def _persisted_player_from_session(session: SessionManager, *, allow_flying: bool) -> PersistedPlayer:
     player = session.player
-    return PersistedPlayer(pos_x=float(player.position.x), pos_y=float(player.position.y), pos_z=float(player.position.z), vel_x=float(player.velocity.x), vel_y=float(player.velocity.y), vel_z=float(player.velocity.z), yaw_deg=float(player.yaw_deg), pitch_deg=float(player.pitch_deg), on_ground=bool(player.on_ground), flying=bool(player.flying and allow_flying), auto_jump_cooldown_s=float(max(0.0, float(player.auto_jump_cooldown_s))), crouch_eye_offset=float(max(0.0, min(float(player.crouch_eye_drop), float(player.crouch_eye_offset)))))
+    return PersistedPlayer(pos_x=float(player.position.x), pos_y=float(player.position.y), pos_z=float(player.position.z), vel_x=float(player.velocity.x), vel_y=float(player.velocity.y), vel_z=float(player.velocity.z), yaw_deg=float(player.yaw_deg), pitch_deg=float(player.pitch_deg), on_ground=bool(player.on_ground), flying=bool(player.flying and allow_flying), auto_jump_cooldown_s=float(max(0.0, float(player.auto_jump_cooldown_s))), crouch_eye_offset=float(max(0.0, min(float(player.crouch_eye_drop), float(player.crouch_eye_offset)))), health=float(player.health), max_health=float(player.max_health))
 
 
 def _persisted_world_from_session(session: SessionManager) -> PersistedWorld:
@@ -133,10 +137,12 @@ def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceC
 
         _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
         _maybe_replace_world(sessions.my_world, state.my_world.world)
+        sessions.my_world.set_ai_players(tuple(player.to_state() for player in state.my_world.ai_players))
         _restore_player_overlap_exemptions(sessions.my_world)
 
         _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
         _maybe_replace_world(sessions.othello, state.othello_space.world)
+        sessions.othello.set_ai_players(tuple(player.to_state() for player in state.othello_space.ai_players))
         ensure_othello_board_layout(sessions.othello.world)
         _lift_player_above_othello_board_if_needed(sessions.othello)
         _restore_player_overlap_exemptions(sessions.othello)
@@ -158,5 +164,5 @@ def save_state(*, project_root: Path, sessions: PlaySpaceContext, renderer, runt
     inventory = persisted_inventory_from_runtime(state_runtime)
     persisted_othello_state = (othello_game_state or OthelloGameState()).normalized()
 
-    state = AppState(current_space_id=normalize_play_space_id(state_runtime.current_space_id), settings=settings, inventory=inventory, othello_settings=state_runtime.othello_settings.normalized(), my_world=PersistedPlaySpace(player=_persisted_player_from_session(sessions.my_world, allow_flying=bool(state_runtime.creative_mode)), world=_persisted_world_from_session(sessions.my_world)), othello_space=PersistedOthelloSpace(player=_persisted_player_from_session(sessions.othello, allow_flying=False), world=_persisted_world_from_session(sessions.othello), othello_game_state=persisted_othello_state))
+    state = AppState(current_space_id=normalize_play_space_id(state_runtime.current_space_id), settings=settings, inventory=inventory, othello_settings=state_runtime.othello_settings.normalized(), my_world=PersistedPlaySpace(player=_persisted_player_from_session(sessions.my_world, allow_flying=bool(state_runtime.creative_mode)), world=_persisted_world_from_session(sessions.my_world), ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.my_world.ai_states())), othello_space=PersistedOthelloSpace(player=_persisted_player_from_session(sessions.othello, allow_flying=False), world=_persisted_world_from_session(sessions.othello), othello_game_state=persisted_othello_state, ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.othello.ai_states())))
     store.save(state)

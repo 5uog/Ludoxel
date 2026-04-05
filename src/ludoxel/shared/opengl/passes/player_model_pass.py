@@ -9,13 +9,14 @@ import numpy as np
 
 from OpenGL.GL import glBindVertexArray, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable, GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LESS, GL_TRIANGLES
 
-from ....features.othello.ui.special_item_art import build_special_item_icon_image
 from ...math.vec3 import Vec3
 from ...rendering.faces.face_occlusion import is_local_face_occluded
 from ...rendering.faces.face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
 from ...rendering.held_block_geometry import held_block_model_boxes_for_kind
 from ...rendering.player_model_pose import HeldBlockPose, PlayerModelPose
 from ...rendering.faces.uv_rects import UVRect
+from ...ui.common.special_item_art import build_special_item_icon_image
+from ...world.inventory.special_items import special_item_icon_keys
 from ..gl.gl_state_guard import GLStateGuard
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.shader_program import ShaderProgram
@@ -45,7 +46,7 @@ class PlayerModelPass:
         self._atlas = atlas
         self._skin_texture = skin_texture
         self._uv_lookup = uv_lookup
-        self._special_item_textures = {"start": ImageTexture.from_image(build_special_item_icon_image("start", size=192)), "settings": ImageTexture.from_image(build_special_item_icon_image("settings", size=192))}
+        self._special_item_textures = {str(icon_key): ImageTexture.from_image(build_special_item_icon_image(str(icon_key), size=192)) for icon_key in special_item_icon_keys()}
         self._shadow_upload_key = None
 
     def destroy(self) -> None:
@@ -97,7 +98,7 @@ class PlayerModelPass:
         draw_calls = 0
         instances = 0
 
-        dc, inst = self._face_pass.draw(face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir)
+        dc, inst = self._face_pass.draw(face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))))
         draw_calls += int(dc)
         instances += int(inst)
 

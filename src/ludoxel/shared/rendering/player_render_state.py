@@ -42,5 +42,6 @@ class PlayerRenderState:
     limb_phase_rad: float
     limb_swing_amount: float
     crouch_amount: float
+    hurt_tint_strength: float = 0.0
     is_first_person: bool = True
     first_person: FirstPersonRenderState | None = None

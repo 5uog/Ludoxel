@@ -8,14 +8,14 @@ import time
 
 from PyQt6.QtWidgets import QMessageBox
 
-from .....application.audio import PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
+from .....application.audio import PLAYER_EVENT_DAMAGE_HIT, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
 from ....math.vec3 import Vec3
 from ....rendering.player_render_state_composer import compose_player_render_state
 from .....features.othello.ui.viewport import othello_controller
-from ..controllers import interaction_controller, settings_controller
+from ..controllers import ai_controller, interaction_controller, settings_controller
 
 if TYPE_CHECKING:
-                                                                from ..gl_viewport_widget import GLViewportWidget
+    from ..gl_viewport_widget import GLViewportWidget
 
 
 class ViewportRenderLoopMixin:
@@ -143,14 +143,20 @@ class ViewportRenderLoopMixin:
 
         fb_w, fb_h, dpr = self._framebuffer_extent()
         player_state = compose_player_render_state(snapshot=snapshot, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry, arm_rotation_limit_min_deg=float(self._state.arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(self._state.arm_rotation_limit_max_deg))
+        extra_player_states = ai_controller.extra_player_render_states(self, snapshot=snapshot)
 
-        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(camera_snapshot.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snapshot.falling_blocks), block_break_particles=tuple(snapshot.block_break_particles))
+        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(camera_snapshot.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, extra_player_states=tuple(extra_player_states), othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snapshot.falling_blocks), block_break_particles=tuple(snapshot.block_break_particles))
+        route_paths = ai_controller.route_overlay_paths(self)
+        if route_paths:
+            self._route_overlay.set_paths(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(camera_snapshot.fov_deg), z_far=float(self._renderer._cfg.camera.z_far), paths=route_paths)
+        else:
+            self._route_overlay.clear_paths()
         self._update_world_player_name_tag(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
         self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self: "GLViewportWidget") -> None:
-        if bool(self.loading_active()) or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
+        if bool(self.loading_active()) or bool(getattr(self, "_ai_settings_overlay_open", False)) or bool(self._transient_modal_active()) or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
             return
         self._runner.update()
 
@@ -160,10 +166,6 @@ class ViewportRenderLoopMixin:
 
         self._inp.poll_relative_mouse_delta()
         frame, mouse_delta = self._inp.consume(invert_x=self._state.invert_x, invert_y=self._state.invert_y)
-
-        if float(self._session.player.position.y) < -64.0:
-            self._set_dead_overlay(True)
-            return
 
         sprint = bool(frame.sprint)
         if bool(self._state.auto_sprint_enabled) and float(frame.move_f) > 1e-6 and (not bool(frame.crouch)):
@@ -176,7 +178,9 @@ class ViewportRenderLoopMixin:
         self._recent_crouch_held = bool(frame.crouch)
         prev_player_y = float(self._session.player.position.y)
         interaction_controller.handle_held_mouse_buttons_pre_step(self)
-        step_result = self._session.step(dt=float(dt), move_f=frame.move_f, move_s=frame.move_s, jump_held=bool(frame.jump_held), jump_pressed=bool(frame.jump_pressed), sprint=bool(sprint), crouch=bool(frame.crouch), mdx=float(mouse_delta.dx), mdy=float(mouse_delta.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
+        paused_ai_actor_ids = () if (not bool(ai_controller.route_edit_active(self)) or self._ai_route_edit_actor_id is None) else (str(self._ai_route_edit_actor_id),)
+        step_result = self._session.step(dt=float(dt), move_f=frame.move_f, move_s=frame.move_s, jump_held=bool(frame.jump_held), jump_pressed=bool(frame.jump_pressed), sprint=bool(sprint), crouch=bool(frame.crouch), mdx=float(mouse_delta.dx), mdy=float(mouse_delta.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled), paused_ai_actor_ids=tuple(paused_ai_actor_ids))
+        settings_controller.sync_hotbar_status(self)
         delta_player_y = float(self._session.player.position.y) - float(prev_player_y)
         if float(delta_player_y) >= 1e-4:
             self._recent_vertical_motion_sign = 1
@@ -198,6 +202,15 @@ class ViewportRenderLoopMixin:
 
         if bool(step_result.landed):
             self._audio.play_surface_event(event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks))
+        if bool(step_result.play_damage_sound):
+            self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=(float(self._session.player.position.x), float(self._session.player.position.y) + float(self._session.player.eye_height) * 0.5, float(self._session.player.position.z)))
+        for position in tuple(step_result.ai_damage_sound_positions):
+            self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
+
+        if step_result.death_reason is not None:
+            self._death.set_message("You died. Respawn returns you to the session spawn position.")
+            self._set_dead_overlay(True)
+            return
 
         if self._state.is_othello_space():
             state_before = self._othello_match.game_state()
@@ -211,10 +224,6 @@ class ViewportRenderLoopMixin:
                 if (float(now) - float(self._othello_last_passive_hud_sync_s)) >= 0.20:
                     self._othello_last_passive_hud_sync_s = float(now)
                     othello_controller.sync_hud_text(self)
-
-        if float(self._session.player.position.y) < -64.0:
-            self._set_dead_overlay(True)
-            return
 
         interaction_controller.handle_held_mouse_buttons(self)
         self._emit_debug_hud_payload()

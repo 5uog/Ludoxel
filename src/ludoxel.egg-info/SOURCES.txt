@@ -320,6 +320,19 @@ assets/audio/block/wood/place/place1.wav
 assets/audio/block/wood/place/place2.wav
 assets/audio/block/wood/place/place3.wav
 assets/audio/block/wood/place/place4.wav
+assets/audio/player/attack/strong1.wav
+assets/audio/player/attack/strong2.wav
+assets/audio/player/attack/strong3.wav
+assets/audio/player/attack/strong4.wav
+assets/audio/player/attack/strong5.wav
+assets/audio/player/attack/strong6.wav
+assets/audio/player/attack/weak1.wav
+assets/audio/player/attack/weak2.wav
+assets/audio/player/attack/weak3.wav
+assets/audio/player/attack/weak4.wav
+assets/audio/player/damage/hit1.wav
+assets/audio/player/damage/hit2.wav
+assets/audio/player/damage/hit3.wav
 assets/audio/player/footstep/ancient_debris/step1.wav
 assets/audio/player/footstep/ancient_debris/step2.wav
 assets/audio/player/footstep/ancient_debris/step3.wav
@@ -1919,6 +1932,7 @@ src/ludoxel/application/boot/run_app.py
 src/ludoxel/application/boot/meta/__init__.py
 src/ludoxel/application/boot/meta/version.py
 src/ludoxel/application/runtime/__init__.py
+src/ludoxel/application/runtime/ai_player_types.py
 src/ludoxel/application/runtime/keybinds.py
 src/ludoxel/application/runtime/player_name.py
 src/ludoxel/application/runtime/context/__init__.py
@@ -1929,6 +1943,9 @@ src/ludoxel/application/runtime/context/my_world/session_factory.py
 src/ludoxel/application/runtime/context/othello/__init__.py
 src/ludoxel/application/runtime/context/othello/session_factory.py
 src/ludoxel/application/runtime/managers/__init__.py
+src/ludoxel/application/runtime/managers/ai_player_manager.py
+src/ludoxel/application/runtime/managers/player_combat.py
+src/ludoxel/application/runtime/managers/player_kinematics.py
 src/ludoxel/application/runtime/managers/session_manager.py
 src/ludoxel/application/runtime/persistence/__init__.py
 src/ludoxel/application/runtime/persistence/app_state_schema.py
@@ -1937,11 +1954,14 @@ src/ludoxel/application/runtime/persistence/json_file_store.py
 src/ludoxel/application/runtime/pipelines/__init__.py
 src/ludoxel/application/runtime/pipelines/runtime_state_pipeline.py
 src/ludoxel/application/runtime/state/__init__.py
+src/ludoxel/application/runtime/state/ai_route_hotbar_defaults.py
 src/ludoxel/application/runtime/state/audio_preferences.py
 src/ludoxel/application/runtime/state/camera_perspective.py
 src/ludoxel/application/runtime/state/runtime_preferences.py
 src/ludoxel/application/runtime/state/session_settings.py
 src/ludoxel/application/runtime/tasks/__init__.py
+src/ludoxel/application/runtime/tasks/ai_route_planner.py
+src/ludoxel/application/runtime/tasks/ai_route_worker.py
 src/ludoxel/application/runtime/tasks/fixed_step_runner.py
 src/ludoxel/application/runtime/tasks/state_persistence.py
 src/ludoxel/features/othello/application/__init__.py
@@ -2117,6 +2137,7 @@ src/ludoxel/shared/ui/game_screen.py
 src/ludoxel/shared/ui/main_window.py
 src/ludoxel/shared/ui/qt_input_adapter.py
 src/ludoxel/shared/ui/common/__init__.py
+src/ludoxel/shared/ui/common/core_special_item_art.py
 src/ludoxel/shared/ui/common/hotbar_support.py
 src/ludoxel/shared/ui/common/hotbar_visuals.py
 src/ludoxel/shared/ui/common/item_photo_provider.py
@@ -2124,7 +2145,9 @@ src/ludoxel/shared/ui/common/item_slots.py
 src/ludoxel/shared/ui/common/player_name_dialog.py
 src/ludoxel/shared/ui/common/sidebar_dialog.py
 src/ludoxel/shared/ui/common/single_instance.py
+src/ludoxel/shared/ui/common/special_item_art.py
 src/ludoxel/shared/ui/common/status_overlay.py
+src/ludoxel/shared/ui/common/themed_notice_dialog.py
 src/ludoxel/shared/ui/config/game_loop_params.py
 src/ludoxel/shared/ui/config/gl_surface_format.py
 src/ludoxel/shared/ui/config/pause_overlay_params.py
@@ -2136,6 +2159,8 @@ src/ludoxel/shared/ui/hud/hud_controller.py
 src/ludoxel/shared/ui/hud/hud_payload.py
 src/ludoxel/shared/ui/hud/hud_widget.py
 src/ludoxel/shared/ui/hud/player_metrics.py
+src/ludoxel/shared/ui/hud/route_overlay_widget.py
+src/ludoxel/shared/ui/overlays/ai_settings_overlay.py
 src/ludoxel/shared/ui/overlays/death_overlay.py
 src/ludoxel/shared/ui/overlays/inventory_overlay.py
 src/ludoxel/shared/ui/overlays/pause_overlay.py
@@ -2153,6 +2178,7 @@ src/ludoxel/shared/ui/theme/fonts.py
 src/ludoxel/shared/ui/theme/main.qss
 src/ludoxel/shared/ui/viewport/gl_viewport_widget.py
 src/ludoxel/shared/ui/viewport/controllers/__init__.py
+src/ludoxel/shared/ui/viewport/controllers/ai_controller.py
 src/ludoxel/shared/ui/viewport/controllers/interaction_controller.py
 src/ludoxel/shared/ui/viewport/controllers/settings_controller.py
 src/ludoxel/shared/ui/viewport/runtime/__init__.py
@@ -2172,5 +2198,8 @@ src/ludoxel/shared/world/config/collision_params.py
 src/ludoxel/shared/world/config/movement_params.py
 src/ludoxel/shared/world/config/render_distance.py
 src/ludoxel/shared/world/entities/player_entity.py
+src/ludoxel/shared/world/inventory/core_special_items.py
 src/ludoxel/shared/world/inventory/hotbar.py
 src/ludoxel/shared/world/inventory/hotbar_defaults.py
+src/ludoxel/shared/world/inventory/special_item_descriptor.py
+src/ludoxel/shared/world/inventory/special_items.py

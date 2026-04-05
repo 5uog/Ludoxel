@@ -73,7 +73,7 @@ class FramePipeline:
         ok = bool(self.cfg.shadow.enabled and info.ok and int(info.tex_id) != 0 and int(info.inst_count) > 0)
         return (ok, int(info.size) if ok else 0)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None, othello_state: OthelloRenderState | None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...], block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...]) -> RendererFrameMetrics:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None, extra_player_states: tuple[PlayerRenderState, ...], othello_state: OthelloRenderState | None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...], block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...]) -> RendererFrameMetrics:
         bx = int(math.floor(float(eye.x)))
         by = int(math.floor(float(eye.y)))
         bz = int(math.floor(float(eye.z)))
@@ -86,12 +86,23 @@ class FramePipeline:
         else:
             light_vp = mat4.identity()
 
-        player_pose = build_player_model_pose(player_state)
+        all_player_states = tuple([player_state, *tuple(extra_player_states)])
+        player_poses = tuple(build_player_model_pose(state) for state in all_player_states)
 
         shadow_metrics = PassFrameMetrics()
         if bool(self.state.shadow_enabled or self.state.debug_shadow):
             othello_shadow_key = None if othello_state is None else (bool(othello_state.enabled), othello_state.board, othello_state.animations)
-            shadow_metrics = self.shadow_pass.render(light_vp, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), extra_draw=(lambda vp: (lambda player_result, othello_result: (int(player_result[0]) + int(othello_result[0]), int(player_result[1]) + int(othello_result[1])))(self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp), self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp))), extra_cache_key=(player_state, othello_shadow_key))
+            def _draw_shadow_extra(vp):
+                player_draw_calls = 0
+                player_instances = 0
+                for pose in player_poses:
+                    draw_calls, instances = self.player_pass.draw_shadow(pose=pose, light_view_proj=vp)
+                    player_draw_calls += int(draw_calls)
+                    player_instances += int(instances)
+                othello_result = self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp)
+                return (int(player_draw_calls + int(othello_result[0])), int(player_instances + int(othello_result[1])))
+
+            shadow_metrics = self.shadow_pass.render(light_vp, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), extra_draw=_draw_shadow_extra, extra_cache_key=(tuple(all_player_states), othello_shadow_key))
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
@@ -127,7 +138,12 @@ class FramePipeline:
         particle_dc, particle_inst = self.block_break_particle_pass.draw(samples=block_break_particles, view_proj=vp, sun_dir=self.state.sun_dir, camera_forward=forward)
         world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + particle_dc), instances=int(world_metrics.instances + particle_inst), rendered=bool(world_metrics.rendered or (particle_dc > 0)))
 
-        player_dc, player_inst = self.player_pass.draw_world(pose=player_pose, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=self.cfg.shadow, shadow_info=shadow_info)
+        player_dc = 0
+        player_inst = 0
+        for pose in player_poses:
+            draw_calls, instances = self.player_pass.draw_world(pose=pose, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=self.cfg.shadow, shadow_info=shadow_info)
+            player_dc += int(draw_calls)
+            player_inst += int(instances)
 
         world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + player_dc), instances=int(world_metrics.instances + player_inst), rendered=bool(world_metrics.rendered or (player_dc > 0)))
 
@@ -149,6 +165,6 @@ class FramePipeline:
             elif first_person.visible_block_id is not None:
                 self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             else:
-                self.first_person_arm_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
+                self.first_person_arm_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir, hurt_tint_strength=float(0.0 if player_state is None else player_state.hurt_tint_strength))
 
         return RendererFrameMetrics(world=world_metrics, shadow=shadow_metrics)

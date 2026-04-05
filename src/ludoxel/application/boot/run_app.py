@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 from ...shared.project_paths import default_project_root, default_resource_root, is_frozen_application
@@ -46,7 +47,12 @@ def _ensure_python_314(project_root: Path) -> None:
         existing_python_path = str(env.get("PYTHONPATH", "")).strip()
         env["PYTHONPATH"] = str(src_root) if not existing_python_path else str(src_root) + os.pathsep + str(existing_python_path)
 
-    os.execve(str(candidate), [str(candidate), "-m", "ludoxel", *sys.argv[1:]], env)
+    argv = [str(candidate), "-m", "ludoxel", *sys.argv[1:]]
+    if os.name == "nt":
+        completed = subprocess.run(argv, env=env, cwd=str(project_root), check=False)
+        raise SystemExit(int(completed.returncode))
+
+    os.execve(str(candidate), argv, env)
 
 
 def run_app() -> None:

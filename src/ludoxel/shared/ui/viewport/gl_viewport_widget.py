@@ -10,6 +10,7 @@ from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel
 
 from ....application.audio import AudioManager
+from ....application.runtime.ai_player_types import AiSpawnEggSettings
 from ....application.runtime.context.play_space_context import PlaySpaceContext
 from ....application.runtime.state.runtime_preferences import RuntimePreferences
 from ....application.runtime.tasks.fixed_step_runner import FixedStepRunner
@@ -27,6 +28,7 @@ from ..config.gl_surface_format import build_gl_surface_format
 from ..hud.crosshair_widget import CrosshairWidget
 from ..hud.hud_controller import HudController
 from ..hud.hotbar_widget import HotbarWidget
+from ..hud.route_overlay_widget import RouteOverlayWidget
 from ..common.status_overlay import status_overlay_title_image_path
 from ..overlays.death_overlay import DeathOverlay
 from ..overlays.inventory_overlay import InventoryOverlay
@@ -112,6 +114,14 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
         self._pause_preview_cache_key: tuple[object, ...] | None = None
         self._pause_preview_frame = QImage()
         self._block_break_particles = ()
+        self._ai_edit_settings = AiSpawnEggSettings().normalized()
+        self._ai_settings_overlay_open: bool = False
+        self._transient_modal_depth: int = 0
+        self._ai_edit_actor_id: str | None = None
+        self._ai_route_edit_actor_id: str | None = None
+        self._ai_route_edit_points = []
+        self._ai_route_edit_closed: bool = False
+        self._ai_route_hover_index: int | None = None
         self._left_mouse_held: bool = False
         self._right_mouse_held: bool = False
         self._left_mouse_repeat_due_s: float = 0.0
@@ -154,6 +164,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
 
         self._hotbar = HotbarWidget(parent=self, resource_root=self._resource_root, registry=self._session.block_registry)
         self._hotbar.setVisible(False)
+        self._route_overlay = RouteOverlayWidget(self)
+        self._route_overlay.setVisible(True)
 
         self._inventory = InventoryOverlay(parent=self, resource_root=self._resource_root, registry=self._session.block_registry)
 

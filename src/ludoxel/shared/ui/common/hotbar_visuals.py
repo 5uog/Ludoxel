@@ -3,26 +3,26 @@
 from __future__ import annotations
 
 from ...blocks.registry.block_registry import BlockRegistry
-from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
+from ...world.inventory.special_items import get_special_item_descriptor
 
 
-def _block_display_name(registry: BlockRegistry, block_id: str | None) -> str:
-    bid = "" if block_id is None else str(block_id).strip()
-    if not bid:
+def _item_display_name(registry: BlockRegistry, item_id: str | None) -> str:
+    normalized_item_id = "" if item_id is None else str(item_id).strip()
+    if not normalized_item_id:
         return "Empty Hand"
 
-    special = get_special_item_descriptor(bid)
+    special = get_special_item_descriptor(normalized_item_id)
     if special is not None:
         return str(special.display_name)
 
-    block = registry.get(bid)
+    block = registry.get(normalized_item_id)
     if block is None:
-        return bid
+        return normalized_item_id
     return str(block.display_name)
 
 
-def hotbar_slot_tooltip(registry: BlockRegistry, *, slot_index: int, block_id: str | None) -> str:
-    bid = "" if block_id is None else str(block_id).strip()
-    if not bid:
+def hotbar_slot_tooltip(registry: BlockRegistry, *, slot_index: int, item_id: str | None) -> str:
+    normalized_item_id = "" if item_id is None else str(item_id).strip()
+    if not normalized_item_id:
         return f"Hotbar Slot {int(slot_index) + 1}\nEmpty Hand"
-    return f"Hotbar Slot {int(slot_index) + 1}\n{_block_display_name(registry, bid)}\n{bid}"
+    return f"Hotbar Slot {int(slot_index) + 1}\n{_item_display_name(registry, normalized_item_id)}\n{normalized_item_id}"

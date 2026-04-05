@@ -18,7 +18,7 @@ from ....rendering.third_person_camera import resolve_camera
 from ..controllers import settings_controller
 
 if TYPE_CHECKING:
-                                                                from ..gl_viewport_widget import GLViewportWidget
+    from ..gl_viewport_widget import GLViewportWidget
 
 _EFFECTIVE_CAMERA_PITCH_LIMIT_DEG = 89.5
 
@@ -122,6 +122,45 @@ class ViewportStateMixin:
         self._right_mouse_held = False
         self._left_mouse_repeat_due_s = 0.0
         self._disable_right_mouse_repeat()
+
+    def _reset_recent_input_state(self: "GLViewportWidget") -> None:
+        self._recent_move_f = 0.0
+        self._recent_move_s = 0.0
+        self._recent_jump_held = False
+        self._recent_jump_pressed = False
+        self._recent_crouch_held = False
+        self._recent_vertical_motion_sign = 0
+
+    def _transient_modal_active(self: "GLViewportWidget") -> bool:
+        return bool(int(getattr(self, "_transient_modal_depth", 0)) > 0)
+
+    def _begin_transient_modal(self: "GLViewportWidget") -> None:
+        self._transient_modal_depth = int(getattr(self, "_transient_modal_depth", 0)) + 1
+        self._reset_held_mouse_actions()
+        self._inp.reset()
+        self._reset_recent_input_state()
+        self._inp.set_mouse_capture(False)
+        self._runner.start()
+        self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
+
+    def _end_transient_modal(self: "GLViewportWidget") -> None:
+        depth = int(getattr(self, "_transient_modal_depth", 0))
+        if int(depth) <= 0:
+            return
+        self._transient_modal_depth = int(depth) - 1
+        self._reset_held_mouse_actions()
+        self._inp.reset()
+        self._reset_recent_input_state()
+        if bool(self._transient_modal_active()):
+            settings_controller.sync_cloud_motion_pause(self)
+            return
+        self._runner.start()
+        self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
+        if (not bool(self.loading_active())) and (not bool(self._overlays.any_modal_open())) and (not bool(getattr(self, "_ai_settings_overlay_open", False))) and bool(getattr(self, "_application_active", True)):
+            self._inp.set_mouse_capture(True)
+            self.arm_resume_refresh()
 
     def _arm_left_mouse_repeat(self: "GLViewportWidget", *, now_s: float) -> None:
         self._left_mouse_held = True
