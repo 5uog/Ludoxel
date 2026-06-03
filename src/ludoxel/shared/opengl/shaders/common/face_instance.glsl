@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 vec3 face_world_pos(int faceIdx, vec2 uv, vec3 mn, vec3 mx) {
     if (faceIdx == 0) {

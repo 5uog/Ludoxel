@@ -1,0 +1,672 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
+
+from ludoxel.application.runtime.runtime_ai_player_types import (
+  AI_DEFAULT_HELD_ITEM_ID,
+  AiPlayerState,
+  AiRoutePoint,
+  normalize_ai_mode,
+  normalize_ai_personality,
+  normalize_ai_route_style,
+  normalize_route_points,
+)
+from ludoxel.application.runtime.runtime_keybinds import KeybindSettings
+from ludoxel.application.runtime.runtime_player_name import normalize_player_name
+from ludoxel.application.runtime.state.state_ai_route_hotbar_defaults import default_ai_route_hotbar_slots
+from ludoxel.application.runtime.state.state_audio_preferences import AudioPreferences
+from ludoxel.application.runtime.state.state_camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, normalize_camera_perspective
+from ludoxel.application.runtime.state.state_runtime_preferences import RuntimePreferences
+from ludoxel.features.othello.domain.game.game_types import OthelloGameState, OthelloSettings
+from ludoxel.features.othello.domain.inventory.inventory_hotbar_defaults import default_othello_hotbar_slots
+from ludoxel.shared.math.math_scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
+from ludoxel.shared.rendering.rendering_player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
+from ludoxel.shared.ui.hud.hud_crosshair_art import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
+from ludoxel.shared.world.config.config_movement_params import DEFAULT_MOVEMENT_PARAMS
+from ludoxel.shared.world.config.config_render_distance import clamp_render_distance_chunks
+from ludoxel.shared.world.inventory.inventory_hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
+from ludoxel.shared.world.inventory.inventory_hotbar_defaults import default_hotbar_slots
+from ludoxel.shared.world.world_play_space import PLAY_SPACE_MY_WORLD, normalize_play_space_id
+
+from ....shared.world.world_state import WorldState
+
+
+def _inventory_branch_to_dict(*, slots: object, selected_index: object, size: int) -> tuple[list[str], int]:
+  normalized_slots = normalize_hotbar_slots(slots, size=int(size))
+  normalized_index = normalize_hotbar_index(coerce_int(selected_index, 0), size=int(size))
+  return [str(value) for value in normalized_slots], int(normalized_index)
+
+
+def _inventory_branch_from_dict(raw_slots: object, raw_index: object, *, size: int, default_slots: tuple[str, ...], default_index: int) -> tuple[tuple[str, ...], int]:
+  normalized_slots = normalize_hotbar_slots(default_slots if raw_slots is None else raw_slots, size=int(size))
+  normalized_index = normalize_hotbar_index(coerce_int(raw_index, default_index), size=int(size))
+  return normalized_slots, int(normalized_index)
+
+
+def _coerce_xyz_triplet(raw: object, *, default: tuple[float, float, float]) -> tuple[float, float, float]:
+  if not isinstance(raw, (list, tuple)) or len(raw) != 3:
+    raw = default
+  return (coerce_float(raw[0], default[0]), coerce_float(raw[1], default[1]), coerce_float(raw[2], default[2]))
+
+
+@dataclass(frozen=True)
+class PersistedSettings:
+  fov_deg: float = 80.0
+  mouse_sens_deg_per_px: float = 0.09
+
+  invert_x: bool = False
+  invert_y: bool = False
+
+  outline_selection: bool = True
+
+  cloud_wireframe: bool = False
+  world_wireframe: bool = False
+  shadow_enabled: bool = True
+
+  sun_az_deg: float = 45.0
+  sun_el_deg: float = 60.0
+
+  cloud_enabled: bool = True
+  cloud_density: int = 1
+  cloud_seed: int = 1337
+  cloud_flow_direction: str = "west_to_east"
+
+  creative_mode: bool = False
+  block_break_repeat_interval_s: float = float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S)
+  block_place_repeat_interval_s: float = float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
+  block_interact_repeat_interval_s: float = float(RuntimePreferences.DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S)
+  block_break_particle_spawn_rate: float = float(RuntimePreferences.DEFAULT_BLOCK_BREAK_PARTICLE_SPAWN_RATE)
+  block_break_particle_speed_scale: float = float(RuntimePreferences.DEFAULT_BLOCK_BREAK_PARTICLE_SPEED_SCALE)
+  auto_jump_enabled: bool = False
+  auto_sprint_enabled: bool = False
+  hide_hud: bool = False
+  hide_hand: bool = False
+  player_name: str = ""
+  crosshair_mode: str = CROSSHAIR_MODE_DEFAULT
+  crosshair_pixels: tuple[str, ...] = field(default_factory=lambda: EMPTY_CROSSHAIR_PIXELS)
+  player_skin_kind: str = PLAYER_SKIN_KIND_ALEX
+  camera_perspective: str = CAMERA_PERSPECTIVE_FIRST_PERSON
+  fullscreen: bool = False
+  view_bobbing_enabled: bool = True
+  camera_shake_enabled: bool = True
+  view_bobbing_strength: float = 0.35
+  camera_shake_strength: float = 0.20
+  arm_rotation_limit_min_deg: float = float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MIN_DEG)
+  arm_rotation_limit_max_deg: float = float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MAX_DEG)
+  arm_swing_duration_s: float = float(RuntimePreferences.DEFAULT_ARM_SWING_DURATION_S)
+  animated_textures_enabled: bool = True
+
+  gravity: float = float(DEFAULT_MOVEMENT_PARAMS.gravity)
+  walk_speed: float = float(DEFAULT_MOVEMENT_PARAMS.walk_speed)
+  sprint_speed: float = float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)
+  jump_v0: float = float(DEFAULT_MOVEMENT_PARAMS.jump_v0)
+  auto_jump_cooldown_s: float = float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)
+  fly_speed: float = float(DEFAULT_MOVEMENT_PARAMS.fly_speed)
+  fly_ascend_speed: float = float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)
+  fly_descend_speed: float = float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)
+
+  render_distance_chunks: int = 6
+  debug_shadow: bool = False
+  vsync_on: bool = False
+
+  hud_visible: bool = False
+  window_left: int | None = None
+  window_top: int | None = None
+  window_width: int = 1280
+  window_height: int = 720
+  window_screen_name: str = ""
+  keybinds: KeybindSettings = field(default_factory=KeybindSettings)
+  audio: AudioPreferences = field(default_factory=AudioPreferences)
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "fov_deg": float(self.fov_deg),
+      "mouse_sens_deg_per_px": float(self.mouse_sens_deg_per_px),
+      "invert_x": bool(self.invert_x),
+      "invert_y": bool(self.invert_y),
+      "outline_selection": bool(self.outline_selection),
+      "cloud_wireframe": bool(self.cloud_wireframe),
+      "world_wireframe": bool(self.world_wireframe),
+      "shadow_enabled": bool(self.shadow_enabled),
+      "sun_az_deg": float(self.sun_az_deg),
+      "sun_el_deg": float(self.sun_el_deg),
+      "cloud_enabled": bool(self.cloud_enabled),
+      "cloud_density": int(self.cloud_density),
+      "cloud_seed": int(self.cloud_seed),
+      "cloud_flow_direction": str(self.cloud_flow_direction),
+      "creative_mode": bool(self.creative_mode),
+      "block_break_repeat_interval_s": float(self.block_break_repeat_interval_s),
+      "block_place_repeat_interval_s": float(self.block_place_repeat_interval_s),
+      "block_interact_repeat_interval_s": float(self.block_interact_repeat_interval_s),
+      "block_break_particle_spawn_rate": float(self.block_break_particle_spawn_rate),
+      "block_break_particle_speed_scale": float(self.block_break_particle_speed_scale),
+      "auto_jump_enabled": bool(self.auto_jump_enabled),
+      "auto_sprint_enabled": bool(self.auto_sprint_enabled),
+      "hide_hud": bool(self.hide_hud),
+      "hide_hand": bool(self.hide_hand),
+      "player_name": normalize_player_name(self.player_name),
+      "crosshair_mode": normalize_crosshair_mode(self.crosshair_mode),
+      "crosshair_pixels": list(normalize_crosshair_pixels(self.crosshair_pixels)),
+      "player_skin_kind": normalize_player_skin_kind(self.player_skin_kind),
+      "camera_perspective": normalize_camera_perspective(self.camera_perspective),
+      "fullscreen": bool(self.fullscreen),
+      "view_bobbing_enabled": bool(self.view_bobbing_enabled),
+      "camera_shake_enabled": bool(self.camera_shake_enabled),
+      "view_bobbing_strength": float(self.view_bobbing_strength),
+      "camera_shake_strength": float(self.camera_shake_strength),
+      "arm_rotation_limit_min_deg": float(self.arm_rotation_limit_min_deg),
+      "arm_rotation_limit_max_deg": float(self.arm_rotation_limit_max_deg),
+      "arm_swing_duration_s": float(self.arm_swing_duration_s),
+      "animated_textures_enabled": bool(self.animated_textures_enabled),
+      "gravity": float(self.gravity),
+      "walk_speed": float(self.walk_speed),
+      "sprint_speed": float(self.sprint_speed),
+      "jump_v0": float(self.jump_v0),
+      "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
+      "fly_speed": float(self.fly_speed),
+      "fly_ascend_speed": float(self.fly_ascend_speed),
+      "fly_descend_speed": float(self.fly_descend_speed),
+      "render_distance_chunks": int(self.render_distance_chunks),
+      "debug_shadow": bool(self.debug_shadow),
+      "vsync_on": bool(self.vsync_on),
+      "hud_visible": bool(self.hud_visible),
+      "window_left": self.window_left,
+      "window_top": self.window_top,
+      "window_width": int(self.window_width),
+      "window_height": int(self.window_height),
+      "window_screen_name": str(self.window_screen_name),
+      "keybinds": self.keybinds.normalized().to_dict(),
+      "audio": self.audio.normalized().to_dict(),
+    }
+
+  @staticmethod
+  def from_dict(d: dict[str, Any]) -> "PersistedSettings":
+    rd = clamp_render_distance_chunks(mapping_int(d, "render_distance_chunks", 6))
+
+    return PersistedSettings(
+      fov_deg=mapping_float(d, "fov_deg", 80.0),
+      mouse_sens_deg_per_px=mapping_float(d, "mouse_sens_deg_per_px", 0.09),
+      invert_x=mapping_bool(d, "invert_x", False),
+      invert_y=mapping_bool(d, "invert_y", False),
+      outline_selection=mapping_bool(d, "outline_selection", True),
+      cloud_wireframe=mapping_bool(d, "cloud_wireframe", mapping_bool(d, "cloud_wire", False)),
+      world_wireframe=mapping_bool(d, "world_wireframe", mapping_bool(d, "world_wire", False)),
+      shadow_enabled=mapping_bool(d, "shadow_enabled", True),
+      sun_az_deg=mapping_float(d, "sun_az_deg", 45.0),
+      sun_el_deg=mapping_float(d, "sun_el_deg", 60.0),
+      cloud_enabled=mapping_bool(d, "cloud_enabled", True),
+      cloud_density=mapping_int(d, "cloud_density", 1),
+      cloud_seed=mapping_int(d, "cloud_seed", 1337),
+      cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"),
+      creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)),
+      block_break_repeat_interval_s=mapping_float(d, "block_break_repeat_interval_s", float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S)),
+      block_place_repeat_interval_s=mapping_float(d, "block_place_repeat_interval_s", float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)),
+      block_interact_repeat_interval_s=mapping_float(d, "block_interact_repeat_interval_s", float(RuntimePreferences.DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S)),
+      block_break_particle_spawn_rate=mapping_float(d, "block_break_particle_spawn_rate", float(RuntimePreferences.DEFAULT_BLOCK_BREAK_PARTICLE_SPAWN_RATE)),
+      block_break_particle_speed_scale=mapping_float(d, "block_break_particle_speed_scale", float(RuntimePreferences.DEFAULT_BLOCK_BREAK_PARTICLE_SPEED_SCALE)),
+      auto_jump_enabled=mapping_bool(d, "auto_jump_enabled", False),
+      auto_sprint_enabled=mapping_bool(d, "auto_sprint_enabled", False),
+      hide_hud=mapping_bool(d, "hide_hud", False),
+      hide_hand=mapping_bool(d, "hide_hand", False),
+      player_name=normalize_player_name(mapping_str(d, "player_name", "")),
+      crosshair_mode=normalize_crosshair_mode(mapping_str(d, "crosshair_mode", CROSSHAIR_MODE_DEFAULT)),
+      crosshair_pixels=normalize_crosshair_pixels(d.get("crosshair_pixels", EMPTY_CROSSHAIR_PIXELS)),
+      player_skin_kind=normalize_player_skin_kind(mapping_str(d, "player_skin_kind", PLAYER_SKIN_KIND_ALEX)),
+      camera_perspective=normalize_camera_perspective(mapping_str(d, "camera_perspective", CAMERA_PERSPECTIVE_FIRST_PERSON)),
+      fullscreen=mapping_bool(d, "fullscreen", False),
+      view_bobbing_enabled=mapping_bool(d, "view_bobbing_enabled", True),
+      camera_shake_enabled=mapping_bool(d, "camera_shake_enabled", True),
+      view_bobbing_strength=mapping_float(d, "view_bobbing_strength", 0.35),
+      camera_shake_strength=mapping_float(d, "camera_shake_strength", 0.20),
+      arm_rotation_limit_min_deg=mapping_float(d, "arm_rotation_limit_min_deg", float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MIN_DEG)),
+      arm_rotation_limit_max_deg=mapping_float(d, "arm_rotation_limit_max_deg", float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MAX_DEG)),
+      arm_swing_duration_s=mapping_float(d, "arm_swing_duration_s", float(RuntimePreferences.DEFAULT_ARM_SWING_DURATION_S)),
+      animated_textures_enabled=mapping_bool(d, "animated_textures_enabled", True),
+      gravity=mapping_float(d, "gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)),
+      walk_speed=mapping_float(d, "walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)),
+      sprint_speed=mapping_float(d, "sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)),
+      jump_v0=mapping_float(d, "jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)),
+      auto_jump_cooldown_s=mapping_float(d, "auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)),
+      fly_speed=mapping_float(d, "fly_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_speed)),
+      fly_ascend_speed=mapping_float(d, "fly_ascend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)),
+      fly_descend_speed=mapping_float(d, "fly_descend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)),
+      render_distance_chunks=int(rd),
+      debug_shadow=mapping_bool(d, "debug_shadow", False),
+      vsync_on=mapping_bool(d, "vsync_on", False),
+      hud_visible=mapping_bool(d, "hud_visible", False),
+      window_left=(None if d.get("window_left") is None else coerce_int(d.get("window_left"), 0)),
+      window_top=(None if d.get("window_top") is None else coerce_int(d.get("window_top"), 0)),
+      window_width=max(320, coerce_int(d.get("window_width", 1280), 1280)),
+      window_height=max(240, coerce_int(d.get("window_height", 720), 720)),
+      window_screen_name=mapping_str(d, "window_screen_name", ""),
+      keybinds=KeybindSettings.from_dict(d.get("keybinds", {})),
+      audio=AudioPreferences.from_dict(d.get("audio", {})),
+    )
+
+
+@dataclass(frozen=True)
+class PersistedInventory:
+  HOTBAR_SIZE: ClassVar[int] = DOMAIN_HOTBAR_SIZE
+
+  creative_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
+  creative_selected_hotbar_index: int = 0
+  survival_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
+  survival_selected_hotbar_index: int = 0
+  othello_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_othello_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
+  othello_selected_hotbar_index: int = 0
+  route_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_ai_route_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
+  route_selected_hotbar_index: int = 0
+
+  def to_dict(self) -> dict[str, Any]:
+    creative_slots, creative_idx = _inventory_branch_to_dict(slots=self.creative_hotbar_slots, selected_index=self.creative_selected_hotbar_index, size=self.HOTBAR_SIZE)
+    survival_slots, survival_idx = _inventory_branch_to_dict(slots=self.survival_hotbar_slots, selected_index=self.survival_selected_hotbar_index, size=self.HOTBAR_SIZE)
+    othello_slots, othello_idx = _inventory_branch_to_dict(slots=self.othello_hotbar_slots, selected_index=self.othello_selected_hotbar_index, size=self.HOTBAR_SIZE)
+    route_slots, route_idx = _inventory_branch_to_dict(slots=self.route_hotbar_slots, selected_index=self.route_selected_hotbar_index, size=self.HOTBAR_SIZE)
+
+    return {
+      "creative_hotbar_slots": creative_slots,
+      "creative_selected_hotbar_index": int(creative_idx),
+      "survival_hotbar_slots": survival_slots,
+      "survival_selected_hotbar_index": int(survival_idx),
+      "othello_hotbar_slots": othello_slots,
+      "othello_selected_hotbar_index": int(othello_idx),
+      "route_hotbar_slots": route_slots,
+      "route_selected_hotbar_index": int(route_idx),
+    }
+
+  @staticmethod
+  def from_dict(d: dict[str, Any]) -> "PersistedInventory":
+    legacy_slots, legacy_idx = _inventory_branch_from_dict(
+      d.get("hotbar_slots"), d.get("selected_hotbar_index", 0), size=PersistedInventory.HOTBAR_SIZE, default_slots=default_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE), default_index=0
+    )
+    creative_slots, creative_idx = _inventory_branch_from_dict(
+      d.get("creative_hotbar_slots", legacy_slots), d.get("creative_selected_hotbar_index", legacy_idx), size=PersistedInventory.HOTBAR_SIZE, default_slots=legacy_slots, default_index=legacy_idx
+    )
+    survival_slots, survival_idx = _inventory_branch_from_dict(
+      d.get("survival_hotbar_slots", legacy_slots), d.get("survival_selected_hotbar_index", legacy_idx), size=PersistedInventory.HOTBAR_SIZE, default_slots=legacy_slots, default_index=legacy_idx
+    )
+    othello_slots, othello_idx = _inventory_branch_from_dict(
+      d.get("othello_hotbar_slots", default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)),
+      d.get("othello_selected_hotbar_index", 0),
+      size=PersistedInventory.HOTBAR_SIZE,
+      default_slots=default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
+      default_index=0,
+    )
+    route_slots, route_idx = _inventory_branch_from_dict(
+      d.get("route_hotbar_slots", default_ai_route_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)),
+      d.get("route_selected_hotbar_index", 0),
+      size=PersistedInventory.HOTBAR_SIZE,
+      default_slots=default_ai_route_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
+      default_index=0,
+    )
+
+    return PersistedInventory(
+      creative_hotbar_slots=creative_slots,
+      creative_selected_hotbar_index=int(creative_idx),
+      survival_hotbar_slots=survival_slots,
+      survival_selected_hotbar_index=int(survival_idx),
+      othello_hotbar_slots=othello_slots,
+      othello_selected_hotbar_index=int(othello_idx),
+      route_hotbar_slots=route_slots,
+      route_selected_hotbar_index=int(route_idx),
+    )
+
+
+@dataclass(frozen=True)
+class PersistedPlayer:
+  pos_x: float = 0.0
+  pos_y: float = 1.0
+  pos_z: float = -10.0
+
+  vel_x: float = 0.0
+  vel_y: float = 0.0
+  vel_z: float = 0.0
+
+  yaw_deg: float = 0.0
+  pitch_deg: float = 0.0
+
+  on_ground: bool = False
+  flying: bool = False
+  auto_jump_cooldown_s: float = 0.0
+  crouch_eye_offset: float = 0.0
+  health: float = 20.0
+  max_health: float = 20.0
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "pos": [float(self.pos_x), float(self.pos_y), float(self.pos_z)],
+      "vel": [float(self.vel_x), float(self.vel_y), float(self.vel_z)],
+      "yaw_deg": float(self.yaw_deg),
+      "pitch_deg": float(self.pitch_deg),
+      "on_ground": bool(self.on_ground),
+      "flying": bool(self.flying),
+      "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
+      "crouch_eye_offset": float(self.crouch_eye_offset),
+      "health": float(self.health),
+      "max_health": float(self.max_health),
+    }
+
+  @staticmethod
+  def from_dict(d: dict[str, Any]) -> "PersistedPlayer":
+    pos_x, pos_y, pos_z = _coerce_xyz_triplet(d.get("pos"), default=(0.0, 1.0, -10.0))
+    vel_x, vel_y, vel_z = _coerce_xyz_triplet(d.get("vel"), default=(0.0, 0.0, 0.0))
+
+    cooldown_raw = d.get("auto_jump_cooldown_s", d.get("jump_cooldown_s", 0.0))
+
+    return PersistedPlayer(
+      pos_x=pos_x,
+      pos_y=pos_y,
+      pos_z=pos_z,
+      vel_x=vel_x,
+      vel_y=vel_y,
+      vel_z=vel_z,
+      yaw_deg=coerce_float(d.get("yaw_deg", 0.0), 0.0),
+      pitch_deg=coerce_float(d.get("pitch_deg", 0.0), 0.0),
+      on_ground=coerce_bool(d.get("on_ground", False), False),
+      flying=coerce_bool(d.get("flying", False), False),
+      auto_jump_cooldown_s=coerce_float(cooldown_raw, 0.0),
+      crouch_eye_offset=coerce_float(d.get("crouch_eye_offset", 0.0), 0.0),
+      health=coerce_float(d.get("health", 20.0), 20.0),
+      max_health=max(1.0, coerce_float(d.get("max_health", 20.0), 20.0)),
+    )
+
+
+@dataclass(frozen=True)
+class PersistedWorld:
+  revision: int = 0
+  blocks: dict[tuple[int, int, int], str] = field(default_factory=dict)
+
+  def to_dict(self) -> dict[str, Any]:
+    world = WorldState(blocks=dict(self.blocks), revision=int(self.revision))
+    return world.to_persisted_dict()
+
+  @staticmethod
+  def from_dict(d: dict[str, Any]) -> "PersistedWorld":
+    world = WorldState.from_persisted_dict(d)
+    return PersistedWorld(revision=int(world.revision), blocks=world.snapshot_blocks())
+
+
+@dataclass(frozen=True)
+class PersistedAiPlayer:
+  actor_id: str = ""
+  mode: str = "idle"
+  personality: str = "aggressive"
+  can_place_blocks: bool = False
+  held_item_id: str | None = AI_DEFAULT_HELD_ITEM_ID
+  pos_x: float = 0.0
+  pos_y: float = 1.0
+  pos_z: float = 0.0
+  vel_x: float = 0.0
+  vel_y: float = 0.0
+  vel_z: float = 0.0
+  yaw_deg: float = 0.0
+  pitch_deg: float = 0.0
+  health: float = 20.0
+  max_health: float = 20.0
+  on_ground: bool = False
+  flying: bool = False
+  route_points: tuple[AiRoutePoint, ...] = field(default_factory=tuple)
+  route_closed: bool = False
+  route_run: bool = False
+  route_style: str = "strict"
+  route_target_index: int = 0
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "actor_id": str(self.actor_id),
+      "mode": str(self.mode),
+      "personality": str(self.personality),
+      "can_place_blocks": bool(self.can_place_blocks),
+      "held_item_id": (None if self.held_item_id is None else str(self.held_item_id)),
+      "pos": [float(self.pos_x), float(self.pos_y), float(self.pos_z)],
+      "vel": [float(self.vel_x), float(self.vel_y), float(self.vel_z)],
+      "yaw_deg": float(self.yaw_deg),
+      "pitch_deg": float(self.pitch_deg),
+      "health": float(self.health),
+      "max_health": float(self.max_health),
+      "on_ground": bool(self.on_ground),
+      "flying": bool(self.flying),
+      "route_points": [[float(point.x), float(point.y), float(point.z)] for point in normalize_route_points(self.route_points)],
+      "route_closed": bool(self.route_closed),
+      "route_run": bool(self.route_run),
+      "route_style": str(self.route_style),
+      "route_target_index": int(self.route_target_index),
+    }
+
+  def to_state(self) -> AiPlayerState:
+    return AiPlayerState(
+      actor_id=str(self.actor_id),
+      mode=normalize_ai_mode(self.mode),
+      personality=normalize_ai_personality(self.personality),
+      can_place_blocks=bool(self.can_place_blocks),
+      held_item_id=(None if self.held_item_id is None else str(self.held_item_id)),
+      pos_x=float(self.pos_x),
+      pos_y=float(self.pos_y),
+      pos_z=float(self.pos_z),
+      vel_x=float(self.vel_x),
+      vel_y=float(self.vel_y),
+      vel_z=float(self.vel_z),
+      yaw_deg=float(self.yaw_deg),
+      pitch_deg=float(self.pitch_deg),
+      health=float(self.health),
+      max_health=float(self.max_health),
+      on_ground=bool(self.on_ground),
+      flying=bool(self.flying),
+      route_points=normalize_route_points(self.route_points),
+      route_closed=bool(self.route_closed),
+      route_run=bool(self.route_run),
+      route_style=normalize_ai_route_style(self.route_style),
+      route_target_index=int(self.route_target_index),
+    ).normalized()
+
+  @staticmethod
+  def from_state(state: AiPlayerState) -> "PersistedAiPlayer":
+    normalized = state.normalized()
+    return PersistedAiPlayer(
+      actor_id=str(normalized.actor_id),
+      mode=str(normalized.mode),
+      personality=str(normalized.personality),
+      can_place_blocks=bool(normalized.can_place_blocks),
+      held_item_id=(None if normalized.held_item_id is None else str(normalized.held_item_id)),
+      pos_x=float(normalized.pos_x),
+      pos_y=float(normalized.pos_y),
+      pos_z=float(normalized.pos_z),
+      vel_x=float(normalized.vel_x),
+      vel_y=float(normalized.vel_y),
+      vel_z=float(normalized.vel_z),
+      yaw_deg=float(normalized.yaw_deg),
+      pitch_deg=float(normalized.pitch_deg),
+      health=float(normalized.health),
+      max_health=float(normalized.max_health),
+      on_ground=bool(normalized.on_ground),
+      flying=bool(normalized.flying),
+      route_points=tuple(normalized.route_points),
+      route_closed=bool(normalized.route_closed),
+      route_run=bool(normalized.route_run),
+      route_style=str(normalized.route_style),
+      route_target_index=int(normalized.route_target_index),
+    )
+
+  @staticmethod
+  def from_dict(data: dict[str, Any]) -> "PersistedAiPlayer":
+    if not isinstance(data, dict):
+      return PersistedAiPlayer()
+    pos_x, pos_y, pos_z = _coerce_xyz_triplet(data.get("pos"), default=(0.0, 1.0, 0.0))
+    vel_x, vel_y, vel_z = _coerce_xyz_triplet(data.get("vel"), default=(0.0, 0.0, 0.0))
+    held_item_id_raw = data.get("held_item_id", AI_DEFAULT_HELD_ITEM_ID)
+    held_item_id = None if held_item_id_raw is None else str(held_item_id_raw).strip()
+    return PersistedAiPlayer(
+      actor_id=mapping_str(data, "actor_id", ""),
+      mode=normalize_ai_mode(data.get("mode", "idle")),
+      personality=normalize_ai_personality(data.get("personality", "aggressive")),
+      can_place_blocks=coerce_bool(data.get("can_place_blocks", False), False),
+      held_item_id=(held_item_id if held_item_id else None),
+      pos_x=pos_x,
+      pos_y=pos_y,
+      pos_z=pos_z,
+      vel_x=vel_x,
+      vel_y=vel_y,
+      vel_z=vel_z,
+      yaw_deg=coerce_float(data.get("yaw_deg", 0.0), 0.0),
+      pitch_deg=coerce_float(data.get("pitch_deg", 0.0), 0.0),
+      health=coerce_float(data.get("health", 20.0), 20.0),
+      max_health=max(1.0, coerce_float(data.get("max_health", 20.0), 20.0)),
+      on_ground=coerce_bool(data.get("on_ground", False), False),
+      flying=coerce_bool(data.get("flying", False), False),
+      route_points=normalize_route_points(data.get("route_points", ())),
+      route_closed=coerce_bool(data.get("route_closed", False), False),
+      route_run=coerce_bool(data.get("route_run", False), False),
+      route_style=normalize_ai_route_style(data.get("route_style", "strict")),
+      route_target_index=max(0, coerce_int(data.get("route_target_index", 0), 0)),
+    )
+
+
+@dataclass(frozen=True)
+class PersistedPlaySpace:
+  player: PersistedPlayer = field(default_factory=PersistedPlayer)
+  world: PersistedWorld = field(default_factory=PersistedWorld)
+  ai_players: tuple[PersistedAiPlayer, ...] = field(default_factory=tuple)
+
+  def to_dict(self) -> dict[str, Any]:
+    return {"player": self.player.to_dict(), "world": self.world.to_dict(), "ai_players": [player.to_dict() for player in self.ai_players]}
+
+  @staticmethod
+  def from_dict(data: dict[str, Any]) -> "PersistedPlaySpace":
+    if not isinstance(data, dict):
+      return PersistedPlaySpace()
+
+    raw_player = data.get("player", {})
+    raw_world = data.get("world", {})
+    raw_ai_players = data.get("ai_players", ())
+    ai_players = tuple(PersistedAiPlayer.from_dict(entry) for entry in raw_ai_players) if isinstance(raw_ai_players, (list, tuple)) else ()
+    return PersistedPlaySpace(
+      player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(),
+      world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(),
+      ai_players=ai_players,
+    )
+
+
+@dataclass(frozen=True)
+class PersistedOthelloSpace:
+  player: PersistedPlayer = field(default_factory=PersistedPlayer)
+  world: PersistedWorld = field(default_factory=PersistedWorld)
+  othello_game_state: OthelloGameState = field(default_factory=OthelloGameState)
+  ai_players: tuple[PersistedAiPlayer, ...] = field(default_factory=tuple)
+
+  def to_dict(self) -> dict[str, Any]:
+    return {"player": self.player.to_dict(), "world": self.world.to_dict(), "othello_game_state": self.othello_game_state.to_dict(), "ai_players": [player.to_dict() for player in self.ai_players]}
+
+  @staticmethod
+  def from_dict(data: dict[str, Any]) -> "PersistedOthelloSpace":
+    if not isinstance(data, dict):
+      return PersistedOthelloSpace()
+
+    raw_player = data.get("player", {})
+    raw_world = data.get("world", {})
+    raw_game = data.get("othello_game_state", {})
+    raw_ai_players = data.get("ai_players", ())
+    ai_players = tuple(PersistedAiPlayer.from_dict(entry) for entry in raw_ai_players) if isinstance(raw_ai_players, (list, tuple)) else ()
+    return PersistedOthelloSpace(
+      player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(),
+      world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(),
+      othello_game_state=(OthelloGameState.from_dict(raw_game) if isinstance(raw_game, dict) else OthelloGameState()),
+      ai_players=ai_players,
+    )
+
+
+@dataclass(frozen=True)
+class PlayerStateFile:
+  version: int = 7
+  current_space_id: str = PLAY_SPACE_MY_WORLD
+  settings: PersistedSettings = field(default_factory=PersistedSettings)
+  inventory: PersistedInventory = field(default_factory=PersistedInventory)
+  othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "version": int(self.version),
+      "current_space_id": str(normalize_play_space_id(self.current_space_id)),
+      "settings": self.settings.to_dict(),
+      "inventory": self.inventory.to_dict(),
+      "othello_settings": self.othello_settings.normalized().to_dict(),
+    }
+
+  @staticmethod
+  def from_dict(d: dict[str, Any]) -> "PlayerStateFile":
+    if not isinstance(d, dict):
+      return PlayerStateFile()
+
+    version = coerce_int(d.get("version", 1), 1)
+    raw_settings = d.get("settings", {})
+    raw_inventory = d.get("inventory", {})
+    raw_othello_settings = d.get("othello_settings", {})
+
+    settings = PersistedSettings.from_dict(raw_settings) if isinstance(raw_settings, dict) else PersistedSettings()
+    inventory = PersistedInventory.from_dict(raw_inventory) if isinstance(raw_inventory, dict) else PersistedInventory()
+    othello_settings = OthelloSettings.from_dict(raw_othello_settings) if isinstance(raw_othello_settings, dict) else OthelloSettings()
+
+    return PlayerStateFile(
+      version=int(max(1, version)), current_space_id=normalize_play_space_id(d.get("current_space_id", PLAY_SPACE_MY_WORLD)), settings=settings, inventory=inventory, othello_settings=othello_settings
+    )
+
+
+@dataclass(frozen=True)
+class WorldStateFile:
+  version: int = 3
+  my_world: PersistedPlaySpace = field(default_factory=PersistedPlaySpace)
+  othello_space: PersistedOthelloSpace = field(default_factory=PersistedOthelloSpace)
+
+  def to_dict(self) -> dict[str, Any]:
+    return {"version": int(self.version), "spaces": {"my_world": self.my_world.to_dict(), "othello": self.othello_space.to_dict()}}
+
+  @staticmethod
+  def from_dict(d: dict[str, Any]) -> "WorldStateFile":
+    if not isinstance(d, dict):
+      return WorldStateFile()
+
+    version = coerce_int(d.get("version", 1), 1)
+
+    if "spaces" not in d:
+      raw_player = d.get("player", {})
+      raw_world = d.get("world", {})
+      my_world = PersistedPlaySpace(
+        player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(),
+        world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(),
+      )
+      return WorldStateFile(version=int(max(3, version)), my_world=my_world, othello_space=PersistedOthelloSpace())
+
+    raw_spaces = d.get("spaces", {})
+    if not isinstance(raw_spaces, dict):
+      raw_spaces = {}
+
+    raw_my_world = raw_spaces.get("my_world", {})
+    raw_othello = raw_spaces.get("othello", {})
+
+    my_world = PersistedPlaySpace.from_dict(raw_my_world) if isinstance(raw_my_world, dict) else PersistedPlaySpace()
+    othello_space = PersistedOthelloSpace.from_dict(raw_othello) if isinstance(raw_othello, dict) else PersistedOthelloSpace()
+
+    return WorldStateFile(version=int(max(3, version)), my_world=my_world, othello_space=othello_space)
+
+
+@dataclass(frozen=True)
+class AppState:
+  current_space_id: str
+  settings: PersistedSettings
+  inventory: PersistedInventory
+  othello_settings: OthelloSettings
+  my_world: PersistedPlaySpace
+  othello_space: PersistedOthelloSpace
+
+  @staticmethod
+  def default() -> "AppState":
+    return AppState(
+      current_space_id=PLAY_SPACE_MY_WORLD,
+      settings=PersistedSettings(),
+      inventory=PersistedInventory(),
+      othello_settings=OthelloSettings(),
+      my_world=PersistedPlaySpace(),
+      othello_space=PersistedOthelloSpace(),
+    )

@@ -1,0 +1,48 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+export const REQUIRED_PACKAGE_SCRIPTS = Object.freeze([
+  'help',
+  'check',
+  'ci',
+  'lint',
+  'lint:js',
+  'lint:js:fix',
+  'lint:css',
+  'lint:css:fix',
+  'lint:py',
+  'format',
+  'format:web',
+  'format:py',
+  'format:check',
+  'format:web:check',
+  'format:py:check',
+  'tools:export',
+  'tools:export:help',
+  'tools:export:src',
+  'tools:export:root',
+  'tools:export:archive',
+  'tools:test',
+  'docs:export',
+  'package:check',
+  'docs:check',
+  'license:check',
+  'resources:check',
+  'shader:check',
+  'build:desktop',
+  'build:desktop:help',
+  'build:native',
+  'build:native:check',
+  'build:windows',
+  'build:windows:help',
+  'build:macos',
+  'build:macos:help',
+  'build:macos:check',
+  'clean',
+  'clean:check',
+  'assets:audio:convert',
+  'assets:audio:check',
+]);
+
+export const REJECTED_PACKAGE_SCRIPT_TERMS = Object.freeze(['future_ai_workbench', 'format:python', 'lint:python']);

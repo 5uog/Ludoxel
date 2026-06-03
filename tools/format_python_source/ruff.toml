@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+
+line-length = 200
+indent-width = 2
+target-version = "py313"
+
+src = [
+  "src",
+  "tools",
+]
+
+extend-exclude = [
+  "dist",
+  "build",
+  "node_modules",
+  "third-party",
+  "assets",
+  "configs",
+  ".venv",
+  ".venv_ludoxel",
+  ".artifacts",
+  "tools/export_directory_markdown/output",
+  "tools/format_python_source/.cache",
+  "**/__pycache__",
+  "**/.pytest_cache",
+  "**/.mypy_cache",
+  "**/.ruff_cache",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+docstring-code-format = false
+
+[lint]
+select = [
+  "E4",
+  "E7",
+  "E9",
+  "F",
+  "I",
+]
+ignore = [
+  "E501",
+]
+
+[lint.isort]
+force-single-line = false
+combine-as-imports = true
+split-on-trailing-comma = false
+known-first-party = [
+  "ludoxel",
+]

@@ -1,8 +1,31 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from .app_state_schema import AppState, PersistedAiPlayer, PersistedInventory, PersistedOthelloSpace, PersistedPlaySpace, PersistedPlayer, PersistedSettings, PersistedWorld, PlayerStateFile, WorldStateFile
-from .app_state_store import AppStateStore
+from ludoxel.application.runtime.persistence.persistence_app_state_schema import (
+  AppState,
+  PersistedAiPlayer,
+  PersistedInventory,
+  PersistedOthelloSpace,
+  PersistedPlayer,
+  PersistedPlaySpace,
+  PersistedSettings,
+  PersistedWorld,
+  PlayerStateFile,
+  WorldStateFile,
+)
+from ludoxel.application.runtime.persistence.persistence_app_state_store import AppStateStore
 
-__all__ = ["AppState", "AppStateStore", "PersistedAiPlayer", "PersistedInventory", "PersistedOthelloSpace", "PersistedPlaySpace", "PersistedPlayer", "PersistedSettings", "PersistedWorld", "PlayerStateFile", "WorldStateFile"]
+__all__ = [
+  "AppState",
+  "AppStateStore",
+  "PersistedAiPlayer",
+  "PersistedInventory",
+  "PersistedOthelloSpace",
+  "PersistedPlaySpace",
+  "PersistedPlayer",
+  "PersistedSettings",
+  "PersistedWorld",
+  "PlayerStateFile",
+  "WorldStateFile",
+]

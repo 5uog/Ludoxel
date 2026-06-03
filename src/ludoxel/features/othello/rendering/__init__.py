@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from .othello_render_state import OthelloRenderState
+from ludoxel.features.othello.rendering.rendering_othello_render_state import OthelloRenderState
 
 __all__ = ["OthelloRenderState"]

@@ -1,0 +1,51 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { PROJECT_ROOT } from '../src/config/path.config.mjs';
+import { runExportDirectoryMarkdownCli } from '../src/cli/run/export.run.mjs';
+
+async function runCase(name, argv) {
+  const exitCode = await runExportDirectoryMarkdownCli(argv, process.env);
+  if (exitCode !== 0) {
+    throw new Error(`${name} failed with exit code ${exitCode}`);
+  }
+}
+
+function readProjectFile(relativePath) {
+  return readFileSync(resolve(PROJECT_ROOT, relativePath), 'utf8');
+}
+
+function assertContains({ name, text, expected }) {
+  if (!text.includes(expected)) {
+    throw new Error(`${name} did not contain expected text: ${expected}`);
+  }
+}
+
+function assertNotContains({ name, text, rejected }) {
+  if (text.includes(rejected)) {
+    throw new Error(`${name} contained rejected text: ${rejected}`);
+  }
+}
+
+await runCase('help', ['--help', '--lang', 'en']);
+
+await runCase('root tree export', ['root', '--format', 'tree', '--output', 'tools/export_directory_markdown/output/export_test_root_tree.md', '--overwrite', '--max-bytes', '1']);
+
+const rootTree = readProjectFile('tools/export_directory_markdown/output/export_test_root_tree.md');
+assertContains({ name: 'root tree export', text: rootTree, expected: 'README.md' });
+assertContains({ name: 'root tree export', text: rootTree, expected: 'tools/' });
+assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'Sudoku/' });
+assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'configs/' });
+assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'third-party/' });
+assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'tools/export_directory_markdown/output' });
+
+await runCase('src code export', ['src', '--format', 'code', '--output', 'tools/export_directory_markdown/output/export_test_src_code.md', '--overwrite', '--max-bytes', '256']);
+
+const srcCode = readProjectFile('tools/export_directory_markdown/output/export_test_src_code.md');
+assertContains({ name: 'src code export', text: srcCode, expected: 'src/ludoxel/__main__.py' });
+assertContains({ name: 'src code export', text: srcCode, expected: '## Files' });
+
+console.log('[export_directory_markdown] tests passed.');

@@ -1,0 +1,52 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+export function parseCleanArgs(argv = []) {
+  const parsed = {
+    help: false,
+    dryRun: false,
+    all: false,
+    language: 'ja',
+    errors: [],
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = String(argv[index] ?? '');
+
+    if (arg === 'help' || arg === '--help' || arg === '-h') {
+      parsed.help = true;
+      continue;
+    }
+
+    if (arg === '--dry-run') {
+      parsed.dryRun = true;
+      continue;
+    }
+
+    if (arg === '--all') {
+      parsed.all = true;
+      continue;
+    }
+
+    if (arg === '--lang' || arg === '--language' || arg === '--locale') {
+      const value = argv[index + 1];
+      if (!value || String(value).startsWith('-')) {
+        parsed.errors.push(`${arg} requires ja or en.`);
+        continue;
+      }
+      parsed.language = String(value);
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('-')) {
+      parsed.errors.push(`Unknown option: ${arg}`);
+      continue;
+    }
+
+    parsed.errors.push(`Unknown clean command: ${arg}`);
+  }
+
+  return parsed;
+}

@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,9 +7,9 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class HudPayload:
-    left_text: str
-    right_text: str = ""
+  left_text: str
+  right_text: str = ""
 
-    @property
-    def text(self) -> str:
-        return str(self.left_text)
+  @property
+  def text(self) -> str:
+    return str(self.left_text)

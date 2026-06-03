@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 graft assets
-graft licenses
-graft scripts
+graft third-party
+graft tools
 
 include pyproject.toml
 include README.md

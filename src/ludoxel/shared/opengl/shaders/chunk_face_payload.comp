@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 #version 430 core
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;

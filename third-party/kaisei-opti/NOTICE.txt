@@ -1,0 +1,10 @@
+Kaisei Opti
+
+This directory contains the license text for the Kaisei Opti font family
+referenced by the local Ludoxel working tree.
+
+Kaisei Opti is third-party font material. It is not part of the Ludoxel
+Original Materials and is not governed by the Ludoxel Independent License.
+
+License: SIL Open Font License 1.1
+License text: third-party/kaisei-opti/LICENSE.txt

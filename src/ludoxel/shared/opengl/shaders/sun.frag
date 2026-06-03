@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kento Konishi
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 #version 330 core
 
 in vec2 v_uv;

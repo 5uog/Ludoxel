@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Ludoxel: python -m ludoxel",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "ludoxel",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Ludoxel: native build verify",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tools.build_native_extensions",
+      "args": ["verify"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

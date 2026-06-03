@@ -1,201 +1,229 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+Ludoxel Independent License
+LicenseRef-All-Rights-Reserved
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+Version: 1.0.1
+Original Effective Date: 2026-06-03
+Current Version Effective Date: 2026-06-04
 
-   1. Definitions.
+Copyright (c) 2026 Kento Konishi.
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+1. Status of This Repository
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+This repository is not open source. This repository is not free software.
+The Original Materials in this repository are not licensed under the Apache
+License 2.0, MIT License, BSD License, GPL, AGPL, LGPL, MPL, or any other
+open source license.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+LicenseRef-All-Rights-Reserved refers to this independent license.
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+For purposes of this license, "Original Materials" means all copyrightable
+materials and, to the extent recognized by applicable law, other protectable
+original materials in this repository that were created by Kento Konishi,
+including source code, documentation, configuration files, build scripts,
+repository text, user interface text, generated data, images, metadata,
+packaged files, distribution files, shaders, bundled resources, desktop app
+packaging material, and other repository contents.
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+Generated files, generated data, images, metadata, packaged files,
+distribution files, and bundled resources are Original Materials only to the
+extent that they were created by Kento Konishi, generated from materials
+created by Kento Konishi, or otherwise protected by copyright or other
+applicable rights held by Kento Konishi.
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+Original Materials expressly exclude third-party materials, including
+third-party libraries, fonts, external packages, vendor files, platform
+SDKs, and materials whose provenance or license is identified separately in
+NOTICE or third-party/.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+The copyright holder of the Original Materials is Kento Konishi. All rights
+in the Original Materials are reserved by Kento Konishi.
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+2. User Materials and Application Output
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+For purposes of this license, "User Materials" means player names, player
+settings, key bindings, window state, custom crosshair data, imported skins,
+world edits, save data, Othello settings, user-created text, user-created
+images, user-created video, chat content, AI workbench history, and other
+materials that a user independently creates, inputs, edits, records, or
+prepares through ordinary use of the Ludoxel application.
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+For purposes of this license, "Application Output" means ordinary screenshots,
+screen recordings, save files, logs, generated AI workbench records, rendered
+states, configuration files, and other output produced by the Ludoxel
+application through ordinary application use.
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+User Materials do not become Original Materials merely because the user
+entered, edited, generated, saved, exported, displayed, or shared them by
+using the Ludoxel application.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+Subject to this license and any applicable third-party rights, users may use,
+record, reproduce, publish, and share their own User Materials and
+Application Output, including ordinary screenshots, screen recordings, save
+data, and user-created AI workbench output.
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+The permission stated in this Section 2 does not grant any right to copy,
+reuse, modify, distribute, deploy, incorporate, relicense, sell, create
+derivative works from, represent as one's own, or use as training data any
+Original Materials, including source code, implementation text, documentation,
+repository text, build materials, shaders, bundled resources, visual assets,
+or any substantially derived work based on them.
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+If User Materials or Application Output contain, reproduce, or incorporate a
+material part of the Original Materials, third-party materials, repository
+text, user interface text, visual assets, bundled resources, or other
+protected repository content, that included protected material remains
+subject to the applicable license terms.
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+Nothing in this license represents that any User Materials or Application
+Output are free from third-party rights or otherwise suitable for publication,
+competition use, commercial use, educational use, training-data use, or any
+other specific purpose.
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+3. Limited Permission to View Repository Contents
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+Subject to full compliance with this license, permission is granted only to
+view the repository contents for review and verification.
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+Public visibility, access to the repository, the presence of source code,
+build files, package metadata, generated files, or the availability or use of
+hosting-service features such as browsing, cloning, forking, downloading,
+copying, or viewing files does not, by itself, grant any copyright license or
+permission from Kento Konishi beyond the limited viewing permission expressly
+stated in this license.
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+Any unavoidable temporary technical copy created solely by a browser, proxy,
+cache, or network system as an incidental technical consequence of viewing
+the repository contents does not grant any further right and may not be used
+for any other purpose.
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+4. Limited Permission for Ordinary Application Use
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+Subject to full compliance with this license, permission is granted to use
+the Ludoxel application in its ordinary desktop application form.
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
+The permission stated in this Section 4 is limited to ordinary use of the
+application as an application. It does not grant permission to copy,
+reproduce, download, clone, fork, scrape, mirror, archive, modify, adapt,
+translate, merge, restructure, refactor, optimize, minify, bundle, compile,
+transpile, publish, distribute, transmit, sublicense, sell, rent, lend, host,
+deploy, make available, incorporate, relicense, create derivative works from,
+or otherwise reuse the Original Materials.
 
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
+The ordinary use of the application does not transfer any copyright or other
+right in the Original Materials to any user.
 
-   END OF TERMS AND CONDITIONS
+5. Prohibited Conduct
 
-   APPENDIX: How to apply the Apache License to your work.
+Except with prior written permission from Kento Konishi, all uses of the
+Original Materials other than the limited permissions stated in Sections 3
+and 4 are prohibited.
 
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
+Without limitation, the following conduct is prohibited:
 
-   Copyright [yyyy] [name of copyright owner]
+- copying, reproduction, downloading, cloning, or forking for reuse,
+  modification, distribution, deployment, incorporation, training-data use,
+  or generative-AI-data use;
+- scraping, mirroring, archiving, or storing for reuse;
+- modification, adaptation, translation, merging, restructuring,
+  refactoring, optimization, minification, bundling, compilation, or
+  transpilation;
+- publication, distribution, transmission, sublicensing, sale, rental,
+  lending, hosting, deployment, or making available;
+- creation of derivative works;
+- incorporation into any other work, product, service, repository, dataset,
+  educational material, training data, machine-learning dataset, or
+  generative AI dataset;
+- use in a manner that treats the Original Materials, or any substantially
+  derived work, as a third party's own work;
+- use that obscures, weakens, or misrepresents the source, authorship,
+  provenance, or licensing status of the Original Materials.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Removing, altering, obscuring, or misrepresenting copyright notices, license
+notices, attribution notices, author information, provenance information, or
+source information is prohibited.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+Representing the Original Materials or any substantially derived work as a
+third party's own work is prohibited.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Using the name, handle, project name, logo, repository name, or other
+identifying element of Kento Konishi in a manner suggesting endorsement,
+sponsorship, affiliation, authorship, approval, or permission is prohibited.
+
+Nothing in this Section 5 prohibits a user from using, recording,
+reproducing, publishing, or sharing User Materials or Application Output as
+permitted in Section 2.
+
+6. Third-Party Materials
+
+Third-party libraries, fonts, external packages, vendor files, platform SDKs,
+and materials identified in NOTICE or third-party/ remain subject to their
+respective license terms. This independent license applies only to the
+Original Materials created by Kento Konishi and does not replace, amend,
+supersede, or remove the license terms of third-party materials.
+
+Third-party notices and license texts are retained for third-party materials.
+The presence of such third-party licenses does not license the Original
+Materials under those third-party terms.
+
+7. Termination and Consequences of Violation
+
+Any permission granted under this license terminates immediately and
+automatically upon violation of any term of this license.
+
+Upon violation, the violator must immediately stop all use of the Original
+Materials and delete all copies, derivatives, extracts, mirrors, archives,
+stored versions, and other reproductions under the violator's possession or
+control, except to the extent retention is strictly required by applicable
+law.
+
+8. No Warranty
+
+The repository, the Original Materials, the Ludoxel application, User
+Materials, Application Output, and any application output are provided "AS
+IS" and "AS AVAILABLE", without warranty of any kind, whether express,
+implied, statutory, or otherwise, including without limitation any warranty
+of title, non-infringement, merchantability, fitness for a particular
+purpose, accuracy, availability, security, absence of defects, correctness of
+game rules, correctness of AI behavior, correctness of generated content, or
+fitness for publication.
+
+9. Limitation of Liability
+
+To the maximum extent permitted by applicable law, Kento Konishi shall not
+be liable for any direct, indirect, incidental, special, consequential,
+exemplary, punitive, or other damages, or for any loss of profits, revenue,
+data, goodwill, business opportunity, or use, arising out of or relating to
+the repository, the Original Materials, this license, permitted viewing,
+ordinary application use, User Materials, Application Output, application
+output, or any prohibited or unauthorized use, regardless of legal theory and
+even if advised of the possibility of such damages.
+
+10. Controlling Text
+
+If README descriptions, package metadata, SPDX headers, generated-file
+notices, summaries, translations, or other repository notices conflict with
+this LICENSE, the English text of this LICENSE controls for the Original
+Materials.
+
+Any Japanese description or translation, if present elsewhere in the
+repository, is provided only as a non-authoritative summary or reference.
+The English text of this LICENSE is the sole authoritative license text for
+the Original Materials.
+
+11. Versioning, Effective Dates, and Revision History
+
+This license version is identified as Version 1.0.1.
+
+The Original Effective Date of this independent license is 2026-06-03.
+The Current Version Effective Date of Version 1.0.1 is 2026-06-04.
+
+Revision history:
+
+- Version 1.0.0, effective 2026-06-03:
+  Initial independent viewing-only license for the Original Materials.
+
+- Version 1.0.1, effective 2026-06-04:
+  Clarifies that third-party legal material is organized under third-party/
+  and that local app-managed runtime data and application output remain
+  outside the Original Materials except where they include protected
+  repository content.

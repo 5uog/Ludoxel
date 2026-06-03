@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from .othello_match_controller import OthelloMatchController
+from ludoxel.features.othello.application.application_othello_match_controller import OthelloMatchController
 
 __all__ = ["OthelloMatchController"]

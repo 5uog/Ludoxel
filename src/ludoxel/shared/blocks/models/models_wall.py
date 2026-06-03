@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+from __future__ import annotations
+
+from typing import Dict, List
+
+from ludoxel.shared.blocks.models.models_common import GetDef, GetState, LocalBox, rotate_box_y_cw
+from ludoxel.shared.blocks.models.models_dimensions import WALL_ARM_LOW_NORTH, WALL_ARM_TALL_NORTH, WALL_POST
+from ludoxel.shared.blocks.structure.structure_structural_rules import wall_side_from_neighbor_state, wall_side_with_top_support, wall_up_rule
+
+
+def _norm_side(s: str) -> str:
+  t = str(s)
+  if t in ("none", "low", "tall"):
+    return t
+  return "none"
+
+
+def _arm_north(kind: str) -> LocalBox:
+  if str(kind) == "tall":
+    return WALL_ARM_TALL_NORTH
+  return WALL_ARM_LOW_NORTH
+
+
+def boxes_for_wall(*, props: Dict[str, str], get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
+  north = _norm_side(str(props.get("north", ""))) if "north" in props else wall_side_from_neighbor_state(get_state(int(x), int(y), int(z - 1)), side_from_neighbor="south", get_def=get_def)
+  east = _norm_side(str(props.get("east", ""))) if "east" in props else wall_side_from_neighbor_state(get_state(int(x + 1), int(y), int(z)), side_from_neighbor="west", get_def=get_def)
+  south = _norm_side(str(props.get("south", ""))) if "south" in props else wall_side_from_neighbor_state(get_state(int(x), int(y), int(z + 1)), side_from_neighbor="north", get_def=get_def)
+  west = _norm_side(str(props.get("west", ""))) if "west" in props else wall_side_from_neighbor_state(get_state(int(x - 1), int(y), int(z)), side_from_neighbor="east", get_def=get_def)
+  s_above = get_state(int(x), int(y + 1), int(z))
+  north = wall_side_with_top_support(str(north), side_name="north", above_state=s_above, get_def=get_def)
+  east = wall_side_with_top_support(str(east), side_name="east", above_state=s_above, get_def=get_def)
+  south = wall_side_with_top_support(str(south), side_name="south", above_state=s_above, get_def=get_def)
+  west = wall_side_with_top_support(str(west), side_name="west", above_state=s_above, get_def=get_def)
+
+  if "up" in props:
+    up = str(props.get("up", "true")).strip().lower() in ("1", "true", "yes", "on")
+  else:
+    up = wall_up_rule(north=str(north), east=str(east), south=str(south), west=str(west), above_state=s_above, get_def=get_def)
+
+  out: list[LocalBox] = []
+
+  if bool(up):
+    out.append(WALL_POST)
+
+  if north != "none":
+    out.append(_arm_north(north))
+  if east != "none":
+    out.append(rotate_box_y_cw(_arm_north(east), 1))
+  if south != "none":
+    out.append(rotate_box_y_cw(_arm_north(south), 2))
+  if west != "none":
+    out.append(rotate_box_y_cw(_arm_north(west), 3))
+
+  if not out:
+    out.append(WALL_POST)
+
+  return out

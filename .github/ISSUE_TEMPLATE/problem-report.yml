@@ -1,0 +1,77 @@
+name: Limited problem report
+description: Report a reproducible problem without submitting code, patches, replacement text, or contribution materials.
+title: '[Problem]: '
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository is not an open source project and does not accept external contributions.
+
+        Use this form only to report a concrete problem in the current repository or official Ludoxel desktop distribution.
+
+        Do not submit source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, refactoring proposals, or other contribution materials.
+
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I understand that this issue must not contain code contributions, patches, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals.
+          required: true
+        - label: I understand that public visibility of this repository does not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, or represent the Original Materials as my own work.
+          required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem summary
+      description: Describe the observed problem briefly.
+      placeholder: Ludoxel behaves unexpectedly when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide steps that reproduce the problem without including exploit details, credentials, tokens, cookies, private user data, or unrelated personal data.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: State what should have happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: State what actually happened.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, PyQt6 version, GPU/OpenGL details, or package/build path if relevant.
+      placeholder: Windows 11, Python 3.13, PyQt6 6.6, OpenGL 4.3 capable GPU
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add only context necessary to understand the problem.
+    validations:
+      required: false

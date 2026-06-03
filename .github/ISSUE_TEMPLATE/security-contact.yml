@@ -1,0 +1,41 @@
+name: Security contact request
+description: Request a private contact method for a suspected vulnerability. Do not include vulnerability details here.
+title: '[Security Contact Request]: '
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not disclose vulnerability details in this public issue.
+
+        If GitHub private vulnerability reporting or GitHub Security Advisories are available for this repository, use that private reporting channel instead.
+
+        Use this form only when no private reporting channel is available and you need to request a private contact method.
+
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I have not included exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, or other vulnerability details in this public issue.
+          required: true
+        - label: I understand that this request does not grant permission to copy, scrape, mirror, archive, modify, deploy, redistribute, incorporate, or otherwise reuse the Original Materials.
+          required: true
+
+  - type: textarea
+    id: limited-summary
+    attributes:
+      label: Limited public summary
+      description: Provide only a minimal category-level description.
+      placeholder: I would like to report a suspected vulnerability affecting the current repository or official desktop distribution.
+    validations:
+      required: true
+
+  - type: input
+    id: contact
+    attributes:
+      label: Preferred reply method
+      description: Provide a non-sensitive contact method only if you want to receive a reply outside this public issue.
+      placeholder: GitHub username or email address
+    validations:
+      required: false

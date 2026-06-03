@@ -1,21 +1,107 @@
-Ludoxel
-Copyright 2026 Kento Konishi
+SPDX-FileCopyrightText: 2026 Kento Konishi
+SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-This product includes software and accompanying asset files developed for the Ludoxel project by Kento Konishi.
+Ludoxel NOTICE
+Version: 1.0.1
+最終更新日: 2026-06-04
+本文言語: 日本語
 
-The Ludoxel source code is distributed under the Apache License, Version 2.0. A copy of that license is provided in the file named LICENSE distributed with this work.
+この NOTICE は、Ludoxel の独自素材、第三者素材、来歴確認が必要な素材、
+および実行時に生成・保存されるユーザーデータの関係を明示するための文書です。
 
-Unless a different notice is expressly stated in a particular file, the textures, audio files, images, shaders, models, and other non-code materials distributed in this repository are original Ludoxel project assets and are not third-party game assets.
+## 1. Ludoxel 独自素材
 
-This product bundles third-party font software.
+Ludoxel のソースコード、ドキュメント、設定、ビルド用 tool、shader、UI 文言、
+リポジトリ本文、Kento Konishi が作成した原資産は、ルート `LICENSE` の
+Ludoxel Independent License に従います。
 
-Kaisei Opti
-Copyright 2020 The Kaisei Project Authors
-Source: https://github.com/FontKai-Kaisei/Kaisei
+SPDX 表記は `LicenseRef-All-Rights-Reserved` です。このリポジトリは
+Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、またはその他の
+オープンソースライセンスでは提供されていません。
 
-The bundled Kaisei Opti font software is licensed under the SIL Open Font License,
-Version 1.1.
+公開リポジトリとして閲覧できること、clone / fork / download / pull request
+などの GitHub 機能が存在することは、Ludoxel 独自素材の複製、改変、再配布、
+組み込み、転載、自作発言、学習データ利用、派生物作成を許可するものでは
+ありません。
 
-A copy of the SIL Open Font License, Version 1.1, is distributed in
-licenses/OFL-Kaisei-Opti.txt together with this NOTICE file and the above
-copyright notice.
+## 2. 第三者素材
+
+第三者ライブラリ、外部 Python / Node パッケージ、フォント、SDK、vendor 素材、
+および `third-party/` 配下に置かれるライセンス本文は、それぞれの権利者と
+ライセンス条件に従います。
+
+第三者素材のライセンスは、Ludoxel 独自素材をその第三者ライセンスで
+再ライセンスするものではありません。
+
+## 3. Kaisei Opti
+
+Kaisei Opti は第三者フォント素材です。
+
+確認対象のローカル font path:
+
+- `assets/fonts/KaiseiOpti-Bold.ttf`
+- `assets/fonts/KaiseiOpti-Medium.ttf`
+- `assets/fonts/KaiseiOpti-Regular.ttf`
+
+ライセンス:
+
+- SIL Open Font License 1.1
+
+第三者ライセンス本文:
+
+- `third-party/kaisei-opti/LICENSE.txt`
+- `third-party/kaisei-opti/NOTICE.txt`
+
+Kaisei Opti は Ludoxel の `LicenseRef-All-Rights-Reserved` の対象ではなく、
+OFL の条件が引き続き適用されます。
+
+## 4. Minecraft 名を含むローカル asset
+
+この作業ツリーには、次のような Minecraft 名を含むローカル asset が存在します。
+
+- `assets/minecraft/`
+- `assets/fonts/MinecraftBold-nMK1.otf`
+- `assets/fonts/MinecraftBoldItalic-1y1e.otf`
+- `assets/fonts/MinecraftItalic-R8Mo.otf`
+- `assets/fonts/MinecraftRegular-Bmg3.otf`
+
+これらは Ludoxel 独自素材として扱ってはなりません。来歴、権利関係、
+再配布可能性はこのリポジトリによって確立されていません。公開配布物に
+含める場合は、権利確認、必要な許諾、帰属表示、または置換・削除を
+事前に完了する必要があります。
+
+Ludoxel が Minecraft、Mojang、Microsoft の公式製品、関連製品、または
+承認された派生物であることを示すものではありません。
+
+## 5. 実行時データ
+
+player settings、window state、custom crosshair、imported player skin、
+world edits、Othello opening-book user extension、compiled cache、AI workbench
+の将来データなど、アプリ利用により生成・更新されるデータは、immutable な
+package resource ではありません。
+
+Ludoxel は、ルート `configs/` を通常の保存先として生成・更新しません。
+実行時データはユーザー別の app-managed data root に保存され、保存対象の
+主要ファイルには HMAC manifest による改竄検出を適用します。
+
+ただし、ローカルマシン上でユーザー自身が全ファイルと検証 key を編集できる
+状況では、完全な改竄防止は保証できません。この manifest は、アプリ外編集、
+偶発的破損、単純な差し替えを検出するためのものです。
+
+## 6. 配布物への同梱
+
+Windows EXE や将来の macOS app bundle などの desktop distribution には、
+少なくとも次を同梱する必要があります。
+
+- `LICENSE`
+- `NOTICE`
+- `third-party/`
+
+`tools/build_desktop_app` は、この legal material を配布ステージへコピーする
+責務を持ちます。
+
+## 7. 支配的な文書
+
+Ludoxel 独自素材のライセンス条件について、この NOTICE、README、package
+metadata、SPDX header、翻訳、要約、生成物内の説明が `LICENSE` と矛盾する場合、
+英語の `LICENSE` 本文が支配します。

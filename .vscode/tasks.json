@@ -1,0 +1,66 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Ludoxel: help",
+      "type": "npm",
+      "script": "help",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: check",
+      "type": "npm",
+      "script": "check",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: ci",
+      "type": "npm",
+      "script": "ci",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: format check",
+      "type": "npm",
+      "script": "format:check",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: lint",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: build native",
+      "type": "npm",
+      "script": "build:native",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: build Windows help",
+      "type": "npm",
+      "script": "build:windows:help",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: export test",
+      "type": "npm",
+      "script": "tools:test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: export root",
+      "type": "npm",
+      "script": "tools:export:root",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ludoxel: clean check",
+      "type": "npm",
+      "script": "clean:check",
+      "problemMatcher": []
+    }
+  ]
+}
