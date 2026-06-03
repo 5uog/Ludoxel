@@ -14,6 +14,13 @@ async function runCase(name, argv) {
   }
 }
 
+async function runErrorCase(name, argv) {
+  const exitCode = await runExportDirectoryMarkdownCli(argv, process.env);
+  if (exitCode === 0) {
+    throw new Error(`${name} unexpectedly succeeded`);
+  }
+}
+
 function readProjectFile(relativePath) {
   return readFileSync(resolve(PROJECT_ROOT, relativePath), 'utf8');
 }
@@ -47,5 +54,30 @@ await runCase('src code export', ['src', '--format', 'code', '--output', 'tools/
 const srcCode = readProjectFile('tools/export_directory_markdown/output/export_test_src_code.md');
 assertContains({ name: 'src code export', text: srcCode, expected: 'src/ludoxel/__main__.py' });
 assertContains({ name: 'src code export', text: srcCode, expected: '## Files' });
+
+await runCase('root target option with excludes', [
+  '--target',
+  'root',
+  '--format',
+  'tree',
+  '--output',
+  'tools/export_directory_markdown/output/export_test_root_exclude_tree.md',
+  '--overwrite',
+  '--exclude',
+  'folder:tools',
+  '--exclude',
+  'file:README.md',
+  '--exclude',
+  'ext:.toml',
+]);
+
+const excludedRootTree = readProjectFile('tools/export_directory_markdown/output/export_test_root_exclude_tree.md');
+assertContains({ name: 'root target option with excludes', text: excludedRootTree, expected: 'src/' });
+assertNotContains({ name: 'root target option with excludes', text: excludedRootTree, rejected: 'tools/' });
+assertNotContains({ name: 'root target option with excludes', text: excludedRootTree, rejected: '├── README.md' });
+assertNotContains({ name: 'root target option with excludes', text: excludedRootTree, rejected: 'pyproject.toml' });
+
+await runErrorCase('duplicate target', ['root', '--target', 'src']);
+await runErrorCase('invalid exclude kind', ['root', '--exclude', 'path:src']);
 
 console.log('[export_directory_markdown] tests passed.');

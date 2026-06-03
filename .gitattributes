@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+
+# Normalize text files to LF in the repository.
+* text=auto eol=lf
+
+# Keep Windows command files with CRLF when such files are added.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Treat common image, font, audio, model, native, and archive files as binary.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.bmp binary
+*.ico binary
+*.gif binary
+*.ttf binary
+*.otf binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.flac binary
+*.glb binary
+*.pyd binary
+*.so binary
+*.dylib binary
+*.dll binary
+*.exe binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.bin binary
+*.pyc binary
+
+# Exclude dependency, build, cache, and local-output directories from generated Git archives.
+node_modules/ export-ignore
+dist/ export-ignore
+build/ export-ignore
+coverage/ export-ignore
+.venv/ export-ignore
+.venv_ludoxel/ export-ignore
+tools/export_directory_markdown/output/ export-ignore
+tools/format_python_source/.cache/ export-ignore
+configs/ export-ignore

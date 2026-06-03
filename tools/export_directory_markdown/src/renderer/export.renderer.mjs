@@ -5,6 +5,12 @@
 import { renderCodeFiles } from './code.renderer.mjs';
 import { renderTree } from './tree.renderer.mjs';
 
+function formatExcludeRules(options) {
+  const rules = options.excludeRules || [];
+  if (rules.length === 0) return 'none';
+  return rules.map((rule) => rule.raw).join(', ');
+}
+
 export function renderDirectoryMarkdown({ target, files, options }) {
   const sections = [
     '# directory export',
@@ -14,6 +20,7 @@ export function renderDirectoryMarkdown({ target, files, options }) {
     `Output format: \`${options.format}\``,
     `Max bytes per file: \`${options.maxBytes}\``,
     `Include hidden: \`${options.includeHidden}\``,
+    `Exclude rules: \`${formatExcludeRules(options)}\``,
     '',
   ];
 

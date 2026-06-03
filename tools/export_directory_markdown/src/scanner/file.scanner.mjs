@@ -5,7 +5,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { createExportFile } from '../model/export.model.mjs';
-import { isBinaryFile, normalizePath, shouldExcludeDirectory } from './exclude.scanner.mjs';
+import { isBinaryFile, normalizePath, shouldExcludeDirectory, shouldExcludeFile } from './exclude.scanner.mjs';
 
 export function scanExportFiles(root, targetDirectory, options) {
   const base = resolve(root, targetDirectory);
@@ -41,7 +41,7 @@ export function scanExportFiles(root, targetDirectory, options) {
       }
 
       if (!entry.isFile()) continue;
-      if (!options.includeHidden && entry.name.startsWith('.')) continue;
+      if (shouldExcludeFile(entry.name, relativePath, options)) continue;
 
       const stat = statSync(absolutePath);
 

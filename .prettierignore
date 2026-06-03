@@ -1,18 +1,53 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+
+# Node dependency tree installed by npm.
 node_modules/
+
+# Build, package, test, and coverage outputs.
 dist/
 build/
 coverage/
-third-party/
+
+# Python caches and local virtual environments.
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .venv/
 .venv_ludoxel/
-__pycache__/
+
+# Generated directory-export output.
+tools/export_directory_markdown/output/
+
+# Local Ruff wrapper cache.
+tools/format_python_source/.cache/
+
+# Binary, third-party, or provenance-sensitive assets are not formatted by Prettier.
+assets/
+third-party/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.bmp
+*.ico
+*.gif
+*.ttf
+*.otf
+*.wav
+*.ogg
+*.mp3
+*.flac
+*.glb
 *.pyd
 *.so
 *.dylib
 *.dll
 *.exe
-tools/export_directory_markdown/output/
-tools/format_python_source/.cache/
-.artifacts/
-assets/
-configs/
+*.zip
+*.tar
+*.gz
+*.7z
+*.bin
+*.pyc

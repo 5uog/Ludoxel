@@ -58,7 +58,7 @@ For the ordinary Windows executable path, `npm run build:windows` is the primary
 
 ## Development workflow
 
-The development path described below assumes Python `3.14.2`, PyQt6 `6.6` or newer, NumPy `1.26` or newer, PyOpenGL `3.1.7` or newer within the `<4` major line, and a working OpenGL 4.3 Core Profile context. On Windows, the Microsoft Visual Studio Build Tools C++ workload is assumed to already be installed before any local native build is attempted. The repository-local bootstrap now also prefers a sibling `Python314` interpreter when the package entry point is invoked from a different local CPython on Windows, because the optional in-place native hot-path extensions are version-specific and are expected to match the stated 3.14 runtime.
+The development path described below assumes Python `3.14.2` when available, PyQt6 `6.6` or newer, NumPy `1.26` or newer, PyOpenGL `3.1.7` or newer within the `<4` major line, and a working OpenGL 4.3 Core Profile context. `pyproject.toml` accepts Python `>=3.13,<3.15`, so macOS environments that do not have `python3.14` may use `python3.13` for ordinary source-tree development. On Windows, the Microsoft Visual Studio Build Tools C++ workload is assumed to already be installed before any local native build is attempted. The repository-local bootstrap now also prefers a sibling `Python314` interpreter when the package entry point is invoked from a different local CPython on Windows, because the optional in-place native hot-path extensions are version-specific and are expected to match the stated 3.14 runtime.
 
 The following sequence is the intended Windows development path for a clean environment when only the editable source install is required.
 
@@ -70,14 +70,28 @@ python -m pip install -e .
 python -m ludoxel
 ```
 
-If the optional native hot-path extensions or packaging tools are needed, install the development extras and then run the explicit native build.
+The following sequence is the intended macOS development path for a clean environment when only the editable source install is required.
+
+```bash
+python3.14 -m venv .venv_ludoxel
+source .venv_ludoxel/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e .
+python -m ludoxel
+```
+
+If `python3.14` is not installed on macOS, use `python3.13` in the first command and keep the remaining commands unchanged.
+
+If the optional native hot-path extensions or packaging tools are needed, install the development extras, install the Node dependency tree, and then run the explicit native build.
 
 ```powershell
 python -m pip install -e ".[dev]"
+npm install
 npm run build:native
+npm run build:native:check
 ```
 
-After the in-place native build has completed on Windows, `npm run build:native:check` should resolve all three hot-path imports to `.pyd` files rather than the corresponding `.py` sources. If the native build is not required for the task at hand, the application can still be launched through `python -m ludoxel` after the ordinary editable install, but the renderer will then use the slower Python fallbacks for those kernels.
+After the in-place native build has completed on Windows, `npm run build:native:check` should resolve all three hot-path imports to `.pyd` files rather than the corresponding `.py` sources. After the in-place native build has completed on macOS, the same check should resolve those imports to generated `.so` files. If the native build is not required for the task at hand, the application can still be launched through `python -m ludoxel` after the ordinary editable install, but the renderer will then use the slower Python fallbacks for those kernels.
 
 If one of the native-accelerated modules is edited, rerun the in-place extension build.
 
@@ -98,7 +112,7 @@ taskkill /F /IM python.exe
 npm run build:native
 ```
 
-The repository-local cleanup tool now removes those generated `.pyd` files deliberately. After `npm run clean` has removed them, rerun `npm run build:native` before the next performance-sensitive session, because until that rebuild has completed the application will again import the slower Python fallback kernels.
+The repository-local cleanup tool now removes those generated native extension files deliberately. After `npm run clean` has removed them, rerun `npm run build:native` before the next performance-sensitive session, because until that rebuild has completed the application will again import the slower Python fallback kernels.
 
 ```powershell
 npm run clean
@@ -123,6 +137,14 @@ npm run build:windows
 
 The default published executable path is `dist\windows\Ludoxel.exe`, with companion legal material emitted beside it as `dist\windows\LICENSE`, `dist\windows\NOTICE`, and `dist\windows\third-party\`.
 
+The macOS packaging command surface is present, but it remains a verification path rather than a supported app-bundle release path.
+
+```bash
+npm run build:macos
+npm run build:macos:check
+npm run build:macos -- --status
+```
+
 That packaging path remains intentionally distinct from the explicit local optimization path. The repository does not make Cython execution an implicit side effect of every packaging or installation action, but the supported Windows bundle builder now executes the narrow native build automatically because the measured renderer frame rate depends materially on those three compiled kernels being present.
 
 ## Repository command surface
@@ -142,6 +164,7 @@ npm run lint:js
 npm run lint:css
 npm run lint:py
 npm run tools:export
+npm run tools:export -- --target root --exclude "folder:assets" --exclude "ext:.so"
 npm run tools:test
 npm run package:check
 npm run docs:check
