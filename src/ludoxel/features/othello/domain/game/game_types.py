@@ -169,7 +169,7 @@ def difficulty_display_name(value: object) -> str:
 
 
 def normalize_time_control(value: object, *, default: str = OTHELLO_TIME_CONTROL_PER_SIDE_20M) -> str:
-  """I define N_t(x) in T, where T is the finite set of supported timer modes. I resolve legacy aliases such as `none` and `unlimited` into `off`, then I accept only canonical members of T so that persistence and UI binding operate over a single stable identifier set."""
+  """I define N_t(x) in T, where T is the finite set of supported timer modes. I resolve previous aliases such as `none` and `unlimited` into `off`, then I accept only canonical members of T so that persistence and UI binding operate over a single stable identifier set."""
   raw = str(value).strip().lower()
   if raw in ("no_limit", "unlimited", "none"):
     raw = OTHELLO_TIME_CONTROL_OFF
@@ -214,7 +214,7 @@ def time_control_display_name(value: object) -> str:
 
 
 def normalize_animation_mode(value: object, *, default: str = OTHELLO_ANIMATION_OFF) -> str:
-  """I define N_a(x) in A, where A = {off, fast, slow} is the animation-mode alphabet. I collapse legacy disabled-state spellings onto `off` and reject every value outside A so that rendered flip timing remains formally well-defined."""
+  """I define N_a(x) in A, where A = {off, fast, slow} is the animation-mode alphabet. I collapse previous disabled-state spellings onto `off` and reject every value outside A so that rendered flip timing remains formally well-defined."""
   raw = str(value).strip().lower()
   if raw in ("none", "disabled", "simultaneous"):
     raw = OTHELLO_ANIMATION_OFF
@@ -633,7 +633,7 @@ class OthelloGameState:
 
   @staticmethod
   def from_dict(data: dict[str, Any]) -> "OthelloGameState":
-    """I define weak deserialization for G by reading an arbitrary mapping, coercing nested records independently, and finally applying N_G. This makes restored match state total even under legacy or partially corrupted payloads."""
+    """I define weak deserialization for G by reading an arbitrary mapping, coercing nested records independently, and finally applying N_G. This makes restored match state total even under previous or partially corrupted payloads."""
     if not isinstance(data, dict):
       return OthelloGameState()
 

@@ -1,0 +1,795 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+from __future__ import annotations
+
+import math
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+import numpy as np
+from PyQt6.QtGui import QColor, QImage
+
+from ludoxel.features.othello.rendering.rendering_othello_render_state import OthelloRenderState
+from ludoxel.shared.blocks.blocks_block_definition import BlockDefinition
+from ludoxel.shared.blocks.registry.registry_block_registry import BlockRegistry
+from ludoxel.shared.blocks.state.state_codec import parse_state
+from ludoxel.shared.math.chunking.chunking_chunk_grid import ChunkKey, normalize_chunk_key
+from ludoxel.shared.math.math_vec3 import Vec3
+from ludoxel.shared.math.math_view_angles import forward_from_yaw_pitch_deg
+from ludoxel.shared.opengl.runtime.runtime_light_space import compute_light_view_proj
+from ludoxel.shared.rendering.backend.backend_renderer_metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
+from ludoxel.shared.rendering.backend.backend_renderer_resources import BackendRendererInfo
+from ludoxel.shared.rendering.backend.wgpu.wgpu_chunk_mesh import (
+  WgpuChunkMesh,
+  WgpuFaceInstances,
+  build_face_vertex_rows,
+  build_selection_vertices,
+  upload_chunk_mesh,
+  upload_face_rows,
+  upload_transform_face_rows,
+)
+from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_pipeline import (
+  create_selection_pipeline,
+  create_shadow_depth_pipeline,
+  create_textured_face_pipeline,
+  create_world_pipeline,
+  create_world_shadowed_pipeline,
+)
+from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_resources import WgpuRendererResources
+from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_surface import configure_wgpu_canvas
+from ludoxel.shared.rendering.backend.wgpu.wgpu_texture_atlas import UVRect, WgpuTextureAtlas
+from ludoxel.shared.rendering.faces.faces_face_bucket_layout import FACE_COUNT
+from ludoxel.shared.rendering.faces.faces_face_occlusion import is_local_face_occluded
+from ludoxel.shared.rendering.faces.faces_face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
+from ludoxel.shared.rendering.faces.faces_falling_block_face_rows import build_falling_block_face_rows
+from ludoxel.shared.rendering.rendering_first_person_geometry import FIRST_PERSON_HAND_NEAR, build_first_person_arm_face_rows, build_first_person_held_block_face_rows
+from ludoxel.shared.rendering.rendering_held_block_geometry import held_block_model_boxes_for_kind
+from ludoxel.shared.rendering.rendering_player_model_pose import HeldBlockPose, PlayerModelPose, build_player_model_pose
+from ludoxel.shared.rendering.rendering_player_render_state import PlayerRenderState
+from ludoxel.shared.rendering.rendering_render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
+
+_DEPTH_FORMAT = "depth24plus"
+_UNIFORM_FLOAT_COUNT = 44
+_UNIFORM_SIZE_BYTES = _UNIFORM_FLOAT_COUNT * 4
+
+
+@dataclass(frozen=True)
+class _WgpuBlockVisualResolver:
+  atlas: WgpuTextureAtlas
+  blocks: BlockRegistry
+
+  def def_lookup(self, base_id: str) -> BlockDefinition | None:
+    return self.blocks.get(str(base_id))
+
+  def atlas_uv_face(self, block_state_or_id: str, face_idx: int) -> UVRect:
+    base_id, _props = parse_state(str(block_state_or_id))
+    block = self.blocks.get(str(base_id))
+    tex_name = block.texture_for_face(int(face_idx)) if block is not None else "default"
+    uv = self.atlas.uv.get(str(tex_name))
+    if uv is None:
+      uv = self.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
+    return (float(uv[0]), float(uv[1]), float(uv[2]), float(uv[3]))
+
+  def display_name(self, block_state_or_id: str) -> str:
+    base_id, _props = parse_state(str(block_state_or_id))
+    block = self.blocks.get(str(base_id))
+    if block is None:
+      return str(base_id)
+    return str(block.display_name)
+
+  def world_build_tools(self):
+    return (self.atlas_uv_face, self.def_lookup)
+
+
+def _adapter_info_value(info, name: str) -> str:
+  if info is None:
+    return ""
+  if isinstance(info, dict):
+    return str(info.get(name, "") or "")
+  return str(getattr(info, name, "") or "")
+
+
+def _perspective_webgpu(fov_y_deg: float, aspect: float, z_near: float, z_far: float) -> np.ndarray:
+  f = 1.0 / math.tan(math.radians(float(fov_y_deg)) * 0.5)
+  m = np.zeros((4, 4), dtype=np.float32)
+  m[0, 0] = float(f / max(float(aspect), 1e-9))
+  m[1, 1] = float(-f)
+  m[2, 2] = float(z_far / (z_near - z_far))
+  m[2, 3] = float((z_far * z_near) / (z_near - z_far))
+  m[3, 2] = -1.0
+  return m
+
+
+def _perspective_fit(fov_y_deg: float, aspect: float, z_near: float, z_far: float) -> np.ndarray:
+  f = 1.0 / math.tan(math.radians(float(fov_y_deg)) * 0.5)
+  m = np.zeros((4, 4), dtype=np.float32)
+  m[0, 0] = float(f / max(float(aspect), 1e-9))
+  m[1, 1] = float(f)
+  m[2, 2] = float(z_far / (z_near - z_far))
+  m[2, 3] = float((z_far * z_near) / (z_near - z_far))
+  m[3, 2] = -1.0
+  return m
+
+
+def _opengl_to_webgpu_light_view_proj(light_vp: np.ndarray) -> np.ndarray:
+  correction = np.asarray(((1.0, 0.0, 0.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.5, 0.5), (0.0, 0.0, 0.0, 1.0)), dtype=np.float32)
+  return (correction @ np.asarray(light_vp, dtype=np.float32)).astype(np.float32)
+
+
+def _look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3 = Vec3(0.0, 1.0, 0.0)) -> np.ndarray:
+  f = forward.normalized()
+  r = up_hint.cross(f).normalized()
+  if r.length() <= 1e-9:
+    r = Vec3(1.0, 0.0, 0.0)
+  u = f.cross(r).normalized()
+  m = np.identity(4, dtype=np.float32)
+  (m[0, 0], m[0, 1], m[0, 2]) = r.x, r.y, r.z
+  (m[1, 0], m[1, 1], m[1, 2]) = u.x, u.y, u.z
+  (m[2, 0], m[2, 1], m[2, 2]) = -f.x, -f.y, -f.z
+  m[0, 3] = -r.dot(eye)
+  m[1, 3] = -u.dot(eye)
+  m[2, 3] = f.dot(eye)
+  return m
+
+
+def _qimage_rgba_bytes(image: QImage, *, mirror_y: bool) -> tuple[QImage, bytes]:
+  img = QImage(image)
+  if img.isNull():
+    raise RuntimeError("Unable to upload a null renderer texture image.")
+  img = img.convertToFormat(QImage.Format.Format_RGBA8888)
+  if bool(mirror_y):
+    img = img.mirrored(False, True)
+  ptr = img.bits()
+  ptr.setsize(img.sizeInBytes())
+  return (img, bytes(ptr))
+
+
+def _create_texture_bind_group(*, device, layout, label: str, image: QImage, mirror_y: bool):
+  import wgpu
+
+  img, data = _qimage_rgba_bytes(image, mirror_y=bool(mirror_y))
+  texture = device.create_texture(
+    label=f"{label}-texture", size=(int(img.width()), int(img.height()), 1), format=wgpu.TextureFormat.rgba8unorm, usage=wgpu.TextureUsage.TEXTURE_BINDING | wgpu.TextureUsage.COPY_DST
+  )
+  device.queue.write_texture({"texture": texture}, data, {"bytes_per_row": int(img.width()) * 4, "rows_per_image": int(img.height())}, (int(img.width()), int(img.height()), 1))
+  view = texture.create_view(label=f"{label}-view")
+  sampler = device.create_sampler(label=f"{label}-sampler", mag_filter="nearest", min_filter="nearest", mipmap_filter="nearest")
+  bind_group = device.create_bind_group(label=f"{label}-bg", layout=layout, entries=[{"binding": 0, "resource": view}, {"binding": 1, "resource": sampler}])
+  return texture, view, sampler, bind_group, int(img.width()), int(img.height())
+
+
+class WgpuRendererBackend:
+  def __init__(self, *, cfg, state, canvas) -> None:
+    self._cfg = cfg
+    self._state = state
+    self._canvas = canvas
+
+    self._res: WgpuRendererResources | None = None
+    self._atlas: WgpuTextureAtlas | None = None
+    self._visuals: _WgpuBlockVisualResolver | None = None
+    self._info = BackendRendererInfo(api="WebGPU/wgpu-native", shading_language="GLSL 450")
+    self._chunks: dict[ChunkKey, WgpuChunkMesh] = {}
+    self._selection_cell: tuple[int, int, int] | None = None
+    self._selection_buffer: object | None = None
+    self._selection_vertex_count = 0
+    self._last_metrics = BackendRendererFrameMetrics()
+    self._player_skin_image = QImage()
+    self._skin_texture: object | None = None
+    self._skin_texture_view: object | None = None
+    self._skin_sampler: object | None = None
+    self._skin_size: tuple[int, int] = (0, 0)
+    self._last_shadow_ok = False
+    self._last_shadow_size = 0
+    self._last_shadow_instances = 0
+    self._initialized = False
+
+  def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
+    import wgpu
+    import wgpu.backends.wgpu_native  # noqa: F401
+
+    adapter = wgpu.gpu.request_adapter_sync(power_preference="high-performance", canvas=self._canvas)
+    device = adapter.request_device_sync(label="ludoxel-wgpu-device")
+    context, target_format = configure_wgpu_canvas(canvas=self._canvas, adapter=adapter, device=device)
+
+    camera_bgl = device.create_bind_group_layout(label="ludoxel-camera-bgl", entries=[{"binding": 0, "visibility": wgpu.ShaderStage.VERTEX | wgpu.ShaderStage.FRAGMENT, "buffer": {"type": "uniform"}}])
+    camera_buffers = []
+    camera_bgs = []
+    for face_idx in range(FACE_COUNT):
+      camera_buffer = device.create_buffer(label=f"ludoxel-frame-uniforms-face-{face_idx}", size=_UNIFORM_SIZE_BYTES, usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST)
+      camera_buffers.append(camera_buffer)
+      camera_bgs.append(
+        device.create_bind_group(
+          label=f"ludoxel-frame-bg-face-{face_idx}", layout=camera_bgl, entries=[{"binding": 0, "resource": {"buffer": camera_buffer, "offset": 0, "size": _UNIFORM_SIZE_BYTES}}]
+        )
+      )
+
+    names = block_registry.required_texture_names()
+    atlas = WgpuTextureAtlas.build_from_dir(Path(assets_dir) / "minecraft" / "textures" / "block", names=names)
+    atlas.upload(device=device)
+
+    atlas_bgl = device.create_bind_group_layout(
+      label="ludoxel-texture-bgl",
+      entries=[
+        {"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "float", "view_dimension": "2d", "multisampled": False}},
+        {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "filtering"}},
+      ],
+    )
+    atlas_bg = device.create_bind_group(label="ludoxel-atlas-bg", layout=atlas_bgl, entries=[{"binding": 0, "resource": atlas.texture_view}, {"binding": 1, "resource": atlas.sampler}])
+    shadow_bgl = device.create_bind_group_layout(
+      label="ludoxel-shadow-bgl",
+      entries=[
+        {"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "depth", "view_dimension": "2d", "multisampled": False}},
+        {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "comparison"}},
+      ],
+    )
+    initial_skin = self._player_skin_image if not self._player_skin_image.isNull() else QImage(64, 64, QImage.Format.Format_RGBA8888)
+    if initial_skin.isNull():
+      raise RuntimeError("Unable to create the initial player skin texture.")
+    if self._player_skin_image.isNull():
+      initial_skin.fill(QColor(255, 255, 255, 255))
+    skin_texture, skin_view, skin_sampler, skin_bg, skin_w, skin_h = _create_texture_bind_group(device=device, layout=atlas_bgl, label="ludoxel-player-skin", image=initial_skin, mirror_y=True)
+
+    world_pipeline = create_world_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, atlas_bind_group_layout=atlas_bgl)
+    world_shadowed_pipeline = create_world_shadowed_pipeline(
+      device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, atlas_bind_group_layout=atlas_bgl, shadow_bind_group_layout=shadow_bgl
+    )
+    shadow_depth_pipeline = create_shadow_depth_pipeline(device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl)
+    textured_face_pipeline = create_textured_face_pipeline(
+      device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, texture_bind_group_layout=atlas_bgl
+    )
+    selection_pipeline = create_selection_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
+    face_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-vertices", data=np.ascontiguousarray(build_face_vertex_rows(), dtype=np.float32), usage=wgpu.BufferUsage.VERTEX)
+
+    self._res = WgpuRendererResources(
+      adapter=adapter,
+      device=device,
+      context=context,
+      target_format=target_format,
+      depth_format=_DEPTH_FORMAT,
+      camera_buffers=tuple(camera_buffers),
+      camera_bind_group_layout=camera_bgl,
+      camera_bind_groups=tuple(camera_bgs),
+      atlas_bind_group_layout=atlas_bgl,
+      atlas_bind_group=atlas_bg,
+      skin_bind_group=skin_bg,
+      face_vertex_buffer=face_vertex_buffer,
+      world_pipeline=world_pipeline,
+      world_shadowed_pipeline=world_shadowed_pipeline,
+      shadow_depth_pipeline=shadow_depth_pipeline,
+      textured_face_pipeline=textured_face_pipeline,
+      selection_pipeline=selection_pipeline,
+      shadow_bind_group_layout=shadow_bgl,
+    )
+    self._skin_texture = skin_texture
+    self._skin_texture_view = skin_view
+    self._skin_sampler = skin_sampler
+    self._skin_size = (int(skin_w), int(skin_h))
+    self._atlas = atlas
+    self._visuals = _WgpuBlockVisualResolver(atlas=atlas, blocks=block_registry)
+
+    info = getattr(adapter, "info", None)
+    backend = _adapter_info_value(info, "backend_type") or _adapter_info_value(info, "backend")
+    adapter_name = _adapter_info_value(info, "device") or _adapter_info_value(info, "description") or _adapter_info_value(info, "adapter")
+    vendor = _adapter_info_value(info, "vendor") or _adapter_info_value(info, "vendor_id")
+    self._info = BackendRendererInfo(vendor=vendor, renderer=adapter_name or str(info or "wgpu adapter"), api=f"WebGPU/wgpu-native {backend}".strip(), shading_language="GLSL 450")
+    print(f"[ludoxel] renderer backend: {self._info.api}; adapter={self._info.renderer}; vendor={self._info.vendor}", flush=True)
+    self._initialized = True
+
+  def destroy(self) -> None:
+    for mesh in tuple(self._chunks.values()):
+      mesh.destroy()
+    self._chunks.clear()
+    if self._selection_buffer is not None and hasattr(self._selection_buffer, "destroy"):
+      self._selection_buffer.destroy()
+    self._selection_buffer = None
+    self._selection_vertex_count = 0
+    if self._atlas is not None:
+      self._atlas.destroy()
+    self._atlas = None
+    if self._skin_texture is not None and hasattr(self._skin_texture, "destroy"):
+      self._skin_texture.destroy()
+    self._skin_texture = None
+    self._skin_texture_view = None
+    self._skin_sampler = None
+    self._skin_size = (0, 0)
+    self._last_shadow_ok = False
+    self._last_shadow_size = 0
+    self._last_shadow_instances = 0
+    if self._res is not None:
+      self._res.destroy()
+    self._res = None
+    self._visuals = None
+    self._initialized = False
+
+  def gl_info(self) -> tuple[str, str, str, str]:
+    return self._info.as_gl_info_tuple()
+
+  def shadow_info(self) -> tuple[bool, int]:
+    active = bool(self._state.shadow_enabled or self._state.debug_shadow)
+    ok = bool(active and self._last_shadow_ok and int(self._last_shadow_instances) > 0)
+    return (ok, int(self._last_shadow_size) if ok else 0)
+
+  def payload_validation_report(self) -> object | None:
+    return None
+
+  def frame_metrics(self):
+    return self._last_metrics
+
+  def apply_runtime_state(self) -> None:
+    return
+
+  def set_cloud_motion_paused(self, on: bool) -> None:
+    _ = bool(on)
+
+  def set_texture_animation_paused(self, on: bool) -> None:
+    _ = bool(on)
+
+  def atlas_uv_face(self, block_state_id: str, face_idx: int) -> tuple[float, float, float, float]:
+    if self._visuals is None:
+      return (0.0, 0.0, 1.0, 1.0)
+    return self._visuals.atlas_uv_face(str(block_state_id), int(face_idx))
+
+  def world_build_tools(self):
+    if self._visuals is None:
+      return None
+    return self._visuals.world_build_tools()
+
+  def block_display_name(self, block_state_or_id: str) -> str:
+    if self._visuals is None:
+      return str(block_state_or_id)
+    return self._visuals.display_name(str(block_state_or_id))
+
+  def evict_chunks(self, *, keep_chunks: set[ChunkKey]) -> None:
+    keep = {normalize_chunk_key(chunk) for chunk in keep_chunks}
+    for ck in tuple(self._chunks.keys()):
+      if ck in keep:
+        continue
+      mesh = self._chunks.pop(ck)
+      mesh.destroy()
+
+  def clear_selection(self) -> None:
+    self._selection_cell = None
+    self._selection_vertex_count = 0
+    if self._selection_buffer is not None and hasattr(self._selection_buffer, "destroy"):
+      self._selection_buffer.destroy()
+    self._selection_buffer = None
+
+  def set_selection_target(self, *, x: int, y: int, z: int, state_str: str, get_state, world_revision: int) -> None:
+    del state_str, get_state, world_revision
+    self._selection_cell = (int(x), int(y), int(z))
+    self._refresh_selection_buffer()
+
+  def submit_chunk(
+    self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None
+  ) -> None:
+    del shadow_faces, gpu_face_sources, gpu_bucket_counts
+    if self._res is None:
+      return
+    ck = normalize_chunk_key(chunk_key)
+    old = self._chunks.pop(ck, None)
+    if old is not None:
+      old.destroy()
+    mesh = upload_chunk_mesh(device=self._res.device, chunk_key=ck, world_revision=int(world_revision), faces=faces)
+    if mesh is not None:
+      self._chunks[ck] = mesh
+
+  def _refresh_selection_buffer(self) -> None:
+    if self._res is None:
+      return
+    import wgpu
+
+    if self._selection_buffer is not None and hasattr(self._selection_buffer, "destroy"):
+      self._selection_buffer.destroy()
+    vertices = build_selection_vertices(self._selection_cell)
+    self._selection_vertex_count = int(vertices.shape[0])
+    if self._selection_vertex_count <= 0:
+      self._selection_buffer = None
+      return
+    self._selection_buffer = self._res.device.create_buffer_with_data(label="ludoxel-selection-lines", data=np.ascontiguousarray(vertices, dtype=np.float32), usage=wgpu.BufferUsage.VERTEX)
+
+  def _ensure_depth_target(self, *, width: int, height: int) -> None:
+    if self._res is None:
+      return
+    import wgpu
+
+    w = max(1, int(width))
+    h = max(1, int(height))
+    if self._res.depth_texture is not None and self._res.depth_size == (w, h):
+      return
+    if self._res.depth_texture is not None and hasattr(self._res.depth_texture, "destroy"):
+      self._res.depth_texture.destroy()
+    depth = self._res.device.create_texture(label="ludoxel-depth", size=(w, h, 1), format=self._res.depth_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT)
+    self._res.depth_texture = depth
+    self._res.depth_view = depth.create_view(label="ludoxel-depth-view")
+    self._res.depth_size = (w, h)
+
+  def _ensure_shadow_target(self) -> bool:
+    if self._res is None:
+      return False
+    import wgpu
+
+    size = max(1, int(self._cfg.shadow.size))
+    if self._res.shadow_texture is not None and int(self._res.shadow_size) == int(size) and self._res.shadow_bind_group is not None:
+      return True
+
+    if self._res.shadow_texture is not None and hasattr(self._res.shadow_texture, "destroy"):
+      self._res.shadow_texture.destroy()
+
+    texture = self._res.device.create_texture(
+      label="ludoxel-shadow-depth", size=(int(size), int(size), 1), format=wgpu.TextureFormat.depth32float, usage=wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.TEXTURE_BINDING
+    )
+    view = texture.create_view(label="ludoxel-shadow-depth-view")
+    sampler = self._res.device.create_sampler(
+      label="ludoxel-shadow-compare-sampler",
+      address_mode_u=wgpu.AddressMode.clamp_to_edge,
+      address_mode_v=wgpu.AddressMode.clamp_to_edge,
+      mag_filter=wgpu.FilterMode.linear,
+      min_filter=wgpu.FilterMode.linear,
+      compare=wgpu.CompareFunction.less_equal,
+    )
+    bind_group = self._res.device.create_bind_group(
+      label="ludoxel-shadow-bg", layout=self._res.shadow_bind_group_layout, entries=[{"binding": 0, "resource": view}, {"binding": 1, "resource": sampler}]
+    )
+
+    self._res.shadow_texture = texture
+    self._res.shadow_view = view
+    self._res.shadow_sampler = sampler
+    self._res.shadow_bind_group = bind_group
+    self._res.shadow_size = int(size)
+    return True
+
+  def _frame_uniform_bytes(
+    self,
+    *,
+    view_proj: np.ndarray,
+    light_view_proj: np.ndarray | None = None,
+    face_idx: int,
+    tint_value: float = 0.55,
+    sel_mode: int = 0,
+    sel_block: tuple[int, int, int] | None = None,
+    shadow_enabled: bool = False,
+    debug_shadow: bool = False,
+  ) -> bytes:
+    vp = np.asarray(view_proj, dtype=np.float32)
+    light_vp = vp if light_view_proj is None else np.asarray(light_view_proj, dtype=np.float32)
+    uniform = np.zeros((_UNIFORM_FLOAT_COUNT,), dtype=np.float32)
+    uniform[:16] = np.ascontiguousarray(vp.T, dtype=np.float32).reshape(16)
+    uniform[16:32] = np.ascontiguousarray(light_vp.T, dtype=np.float32).reshape(16)
+    sun = self._state.sun_dir.normalized()
+    uniform[32:35] = (float(sun.x), float(sun.y), float(sun.z))
+    uniform[35] = float(tint_value)
+    raw = bytearray(uniform.tobytes())
+    ints = np.frombuffer(raw, dtype=np.int32)
+    ints[36] = int(face_idx)
+    ints[37] = int(sel_mode)
+    ints[38] = 1 if bool(shadow_enabled) else 0
+    ints[39] = 1 if bool(debug_shadow) else 0
+    if sel_block is not None:
+      ints[40:43] = (int(sel_block[0]), int(sel_block[1]), int(sel_block[2]))
+    else:
+      ints[40:43] = (0, 0, 0)
+    return bytes(raw)
+
+  def _camera_view_proj(self, *, width: int, height: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, z_near: float | None = None) -> np.ndarray:
+    aspect = float(max(1, int(width))) / float(max(1, int(height)))
+    forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
+    view = _look_dir(eye, forward)
+    proj = _perspective_webgpu(float(fov_deg), aspect, float(self._cfg.camera.z_near if z_near is None else z_near), float(self._cfg.camera.z_far))
+    return (proj @ view).astype(np.float32)
+
+  def _hand_view_proj(self, *, width: int, height: int, fov_deg: float) -> np.ndarray:
+    aspect = float(max(1, int(width))) / float(max(1, int(height)))
+    return _perspective_webgpu(float(fov_deg), aspect, float(FIRST_PERSON_HAND_NEAR), float(self._cfg.camera.z_far)).astype(np.float32)
+
+  def _hand_fit_projection(self, *, width: int, height: int, fov_deg: float) -> np.ndarray:
+    aspect = float(max(1, int(width))) / float(max(1, int(height)))
+    return _perspective_fit(float(fov_deg), aspect, float(FIRST_PERSON_HAND_NEAR), float(self._cfg.camera.z_far)).astype(np.float32)
+
+  def _light_view_proj(self, *, center: Vec3) -> np.ndarray:
+    shadow_size = max(1, int(self._cfg.shadow.size))
+    light_vp = compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._cfg.shadow, shadow_size=int(shadow_size))
+    return _opengl_to_webgpu_light_view_proj(light_vp)
+
+  def _write_frame_uniforms(
+    self,
+    *,
+    view_proj: np.ndarray,
+    light_view_proj: np.ndarray | None = None,
+    tint_value: float = 0.55,
+    sel_mode: int = 0,
+    sel_block: tuple[int, int, int] | None = None,
+    shadow_enabled: bool = False,
+    debug_shadow: bool = False,
+  ) -> None:
+    if self._res is None:
+      return
+    for face_idx, buffer in enumerate(self._res.camera_buffers[:FACE_COUNT]):
+      data = self._frame_uniform_bytes(
+        view_proj=view_proj,
+        light_view_proj=light_view_proj,
+        face_idx=int(face_idx),
+        tint_value=float(tint_value),
+        sel_mode=int(sel_mode),
+        sel_block=sel_block,
+        shadow_enabled=bool(shadow_enabled),
+        debug_shadow=bool(debug_shadow),
+      )
+      self._res.device.queue.write_buffer(buffer, 0, data)
+
+  def _draw_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
+    if self._res is None or int(face.instance_count) <= 0:
+      return 0
+    render_pass.set_vertex_buffer(1, face.instance_buffer)
+    render_pass.draw(6, int(face.instance_count), int(face_idx) * 6, 0)
+    return int(face.instance_count)
+
+  def _draw_transform_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
+    if self._res is None or int(face.instance_count) <= 0:
+      return 0
+    render_pass.set_vertex_buffer(1, face.instance_buffer)
+    render_pass.draw(6, int(face.instance_count), int(face_idx) * 6, 0)
+    return int(face.instance_count)
+
+  def _upload_temp_face_buckets(self, face_buckets: list[np.ndarray] | tuple[np.ndarray, ...], *, label: str) -> list[WgpuFaceInstances | None]:
+    if self._res is None:
+      return [None for _ in range(FACE_COUNT)]
+    out: list[WgpuFaceInstances | None] = []
+    for face_idx in range(FACE_COUNT):
+      rows = face_buckets[face_idx] if face_idx < len(face_buckets) else None
+      out.append(upload_face_rows(device=self._res.device, label=f"{label}-face-{face_idx}", rows=rows))
+    return out
+
+  def _upload_temp_transform_face_buckets(self, face_buckets: list[np.ndarray] | tuple[np.ndarray, ...], *, label: str) -> list[WgpuFaceInstances | None]:
+    if self._res is None:
+      return [None for _ in range(FACE_COUNT)]
+    out: list[WgpuFaceInstances | None] = []
+    for face_idx in range(FACE_COUNT):
+      rows = face_buckets[face_idx] if face_idx < len(face_buckets) else None
+      out.append(upload_transform_face_rows(device=self._res.device, label=f"{label}-face-{face_idx}", rows=rows))
+    return out
+
+  def _third_person_held_block_face_rows(self, pose: HeldBlockPose | None) -> tuple[np.ndarray, ...]:
+    if pose is None or self._visuals is None:
+      return empty_textured_face_rows()
+
+    boxes = list(held_block_model_boxes_for_kind(pose.block_kind))
+    if not boxes:
+      return empty_textured_face_rows()
+
+    kind = "" if pose.block_kind is None else str(pose.block_kind)
+    buffers: list[list[list[float]]] = [[] for _ in range(FACE_COUNT)]
+    local_boxes = [textured_box.box for textured_box in boxes]
+    for textured_box in boxes:
+      for face_idx in range(FACE_COUNT):
+        if is_local_face_occluded(box=textured_box.box, face_idx=int(face_idx), boxes=local_boxes):
+          continue
+        texture_uv = self._visuals.atlas_uv_face(str(pose.block_id), int(face_idx))
+        uv_rect = atlas_face_uv(texture_uv, int(face_idx), textured_box.box, kind=kind, face_uv_pixels=textured_box.face_uv_pixels)
+        model = model_matrix_for_local_box(pose.parent_transform, textured_box.box)
+        append_face_instance(buffers, int(face_idx), model, uv_rect)
+    return face_rows_from_buffers(buffers)
+
+  def _draw_transform_buckets(self, render_pass, *, buckets: tuple[np.ndarray, ...] | list[np.ndarray], texture_bind_group, label: str) -> tuple[int, int, list[WgpuFaceInstances]]:
+    if self._res is None or texture_bind_group is None:
+      return (0, 0, [])
+    uploaded = self._upload_temp_transform_face_buckets(buckets, label=label)
+    live_uploads: list[WgpuFaceInstances] = []
+    draw_calls = 0
+    instances = 0
+    render_pass.set_pipeline(self._res.textured_face_pipeline)
+    render_pass.set_bind_group(1, texture_bind_group)
+    render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
+    for face_idx, face in enumerate(uploaded):
+      if face is None:
+        continue
+      live_uploads.append(face)
+      render_pass.set_bind_group(0, self._res.camera_bind_groups[int(face_idx)])
+      count = self._draw_transform_face_instances(render_pass, face_idx=int(face_idx), face=face)
+      if count <= 0:
+        continue
+      draw_calls += 1
+      instances += int(count)
+    return (int(draw_calls), int(instances), live_uploads)
+
+  def render(
+    self,
+    *,
+    w: int,
+    h: int,
+    eye: Vec3,
+    yaw_deg: float,
+    pitch_deg: float,
+    roll_deg: float = 0.0,
+    fov_deg: float,
+    render_distance_chunks: int,
+    player_state: PlayerRenderState | None = None,
+    extra_player_states: tuple[PlayerRenderState, ...] = (),
+    othello_state: OthelloRenderState | None = None,
+    falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = (),
+    block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = (),
+  ) -> None:
+    del roll_deg, render_distance_chunks, othello_state, block_break_particles
+    if self._res is None or not bool(self._initialized):
+      return
+    import wgpu
+
+    t0 = time.perf_counter()
+    width = max(1, int(w))
+    height = max(1, int(h))
+    self._ensure_depth_target(width=width, height=height)
+    if self._res.depth_view is None:
+      return
+
+    view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg))
+    sel_block = self._selection_cell if self._selection_cell is not None and bool(self._state.outline_selection_enabled) else None
+    shadow_requested = bool(self._state.shadow_enabled or self._state.debug_shadow)
+    light_view_proj = self._light_view_proj(center=eye) if bool(shadow_requested) else view_proj
+
+    current_texture = self._res.context.get_current_texture()
+    color_view = current_texture.create_view()
+    encoder = self._res.device.create_command_encoder(label="ludoxel-frame")
+    shadow_draw_calls = 0
+    shadow_instances = 0
+    shadow_ok = False
+    if bool(shadow_requested) and self._ensure_shadow_target() and self._res.shadow_view is not None:
+      self._write_frame_uniforms(view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.55, sel_mode=0, sel_block=None, shadow_enabled=False, debug_shadow=False)
+      shadow_pass = encoder.begin_render_pass(
+        label="ludoxel-shadow-pass",
+        color_attachments=[],
+        depth_stencil_attachment={"view": self._res.shadow_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
+      )
+      shadow_pass.set_pipeline(self._res.shadow_depth_pipeline)
+      shadow_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
+      for face_idx in range(FACE_COUNT):
+        shadow_pass.set_bind_group(0, self._res.camera_bind_groups[int(face_idx)])
+        for mesh in tuple(self._chunks.values()):
+          face = mesh.face(int(face_idx))
+          if face is None:
+            continue
+          count = self._draw_face_instances(shadow_pass, face_idx=int(face_idx), face=face)
+          if count <= 0:
+            continue
+          shadow_draw_calls += 1
+          shadow_instances += int(count)
+      shadow_pass.end()
+      shadow_ok = bool(int(shadow_instances) > 0)
+
+    self._last_shadow_ok = bool(shadow_ok)
+    self._last_shadow_size = int(getattr(self._res, "shadow_size", 0) or 0)
+    self._last_shadow_instances = int(shadow_instances)
+    shadow_sampling_ok = bool(shadow_requested and self._res.shadow_bind_group is not None and self._res.shadow_view is not None and self._res.shadow_sampler is not None and shadow_ok)
+    self._write_frame_uniforms(
+      view_proj=view_proj,
+      light_view_proj=light_view_proj,
+      tint_value=0.55,
+      sel_mode=2 if sel_block is not None else 0,
+      sel_block=sel_block,
+      shadow_enabled=bool(shadow_sampling_ok),
+      debug_shadow=bool(self._state.debug_shadow),
+    )
+    temp_uploads: list[WgpuFaceInstances] = []
+    render_pass = encoder.begin_render_pass(
+      label="ludoxel-main-pass",
+      color_attachments=[{"view": color_view, "resolve_target": None, "clear_value": (0.54, 0.70, 0.92, 1.0), "load_op": wgpu.LoadOp.clear, "store_op": wgpu.StoreOp.store}],
+      depth_stencil_attachment={"view": self._res.depth_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
+    )
+
+    draw_calls = 0
+    instances = 0
+    use_shadow_pipeline = bool(shadow_requested and self._res.shadow_bind_group is not None)
+    render_pass.set_pipeline(self._res.world_shadowed_pipeline if bool(use_shadow_pipeline) else self._res.world_pipeline)
+    render_pass.set_bind_group(1, self._res.atlas_bind_group)
+    if bool(use_shadow_pipeline):
+      render_pass.set_bind_group(2, self._res.shadow_bind_group)
+    render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
+    for face_idx in range(FACE_COUNT):
+      render_pass.set_bind_group(0, self._res.camera_bind_groups[int(face_idx)])
+      for mesh in tuple(self._chunks.values()):
+        face = mesh.face(int(face_idx))
+        if face is None:
+          continue
+        count = self._draw_face_instances(render_pass, face_idx=int(face_idx), face=face)
+        if count <= 0:
+          continue
+        draw_calls += 1
+        instances += int(count)
+
+    if self._visuals is not None:
+      falling_rows = build_falling_block_face_rows(samples=tuple(falling_blocks), uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
+      dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=falling_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-falling-block-temp")
+      draw_calls += int(dc)
+      instances += int(inst)
+      temp_uploads.extend(uploads)
+
+    player_poses: list[PlayerModelPose] = []
+    for state in (player_state, *tuple(extra_player_states)):
+      if state is None:
+        continue
+      player_poses.append(build_player_model_pose(state))
+
+    for pose_idx, pose in enumerate(player_poses):
+      if self._res.skin_bind_group is not None:
+        dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label=f"ludoxel-player-skin-temp-{pose_idx}")
+        draw_calls += int(dc)
+        instances += int(inst)
+        temp_uploads.extend(uploads)
+      held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
+      dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label=f"ludoxel-player-held-temp-{pose_idx}")
+      draw_calls += int(dc)
+      instances += int(inst)
+      temp_uploads.extend(uploads)
+
+    if self._selection_buffer is not None and self._selection_vertex_count > 0 and bool(self._state.outline_selection_enabled):
+      render_pass.set_pipeline(self._res.selection_pipeline)
+      render_pass.set_bind_group(0, self._res.camera_bind_groups[0])
+      render_pass.set_vertex_buffer(0, self._selection_buffer)
+      render_pass.draw(int(self._selection_vertex_count), 1, 0, 0)
+      draw_calls += 1
+
+    render_pass.end()
+
+    first_person = None if player_state is None else player_state.first_person
+    if first_person is not None and bool(first_person.show_view_model) and self._visuals is not None:
+      hand_fov = float(fov_deg if float(fov_deg) <= 80.0 else 80.0 + (float(fov_deg) - 80.0) * 0.20)
+      hand_vp = self._hand_view_proj(width=width, height=height, fov_deg=hand_fov)
+      hand_fit_proj = self._hand_fit_projection(width=width, height=height, fov_deg=hand_fov)
+      hand_rows = empty_textured_face_rows()
+      hand_bind_group = self._res.atlas_bind_group
+      hand_label = "ludoxel-first-person-empty"
+      tint_mix = 0.0
+      if first_person.visible_block_id is not None:
+        hand_rows = build_first_person_held_block_face_rows(first_person, projection=hand_fit_proj, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
+        hand_label = "ludoxel-first-person-held-temp"
+      elif bool(first_person.show_arm) and self._res.skin_bind_group is not None:
+        skin_w, skin_h = self._skin_size
+        hand_rows = build_first_person_arm_face_rows(first_person, projection=hand_fit_proj, skin_width=int(max(1, skin_w)), skin_height=int(max(1, skin_h)))
+        hand_bind_group = self._res.skin_bind_group
+        hand_label = "ludoxel-first-person-arm-temp"
+        tint_mix = float(0.0 if player_state is None else player_state.hurt_tint_strength)
+
+      self._write_frame_uniforms(view_proj=hand_vp, tint_value=float(tint_mix), sel_mode=0, sel_block=None)
+      hand_pass = encoder.begin_render_pass(
+        label="ludoxel-first-person-pass",
+        color_attachments=[{"view": color_view, "resolve_target": None, "load_op": wgpu.LoadOp.load, "store_op": wgpu.StoreOp.store}],
+        depth_stencil_attachment={"view": self._res.depth_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
+      )
+      dc, inst, uploads = self._draw_transform_buckets(hand_pass, buckets=hand_rows, texture_bind_group=hand_bind_group, label=hand_label)
+      draw_calls += int(dc)
+      instances += int(inst)
+      temp_uploads.extend(uploads)
+      hand_pass.end()
+
+    self._res.device.queue.submit([encoder.finish()])
+    for face in temp_uploads:
+      face.destroy()
+
+    elapsed_ms = float((time.perf_counter() - t0) * 1000.0)
+    self._last_metrics = BackendRendererFrameMetrics(
+      world=BackendPassFrameMetrics(cpu_ms=elapsed_ms, draw_calls=int(draw_calls), instances=int(instances), rendered=True),
+      shadow=BackendPassFrameMetrics(cpu_ms=0.0, draw_calls=int(shadow_draw_calls), instances=int(shadow_instances), rendered=bool(shadow_ok)),
+    )
+
+  def set_player_skin_image(self, image: QImage) -> None:
+    self._player_skin_image = QImage(image)
+    if self._res is None or self._player_skin_image.isNull():
+      return
+    if self._skin_texture is not None and hasattr(self._skin_texture, "destroy"):
+      self._skin_texture.destroy()
+    texture, view, sampler, bind_group, width, height = _create_texture_bind_group(
+      device=self._res.device, layout=self._res.atlas_bind_group_layout, label="ludoxel-player-skin", image=self._player_skin_image, mirror_y=True
+    )
+    self._skin_texture = texture
+    self._skin_texture_view = view
+    self._skin_sampler = sampler
+    self._skin_size = (int(width), int(height))
+    self._res.skin_bind_group = bind_group
+
+  def render_player_preview_frame(
+    self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
+  ) -> QImage:
+    del player_state, restore_framebuffer, restore_viewport
+    image = QImage(max(1, int(width)), max(1, int(height)), QImage.Format.Format_RGBA8888)
+    image.fill(QColor(0, 0, 0, 0))
+    image.setDevicePixelRatio(max(1.0, float(device_pixel_ratio)))
+    return image

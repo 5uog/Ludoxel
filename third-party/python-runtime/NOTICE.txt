@@ -1,0 +1,44 @@
+SPDX-FileCopyrightText: 2026 Kento Konishi
+SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+
+Ludoxel Python Runtime and Build Dependency Notice
+
+This notice records third-party Python packages and bundled runtime components
+that may be used by Ludoxel source-tree execution or desktop distribution
+builds. It does not relicense Ludoxel original materials.
+
+Runtime dependencies:
+
+- CPython / Python standard library: Python Software Foundation License
+- PyQt6: GPL-3.0-only or commercial Riverbank license
+- PyQt6-Qt6 / Qt 6 runtime subset: LGPL-3.0
+- PyQt6-sip: BSD-2-Clause
+- NumPy: BSD-3-Clause with additional bundled third-party notices in the wheel
+- PyOpenGL (Windows renderer path): BSD-3-Clause
+- wgpu-py (macOS renderer path): BSD-2-Clause
+- rendercanvas (macOS renderer path): BSD-2-Clause
+- cffi: MIT
+- pycparser: BSD-3-Clause
+- rubicon-objc: BSD-2-Clause
+- packaging: Apache-2.0 or BSD-2-Clause
+
+Build and development dependencies:
+
+- PyInstaller: GPL-2.0-or-later with the PyInstaller bootloader exception
+- pyinstaller-hooks-contrib: GPL-2.0-or-later with the PyInstaller bootloader exception
+- Cython: Apache-2.0
+- setuptools: MIT
+- wheel: MIT
+- build: MIT
+- pyproject-hooks: MIT
+- ruff: MIT
+- altgraph: MIT
+- macholib: MIT
+
+Node-based repository tools use npm development dependencies declared in
+`package.json`; those packages remain governed by their own package metadata
+and license files.
+
+When building desktop distributions, keep package-provided license metadata
+and this repository's `LICENSE`, `NOTICE`, and `third-party/` material with the
+generated artifact.

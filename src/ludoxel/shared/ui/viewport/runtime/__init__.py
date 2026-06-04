@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from ludoxel.shared.opengl.runtime.runtime_world_upload_tracker import WorldUploadTracker
+import sys
+
+if sys.platform == "darwin":
+  from ludoxel.shared.rendering.backend.backend_world_upload_tracker import WorldUploadTracker
+else:
+  from ludoxel.shared.opengl.runtime.runtime_world_upload_tracker import WorldUploadTracker
 from ludoxel.shared.ui.viewport.runtime.runtime_frame_sync import ViewportFrameSync
 from ludoxel.shared.ui.viewport.runtime.runtime_input_controller import ViewportInput
 from ludoxel.shared.ui.viewport.runtime.runtime_overlay_controller import OverlayRefs, ViewportOverlays

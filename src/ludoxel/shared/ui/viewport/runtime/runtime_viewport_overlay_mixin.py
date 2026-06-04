@@ -17,7 +17,7 @@ from ludoxel.shared.math.math_vec3 import Vec3
 from ludoxel.shared.math.math_view_angles import forward_from_yaw_pitch_deg
 
 if TYPE_CHECKING:
-  from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget
+  from ludoxel.shared.ui.viewport.viewport_renderer_viewport_widget import RendererViewportWidget
 
 _PLAYER_NAME_VERTICAL_OFFSET = 0.24
 _PLAYER_NAME_CROUCH_OFFSET = 0.12
@@ -27,27 +27,27 @@ _PLAYER_NAME_SCREEN_MARGIN_PX = 8
 
 
 class ViewportOverlayMixin:
-  def set_hud(self: "GLViewportWidget", hud) -> None:
+  def set_hud(self: "RendererViewportWidget", hud) -> None:
     self._hud = hud
     self._hud.setParent(self)
     self._hud.setGeometry(0, 0, max(1, self.width()), max(1, self.height()))
     self._sync_gameplay_hud_visibility()
 
-  def fullscreen_enabled(self: "GLViewportWidget") -> bool:
+  def fullscreen_enabled(self: "RendererViewportWidget") -> bool:
     return bool(self._state.fullscreen)
 
-  def _invalidate_pause_preview_cache(self: "GLViewportWidget") -> None:
+  def _invalidate_pause_preview_cache(self: "RendererViewportWidget") -> None:
     self._pause_preview_cache_key = None
     self._pause_preview_frame = QImage()
 
-  def _clear_pause_preview_frame(self: "GLViewportWidget") -> None:
+  def _clear_pause_preview_frame(self: "RendererViewportWidget") -> None:
     if self._pause_preview_cache_key is None and self._pause_preview_frame.isNull():
       return
     self._invalidate_pause_preview_cache()
     self._overlay.set_player_preview_frame(QImage())
     self._overlay.set_player_preview_name_tag("", visible=False)
 
-  def _position_detached_overlay_window(self: "GLViewportWidget", overlay: QWidget | None) -> None:
+  def _position_detached_overlay_window(self: "RendererViewportWidget", overlay: QWidget | None) -> None:
     if overlay is None:
       return
     if hasattr(overlay, "prepare_to_show"):
@@ -62,10 +62,10 @@ class ViewportOverlayMixin:
     y = int(frame.y() + max(0, (frame.height() - size.height()) // 2))
     overlay.move(int(x), int(y))
 
-  def _position_settings_window(self: "GLViewportWidget") -> None:
+  def _position_settings_window(self: "RendererViewportWidget") -> None:
     self._position_detached_overlay_window(self._settings)
 
-  def _position_othello_settings_window(self: "GLViewportWidget") -> None:
+  def _position_othello_settings_window(self: "RendererViewportWidget") -> None:
     self._position_detached_overlay_window(self._othello_settings)
 
   @staticmethod
@@ -89,13 +89,13 @@ class ViewportOverlayMixin:
       bool(player_state.is_first_person),
     )
 
-  def _build_pause_preview_player_state(self: "GLViewportWidget", player_state) -> object:
+  def _build_pause_preview_player_state(self: "RendererViewportWidget", player_state) -> object:
     body_yaw_deg, head_yaw_deg, head_pitch_deg = self._overlay.player_preview_angles()
     if player_state is None:
       return None
     return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)
 
-  def _update_pause_preview_frame(self: "GLViewportWidget", player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:
+  def _update_pause_preview_frame(self: "RendererViewportWidget", player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:
     if not bool(self._overlays.paused()) or bool(self.loading_active()):
       self._clear_pause_preview_frame()
       return
@@ -123,7 +123,7 @@ class ViewportOverlayMixin:
     self._pause_preview_frame = QImage(frame)
     self._overlay.set_player_preview_frame(frame)
 
-  def _layout_viewport_overlays(self: "GLViewportWidget", *, width: int, height: int) -> None:
+  def _layout_viewport_overlays(self: "RendererViewportWidget", *, width: int, height: int) -> None:
     if self._hud is not None:
       self._hud.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._othello_hud.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
@@ -135,7 +135,7 @@ class ViewportOverlayMixin:
     self._death.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._sync_player_name_overlays()
 
-  def _restore_overlay_stack_after_resize(self: "GLViewportWidget") -> None:
+  def _restore_overlay_stack_after_resize(self: "RendererViewportWidget") -> None:
     if self._overlays.dead():
       self._death.raise_()
     elif self._overlays.othello_settings_open():
@@ -153,7 +153,7 @@ class ViewportOverlayMixin:
     self._route_overlay.raise_()
     self._sync_gameplay_hud_visibility()
 
-  def _gameplay_hud_active(self: "GLViewportWidget") -> bool:
+  def _gameplay_hud_active(self: "RendererViewportWidget") -> bool:
     return (
       (not bool(self.loading_active()))
       and (not bool(self._state.hide_hud))
@@ -163,10 +163,10 @@ class ViewportOverlayMixin:
       and (not self._overlays.inventory_open())
     )
 
-  def _debug_hud_active(self: "GLViewportWidget") -> bool:
+  def _debug_hud_active(self: "RendererViewportWidget") -> bool:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
-  def _sync_gameplay_hud_visibility(self: "GLViewportWidget") -> None:
+  def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
     show_gameplay_hud = bool(self._gameplay_hud_active())
     show_othello_hud = bool(
       (not bool(self.loading_active()))
@@ -212,14 +212,14 @@ class ViewportOverlayMixin:
     self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
     self._sync_player_name_overlays()
 
-  def _set_dead_overlay(self: "GLViewportWidget", on: bool) -> None:
+  def _set_dead_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
     self._overlays.set_dead(bool(on))
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
-  def _set_paused_overlay(self: "GLViewportWidget", on: bool) -> None:
+  def _set_paused_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
     self._overlays.set_paused(bool(on))
@@ -229,7 +229,7 @@ class ViewportOverlayMixin:
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
-  def _set_settings_overlay(self: "GLViewportWidget", on: bool) -> None:
+  def _set_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
       if bool(self._state.fullscreen):
@@ -241,7 +241,7 @@ class ViewportOverlayMixin:
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
-  def _set_othello_settings_overlay(self: "GLViewportWidget", on: bool) -> None:
+  def _set_othello_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
       if bool(self._state.fullscreen):
@@ -253,7 +253,7 @@ class ViewportOverlayMixin:
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
-  def _set_inventory_overlay(self: "GLViewportWidget", on: bool) -> None:
+  def _set_inventory_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on) and not settings_controller.inventory_available(self):
       return
     if bool(on):
@@ -262,10 +262,10 @@ class ViewportOverlayMixin:
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
-  def _hide_world_player_name_tag(self: "GLViewportWidget") -> None:
+  def _hide_world_player_name_tag(self: "RendererViewportWidget") -> None:
     self._player_name_tag.setVisible(False)
 
-  def _set_world_player_name_tag(self: "GLViewportWidget", *, text: str, center_x: float, bottom_y: float, opacity: float) -> None:
+  def _set_world_player_name_tag(self: "RendererViewportWidget", *, text: str, center_x: float, bottom_y: float, opacity: float) -> None:
     body = str(text).strip()
     if not body:
       self._hide_world_player_name_tag()
@@ -284,7 +284,7 @@ class ViewportOverlayMixin:
     self._player_name_tag.setVisible(True)
     self._player_name_tag.raise_()
 
-  def _world_player_name_visible(self: "GLViewportWidget") -> bool:
+  def _world_player_name_visible(self: "RendererViewportWidget") -> bool:
     return bool(
       (not bool(self.loading_active()))
       and (not bool(self._state.hide_hud))
@@ -296,20 +296,20 @@ class ViewportOverlayMixin:
       and (not bool(self._state.is_first_person_view()))
     )
 
-  def _sync_player_name_overlays(self: "GLViewportWidget") -> None:
+  def _sync_player_name_overlays(self: "RendererViewportWidget") -> None:
     text = str(self._state.resolved_player_name).strip()
     preview_visible = bool(self._overlays.paused()) and (not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and bool(text)
     self._overlay.set_player_preview_name_tag(text, visible=bool(preview_visible), opacity=1.0)
     if not bool(self._world_player_name_visible()) or not bool(text):
       self._hide_world_player_name_tag()
 
-  def _player_name_anchor_world_pos(self: "GLViewportWidget", *, snapshot) -> Vec3:
+  def _player_name_anchor_world_pos(self: "RendererViewportWidget", *, snapshot) -> Vec3:
     player = self._session.player
     crouch_amount = clampf(float(snapshot.player_model.crouch_amount), 0.0, 1.0)
     y = float(snapshot.player_model.base_y) + float(player.height) + float(_PLAYER_NAME_VERTICAL_OFFSET) - float(_PLAYER_NAME_CROUCH_OFFSET) * float(crouch_amount)
     return Vec3(float(snapshot.player_model.base_x), float(y), float(snapshot.player_model.base_z))
 
-  def _player_name_occluded(self: "GLViewportWidget", *, eye: Vec3, target: Vec3, distance: float) -> bool:
+  def _player_name_occluded(self: "RendererViewportWidget", *, eye: Vec3, target: Vec3, distance: float) -> bool:
     if float(distance) <= 1e-4:
       return False
     direction = (target - eye).normalized()
@@ -318,7 +318,7 @@ class ViewportOverlayMixin:
       return False
     return bool(float(hit.t) + 1e-4 < float(distance) - 0.02)
 
-  def _update_world_player_name_tag(self: "GLViewportWidget", *, snapshot, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
+  def _update_world_player_name_tag(self: "RendererViewportWidget", *, snapshot, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
     text = str(self._state.resolved_player_name).strip()
     if not bool(text) or not bool(self._world_player_name_visible()) or int(self.width()) <= 1 or int(self.height()) <= 1:
       self._hide_world_player_name_tag()

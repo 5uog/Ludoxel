@@ -7,13 +7,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ludoxel"
 dynamic = ["version"]
-description = "PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and an OpenGL 4.3 Core Profile renderer."
+description = "PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and platform-specific desktop renderers."
 keywords = [
     "minecraft",
     "pvp",
     "aim",
     "simulation",
     "opengl",
+    "webgpu",
+    "wgpu",
     "voxel",
     "shadow-map",
     "cython",
@@ -33,7 +35,13 @@ classifiers = [
     "Topic :: Games/Entertainment",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
-dependencies = ["PyQt6>=6.6,<7", "numpy>=1.26,<3", "PyOpenGL>=3.1.7,<4"]
+dependencies = [
+    "PyQt6>=6.6,<7",
+    "numpy>=1.26,<3",
+    "PyOpenGL>=3.1,<4; platform_system == 'Windows'",
+    "wgpu>=0.31,<0.32; platform_system == 'Darwin'",
+    "rendercanvas>=2.6,<3; platform_system == 'Darwin'",
+]
 
 [project.optional-dependencies]
 dev = ["build>=1.2,<2", "Cython>=3.0,<4", "PyInstaller>=6,<7", "setuptools>=82", "wheel>=0.45", "ruff>=0.14,<1"]

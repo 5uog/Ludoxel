@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
 from ludoxel.application.runtime.runtime_keybinds import action_display_name
 from ludoxel.application.runtime.state.state_camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON
-from ludoxel.shared.opengl.runtime.runtime_cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
+from ludoxel.shared.rendering.backend.backend_renderer_state import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
 from ludoxel.shared.ui.common.common_sidebar_dialog import SidebarDialogBase
 from ludoxel.shared.ui.config.config_pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ludoxel.shared.ui.settings.widgets.widgets_controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
@@ -125,7 +125,7 @@ class SettingsOverlay(SidebarDialogBase):
 
   def _current_cloud_flow_value(self) -> str:
     data = self._cmb_cloud_flow.currentData()
-    return str(DEFAULT_CLOUD_FLOW_DIRECTION) if data is None else str(data)
+    return str(DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION) if data is None else str(data)
 
   def _current_camera_perspective_value(self) -> str:
     data = self._cmb_camera_perspective.currentData()

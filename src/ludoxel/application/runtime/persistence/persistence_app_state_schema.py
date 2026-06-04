@@ -279,14 +279,22 @@ class PersistedInventory:
 
   @staticmethod
   def from_dict(d: dict[str, Any]) -> "PersistedInventory":
-    legacy_slots, legacy_idx = _inventory_branch_from_dict(
+    previous_slots, previous_idx = _inventory_branch_from_dict(
       d.get("hotbar_slots"), d.get("selected_hotbar_index", 0), size=PersistedInventory.HOTBAR_SIZE, default_slots=default_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE), default_index=0
     )
     creative_slots, creative_idx = _inventory_branch_from_dict(
-      d.get("creative_hotbar_slots", legacy_slots), d.get("creative_selected_hotbar_index", legacy_idx), size=PersistedInventory.HOTBAR_SIZE, default_slots=legacy_slots, default_index=legacy_idx
+      d.get("creative_hotbar_slots", previous_slots),
+      d.get("creative_selected_hotbar_index", previous_idx),
+      size=PersistedInventory.HOTBAR_SIZE,
+      default_slots=previous_slots,
+      default_index=previous_idx,
     )
     survival_slots, survival_idx = _inventory_branch_from_dict(
-      d.get("survival_hotbar_slots", legacy_slots), d.get("survival_selected_hotbar_index", legacy_idx), size=PersistedInventory.HOTBAR_SIZE, default_slots=legacy_slots, default_index=legacy_idx
+      d.get("survival_hotbar_slots", previous_slots),
+      d.get("survival_selected_hotbar_index", previous_idx),
+      size=PersistedInventory.HOTBAR_SIZE,
+      default_slots=previous_slots,
+      default_index=previous_idx,
     )
     othello_slots, othello_idx = _inventory_branch_from_dict(
       d.get("othello_hotbar_slots", default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)),

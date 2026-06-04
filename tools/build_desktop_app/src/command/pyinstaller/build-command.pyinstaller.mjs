@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { extname, resolve } from 'node:path';
 
 import {
   APP_NAME,
+  MACOS_BUNDLE_IDENTIFIER,
   MACOS_ENTRY_SCRIPT,
-  MACOS_ICON_CANDIDATES,
+  MACOS_ICON_PATH,
   PYINSTALLER_SPEC_ROOT,
   PYINSTALLER_STAGING_ROOT,
   PYINSTALLER_WORK_ROOT,
@@ -17,34 +18,81 @@ import {
 } from '../../config/build.config.mjs';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 
-function pyinstallerDataSeparator() {
-  return process.platform === 'win32' ? ';' : ':';
+function pyinstallerDataSeparator(targetPlatform = process.platform) {
+  return targetPlatform === 'win32' ? ';' : ':';
 }
 
-function addDataArg(sourceRelativePath, destinationPath) {
-  return `${resolve(PROJECT_ROOT, sourceRelativePath)}${pyinstallerDataSeparator()}${destinationPath}`;
+function projectPath(relativePath) {
+  return resolve(PROJECT_ROOT, relativePath);
 }
 
-function addCommonDataArgs(args) {
-  if (existsSync(resolve(PROJECT_ROOT, 'assets'))) {
-    args.push('--add-data', addDataArg('assets', 'assets'));
+function addDataArg(sourceRelativePath, destinationPath, targetPlatform = process.platform) {
+  return `${projectPath(sourceRelativePath)}${pyinstallerDataSeparator(targetPlatform)}${destinationPath}`;
+}
+
+function requireProjectPath(relativePath) {
+  const absolutePath = projectPath(relativePath);
+
+  if (!existsSync(absolutePath)) {
+    throw new Error(`Required desktop bundle input is missing: ${relativePath} (${absolutePath})`);
   }
 
-  if (existsSync(resolve(PROJECT_ROOT, 'src'))) {
-    args.push('--add-data', addDataArg('src', 'src'));
+  return absolutePath;
+}
+
+function addOptionalDataArg(args, sourceRelativePath, destinationPath = sourceRelativePath, targetPlatform = process.platform) {
+  if (existsSync(projectPath(sourceRelativePath))) {
+    args.push('--add-data', addDataArg(sourceRelativePath, destinationPath, targetPlatform));
+  }
+}
+
+function addRequiredDataArg(args, sourceRelativePath, destinationPath = sourceRelativePath, targetPlatform = process.platform) {
+  requireProjectPath(sourceRelativePath);
+  args.push('--add-data', addDataArg(sourceRelativePath, destinationPath, targetPlatform));
+}
+
+function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
+  addOptionalDataArg(args, 'assets', 'assets', targetPlatform);
+  addOptionalDataArg(args, 'src', 'src', targetPlatform);
+  addOptionalDataArg(args, 'LICENSE', 'LICENSE', targetPlatform);
+  addOptionalDataArg(args, 'NOTICE', 'NOTICE', targetPlatform);
+  addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
+}
+
+function addRendererBackendArgs(args, targetPlatform = process.platform) {
+  if (targetPlatform !== 'darwin') {
+    return;
   }
 
-  if (existsSync(resolve(PROJECT_ROOT, 'LICENSE'))) {
-    args.push('--add-data', addDataArg('LICENSE', 'LICENSE'));
+  args.push('--collect-all', 'wgpu');
+  args.push('--collect-all', 'rendercanvas');
+  args.push('--hidden-import', 'wgpu.backends.wgpu_native');
+  args.push('--hidden-import', 'rendercanvas.qt');
+  args.push('--hidden-import', 'rendercanvas.pyqt6');
+}
+
+function addMacosRequiredDataArgs(args) {
+  requireProjectPath('assets/minecraft/skins/alex.png');
+
+  addRequiredDataArg(args, 'assets', 'assets', 'darwin');
+  addRequiredDataArg(args, 'src', 'src', 'darwin');
+  addRequiredDataArg(args, 'LICENSE', 'LICENSE', 'darwin');
+  addRequiredDataArg(args, 'NOTICE', 'NOTICE', 'darwin');
+  addRequiredDataArg(args, 'third-party', 'third-party', 'darwin');
+}
+
+function addMacosIconArg(args) {
+  const iconPath = projectPath(MACOS_ICON_PATH);
+
+  if (!existsSync(iconPath)) {
+    throw new Error(`Required macOS .icns app icon is missing: ${MACOS_ICON_PATH}`);
   }
 
-  if (existsSync(resolve(PROJECT_ROOT, 'NOTICE'))) {
-    args.push('--add-data', addDataArg('NOTICE', 'NOTICE'));
+  if (extname(iconPath).toLowerCase() !== '.icns') {
+    throw new Error(`macOS app icon must be an .icns file: ${MACOS_ICON_PATH}`);
   }
 
-  if (existsSync(resolve(PROJECT_ROOT, 'third-party'))) {
-    args.push('--add-data', addDataArg('third-party', 'third-party'));
-  }
+  args.push('--icon', iconPath);
 }
 
 export function buildWindowsPyinstallerCommand({ pythonExecutable, token }) {
@@ -71,7 +119,8 @@ export function buildWindowsPyinstallerCommand({ pythonExecutable, token }) {
     'ludoxel',
   ];
 
-  addCommonDataArgs(args);
+  addRendererBackendArgs(args, 'win32');
+  addCommonOptionalDataArgs(args, 'win32');
 
   if (existsSync(resolve(PROJECT_ROOT, WINDOWS_ICON_PATH))) {
     args.push('--icon', resolve(PROJECT_ROOT, WINDOWS_ICON_PATH));
@@ -101,6 +150,8 @@ export function buildMacosPyinstallerCommand({ pythonExecutable, token }) {
     '--windowed',
     '--name',
     APP_NAME,
+    '--osx-bundle-identifier',
+    MACOS_BUNDLE_IDENTIFIER,
     '--distpath',
     stagingDir,
     '--workpath',
@@ -113,16 +164,9 @@ export function buildMacosPyinstallerCommand({ pythonExecutable, token }) {
     'ludoxel',
   ];
 
-  addCommonDataArgs(args);
-
-  for (const iconCandidate of MACOS_ICON_CANDIDATES) {
-    const iconPath = resolve(PROJECT_ROOT, iconCandidate);
-
-    if (existsSync(iconPath)) {
-      args.push('--icon', iconPath);
-      break;
-    }
-  }
+  addRendererBackendArgs(args, 'darwin');
+  addMacosRequiredDataArgs(args);
+  addMacosIconArg(args);
 
   args.push(resolve(PROJECT_ROOT, MACOS_ENTRY_SCRIPT));
 

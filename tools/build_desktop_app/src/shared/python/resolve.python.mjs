@@ -5,6 +5,8 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { PROJECT_ROOT } from '../../config/path.config.mjs';
+
 export function resolvePythonExecutable(env = process.env) {
   if (env.PYTHON) {
     return env.PYTHON;
@@ -16,6 +18,12 @@ export function resolvePythonExecutable(env = process.env) {
     if (existsSync(candidate)) {
       return candidate;
     }
+  }
+
+  const localVenvPython = process.platform === 'win32' ? resolve(PROJECT_ROOT, '.venv_ludoxel', 'Scripts', 'python.exe') : resolve(PROJECT_ROOT, '.venv_ludoxel', 'bin', 'python');
+
+  if (existsSync(localVenvPython)) {
+    return localVenvPython;
   }
 
   return process.platform === 'win32' ? 'python.exe' : 'python3';

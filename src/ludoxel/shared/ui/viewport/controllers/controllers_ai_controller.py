@@ -18,23 +18,23 @@ from ludoxel.shared.world.inventory.inventory_core_special_items import AI_ROUTE
 from ludoxel.shared.world.inventory.inventory_hotbar import HOTBAR_SIZE
 
 if TYPE_CHECKING:
-  from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget
+  from ludoxel.shared.ui.viewport.viewport_renderer_viewport_widget import RendererViewportWidget
 
 
-def _ensure_edit_settings(viewport: "GLViewportWidget") -> None:
+def _ensure_edit_settings(viewport: "RendererViewportWidget") -> None:
   viewport._ai_edit_settings = viewport._ai_edit_settings.normalized()
 
 
-def route_edit_active(viewport: "GLViewportWidget") -> bool:
+def route_edit_active(viewport: "RendererViewportWidget") -> bool:
   return bool(viewport._state.route_edit_active)
 
 
-def _eraser_selected(viewport: "GLViewportWidget") -> bool:
+def _eraser_selected(viewport: "RendererViewportWidget") -> bool:
   item_id = settings_controller.current_item_id(viewport)
   return str(item_id) == AI_ROUTE_ERASE_ITEM_ID
 
 
-def _hovered_route_point_index(viewport: "GLViewportWidget") -> int | None:
+def _hovered_route_point_index(viewport: "RendererViewportWidget") -> int | None:
   if not bool(route_edit_active(viewport)) or (not bool(_eraser_selected(viewport))):
     return None
   if len(viewport._ai_route_edit_points) <= 0:
@@ -65,7 +65,7 @@ def _hovered_route_point_index(viewport: "GLViewportWidget") -> int | None:
   return best_index
 
 
-def route_overlay_paths(viewport: "GLViewportWidget") -> tuple[RouteOverlayPath, ...]:
+def route_overlay_paths(viewport: "RendererViewportWidget") -> tuple[RouteOverlayPath, ...]:
   viewport._ai_route_hover_index = _hovered_route_point_index(viewport)
   paths: list[RouteOverlayPath] = []
   for route_path in viewport._session.ai_route_paths():
@@ -78,13 +78,13 @@ def route_overlay_paths(viewport: "GLViewportWidget") -> tuple[RouteOverlayPath,
   return tuple(paths)
 
 
-def _sync_ai_visuals(viewport: "GLViewportWidget") -> None:
+def _sync_ai_visuals(viewport: "RendererViewportWidget") -> None:
   viewport._sync_gameplay_hud_visibility()
   viewport._route_overlay.update()
   viewport.update()
 
 
-def _spawn_ai_at_hit(viewport: "GLViewportWidget", *, hit) -> bool:
+def _spawn_ai_at_hit(viewport: "RendererViewportWidget", *, hit) -> bool:
   if hit is None or hit.place is None:
     return False
   actor_id = viewport._session.spawn_ai_player(spawn_cell=tuple(int(value) for value in hit.place), settings=AiSpawnEggSettings(mode=AI_MODE_IDLE).normalized())
@@ -94,7 +94,7 @@ def _spawn_ai_at_hit(viewport: "GLViewportWidget", *, hit) -> bool:
   return True
 
 
-def _open_actor_dialog(viewport: "GLViewportWidget", *, actor_id: str, initial_settings: AiSpawnEggSettings | None = None) -> bool:
+def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, initial_settings: AiSpawnEggSettings | None = None) -> bool:
   settings = None if initial_settings is None else initial_settings.normalized()
   if settings is None:
     settings = viewport._session.ai_player_settings(str(actor_id))
@@ -145,7 +145,7 @@ def _open_actor_dialog(viewport: "GLViewportWidget", *, actor_id: str, initial_s
       viewport.arm_resume_refresh()
 
 
-def begin_route_edit(viewport: "GLViewportWidget", *, actor_id: str, settings: AiSpawnEggSettings | None = None) -> None:
+def begin_route_edit(viewport: "RendererViewportWidget", *, actor_id: str, settings: AiSpawnEggSettings | None = None) -> None:
   resolved_settings = None if settings is None else settings.normalized()
   if resolved_settings is None:
     resolved_settings = viewport._session.ai_player_settings(str(actor_id))
@@ -168,7 +168,7 @@ def begin_route_edit(viewport: "GLViewportWidget", *, actor_id: str, settings: A
   _sync_ai_visuals(viewport)
 
 
-def _finish_route_edit(viewport: "GLViewportWidget", *, commit: bool, reopen_dialog: bool) -> None:
+def _finish_route_edit(viewport: "RendererViewportWidget", *, commit: bool, reopen_dialog: bool) -> None:
   actor_id = None if viewport._ai_route_edit_actor_id is None else str(viewport._ai_route_edit_actor_id)
   reopen_settings = viewport._ai_edit_settings.normalized()
   if bool(commit):
@@ -205,7 +205,7 @@ def _finish_route_edit(viewport: "GLViewportWidget", *, commit: bool, reopen_dia
     viewport._ai_edit_actor_id = None
 
 
-def cancel_route_edit(viewport: "GLViewportWidget", *, reopen_dialog: bool = False) -> None:
+def cancel_route_edit(viewport: "RendererViewportWidget", *, reopen_dialog: bool = False) -> None:
   if not bool(route_edit_active(viewport)):
     return
   _finish_route_edit(viewport, commit=False, reopen_dialog=bool(reopen_dialog))
@@ -220,7 +220,7 @@ def _route_point_from_top_face_hit(hit) -> AiRoutePoint | None:
   )
 
 
-def handle_route_left_click(viewport: "GLViewportWidget") -> bool:
+def handle_route_left_click(viewport: "RendererViewportWidget") -> bool:
   if not bool(route_edit_active(viewport)):
     return False
 
@@ -255,7 +255,7 @@ def handle_route_left_click(viewport: "GLViewportWidget") -> bool:
   return True
 
 
-def _confirm_or_cancel_route_item(viewport: "GLViewportWidget", item_id: str) -> InteractionOutcome:
+def _confirm_or_cancel_route_item(viewport: "RendererViewportWidget", item_id: str) -> InteractionOutcome:
   reopen_dialog = viewport._ai_route_edit_actor_id is not None
   if str(item_id) == AI_ROUTE_CONFIRM_ITEM_ID:
     _finish_route_edit(viewport, commit=True, reopen_dialog=bool(reopen_dialog))
@@ -266,7 +266,7 @@ def _confirm_or_cancel_route_item(viewport: "GLViewportWidget", item_id: str) ->
   return InteractionOutcome(success=False)
 
 
-def handle_special_right_click(viewport: "GLViewportWidget", *, origin: Vec3, direction: Vec3, hit) -> InteractionOutcome | None:
+def handle_special_right_click(viewport: "RendererViewportWidget", *, origin: Vec3, direction: Vec3, hit) -> InteractionOutcome | None:
   item_id = settings_controller.current_item_id(viewport)
   if bool(route_edit_active(viewport)):
     if str(item_id) in (AI_ROUTE_CONFIRM_ITEM_ID, AI_ROUTE_CANCEL_ITEM_ID):
@@ -282,6 +282,6 @@ def handle_special_right_click(viewport: "GLViewportWidget", *, origin: Vec3, di
   return None
 
 
-def extra_player_render_states(viewport: "GLViewportWidget", *, snapshot) -> tuple:
+def extra_player_render_states(viewport: "RendererViewportWidget", *, snapshot) -> tuple:
   del snapshot
   return tuple(viewport._session.ai_render_states())

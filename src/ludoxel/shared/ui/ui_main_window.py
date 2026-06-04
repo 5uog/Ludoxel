@@ -14,7 +14,6 @@ from ludoxel.application.runtime.runtime_player_name import normalize_player_nam
 from ludoxel.shared.ui.common.common_player_name_dialog import PlayerNameDialog
 from ludoxel.shared.ui.common.common_single_instance import SingleInstanceRelay
 from ludoxel.shared.ui.common.common_status_overlay import StatusOverlayFrame, status_overlay_title_image_path
-from ludoxel.shared.ui.config.config_gl_surface_format import install_default_gl_surface_format
 from ludoxel.shared.ui.theme.theme_fonts import apply_application_font, install_minecraft_fonts
 from ludoxel.shared.ui.ui_game_screen import GameScreen
 
@@ -22,12 +21,19 @@ from ...application.boot.meta import __version__
 
 _MIN_WINDOW_WIDTH = 980
 _MIN_WINDOW_HEIGHT = 620
-_APP_ICON_CANDIDATE_NAMES = ("app_icon.ico", "app_icon.png", "app_icon.jpg", "app_icon.jpeg")
+_MACOS_APP_ICON_CANDIDATE_NAMES = ("app_icon.icns", "app_icon.png", "app_icon.jpg", "app_icon.jpeg", "app_icon.ico")
+_WINDOWS_APP_ICON_CANDIDATE_NAMES = ("app_icon.ico", "app_icon.png", "app_icon.jpg", "app_icon.jpeg")
 
 
 def _application_icon_candidate_paths(resource_root: Path) -> tuple[Path, ...]:
   base = Path(resource_root) / "assets" / "ui"
-  return tuple(base / name for name in _APP_ICON_CANDIDATE_NAMES)
+  if sys.platform == "darwin":
+    names = _MACOS_APP_ICON_CANDIDATE_NAMES
+  elif sys.platform.startswith("win"):
+    names = _WINDOWS_APP_ICON_CANDIDATE_NAMES
+  else:
+    names = (*_WINDOWS_APP_ICON_CANDIDATE_NAMES, "app_icon.icns")
+  return tuple(base / name for name in names)
 
 
 def _load_application_icon(resource_root: Path) -> QIcon | None:
@@ -183,22 +189,29 @@ class MainWindow(QMainWindow):
 
 
 def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None:
-  install_default_gl_surface_format()
-
   root = Path(project_root)
   bundled_root = Path(resource_root)
   managed_data_root = Path(data_root)
 
   _set_windows_application_id()
   app = QApplication([])
-  app.setApplicationName(f"Ludoxel v{__version__}")
+  app.setOrganizationName("Kento Konishi")
+  app.setApplicationName("Ludoxel")
+  app.setApplicationVersion(str(__version__))
+  if hasattr(app, "setApplicationDisplayName"):
+    app.setApplicationDisplayName(f"Ludoxel v{__version__}")
+  if hasattr(app, "setDesktopFileName"):
+    app.setDesktopFileName("Ludoxel")
   app_icon = _load_application_icon(bundled_root)
   if app_icon is not None:
     app.setWindowIcon(app_icon)
 
   fonts = install_minecraft_fonts(font_dir=(bundled_root / "assets" / "fonts"))
-  if bool(fonts.ok):
-    apply_application_font(app=app, family=str(fonts.family), point_size=12, fallback_families=tuple(fonts.fallback_families))
+  if not bool(fonts.ok):
+    details = "\n".join(str(error) for error in tuple(fonts.errors) if str(error))
+    raise RuntimeError(f"Ludoxel bundled font registration failed.\n{details}")
+  apply_application_font(app=app, family=str(fonts.family), point_size=12, fallback_families=tuple(fonts.fallback_families))
+  print(f"[ludoxel] registered bundled UI font: {fonts.family}", file=sys.stderr)
 
   qss = Path(__file__).resolve().parent / "theme" / "main.qss"
   if qss.exists():

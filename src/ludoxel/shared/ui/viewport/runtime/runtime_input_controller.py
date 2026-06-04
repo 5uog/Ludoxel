@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QCursor, QGuiApplication, QKeyEvent
-from PyQt6.QtOpenGLWidgets import QOpenGLWidget
+from PyQt6.QtWidgets import QWidget
 
 from ludoxel.shared.ui.ui_qt_input_adapter import InputFrame, QtInputAdapter
 
@@ -18,7 +18,7 @@ class MouseDelta:
 
 
 class ViewportInput:
-  def __init__(self, *, widget: QOpenGLWidget, adapter: QtInputAdapter) -> None:
+  def __init__(self, *, widget: QWidget, adapter: QtInputAdapter) -> None:
     self._w = widget
     self._a = adapter
     self._captured: bool = False

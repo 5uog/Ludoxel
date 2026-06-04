@@ -213,9 +213,12 @@ class ViewportFrameSync:
     self.upload.arm_resume()
     self.selection.arm_resume()
 
-  def reset_after_gl_initialize(self) -> None:
+  def reset_after_renderer_initialize(self) -> None:
     self.upload.reset(force_duration_s=_WORLD_CHANGE_FORCE_S)
     self.selection.reset(force_duration_s=_WORLD_CHANGE_FORCE_S)
+
+  def reset_after_gl_initialize(self) -> None:
+    self.reset_after_renderer_initialize()
 
   def note_runtime_started(self, *, now: float) -> None:
     self.upload.note_runtime_started(now=float(now))

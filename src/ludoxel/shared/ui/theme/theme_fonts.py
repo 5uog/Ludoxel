@@ -14,44 +14,66 @@ class FontInstallResult:
   ok: bool
   family: str
   fallback_families: tuple[str, ...] = ()
+  errors: tuple[str, ...] = ()
+
+
+_PRIMARY_FONT_FILES = ("MinecraftBold-nMK1.otf", "MinecraftBoldItalic-1y1e.otf", "MinecraftItalic-R8Mo.otf", "MinecraftRegular-Bmg3.otf")
+_FALLBACK_FONT_FILES = ("KaiseiOpti-Regular.ttf", "KaiseiOpti-Medium.ttf", "KaiseiOpti-Bold.ttf")
 
 
 def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
   d = Path(font_dir)
 
-  primary_candidates = (d / "MinecraftBold-nMK1.otf", d / "MinecraftBoldItalic-1y1e.otf", d / "MinecraftItalic-R8Mo.otf", d / "MinecraftRegular-Bmg3.otf")
-  fallback_candidates = (d / "KaiseiOpti-Regular.ttf", d / "KaiseiOpti-Medium.ttf", d / "KaiseiOpti-Bold.ttf")
+  primary_candidates = tuple(d / name for name in _PRIMARY_FONT_FILES)
+  fallback_candidates = tuple(d / name for name in _FALLBACK_FONT_FILES)
 
   primary_families: list[str] = []
   fallback_families: list[str] = []
+  errors: list[str] = []
   for p in primary_candidates:
     if not p.exists():
+      errors.append(f"missing bundled font: {p}")
       continue
 
     fid = int(QFontDatabase.addApplicationFont(str(p)))
     if fid < 0:
+      errors.append(f"failed to register bundled font: {p}")
       continue
 
-    for fam in QFontDatabase.applicationFontFamilies(fid):
+    families = tuple(QFontDatabase.applicationFontFamilies(fid))
+    if not families:
+      errors.append(f"registered bundled font has no family: {p}")
+      continue
+
+    for fam in families:
       s = str(fam)
       if s and (s not in primary_families):
         primary_families.append(s)
 
   for p in fallback_candidates:
     if not p.exists():
+      errors.append(f"missing bundled fallback font: {p}")
       continue
 
     fid = int(QFontDatabase.addApplicationFont(str(p)))
     if fid < 0:
+      errors.append(f"failed to register bundled fallback font: {p}")
       continue
 
-    for fam in QFontDatabase.applicationFontFamilies(fid):
+    families = tuple(QFontDatabase.applicationFontFamilies(fid))
+    if not families:
+      errors.append(f"registered bundled fallback font has no family: {p}")
+      continue
+
+    for fam in families:
       s = str(fam)
       if s and (s not in fallback_families):
         fallback_families.append(s)
 
-  if not primary_families:
-    return FontInstallResult(ok=False, family="")
+  if errors or not primary_families:
+    if not primary_families:
+      errors.append(f"no bundled Minecraft font family registered from {d}")
+    return FontInstallResult(ok=False, family="", errors=tuple(errors))
 
   preferred = ""
   for fam in primary_families:

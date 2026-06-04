@@ -17,7 +17,9 @@ function normalizePathValue(value) {
 }
 
 function normalizeExtensionValue(value) {
-  const normalized = String(value || '').trim().toLowerCase();
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) return '';
   return normalized.startsWith('.') ? normalized : `.${normalized}`;
 }

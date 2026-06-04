@@ -19,7 +19,7 @@ export function renderDesktopBuildHelp(command = null) {
     return lines([
       'desktop build: windows',
       '',
-      section('目的', '  Ludoxel の Windows onefile EXE を PyInstaller で構築する。'),
+      section('目的', '  Ludoxel の Windows onefile EXE を既存 OpenGL renderer 経路のまま PyInstaller で構築する。'),
       '',
       section(
         '起動形式',
@@ -49,7 +49,7 @@ export function renderDesktopBuildHelp(command = null) {
     return lines([
       'desktop build: macos',
       '',
-      section('目的', '  Ludoxel の macOS .app bundle を PyInstaller で構築する。OpenGL / GLSL 制約は build 後の実機起動で別途検証する。'),
+      section('目的', '  Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist を検証する。'),
       '',
       section(
         '起動形式',

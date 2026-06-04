@@ -42,7 +42,7 @@ from ludoxel.shared.world.world_play_space import PLAY_SPACE_MY_WORLD, PLAY_SPAC
 if TYPE_CHECKING:
   from PyQt6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 
-  from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget
+  from ludoxel.shared.ui.viewport.viewport_renderer_viewport_widget import RendererViewportWidget
 
 
 @dataclass(frozen=True)
@@ -78,7 +78,7 @@ _VERTICAL_REPEAT_LOCK_DISPLACEMENT = 0.05
 _GRAVITY_AFFECTED_TAG = "gravity_affected"
 
 
-def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
+def bind_overlay_actions(viewport: "RendererViewportWidget") -> None:
   viewport._overlay.resume_requested.connect(lambda: resume_from_overlay(viewport))
   viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
   viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
@@ -93,7 +93,7 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
   viewport._inventory.closed.connect(lambda: on_inventory_closed(viewport))
 
 
-def respawn(viewport: "GLViewportWidget") -> None:
+def respawn(viewport: "RendererViewportWidget") -> None:
   viewport._reset_held_mouse_actions()
   ai_controller.cancel_route_edit(viewport)
   viewport._session.respawn()
@@ -103,13 +103,13 @@ def respawn(viewport: "GLViewportWidget") -> None:
   settings_controller.sync_hotbar_widgets(viewport)
 
 
-def resume_from_overlay(viewport: "GLViewportWidget") -> None:
+def resume_from_overlay(viewport: "RendererViewportWidget") -> None:
   viewport._set_paused_overlay(False)
   viewport.arm_resume_refresh()
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def open_pause_menu(viewport: "GLViewportWidget") -> None:
+def open_pause_menu(viewport: "RendererViewportWidget") -> None:
   if viewport._overlays.dead():
     return
   if viewport._overlays.inventory_open():
@@ -125,7 +125,7 @@ def open_pause_menu(viewport: "GLViewportWidget") -> None:
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bool = False) -> None:
+def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
   normalized = normalize_play_space_id(space_id)
   if normalized == normalize_play_space_id(viewport._state.current_space_id):
     if resume:
@@ -157,24 +157,24 @@ def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bo
   viewport.update()
 
 
-def open_settings_from_pause(viewport: "GLViewportWidget") -> None:
+def open_settings_from_pause(viewport: "RendererViewportWidget") -> None:
   settings_controller.sync_settings_values(viewport)
   viewport._set_settings_overlay(True)
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def back_from_settings(viewport: "GLViewportWidget") -> None:
+def back_from_settings(viewport: "RendererViewportWidget") -> None:
   viewport._set_settings_overlay(False)
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def open_othello_settings_from_item(viewport: "GLViewportWidget") -> None:
+def open_othello_settings_from_item(viewport: "RendererViewportWidget") -> None:
   othello_controller.sync_settings_values(viewport)
   viewport._set_othello_settings_overlay(True)
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def back_from_othello_settings(viewport: "GLViewportWidget") -> None:
+def back_from_othello_settings(viewport: "RendererViewportWidget") -> None:
   viewport._set_othello_settings_overlay(False)
   if viewport._state.is_othello_space():
     viewport._othello_analysis_request_signature = None
@@ -182,7 +182,7 @@ def back_from_othello_settings(viewport: "GLViewportWidget") -> None:
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def on_inventory_selected(viewport: "GLViewportWidget", item_id: str) -> None:
+def on_inventory_selected(viewport: "RendererViewportWidget", item_id: str) -> None:
   if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
     return
 
@@ -192,12 +192,12 @@ def on_inventory_selected(viewport: "GLViewportWidget", item_id: str) -> None:
   settings_controller.sync_first_person_target(viewport)
 
 
-def on_inventory_closed(viewport: "GLViewportWidget") -> None:
+def on_inventory_closed(viewport: "RendererViewportWidget") -> None:
   viewport._set_inventory_overlay(False)
   viewport.arm_resume_refresh()
 
 
-def save_and_quit(viewport: "GLViewportWidget") -> None:
+def save_and_quit(viewport: "RendererViewportWidget") -> None:
   viewport._reset_held_mouse_actions()
   try:
     viewport.save_state()
@@ -208,7 +208,7 @@ def save_and_quit(viewport: "GLViewportWidget") -> None:
     host.close()
 
 
-def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
+def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool:
   bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
   hotbar_idx = hotbar_index_from_key(int(e.key()), viewport._state.keybinds)
 
@@ -289,7 +289,7 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
   return False
 
 
-def handle_wheel(viewport: "GLViewportWidget", e: "QWheelEvent") -> bool:
+def handle_wheel(viewport: "RendererViewportWidget", e: "QWheelEvent") -> bool:
   if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open():
     return False
 
@@ -305,7 +305,7 @@ def handle_wheel(viewport: "GLViewportWidget", e: "QWheelEvent") -> bool:
   return False
 
 
-def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
+def handle_mouse_press(viewport: "RendererViewportWidget", e: "QMouseEvent") -> bool:
   viewport.setFocus(Qt.FocusReason.MouseFocusReason)
 
   if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open():
@@ -345,7 +345,7 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
   return False
 
 
-def handle_mouse_release(viewport: "GLViewportWidget", e: "QMouseEvent") -> None:
+def handle_mouse_release(viewport: "RendererViewportWidget", e: "QMouseEvent") -> None:
   if e.button() == Qt.MouseButton.LeftButton:
     viewport._left_mouse_held = False
     viewport._left_mouse_repeat_due_s = 0.0
@@ -354,7 +354,7 @@ def handle_mouse_release(viewport: "GLViewportWidget", e: "QMouseEvent") -> None
     viewport._disable_right_mouse_repeat()
 
 
-def _advance_right_mouse_place_repeat(viewport: "GLViewportWidget", *, now_s: float) -> None:
+def _advance_right_mouse_place_repeat(viewport: "RendererViewportWidget", *, now_s: float) -> None:
   result = _perform_right_click_place_repeat(viewport)
   if result.place_line is not None:
     viewport._right_mouse_repeat_line_start = tuple(int(value) for value in result.place_line.start_cell)
@@ -400,7 +400,7 @@ def _physical_right_mouse_button_held() -> bool:
   return bool(buttons & Qt.MouseButton.RightButton)
 
 
-def _update_right_mouse_place_vertical_lock(viewport: "GLViewportWidget") -> None:
+def _update_right_mouse_place_vertical_lock(viewport: "RendererViewportWidget") -> None:
   if not bool(viewport._right_mouse_repeat_enabled) or str(viewport._right_mouse_repeat_mode) != INTERACTION_ACTION_PLACE:
     return
   if int(getattr(viewport, "_right_mouse_repeat_vertical_lock_sign", 0)) != 0:
@@ -412,7 +412,7 @@ def _update_right_mouse_place_vertical_lock(viewport: "GLViewportWidget") -> Non
     viewport._right_mouse_repeat_vertical_lock_sign = -1
 
 
-def handle_held_mouse_buttons_pre_step(viewport: "GLViewportWidget") -> None:
+def handle_held_mouse_buttons_pre_step(viewport: "RendererViewportWidget") -> None:
   if (
     viewport._overlays.paused()
     or viewport._overlays.inventory_open()
@@ -442,7 +442,7 @@ def handle_held_mouse_buttons_pre_step(viewport: "GLViewportWidget") -> None:
     _advance_right_mouse_place_repeat(viewport, now_s=float(now_s))
 
 
-def handle_held_mouse_buttons(viewport: "GLViewportWidget") -> None:
+def handle_held_mouse_buttons(viewport: "RendererViewportWidget") -> None:
   if (
     viewport._overlays.paused()
     or viewport._overlays.inventory_open()
@@ -484,7 +484,7 @@ def handle_held_mouse_buttons(viewport: "GLViewportWidget") -> None:
       viewport._disable_right_mouse_repeat()
 
 
-def _perform_left_click(viewport: "GLViewportWidget"):
+def _perform_left_click(viewport: "RendererViewportWidget"):
   interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose()
   break_outcome = None
   attack_result = None
@@ -510,13 +510,13 @@ def _perform_left_click(viewport: "GLViewportWidget"):
   return break_outcome
 
 
-def _current_interaction_hit(viewport: "GLViewportWidget"):
+def _current_interaction_hit(viewport: "RendererViewportWidget"):
   interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose()
   hit = viewport._session.pick_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
   return (interaction_eye, interaction_direction, hit)
 
 
-def _finalize_right_click(viewport: "GLViewportWidget", outcome: InteractionOutcome) -> None:
+def _finalize_right_click(viewport: "RendererViewportWidget", outcome: InteractionOutcome) -> None:
   viewport._first_person_motion.trigger_right_swing(success=bool(outcome.success))
   if bool(outcome.success):
     viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)
@@ -633,7 +633,7 @@ def _face_plane_intersection_point(*, cell: tuple[int, int, int], face: int, eye
   return Vec3(float(hit_x), float(hit_y), float(plane_z))
 
 
-def _support_face_from_direction(viewport: "GLViewportWidget", *, direction: Vec3) -> int:
+def _support_face_from_direction(viewport: "RendererViewportWidget", *, direction: Vec3) -> int:
   horizontal_direction = Vec3(float(direction.x), 0.0, float(direction.z))
   if horizontal_direction.length() <= 1e-6:
     horizontal_direction = forward_from_yaw_pitch_deg(float(viewport._session.player.yaw_deg), 0.0)
@@ -663,7 +663,7 @@ def _support_face_from_world_hit(*, support_cell: tuple[int, int, int], world_hi
   return _support_face_from_top_surface_hit_point(support_cell=tuple(int(value) for value in support_cell), hit_point=world_hit.hit_point)
 
 
-def _support_face_place_hit(viewport: "GLViewportWidget", *, eye: Vec3, direction: Vec3, world_hit: BlockPick | None = None) -> BlockPick | None:
+def _support_face_place_hit(viewport: "RendererViewportWidget", *, eye: Vec3, direction: Vec3, world_hit: BlockPick | None = None) -> BlockPick | None:
   contact = viewport._session.support_block_contact()
   if contact is None:
     return None
@@ -701,7 +701,7 @@ def _support_face_surface_matches_hit(*, world_hit: BlockPick, support_hit: Bloc
   return False
 
 
-def _should_prefer_support_face_hit(viewport: "GLViewportWidget", *, world_hit: BlockPick | None, support_hit: BlockPick | None, direction: Vec3) -> bool:
+def _should_prefer_support_face_hit(viewport: "RendererViewportWidget", *, world_hit: BlockPick | None, support_hit: BlockPick | None, direction: Vec3) -> bool:
   if support_hit is None:
     return False
   if world_hit is None:
@@ -736,7 +736,7 @@ def _should_prefer_support_face_hit(viewport: "GLViewportWidget", *, world_hit: 
   return False
 
 
-def _select_place_hit(viewport: "GLViewportWidget", *, eye: Vec3, direction: Vec3, world_hit: BlockPick | None) -> tuple[BlockPick | None, bool]:
+def _select_place_hit(viewport: "RendererViewportWidget", *, eye: Vec3, direction: Vec3, world_hit: BlockPick | None) -> tuple[BlockPick | None, bool]:
   support_hit = _support_face_place_hit(viewport, eye=eye, direction=direction, world_hit=world_hit)
   if _should_prefer_support_face_hit(viewport, world_hit=world_hit, support_hit=support_hit, direction=direction):
     return (support_hit, True)
@@ -747,7 +747,7 @@ def _select_place_hit(viewport: "GLViewportWidget", *, eye: Vec3, direction: Vec
   return (None, False)
 
 
-def _repeat_vertical_motion_sign(viewport: "GLViewportWidget") -> int:
+def _repeat_vertical_motion_sign(viewport: "RendererViewportWidget") -> int:
   player = viewport._session.player
   locked_sign = int(getattr(viewport, "_right_mouse_repeat_vertical_lock_sign", 0))
   if int(locked_sign) > 0:
@@ -774,7 +774,7 @@ def _repeat_vertical_motion_sign(viewport: "GLViewportWidget") -> int:
   return 0
 
 
-def _repeat_has_horizontal_intent(viewport: "GLViewportWidget", *, step: tuple[int, int, int]) -> bool:
+def _repeat_has_horizontal_intent(viewport: "RendererViewportWidget", *, step: tuple[int, int, int]) -> bool:
   move_f = float(getattr(viewport, "_recent_move_f", 0.0))
   move_s = float(getattr(viewport, "_recent_move_s", 0.0))
   if abs(float(move_f)) <= 1e-6 and abs(float(move_s)) <= 1e-6:
@@ -786,7 +786,7 @@ def _repeat_has_horizontal_intent(viewport: "GLViewportWidget", *, step: tuple[i
   return abs(float(axis_projection)) > 1e-6
 
 
-def _project_repeat_step(viewport: "GLViewportWidget", *, face: int, direction: Vec3, hit_point: Vec3 | None = None) -> tuple[int, int, int] | None:
+def _project_repeat_step(viewport: "RendererViewportWidget", *, face: int, direction: Vec3, hit_point: Vec3 | None = None) -> tuple[int, int, int] | None:
   nx, ny, nz = face_neighbor_offset(int(face))
   tangent_x = float(direction.x) - float(nx) * float(direction.dot(Vec3(float(nx), float(ny), float(nz))))
   tangent_y = float(direction.y) - float(ny) * float(direction.dot(Vec3(float(nx), float(ny), float(nz))))
@@ -832,7 +832,7 @@ def _project_repeat_step(viewport: "GLViewportWidget", *, face: int, direction: 
   return tuple(int(value) for value in step)
 
 
-def _vertical_repeat_chain_step(viewport: "GLViewportWidget", *, face: int) -> tuple[int, int, int] | None:
+def _vertical_repeat_chain_step(viewport: "RendererViewportWidget", *, face: int) -> tuple[int, int, int] | None:
   face_step = face_neighbor_offset(int(face))
   motion_sign = int(_repeat_vertical_motion_sign(viewport))
   if int(motion_sign) == 0:
@@ -845,7 +845,7 @@ def _vertical_repeat_chain_step(viewport: "GLViewportWidget", *, face: int) -> t
   return (0, int(motion_sign), 0)
 
 
-def _place_repeat_line_from_hit(viewport: "GLViewportWidget", hit, *, direction: Vec3) -> _PlaceRepeatLine | None:
+def _place_repeat_line_from_hit(viewport: "RendererViewportWidget", hit, *, direction: Vec3) -> _PlaceRepeatLine | None:
   if hit is None or hit.place is None:
     return None
 
@@ -890,7 +890,7 @@ def _place_repeat_line_from_hit(viewport: "GLViewportWidget", hit, *, direction:
   )
 
 
-def _place_repeat_line_for_result(viewport: "GLViewportWidget", hit, outcome: InteractionOutcome, *, direction: Vec3) -> _PlaceRepeatLine | None:
+def _place_repeat_line_for_result(viewport: "RendererViewportWidget", hit, outcome: InteractionOutcome, *, direction: Vec3) -> _PlaceRepeatLine | None:
   if not bool(outcome.success) or str(outcome.action) != INTERACTION_ACTION_PLACE or hit is None or hit.place is None or outcome.target_position is None:
     return None
 
@@ -926,7 +926,7 @@ def _support_face_repeat_line_from_hit(hit) -> _PlaceRepeatLine | None:
   )
 
 
-def _support_face_repeat_line_for_result(viewport: "GLViewportWidget", hit, outcome: InteractionOutcome) -> _PlaceRepeatLine | None:
+def _support_face_repeat_line_for_result(viewport: "RendererViewportWidget", hit, outcome: InteractionOutcome) -> _PlaceRepeatLine | None:
   if not bool(outcome.success) or str(outcome.action) != INTERACTION_ACTION_PLACE or hit is None or hit.place is None or outcome.target_position is None:
     return None
 
@@ -951,7 +951,7 @@ def _deferred_place_repeat_line(line: _PlaceRepeatLine | None, *, hit: BlockPick
   )
 
 
-def _should_arm_deferred_place_repeat(viewport: "GLViewportWidget", *, hit: BlockPick | None) -> bool:
+def _should_arm_deferred_place_repeat(viewport: "RendererViewportWidget", *, hit: BlockPick | None) -> bool:
   if hit is None or hit.place is None:
     return False
 
@@ -973,14 +973,14 @@ def _should_arm_deferred_place_repeat(viewport: "GLViewportWidget", *, hit: Bloc
   )
 
 
-def _state_is_gravity_affected(viewport: "GLViewportWidget", *, state_str: str | None) -> bool:
+def _state_is_gravity_affected(viewport: "RendererViewportWidget", *, state_str: str | None) -> bool:
   defn = def_from_state(state_str, viewport._session.block_registry)
   if defn is None:
     return False
   return bool(defn.is_family("block") and defn.has_tag(_GRAVITY_AFFECTED_TAG))
 
 
-def _support_establishes_gravity_frontier(viewport: "GLViewportWidget", *, cell: tuple[int, int, int], state_str: str) -> bool:
+def _support_establishes_gravity_frontier(viewport: "RendererViewportWidget", *, cell: tuple[int, int, int], state_str: str) -> bool:
   def get_state(x: int, y: int, z: int) -> str | None:
     return viewport._session.world.blocks.get((int(x), int(y), int(z)))
 
@@ -999,7 +999,7 @@ def _support_establishes_gravity_frontier(viewport: "GLViewportWidget", *, cell:
   return False
 
 
-def _cell_establishes_repeat_frontier(viewport: "GLViewportWidget", *, cell: tuple[int, int, int], state_str: str | None) -> bool:
+def _cell_establishes_repeat_frontier(viewport: "RendererViewportWidget", *, cell: tuple[int, int, int], state_str: str | None) -> bool:
   if state_str is None:
     return False
   if not bool(_state_is_gravity_affected(viewport, state_str=str(state_str))):
@@ -1018,7 +1018,7 @@ def _cell_establishes_repeat_frontier(viewport: "GLViewportWidget", *, cell: tup
   return True
 
 
-def _outcome_establishes_repeat_frontier(viewport: "GLViewportWidget", *, outcome: InteractionOutcome, target_cell: tuple[int, int, int]) -> bool:
+def _outcome_establishes_repeat_frontier(viewport: "RendererViewportWidget", *, outcome: InteractionOutcome, target_cell: tuple[int, int, int]) -> bool:
   if not bool(outcome.success) or str(outcome.action) != INTERACTION_ACTION_PLACE or outcome.target_position is None:
     return False
   if tuple(int(value) for value in outcome.target_position) != tuple(int(value) for value in target_cell):
@@ -1028,7 +1028,9 @@ def _outcome_establishes_repeat_frontier(viewport: "GLViewportWidget", *, outcom
   return bool(_cell_establishes_repeat_frontier(viewport, cell=tuple(int(value) for value in target_cell), state_str=state_str))
 
 
-def _place_line_after_attempt(viewport: "GLViewportWidget", *, line: _PlaceRepeatLine, target_progress: int, target_cell: tuple[int, int, int], outcome: InteractionOutcome) -> _PlaceRepeatLine | None:
+def _place_line_after_attempt(
+  viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, target_progress: int, target_cell: tuple[int, int, int], outcome: InteractionOutcome
+) -> _PlaceRepeatLine | None:
   if not bool(_outcome_establishes_repeat_frontier(viewport, outcome=outcome, target_cell=tuple(int(value) for value in target_cell))):
     if bool(outcome.success) and str(outcome.action) == INTERACTION_ACTION_PLACE:
       return None
@@ -1045,7 +1047,7 @@ def _place_line_after_attempt(viewport: "GLViewportWidget", *, line: _PlaceRepea
   )
 
 
-def _retry_pending_place_repeat_start(viewport: "GLViewportWidget", *, line: _PlaceRepeatLine) -> _RightClickResult:
+def _retry_pending_place_repeat_start(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine) -> _RightClickResult:
   support_cell = line.pending_support_cell
   support_face = line.pending_support_face
   support_hit_point = line.pending_support_hit_point
@@ -1071,7 +1073,7 @@ def _retry_pending_place_repeat_start(viewport: "GLViewportWidget", *, line: _Pl
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
 
 
-def _apply_initial_right_mouse_repeat(viewport: "GLViewportWidget", *, now_s: float, result: _RightClickResult) -> None:
+def _apply_initial_right_mouse_repeat(viewport: "RendererViewportWidget", *, now_s: float, result: _RightClickResult) -> None:
   if str(result.repeat_action) == INTERACTION_ACTION_INTERACT and result.interact_cell is not None:
     if not bool(result.outcome.success):
       viewport._disable_right_mouse_repeat()
@@ -1105,7 +1107,7 @@ def _apply_initial_right_mouse_repeat(viewport: "GLViewportWidget", *, now_s: fl
   viewport._disable_right_mouse_repeat()
 
 
-def _perform_right_click(viewport: "GLViewportWidget") -> _RightClickResult:
+def _perform_right_click(viewport: "RendererViewportWidget") -> _RightClickResult:
   interaction_eye, interaction_direction, hit = _current_interaction_hit(viewport)
   special_outcome = ai_controller.handle_special_right_click(viewport, origin=interaction_eye, direction=interaction_direction, hit=hit)
   if special_outcome is not None:
@@ -1146,7 +1148,7 @@ def _perform_right_click(viewport: "GLViewportWidget") -> _RightClickResult:
   return _RightClickResult(outcome=outcome, repeat_action=repeat_action, interact_cell=interact_cell, place_line=place_line)
 
 
-def _perform_right_click_interact_repeat(viewport: "GLViewportWidget") -> InteractionOutcome:
+def _perform_right_click_interact_repeat(viewport: "RendererViewportWidget") -> InteractionOutcome:
   target_cell = viewport._right_mouse_repeat_target_cell
   if target_cell is None:
     outcome = InteractionOutcome(success=False)
@@ -1233,7 +1235,7 @@ def _support_face_repeat_candidate_hit(
   return None
 
 
-def _initial_vertical_transition_repeat_line(viewport: "GLViewportWidget", *, line: _PlaceRepeatLine, hit: BlockPick | None) -> _PlaceRepeatLine | None:
+def _initial_vertical_transition_repeat_line(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, hit: BlockPick | None) -> _PlaceRepeatLine | None:
   start_cell = tuple(int(value) for value in line.start_cell)
   step = tuple(int(value) for value in line.step)
   face = int(line.face)
@@ -1307,7 +1309,7 @@ def _visible_face_chain_candidate_hit(
 
 
 def _direct_visible_support_face_candidate(
-  viewport: "GLViewportWidget", *, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int
+  viewport: "RendererViewportWidget", *, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int
 ) -> tuple[BlockPick, int, int] | None:
   if hit is None or hit.place is None or _is_vertical_face(int(hit.face)):
     return None
@@ -1324,7 +1326,7 @@ def _direct_visible_support_face_candidate(
 
 
 def _projected_frontier_support_face_candidate(
-  viewport: "GLViewportWidget", *, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, max_progress: int, eye: Vec3, direction: Vec3, hit: BlockPick | None
+  viewport: "RendererViewportWidget", *, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, max_progress: int, eye: Vec3, direction: Vec3, hit: BlockPick | None
 ) -> tuple[BlockPick, int, int] | None:
   intent_direction = Vec3(float(direction.x), float(direction.y), float(direction.z))
   if math.hypot(float(direction.x), float(direction.z)) <= 0.25:
@@ -1364,7 +1366,7 @@ def _projected_frontier_support_face_candidate(
   )
 
 
-def _perform_generic_place_repeat(viewport: "GLViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
+def _perform_generic_place_repeat(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
   start_cell = tuple(int(value) for value in line.start_cell)
   step = tuple(int(value) for value in line.step)
   face = int(line.face)
@@ -1455,7 +1457,7 @@ def _perform_generic_place_repeat(viewport: "GLViewportWidget", *, line: _PlaceR
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
 
 
-def _perform_visible_face_place_repeat(viewport: "GLViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
+def _perform_visible_face_place_repeat(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
   start_cell = tuple(int(value) for value in line.start_cell)
   step = tuple(int(value) for value in line.step)
   face = int(line.face)
@@ -1491,7 +1493,7 @@ def _perform_visible_face_place_repeat(viewport: "GLViewportWidget", *, line: _P
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
 
 
-def _perform_support_face_place_repeat(viewport: "GLViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
+def _perform_support_face_place_repeat(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
   start_cell = tuple(int(value) for value in line.start_cell)
   step = tuple(int(value) for value in line.step)
   face = int(line.face)
@@ -1552,7 +1554,7 @@ def _perform_support_face_place_repeat(viewport: "GLViewportWidget", *, line: _P
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
 
 
-def _perform_right_click_place_repeat(viewport: "GLViewportWidget") -> _RightClickResult:
+def _perform_right_click_place_repeat(viewport: "RendererViewportWidget") -> _RightClickResult:
   start_cell = viewport._right_mouse_repeat_line_start
   step = viewport._right_mouse_repeat_line_step
   face = viewport._right_mouse_repeat_line_face
@@ -1595,7 +1597,7 @@ def _perform_right_click_place_repeat(viewport: "GLViewportWidget") -> _RightCli
   return _perform_generic_place_repeat(viewport, line=line, interaction_eye=interaction_eye, interaction_direction=interaction_direction, hit=hit)
 
 
-def _spawn_break_particles(viewport: "GLViewportWidget", *, block_state: str | None, position: tuple[int, int, int] | None) -> None:
+def _spawn_break_particles(viewport: "RendererViewportWidget", *, block_state: str | None, position: tuple[int, int, int] | None) -> None:
   if block_state is None or position is None:
     return
   tools = viewport._renderer.world_build_tools()

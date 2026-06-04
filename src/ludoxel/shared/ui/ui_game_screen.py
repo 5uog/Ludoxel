@@ -2,13 +2,18 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from ludoxel.shared.ui.common.common_status_overlay import StatusOverlayFrame, status_overlay_title_image_path
-from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget
+
+if sys.platform == "darwin":
+  from ludoxel.shared.ui.viewport.viewport_renderer_viewport_widget import RendererViewportWidget as ViewportWidget
+else:
+  from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget as ViewportWidget
 
 from .hud.hud_widget import HUDWidget
 
@@ -22,7 +27,7 @@ class GameScreen(QWidget):
     self.setObjectName("gameScreen")
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
     self.setStyleSheet("QWidget#gameScreen { background: #121212; }")
-    self.viewport = GLViewportWidget(project_root=self.project_root, resource_root=self.resource_root, data_root=self.data_root, launch_player_name=launch_player_name)
+    self.viewport = ViewportWidget(project_root=self.project_root, resource_root=self.resource_root, data_root=self.data_root, launch_player_name=launch_player_name)
     self.hud = HUDWidget()
 
     self._layout = QVBoxLayout(self)

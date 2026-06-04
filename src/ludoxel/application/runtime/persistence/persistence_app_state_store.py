@@ -8,7 +8,7 @@ from pathlib import Path
 from ludoxel.application.runtime.persistence.persistence_app_state_schema import AppState, PersistedOthelloSpace, PersistedPlaySpace, PlayerStateFile, WorldStateFile
 from ludoxel.application.runtime.persistence.persistence_integrity_manifest import update_runtime_integrity_manifest, verify_runtime_file
 from ludoxel.application.runtime.persistence.persistence_json_file_store import JsonFileStore
-from ludoxel.shared.shared_project_paths import default_runtime_data_root, legacy_configs_root, runtime_state_root
+from ludoxel.shared.shared_project_paths import default_runtime_data_root, previous_configs_root, runtime_state_root
 
 
 @dataclass
@@ -24,8 +24,8 @@ class AppStateStore:
   def _state_path(self, name: str) -> Path:
     return runtime_state_root(self._data_root()) / str(name)
 
-  def _legacy_config_path(self, name: str) -> Path:
-    return legacy_configs_root(Path(self.project_root)) / str(name)
+  def _previous_config_path(self, name: str) -> Path:
+    return previous_configs_root(Path(self.project_root)) / str(name)
 
   def _player_store(self) -> JsonFileStore:
     return JsonFileStore(path=self._state_path("player_state.json"))
@@ -33,7 +33,7 @@ class AppStateStore:
   def _world_store(self) -> JsonFileStore:
     return JsonFileStore(path=self._state_path("world_state.json"))
 
-  def _read_runtime_or_legacy(self, name: str) -> dict | None:
+  def _read_runtime_or_previous(self, name: str) -> dict | None:
     runtime_path = self._state_path(name)
     if runtime_path.exists():
       relative_path = f"state/{name}"
@@ -41,15 +41,15 @@ class AppStateStore:
         return None
       return JsonFileStore(path=runtime_path).read()
 
-    legacy_path = self._legacy_config_path(name)
-    if legacy_path.exists():
-      return JsonFileStore(path=legacy_path).read()
+    previous_path = self._previous_config_path(name)
+    if previous_path.exists():
+      return JsonFileStore(path=previous_path).read()
 
     return None
 
   def load(self) -> AppState | None:
-    raw_player = self._read_runtime_or_legacy("player_state.json")
-    raw_world = self._read_runtime_or_legacy("world_state.json")
+    raw_player = self._read_runtime_or_previous("player_state.json")
+    raw_world = self._read_runtime_or_previous("world_state.json")
 
     if raw_player is None and raw_world is None:
       return None

@@ -37,7 +37,7 @@ export function checkResources() {
   if (!existsSync(integrityModule)) failures.push('persistence_integrity_manifest.py is missing');
 
   if (existsSync(resolve(PROJECT_ROOT, 'assets'))) notes.push('assets/ exists and must stay ignored until provenance is reviewed');
-  if (existsSync(resolve(PROJECT_ROOT, 'configs'))) notes.push('legacy configs/ exists; runtime writes must use the app-managed data root and may migrate this only as legacy input');
+  if (existsSync(resolve(PROJECT_ROOT, 'configs'))) notes.push('previous-format configs/ exists; runtime writes must use the app-managed data root and may migrate this only as previous-format input');
   if (existsSync(resolve(PROJECT_ROOT, 'tools', 'export_directory_markdown', 'output'))) {
     notes.push('tools/export_directory_markdown/output exists; it must stay ignored and generated');
   }

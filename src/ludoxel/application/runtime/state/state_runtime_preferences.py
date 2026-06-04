@@ -14,7 +14,7 @@ from ludoxel.application.runtime.state.state_camera_perspective import CAMERA_PE
 from ludoxel.features.othello.domain.game.game_types import OthelloSettings
 from ludoxel.features.othello.domain.inventory.inventory_hotbar_defaults import default_othello_hotbar_slots
 from ludoxel.shared.math.math_scalars import clampf, clampi
-from ludoxel.shared.opengl.runtime.runtime_cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ludoxel.shared.rendering.backend.backend_renderer_state import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.shared.rendering.rendering_player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
 from ludoxel.shared.ui.hud.hud_crosshair_art import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from ludoxel.shared.world.config.config_render_distance import clamp_render_distance_chunks
@@ -92,7 +92,7 @@ class RuntimePreferences:
   cloud_enabled: bool = True
   cloud_density: int = 1
   cloud_seed: int = 1337
-  cloud_flow_direction: str = DEFAULT_CLOUD_FLOW_DIRECTION
+  cloud_flow_direction: str = DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
   world_wire: bool = False
   shadow_enabled: bool = True
   creative_mode: bool = False
@@ -178,7 +178,7 @@ class RuntimePreferences:
 
     self.cloud_density = clampi(int(self.cloud_density), 0, 4)
     self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
-    self.cloud_flow_direction = normalize_cloud_flow_direction(str(self.cloud_flow_direction))
+    self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
     self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
     self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
     self.camera_shake_strength = clampf(float(self.camera_shake_strength), 0.0, 1.0)

@@ -20,8 +20,8 @@ const DESCRIPTIONS = Object.freeze({
     en: 'Check assets, configs, and generated output policy.',
   },
   shaders: {
-    ja: 'Ludoxel の OpenGL 4.3 shader 契約を静的検査する。',
-    en: 'Statically check Ludoxel shader sources against the OpenGL 4.3 renderer contract.',
+    ja: 'Ludoxel の renderer shader 契約を静的検査する。',
+    en: 'Statically check Ludoxel renderer shader sources.',
   },
 });
 

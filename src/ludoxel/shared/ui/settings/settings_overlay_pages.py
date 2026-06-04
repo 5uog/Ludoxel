@@ -557,7 +557,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   details_layout.addWidget(details_title)
 
   details_body = QLabel(
-    "The current application combines a persistent voxel play space, an OpenGL 4.3 Core Profile renderer, and a separate Othello mode that shares the same runtime shell. The project emphasizes deterministic state persistence, inspectable rendering behavior, and feature work that stays close to implemented mechanics rather than mock interfaces.",
+    "The current application combines a persistent voxel play space, a backend-neutral renderer that can target wgpu-native, and a separate Othello mode that shares the same runtime shell. The project emphasizes deterministic state persistence, inspectable rendering behavior, and feature work that stays close to implemented mechanics rather than mock interfaces.",
     details_card,
   )
   details_body.setObjectName("subtitle")

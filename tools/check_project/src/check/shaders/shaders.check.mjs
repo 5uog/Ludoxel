@@ -21,7 +21,7 @@ function checkShader(path) {
     if (!version) {
       failures.push(`${display}: missing #version`);
     } else if (Number(version[1]) > 430) {
-      failures.push(`${display}: #version ${version[1]} exceeds Ludoxel OpenGL 4.3 contract`);
+      failures.push(`${display}: #version ${version[1]} exceeds Ludoxel renderer shader contract`);
     } else if (Number(version[1]) < 140) {
       failures.push(`${display}: #version ${version[1]} is lower than the minimum accepted GLSL version for tool validation`);
     }
@@ -40,6 +40,6 @@ export function checkShaders() {
 
   return printCheckResult('shaders', failures, [
     `checked ${shaderFiles.length} shader files`,
-    'default shader check validates Ludoxel OpenGL 4.3 source; Vulkan SPIR-V is not the active renderer target',
+    'shader check validates Ludoxel renderer shader source; macOS uses wgpu-native and Windows retains the existing OpenGL renderer path',
   ]);
 }

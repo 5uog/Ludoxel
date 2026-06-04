@@ -28,10 +28,10 @@ from ludoxel.shared.audio import PLAYER_EVENT_OTHELLO_FLIP, PLAYER_EVENT_OTHELLO
 
 if TYPE_CHECKING:
   from ludoxel.shared.math.math_vec3 import Vec3
-  from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget
+  from ludoxel.shared.ui.viewport.viewport_renderer_viewport_widget import RendererViewportWidget
 
 
-def bind_othello_controls(viewport: "GLViewportWidget") -> None:
+def bind_othello_controls(viewport: "RendererViewportWidget") -> None:
   import ludoxel.shared.ui.viewport.controllers.controllers_interaction_controller as interaction_controller
 
   viewport._othello_ai.move_ready.connect(lambda generation, move_index: on_ai_move_ready(viewport, int(generation), move_index))
@@ -46,7 +46,7 @@ def bind_othello_controls(viewport: "GLViewportWidget") -> None:
   viewport._othello_settings.book_export_requested.connect(lambda: export_book(viewport))
 
 
-def _ensure_book_summary_loaded(viewport: "GLViewportWidget") -> None:
+def _ensure_book_summary_loaded(viewport: "RendererViewportWidget") -> None:
   if str(viewport._othello_book_summary_text).strip():
     return
   _refresh_book_summary(viewport)
@@ -75,7 +75,7 @@ def _format_best_move(best_move_index: int | None) -> str:
   return square_index_to_name(int(best_move_index))
 
 
-def _analysis_player_edge(viewport: "GLViewportWidget") -> float | None:
+def _analysis_player_edge(viewport: "RendererViewportWidget") -> float | None:
   analysis = viewport._othello_analysis.normalized()
   state = viewport._othello_match.game_state()
   if int(analysis.depth_reached) <= 0 and analysis.best_move_index is None:
@@ -86,7 +86,7 @@ def _analysis_player_edge(viewport: "GLViewportWidget") -> float | None:
   return float(perspective_score)
 
 
-def _analysis_graph_samples(viewport: "GLViewportWidget") -> tuple[tuple[int, float, bool], ...]:
+def _analysis_graph_samples(viewport: "RendererViewportWidget") -> tuple[tuple[int, float, bool], ...]:
   analysis = viewport._othello_analysis.normalized()
   state = viewport._othello_match.game_state()
   if not analysis.depth_samples:
@@ -95,18 +95,18 @@ def _analysis_graph_samples(viewport: "GLViewportWidget") -> tuple[tuple[int, fl
   return tuple((int(sample.depth), float(sample.score) * float(sign), bool(sample.solved)) for sample in tuple(analysis.depth_samples)[-12:])
 
 
-def _book_learning_progress(viewport: "GLViewportWidget") -> dict[str, object] | None:
+def _book_learning_progress(viewport: "RendererViewportWidget") -> dict[str, object] | None:
   progress = viewport._othello_book_learning_progress
   return progress if isinstance(progress, dict) else None
 
 
-def _refresh_book_summary(viewport: "GLViewportWidget") -> None:
+def _refresh_book_summary(viewport: "RendererViewportWidget") -> None:
   summary = opening_book_summary(viewport._data_root)
   viewport._othello_book_summary_text = f"Bundled {int(summary.bundled_lines)} lines | User {int(summary.user_lines)} lines | Total {int(summary.total_lines)} lines"
   viewport._othello_settings.set_book_summary_text(viewport._othello_book_summary_text)
 
 
-def set_title_flash(viewport: "GLViewportWidget", text: str, *, duration_s: float) -> None:
+def set_title_flash(viewport: "RendererViewportWidget", text: str, *, duration_s: float) -> None:
   body = str(text).strip()
   if not body:
     return
@@ -114,12 +114,12 @@ def set_title_flash(viewport: "GLViewportWidget", text: str, *, duration_s: floa
   viewport._othello_title_flash_until_s = time.perf_counter() + max(0.0, float(duration_s))
 
 
-def clear_title_flash(viewport: "GLViewportWidget") -> None:
+def clear_title_flash(viewport: "RendererViewportWidget") -> None:
   viewport._othello_title_flash_text = ""
   viewport._othello_title_flash_until_s = 0.0
 
 
-def track_message_for_title(viewport: "GLViewportWidget", message: str) -> None:
+def track_message_for_title(viewport: "RendererViewportWidget", message: str) -> None:
   body = str(message).strip()
   if body == viewport._last_othello_message:
     return
@@ -131,7 +131,7 @@ def track_message_for_title(viewport: "GLViewportWidget", message: str) -> None:
     set_title_flash(viewport, "Match started", duration_s=1.10)
 
 
-def _banner_text(viewport: "GLViewportWidget", *, black_count: int, white_count: int) -> str:
+def _banner_text(viewport: "RendererViewportWidget", *, black_count: int, white_count: int) -> str:
   if not viewport._state.is_othello_space():
     return ""
 
@@ -156,7 +156,7 @@ def _banner_text(viewport: "GLViewportWidget", *, black_count: int, white_count:
   return ""
 
 
-def sync_hud_text(viewport: "GLViewportWidget") -> None:
+def sync_hud_text(viewport: "RendererViewportWidget") -> None:
   if not viewport._state.is_othello_space():
     viewport._othello_hud_signature = None
     viewport._othello_hud.set_texts(left_text="", right_text="", title_text="", graph_samples=(), graph_current_edge=None)
@@ -245,7 +245,7 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
   viewport._othello_hud.set_texts(left_text="\n".join(left_lines), right_text="\n".join(right_lines), title_text=str(banner), graph_samples=tuple(graph_samples), graph_current_edge=player_edge)
 
 
-def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | None:
+def build_render_state(viewport: "RendererViewportWidget") -> OthelloRenderState | None:
   if not viewport._state.is_othello_space():
     viewport._othello_render_state_cache_key = None
     viewport._othello_render_state_cache = None
@@ -285,7 +285,7 @@ def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | Non
   return render_state
 
 
-def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
+def refresh_hover_square(viewport: "RendererViewportWidget", snapshot) -> None:
   viewport._othello_hover_square = None
   if not viewport._state.is_othello_space() or viewport._overlays.any_modal_open():
     return
@@ -297,7 +297,7 @@ def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
   viewport._othello_hover_square = int(square_index)
 
 
-def sync_settings_values(viewport: "GLViewportWidget") -> None:
+def sync_settings_values(viewport: "RendererViewportWidget") -> None:
   if viewport._state.is_othello_space() or viewport._overlays.othello_settings_open():
     _ensure_book_summary_loaded(viewport)
   viewport._othello_settings.sync_values(viewport._state.othello_settings)
@@ -305,7 +305,7 @@ def sync_settings_values(viewport: "GLViewportWidget") -> None:
   viewport._othello_settings.set_learning_running(bool(viewport._othello_book_learning_running), status_text=str(viewport._othello_book_learning_status_text))
 
 
-def _play_move_audio(viewport: "GLViewportWidget", state) -> None:
+def _play_move_audio(viewport: "RendererViewportWidget", state) -> None:
   if state.last_move_index is not None:
     place_x, place_z = square_center(int(state.last_move_index))
     viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_PLACE, position=(float(place_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(place_z)))
@@ -314,7 +314,7 @@ def _play_move_audio(viewport: "GLViewportWidget", state) -> None:
     viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_FLIP, position=(float(flip_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(flip_z)))
 
 
-def apply_settings(viewport: "GLViewportWidget", settings) -> None:
+def apply_settings(viewport: "RendererViewportWidget", settings) -> None:
   viewport._state.othello_settings = settings.normalized()
   viewport._state.normalize()
   viewport._othello_match.set_default_settings(viewport._state.othello_settings)
@@ -324,7 +324,7 @@ def apply_settings(viewport: "GLViewportWidget", settings) -> None:
     maybe_request_analysis(viewport)
 
 
-def request_book_learning(viewport: "GLViewportWidget", settings) -> None:
+def request_book_learning(viewport: "RendererViewportWidget", settings) -> None:
   normalized = settings.normalized()
   viewport._othello_match.reset_to_idle()
   viewport._pending_othello_ai_result = None
@@ -341,7 +341,7 @@ def request_book_learning(viewport: "GLViewportWidget", settings) -> None:
   viewport._othello_ai.request_book_learning(settings=normalized, project_root=str(viewport._data_root))
 
 
-def cancel_book_learning(viewport: "GLViewportWidget") -> None:
+def cancel_book_learning(viewport: "RendererViewportWidget") -> None:
   if not bool(viewport._othello_book_learning_running):
     return
   viewport._othello_book_learning_status_text = "Cancelling opening book learning..."
@@ -351,7 +351,7 @@ def cancel_book_learning(viewport: "GLViewportWidget") -> None:
   viewport._othello_ai.cancel_book_learning()
 
 
-def import_book(viewport: "GLViewportWidget") -> None:
+def import_book(viewport: "RendererViewportWidget") -> None:
   selected_path, _selected_filter = QFileDialog.getOpenFileName(viewport._othello_settings, "Import Opening Book", str(viewport._data_root), "JSON Files (*.json)")
   if not str(selected_path).strip():
     return
@@ -369,7 +369,7 @@ def import_book(viewport: "GLViewportWidget") -> None:
   viewport.update()
 
 
-def export_book(viewport: "GLViewportWidget") -> None:
+def export_book(viewport: "RendererViewportWidget") -> None:
   export_dir = viewport._data_root / "exports"
   selected_path, _selected_filter = QFileDialog.getSaveFileName(viewport._othello_settings, "Export Opening Book", str(export_dir / "othello_opening_book_export.json"), "JSON Files (*.json)")
   if not str(selected_path).strip():
@@ -385,7 +385,7 @@ def export_book(viewport: "GLViewportWidget") -> None:
   viewport.update()
 
 
-def on_book_learning_progress(viewport: "GLViewportWidget", payload: object) -> None:
+def on_book_learning_progress(viewport: "RendererViewportWidget", payload: object) -> None:
   if not isinstance(payload, dict):
     return
   viewport._othello_book_learning_progress = dict(payload)
@@ -403,7 +403,7 @@ def on_book_learning_progress(viewport: "GLViewportWidget", payload: object) -> 
   viewport.update()
 
 
-def on_book_learning_ready(viewport: "GLViewportWidget", payload: object) -> None:
+def on_book_learning_ready(viewport: "RendererViewportWidget", payload: object) -> None:
   viewport._othello_book_learning_running = False
   viewport._othello_book_learning_progress = None
   viewport._othello_render_state_cache_key = None
@@ -429,7 +429,7 @@ def on_book_learning_ready(viewport: "GLViewportWidget", payload: object) -> Non
   viewport.update()
 
 
-def clear_state_for_space_switch(viewport: "GLViewportWidget") -> None:
+def clear_state_for_space_switch(viewport: "RendererViewportWidget") -> None:
   viewport._othello_ai.cancel_book_learning(emit_ready=False)
   viewport._othello_match.settle_animations()
   viewport._pending_othello_ai_result = None
@@ -447,7 +447,7 @@ def clear_state_for_space_switch(viewport: "GLViewportWidget") -> None:
   viewport._last_othello_message = ""
 
 
-def maybe_request_ai(viewport: "GLViewportWidget") -> None:
+def maybe_request_ai(viewport: "RendererViewportWidget") -> None:
   if not viewport._state.is_othello_space():
     return
   if viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead():
@@ -492,7 +492,7 @@ def maybe_request_ai(viewport: "GLViewportWidget") -> None:
 
 
 def dispatch_ai_request(
-  viewport: "GLViewportWidget", *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, thread_count: int, sacrifice_level: int, hash_level: int
+  viewport: "RendererViewportWidget", *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, thread_count: int, sacrifice_level: int, hash_level: int
 ) -> None:
   viewport._othello_ai_request_armed = False
   if not viewport._state.is_othello_space():
@@ -517,7 +517,7 @@ def dispatch_ai_request(
   )
 
 
-def maybe_request_analysis(viewport: "GLViewportWidget") -> None:
+def maybe_request_analysis(viewport: "RendererViewportWidget") -> None:
   if not viewport._state.is_othello_space():
     return
   if viewport.loading_active() or viewport._overlays.dead():
@@ -557,7 +557,7 @@ def maybe_request_analysis(viewport: "GLViewportWidget") -> None:
   )
 
 
-def on_analysis_ready(viewport: "GLViewportWidget", generation: int, analysis: object) -> None:
+def on_analysis_ready(viewport: "RendererViewportWidget", generation: int, analysis: object) -> None:
   state = viewport._othello_match.game_state()
   if int(generation) != int(state.match_generation):
     return
@@ -568,7 +568,7 @@ def on_analysis_ready(viewport: "GLViewportWidget", generation: int, analysis: o
   sync_hud_text(viewport)
 
 
-def consume_pending_ai_result(viewport: "GLViewportWidget") -> None:
+def consume_pending_ai_result(viewport: "RendererViewportWidget") -> None:
   if viewport._pending_othello_ai_result is None:
     return
   if viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead():
@@ -579,7 +579,7 @@ def consume_pending_ai_result(viewport: "GLViewportWidget") -> None:
   apply_ai_result(viewport, int(generation), move_index)
 
 
-def apply_ai_result(viewport: "GLViewportWidget", generation: int, move_index: int | None) -> None:
+def apply_ai_result(viewport: "RendererViewportWidget", generation: int, move_index: int | None) -> None:
   state = viewport._othello_match.game_state()
   if int(generation) != int(state.match_generation) or state.status != OTHELLO_GAME_STATE_AI_TURN:
     return
@@ -591,7 +591,7 @@ def apply_ai_result(viewport: "GLViewportWidget", generation: int, move_index: i
   maybe_request_analysis(viewport)
 
 
-def on_ai_move_ready(viewport: "GLViewportWidget", generation: int, move_index: object) -> None:
+def on_ai_move_ready(viewport: "RendererViewportWidget", generation: int, move_index: object) -> None:
   result = None if move_index is None else int(move_index)
   if viewport._overlays.paused() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or viewport._overlays.dead():
     viewport._pending_othello_ai_result = (int(generation), result)
@@ -599,7 +599,7 @@ def on_ai_move_ready(viewport: "GLViewportWidget", generation: int, move_index: 
   apply_ai_result(viewport, int(generation), result)
 
 
-def handle_left_click(viewport: "GLViewportWidget", render_eye: "Vec3", render_direction: "Vec3") -> None:
+def handle_left_click(viewport: "RendererViewportWidget", render_eye: "Vec3", render_direction: "Vec3") -> None:
   viewport._first_person_motion.trigger_left_swing()
   square_index = raycast_board_square(render_eye, render_direction)
   if square_index is not None and viewport._othello_match.submit_player_move(int(square_index)):
@@ -609,7 +609,7 @@ def handle_left_click(viewport: "GLViewportWidget", render_eye: "Vec3", render_d
     maybe_request_analysis(viewport)
 
 
-def handle_right_click(viewport: "GLViewportWidget") -> None:
+def handle_right_click(viewport: "RendererViewportWidget") -> None:
   import ludoxel.shared.ui.viewport.controllers.controllers_interaction_controller as interaction_controller
 
   item_id = settings_controller.current_item_id(viewport)

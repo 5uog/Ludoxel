@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from ludoxel.application.runtime.managers.managers_session_manager import SessionManager
 from ludoxel.shared.math.math_vec3 import Vec3
-from ludoxel.shared.opengl.runtime.runtime_gl_renderer import GLRenderer
+from ludoxel.shared.rendering.backend.backend_renderer_api import BackendRendererApi
 from ludoxel.shared.ui.hud.hud_player_metrics import PlayerMetricsTracker
 from ludoxel.shared.world.config.config_render_distance import clamp_render_distance_chunks
 
@@ -215,7 +215,7 @@ class HudController:
     self,
     *,
     session: SessionManager,
-    renderer: GLRenderer,
+    renderer: BackendRendererApi,
     auto_jump_enabled: bool,
     auto_sprint_enabled: bool,
     creative_mode: bool,
@@ -314,13 +314,15 @@ class HudController:
     )
     lines.append(f"Ludoxel v{__version__} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
 
-    gl_vendor, gl_rend, gl_ver, _glsl = renderer.gl_info()
-    if gl_rend:
-      lines.append(str(gl_rend))
-    if gl_ver:
-      lines.append(f"OpenGL {str(gl_ver)}")
-    if gl_vendor:
-      lines.append(str(gl_vendor))
+    renderer_vendor, renderer_name, renderer_api, shader_lang = renderer.gl_info()
+    if renderer_name:
+      lines.append(str(renderer_name))
+    if renderer_api:
+      lines.append(f"Renderer {str(renderer_api)}")
+    if shader_lang:
+      lines.append(f"Shader {str(shader_lang)}")
+    if renderer_vendor:
+      lines.append(str(renderer_vendor))
 
     return "\n".join(lines).rstrip()
 
@@ -347,7 +349,7 @@ class HudController:
     self,
     *,
     session: SessionManager,
-    renderer: GLRenderer,
+    renderer: BackendRendererApi,
     auto_jump_enabled: bool,
     auto_sprint_enabled: bool,
     creative_mode: bool,

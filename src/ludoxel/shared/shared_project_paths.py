@@ -148,5 +148,5 @@ def runtime_integrity_key_path(data_root: Path) -> Path:
   return runtime_state_root(data_root) / "integrity_key.bin"
 
 
-def legacy_configs_root(project_root: Path) -> Path:
+def previous_configs_root(project_root: Path) -> Path:
   return Path(project_root) / "configs"

@@ -16,10 +16,10 @@ from ludoxel.application.runtime.state.state_runtime_preferences import RuntimeP
 from ludoxel.shared.rendering.rendering_player_skin import PLAYER_SKIN_KIND_ALEX, PLAYER_SKIN_KIND_CUSTOM, delete_custom_player_skin, normalize_player_skin_image, write_custom_player_skin
 
 if TYPE_CHECKING:
-  from ludoxel.shared.ui.viewport.viewport_gl_viewport_widget import GLViewportWidget
+  from ludoxel.shared.ui.viewport.viewport_renderer_viewport_widget import RendererViewportWidget
 
 
-def bind_settings_overlay(viewport: "GLViewportWidget") -> None:
+def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
   import ludoxel.shared.ui.viewport.controllers.controllers_interaction_controller as interaction_controller
 
   overlay = viewport._settings
@@ -79,15 +79,15 @@ def bind_settings_overlay(viewport: "GLViewportWidget") -> None:
   overlay.player_name_changed.connect(lambda value: set_player_name(viewport, str(value)))
 
 
-def sync_state_from_renderer_sun(viewport: "GLViewportWidget") -> None:
+def sync_state_from_renderer_sun(viewport: "RendererViewportWidget") -> None:
   sync_runtime_sun_from_renderer(viewport._state, viewport._renderer)
 
 
-def apply_runtime_to_renderer(viewport: "GLViewportWidget") -> None:
+def apply_runtime_to_renderer(viewport: "RendererViewportWidget") -> None:
   apply_runtime_to_renderer_state(viewport._state, viewport._renderer)
 
 
-def sync_cloud_motion_pause(viewport: "GLViewportWidget") -> None:
+def sync_cloud_motion_pause(viewport: "RendererViewportWidget") -> None:
   pause_motion = (
     bool(viewport.loading_active())
     or bool(viewport._overlays.paused())
@@ -102,25 +102,25 @@ def sync_cloud_motion_pause(viewport: "GLViewportWidget") -> None:
   viewport._renderer.set_texture_animation_paused(bool(pause_motion))
 
 
-def sync_input_bindings(viewport: "GLViewportWidget") -> None:
+def sync_input_bindings(viewport: "RendererViewportWidget") -> None:
   viewport._adapter.set_keybinds(viewport._state.keybinds.normalized())
 
 
-def sync_audio_preferences(viewport: "GLViewportWidget") -> None:
+def sync_audio_preferences(viewport: "RendererViewportWidget") -> None:
   if hasattr(viewport, "_audio") and viewport._audio is not None:
     viewport._audio.set_preferences(viewport._state.audio.normalized())
 
 
-def inventory_available(viewport: "GLViewportWidget") -> bool:
+def inventory_available(viewport: "RendererViewportWidget") -> bool:
   return (not viewport._state.is_othello_space()) and (not bool(viewport._state.route_edit_active))
 
 
-def sync_hotbar_status(viewport: "GLViewportWidget") -> None:
+def sync_hotbar_status(viewport: "RendererViewportWidget") -> None:
   show_health = bool((not viewport._state.creative_mode) and (not viewport._state.is_othello_space()) and (not viewport._state.route_edit_active))
   viewport._hotbar.set_status(show_health=bool(show_health), health=float(viewport._session.player.health), max_health=float(viewport._session.player.max_health))
 
 
-def sync_hotbar_widgets(viewport: "GLViewportWidget") -> None:
+def sync_hotbar_widgets(viewport: "RendererViewportWidget") -> None:
   viewport._state.normalize()
   slots = viewport._state.hotbar_snapshot()
   selected_index = viewport._state.active_hotbar_index()
@@ -134,61 +134,61 @@ def sync_hotbar_widgets(viewport: "GLViewportWidget") -> None:
   sync_hotbar_status(viewport)
 
 
-def sync_crosshair_widgets(viewport: "GLViewportWidget") -> None:
+def sync_crosshair_widgets(viewport: "RendererViewportWidget") -> None:
   viewport._crosshair.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
   viewport._settings._crosshair_preview.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
   viewport._settings._crosshair_editor.set_pixels(viewport._state.crosshair_pixels)
 
 
-def sync_player_skin(viewport: "GLViewportWidget", *, push_to_renderer: bool = False) -> None:
+def sync_player_skin(viewport: "RendererViewportWidget", *, push_to_renderer: bool = False) -> None:
   viewport._sync_player_skin_design(push_to_renderer=bool(push_to_renderer))
 
 
-def current_item_id(viewport: "GLViewportWidget") -> str | None:
+def current_item_id(viewport: "RendererViewportWidget") -> str | None:
   viewport._state.normalize()
   return viewport._state.current_item_id()
 
 
-def current_block_id(viewport: "GLViewportWidget") -> str | None:
+def current_block_id(viewport: "RendererViewportWidget") -> str | None:
   viewport._state.normalize()
   return viewport._state.current_block_id()
 
 
-def sync_view_model_visibility(viewport: "GLViewportWidget") -> None:
+def sync_view_model_visibility(viewport: "RendererViewportWidget") -> None:
   viewport._first_person_motion.set_view_model_visible(bool(viewport._state.view_model_visible()))
 
 
-def sync_first_person_target(viewport: "GLViewportWidget") -> None:
+def sync_first_person_target(viewport: "RendererViewportWidget") -> None:
   viewport._first_person_motion.set_target_item_id(current_item_id(viewport))
   viewport._first_person_motion.set_swing_duration_s(float(viewport._state.arm_swing_duration_s))
   sync_view_model_visibility(viewport)
 
 
-def select_hotbar_slot(viewport: "GLViewportWidget", slot_index: int) -> None:
+def select_hotbar_slot(viewport: "RendererViewportWidget", slot_index: int) -> None:
   viewport._state.select_hotbar_index(int(slot_index))
   sync_hotbar_widgets(viewport)
   sync_first_person_target(viewport)
 
 
-def assign_hotbar_slot(viewport: "GLViewportWidget", slot_index: int, item_id: str) -> None:
+def assign_hotbar_slot(viewport: "RendererViewportWidget", slot_index: int, item_id: str) -> None:
   viewport._state.set_hotbar_slot(int(slot_index), str(item_id))
   sync_hotbar_widgets(viewport)
   sync_first_person_target(viewport)
 
 
-def cycle_hotbar(viewport: "GLViewportWidget", step: int) -> None:
+def cycle_hotbar(viewport: "RendererViewportWidget", step: int) -> None:
   viewport._state.cycle_hotbar(int(step))
   sync_hotbar_widgets(viewport)
   sync_first_person_target(viewport)
 
 
-def clear_selected_hotbar_slot(viewport: "GLViewportWidget") -> None:
+def clear_selected_hotbar_slot(viewport: "RendererViewportWidget") -> None:
   viewport._state.clear_selected_hotbar_slot()
   sync_hotbar_widgets(viewport)
   sync_first_person_target(viewport)
 
 
-def sync_settings_values(viewport: "GLViewportWidget") -> None:
+def sync_settings_values(viewport: "RendererViewportWidget") -> None:
   sync_state_from_renderer_sun(viewport)
   viewport._settings.sync_values(
     fov_deg=viewport._session.settings.fov_deg,
@@ -246,7 +246,7 @@ def sync_settings_values(viewport: "GLViewportWidget") -> None:
   )
 
 
-def refresh_player_identity(viewport: "GLViewportWidget", *, regenerate_if_blank: bool) -> None:
+def refresh_player_identity(viewport: "RendererViewportWidget", *, regenerate_if_blank: bool) -> None:
   explicit_name = normalize_player_name(viewport._state.player_name)
   fallback_name = None if bool(regenerate_if_blank) else str(viewport._state.resolved_player_name or "")
   viewport._state.player_name = explicit_name
@@ -255,23 +255,23 @@ def refresh_player_identity(viewport: "GLViewportWidget", *, regenerate_if_blank
   viewport._sync_player_name_overlays()
 
 
-def set_fov(viewport: "GLViewportWidget", fov: float) -> None:
+def set_fov(viewport: "RendererViewportWidget", fov: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_fov(float(fov)))
 
 
-def set_sens(viewport: "GLViewportWidget", sens: float) -> None:
+def set_sens(viewport: "RendererViewportWidget", sens: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_mouse_sens(float(sens)))
 
 
-def set_invert_x(viewport: "GLViewportWidget", on: bool) -> None:
+def set_invert_x(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.invert_x = bool(on)
 
 
-def set_invert_y(viewport: "GLViewportWidget", on: bool) -> None:
+def set_invert_y(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.invert_y = bool(on)
 
 
-def set_fullscreen(viewport: "GLViewportWidget", on: bool) -> None:
+def set_fullscreen(viewport: "RendererViewportWidget", on: bool) -> None:
   enabled = bool(on)
   if enabled == bool(viewport._state.fullscreen):
     return
@@ -281,31 +281,31 @@ def set_fullscreen(viewport: "GLViewportWidget", on: bool) -> None:
   viewport.fullscreen_changed.emit(bool(viewport._state.fullscreen))
 
 
-def set_hide_hud(viewport: "GLViewportWidget", on: bool) -> None:
+def set_hide_hud(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.hide_hud = bool(on)
   viewport._sync_gameplay_hud_visibility()
 
 
-def set_hide_hand(viewport: "GLViewportWidget", on: bool) -> None:
+def set_hide_hand(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.hide_hand = bool(on)
   sync_view_model_visibility(viewport)
 
 
-def set_crosshair_pixels(viewport: "GLViewportWidget", pixels: object) -> None:
+def set_crosshair_pixels(viewport: "RendererViewportWidget", pixels: object) -> None:
   viewport._state.crosshair_mode = "custom"
   viewport._state.crosshair_pixels = tuple(pixels)
   viewport._state.normalize()
   sync_crosshair_widgets(viewport)
 
 
-def clear_crosshair(viewport: "GLViewportWidget") -> None:
+def clear_crosshair(viewport: "RendererViewportWidget") -> None:
   viewport._state.crosshair_mode = "default"
   viewport._state.crosshair_pixels = ()
   viewport._state.normalize()
   sync_crosshair_widgets(viewport)
 
 
-def set_camera_perspective(viewport: "GLViewportWidget", value: str) -> None:
+def set_camera_perspective(viewport: "RendererViewportWidget", value: str) -> None:
   viewport._state.camera_perspective = normalize_camera_perspective(value)
   viewport._state.normalize()
   sync_view_model_visibility(viewport)
@@ -314,7 +314,7 @@ def set_camera_perspective(viewport: "GLViewportWidget", value: str) -> None:
   viewport._invalidate_selection_target()
 
 
-def cycle_camera_perspective(viewport: "GLViewportWidget") -> None:
+def cycle_camera_perspective(viewport: "RendererViewportWidget") -> None:
   viewport._state.cycle_camera_perspective()
   viewport._state.normalize()
   sync_view_model_visibility(viewport)
@@ -323,25 +323,25 @@ def cycle_camera_perspective(viewport: "GLViewportWidget") -> None:
   viewport._invalidate_selection_target()
 
 
-def set_view_bobbing_enabled(viewport: "GLViewportWidget", on: bool) -> None:
+def set_view_bobbing_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.view_bobbing_enabled = bool(on)
 
 
-def set_camera_shake_enabled(viewport: "GLViewportWidget", on: bool) -> None:
+def set_camera_shake_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.camera_shake_enabled = bool(on)
 
 
-def set_view_bobbing_strength(viewport: "GLViewportWidget", strength: float) -> None:
+def set_view_bobbing_strength(viewport: "RendererViewportWidget", strength: float) -> None:
   viewport._state.view_bobbing_strength = float(strength)
   viewport._state.normalize()
 
 
-def set_camera_shake_strength(viewport: "GLViewportWidget", strength: float) -> None:
+def set_camera_shake_strength(viewport: "RendererViewportWidget", strength: float) -> None:
   viewport._state.camera_shake_strength = float(strength)
   viewport._state.normalize()
 
 
-def set_arm_rotation_limit_min_deg(viewport: "GLViewportWidget", value: float) -> None:
+def set_arm_rotation_limit_min_deg(viewport: "RendererViewportWidget", value: float) -> None:
   viewport._state.arm_rotation_limit_min_deg = float(value)
   viewport._state.normalize()
   viewport._invalidate_pause_preview_cache()
@@ -349,7 +349,7 @@ def set_arm_rotation_limit_min_deg(viewport: "GLViewportWidget", value: float) -
   viewport.update()
 
 
-def set_arm_rotation_limit_max_deg(viewport: "GLViewportWidget", value: float) -> None:
+def set_arm_rotation_limit_max_deg(viewport: "RendererViewportWidget", value: float) -> None:
   viewport._state.arm_rotation_limit_max_deg = float(value)
   viewport._state.normalize()
   viewport._invalidate_pause_preview_cache()
@@ -357,7 +357,7 @@ def set_arm_rotation_limit_max_deg(viewport: "GLViewportWidget", value: float) -
   viewport.update()
 
 
-def set_arm_swing_duration_s(viewport: "GLViewportWidget", value: float) -> None:
+def set_arm_swing_duration_s(viewport: "RendererViewportWidget", value: float) -> None:
   viewport._state.arm_swing_duration_s = float(value)
   viewport._state.normalize()
   viewport._first_person_motion.set_swing_duration_s(float(viewport._state.arm_swing_duration_s))
@@ -366,68 +366,68 @@ def set_arm_swing_duration_s(viewport: "GLViewportWidget", value: float) -> None
   viewport.update()
 
 
-def set_animated_textures_enabled(viewport: "GLViewportWidget", on: bool) -> None:
+def set_animated_textures_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.animated_textures_enabled = bool(on)
   viewport._renderer.set_animated_textures_enabled(bool(viewport._state.animated_textures_enabled))
   sync_hotbar_widgets(viewport)
 
 
-def set_outline_selection(viewport: "GLViewportWidget", on: bool) -> None:
+def set_outline_selection(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.outline_selection = bool(on)
   viewport._renderer.set_outline_selection_enabled(bool(viewport._state.outline_selection))
 
 
-def set_cloud_wire(viewport: "GLViewportWidget", on: bool) -> None:
+def set_cloud_wire(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.cloud_wire = bool(on)
   viewport._renderer.set_cloud_wireframe(bool(viewport._state.cloud_wire))
 
 
-def set_cloud_enabled(viewport: "GLViewportWidget", on: bool) -> None:
+def set_cloud_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.cloud_enabled = bool(on)
   viewport._renderer.set_cloud_enabled(bool(viewport._state.cloud_enabled))
 
 
-def set_cloud_density(viewport: "GLViewportWidget", density: int) -> None:
+def set_cloud_density(viewport: "RendererViewportWidget", density: int) -> None:
   viewport._state.cloud_density = int(density)
   viewport._state.normalize()
   viewport._renderer.set_cloud_density(int(viewport._state.cloud_density))
 
 
-def set_cloud_seed(viewport: "GLViewportWidget", seed: int) -> None:
+def set_cloud_seed(viewport: "RendererViewportWidget", seed: int) -> None:
   viewport._state.cloud_seed = int(seed)
   viewport._state.normalize()
   viewport._renderer.set_cloud_seed(int(viewport._state.cloud_seed))
 
 
-def set_cloud_flow_direction(viewport: "GLViewportWidget", direction: str) -> None:
+def set_cloud_flow_direction(viewport: "RendererViewportWidget", direction: str) -> None:
   viewport._state.cloud_flow_direction = str(direction)
   viewport._state.normalize()
   viewport._renderer.set_cloud_flow_direction(str(viewport._state.cloud_flow_direction))
 
 
-def set_world_wire(viewport: "GLViewportWidget", on: bool) -> None:
+def set_world_wire(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.world_wire = bool(on)
   viewport._renderer.set_world_wireframe(bool(viewport._state.world_wire))
 
 
-def set_shadow_enabled(viewport: "GLViewportWidget", on: bool) -> None:
+def set_shadow_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.shadow_enabled = bool(on)
   viewport._renderer.set_shadow_enabled(bool(viewport._state.shadow_enabled))
 
 
-def set_sun_azimuth(viewport: "GLViewportWidget", azimuth_deg: float) -> None:
+def set_sun_azimuth(viewport: "RendererViewportWidget", azimuth_deg: float) -> None:
   viewport._state.sun_az_deg = float(azimuth_deg)
   viewport._state.normalize()
   viewport._renderer.set_sun_angles(float(viewport._state.sun_az_deg), float(viewport._state.sun_el_deg))
 
 
-def set_sun_elevation(viewport: "GLViewportWidget", elevation_deg: float) -> None:
+def set_sun_elevation(viewport: "RendererViewportWidget", elevation_deg: float) -> None:
   viewport._state.sun_el_deg = float(elevation_deg)
   viewport._state.normalize()
   viewport._renderer.set_sun_angles(float(viewport._state.sun_az_deg), float(viewport._state.sun_el_deg))
 
 
-def set_creative_mode(viewport: "GLViewportWidget", on: bool) -> None:
+def set_creative_mode(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.creative_mode = bool(on)
   if not bool(viewport._state.creative_mode):
     viewport._for_each_session(lambda session: setattr(session.player, "flying", False))
@@ -435,72 +435,72 @@ def set_creative_mode(viewport: "GLViewportWidget", on: bool) -> None:
   sync_first_person_target(viewport)
 
 
-def set_auto_jump(viewport: "GLViewportWidget", on: bool) -> None:
+def set_auto_jump(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.auto_jump_enabled = bool(on)
 
 
-def set_auto_sprint(viewport: "GLViewportWidget", on: bool) -> None:
+def set_auto_sprint(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.auto_sprint_enabled = bool(on)
 
 
-def set_block_break_repeat_interval(viewport: "GLViewportWidget", interval_s: float) -> None:
+def set_block_break_repeat_interval(viewport: "RendererViewportWidget", interval_s: float) -> None:
   viewport._state.block_break_repeat_interval_s = float(interval_s)
   viewport._state.normalize()
 
 
-def set_block_place_repeat_interval(viewport: "GLViewportWidget", interval_s: float) -> None:
+def set_block_place_repeat_interval(viewport: "RendererViewportWidget", interval_s: float) -> None:
   viewport._state.block_place_repeat_interval_s = float(interval_s)
   viewport._state.normalize()
 
 
-def set_block_interact_repeat_interval(viewport: "GLViewportWidget", interval_s: float) -> None:
+def set_block_interact_repeat_interval(viewport: "RendererViewportWidget", interval_s: float) -> None:
   viewport._state.block_interact_repeat_interval_s = float(interval_s)
   viewport._state.normalize()
 
 
-def set_block_break_particle_spawn_rate(viewport: "GLViewportWidget", spawn_rate: float) -> None:
+def set_block_break_particle_spawn_rate(viewport: "RendererViewportWidget", spawn_rate: float) -> None:
   viewport._state.block_break_particle_spawn_rate = float(spawn_rate)
   viewport._state.normalize()
 
 
-def set_block_break_particle_speed_scale(viewport: "GLViewportWidget", speed_scale: float) -> None:
+def set_block_break_particle_speed_scale(viewport: "RendererViewportWidget", speed_scale: float) -> None:
   viewport._state.block_break_particle_speed_scale = float(speed_scale)
   viewport._state.normalize()
 
 
-def set_gravity(viewport: "GLViewportWidget", gravity: float) -> None:
+def set_gravity(viewport: "RendererViewportWidget", gravity: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_gravity(float(gravity)))
 
 
-def set_walk_speed(viewport: "GLViewportWidget", walk_speed: float) -> None:
+def set_walk_speed(viewport: "RendererViewportWidget", walk_speed: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_walk_speed(float(walk_speed)))
 
 
-def set_sprint_speed(viewport: "GLViewportWidget", sprint_speed: float) -> None:
+def set_sprint_speed(viewport: "RendererViewportWidget", sprint_speed: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_sprint_speed(float(sprint_speed)))
 
 
-def set_jump_v0(viewport: "GLViewportWidget", jump_v0: float) -> None:
+def set_jump_v0(viewport: "RendererViewportWidget", jump_v0: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_jump_v0(float(jump_v0)))
 
 
-def set_auto_jump_cooldown_s(viewport: "GLViewportWidget", cooldown_s: float) -> None:
+def set_auto_jump_cooldown_s(viewport: "RendererViewportWidget", cooldown_s: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_auto_jump_cooldown_s(float(cooldown_s)))
 
 
-def set_fly_speed(viewport: "GLViewportWidget", fly_speed: float) -> None:
+def set_fly_speed(viewport: "RendererViewportWidget", fly_speed: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_fly_speed(float(fly_speed)))
 
 
-def set_fly_ascend_speed(viewport: "GLViewportWidget", fly_ascend_speed: float) -> None:
+def set_fly_ascend_speed(viewport: "RendererViewportWidget", fly_ascend_speed: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_fly_ascend_speed(float(fly_ascend_speed)))
 
 
-def set_fly_descend_speed(viewport: "GLViewportWidget", fly_descend_speed: float) -> None:
+def set_fly_descend_speed(viewport: "RendererViewportWidget", fly_descend_speed: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_fly_descend_speed(float(fly_descend_speed)))
 
 
-def reset_advanced_defaults(viewport: "GLViewportWidget") -> None:
+def reset_advanced_defaults(viewport: "RendererViewportWidget") -> None:
   viewport._for_each_session(lambda session: session.settings.reset_advanced_movement_defaults())
   viewport._state.block_break_repeat_interval_s = float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S)
   viewport._state.block_place_repeat_interval_s = float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
@@ -511,12 +511,12 @@ def reset_advanced_defaults(viewport: "GLViewportWidget") -> None:
   sync_settings_values(viewport)
 
 
-def set_render_distance(viewport: "GLViewportWidget", render_distance_chunks: int) -> None:
+def set_render_distance(viewport: "RendererViewportWidget", render_distance_chunks: int) -> None:
   viewport._state.render_distance_chunks = int(render_distance_chunks)
   viewport._state.normalize()
 
 
-def set_keybind(viewport: "GLViewportWidget", action: str, binding: str) -> None:
+def set_keybind(viewport: "RendererViewportWidget", action: str, binding: str) -> None:
   viewport._state.keybinds = viewport._state.keybinds.with_binding(str(action), str(binding))
   viewport._state.normalize()
   sync_input_bindings(viewport)
@@ -524,7 +524,7 @@ def set_keybind(viewport: "GLViewportWidget", action: str, binding: str) -> None
   sync_settings_values(viewport)
 
 
-def reset_keybinds(viewport: "GLViewportWidget") -> None:
+def reset_keybinds(viewport: "RendererViewportWidget") -> None:
   viewport._state.keybinds = KeybindSettings()
   viewport._state.normalize()
   sync_input_bindings(viewport)
@@ -532,7 +532,7 @@ def reset_keybinds(viewport: "GLViewportWidget") -> None:
   sync_settings_values(viewport)
 
 
-def _replace_audio_preferences(viewport: "GLViewportWidget", *, master: float | None = None, ambient: float | None = None, block: float | None = None, player: float | None = None) -> None:
+def _replace_audio_preferences(viewport: "RendererViewportWidget", *, master: float | None = None, ambient: float | None = None, block: float | None = None, player: float | None = None) -> None:
   current = viewport._state.audio.normalized()
   viewport._state.audio = AudioPreferences(
     master=float(current.master if master is None else master),
@@ -543,30 +543,30 @@ def _replace_audio_preferences(viewport: "GLViewportWidget", *, master: float | 
   sync_audio_preferences(viewport)
 
 
-def set_master_volume(viewport: "GLViewportWidget", value: float) -> None:
+def set_master_volume(viewport: "RendererViewportWidget", value: float) -> None:
   _replace_audio_preferences(viewport, master=float(value))
 
 
-def set_ambient_volume(viewport: "GLViewportWidget", value: float) -> None:
+def set_ambient_volume(viewport: "RendererViewportWidget", value: float) -> None:
   _replace_audio_preferences(viewport, ambient=float(value))
 
 
-def set_block_volume(viewport: "GLViewportWidget", value: float) -> None:
+def set_block_volume(viewport: "RendererViewportWidget", value: float) -> None:
   _replace_audio_preferences(viewport, block=float(value))
 
 
-def set_player_volume(viewport: "GLViewportWidget", value: float) -> None:
+def set_player_volume(viewport: "RendererViewportWidget", value: float) -> None:
   _replace_audio_preferences(viewport, player=float(value))
 
 
-def set_player_name(viewport: "GLViewportWidget", value: str) -> None:
+def set_player_name(viewport: "RendererViewportWidget", value: str) -> None:
   viewport._state.player_name = normalize_player_name(value)
   refresh_player_identity(viewport, regenerate_if_blank=True)
   sync_settings_values(viewport)
   viewport.update()
 
 
-def change_player_skin(viewport: "GLViewportWidget") -> None:
+def change_player_skin(viewport: "RendererViewportWidget") -> None:
   selected_path, _selected_filter = QFileDialog.getOpenFileName(viewport, "Select Player Skin", "", "PNG Files (*.png)")
   if not str(selected_path).strip():
     return
@@ -584,7 +584,7 @@ def change_player_skin(viewport: "GLViewportWidget") -> None:
   sync_player_skin(viewport, push_to_renderer=True)
 
 
-def reset_player_skin(viewport: "GLViewportWidget") -> None:
+def reset_player_skin(viewport: "RendererViewportWidget") -> None:
   delete_custom_player_skin(viewport._data_root)
   viewport._state.player_skin_kind = PLAYER_SKIN_KIND_ALEX
   viewport._state.normalize()
