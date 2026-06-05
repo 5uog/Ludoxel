@@ -88,6 +88,13 @@ class ViewportLifecycleMixin:
       return
     self._shutdown_done = True
     self._set_runtime_active(False)
+    app = getattr(self, "_application_event_filter_app", None)
+    if app is not None:
+      try:
+        app.removeEventFilter(self)
+      except Exception:
+        pass
+      self._application_event_filter_app = None
     try:
       self._settings.hide()
     except Exception:

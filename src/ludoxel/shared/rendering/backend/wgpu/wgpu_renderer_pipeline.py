@@ -12,6 +12,10 @@ def _shader_root() -> Path:
   return Path(__file__).resolve().parents[3] / "opengl" / "shaders"
 
 
+def _othello_shader_root() -> Path:
+  return Path(__file__).resolve().parents[4] / "features" / "othello" / "opengl" / "shaders"
+
+
 def _expand_includes(path: Path, seen: tuple[Path, ...] = ()) -> str:
   src_path = Path(path).resolve()
   if src_path in seen:
@@ -27,7 +31,9 @@ def _expand_includes(path: Path, seen: tuple[Path, ...] = ()) -> str:
 
 
 def _wgpu_glsl_source(filename: str) -> str:
-  text = _expand_includes(_shader_root() / str(filename))
+  name = str(filename)
+  root = _othello_shader_root() if name.startswith("othello") else _shader_root()
+  text = _expand_includes(root / name)
   text = _adapt_wgpu_glsl(str(filename), text)
   lines = text.splitlines()
   version_idx = next((i for i, line in enumerate(lines) if line.strip().startswith("#version")), None)
@@ -62,7 +68,7 @@ def _camera_uniform_block(name: str) -> str:
 """
 
 
-def _replace_first_person_inverse(text: str) -> str:
+def _replace_inverse_transpose_calls(text: str) -> str:
   helper = """
 mat3 inverse_transpose_mat3(mat3 m) {
     vec3 c0 = m[0];
@@ -79,9 +85,20 @@ mat3 inverse_transpose_mat3(mat3 m) {
     return mat3(inv_t0 * inv_det, inv_t1 * inv_det, inv_t2 * inv_det);
 }
 """
-  return text.replace("\nvoid main() {\n", f"{helper}\nvoid main() {{\n").replace(
-    "normalize(transpose(inverse(model_mat3())) * a_normal)", "normalize(inverse_transpose_mat3(model_mat3()) * a_normal)"
-  )
+  text = text.replace("\nvoid main() {\n", f"{helper}\nvoid main() {{\n")
+  text = text.replace("normalize(transpose(inverse(model_mat3())) * a_normal)", "normalize(inverse_transpose_mat3(model_mat3()) * a_normal)")
+  text = text.replace("normalize(transpose(inverse(m)) * a_normal)", "normalize(inverse_transpose_mat3(m) * a_normal)")
+  return text
+
+
+def _cloud_uniform_block() -> str:
+  return """layout(set = 0, binding = 0) uniform LudoxelCloudUniforms {
+    mat4 ldx_viewProj;
+    vec4 ldx_cloudShiftAlpha;
+    vec4 ldx_cloudColor;
+    vec4 ldx_cloudSunDir;
+};
+"""
 
 
 def _adapt_wgpu_glsl(filename: str, text: str) -> str:
@@ -117,6 +134,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
       + "\nlayout(set = 1, binding = 0) uniform texture2D ldx_atlasTexture;\nlayout(set = 1, binding = 1) uniform sampler ldx_atlasSampler;\nlayout(set = 2, binding = 0) uniform texture2D ldx_shadowTexture;\nlayout(set = 2, binding = 1) uniform samplerShadow ldx_shadowSampler;\n",
     )
     text = text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
+    text = text.replace("vec3 uvz = ndc * 0.5 + 0.5;", "vec3 uvz = vec3(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5, ndc.z);")
     text = text.replace("texture(u_shadowMap, vec3(uvz.xy, z))", "texture(sampler2DShadow(ldx_shadowTexture, ldx_shadowSampler), vec3(uvz.xy, z))")
     text = text.replace("texture(u_atlas, uv)", "texture(sampler2D(ldx_atlasTexture, ldx_atlasSampler), uv)")
     text = text.replace("u_shadowEnabled", "ldx_faceSelMode.z")
@@ -152,13 +170,52 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
   if name == "selection_line.frag":
     return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
 
+  if name == "cloud_box.vert":
+    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // smooth translation (world space)\n", _cloud_uniform_block())
+    text = text.replace("out vec3 v_normal;\nout float v_alphaMul;", "layout(location = 0) out vec3 v_normal;\nlayout(location = 1) out float v_alphaMul;")
+    text = text.replace("u_viewProj", "ldx_viewProj")
+    text = text.replace("u_shift", "ldx_cloudShiftAlpha.xyz")
+    return text
+
+  if name == "cloud_box.frag":
+    text = text.replace("in vec3 v_normal;\nin float v_alphaMul;", "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in float v_alphaMul;")
+    text = text.replace("uniform vec3 u_color;\nuniform float u_alpha;\nuniform vec3 u_sunDir;\n", _cloud_uniform_block())
+    text = text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
+    text = text.replace("u_color", "ldx_cloudColor.rgb")
+    text = text.replace("u_alpha", "ldx_cloudColor.a")
+    text = text.replace("u_sunDir", "ldx_cloudSunDir.xyz")
+    return text
+
+  if name == "sun.vert":
+    text = text.replace(
+      "uniform mat4 u_viewProj;\nuniform vec3 u_center;\nuniform vec3 u_u;\nuniform vec3 u_v;\nuniform float u_halfSize;\n",
+      """layout(set = 0, binding = 0) uniform LudoxelSunUniforms {
+    mat4 ldx_viewProj;
+    vec4 ldx_centerHalf;
+    vec4 ldx_u;
+    vec4 ldx_v;
+};
+""",
+    )
+    text = text.replace("out vec2 v_uv;", "layout(location = 0) out vec2 v_uv;")
+    text = text.replace("u_viewProj", "ldx_viewProj")
+    text = text.replace("u_center", "ldx_centerHalf.xyz")
+    text = text.replace("u_u", "ldx_u.xyz")
+    text = text.replace("u_v", "ldx_v.xyz")
+    text = text.replace("u_halfSize", "ldx_centerHalf.w")
+    return text
+
+  if name == "sun.frag":
+    text = text.replace("in vec2 v_uv;", "layout(location = 0) in vec2 v_uv;")
+    return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
+
   if name == "first_person_face.vert":
     text = text.replace("uniform mat4 u_viewProj;\n", _camera_uniform_block("first_person"))
     text = text.replace(
       "out vec3 v_normal;\nout vec2 v_uv;\nout vec4 v_uvRect;", "layout(location = 0) out vec3 v_normal;\nlayout(location = 1) out vec2 v_uv;\nlayout(location = 2) out vec4 v_uvRect;"
     )
     text = text.replace("u_viewProj", "ldx_viewProj")
-    return _replace_first_person_inverse(text)
+    return _replace_inverse_transpose_calls(text)
 
   if name == "first_person_face.frag":
     text = text.replace("in vec3 v_normal;\nin vec2 v_uv;\nin vec4 v_uvRect;", "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in vec2 v_uv;\nlayout(location = 2) in vec4 v_uvRect;")
@@ -171,6 +228,47 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_sunDir", "ldx_sunDirTintMix.xyz")
     text = text.replace("u_tintColor", "vec3(1.0, 0.32, 0.32)")
     text = text.replace("u_tintMix", "ldx_sunDirTintMix.w")
+    return text
+
+  if name == "othello.vert":
+    text = text.replace("uniform mat4 u_viewProj;\nuniform mat4 u_lightViewProj;\n", _camera_uniform_block("world"))
+    text = text.replace(
+      "out vec3 v_normal;\nout vec3 v_color;\n\nout float v_alpha;\n\nout vec4 v_lightPos;",
+      "layout(location = 0) out vec3 v_normal;\nlayout(location = 1) out vec3 v_color;\n\nlayout(location = 2) out float v_alpha;\n\nlayout(location = 3) out vec4 v_lightPos;",
+    )
+    text = text.replace("u_viewProj", "ldx_viewProj")
+    text = text.replace("u_lightViewProj", "ldx_lightViewProj")
+    return _replace_inverse_transpose_calls(text)
+
+  if name == "othello.frag":
+    text = text.replace(
+      "uniform vec3 u_sunDir;\n\nuniform sampler2DShadow u_shadowMap;\n\nuniform int u_shadowEnabled;\n\nuniform vec2 u_shadowTexel;\n\nuniform float u_shadowDarkMul;\nuniform float u_shadowBiasMin;\nuniform float u_shadowBiasSlope;\n\nuniform int u_debugShadow;\n",
+      _camera_uniform_block("world") + "\nlayout(set = 1, binding = 0) uniform texture2D ldx_shadowTexture;\nlayout(set = 1, binding = 1) uniform samplerShadow ldx_shadowSampler;\n",
+    )
+    text = text.replace(
+      "in vec3 v_normal;\nin vec3 v_color;\n\nin float v_alpha;\n\nin vec4 v_lightPos;",
+      "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in vec3 v_color;\n\nlayout(location = 2) in float v_alpha;\n\nlayout(location = 3) in vec4 v_lightPos;",
+    )
+    text = text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
+    text = text.replace("vec3 uvz = ndc * 0.5 + 0.5;", "vec3 uvz = vec3(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5, ndc.z);")
+    text = text.replace("texture(u_shadowMap, vec3(uvz.xy, z))", "texture(sampler2DShadow(ldx_shadowTexture, ldx_shadowSampler), vec3(uvz.xy, z))")
+    text = text.replace("u_shadowEnabled", "ldx_faceSelMode.z")
+    text = text.replace("u_shadowTexel", "vec2(1.0 / 2048.0, 1.0 / 2048.0)")
+    text = text.replace("u_shadowDarkMul", "0.20")
+    text = text.replace("u_shadowBiasMin", "0.00005")
+    text = text.replace("u_shadowBiasSlope", "0.00050")
+    text = text.replace("u_sunDir", "ldx_sunDirSelTint.xyz")
+    text = text.replace("u_debugShadow", "ldx_faceSelMode.w")
+    return text
+
+  if name == "othello_shadow.vert":
+    text = text.replace("uniform mat4 u_lightViewProj;\n", _camera_uniform_block("world"))
+    text = text.replace("u_lightViewProj", "ldx_lightViewProj")
+    return text
+
+  if name == "player_model_shadow.vert":
+    text = text.replace("uniform mat4 u_lightViewProj;\n", _camera_uniform_block("world"))
+    text = text.replace("u_lightViewProj", "ldx_lightViewProj")
     return text
 
   return text
@@ -211,9 +309,155 @@ def create_world_pipeline(*, device, target_format, depth_format, camera_bind_gr
         },
       ],
     },
-    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.back},
     depth_stencil={"format": depth_format, "depth_write_enabled": True, "depth_compare": wgpu.CompareFunction.less},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format}]},
+  )
+
+
+def create_sun_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-sun.vert", code=_wgpu_glsl_source("sun.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-sun.frag", code=_wgpu_glsl_source("sun.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-sun-layout", bind_group_layouts=[camera_bind_group_layout])
+  blend = {
+    "color": {"src_factor": wgpu.BlendFactor.src_alpha, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+    "alpha": {"src_factor": wgpu.BlendFactor.one, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+  }
+  return device.create_render_pipeline(
+    label="ludoxel-sun-pipeline",
+    layout=layout,
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": []},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.always},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def create_cloud_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-cloud_box.vert", code=_wgpu_glsl_source("cloud_box.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-cloud_box.frag", code=_wgpu_glsl_source("cloud_box.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-cloud-layout", bind_group_layouts=[camera_bind_group_layout])
+  blend = {
+    "color": {"src_factor": wgpu.BlendFactor.src_alpha, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+    "alpha": {"src_factor": wgpu.BlendFactor.one, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+  }
+  return device.create_render_pipeline(
+    label="ludoxel-cloud-pipeline",
+    layout=layout,
+    vertex={
+      "module": vertex_shader,
+      "entry_point": "main",
+      "buffers": [
+        {
+          "array_stride": 8 * 4,
+          "step_mode": "vertex",
+          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
+        },
+        {
+          "array_stride": 7 * 4,
+          "step_mode": "instance",
+          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3}, {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4}],
+        },
+      ],
+    },
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.back},
+    depth_stencil={"format": depth_format, "depth_write_enabled": True, "depth_compare": wgpu.CompareFunction.less},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def _othello_vertex_buffers(*, wgpu, shadow: bool = False):
+  vertex_attrs = [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}]
+  if not bool(shadow):
+    vertex_attrs.extend(({"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}, {"format": wgpu.VertexFormat.float32x3, "offset": 6 * 4, "shader_location": 2}))
+  instance_attrs = [
+    {"format": wgpu.VertexFormat.float32x4, "offset": 0, "shader_location": 3},
+    {"format": wgpu.VertexFormat.float32x4, "offset": 4 * 4, "shader_location": 4},
+    {"format": wgpu.VertexFormat.float32x4, "offset": 8 * 4, "shader_location": 5},
+    {"format": wgpu.VertexFormat.float32x4, "offset": 12 * 4, "shader_location": 6},
+  ]
+  if not bool(shadow):
+    instance_attrs.append({"format": wgpu.VertexFormat.float32x4, "offset": 16 * 4, "shader_location": 7})
+  return [{"array_stride": 9 * 4, "step_mode": "vertex", "attributes": vertex_attrs}, {"array_stride": 20 * 4, "step_mode": "instance", "attributes": instance_attrs}]
+
+
+def create_othello_pipeline(*, device, target_format, depth_format, camera_bind_group_layout, shadow_bind_group_layout, overlay: bool = False):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-othello.vert", code=_wgpu_glsl_source("othello.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-othello.frag", code=_wgpu_glsl_source("othello.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-othello-layout", bind_group_layouts=[camera_bind_group_layout, shadow_bind_group_layout])
+  blend = {
+    "color": {"src_factor": wgpu.BlendFactor.src_alpha, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+    "alpha": {"src_factor": wgpu.BlendFactor.one, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+  }
+  return device.create_render_pipeline(
+    label="ludoxel-othello-overlay-pipeline" if bool(overlay) else "ludoxel-othello-pipeline",
+    layout=layout,
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": _othello_vertex_buffers(wgpu=wgpu)},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={"format": depth_format, "depth_write_enabled": not bool(overlay), "depth_compare": wgpu.CompareFunction.less_equal},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def create_othello_shadow_pipeline(*, device, depth_format, camera_bind_group_layout, depth_bias: int = 0, depth_bias_slope_scale: float = 0.0):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-othello_shadow.vert", code=_wgpu_glsl_source("othello_shadow.vert"))
+  layout = device.create_pipeline_layout(label="ludoxel-othello-shadow-layout", bind_group_layouts=[camera_bind_group_layout])
+  return device.create_render_pipeline(
+    label="ludoxel-othello-shadow-pipeline",
+    layout=layout,
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": _othello_vertex_buffers(wgpu=wgpu, shadow=True)},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={
+      "format": depth_format,
+      "depth_write_enabled": True,
+      "depth_compare": wgpu.CompareFunction.less,
+      "depth_bias": int(depth_bias),
+      "depth_bias_slope_scale": float(depth_bias_slope_scale),
+    },
+  )
+
+
+def create_transform_shadow_pipeline(*, device, depth_format, camera_bind_group_layout, depth_bias: int = 0, depth_bias_slope_scale: float = 0.0):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-transform-shadow.vert", code=_wgpu_glsl_source("player_model_shadow.vert"))
+  layout = device.create_pipeline_layout(label="ludoxel-transform-shadow-layout", bind_group_layouts=[camera_bind_group_layout])
+  return device.create_render_pipeline(
+    label="ludoxel-transform-shadow-pipeline",
+    layout=layout,
+    vertex={
+      "module": vertex_shader,
+      "entry_point": "main",
+      "buffers": [
+        {"array_stride": 8 * 4, "step_mode": "vertex", "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}]},
+        {
+          "array_stride": 16 * 4,
+          "step_mode": "instance",
+          "attributes": [
+            {"format": wgpu.VertexFormat.float32x4, "offset": 0, "shader_location": 3},
+            {"format": wgpu.VertexFormat.float32x4, "offset": 4 * 4, "shader_location": 4},
+            {"format": wgpu.VertexFormat.float32x4, "offset": 8 * 4, "shader_location": 5},
+            {"format": wgpu.VertexFormat.float32x4, "offset": 12 * 4, "shader_location": 6},
+          ],
+        },
+      ],
+    },
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={
+      "format": depth_format,
+      "depth_write_enabled": True,
+      "depth_compare": wgpu.CompareFunction.less,
+      "depth_bias": int(depth_bias),
+      "depth_bias_slope_scale": float(depth_bias_slope_scale),
+    },
   )
 
 
@@ -252,13 +496,13 @@ def create_world_shadowed_pipeline(*, device, target_format, depth_format, camer
         },
       ],
     },
-    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.back},
     depth_stencil={"format": depth_format, "depth_write_enabled": True, "depth_compare": wgpu.CompareFunction.less},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format}]},
   )
 
 
-def create_shadow_depth_pipeline(*, device, depth_format, camera_bind_group_layout):
+def create_shadow_depth_pipeline(*, device, depth_format, camera_bind_group_layout, depth_bias: int = 0, depth_bias_slope_scale: float = 0.0):
   import wgpu
 
   vertex_shader = device.create_shader_module(label="ludoxel-shadow.vert", code=_wgpu_glsl_source("shadow.vert"))
@@ -293,7 +537,13 @@ def create_shadow_depth_pipeline(*, device, depth_format, camera_bind_group_layo
       ],
     },
     primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
-    depth_stencil={"format": depth_format, "depth_write_enabled": True, "depth_compare": wgpu.CompareFunction.less},
+    depth_stencil={
+      "format": depth_format,
+      "depth_write_enabled": True,
+      "depth_compare": wgpu.CompareFunction.less,
+      "depth_bias": int(depth_bias),
+      "depth_bias_slope_scale": float(depth_bias_slope_scale),
+    },
   )
 
 

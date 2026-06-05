@@ -87,9 +87,9 @@ world edits、Othello opening-book user extension、compiled cache、AI workbenc
 の将来データなど、アプリ利用により生成・更新されるデータは、immutable な
 package resource ではありません。
 
-Ludoxel は、ルート `configs/` を通常の保存先として生成・更新しません。
-実行時データはユーザー別の app-managed data root に保存され、保存対象の
-主要ファイルには HMAC manifest による改竄検出を適用します。
+Ludoxel v3.6 以降では、v3.5 以前の仕様であったルート `configs/` を通常の保存先とした
+生成・更新を行いません。実行時データはユーザー別の app-managed data root に保存され、
+保存対象の主要ファイルには HMAC manifest による改竄検出を適用します。
 
 ただし、ローカルマシン上でユーザー自身が全ファイルと検証 key を編集できる
 状況では、完全な改竄防止は保証できません。この manifest は、アプリ外編集、

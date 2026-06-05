@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 
 from PyQt6.QtCore import QPoint, Qt
@@ -100,6 +101,9 @@ class ViewportInput:
     host_window = self._w.window()
     if host_window is not None:
       host_window.setCursor(Qt.CursorShape.BlankCursor)
+    if sys.platform == "darwin":
+      self._w.grabMouse()
+      self._w.grabKeyboard()
 
   def poll_relative_mouse_delta(self) -> None:
     if not bool(self._captured):

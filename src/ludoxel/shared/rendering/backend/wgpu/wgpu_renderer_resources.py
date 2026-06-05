@@ -21,9 +21,19 @@ class WgpuRendererResources:
   face_vertex_buffer: object
   world_pipeline: object
   world_shadowed_pipeline: object
+  sun_pipeline: object
+  cloud_pipeline: object
+  othello_pipeline: object
+  othello_overlay_pipeline: object
+  othello_shadow_pipeline: object
+  transform_shadow_pipeline: object
   shadow_depth_pipeline: object
   textured_face_pipeline: object
   selection_pipeline: object
+  othello_board_vertex_buffer: object
+  othello_board_vertex_count: int
+  othello_piece_vertex_buffer: object
+  othello_piece_vertex_count: int
   shadow_bind_group_layout: object
   shadow_bind_group: object | None = None
   shadow_texture: object | None = None
@@ -35,7 +45,7 @@ class WgpuRendererResources:
   depth_size: tuple[int, int] = (0, 0)
 
   def destroy(self) -> None:
-    for obj in (self.shadow_texture, self.depth_texture, self.face_vertex_buffer, *self.camera_buffers):
+    for obj in (self.shadow_texture, self.depth_texture, self.face_vertex_buffer, self.othello_board_vertex_buffer, self.othello_piece_vertex_buffer, *self.camera_buffers):
       if obj is not None and hasattr(obj, "destroy"):
         obj.destroy()
     self.shadow_texture = None

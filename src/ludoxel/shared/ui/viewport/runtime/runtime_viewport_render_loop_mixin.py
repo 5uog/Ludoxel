@@ -226,15 +226,28 @@ class ViewportRenderLoopMixin:
 
   def _tick_sim(self: "GLViewportWidget") -> None:
     if (
+      bool(getattr(self, "_shutdown_done", False))
+      or (not bool(getattr(self, "_runtime_active", False)))
+      or (not bool(self.isVisible()))
+      or bool(self.loading_active())
+      or bool(getattr(self, "_ai_settings_overlay_open", False))
+      or bool(self._transient_modal_active())
+      or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open())
+    ):
+      return
+
+    self._runner.update()
+
+  def _on_step(self: "GLViewportWidget", dt: float) -> None:
+    if bool(getattr(self, "_shutdown_done", False)):
+      return
+    if (
       bool(self.loading_active())
       or bool(getattr(self, "_ai_settings_overlay_open", False))
       or bool(self._transient_modal_active())
       or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open())
     ):
       return
-    self._runner.update()
-
-  def _on_step(self: "GLViewportWidget", dt: float) -> None:
     othello_controller.consume_pending_ai_result(self)
     self._update_block_break_particles(float(dt))
 
@@ -319,3 +332,4 @@ class ViewportRenderLoopMixin:
 
     interaction_controller.handle_held_mouse_buttons(self)
     self._emit_debug_hud_payload()
+    self._request_render()

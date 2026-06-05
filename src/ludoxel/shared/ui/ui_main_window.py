@@ -122,6 +122,9 @@ class MainWindow(QMainWindow):
     self.setCentralWidget(self._screen)
     self.setMinimumSize(_MIN_WINDOW_WIDTH, _MIN_WINDOW_HEIGHT)
     self._screen.viewport.fullscreen_changed.connect(self._apply_fullscreen)
+    app = QApplication.instance()
+    if app is not None:
+      app.aboutToQuit.connect(self._shutdown_viewport)
 
   def wants_fullscreen(self) -> bool:
     return bool(self._screen.viewport.fullscreen_enabled())
@@ -169,10 +172,16 @@ class MainWindow(QMainWindow):
     if self.isFullScreen():
       self.showNormal()
 
+  def _shutdown_viewport(self) -> None:
+    try:
+      self._screen.viewport.shutdown()
+    except Exception:
+      pass
+
   def closeEvent(self, e) -> None:
     try:
       self._persist_window_geometry()
-      self._screen.viewport.shutdown()
+      self._shutdown_viewport()
     except Exception:
       pass
     super().closeEvent(e)

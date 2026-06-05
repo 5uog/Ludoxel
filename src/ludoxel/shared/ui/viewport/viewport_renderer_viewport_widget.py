@@ -55,6 +55,43 @@ from .runtime import (
 _APPLICATION_DEACTIVATION_PAUSE_DELAY_MS = 250
 
 
+def _qt_event_type(name: str):
+  return getattr(QEvent.Type, str(name), None)
+
+
+_MACOS_CAPTURE_CONSUME_EVENT_TYPES = tuple(
+  event_type
+  for event_type in (
+    _qt_event_type("ShortcutOverride"),
+    _qt_event_type("InputMethod"),
+    _qt_event_type("InputMethodQuery"),
+    _qt_event_type("NativeGesture"),
+    _qt_event_type("Gesture"),
+    _qt_event_type("GestureOverride"),
+    _qt_event_type("TabletPress"),
+    _qt_event_type("TabletMove"),
+    _qt_event_type("TabletRelease"),
+    _qt_event_type("TouchBegin"),
+    _qt_event_type("TouchUpdate"),
+    _qt_event_type("TouchEnd"),
+    _qt_event_type("TouchCancel"),
+  )
+  if event_type is not None
+)
+_MACOS_CAPTURE_REDIRECT_EVENT_TYPES = tuple(
+  event_type
+  for event_type in (
+    _qt_event_type("KeyPress"),
+    _qt_event_type("KeyRelease"),
+    _qt_event_type("MouseButtonPress"),
+    _qt_event_type("MouseButtonRelease"),
+    _qt_event_type("MouseMove"),
+    _qt_event_type("Wheel"),
+  )
+  if event_type is not None
+)
+
+
 class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOverlayMixin, ViewportLifecycleMixin, QRenderWidget):
   hud_updated = pyqtSignal(object)
   fullscreen_changed = pyqtSignal(bool)
@@ -168,6 +205,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self._recent_vertical_motion_sign: int = 0
     app = QGuiApplication.instance()
     self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
+    self._application_event_filter_app = None
 
     self._overlay = PauseOverlay(self)
     self._overlay.set_title_image_path(status_overlay_title_image_path(self._resource_root))
@@ -210,6 +248,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self.setMouseTracking(True)
     self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
     self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+    self.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled, False)
     self.setAutoFillBackground(False)
     self.request_draw(self._draw_render_frame)
 
@@ -251,21 +290,70 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self._sync_gameplay_hud_visibility()
     if app is not None:
       app.applicationStateChanged.connect(self._on_application_state_changed)
+      app.installEventFilter(self)
+      self._application_event_filter_app = app
+
+  def _macos_game_input_priority_active(self) -> bool:
+    if sys.platform != "darwin":
+      return False
+    if not hasattr(self, "_frame_sync") or not hasattr(self, "_overlays") or not hasattr(self, "_inp"):
+      return False
+    if bool(self.loading_active()) or not bool(getattr(self, "_application_active", True)):
+      return False
+    if not bool(getattr(self, "_runtime_active", False)) or not bool(self._inp.captured()):
+      return False
+    if bool(self._overlays.any_modal_open()):
+      return False
+    return not bool(self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open())
+
+  def _queue_render_after_input(self) -> None:
+    if not bool(getattr(self, "_renderer_initialized", False)):
+      return
+    try:
+      self.request_draw()
+    except Exception:
+      pass
 
   def event(self, e) -> bool:
-    if sys.platform == "darwin" and e.type() == QEvent.Type.ShortcutOverride:
-      key = int(e.key()) if hasattr(e, "key") else 0
-      modal_open = bool(getattr(self, "_overlays", None) is not None and self._overlays.any_modal_open())
-      if key in (int(Qt.Key.Key_F4), int(Qt.Key.Key_F5)) and (not bool(self.loading_active())) and (not modal_open):
+    if bool(self._macos_game_input_priority_active()):
+      if e.type() in _MACOS_CAPTURE_CONSUME_EVENT_TYPES:
         e.accept()
         return True
     return super().event(e)
+
+  def eventFilter(self, watched, e) -> bool:
+    if bool(self._macos_game_input_priority_active()):
+      event_type = e.type()
+      if event_type in _MACOS_CAPTURE_CONSUME_EVENT_TYPES:
+        e.accept()
+        return True
+      if watched is not self and event_type in _MACOS_CAPTURE_REDIRECT_EVENT_TYPES:
+        if event_type == QEvent.Type.KeyPress:
+          self.keyPressEvent(e)
+          return bool(e.isAccepted())
+        if event_type == QEvent.Type.KeyRelease:
+          self.keyReleaseEvent(e)
+          return bool(e.isAccepted())
+        if event_type == QEvent.Type.MouseButtonPress:
+          self.mousePressEvent(e)
+          return bool(e.isAccepted())
+        if event_type == QEvent.Type.MouseButtonRelease:
+          self.mouseReleaseEvent(e)
+          return bool(e.isAccepted())
+        if event_type == QEvent.Type.MouseMove:
+          self.mouseMoveEvent(e)
+          return bool(e.isAccepted())
+        if event_type == QEvent.Type.Wheel:
+          self.wheelEvent(e)
+          return bool(e.isAccepted())
+    return super().eventFilter(watched, e)
 
   def keyPressEvent(self, e: QKeyEvent) -> None:
     if bool(self.loading_active()):
       e.accept()
       return
     if interaction_controller.handle_key_press(self, e):
+      self._queue_render_after_input()
       return
     super().keyPressEvent(e)
 
@@ -274,6 +362,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       e.accept()
       return
     self._inp.on_key_release(e)
+    self._queue_render_after_input()
     super().keyReleaseEvent(e)
 
   def wheelEvent(self, e: QWheelEvent) -> None:
@@ -281,6 +370,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       e.accept()
       return
     if interaction_controller.handle_wheel(self, e):
+      self._queue_render_after_input()
       return
     super().wheelEvent(e)
 
@@ -289,6 +379,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       e.accept()
       return
     interaction_controller.handle_mouse_press(self, e)
+    self._queue_render_after_input()
     super().mousePressEvent(e)
 
   def mouseReleaseEvent(self, e: QMouseEvent) -> None:
@@ -296,6 +387,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       e.accept()
       return
     interaction_controller.handle_mouse_release(self, e)
+    self._queue_render_after_input()
     super().mouseReleaseEvent(e)
 
   def mouseMoveEvent(self, e: QMouseEvent) -> None:
@@ -305,6 +397,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       super().mouseMoveEvent(e)
       return
     e.accept()
+    self._queue_render_after_input()
 
   def resizeEvent(self, e) -> None:
     super().resizeEvent(e)
