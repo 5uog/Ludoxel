@@ -49,7 +49,7 @@ export function renderDesktopBuildHelp(command = null) {
     return lines([
       'desktop build: macos',
       '',
-      section('目的', '  Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist を検証する。'),
+      section('目的', '  Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist、gameplay input monitoring 表記を検証する。'),
       '',
       section(
         '起動形式',

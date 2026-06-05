@@ -121,6 +121,11 @@ function patchMacosInfoPlist(appPath) {
   plistText = upsertPlistString(plistText, 'CFBundleShortVersionString', MACOS_APP_VERSION);
   plistText = upsertPlistString(plistText, 'CFBundleVersion', MACOS_APP_VERSION);
   plistText = upsertPlistString(plistText, 'CFBundleIconFile', bundledIconName);
+  plistText = upsertPlistString(
+    plistText,
+    'NSInputMonitoringUsageDescription',
+    'Ludoxel uses keyboard input monitoring while gameplay mouse capture is active so macOS and global app shortcuts do not steal game controls.',
+  );
   writeFileSync(plistPath, plistText);
 }
 
@@ -144,6 +149,9 @@ function requireMacosInfoPlist(appPath) {
 
   if (!plistText.includes('<key>CFBundleIconFile</key>') || !plistText.includes('.icns</string>')) {
     throw new Error(`macOS Info.plist is missing a .icns CFBundleIconFile entry: ${plistPath}`);
+  }
+  if (!plistText.includes('<key>NSInputMonitoringUsageDescription</key>')) {
+    throw new Error(`macOS Info.plist is missing NSInputMonitoringUsageDescription for gameplay input capture: ${plistPath}`);
   }
 }
 

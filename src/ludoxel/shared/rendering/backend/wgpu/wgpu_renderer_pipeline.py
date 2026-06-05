@@ -315,6 +315,47 @@ def create_world_pipeline(*, device, target_format, depth_format, camera_bind_gr
   )
 
 
+def create_world_wireframe_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-world-wireframe.vert", code=_wgpu_glsl_source("world.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-world-wireframe.frag", code=_wgpu_glsl_source("selection_line.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-world-wireframe-layout", bind_group_layouts=[camera_bind_group_layout])
+  return device.create_render_pipeline(
+    label="ludoxel-world-wireframe-pipeline",
+    layout=layout,
+    vertex={
+      "module": vertex_shader,
+      "entry_point": "main",
+      "buffers": [
+        {
+          "array_stride": 8 * 4,
+          "step_mode": "vertex",
+          "attributes": [
+            {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0},
+            {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1},
+            {"format": wgpu.VertexFormat.float32x2, "offset": 6 * 4, "shader_location": 2},
+          ],
+        },
+        {
+          "array_stride": 12 * 4,
+          "step_mode": "instance",
+          "attributes": [
+            {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3},
+            {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 4},
+            {"format": wgpu.VertexFormat.float32x4, "offset": 6 * 4, "shader_location": 5},
+            {"format": wgpu.VertexFormat.float32, "offset": 10 * 4, "shader_location": 6},
+            {"format": wgpu.VertexFormat.float32, "offset": 11 * 4, "shader_location": 7},
+          ],
+        },
+      ],
+    },
+    primitive={"topology": wgpu.PrimitiveTopology.line_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.less_equal},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format}]},
+  )
+
+
 def create_sun_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
   import wgpu
 
@@ -367,6 +408,37 @@ def create_cloud_pipeline(*, device, target_format, depth_format, camera_bind_gr
     primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.back},
     depth_stencil={"format": depth_format, "depth_write_enabled": True, "depth_compare": wgpu.CompareFunction.less},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def create_cloud_wireframe_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-cloud-wireframe.vert", code=_wgpu_glsl_source("cloud_box.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-cloud-wireframe.frag", code=_wgpu_glsl_source("selection_line.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-cloud-wireframe-layout", bind_group_layouts=[camera_bind_group_layout])
+  return device.create_render_pipeline(
+    label="ludoxel-cloud-wireframe-pipeline",
+    layout=layout,
+    vertex={
+      "module": vertex_shader,
+      "entry_point": "main",
+      "buffers": [
+        {
+          "array_stride": 8 * 4,
+          "step_mode": "vertex",
+          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
+        },
+        {
+          "array_stride": 7 * 4,
+          "step_mode": "instance",
+          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3}, {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4}],
+        },
+      ],
+    },
+    primitive={"topology": wgpu.PrimitiveTopology.line_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.less_equal},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format}]},
   )
 
 

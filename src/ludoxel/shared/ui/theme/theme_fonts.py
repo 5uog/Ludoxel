@@ -15,6 +15,7 @@ class FontInstallResult:
   family: str
   fallback_families: tuple[str, ...] = ()
   errors: tuple[str, ...] = ()
+  font_paths: tuple[Path, ...] = ()
 
 
 _PRIMARY_FONT_FILES = ("MinecraftBold-nMK1.otf", "MinecraftBoldItalic-1y1e.otf", "MinecraftItalic-R8Mo.otf", "MinecraftRegular-Bmg3.otf")
@@ -29,6 +30,7 @@ def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
 
   primary_families: list[str] = []
   fallback_families: list[str] = []
+  registered_paths: list[Path] = []
   errors: list[str] = []
   for p in primary_candidates:
     if not p.exists():
@@ -44,6 +46,7 @@ def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
     if not families:
       errors.append(f"registered bundled font has no family: {p}")
       continue
+    registered_paths.append(p)
 
     for fam in families:
       s = str(fam)
@@ -64,6 +67,7 @@ def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
     if not families:
       errors.append(f"registered bundled fallback font has no family: {p}")
       continue
+    registered_paths.append(p)
 
     for fam in families:
       s = str(fam)
@@ -73,7 +77,7 @@ def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
   if errors or not primary_families:
     if not primary_families:
       errors.append(f"no bundled Minecraft font family registered from {d}")
-    return FontInstallResult(ok=False, family="", errors=tuple(errors))
+    return FontInstallResult(ok=False, family="", errors=tuple(errors), font_paths=tuple(registered_paths))
 
   preferred = ""
   for fam in primary_families:
@@ -84,7 +88,7 @@ def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
     preferred = primary_families[0]
 
   ordered_fallback_families = tuple(str(fam) for fam in fallback_families if str(fam) and str(fam) != str(preferred))
-  return FontInstallResult(ok=True, family=str(preferred), fallback_families=ordered_fallback_families)
+  return FontInstallResult(ok=True, family=str(preferred), fallback_families=ordered_fallback_families, font_paths=tuple(registered_paths))
 
 
 def apply_application_font(*, app: QApplication, family: str, point_size: int = 12, fallback_families: tuple[str, ...] = ()) -> None:
@@ -99,3 +103,10 @@ def apply_application_font(*, app: QApplication, family: str, point_size: int = 
   else:
     font.setFamily(fam)
   app.setFont(font)
+
+
+def application_font_stylesheet(*, family: str, fallback_families: tuple[str, ...] = ()) -> str:
+  families = [str(family), *(str(candidate) for candidate in tuple(fallback_families) if str(candidate).strip())]
+  safe_families = tuple(value.replace('"', "") for value in families if value.strip())
+  quoted = ", ".join(f'"{value}"' for value in safe_families)
+  return "" if not quoted else f"* {{ font-family: {quoted}; }}\n"

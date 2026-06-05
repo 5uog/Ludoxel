@@ -116,6 +116,10 @@ class ViewportLifecycleMixin:
     except Exception:
       pass
     try:
+      self._inp.shutdown()
+    except Exception:
+      pass
+    try:
       self.save_state()
     except Exception:
       pass

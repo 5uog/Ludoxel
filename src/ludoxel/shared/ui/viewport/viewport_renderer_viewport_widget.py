@@ -109,7 +109,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self._loop = loop_params
 
     self._adapter = QtInputAdapter(self)
-    self._inp = ViewportInput(widget=self, adapter=self._adapter)
+    self._inp = ViewportInput(widget=self, adapter=self._adapter, native_key_handler=self._handle_native_game_key)
 
     self._sessions = PlaySpaceContext.create_default(seed=0)
     self._session = self._sessions.active_session()
@@ -355,6 +355,10 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     if interaction_controller.handle_key_press(self, e):
       self._queue_render_after_input()
       return
+    if bool(self._macos_game_input_priority_active()):
+      e.accept()
+      self._queue_render_after_input()
+      return
     super().keyPressEvent(e)
 
   def keyReleaseEvent(self, e) -> None:
@@ -363,13 +367,34 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       return
     self._inp.on_key_release(e)
     self._queue_render_after_input()
+    if bool(self._macos_game_input_priority_active()):
+      e.accept()
+      return
     super().keyReleaseEvent(e)
+
+  def _handle_native_game_key(self, key: int, pressed: bool, auto_repeat: bool) -> None:
+    if sys.platform != "darwin":
+      return
+    if bool(self.loading_active()) or (not bool(self._macos_game_input_priority_active())):
+      return
+    event_type = QEvent.Type.KeyPress if bool(pressed) else QEvent.Type.KeyRelease
+    event = QKeyEvent(event_type, int(key), Qt.KeyboardModifier.NoModifier, "", bool(auto_repeat), 1)
+    if bool(pressed):
+      interaction_controller.handle_key_press(self, event)
+    else:
+      self._inp.on_key_release(event)
+    event.accept()
+    self._queue_render_after_input()
 
   def wheelEvent(self, e: QWheelEvent) -> None:
     if bool(self.loading_active()):
       e.accept()
       return
     if interaction_controller.handle_wheel(self, e):
+      self._queue_render_after_input()
+      return
+    if bool(self._macos_game_input_priority_active()):
+      e.accept()
       self._queue_render_after_input()
       return
     super().wheelEvent(e)
@@ -380,6 +405,9 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       return
     interaction_controller.handle_mouse_press(self, e)
     self._queue_render_after_input()
+    if bool(self._macos_game_input_priority_active()):
+      e.accept()
+      return
     super().mousePressEvent(e)
 
   def mouseReleaseEvent(self, e: QMouseEvent) -> None:
@@ -388,6 +416,9 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       return
     interaction_controller.handle_mouse_release(self, e)
     self._queue_render_after_input()
+    if bool(self._macos_game_input_priority_active()):
+      e.accept()
+      return
     super().mouseReleaseEvent(e)
 
   def mouseMoveEvent(self, e: QMouseEvent) -> None:
@@ -397,6 +428,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       super().mouseMoveEvent(e)
       return
     e.accept()
+    self._inp.on_captured_mouse_move(e)
     self._queue_render_after_input()
 
   def resizeEvent(self, e) -> None:

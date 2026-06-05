@@ -27,6 +27,7 @@ from ludoxel.shared.rendering.backend.wgpu.wgpu_chunk_mesh import (
   WgpuChunkMesh,
   WgpuFaceInstances,
   build_face_vertex_rows,
+  build_face_wire_vertex_rows,
   build_selection_vertices,
   upload_chunk_mesh,
   upload_face_rows,
@@ -34,6 +35,7 @@ from ludoxel.shared.rendering.backend.wgpu.wgpu_chunk_mesh import (
 )
 from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_pipeline import (
   create_cloud_pipeline,
+  create_cloud_wireframe_pipeline,
   create_othello_pipeline,
   create_othello_shadow_pipeline,
   create_selection_pipeline,
@@ -43,6 +45,7 @@ from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_pipeline import (
   create_transform_shadow_pipeline,
   create_world_pipeline,
   create_world_shadowed_pipeline,
+  create_world_wireframe_pipeline,
 )
 from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_resources import WgpuRendererResources
 from ludoxel.shared.rendering.backend.wgpu.wgpu_renderer_surface import configure_wgpu_canvas
@@ -69,6 +72,11 @@ _DEPTH_FORMAT = "depth24plus"
 _UNIFORM_FLOAT_COUNT = 44
 _UNIFORM_SIZE_BYTES = _UNIFORM_FLOAT_COUNT * 4
 _OPENGL_TO_WGPU_CLIP = np.asarray(((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.5, 0.5), (0.0, 0.0, 0.0, 1.0)), dtype=np.float32)
+_PREVIEW_EYE = Vec3(0.0, 0.98, 6.8)
+_PREVIEW_TARGET = Vec3(0.0, 0.78, 0.0)
+_PREVIEW_FOV_DEG = 26.0
+_PREVIEW_NEAR = 0.1
+_PREVIEW_FAR = 10.0
 
 
 @dataclass(frozen=True)
@@ -244,8 +252,10 @@ class WgpuRendererBackend:
     world_shadowed_pipeline = create_world_shadowed_pipeline(
       device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, atlas_bind_group_layout=atlas_bgl, shadow_bind_group_layout=shadow_bgl
     )
+    world_wireframe_pipeline = create_world_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_pipeline = create_sun_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_pipeline = create_cloud_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
+    cloud_wireframe_pipeline = create_cloud_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     othello_pipeline = create_othello_pipeline(
       device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, shadow_bind_group_layout=shadow_bgl, overlay=False
     )
@@ -268,6 +278,8 @@ class WgpuRendererBackend:
     )
     selection_pipeline = create_selection_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     face_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-vertices", data=np.ascontiguousarray(build_face_vertex_rows(), dtype=np.float32), usage=wgpu.BufferUsage.VERTEX)
+    face_wire_vertices = np.ascontiguousarray(build_face_wire_vertex_rows(), dtype=np.float32)
+    face_wire_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-wire-vertices", data=face_wire_vertices, usage=wgpu.BufferUsage.VERTEX)
     othello_board_vertices = np.ascontiguousarray(build_othello_board_vertices(), dtype=np.float32)
     othello_piece_vertices = np.ascontiguousarray(build_othello_piece_vertices(), dtype=np.float32)
     othello_board_vertex_buffer = device.create_buffer_with_data(label="ludoxel-othello-board-vertices", data=othello_board_vertices, usage=wgpu.BufferUsage.VERTEX)
@@ -286,10 +298,14 @@ class WgpuRendererBackend:
       atlas_bind_group=atlas_bg,
       skin_bind_group=skin_bg,
       face_vertex_buffer=face_vertex_buffer,
+      face_wire_vertex_buffer=face_wire_vertex_buffer,
+      face_wire_vertex_count=int(face_wire_vertices.shape[0]),
       world_pipeline=world_pipeline,
       world_shadowed_pipeline=world_shadowed_pipeline,
+      world_wireframe_pipeline=world_wireframe_pipeline,
       sun_pipeline=sun_pipeline,
       cloud_pipeline=cloud_pipeline,
+      cloud_wireframe_pipeline=cloud_wireframe_pipeline,
       othello_pipeline=othello_pipeline,
       othello_overlay_pipeline=othello_overlay_pipeline,
       othello_shadow_pipeline=othello_shadow_pipeline,
@@ -710,6 +726,13 @@ class WgpuRendererBackend:
     render_pass.draw(6, int(face.instance_count), int(face_idx) * 6, 0)
     return int(face.instance_count)
 
+  def _draw_wire_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
+    if self._res is None or int(face.instance_count) <= 0:
+      return 0
+    render_pass.set_vertex_buffer(1, face.instance_buffer)
+    render_pass.draw(8, int(face.instance_count), int(face_idx) * 8, 0)
+    return int(face.instance_count)
+
   def _draw_transform_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
     if self._res is None or int(face.instance_count) <= 0:
       return 0
@@ -815,7 +838,8 @@ class WgpuRendererBackend:
     othello_rows: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
     if othello_state is not None and bool(othello_state.enabled):
       othello_rows = build_othello_instance_rows(othello_state)
-    sel_block = self._selection_cell if self._selection_cell is not None and bool(self._state.outline_selection_enabled) else None
+    sel_block = self._selection_cell
+    sel_mode = 1 if sel_block is not None and bool(self._state.outline_selection_enabled) else (2 if sel_block is not None else 0)
     shadow_requested = bool(self._state.shadow_enabled or self._state.debug_shadow)
     light_view_proj = self._light_view_proj(center=eye) if bool(shadow_requested) else view_proj
     player_poses: list[PlayerModelPose] = []
@@ -881,7 +905,7 @@ class WgpuRendererBackend:
       view_proj=view_proj,
       light_view_proj=light_view_proj,
       tint_value=0.55,
-      sel_mode=2 if sel_block is not None else 0,
+      sel_mode=int(sel_mode),
       sel_block=sel_block,
       shadow_enabled=bool(shadow_sampling_ok),
       debug_shadow=bool(self._state.debug_shadow),
@@ -906,22 +930,37 @@ class WgpuRendererBackend:
       draw_calls += 1
 
     use_shadow_pipeline = bool(shadow_requested and self._res.shadow_bind_group is not None)
-    render_pass.set_pipeline(self._res.world_shadowed_pipeline if bool(use_shadow_pipeline) else self._res.world_pipeline)
-    render_pass.set_bind_group(1, self._res.atlas_bind_group)
-    if bool(use_shadow_pipeline):
-      render_pass.set_bind_group(2, self._res.shadow_bind_group)
-    render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
-    for face_idx in range(FACE_COUNT):
-      render_pass.set_bind_group(0, world_uniform_bind_groups[int(face_idx)])
-      for mesh in tuple(self._chunks.values()):
-        face = mesh.face(int(face_idx))
-        if face is None:
-          continue
-        count = self._draw_face_instances(render_pass, face_idx=int(face_idx), face=face)
-        if count <= 0:
-          continue
-        draw_calls += 1
-        instances += int(count)
+    if bool(self._state.world_wireframe):
+      render_pass.set_pipeline(self._res.world_wireframe_pipeline)
+      render_pass.set_vertex_buffer(0, self._res.face_wire_vertex_buffer)
+      for face_idx in range(FACE_COUNT):
+        render_pass.set_bind_group(0, world_uniform_bind_groups[int(face_idx)])
+        for mesh in tuple(self._chunks.values()):
+          face = mesh.face(int(face_idx))
+          if face is None:
+            continue
+          count = self._draw_wire_face_instances(render_pass, face_idx=int(face_idx), face=face)
+          if count <= 0:
+            continue
+          draw_calls += 1
+          instances += int(count)
+    else:
+      render_pass.set_pipeline(self._res.world_shadowed_pipeline if bool(use_shadow_pipeline) else self._res.world_pipeline)
+      render_pass.set_bind_group(1, self._res.atlas_bind_group)
+      if bool(use_shadow_pipeline):
+        render_pass.set_bind_group(2, self._res.shadow_bind_group)
+      render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
+      for face_idx in range(FACE_COUNT):
+        render_pass.set_bind_group(0, world_uniform_bind_groups[int(face_idx)])
+        for mesh in tuple(self._chunks.values()):
+          face = mesh.face(int(face_idx))
+          if face is None:
+            continue
+          count = self._draw_face_instances(render_pass, face_idx=int(face_idx), face=face)
+          if count <= 0:
+            continue
+          draw_calls += 1
+          instances += int(count)
 
     if self._visuals is not None:
       falling_rows = build_falling_block_face_rows(samples=tuple(falling_blocks), uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
@@ -1043,11 +1082,11 @@ class WgpuRendererBackend:
         if cloud_uniform_buffer is not None:
           temp_uniform_buffers.append(cloud_uniform_buffer)
         if cloud_uniform_bind_group is not None:
-          render_pass.set_pipeline(self._res.cloud_pipeline)
+          render_pass.set_pipeline(self._res.cloud_wireframe_pipeline if bool(self._state.cloud_wireframe) else self._res.cloud_pipeline)
           render_pass.set_bind_group(0, cloud_uniform_bind_group)
-          render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
+          render_pass.set_vertex_buffer(0, self._res.face_wire_vertex_buffer if bool(self._state.cloud_wireframe) else self._res.face_vertex_buffer)
           render_pass.set_vertex_buffer(1, cloud_instance_buffer)
-          render_pass.draw(FACE_COUNT * 6, int(cloud_instance_count), 0, 0)
+          render_pass.draw(FACE_COUNT * (8 if bool(self._state.cloud_wireframe) else 6), int(cloud_instance_count), 0, 0)
           draw_calls += 1
           instances += int(cloud_instance_count)
 
@@ -1136,8 +1175,60 @@ class WgpuRendererBackend:
   def render_player_preview_frame(
     self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
   ) -> QImage:
-    del player_state, restore_framebuffer, restore_viewport
-    image = QImage(max(1, int(width)), max(1, int(height)), QImage.Format.Format_RGBA8888)
-    image.fill(QColor(0, 0, 0, 0))
-    image.setDevicePixelRatio(max(1.0, float(device_pixel_ratio)))
-    return image
+    del restore_framebuffer, restore_viewport
+    if self._res is None or player_state is None or self._res.skin_bind_group is None:
+      return QImage()
+    import wgpu
+
+    target_width = max(1, int(width))
+    target_height = max(1, int(height))
+    pose = build_player_model_pose(player_state)
+    aspect = float(target_width) / max(1.0, float(target_height))
+    view = mat4.look_dir(_PREVIEW_EYE, (_PREVIEW_TARGET - _PREVIEW_EYE).normalized())
+    proj = mat4.perspective(float(_PREVIEW_FOV_DEG), float(aspect), float(_PREVIEW_NEAR), float(_PREVIEW_FAR))
+    view_proj = mat4.mul(proj, view).astype(np.float32)
+
+    color_texture = self._res.device.create_texture(
+      label="ludoxel-preview-color", size=(int(target_width), int(target_height), 1), format=self._res.target_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.COPY_SRC
+    )
+    depth_texture = self._res.device.create_texture(
+      label="ludoxel-preview-depth", size=(int(target_width), int(target_height), 1), format=self._res.depth_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT
+    )
+    color_view = color_texture.create_view(label="ludoxel-preview-color-view")
+    depth_view = depth_texture.create_view(label="ludoxel-preview-depth-view")
+    uniform_buffers: tuple[object, ...] = ()
+    temp_uploads: list[WgpuFaceInstances] = []
+    try:
+      uniform_buffers, uniform_bind_groups = self._create_frame_uniform_bind_groups(
+        label="ludoxel-preview-frame", view_proj=view_proj, tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), sel_mode=0, sel_block=None
+      )
+      encoder = self._res.device.create_command_encoder(label="ludoxel-preview-encoder")
+      render_pass = encoder.begin_render_pass(
+        label="ludoxel-preview-pass",
+        color_attachments=[{"view": color_view, "resolve_target": None, "clear_value": (0.0, 0.0, 0.0, 0.0), "load_op": wgpu.LoadOp.clear, "store_op": wgpu.StoreOp.store}],
+        depth_stencil_attachment={"view": depth_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
+      )
+      render_pass.set_pipeline(self._res.textured_face_pipeline)
+      render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
+      _draw_calls, _instances, uploads = self._draw_transform_buckets(
+        render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label="ludoxel-preview-player-temp", camera_bind_groups=uniform_bind_groups
+      )
+      temp_uploads.extend(uploads)
+      render_pass.end()
+      self._res.device.queue.submit([encoder.finish()])
+      data = self._res.device.queue.read_texture({"texture": color_texture}, {"bytes_per_row": int(target_width) * 4, "rows_per_image": int(target_height)}, (int(target_width), int(target_height), 1))
+      pixels = np.frombuffer(data, dtype=np.uint8).reshape((int(target_height), int(target_width), 4)).copy()
+      if "bgra" in str(self._res.target_format).lower():
+        pixels = pixels[:, :, [2, 1, 0, 3]]
+      image = QImage(pixels.tobytes(), int(target_width), int(target_height), QImage.Format.Format_RGBA8888).copy()
+      image.setDevicePixelRatio(max(1.0, float(device_pixel_ratio)))
+      return image
+    finally:
+      for face in temp_uploads:
+        face.destroy()
+      for buffer in uniform_buffers:
+        if buffer is not None and hasattr(buffer, "destroy"):
+          buffer.destroy()
+      for texture in (color_texture, depth_texture):
+        if texture is not None and hasattr(texture, "destroy"):
+          texture.destroy()

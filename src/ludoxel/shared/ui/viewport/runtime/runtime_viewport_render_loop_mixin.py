@@ -21,6 +21,13 @@ if TYPE_CHECKING:
 
 
 class ViewportRenderLoopMixin:
+  def _request_viewport_render(self: "GLViewportWidget") -> None:
+    request_render = getattr(self, "_request_render", None)
+    if callable(request_render):
+      request_render()
+      return
+    self.update()
+
   def _framebuffer_extent(self: "GLViewportWidget") -> tuple[int, int, float]:
     dpr = float(self.devicePixelRatioF())
     fb_w = max(1, int(round(float(self.width()) * dpr)))
@@ -237,6 +244,7 @@ class ViewportRenderLoopMixin:
       return
 
     self._runner.update()
+    self._request_viewport_render()
 
   def _on_step(self: "GLViewportWidget", dt: float) -> None:
     if bool(getattr(self, "_shutdown_done", False)):
@@ -332,4 +340,3 @@ class ViewportRenderLoopMixin:
 
     interaction_controller.handle_held_mouse_buttons(self)
     self._emit_debug_hud_payload()
-    self._request_render()

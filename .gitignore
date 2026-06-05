@@ -12,9 +12,6 @@ coverage/
 # Local analysis, inventory, code-dump, and temporary pip target outputs.
 .artifacts/
 
-# Previous-format local runtime settings directory.
-/configs/
-
 # Python bytecode, pytest/mypy/ruff caches, and local virtual environments.
 __pycache__/
 *.py[cod]

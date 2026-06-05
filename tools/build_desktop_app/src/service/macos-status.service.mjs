@@ -18,7 +18,7 @@ export function renderMacosStatus() {
     '  - Verify the wgpu-native renderer contract against the macOS Metal path.',
     '  - Collect wgpu and rendercanvas only for the macOS bundle.',
     '  - Preserve bundled assets, fonts, legal material, and Python framework links.',
-    '  - Verify .icns icon presence and Ludoxel Info.plist identity fields.',
+    '  - Verify .icns icon presence, Ludoxel Info.plist identity fields, and gameplay input monitoring usage text.',
     '',
     'Release work outside this tool:',
     '  - Codesigning and notarization.',

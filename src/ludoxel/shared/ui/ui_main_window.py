@@ -14,7 +14,7 @@ from ludoxel.application.runtime.runtime_player_name import normalize_player_nam
 from ludoxel.shared.ui.common.common_player_name_dialog import PlayerNameDialog
 from ludoxel.shared.ui.common.common_single_instance import SingleInstanceRelay
 from ludoxel.shared.ui.common.common_status_overlay import StatusOverlayFrame, status_overlay_title_image_path
-from ludoxel.shared.ui.theme.theme_fonts import apply_application_font, install_minecraft_fonts
+from ludoxel.shared.ui.theme.theme_fonts import application_font_stylesheet, apply_application_font, install_minecraft_fonts
 from ludoxel.shared.ui.ui_game_screen import GameScreen
 
 from ...application.boot.meta import __version__
@@ -220,16 +220,19 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
     details = "\n".join(str(error) for error in tuple(fonts.errors) if str(error))
     raise RuntimeError(f"Ludoxel bundled font registration failed.\n{details}")
   apply_application_font(app=app, family=str(fonts.family), point_size=12, fallback_families=tuple(fonts.fallback_families))
-  print(f"[ludoxel] registered bundled UI font: {fonts.family}", file=sys.stderr)
+  print(f"[ludoxel] registered bundled UI font: {fonts.family}; fallbacks={','.join(tuple(fonts.fallback_families))}; paths={','.join(str(path) for path in tuple(fonts.font_paths))}", file=sys.stderr)
 
+  font_qss = application_font_stylesheet(family=str(fonts.family), fallback_families=tuple(fonts.fallback_families))
   qss = Path(__file__).resolve().parent / "theme" / "main.qss"
   if qss.exists():
-    qss_text = qss.read_text(encoding="utf-8")
+    qss_text = str(font_qss) + qss.read_text(encoding="utf-8")
     arrow_up = (bundled_root / "assets" / "ui" / "arrow_up.svg").resolve().as_posix()
     arrow_down = (bundled_root / "assets" / "ui" / "arrow_down.svg").resolve().as_posix()
     qss_text = qss_text.replace("__ARROW_UP__", str(arrow_up))
     qss_text = qss_text.replace("__ARROW_DOWN__", str(arrow_down))
     app.setStyleSheet(qss_text)
+  elif font_qss:
+    app.setStyleSheet(str(font_qss))
 
   relay = SingleInstanceRelay(managed_data_root, app)
   if relay.activate_existing_instance():

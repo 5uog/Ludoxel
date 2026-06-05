@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 import sys
+import time
 from dataclasses import dataclass
+from typing import Callable
 
 from PyQt6.QtCore import QPoint, Qt
-from PyQt6.QtGui import QCursor, QGuiApplication, QKeyEvent
+from PyQt6.QtGui import QCursor, QGuiApplication, QKeyEvent, QMouseEvent
 from PyQt6.QtWidgets import QWidget
 
 from ludoxel.shared.ui.ui_qt_input_adapter import InputFrame, QtInputAdapter
+
+if sys.platform == "darwin":
+  from ludoxel.shared.ui.viewport.runtime.runtime_macos_input_guard import MacosGameplayInputGuard
+else:
+  MacosGameplayInputGuard = None
 
 
 @dataclass
@@ -19,12 +26,15 @@ class MouseDelta:
 
 
 class ViewportInput:
-  def __init__(self, *, widget: QWidget, adapter: QtInputAdapter) -> None:
+  def __init__(self, *, widget: QWidget, adapter: QtInputAdapter, native_key_handler: Callable[[int, bool, bool], None] | None = None) -> None:
     self._w = widget
     self._a = adapter
     self._captured: bool = False
     self._capture_sync_pending: bool = False
     self._capture_sync_stable_polls: int = 0
+    self._ignore_mouse_move_until_s: float = 0.0
+    self._ignore_mouse_move_events: int = 0
+    self._macos_input_guard = MacosGameplayInputGuard(native_key_handler) if MacosGameplayInputGuard is not None and callable(native_key_handler) else None
 
   def reset(self) -> None:
     self._a.reset()
@@ -41,6 +51,11 @@ class ViewportInput:
   def _center_global(self) -> QPoint:
     c = QPoint(self._w.width() // 2, self._w.height() // 2)
     return self._w.mapToGlobal(c)
+
+  def _warp_cursor_to_center(self) -> None:
+    self._ignore_mouse_move_until_s = max(float(self._ignore_mouse_move_until_s), float(time.perf_counter()) + 0.025)
+    self._ignore_mouse_move_events = max(int(self._ignore_mouse_move_events), 2)
+    QCursor.setPos(self._center_global())
 
   @staticmethod
   def _sync_override_cursor(*, hidden: bool) -> None:
@@ -77,11 +92,15 @@ class ViewportInput:
         host_window.setCursor(Qt.CursorShape.BlankCursor)
       self._w.grabMouse()
       self._w.grabKeyboard()
+      if self._macos_input_guard is not None:
+        self._macos_input_guard.set_active(True)
       self._a.clear_mouse_delta()
-      QCursor.setPos(self._center_global())
+      self._warp_cursor_to_center()
       self._capture_sync_pending = True
       self._capture_sync_stable_polls = 0
     else:
+      if self._macos_input_guard is not None:
+        self._macos_input_guard.set_active(False)
       self._w.releaseKeyboard()
       self._w.releaseMouse()
       self._sync_override_cursor(hidden=False)
@@ -104,6 +123,8 @@ class ViewportInput:
     if sys.platform == "darwin":
       self._w.grabMouse()
       self._w.grabKeyboard()
+      if self._macos_input_guard is not None:
+        self._macos_input_guard.set_active(True)
 
   def poll_relative_mouse_delta(self) -> None:
     if not bool(self._captured):
@@ -115,7 +136,7 @@ class ViewportInput:
       dx = float(cur.x() - center.x())
       dy = float(cur.y() - center.y())
       self._a.clear_mouse_delta()
-      QCursor.setPos(center)
+      self._warp_cursor_to_center()
       if abs(float(dx)) <= 1.0 and abs(float(dy)) <= 1.0:
         self._capture_sync_stable_polls = int(self._capture_sync_stable_polls) + 1
       else:
@@ -134,13 +155,41 @@ class ViewportInput:
       return
 
     self._a.add_mouse_delta(dx, dy)
-    QCursor.setPos(center)
+    self._warp_cursor_to_center()
+
+  def on_captured_mouse_move(self, e: QMouseEvent) -> None:
+    if not bool(self._captured):
+      return
+    if self.capture_sync_pending():
+      return
+    if int(self._ignore_mouse_move_events) > 0:
+      self._ignore_mouse_move_events = max(0, int(self._ignore_mouse_move_events) - 1)
+      return
+    if float(time.perf_counter()) < float(self._ignore_mouse_move_until_s):
+      return
+    if not hasattr(e, "position"):
+      return
+    pos = e.position()
+    center_x = float(self._w.width()) * 0.5
+    center_y = float(self._w.height()) * 0.5
+    dx = float(pos.x()) - float(center_x)
+    dy = float(pos.y()) - float(center_y)
+    if abs(float(dx)) <= 1.0 and abs(float(dy)) <= 1.0:
+      return
+    self._capture_sync_pending = False
+    self._capture_sync_stable_polls = 0
+    self._a.add_mouse_delta(float(dx), float(dy))
+    self._warp_cursor_to_center()
 
   def on_key_press(self, e: QKeyEvent) -> None:
     self._a.on_key_press(e)
 
   def on_key_release(self, e: QKeyEvent) -> None:
     self._a.on_key_release(e)
+
+  def shutdown(self) -> None:
+    if self._macos_input_guard is not None:
+      self._macos_input_guard.close()
 
   def consume(self, *, invert_x: bool, invert_y: bool) -> tuple[InputFrame, MouseDelta]:
     fr = self._a.consume()
