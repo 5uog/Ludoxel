@@ -59,19 +59,26 @@ function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
   addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
 }
 
+function addApplicationBootstrapHiddenImports(args) {
+  args.push('--hidden-import', 'ludoxel.application.bootstrap');
+  args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
+}
+
+function addMacosRendererBackendArgs(args) {
+  args.push('--collect-all', 'wgpu');
+  args.push('--collect-all', 'rendercanvas');
+  args.push('--hidden-import', 'wgpu.backends.wgpu_native');
+  args.push('--hidden-import', 'rendercanvas.qt');
+  args.push('--hidden-import', 'rendercanvas.pyqt6');
+  args.push('--hidden-import', 'ludoxel.presentation.interface.input.macos_cursor');
+}
+
 function addRendererBackendArgs(args, targetPlatform = process.platform) {
   if (targetPlatform !== 'darwin') {
     return;
   }
 
-  args.push('--collect-all', 'wgpu');
-  args.push('--collect-all', 'rendercanvas');
-  args.push('--hidden-import', 'ludoxel.application.bootstrap');
-  args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
-  args.push('--hidden-import', 'wgpu.backends.wgpu_native');
-  args.push('--hidden-import', 'rendercanvas.qt');
-  args.push('--hidden-import', 'rendercanvas.pyqt6');
-  args.push('--hidden-import', 'ludoxel.presentation.interface.input.macos_cursor');
+  addMacosRendererBackendArgs(args);
 }
 
 function addMacosRequiredDataArgs(args) {
@@ -136,6 +143,7 @@ export function buildWindowsPyinstallerCommand({ pythonExecutable, token }) {
     'ludoxel',
   ];
 
+  addApplicationBootstrapHiddenImports(args);
   addRendererBackendArgs(args, 'win32');
   addCommonOptionalDataArgs(args, 'win32');
   addWindowsIconArg(args);
@@ -175,6 +183,7 @@ export function buildMacosPyinstallerCommand({ pythonExecutable, token }) {
     'ludoxel',
   ];
 
+  addApplicationBootstrapHiddenImports(args);
   addRendererBackendArgs(args, 'darwin');
   addMacosRequiredDataArgs(args);
   addMacosIconArg(args);
