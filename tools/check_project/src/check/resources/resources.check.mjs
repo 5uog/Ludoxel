@@ -22,8 +22,8 @@ export function checkResources() {
     }
   }
 
-  const pathsModule = resolve(PROJECT_ROOT, 'src', 'ludoxel', 'shared', 'shared_project_paths.py');
-  const integrityModule = resolve(PROJECT_ROOT, 'src', 'ludoxel', 'application', 'runtime', 'persistence', 'persistence_integrity_manifest.py');
+  const pathsModule = resolve(PROJECT_ROOT, 'src', 'ludoxel', 'foundations', 'locations', 'roots.py');
+  const integrityModule = resolve(PROJECT_ROOT, 'src', 'ludoxel', 'application', 'persistence', 'integrity', 'manifest.py');
 
   if (!existsSync(pathsModule)) {
     failures.push('runtime path module is missing');
@@ -34,7 +34,7 @@ export function checkResources() {
     }
   }
 
-  if (!existsSync(integrityModule)) failures.push('persistence_integrity_manifest.py is missing');
+  if (!existsSync(integrityModule)) failures.push('application persistence integrity manifest module is missing');
 
   if (existsSync(resolve(PROJECT_ROOT, 'assets'))) notes.push('assets/ exists and must stay ignored until provenance is reviewed');
   if (existsSync(resolve(PROJECT_ROOT, 'configs'))) notes.push('previous-format configs/ exists; runtime writes must use the app-managed data root and may migrate this only as previous-format input');

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, lstatSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
@@ -35,6 +36,8 @@ const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
   'assets/fonts/KaiseiOpti-Medium.ttf',
   'assets/fonts/KaiseiOpti-Bold.ttf',
 ]);
+
+const MACOS_LAUNCH_SMOKE_TIMEOUT_MS = 8000;
 const MACOS_APP_VERSION = JSON.parse(readFileSync(resolve(PROJECT_ROOT, 'package.json'), 'utf8')).version;
 
 function requireMacosHost() {
@@ -129,6 +132,29 @@ function patchMacosInfoPlist(appPath) {
   writeFileSync(plistPath, plistText);
 }
 
+function runCodesign(args, label) {
+  const result = spawnSync('codesign', args, {
+    cwd: PROJECT_ROOT,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  });
+
+  if (result.status !== 0) {
+    const stderr = String(result.stderr || '').trim();
+    const stdout = String(result.stdout || '').trim();
+    const detail = stderr || stdout || `exit ${result.status}`;
+    throw new Error(`${label} failed: ${detail}`);
+  }
+}
+
+function signMacosAppBundle(appPath) {
+  runCodesign(['--force', '--deep', '--sign', '-', appPath], `macOS app bundle ad-hoc signing (${appPath})`);
+}
+
+function verifyMacosCodeSignature(appPath) {
+  runCodesign(['--verify', '--deep', '--strict', appPath], `macOS app bundle signature verification (${appPath})`);
+}
+
 function requireMacosInfoPlist(appPath) {
   const plistPath = resolve(appPath, 'Contents', 'Info.plist');
   const plistText = readFileSync(plistPath, 'utf8');
@@ -186,6 +212,45 @@ function requirePythonFrameworkLink(appPath) {
   }
 }
 
+function formatLaunchOutput(result) {
+  const stderr = String(result.stderr || '').trim();
+  const stdout = String(result.stdout || '').trim();
+  return [stderr, stdout].filter(Boolean).join('\n');
+}
+
+function launchSmokeDataRoot(token, label) {
+  return resolve(PROJECT_ROOT, 'build', 'macos-launch-smoke', String(token), String(label));
+}
+
+function verifyMacosExecutableStaysAlive(appPath, token, label) {
+  const executablePath = resolve(appPath, 'Contents', 'MacOS', APP_NAME);
+  const dataRoot = launchSmokeDataRoot(token, label);
+
+  rmSync(dataRoot, { recursive: true, force: true });
+
+  const result = spawnSync(executablePath, [], {
+    cwd: PROJECT_ROOT,
+    encoding: 'utf8',
+    stdio: 'pipe',
+    timeout: MACOS_LAUNCH_SMOKE_TIMEOUT_MS,
+    env: {
+      ...process.env,
+      LUDOXEL_DATA_ROOT: dataRoot,
+      PYTHONUNBUFFERED: '1',
+    },
+  });
+
+  if (result.error && result.error.code === 'ETIMEDOUT') {
+    console.log(`[build_desktop_app] verified macOS app stayed alive for ${MACOS_LAUNCH_SMOKE_TIMEOUT_MS}ms: ${executablePath}`);
+    rmSync(dataRoot, { recursive: true, force: true });
+    return;
+  }
+
+  const output = formatLaunchOutput(result);
+  const exitPart = result.signal ? `signal ${result.signal}` : `exit ${result.status}`;
+  throw new Error(`macOS app executable exited during launch smoke test (${label}, ${exitPart}): ${executablePath}${output ? `\n${output}` : ''}`);
+}
+
 function verifyMacosAppBundle(appPath) {
   const executablePath = resolve(appPath, 'Contents', 'MacOS', APP_NAME);
 
@@ -200,6 +265,7 @@ function verifyMacosAppBundle(appPath) {
   requirePythonFrameworkLink(appPath);
   requireMacosInfoPlist(appPath);
   requireMacosIcon(appPath);
+  verifyMacosCodeSignature(appPath);
 
   const alexSkinPath = requireBundledResource(appPath, 'bundled Alex skin texture', MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS);
   console.log(`[build_desktop_app] verified macOS bundled asset: ${alexSkinPath}`);
@@ -210,13 +276,15 @@ function verifyMacosAppBundle(appPath) {
   }
 }
 
-function publishMacosApp(stagingDir) {
+function publishMacosApp(stagingDir, token) {
   const stagedApp = macosAppPath(stagingDir);
   const publishDir = resolve(PROJECT_ROOT, MACOS_PUBLISH_DIR);
   const publishApp = macosAppPath(publishDir);
 
   patchMacosInfoPlist(stagedApp);
+  signMacosAppBundle(stagedApp);
   verifyMacosAppBundle(stagedApp);
+  verifyMacosExecutableStaysAlive(stagedApp, token, 'staged');
 
   ensureDirectory(publishDir);
   rmSync(publishApp, { recursive: true, force: true });
@@ -227,7 +295,9 @@ function publishMacosApp(stagingDir) {
     verbatimSymlinks: true,
   });
 
+  signMacosAppBundle(publishApp);
   verifyMacosAppBundle(publishApp);
+  verifyMacosExecutableStaysAlive(publishApp, token, 'published');
   copyLegalMaterial(publishDir);
 
   console.log(`[build_desktop_app] published macOS app bundle: ${publishApp}`);
@@ -272,12 +342,13 @@ export function runMacosBuild(options = {}) {
     return exitCode;
   }
 
-  publishMacosApp(command.stagingDir);
+  publishMacosApp(command.stagingDir, token);
 
   if (!options.keepBuildCache) {
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_WORK_ROOT, token), { recursive: true, force: true });
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_SPEC_ROOT, token), { recursive: true, force: true });
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_STAGING_ROOT, token), { recursive: true, force: true });
+    rmSync(resolve(PROJECT_ROOT, 'build', 'macos-launch-smoke', token), { recursive: true, force: true });
   }
 
   return 0;

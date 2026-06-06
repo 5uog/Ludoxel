@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { readFileSync } from 'node:fs';
-import { extname } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 import { printCheckResult } from '../../service/report.service.mjs';
 import { listFiles } from '../../shared/file/find.file.mjs';
@@ -35,7 +35,14 @@ function checkShader(path) {
 }
 
 export function checkShaders() {
-  const shaderFiles = listFiles(PROJECT_ROOT).filter((path) => SHADER_SUFFIXES.includes(extname(path).toLowerCase()));
+  const shaderRoots = [
+    resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'backends', 'opengl', 'shaders'),
+    resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'backends', 'wgpu', 'shaders', 'sources'),
+  ];
+  const shaderFiles = shaderRoots
+    .filter((root) => existsSync(root))
+    .flatMap((root) => listFiles(root))
+    .filter((path) => SHADER_SUFFIXES.includes(extname(path).toLowerCase()));
   const failures = shaderFiles.flatMap(checkShader);
 
   return printCheckResult('shaders', failures, [

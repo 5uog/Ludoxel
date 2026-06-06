@@ -272,8 +272,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'docs:export',
     usage: 'npm run docs:export',
     description: {
-      ja: 'README / Codex 共有向けに repository root の Markdown export を生成する互換 alias。',
-      en: 'Compatibility alias for repository root Markdown export for README/Codex sharing.',
+      ja: 'README 共有向けに repository root の Markdown export を生成する互換 alias。',
+      en: 'Compatibility alias for repository root Markdown export for README sharing.',
     },
     options: ['tools:export:root と同じ。'],
     examples: ['npm run docs:export'],

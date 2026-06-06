@@ -3,7 +3,7 @@ SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 Ludoxel NOTICE
 Version: 1.0.1
-最終更新日: 2026-06-04
+最終更新日: 2026-06-05
 本文言語: 日本語
 
 この NOTICE は、Ludoxel の独自素材、第三者素材、来歴確認が必要な素材、
@@ -21,8 +21,7 @@ Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、またはその他の
 
 公開リポジトリとして閲覧できること、clone / fork / download / pull request
 などの GitHub 機能が存在することは、Ludoxel 独自素材の複製、改変、再配布、
-組み込み、転載、自作発言、学習データ利用、派生物作成を許可するものでは
-ありません。
+組み込み、転載、自作発言、学習データ利用、派生物作成を許可するものではありません。
 
 ## 2. 第三者素材
 

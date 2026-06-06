@@ -47,25 +47,27 @@ dependencies = [
 dev = ["build>=1.2,<2", "Cython>=3.0,<4", "PyInstaller>=6,<7", "setuptools>=82", "wheel>=0.45", "ruff>=0.14,<1"]
 
 [project.scripts]
-ludoxel = "ludoxel.application.boot:run_app"
+ludoxel = "ludoxel.application.bootstrap:run_app"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = { attr = "ludoxel.application.boot.meta.meta_version.__version__" }
+version = { attr = "ludoxel.foundations.identity.version.__version__" }
 
 [tool.setuptools.package-data]
 ludoxel = [
-    "shared/ui/theme/*.qss",
-    "shared/opengl/shaders/*.vert",
-    "shared/opengl/shaders/*.frag",
-    "shared/opengl/shaders/*.comp",
-    "shared/opengl/shaders/common/*.glsl",
-    "features/othello/opengl/shaders/*.vert",
-    "features/othello/opengl/shaders/*.frag",
-    "features/othello/resources/*.json",
+    "presentation/interface/theme/*.qss",
+    "presentation/rendering/backends/opengl/shaders/*.vert",
+    "presentation/rendering/backends/opengl/shaders/*.frag",
+    "presentation/rendering/backends/opengl/shaders/*.comp",
+    "presentation/rendering/backends/opengl/shaders/common/*.glsl",
+    "presentation/rendering/backends/wgpu/shaders/sources/*.vert",
+    "presentation/rendering/backends/wgpu/shaders/sources/*.frag",
+    "presentation/rendering/backends/wgpu/shaders/sources/*.comp",
+    "presentation/rendering/backends/wgpu/shaders/sources/common/*.glsl",
+    "simulation/spaces/othello/resources/*.json",
 ]
 
 [tool.setuptools.packages.find]

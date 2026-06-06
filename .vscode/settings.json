@@ -7,7 +7,7 @@
     "**/build": true,
     "**/dist": true,
     "**/node_modules": true,
-    "tools/export_directory_markdown/output": true
+    "tools/export_directory_markdown/output": false
   },
   "diffEditor.experimental.useTrueInlineView": true,
   "editor.bracketPairColorization.enabled": true,

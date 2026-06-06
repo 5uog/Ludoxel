@@ -66,9 +66,12 @@ function addRendererBackendArgs(args, targetPlatform = process.platform) {
 
   args.push('--collect-all', 'wgpu');
   args.push('--collect-all', 'rendercanvas');
+  args.push('--hidden-import', 'ludoxel.application.bootstrap');
+  args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
   args.push('--hidden-import', 'wgpu.backends.wgpu_native');
   args.push('--hidden-import', 'rendercanvas.qt');
   args.push('--hidden-import', 'rendercanvas.pyqt6');
+  args.push('--hidden-import', 'ludoxel.presentation.interface.input.macos_cursor');
 }
 
 function addMacosRequiredDataArgs(args) {
@@ -90,6 +93,20 @@ function addMacosIconArg(args) {
 
   if (extname(iconPath).toLowerCase() !== '.icns') {
     throw new Error(`macOS app icon must be an .icns file: ${MACOS_ICON_PATH}`);
+  }
+
+  args.push('--icon', iconPath);
+}
+
+function addWindowsIconArg(args) {
+  const iconPath = projectPath(WINDOWS_ICON_PATH);
+
+  if (!existsSync(iconPath)) {
+    return;
+  }
+
+  if (extname(iconPath).toLowerCase() !== '.ico') {
+    throw new Error(`Windows app icon must be an .ico file: ${WINDOWS_ICON_PATH}`);
   }
 
   args.push('--icon', iconPath);
@@ -121,18 +138,12 @@ export function buildWindowsPyinstallerCommand({ pythonExecutable, token }) {
 
   addRendererBackendArgs(args, 'win32');
   addCommonOptionalDataArgs(args, 'win32');
-
-  if (existsSync(resolve(PROJECT_ROOT, WINDOWS_ICON_PATH))) {
-    args.push('--icon', resolve(PROJECT_ROOT, WINDOWS_ICON_PATH));
-  }
-
-  args.push(resolve(PROJECT_ROOT, WINDOWS_ENTRY_SCRIPT));
+  addWindowsIconArg(args);
+  args.push(projectPath(WINDOWS_ENTRY_SCRIPT));
 
   return {
     executable: pythonExecutable,
     args,
-    workDir,
-    specDir,
     stagingDir,
     displayCommand: [pythonExecutable, ...args].join(' '),
   };
@@ -167,14 +178,11 @@ export function buildMacosPyinstallerCommand({ pythonExecutable, token }) {
   addRendererBackendArgs(args, 'darwin');
   addMacosRequiredDataArgs(args);
   addMacosIconArg(args);
-
-  args.push(resolve(PROJECT_ROOT, MACOS_ENTRY_SCRIPT));
+  args.push(projectPath(MACOS_ENTRY_SCRIPT));
 
   return {
     executable: pythonExecutable,
     args,
-    workDir,
-    specDir,
     stagingDir,
     displayCommand: [pythonExecutable, ...args].join(' '),
   };
