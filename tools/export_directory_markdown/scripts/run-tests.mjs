@@ -77,7 +77,36 @@ assertNotContains({ name: 'root target option with excludes', text: excludedRoot
 assertNotContains({ name: 'root target option with excludes', text: excludedRootTree, rejected: '├── README.md' });
 assertNotContains({ name: 'root target option with excludes', text: excludedRootTree, rejected: 'pyproject.toml' });
 
+await runCase('root target option with comma-separated excludes', [
+  '--target',
+  'root',
+  '--format',
+  'code',
+  '--output',
+  'tools/export_directory_markdown/output/export_test_root_comma_exclude_code.md',
+  '--overwrite',
+  '--max-bytes',
+  '256',
+  '--exclude',
+  'folder:ludoxel.egg-info,format_web_source,format_python_source,export_directory_markdown',
+  '--exclude',
+  'file:MANIFEST.in',
+  '--exclude',
+  'ext:toml',
+]);
+
+const commaExcludedRootCode = readProjectFile('tools/export_directory_markdown/output/export_test_root_comma_exclude_code.md');
+assertContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, expected: 'FILE: package.json' });
+assertContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, expected: 'Exclude rules: `folder:ludoxel.egg-info, folder:format_web_source' });
+assertNotContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, rejected: 'FILE: src/ludoxel.egg-info' });
+assertNotContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, rejected: 'FILE: tools/format_web_source' });
+assertNotContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, rejected: 'FILE: tools/format_python_source' });
+assertNotContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, rejected: 'FILE: tools/export_directory_markdown' });
+assertNotContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, rejected: 'FILE: MANIFEST.in' });
+assertNotContains({ name: 'root target option with comma-separated excludes', text: commaExcludedRootCode, rejected: 'FILE: pyproject.toml' });
+
 await runErrorCase('duplicate target', ['root', '--target', 'src']);
 await runErrorCase('invalid exclude kind', ['root', '--exclude', 'path:src']);
+await runErrorCase('empty comma-separated exclude item', ['root', '--exclude', 'folder:tools,,src']);
 
 console.log('[export_directory_markdown] tests passed.');

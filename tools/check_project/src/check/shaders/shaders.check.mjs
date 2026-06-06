@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { readFileSync } from 'node:fs';
-import { extname } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 import { printCheckResult } from '../../service/report.service.mjs';
 import { listFiles } from '../../shared/file/find.file.mjs';
@@ -21,7 +21,7 @@ function checkShader(path) {
     if (!version) {
       failures.push(`${display}: missing #version`);
     } else if (Number(version[1]) > 430) {
-      failures.push(`${display}: #version ${version[1]} exceeds Ludoxel OpenGL 4.3 contract`);
+      failures.push(`${display}: #version ${version[1]} exceeds Ludoxel renderer shader contract`);
     } else if (Number(version[1]) < 140) {
       failures.push(`${display}: #version ${version[1]} is lower than the minimum accepted GLSL version for tool validation`);
     }
@@ -35,11 +35,18 @@ function checkShader(path) {
 }
 
 export function checkShaders() {
-  const shaderFiles = listFiles(PROJECT_ROOT).filter((path) => SHADER_SUFFIXES.includes(extname(path).toLowerCase()));
+  const shaderRoots = [
+    resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'backends', 'opengl', 'shaders'),
+    resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'backends', 'wgpu', 'shaders', 'sources'),
+  ];
+  const shaderFiles = shaderRoots
+    .filter((root) => existsSync(root))
+    .flatMap((root) => listFiles(root))
+    .filter((path) => SHADER_SUFFIXES.includes(extname(path).toLowerCase()));
   const failures = shaderFiles.flatMap(checkShader);
 
   return printCheckResult('shaders', failures, [
     `checked ${shaderFiles.length} shader files`,
-    'default shader check validates Ludoxel OpenGL 4.3 source; Vulkan SPIR-V is not the active renderer target',
+    'shader check validates Ludoxel renderer shader source; macOS uses wgpu-native and Windows retains the existing OpenGL renderer path',
   ]);
 }

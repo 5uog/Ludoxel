@@ -15,11 +15,9 @@ function createDownloadAgent() {
   });
 }
 
-const DOWNLOAD_AGENT = createDownloadAgent();
-
 export function downloadFile(url, destination) {
   return new Promise((resolvePromise, rejectPromise) => {
-    const request = https.get(url, { agent: DOWNLOAD_AGENT }, (response) => {
+    const request = https.get(url, { agent: createDownloadAgent() }, (response) => {
       const statusCode = response.statusCode ?? 0;
 
       if (statusCode >= 300 && statusCode < 400 && response.headers.location) {

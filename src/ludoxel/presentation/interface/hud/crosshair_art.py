@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+from __future__ import annotations
+
+from PyQt6.QtGui import QColor, QImage
+
+from ludoxel.application.preferences.crosshair import CROSSHAIR_GRID_SIZE, CROSSHAIR_MODE_CUSTOM, DEFAULT_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
+
+
+def active_crosshair_pixels(mode: object, custom_pixels: object) -> tuple[str, ...]:
+  if normalize_crosshair_mode(mode) == CROSSHAIR_MODE_CUSTOM:
+    return normalize_crosshair_pixels(custom_pixels)
+  return DEFAULT_CROSSHAIR_PIXELS
+
+
+def render_crosshair_image(mode: object, custom_pixels: object, *, scale: int = 2, fill: QColor | None = None, outline: QColor | None = None) -> QImage:
+  pixels = active_crosshair_pixels(mode, custom_pixels)
+  pixel_scale = max(1, int(scale))
+  image = QImage(int(CROSSHAIR_GRID_SIZE) * pixel_scale, int(CROSSHAIR_GRID_SIZE) * pixel_scale, QImage.Format.Format_RGBA8888)
+  image.fill(0)
+
+  fill_color = QColor(255, 255, 255, 230) if fill is None else QColor(fill)
+
+  if outline is not None:
+    outline_color = QColor(outline)
+    for y in range(CROSSHAIR_GRID_SIZE):
+      for x in range(CROSSHAIR_GRID_SIZE):
+        if pixels[y][x] != "1":
+          continue
+        for oy in (-1, 0, 1):
+          for ox in (-1, 0, 1):
+            nx = int(x) + int(ox)
+            ny = int(y) + int(oy)
+            if int(nx) < 0 or int(ny) < 0 or int(nx) >= int(CROSSHAIR_GRID_SIZE) or int(ny) >= int(CROSSHAIR_GRID_SIZE):
+              continue
+            if pixels[ny][nx] == "1":
+              continue
+            _fill_scaled_pixel(image, nx, ny, pixel_scale, outline_color)
+
+  for y in range(CROSSHAIR_GRID_SIZE):
+    for x in range(CROSSHAIR_GRID_SIZE):
+      if pixels[y][x] == "1":
+        _fill_scaled_pixel(image, x, y, pixel_scale, fill_color)
+
+  return image
+
+
+def _fill_scaled_pixel(image: QImage, x: int, y: int, scale: int, color: QColor) -> None:
+  base_x = int(x) * int(scale)
+  base_y = int(y) * int(scale)
+  rgba = color.rgba()
+  for py in range(int(scale)):
+    for px in range(int(scale)):
+      image.setPixel(base_x + px, base_y + py, rgba)

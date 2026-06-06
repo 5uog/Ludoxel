@@ -6,7 +6,11 @@ import { basename, extname } from 'node:path';
 import { DEFAULT_BINARY_EXTENSIONS, DEFAULT_EXCLUDED_DIRECTORY_NAMES, DEFAULT_EXCLUDED_RELATIVE_PREFIXES } from '../config/profile.config.mjs';
 
 export function normalizePath(value) {
-  return String(value || '').replace(/\\/g, '/').replace(/^\.\//u, '').replace(/\/+/g, '/').replace(/\/$/u, '');
+  return String(value || '')
+    .replace(/\\/g, '/')
+    .replace(/^\.\//u, '')
+    .replace(/\/+/g, '/')
+    .replace(/\/$/u, '');
 }
 
 function pathMatchesNameOrRelativePath({ name, relativePath, ruleValue }) {

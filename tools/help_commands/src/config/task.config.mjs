@@ -20,7 +20,7 @@ export const HELP_COMMANDS = Object.freeze([
     usage: 'npm run package:check -- [options]',
     description: {
       ja: 'package.json、npm scripts、禁止された旧 scripts/ 経路、tool entrypoint の整合性を検査する。',
-      en: 'Check package.json, npm scripts, prohibited legacy scripts/ paths, and tool entrypoints.',
+      en: 'Check package.json, npm scripts, prohibited retired scripts/ paths, and tool entrypoints.',
     },
     options: ['--help, -h', '--lang ja|en'],
     examples: ['npm run package:check', 'npm run package:check -- --help --lang en'],
@@ -63,8 +63,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'shader:check',
     usage: 'npm run shader:check -- [options]',
     description: {
-      ja: 'OpenGL 4.3 Core Profile renderer の shader 契約を静的検査する。',
-      en: 'Statically check shader sources against the OpenGL 4.3 Core Profile renderer contract.',
+      ja: 'platform 別 renderer の shader 契約を静的検査する。',
+      en: 'Statically check shader sources for the platform-specific renderer contracts.',
     },
     options: ['--help, -h', '--lang ja|en'],
     examples: ['npm run shader:check', 'npm run shader:check -- --help --lang en'],
@@ -272,8 +272,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'docs:export',
     usage: 'npm run docs:export',
     description: {
-      ja: 'README / Codex 共有向けに repository root の Markdown export を生成する互換 alias。',
-      en: 'Compatibility alias for repository root Markdown export for README/Codex sharing.',
+      ja: 'README 共有向けに repository root の Markdown export を生成する互換 alias。',
+      en: 'Compatibility alias for repository root Markdown export for README sharing.',
     },
     options: ['tools:export:root と同じ。'],
     examples: ['npm run docs:export'],

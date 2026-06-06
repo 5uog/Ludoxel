@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+from __future__ import annotations
+
+from ludoxel.application.preferences.audio import AUDIO_CATEGORY_AMBIENT
+from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool, make_audio_pool
+
+AMBIENT_KEY_MY_WORLD = "my_world_default"
+
+AMBIENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
+  AMBIENT_KEY_MY_WORLD: make_audio_pool(
+    "assets/audio/ambient/my_world/wind1.wav",
+    "assets/audio/ambient/my_world/wind2.wav",
+    "assets/audio/ambient/my_world/wind3.wav",
+    "assets/audio/ambient/my_world/wind4.wav",
+    category=AUDIO_CATEGORY_AMBIENT,
+    selection_mode=SELECTION_ROUND_ROBIN,
+    spatial=False,
+    distance_cutoff=0.0,
+    size=0.0,
+    max_polyphony=1,
+  )
+}

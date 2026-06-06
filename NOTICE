@@ -3,7 +3,7 @@ SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 Ludoxel NOTICE
 Version: 1.0.1
-最終更新日: 2026-06-04
+最終更新日: 2026-06-05
 本文言語: 日本語
 
 この NOTICE は、Ludoxel の独自素材、第三者素材、来歴確認が必要な素材、
@@ -21,8 +21,7 @@ Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、またはその他の
 
 公開リポジトリとして閲覧できること、clone / fork / download / pull request
 などの GitHub 機能が存在することは、Ludoxel 独自素材の複製、改変、再配布、
-組み込み、転載、自作発言、学習データ利用、派生物作成を許可するものでは
-ありません。
+組み込み、転載、自作発言、学習データ利用、派生物作成を許可するものではありません。
 
 ## 2. 第三者素材
 
@@ -32,6 +31,13 @@ Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、またはその他の
 
 第三者素材のライセンスは、Ludoxel 独自素材をその第三者ライセンスで
 再ライセンスするものではありません。
+
+Python / Qt / PyOpenGL / wgpu / rendercanvas / PyInstaller / Cython /
+Node tooling など、実行又は build に関係する第三者技術スタックの概要は
+次に記録します。Windows は既存の PyOpenGL 経路を保持し、macOS は
+wgpu / rendercanvas 経路を使用します。
+
+- `third-party/python-runtime/NOTICE.txt`
 
 ## 3. Kaisei Opti
 
@@ -49,8 +55,8 @@ Kaisei Opti は第三者フォント素材です。
 
 第三者ライセンス本文:
 
-- `third-party/kaisei-opti/LICENSE.txt`
 - `third-party/kaisei-opti/NOTICE.txt`
+- `third-party/kaisei-opti/LICENSE.txt`
 
 Kaisei Opti は Ludoxel の `LicenseRef-All-Rights-Reserved` の対象ではなく、
 OFL の条件が引き続き適用されます。
@@ -80,9 +86,9 @@ world edits、Othello opening-book user extension、compiled cache、AI workbenc
 の将来データなど、アプリ利用により生成・更新されるデータは、immutable な
 package resource ではありません。
 
-Ludoxel は、ルート `configs/` を通常の保存先として生成・更新しません。
-実行時データはユーザー別の app-managed data root に保存され、保存対象の
-主要ファイルには HMAC manifest による改竄検出を適用します。
+Ludoxel v3.6 以降では、v3.5 以前の仕様であったルート `configs/` を通常の保存先とした
+生成・更新を行いません。実行時データはユーザー別の app-managed data root に保存され、
+保存対象の主要ファイルには HMAC manifest による改竄検出を適用します。
 
 ただし、ローカルマシン上でユーザー自身が全ファイルと検証 key を編集できる
 状況では、完全な改竄防止は保証できません。この manifest は、アプリ外編集、
@@ -90,7 +96,7 @@ Ludoxel は、ルート `configs/` を通常の保存先として生成・更新
 
 ## 6. 配布物への同梱
 
-Windows EXE や将来の macOS app bundle などの desktop distribution には、
+Windows EXE や macOS app bundle などの desktop distribution には、
 少なくとも次を同梱する必要があります。
 
 - `LICENSE`

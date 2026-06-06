@@ -10,6 +10,7 @@ const EXCLUDE_KINDS = new Set(['folder', 'ext', 'file']);
 
 function normalizePathValue(value) {
   return String(value || '')
+    .trim()
     .replace(/\\/g, '/')
     .replace(/^\.\//u, '')
     .replace(/\/+/g, '/')
@@ -17,41 +18,55 @@ function normalizePathValue(value) {
 }
 
 function normalizeExtensionValue(value) {
-  const normalized = String(value || '').trim().toLowerCase();
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+
   if (!normalized) return '';
   return normalized.startsWith('.') ? normalized : `.${normalized}`;
 }
 
-function parseExcludeRule(rawRule, errors) {
-  const raw = String(rawRule || '');
+function parseExcludeRules(rawRule, errors) {
+  const raw = String(rawRule || '').trim();
   const separatorIndex = raw.indexOf(':');
 
   if (separatorIndex <= 0) {
     errors.push(`--exclude must use folder:<value>, ext:<value>, or file:<value>: ${raw}`);
-    return null;
+    return [];
   }
 
-  const kind = raw.slice(0, separatorIndex).trim();
+  const kind = raw.slice(0, separatorIndex).trim().toLowerCase();
   const rawValue = raw.slice(separatorIndex + 1).trim();
 
   if (!EXCLUDE_KINDS.has(kind)) {
     errors.push(`Unknown --exclude kind: ${kind}`);
-    return null;
+    return [];
   }
 
   if (!rawValue) {
     errors.push(`--exclude ${kind}: value must not be empty.`);
-    return null;
+    return [];
   }
 
-  const value = kind === 'ext' ? normalizeExtensionValue(rawValue) : normalizePathValue(rawValue);
+  const rules = [];
+  const seen = new Set();
 
-  if (!value) {
-    errors.push(`--exclude ${kind}: value must not be empty.`);
-    return null;
+  for (const rawPart of rawValue.split(',')) {
+    const value = kind === 'ext' ? normalizeExtensionValue(rawPart) : normalizePathValue(rawPart);
+
+    if (!value) {
+      errors.push(`--exclude ${kind}: value must not be empty.`);
+      continue;
+    }
+
+    const key = `${kind}:${value}`;
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    rules.push(Object.freeze({ kind, value, raw: key }));
   }
 
-  return Object.freeze({ kind, value, raw });
+  return rules;
 }
 
 export function validateExportArgs(parsed) {
@@ -74,9 +89,16 @@ export function validateExportArgs(parsed) {
   }
 
   const excludeRules = [];
+  const seenExcludeRules = new Set();
+
   for (const rawRule of parsed.exclude) {
-    const rule = parseExcludeRule(rawRule, errors);
-    if (rule) excludeRules.push(rule);
+    for (const rule of parseExcludeRules(rawRule, errors)) {
+      const key = `${rule.kind}:${rule.value}`;
+      if (seenExcludeRules.has(key)) continue;
+
+      seenExcludeRules.add(key);
+      excludeRules.push(rule);
+    }
   }
 
   return {
