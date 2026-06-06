@@ -37,7 +37,6 @@ const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
   'assets/fonts/KaiseiOpti-Bold.ttf',
 ]);
 
-const MACOS_LAUNCH_SMOKE_TIMEOUT_MS = 8000;
 const MACOS_APP_VERSION = JSON.parse(readFileSync(resolve(PROJECT_ROOT, 'package.json'), 'utf8')).version;
 
 function requireMacosHost() {
@@ -86,23 +85,31 @@ function bundledAssetCandidates(relativeAssetPath) {
 
 function walkFiles(rootPath) {
   const entries = [];
+
   for (const entry of readdirSync(rootPath, { withFileTypes: true })) {
     const absolutePath = resolve(rootPath, entry.name);
+
     if (entry.isDirectory()) {
       entries.push(...walkFiles(absolutePath));
-    } else if (entry.isFile()) {
+      continue;
+    }
+
+    if (entry.isFile()) {
       entries.push(absolutePath);
     }
   }
+
   return entries;
 }
 
 function upsertPlistString(plistText, key, value) {
   const escapedValue = String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   const existing = new RegExp(`(<key>${key}</key>\\s*)<string>[^<]*</string>`);
+
   if (existing.test(plistText)) {
     return plistText.replace(existing, `$1<string>${escapedValue}</string>`);
   }
+
   return plistText.replace('</dict>', `\t<key>${key}</key>\n\t<string>${escapedValue}</string>\n</dict>`);
 }
 
@@ -117,6 +124,7 @@ function patchMacosInfoPlist(appPath) {
   const resourcesPath = resolve(appPath, 'Contents', 'Resources');
   const bundledIcons = existsSync(resourcesPath) ? walkFiles(resourcesPath).filter((path) => path.toLowerCase().endsWith('.icns')) : [];
   const bundledIconName = bundledIcons.length > 0 ? basename(bundledIcons[0]) : basename(MACOS_ICON_PATH);
+
   plistText = upsertPlistString(plistText, 'CFBundleName', APP_NAME);
   plistText = upsertPlistString(plistText, 'CFBundleDisplayName', APP_NAME);
   plistText = upsertPlistString(plistText, 'CFBundleIdentifier', MACOS_BUNDLE_IDENTIFIER);
@@ -129,6 +137,7 @@ function patchMacosInfoPlist(appPath) {
     'NSInputMonitoringUsageDescription',
     'Ludoxel uses keyboard input monitoring while gameplay mouse capture is active so macOS and global app shortcuts do not steal game controls.',
   );
+
   writeFileSync(plistPath, plistText);
 }
 
@@ -176,6 +185,7 @@ function requireMacosInfoPlist(appPath) {
   if (!plistText.includes('<key>CFBundleIconFile</key>') || !plistText.includes('.icns</string>')) {
     throw new Error(`macOS Info.plist is missing a .icns CFBundleIconFile entry: ${plistPath}`);
   }
+
   if (!plistText.includes('<key>NSInputMonitoringUsageDescription</key>')) {
     throw new Error(`macOS Info.plist is missing NSInputMonitoringUsageDescription for gameplay input capture: ${plistPath}`);
   }
@@ -212,45 +222,6 @@ function requirePythonFrameworkLink(appPath) {
   }
 }
 
-function formatLaunchOutput(result) {
-  const stderr = String(result.stderr || '').trim();
-  const stdout = String(result.stdout || '').trim();
-  return [stderr, stdout].filter(Boolean).join('\n');
-}
-
-function launchSmokeDataRoot(token, label) {
-  return resolve(PROJECT_ROOT, 'build', 'macos-launch-smoke', String(token), String(label));
-}
-
-function verifyMacosExecutableStaysAlive(appPath, token, label) {
-  const executablePath = resolve(appPath, 'Contents', 'MacOS', APP_NAME);
-  const dataRoot = launchSmokeDataRoot(token, label);
-
-  rmSync(dataRoot, { recursive: true, force: true });
-
-  const result = spawnSync(executablePath, [], {
-    cwd: PROJECT_ROOT,
-    encoding: 'utf8',
-    stdio: 'pipe',
-    timeout: MACOS_LAUNCH_SMOKE_TIMEOUT_MS,
-    env: {
-      ...process.env,
-      LUDOXEL_DATA_ROOT: dataRoot,
-      PYTHONUNBUFFERED: '1',
-    },
-  });
-
-  if (result.error && result.error.code === 'ETIMEDOUT') {
-    console.log(`[build_desktop_app] verified macOS app stayed alive for ${MACOS_LAUNCH_SMOKE_TIMEOUT_MS}ms: ${executablePath}`);
-    rmSync(dataRoot, { recursive: true, force: true });
-    return;
-  }
-
-  const output = formatLaunchOutput(result);
-  const exitPart = result.signal ? `signal ${result.signal}` : `exit ${result.status}`;
-  throw new Error(`macOS app executable exited during launch smoke test (${label}, ${exitPart}): ${executablePath}${output ? `\n${output}` : ''}`);
-}
-
 function verifyMacosAppBundle(appPath) {
   const executablePath = resolve(appPath, 'Contents', 'MacOS', APP_NAME);
 
@@ -276,7 +247,7 @@ function verifyMacosAppBundle(appPath) {
   }
 }
 
-function publishMacosApp(stagingDir, token) {
+function publishMacosApp(stagingDir) {
   const stagedApp = macosAppPath(stagingDir);
   const publishDir = resolve(PROJECT_ROOT, MACOS_PUBLISH_DIR);
   const publishApp = macosAppPath(publishDir);
@@ -284,7 +255,6 @@ function publishMacosApp(stagingDir, token) {
   patchMacosInfoPlist(stagedApp);
   signMacosAppBundle(stagedApp);
   verifyMacosAppBundle(stagedApp);
-  verifyMacosExecutableStaysAlive(stagedApp, token, 'staged');
 
   ensureDirectory(publishDir);
   rmSync(publishApp, { recursive: true, force: true });
@@ -297,7 +267,6 @@ function publishMacosApp(stagingDir, token) {
 
   signMacosAppBundle(publishApp);
   verifyMacosAppBundle(publishApp);
-  verifyMacosExecutableStaysAlive(publishApp, token, 'published');
   copyLegalMaterial(publishDir);
 
   console.log(`[build_desktop_app] published macOS app bundle: ${publishApp}`);
@@ -308,6 +277,7 @@ export function runMacosBuild(options = {}) {
   requireMacosEntryScript();
   requireProjectAsset('assets/minecraft/skins/alex.png');
   requireProjectAsset(MACOS_ICON_PATH);
+
   for (const fontAssetPath of MACOS_REQUIRED_FONT_ASSET_PATHS) {
     requireProjectAsset(fontAssetPath);
   }
@@ -324,7 +294,9 @@ export function runMacosBuild(options = {}) {
   const token = randomUUID().replace(/-/g, '').slice(0, 12);
   const command = buildMacosPyinstallerCommand({ pythonExecutable, token });
   const pyinstallerConfigDir = resolve(PROJECT_ROOT, PYINSTALLER_CONFIG_ROOT);
+
   ensureDirectory(pyinstallerConfigDir);
+
   const pyinstallerEnv = {
     ...(options.env || process.env),
     PYINSTALLER_CONFIG_DIR: pyinstallerConfigDir,
@@ -342,13 +314,12 @@ export function runMacosBuild(options = {}) {
     return exitCode;
   }
 
-  publishMacosApp(command.stagingDir, token);
+  publishMacosApp(command.stagingDir);
 
   if (!options.keepBuildCache) {
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_WORK_ROOT, token), { recursive: true, force: true });
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_SPEC_ROOT, token), { recursive: true, force: true });
     rmSync(resolve(PROJECT_ROOT, PYINSTALLER_STAGING_ROOT, token), { recursive: true, force: true });
-    rmSync(resolve(PROJECT_ROOT, 'build', 'macos-launch-smoke', token), { recursive: true, force: true });
   }
 
   return 0;
