@@ -18,7 +18,7 @@ def coerce_xyz_triplet(raw: object, *, default: tuple[float, float, float]) -> t
 class PersistedPlayer:
   pos_x: float = 0.0
   pos_y: float = 1.0
-  pos_z: float = -10.0
+  pos_z: float = 0.0
 
   vel_x: float = 0.0
   vel_y: float = 0.0
@@ -50,7 +50,7 @@ class PersistedPlayer:
 
   @staticmethod
   def from_dict(d: dict[str, Any]) -> "PersistedPlayer":
-    pos_x, pos_y, pos_z = coerce_xyz_triplet(d.get("pos"), default=(0.0, 1.0, -10.0))
+    pos_x, pos_y, pos_z = coerce_xyz_triplet(d.get("pos"), default=(0.0, 1.0, 0.0))
     vel_x, vel_y, vel_z = coerce_xyz_triplet(d.get("vel"), default=(0.0, 0.0, 0.0))
 
     cooldown_raw = d.get("auto_jump_cooldown_s", d.get("jump_cooldown_s", 0.0))

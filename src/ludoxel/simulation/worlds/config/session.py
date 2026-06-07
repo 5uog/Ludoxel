@@ -20,7 +20,7 @@ class SessionSettings:
 
   spawn_x: float = 0.0
   spawn_y: float = 1.0
-  spawn_z: float = -10.0
+  spawn_z: float = 0.0
 
   movement: MovementParams = field(default_factory=lambda: DEFAULT_MOVEMENT_PARAMS)
   collision: CollisionParams = field(default_factory=lambda: DEFAULT_COLLISION_PARAMS)
