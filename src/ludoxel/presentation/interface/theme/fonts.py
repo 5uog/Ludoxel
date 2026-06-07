@@ -18,8 +18,8 @@ class FontInstallResult:
   font_paths: tuple[Path, ...] = ()
 
 
-_PRIMARY_FONT_FILES = ("MinecraftBold-nMK1.otf", "MinecraftBoldItalic-1y1e.otf", "MinecraftItalic-R8Mo.otf", "MinecraftRegular-Bmg3.otf")
-_FALLBACK_FONT_FILES = ("KaiseiOpti-Regular.ttf", "KaiseiOpti-Medium.ttf", "KaiseiOpti-Bold.ttf")
+_PRIMARY_FONT_FILES = ("KaiseiOpti-Regular.ttf", "KaiseiOpti-Medium.ttf", "KaiseiOpti-Bold.ttf")
+_FALLBACK_FONT_FILES = ("MinecraftBold-nMK1.otf", "MinecraftBoldItalic-1y1e.otf", "MinecraftItalic-R8Mo.otf", "MinecraftRegular-Bmg3.otf")
 
 
 def install_minecraft_fonts(*, font_dir: Path) -> FontInstallResult:
