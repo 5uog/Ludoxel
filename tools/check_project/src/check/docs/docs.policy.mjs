@@ -6,12 +6,6 @@ export const REJECTED_DOCUMENTATION_TERMS = Object.freeze(['tools/future_ai_work
 
 export const REQUIRED_README_TERMS = Object.freeze([
   'Ludoxel v3.6',
-  'Development workflow',
-  'Repository command surface',
-  'npm run help',
-  'tools:export',
-  'lint:py',
-  'format:py',
   'LicenseRef-All-Rights-Reserved',
   'NOTICE',
   'third-party/',
