@@ -94,13 +94,7 @@ def _normalized_blocks(blocks: Iterable[AboutBlock]) -> tuple[AboutBlock, ...]:
   return tuple(normalized)
 
 
-def render_about_sections(
-  *,
-  parent: QWidget,
-  layout: QVBoxLayout,
-  sections: Iterable[AboutSection],
-  text_factory: Callable[[QWidget, str, str], QLabel],
-) -> None:
+def render_about_sections(*, parent: QWidget, layout: QVBoxLayout, sections: Iterable[AboutSection], text_factory: Callable[[QWidget, str, str], QLabel]) -> None:
   for section in tuple(sections):
     title = str(section.title).strip()
     if title:

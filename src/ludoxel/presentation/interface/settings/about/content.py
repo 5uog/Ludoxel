@@ -51,213 +51,871 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
   AboutSection(
     title="Ludoxel v3.6",
     blocks=(
-      paragraph("Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person and third-person camera pipeline, persistent local application state, and platform-specific voxel renderers. The application is built as a desktop system in which world state, input ownership, simulation stepping, renderer behavior, resource loading, persistence, packaging, and legal distribution boundaries are exposed as engineering concerns rather than hidden behind a generic game label."),
-      paragraph("The current application exposes two persistent modes inside a single desktop shell: My World and Play Othello (Reversi). My World is the ordinary sandbox and inspection space. Play Othello (Reversi) is a separate application mode with its own board state, match controller, AI opponent, clocks, control hotbar, settings surface, opening-book storage, animation path, and rendering path. Both modes share the same application shell, runtime preference system, persistence discipline, renderer contract boundary, modal-window policy, title-mark search path, and app-managed data root."),
-      paragraph("The project is intentionally narrower than a complete Minecraft implementation. It uses selected Minecraft-like semantics as local references for survival health, fall damage, void damage, block placement, falling blocks, camera behavior, HUD expectations, and structural block families, while keeping the implemented world model restricted enough to permit direct inspection of collision, picking, block-state geometry, renderer upload, AI movement, Othello integration, desktop packaging, and persistent runtime state."),
+      paragraph(
+        "Ludoxel v3.6 is a PyQt6 desktop application that treats a restricted voxel world, a first-person and third-person camera system, persistent play-space state, AI-player behavior, Othello search, platform-specific rendering, and desktop packaging as one inspectable engineering object. The application is not described here as a general clone of any external game. Its technical identity is narrower and more precise: it is a controlled voxel-interaction laboratory in which world state, block-state geometry, collision, picking, persistence, rendering, input ownership, and verification commands are implemented as explicit software strata."
+      ),
+      paragraph(
+        "The term controlled voxel-interaction laboratory is used here in a defined sense. It means that Ludoxel deliberately limits its world model while making the implemented portion technically accountable: a block is not merely a visible cube, but an object whose definition, state codec, render boxes, collision volumes, pick volumes, structural connectivity, persistence representation, renderer payload, and user interaction behavior must remain mutually consistent across Python simulation code, GLSL shader resources, OpenGL upload paths, and the macOS wgpu path."
+      ),
+      code_block("""public application title: Ludoxel
+Python package and import namespace: ludoxel
+package version: 3.6.0
+source entry point: src/ludoxel/__main__.py
+runtime entry function: ludoxel.application.bootstrap.run_app
+console script: ludoxel = ludoxel.application.bootstrap:run_app
+declared Python range: >=3.13,<3.15
+principal GUI toolkit: PyQt6 >=6.6,<7
+numerical dependency: NumPy >=1.26,<3
+Windows renderer dependency: PyOpenGL >=3.1,<4
+macOS renderer dependencies: wgpu >=0.31,<0.32 and rendercanvas >=2.6,<3
+persistent play spaces: My World and Play Othello (Reversi)"""),
     ),
   ),
   AboutSection(
-    title="Application shell and space switching",
+    title="Source layout and architectural stratification",
     blocks=(
-      paragraph("The desktop shell owns the persistent transition between My World and Play Othello (Reversi). The pause menu exposes Play My World, Play Othello (Reversi), and Save & Quit. A destination action is disabled while its space is already active, and Save & Quit persists the current world, player state, active space, settings, and mode-local session data before application closure."),
-      code_block("Play My World\nPlay Othello (Reversi)\nSave & Quit"),
-      paragraph("Each play space persists its own player transform and session-specific state. Returning to My World restores the sandbox player, local world edits, inventory branch, AI actors, and sandbox runtime context. Returning to the Othello space restores the Othello player transform, board world, match defaults, clock state, persisted Othello state, and Othello-specific hotbar branch without treating either mode as a transient overlay over the other."),
-      paragraph("The pause overlay is organized as a screen-wide two-column surface. The left half is vertically centered as a combined title-and-control column: the same Ludoxel title image search path used by the loading screen is rendered above the boxed session and space-management controls, the image is shown without a separate color plate behind it, and the logo/control stack is centered as one unit."),
-      paragraph("The right half contains a vertically centered, unboxed live slim-arm player preview with skin import and reset actions placed immediately below it. The preview interaction path supplies desired view angles to the renderer API rather than defining a second cube-layout or UV implementation inside the UI. Backends that have not migrated full preview rendering degrade through the same public preview API instead of causing the settings surface to own renderer-specific body geometry."),
-      paragraph("Pointer motion across the pause surface, including both columns, steers the preview head orientation whenever the left mouse button is not held. Holding the left mouse button and dragging anywhere on the pause surface rotates the preview body around the vertical axis. The head yaw remains a bounded offset from the current body heading, and pitch follows the screen-space vertical direction. When third-person camera mode and gameplay HUD rendering are both active, the preview also shows the resolved session player name above the head by reusing the same HUD panel treatment applied in the world."),
+      paragraph(
+        "The source tree is organized around four top-level Python packages whose names describe dependency direction rather than visual location in the application. `ludoxel.foundations` owns identity, root resolution, diagnostics, scalar normalization, vector and matrix mathematics, ray-box tests, voxel traversal, chunk-coordinate utilities, and frustum clipping. `ludoxel.simulation` owns world state, block catalogs, block models, player and AI-player state, inventories, movement, collision, gravity, interaction, placement, picking, My World, and Othello rules. `ludoxel.application` owns bootstrap, preferences, persistence schemas, state stores, session factories, session managers, runtime-state pipelines, and fixed-step runners. `ludoxel.presentation` owns Qt windows, input adapters, HUD, overlays, settings pages, theme resources, audio playback, renderer contracts, OpenGL backends, wgpu backends, shader resources, visual-state composers, and viewport widgets."
+      ),
+      paragraph(
+        "This structure is a one-way dependency discipline. Foundations can be imported by every layer. Simulation can depend on foundations but must not know presentation widgets or application storage policy. Application connects simulation to persistence and runtime orchestration; it may reach presentation only at the bootstrap composition root. Presentation consumes simulation and application DTOs and renders or edits them through Qt, OpenGL, wgpu, audio playback, and settings controls. This is the central reason why `application.persistence.schema.PlayerStateFile`, `WorldStateFile`, `PersistedSettings`, `PersistedInventory`, `PersistedWorld`, `PersistedAiPlayer`, `PersistedPlaySpace`, and `PersistedOthelloSpace` exist as explicit dataclasses rather than allowing renderer or widget classes to become save-file schema."
+      ),
+      code_block("""reported repository export size: 534 files
+principal source packages:
+  src/ludoxel/foundations
+  src/ludoxel/simulation
+  src/ludoxel/application
+  src/ludoxel/presentation
+
+major package-resource roots:
+  src/ludoxel/presentation/interface/theme
+  src/ludoxel/presentation/rendering/backends/opengl/shaders
+  src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources
+  src/ludoxel/simulation/spaces/othello/resources
+
+representative public composition route:
+  src/ludoxel/__main__.py
+  -> ludoxel.application.run_app
+  -> ludoxel.application.bootstrap.run.run_app
+  -> ludoxel.presentation.interface.windows.main.run_app"""),
     ),
   ),
   AboutSection(
-    title="My World",
+    title="Application bootstrap, shell ownership, and play-space switching",
     blocks=(
-      paragraph("My World is the ordinary persistent sandbox space. It serves as a flat inspection environment in which the implemented block subset can be placed, broken, rendered, picked, collided against, persisted, restored, and compared across renderer paths. The space is deliberately restricted when measured against the breadth of a complete Minecraft implementation, but the implemented subset is treated as a serious simulation surface rather than a decorative mockup."),
-      paragraph("Outside creative mode, the local player runs under a survival-health path with a 20-point health pool shown on the gameplay HUD. Fall damage follows Minecraft-like thresholds, and lethal damage enters the ordinary death-and-respawn flow. Falling below y = -64 applies repeated void damage on a fixed half-second cadence until health reaches zero, so the void path remains part of the ordinary health and damage system rather than a separate scripted death overlay."),
-      paragraph("The current catalog includes full cubes together with slabs, stairs, fences, fence gates, and walls. Each implemented family is driven by explicit block-state logic for render boxes, collision volumes, pick volumes, structural connectivity, wall top-support, and fence-gate behavior. The same state-derived geometry is used to align visible selection, collision response, falling-block support, particle emission, and persisted restart behavior."),
-      paragraph("Sand, red sand, and gravel are gravity-affected blocks. They leave the static world as transient falling bodies, descend on a Minecraft-like falling-block tick, and render continuously between ticks rather than being teleported cell-by-cell through the chunk mesh. Their landing path treats lower stairs, fences, fence gates, and walls as valid resting supports for a full falling block, while collision with a lower slab destroys the falling block and emits the same block-break particle effect used by ordinary manual block breaking."),
-      paragraph("Block destruction emits short-lived terrain-fragment break particles. Spawn positions are sampled from the broken block's active render boxes rather than from a hard-coded full-cube assumption. Stochastic volume sampling prevents thin members and partial-volume blocks from producing uniform fragment rows, so slabs, fences, walls, stairs, and other partial-volume structures emit fragments from their implemented geometry."),
-      paragraph("The player collision path includes depenetration for pre-existing overlaps so that block edits do not leave the camera embedded in geometry. Closed fence gates preserve the Minecraft-like case in which a player already standing inside the gate is not forcibly expelled when the gate is shut around them. Landed gravity blocks likewise preserve overlap when they settle onto the player rather than pushing the player aside. Persisted-state restoration reconstructs those overlap exemptions before the first post-load collision step, eliminating the restart case in which a player saved inside a closed fence gate was lifted onto the gate on relaunch."),
+      paragraph(
+        "Application startup is deliberately routed through `src/ludoxel/__main__.py`, which calls `multiprocessing.freeze_support()` before transferring control to `ludoxel.application.run_app`. The application package facade resolves `run_app` lazily through `ludoxel.application.bootstrap`, and `ludoxel.application.bootstrap.run.run_app` computes `project_root`, `resource_root`, and `data_root` by using `default_project_root`, `default_resource_root`, and `default_runtime_data_root` before installing Othello book storage hooks and importing the Qt shell. This order keeps root resolution and persistence-hook installation outside presentation initialization while still permitting the bootstrap composition root to connect the final desktop window."
+      ),
+      paragraph(
+        "The desktop shell hosts two persistent spaces inside one application surface. `My World` is the sandbox voxel space. `Play Othello (Reversi)` is a separate persistent Othello space with its own board, hotbar, match settings, AI opponent, clocks, animation path, and renderer integration. The pause menu offers the three persistent actions `Play My World`, `Play Othello (Reversi)`, and `Save & Quit`; the first two switch active play-space context, and the last persists world, player, and mode-local state before closing. Each space owns its own player transform and session-specific state rather than sharing a single mutable player slot across unrelated modes."
+      ),
+      code_block("""bootstrap functions and classes:
+  ludoxel.application.bootstrap.run.run_app()
+  ludoxel.application.bootstrap.run._ensure_python_314()
+  ludoxel.application.sessions.context.play_space.PlaySpaceContext
+  ludoxel.application.sessions.factories.my_world.create_my_world_session()
+  ludoxel.application.sessions.factories.othello.create_othello_session()
+  ludoxel.application.sessions.managers.session.SessionManager
+  ludoxel.application.sessions.runners.fixed_step.FixedStepRunner
+
+persistent shell actions:
+  Play My World
+  Play Othello (Reversi)
+  Save & Quit
+
+startup identity behavior:
+  stored player name present -> use persisted identity
+  stored player name blank -> show name dialog and allow random session name generation on each restart"""),
     ),
   ),
   AboutSection(
-    title="Block interaction and held placement",
+    title="Runtime persistence, file integrity, and data-root policy",
     blocks=(
-      paragraph("The ordinary block interaction path remains active inside My World. Holding the left mouse button in creative mode repeats block breaking continuously. Holding the right mouse button repeats both block placement and fence-gate interaction continuously. The persistent default cadences are 0.30 seconds for break repetition, approximately 0.008 seconds for placement continuation, and 0.20 seconds for interaction repetition. These cadences are stored with runtime preferences and can be edited from the Game Player settings page."),
-      code_block("break repetition: 0.30 s\nplacement continuation: approximately 0.008 s\ninteraction repetition: 0.20 s\ninitial held-placement dwell: 0.20 s"),
-      paragraph("Continuous right-click placement is constrained to a single aligned continuation line while the button remains held. The maintained line can grow in either signed direction from the first placed block. The first right-click placement remains a single isolated action, and the held repeater arms only after an initial dwell. Once armed, the held place path resumes on the high-cadence continuation path before the player collision step of each simulation tick, removing accidental two-block bursts on ordinary single clicks without sacrificing sustained bridging cadence."),
-      paragraph("When the player begins a held sequence from a directly visible horizontal side face, the sequence enters a dedicated face-chain mode whose continuation axis remains locked to the same face orientation of the frontier block. When the sequence begins from supporting ground without a qualifying visible frontier face, the placement path synthesizes the same side-face basis that would result from placing against the supporting block in the current facing direction. Grounded crouch bridging prefers that horizontal reacharound basis over accidental top-face or bottom-face hits that would redirect the action into upward or downward stacking."),
-      paragraph("The start-of-sequence support-face classifier accepts any hit on the supporting block that lies on the intended side half rather than only a narrow outer-edge strip. When a supporting-block hit resolves to the top or bottom face, the classifier reconstructs the intended horizontal side from the actual top-surface hit displacement whenever one horizontal axis dominates the local corner geometry. This prevents a clearly side-committed corner aim from falling back to the raw facing direction and emitting an unwanted forward wall before the side route exists."),
-      paragraph("Vertical continuation is admitted only while the held sequence is still at its first follow-up decision and only while the player remains horizontally co-located with the original two-block anchor pair formed by the first placed block and its immediately preceding support block. Live support or pick context on that same pair also counts as anchored evidence. For horizontal-face starts, the preceding support block is the immediately previous block along the maintained horizontal continuation axis. For top-face and bottom-face starts, it is the actual block clicked to produce the first upward or downward placement, and the vertical branch is accepted only when the commanded vertical sign matches that starting face orientation."),
-      paragraph("When the initial right-click cannot place because the target cell is still empty in the world but temporarily occupied by the player body, the repeater still arms from that clicked face and treats the unresolved hit.place cell as the starting cell of the held route. The deferred route retries that same unresolved start cell against the originally clicked support face until the block genuinely materializes there. A successful materialization preserves the matching upward or downward continuation state rather than discarding the vertical command until a later retry."),
-      paragraph("The maintained frontier advances only when the attempted target cell remains a valid world block at that exact cell after the placement decision. Failure caused by player overlap, missing support, rejected placement, or unsupported falling-block conversion leaves repeat progress unchanged. The same frontier gate applies to gravity-affected placements, preventing an unsupported falling block from being treated as the next support before it leaves the static world and terminates that held continuation after the single emitted falling block."),
-      paragraph("The visible-face, support-face, and generic horizontal repeat routes consult the live movement command projected onto the maintained horizontal continuation axis. They refuse to advance the forward frontier whenever the held sequence is not actually commanding motion along that axis, leaving the first follow-up decision available to the upward or downward branch. Once a vertical branch is recognized, the repeater persists the reoriented vertical line even across a no-placement retry, preventing the next tick from falling back to the previous horizontal route merely because the player had not yet crossed the next placement threshold."),
-      paragraph("The first detected world-space displacement away from the hold origin locks the entire held vertical branch to that sign. A hold that has committed upward no longer emits downward placements, and a hold that has committed downward no longer emits upward placements. Once a vertical line is committed, continuation advances only toward the next neighboring frontier cell in that locked direction from the player's signed feet-height displacement measured against the hold origin rather than from the changing view ray. If the player outpaces that immediate neighboring frontier cell by more than one block, the held path does not back-fill skipped vertical cells."),
-      paragraph("Support-face continuation no longer free-runs while the view remains locked to the original supporting block face. It evaluates both the directly visible frontier face and a forward projected frontier-face intersection against the maintained bridge direction. The projected frontier path remains unavailable while the player is still grounded on the pre-advance support block and becomes available only after the player has gone airborne or transferred support onto the present frontier block, with the additional requirement that the current pick ray has already advanced onto that frontier block rather than still resolving to an older support block."),
-      paragraph("When the live view becomes nearly vertical, the effective interaction pitch is clamped inside the same finite domain used by the player look state, preventing near-vertical camera shake from flipping the rendered image or inverting the horizontal intent derived by the support-face classifier. For ordinary visible side-face continuation and generic horizontal continuation, the first follow-up vertical branch also accepts an upward start from the live jump command and is available from top-face and bottom-face starts."),
-      paragraph("Wall top-support updates account for the presently implemented block families above the wall. A straight wall run that would otherwise remain flat reintroduces its center post when the directly overlying block is another wall or a fence. A directly overlying full cube, fence gate, slab, or stairs block promotes supported wall arms to full-height tall segments and preserves the flat center when opposite tall supports are formed, matching the implemented Minecraft-style wall top-support distinction for the available block subset."),
+      paragraph(
+        "Runtime-writable state is kept outside immutable package resources. `default_runtime_data_root` resolves the application-managed data root and honors `LUDOXEL_DATA_ROOT` when it is explicitly supplied. The runtime root is divided into `state` and `cache`: player settings, window state, world edits, custom player skin, and user-authored Othello opening-book data belong to state, while compiled Othello opening-book cache belongs to cache. Repository-level `configs` is treated as previous-format input for migration and compatibility, not as the ordinary v3.6 write target."
+      ),
+      paragraph(
+        "Persistence is expressed through small dataclasses instead of ad hoc dictionaries. `PlayerStateFile` currently serializes version `7`, current play-space id, settings, inventory, and Othello settings. `WorldStateFile` currently serializes version `3` and contains the two persisted play-space bundles. `AppStateStore.load` reads `player_state.json` and `world_state.json`, verifies runtime files when a manifest exists, migrates previous-format input where available, and returns an `AppState` aggregate. `AppStateStore.save` writes both JSON files through `JsonFileStore`, then updates the HMAC manifest."
+      ),
+      paragraph(
+        "The integrity layer is an external-edit and accidental-corruption detector. `update_runtime_integrity_manifest` stores HMAC-SHA256 digests for protected runtime files by using a locally generated 32-byte key, and `verify_runtime_file` compares stored and computed digests with `hmac.compare_digest`. The file-reading path hashes the relative path, a null separator, and file data streamed in `1024 * 1024` byte chunks. This is an integrity signal for local runtime files, not a cryptographic prevention mechanism against a user who can edit both data and key material."
+      ),
+      code_block("""state files:
+  state/player_state.json
+  state/world_state.json
+  state/player_skin.png
+  state/othello_opening_book.json
+
+cache files:
+  cache/othello_opening_book_cache.json
+
+integrity implementation:
+  class AppStateStore
+  class JsonFileStore
+  class PlayerStateFile(version=7)
+  class WorldStateFile(version=3)
+  class PersistedSettings
+  class PersistedInventory
+  class PersistedPlayer
+  class PersistedWorld
+  class PersistedAiPlayer
+  class PersistedPlaySpace
+  class PersistedOthelloSpace
+  function verify_runtime_file(data_root, relative_path)
+  function update_runtime_integrity_manifest(data_root, relative_paths)
+  algorithm: hmac-sha256
+  generated key length: 32 bytes
+  protected paths: player_state.json, world_state.json, player_skin.png, othello_opening_book.json"""),
     ),
   ),
   AboutSection(
-    title="Inventory, special items, and AI players",
+    title="Fixed-step simulation, movement, collision, and survival parameters",
     blocks=(
-      paragraph("The block inventory is opened with E, world edits persist with the sandbox space, and re-entering My World restores the previous player transform together with local world modifications. The creative inventory exposes a searchable field for block names, block identifiers, and special-item identifiers, allowing large catalog scans without manual visual paging."),
-      paragraph("The creative inventory includes an AI special item. Right-clicking a valid placement cell with that item spawns one standby AI at that cell immediately rather than opening a spawn-time dialog. A standby AI remains waiting at its spawn position until the player right-clicks that specific instance, which opens an application-modal per-instance settings window built on the detached sidebar-dialog shell and main.qss styling path used by common settings surfaces."),
-      code_block("Standby\nRoute Patrol\nFree Roam / PVP\nAggressive\nPeaceful\nAllow block placement\nDelete AI"),
-      paragraph("The per-instance AI settings surface controls behavior mode, personality, block-placement permission, route style, route editing, and actor deletion. Route configuration temporarily switches the active hotbar to a dedicated route-edit branch whose leftmost slot contains the check item, whose second slot contains the eraser item, and whose rightmost slot contains the cancel item. While route editing is active, left-clicking ground-block top faces records route points, the eraser slot focuses and deletes points under the crosshair, and the viewport draws draft and committed routes as world-space line strips."),
-      paragraph("The actor currently being edited is frozen for the duration of route editing, and any pending background route request for that actor is canceled before editing begins so that the instance does not continue stepping into damage or death while its patrol path is authored. Closing the route back onto the first point yields a continuous loop, while an open route causes the AI to traverse to the terminal point, return to the first point, and repeat."),
-      paragraph("Route patrol offers Strict and Flexible routing styles. The strict form aims directly at authored patrol points. The flexible form snapshots a bounded world window around the patrol region, offloads full support-cell route planning to a dedicated background worker, accepts only complete routes that reach the presently authored patrol point, and reuses the returned support-cell path until the world changes or the next edge is proved blocked by collision, failed placement, or repeated lack of progress."),
-      paragraph("The flexible planner uses the same collision-derived support semantics as the player ground detector. It prefers ordinary short step-up and auto-jump traversals before longer parkour, admits short downward drop transitions where landing support is collision-safe, resolves authored patrol points onto the nearest reachable standable support within a wider local neighborhood, and periodically retries failed patrol targets even when the static world has not changed. This prevents a locally failed jump or descent from freezing the actor forever on the same world revision."),
-      paragraph("While no fresh full route is available, the runtime keeps a short-lived set of recently avoided support cells and applies a bounded local recovery search that prefers genuinely different nearby supports over immediately repeating the same blocked jump or edge. When no complete route exists to the present authored patrol point, the actor freezes in place rather than skipping ahead to a later patrol point or marching toward an unreachable closest-approach cell."),
-      paragraph("During active melee pursuit, route AI suspends route planning and falls back to direct combat pursuit so that combat does not burn route-planner time on the gameplay thread. Aggressive route AI may break off briefly to attack the player when the player enters the nearby engagement volume and then returns to the patrol path after the target leaves that range. Flexible route execution drives vertical support changes and longer jumps through an explicit edge-commit target, allowing the runtime to commit to takeoff edges for drops and longer jumps rather than braking early and falling off loosely."),
-      paragraph("Free-roam and route AI use the same player collision, jump, placement, interaction, and kinematic stepping path as the local player. They can receive and deal melee knockback, flash red briefly when damaged, swing the visible attack arm during successful melee strikes, and use short jump-reset, knockback-reduction block placement, and bridge-placement heuristics while traversing and fighting whenever block placement is enabled for that instance."),
-      paragraph("In survival mode, an aggressive AI attack lands only when the player is actually inside the AI eye-line within a three-block melee reach, while a peaceful AI does not attack. Local player left-clicks emit weak attack samples on empty swings, strong attack samples only on successful AI hits, and never stack weak and strong variants on the same click. Non-landing damage on the local player and damage on AI actors emit randomized player hit samples, and the first-person arm follows the same hurt-tint flash that modulates the player skin."),
-      paragraph("Spawned AI players use the same skin pipeline as the local player, render through the same third-person player-model and shadow path, and persist independently inside each play space together with transform, health, behavior mode, personality, block-placement permission, route style, and route state."),
+      paragraph(
+        "The gameplay loop separates simulation cadence from renderer presentation. `GameLoopParams` defines `sim_hz = 120.0`, and `step_dt()` therefore returns `1 / 120` seconds for the fixed-step simulation path. Movement constants are kept in `MovementParams`, collision tolerances in `CollisionParams`, and runtime user preferences in `RuntimePreferences`; this prevents a settings page, physics rule, and persistence schema from silently becoming three independent definitions of the same quantity."
+      ),
+      paragraph(
+        "The local player is modeled by `PlayerEntity` and advanced through movement, collision, and damage services. The default movement profile uses a `20.0` tick reference for Minecraft-like reasoning, a walking speed of `4.317`, sprint speed of `5.612`, crouch multiplier `0.3`, gravity `32.0`, maximum fall speed `78.4`, jump velocity `8.4`, fly speed `10.92`, and auto-jump cooldown `0.12 s`. Collision uses an epsilon of `1e-4`, a ground probe of `0.03`, a step height of `0.5625`, and neighborhood padding values that bound local collision searches around the player body."
+      ),
+      paragraph(
+        "The survival path gives the local player a `20`-point health pool. Fall damage is computed after a safe distance of `3.0` blocks, and void damage begins below `y = -64.0`, applying `4.0` damage on a `0.50 s` cadence until death. Melee sampling is also explicit: local empty swings and successful AI hits are separated, melee damage cooldown is `0.50 s`, first-person and third-person hurt feedback share the same state, and knockback calculations use the movement vector rather than storing an isolated visual-only strike event."
+      ),
+      code_block("""classes and functions:
+  MovementParams
+  CollisionParams
+  GameLoopParams
+  PlayerEntity
+  PlayerMotionState
+  PlayerStepInput
+  RuntimePlayerStepResult
+  fall_damage_amount()
+  damage_local_player()
+  kill_player()
+  respawn_player()
+  step_player_motion()
+  resolve_player_collision()
+
+fixed-step and movement values:
+  simulation frequency: 120.0 Hz
+  simulation dt: 0.0083333333 s
+  movement tick reference: 20.0 Hz
+  walk_speed: 4.317
+  sprint_speed: 5.612
+  crouch_mult: 0.3
+  gravity: 32.0
+  fall_speed_max: 78.4
+  jump_v0: 8.4
+  fly_speed: 10.92
+  auto_jump_cooldown_s: 0.12
+  collision_eps: 1e-4
+  ground_probe: 0.03
+  step_height: 0.5625
+  default health: 20.0
+  void threshold: y < -64.0
+  void damage interval: 0.50 s
+  void damage amount: 4.0"""),
     ),
   ),
   AboutSection(
-    title="Camera, HUD, skin, and video settings",
+    title="World state, flat generation, chunks, and GPU residency",
     blocks=(
-      paragraph("Camera perspective is part of persistent runtime state. The default cycle order follows the Minecraft-style F5 sequence First Person, Third Person Back, Third Person Front, and First Person. The same action is remappable through the keybind settings, and the current perspective can also be selected explicitly from the video settings page."),
-      code_block("First Person -> Third Person Back -> Third Person Front -> First Person"),
-      paragraph("Third-person camera placement is collision-constrained against block collision volumes, so the camera retracts before penetrating nearby geometry and does not expose interior block faces by clipping through them. The third-person projection uses a smaller near plane together with a larger camera-clearance margin, keeping nearby block faces visible instead of allowing them to vanish at the lens boundary while the camera is pressed back against geometry."),
-      paragraph("The gameplay crosshair is suppressed outside first person. Gameplay HUD rendering is remappable and defaults to F1 under Controls -> Gameplay Keys. When HUD rendering is enabled and the camera is in third person, the resolved session player name is projected above the player head in world space and in the pause preview, uses the same translucent F3-style background tone without a surrounding frame, fades when world geometry occludes the head or when the player is crouching, and disappears together with the rest of the gameplay HUD when F1 is used or the same setting is disabled from the controls window."),
-      paragraph("The in-world name tag follows the rendered player-model base position rather than the raw physics body, so shallow step transitions do not produce overshoot-and-return motion. Crouch-release opacity restoration follows the live crouch input state rather than waiting for the eased crouch-eye offset to settle. The name tag is screen-composited from world projection and does not participate in shadow casting."),
-      paragraph("The third-person player body and the first-person arm use a persistent slim-arm skin texture. The default texture remains Alex. A custom modern 64x64 skin can be imported from the pause menu, the imported file is overwritten in place under the app-managed data root as state/player_skin.png, and resetting returns the renderer to Alex. Both held blocks and held Othello control items follow the same swing state in the visible model and in the shadow caster, and Othello control item orientation is corrected consistently across first person, third person, and the shadow path."),
-      paragraph("Step transitions drive the rendered player base height with the same vertical easing used by the camera eye, removing the previous shadow-only teleport impression while ascending or descending shallow ledges."),
-      paragraph("Video settings are hosted in a separate application-modal settings window rather than inside an in-viewport overlay, so visual changes can be inspected against the live world while the window remains open. That window exposes the default Minecraft-style crosshair together with a persistent 16x16 pixel editor. A custom pattern can be drawn with the left mouse button, erased with the right mouse button, and reset through Clear Board, which simultaneously clears the editor board and restores the default Minecraft-style crosshair."),
-      paragraph("The gameplay crosshair is rendered without the previous forced black outline, regardless of whether the active pattern is the default form or a user-authored bitmap. Cloud density and cloud seed follow the same enabled-state semantics used by view bobbing and camera shake, so disabling clouds visibly disables those sliders rather than leaving stale editable values on screen."),
-      paragraph("The Video page exposes persistent break-particle spawn-rate and break-particle speed controls together with persistent minimum and maximum arm-rotation limits and a persistent arm-swing duration control that caps visible swing speed for the player model. The Game Player page retains the persistent block-break and block-place repeat interval controls alongside movement parameter controls and stores the explicit player name. Leaving that field blank keeps the pre-launch name dialog enabled and causes a new random session name to be generated at each restart."),
-      paragraph("The detached settings shell includes this About page with creator attribution and a project overview, reusing the bundled Ludoxel title mark when no separate creator portrait asset is present in the repository."),
+      paragraph(
+        "Voxel state is held in `WorldState`, which stores a block mapping, revision number, dirty chunk set, chunk index, column index, chunk mesh revision map, gravity-dirty columns, and an internal lock. The world API includes `set_block`, `remove_block`, `set_blocks_bulk`, `snapshot_for_chunk_build`, `snapshot_block_window`, `snapshot_column`, `column_y_values`, `replace_all`, `to_persisted_dict`, and `from_persisted_dict`, so persistence, chunk building, gravity, and interaction all observe the same domain object rather than private renderer-specific copies."
+      ),
+      paragraph(
+        "The current generated My World baseline is intentionally flat. `generate_flat_world` defaults to `half_extent = 32`, `ground_y = 0`, and `block_id = minecraft:grass_block`, producing a square from `-32` through `32` on both horizontal axes. That is a `65 * 65` block floor, or `4225` initial ground cells, before the user places, breaks, or persists modifications. The function `generate_test_map` delegates to this flat generator, which makes the flat world a deliberate reproducible fixture rather than an incidental fallback map."
+      ),
+      paragraph(
+        "Chunk addressing is based on `CHUNK_SIZE = 16`. `chunk_key` maps world coordinates to chunk coordinates by integer division, and `neighbor_chunk_keys_for_cell` marks adjacent chunks when edits occur on chunk boundaries. `WorldUploadTracker` then operates as a renderer-residency coordinator: it uses a single background worker, drains a bounded number of completed results per update, keeps a bounded cache of mesh-build results, and distinguishes visible chunks, retained chunks, prefetch radius, and prewarm radius. The important engineering point is that chunk residency is not equivalent to world state; world state remains authoritative, while renderer upload is a derived, eventually synchronized view."
+      ),
+      code_block("""world functions:
+  generate_flat_world(half_extent=32, ground_y=0, block_id="minecraft:grass_block")
+  generate_test_map(seed=0)
+  chunk_key(x, y, z)
+  chunk_origin(chunk_key_value)
+  neighbor_chunk_keys_for_cell(x, y, z)
+  WorldState.set_block()
+  WorldState.remove_block()
+  WorldState.set_blocks_bulk()
+  WorldState.snapshot_for_chunk_build()
+  WorldState.to_persisted_dict()
+  WorldState.from_persisted_dict()
+
+numeric world constants:
+  CHUNK_SIZE: 16
+  default flat half extent: 32
+  default flat ground y: 0
+  default flat side length: 65 cells
+  default flat floor size: 4225 blocks
+  render distance range: 2..50 chunks
+  default render distance: 6 chunks
+
+upload coordination:
+  class WorldUploadTracker
+  background workers: 1
+  max results per drain: 4
+  max cached mesh results: 192
+  prefetch radius: render_distance + 2
+  prewarm radius: render_distance + 1"""),
     ),
   ),
   AboutSection(
-    title="Fullscreen and detached dialog behavior",
+    title="Block registry, block-state geometry, and structural semantics",
     blocks=(
-      paragraph("When the detached settings window or the detached Othello settings window is opened while fullscreen is enabled, the host window temporarily returns to the normal state for the duration of that detached dialog and reapplies the stored fullscreen preference only after the detached window has closed. This preserves access to dialog controls without forcing the user to lose the persisted fullscreen preference merely to edit settings."),
-      paragraph("The separate modal settings window remains live so that visual settings can be inspected against the world in real time. Time-based renderer motion such as cloud drift and animated-texture stepping is paused for true application deactivation and for pause, death, inventory, Othello-settings, and short-lived notice-dialog states."),
+      paragraph(
+        "Block behavior is not stored as a monolithic texture id. A block enters the simulation through `BlockDefinition`, `BlockTextures`, the default registry, model-specific geometry functions, state codecs, and structural-update rules. The exported v3.6 code contains full cubes together with slabs, stairs, fences, fence gates, and walls; each family is represented through explicit state and geometry functions so that rendering, picking, collision, support checks, placement resolution, and neighbor updates can agree on the same object."
+      ),
+      paragraph(
+        "The inspected registry construction registers wood, stone, decorative stone, sandstone, ore, special stone, and special dirt families. At the registered block-id level, the observed v3.6 snapshot contains `276` concrete block definitions before block-state expansion. The wood branch contributes planks, slabs, stairs, fences, and fence gates across `13` plank-like material entries, including `12` fence-capable wood entries and the mosaic branch; the stone-like branches contribute `213` registered variants across stone, decorative stone, sandstone, ore, special stone, and special dirt catalog modules. This count is a codebase count, not a claim about parity with a complete Minecraft catalog."
+      ),
+      paragraph(
+        "Geometry is authored in sixteenth-block units through functions such as `px_box`, and then converted to local or world AABBs. For example, fence posts use a central `6..10` pixel range on the X and Z axes, walls use a central `4..12` pixel post, and fence-gate variants alter collision and render boxes according to open, closed, facing, and in-wall state. The term state-parametric voxel geometry is used here to describe that design: the geometry of a block is a function of its block id, encoded properties, neighboring states, and requested purpose, rather than a fixed mesh attached to a texture name."
+      ),
+      code_block("""principal block classes and functions:
+  class BlockDefinition
+  class BlockTextures
+  class BlockRegistry
+  create_default_registry()
+  register_wood_blocks()
+  register_stones()
+  collision_aabbs_for_block()
+  render_boxes_for_block()
+  pick_boxes_for_block()
+  pick_aabbs_for_block()
+  has_full_top_support_for_block()
+  parse_state()
+  format_state()
+  prop_as_bool()
+  collect_structural_neighbor_updates()
+
+observed registered block-id scale:
+  total registered block ids: 276
+  wood-family variants: 63
+  stone-like variants: 213
+  gravity-affected block ids: sand, red_sand, gravel
+
+representative geometry:
+  slab heights: half-block state selected by face and hit position
+  fence post: px_box(6, 0, 6, 10, 16, 10)
+  wall post: px_box(4, 0, 4, 12, 16, 12)
+  fence gate: open and closed variants, including in-wall vertical offsets
+  wall top support: full cubes, fences, fence gates, slabs, stairs, and walls affect arm and post height"""),
     ),
   ),
   AboutSection(
-    title="Play Othello (Reversi)",
+    title="Picking, placement, breaking, and held interaction cadences",
     blocks=(
-      paragraph("Play Othello (Reversi) is a second persistent play space hosted inside the same application shell. It has its own hotbar, match settings, AI opponent, clocks, board interaction path, piece animation path, and rendering path. This mode is a specialized subsystem layered onto the renderer and UI framework, and it should be understood as a self-contained application mode rather than evidence that the surrounding sandbox has reached general game completeness."),
-      paragraph("Within this space, block placement, block breaking, and the block inventory overlay are disabled. The Othello hotbar is reserved for control items. Slot 1 contains Start, and slot 9 contains Settings. Selecting either slot equips a dedicated enlarged control icon rather than leaving the hand empty. The icon is rendered as a single visible face in first person and is attached to the third-person player model and its shadow so that the active control item remains legible before use."),
-      code_block("Slot 1: Start\nSlot 9: Settings"),
-      paragraph("Right-clicking Start begins a fresh match or restarts the current match under the stored defaults. Right-clicking Settings opens a separate application-modal Othello settings window that configures AI strength, time control, disc-animation mode, player order, sacrifice level, worker count, hash level, and opening-book learning limits for the next match."),
-      paragraph("The difficulty menu exposes Weak, Medium, Strong, Insane, and Insane+. Insane remains the cached bitboard-search engine without enforced opening-book selection, while Insane+ is the higher tier that consults the bundled and user-extended opening book before falling through to the same search core."),
-      code_block("Weak\nMedium\nStrong\nInsane\nInsane+"),
-      paragraph("The time-control menu exposes Timer off, one-move limits of 5, 10, and 30 seconds, and per-side limits of 1, 3, 5, 10, and 20 minutes. The animation menu exposes Animation off together with Ripple fast and Ripple slow, both of which start successive flips from the placed disc outward rather than rotating every captured disc at once."),
-      code_block("Timer off\n1 move 5 seconds\n1 move 10 seconds\n1 move 30 seconds\n1 minute per side\n3 minutes per side\n5 minutes per side\n10 minutes per side\n20 minutes per side\nAnimation off\nRipple fast\nRipple slow"),
-      paragraph("The settings window can extend the opening book by launching threshold-controlled learning with explicit depth, per-move error, cumulative error, and leaf-error bounds. The learning controls admit depth 0 through 60 with default 55, and per-move, cumulative, and leaf error bounds each admit 0 through 24 with defaults 22, 19, and 20. Starting book learning resets any active match state before the learning run begins, preventing clocks and board state from leaking into the learning session."),
-      paragraph("A learning run exposes cancellable progress state, mirrors current status inside the detached settings window and the in-world Othello title HUD, temporarily projects the currently explored learning position onto the rendered board, and preserves partial progress on cancellation because user-generated book lines are written persistently under the app-managed data root as state/othello_opening_book.json. The compiled opening-book cache lives under cache/othello_opening_book_cache.json."),
-      paragraph("Book storage is symmetry-aware at the position level through canonicalized board transforms, so search lookup and learning-state pruning treat rotated and reflected equivalents as the same opening-book position. A pristine persisted Othello state still renders the standard initial 2x2 opening discs before the first match is started. The default Othello configuration remains Medium, 20 minutes per side, Animation off, and player moves first."),
-      paragraph("Disc placement is performed by aiming at the board and pressing the left mouse button on a legal square. Hovering reports the algebraic square name, such as a1 through h8. The Othello HUD uses the same panel style as the normal F3 debug HUD, is hidden whenever the ordinary F3 HUD is shown or gameplay HUD rendering is disabled with F1, and otherwise reports current turn, best move, principal line, player-versus-AI evaluation, and a painted evaluation line graph derived from the current search trace. The rendered board is hosted in a separate persistent world space, and match clocks pause while the pause menu or the separate Othello settings window is open."),
+      paragraph(
+        "The interaction layer is centered on `InteractionService`. Picking, breaking, placing, fence-gate toggling, slab merging, structural neighbor updates, player-overlap rejection, and world-revision updates pass through service functions rather than being scattered across viewport event handlers. `pick_block_for_session`, `break_block_for_session`, `place_block_from_hit_for_session`, `place_block_for_session`, and `interact_block_at_hit_for_session` expose the session-facing path, while lower-level placement policy functions decide slab type, stair facing, fence-gate facing, wall state, and support validity."
+      ),
+      paragraph(
+        "Continuous interaction is parameterized through persisted runtime preferences. The default left-button creative break cadence is `0.30 s`. The held-placement path uses an initial dwell of `0.20 s` and then a continuation cadence of `1 / 120 s`, approximately `0.008333 s`, matching the simulation step. Fence-gate interaction repeats at `0.20 s`. These values are not UI decoration; they govern the temporal relation between mouse input, simulation steps, collision checks, and world edit commits."
+      ),
+      paragraph(
+        "Held placement is constrained by route state. The first right-click remains a single isolated placement; only after the initial dwell does the continuation route advance. The route can be a visible side-face chain, a synthesized support-face chain for crouch bridging, a generic horizontal route, or a first-follow-up vertical branch. The maintained frontier advances only when a valid world block actually remains at the attempted target cell, so rejected placement, player overlap, missing support, and unsupported falling-block conversion do not falsely advance the route."
+      ),
+      code_block("""interaction classes and functions:
+  class InteractionService
+  class PlacementPolicy
+  pick_block_for_session()
+  break_block_for_session()
+  place_block_from_hit_for_session()
+  place_block_for_session()
+  interact_block_at_hit_for_session()
+  place_from_hit_for_service()
+  place_block_for_service()
+  toggle_fence_gate_if_hit_for_service()
+  player_intersects_state_for_service()
+  resolve_place_state()
+  choose_half_type()
+
+default repeat parameters:
+  block_break_repeat_interval_s: 0.30
+  block_place_repeat_initial_delay_s: 0.20
+  block_place_repeat_interval_s: 1 / 120 = 0.0083333333
+  block_interact_repeat_interval_s: 0.20
+  editable interval range: 0.0..1.0 s
+
+hotbar and key defaults:
+  inventory: E
+  creative mode: B
+  gameplay HUD: F1
+  debug HUD: F3
+  debug shadow: F4
+  camera cycle: F5
+  clear selected slot: Q
+  movement: W, A, S, D, Space, Shift, Control
+  hotbar slots: 1..9"""),
     ),
   ),
   AboutSection(
-    title="Startup route and runtime shell",
+    title="Gravity blocks and break-particle sampling",
     blocks=(
-      paragraph("The canonical source-tree startup route is python -m ludoxel. The package entry path is rooted at src/ludoxel/__main__.py, after which control passes into ludoxel.application.bootstrap. The public project title is Ludoxel, while the current source package and import namespace remain ludoxel. This separation allows the visible application identity to evolve without forcing an immediate package-level rename across the codebase."),
-      code_block("python -m ludoxel\nludoxel.application.bootstrap\nsrc/ludoxel/__main__.py"),
-      paragraph("At startup, Ludoxel enforces a single desktop shell instance. If a second launch is attempted while an instance is already running, the currently visible top-level Ludoxel surface is restored, raised, and activated instead of opening a second process window."),
-      paragraph("Before either the loading surface or the main window is shown, the shell loads the persisted player identity. When no explicit name is stored, it presents a dedicated player-name dialog in front of the loading screen. The dialog permits either an explicit name or an empty continuation. An empty value is intentionally preserved as no stored name, causing the runtime to generate a new random session name on each launch and to present the same dialog again on the next restart."),
-      paragraph("After player identity resolution, the shell presents a dedicated top-level loading screen before the main window is allowed to surface. The embedded viewport still retains its in-window loading overlay until renderer initialization has completed and the initially visible chunk set has reached GPU residency. Both loading surfaces search bundled UI assets for the Ludoxel title mark and fall back to textual Ludoxel when no decodable asset is present."),
-      code_block("assets/ui/ludoxel.png\nassets/ui/ludoxel.svg\nassets/ui/ludoxel.jpg\nassets/ui/ludoxel.jpeg\nassets/ui/ludoxel.webp\nassets/ui/ludoxel.bmp"),
-      paragraph("Simulation input remains suspended during loading, so the user does not observe previous in-world hitching while initial chunk uploads converge, and the launch path no longer leaks an initial blank frame from a not-yet-initialized renderer surface. The persisted window rectangle and target monitor are restored before either the splash screen or the main window is shown, so relaunching returns the application to the previous display and window size rather than recentering it on the primary monitor."),
-      paragraph("Space transfers between My World and Play Othello (Reversi) reuse a retained CPU-side chunk-build cache and immediately re-enter the same loading overlay while the target residency set remains unresolved. When the desktop shell becomes inactive, simulation input is suspended and mouse capture is released. The pause menu opens only when that deactivation occurred from ordinary captured gameplay. If the cursor had already been released because the user was in inventory or another non-captured state, the current screen remains in place instead of being replaced by an unsolicited pause surface."),
-      paragraph("When the shell becomes active again, the viewport explicitly re-arms the next world upload and selection refresh so that returning from PAUSE or INVENTORY does not wait on stale render cadence before the world resumes stable drawing. Mouse-look capture enters a short resynchronization phase after capture is re-enabled. During that phase, the system cursor is repeatedly re-centered, keyboard movement continues to flow, camera delta is forced to zero, and normal mouse-look sampling resumes only after the cursor has remained at the viewport center across successive polls."),
-      paragraph("On macOS, gameplay capture keeps keyboard interception and mouse confinement separate. The keyboard path installs the existing native CoreGraphics event tap, and the mouse path recenters the system cursor through a small CoreGraphics cursor-warp helper before falling back to Qt cursor positioning. The app bundle declares keyboard guard usage through NSInputMonitoringUsageDescription, and macOS may require Input Monitoring or Accessibility approval for that event tap to install. The pause-screen player preview preserves its last head orientation when the pointer leaves the application and resumes direct pointer tracking immediately when the pointer re-enters."),
+      paragraph(
+        "Gravity-affected blocks are implemented as a transition from static world state to transient falling bodies. `GravitySystem` identifies blocks with the `gravity_affected` tag, removes unsupported gravity blocks from the static world, advances falling state on the falling-block tick, emits render samples between discrete ticks, and resolves landing against collision and support geometry. This is materially different from moving a block cell-by-cell through the chunk mesh, because the renderer sees a continuous falling-block sample while the static world remains a discrete voxel map."
+      ),
+      paragraph(
+        "The current gravity set is deliberately small: `sand`, `red_sand`, and `gravel`. Their landing path treats full support and implemented partial supports carefully; lower stairs, fences, fence gates, and walls can support the falling block, while a lower slab collision destroys the falling block and emits the block-break particle path. The same overlap-preservation discipline used for closed fence gates is also applied to landed gravity blocks, preventing load or landing events from pushing a player out through a state transition that the domain model has chosen to exempt."
+      ),
+      paragraph(
+        "Break particles are sampled from active render boxes rather than a full-cube assumption. This matters for slabs, fences, walls, fence gates, and stairs, because a lattice sampled over the unit cube would place fragments where no visible material exists. The break-particle path therefore uses stochastic volume sampling over the block's actual render-box set, and renderer preferences expose both spawn-rate and speed scale so visual density and kinetic scale can be adjusted without changing block geometry semantics."
+      ),
+      code_block("""gravity and particle classes/functions:
+  class GravitySystem
+  class GravityStepResult
+  class GravityBrokenBlock
+  class FallingBlockRenderSample
+  break_particle_samples_for_block()
+  build_break_particle_instances()
+  render_boxes_for_block()
+
+gravity-affected tag:
+  gravity_affected
+
+current gravity-affected blocks:
+  minecraft:sand
+  minecraft:red_sand
+  minecraft:gravel
+
+particle preference parameters:
+  block_break_particle_spawn_rate default: 1.0
+  block_break_particle_spawn_rate range: 0.0..2.0
+  block_break_particle_speed_scale default: 1.0
+  block_break_particle_speed_scale range: 0.1..3.0"""),
     ),
   ),
   AboutSection(
-    title="Source layout and responsibility boundaries",
+    title="AI-player subsystem and route planning",
     blocks=(
-      paragraph("The source tree is organized by responsibility. ludoxel.foundations contains identity, repository and runtime root resolution, diagnostics, and mathematical kernels. ludoxel.simulation contains world state, generation, block catalogs, block models, movement rules, collision rules, gravity rules, picking, placement, interaction, player state, AI-player state, inventories, Othello rules, Othello engines, Othello books, and bundled Othello resources."),
-      paragraph("ludoxel.application contains bootstrap, UI-independent preferences, persistence stores, integrity checking, session factories, session managers, runtime-state pipelines, render snapshot DTOs, and fixed-step runners. ludoxel.presentation contains Qt windows, input, HUD, overlays, settings surfaces, theme resources, renderer contracts, OpenGL and wgpu backends, shader resources, visual builders, and audio playback."),
-      code_block("ludoxel.foundations\nludoxel.simulation\nludoxel.application\nludoxel.presentation"),
-      paragraph("Package resources live under presentation/interface/theme, presentation/rendering/backends/opengl/shaders, presentation/rendering/backends/wgpu/shaders/sources, and simulation/spaces/othello/resources. Repository-level UI SVG and image assets remain under assets/ui. This layout keeps runtime code, package resources, repository assets, writable user state, and generated build outputs in distinct roles."),
-      code_block("presentation/interface/theme\npresentation/rendering/backends/opengl/shaders\npresentation/rendering/backends/wgpu/shaders/sources\nsimulation/spaces/othello/resources\nassets/ui"),
+      paragraph(
+        "The AI special item turns a voxel cell into an actor-spawn operation. Right-clicking a valid placement cell with the searchable `AI` item spawns a standby AI instance at that cell. Each instance is then configured through a per-instance settings dialog with behavior mode, personality, block-placement permission, route style, and deletion action. This is an actor system integrated with world interaction, persistence, and rendering, not a decorative non-player model."
+      ),
+      paragraph(
+        "AI state is represented by `AiPlayerState` and persisted by `PersistedAiPlayer`. The persisted fields include actor id, mode, personality, block-placement permission, held item id, position, velocity, yaw, pitch, health, max health, ground state, flying state, route points, route closure, route-running state, route style, and target index. Runtime behavior is distributed across route, navigation, avoidance, stuck recovery, parkour, placement, combat, idle, wander, spawning, serialization, and background worker modules. This distribution is necessary because a route actor can move, jump, fall, place blocks, recover from local obstruction, enter combat, and return to patrol without converting all behavior into one untestable update function."
+      ),
+      paragraph(
+        "Flexible route planning snapshots a bounded world window around the patrol region and computes support-cell paths on a background worker. The route planner distinguishes complete target reachability from closest-approach failure, and the runtime freezes an actor when no complete route exists to the authored patrol point. During melee pursuit, route planning is suspended so combat pursuit does not consume route-planner work on the gameplay thread. The term support-cell route is used in its concrete code meaning: a path whose nodes represent standable support cells derived from the same collision semantics used by the player ground detector."
+      ),
+      code_block("""AI classes and modules:
+  class AiPlayerState
+  class AiRoutePoint
+  class AiPlayerManager
+  class AiRoutePlanRequest
+  class AiRoutePlanResult
+  class AiRoutePlanStep
+  class PersistedAiPlayer
+
+AI modules:
+  avoidance.py
+  combat.py
+  idle.py
+  manager.py
+  modes.py
+  navigation.py
+  parkour.py
+  placement.py
+  planner.py
+  recovery.py
+  route.py
+  runtime.py
+  serialization.py
+  settings.py
+  spawning.py
+  state.py
+  stuck.py
+  wander.py
+  worker.py
+
+available instance controls:
+  modes: Standby, Route Patrol, Free Roam / PVP
+  personalities: Aggressive, Peaceful
+  route styles: Strict, Flexible
+  route-edit hotbar: check item, eraser item, cancel item
+  combat reach against player: 3 blocks
+  default AI health: 20.0"""),
     ),
   ),
   AboutSection(
-    title="Native build and editable install model",
+    title="Camera, HUD, skin, crosshair, and user-facing visual state",
     blocks=(
-      paragraph("The native build remains deliberately narrow. Only ludoxel.foundations.mathematics.geometry.ray_aabb, ludoxel.foundations.mathematics.voxels.dda, and ludoxel.foundations.mathematics.linear.view_angles are compiled in place. Those modules are dominated by scalar arithmetic, geometric branching, and dense numerical work."),
-      code_block("ludoxel.foundations.mathematics.geometry.ray_aabb\nludoxel.foundations.mathematics.voxels.dda\nludoxel.foundations.mathematics.linear.view_angles"),
-      paragraph("Broader scene and block orchestration layers remain in Python because they are governed primarily by Python object traffic, callback dispatch, dictionary access, and heterogeneous container traversal. Moving those layers wholesale across the extension boundary can reduce inspectability and worsen end-to-end frame cost."),
-      paragraph("The supported recovery path for the acceleration layer is npm run build:native, which enters tools/build_native_extensions and verifies that the interpreter resolves those imports to compiled binaries instead of Python fallback sources. The editable install and explicit native build are intentionally separated. python -m pip install -e . is described by pyproject.toml and does not make Cython part of ordinary metadata evaluation. The explicit in-place native build performs the optional native compilation step through repository tooling and then verifies imported module targets."),
-      code_block("python -m pip install -e .\nnpm run build:native\nnpm run build:native:check"),
-      paragraph("On Windows, npm run build:windows is the primary executable packaging path and usually invokes the narrow native rebuild automatically unless --skip-native-build is supplied. The standalone npm run build:native path remains intentional for source-tree development, performance recovery after npm run clean, and any case in which in-place native modules are needed without rebuilding the Windows bundle."),
+      paragraph(
+        "Camera perspective is a persisted runtime preference. The cycle order is `First Person -> Third Person Back -> Third Person Front -> First Person`, exposed through the `F5` action and through video settings. Third-person placement is collision-constrained against block collision volumes, and the gameplay crosshair is suppressed outside first person. Player name tags are projected from world coordinates into screen composition, do not participate in shadow casting, and fade according to crouch and occlusion state."
+      ),
+      paragraph(
+        "The player visual path separates simulation body state from rendered presentation state. `PlayerModelSnapshotDTO`, player visual composers, first-person geometry builders, first-person motion, held-block geometry, skin UV maps, and skin image handling collectively produce first-person arms, third-person bodies, held items, hurt tint, swing motion, and shadow-caster alignment. Modern imported skins are expected as `64x64` textures and are persisted as `state/player_skin.png`; resetting returns the renderer to the Alex default."
+      ),
+      paragraph(
+        "The settings system exposes a persistent `16x16` crosshair editor, video and gameplay parameters, player name storage, camera perspective, clouds, shadow settings, movement parameters, arm-rotation limits, arm-swing duration, audio category volumes, and fullscreen behavior. `AudioPreferences` stores master, ambient, block, and player volumes, each clamped to the closed interval `[0, 1]`, and category gain is computed as master gain multiplied by the category-specific gain."
+      ),
+      code_block("""camera and HUD preferences:
+  CAMERA_PERSPECTIVE_FIRST_PERSON: first_person
+  CAMERA_PERSPECTIVE_THIRD_PERSON_BACK: third_person_back
+  CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT: third_person_front
+  camera order: first_person, third_person_back, third_person_front
+  default FOV: 80.0 degrees
+  mouse sensitivity: 0.09 degrees per px
+  default gameplay HUD toggle: F1
+  default camera cycle: F5
+
+crosshair:
+  CROSSHAIR_GRID_SIZE: 16
+  modes: default, custom
+  custom grid: 16x16 pixels
+
+skin and model:
+  imported skin size: 64x64
+  persisted skin path: state/player_skin.png
+  default skin kind: Alex
+  arm rotation limit default: -180.0..180.0 degrees
+  arm swing duration default: 0.30 s
+  arm swing duration range: 0.05..1.50 s
+
+audio:
+  class AudioPreferences
+  categories: master, ambient, block, player
+  volume clamp: 0.0..1.0
+  effective non-master gain: master * category"""),
     ),
   ),
   AboutSection(
-    title="Development workflow",
+    title="Othello play space, board model, clocks, and interaction",
     blocks=(
-      paragraph("The development path assumes Python 3.14.2 when available, PyQt6 6.6 or newer, and NumPy 1.26 or newer. The declared Python range is >=3.13,<3.15, so macOS environments without python3.14 may use python3.13 for ordinary source-tree development. On macOS, the platform dependency set includes wgpu and rendercanvas and does not require a platform OpenGL context. On Windows, the platform dependency set includes PyOpenGL and keeps the existing OpenGL renderer path."),
-      paragraph("The intended Windows development path for a clean environment with only the editable source install creates .venv_ludoxel, activates it, updates pip tooling, installs the project in editable mode, and launches through python -m ludoxel."),
-      code_block("python -m venv .venv_ludoxel\n.\\.venv_ludoxel\\Scripts\\Activate.ps1\npython -m pip install --upgrade pip setuptools wheel\npython -m pip install -e .\npython -m ludoxel"),
-      paragraph("The intended macOS development path creates .venv_ludoxel with python3.14 when available, activates it through the POSIX shell path, updates pip tooling, installs the project in editable mode, and launches through python -m ludoxel. If python3.14 is not installed, python3.13 may be used for the virtual environment command while keeping the remaining commands unchanged."),
-      code_block("python3.14 -m venv .venv_ludoxel\nsource .venv_ludoxel/bin/activate\npython -m pip install --upgrade pip setuptools wheel\npython -m pip install -e .\npython -m ludoxel"),
-      paragraph("Development extras and the Node dependency tree are needed when local packaging, native extension rebuilding, or the repository check surface is required. If a native-accelerated module is edited, rerun npm run build:native. If packaging metadata, dependency declarations, entry-point definitions, or package-data rules are changed, rerun the editable install as well."),
-      code_block("python -m pip install -e \".[dev]\"\nnpm install\nnpm run build:native\nnpm run build:native:check\npython -m pip install -e ."),
-      paragraph("On Windows, a loaded .pyd file cannot be overwritten while a Python process still holds the module image open. If the in-place native build fails with a file-in-use or permission error, terminate the running application and any interactive Python processes that imported the target module, then rerun the build."),
-      code_block("taskkill /F /IM python.exe\nnpm run build:native"),
-      paragraph("The repository-local cleanup tool deliberately removes generated native extension files. After npm run clean removes them, npm run build:native must be rerun before the next performance-sensitive session because the application will otherwise import the slower Python fallback kernels until the rebuild completes."),
-      code_block("npm run clean\nnpm run build:native\npython -m build"),
+      paragraph(
+        "`Play Othello (Reversi)` is a second persistent play space with its own hotbar, board world, match state, clocks, AI opponent, animation state, settings window, and renderer integration. Ordinary block placement, block breaking, and the block inventory overlay are disabled in this space. Slot `1` contains `Start`, slot `9` contains `Settings`, and each selected control item is rendered as an enlarged visible item in first person, third person, and the shadow path."
+      ),
+      paragraph(
+        "The Othello board is represented as an 8-by-8 domain board with `64` squares and a separate world-space board footprint. The initial board contains the standard four central discs: white at `(3,3)` and `(4,4)`, black at `(3,4)` and `(4,3)`. World interaction maps ray hits to algebraic square names from `a1` through `h8`, and the Othello HUD reports turn, best move, principal line, player-versus-AI evaluation, and evaluation graph while respecting the ordinary gameplay HUD visibility state."
+      ),
+      paragraph(
+        "Match settings include difficulty, time control, animation mode, player order, sacrifice level, worker count, hash level, and opening-book learning bounds. The default Othello configuration is `Medium`, `20 minutes per side`, `Animation off`, and player moves first. Clocks pause while the pause menu or the detached Othello settings window is open, which makes UI inspection and settings edits part of the runtime-control model rather than an accidental clock leak."
+      ),
+      code_block("""Othello domain constants:
+  BOARD_SIZE: 8
+  BOARD_CELL_COUNT: 64
+  SIDE_EMPTY: 0
+  SIDE_BLACK: 1
+  SIDE_WHITE: 2
+  initial discs:
+    white: (3,3), (4,4)
+    black: (3,4), (4,3)
+
+world-board placement:
+  OTHELLO_BOARD_MIN_X: -4
+  OTHELLO_BOARD_MIN_Z: -4
+  OTHELLO_BOARD_GROUND_Y: 0
+  OTHELLO_BOARD_BLOCK_Y: 1
+  OTHELLO_BOARD_SURFACE_Y: 2.0
+  board dark block: minecraft:dark_oak_planks
+  board light block: minecraft:spruce_planks
+
+Othello functions and classes:
+  create_initial_board()
+  counts_for_board()
+  captures_for_move()
+  find_legal_moves()
+  has_any_legal_move()
+  apply_move()
+  winner_for_board()
+  square_index_to_name()
+  world_xz_to_square_index()
+  raycast_board_square()
+  class OthelloGameState
+  class OthelloSettings
+  class OthelloAnimationState"""),
     ),
   ),
   AboutSection(
-    title="Windows and macOS packaging",
+    title="Othello search, opening-book learning, and persistent book storage",
     blocks=(
-      paragraph("The supported Windows executable packaging path is npm run build:windows. The tool rebuilds the native hot-path extensions unless --skip-native-build is supplied, invokes PyInstaller in one-file mode using src/ludoxel/__main__.py as the frozen entry script, collects package data under src/ludoxel, and bundles both the repository-level assets tree and repository-level src tree into the PyInstaller data root resolved through sys._MEIPASS."),
-      paragraph("The frozen process loads immutable bundled resources from the internal extraction root while keeping runtime writes in the user-specific app-managed data root. PyInstaller onefile still performs its own temporary extraction into the operating-system temporary directory before control reaches the application. The builder removes obsolete onedir output on a best-effort basis, allocates run-unique work, spec, and staging directories, publishes the staged Ludoxel.exe into dist/windows/Ludoxel.exe when possible, and preserves the staged executable when the published path is locked by a running previous build."),
-      code_block("npm run build:windows\ndist\\windows\\Ludoxel.exe\ndist\\windows\\LICENSE\ndist\\windows\\NOTICE\ndist\\windows\\third-party\\"),
-      paragraph("If a custom Windows executable icon is desired, the canonical path is assets/ui/app_icon.ico. When that file exists, tools/build_desktop_app forwards it to PyInstaller through --icon so the generated Ludoxel.exe carries the custom shell icon. The running Qt application also searches bundled resources for app_icon.ico, app_icon.png, app_icon.jpg, and app_icon.jpeg, but only the .ico file is suitable for embedding into the Windows executable itself."),
-      code_block("assets/ui/app_icon.ico\nassets/ui/app_icon.png\nassets/ui/app_icon.jpg\nassets/ui/app_icon.jpeg"),
-      paragraph("The frozen Windows entry path enables multiprocessing freeze support before control reaches the application shell, assigns an explicit Windows AppUserModelID for the Ludoxel desktop identity, and suppresses visible console windows for diagnostic tasklist and nvidia-smi probes that may be used by the optional debug HUD."),
-      paragraph("The macOS packaging command surface is the supported local app-bundle verification path. It builds a PyInstaller .app, preserves the bundled Python.framework symlink layout, bundles assets, LICENSE, NOTICE, and third-party material, verifies bundled fonts under assets/fonts, records the gameplay input monitoring usage string for the keyboard guard in Info.plist, re-signs the bundle after that Info.plist patch, and forwards a macOS icon only when a real .icns asset is present."),
-      code_block("npm run build:macos\nnpm run build:macos:check\nnpm run build:macos -- --status"),
-      paragraph("The macOS packaging path remains distinct from the explicit local optimization path. The repository does not make Cython execution an implicit side effect of every packaging or installation action, while the supported Windows bundle builder executes the narrow native build automatically because measured renderer frame rate depends materially on the three compiled kernels being present. Codesigning and notarization remain separate release steps."),
+      paragraph(
+        "The Othello AI is split into classic rules, bitboard representation, evaluation, move ordering, search, transposition, insane-tier analysis, worker execution, and opening-book handling. The difficulty menu exposes `Weak`, `Medium`, `Strong`, `Insane`, and `Insane+`. `Insane` uses the cached bitboard-search engine, while `Insane+` consults the bundled and user-extended opening book before falling through to the same search core."
+      ),
+      paragraph(
+        "Opening-book learning is bounded by explicit parameters rather than by a vague learning label. Depth admits `0..60` with default `55`. Per-move error, cumulative error, and leaf error each admit `0..24`, with defaults `22`, `19`, and `20`. Learning state is cancellable and persists partial user-generated lines under `state/othello_opening_book.json`, while the compiled lookup cache is stored under `cache/othello_opening_book_cache.json`. Storage is symmetry-aware through canonicalized board transforms, so rotated and reflected equivalents are treated as the same position for lookup and pruning."
+      ),
+      paragraph(
+        "The Othello time-control set is also concrete. Per-move controls are `5`, `10`, and `30` seconds. Per-side controls are `1`, `3`, `5`, `10`, and `20` minutes, stored internally as `60`, `180`, `300`, `600`, and `1200` seconds. Animation modes include simultaneous off-state rendering and ripple variants; the flip animation state uses a `0.22 s` duration and `0.075` lift height, making disc movement a bounded visual process attached to match generation."
+      ),
+      code_block("""engine modules:
+  bitboards.py
+  classic.py
+  evaluation_profile.py
+  evaluation.py
+  insane.py
+  ordering.py
+  search.py
+  transposition.py
+  worker.py
+  books/opening.py
+  books/learning.py
+
+difficulty values:
+  weak
+  medium
+  strong
+  insane
+  insane_plus
+
+time controls:
+  off: no side limit
+  per move: 5 s, 10 s, 30 s
+  per side: 60 s, 180 s, 300 s, 600 s, 1200 s
+  default: 1200 s per side
+
+book learning:
+  depth range: 0..60
+  default depth: 55
+  error bound range: 0..24
+  default per-move error: 22
+  default cumulative error: 19
+  default leaf error: 20
+  worker count range: 1..8
+  hash level range: 0..6
+  user book: state/othello_opening_book.json
+  compiled cache: cache/othello_opening_book_cache.json
+
+animation:
+  animation duration: 0.22 s
+  lift height: 0.075"""),
     ),
   ),
   AboutSection(
-    title="Repository command surface",
+    title="Renderer contracts, render snapshots, and platform selection",
     blocks=(
-      paragraph("Development support is entered through package.json and tools. The root-level scripts directory is not part of the supported structure. The command surface covers help, check, CI, formatting, linting, directory export, tool tests, package checks, documentation checks, license checks, resource checks, shader checks, native build recovery, desktop packaging, cleanup, and audio-asset conversion."),
-      code_block("npm run help\nnpm run check\nnpm run ci\nnpm run format\nnpm run format:check\nnpm run format:py\nnpm run format:py:check\nnpm run lint\nnpm run lint:js\nnpm run lint:css\nnpm run lint:py\nnpm run tools:export\nnpm run tools:export -- --target root --exclude \"folder:assets\" --exclude \"ext:.so\"\nnpm run tools:test\nnpm run package:check\nnpm run docs:check\nnpm run license:check\nnpm run resources:check\nnpm run shader:check"),
-      paragraph("The active tool directories are help_commands, check_project, build_native_extensions, build_desktop_app, clean_build_artifacts, export_directory_markdown, format_python_source, format_web_source, and convert_audio_assets. Each command owns its help path. --help and --lang ja|en are supported by check commands, and npm run help -- <command> gives the repository command overview where applicable."),
-      code_block("tools/help_commands\ntools/check_project\ntools/build_native_extensions\ntools/build_desktop_app\ntools/clean_build_artifacts\ntools/export_directory_markdown\ntools/format_python_source\ntools/format_web_source\ntools/convert_audio_assets"),
-      paragraph("Python source uses 2-space indentation. format:py and lint:py enforce that policy without asking Ruff to rewrite Python into a 4-space style. tools/check_project keeps check implementations under check-specific folders such as src/check/package/package.check.mjs, rather than placing package.check.mjs, docs.check.mjs, legal.check.mjs, resources.check.mjs, or shaders.check.mjs directly under a generic service folder."),
-      paragraph("tools/convert_audio_assets reports .ogg ambient audio and optional generated .wav derivatives. npm run assets:audio:check reports missing generated .wav files as warnings because the current ambient catalog directly references .ogg. npm run assets:audio:check -- --require-wav is available when a packaging target requires generated .wav derivatives."),
+      paragraph(
+        "Rendering is mediated through contracts rather than direct widget access to backend internals. `BackendRendererApi` defines initialization, destruction, renderer information, shadow information, payload validation, frame metrics, runtime-state application, cloud and texture-animation pause controls, atlas UV lookup, world-build tools, block display-name resolution, chunk eviction, selection targeting, chunk submission, frame rendering, player-skin image update, and player-preview rendering. The session layer emits render snapshots, while the presentation layer turns those snapshots into OpenGL or wgpu calls."
+      ),
+      paragraph(
+        "The renderer target is platform-selected. Windows keeps the existing PyOpenGL path and an OpenGL `4.3` surface contract. macOS uses wgpu-native through a Qt rendercanvas surface, reaching Metal through wgpu instead of relying on Apple's legacy OpenGL implementation. The same shader source names are mirrored under the OpenGL shader root and the wgpu shader source root, but the macOS path does not require the OpenGL compute-shader payload path that the Windows renderer can use."
+      ),
+      paragraph(
+        "The term renderer-contract bifurcation is used here for a precise condition: Ludoxel has two backend families, but they are expected to implement the same application-visible renderer contract. Backend differences are allowed at API and upload level; they are not allowed to change the meaning of a block state, a skin UV map, a selected face, a shadow-caster transform, or a submitted chunk snapshot."
+      ),
+      code_block("""renderer contract classes:
+  BackendRendererApi
+  BackendRendererBackend
+  BackendRendererConfig
+  BackendRendererResources
+  BackendRendererRuntimeState
+  BackendRendererFrameMetrics
+  BackendPassFrameMetrics
+  BackendUploadTracker
+  RenderSnapshotDTO
+
+BackendRendererApi methods:
+  initialize()
+  destroy()
+  gl_info()
+  shadow_info()
+  payload_validation_report()
+  frame_metrics()
+  apply_runtime_state()
+  set_cloud_motion_paused()
+  set_texture_animation_paused()
+  atlas_uv_face()
+  world_build_tools()
+  block_display_name()
+  evict_chunks()
+  clear_selection()
+  set_selection_target()
+  submit_chunk()
+  render()
+  set_player_skin_image()
+  render_player_preview_frame()
+
+platform renderer selection:
+  Windows: PyOpenGL / OpenGL 4.3
+  macOS: wgpu-native / rendercanvas / Metal
+
+shader roots:
+  src/ludoxel/presentation/rendering/backends/opengl/shaders
+  src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources"""),
     ),
   ),
   AboutSection(
-    title="Runtime data and tamper detection",
+    title="OpenGL renderer, GLSL resources, and frame parameters",
     blocks=(
-      paragraph("Immutable application resources stay with the bundled resource root. Runtime-writable data does not use repository-level configs as the normal save location. ludoxel.foundations.locations.roots.default_runtime_data_root resolves the app-managed data root, honoring LUDOXEL_DATA_ROOT when explicitly set. On Windows, the default root is under the user's local application data directory."),
-      code_block("LUDOXEL_DATA_ROOT\nstate/\ncache/\nstate/state_manifest.json\nstate/integrity_key.bin"),
-      paragraph("The app-managed data root is split into state and cache. Player settings, window state, world edits, custom player skin, and the Othello user opening-book extension are state. The compiled Othello opening-book map is cache. The main state files are covered by state/state_manifest.json and state/integrity_key.bin using HMAC-SHA256 to detect simple external edits or accidental corruption."),
-      paragraph("This integrity path is tamper detection, not an absolute guarantee against a local user who can rewrite both data files and the local integrity key. An existing repository-level configs directory is treated only as previous-format input for migration and compatibility. New runtime writes go to the app-managed data root."),
+      paragraph(
+        "The Windows rendering path uses `RendererBackend`, `GLRenderer`, OpenGL resource wrappers, shader-program compilation, mesh buffers, storage buffers, texture atlases, frame pipelines, and pass-specific render modules. The OpenGL surface configuration requests version `4.3`, core profile, `24`-bit depth buffer, `8`-bit stencil buffer, double buffering, zero multisample samples, and a swap interval determined by the v-sync preference. This is an explicit desktop-renderer contract rather than a generic Qt paint event."
+      ),
+      paragraph(
+        "The OpenGL shader root contains world, shadow, player-model, first-person, cloud, sun, selection, and Othello shader resources, plus `chunk_face_payload.comp` and shared `face_instance.glsl`. The compute payload path is relevant because the Windows OpenGL implementation can rely on GLSL 4.30-level mechanisms such as compute shaders and buffer-backed face payload processing. The macOS path deliberately avoids requiring that same OpenGL compute contract."
+      ),
+      paragraph(
+        "Frame parameters are likewise explicit. `BackendCameraParams` uses near and far planes `0.05` and `200.0`. `BackendShadowParams` defaults to a `2048`-square shadow map, dark multiplier `0.20`, minimum bias `0.00005`, slope bias `0.00050`, polygon offset factor `0.50`, and units `0.75`. `BackendSunParams` defaults to azimuth `45.0`, elevation `60.0`, distance `150.0`, half angle `2.6`, light distance `60.0`, orthographic radius `30.0`, near plane `0.1`, and far plane `140.0`. Clouds use a volumetric field abstraction with `y = 28`, thickness `3`, macro cell size `32`, view radius `150`, horizontal speed components `0.70` and `0.10`, and default seed `1337`."
+      ),
+      code_block("""OpenGL classes and modules:
+  RendererBackend
+  GLRenderer
+  ShaderProgram
+  MeshBuffer
+  ColoredMeshBuffer
+  StorageBuffer
+  TextureAtlas
+  ImageTexture
+  FramePipeline
+  WorldPass
+  ShadowMapPass
+  PlayerModelPass
+  FirstPersonArmPass
+  HeldBlockPass
+  FallingBlockPass
+  BlockBreakParticlePass
+  CloudPass
+  SelectionPass
+  OthelloRenderPass
+
+OpenGL surface:
+  version: 4.3
+  profile: CoreProfile
+  depth buffer: 24 bits
+  stencil buffer: 8 bits
+  samples: 0
+  double buffer: true
+  swap interval: 1 when vsync_on else 0
+
+shader count per backend root:
+  fragment shaders: 10
+  vertex shaders: 10
+  compute shaders: 1
+  shared GLSL include: 1
+  total shader files per root: 22
+
+representative shader names:
+  world.vert / world.frag
+  world_no_shadow.frag
+  shadow.vert / shadow.frag
+  player_model.vert / player_model.frag
+  player_model_shadow.vert
+  first_person_face.vert / first_person_face.frag
+  cloud_box.vert / cloud_box.frag
+  selection_line.vert / selection_line.frag
+  othello.vert / othello.frag
+  chunk_face_payload.comp
+  common/face_instance.glsl"""),
     ),
   ),
   AboutSection(
-    title="Legal material and repository policy",
+    title="wgpu renderer, rendercanvas surface, and cross-backend parity",
     blocks=(
-      paragraph("Ludoxel Original Materials are governed by LicenseRef-All-Rights-Reserved under the Ludoxel Independent License in LICENSE. The repository is not open source and is not licensed under Apache-2.0. Public visibility, hosting-service browsing, cloning, downloading, or the presence of repository source code does not grant a copyright license beyond the permissions stated in the license."),
-      paragraph("NOTICE is written in Japanese and records the relationship between Ludoxel Original Materials, third-party materials, provenance-sensitive local assets, runtime user data, and distribution legal material. Third-party license texts are kept under third-party. Kaisei Opti is documented under third-party/kaisei-opti with the SIL Open Font License text."),
-      code_block("LICENSE\nNOTICE\nthird-party/\nthird-party/kaisei-opti/\nassets/fonts/"),
-      paragraph("Desktop builds must bundle the fonts under assets/fonts, and runtime startup registers bundled fonts rather than relying on platform system-font fallback. Local Minecraft-named assets and fonts under assets are not covered by the Ludoxel Independent License and must not be represented as original Ludoxel assets. Their redistribution rights are not established by this repository."),
-      paragraph("The .github directory mirrors the non-open-source governance boundary used by the reference Sudoku project: external contributions are not accepted, issue forms are limited, security reporting is separated, Dependabot is scoped, and CI runs the same npm entrypoint used locally."),
+      paragraph(
+        "The macOS rendering path is organized under `presentation.rendering.backends.wgpu` and contains chunk meshes, pipeline factory functions, runtime backend objects, surface configuration, resources, texture atlas handling, and shader sources. `configure_wgpu_canvas` and the wgpu surface layer adapt the Qt-hosted rendercanvas surface to the backend. The design follows the wgpu model in which the canvas context is configured, a current texture is acquired for rendering, and the rendered texture is presented through the canvas context."
+      ),
+      paragraph(
+        "The wgpu path exists because macOS should not be forced through Apple's legacy OpenGL implementation. wgpu supplies a WebGPU-shaped abstraction over native graphics backends, including Metal on macOS, while rendercanvas supplies a GUI-agnostic canvas API that can be hosted in Qt. In Ludoxel, this external stack is not treated as a reason to relax renderer parity: block UVs, face orientation, culling behavior, skin mapping, first-person arm transforms, third-person model transforms, Othello control items, shadow-caster orientation, and selection outlines still have to match the renderer contract established by the application."
+      ),
+      paragraph(
+        "The wgpu shader source directory mirrors the OpenGL shader naming surface, but the macOS path does not compile or link `chunk_face_payload.comp` and does not require GLSL 4.30 compute shaders, shader storage buffers, or `glMultiDrawArraysIndirect`. The engineering requirement is therefore not textual shader identity; it is semantic identity at the submitted-render-snapshot level. A chunk face emitted by CPU payload builders, a UV rectangle from the atlas, or a player skin vertex from `skin_uv_maps` must denote the same visual object in both backend families."
+      ),
+      code_block("""wgpu modules:
+  presentation/rendering/backends/wgpu/meshes/chunk.py
+  presentation/rendering/backends/wgpu/pipelines/factory.py
+  presentation/rendering/backends/wgpu/runtime/backend.py
+  presentation/rendering/backends/wgpu/runtime/resources.py
+  presentation/rendering/backends/wgpu/runtime/surface.py
+  presentation/rendering/backends/wgpu/textures/atlas.py
+
+wgpu pipeline factory functions:
+  create_world_pipeline()
+  create_world_wireframe_pipeline()
+  create_world_shadowed_pipeline()
+  create_shadow_depth_pipeline()
+  create_transform_shadow_pipeline()
+  create_sun_pipeline()
+  create_cloud_pipeline()
+  create_cloud_wireframe_pipeline()
+  create_selection_pipeline()
+  create_othello_pipeline()
+  create_othello_shadow_pipeline()
+
+wgpu backend classes and functions:
+  class WgpuRendererBackend
+  class _WgpuBlockVisualResolver
+  configure_wgpu_canvas()
+
+macOS renderer stack:
+  PyQt6 window
+  rendercanvas Qt surface
+  wgpu Python package
+  wgpu-native
+  Metal backend
+
+explicit macOS non-requirements:
+  no OpenGL 4.3 context requirement
+  no GLSL 4.30 compute requirement
+  no shader storage buffer requirement
+  no glMultiDrawArraysIndirect requirement"""),
     ),
   ),
   AboutSection(
-    title="Shader and platform notes",
+    title="Input ownership, macOS cursor capture, and modal-state suspension",
     blocks=(
-      paragraph("The renderer target is selected by platform. Windows uses the existing PyOpenGL renderer and its OpenGL 4.3 contract. macOS uses wgpu-native through a Qt rendercanvas surface, reaching Metal through wgpu-native rather than using Apple's OpenGL implementation."),
-      code_block("Windows: PyOpenGL / OpenGL 4.3\nmacOS: wgpu-native / rendercanvas / Metal"),
-      paragraph("npm run shader:check validates package shader roots under src/ludoxel/presentation/rendering/backends/opengl/shaders and src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources. It keeps obvious cross-profile hazards, such as raw gl_VertexID use, out of source."),
-      code_block("src/ludoxel/presentation/rendering/backends/opengl/shaders\nsrc/ludoxel/presentation/rendering/backends/wgpu/shaders/sources\nnpm run shader:check"),
-      paragraph("The macOS renderer path does not compile or link chunk_face_payload.comp and does not require GLSL 4.30 compute shaders, shader storage buffers, or glMultiDrawArraysIndirect. The Windows renderer path still uses the existing OpenGL implementation until it can be migrated and verified on Windows hardware."),
-      paragraph("The macOS app packaging path uses the wgpu-native renderer path, collects the Python wgpu and rendercanvas packages for PyInstaller, preserves bundled assets, fonts, icon metadata, the gameplay input monitoring usage string, Python framework links, and legal material, and verifies the app-bundle shape during npm run build:macos:check. Windows packaging keeps the existing PyOpenGL renderer path and Windows .ico handling."),
+      paragraph(
+        "Input handling is owned by presentation input modules rather than by arbitrary widgets. Qt key and mouse events, gameplay input state, macOS keyboard interception, and macOS cursor recentering are separated into `game_input.py`, `qt.py`, `macos_guard.py`, and `macos_cursor.py`. This separation is important because gameplay capture, UI interaction, pause overlays, settings windows, Othello dialogs, inventory screens, and application deactivation each impose different rules on whether simulation input should be consumed, suspended, or released."
+      ),
+      paragraph(
+        "Mouse-look capture has a resynchronization phase after re-enable. During that phase the system cursor is repeatedly recentered, keyboard movement remains available, camera delta is forced to zero, and normal sampling resumes only after the cursor has remained at the viewport center across successive polls. On macOS, keyboard interception and mouse confinement are separate: the keyboard path uses the native CoreGraphics event-tap guard, while the mouse path recenters through a CoreGraphics cursor-warp helper before falling back to Qt cursor positioning."
+      ),
+      paragraph(
+        "Time-based renderer motion is suspended for true application deactivation and for pause, death, inventory, Othello-settings, and short-lived notice-dialog states. The detached settings window is the controlled exception: visual settings remain live so the user can inspect world rendering while the dialog is open. The viewport explicitly re-arms world upload and selection refresh after returning from pause or inventory, preventing stale render cadence from becoming visible as delayed world recovery."
+      ),
+      code_block("""input modules:
+  presentation/interface/input/game_input.py
+  presentation/interface/input/qt.py
+  presentation/interface/input/macos_guard.py
+  presentation/interface/input/macos_cursor.py
+
+viewport and lifecycle modules:
+  presentation/interface/viewport/widgets/gl.py
+  presentation/interface/viewport/widgets/renderer.py
+  presentation/interface/viewport/lifecycle/mixin.py
+  presentation/interface/viewport/render_loop/frame_sync.py
+  presentation/interface/viewport/render_loop/loop.py
+  presentation/interface/viewport/overlays/controller.py
+  presentation/interface/viewport/selection/state.py
+
+macOS packaging permission string:
+  NSInputMonitoringUsageDescription
+
+capture policy:
+  gameplay captured -> mouse-look and gameplay keys are owned by Ludoxel
+  modal UI open -> simulation input suspended
+  application inactive -> capture released
+  recapture -> cursor recentering and zero-delta resynchronization"""),
+    ),
+  ),
+  AboutSection(
+    title="Settings surfaces, About page composition, and creator-facing metadata",
+    blocks=(
+      paragraph(
+        "The settings layer is implemented as detached Qt surfaces and composable about-page widgets, not as literal markdown injected into the viewport. `ABOUT_PROJECT_OVERVIEW_SECTIONS` is consumed by `render_about_sections`, and each `AboutSection` contains a title and an ordered tuple of `AboutBlock` objects. Blocks are produced by `paragraph` and `code_block`, which allows ordinary prose and technical code-like listings to be rendered consistently through `about_text` and `about_code_block`. This is why the overview text must be precise: it is application UI content, but it is also a condensed specification of actual code architecture."
+      ),
+      paragraph(
+        "The About page is therefore not a promotional page. It is a compact technical account of what Ludoxel v3.6 actually contains: package boundaries, runtime state, renderer contracts, interaction rules, block models, AI behavior, Othello search, packaging surfaces, and legal-resource treatment. Creator metadata, profile image candidates, GitHub image candidates, title-mark fallback, and project overview sections are all handled by the settings/about content and widget modules, but the substantive project overview must remain grounded in code, file layout, and numeric constants."
+      ),
+      code_block("""About page content structures:
+  @dataclass(frozen=True)
+  class AboutBlock:
+    kind: str
+    text: str
+
+  @dataclass(frozen=True)
+  class AboutSection:
+    title: str
+    blocks: tuple[AboutBlock, ...]
+
+helper functions:
+  paragraph(text: str) -> AboutBlock
+  code_block(text: str) -> AboutBlock
+  render_about_sections(layout, sections)
+  about_card()
+  about_text()
+  about_code_block()
+  about_meta_row()
+  about_pill()
+
+image candidate names:
+  profile.png, profile.jpg, profile.jpeg, profile.webp, profile.bmp
+  github.png, github.jpg, github.jpeg, github.webp, github.bmp, github.svg"""),
+    ),
+  ),
+  AboutSection(
+    title="Native acceleration and development command surface",
+    blocks=(
+      paragraph(
+        "The native build is intentionally narrow. Only `ludoxel.foundations.mathematics.geometry.ray_aabb`, `ludoxel.foundations.mathematics.voxels.dda`, and `ludoxel.foundations.mathematics.linear.view_angles` are compiled in place. These modules are appropriate native candidates because they are dominated by scalar arithmetic, geometric branching, voxel traversal, and dense numerical operations. Broader block orchestration, session management, renderer dispatch, and UI behavior remain in Python because their cost model is governed by object traffic, dictionaries, callbacks, heterogeneous containers, and user-interface state rather than a single arithmetic kernel."
+      ),
+      paragraph(
+        "The editable install and native build are separated. `pyproject.toml` describes ordinary editable installation, while `tools/build_native_extensions` drives the optional in-place extension build and verifies that imports resolve to generated binary modules rather than Python fallback files. This separation keeps `python -m pip install -e .` lightweight and prevents Cython execution from becoming an implicit metadata-evaluation side effect."
+      ),
+      paragraph(
+        "Repository development is entered through `package.json` and `tools`. The check surface includes formatting, linting, directory export tests, package checks, documentation checks, license checks, resource checks, and shader checks. Python source is formatted with `indent-width = 2`, `line-length = 200`, target version `py313`, and the Ruff formatter configuration preserves the two-space house style rather than rewriting the project into four-space indentation."
+      ),
+      code_block("""native extension targets:
+  ludoxel.foundations.mathematics.geometry.ray_aabb
+  ludoxel.foundations.mathematics.voxels.dda
+  ludoxel.foundations.mathematics.linear.view_angles
+
+native commands:
+  npm run build:native
+  npm run build:native:check
+
+active tool directories:
+  tools/help_commands
+  tools/check_project
+  tools/build_native_extensions
+  tools/build_desktop_app
+  tools/clean_build_artifacts
+  tools/export_directory_markdown
+  tools/format_python_source
+  tools/format_web_source
+  tools/convert_audio_assets
+
+principal repository commands:
+  npm run help
+  npm run check
+  npm run ci
+  npm run format
+  npm run format:check
+  npm run lint
+  npm run tools:export
+  npm run tools:test
+  npm run package:check
+  npm run docs:check
+  npm run license:check
+  npm run resources:check
+  npm run shader:check
+  npm run clean
+  npm run assets:audio:check
+  npm run assets:audio:convert
+
+Ruff source policy:
+  line-length: 200
+  indent-width: 2
+  target-version: py313
+  quote-style: double
+  skip-magic-trailing-comma: true"""),
+    ),
+  ),
+  AboutSection(
+    title="Desktop packaging, bundled resources, fonts, and legal material",
+    blocks=(
+      paragraph(
+        "Desktop packaging is handled through `tools/build_desktop_app`. The Windows path builds a PyInstaller one-file executable from `src/ludoxel/__main__.py`, runs the narrow native rebuild unless skipped, collects package data under `src/ludoxel`, bundles repository-level assets, preserves runtime writes under the app-managed data root, and publishes `Ludoxel.exe` beside legal material. The macOS path builds a PyInstaller `.app`, preserves Python framework layout, collects wgpu and rendercanvas packages, patches the input-monitoring usage string, re-signs the bundle after Info.plist modification, verifies fonts, and checks bundle shape."
+      ),
+      paragraph(
+        "Resource handling distinguishes immutable bundled resources from runtime user data. Theme resources live under `presentation/interface/theme`, shader resources live under the renderer backend shader roots, Othello bundled resources live under `simulation/spaces/othello/resources`, and repository-level UI assets remain under `assets/ui`. Desktop builds must bundle `LICENSE`, `NOTICE`, and `third-party`, and runtime startup registers bundled fonts rather than relying on a platform system-font fallback."
+      ),
+      paragraph(
+        "The legal boundary is part of the engineering surface because packaging and documentation can otherwise misrepresent provenance. Ludoxel Original Materials are governed by `LicenseRef-All-Rights-Reserved` under the Ludoxel Independent License. The repository is not open source. Third-party materials, fonts, SDKs, external packages, and local provenance-sensitive assets remain governed by their own terms or by unresolved provenance, and must not be described as original Ludoxel assets merely because they are present under a local resource directory."
+      ),
+      code_block("""Windows packaging:
+  npm run build:windows
+  frozen entry: src/ludoxel/__main__.py
+  published executable: dist/windows/Ludoxel.exe
+  executable icon candidate: assets/ui/app_icon.ico
+  companion material: LICENSE, NOTICE, third-party/
+
+macOS packaging:
+  npm run build:macos
+  npm run build:macos:check
+  npm run build:macos -- --status
+  app bundle: dist/macos/Ludoxel.app
+  renderer path: wgpu-native / rendercanvas / Metal
+  input-monitoring key: NSInputMonitoringUsageDescription
+  release steps kept separate: codesigning and notarization
+
+package data:
+  presentation/interface/theme/*.qss
+  presentation/rendering/backends/opengl/shaders/*.vert, *.frag, *.comp, common/*.glsl
+  presentation/rendering/backends/wgpu/shaders/sources/*.vert, *.frag, *.comp, common/*.glsl
+  simulation/spaces/othello/resources/*.json
+
+license boundary:
+  license id: LicenseRef-All-Rights-Reserved
+  legal files: LICENSE, NOTICE, third-party/
+  local runtime data: not original package resource
+  repository-level configs: migration input only"""),
     ),
   ),
 )
