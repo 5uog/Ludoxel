@@ -10,15 +10,17 @@ from ludoxel.presentation.interface.settings.about.content import (
   ABOUT_CREATOR_HANDLE,
   ABOUT_CREATOR_ROLE,
   ABOUT_ETYMOLOGY_PARAGRAPHS,
+  ABOUT_GITHUB_URL,
   ABOUT_PROFILE_BIO_TEXT,
   ABOUT_PROJECT_OVERVIEW_SECTIONS,
   ABOUT_WORK_TEXT,
+  GITHUB_IMAGE_CANDIDATE_NAMES,
   PROFILE_IMAGE_CANDIDATE_NAMES,
   AboutBlock,
   AboutSection,
 )
 from ludoxel.presentation.interface.settings.about.renderer import render_about_sections
-from ludoxel.presentation.interface.settings.about.widgets import about_card, about_code_block, about_meta_row, about_pill, about_text, profile_image_path
+from ludoxel.presentation.interface.settings.about.widgets import about_card, about_code_block, about_meta_row, about_pill, about_text, github_image_path, profile_image_path
 
 __all__ = [
   "ABOUT_ACADEMIC_DIRECTION_TEXT",
@@ -28,9 +30,11 @@ __all__ = [
   "ABOUT_CREATOR_HANDLE",
   "ABOUT_CREATOR_ROLE",
   "ABOUT_ETYMOLOGY_PARAGRAPHS",
+  "ABOUT_GITHUB_URL",
   "ABOUT_PROFILE_BIO_TEXT",
   "ABOUT_PROJECT_OVERVIEW_SECTIONS",
   "ABOUT_WORK_TEXT",
+  "GITHUB_IMAGE_CANDIDATE_NAMES",
   "PROFILE_IMAGE_CANDIDATE_NAMES",
   "AboutBlock",
   "AboutSection",
@@ -39,6 +43,7 @@ __all__ = [
   "about_meta_row",
   "about_pill",
   "about_text",
+  "github_image_path",
   "profile_image_path",
   "render_about_sections",
 ]

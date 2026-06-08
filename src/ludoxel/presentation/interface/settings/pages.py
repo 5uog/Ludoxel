@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtCore import QSize, Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QIcon, QPixmap
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
@@ -20,12 +20,14 @@ from ludoxel.presentation.interface.settings.about import (
   ABOUT_CREATOR_HANDLE as _CREATOR_HANDLE,
   ABOUT_CREATOR_ROLE as _CREATOR_ROLE,
   ABOUT_ETYMOLOGY_PARAGRAPHS,
+  ABOUT_GITHUB_URL as _ABOUT_GITHUB_URL,
   ABOUT_PROFILE_BIO_TEXT as _ABOUT_PROFILE_BIO_TEXT,
   ABOUT_PROJECT_OVERVIEW_SECTIONS,
   ABOUT_WORK_TEXT as _ABOUT_WORK_TEXT,
   about_meta_row as _about_meta_row,
   about_pill as _about_pill,
   about_text as _about_text,
+  github_image_path as _github_image_path,
   profile_image_path as _profile_image_path,
   render_about_sections,
 )
@@ -520,6 +522,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
 
   title_image_path = None if overlay._resource_root is None else status_overlay_title_image_path(overlay._resource_root)
   profile_path = _profile_image_path(overlay._resource_root)
+  github_path = _github_image_path(overlay._resource_root)
 
   profile_card = QFrame(host)
   profile_card.setObjectName("aboutProfileCard")
@@ -599,6 +602,25 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   profile_text_column.addLayout(pill_row)
 
   profile_text_column.addWidget(_about_text(profile_card, _ABOUT_PROFILE_BIO_TEXT, "aboutProfileBio"))
+
+  github_button = QPushButton("GitHub Repository", profile_card)
+  github_button.setObjectName("aboutGithubButton")
+  github_button.setCursor(Qt.CursorShape.PointingHandCursor)
+  github_button.setToolTip(_ABOUT_GITHUB_URL)
+  if github_path is not None:
+    github_icon = QIcon(str(github_path))
+    if not github_icon.isNull():
+      github_button.setIcon(github_icon)
+      github_button.setIconSize(QSize(24, 24))
+  github_button.clicked.connect(lambda _checked=False: QDesktopServices.openUrl(QUrl(_ABOUT_GITHUB_URL)))
+
+  github_row = QHBoxLayout()
+  github_row.setContentsMargins(0, 2, 0, 0)
+  github_row.setSpacing(0)
+  github_row.addWidget(github_button)
+  github_row.addStretch(1)
+  profile_text_column.addLayout(github_row)
+
   profile_layout.addLayout(profile_text_column, 1, 1)
   layout.addWidget(profile_card)
 

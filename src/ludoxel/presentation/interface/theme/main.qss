@@ -40,6 +40,9 @@ QWidget#settingsRoot QPushButton#modeToggle { color: #f4f4f4; background: #5a5a5
 QWidget#settingsRoot QPushButton#modeToggle:hover { background: #686868; }
 QWidget#settingsRoot QPushButton#modeToggle:checked { color: #ffffff; background: #6aa038; border-top: 2px solid #9ad65d; border-left: 2px solid #9ad65d; border-right: 2px solid #253713; border-bottom: 2px solid #253713; }
 QWidget#settingsRoot QPushButton#modeToggle:pressed { border-top: 2px solid #262626; border-left: 2px solid #262626; border-right: 2px solid #8e8e8e; border-bottom: 2px solid #8e8e8e; }
+QWidget#settingsRoot QPushButton#aboutGithubButton { color: #ffffff; background: rgba(30,30,30,235); border-top: 2px solid rgba(255,255,255,92); border-left: 2px solid rgba(255,255,255,72); border-right: 2px solid rgba(0,0,0,205); border-bottom: 2px solid rgba(0,0,0,230); padding: 7px 14px; min-height: 30px; font-size: 13px; font-weight: 800; text-align: left; }
+QWidget#settingsRoot QPushButton#aboutGithubButton:hover { background: rgba(43,43,43,245); }
+QWidget#settingsRoot QPushButton#aboutGithubButton:pressed { background: rgba(18,18,18,245); border-top: 2px solid rgba(0,0,0,230); border-left: 2px solid rgba(0,0,0,205); border-right: 2px solid rgba(255,255,255,72); border-bottom: 2px solid rgba(255,255,255,92); }
 QWidget#settingsRoot QCheckBox { color: #ffffff; spacing: 8px; min-height: 20px; }
 QWidget#settingsRoot QCheckBox::indicator { width: 18px; height: 18px; border: 2px solid #0b0b0b; background: #1d1d1d; }
 QWidget#settingsRoot QCheckBox::indicator:checked { background: #6aa038; }

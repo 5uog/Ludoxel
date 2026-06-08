@@ -7,7 +7,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QSizePolicy, QWidget
 
-from ludoxel.presentation.interface.settings.about.content import PROFILE_IMAGE_CANDIDATE_NAMES
+from ludoxel.presentation.interface.settings.about.content import GITHUB_IMAGE_CANDIDATE_NAMES, PROFILE_IMAGE_CANDIDATE_NAMES
 
 
 def _first_existing_asset(resource_root: Path | None, relative_dir: str, candidate_names: tuple[str, ...]) -> Path | None:
@@ -23,6 +23,10 @@ def _first_existing_asset(resource_root: Path | None, relative_dir: str, candida
 
 def profile_image_path(resource_root: Path | None) -> Path | None:
   return _first_existing_asset(resource_root, "assets/ui/profile", PROFILE_IMAGE_CANDIDATE_NAMES)
+
+
+def github_image_path(resource_root: Path | None) -> Path | None:
+  return _first_existing_asset(resource_root, "assets/ui/profile", GITHUB_IMAGE_CANDIDATE_NAMES)
 
 
 def about_card(parent: QWidget, object_name: str = "aboutCard") -> QFrame:
