@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ludoxel.application.preferences.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
@@ -19,6 +20,52 @@ from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS
 
 if TYPE_CHECKING:
   from ludoxel.presentation.interface.settings.overlay import SettingsOverlay
+
+_PROFILE_IMAGE_CANDIDATE_NAMES = ("profile.png", "profile.jpg", "profile.jpeg", "profile.webp", "profile.bmp")
+_CREATOR_DISPLAY_NAME = "Kento Konishi"
+_CREATOR_HANDLE = "5uog"
+_CREATOR_ROLE = "Keio University student / Ludoxel creator"
+_CREATOR_AGE = "20"
+_CREATOR_GENDER = "he/him"
+
+
+def _first_existing_asset(resource_root: Path | None, relative_dir: str, candidate_names: tuple[str, ...]) -> Path | None:
+  if resource_root is None:
+    return None
+  base = Path(resource_root) / relative_dir
+  for name in tuple(candidate_names):
+    candidate = base / str(name)
+    if candidate.is_file():
+      return candidate.resolve()
+  return None
+
+
+def _profile_image_path(resource_root: Path | None) -> Path | None:
+  return _first_existing_asset(resource_root, "assets/ui/profile", _PROFILE_IMAGE_CANDIDATE_NAMES)
+
+
+def _about_text(parent: QWidget, text: str, object_name: str = "subtitle") -> QLabel:
+  label = QLabel(str(text), parent)
+  label.setObjectName(str(object_name))
+  label.setWordWrap(True)
+  return label
+
+
+def _about_pill(parent: QWidget, text: str) -> QLabel:
+  label = QLabel(str(text), parent)
+  label.setObjectName("aboutPill")
+  label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+  return label
+
+
+def _about_meta_row(layout: QGridLayout, row: int, title: str, value: str, parent: QWidget) -> None:
+  title_label = QLabel(str(title), parent)
+  title_label.setObjectName("aboutMetaTitle")
+  value_label = QLabel(str(value), parent)
+  value_label.setObjectName("aboutMetaValue")
+  value_label.setWordWrap(True)
+  layout.addWidget(title_label, int(row), 0)
+  layout.addWidget(value_label, int(row), 1)
 
 
 def build_video_tab(overlay: "SettingsOverlay") -> None:
@@ -509,69 +556,188 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
 
 
 def build_about_tab(overlay: "SettingsOverlay") -> None:
-  scroll, host, layout = overlay._make_scroll_page()
+  scroll, host, layout = overlay._make_scroll_page(page_object_name="aboutPage")
+  layout.setContentsMargins(8, 8, 8, 8)
+  layout.setSpacing(16)
 
-  image_label = QLabel(host)
-  image_label.setObjectName("aboutImage")
-  image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-  image_label.setVisible(False)
-  if overlay._resource_root is not None:
-    image_path = status_overlay_title_image_path(overlay._resource_root)
-    pixmap = QPixmap() if image_path is None else QPixmap(str(image_path))
-    if not pixmap.isNull():
-      image_label.setPixmap(pixmap.scaled(420, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-      image_label.setVisible(True)
-  layout.addWidget(image_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+  title_image_path = None if overlay._resource_root is None else status_overlay_title_image_path(overlay._resource_root)
+  profile_path = _profile_image_path(overlay._resource_root)
 
-  author_card = QFrame(host)
-  author_card.setObjectName("aboutCard")
-  author_layout = QVBoxLayout(author_card)
-  author_layout.setContentsMargins(18, 18, 18, 18)
-  author_layout.setSpacing(10)
+  profile_card = QFrame(host)
+  profile_card.setObjectName("aboutProfileCard")
+  profile_layout = QGridLayout(profile_card)
+  profile_layout.setContentsMargins(0, 0, 0, 24)
+  profile_layout.setHorizontalSpacing(18)
+  profile_layout.setVerticalSpacing(0)
+  profile_layout.setColumnMinimumWidth(0, 176)
+  profile_layout.setColumnStretch(0, 0)
+  profile_layout.setColumnStretch(1, 1)
+  profile_layout.setRowMinimumHeight(0, 140)
+  profile_layout.setRowStretch(0, 0)
+  profile_layout.setRowStretch(1, 1)
 
-  author_title = QLabel("Creator", author_card)
-  author_title.setObjectName("sectionTitle")
-  author_layout.addWidget(author_title)
+  cover = QFrame(profile_card)
+  cover.setObjectName("aboutProfileCover")
+  cover.setFixedHeight(140)
+  cover.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+  cover_layout = QVBoxLayout(cover)
+  cover_layout.setContentsMargins(22, 18, 22, 18)
+  cover_layout.setSpacing(0)
 
-  author_name = QLabel("5uog", author_card)
-  author_name.setObjectName("aboutLead")
-  author_layout.addWidget(author_name)
+  mark_label = QLabel("Ludoxel", cover)
+  mark_label.setObjectName("aboutProfileMark")
+  mark_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+  if title_image_path is not None:
+    mark_pixmap = QPixmap(str(title_image_path))
+    if not mark_pixmap.isNull():
+      mark_label.setText("")
+      mark_label.setPixmap(mark_pixmap.scaled(300, 96, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+  cover_layout.addWidget(mark_label, alignment=Qt.AlignmentFlag.AlignRight)
+  profile_layout.addWidget(cover, 0, 0, 1, 2)
 
-  author_summary = QLabel(
-    "Ludoxel is authored as a focused desktop sandbox for voxel rendering, interaction experiments, and an integrated Othello subsystem inside one persistent PyQt6 shell.", author_card
+  avatar_layer = QWidget(profile_card)
+  avatar_layer.setObjectName("aboutAvatarLayer")
+  avatar_layer_layout = QVBoxLayout(avatar_layer)
+  avatar_layer_layout.setContentsMargins(22, 112, 22, 0)
+  avatar_layer_layout.setSpacing(0)
+
+  avatar = QLabel("KK", profile_card)
+  avatar.setObjectName("aboutAvatar")
+  avatar.setFixedSize(132, 132)
+  avatar.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+  if profile_path is not None:
+    avatar_pixmap = QPixmap(str(profile_path))
+    if not avatar_pixmap.isNull():
+      avatar.setText("")
+      avatar.setPixmap(avatar_pixmap.scaled(132, 132, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation))
+  avatar_layer_layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+  avatar_layer_layout.addStretch(1)
+  profile_layout.addWidget(avatar_layer, 0, 0, 2, 1)
+
+  profile_text_column = QVBoxLayout()
+  profile_text_column.setContentsMargins(0, 22, 22, 0)
+  profile_text_column.setSpacing(8)
+
+  display_name = QLabel(_CREATOR_DISPLAY_NAME, profile_card)
+  display_name.setObjectName("aboutProfileName")
+  profile_text_column.addWidget(display_name)
+
+  handle = QLabel(f"@{_CREATOR_HANDLE}", profile_card)
+  handle.setObjectName("aboutProfileHandle")
+  profile_text_column.addWidget(handle)
+
+  role = QLabel(_CREATOR_ROLE, profile_card)
+  role.setObjectName("aboutProfileRole")
+  role.setWordWrap(True)
+  profile_text_column.addWidget(role)
+
+  pill_row = QHBoxLayout()
+  pill_row.setContentsMargins(0, 4, 0, 0)
+  pill_row.setSpacing(8)
+  pill_row.addWidget(_about_pill(profile_card, "Engineering"))
+  pill_row.addWidget(_about_pill(profile_card, "Law"))
+  pill_row.addWidget(_about_pill(profile_card, "Voxel Systems"))
+  pill_row.addStretch(1)
+  profile_text_column.addLayout(pill_row)
+
+  profile_text_column.addWidget(
+    _about_text(
+      profile_card,
+      "My academic work is directed toward future legal practice, with particular concern for victim protection, fact finding, procedural access, information control, and institutional reform. Law forms the center of that study, while information security and user experience practice support the examination of how protective systems can be made safer, clearer, and more practically reachable. Ludoxel is developed separately as a personal desktop software project, and it follows the same discipline of making complex systems inspectable, testable, explainable, and accountable through software architecture, rendering behavior, persistence, input design, packaging, licensing, and repository governance.",
+      "aboutProfileBio",
+    )
   )
-  author_summary.setObjectName("subtitle")
-  author_summary.setWordWrap(True)
-  author_layout.addWidget(author_summary)
+  profile_layout.addLayout(profile_text_column, 1, 1)
+  layout.addWidget(profile_card)
 
-  layout.addWidget(author_card)
-
-  details_card = QFrame(host)
-  details_card.setObjectName("aboutCard")
-  details_layout = QVBoxLayout(details_card)
-  details_layout.setContentsMargins(18, 18, 18, 18)
-  details_layout.setSpacing(10)
-
-  details_title = QLabel("Project Overview", details_card)
-  details_title.setObjectName("sectionTitle")
-  details_layout.addWidget(details_title)
-
-  details_body = QLabel(
-    "The current application combines a persistent voxel play space, a backend-neutral renderer that can target wgpu-native, and a separate Othello mode that shares the same runtime shell. The project emphasizes deterministic state persistence, inspectable rendering behavior, and feature work that stays close to implemented mechanics rather than mock interfaces.",
-    details_card,
+  meta_card = QFrame(host)
+  meta_card.setObjectName("aboutCard")
+  meta_layout = QGridLayout(meta_card)
+  meta_layout.setContentsMargins(18, 18, 18, 18)
+  meta_layout.setHorizontalSpacing(18)
+  meta_layout.setVerticalSpacing(10)
+  _about_meta_row(meta_layout, 0, "Name", _CREATOR_DISPLAY_NAME, meta_card)
+  _about_meta_row(meta_layout, 1, "Handle", f"@{_CREATOR_HANDLE}", meta_card)
+  _about_meta_row(meta_layout, 2, "Age", _CREATOR_AGE, meta_card)
+  _about_meta_row(meta_layout, 3, "Gender", _CREATOR_GENDER, meta_card)
+  _about_meta_row(
+    meta_layout,
+    4,
+    "Work",
+    "Ludoxel development across PyQt6 desktop application architecture, persistent voxel-world state, first-person and third-person interaction, collision, picking, block-state rendering, AI-player behavior, Othello play-space design, OpenGL and wgpu renderer paths, native hot-path acceleration, desktop packaging, bundled resources, licensing, and repository governance.",
+    meta_card,
   )
-  details_body.setObjectName("subtitle")
-  details_body.setWordWrap(True)
-  details_layout.addWidget(details_body)
+  layout.addWidget(meta_card)
 
-  details_body_2 = QLabel(
-    "The About page uses the bundled Ludoxel mark because the present repository does not ship a dedicated creator portrait asset. The surrounding application identity, packaging metadata, and in-app documentation are kept aligned with the live code path.",
-    details_card,
+  etymology_card = QFrame(host)
+  etymology_card.setObjectName("aboutCard")
+  etymology_layout = QVBoxLayout(etymology_card)
+  etymology_layout.setContentsMargins(18, 18, 18, 18)
+  etymology_layout.setSpacing(10)
+
+  etymology_title = QLabel("Etymology", etymology_card)
+  etymology_title.setObjectName("sectionTitle")
+  etymology_layout.addWidget(etymology_title)
+  etymology_layout.addWidget(
+    _about_text(
+      etymology_card,
+      "Latin 'ludus' underlies the initial element 'lud-'. Its attested semantic field extends across play, game, sport, and school or training. The stem therefore bears a general ludic reference: not combat in particular, not one ruleset in particular, and not training in isolation, but play taken in its broader and more exact genus.",
+    )
   )
-  details_body_2.setObjectName("subtitle")
-  details_body_2.setWordWrap(True)
-  details_layout.addWidget(details_body_2)
+  etymology_layout.addWidget(
+    _about_text(
+      etymology_card,
+      "'Voxel' is the modern technical contraction of 'volumetric' and 'pixel'. In technical usage, it denotes a discrete element of three-dimensional representation, commonly treated as the spatial analogue of the pixel, and thus refers to discretized volume rather than merely to visual style or atmospheric motif.",
+    )
+  )
+  etymology_layout.addWidget(
+    _about_text(
+      etymology_card,
+      "'Ludoxel' accordingly denotes ludic activity in voxel space, or, more strictly, play conducted within a discretized volumetric world. As the title of a sandbox application, the term is exact in the only sense that matters here: the operative environment is voxel-constituted, while the activity admitted within it is ludic in a broad sense, namely as play not exhausted by any single closed game form, but proceeding through locally open course and user-directed manipulation.",
+    )
+  )
+  layout.addWidget(etymology_card)
 
-  layout.addWidget(details_card)
+  overview_card = QFrame(host)
+  overview_card.setObjectName("aboutCard")
+  overview_layout = QVBoxLayout(overview_card)
+  overview_layout.setContentsMargins(18, 18, 18, 18)
+  overview_layout.setSpacing(10)
+
+  overview_title = QLabel("Project Overview", overview_card)
+  overview_title.setObjectName("sectionTitle")
+  overview_layout.addWidget(overview_title)
+  overview_layout.addWidget(
+    _about_text(
+      overview_card,
+      "Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person and third-person camera pipeline, platform-specific renderers, persistent world state, and a separate Othello play space inside one application shell.",
+    )
+  )
+  overview_layout.addWidget(
+    _about_text(
+      overview_card,
+      "The present codebase contains the persistent My World sandbox, the Play Othello space, survival-health and fall-damage handling, state-dependent structural block logic, falling blocks for sand-class materials, AI-player spawning and behavior editing, runtime persistence, and opening-book-backed Othello settings.",
+    )
+  )
+  overview_layout.addWidget(
+    _about_text(
+      overview_card,
+      "The source tree is organized by responsibility: foundations for identity, roots, diagnostics, and math kernels; simulation for world, block, movement, player, AI-player, inventory, and Othello rules; application for bootstrap, preferences, persistence, sessions, and runtime pipelines; presentation for Qt windows, input, HUD, overlays, theme resources, rendering backends, visual builders, and audio playback.",
+    )
+  )
+  overview_layout.addWidget(
+    _about_text(
+      overview_card,
+      "The Windows path keeps the PyOpenGL renderer and its OpenGL 4.3 contract. The macOS path uses wgpu-native through the Qt rendercanvas surface so the application can reach Metal without depending on Apple OpenGL behavior. Native acceleration is limited to the arithmetic-heavy ray-AABB, voxel DDA, and view-angle kernels where the extension boundary is justified.",
+    )
+  )
+  overview_layout.addWidget(
+    _about_text(
+      overview_card,
+      "The repository is governed as a non-open-source engineering workbench. Package resources, shader roots, bundled legal material, app-managed runtime state, HMAC-based tamper detection, and desktop packaging are kept explicit so the project can be inspected, verified, distributed, and explained without blurring repository materials and user-generated state.",
+    )
+  )
+  layout.addWidget(overview_card)
+
   layout.addStretch(1)
   overlay._stack.addWidget(scroll)

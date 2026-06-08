@@ -4,14 +4,6 @@ Ludoxel is a PyQt6 desktop application for controlled experimentation on a restr
 
 The repository should instead be read as an engineering workbench. The implemented systems are those that are currently useful for rendering, collision, picking, input, persistence, and deterministic numerical inspection. Where Minecraft-derived semantics are present, they are local design targets for specific subsystems rather than a claim of full game equivalence across movement, combat, world generation, inventory logic, redstone, networking, or content coverage.
 
-## Etymology
-
-Latin **ludus** underlies the initial element **lud-**. Its attested semantic field extends across play, game, sport, and school or training. The stem therefore bears a general ludic reference: not combat in particular, not one ruleset in particular, and not training in isolation, but play taken in its broader and more exact genus.
-
-**Voxel** is the modern technical contraction of **volumetric** and **pixel**. In technical usage, it denotes a discrete element of three-dimensional representation, commonly treated as the spatial analogue of the pixel, and thus refers to discretized volume rather than merely to visual style or atmospheric motif.
-
-**Ludoxel** accordingly denotes ludic activity in voxel space, or, more strictly, play conducted within a discretized volumetric world. As the title of a sandbox application, the term is exact in the only sense that matters here: the operative environment is voxel-constituted, while the activity admitted within it is ludic in a broad sense, namely as play not exhausted by any single closed game form, but proceeding through locally open course and user-directed manipulation.
-
 ## Application modes
 
 Ludoxel currently exposes two persistent application modes inside a single desktop shell: `My World` and `Play Othello (Reversi)`.
