@@ -89,6 +89,8 @@ QWidget#settingsRoot QFrame#aboutCard { background: rgba(24,24,24,208); border: 
 QWidget#settingsRoot QLabel#aboutMetaTitle { color: rgba(255,255,255,168); font-size: 12px; font-weight: 700; min-width: 142px; }
 QWidget#settingsRoot QLabel#aboutMetaValue { color: rgba(255,255,255,230); font-size: 13px; }
 QWidget#settingsRoot QLabel#aboutLead { color: #ffffff; font-size: 18px; font-weight: 700; }
+QWidget#settingsRoot QLabel#aboutSectionTitle { color: #ffffff; font-size: 14px; font-weight: 800; padding-top: 8px; }
+QWidget#settingsRoot QLabel#aboutCodeBlock { color: rgba(255,255,255,232); background: rgba(10,10,10,190); border: 1px solid rgba(255,255,255,54); border-radius: 4px; padding: 10px 12px; font-family: "SF Mono", "Menlo", "Consolas", "Courier New", monospace; font-size: 12px; }
 QWidget#othelloGraph { border: 2px solid rgba(0,0,0,185); }
 QWidget#othelloSettingsRoot QComboBox { color: #ffffff; background: #3c3c3c; border-top: 2px solid #6a6a6a; border-left: 2px solid #6a6a6a; border-right: 2px solid #1f1f1f; border-bottom: 2px solid #1f1f1f; padding: 6px 10px; min-height: 20px; }
 QWidget#othelloSettingsRoot QComboBox:hover { background: #4a4a4a; }
