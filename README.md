@@ -1,10 +1,8 @@
 # Ludoxel v3.6
 
-Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person and third-person camera pipeline, and platform-specific voxel renderers. The present codebase contains a persistent flat sandbox, a separate Othello play space, survival-only player health with fall damage, melee damage feedback, knockback, and lethal-damage death handling, state-dependent block-shape logic for a limited set of structural block families, gravity-affected falling blocks for `sand`, `red_sand`, and `gravel`, AI-player spawning through a dedicated creative-inventory `AI` special item, and a narrowly selected native-acceleration path for arithmetic-intensive kernels. The Windows source and bundle path retains the existing PyOpenGL renderer and its OpenGL 4.3 contract. The macOS source and `.app` path uses wgpu-native through the Qt `rendercanvas` surface so the app can reach Metal without depending on Apple's OpenGL 4.1 implementation. The native performance path presently depends on the generated in-place extension modules for `ludoxel.foundations.mathematics.geometry.ray_aabb`, `ludoxel.foundations.mathematics.voxels.dda`, and `ludoxel.foundations.mathematics.linear.view_angles`; if those binaries are absent, the application falls back to the Python sources for those kernels and the frame rate drops accordingly. It does not presently constitute a rule-complete reproduction of Minecraft Bedrock Edition or Minecraft Java Edition, and it should not be represented as a finished system.
+Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person and third-person camera pipeline, and platform-specific voxel renderers.
 
-The repository should instead be read as an engineering workbench. The implemented systems are those that are currently useful for rendering, collision, picking, input, persistence, and deterministic numerical inspection. Where Minecraft-derived semantics are present, they are local design targets for specific subsystems rather than a claim of full game equivalence across movement, combat, world generation, inventory logic, redstone, networking, or content coverage.
-
-## Application modes
+## Application verification notes
 
 Ludoxel currently exposes two persistent application modes inside a single desktop shell: `My World` and `Play Othello (Reversi)`.
 
@@ -208,7 +206,3 @@ The renderer target is selected by platform. Windows uses the existing PyOpenGL 
 `npm run shader:check` validates the package shader roots under `src/ludoxel/presentation/rendering/backends/opengl/shaders` and `src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources`, and keeps obvious cross-profile hazards, such as raw `gl_VertexID` use, out of source. The macOS renderer path does not compile or link `chunk_face_payload.comp` and does not require GLSL 4.30 compute shaders, shader storage buffers, or `glMultiDrawArraysIndirect`; the Windows renderer path still uses the existing OpenGL implementation until it can be migrated and verified on Windows hardware.
 
 The macOS `.app` packaging path uses the wgpu-native renderer path, collects the Python `wgpu` and `rendercanvas` packages for PyInstaller, preserves bundled assets, fonts, icon metadata, the gameplay input monitoring usage string, Python framework links, and legal material, and verifies the app-bundle shape during `npm run build:macos:check`. Codesigning and notarization remain separate release steps. Windows packaging keeps the existing PyOpenGL renderer path and Windows `.ico` handling.
-
-## Future AI workbench note
-
-The future AI workbench remains a design direction, not a placeholder tool directory. A later implementation may introduce a React / TypeScript / Vite surface for AI image generation, AI video generation, AI text generation, chat, history, model management, notifications, saving, and exhibit sending, but the current repository does not ship an empty future-workbench command. Web formatting and lint commands are present so future web source can be introduced without changing the npm command surface.

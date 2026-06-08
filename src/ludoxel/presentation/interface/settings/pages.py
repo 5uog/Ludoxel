@@ -29,6 +29,148 @@ _CREATOR_AGE = "20"
 _CREATOR_GENDER = "he/him"
 
 
+_ABOUT_PROFILE_BIO_TEXT: str = (
+  "My academic work is directed toward future legal practice, with particular concern for victim protection, fact finding, procedural access, information management, and "
+  "institutional reform. Law forms the center of that study, while information security and user-experience practice support the examination of how protective systems can be "
+  "made safer, clearer, and more practically reachable. Ludoxel is developed separately as a personal desktop software project. It shares a related discipline with that "
+  "academic direction because complex institutional and technical systems both require structures that can be inspected, tested, explained, and held accountable through "
+  "explicit architecture, rendering behavior, persistence, input design, packaging, licensing, and repository governance."
+)
+
+_ABOUT_WORK_TEXT: str = (
+  "I work on Ludoxel as a PyQt6 desktop application with persistent voxel-world state, first-person and third-person interaction, collision, picking, block-state rendering, "
+  "falling-block behavior, AI-player behavior and settings, a separate Othello play space, OpenGL and wgpu renderer paths, native hot-path acceleration, runtime persistence, "
+  "desktop packaging, bundled resources, licensing, and repository governance."
+)
+
+_ABOUT_ACADEMIC_DIRECTION_TEXT: str = (
+  "My academic direction centers on legal practice, victim protection, fact finding, procedural access, information management, and institutional reform. Software-system "
+  "design, verification, persistence, interface construction, and governance are relevant to that direction because protective systems must remain inspectable, explainable, "
+  "testable, and accountable when they handle human claims, evidence, access routes, stored information, and institutional decisions."
+)
+
+_ABOUT_PROJECT_OVERVIEW_PARAGRAPHS: tuple[str, ...] = (
+  (
+    "Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person and third-person camera pipeline, and "
+    "platform-specific voxel renderers. The present codebase contains a persistent My World sandbox, a separate Othello play space, survival-only player health with fall "
+    "damage, melee damage feedback, knockback, lethal-damage death handling, state-dependent block-shape logic for selected structural block families, gravity-affected falling "
+    "blocks for `sand`, `red_sand`, and `gravel`, AI-player spawning through a dedicated creative-inventory `AI` special item, and a narrowly selected native-acceleration path "
+    "for arithmetic-intensive kernels."
+  ),
+  (
+    "Ludoxel is an engineering workbench for rendering, collision, picking, input, persistence, deterministic numerical inspection, and desktop packaging. Minecraft-derived "
+    "semantics appear only as local design targets for implemented subsystems. The project does not claim rule-complete reproduction of Minecraft Bedrock Edition or Minecraft "
+    "Java Edition and does not assert complete equivalence for movement, combat, world generation, inventory logic, redstone, networking, or content coverage."
+  ),
+  (
+    "The desktop shell exposes two persistent application modes: `My World` and `Play Othello (Reversi)`. The pause menu switches between those spaces and `Save & Quit` "
+    "persists the current world, player state, mode-local session data, and runtime preferences before closing. Each space keeps its own player transform and session-specific "
+    "state, and the shell reuses the same loading and resource-resolution paths when transferring between spaces."
+  ),
+  (
+    "`My World` is the persistent sandbox space. It supports placement, breaking, rendering, picking, collision, imported skin state, camera perspective, HUD visibility, "
+    "explicit player name persistence, and survival health with a `20`-point health pool. Fall damage follows Minecraft-like thresholds, falling below `y = -64` applies "
+    "repeated void damage on a fixed half-second cadence, and lethal damage enters the ordinary death-and-respawn flow."
+  ),
+  (
+    "The implemented block catalog includes full cubes, slabs, stairs, fences, fence gates, and walls. Those families use explicit block-state logic for render boxes, "
+    "collision volumes, pick volumes, and structural connectivity. `sand`, `red_sand`, and `gravel` leave the static world as transient falling bodies, descend on a "
+    "Minecraft-like falling-block tick, render continuously between ticks, settle on supported lower structural blocks, and break with the same terrain-fragment particle path "
+    "when the implemented landing rule destroys them."
+  ),
+  (
+    "The player collision and block-edit paths include depenetration for pre-existing overlaps, special restoration for saved overlaps inside closed fence gates, and preserved "
+    "overlap handling when landed gravity blocks settle onto the player. Runtime restoration reconstructs those exemptions before the first post-load collision step so restart "
+    "behavior remains consistent with the saved state instead of forcing the camera or player body into a new support condition."
+  ),
+  (
+    "The block interaction path includes continuous creative breaking and continuous right-click placement or interaction. The persisted cadences are `0.30 s` for break "
+    "repetition, approximately `0.008 s` for placement continuation, and `0.20 s` for interaction repetition. Held placement is constrained to a maintained continuation line, "
+    "classifies visible side-face starts, support-face starts, grounded crouch-bridging starts, top-face and bottom-face starts, and deferred starts where the target cell is "
+    "temporarily occupied by the player body. The maintained frontier advances only when the attempted target cell actually remains a valid world block after placement, which "
+    "prevents skipped cells, unsupported falling-block loops, and route mutation from an obsolete start cell."
+  ),
+  (
+    "AI-player behavior is implemented inside the current sandbox. The creative inventory exposes a searchable `AI` special item. Right-clicking a valid placement cell spawns "
+    "a standby AI instance, and right-clicking that actor opens a per-instance settings window with `Standby`, `Route Patrol`, and `Free Roam / PVP` modes, `Aggressive` and "
+    "`Peaceful` personalities, a block-placement permission switch, route editing, route deletion, and actor deletion. Spawned AI players persist independently with transform, "
+    "health, behavior mode, placement permission, route style, and route state."
+  ),
+  (
+    "Route AI uses strict and flexible routing styles. The flexible planner snapshots a bounded world window around the patrol region, offloads support-cell route planning to "
+    "a background worker, accepts complete routes that reach the authored patrol point, reuses returned support-cell paths while valid, retries failed targets, applies local "
+    "recovery when fresh routing is unavailable, and freezes when no complete route exists to the present authored point. During melee pursuit it suspends route planning and "
+    "falls back to direct combat pursuit so path search does not consume gameplay-thread time during active combat."
+  ),
+  (
+    "Free-roam and route AI share the local player's collision, jump, placement, interaction, and kinematic stepping paths. AI actors can receive and deal melee knockback, "
+    "flash red when damaged, swing the visible attack arm during successful melee strikes, and use jump-reset, knockback-reduction placement, and bridge-placement heuristics "
+    "when placement is enabled. Aggressive AI attacks only when the player is inside the implemented eye-line and melee reach, while peaceful AI does not attack."
+  ),
+  (
+    "Camera perspective is persistent runtime state. The default `F5` cycle follows `First Person -> Third Person Back -> Third Person Front -> First Person`, the action is "
+    "remappable, and the video settings page can select the perspective directly. Third-person placement is collision-constrained against block collision volumes, uses "
+    "near-plane and clearance parameters that keep nearby faces visible, suppresses the gameplay crosshair outside first person, and projects the resolved player name above "
+    "the third-person model when gameplay HUD rendering is enabled."
+  ),
+  (
+    "The settings surfaces expose persistent video, control, player, crosshair, cloud, break-particle, arm-swing, movement, player-name, fullscreen, and Othello settings "
+    "through detached application-modal windows. The `About` page belongs to that settings shell and uses the existing title-mark search path when no separate creator portrait "
+    "asset is present. Opening a detached settings window while fullscreen is enabled temporarily returns the host window to normal state and reapplies the stored fullscreen "
+    "preference after the detached dialog closes."
+  ),
+  (
+    "`Play Othello (Reversi)` is a separate persistent play space inside the same application shell. It disables ordinary voxel placement, block breaking, and the block "
+    "inventory overlay. Its hotbar is reserved for control items, its settings window configures AI strength, time control, animation mode, player order, sacrifice level, "
+    "worker count, hash level, and opening-book learning limits, and its board interaction path handles legal disc placement, algebraic hover reports, match clocks, Othello "
+    "HUD output, board rendering, and pause behavior."
+  ),
+  (
+    "The Othello subsystem includes `Weak`, `Medium`, `Strong`, `Insane`, and `Insane+` difficulty paths, time controls from per-move limits through side clocks, simultaneous "
+    "and ripple disc-animation choices, threshold-controlled opening-book learning, cancellable learning progress, persisted user book lines under "
+    "`state/othello_opening_book.json`, compiled opening-book cache under `cache/othello_opening_book_cache.json`, opening-book import and export, and symmetry-aware storage "
+    "through canonicalized board transforms."
+  ),
+  (
+    "The canonical source-tree startup route is `python -m ludoxel`. The package entry path is `src/ludoxel/__main__.py`, after which control passes into "
+    "`ludoxel.application.bootstrap`. The visible application title is **Ludoxel**, while the import namespace remains `ludoxel`. At startup the shell enforces a single "
+    "visible desktop instance, loads persisted identity and window state, presents the player-name dialog when no explicit name is stored, displays a loading surface before "
+    "the main window becomes usable, and suspends simulation input until renderer initialization and initial residency have converged."
+  ),
+  (
+    "The source layout is divided by responsibility. `foundations` owns identity, repository and runtime root resolution, diagnostics, and math kernels. `simulation` owns "
+    "world state, block catalogs and models, movement, collision and interaction rules, player and AI-player state, inventories, Othello rules, engines, books, and bundled "
+    "book resources. `application` owns bootstrap, UI-independent preferences, persistence stores and integrity checking, session factories, session managers, runtime-state "
+    "pipelines, render snapshot DTOs, and fixed-step runners. `presentation` owns Qt windows, input, HUD, overlays, settings surfaces, theme resources, renderer contracts, "
+    "OpenGL and wgpu backends, shader resources, visual builders, and audio playback."
+  ),
+  (
+    "The Windows source and bundle path retains the PyOpenGL renderer and its OpenGL 4.3 contract. The macOS source and `.app` path uses wgpu-native through the Qt "
+    "`rendercanvas` surface so the application reaches Metal without depending on Apple's OpenGL 4.1 implementation. The macOS path keeps keyboard interception and mouse "
+    "confinement separate, uses a native CoreGraphics event tap for the keyboard guard, recenters the system cursor for mouse-look capture, and records "
+    "`NSInputMonitoringUsageDescription` in the `.app` bundle."
+  ),
+  (
+    "Native acceleration is deliberately narrow. Only `ludoxel.foundations.mathematics.geometry.ray_aabb`, `ludoxel.foundations.mathematics.voxels.dda`, and "
+    "`ludoxel.foundations.mathematics.linear.view_angles` are compiled in place. Those modules are dominated by scalar arithmetic, geometric branching, and dense numerical "
+    "work. Scene orchestration, block orchestration, session management, persistence, UI state, and renderer scheduling remain Python responsibilities because those layers are "
+    "governed by object ownership, callback dispatch, dictionaries, and heterogeneous application state rather than one dense arithmetic kernel."
+  ),
+  (
+    "Runtime-writable data is separated from immutable package resources. Repository-level `configs/` is previous-format input and is not the normal save location for current "
+    "runtime writes. The app-managed data root separates durable `state/` files from rebuildable `cache/` files. Player settings, window state, world edits, custom player "
+    "skin, and the Othello user opening-book extension are state. The compiled Othello opening-book map is cache. Main state files use an HMAC-SHA256 manifest to detect simple "
+    "external edits or accidental corruption; this is tamper detection, not complete tamper prevention against a local user who can rewrite both data files and the local "
+    "integrity key."
+  ),
+  (
+    "The legal boundary is explicit. Ludoxel Original Materials follow the Ludoxel Independent License identified as `LicenseRef-All-Rights-Reserved`, and the repository is "
+    "not open source. Third-party materials, provenance-sensitive local assets, runtime user data, and application output are distinct from those Original Materials. Desktop "
+    "builds must include `LICENSE`, `NOTICE`, and `third-party/`, and package startup registers bundled fonts rather than relying on a platform system-font fallback."
+  ),
+)
+
+
 def _first_existing_asset(resource_root: Path | None, relative_dir: str, candidate_names: tuple[str, ...]) -> Path | None:
   if resource_root is None:
     return None
@@ -640,13 +782,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   pill_row.addStretch(1)
   profile_text_column.addLayout(pill_row)
 
-  profile_text_column.addWidget(
-    _about_text(
-      profile_card,
-      "My academic work is directed toward future legal practice, with particular concern for victim protection, fact finding, procedural access, information control, and institutional reform. Law forms the center of that study, while information security and user experience practice support the examination of how protective systems can be made safer, clearer, and more practically reachable. Ludoxel is developed separately as a personal desktop software project, and it follows the same discipline of making complex systems inspectable, testable, explainable, and accountable through software architecture, rendering behavior, persistence, input design, packaging, licensing, and repository governance.",
-      "aboutProfileBio",
-    )
-  )
+  profile_text_column.addWidget(_about_text(profile_card, _ABOUT_PROFILE_BIO_TEXT, "aboutProfileBio"))
   profile_layout.addLayout(profile_text_column, 1, 1)
   layout.addWidget(profile_card)
 
@@ -660,13 +796,8 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   _about_meta_row(meta_layout, 1, "Handle", f"@{_CREATOR_HANDLE}", meta_card)
   _about_meta_row(meta_layout, 2, "Age", _CREATOR_AGE, meta_card)
   _about_meta_row(meta_layout, 3, "Gender", _CREATOR_GENDER, meta_card)
-  _about_meta_row(
-    meta_layout,
-    4,
-    "Work",
-    "Ludoxel development across PyQt6 desktop application architecture, persistent voxel-world state, first-person and third-person interaction, collision, picking, block-state rendering, AI-player behavior, Othello play-space design, OpenGL and wgpu renderer paths, native hot-path acceleration, desktop packaging, bundled resources, licensing, and repository governance.",
-    meta_card,
-  )
+  _about_meta_row(meta_layout, 4, "Work", _ABOUT_WORK_TEXT, meta_card)
+  _about_meta_row(meta_layout, 5, "Academic direction", _ABOUT_ACADEMIC_DIRECTION_TEXT, meta_card)
   layout.addWidget(meta_card)
 
   etymology_card = QFrame(host)
@@ -707,36 +838,8 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   overview_title = QLabel("Project Overview", overview_card)
   overview_title.setObjectName("sectionTitle")
   overview_layout.addWidget(overview_title)
-  overview_layout.addWidget(
-    _about_text(
-      overview_card,
-      "Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person and third-person camera pipeline, platform-specific renderers, persistent world state, and a separate Othello play space inside one application shell.",
-    )
-  )
-  overview_layout.addWidget(
-    _about_text(
-      overview_card,
-      "The present codebase contains the persistent My World sandbox, the Play Othello space, survival-health and fall-damage handling, state-dependent structural block logic, falling blocks for sand-class materials, AI-player spawning and behavior editing, runtime persistence, and opening-book-backed Othello settings.",
-    )
-  )
-  overview_layout.addWidget(
-    _about_text(
-      overview_card,
-      "The source tree is organized by responsibility: foundations for identity, roots, diagnostics, and math kernels; simulation for world, block, movement, player, AI-player, inventory, and Othello rules; application for bootstrap, preferences, persistence, sessions, and runtime pipelines; presentation for Qt windows, input, HUD, overlays, theme resources, rendering backends, visual builders, and audio playback.",
-    )
-  )
-  overview_layout.addWidget(
-    _about_text(
-      overview_card,
-      "The Windows path keeps the PyOpenGL renderer and its OpenGL 4.3 contract. The macOS path uses wgpu-native through the Qt rendercanvas surface so the application can reach Metal without depending on Apple OpenGL behavior. Native acceleration is limited to the arithmetic-heavy ray-AABB, voxel DDA, and view-angle kernels where the extension boundary is justified.",
-    )
-  )
-  overview_layout.addWidget(
-    _about_text(
-      overview_card,
-      "The repository is governed as a non-open-source engineering workbench. Package resources, shader roots, bundled legal material, app-managed runtime state, HMAC-based tamper detection, and desktop packaging are kept explicit so the project can be inspected, verified, distributed, and explained without blurring repository materials and user-generated state.",
-    )
-  )
+  for paragraph in _ABOUT_PROJECT_OVERVIEW_PARAGRAPHS:
+    overview_layout.addWidget(_about_text(overview_card, paragraph))
   layout.addWidget(overview_card)
 
   layout.addStretch(1)
