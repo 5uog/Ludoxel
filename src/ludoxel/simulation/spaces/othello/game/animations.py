@@ -15,7 +15,10 @@ OTHELLO_ANIMATION_MODES: tuple[str, ...] = (OTHELLO_ANIMATION_OFF, OTHELLO_ANIMA
 
 
 def normalize_animation_mode(value: object, *, default: str = OTHELLO_ANIMATION_OFF) -> str:
-  """I define N_a(x) in A, where A = {off, fast, slow} is the animation-mode alphabet. I collapse previous disabled-state spellings onto `off` and reject every value outside A so that rendered flip timing remains formally well-defined."""
+  """
+  animation mode token を有限集合 `{off, fast, slow}` へ正規化する。
+  過去の disabled 表記は `off` へ畳み込み、集合外の値は許容しないため、flip timing は常に定義済み mode に属する。
+  """
   raw = str(value).strip().lower()
   if raw in ("none", "disabled", "simultaneous"):
     raw = OTHELLO_ANIMATION_OFF
@@ -28,7 +31,10 @@ def normalize_animation_mode(value: object, *, default: str = OTHELLO_ANIMATION_
 
 
 def animation_mode_display_name(value: object) -> str:
-  """I define L_a : A -> HumanReadable by a total label map over animation modes. I keep this projection separate from N_a so that storage and presentation remain decoupled."""
+  """
+  正規化済み animation mode を表示 label へ写す全域的な map である。
+  storage identifier と presentation label を分離し、UI 文言の変更が保存値へ影響しないようにする。
+  """
   normalized = normalize_animation_mode(value)
   if normalized == OTHELLO_ANIMATION_SLOW:
     return "Ripple slow"
@@ -39,8 +45,11 @@ def animation_mode_display_name(value: object) -> str:
 
 @dataclass(frozen=True)
 class OthelloAnimationState:
-  """I model one disc-flip trajectory as alpha = (square, from, to, elapsed, duration, delay, lift). The effective phase is t = clamp((elapsed - delay)/duration, 0, 1), and I preserve delay explicitly so that ripple schedules can be represented without duplicating per-mode timing code in the renderer."""
-
+  """
+  一つの disc flip trajectory を表す record である。
+  square、from/to side、elapsed、duration、delay、lift を持ち、
+  effective phase は `clamp((elapsed - delay) / duration, 0, 1)` として renderer が読める。
+  """
   square_index: int
   from_side: int
   to_side: int
@@ -50,7 +59,10 @@ class OthelloAnimationState:
   lift_height: float = 0.075
 
   def normalized(self) -> "OthelloAnimationState":
-    """I define N_alpha(alpha_raw) by clamping the square index into [0,63], enforcing elapsed >= 0, duration > 0, delay >= 0, and lift >= 0, and normalizing both side tokens. This prevents the renderer from receiving singular or negative timing parameters."""
+    """
+    animation state の各成分を許容範囲へ正規化する。
+    square は `[0, 63]`、elapsed と delay と lift は非負、duration は正、side token は canonical side に固定される。
+    """
     try:
       square_index = int(self.square_index)
     except Exception:
@@ -71,12 +83,18 @@ class OthelloAnimationState:
     )
 
   def total_duration_s(self) -> float:
-    """I define T(alpha) = delay + duration. I use this scalar as the completion threshold in the match controller so that staggered animations terminate only after the last delayed phase has elapsed."""
+    """
+    animation が完了する時刻を `delay + duration` として返す。
+    match controller は staggered ripple の最後の delayed phase が終わるまで animation を継続する。
+    """
     normalized = self.normalized()
     return float(normalized.start_delay_s) + float(normalized.duration_s)
 
   def to_dict(self) -> dict[str, Any]:
-    """I define phi_alpha : alpha -> JSONMap by serializing the normalized trajectory state, including its explicit start delay. I persist delay because ripple schedules are part of the semantic match state rather than transient renderer-local data."""
+    """
+    正規化済み trajectory を JSON map へ変換する。
+    delay は ripple schedule の意味を持つ match state の一部であり、renderer-local 一時値として捨てない。
+    """
     normalized = self.normalized()
     return {
       "square_index": int(normalized.square_index),
@@ -90,7 +108,10 @@ class OthelloAnimationState:
 
   @staticmethod
   def from_dict(data: dict[str, Any]) -> "OthelloAnimationState":
-    """I define weak deserialization for alpha by reading an arbitrary mapping and then applying N_alpha. This guarantees that restored animation state remains renderable even when persistence inputs are partial or stale."""
+    """
+    任意 mapping から animation state を復元し、最後に正規化する。
+    古い又は部分的な保存値でも renderer が処理可能な trajectory へ落とす。
+    """
     if not isinstance(data, dict):
       return OthelloAnimationState(square_index=0, from_side=SIDE_EMPTY, to_side=SIDE_EMPTY)
     return OthelloAnimationState(

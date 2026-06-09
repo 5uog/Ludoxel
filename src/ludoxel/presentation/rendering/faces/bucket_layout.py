@@ -11,7 +11,11 @@ BucketCounts = tuple[int, int, int, int, int, int]
 
 
 def normalize_bucket_counts(bucket_counts: Sequence[int]) -> BucketCounts:
-  """I define N(c)_i = max(0, int(c_i)) for i < 6, padding missing entries with zero and truncating surplus entries beyond the six voxel faces. I use this normalization to keep every face-bucket consumer total over loose sequence inputs while preserving the fixed face ordering contract."""
+  """
+  六つの voxel face に対応する count 列を正規化する。
+  各成分は `max(0, int(c_i))` とし、不足分は 0 で埋め、七番目以降は捨てることで、
+  全 renderer bucket が同じ face 順序を共有する。
+  """
   vals = tuple(int(max(0, int(v))) for v in tuple(bucket_counts)[:FACE_COUNT])
   if len(vals) < FACE_COUNT:
     vals = vals + (0,) * (FACE_COUNT - len(vals))
@@ -19,12 +23,18 @@ def normalize_bucket_counts(bucket_counts: Sequence[int]) -> BucketCounts:
 
 
 def bucket_offsets(bucket_counts: Sequence[int]) -> BucketCounts:
-  """I define O_i = sum_{k < i} N(c)_k under the normalized six-face count vector N(c). I use this prefix-sum layout when one flat payload must be indexed by face-local contiguous ranges."""
+  """
+  正規化された六 face count から prefix offset を作る。
+  各 offset は `O_i = Σ_{k<i} c_k` であり、平坦 payload から face-local な連続領域を取り出す基準になる。
+  """
   c0, c1, c2, c3, c4, _c5 = normalize_bucket_counts(bucket_counts)
   return (0, int(c0), int(c0 + c1), int(c0 + c1 + c2), int(c0 + c1 + c2 + c3), int(c0 + c1 + c2 + c3 + c4))
 
 
 def empty_face_bucket_arrays(row_width: int, *, dtype: object = np.float32) -> list[np.ndarray]:
-  """I define E_i = 0_(0 x w) for each face bucket i in {0,...,5}, where w = max(0, int(row_width)). I use this constructor to give all empty bucket families one canonical shape and dtype policy."""
+  """
+  六 face それぞれに対して、行数 0、列数 `max(0, row_width)` の `float32` 配列を作る。
+  空 payload でも shape と dtype を固定することで、upload 側の分岐を減らす。
+  """
   width = int(max(0, int(row_width)))
   return [np.zeros((0, width), dtype=dtype) for _ in range(FACE_COUNT)]

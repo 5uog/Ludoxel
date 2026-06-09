@@ -14,17 +14,26 @@ def skin_cube_uv_map(
   pos_z: tuple[float, float, float, float],
   neg_z: tuple[float, float, float, float],
 ) -> dict[int, tuple[float, float, float, float]]:
-  """I define U = {+X,-X,+Y,-Y,+Z,-Z} -> R^4, where each face key is mapped onto its skin-space pixel rectangle. I use this constructor to keep the arm and sleeve UV atlases algebraically explicit while avoiding repeated face-index bookkeeping."""
+  """
+  face key `{+X, -X, +Y, -Y, +Z, -Z}` を skin-space pixel rectangle へ写す辞書を作る。
+  arm と sleeve の atlas 指定を明示し、face index の重複管理を避ける。
+  """
   return {FACE_POS_X: pos_x, FACE_NEG_X: neg_x, FACE_POS_Y: pos_y, FACE_NEG_Y: neg_y, FACE_POS_Z: pos_z, FACE_NEG_Z: neg_z}
 
 
 def rotate_uv_rect_180(px_rect: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
-  """I define R180(u0,v0,u1,v1) = (u1,v1,u0,v0). I apply this involution when the skin face must be sampled with the orientation expected by the mesh convention rather than the raw texture-layout convention."""
+  """
+  UV rectangle `(u0, v0, u1, v1)` を 180 度回転相当の `(u1, v1, u0, v0)` へ写す。
+  mesh convention と raw texture layout の向きが異なる face に適用する involution である。
+  """
   return (float(px_rect[2]), float(px_rect[3]), float(px_rect[0]), float(px_rect[1]))
 
 
 def uv_map_with_rotated_faces(uv_map: dict[int, tuple[float, float, float, float]], *faces: int) -> dict[int, tuple[float, float, float, float]]:
-  """I define U'(f) = R180(U(f)) for every requested face f and U'(g) = U(g) otherwise. I use this selective reorientation to keep atlas data canonical while still matching the winding and face-local tangent conventions of the renderer."""
+  """
+  指定 face にだけ `rotate_uv_rect_180` を適用し、その他の face は元の UV rectangle を保持する。
+  atlas data を canonical に保ちながら、renderer の winding と face-local tangent convention に合わせる。
+  """
   out = {int(face_idx): tuple(rect) for face_idx, rect in uv_map.items()}
   for face_idx in faces:
     out[int(face_idx)] = rotate_uv_rect_180(out[int(face_idx)])

@@ -101,8 +101,10 @@ _LEFT_LEG_PANTS_UV_PX = skin_cube_uv_map(
 
 @dataclass(frozen=True)
 class HeldBlockPose:
-  """I define this record as the tuple (block_id, block_kind, M_parent) that parameterizes third-person held-block rendering. I isolate the parent transform from the later face-expansion step so that pose generation and face-row materialization remain independently cacheable."""
-
+  """
+  third-person held block rendering に必要な `block_id`、`block_kind`、親 transform を保持する record である。
+  pose generation と face expansion を分けることで、attachment 計算と row materialization を別々に cache できる。
+  """
   block_id: str
   block_kind: str | None
   parent_transform: np.ndarray
@@ -110,8 +112,10 @@ class HeldBlockPose:
 
 @dataclass(frozen=True)
 class PlayerModelPose:
-  """I define this record as the cached player-render state image P = (F_skin, H, F_special, icon, R_shadow). I use it as the stable boundary between expensive pose synthesis and the later OpenGL passes that only consume packed face or transform rows."""
-
+  """
+  third-person player の pose synthesis 結果を保持する cached record である。
+  skin face rows、held block pose、special item rows、icon、shadow cuboid rows をまとめ、OpenGL pass は高価な kinematics ではなく packing 済み入力だけを読む。
+  """
   skin_face_rows: tuple[np.ndarray, ...]
   held_block_pose: HeldBlockPose | None
   special_item_face_rows: tuple[np.ndarray, ...]
@@ -121,18 +125,27 @@ class PlayerModelPose:
 
 
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
-  """I define vec16(M) as the row-major flattening of a 4x4 affine matrix into R^16. I use this compact encoding for the shadow pipeline because its cuboid instances require only transforms and not per-face UV metadata."""
+  """
+  4x4 affine matrix を row-major の 16 成分へ平坦化する。
+  shadow pipeline は UV metadata を必要とせず、cuboid instance transform だけをこの compact representation で受け取る。
+  """
   return np.asarray(matrix, dtype=np.float32).reshape(16)
 
 
 def _append_unit_cube_rows(buffers: list[list[list[float]]], model: np.ndarray, uv_map_pixels: dict[int, tuple[float, float, float, float]]) -> None:
-  """I append the six face rows of one unit cube transformed by model and textured by the supplied skin-rectangle family. I use this helper to keep body-part materialization declarative at the call site."""
+  """
+  一つの unit cube を指定 model matrix と skin UV map で六 face row へ展開する。
+  body part の materialization を呼び出し側で宣言的に記述するための補助関数である。
+  """
   for face_idx in range(6):
     append_face_instance(buffers, int(face_idx), model, skin_uv_rect(uv_map_pixels[int(face_idx)], width=int(_SKIN_WIDTH), height=int(_SKIN_HEIGHT)))
 
 
 def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
-  """I define (ax, ay, az) as the right-arm attack contribution derived from the clamped swing parameter through eased sinusoidal laws. I use these angles only in the shadow pose so that the silhouette tracks attack motion even when the visible first-person model is suppressed."""
+  """
+  clamp 済み swing parameter から、shadow 用右腕 pose に加える attack rotation 成分を求める。
+  可視 first-person model が抑止される場合でも、影の silhouette は attack motion を反映する。
+  """
   swing = clampf(float(swing_progress), 0.0, 1.0)
   if swing <= 1e-6:
     return (0.0, 0.0, 0.0)
@@ -147,7 +160,10 @@ def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
 
 
 def _attack_swing_weight(swing_progress: float) -> float:
-  """I define w = sin(pi*sqrt(p)) for p = clamp(swing_progress, 0, 1), with w = 0 at rest. I use this weight to damp the ordinary walk cycle when the main-hand attack pose should dominate the arm kinematics."""
+  """
+  `p = clamp(swing_progress, 0, 1)` に対して `w = sin(pi sqrt(p))` を計算する。
+  main-hand attack pose が支配的な間、通常の歩行 cycle を減衰させるための重みである。
+  """
   swing = clampf(float(swing_progress), 0.0, 1.0)
   if swing <= 1e-6:
     return 0.0
@@ -156,7 +172,11 @@ def _attack_swing_weight(swing_progress: float) -> float:
 
 @lru_cache(maxsize=64)
 def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerModelPose:
-  """I define P(state) as the fully materialized third-person player pose, including articulated body cuboids, optional held-item attachment state, optional special-item quad rows, and the shadow-only cuboid stack. I cache P because every downstream renderer treats it as immutable over a frame, whereas its synthesis traverses the most expensive local kinematic path."""
+  """
+  player render state から third-person player pose を完全に materialize する。
+  関節 body cuboid、任意の held-item attachment、任意の special-item quad、
+  shadow 専用 cuboid stack を含む frame 内不変の重い生成物であるため、cache 対象にする。
+  """
   empty_shadow = np.zeros((0, 16), dtype=np.float32)
   empty_faces = empty_textured_face_rows()
   if state is None:
@@ -328,5 +348,8 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
 
 
 def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
-  """I define this function as the public projection pi(state) = P(state) onto the cached player-render pose space. I keep the wrapper narrow so that callers depend on one stable entry point while the cache policy remains private to this module."""
+  """
+  cached player-render pose 空間への公開入口である。
+  呼び出し側はこの関数だけへ依存し、cache policy と具体的な pose synthesis 経路は module 内に閉じる。
+  """
   return _build_player_model_pose_cached(state)

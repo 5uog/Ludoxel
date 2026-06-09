@@ -39,7 +39,10 @@ DEFAULT_TIME_LIMIT_S: float = 20.0 * 60.0
 
 
 def normalize_time_control(value: object, *, default: str = OTHELLO_TIME_CONTROL_PER_SIDE_20M) -> str:
-  """I define N_t(x) in T, where T is the finite set of supported timer modes. I resolve previous aliases such as `none` and `unlimited` into `off`, then I accept only canonical members of T so that persistence and UI binding operate over a single stable identifier set."""
+  """
+  time-control token を対応 timer mode の有限集合へ正規化する。
+  `none` や `unlimited` などの別名は `off` へ畳み込み、persistence と UI binding は一つの identifier 集合を共有する。
+  """
   raw = str(value).strip().lower()
   if raw in ("no_limit", "unlimited", "none"):
     raw = OTHELLO_TIME_CONTROL_OFF
@@ -52,17 +55,26 @@ def normalize_time_control(value: object, *, default: str = OTHELLO_TIME_CONTROL
 
 
 def time_control_limit_s(value: object) -> float | None:
-  """I define tau(t) as the nominal limit in seconds associated with a normalized timer mode t. I return None exactly for the timer-off state and a finite positive scalar for every bounded per-move or per-side mode."""
+  """
+  正規化済み timer mode に対応する基準秒数を返す。
+  timer off の場合だけ `None` を返し、bounded per-move 又は per-side mode では有限正値を返す。
+  """
   return _TIME_CONTROL_LIMITS_S.get(normalize_time_control(value), float(DEFAULT_TIME_LIMIT_S))
 
 
 def time_control_is_per_move(value: object) -> bool:
-  """I define chi_move(t) = 1 iff the normalized timer mode is constrained per move rather than per side. I use this predicate at turn transition so that only the active side clock is reloaded in sudden-death move-timer modes."""
+  """
+  timer mode が per-move 制約を持つかを判定する。
+  turn transition ではこの述語により、active side clock を reload すべき mode だけを選ぶ。
+  """
   return normalize_time_control(value) in _PER_MOVE_TIME_CONTROLS
 
 
 def time_control_display_name(value: object) -> str:
-  """I define L_t : T -> HumanReadable by a total presentation map over the canonical timer domain. This map is deliberately non-invertible at the UI layer because serialization remains governed by the canonical identifiers rather than by labels."""
+  """
+  canonical timer identifier を表示 label へ写す全域的な map である。
+  label は UI 用であり、保存値の意味は identifier によって固定される。
+  """
   normalized = normalize_time_control(value)
   if normalized == OTHELLO_TIME_CONTROL_OFF:
     return "Timer off"

@@ -13,7 +13,10 @@ ChunkPredicate = Callable[[ChunkKey], bool]
 
 
 def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_distance_chunks: int) -> bool:
-  """I define D(ck, cam) = (|dx| <= rd) and (|dy| <= 1) and (|dz| <= rd) after normalizing both chunk keys. I use this anisotropic predicate because horizontal chunk reach is configurable while the vertical neighborhood is intentionally clamped to the renderer's fixed local working band."""
+  """
+  chunk key と camera chunk を正規化したうえで、水平距離を render distance、垂直距離を固定範囲 `|dy| <= 1` によって判定する。
+  renderer は水平方向だけを設定可能距離とし、垂直方向は局所作業帯に制限する。
+  """
   ck = normalize_chunk_key(chunk_key)
   cam = normalize_chunk_key(camera_chunk)
   rd = int(render_distance_chunks)
@@ -25,7 +28,10 @@ def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_d
 
 
 def select_visible_chunks(chunk_keys: Iterable[ChunkKey], matrix: np.ndarray, *, predicate: ChunkPredicate | None = None) -> list[ChunkKey]:
-  """I define V = [ck in Normalize(chunk_keys) | predicate(ck) and Clip(ck, matrix)], with the predicate term omitted when no extra filter is supplied. I keep this selection pure so that frustum rejection and optional policy filters compose without entangling traversal state."""
+  """
+  chunk key 列を正規化し、render-distance 等の任意 predicate と frustum clip を通過したものだけを返す。
+  traversal state を持たない純粋選択にして、frustum rejection と policy filter を合成可能にする。
+  """
   out: list[ChunkKey] = []
 
   for chunk_key in chunk_keys:

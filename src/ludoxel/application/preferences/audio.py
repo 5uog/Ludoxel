@@ -15,7 +15,10 @@ AUDIO_CATEGORY_ORDER: tuple[str, ...] = (AUDIO_CATEGORY_MASTER, AUDIO_CATEGORY_A
 
 
 def _clamp_volume(value: object, *, default: float = 1.0) -> float:
-  """I define V(x) = clamp_R(float(x), 0, 1) with total fallback to `default`. This normalization preserves the closed gain interval required by the mixer."""
+  """
+  任意の入力を実数へ変換したうえで、音量係数を閉区間 [0, 1] へ射影する。
+  変換不能な値は default に退避させるため、ミキサーへ渡る gain は常に有限な正規化値となる。
+  """
   try:
     numeric = float(value)
   except Exception:
@@ -25,7 +28,10 @@ def _clamp_volume(value: object, *, default: float = 1.0) -> float:
 
 @dataclass(frozen=True)
 class AudioPreferences:
-  """I model the mixer state as A = (master, ambient, block, player) with each component constrained to [0,1]. I store these gains independently so that effective category gain can be evaluated compositionally."""
+  """
+  master、ambient、block、player の四つの音量係数を保持する設定値である。
+  各成分は [0, 1] に正規化され、presentation.audio の再生管理はこの値をカテゴリ別の実効音量へ合成する。
+  """
 
   master: float = 1.0
   ambient: float = 1.0
@@ -33,18 +39,25 @@ class AudioPreferences:
   player: float = 1.0
 
   def __post_init__(self) -> None:
-    """I project every stored gain through V at construction time. This makes the dataclass itself its normalized representation."""
+    """
+    生成時に全音量係数を `_clamp_volume` へ通し、データクラス内部の値を保存形式と再生処理が共有できる正規形に固定する。
+    """
     object.__setattr__(self, "master", _clamp_volume(self.master))
     object.__setattr__(self, "ambient", _clamp_volume(self.ambient))
     object.__setattr__(self, "block", _clamp_volume(self.block))
     object.__setattr__(self, "player", _clamp_volume(self.player))
 
   def normalized(self) -> "AudioPreferences":
-    """I return self because the constructor already enforces the normalization invariant A in [0,1]^4."""
+    """
+    この型は生成時点で正規化済みであるため、追加の複製を行わず同一インスタンスを返す。
+    """
     return self
 
   def volume_for(self, category: str) -> float:
-    """I define gain(category) = master * category_gain for non-master categories and = master otherwise. This factorization preserves a global mute-like scaling channel without duplicating category state."""
+    """
+    カテゴリ音量は master とカテゴリ別係数の積として求める。
+    master 自体を照会した場合又は未知カテゴリの場合は、全体音量として master のみを返す。
+    """
     key = str(category).strip().lower()
     if key == AUDIO_CATEGORY_AMBIENT:
       return float(self.master) * float(self.ambient)
@@ -55,12 +68,17 @@ class AudioPreferences:
     return float(self.master)
 
   def to_dict(self) -> dict[str, float]:
-    """I serialize the normalized mixer vector into a flat mapping keyed by category identifiers."""
+    """
+    正規化済みの音量ベクトルを、永続化 schema がそのまま保存できるカテゴリ識別子付きの平坦な辞書へ変換する。
+    """
     return {AUDIO_CATEGORY_MASTER: float(self.master), AUDIO_CATEGORY_AMBIENT: float(self.ambient), AUDIO_CATEGORY_BLOCK: float(self.block), AUDIO_CATEGORY_PLAYER: float(self.player)}
 
   @staticmethod
   def from_dict(data: object) -> "AudioPreferences":
-    """I define total deserialization from an arbitrary mapping into the normalized mixer domain."""
+    """
+    外部入力が辞書である場合に限りカテゴリ別音量を読み取り、各成分を [0, 1] へ射影して `AudioPreferences` を構成する。
+    辞書以外の値は既定設定として扱う。
+    """
     if not isinstance(data, dict):
       return AudioPreferences()
     return AudioPreferences(

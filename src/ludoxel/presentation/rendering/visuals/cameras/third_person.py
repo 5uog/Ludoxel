@@ -17,7 +17,10 @@ _THIRD_PERSON_COLLISION_MARGIN = 0.16
 
 
 def resolve_camera(*, world: WorldState, block_registry: BlockRegistry, anchor_eye: Vec3, yaw_deg: float, pitch_deg: float, perspective: str) -> tuple[Vec3, float, float, Vec3]:
-  """I define C(perspective) as the resolved eye position, look angles, and forward vector obtained by placing the camera at the first-person anchor or at the collision-clamped third-person offset. I use this resolver to keep perspective switching and world-intersection handling within one consistent geometric law."""
+  """
+  camera perspective に応じて eye position、look angles、forward vector を確定する。
+  first-person anchor と third-person offset の衝突補正を同じ幾何規則で扱い、perspective 切替時の renderer 入力を一貫させる。
+  """
   normalized_perspective = normalize_camera_perspective(perspective)
   forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
   if normalized_perspective == CAMERA_PERSPECTIVE_FIRST_PERSON:
@@ -38,7 +41,10 @@ def resolve_camera(*, world: WorldState, block_registry: BlockRegistry, anchor_e
 
 
 def _resolve_camera_collision(*, world: WorldState, block_registry: BlockRegistry, anchor_eye: Vec3, desired_eye: Vec3, collision_margin: float) -> Vec3:
-  """I define E_resolved as the nearest non-penetrating point on the anchor-to-desired segment after ray-casting against every collision AABB intersected by the segment. I subtract a fixed margin from the first hit distance so that the third-person camera does not rest exactly on solid geometry."""
+  """
+  anchor から desired camera までの segment を collision AABB に対して ray cast し、最初の衝突点より margin だけ手前の非貫通位置を返す。
+  third-person camera が solid geometry 表面に重なって描画されることを防ぐ。
+  """
   delta = desired_eye - anchor_eye
   max_distance = float(delta.length())
   if max_distance <= 1e-6:

@@ -28,7 +28,10 @@ _FLUSH_POSITION_STEP: int = 12
 
 @dataclass(frozen=True)
 class BookLearningResult:
-  """I model the terminal learning summary as R = (requested_depth, added_lines, total_lines, explored_positions). These scalars are sufficient to characterize the cost and yield of one learning run at the UI and persistence layers."""
+  """
+  一回の opening-book 学習実行の終端 summary である。
+  requested depth、追加 line 数、総 line 数、探索 position 数を保持し、UI と persistence はこの量だけで実行コストと成果を表示できる。
+  """
 
   requested_depth: int
   added_lines: int
@@ -37,22 +40,34 @@ class BookLearningResult:
 
 
 class BookLearningCancelled(RuntimeError):
-  """I raise this sentinel exactly when cooperative cancellation is observed inside the learning recursion. I keep it distinct from generic runtime failure because cancellation triggers a partial flush rather than an error path."""
-
+  """
+  学習 recursion 内で cooperative cancellation が検出された場合に送出する sentinel 例外である。
+  通常の実行失敗と分けることで、途中成果の flush 経路を保つ。
+  """
   pass
 
 
 class _LearningProgressReporter:
-  """I define a rate-limited emitter for progress payloads p = (board, side, line, legal_moves, explored_positions, remaining_depth, requested_depth). The throttling constraint dt >= 0.12 s prevents the UI transport path from dominating the learning workload."""
+  """
+  学習中の progress payload を rate limit 付きで送出する emitter である。
+  payload は board、side、line、legal moves、explored positions、remaining depth、requested depth を含み、
+  UI 同期が探索コストを支配しないよう 0.12 秒以上の間隔を設ける。
+  """
 
   def __init__(self, *, sink: Callable[[dict[str, object]], None] | None, requested_depth: int) -> None:
-    """I store the downstream sink and the requested root depth D so that every emitted payload remains self-descriptive. The reporter carries time state because emission rate is itself part of the algorithmic contract."""
+    """
+    progress sink と requested root depth を保持し、後続 emit が自己記述的な payload を構成できるようにする。
+    emission rate 自体が学習処理の契約に含まれるため、直近送出時刻も状態として持つ。
+    """
     self._sink = sink
     self._requested_depth = int(requested_depth)
     self._last_emit_s = 0.0
 
   def emit(self, *, board: tuple[int, ...], side: int, line: tuple[int, ...], legal_moves: tuple[int, ...], explored_positions: int, remaining_depth: int, force: bool = False) -> None:
-    """I emit p only when force = 1 or when t_now - t_last >= 0.12. This preserves observability of the active line and board while constraining UI synchronization overhead."""
+    """
+    `force` が真の場合又は直近送出から 0.12 秒以上経過した場合だけ progress payload を送出する。
+    現在の line と board の観測可能性を保ちながら、UI 同期の過剰な介入を抑える。
+    """
     if self._sink is None:
       return
     now = time.perf_counter()
@@ -72,17 +87,27 @@ class _LearningProgressReporter:
 
 
 class _LearningCommitter:
-  """I define a staged persistence gate for the learned line set L*. I flush only when either force = 1, |L*| has grown materially, or wall-clock time exceeds the configured interval, because synchronous writes inside every recursive leaf would distort the learning cost profile."""
+  """
+  学習済み line 集合を段階的に永続化する gate である。
+  強制 flush、十分な件数増加、一定時間の経過のいずれかが成立した場合だけ書き込み、
+  recursive leaf ごとの同期書き込みで探索時間が歪むことを避ける。
+  """
 
   def __init__(self, *, project_root=None, learned_lines: set[tuple[int, ...]]) -> None:
-    """I bind the mutable learned-line set to one project root so that every flush writes into the correct user-book store. I also retain the last flush time and count in order to implement a deterministic write-throttling policy."""
+    """
+    mutable な learned-line set と project root を結び付け、flush が正しい user-book store へ向かうようにする。
+    直近 flush 時刻と件数は、書き込み間隔を決定するために保持する。
+    """
     self._project_root = project_root
     self._learned_lines = learned_lines
     self._last_flush_s = 0.0
     self._last_flushed_count = len(learned_lines)
 
   def flush(self, *, force: bool = False) -> tuple[tuple[int, ...], ...] | None:
-    """I define Flush(L*) = persisted_lines when the throttling predicate permits a write and None otherwise. The write condition is force = 1 or (|L*| - |L_last| >= 12) or (t_now - t_last >= 0.75 s with growth present)."""
+    """
+    throttling 条件が成立したときだけ learned-line set を永続化し、成立しない場合は `None` を返す。
+    条件は強制 flush、12 本以上の増加、又は増加を伴う 0.75 秒以上の経過である。
+    """
     current_count = len(self._learned_lines)
     now = time.perf_counter()
     if not bool(force):
@@ -97,13 +122,19 @@ class _LearningCommitter:
 
 
 def _analysis_time_budget_s(*, requested_depth: int, ply_index: int, hash_level: int) -> float:
-  """I define T(D,p,h) = min(2.0, 0.30 + 0.05*max(1, D - p) + 0.04*max(0, h)). This schedule increases local evaluation budget deeper in the requested line and for larger hash allocations while retaining a hard upper bound."""
+  """
+  学習局面ごとの local evaluation budget を `min(2.0, 0.30 + 0.05 max(1, D - p) + 0.04 max(0, h))` として求める。
+  要求 depth の深部と hash allocation の増加には時間を与えつつ、局所探索の上限を 2 秒に固定する。
+  """
   remaining = max(1, int(requested_depth) - int(ply_index))
   return float(min(2.0, 0.30 + 0.05 * float(remaining) + 0.04 * float(max(0, int(hash_level)))))
 
 
 def _next_side_to_move(board: tuple[int, ...], side: int) -> int | None:
-  """I define Next(board, side) as the legal successor side under Othello pass rules. I return the opponent when it has legal moves, I return the current side when only a self-pass continuation is legal, and I return None only at terminal positions."""
+  """
+  Othello の pass rule に従い、次に手番を持つ side を返す。
+  相手に合法手があれば相手、相手に無く自分にだけ合法手があれば自分を返し、双方が打てない終局でだけ `None` となる。
+  """
   next_side = other_side(int(side))
   if find_legal_moves(board, int(next_side)):
     return int(next_side)
@@ -113,13 +144,19 @@ def _next_side_to_move(board: tuple[int, ...], side: int) -> int | None:
 
 
 def _ensure_not_cancelled(cancel_check: Callable[[], bool] | None) -> None:
-  """I define C() as a cooperative cancellation barrier. When the supplied predicate evaluates to true, I raise BookLearningCancelled immediately so that recursive exploration unwinds through the partial-flush path."""
+  """
+  cancel predicate を評価する cooperative cancellation barrier である。
+  真になった時点で `BookLearningCancelled` を送出し、recursive exploration を途中成果 flush へ巻き戻す。
+  """
   if cancel_check is not None and bool(cancel_check()):
     raise BookLearningCancelled("Opening book learning was cancelled.")
 
 
 def _should_skip_position(*, board: tuple[int, ...], side: int, remaining_depth: int, cumulative_error: float, visited_costs: dict[tuple[str, int], float]) -> bool:
-  """I define Skip(board, side, d, e) by comparing e against the best previously observed cumulative error for the canonical position-depth key (K(board,side), d). If e is not strictly better, I prune the branch because symmetry-equivalent exploration with a weaker accumulated bound cannot add new admissible lines."""
+  """
+  canonical position-depth key に記録された最良累積誤差と現在の誤差を比較し、同一対称局面を劣った bound で再探索する枝を剪定する。
+  累積誤差が厳密に改善しない探索は、新しい許容 line を追加しない。
+  """
   canonical_key, _transform_id = canonical_position_key(board, int(side))
   visit_key = (str(canonical_key), int(remaining_depth))
   best_error = visited_costs.get(visit_key)
@@ -148,7 +185,11 @@ def _learn_from_position(
   visited_costs: dict[tuple[str, int], float],
   committer: _LearningCommitter,
 ) -> None:
-  """I define Learn(board, side, d, e, line) as recursive threshold-bounded line expansion. For each candidate move m with local error delta_m and cumulative error e' = e + delta_m, I recurse iff delta_m <= e_move and e' <= e_cum; terminal or depth-exhausted leaves are admitted when delta_m <= e_leaf or when m is the principal move."""
+  """
+  局面から opening line を閾値付きで再帰展開する。
+  候補手 `m` ごとの局所誤差 `delta_m` と累積誤差 `e + delta_m` が指定上限内にある場合だけ再帰し、
+  終端又は depth 到達時は leaf 閾値又は principal move 条件により line を採用する。
+  """
   _ensure_not_cancelled(cancel_check)
   if _should_skip_position(board=board, side=int(side), remaining_depth=int(remaining_depth), cumulative_error=float(cumulative_error), visited_costs=visited_costs):
     return
@@ -236,7 +277,11 @@ def learn_opening_book(
   progress_sink: Callable[[dict[str, object]], None] | None = None,
   cancel_check: Callable[[], bool] | None = None,
 ) -> BookLearningResult:
-  """I define the public learning operator as Lrn(D, e_move, e_cum, e_leaf, root, h, q). I initialize the search cache and the learned-line set from the persistent effective book, I explore from the initial board under the admissibility constraints delta_m <= e_move and sum(delta_i) <= e_cum, I flush partial results during recursion, and I return the cardinality delta between the final persistent book and the starting corpus."""
+  """
+  公開学習 operator である。
+  永続化された effective book から開始集合を作り、初期盤面から局所誤差、累積誤差、leaf 誤差の条件に従って探索し、
+  再帰中に途中成果を flush して、最終 book と開始 book の cardinality 差を返す。
+  """
   normalized_depth = normalize_book_learning_depth(depth)
   normalized_per_move_error = normalize_book_error(per_move_error, default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR))
   normalized_cumulative_error = normalize_book_error(cumulative_error, default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR))

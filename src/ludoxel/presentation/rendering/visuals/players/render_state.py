@@ -7,8 +7,11 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FirstPersonRenderState:
-  """I define this record as the immutable parameter vector consumed by first-person arm, held-block, and special-item renderers. I keep both visible and target identifiers together with temporal animation channels so that one sampled state suffices to reconstruct every view-model transform of the frame."""
-
+  """
+  first-person の腕、held block、special item renderer が消費する不変 parameter record である。
+  visible/target identifier と時間的 animation channel を一体で保持し、
+  frame 内の view-model transform を一つの sample から再構成できるようにする。
+  """
   visible_item_id: str | None
   target_item_id: str | None
   visible_block_id: str | None
@@ -33,8 +36,10 @@ class FirstPersonRenderState:
 
 @dataclass(frozen=True)
 class PlayerRenderState:
-  """I define this record as the immutable player-pose input P = (base pose, locomotion phase, crouch, perspective flag, first-person extension). I use it as the cache key for player model synthesis because every visible body and shadow pose derives from exactly these fields."""
-
+  """
+  third-person player model synthesis の cache key となる不変入力 record である。
+  base pose、locomotion phase、crouch、perspective flag、first-person extension から、可視 body と shadow pose が決定される。
+  """
   base_x: float
   base_y: float
   base_z: float

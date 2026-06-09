@@ -14,7 +14,11 @@ from ludoxel.simulation.blocks.states.codec import parse_state
 
 
 def build_falling_block_face_rows(*, samples: tuple[FallingBlockRenderSampleDTO, ...], uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, ...]:
-  """I define F_i as the aggregate instanced-face payload for all transient falling-block samples over face index i. For each sample I materialize the render boxes of its encoded block state at the sample translation, eliminate locally occluded faces, and append vec(M_box, U_face) rows into the six face buckets."""
+  """
+  落下中 block sample を六 face の instanced payload に変換する。
+  各 sample では state に対応する render box を sample 位置へ移し、
+  local occlusion を除去したうえで `vec(M_box, U_face)` 行を face bucket へ追加する。
+  """
   if not samples:
     return empty_textured_face_rows()
 

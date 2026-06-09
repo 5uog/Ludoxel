@@ -15,17 +15,26 @@ _SKIN_HEIGHT = 64
 
 
 def default_player_skin_path(resource_root: Path) -> Path:
-  """I define P_default(root_r) = root_r / 'assets' / 'minecraft' / 'skins' / 'alex.png'. I use this path constructor as the canonical location of the bundled fallback skin texture under the immutable resource root rather than under the writable runtime root."""
+  """
+  immutable resource root の下にある bundled Alex skin path を返す。
+  既定 skin は package resource として扱い、user-writable runtime state と同じ場所へ混在させない。
+  """
   return Path(resource_root) / "assets" / "minecraft" / "skins" / "alex.png"
 
 
 def custom_player_skin_path(data_root: Path) -> Path:
-  """I define P_custom(root_d) = root_d / 'state' / 'player_skin.png'. I use this app-managed path for user-supplied skin overrides instead of writing into repository-level configs/."""
+  """
+  writable runtime data root の `state/player_skin.png` を返す。
+  user-supplied skin は repository-level configs へ書き込まず、app-managed state として保存する。
+  """
   return runtime_state_root(Path(data_root)) / "player_skin.png"
 
 
 def normalize_player_skin_image(image: QImage) -> QImage:
-  """I define N(image) as the RGBA8888-converted image under the hard invariant width = 64 and height = 64. I enforce this normalization because the renderer and skin UV layout both assume the modern Minecraft skin atlas dimensions exactly."""
+  """
+  入力画像を RGBA8888 に変換し、幅 64、高さ 64 の skin atlas であることを検査する。
+  renderer と skin UV layout は modern Minecraft skin atlas の寸法を厳密に仮定している。
+  """
   candidate = QImage(image)
   if candidate.isNull():
     raise ValueError("The selected skin image could not be decoded.")
@@ -35,7 +44,10 @@ def normalize_player_skin_image(image: QImage) -> QImage:
 
 
 def load_player_skin_image(data_root: Path, *, kind: object, resource_root: Path | None = None) -> QImage:
-  """I define Load(root_w, kind, root_r) as the custom image at P_custom(root_w) when the custom variant exists and normalizes successfully, and otherwise as the bundled Alex image at P_default(root_r). I use this split-root fallback order so that mutable user state remains under the writable runtime tree while immutable packaged textures continue to load from the bundle data root."""
+  """
+  custom skin が選択され、runtime root の custom file が正規化に成功する場合はそれを返し、その他の場合は bundled Alex skin を返す。
+  mutable user state と immutable package resource の root 境界を維持した fallback loader である。
+  """
   normalized_kind = normalize_player_skin_kind(kind)
   if normalized_kind == PLAYER_SKIN_KIND_CUSTOM:
     custom_path = custom_player_skin_path(data_root)
@@ -55,7 +67,10 @@ def load_player_skin_image(data_root: Path, *, kind: object, resource_root: Path
 
 
 def write_custom_player_skin(data_root: Path, image: QImage) -> None:
-  """I define Save(root, image) as Normalize(image) followed by a PNG write to P_custom(root), creating parent directories as needed. I use this path to persist a user-selected skin in the same normalized format that the loader later expects."""
+  """
+  入力画像を正規化してから custom skin path へ PNG として保存する。
+  保存される画像形式は loader と renderer が期待する 64x64 RGBA atlas に揃えられる。
+  """
   normalized = normalize_player_skin_image(image)
   target = custom_player_skin_path(data_root)
   target.parent.mkdir(parents=True, exist_ok=True)
@@ -65,7 +80,10 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
 
 
 def delete_custom_player_skin(data_root: Path) -> None:
-  """I define Delete(root) as the idempotent removal of P_custom(root) when that path exists. I use this operation to revert the player-skin selection to the bundled default without leaving stale override assets in place."""
+  """
+  custom skin path が存在する場合に削除する冪等操作である。
+  stale override asset を残さず、player-skin 選択を bundled default へ戻すために使う。
+  """
   target = custom_player_skin_path(data_root)
   if target.exists():
     target.unlink()

@@ -12,7 +12,10 @@ _TOKEN_SIDES: dict[str, int] = {value: key for key, value in _SIDE_TOKENS.items(
 
 
 def normalize_side(value: object, *, default: int = SIDE_EMPTY) -> int:
-  """I define N_s(x) in {0,1,2} as the canonical side normalizer with the encoding 0 = empty, 1 = black, and 2 = white. I first resolve string aliases through a finite lexical map, I then coerce numerically when lexical resolution is absent, and I finally return the designated fallback whenever x is not admissible in the state space of a disc side."""
+  """
+  side token を `0 = empty`、`1 = black`、`2 = white` の符号化へ正規化する。
+  文字列 alias を有限 map で先に解決し、解決できない値は数値変換を試み、許容集合外なら fallback へ落とす。
+  """
   if isinstance(value, str):
     raw = str(value).strip().lower()
     if raw in ("black", "player_first", "first", "b"):
@@ -36,7 +39,10 @@ def normalize_side(value: object, *, default: int = SIDE_EMPTY) -> int:
 
 
 def other_side(side: int) -> int:
-  """I define O(s) by O(1) = 2, O(2) = 1, and O(0) = 0. This involution satisfies O(O(s)) = s for s in {1,2} and preserves the empty element as a fixed point."""
+  """
+  `black` と `white` を入れ替え、`empty` を固定点として保つ involution である。
+  `s in {1, 2}` では `other_side(other_side(s)) = s` が成立する。
+  """
   norm = normalize_side(side, default=SIDE_EMPTY)
   if norm == SIDE_BLACK:
     return SIDE_WHITE
@@ -46,7 +52,10 @@ def other_side(side: int) -> int:
 
 
 def normalize_player_side(value: object, *, default: int = SIDE_BLACK) -> int:
-  """I define N_p(x) = N_s(x) with the additional constraint N_p(x) != 0. Whenever the raw value collapses to the empty side, I project it onto the designated player-side fallback so that turn assignment and AI-side derivation remain total."""
+  """
+  player side として使用できる side token へ正規化する。
+  `empty` に潰れた値は fallback の player side へ射影され、turn assignment と AI-side derivation が全域的に定義される。
+  """
   side = normalize_side(value, default=default)
   if side == SIDE_EMPTY:
     return SIDE_BLACK if int(default) == SIDE_EMPTY else normalize_side(default, default=SIDE_BLACK)
@@ -54,7 +63,10 @@ def normalize_player_side(value: object, *, default: int = SIDE_BLACK) -> int:
 
 
 def side_name(side: int) -> str:
-  """I define L_s : {0,1,2} -> {empty,black,white} as the canonical textual projection of a normalized side token. I use this map in persistence payloads and message generation so that external state remains semantically explicit."""
+  """
+  正規化済み side token を `empty`、`black`、`white` の textual identifier へ写す。
+  persistence payload と message generation はこの map により side の意味を明示する。
+  """
   norm = normalize_side(side, default=SIDE_EMPTY)
   if norm == SIDE_BLACK:
     return "black"

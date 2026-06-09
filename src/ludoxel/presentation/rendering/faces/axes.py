@@ -8,12 +8,18 @@ FACE_EPSILON = 1e-7
 
 
 def approx_eq(a: float, b: float) -> bool:
-  """I define a ~= b iff |a - b| <= eps, where eps = FACE_EPSILON. I use this tolerance relation to stabilize face-boundary tests against float noise introduced by model decomposition and affine composition."""
+  """
+  `|a - b| <= FACE_EPSILON` を同値近似として用いる境界判定である。
+  model 分解や affine 合成で生じる微小誤差により、face が voxel 境界から外れたと誤判定されることを防ぐ。
+  """
   return abs(float(a) - float(b)) <= FACE_EPSILON
 
 
 def face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
-  """I define T(face, box) as the predicate that the requested box face lies on the unit-cell boundary associated with that face index. I use this boundary test to decide whether occlusion may depend on a neighboring voxel rather than only on intra-block geometry."""
+  """
+  指定 face が local box の属する単位 cell 境界に接しているかを判定する。
+  境界に達した face だけが隣接 voxel による occlusion の対象となり、内部 face は block 内の幾何関係だけで扱われる。
+  """
   fi = int(face_idx)
 
   if fi == 0:
@@ -30,7 +36,10 @@ def face_touches_cell_boundary(face_idx: int, box: LocalBox) -> bool:
 
 
 def face_rect(face_idx: int, box: LocalBox) -> tuple[float, float, float, float]:
-  """I define R(face, box) as the 2D rectangle obtained by projecting the requested face onto its intrinsic coordinate plane. I use this rectangle as the canonical domain on which local and neighbor occlusion become pure cover problems."""
+  """
+  指定 face をその face 固有の二次元座標平面へ射影した矩形として返す。
+  local occlusion と neighbor occlusion は、この矩形上の被覆問題として処理される。
+  """
   fi = int(face_idx)
 
   if fi in (0, 1):

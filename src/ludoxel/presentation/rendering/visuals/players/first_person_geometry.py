@@ -86,7 +86,10 @@ _SPECIAL_ITEM_UV_RECT = (1.0, 0.0, 0.0, 1.0)
 
 
 def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float, float, float]:
-  """I define (r,s,f,t) = (sin(pi*sqrt(p)), sin(pi*p^2), sin(pi*p), sin(2*pi*sqrt(p))) with p = clamp(swing_progress, 0, 1). I use this quartet because the hand and arm transforms couple different positional and rotational channels to differently eased phases of the same attack animation parameter."""
+  """
+  `p = clamp(swing_progress, 0, 1)` から `sin(pi sqrt(p))`、`sin(pi p^2)`、`sin(pi p)`、`sin(2 pi sqrt(p))` を得る。
+  手と腕の位置・回転は同じ attack progress から異なる easing phase を参照するため、ここで四つの成分を揃える。
+  """
   swing = clampf(float(first_person.swing_progress), 0.0, 1.0)
   root = math.sin(math.sqrt(swing) * math.pi)
   squared = math.sin(swing * swing * math.pi)
@@ -96,7 +99,10 @@ def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float
 
 
 def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
-  """I define M_bob = T(tx,ty,tz) * Rz(roll) * Ry(yaw) * Rx(pitch) over the sampled first-person bob state. I use this prefix transform so that held-item and arm geometry inherit the same camera-space bobbing frame before their own pose-specific offsets are applied."""
+  """
+  first-person bob state から `M_bob = T(tx, ty, tz) Rz(roll) Ry(yaw) Rx(pitch)` を作る。
+  保持 item と腕は、それぞれの pose 固有変換へ進む前に同じ camera-space bobbing frame を継承する。
+  """
   return compose_matrices(
     translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)),
     rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)),
@@ -106,7 +112,10 @@ def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
 
 
 def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np.ndarray:
-  """I define M_hand as the ordered product of swing translations, nominal hand translation, and three preswing or swing-dependent rotations. I use this transform as the shared camera-space backbone for both held blocks and special first-person item quads."""
+  """
+  swing translation、基準手位置、pre-swing 及び swing dependent rotation を順に合成し、main hand の camera-space backbone を作る。
+  held block と特殊 item quad はこの共通 transform を出発点にする。
+  """
   root, squared, full, twice = _arm_swing_terms(first_person)
   return compose_matrices(
     translate_matrix(float(_ITEM_SWING_X_POS_SCALE) * float(root), float(_ITEM_SWING_Y_POS_SCALE) * float(twice), float(_ITEM_SWING_Z_POS_SCALE) * float(full)),
@@ -119,7 +128,10 @@ def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np
 
 
 def build_first_person_item_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float = 1.0) -> np.ndarray:
-  """I define M_item = M_bob * M_hand * T_item * R_item * S_item * T(-1/2,-1/2,-1/2), with the scale term multiplied by the supplied render-scale correction. I use this transform to place held block geometry into camera space under one stable pivot convention regardless of block family."""
+  """
+  held block を camera space に置くため、`M_item = M_bob M_hand T_item R_item S_item T(-1/2,-1/2,-1/2)` を構成する。
+  scale は block kind ごとの補正を含み、block family が変わっても pivot convention は同一に保たれる。
+  """
   uniform_scale = float(render_scale_multiplier)
   return compose_matrices(
     _view_bob_transform(first_person),
@@ -134,7 +146,10 @@ def build_first_person_item_camera_transform(first_person: FirstPersonRenderStat
 
 
 def build_third_person_item_hand_transform() -> np.ndarray:
-  """I define M_3p as the fixed third-person attachment transform applied after the animated hand anchor. I use this constant mapping so that every third-person held block shares one orientation, scale, and pivot basis relative to the player hand."""
+  """
+  third-person player の手に held block を接続する固定 attachment transform を返す。
+  orientation、scale、pivot basis を body pose から分離し、全 block kind が同じ基準で手元へ結合される。
+  """
   return compose_matrices(
     translate_matrix(float(_BLOCK_THIRDPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_THIRDPERSON_TRANSLATE_PX[2]) * _PX),
     rotate_x_deg_matrix(float(_BLOCK_THIRDPERSON_ROTATE_DEG[0])),
@@ -146,7 +161,11 @@ def build_third_person_item_hand_transform() -> np.ndarray:
 
 
 def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState, *, render_scale_multiplier: float = 1.0) -> np.ndarray:
-  """I define M_arm as the ordered product of bob transform, swing-dependent offsets, arm anchor translation, preswing yaw, swing rotations, prerotation offsets, fixed arm rotations, postrotation offset, and final uniform scale. I use this transform to reproduce the authored first-person slim-arm pose with a single matrix product."""
+  """
+  first-person arm の camera transform を、bob、swing offset、arm anchor、pre-swing yaw、
+  swing rotation、pre/post rotation offset、固定 arm rotation、uniform scale の順で合成する。
+  slim-arm の authored pose はこの単一行列積で renderer へ渡される。
+  """
   root, squared, full, twice = _arm_swing_terms(first_person)
   arm_scale = float(_ARM_FIRSTPERSON_SCALE) * float(render_scale_multiplier)
   arm_rot_x_deg = clampf(float(_ARM_ROT_X_DEG), float(first_person.arm_rotation_limit_min_deg), float(first_person.arm_rotation_limit_max_deg))
@@ -167,12 +186,18 @@ def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState
 
 
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
-  """I define P(box) as the 8x4 homogeneous corner matrix generated by the cartesian product of the box minima and maxima on each axis. I use this matrix as the minimal finite witness set for camera-space fitting of convex cuboids."""
+  """
+  box の最小・最大座標の直積から 8 点の同次座標行列を作る。
+  convex cuboid の camera-space fitting は内部点を必要とせず、extreme corner だけを有限 witness として扱えば足りる。
+  """
   return np.asarray([[float(x), float(y), float(z), 1.0] for x in (box.mn_x, box.mx_x) for y in (box.mn_y, box.mx_y) for z in (box.mn_z, box.mx_z)], dtype=np.float32)
 
 
 def _camera_space_points(parent_transform: np.ndarray, boxes: tuple[LocalBox, ...] | list[LocalBox]) -> np.ndarray:
-  """I define Q = vstack(M * P(box_j)^T)^T over all local boxes box_j. I use this aggregated point cloud because clip-safe fitting only depends on transformed extremal corners, not on the interior of each cuboid."""
+  """
+  すべての local box corner を指定 transform で camera space へ写し、一つの点群へ積み上げる。
+  clip-safe fitting は cuboid 内部ではなく変換後の extremal corner にだけ依存する。
+  """
   points = []
   transform = np.asarray(parent_transform, dtype=np.float32)
   for box in boxes:
@@ -184,7 +209,10 @@ def _camera_space_points(parent_transform: np.ndarray, boxes: tuple[LocalBox, ..
 
 
 def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projection_scale: float, ndc_min: float, ndc_max: float) -> tuple[float, float]:
-  """I define I_axis as the intersection over all points of the translation interval that keeps p_axis / (-p_z), scaled by the projection coefficient, inside [ndc_min, ndc_max]. I use this interval arithmetic to solve first-person fitting as a one-dimensional feasibility problem per screen axis."""
+  """
+  screen axis ごとに、各点が安全な NDC 区間内へ入るための translation interval を交差して求める。
+  投影係数と負の z 距離を用いるため、first-person fitting は一次元の実行可能区間問題として解ける。
+  """
   lower = -math.inf
   upper = math.inf
   proj = max(float(projection_scale), _FIRST_PERSON_FIT_EPSILON)
@@ -197,7 +225,10 @@ def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projectio
 
 
 def _fit_intervals(parent_transform: np.ndarray, boxes: tuple[LocalBox, ...] | list[LocalBox], projection: np.ndarray, safe_frame: SafeFrame) -> tuple[tuple[float, float], tuple[float, float]]:
-  """I define (I_x, I_y) as the feasible translation intervals induced by the transformed box corners under the supplied projection and safe frame. I use this paired result to separate geometric fitting from the later anchoring policy that chooses one concrete translation inside the feasible set."""
+  """
+  変換済み box corner と projection、安全 frame から x 軸・y 軸の実行可能 translation interval を返す。
+  後続の anchoring policy は、この interval の内側から具体的な移動量を選ぶ。
+  """
   projection_matrix = np.asarray(projection, dtype=np.float32)
   min_x, max_x, min_y, max_y = (float(safe_frame[0]), float(safe_frame[1]), float(safe_frame[2]), float(safe_frame[3]))
   points = _camera_space_points(parent_transform, boxes)
@@ -207,12 +238,18 @@ def _fit_intervals(parent_transform: np.ndarray, boxes: tuple[LocalBox, ...] | l
 
 
 def _interval_is_feasible(interval: tuple[float, float]) -> bool:
-  """I define Feasible((l,u)) iff l <= u. I use this predicate as the exact admissibility criterion for the one-dimensional translation intervals generated by the fitting pass."""
+  """
+  区間 `(l, u)` が `l <= u` を満たすかを判定する。
+  fitting pass が返す一次元 translation interval の許容性はこの条件で決まる。
+  """
   return float(interval[0]) <= float(interval[1])
 
 
 def _projection_uniform_scale_multiplier(projection: np.ndarray, *, exponent: float) -> float:
-  """I define m = (P_ref_y / P_cur_y)^e, where P_y is the projection-matrix y-scale and e is the configured exponent. I use this law to attenuate the apparent size drift of first-person items across field-of-view changes without forcing a rigid FOV lock."""
+  """
+  現在の projection y-scale と基準 projection y-scale の比から、`m = (P_ref_y / P_cur_y)^e` を計算する。
+  FOV の変化に伴う first-person item の見かけの大きさの揺れを、完全固定せず緩和するための倍率である。
+  """
   exp = float(exponent)
   if abs(exp) <= _FIRST_PERSON_FIT_EPSILON:
     return 1.0
@@ -222,7 +259,10 @@ def _projection_uniform_scale_multiplier(projection: np.ndarray, *, exponent: fl
 
 
 def _anchored_value_in_interval(value: float, interval: tuple[float, float], anchor_mode: AnchorMode) -> float:
-  """I define A(value, [l,u], mode) as l for min_edge, u for max_edge, and clamp(value, l, u) for nearest_zero. I use this selector to express how the fitted geometry should bias itself within the feasible translation interval."""
+  """
+  anchor mode に応じて実行可能区間内の代表値を選ぶ。
+  `min_edge` は下端、`max_edge` は上端、`nearest_zero` は 0 に最も近い許容値を返し、画面端への寄せ方を明示する。
+  """
   low, high = float(interval[0]), float(interval[1])
   if str(anchor_mode) == "min_edge":
     return low
@@ -236,7 +276,10 @@ def _anchored_value_in_interval(value: float, interval: tuple[float, float], anc
 
 
 def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> float:
-  """I define Clamp(value, [l,u]) = min(max(value, l), u). I use this final projection onto the feasible set when a reference transform suggests an anchored translation that still must honor the active transform's own interval."""
+  """
+  参照 transform から得た候補値を区間 `[l, u]` へ射影する。
+  active transform 自身の許容 interval を最後に尊重するための安全な clamp である。
+  """
   low, high = float(interval[0]), float(interval[1])
   if float(value) < low:
     return low
@@ -246,12 +289,18 @@ def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> flo
 
 
 def _neutral_swing_state(first_person: FirstPersonRenderState) -> FirstPersonRenderState:
-  """I define state_0 as the state obtained by replacing both swing-progress channels with zero while preserving every other render parameter. I use this neutralized sample to derive a stable anchoring reference that is insensitive to transient swing excursions."""
+  """
+  render state の swing progress だけを 0 に置き換え、他の値を保持した基準状態を作る。
+  一時的な swing に左右されない anchoring reference を得るために使う。
+  """
   return replace(first_person, swing_progress=0.0, prev_swing_progress=0.0)
 
 
 def _equip_hide_transform(first_person: FirstPersonRenderState, *, hide_distance: float) -> np.ndarray:
-  """I define h = 1 - equip_progress, e = h^2 * (3 - 2h), and M_hide = T(0, -hide_distance * e, 0). I use this eased vertical displacement to lower or raise the arm and item payloads during equip transitions without introducing discontinuous velocity."""
+  """
+  `h = 1 - equip_progress`、`e = h^2(3 - 2h)` により smoothstep 型の下降量を作り、`T(0, -hide_distance e, 0)` を返す。
+  装備切替時の腕と item を速度不連続なしに上下させる。
+  """
   hidden = 1.0 - clampf(float(first_person.equip_progress), 0.0, 1.0)
   eased = float(hidden * hidden * (3.0 - 2.0 * hidden))
   if eased <= _FIRST_PERSON_FIT_EPSILON:
@@ -270,7 +319,10 @@ def _fitted_first_person_parent_transform(
   y_anchor_mode: AnchorMode,
   reference_transform_builder=None,
 ) -> np.ndarray:
-  """I define M_fit as the transform produced by projection-aware scale correction, interval feasibility search, and anchored translation selection inside the resulting safe-frame admissible region. I use this fitted parent transform to guarantee that first-person meshes remain inside the protected clip rectangle while retaining a reproducible edge bias."""
+  """
+  projection-aware scale 補正、実行可能 interval の探索、safe frame 内の anchoring を統合し、first-person mesh の親 transform を決定する。
+  返値は保護された clip rectangle 内に収まり、同じ入力から同じ edge bias を再現する。
+  """
   projection_scale_multiplier = _projection_uniform_scale_multiplier(projection, exponent=float(projection_scale_exponent))
   best_scale = 1.0
   transform = np.asarray(transform_builder(projection_scale_multiplier), dtype=np.float32)
@@ -317,7 +369,10 @@ def _fitted_first_person_parent_transform(
 
 
 def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, ...]:
-  """I define F_i as the packed instanced-face payload for the visible held block under the current first-person transform, where each row is vec(M_box, U_face). I return the six-face family (F_0,...,F_5) after equip hiding, projection fitting, face occlusion, and atlas-UV resolution have been applied coherently."""
+  """
+  現在の first-person transform に基づいて held block の instanced face payload を六 face bucket として構築する。
+  equip hide、projection fitting、face occlusion、atlas UV 解決を同じ順序で適用し、各 row は `vec(M_box, U_face)` となる。
+  """
   if first_person is None or first_person.visible_block_id is None:
     return empty_textured_face_rows()
 
@@ -357,7 +412,10 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
 
 
 def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray, skin_width: int, skin_height: int) -> tuple[np.ndarray, ...]:
-  """I define A_i as the instanced-face payload for the visible first-person slim arm and sleeve, parameterized by the current camera-space swing state and skin-image dimensions. I fit the arm into a protected projection frame and then map each cuboid face through the corresponding skin rectangle."""
+  """
+  first-person の slim arm と sleeve を、現在の swing state と skin 画像寸法から instanced face payload へ変換する。
+  arm は保護 projection frame 内に fitting され、各 cuboid face は対応する skin rectangle を参照する。
+  """
   if first_person is None or (not bool(first_person.show_arm)):
     return empty_textured_face_rows()
 
@@ -385,7 +443,10 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
 
 
 def build_first_person_special_item_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray) -> tuple[np.ndarray, ...]:
-  """I define S_pos_z as the single textured quad used for an enlarged first-person special-item icon, with every other face bucket forced empty. I still pass the icon through the same projection-fit and equip-hide operators used by held blocks so that its screen-space motion remains kinematically consistent."""
+  """
+  拡大表示される特殊 item icon を、正 z face に対応する単一 textured quad として作る。
+  他の face bucket は空にしつつ、held block と同じ projection fitting と equip hide を通して screen-space motion を揃える。
+  """
   if first_person is None or first_person.visible_special_item_icon is None:
     return empty_textured_face_rows()
 
@@ -416,7 +477,10 @@ def build_first_person_special_item_face_rows(first_person: FirstPersonRenderSta
 
 
 def rotation_only(matrix: np.ndarray) -> np.ndarray:
-  """I define R(M) as the affine matrix whose linear block is obtained by column-wise normalizing the 3x3 block of M and whose translation block is zero. I use this operator when downstream consumers require orientation without inherited non-uniform scale or translation."""
+  """
+  affine matrix の 3x3 線形部分を列ごとに正規化し、translation を 0 にした orientation matrix を返す。
+  下流が scale や位置を継承せず向きだけを必要とする場合に用いる。
+  """
   out = identity_matrix()
   linear = np.asarray(matrix, dtype=np.float32)[:3, :3].copy()
   for column in range(3):
@@ -428,7 +492,10 @@ def rotation_only(matrix: np.ndarray) -> np.ndarray:
 
 
 def rotation_scale_only(matrix: np.ndarray) -> np.ndarray:
-  """I define RS(M) as the affine matrix whose 3x3 block equals that of M and whose translation block is zero. I use this projection when I must preserve embedded scale but intentionally discard positional information."""
+  """
+  affine matrix の 3x3 線形部分を保持し、translation だけを 0 にした matrix を返す。
+  scale を含む orientation を維持しながら位置情報を落とす必要がある renderer 経路で用いる。
+  """
   out = identity_matrix()
   out[:3, :3] = np.asarray(matrix, dtype=np.float32)[:3, :3]
   return out

@@ -12,24 +12,36 @@ from ludoxel.simulation.blocks.models.common import LocalBox
 
 
 def empty_textured_face_rows() -> tuple[np.ndarray, ...]:
-  """I define E_i = 0_(0x20) for each face index i in {0,...,5}. This constructor gives every textured-face pipeline the same canonical empty payload shape, dtype, and face ordering."""
+  """
+  六 face それぞれに対して `0 x 20` の `float32` 配列を返す。
+  textured face payload は空の場合でも shape、dtype、face ordering をこの形式で統一する。
+  """
   return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
 
 
 def append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: UVRect) -> None:
-  """I encode a face instance as r = vec(M[0:16], u0, v0, u1, v1) in R^20, where M is the flattened 4x4 model matrix and (u0,v0,u1,v1) is the texture rectangle. I append r into the buffer selected by face_idx."""
+  """
+  一つの face instance を、row-major 4x4 model matrix の 16 成分と UV rectangle `(u0, v0, u1, v1)` からなる 20 成分 row として追加する。
+  追加先は `face_idx` に対応する buffer である。
+  """
   row = list(np.asarray(model, dtype=np.float32).reshape(16))
   row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
   buffers[int(face_idx)].append(row)
 
 
 def face_rows_from_buffers(buffers: list[list[list[float]]]) -> tuple[np.ndarray, ...]:
-  """I realize each face buffer B_i as an array A_i in R^(n_i x 20), with A_i = 0_(0x20) when n_i = 0. This map is the terminal packing step that normalizes all textured-face producers onto the renderer input contract."""
+  """
+  各 face buffer を `n_i x 20` の `float32` 配列へ確定する。
+  buffer が空の face は `0 x 20` とし、全 producer が renderer 入力契約に一致するようにする。
+  """
   return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
 
 
 def uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float], *, texture_size_px: float = 16.0) -> UVRect:
-  """I define U'(p) = U0 + (U1 - U0) * p / S componentwise on pixel-space rectangle endpoints, where S is the local texture span in pixels. I use this affine rescaling when a box face consumes an explicit per-face pixel rectangle inside the parent atlas tile."""
+  """
+  親 atlas rectangle 内の pixel rectangle を affine mapping で UV rectangle へ変換する。
+  局所 texture span `S` に対して、各 endpoint は `U0 + (U1 - U0) * p / S` として求められる。
+  """
   u0_a, v0_a, u1_a, v1_a = texture_uv
   px0, py0, px1, py1 = px_rect
   scale = max(float(texture_size_px), 1.0)
@@ -42,7 +54,11 @@ def uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, 
 
 
 def skin_uv_rect(px_rect: tuple[float, float, float, float], *, width: int, height: int) -> UVRect:
-  """I define S(px0,py0,px1,py1) = (px0/W, 1 - py1/H, px1/W, 1 - py0/H), which converts image-space rectangles with top-left origin into OpenGL UV space with bottom-left origin. I use this map for player-skin cuboids and first-person arm quads."""
+  """
+  左上原点の skin 画像座標を、左下原点の UV 座標へ変換する。
+  幅 `W`、高さ `H` に対し `(px0/W, 1 - py1/H, px1/W, 1 - py0/H)` を返し、
+  player skin cuboid と first-person arm が同じ規則で texture を読む。
+  """
   px0, py0, px1, py1 = px_rect
   w = max(1.0, float(width))
   h = max(1.0, float(height))
@@ -50,7 +66,11 @@ def skin_uv_rect(px_rect: tuple[float, float, float, float], *, width: int, heig
 
 
 def atlas_face_uv(texture_uv: UVRect, face_idx: int, box: LocalBox, *, kind: str | None = None, face_uv_pixels: Mapping[int, tuple[float, float, float, float]] | None = None) -> UVRect:
-  """I define U_face as a three-branch selector. I first honor an explicit pixel rectangle when face_uv_pixels fixes one for the requested face, I then apply the fence-gate-specific remapping when the kind and uv_hint require it, and I otherwise fall back to the geometric sub-rectangle induced by the local box extents."""
+  """
+  block face の UV rectangle を選択する。
+  明示 pixel rectangle、fence gate の専用 remapping、local box 幾何から得る sub-rectangle の順に解決し、
+  block family ごとの例外を一箇所へ集約する。
+  """
   if face_uv_pixels is not None:
     px_rect = face_uv_pixels.get(int(face_idx))
     if px_rect is not None:
@@ -63,7 +83,10 @@ def atlas_face_uv(texture_uv: UVRect, face_idx: int, box: LocalBox, *, kind: str
 
 
 def model_matrix_for_local_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
-  """I define M_box = M_parent * T(c_x,c_y,c_z) * S(s_x,s_y,s_z), where c = (mn + mx)/2 and s = mx - mn componentwise. This is the canonical local-box instance transform used by held blocks, player model quads, and other cuboid-derived renderables."""
+  """
+  local box の中心 `c = (mn + mx)/2` と大きさ `s = mx - mn` から `M_box = M_parent T(c) S(s)` を作る。
+  held block、player model、その他 cuboid renderable はこの同じ instance transform を使う。
+  """
   center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
   center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
   center_z = 0.5 * (float(box.mn_z) + float(box.mx_z))

@@ -16,8 +16,10 @@ from ludoxel.simulation.blocks.models.wall import boxes_for_wall
 
 @dataclass(frozen=True)
 class TexturedBox:
-  """I define this record as the pair (B, U), where B is a local cuboid and U is an optional per-face pixel-rectangle family over the six voxel faces. I use the record to transport enough information to synthesize both geometry and atlas-addressing data without binding held-item rendering to any single block-family implementation."""
-
+  """
+  local cuboid `B` と、六 voxel face に対応する任意の pixel UV rectangle 群 `U` を組にした record である。
+  held-item rendering はこの record により、block family 実装へ直接結合せず幾何と atlas addressing を受け渡す。
+  """
   box: LocalBox
   face_uv_pixels: dict[int, tuple[float, float, float, float]] | None = None
 
@@ -67,12 +69,18 @@ _HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0
 
 
 def _normalize_kind(kind: str | None) -> str:
-  """I define k_norm = lower(strip(kind)) when kind is present and k_norm = '' otherwise. I use this normalization to make the held-block geometry catalogue total over nullable and loosely formatted block-kind inputs."""
+  """
+  block kind 文字列を小文字化・strip し、欠落値は空文字列へ正規化する。
+  nullable 又は緩い入力でも held-block geometry catalogue の lookup を全域的に行えるようにする。
+  """
   return "" if kind is None else str(kind).strip().lower()
 
 
 def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple[TexturedBox, ...]:
-  """I define B(id) = B_kind(kind(id)) whenever the registry resolves the block definition, and B(id) = () otherwise. I use this lookup to bridge inventory identifiers onto the canonical held-item cuboid catalogue."""
+  """
+  inventory item identifier から block definition を解決し、その kind に対応する held-block cuboid 群を返す。
+  registry で解決できない identifier は空 tuple となり、renderer は未定義 block を描かない。
+  """
   if block_id is None:
     return ()
 
@@ -84,7 +92,10 @@ def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple
 
 
 def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]:
-  """I define B_kind over the finite family {cube, slab, stairs, wall, fence, fence_gate}, with each element mapped onto the cuboid decomposition used by the held-item renderer. I keep this catalogue factored so that first-person and third-person item rendering consume the same geometric source of truth."""
+  """
+  `cube`、`slab`、`stairs`、`wall`、`fence`、`fence_gate` の有限集合を held-item 用 cuboid decomposition へ写す catalogue である。
+  first-person と third-person はこの同じ幾何源を消費する。
+  """
   normalized = _normalize_kind(kind)
   if normalized == "slab":
     return tuple(TexturedBox(box=b) for b in boxes_for_slab({"type": "bottom"}))
@@ -103,6 +114,9 @@ def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]
 
 
 def held_block_kind_scale_multiplier(kind: str | None) -> float:
-  """I define s(kind) as the renderer-side scalar correction applied to the held-item camera transform. I use this finite lookup so that narrow or sparse block families occupy approximately stable screen-space mass under one shared first-person composition law."""
+  """
+  block kind ごとの held-item camera transform 補正倍率を返す。
+  細い block や疎な block が同一 composition law の下で過度に小さく又は大きく見えないよう、screen-space mass を調整する。
+  """
   normalized = _normalize_kind(kind)
   return float(_HELD_BLOCK_KIND_SCALE_MULTIPLIERS.get(normalized, 1.0))

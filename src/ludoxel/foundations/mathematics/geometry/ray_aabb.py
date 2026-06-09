@@ -12,12 +12,21 @@ from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y,
 
 @dataclass(frozen=True)
 class RayHitFace:
+  """
+  ray と AABB の交差結果として、侵入又は脱出 parameter、交点、対応 face を保持する。
+  `t_enter` は `origin + direction * t` の `t`、`point` は world 空間上の交点、
+  `face` は `faces.py` の face index であり、block picking と third-person camera collision はこの face 契約に依存する。
+  """
   t_enter: float
   point: Vec3
   face: int
 
 
 def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
+  """
+  slab 法で近側境界を更新した軸と逆方向値から、ray が入射した face index を決定する。
+  `axis` は 0, 1, 2 を x, y, z に対応させ、`inv_dir >= 0` のとき負側面から入射したものとして face を返す。
+  """
   if axis == 0:
     return FACE_NEG_X if inv_dir >= 0.0 else FACE_POS_X
   if axis == 1:
@@ -26,6 +35,10 @@ def _enter_face_for_axis(axis: int, inv_dir: float) -> int:
 
 
 def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
+  """
+  slab 法で遠側境界を更新した軸と逆方向値から、ray が箱内部から出る face index を決定する。
+  ray origin が AABB 内部にある場合、`ray_aabb_face` は進行方向に沿う脱出面をこの helper の結果として返す。
+  """
   if axis == 0:
     return FACE_POS_X if inv_dir >= 0.0 else FACE_NEG_X
   if axis == 1:
@@ -34,6 +47,12 @@ def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
 
 
 def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
+  """
+  三次元 ray と AABB の最初の可観測交差を slab 法で計算する。
+  各軸で `t1 = (mn - o) / d`、`t2 = (mx - o) / d` を比較し、`abs(d) < 1e-12` の平行軸では origin が区間外にある場合だけ非交差とする。
+  返値は前方交差が存在する場合の `RayHitFace` 又は `None` であり、この Python source は native extension build の対象でもあるため、
+  picking と camera collision は Python fallback と compiled module の同じ契約に依存する。
+  """
   d = ray.direction
   o = ray.origin
 

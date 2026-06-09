@@ -12,8 +12,10 @@ from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS, M
 
 @dataclass
 class SessionSettings:
-  """Domain-side player, camera, movement, and collision parameters for one play session."""
-
+  """
+  一つの play session における seed、spawn、camera、movement、collision の domain 側設定を保持する。
+  application persistence や presentation renderer の型を含めず、simulation が必要とする初期条件だけを表す。
+  """
   seed: int = 0
   fov_deg: float = 80.0
   mouse_sens_deg_per_px: float = 0.09

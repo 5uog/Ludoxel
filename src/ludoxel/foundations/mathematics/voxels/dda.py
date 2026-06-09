@@ -10,6 +10,11 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 
 @dataclass(frozen=True)
 class DDAHit:
+  """
+  voxel grid traversal の各 step で訪問された cell と ray parameter を保持する。
+  `cell_x`、`cell_y`、`cell_z` は grid cell index、`t` は `origin + direction * t` の parameter、
+  `enter_face` は直前境界を越えて現在 cell に入った face index 又は開始 cell を表す -1 である。
+  """
   cell_x: int
   cell_y: int
   cell_z: int
@@ -18,6 +23,11 @@ class DDAHit:
 
 
 def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
+  """
+  ray が通過する voxel cell を Amanatides-Woo 型の DDA で順に生成する。
+  `origin` と `direction` は同じ world 座標系の `Vec3`、`cell_size` は正の grid 間隔として扱われ、direction が零 vector の場合は何も yield しない。
+  この Python source は native extension build の対象でもあり、block picking と third-person camera collision は traversal 順序と face index の同じ契約に依存する。
+  """
   d = direction
   if abs(d.x) < 1e-12 and abs(d.y) < 1e-12 and abs(d.z) < 1e-12:
     return
@@ -31,6 +41,10 @@ def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: fl
   step_z = 1 if d.z > 0 else -1
 
   def int_bound(s: float, ds: float) -> float:
+    """
+    現在位置から次の整数 grid 境界までの ray parameter 増分を一軸について計算する。
+    `ds > 0` では上側境界までの距離、`ds <= 0` では下側境界までの距離を返し、DDA の `tmx`、`tmy`、`tmz` 初期値を決定する。
+    """
     if ds > 0:
       s = s - math.floor(s)
       return (1.0 - s) / ds

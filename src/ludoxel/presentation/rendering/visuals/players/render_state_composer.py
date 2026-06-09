@@ -13,7 +13,10 @@ from ludoxel.simulation.inventories.special_items.registry import get_special_it
 def compose_player_render_state(
   *, snapshot: RenderSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float
 ) -> PlayerRenderState:
-  """I define R(snapshot, motion) = Compose(snapshot.player_model, motion, registry). I keep this outer adapter so that the main render snapshot can be projected onto the player-render state without duplicating DTO field selection at every call site."""
+  """
+  render snapshot 内の player model 情報と first-person motion sample を、player-render state の構成関数へ渡す外側 adapter である。
+  DTO field selection を各 renderer call site へ重複させない。
+  """
   return compose_player_render_state_from_parts(
     player_model=snapshot.player_model,
     motion=motion,
@@ -26,7 +29,11 @@ def compose_player_render_state(
 def compose_player_render_state_from_parts(
   *, player_model: PlayerModelSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float
 ) -> PlayerRenderState:
-  """I define the composed player render state as the direct product of the authoritative player-model snapshot and the sampled first-person motion state, enriched by registry and special-item lookups. I use this pure constructor to turn runtime DTOs into the immutable render-state records consumed by the pose builders."""
+  """
+  権威的な player-model snapshot と sampled first-person motion state を合成し、
+  registry と special-item lookup を加えて不変 render-state record を作る。
+  pose builder はこの record だけから body、hand、item の描画入力を再構成する。
+  """
   visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))
   special_descriptor = None if motion.visible_item_id is None else get_special_item_descriptor(motion.visible_item_id)
   first_person = FirstPersonRenderState(
