@@ -13,8 +13,9 @@ FACE_NEG_Z: int = 5
 def face_neighbor_offset(face_idx: int) -> tuple[int, int, int]:
   """
   face index に対応する隣接 voxel への一軸 offset を返す。
-  `FACE_POS_X` から `FACE_NEG_Z` までの六面は `(±1,0,0)`、`(0,±1,0)`、`(0,0,±1)` に対応し、
-  範囲外の index は負 z 面と同じ `(0,0,-1)` へ退避する。
+  `FACE_POS_X`、`FACE_NEG_X`、`FACE_POS_Y`、`FACE_NEG_Y`、`FACE_POS_Z`、`FACE_NEG_Z` は、
+  それぞれ x 軸正方向、x 軸負方向、y 軸正方向、y 軸負方向、z 軸正方向、z 軸負方向の隣接 cell に対応する。
+  範囲外の index は z 軸負方向の offset `(0, 0, -1)` へ退避する。
   """
   fi = int(face_idx)
 

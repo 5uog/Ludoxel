@@ -58,7 +58,7 @@ def _animation_start_delay_s(*, mode: str, flip_order_index: int) -> float:
 def _ordered_flipped_squares(*, placed_square_index: int, flipped: tuple[int, ...] | list[int]) -> tuple[int, ...]:
   """
   配置 square からの二乗距離、row、col の辞書式順序で flipped square を並べる。
-  浮動小数距離の曖昧さを持ち込まず、置いた disc から外側へ進む deterministic ripple を作る。
+  浮動小数距離の曖昧さを持ち込まず、置いた disc から外側へ進む deterministic ripple 順序を返す。
   """
   placed_row, placed_col = square_index_to_row_col(int(placed_square_index))
 
@@ -121,6 +121,7 @@ class OthelloMatchController:
   def game_state(self) -> OthelloGameState:
     """
     現在保持している正規化済み match state を返す。
+    返値は内部状態と同じ `OthelloGameState` であり、呼び出し側はこの値を読み取り専用 snapshot として扱う。
     """
     return self._state
 
@@ -210,8 +211,8 @@ class OthelloMatchController:
   def tick(self, dt: float, *, paused: bool) -> OthelloGameState:
     """
     `dt >= 0` の離散時間進行として、animation clock と match clock を進める。
-    animating 状態では各 `elapsed_j` を加算し、全 trajectory が `delay_j + duration_j` に達したとき move を確定し、
-    turn 状態では有限 timer から `dt` を差し引き時間切れを処理する。
+    animating 状態では各 `elapsed_j` を加算し、全 trajectory が `delay_j + duration_j` に達したとき move を確定する。
+    turn 状態では有限 timer から `dt` を差し引き、残時間が 0 以下になった side を敗者として finished state へ遷移させる。
     """
     step = max(0.0, float(dt))
     state = self._state.normalized()
@@ -302,7 +303,7 @@ class OthelloMatchController:
 
   def _apply_turn_move(self, *, side: int, square_index: int) -> None:
     """
-    指定 side の move を board へ適用し、flip animation、turn inversion、message 更新を含む次 state を作る。
+    指定 side の move を board へ適用し、flip animation、turn inversion、message 更新を含む次 state を生成する。
     animation schedule は ordered flipped set から派生し、同時表示 mode と ripple mode の双方に必要な時間構造を含む。
     """
     state = self._state.normalized()

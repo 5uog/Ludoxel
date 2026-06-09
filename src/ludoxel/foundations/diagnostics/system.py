@@ -168,7 +168,7 @@ def _posix_rss_bytes_ps() -> int | None:
 def _mac_sysctl_str(name: str) -> str:
   """
   macOS の `sysctl -n` から指定名の文字列値を取得する。
-  コマンド失敗又は timeout は空文字列へ正規化され、CPU brand string など表示用診断値の欠落を安全に表す。
+  コマンド失敗又は timeout は空文字列へ正規化され、CPU brand string などの表示用診断値について、取得不能状態を数値 0 や例外送出と区別して表す。
   """
   try:
     out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=0.6)

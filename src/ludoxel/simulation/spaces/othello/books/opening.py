@@ -376,7 +376,7 @@ def compiled_opening_book_cache_payload(*, fingerprint: str, book: OpeningBook) 
 def _build_line_tree(lines: tuple[tuple[int, ...], ...]) -> dict[int, dict]:
   """
   normalized line corpus から prefix trie を構築する。
-  共通 prefix を持つ多数の line を個別に replay せず、各到達局面を一度だけ処理するための構造である。
+  共通 prefix を持つ多数の line を個別に replay せず、各到達局面を一度だけ評価するための構造である。
   """
   root: dict[int, dict] = {}
   for line in tuple(lines):
@@ -541,7 +541,7 @@ def _load_opening_book_from_lines(lines: tuple[tuple[int, ...], ...]) -> Opening
 
 def load_opening_book(project_root: str | Path | None = None) -> OpeningBook:
   """
-  指定 root の effective corpus から search-time opening book を作る。
+  指定 root の effective corpus から search-time opening book を構築する。
   engine はこの compiled map を局面ごとの候補手取得に用いる。
   """
   return _load_opening_book_cached(_project_root_key(project_root))

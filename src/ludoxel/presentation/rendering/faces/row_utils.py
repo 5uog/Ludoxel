@@ -84,7 +84,7 @@ def atlas_face_uv(texture_uv: UVRect, face_idx: int, box: LocalBox, *, kind: str
 
 def model_matrix_for_local_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
   """
-  local box の中心 `c = (mn + mx)/2` と大きさ `s = mx - mn` から `M_box = M_parent T(c) S(s)` を作る。
+  local box の中心 `c = (mn + mx)/2` と大きさ `s = mx - mn` から `M_box = M_parent T(c) S(s)` を生成する。
   held block、player model、その他 cuboid renderable はこの同じ instance transform を使う。
   """
   center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))

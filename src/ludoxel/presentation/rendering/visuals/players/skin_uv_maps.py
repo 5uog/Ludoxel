@@ -15,7 +15,7 @@ def skin_cube_uv_map(
   neg_z: tuple[float, float, float, float],
 ) -> dict[int, tuple[float, float, float, float]]:
   """
-  face key `{+X, -X, +Y, -Y, +Z, -Z}` を skin-space pixel rectangle へ写す辞書を作る。
+  x 軸正方向、x 軸負方向、y 軸正方向、y 軸負方向、z 軸正方向、z 軸負方向の face key を、skin-space pixel rectangle へ写す辞書として生成する。
   arm と sleeve の atlas 指定を明示し、face index の重複管理を避ける。
   """
   return {FACE_POS_X: pos_x, FACE_NEG_X: neg_x, FACE_POS_Y: pos_y, FACE_NEG_Y: neg_y, FACE_POS_Z: pos_z, FACE_NEG_Z: neg_z}

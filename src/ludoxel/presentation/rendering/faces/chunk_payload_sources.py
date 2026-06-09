@@ -63,8 +63,8 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
 
 def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
   """
-  chunk iterator から可視 face を列挙し、`(mn, mx, uv, 1, 0, face_idx, slot)` の source row と六 face count を作る。
-  visibility walk はここで一度だけ行い、後段は純粋な配列再配置として扱う。
+  chunk iterator から可視 face を列挙し、`(mn, mx, uv, 1, 0, face_idx, slot)` の source row と六 face count を生成する。
+  visibility walk はここで一度だけ実行され、後段は同じ source row を face bucket へ再配置する。
   """
   rows: list[list[float]] = []
   bucket_counts = [0 for _ in range(FACE_COUNT)]

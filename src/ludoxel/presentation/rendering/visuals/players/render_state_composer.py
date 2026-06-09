@@ -31,7 +31,7 @@ def compose_player_render_state_from_parts(
 ) -> PlayerRenderState:
   """
   権威的な player-model snapshot と sampled first-person motion state を合成し、
-  registry と special-item lookup を加えて不変 render-state record を作る。
+  registry と special-item lookup を加えて不変 render-state record を生成する。
   pose builder はこの record だけから body、hand、item の描画入力を再構成する。
   """
   visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))

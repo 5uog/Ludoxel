@@ -100,7 +100,7 @@ def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float
 
 def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
   """
-  first-person bob state から `M_bob = T(tx, ty, tz) Rz(roll) Ry(yaw) Rx(pitch)` を作る。
+  first-person bob state から `M_bob = T(tx, ty, tz) Rz(roll) Ry(yaw) Rx(pitch)` を生成する。
   保持 item と腕は、それぞれの pose 固有変換へ進む前に同じ camera-space bobbing frame を継承する。
   """
   return compose_matrices(
@@ -113,7 +113,7 @@ def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
 
 def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np.ndarray:
   """
-  swing translation、基準手位置、pre-swing 及び swing dependent rotation を順に合成し、main hand の camera-space backbone を作る。
+  swing translation、基準手位置、pre-swing 及び swing dependent rotation を順に合成し、main hand の camera-space backbone を生成する。
   held block と特殊 item quad はこの共通 transform を出発点にする。
   """
   root, squared, full, twice = _arm_swing_terms(first_person)
@@ -187,8 +187,8 @@ def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState
 
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
   """
-  box の最小・最大座標の直積から 8 点の同次座標行列を作る。
-  convex cuboid の camera-space fitting は内部点を必要とせず、extreme corner だけを有限 witness として扱えば足りる。
+  box の最小・最大座標の直積から、shape `(8, 4)` の同次座標行列を生成する。
+  各 row は `(x, y, z, 1)` を表し、convex cuboid の camera-space fitting は内部点を列挙せず extreme corner だけを witness とする。
   """
   return np.asarray([[float(x), float(y), float(z), 1.0] for x in (box.mn_x, box.mx_x) for y in (box.mn_y, box.mx_y) for z in (box.mn_z, box.mx_z)], dtype=np.float32)
 
@@ -210,7 +210,7 @@ def _camera_space_points(parent_transform: np.ndarray, boxes: tuple[LocalBox, ..
 
 def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projection_scale: float, ndc_min: float, ndc_max: float) -> tuple[float, float]:
   """
-  screen axis ごとに、各点が安全な NDC 区間内へ入るための translation interval を交差して求める。
+  screen axis ごとに、各点が指定された NDC 区間内へ入るための translation interval を交差して求める。
   投影係数と負の z 距離を用いるため、first-person fitting は一次元の実行可能区間問題として解ける。
   """
   lower = -math.inf
@@ -226,7 +226,7 @@ def _axis_translation_interval(points: np.ndarray, *, axis_index: int, projectio
 
 def _fit_intervals(parent_transform: np.ndarray, boxes: tuple[LocalBox, ...] | list[LocalBox], projection: np.ndarray, safe_frame: SafeFrame) -> tuple[tuple[float, float], tuple[float, float]]:
   """
-  変換済み box corner と projection、安全 frame から x 軸・y 軸の実行可能 translation interval を返す。
+  変換済み box corner と projection、NDC 保護 frame から x 軸・y 軸の実行可能 translation interval を返す。
   後続の anchoring policy は、この interval の内側から具体的な移動量を選ぶ。
   """
   projection_matrix = np.asarray(projection, dtype=np.float32)
@@ -278,7 +278,7 @@ def _anchored_value_in_interval(value: float, interval: tuple[float, float], anc
 def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> float:
   """
   参照 transform から得た候補値を区間 `[l, u]` へ射影する。
-  active transform 自身の許容 interval を最後に尊重するための安全な clamp である。
+  active transform 自身の許容 interval を最後に反映するため、返値は常に `l <= value <= u` を満たす。
   """
   low, high = float(interval[0]), float(interval[1])
   if float(value) < low:
@@ -290,7 +290,7 @@ def _clamp_value_to_interval(value: float, interval: tuple[float, float]) -> flo
 
 def _neutral_swing_state(first_person: FirstPersonRenderState) -> FirstPersonRenderState:
   """
-  render state の swing progress だけを 0 に置き換え、他の値を保持した基準状態を作る。
+  render state の swing progress だけを 0 に置き換え、他の値を保持した基準状態を生成する。
   一時的な swing に左右されない anchoring reference を得るために使う。
   """
   return replace(first_person, swing_progress=0.0, prev_swing_progress=0.0)
@@ -444,7 +444,7 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
 
 def build_first_person_special_item_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray) -> tuple[np.ndarray, ...]:
   """
-  拡大表示される特殊 item icon を、正 z face に対応する単一 textured quad として作る。
+  拡大表示される特殊 item icon を、z 軸正方向 face に対応する単一 textured quad として生成する。
   他の face bucket は空にしつつ、held block と同じ projection fitting と equip hide を通して screen-space motion を揃える。
   """
   if first_person is None or first_person.visible_special_item_icon is None:

@@ -24,8 +24,8 @@ def normalize_bucket_counts(bucket_counts: Sequence[int]) -> BucketCounts:
 
 def bucket_offsets(bucket_counts: Sequence[int]) -> BucketCounts:
   """
-  正規化された六 face count から prefix offset を作る。
-  各 offset は `O_i = Σ_{k<i} c_k` であり、平坦 payload から face-local な連続領域を取り出す基準になる。
+  正規化された六 face count から prefix offset を生成する。
+  各 offset は `O_i = sum(c_k for k < i)` であり、平坦 payload から face-local な連続領域を取り出す基準になる。
   """
   c0, c1, c2, c3, c4, _c5 = normalize_bucket_counts(bucket_counts)
   return (0, int(c0), int(c0 + c1), int(c0 + c1 + c2), int(c0 + c1 + c2 + c3), int(c0 + c1 + c2 + c3 + c4))
@@ -33,8 +33,8 @@ def bucket_offsets(bucket_counts: Sequence[int]) -> BucketCounts:
 
 def empty_face_bucket_arrays(row_width: int, *, dtype: object = np.float32) -> list[np.ndarray]:
   """
-  六 face それぞれに対して、行数 0、列数 `max(0, row_width)` の `float32` 配列を作る。
-  空 payload でも shape と dtype を固定することで、upload 側の分岐を減らす。
+  六 face それぞれに対して、行数 0、列数 `max(0, row_width)` の `float32` 配列を生成する。
+  空 payload でも shape と dtype を固定することで、upload 側は face ごとの欠落を特別な sentinel として扱わずに済む。
   """
   width = int(max(0, int(row_width)))
   return [np.zeros((0, width), dtype=dtype) for _ in range(FACE_COUNT)]
