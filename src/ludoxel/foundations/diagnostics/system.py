@@ -18,6 +18,7 @@ class SystemInfo:
   `cpu_speed_ghz` と `total_mem_bytes` は取得不能時に `None` となる任意値である。
   presentation の HUD はこの型により、OS 別の取得処理を直接所有せずに診断情報を表示する。
   """
+
   cpu_threads: int
   cpu_name: str
   cpu_speed_ghz: float | None
@@ -30,6 +31,7 @@ class ProcessMemorySnapshot:
   現在プロセスの常駐集合サイズと物理メモリ総量を同じ単位で保持する。
   `rss_bytes` と `total_bytes` は byte 単位の整数又は取得不能を表す `None` であり、HUD 側の MiB 表示と欠落表示はこの型の `None` 契約に依存する。
   """
+
   rss_bytes: int | None
   total_bytes: int | None
 
@@ -230,6 +232,7 @@ def _windows_total_mem_bytes() -> int | None:
       Win32 `GlobalMemoryStatusEx` が書き込むメモリ状態構造体を ctypes 上で表す。
       field 順序と整数幅は Windows API の layout に合わせられ、Ludoxel 側では `ullTotalPhys` だけを物理メモリ総量として読む。
       """
+
       _fields_ = [
         ("dwLength", ctypes.c_uint32),
         ("dwMemoryLoad", ctypes.c_uint32),
@@ -266,6 +269,7 @@ def _windows_rss_bytes_psapi() -> int | None:
       Windows PSAPI が現在プロセスの memory counter を書き込む ctypes 構造体である。
       Ludoxel の診断処理はこの構造体の `WorkingSetSize` を RSS 相当の値として扱い、他 field は API layout を満たすために保持する。
       """
+
       _fields_ = [
         ("cb", wt.DWORD),
         ("PageFaultCount", wt.DWORD),
@@ -431,6 +435,7 @@ class GpuUtilizationSampler:
   GPU 使用率の外部コマンド照会を最小間隔で間引く状態ful sampler である。
   `min_interval_s` 未満の連続呼出しでは直前値を返すため、HUD 更新周期が短い場合でも `nvidia-smi` の起動負荷と表示値の欠落規則を安定させる。
   """
+
   min_interval_s: float = 1.0
   _last_t: float = 0.0
   _last: float | None = None

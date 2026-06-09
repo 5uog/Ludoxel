@@ -229,6 +229,7 @@ class OpeningBookSummary:
   bundled line 数、user line 数、total line 数だけを持つ要約 record である。
   settings UI と診断表示は line corpus 全体を保持せず、この cardinality 情報だけを参照する。
   """
+
   bundled_lines: int = 0
   user_lines: int = 0
   total_lines: int = 0

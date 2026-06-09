@@ -14,5 +14,6 @@ class Ray:
   `direction` の正規化は型の生成時には強制されず、picking、camera collision、
   ray-AABB 判定の呼び出し側が距離 parameter `t` の単位を方向 vector の長さに対応させる。
   """
+
   origin: Vec3
   direction: Vec3

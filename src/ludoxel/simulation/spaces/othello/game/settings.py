@@ -116,6 +116,7 @@ class OthelloSettings:
   difficulty、time control、animation、player side、sacrifice level、thread/hash、
   book-learning parameters は各許容領域に正規化され、game construction、UI、persistence が同じ値域を参照する。
   """
+
   difficulty: str = OTHELLO_DIFFICULTY_MEDIUM
   time_control: str = OTHELLO_TIME_CONTROL_PER_SIDE_20M
   animation_mode: str = OTHELLO_ANIMATION_OFF

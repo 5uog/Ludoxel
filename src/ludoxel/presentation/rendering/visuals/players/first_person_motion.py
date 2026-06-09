@@ -27,6 +27,7 @@ class FirstPersonMotionSample:
   visible item、target item、equip progress、swing progress、arm flag、view-model flag をまとめ、
   後段の render-state composer が mutable controller を触らずに済むようにする。
   """
+
   visible_item_id: str | None
   target_item_id: str | None
   equip_progress: float

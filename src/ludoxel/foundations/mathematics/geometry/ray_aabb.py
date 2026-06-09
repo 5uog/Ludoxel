@@ -17,6 +17,7 @@ class RayHitFace:
   `t_enter` は `origin + direction * t` の `t`、`point` は world 空間上の交点、
   `face` は `faces.py` の face index であり、block picking と third-person camera collision はこの face 契約に依存する。
   """
+
   t_enter: float
   point: Vec3
   face: int

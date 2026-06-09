@@ -105,6 +105,7 @@ class HeldBlockPose:
   third-person held block rendering に必要な `block_id`、`block_kind`、親 transform を保持する record である。
   pose generation と face expansion を分けることで、attachment 計算と row materialization を別々に cache できる。
   """
+
   block_id: str
   block_kind: str | None
   parent_transform: np.ndarray
@@ -116,6 +117,7 @@ class PlayerModelPose:
   third-person player の pose synthesis 結果を保持する cached record である。
   skin face rows、held block pose、special item rows、icon、shadow cuboid rows をまとめ、OpenGL pass は高価な kinematics ではなく packing 済み入力だけを読む。
   """
+
   skin_face_rows: tuple[np.ndarray, ...]
   held_block_pose: HeldBlockPose | None
   special_item_face_rows: tuple[np.ndarray, ...]

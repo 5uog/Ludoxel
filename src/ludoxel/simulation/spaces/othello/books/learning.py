@@ -44,6 +44,7 @@ class BookLearningCancelled(RuntimeError):
   学習 recursion 内で cooperative cancellation が検出された場合に送出する sentinel 例外である。
   通常の実行失敗と分けることで、途中成果の flush 経路を保つ。
   """
+
   pass
 
 

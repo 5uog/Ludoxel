@@ -235,6 +235,7 @@ class OthelloDepthSample:
   iterative search の一つの depth sample を表す record である。
   depth、score、solved flag だけを保持し、HUD が単調な depth trace を再構成する最小単位とする。
   """
+
   depth: int
   score: float
   solved: bool = False
@@ -253,6 +254,7 @@ class OthelloAnalysis:
   search から HUD と AI explanation へ渡す analysis snapshot である。
   side、best move、principal variation、score、solved、depth、depth samples を一つの情報面として保持する。
   """
+
   side_to_move: int = SIDE_BLACK
   best_move_index: int | None = None
   best_line: tuple[int, ...] = ()
@@ -295,6 +297,7 @@ class OthelloGameState:
   status、board、settings、player/AI side、turn、clock、move count、pass count、winner、message、last move、
   animations、generation、legal moves、thinking を明示的な state-to-state transition の対象として保持する。
   """
+
   status: str = OTHELLO_GAME_STATE_IDLE
   board: tuple[int, ...] = field(default_factory=_default_initial_board)
   settings: OthelloSettings = field(default_factory=OthelloSettings)

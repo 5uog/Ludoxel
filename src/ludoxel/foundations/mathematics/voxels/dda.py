@@ -15,6 +15,7 @@ class DDAHit:
   `cell_x`、`cell_y`、`cell_z` は grid cell index、`t` は `origin + direction * t` の parameter、
   `enter_face` は直前境界を越えて現在 cell に入った face index 又は開始 cell を表す -1 である。
   """
+
   cell_x: int
   cell_y: int
   cell_z: int

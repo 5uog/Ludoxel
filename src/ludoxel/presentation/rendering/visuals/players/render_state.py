@@ -12,6 +12,7 @@ class FirstPersonRenderState:
   visible/target identifier と時間的 animation channel を一体で保持し、
   frame 内の view-model transform を一つの sample から再構成できるようにする。
   """
+
   visible_item_id: str | None
   target_item_id: str | None
   visible_block_id: str | None
@@ -40,6 +41,7 @@ class PlayerRenderState:
   third-person player model synthesis の cache key となる不変入力 record である。
   base pose、locomotion phase、crouch、perspective flag、first-person extension から、可視 body と shadow pose が決定される。
   """
+
   base_x: float
   base_y: float
   base_z: float

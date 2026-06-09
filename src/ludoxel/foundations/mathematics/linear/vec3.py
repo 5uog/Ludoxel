@@ -13,6 +13,7 @@ class Vec3:
   成分 `x`、`y`、`z` は world 座標、速度、方向、AABB 境界の共通表現であり、
   simulation、application persistence、renderer visual はこの型を低水準の幾何値として共有する。
   """
+
   x: float
   y: float
   z: float

@@ -50,6 +50,7 @@ class OthelloAnimationState:
   square、from/to side、elapsed、duration、delay、lift を持ち、
   effective phase は `clamp((elapsed - delay) / duration, 0, 1)` として renderer が読める。
   """
+
   square_index: int
   from_side: int
   to_side: int

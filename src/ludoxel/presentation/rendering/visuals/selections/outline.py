@@ -19,6 +19,7 @@ class SelectionOutlineBuilder:
   一つの block state realization を world-space outline segment 群へ写す builder である。
   block definition lookup を instance に束ね、outline construction が常に同じ block-model semantics を参照するようにする。
   """
+
   def_lookup: DefLookup
 
   @staticmethod

@@ -73,6 +73,7 @@ class RuntimePreferences:
   application persistence、Qt controls、renderer state、active session が共有する境界値であるため、
   保存値や UI 入力を受けた後は必ず正規化された状態で扱う。
   """
+
   DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S: ClassVar[float] = 0.30
   DEFAULT_BLOCK_PLACE_REPEAT_INITIAL_DELAY_S: ClassVar[float] = 0.20
   DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 1.0 / 120.0

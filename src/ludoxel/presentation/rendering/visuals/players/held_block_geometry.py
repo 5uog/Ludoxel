@@ -20,6 +20,7 @@ class TexturedBox:
   local cuboid `B` と、六 voxel face に対応する任意の pixel UV rectangle 群 `U` を組にした record である。
   held-item rendering はこの record により、block family 実装へ直接結合せず幾何と atlas addressing を受け渡す。
   """
+
   box: LocalBox
   face_uv_pixels: dict[int, tuple[float, float, float, float]] | None = None
 

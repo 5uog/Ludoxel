@@ -20,6 +20,7 @@ class VisibleFace:
   local box、face index、world-space bounds からなる、occlusion 後に残った一つの可視 face を表す中間 record である。
   model visibility analysis と renderer payload packing の間で共有される。
   """
+
   box: LocalBox
   face_idx: int
   mn: tuple[float, float, float]
