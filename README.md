@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/ludoxel_banner.png" alt="Ludoxel" width="100%">
+</p>
+
 # Ludoxel v3.6.0 法務情報
 
 Ludoxel は、Python、PyQt6、OpenGL、WGPU を用いたデスクトップ向けボクセルサンドボックスアプリケーションである。
