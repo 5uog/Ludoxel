@@ -1,25 +1,25 @@
 name: Limited question
-description: Ask a limited question without submitting contribution materials.
+description: Ask a limited repository question without submitting contribution materials.
 title: '[Question]: '
 labels: []
 body:
   - type: markdown
     attributes:
       value: |
-        This repository is not an open source project and does not accept external contributions.
+        This public form is limited to questions about repository policy, licensing, ordinary application use, packaging status, or security reporting procedure.
 
-        Use this form only for a limited question about repository policy, licensing, ordinary application use, packaging status, or security reporting procedure.
+        Do not use this form to submit source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, refactoring proposals, or other contribution materials.
 
-        Do not submit source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, refactoring proposals, or other contribution materials.
+        Do not include vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, or other information unsuitable for public disclosure.
 
   - type: checkboxes
     id: acknowledgement
     attributes:
       label: Acknowledgement
       options:
-        - label: I understand that this question must not include contribution materials or implementation proposals.
+        - label: I understand that this question must not include contribution materials, replacement repository content, or implementation proposals.
           required: true
-        - label: I understand that public GitHub features, including issues, pull requests, forks, clones, downloads, and repository browsing, do not grant permission to reuse the Original Materials.
+        - label: I understand that public GitHub features do not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, use as training data, or represent the Original Materials as my own work.
           required: true
 
   - type: dropdown
@@ -40,6 +40,6 @@ body:
     id: question
     attributes:
       label: Question
-      description: Ask the question without submitting code, replacement text, or proposed repository content.
+      description: Ask the limited question without submitting code, replacement text, proposed repository content, or non-public security information.
     validations:
       required: true

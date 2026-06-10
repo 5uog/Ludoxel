@@ -1,65 +1,46 @@
-Python Runtime and Toolchain Notice
-Repository Notice Scope: Supplemental third-party notice
-Related Root Notice Version: 1.0.2
+Python 実行環境及びツールチェーン通知
 
-This notice records runtime, packaging, renderer, validation, and
-toolchain categories that may be involved in Ludoxel development or
-distribution. This notice is a repository-specific supplemental notice.
-It does not replace, translate as controlling text, narrow, expand, or
-otherwise modify the license text of any dependency, runtime, package,
-SDK, or tool.
+補助通知の範囲: 第三者通知
+関連するルート NOTICE の版: 1.0.3
+本文言語: 日本語
 
-Ludoxel source-tree execution, validation, desktop building, renderer
-backend operation, native extension building, formatting, linting,
-resource checking, shader checking, and distribution packaging may
-involve CPython, PyQt6, Qt runtime components, NumPy, PyOpenGL, wgpu,
-rendercanvas, PyInstaller, Ruff, Node.js, npm packages, ESLint,
-Stylelint, Prettier, and other packages or toolchain components.
+この通知は、Ludoxel の開発、検証、描画、ビルド、パッケージ作成、及び配
+布に関係し得る実行環境、パッケージ、SDK、及びツールチェーンの分類を、リ
+ポジトリ固有の補助的な第三者通知として記録する文書である。この通知は、依
+存物、実行環境、パッケージ、SDK、又はツールのライセンス本文を置換、支配
+的翻訳、制限、拡張、又はその他の方法で修正するものではない。
 
-Those materials are Third-Party Materials unless a specific component is
-separately authored by Kento Konishi and identified as Ludoxel Original
-Material. Their presence in a development environment, package metadata,
-lockfile, build log, validation command, or distribution artifact does
-not relicense Ludoxel Original Materials.
+Ludoxel のソースツリー実行、検証、デスクトップビルド、描画バックエンド
+動作、ネイティブ拡張ビルド、整形、lint、資源検査、シェーダー検査、及び配
+布パッケージ作成には、CPython、PyQt6、Qt 実行環境構成要素、NumPy、
+PyOpenGL、wgpu、rendercanvas、PyInstaller、Ruff、Node.js、npm
+パッケージ、ESLint、Stylelint、Prettier、及びその他のパッケージ又は
+ツールチェーンが関係し得る。
 
-Each dependency, runtime, package, SDK, and toolchain component remains
-subject to its own license terms, copyright notices, attribution
-requirements, warranty disclaimers, reserved names, source-offer
-requirements, export restrictions, and redistribution conditions. Before
-distributing a Ludoxel artifact, the distributor must confirm the
-license obligations that apply to the exact dependency versions and to
-the exact form in which those dependencies are bundled, embedded,
-required, or otherwise supplied.
+これらの素材は、特定の構成要素が小西拳斗によって別個に著作され、Ludoxel
+独自素材として識別される場合を除き、第三者素材である。開発環境、パッケー
+ジメタデータ、lockfile、ビルドログ、検証コマンド、又は配布物にそれらが
+現れることは、Ludoxel 独自素材を当該依存物のライセンスで再許諾する根拠
+にならない。
 
-This notice does not grant permission to distribute Ludoxel. Ludoxel
-distribution is governed by the root LICENSE and requires permission
-under that license or a separate written agreement signed by Kento
-Konishi.
+各依存物、実行環境、パッケージ、SDK、及びツールチェーン構成要素は、それ
+ぞれのライセンス、著作権表示、通知、保証否認、ソース提供条件、再配布条件、
+及びその他の条件に従う。`Ludoxel Independent License` は、これら第
+三者素材の条件を変更しない。
 
-If a desktop distribution bundles CPython, Qt runtime components,
-Python packages, renderer packages, Node packages, or other binary
-dependencies, the distribution process must include the legal records
-required by those dependencies in addition to the Ludoxel legal
-material:
+Python パッケージ依存関係は、主として pyproject.toml に記録される。
+Node.js パッケージ及び repository tooling の依存関係は、主として
+package.json 及び lockfile に記録される。これらのメタデータは依存関
+係の技術的な記録であり、Ludoxel 独自素材に対する追加許諾を構成しない。
 
-* LICENSE
-* NOTICE
-* third-party/
+PyInstaller、Qt、PyQt6、OpenGL 関連構成要素、wgpu 関連構成要素、
+rendercanvas、Node.js ツール、又はその他の実行環境構成要素を配布物に
+含める場合、その同梱可否及び同梱条件は、各構成要素に適用されるライセンス
+及び配布条件によって定まる。
 
-This notice is intentionally general because dependency versions and
-bundle contents may change between development environments and build
-artifacts. A release process must therefore verify actual dependency
-versions, actual bundle contents, and actual notice requirements at the
-time of distribution.
+この通知は、Ludoxel の配布許諾を発生させない。配布許諾は、ルートの
+LICENSE 又は小西拳斗が署名した別個の書面によって明示される必要がある。
 
-This notice does not determine whether the license terms of a runtime,
-package, SDK, binary component, build tool, renderer package, or Node
-package permit distribution in a particular artifact. The distributor
-must verify that question against the exact upstream license text and
-the exact artifact contents.
-
-This notice does not create an independent version sequence for the
-Ludoxel Independent License, the root NOTICE, or any third-party
-license. If the root NOTICE is amended before its current version is
-committed, this supplemental notice must remain aligned with that root
-NOTICE version and must not record a later version number.
+この通知は、依存物一覧の完全性を保証するものではない。実際の依存関係及び
+同梱物は、pyproject.toml、package.json、lockfile、ビルド設定、配布
+物の内容、及び該当する第三者ライセンスに基づいて判断される。

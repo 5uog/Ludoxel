@@ -9,8 +9,6 @@ This repository is not an open source project and does not accept external contr
 
 Do not submit pull requests, patches, source code changes, documentation changes, translations, design assets, generated files, datasets, feature implementations, refactoring proposals, shader rewrites, assets, saved worlds, AI workbench output, or other contribution materials.
 
-Pull requests may be closed without review.
+A pull request may be closed without review. Submission of a pull request does not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, use as training data, or represent the repository's Original Materials as one's own work.
 
-Submitting this pull request does not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, or represent the repository's Original Materials as one's own work.
-
-For the controlling terms, see [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE), and [`.github/CONTRIBUTING.md`](./CONTRIBUTING.md).
+For the controlling terms, see [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE), and [`.github/CONTRIBUTING.md`](./CONTRIBUTING.md). GitHub interface features do not expand the independent license granted by Kento Konishi for the Original Materials.
