@@ -36,12 +36,24 @@ def _application_icon_candidate_paths(resource_root: Path) -> tuple[Path, ...]:
 
 
 def _load_application_icon(resource_root: Path) -> QIcon | None:
-  for path in _application_icon_candidate_paths(resource_root):
-    if not path.is_file():
-      continue
-    icon = QIcon(str(path.resolve()))
-    if not icon.isNull():
-      return icon
+  root = Path(resource_root)
+
+  if sys.platform == "darwin":
+    base = root / "assets" / "app" / "icons" / "macos"
+    names = _MACOS_APP_ICON_CANDIDATE_NAMES
+  elif sys.platform.startswith("win"):
+    base = root / "assets" / "app" / "icons" / "windows"
+    names = _WINDOWS_APP_ICON_CANDIDATE_NAMES
+  else:
+    base = root / "assets" / "app" / "icons"
+    names = _WINDOWS_APP_ICON_CANDIDATE_NAMES + _MACOS_APP_ICON_CANDIDATE_NAMES
+
+  for name in names:
+    candidate = base / name
+    if candidate.is_file():
+      icon = QIcon(str(candidate.resolve()))
+      if not icon.isNull():
+        return icon
   return None
 
 
@@ -225,8 +237,8 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   qss = Path(__file__).resolve().parents[1] / "theme" / "main.qss"
   if qss.exists():
     qss_text = str(font_qss) + qss.read_text(encoding="utf-8")
-    arrow_up = (bundled_root / "assets" / "ui" / "arrow_up.svg").resolve().as_posix()
-    arrow_down = (bundled_root / "assets" / "ui" / "arrow_down.svg").resolve().as_posix()
+    arrow_up = (bundled_root / "assets" / "ui" / "settings" / "arrow_up.svg").resolve().as_posix()
+    arrow_down = (bundled_root / "assets" / "ui" / "settings" / "arrow_down.svg").resolve().as_posix()
     qss_text = qss_text.replace("__ARROW_UP__", str(arrow_up))
     qss_text = qss_text.replace("__ARROW_DOWN__", str(arrow_down))
     app.setStyleSheet(qss_text)

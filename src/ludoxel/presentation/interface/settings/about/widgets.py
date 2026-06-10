@@ -22,11 +22,11 @@ def _first_existing_asset(resource_root: Path | None, relative_dir: str, candida
 
 
 def profile_image_path(resource_root: Path | None) -> Path | None:
-  return _first_existing_asset(resource_root, "assets/ui/profile", PROFILE_IMAGE_CANDIDATE_NAMES)
+  return _first_existing_asset(resource_root, "assets/ui/about", PROFILE_IMAGE_CANDIDATE_NAMES)
 
 
 def github_image_path(resource_root: Path | None) -> Path | None:
-  return _first_existing_asset(resource_root, "assets/ui/profile", GITHUB_IMAGE_CANDIDATE_NAMES)
+  return _first_existing_asset(resource_root, "assets/ui/about", GITHUB_IMAGE_CANDIDATE_NAMES)
 
 
 def about_card(parent: QWidget, object_name: str = "aboutCard") -> QFrame:

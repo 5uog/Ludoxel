@@ -12,7 +12,7 @@ _TITLE_IMAGE_CANDIDATE_NAMES = ("ludoxel.png", "ludoxel.svg", "ludoxel.jpg", "lu
 
 
 def status_overlay_title_image_path(resource_root: Path) -> Path | None:
-  base = Path(resource_root) / "assets" / "ui"
+  base = Path(resource_root) / "assets" / "branding"
   for name in _TITLE_IMAGE_CANDIDATE_NAMES:
     candidate = base / name
     if candidate.is_file():

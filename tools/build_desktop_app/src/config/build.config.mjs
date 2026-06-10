@@ -5,11 +5,11 @@
 export const APP_NAME = 'Ludoxel';
 
 export const WINDOWS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
-export const WINDOWS_ICON_PATH = 'assets/ui/app_icon.ico';
+export const WINDOWS_ICON_PATH = 'assets/app/icons/windows/app_icon.ico';
 export const WINDOWS_PUBLISH_DIR = 'dist/windows';
 
 export const MACOS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
-export const MACOS_ICON_PATH = 'assets/ui/app_icon.icns';
+export const MACOS_ICON_PATH = 'assets/app/icons/macos/app_icon.icns';
 export const MACOS_PUBLISH_DIR = 'dist/macos';
 export const MACOS_BUNDLE_IDENTIFIER = 'com.kentokonishi.ludoxel';
 
