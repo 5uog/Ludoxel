@@ -5,11 +5,25 @@
 export const APP_NAME = 'Ludoxel';
 
 export const WINDOWS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
-export const WINDOWS_ICON_PATH = 'assets/app/icons/windows/app_icon.ico';
+export const WINDOWS_ICON_CANDIDATE_PATHS = Object.freeze([
+  'assets/app/icons/windows/app_icon_256x256.ico',
+  'assets/app/icons/windows/app_icon_128x128.ico',
+  'assets/app/icons/windows/app_icon_32x32.ico',
+  'assets/app/icons/windows/app_icon_16x16.ico',
+]);
+export const WINDOWS_ICON_PATH = WINDOWS_ICON_CANDIDATE_PATHS[0];
 export const WINDOWS_PUBLISH_DIR = 'dist/windows';
 
 export const MACOS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
-export const MACOS_ICON_PATH = 'assets/app/icons/macos/app_icon.icns';
+export const MACOS_ICON_CANDIDATE_PATHS = Object.freeze([
+  'assets/app/icons/macos/app_icon_1024x1024.icns',
+  'assets/app/icons/macos/app_icon_512x512.icns',
+  'assets/app/icons/macos/app_icon_256x256.icns',
+  'assets/app/icons/macos/app_icon_128x128.icns',
+  'assets/app/icons/macos/app_icon_32x32.icns',
+  'assets/app/icons/macos/app_icon_16x16.icns',
+]);
+export const MACOS_ICON_PATH = MACOS_ICON_CANDIDATE_PATHS[0];
 export const MACOS_PUBLISH_DIR = 'dist/macos';
 export const MACOS_BUNDLE_IDENTIFIER = 'com.kentokonishi.ludoxel';
 

@@ -9,12 +9,12 @@ import {
   APP_NAME,
   MACOS_BUNDLE_IDENTIFIER,
   MACOS_ENTRY_SCRIPT,
-  MACOS_ICON_PATH,
+  MACOS_ICON_CANDIDATE_PATHS,
   PYINSTALLER_SPEC_ROOT,
   PYINSTALLER_STAGING_ROOT,
   PYINSTALLER_WORK_ROOT,
   WINDOWS_ENTRY_SCRIPT,
-  WINDOWS_ICON_PATH,
+  WINDOWS_ICON_CANDIDATE_PATHS,
 } from '../../config/build.config.mjs';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 
@@ -91,32 +91,46 @@ function addMacosRequiredDataArgs(args) {
   addRequiredDataArg(args, 'third-party', 'third-party', 'darwin');
 }
 
+function resolveFirstExistingProjectPath(candidateRelativePaths, label, requiredExtension, { required = true } = {}) {
+  const checkedRelativePaths = Array.from(candidateRelativePaths);
+
+  for (const relativePath of checkedRelativePaths) {
+    const absolutePath = projectPath(relativePath);
+
+    if (!existsSync(absolutePath)) {
+      continue;
+    }
+
+    if (extname(absolutePath).toLowerCase() !== requiredExtension) {
+      throw new Error(`${label} must use ${requiredExtension} files only: ${relativePath}`);
+    }
+
+    return {
+      relativePath,
+      absolutePath,
+    };
+  }
+
+  if (required) {
+    throw new Error(`Required ${label} is missing. Checked: ${checkedRelativePaths.join(', ')}`);
+  }
+
+  return null;
+}
+
 function addMacosIconArg(args) {
-  const iconPath = projectPath(MACOS_ICON_PATH);
-
-  if (!existsSync(iconPath)) {
-    throw new Error(`Required macOS .icns app icon is missing: ${MACOS_ICON_PATH}`);
-  }
-
-  if (extname(iconPath).toLowerCase() !== '.icns') {
-    throw new Error(`macOS app icon must be an .icns file: ${MACOS_ICON_PATH}`);
-  }
-
-  args.push('--icon', iconPath);
+  const resolvedIcon = resolveFirstExistingProjectPath(MACOS_ICON_CANDIDATE_PATHS, 'macOS app icon', '.icns');
+  args.push('--icon', resolvedIcon.absolutePath);
 }
 
 function addWindowsIconArg(args) {
-  const iconPath = projectPath(WINDOWS_ICON_PATH);
+  const resolvedIcon = resolveFirstExistingProjectPath(WINDOWS_ICON_CANDIDATE_PATHS, 'Windows app icon', '.ico', { required: false });
 
-  if (!existsSync(iconPath)) {
+  if (resolvedIcon === null) {
     return;
   }
 
-  if (extname(iconPath).toLowerCase() !== '.ico') {
-    throw new Error(`Windows app icon must be an .ico file: ${WINDOWS_ICON_PATH}`);
-  }
-
-  args.push('--icon', iconPath);
+  args.push('--icon', resolvedIcon.absolutePath);
 }
 
 export function buildWindowsPyinstallerCommand({ pythonExecutable, token }) {

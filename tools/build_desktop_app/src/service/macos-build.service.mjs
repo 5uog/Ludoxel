@@ -13,7 +13,7 @@ import {
   APP_NAME,
   MACOS_BUNDLE_IDENTIFIER,
   MACOS_ENTRY_SCRIPT,
-  MACOS_ICON_PATH,
+  MACOS_ICON_CANDIDATE_PATHS,
   MACOS_PUBLISH_DIR,
   PYINSTALLER_CONFIG_ROOT,
   PYINSTALLER_SPEC_ROOT,
@@ -59,6 +59,23 @@ function requireProjectAsset(relativePath) {
   if (!existsSync(absolutePath)) {
     throw new Error(`Required macOS bundle asset is missing: ${relativePath} (${absolutePath})`);
   }
+}
+
+function requireFirstProjectAsset(candidateRelativePaths, label) {
+  const checkedRelativePaths = Array.from(candidateRelativePaths);
+
+  for (const relativePath of checkedRelativePaths) {
+    const absolutePath = resolve(PROJECT_ROOT, relativePath);
+
+    if (existsSync(absolutePath)) {
+      return {
+        relativePath,
+        absolutePath,
+      };
+    }
+  }
+
+  throw new Error(`Required ${label} is missing. Checked: ${checkedRelativePaths.join(', ')}`);
 }
 
 function macosAppPath(rootDir) {
@@ -123,7 +140,7 @@ function patchMacosInfoPlist(appPath) {
   let plistText = readFileSync(plistPath, 'utf8');
   const resourcesPath = resolve(appPath, 'Contents', 'Resources');
   const bundledIcons = existsSync(resourcesPath) ? walkFiles(resourcesPath).filter((path) => path.toLowerCase().endsWith('.icns')) : [];
-  const bundledIconName = bundledIcons.length > 0 ? basename(bundledIcons[0]) : basename(MACOS_ICON_PATH);
+  const bundledIconName = bundledIcons.length > 0 ? basename(bundledIcons[0]) : basename(MACOS_ICON_CANDIDATE_PATHS[0]);
 
   plistText = upsertPlistString(plistText, 'CFBundleName', APP_NAME);
   plistText = upsertPlistString(plistText, 'CFBundleDisplayName', APP_NAME);
@@ -192,11 +209,7 @@ function requireMacosInfoPlist(appPath) {
 }
 
 function requireMacosIcon(appPath) {
-  const expectedProjectIcon = resolve(PROJECT_ROOT, MACOS_ICON_PATH);
-
-  if (!existsSync(expectedProjectIcon)) {
-    throw new Error(`Required macOS project icon is missing: ${MACOS_ICON_PATH}`);
-  }
+  const resolvedProjectIcon = requireFirstProjectAsset(MACOS_ICON_CANDIDATE_PATHS, 'macOS project icon');
 
   const resourcesPath = resolve(appPath, 'Contents', 'Resources');
   const bundledIcons = existsSync(resourcesPath) ? walkFiles(resourcesPath).filter((path) => path.toLowerCase().endsWith('.icns')) : [];
@@ -205,6 +218,7 @@ function requireMacosIcon(appPath) {
     throw new Error(`macOS app bundle is missing a bundled .icns icon under Contents/Resources: ${appPath}`);
   }
 
+  console.log(`[build_desktop_app] verified macOS project icon: ${resolvedProjectIcon.relativePath}`);
   console.log(`[build_desktop_app] verified macOS bundled icon: ${bundledIcons[0]}`);
 }
 
@@ -276,7 +290,7 @@ export function runMacosBuild(options = {}) {
   requireMacosHost();
   requireMacosEntryScript();
   requireProjectAsset('assets/minecraft/skins/alex.png');
-  requireProjectAsset(MACOS_ICON_PATH);
+  requireFirstProjectAsset(MACOS_ICON_CANDIDATE_PATHS, 'macOS project icon');
 
   for (const fontAssetPath of MACOS_REQUIRED_FONT_ASSET_PATHS) {
     requireProjectAsset(fontAssetPath);

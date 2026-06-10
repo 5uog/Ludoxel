@@ -20,36 +20,37 @@ from ludoxel.presentation.interface.windows.game_screen import GameScreen
 
 _MIN_WINDOW_WIDTH = 980
 _MIN_WINDOW_HEIGHT = 620
-_MACOS_APP_ICON_CANDIDATE_NAMES = ("app_icon.icns", "app_icon.png", "app_icon.jpg", "app_icon.jpeg", "app_icon.ico")
-_WINDOWS_APP_ICON_CANDIDATE_NAMES = ("app_icon.ico", "app_icon.png", "app_icon.jpg", "app_icon.jpeg")
+_MACOS_APP_ICON_CANDIDATE_NAMES = (
+  "app_icon_1024x1024.icns",
+  "app_icon_512x512.icns",
+  "app_icon_256x256.icns",
+  "app_icon_128x128.icns",
+  "app_icon_32x32.icns",
+  "app_icon_16x16.icns",
+)
+_WINDOWS_APP_ICON_CANDIDATE_NAMES = (
+  "app_icon_256x256.ico",
+  "app_icon_128x128.ico",
+  "app_icon_32x32.ico",
+  "app_icon_16x16.ico",
+)
 
 
 def _application_icon_candidate_paths(resource_root: Path) -> tuple[Path, ...]:
-  base = Path(resource_root) / "assets" / "ui"
+  root = Path(resource_root)
+  windows_base = root / "assets" / "app" / "icons" / "windows"
+  macos_base = root / "assets" / "app" / "icons" / "macos"
+
   if sys.platform == "darwin":
-    names = _MACOS_APP_ICON_CANDIDATE_NAMES
-  elif sys.platform.startswith("win"):
-    names = _WINDOWS_APP_ICON_CANDIDATE_NAMES
-  else:
-    names = (*_WINDOWS_APP_ICON_CANDIDATE_NAMES, "app_icon.icns")
-  return tuple(base / name for name in names)
+    return tuple(macos_base / name for name in _MACOS_APP_ICON_CANDIDATE_NAMES)
+  if sys.platform.startswith("win"):
+    return tuple(windows_base / name for name in _WINDOWS_APP_ICON_CANDIDATE_NAMES)
+
+  return tuple(windows_base / name for name in _WINDOWS_APP_ICON_CANDIDATE_NAMES) + tuple(macos_base / name for name in _MACOS_APP_ICON_CANDIDATE_NAMES)
 
 
 def _load_application_icon(resource_root: Path) -> QIcon | None:
-  root = Path(resource_root)
-
-  if sys.platform == "darwin":
-    base = root / "assets" / "app" / "icons" / "macos"
-    names = _MACOS_APP_ICON_CANDIDATE_NAMES
-  elif sys.platform.startswith("win"):
-    base = root / "assets" / "app" / "icons" / "windows"
-    names = _WINDOWS_APP_ICON_CANDIDATE_NAMES
-  else:
-    base = root / "assets" / "app" / "icons"
-    names = _WINDOWS_APP_ICON_CANDIDATE_NAMES + _MACOS_APP_ICON_CANDIDATE_NAMES
-
-  for name in names:
-    candidate = base / name
+  for candidate in _application_icon_candidate_paths(resource_root):
     if candidate.is_file():
       icon = QIcon(str(candidate.resolve()))
       if not icon.isNull():
