@@ -20,20 +20,8 @@ from ludoxel.presentation.interface.windows.game_screen import GameScreen
 
 _MIN_WINDOW_WIDTH = 980
 _MIN_WINDOW_HEIGHT = 620
-_MACOS_APP_ICON_CANDIDATE_NAMES = (
-  "app_icon_1024x1024.icns",
-  "app_icon_512x512.icns",
-  "app_icon_256x256.icns",
-  "app_icon_128x128.icns",
-  "app_icon_32x32.icns",
-  "app_icon_16x16.icns",
-)
-_WINDOWS_APP_ICON_CANDIDATE_NAMES = (
-  "app_icon_256x256.ico",
-  "app_icon_128x128.ico",
-  "app_icon_32x32.ico",
-  "app_icon_16x16.ico",
-)
+_MACOS_APP_ICON_CANDIDATE_NAMES = ("app_icon_1024x1024.icns", "app_icon_512x512.icns", "app_icon_256x256.icns", "app_icon_128x128.icns", "app_icon_32x32.icns", "app_icon_16x16.icns")
+_WINDOWS_APP_ICON_CANDIDATE_NAMES = ("app_icon_256x256.ico", "app_icon_128x128.ico", "app_icon_32x32.ico", "app_icon_16x16.ico")
 
 
 def _application_icon_candidate_paths(resource_root: Path) -> tuple[Path, ...]:
