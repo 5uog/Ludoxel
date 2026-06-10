@@ -1,62 +1,66 @@
 Ludoxel Independent License
 LicenseRef-All-Rights-Reserved
 
-Version: 1.0.3
+Version: 1.0.4
 Original Effective Date: 2026-06-03
-Current Version Effective Date: 2026-06-10
+Current Version Effective Date: 2026-06-11
 
 Copyright (c) 2026 Kento Konishi.
 
-1. Status of This Repository
+1. Legal Status and Construction
 
-This repository is not open source. This repository is not free software.
-The Original Materials in this repository are not licensed under the
-Apache License 2.0, MIT License, BSD License, GPL, AGPL, LGPL, MPL, or
-any other open source license.
+This repository is not open source, is not free software, and is not a
+community contribution project. No Original Materials are licensed under
+the Apache License 2.0, MIT License, BSD License, GPL, AGPL, LGPL, MPL,
+Creative Commons license, public-domain dedication, or any other open
+source, free software, public-content, or permissive license.
 
-LicenseRef-All-Rights-Reserved refers to this independent license.
+LicenseRef-All-Rights-Reserved identifies this independent license. It
+does not identify any standardized permissive, copyleft, public-domain,
+open-content, or community license.
 
-For purposes of this license, "Original Materials" means all
-copyrightable materials and, to the extent recognized by applicable law,
-other protectable original materials in this repository that were
-created by Kento Konishi, including source code, documentation,
-configuration files, build scripts, repository text, user interface
-text, generated data, images, metadata, packaged files, distribution
-files, shaders, bundled resources, desktop app packaging material,
-project-specific assets, project-specific textures, branding material,
-application icons, user interface assets, and other repository contents.
+For purposes of this License, "Original Materials" means all
+copyrightable expression and all other protectable original materials in
+or distributed from this repository that were created by Kento Konishi,
+including source code, documentation, repository text, configuration
+files, build scripts, validation tools, shaders, user interface text,
+generated metadata, packaged files, desktop application packaging
+material, project-specific assets, project-specific textures, branding
+material, application icons, user interface assets, and other repository
+contents.
 
-For purposes of this license, "Repository Contents" means all files,
+For purposes of this License, "Repository Contents" means all files,
 directories, text, source code, metadata, configuration, documentation,
 scripts, shaders, assets, resources, packaged materials, generated
 materials, and other materials made available in, through, or from this
-repository, whether viewed through a browser, obtained through a
-hosting-service feature, downloaded, cloned, forked, mirrored, archived,
-copied, or otherwise accessed.
+repository, whether viewed through a browser, accessed through a hosting
+service, downloaded, cloned, forked, mirrored, archived, copied,
+indexed, or otherwise accessed.
 
 Generated files, generated data, images, metadata, packaged files,
-distribution files, and bundled resources are Original Materials only to
-the extent that they were created by Kento Konishi, generated from
-materials created by Kento Konishi, or otherwise protected by copyright
-or other applicable rights held by Kento Konishi.
+distribution files, and bundled resources are Original Materials to the
+extent that they were created by Kento Konishi, generated from materials
+created by Kento Konishi, or otherwise protected by copyrights or other
+rights held by Kento Konishi.
 
-Original Materials expressly exclude third-party materials, including
-third-party libraries, fonts, external packages, vendor files, platform
-SDKs, and materials whose provenance or license is identified
-separately in NOTICE or third-party/.
+Original Materials exclude third-party libraries, fonts, external
+packages, vendor files, platform SDKs, toolchain components, and
+materials whose provenance, authorship, or license is identified
+separately in NOTICE, third-party/, package metadata, or other
+repository legal material.
 
-A material is not removed from the scope of the Original Materials
-merely because it is generated, bundled, embedded, copied into a
-distribution directory, included in a package, converted into another
-technical format, compiled, minified, optimized, transformed, rendered,
-exported, or otherwise prepared from Original Materials.
+A material remains within the scope of Original Materials when it is
+compiled, minified, optimized, transformed, rendered, exported,
+embedded, bundled, copied into a distribution directory, included in a
+package, or converted into another technical format from Original
+Materials.
 
-The copyright holder of the Original Materials is Kento Konishi. All
-rights in the Original Materials are reserved by Kento Konishi.
+All copyrights and all other protectable rights in the Original
+Materials are reserved by Kento Konishi.
 
 2. User Materials and Application Output
 
-For purposes of this license, "User Materials" means player names,
+For purposes of this License, "User Materials" means player names,
 player settings, key bindings, window state, custom crosshair data,
 imported skins, world edits, save data, Othello settings, user-created
 text, user-created images, user-created video, chat content, AI
@@ -64,85 +68,81 @@ workbench history, and other materials that a user independently
 creates, inputs, edits, records, or prepares through ordinary use of the
 Ludoxel application.
 
-For purposes of this license, "Application Output" means ordinary
+For purposes of this License, "Application Output" means ordinary
 screenshots, screen recordings, save files, logs, generated AI
 workbench records, rendered states, configuration files, and other
 output produced by the Ludoxel application through ordinary application
 use.
 
-User Materials do not become Original Materials merely because the user
-entered, edited, generated, saved, exported, displayed, or shared them
-by using the Ludoxel application.
+User Materials do not become Original Materials merely because they are
+entered, edited, generated, saved, exported, displayed, recorded, or
+shared through the Ludoxel application.
 
-Subject to this license and any applicable third-party rights, users may
-use, record, reproduce, publish, and share their own User Materials and
-Application Output, including ordinary screenshots, screen recordings,
-save data, and user-created AI workbench output.
+Subject to this License and to applicable third-party rights, a user may
+use, record, reproduce, publish, and share that user's own User
+Materials and Application Output, including ordinary screenshots,
+ordinary screen recordings, save data, and user-created AI workbench
+output.
 
-The permission stated in this Section 2 does not grant any right to
-copy, reuse, modify, distribute, deploy, incorporate, relicense, sell,
-create derivative works from, represent as one's own, or use as
-training data any Original Materials, including source code,
-implementation text, documentation, repository text, build materials,
-shaders, bundled resources, visual assets, project-specific textures,
-branding material, application icons, user interface assets, or any
+The preceding permission does not authorize copying, extracting,
+modifying, publishing, distributing, deploying, incorporating,
+relicensing, selling, sublicensing, creating derivative works from,
+representing as one's own, or using as training data any Original
+Materials, third-party materials, repository text, implementation text,
+visual assets, bundled resources, project-specific textures, branding
+material, application icons, user interface assets, shaders, or any
 substantially derived work based on them.
 
-If User Materials or Application Output contain, reproduce, or
-incorporate a material part of the Original Materials, third-party
-materials, repository text, user interface text, visual assets, bundled
-resources, project-specific textures, branding material, application
-icons, or other protected repository content, that included protected
-material remains subject to the applicable license terms.
+If User Materials or Application Output contain a material part of the
+Original Materials, third-party materials, repository text, user
+interface text, visual assets, bundled resources, project-specific
+textures, branding material, application icons, or other protected
+content, the included protected material remains subject to its
+applicable legal terms.
 
-Nothing in this license represents that any User Materials or
-Application Output are free from third-party rights or otherwise
-suitable for publication, competition use, commercial use, educational
-use, training-data use, dataset use, model evaluation use, or any other
-specific purpose.
+No statement in this Section 2 represents that User Materials or
+Application Output are free from third-party rights or suitable for
+publication, competition use, commercial use, educational use,
+training-data use, dataset use, model evaluation, or any other specific
+purpose.
 
 3. Limited Permission to View Repository Contents
 
-Subject to full compliance with this license, permission is granted only
-to view the repository contents for review and verification.
+Subject to complete compliance with this License, permission is granted
+only to view Repository Contents for human review and verification.
 
-The viewing permission stated in this Section 3 is limited to human
-review and verification of the repository contents. It does not grant
-permission to copy, reproduce, download, clone, fork, scrape, mirror,
-archive, store, modify, adapt, translate, merge, restructure, refactor,
-optimize, minify, bundle, compile, transpile, publish, distribute,
-transmit, sublicense, sell, rent, lend, host, deploy, make available,
-incorporate, relicense, create derivative works from, or otherwise
-reuse the Original Materials.
+The viewing permission does not include any right to copy, reproduce,
+download, clone, fork, scrape, crawl, index, mirror, archive, store,
+modify, adapt, translate, merge, restructure, refactor, optimize,
+minify, bundle, compile, transpile, publish, distribute, transmit,
+sublicense, sell, rent, lend, host, deploy, make available, incorporate,
+relicense, create derivative works from, or otherwise reuse the Original
+Materials.
 
-Public visibility, access to the repository, the presence of source
-code, build files, package metadata, generated files, or the availability
-or use of hosting-service features such as browsing, cloning, forking,
-downloading, copying, viewing files, pull requests, issues, actions,
-releases, packages, archives, diffs, or patches does not, by itself,
-grant any copyright license, patent license, trademark license,
-database right, trade secret license, or other permission from Kento
-Konishi beyond the limited viewing permission expressly stated in this
-license.
+Public repository visibility, availability of source code, package
+metadata, generated files, or hosting-service features such as browsing,
+cloning, forking, downloading, copying, viewing files, pull requests,
+issues, actions, releases, packages, archives, diffs, and patches does
+not create a copyright license, patent license, trademark license,
+database right, trade secret license, or any other permission from Kento
+Konishi beyond the viewing permission stated in this Section 3.
 
-Any unavoidable temporary technical copy created solely by a browser,
-proxy, cache, or network system as an incidental technical consequence
-of viewing the repository contents does not grant any further right and
-may not be used for any other purpose.
+An unavoidable temporary technical copy created solely by a browser,
+proxy, cache, or network system as an incidental consequence of viewing
+Repository Contents confers no further right and may not be repurposed.
 
 Automated access, scraping, indexing, dataset construction, model
 ingestion, bulk extraction, mirroring, archival collection, or other
-systematic collection of Repository Contents is outside the limited
-viewing permission stated in this Section 3.
+systematic collection of Repository Contents is outside the permission
+stated in this Section 3.
 
 4. Limited Permission for Ordinary Application Use
 
-Subject to full compliance with this license, permission is granted to
-use the Ludoxel application in its ordinary desktop application form.
+Subject to complete compliance with this License, permission is granted
+to use the Ludoxel application in its ordinary desktop application form.
 
-The permission stated in this Section 4 is limited to ordinary use of
-the application as an application. It does not grant permission to copy,
-reproduce, download, clone, fork, scrape, mirror, archive, modify,
+The ordinary application use permission does not include any right to
+copy, reproduce, download, clone, fork, scrape, mirror, archive, modify,
 adapt, translate, merge, restructure, refactor, optimize, minify,
 bundle, compile, transpile, publish, distribute, transmit, sublicense,
 sell, rent, lend, host, deploy, make available, incorporate, relicense,
@@ -151,138 +151,135 @@ extract assets from, extract resources from, or otherwise reuse the
 Original Materials, except to the extent a restriction is not
 enforceable under applicable law.
 
-The ordinary use of the application does not transfer any copyright or
-other right in the Original Materials to any user.
+Ordinary use of the application transfers no copyright, neighboring
+right, database right, trademark right, trade secret right, or other
+protectable right in the Original Materials to any user.
 
-The ordinary use of the application does not grant permission to use the
+Ordinary use of the application does not authorize use of the
 application, its output, its resources, its assets, its shaders, its
-bundled materials, its user interface text, or its repository contents
-as a source for training data, model evaluation data, benchmark data,
-synthetic data, dataset enrichment, prompt libraries, code-generation
-examples, asset libraries, or other machine-learning or generative-AI
-purposes.
+bundled materials, its user interface text, or its Repository Contents
+as training data, model evaluation data, benchmark data, synthetic data,
+dataset enrichment, prompt libraries, code-generation examples, asset
+libraries, or other machine-learning or generative-AI material.
 
 5. Prohibited Conduct
 
-Except with prior written permission from Kento Konishi, all uses of the
-Original Materials other than the limited permissions stated in Sections
-3 and 4 are prohibited.
+Except with prior written permission signed by Kento Konishi, every use
+of the Original Materials outside Sections 3 and 4 is prohibited.
 
-Without limitation, the following conduct is prohibited:
+Without limitation, prohibited conduct includes:
 
 * copying, reproduction, downloading, cloning, or forking for reuse,
   modification, distribution, deployment, incorporation, training-data
   use, dataset use, benchmark use, model-evaluation use, or
   generative-AI-data use;
 * scraping, crawling, indexing, mirroring, archiving, bulk extraction,
-  bulk downloading, or storing for reuse;
+  bulk downloading, storage, or embedding for reuse;
 * modification, adaptation, translation, merging, restructuring,
   refactoring, optimization, minification, bundling, compilation,
   transpilation, reverse engineering, decompilation, disassembly, or
   resource extraction, except to the extent a restriction is not
   enforceable under applicable law;
 * publication, distribution, transmission, sublicensing, sale, rental,
-  lending, hosting, deployment, or making available;
+  lending, hosting, deployment, public performance, public display, or
+  making available;
 * creation of derivative works;
-* incorporation into any other work, product, service, repository,
+* incorporation into another work, product, service, repository,
   dataset, educational material, training data, machine-learning
   dataset, generative-AI dataset, benchmark, evaluation suite, asset
   library, code library, template collection, or documentation corpus;
-* use in a manner that treats the Original Materials, or any
-  substantially derived work, as a third party's own work;
-* use that obscures, weakens, or misrepresents the source, authorship,
+* representation of the Original Materials, or a substantially derived
+  work, as a third party's own work;
+* conduct that obscures, weakens, or misrepresents source, authorship,
   provenance, copyright status, licensing status, all-rights-reserved
   status, or non-open-source status of the Original Materials;
-* use of the Original Materials to create, improve, train, fine-tune,
-  evaluate, benchmark, validate, test, or populate any artificial
-  intelligence system, machine-learning model, generative model, code
-  model, multimodal model, search index, retrieval system, dataset, or
-  synthetic data generation pipeline;
-* extraction, reuse, recoloring, remapping, redistribution, repackaging,
-  or incorporation of project-specific textures, branding material,
-  application icons, user interface assets, shaders, bundled resources,
-  or other visual materials.
+* use of Original Materials to create, improve, train, fine-tune,
+  evaluate, benchmark, validate, test, populate, or operate any
+  artificial intelligence system, machine-learning model, generative
+  model, code model, multimodal model, search index, retrieval system,
+  dataset, or synthetic data generation pipeline;
+* extraction, reuse, recoloring, remapping, redistribution,
+  repackaging, or incorporation of project-specific textures, branding
+  material, application icons, user interface assets, shaders, bundled
+  resources, or other visual materials.
 
-Removing, altering, obscuring, or misrepresenting copyright notices,
-license notices, SPDX notices, attribution notices, author information,
-provenance information, source information, repository notices,
-generated-file notices, or bundled legal material is prohibited.
+Removal, alteration, concealment, or misrepresentation of copyright
+notices, license notices, SPDX notices, attribution notices, author
+information, provenance information, source information, repository
+notices, generated-file notices, or bundled legal material is
+prohibited.
 
-Representing the Original Materials or any substantially derived work as
-a third party's own work is prohibited.
-
-Using the name, handle, project name, logo, repository name, branding
+Use of the name, handle, project name, logo, repository name, branding
 material, application icon, or other identifying element of Kento
 Konishi or Ludoxel in a manner suggesting endorsement, sponsorship,
 affiliation, authorship, approval, or permission is prohibited.
 
-Nothing in this Section 5 prohibits a user from using, recording,
-reproducing, publishing, or sharing User Materials or Application Output
-as permitted in Section 2.
+Nothing in this Section 5 limits a user's use of that user's own User
+Materials and Application Output as permitted in Section 2.
 
-6. Third-Party Materials
+6. Third-Party and Provenance-Sensitive Materials
 
 Third-party libraries, fonts, external packages, vendor files, platform
-SDKs, and materials identified in NOTICE or third-party/ remain subject
-to their respective license terms. This independent license applies only
-to the Original Materials created by Kento Konishi and does not replace,
-amend, supersede, or remove the license terms of third-party materials.
+SDKs, toolchain components, and materials identified in NOTICE,
+third-party/, package metadata, or other legal material remain subject
+to their respective terms. This License governs only Original Materials
+and does not replace, amend, supersede, translate, narrow, or expand the
+terms governing third-party materials.
 
 Third-party notices and license texts are retained for third-party
-materials. The presence of such third-party licenses does not license
-the Original Materials under those third-party terms.
+materials. Their presence does not place the Original Materials under
+those third-party terms.
 
 A material whose provenance, authorship, license status, or
 redistribution permission is identified as requiring confirmation in
-NOTICE remains outside the Original Materials unless and until its
-status as an Original Material is separately established. The
-organization, reference, display, bundling, or technical use of such a
-material in the repository or application does not convert that material
-into an Original Material and does not grant permission to reuse it.
+NOTICE remains outside the Original Materials unless its status as an
+Original Material is separately established by Kento Konishi. Repository
+organization, reference, display, bundling, technical use, or
+application presentation does not convert such a material into an
+Original Material and does not authorize reuse.
 
-If a third-party material, provenance-sensitive material, or externally
-licensed material is included in, referenced by, displayed through, or
-distributed with the Ludoxel application, that inclusion does not grant
-any right to use the Original Materials and does not grant any right to
-use the third-party material beyond the applicable third-party license
-or permission.
+Inclusion, reference, display, or distribution of third-party material,
+provenance-sensitive material, or externally licensed material with the
+Ludoxel application confers no right to use the Original Materials and
+no right to use the third-party material beyond the applicable
+third-party license or permission.
 
 7. Distribution Materials and Bundled Resources
 
-For purposes of this license, "Distribution Materials" means packaged
+For purposes of this License, "Distribution Materials" means packaged
 applications, installers, archives, bundles, generated distribution
 directories, executable packages, embedded resources, copied legal
 material, build outputs, metadata, and other materials prepared for
 ordinary desktop application distribution.
 
 Distribution Materials that contain Original Materials remain subject to
-this license. Packaging, bundling, compilation, copying into a
+this License. Packaging, bundling, compilation, copying into a
 distribution directory, embedding in an application bundle, embedding in
-an executable, or inclusion in an installer does not grant any
-additional license or permission.
+an executable, or inclusion in an installer creates no additional
+license or permission.
 
 Bundled resources, shaders, user interface assets, project-specific
 textures, branding material, application icons, package metadata,
-generated distribution metadata, and desktop app packaging material
-remain protected to the extent they are Original Materials.
+generated distribution metadata, and desktop application packaging
+material remain protected to the extent they are Original Materials.
 
-The inclusion of LICENSE, NOTICE, third-party notices, third-party
-license texts, SPDX headers, or other legal material in Distribution
-Materials does not grant permission beyond the permissions expressly
-stated in this license and in the applicable third-party licenses.
+Inclusion of LICENSE, NOTICE, third-party notices, third-party license
+texts, SPDX headers, or other legal material in Distribution Materials
+confers no permission beyond the permissions stated in this License and
+in the applicable third-party licenses.
 
 8. Termination and Consequences of Violation
 
-Any permission granted under this license terminates immediately and
-automatically upon violation of any term of this license.
+Any permission granted under this License terminates immediately and
+automatically upon violation of any term of this License.
 
-Upon violation, the violator must immediately stop all use of the
+Upon termination, the violator shall immediately cease all use of the
 Original Materials and delete all copies, derivatives, extracts,
 mirrors, archives, stored versions, generated derivatives, transformed
 versions, compiled versions, bundled versions, datasets, model inputs,
 model outputs that substantially reproduce protected material, indexes,
 embeddings, and other reproductions under the violator's possession or
-control, except to the extent retention is strictly required by
+control, except to the extent retention is strictly compelled by
 applicable law.
 
 Termination does not limit any rights or remedies available to Kento
@@ -292,15 +289,16 @@ other applicable law.
 
 9. No Warranty
 
-The repository, the Original Materials, the Ludoxel application, User
-Materials, Application Output, and any application output are provided
-"AS IS" and "AS AVAILABLE", without warranty of any kind, whether
-express, implied, statutory, or otherwise, including without limitation
-any warranty of title, non-infringement, merchantability, fitness for a
-particular purpose, accuracy, availability, security, absence of
-defects, correctness of game rules, correctness of AI behavior,
-correctness of generated content, fitness for publication, fitness for
-distribution, or freedom from third-party claims.
+The repository, Original Materials, Ludoxel application, User Materials,
+Application Output, Distribution Materials, third-party materials, and
+provenance-sensitive materials are provided "AS IS" and "AS AVAILABLE",
+without warranty of any kind, whether express, implied, statutory, or
+otherwise, including any warranty of title, non-infringement,
+merchantability, fitness for a particular purpose, accuracy,
+availability, security, absence of defects, correctness of game rules,
+correctness of AI behavior, correctness of generated content, fitness
+for publication, fitness for distribution, or freedom from third-party
+claims.
 
 10. Limitation of Liability
 
@@ -308,18 +306,18 @@ To the maximum extent permitted by applicable law, Kento Konishi shall
 not be liable for any direct, indirect, incidental, special,
 consequential, exemplary, punitive, or other damages, or for any loss of
 profits, revenue, data, goodwill, business opportunity, or use, arising
-out of or relating to the repository, the Original Materials, this
-license, permitted viewing, ordinary application use, User Materials,
-Application Output, application output, Distribution Materials,
-third-party materials, provenance-sensitive materials, or any prohibited
-or unauthorized use, regardless of legal theory and even if advised of
-the possibility of such damages.
+out of or relating to the repository, Original Materials, this License,
+permitted viewing, ordinary application use, User Materials, Application
+Output, Distribution Materials, third-party materials,
+provenance-sensitive materials, or prohibited or unauthorized use,
+regardless of legal theory and even if advised of the possibility of
+such damages.
 
 11. Governing Law, Forum, and Platform Terms
 
-This license is governed by the laws of Japan, excluding rules that
-would require the application of another jurisdiction's law, to the
-maximum extent permitted by applicable law.
+This License is governed by the laws of Japan, excluding conflict-of-law
+rules that would require application of another jurisdiction's law, to
+the maximum extent permitted by applicable law.
 
 The choice of Japanese law reflects the authorship, copyright ownership,
 residence, and ordinary legal position of Kento Konishi. It does not
@@ -327,19 +325,19 @@ represent that no other law, treaty, mandatory rule, consumer rule,
 platform rule, or procedural rule can apply in a particular dispute,
 jurisdiction, platform transaction, or distribution context.
 
-Any dispute arising out of or relating to this license, the Original
+Any dispute arising out of or relating to this License, the Original
 Materials, Repository Contents, Distribution Materials, or unauthorized
 use of those materials is subject to the exclusive jurisdiction of the
 Tokyo District Court as the court of first instance, to the maximum
 extent permitted by applicable law.
 
 Hosting-service terms, including GitHub service terms, govern the
-relationship between the relevant service provider and its users. Such
-platform terms may permit platform functions, such as viewing or forking
-through the service, as a matter of that service's contract. They do
-not, without an express license from Kento Konishi, grant additional
-rights to copy, modify, distribute, train on, deploy, or otherwise reuse
-the Original Materials outside the scope of this license.
+relationship between the relevant service provider and its users. Those
+platform terms may permit service functions, such as viewing or forking
+within the service, as a matter of the service contract. They do not,
+without an express license from Kento Konishi, grant additional rights
+to copy, modify, distribute, train on, deploy, transmit, publish, or
+otherwise reuse the Original Materials outside this License.
 
 12. Controlling Text
 
@@ -350,34 +348,27 @@ documentation, application UI text, or other repository notices conflict
 with this LICENSE, the English text of this LICENSE controls for the
 Original Materials.
 
-Any Japanese description or translation, if present elsewhere in the
-repository, is provided only as a non-authoritative summary or
-reference. The English text of this LICENSE is the sole authoritative
-license text for the Original Materials.
+Any Japanese description or translation elsewhere in the repository is
+non-authoritative unless this LICENSE is amended by a later written
+instrument signed by Kento Konishi. The English text of this LICENSE is
+the sole authoritative license text for the Original Materials.
 
 No statement in README, NOTICE, package metadata, generated files,
 issues, pull requests, releases, discussions, comments, examples, build
-logs, or application output may be interpreted as granting a license to
-the Original Materials unless it expressly amends this LICENSE with
-clear written permission from Kento Konishi.
+logs, application output, or other repository material grants a license
+to the Original Materials unless it expressly amends this LICENSE by a
+later written instrument signed by Kento Konishi.
 
 13. Severability and Non-Waiver
 
-If any provision of this license is held to be invalid, unenforceable,
-or inapplicable in a particular jurisdiction or circumstance, the
-remaining provisions remain in effect to the maximum extent permitted by
+If any provision of this License is held invalid, unenforceable, or
+inapplicable in a particular jurisdiction or circumstance, the remaining
+provisions remain in effect to the maximum extent permitted by
 applicable law.
 
-Failure by Kento Konishi to enforce any provision of this license in any
+Failure by Kento Konishi to enforce any provision of this License in any
 instance does not constitute a waiver of that provision or of any other
 right, remedy, claim, or protection.
-
-14. Versioning, Effective Dates, and Revision History
-
-This license version is identified as Version 1.0.3.
-
-The Original Effective Date of this independent license is 2026-06-03.
-The Current Version Effective Date of Version 1.0.3 is 2026-06-10.
 
 Revision history:
 
@@ -386,20 +377,24 @@ Revision history:
 
 * Version 1.0.1, effective 2026-06-04:
   Clarifies that third-party legal material is organized under
-  third-party/ and that local app-managed runtime data and application
-  output remain outside the Original Materials except where they include
-  protected repository content.
+  third-party/ and that local application-managed runtime data and
+  application output remain outside Original Materials except where they
+  include protected repository content.
 
 * Version 1.0.2, effective 2026-06-10:
-  Strengthens the repository viewing limitation, ordinary application
-  use limitation, prohibited conduct provisions, AI and dataset use
-  restrictions, bundled resource and distribution material treatment,
-  provenance-sensitive material treatment, controlling-text rule,
-  termination consequences, severability, and non-waiver provisions.
+  Strengthens viewing limitations, ordinary application use limitations,
+  prohibited conduct, AI and dataset restrictions, bundled resource and
+  distribution treatment, provenance-sensitive material treatment,
+  controlling-text rules, termination consequences, severability, and
+  non-waiver provisions.
 
 * Version 1.0.3, effective 2026-06-10:
-  Adds an express Japanese governing-law clause, an exclusive
-  first-instance forum clause for the Tokyo District Court to the extent
-  permitted by law, and a platform-terms clarification stating that
-  GitHub service functionality does not expand the independent license
-  for the Original Materials beyond this license.
+  Adds Japanese governing law, Tokyo District Court exclusive
+  first-instance forum language, and platform-terms clarification.
+
+* Version 1.0.4, effective 2026-06-11:
+  Recasts the license in a more formal rights-reservation structure,
+  consolidates repeated statements, and sharpens the distinction between
+  viewing, ordinary application use, User Materials, Application Output,
+  Original Materials, third-party materials, Distribution Materials, and
+  hosting-service functionality.

@@ -6,11 +6,11 @@ Ludoxel の機能、実行方法、ビルド方法、内部構造、開発手順
 
 ## 1 支配文書
 
-Ludoxel 独自素材に関する支配的なライセンス本文は、ルートの `LICENSE` に置かれた現行 1.0.3 版の `Ludoxel Independent License` である。ここで、`LicenseRef-All-Rights-Reserved` とは、当該リポジトリにおいて `Ludoxel Independent License` を指す独自のライセンス識別子であり、Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、又はその他のオープンソースライセンスを意味しない。
+Ludoxel 独自素材に関する支配的なライセンス本文は、ルートの `LICENSE` に置かれた現行 1.0.4 版の `Ludoxel Independent License` である。ここで、`LicenseRef-All-Rights-Reserved` とは、当該リポジトリにおいて `Ludoxel Independent License` を指す独自のライセンス識別子であり、Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、又はその他のオープンソースライセンスを意味しない。
 
 本書にいう Ludoxel 独自素材は、`LICENSE` が定義する `Original Materials` に対応する素材をいう。正確な定義、範囲、例外、及び第三者素材との区別は、`LICENSE` の英文本文に従う。
 
-Ludoxel 独自素材の著作権者及び権利管理主体は、小西拳斗である。`README.md`、`NOTICE`、`third-party/` 配下の補助通知、パッケージメタデータ、SPDX 表示、About 表示、UI 表示、issue、pull request、リリースノート、ビルドログ、生成物、翻訳、要約、又は日本語説明が `LICENSE` と抵触する場合、Ludoxel 独自素材については `LICENSE` の英文本文が優先する。
+Ludoxel 独自素材の著作権者及び権利管理主体は、小西拳斗である。`README.md`、`NOTICE`、`third-party/` 配下の補助通知、パッケージメタデータ、SPDX 表示、アプリケーション情報表示、ユーザーインターフェース表示、課題投稿、プルリクエスト、リリースノート、ビルドログ、生成物、翻訳、要約、又は日本語説明が `LICENSE` と抵触する場合、Ludoxel 独自素材については `LICENSE` の英文本文が優先する。
 
 ## 2 許諾の不存在及び権利留保
 
@@ -55,7 +55,7 @@ Kaisei Opti のライセンス本文は `third-party/kaisei-opti/LICENSE.txt` �
 
 通常のアプリケーション出力とは、通常の利用の結果として生じるスクリーンショット、画面録画、保存ファイル、ログ、設定ファイル、表示状態、又は利用者固有の出力をいう。そのうち利用者が独自に作成した部分は、Ludoxel 独自素材として扱われない。
 
-もっとも、実行時利用者データ又は通常のアプリケーション出力に、Ludoxel 独自素材、第三者素材、UI 表示、視覚資産、同梱資源、来歴確認を要するローカル資産、又はその他の保護対象が実質的に含まれる場合、その含まれる部分には、それぞれの権利又は利用条件に基づく制限が残る。
+もっとも、実行時利用者データ又は通常のアプリケーション出力に、Ludoxel 独自素材、第三者素材、ユーザーインターフェース表示、視覚資産、同梱資源、来歴確認を要するローカル資産、又はその他の保護対象が実質的に含まれる場合、その含まれる部分には、それぞれの権利又は利用条件に基づく制限が残る。
 
 ## 6 配布時法務資料
 
@@ -73,23 +73,23 @@ third-party/
 
 ## 7 GitHub の機能及びリポジトリ方針文書
 
-GitHub の閲覧、fork、download、archive、release、package、diff、issue、pull request、discussion、Actions、Packages、又はその他の画面機能は、GitHub と利用者との間の利用条件及び GitHub が提供するサービス機能に従って利用される。これらの機能の法的性質は、Ludoxel 独自素材に関する `LICENSE` の許諾範囲とは区別される。
+GitHub の閲覧、フォーク、ダウンロード、アーカイブ、リリース、パッケージ、差分表示、課題投稿、プルリクエスト、議論、GitHub Actions、GitHub Packages、又はその他の画面機能は、GitHub と利用者との間の利用条件及び GitHub が提供するサービス機能に従って利用される。これらの機能の法的性質は、Ludoxel 独自素材に関する `LICENSE` の許諾範囲とは区別される。
 
-`.github/CONTRIBUTING.md` は、外部提供物を受け付けない方針を示す文書である。外部提供物には、pull request、パッチ、ソースコード変更、文書変更、翻訳、デザイン資産、生成ファイル、データセット、機能実装、リファクタリング提案、シェーダー書換え、資産、保存済みワールド、AI 作業台出力、及びその他の提出物が含まれる。
+`.github/CONTRIBUTING.md` は、外部提供物を受け付けない方針を示す文書である。外部提供物には、プルリクエスト、パッチ、ソースコード変更、文書変更、翻訳、デザイン資産、生成ファイル、データセット、機能実装、リファクタリング提案、シェーダー書換え、資産、保存済みワールド、AI 作業台出力、及びその他の提出物が含まれる。
 
 `.github/SECURITY.md` は、セキュリティ報告の範囲、非公開報告経路、公開開示の禁止、対象外報告、取扱方針、試験制限、及び支配本文を説明する文書である。セキュリティ報告又はセキュリティ試験は、Ludoxel 独自素材の再利用を正当化する根拠とはならない。
 
-`.github/pull_request_template.md` は、pull request による外部提供物の提出を排除するための GitHub 上の方針文書である。pull request の画面が存在することは、外部提供物を受け付ける意思表示ではない。
+`.github/pull_request_template.md` は、プルリクエストによる外部提供物の提出を排除するための GitHub 上の方針文書である。プルリクエストの画面が存在することは、外部提供物を受け付ける意思表示ではない。
 
-`.github/ISSUE_TEMPLATE/problem-report.yml`、`.github/ISSUE_TEMPLATE/limited-question.yml`、及び `.github/ISSUE_TEMPLATE/security-contact.yml` は、それぞれ、限定された問題報告、限定質問、及び非公開連絡方法の請求に用途を限定する GitHub issue template である。これらのフォームは、ソースコード、パッチ、差替え文案、デザイン資産、データセット、生成ファイル、シェーダー書換え、機能実装、リファクタリング提案、又はその他の外部提供物を受け付けるためのものではない。
+`.github/ISSUE_TEMPLATE/problem-report.yml`、`.github/ISSUE_TEMPLATE/limited-question.yml`、及び `.github/ISSUE_TEMPLATE/security-contact.yml` は、それぞれ、限定された問題報告、限定質問、及び非公開連絡方法の請求に用途を限定する GitHub 課題テンプレートである。これらのフォームは、ソースコード、パッチ、差替え文案、デザイン資産、データセット、生成ファイル、シェーダー書換え、機能実装、リファクタリング提案、又はその他の外部提供物を受け付けるためのものではない。
 
-公開 issue には、脆弱性の詳細、攻撃手順、実証コード、認証情報、token、cookie、secret を含むログ、非公開のローカルファイル、第三者の秘密情報、又は公開に適さない再現情報を書いてはならない。セキュリティ報告は、`.github/SECURITY.md` に従い、利用可能な非公開報告経路を優先する。
+公開課題には、脆弱性の詳細、攻撃手順、実証コード、認証情報、トークン、クッキー、秘匿情報を含むログ、非公開のローカルファイル、第三者の秘密情報、又は公開に適さない再現情報を書いてはならない。セキュリティ報告は、`.github/SECURITY.md` に従い、利用可能な非公開報告経路を優先する。
 
 ## 8 準拠法、管轄、及びプラットフォーム利用条件
 
 `LICENSE` 第11節は、適用法上許される最大限の範囲で、`Ludoxel Independent License` が日本法に準拠することを定める。同節は、Ludoxel 独自素材、リポジトリ内容、配布物、又は無許諾利用に関する紛争について、東京地方裁判所を第一審の専属的合意管轄裁判所とすることも定める。
 
-この準拠法及び管轄の定めは、Ludoxel 独自素材に関する独立ライセンスの解釈、履行、違反、終了、及び無許諾利用に関する関係を対象とする。他方で、GitHub と利用者との間には、GitHub の利用条件、追加製品条件、GitHub Security Advisories、非公開脆弱性報告、issue template、pull request template、Actions、Packages、又はその他の GitHub サービス機能に関する別個の条件が適用され得る。
+この準拠法及び管轄の定めは、Ludoxel 独自素材に関する独立ライセンスの解釈、履行、違反、終了、及び無許諾利用に関する関係を対象とする。他方で、GitHub と利用者との間には、GitHub の利用条件、追加製品条件、GitHub Security Advisories、非公開脆弱性報告、課題テンプレート、プルリクエストテンプレート、GitHub Actions、GitHub Packages、又はその他の GitHub サービス機能に関する別個の条件が適用され得る。
 
 したがって、日本法準拠及び東京地方裁判所の専属的合意管轄に関する `LICENSE` の定めと、GitHub の利用条件に基づく GitHub サービス上の機能利用とは、適用対象を異にする。前者は Ludoxel 独自素材に関する独立ライセンス上の関係を規律し、後者は GitHub サービスの利用関係を規律する。
 
