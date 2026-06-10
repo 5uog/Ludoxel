@@ -10,10 +10,6 @@ Ludoxel は、Python、PyQt6、OpenGL、WGPU を用いたデスクトップ向�
 
 Ludoxel の機能、実行方法、ビルド方法、内部構造、開発手順、検証方法、又は実装上の設計は、本書の説明対象ではない。これらに関する名称が現れる場合も、その記載は、法務上の対象、素材区分、配布時法務資料、又はリポジトリ方針の適用範囲を特定する限度にとどまる。
 
-<p align="center">
-  <img src="assets/branding/ludoxel-license.svg" alt="Ludoxel repository license metrics" width="100%">
-</p>
-
 ## 1 支配文書
 
 Ludoxel 独自素材に関する支配的なライセンス本文は、ルートの [`LICENSE`](LICENSE) に置かれた現行 1.0.4 版の `Ludoxel Independent License` である。ここで、`LicenseRef-All-Rights-Reserved` とは、当該リポジトリにおいて `Ludoxel Independent License` を指す独自のライセンス識別子であり、Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、又はその他のオープンソースライセンスを意味しない。
