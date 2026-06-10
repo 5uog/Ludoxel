@@ -38,6 +38,7 @@ export function parseExportArgs(argv = []) {
     failOnUnreadable: false,
     maxBytes: 'unlimited',
     exclude: [],
+    include: [],
     help: false,
     language: 'ja',
     errors: [],
@@ -82,6 +83,13 @@ export function parseExportArgs(argv = []) {
     if (arg === '--exclude' || arg.startsWith('--exclude=')) {
       const result = readInlineOrNextValue(argv, index, '--exclude', parsed);
       if (result.value) parsed.exclude.push(result.value);
+      index = result.nextIndex;
+      continue;
+    }
+
+    if (arg === '--include' || arg.startsWith('--include=')) {
+      const result = readInlineOrNextValue(argv, index, '--include', parsed);
+      if (result.value) parsed.include.push(result.value);
       index = result.nextIndex;
       continue;
     }

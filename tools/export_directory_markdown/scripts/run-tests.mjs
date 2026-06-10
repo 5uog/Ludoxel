@@ -43,10 +43,10 @@ await runCase('root tree export', ['root', '--format', 'tree', '--output', 'tool
 
 const rootTree = readProjectFile('tools/export_directory_markdown/output/export_test_root_tree.md');
 assertContains({ name: 'root tree export', text: rootTree, expected: 'README.md' });
+assertContains({ name: 'root tree export', text: rootTree, expected: 'assets/' });
+assertContains({ name: 'root tree export', text: rootTree, expected: 'third-party/' });
 assertContains({ name: 'root tree export', text: rootTree, expected: 'tools/' });
-assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'Sudoku/' });
-assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'configs/' });
-assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'third-party/' });
+assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'node_modules/' });
 assertNotContains({ name: 'root tree export', text: rootTree, rejected: 'tools/export_directory_markdown/output' });
 
 await runCase('src code export', ['src', '--format', 'code', '--output', 'tools/export_directory_markdown/output/export_test_src_code.md', '--overwrite', '--max-bytes', '256']);

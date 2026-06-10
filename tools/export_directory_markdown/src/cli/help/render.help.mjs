@@ -35,7 +35,7 @@ export function renderExportHelp() {
     '  npm run tools:export:root',
     '  npm run tools:export:src',
     '  npm run tools:export -- root --format both --overwrite',
-    '  npm run tools:export -- --target root --exclude "folder:assets,src/ludoxel.egg-info" --exclude "ext:.so,.pyd" --overwrite',
+    '  npm run tools:export -- --target root --exclude "folder:ludoxel.egg-info" --exclude "ext:.so,.pyd" --overwrite',
     '  npm run tools:export -- --target src --exclude "file:src/ludoxel.egg-info/SOURCES.txt,src/ludoxel.egg-info/PKG-INFO" --format code --overwrite',
     '',
   ].join('\n');
