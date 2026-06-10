@@ -1,44 +1,65 @@
-SPDX-FileCopyrightText: 2026 Kento Konishi
-SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+Python Runtime and Toolchain Notice
+Repository Notice Scope: Supplemental third-party notice
+Related Root Notice Version: 1.0.2
 
-Ludoxel Python Runtime and Build Dependency Notice
+This notice records runtime, packaging, renderer, validation, and
+toolchain categories that may be involved in Ludoxel development or
+distribution. This notice is a repository-specific supplemental notice.
+It does not replace, translate as controlling text, narrow, expand, or
+otherwise modify the license text of any dependency, runtime, package,
+SDK, or tool.
 
-This notice records third-party Python packages and bundled runtime components
-that may be used by Ludoxel source-tree execution or desktop distribution
-builds. It does not relicense Ludoxel original materials.
+Ludoxel source-tree execution, validation, desktop building, renderer
+backend operation, native extension building, formatting, linting,
+resource checking, shader checking, and distribution packaging may
+involve CPython, PyQt6, Qt runtime components, NumPy, PyOpenGL, wgpu,
+rendercanvas, PyInstaller, Ruff, Node.js, npm packages, ESLint,
+Stylelint, Prettier, and other packages or toolchain components.
 
-Runtime dependencies:
+Those materials are Third-Party Materials unless a specific component is
+separately authored by Kento Konishi and identified as Ludoxel Original
+Material. Their presence in a development environment, package metadata,
+lockfile, build log, validation command, or distribution artifact does
+not relicense Ludoxel Original Materials.
 
-- CPython / Python standard library: Python Software Foundation License
-- PyQt6: GPL-3.0-only or commercial Riverbank license
-- PyQt6-Qt6 / Qt 6 runtime subset: LGPL-3.0
-- PyQt6-sip: BSD-2-Clause
-- NumPy: BSD-3-Clause with additional bundled third-party notices in the wheel
-- PyOpenGL (Windows renderer path): BSD-3-Clause
-- wgpu-py (macOS renderer path): BSD-2-Clause
-- rendercanvas (macOS renderer path): BSD-2-Clause
-- cffi: MIT
-- pycparser: BSD-3-Clause
-- rubicon-objc: BSD-2-Clause
-- packaging: Apache-2.0 or BSD-2-Clause
+Each dependency, runtime, package, SDK, and toolchain component remains
+subject to its own license terms, copyright notices, attribution
+requirements, warranty disclaimers, reserved names, source-offer
+requirements, export restrictions, and redistribution conditions. Before
+distributing a Ludoxel artifact, the distributor must confirm the
+license obligations that apply to the exact dependency versions and to
+the exact form in which those dependencies are bundled, embedded,
+required, or otherwise supplied.
 
-Build and development dependencies:
+This notice does not grant permission to distribute Ludoxel. Ludoxel
+distribution is governed by the root LICENSE and requires permission
+under that license or a separate written agreement signed by Kento
+Konishi.
 
-- PyInstaller: GPL-2.0-or-later with the PyInstaller bootloader exception
-- pyinstaller-hooks-contrib: GPL-2.0-or-later with the PyInstaller bootloader exception
-- Cython: Apache-2.0
-- setuptools: MIT
-- wheel: MIT
-- build: MIT
-- pyproject-hooks: MIT
-- ruff: MIT
-- altgraph: MIT
-- macholib: MIT
+If a desktop distribution bundles CPython, Qt runtime components,
+Python packages, renderer packages, Node packages, or other binary
+dependencies, the distribution process must include the legal records
+required by those dependencies in addition to the Ludoxel legal
+material:
 
-Node-based repository tools use npm development dependencies declared in
-`package.json`; those packages remain governed by their own package metadata
-and license files.
+* LICENSE
+* NOTICE
+* third-party/
 
-When building desktop distributions, keep package-provided license metadata
-and this repository's `LICENSE`, `NOTICE`, and `third-party/` material with the
-generated artifact.
+This notice is intentionally general because dependency versions and
+bundle contents may change between development environments and build
+artifacts. A release process must therefore verify actual dependency
+versions, actual bundle contents, and actual notice requirements at the
+time of distribution.
+
+This notice does not determine whether the license terms of a runtime,
+package, SDK, binary component, build tool, renderer package, or Node
+package permit distribution in a particular artifact. The distributor
+must verify that question against the exact upstream license text and
+the exact artifact contents.
+
+This notice does not create an independent version sequence for the
+Ludoxel Independent License, the root NOTICE, or any third-party
+license. If the root NOTICE is amended before its current version is
+committed, this supplemental notice must remain aligned with that root
+NOTICE version and must not record a later version number.

@@ -1,10 +1,50 @@
-Kaisei Opti
-
-This directory contains the license text for the Kaisei Opti font family
-referenced by the local Ludoxel working tree.
-
-Kaisei Opti is third-party font material. It is not part of the Ludoxel
-Original Materials and is not governed by the Ludoxel Independent License.
-
+Kaisei Opti Notice
+Repository Notice Scope: Supplemental third-party notice
+Related Root Notice Version: 1.0.2
+Material: Kaisei Opti font files
 License: SIL Open Font License 1.1
-License text: third-party/kaisei-opti/LICENSE.txt
+
+This notice records the repository-specific use of Kaisei Opti font
+material in Ludoxel. It supplements the upstream license text stored at
+third-party/kaisei-opti/LICENSE.txt. It does not replace, translate as
+controlling text, narrow, expand, or otherwise modify that license text.
+
+The following files are treated as Kaisei Opti font material:
+
+* assets/fonts/KaiseiOpti-Bold.ttf
+* assets/fonts/KaiseiOpti-Medium.ttf
+* assets/fonts/KaiseiOpti-Regular.ttf
+
+Kaisei Opti is not Ludoxel Original Material. The Ludoxel Independent
+License does not relicense Kaisei Opti, and the SIL Open Font License
+1.1 does not relicense Ludoxel Original Materials.
+
+When Ludoxel is distributed under authorization, the distribution
+process must preserve the applicable Kaisei Opti license text and this
+repository notice in a reasonably accessible location. The required
+notice path in the source repository is:
+
+* third-party/kaisei-opti/LICENSE.txt
+* third-party/kaisei-opti/NOTICE.txt
+
+If the Kaisei Opti font files are modified, subset, renamed, converted,
+embedded, or otherwise transformed, the person performing that action
+must confirm and follow the SIL Open Font License 1.1 requirements,
+including any reserved-name and notice obligations that apply to the
+specific transformation.
+
+This notice does not state that any other font file in assets/fonts/ is
+Kaisei Opti, open source, public domain, or freely redistributable.
+Other font files must be assessed under their own provenance and
+license records.
+
+This notice does not grant permission to distribute Ludoxel. Ludoxel
+distribution is governed by the root LICENSE and requires permission
+under that license or a separate written agreement signed by Kento
+Konishi.
+
+This notice does not create an independent version sequence for the
+Ludoxel Independent License, the root NOTICE, or the SIL Open Font
+License. If the root NOTICE is amended before its current version is
+committed, this supplemental notice must remain aligned with that root
+NOTICE version and must not record a later version number.

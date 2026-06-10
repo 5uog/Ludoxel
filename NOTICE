@@ -2,112 +2,270 @@ SPDX-FileCopyrightText: 2026 Kento Konishi
 SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 Ludoxel NOTICE
-Version: 1.0.1
-最終更新日: 2026-06-05
-本文言語: 日本語
+Version: 1.0.2
+Original Notice Effective Date: 2026-06-05
+Current Notice Effective Date: 2026-06-10
+Text Language: Japanese
 
-この NOTICE は、Ludoxel の独自素材、第三者素材、来歴確認が必要な素材、
-および実行時に生成・保存されるユーザーデータの関係を明示するための文書です。
+この NOTICE は、Ludoxel repository に含まれる Ludoxel Original
+Materials、第三者素材、来歴又は権利関係について個別確認を要する local
+assets、実行時 user data、及び desktop distribution に同梱すべき legal
+material の関係を、ルート LICENSE の支配的効力を弱めることなく補助的に
+明示するための文書である。
 
-## 1. Ludoxel 独自素材
+この NOTICE は許諾文書ではない。Ludoxel Original Materials に関する許諾
+条件、禁止行為、閲覧可能性の限界、ordinary application use の範囲、AI
+又は dataset 利用の制限、終了、非放棄、分離可能性、及び定義は、常に
+ルート LICENSE の英文本文に従う。
 
-Ludoxel のソースコード、ドキュメント、設定、ビルド用 tool、shader、UI 文言、
-リポジトリ本文、Kento Konishi が作成した原資産は、ルート `LICENSE` の
-Ludoxel Independent License に従います。
+本書における Ludoxel Original Materials とは、ルート LICENSE が定義する
+Original Materials をいう。本書は、repository 内に存在するすべての file
+を一律に Kento Konishi の独自素材であると宣言するものではない。本書は、
+第三者 license text、外部 package、外部 runtime、font、platform
+component、vendor material、provenance-sensitive local asset、user
+material、及び ordinary application output を Ludoxel Original Materials
+から区別して記録するために置かれる。
 
-SPDX 表記は `LicenseRef-All-Rights-Reserved` です。このリポジトリは
-Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、またはその他の
-オープンソースライセンスでは提供されていません。
+1. Relationship to the root LICENSE
 
-公開リポジトリとして閲覧できること、clone / fork / download / pull request
-などの GitHub 機能が存在することは、Ludoxel 独自素材の複製、改変、再配布、
-組み込み、転載、自作発言、学習データ利用、派生物作成を許可するものではありません。
+Ludoxel Original Materials に関する支配的な許諾条件は、ルート LICENSE の
+Ludoxel Independent License である。README.md、NOTICE、third-party 配下
+の補助 notice、package metadata、SPDX header、About page、UI 表示、issue、
+pull request、release note、build log、generated file、translation、
+summary、又は日本語説明がルート LICENSE と矛盾する場合、Ludoxel Original
+Materials についてはルート LICENSE の英文本文が優先する。
 
-## 2. 第三者素材
+本 repository は、Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、又は
+その他の open-source license によって Ludoxel Original Materials を提供
+するものではない。LicenseRef-All-Rights-Reserved は、本 repository の
+独自 license reference として、ルート LICENSE の Ludoxel Independent
+License を指す。
 
-第三者ライブラリ、外部 Python / Node パッケージ、フォント、SDK、vendor 素材、
-および `third-party/` 配下に置かれるライセンス本文は、それぞれの権利者と
-ライセンス条件に従います。
+公開 repository、private repository の共有、download、clone、fork、diff、
+patch、archive、release、issue、pull request、discussion、又は code
+hosting service の UI 機能は、それ自体として Ludoxel Original Materials
+の複製、改変、再配布、転載、組み込み、派生物作成、商用利用、training
+data 化、dataset 化、自作発言、又は別 project への流用を許諾するものでは
+ない。
 
-第三者素材のライセンスは、Ludoxel 独自素材をその第三者ライセンスで
-再ライセンスするものではありません。
+GitHub の service terms、又は他の hosting service の terms は、当該 service
+provider と user との関係を定める。これらの platform terms は、service 上
+での表示、fork、backup、indexing、archive、又はその他の platform function
+を許容する場合がある。しかし、その許容は、Kento Konishi が Ludoxel
+Original Materials について別途付与する license の内容を拡張しない。
 
-Python / Qt / PyOpenGL / wgpu / rendercanvas / PyInstaller / Cython /
-Node tooling など、実行又は build に関係する第三者技術スタックの概要は
-次に記録します。Windows は既存の PyOpenGL 経路を保持し、macOS は
-wgpu / rendercanvas 経路を使用します。
+2. Ludoxel Original Materials
 
-- `third-party/python-runtime/NOTICE.txt`
+Ludoxel Original Materials は、Kento Konishi が創作し、又は Kento Konishi
+が適法に管理する Ludoxel 固有の source code、documentation、
+project-specific configuration、build tool、validation tool、shader、UI
+composition、及びその他の創作的表現をいう。
 
-## 3. Kaisei Opti
+Ludoxel Original Materials は、repository に含まれる第三者素材、外部
+runtime、外部 package、外部 toolchain、font、texture、skin、thumbnail、
+icon、profile material、vendor material、又は user material を含まない。
+これらの素材が Ludoxel の source tree、distribution artifact、About page、
+README、package metadata、又は build output に現れる場合でも、その事実は
+Ludoxel Original Materials への編入又は再許諾を意味しない。
 
-Kaisei Opti は第三者フォント素材です。
+Ludoxel Original Materials の利用可能範囲は、常にルート LICENSE によって
+定まる。本 NOTICE は、Ludoxel Original Materials の利用範囲を拡張せず、
+また第三者素材に対する権利を取得又は許諾するものでもない。
 
-確認対象のローカル font path:
+3. Third-party materials
 
-- `assets/fonts/KaiseiOpti-Bold.ttf`
-- `assets/fonts/KaiseiOpti-Medium.ttf`
-- `assets/fonts/KaiseiOpti-Regular.ttf`
+第三者素材とは、Ludoxel Original Materials ではない素材をいう。第三者素材
+には、外部 library、runtime、package、SDK、toolchain、font、image、sound、
+texture、icon、sample、vendor material、及び権利者が Kento Konishi では
+ない素材が含まれる。
 
-ライセンス:
+第三者素材は、それぞれの license terms、copyright notices、attribution
+requirements、reserved names、warranty disclaimers、redistribution
+conditions、及びその他の条件に従う。Ludoxel Independent License は、第三者
+素材の license condition を変更しない。第三者素材の license は、Ludoxel
+Original Materials を当該第三者 license によって再許諾するものでもない。
 
-- SIL Open Font License 1.1
+第三者素材を追加、削除、更新、変換、bundle、freeze、又は distribution
+artifact に同梱する場合は、該当 license text、notice、copyright
+statement、attribution requirement、source offer requirement、
+reserved-name restriction、及び redistribution condition を確認しなければ
+ならない。
 
-第三者ライセンス本文:
+4. Records under third-party
 
-- `third-party/kaisei-opti/NOTICE.txt`
-- `third-party/kaisei-opti/LICENSE.txt`
+third-party は、Ludoxel Original Materials ではない素材に関する license
+text、notice、由来説明、同梱条件、runtime 又は build dependency の法務的
+記録を置く場所である。現行 repository では、少なくとも次の文書が存在する。
 
-Kaisei Opti は Ludoxel の `LicenseRef-All-Rights-Reserved` の対象ではなく、
-OFL の条件が引き続き適用されます。
+* third-party/kaisei-opti/LICENSE.txt
+* third-party/kaisei-opti/NOTICE.txt
+* third-party/python-runtime/NOTICE.txt
 
-## 4. Minecraft 名を含むローカル asset
+第三者 license text は、正確性維持のため原文のまま保持する。翻訳、要約、
+整形、抜粋、注釈、repository-specific paraphrase によって license text を
+置換してはならない。補足説明が必要な場合は、license text ではなく notice
+側に記録し、補足説明が第三者 license の本文を修正又は限定するものでは
+ないことを明示する。
 
-この作業ツリーには、次のような Minecraft 名を含むローカル asset が存在します。
+5. Kaisei Opti font
 
-- `assets/minecraft/`
-- `assets/fonts/MinecraftBold-nMK1.otf`
-- `assets/fonts/MinecraftBoldItalic-1y1e.otf`
-- `assets/fonts/MinecraftItalic-R8Mo.otf`
-- `assets/fonts/MinecraftRegular-Bmg3.otf`
+次の font files は、Kaisei Opti font family に対応する third-party font
+material として扱う。
 
-これらは Ludoxel 独自素材として扱ってはなりません。来歴、権利関係、
-再配布可能性はこのリポジトリによって確立されていません。公開配布物に
-含める場合は、権利確認、必要な許諾、帰属表示、または置換・削除を
-事前に完了する必要があります。
+* assets/fonts/KaiseiOpti-Bold.ttf
+* assets/fonts/KaiseiOpti-Medium.ttf
+* assets/fonts/KaiseiOpti-Regular.ttf
 
-Ludoxel が Minecraft、Mojang、Microsoft の公式製品、関連製品、または
-承認された派生物であることを示すものではありません。
+Kaisei Opti に関する license text は third-party/kaisei-opti/LICENSE.txt
+に置かれ、補助 notice は third-party/kaisei-opti/NOTICE.txt に置かれる。
 
-## 5. 実行時データ
+Kaisei Opti は SIL Open Font License 1.1, commonly identified as OFL-1.1,
+の対象であり、Ludoxel Original Materials ではない。Kaisei Opti が
+Ludoxel の UI 又は distribution に同梱される場合でも、Kaisei Opti の
+license text と notice の同梱義務、reserved name、改変時の表示、及び
+warranty disclaimer は当該 license に従う。
 
-player settings、window state、custom crosshair、imported player skin、
-world edits、Othello opening-book user extension、compiled cache、AI workbench
-の将来データなど、アプリ利用により生成・更新されるデータは、immutable な
-package resource ではありません。
+6. Python runtime, Qt runtime, renderer packages, build tools,
+   and Node tooling
 
-Ludoxel v3.6 以降では、v3.5 以前の仕様であったルート `configs/` を通常の保存先とした
-生成・更新を行いません。実行時データはユーザー別の app-managed data root に保存され、
-保存対象の主要ファイルには HMAC manifest による改竄検出を適用します。
+Ludoxel の source-tree execution、validation、desktop build、renderer
+backend、native extension build、format、lint、resource check、shader
+check、及び distribution packaging には、Python runtime、Qt runtime、Python
+packages、Node packages、及び build toolchain が関係する。
 
-ただし、ローカルマシン上でユーザー自身が全ファイルと検証 key を編集できる
-状況では、完全な改竄防止は保証できません。この manifest は、アプリ外編集、
-偶発的破損、単純な差し替えを検出するためのものです。
+これらの dependency は、Ludoxel Original Materials を当該 dependency
+license で再許諾するものではなく、かつ Ludoxel Independent License によって
+当該 dependency の license condition を変更するものでもない。
 
-## 6. 配布物への同梱
+第三者 runtime、package、toolchain の概要は
+third-party/python-runtime/NOTICE.txt に記録する。dependency を追加、削除、
+upgrade、freeze、bundle、又は desktop distribution に含める場合は、
+pyproject.toml、package.json、lockfile、PyInstaller 設定、legal copy
+service、MANIFEST.in、About page、README、及びこの NOTICE の整合を確認する。
 
-Windows EXE や macOS app bundle などの desktop distribution には、
-少なくとも次を同梱する必要があります。
+7. Provenance-sensitive local assets
 
-- `LICENSE`
-- `NOTICE`
-- `third-party/`
+assets/ には、由来、権利者、license、trademark status、redistribution
+permission、又は改変許諾の範囲について個別確認を要する local assets が
+含まれる場合がある。これらの素材は、Ludoxel の repository に存在するという
+事実だけを理由として、Ludoxel Original Materials、public-domain material、
+open-source material、free asset、又は freely redistributable material と
+扱ってはならない。
 
-`tools/build_desktop_app` は、この legal material を配布ステージへコピーする
-責務を持ちます。
+少なくとも、assets/minecraft/ 配下の Minecraft-named local assets、及び
+assets/fonts/ 配下の Minecraft-named font files は、provenance-sensitive
+local assets として扱う。これらの素材について、README、About page、UI、
+package metadata、NOTICE、third-party notice、又は build output で、Kento
+Konishi の独自素材であると断定してはならない。
 
-## 7. 支配的な文書
+provenance-sensitive local assets を distribution artifact に含める場合は、
+当該素材ごとの rights status、license、redistribution permission、
+attribution requirement、reserved names、trademark implication、及び
+distribution limitation を確認しなければならない。
 
-Ludoxel 独自素材のライセンス条件について、この NOTICE、README、package
-metadata、SPDX header、翻訳、要約、生成物内の説明が `LICENSE` と矛盾する場合、
-英語の `LICENSE` 本文が支配します。
+8. Runtime user data and ordinary application output
+
+Runtime user data は、Ludoxel Original Materials、第三者素材、及び immutable
+package resources とは区別される。Runtime user data には、player settings、
+window state、custom crosshair data、imported player skin、world edits、
+Othello opening-book user extension、compiled cache、及び実行時に user が
+作成又は供給するその他の records が含まれる。
+
+Runtime user data が Ludoxel によって作成、保存、読込、変換、又は表示
+される場合でも、その事実は当該 data を Ludoxel Original Materials として
+扱う根拠にならない。逆に、runtime user data が Ludoxel Original Materials
+又は第三者素材を含む場合は、その含まれる素材について別途 applicable
+license 又は applicable restriction に従う必要がある。
+
+Ordinary application output は、通常の application operation の結果として
+生成される表示、cache、log、temporary file、又は user-specific state をいう。
+Ordinary application output は、repository source、package resource、legal
+material、又は distribution artifact の同梱対象と混同してはならない。
+
+9. Distribution legal material
+
+Desktop distribution、installer、archive、release artifact、app bundle、EXE、
+wheel、source distribution、又はその他の distribution artifact を作成する
+場合は、authorized distribution であることを前提として、少なくとも次の
+legal material を同梱しなければならない。
+
+* LICENSE
+* NOTICE
+* third-party/
+
+これらの legal material を同梱することは、distribution permission を発生
+させるものではない。Distribution permission は、ルート LICENSE 又は Kento
+Konishi が署名した別個の書面によって明示的に与えられる必要がある。
+
+Distribution artifact に同梱される third-party material については、当該
+third-party material ごとの license text、notice、copyright statement、
+attribution requirement、source offer requirement、reserved-name
+restriction、及び redistribution condition を、上記 legal material とは
+別に確認する。
+
+10. About page, README, and package metadata
+
+About page、README、package metadata、UI text、documentation は、Ludoxel
+の法務状態を説明できるが、license text を置換してはならない。これらの文書
+は、repository が open source 又は free software ではないこと、third-party
+material は third-party のまま扱うこと、provenance-sensitive local assets
+を独自素材として断定しないこと、runtime user data を package resource と
+分けること、distribution legal material を同梱することを、ルート LICENSE
+と矛盾しない形で記載する。
+
+About page の code block、inline code、license identifier、path、command、
+dependency name、version は、display convenience のために法的意味を変えて
+はならない。UI 表示の整形は補助的であり、legal material の本文が支配する。
+
+11. Governing-law and platform-term consistency
+
+Ludoxel Independent License は、日本法準拠及び東京地方裁判所を第一審の
+専属的合意管轄裁判所とする条項を、適用法上許される最大限の範囲で定める。
+この選択は、Kento Konishi の著作、著作権管理、住所又は通常の法的地位に
+即して置かれる。
+
+この NOTICE は、GitHub service terms、app store terms、package registry
+terms、cloud service terms、又はその他の platform terms を置換しない。
+それらの terms が service provider と user の間で適用される場合でも、その
+事実は Ludoxel Original Materials に対する再利用許諾を発生させない。
+
+12. Maintenance discipline
+
+次の変更を行う場合は、この NOTICE、third-party、ルート LICENSE、README、
+About page、package metadata、及び distribution legal copy behavior の整合
+を確認する。
+
+* assets の追加、削除、移動、改名、変換
+* font file の追加、更新、削除
+* texture、skin、thumbnail、icon、profile material の追加、更新、削除
+* Python dependency、Node dependency、runtime component、build toolchain の追加又は更新
+* PyInstaller、MANIFEST.in、package data、resource copy、legal copy service の変更
+* renderer backend resource、shader source、QSS、Othello bundled resource の配置変更
+* runtime data root、cache root、integrity path、save format、user import path の変更
+* README、About page、LICENSE、NOTICE、third-party notice、package metadata の法務説明変更
+* desktop distribution、installer、archive、release artifact の同梱対象変更
+
+13. Versioning, Effective Dates, and Revision History
+
+This NOTICE version is identified as Version 1.0.2.
+
+The Original Notice Effective Date of this NOTICE is 2026-06-05. The
+Current Notice Effective Date of Version 1.0.2 is 2026-06-10.
+
+Revision history:
+
+* Version 1.0.1, effective 2026-06-05:
+  Records the relationship between Ludoxel original materials,
+  third-party materials, provenance-sensitive materials, and user
+  runtime data, with Kaisei Opti and Python runtime dependency notices
+  referenced under third-party.
+
+* Version 1.0.2, effective 2026-06-10:
+  Aligns this NOTICE with Ludoxel Independent License Version 1.0.3,
+  records the distinction between Original Materials and
+  provenance-sensitive local assets more strictly, clarifies
+  third-party material independence, separates immutable package resources
+  from runtime user data, specifies distribution legal material requirements
+  and About/README/package metadata consistency requirements, and records
+  the separation between Japanese governing law for the independent license
+  and platform terms for hosting-service use.
