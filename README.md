@@ -2,13 +2,17 @@
   <img src="assets/branding/ludoxel_banner.png" alt="Ludoxel" width="100%">
 </p>
 
-# Ludoxel v3.6.0 法務情報
-
 Ludoxel は、Python、PyQt6、OpenGL、WGPU を用いたデスクトップ向けボクセルサンドボックスアプリケーションである。
+
+# Ludoxel v3.6.0 法務情報
 
 当該文書は、Ludoxel リポジトリにおける法務上の基本関係を整理する補助文書である。その対象は、ルートの [`LICENSE`](LICENSE)、ルートの [`NOTICE`](NOTICE)、第三者通知、来歴確認を要するローカル資産、実行時利用者データ、通常のアプリケーション出力、配布時法務資料、GitHub の機能及び利用条件、並びに [`.github/`](.github/) 配下のリポジトリ方針文書の相互関係に限られる。
 
 Ludoxel の機能、実行方法、ビルド方法、内部構造、開発手順、検証方法、又は実装上の設計は、本書の説明対象ではない。これらに関する名称が現れる場合も、その記載は、法務上の対象、素材区分、配布時法務資料、又はリポジトリ方針の適用範囲を特定する限度にとどまる。
+
+<p align="center">
+  <img src="assets/branding/ludoxel-license.svg" alt="Ludoxel repository license metrics" width="100%">
+</p>
 
 ## 1 支配文書
 
