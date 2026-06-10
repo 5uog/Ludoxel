@@ -1,168 +1,65 @@
-# Ludoxel v3.6
+# Ludoxel v3.6.0 法務情報
 
-Ludoxel is a PyQt6 desktop application for a persistent voxel sandbox,
-first-person and third-person interaction, a persistent Othello play
-space, and platform-specific desktop rendering.
+当該文書は、Ludoxel リポジトリにおける法務上の基本関係を整理する補助文書である。その対象は、ルートの `LICENSE`、ルートの `NOTICE`、第三者通知、来歴確認を要するローカル資産、実行時利用者データ、通常のアプリケーション出力、配布時法務資料、GitHub の機能及び利用条件、並びに `.github/` 配下のリポジトリ方針文書の相互関係に限られる。
 
-Ludoxel is developed as a personal desktop software project by Kento
-Konishi. The repository contains original source code and documentation,
-third-party legal material, local assets whose rights status must be
-reviewed separately, Python packaging metadata, Node-based repository
-tooling, and desktop distribution support.
+Ludoxel の機能、実行方法、ビルド方法、内部構造、開発手順、検証方法、又は実装上の設計は、本書の説明対象ではない。これらに関する名称が現れる場合も、その記載は、法務上の対象、素材区分、配布時法務資料、又はリポジトリ方針の適用範囲を特定する限度にとどまる。
 
-The current source tree is organized under `src/ludoxel/` as four
-principal layers: `foundations`, `application`, `simulation`, and
-`presentation`.
+## 1 支配文書
 
-The `foundations` layer provides low-level identity, path, diagnostic,
-numeric, geometry, voxel, matrix, frustum, and chunk contracts. The
-`application` layer connects bootstrap, preferences, persistence,
-session construction, runtime state, save scheduling, and application
-orchestration. The `simulation` layer owns world state, block
-definitions, block models, actors, movement, collision, gravity,
-picking, placement, interaction, inventories, My World, and Othello
-domain logic. The `presentation` layer owns the desktop interface,
-input adapters, viewport lifecycle, HUD, overlays, settings surfaces,
-audio playback, renderer contracts, OpenGL rendering, and wgpu
-rendering.
+Ludoxel 独自素材に関する支配的なライセンス本文は、ルートの `LICENSE` に置かれた現行 1.0.3 版の `Ludoxel Independent License` である。ここで、`LicenseRef-All-Rights-Reserved` とは、当該リポジトリにおいて `Ludoxel Independent License` を指す独自のライセンス識別子であり、Apache-2.0、MIT、BSD、GPL、AGPL、LGPL、MPL、又はその他のオープンソースライセンスを意味しない。
 
-The repository also contains local assets under `assets/`, third-party
-legal records under `third-party/`, Python package metadata in
-`pyproject.toml`, source-distribution inclusion rules in `MANIFEST.in`,
-Node-based tools under `tools/`, and distribution legal material at the
-repository root.
+本書にいう Ludoxel 独自素材は、`LICENSE` が定義する `Original Materials` に対応する素材をいう。正確な定義、範囲、例外、及び第三者素材との区別は、`LICENSE` の英文本文に従う。
 
-## Execution
+Ludoxel 独自素材の著作権者及び権利管理主体は、小西拳斗である。`README.md`、`NOTICE`、`third-party/` 配下の補助通知、パッケージメタデータ、SPDX 表示、About 表示、UI 表示、issue、pull request、リリースノート、ビルドログ、生成物、翻訳、要約、又は日本語説明が `LICENSE` と抵触する場合、Ludoxel 独自素材については `LICENSE` の英文本文が優先する。
 
-Use a project-local Python environment. The application entry point is
-the installed `ludoxel` command or the module entry point below.
+## 2 許諾の不存在及び権利留保
 
-```bash
-python -m ludoxel
-```
+Ludoxel 独自素材は、オープンソースソフトウェア又は自由ソフトウェアとして提供されるものではない。公開リポジトリとして閲覧できること、GitHub 上で操作可能であること、又はローカル環境で技術的に取得若しくは実行できることは、`LICENSE` に明示された範囲を超える利用許諾を成立させない。
 
-Repository validation is driven by npm scripts. The aggregate check runs
-formatting, linting, tool tests, package checks, documentation checks,
-license checks, resource checks, and shader checks according to the
-current `package.json`.
+`LICENSE` に基づく通常のアプリケーション利用は、Ludoxel を通常のデスクトップアプリケーションとして利用する限度で認められる。これにより、Ludoxel 独自素材の複製、改変、翻案、再配布、転載、公衆送信、組込み、派生物作成、再ライセンス、販売、貸与、公開、配置、人工知能学習用データ化、データセット化、ベンチマーク用データ化、検索索引用データ化、又は自作発言が許諾されるものではない。
 
-```bash
-npm run check
-```
+`LICENSE` に明示されていない利用は、小西拳斗が署名した別個の書面によって許諾された場合を除き、許されない。GitHub の画面機能、リポジトリの公開状態、補助文書の存在、又は第三者通知の存在を、当該許諾に代えることはできない。
 
-Platform packaging is handled by repository tooling. Windows and macOS
-builds use different renderer and packaging paths. A successful result
-on one platform must not be described as verification of the other
-platform.
+## 3 NOTICE 及び第三者通知
 
-```bash
-npm run build:windows
-npm run build:macos
-```
+ルートの `NOTICE` は、Ludoxel 独自素材、第三者素材、来歴確認を要するローカル資産、実行時利用者データ、通常のアプリケーション出力、配布時法務資料、及び法務上の分類を記録する補助的な法務文書である。`NOTICE` は、`LICENSE` の支配的効力を制限せず、`LICENSE` に存在しない許諾を追加しない。
 
-## Repository status
+第三者素材とは、Ludoxel 独自素材に含まれない素材をいう。外部ライブラリ、実行環境、パッケージ、SDK、ツールチェーン、フォント、画像、音声、テクスチャ、アイコン、外部由来素材、第三者作成資料、及び権利者が小西拳斗ではない素材は、第三者素材として扱われる。
 
-This repository is not open source and is not free software. Public
-visibility, private sharing, browsing, downloading, cloning, forking,
-archiving, diff viewing, issue viewing, pull request viewing, release
-access, package metadata, or ordinary code-hosting functionality does
-not grant permission to reuse Ludoxel Original Materials outside the
-scope stated in `LICENSE`.
+第三者素材には、それぞれのライセンス、著作権表示、帰属表示、保証否認、予約名、ソース提供条件、再配布条件、利用制限、及びその他の条件が適用される。第三者素材のライセンスは Ludoxel 独自素材を再許諾せず、Ludoxel 独自素材の `LICENSE` も第三者素材の条件を変更しない。
 
-`LicenseRef-All-Rights-Reserved` is a repository-local SPDX custom
-license reference for the Ludoxel Independent License. It is used by
-source headers and package metadata to identify the controlling license
-text in `LICENSE`. It does not identify an OSI-approved license, and it
-does not make the repository open source.
-
-## License
-
-Ludoxel Original Materials are governed by the Ludoxel Independent
-License in `LICENSE`. The current license version is Version 1.0.3.
-
-`LICENSE` is the controlling license text for Ludoxel Original
-Materials. If README text, NOTICE text, package metadata, SPDX headers,
-About-page text, generated-file notices, issue text, pull request text,
-release notes, summaries, translations, or UI descriptions conflict
-with `LICENSE`, the English text of `LICENSE` controls for Ludoxel
-Original Materials.
-
-This repository is not licensed under Apache-2.0, MIT, BSD, GPL, AGPL,
-LGPL, MPL, or any other open-source license.
-
-`NOTICE` records explanatory legal, provenance, third-party,
-distribution, runtime-data, and maintenance information. It does not
-grant permissions that are absent from `LICENSE`.
-
-The Ludoxel Independent License is governed by the laws of Japan to the
-maximum extent permitted by applicable law. GitHub service terms,
-including any service permission to view or fork repository content
-through GitHub functionality, govern the separate relationship between
-GitHub and its users. Those service terms do not expand the independent
-license granted by Kento Konishi for Ludoxel Original Materials.
-
-## Third-party materials
-
-Third-party materials remain subject to their own licenses and notices.
-The repository records known third-party legal material under
-`third-party/`.
-
-The presence of third-party license texts, third-party notices,
-external packages, runtime components, SDKs, build tools, fonts, images,
-sounds, textures, icons, or vendor materials does not relicense Ludoxel
-Original Materials under those third-party terms.
-
-Known supplemental third-party records include:
+現行リポジトリにおける補助的な第三者通知は、少なくとも次の文書である。
 
 ```text
-third-party/kaisei-opti/LICENSE.txt
 third-party/kaisei-opti/NOTICE.txt
 third-party/python-runtime/NOTICE.txt
 ```
 
-Kaisei Opti font files are treated as third-party font material governed
-by the SIL Open Font License 1.1. The Ludoxel Independent License does
-not relicense Kaisei Opti, and the SIL Open Font License 1.1 does not
-relicense Ludoxel Original Materials.
+Kaisei Opti のライセンス本文は `third-party/kaisei-opti/LICENSE.txt` に置かれる。`third-party/kaisei-opti/NOTICE.txt` は、Kaisei Opti フォント素材の利用関係を補助的に説明する通知であり、`SIL Open Font License 1.1` を置換、翻訳、制限、拡張、又は修正しない。
 
-## Provenance-sensitive local assets
+`third-party/python-runtime/NOTICE.txt` は、CPython、PyQt6、Qt 実行環境構成要素、NumPy、PyOpenGL、wgpu、rendercanvas、PyInstaller、Ruff、Node.js、npm パッケージ、ESLint、Stylelint、Prettier、及び関連する実行環境又はツールチェーンの分類を補助的に記録する文書であり、各依存物のライセンス本文を変更しない。
 
-Some local assets require separate provenance, rights, license,
-trademark, redistribution, and transformation review. Their presence in
-the repository does not represent that they are Ludoxel Original
-Materials, public-domain materials, open-source materials, free assets,
-or freely redistributable materials.
+## 4 来歴確認を要するローカル資産
 
-At minimum, Minecraft-named local assets under `assets/minecraft/` and
-Minecraft-named font files under `assets/fonts/` must be treated as
-provenance-sensitive local assets unless their status is established by
-separate records.
+`assets/` 配下には、由来、権利者、ライセンス、商標状態、再配布可否、改変許諾範囲、又は同梱可否について個別確認を要するローカル資産が含まれる場合がある。
 
-A desktop distribution process must not assume that every file under
-`assets/` may be redistributed merely because the application can load
-or display that file.
+少なくとも、`assets/minecraft/` 配下の Minecraft 名を含むローカル資産、及び `assets/fonts/` 配下の Minecraft 名を含むフォントファイルは、来歴確認を要するローカル資産として扱う。これらは、リポジトリ内に存在し、Ludoxel が読み込み、又は画面上に表示し得るという事情によって、Ludoxel 独自素材、パブリックドメイン素材、オープンソース素材、自由素材、又は自由に再配布できる素材に転化しない。
 
-## Runtime user data and application output
+当該資産を配布物に含める権限及び条件は、対象素材ごとの権利状態、ライセンス、再配布許可、帰属表示、予約名、商標上の含意、改変許諾範囲、及び配布制限によって定まる。確認未了の素材について、技術的な同梱可能性を法的な配布可能性と同視してはならない。
 
-Runtime user data is separate from immutable package resources and from
-Ludoxel Original Materials. Runtime user data includes player settings,
-window state, key bindings, custom crosshair data, imported player
-skins, save data, world edits, Othello settings, generated cache data,
-and other user-specific records created or supplied during ordinary
-application use.
+## 5 実行時利用者データ及び通常のアプリケーション出力
 
-User materials and ordinary application output do not become Ludoxel
-Original Materials merely because Ludoxel creates, loads, displays,
-stores, converts, or exports them. If those materials contain Ludoxel
-Original Materials or third-party materials, the included protected
-material remains subject to its applicable license or restriction.
+実行時利用者データは、Ludoxel 独自素材、第三者素材、来歴確認を要するローカル資産、及び不変のパッケージ資源から区別される。利用者が通常のアプリケーション利用を通じて作成、入力、編集、保存、又は供給する設定、保存データ、世界編集、インポートされたスキン、利用者作成の記録、及びその他の利用者固有データは、実行時利用者データに含まれる。
 
-## Distribution legal material
+実行時利用者データは、Ludoxel によって作成、保存、読込、変換、又は表示される場合であっても、その事実のみを以て Ludoxel 独自素材とは扱わない。利用者が独自に作成した素材又はデータは、Ludoxel の通常機能により保存又は表示されたことを理由として、小西拳斗に帰することはない。
 
-An authorized desktop distribution, installer, archive, application
-bundle, executable package, wheel, source distribution, or release
-artifact must include the legal material required for the exact artifact
-being distributed. At minimum, Ludoxel distribution material must include:
+通常のアプリケーション出力とは、通常の利用の結果として生じるスクリーンショット、画面録画、保存ファイル、ログ、設定ファイル、表示状態、又は利用者固有の出力をいう。そのうち利用者が独自に作成した部分は、Ludoxel 独自素材として扱われない。
+
+もっとも、実行時利用者データ又は通常のアプリケーション出力に、Ludoxel 独自素材、第三者素材、UI 表示、視覚資産、同梱資源、来歴確認を要するローカル資産、又はその他の保護対象が実質的に含まれる場合、その含まれる部分には、それぞれの権利又は利用条件に基づく制限が残る。
+
+## 6 配布時法務資料
+
+デスクトップ配布物、インストーラ、アーカイブ、リリース成果物、アプリケーションバンドル、実行形式、wheel、ソース配布物、又はその他の配布物を作成する場合は、配布権限が別途存在することを前提として、少なくとも次の配布時法務資料を同梱する必要がある。
 
 ```text
 LICENSE
@@ -170,8 +67,30 @@ NOTICE
 third-party/
 ```
 
-Including these legal materials does not itself grant permission to
-distribute Ludoxel. Distribution permission must come from `LICENSE` or
-from a separate written agreement signed by Kento Konishi.
+ただし、これら資料の同梱事実が、直ちに配布権限の存在を意味することはない。配布権限は、`LICENSE` 又は小西拳斗が署名した別個の書面によって明示される必要がある。
 
-Copyright (c) 2026 Kento Konishi.
+配布物に第三者素材又は来歴確認を要するローカル資産を含める場合、当該素材ごとのライセンス本文、通知、著作権表示、帰属表示、ソース提供条件、予約名制限、再配布条件、商標上の含意、改変可否、及び配布条件は、Ludoxel 側の配布時法務資料とは別に効力を有する。
+
+## 7 GitHub の機能及びリポジトリ方針文書
+
+GitHub の閲覧、fork、download、archive、release、package、diff、issue、pull request、discussion、Actions、Packages、又はその他の画面機能は、GitHub と利用者との間の利用条件及び GitHub が提供するサービス機能に従って利用される。これらの機能の法的性質は、Ludoxel 独自素材に関する `LICENSE` の許諾範囲とは区別される。
+
+`.github/CONTRIBUTING.md` は、外部提供物を受け付けない方針を示す文書である。外部提供物には、pull request、パッチ、ソースコード変更、文書変更、翻訳、デザイン資産、生成ファイル、データセット、機能実装、リファクタリング提案、シェーダー書換え、資産、保存済みワールド、AI 作業台出力、及びその他の提出物が含まれる。
+
+`.github/SECURITY.md` は、セキュリティ報告の範囲、非公開報告経路、公開開示の禁止、対象外報告、取扱方針、試験制限、及び支配本文を説明する文書である。セキュリティ報告又はセキュリティ試験は、Ludoxel 独自素材の再利用を正当化する根拠とはならない。
+
+`.github/pull_request_template.md` は、pull request による外部提供物の提出を排除するための GitHub 上の方針文書である。pull request の画面が存在することは、外部提供物を受け付ける意思表示ではない。
+
+`.github/ISSUE_TEMPLATE/problem-report.yml`、`.github/ISSUE_TEMPLATE/limited-question.yml`、及び `.github/ISSUE_TEMPLATE/security-contact.yml` は、それぞれ、限定された問題報告、限定質問、及び非公開連絡方法の請求に用途を限定する GitHub issue template である。これらのフォームは、ソースコード、パッチ、差替え文案、デザイン資産、データセット、生成ファイル、シェーダー書換え、機能実装、リファクタリング提案、又はその他の外部提供物を受け付けるためのものではない。
+
+公開 issue には、脆弱性の詳細、攻撃手順、実証コード、認証情報、token、cookie、secret を含むログ、非公開のローカルファイル、第三者の秘密情報、又は公開に適さない再現情報を書いてはならない。セキュリティ報告は、`.github/SECURITY.md` に従い、利用可能な非公開報告経路を優先する。
+
+## 8 準拠法、管轄、及びプラットフォーム利用条件
+
+`LICENSE` 第11節は、適用法上許される最大限の範囲で、`Ludoxel Independent License` が日本法に準拠することを定める。同節は、Ludoxel 独自素材、リポジトリ内容、配布物、又は無許諾利用に関する紛争について、東京地方裁判所を第一審の専属的合意管轄裁判所とすることも定める。
+
+この準拠法及び管轄の定めは、Ludoxel 独自素材に関する独立ライセンスの解釈、履行、違反、終了、及び無許諾利用に関する関係を対象とする。他方で、GitHub と利用者との間には、GitHub の利用条件、追加製品条件、GitHub Security Advisories、非公開脆弱性報告、issue template、pull request template、Actions、Packages、又はその他の GitHub サービス機能に関する別個の条件が適用され得る。
+
+したがって、日本法準拠及び東京地方裁判所の専属的合意管轄に関する `LICENSE` の定めと、GitHub の利用条件に基づく GitHub サービス上の機能利用とは、適用対象を異にする。前者は Ludoxel 独自素材に関する独立ライセンス上の関係を規律し、後者は GitHub サービスの利用関係を規律する。
+
+Copyright (c) 2026 小西拳斗.
