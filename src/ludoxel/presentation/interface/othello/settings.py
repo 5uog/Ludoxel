@@ -328,8 +328,7 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     super().keyPressEvent(e)
 
   def closeEvent(self, event) -> None:
-    if bool(self._as_window):
-      event.ignore()
+    if self._accept_detached_close_event(event):
       self.back_requested.emit()
       return
     super().closeEvent(event)

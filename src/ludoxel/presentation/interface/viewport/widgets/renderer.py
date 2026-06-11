@@ -292,6 +292,15 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       app.installEventFilter(self)
       self._application_event_filter_app = app
 
+  def _visible_overlay_blocks_game_input(self) -> bool:
+    for overlay in (self._overlay, self._settings, self._othello_settings, self._inventory, self._death):
+      try:
+        if overlay is not None and bool(overlay.isVisible()):
+          return True
+      except RuntimeError:
+        continue
+    return False
+
   def _macos_game_input_priority_active(self) -> bool:
     if sys.platform != "darwin":
       return False
@@ -301,7 +310,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       return False
     if not bool(getattr(self, "_runtime_active", False)) or not bool(self._inp.captured()):
       return False
-    if bool(self._overlays.any_modal_open()):
+    if bool(self._overlays.any_modal_open()) or bool(self._visible_overlay_blocks_game_input()):
       return False
     return not bool(self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open())
 

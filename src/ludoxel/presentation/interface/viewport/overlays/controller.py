@@ -219,7 +219,9 @@ class ViewportOverlays:
 
     if self._othello_settings_open:
       self._othello_settings_return_to_pause = bool(self._paused)
+      self._paused = False
       self._settings_open = False
+      self._settings_return_to_pause = False
       self.set_inventory_open(False)
       self._inp.set_mouse_capture(False)
       self._r.hotbar.setVisible(False)
@@ -233,16 +235,23 @@ class ViewportOverlays:
       self._r.othello_settings.setFocus()
       return
 
+    return_to_pause = bool(self._othello_settings_return_to_pause)
+    self._othello_settings_return_to_pause = False
     self._r.othello_settings.setVisible(False)
 
-    if self._othello_settings_return_to_pause and self._paused:
+    if bool(return_to_pause):
+      self._paused = True
+      self._settings_open = False
+      self._settings_return_to_pause = False
+      self._inp.set_mouse_capture(False)
+      self._r.settings.setVisible(False)
+      self._r.hotbar.setVisible(False)
       self._r.pause.setVisible(True)
       self._r.pause.raise_()
       self._r.pause.setFocus()
       return
 
     self._paused = False
-    self._othello_settings_return_to_pause = False
 
     if not self._inventory_open:
       self._resume_gameplay_deferred()

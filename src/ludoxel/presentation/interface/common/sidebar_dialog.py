@@ -39,7 +39,7 @@ class SidebarDialogBase(QDialog):
       self.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
       self.setWindowFlag(Qt.WindowType.WindowTitleHint, True)
       self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, True)
-      self.setWindowModality(Qt.WindowModality.ApplicationModal)
+      self.setWindowModality(Qt.WindowModality.NonModal)
       self.setWindowTitle(str(window_title))
       self.resize(int(window_size[0]), int(window_size[1]))
       self.setMinimumSize(int(minimum_window_size[0]), int(minimum_window_size[1]))
@@ -124,6 +124,14 @@ class SidebarDialogBase(QDialog):
     if not self.isVisible():
       return
     self.setWindowOpacity(1.0)
+
+  def _accept_detached_close_event(self, event) -> bool:
+    if not bool(self._as_window):
+      return False
+    self._deferred_reveal_pending = False
+    self.setWindowOpacity(1.0)
+    event.accept()
+    return True
 
   def _make_tab_button(self, text: str, index: int, on_selected: Callable[[int], None], parent: QWidget | None = None) -> QPushButton:
     button_parent = self._sidebar if parent is None else parent
