@@ -25,23 +25,32 @@ class AdvancedScalarControl(QWidget):
     self._default = float(default_value)
     self._guard = False
 
-    root = QVBoxLayout(self)
-    root.setContentsMargins(0, 0, 0, 0)
-    root.setSpacing(6)
+    self.setObjectName("settingsRow")
+    root = QHBoxLayout(self)
+    root.setContentsMargins(12, 8, 12, 8)
+    root.setSpacing(16)
 
-    self._label = QLabel(self._title, self)
-    self._label.setObjectName("valueLabel")
-    root.addWidget(self._label)
+    text_host = QWidget(self)
+    text_host.setObjectName("settingsRowText")
+    text_layout = QVBoxLayout(text_host)
+    text_layout.setContentsMargins(0, 0, 0, 0)
+    text_layout.setSpacing(0)
+    self._label = QLabel(self._title, text_host)
+    self._label.setObjectName("settingsRowLabel")
+    text_layout.addWidget(self._label)
+    root.addWidget(text_host, stretch=3)
 
-    row = QHBoxLayout()
+    control_host = QWidget(self)
+    control_host.setObjectName("settingsRowControl")
+    row = QHBoxLayout(control_host)
     row.setContentsMargins(0, 0, 0, 0)
     row.setSpacing(8)
 
-    self._slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, self)
+    self._slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, control_host)
     self._slider.setRange(int(round(float(self._min) * float(self._scale))), int(round(float(self._max) * float(self._scale))))
     row.addWidget(self._slider, stretch=1)
 
-    self._spin = WheelPassthroughDoubleSpinBox(self)
+    self._spin = WheelPassthroughDoubleSpinBox(control_host)
     self._spin.setDecimals(int(self._decimals))
     self._spin.setRange(float(self._min), float(self._max))
     self._spin.setSingleStep(max(10.0 ** (-int(self._decimals)), 1.0 / float(self._scale)))
@@ -49,13 +58,13 @@ class AdvancedScalarControl(QWidget):
     self._spin.setFixedWidth(int(self._SPIN_WIDTH))
     row.addWidget(self._spin)
 
-    self._btn_reset = QPushButton("Reset", self)
-    self._btn_reset.setObjectName("menuBtn")
+    self._btn_reset = QPushButton("Reset", control_host)
+    self._btn_reset.setObjectName("secondaryBtn")
     self._btn_reset.setFixedWidth(int(self._RESET_WIDTH))
     self._btn_reset.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     row.addWidget(self._btn_reset)
 
-    root.addLayout(row)
+    root.addWidget(control_host, stretch=2)
 
     self._slider.valueChanged.connect(self._on_slider)
     self._spin.valueChanged.connect(self._on_spin)

@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from ludoxel.presentation.interface.settings.about.content import AboutBlock, AboutSection
-from ludoxel.presentation.interface.settings.about.widgets import about_code_block
+from ludoxel.presentation.interface.settings.about.widgets import about_code_block, about_code_value, about_inline_paragraph
 
 
 def _fence_length(line: str) -> int:
@@ -84,11 +84,17 @@ def _normalized_blocks(blocks: Iterable[AboutBlock]) -> tuple[AboutBlock, ...]:
   normalized: list[AboutBlock] = []
   for block in tuple(blocks):
     kind = str(block.kind).strip().lower()
+    if kind == "paragraph_runs" and block.runs:
+      normalized.append(block)
+      continue
     text = str(block.text)
     if not text.strip():
       continue
     if kind == "code":
       normalized.append(AboutBlock(kind="code", text=text))
+      continue
+    if kind == "code_value":
+      normalized.append(AboutBlock(kind="code_value", text=text))
       continue
     normalized.extend(_paragraph_blocks_from_text(text))
   return tuple(normalized)
@@ -106,5 +112,9 @@ def render_about_sections(*, parent: QWidget, layout: QVBoxLayout, sections: Ite
     for block in _normalized_blocks(section.blocks):
       if block.kind == "code":
         layout.addWidget(about_code_block(parent, block.text))
+      elif block.kind == "code_value":
+        layout.addWidget(about_code_value(parent, block.text))
+      elif block.kind == "paragraph_runs":
+        layout.addWidget(about_inline_paragraph(parent, block.runs))
       else:
         layout.addWidget(text_factory(parent, block.text, "subtitle"))

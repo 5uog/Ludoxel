@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_ORDER
+from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_CUSTOM, normalize_crosshair_mode
 from ludoxel.foundations.mathematics.scalars.numeric import clampf, clampi, round_clampi
 from ludoxel.presentation.interface.settings.cloud_flow import cloud_flow_index_for_value
 
@@ -65,6 +66,7 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
   overlay._ctl_arm_swing_duration.set_value(float(values["arm_swing_duration_s"]))
   overlay._crosshair_editor.set_pixels(values["crosshair_pixels"])
   overlay._crosshair_preview.set_pattern(mode=values["crosshair_mode"], custom_pixels=values["crosshair_pixels"])
+  overlay._btn_crosshair_reset.setEnabled(normalize_crosshair_mode(values["crosshair_mode"]) == CROSSHAIR_MODE_CUSTOM)
 
   camera_perspective = str(values.get("camera_perspective", CAMERA_PERSPECTIVE_FIRST_PERSON))
   camera_index = 0

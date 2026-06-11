@@ -1,0 +1,46 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+export function renderBlockThumbnailHelp(command = 'generate') {
+  return [
+    `block thumbnail ${command}`,
+    '',
+    'Purpose',
+    '  Render current Ludoxel block-model states from a selected texture root into deterministic 300x300 RGBA PNG thumbnails.',
+    '  The canvas is transparent; output is model-centered with stable padding and a default isometric-like yaw 45 / pitch 30 view.',
+    '',
+    'Asset roots',
+    '  Minecraft source: assets/minecraft/textures -> assets/minecraft/thumbnails/blocks',
+    '  Ludoxel source:   assets/ludoxel/textures  -> assets/ludoxel/thumbnails/blocks',
+    '  Runtime OpenGL, WGPU, hotbar, inventory, and item selection use one shared family resolver. A complete Ludoxel block texture set takes priority.',
+    '',
+    'Options',
+    '  --texture-root PATH          Texture root containing block/*.png.',
+    '  --output-root PATH           Thumbnail output directory.',
+    '  --all                        Select all registered blocks (default).',
+    '  --block ID[,ID...]           Select one or more block ids.',
+    '  --model-category CATEGORY    cube/full_block, slab, stairs, fence, fence_gate, or wall.',
+    '  --state KEY=VALUE            Repeatable state override: orientation/facing, type/half, shape, open, connectivity, and related model props.',
+    '  --yaw DEG                    Horizontal model rotation (default 45).',
+    '  --pitch DEG                  Vertical model rotation (default 30).',
+    '  --roll DEG                   Roll rotation (default 0).',
+    '  --scale FLOAT                Additional fitted model scale (default 1).',
+    '  --fit-padding PX             Stable transparent padding (default 36).',
+    '  --connectivity-axis VALUE    fence/wall default: north-south; alternatives east-west or none.',
+    '  --north/--east/--south/--west and --no-* override individual connectivity.',
+    '  --dry-run                    Validate and report outputs without writing.',
+    '  --allow-overwrite            Permit replacement of existing outputs. Required for existing Minecraft thumbnails.',
+    '  --help                       Show this help.',
+    '',
+    'Examples',
+    '  npm run assets:block-thumbnails:generate -- --block minecraft:oak_stairs --texture-root assets/ludoxel/textures --output-root assets/ludoxel/thumbnails/blocks',
+    '  npm run assets:block-thumbnails:generate -- --model-category fence --connectivity-axis east-west --dry-run',
+    '  npm run assets:block-thumbnails:check -- --texture-root assets/minecraft/textures --output-root assets/minecraft/thumbnails/blocks',
+    '',
+    'Command distinction',
+    '  check validates texture/model contracts, PNG/RGBA requirements, output collisions, overwrite policy, and asset-family migration without writing.',
+    '  generate --dry-run performs the same selected generation plan without writing; generate writes only after validation succeeds.',
+    '',
+  ].join('\n');
+}

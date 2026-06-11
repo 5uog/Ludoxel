@@ -23,7 +23,6 @@ from ludoxel.presentation.rendering.backends.wgpu.meshes.chunk import (
   WgpuFaceInstances,
   build_face_vertex_rows,
   build_face_wire_vertex_rows,
-  build_selection_vertices,
   upload_chunk_mesh,
   upload_face_rows,
   upload_transform_face_rows,
@@ -63,9 +62,12 @@ from ludoxel.presentation.rendering.visuals.players.first_person_geometry import
 from ludoxel.presentation.rendering.visuals.players.held_block_geometry import held_block_model_boxes_for_kind
 from ludoxel.presentation.rendering.visuals.players.model_pose import HeldBlockPose, PlayerModelPose, build_player_model_pose
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
+from ludoxel.presentation.rendering.visuals.selections.outline import SelectionOutlineBuilder
+from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
 from ludoxel.simulation.blocks.definitions.block import BlockDefinition
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import parse_state
+from ludoxel.simulation.blocks.structures.neighborhood import six_neighbor_state_signature
 from ludoxel.simulation.inventories.special_items.registry import special_item_icon_keys
 
 _DEPTH_FORMAT = "depth24plus"
@@ -173,6 +175,8 @@ class WgpuRendererBackend:
     self._info = BackendRendererInfo(api="WebGPU/wgpu-native", shading_language="GLSL 450")
     self._chunks: dict[ChunkKey, WgpuChunkMesh] = {}
     self._selection_cell: tuple[int, int, int] | None = None
+    self._selection_key: tuple[object, ...] | None = None
+    self._selection_outline_builder: SelectionOutlineBuilder | None = None
     self._selection_buffer: object | None = None
     self._selection_vertex_count = 0
     self._last_metrics = BackendRendererFrameMetrics()
@@ -214,7 +218,8 @@ class WgpuRendererBackend:
       )
 
     names = block_registry.required_texture_names()
-    atlas = WgpuTextureAtlas.build_from_dir(Path(assets_dir) / "minecraft" / "textures" / "block", names=names)
+    visual_roots = resolve_visual_asset_roots(assets_dir, required_texture_names=names)
+    atlas = WgpuTextureAtlas.build_from_dir(visual_roots.block_texture_dir, names=names)
     atlas.upload(device=device)
 
     atlas_bgl = device.create_bind_group_layout(
@@ -327,6 +332,7 @@ class WgpuRendererBackend:
     self._special_item_bind_groups = special_item_bind_groups
     self._atlas = atlas
     self._visuals = _WgpuBlockVisualResolver(atlas=atlas, blocks=block_registry)
+    self._selection_outline_builder = SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup)
     self.apply_runtime_state()
 
     info = getattr(adapter, "info", None)
@@ -423,15 +429,25 @@ class WgpuRendererBackend:
 
   def clear_selection(self) -> None:
     self._selection_cell = None
+    self._selection_key = None
     self._selection_vertex_count = 0
     if self._selection_buffer is not None and hasattr(self._selection_buffer, "destroy"):
       self._selection_buffer.destroy()
     self._selection_buffer = None
 
   def set_selection_target(self, *, x: int, y: int, z: int, state_str: str, get_state, world_revision: int) -> None:
-    del state_str, get_state, world_revision
-    self._selection_cell = (int(x), int(y), int(z))
-    self._refresh_selection_buffer()
+    del world_revision
+    cell = (int(x), int(y), int(z))
+    self._selection_cell = cell
+    key: tuple[object, ...] = (*cell, str(state_str), *six_neighbor_state_signature(get_state, *cell))
+    if self._selection_key == key:
+      return
+    if self._selection_outline_builder is None:
+      self.clear_selection()
+      return
+    vertices = self._selection_outline_builder.build(x=cell[0], y=cell[1], z=cell[2], state_str=str(state_str), get_state=get_state)
+    self._selection_key = key
+    self._refresh_selection_buffer(vertices)
 
   def submit_chunk(
     self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None
@@ -447,14 +463,18 @@ class WgpuRendererBackend:
     if mesh is not None:
       self._chunks[ck] = mesh
 
-  def _refresh_selection_buffer(self) -> None:
+  def _refresh_selection_buffer(self, vertices: np.ndarray) -> None:
+    """
+    shared selection builder が生成した line vertex 列で WGPU selection buffer を置換する。
+    入力は block model の render boxes、neighbor state、local occlusion を反映済みであり、空配列の場合は draw count と buffer を無効化する。
+    """
     if self._res is None:
       return
     import wgpu
 
     if self._selection_buffer is not None and hasattr(self._selection_buffer, "destroy"):
       self._selection_buffer.destroy()
-    vertices = build_selection_vertices(self._selection_cell)
+    vertices = np.asarray(vertices, dtype=np.float32)
     self._selection_vertex_count = int(vertices.shape[0])
     if self._selection_vertex_count <= 0:
       self._selection_buffer = None
@@ -730,8 +750,43 @@ class WgpuRendererBackend:
     if self._res is None or int(face.instance_count) <= 0:
       return 0
     render_pass.set_vertex_buffer(1, face.instance_buffer)
-    render_pass.draw(8, int(face.instance_count), int(face_idx) * 8, 0)
+    render_pass.draw(12, int(face.instance_count), int(face_idx) * 12, 0)
     return int(face.instance_count)
+
+  @staticmethod
+  def _front_facing_world_rows(rows: np.ndarray, *, face_idx: int, eye: Vec3) -> np.ndarray:
+    """
+    axis-aligned face instance の外向き法線と camera 方向の内積が正になる row だけを返す。
+    OpenGL の `GL_BACK` culling 後に polygon line mode が生成する triangle edge と同じ face 集合を WGPU の line list へ渡す。
+    """
+    data = np.asarray(rows, dtype=np.float32)
+    if data.ndim != 2 or int(data.shape[0]) <= 0:
+      return np.zeros((0, 12), dtype=np.float32)
+    fi = int(face_idx)
+    axis = 0 if fi in (0, 1) else (1 if fi in (2, 3) else 2)
+    positive = fi in (0, 2, 4)
+    surface = data[:, axis + (3 if positive else 0)]
+    eye_value = (float(eye.x), float(eye.y), float(eye.z))[axis]
+    visible = (float(eye_value) - surface) > 0.0 if positive else (float(eye_value) - surface) < 0.0
+    return np.ascontiguousarray(data[visible], dtype=np.float32)
+
+  @staticmethod
+  def _front_facing_cloud_rows(rows: np.ndarray, *, face_idx: int, eye: Vec3, shift: Vec3) -> np.ndarray:
+    """
+    cloud box の中心、寸法、world shift から face plane を求め、camera に向いた face の instance row だけを返す。
+    隣接 quad の外周だけではなく、OpenGL の二 triangle が持つ対角線を含む line list の culling 入力として用いる。
+    """
+    data = np.asarray(rows, dtype=np.float32)
+    if data.ndim != 2 or int(data.shape[0]) <= 0:
+      return np.zeros((0, 7), dtype=np.float32)
+    fi = int(face_idx)
+    axis = 0 if fi in (0, 1) else (1 if fi in (2, 3) else 2)
+    positive = fi in (0, 2, 4)
+    eye_value = (float(eye.x), float(eye.y), float(eye.z))[axis]
+    shift_value = (float(shift.x), float(shift.y), float(shift.z))[axis]
+    surface = data[:, axis] + float(shift_value) + ((0.5 if positive else -0.5) * data[:, axis + 3])
+    visible = (float(eye_value) - surface) > 0.0 if positive else (float(eye_value) - surface) < 0.0
+    return np.ascontiguousarray(data[visible], dtype=np.float32)
 
   def _draw_transform_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
     if self._res is None or int(face.instance_count) <= 0:
@@ -939,7 +994,12 @@ class WgpuRendererBackend:
           face = mesh.face(int(face_idx))
           if face is None:
             continue
-          count = self._draw_wire_face_instances(render_pass, face_idx=int(face_idx), face=face)
+          visible_rows = self._front_facing_world_rows(face.rows, face_idx=int(face_idx), eye=eye)
+          visible_face = upload_face_rows(device=self._res.device, label=f"ludoxel-world-wireframe-face-{face_idx}", rows=visible_rows)
+          if visible_face is None:
+            continue
+          temp_uploads.append(visible_face)
+          count = self._draw_wire_face_instances(render_pass, face_idx=int(face_idx), face=visible_face)
           if count <= 0:
             continue
           draw_calls += 1
@@ -1085,10 +1145,22 @@ class WgpuRendererBackend:
           render_pass.set_pipeline(self._res.cloud_wireframe_pipeline if bool(self._state.cloud_wireframe) else self._res.cloud_pipeline)
           render_pass.set_bind_group(0, cloud_uniform_bind_group)
           render_pass.set_vertex_buffer(0, self._res.face_wire_vertex_buffer if bool(self._state.cloud_wireframe) else self._res.face_vertex_buffer)
-          render_pass.set_vertex_buffer(1, cloud_instance_buffer)
-          render_pass.draw(FACE_COUNT * (8 if bool(self._state.cloud_wireframe) else 6), int(cloud_instance_count), 0, 0)
-          draw_calls += 1
-          instances += int(cloud_instance_count)
+          if bool(self._state.cloud_wireframe):
+            for face_idx in range(FACE_COUNT):
+              visible_rows = self._front_facing_cloud_rows(cloud_rows, face_idx=int(face_idx), eye=eye, shift=shift)
+              visible_buffer, visible_count = self._upload_temp_rows(label=f"ludoxel-cloud-wireframe-face-{face_idx}", rows=visible_rows)
+              if visible_buffer is None or int(visible_count) <= 0:
+                continue
+              temp_uniform_buffers.append(visible_buffer)
+              render_pass.set_vertex_buffer(1, visible_buffer)
+              render_pass.draw(12, int(visible_count), int(face_idx) * 12, 0)
+              draw_calls += 1
+              instances += int(visible_count)
+          else:
+            render_pass.set_vertex_buffer(1, cloud_instance_buffer)
+            render_pass.draw(FACE_COUNT * 6, int(cloud_instance_count), 0, 0)
+            draw_calls += 1
+            instances += int(cloud_instance_count)
 
     if self._selection_buffer is not None and self._selection_vertex_count > 0 and bool(self._state.outline_selection_enabled):
       selection_uniform_buffers, selection_uniform_bind_groups = self._create_frame_uniform_bind_groups(

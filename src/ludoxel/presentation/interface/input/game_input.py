@@ -14,10 +14,11 @@ from PyQt6.QtWidgets import QWidget
 from ludoxel.presentation.interface.input.qt import InputFrame, QtInputAdapter
 
 if sys.platform == "darwin":
-  from ludoxel.presentation.interface.input.macos_cursor import MacosCursorWarp
+  from ludoxel.presentation.interface.input.macos_cursor import MacosCursorWarp, MacosRelativeMouseCapture
   from ludoxel.presentation.interface.input.macos_guard import MacosGameplayInputGuard
 else:
   MacosCursorWarp = None
+  MacosRelativeMouseCapture = None
   MacosGameplayInputGuard = None
 
 
@@ -37,6 +38,7 @@ class ViewportInput:
     self._ignore_mouse_move_until_s: float = 0.0
     self._ignore_mouse_move_events: int = 0
     self._macos_cursor_warp = MacosCursorWarp() if MacosCursorWarp is not None else None
+    self._macos_relative_mouse = MacosRelativeMouseCapture() if MacosRelativeMouseCapture is not None else None
     self._macos_input_guard = MacosGameplayInputGuard(native_key_handler) if MacosGameplayInputGuard is not None and callable(native_key_handler) else None
 
   def reset(self) -> None:
@@ -107,10 +109,15 @@ class ViewportInput:
       if self._macos_input_guard is not None:
         self._macos_input_guard.set_active(True)
       self._a.clear_mouse_delta()
-      self._warp_cursor_to_center()
-      self._capture_sync_pending = True
+      center = self._center_global()
+      native_relative = bool(self._macos_relative_mouse is not None and self._macos_relative_mouse.begin(x=int(center.x()), y=int(center.y())))
+      if not bool(native_relative):
+        self._warp_cursor_to_center()
+      self._capture_sync_pending = not bool(native_relative)
       self._capture_sync_stable_polls = 0
     else:
+      if self._macos_relative_mouse is not None:
+        self._macos_relative_mouse.end()
       if self._macos_input_guard is not None:
         self._macos_input_guard.set_active(False)
       self._w.releaseKeyboard()
@@ -145,6 +152,8 @@ class ViewportInput:
     if not bool(self._captured):
       return
     self.ensure_mouse_capture_applied()
+    if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
+      return
     if self.capture_sync_pending():
       center = self._center_global()
       cur = QCursor.pos()
@@ -175,6 +184,11 @@ class ViewportInput:
   def on_captured_mouse_move(self, e: QMouseEvent) -> None:
     if not bool(self._captured):
       return
+    if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
+      delta = self._macos_relative_mouse.poll()
+      if int(delta.dx) != 0 or int(delta.dy) != 0:
+        self._a.add_mouse_delta(float(delta.dx), float(delta.dy))
+      return
     if self.capture_sync_pending():
       return
     if int(self._ignore_mouse_move_events) > 0:
@@ -203,6 +217,9 @@ class ViewportInput:
     self._a.on_key_release(e)
 
   def shutdown(self) -> None:
+    self.set_mouse_capture(False)
+    if self._macos_relative_mouse is not None:
+      self._macos_relative_mouse.close()
     if self._macos_input_guard is not None:
       self._macos_input_guard.close()
 

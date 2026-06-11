@@ -371,8 +371,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'build:macos',
     usage: 'npm run build:macos -- [options]',
     description: {
-      ja: 'macOS app bundle 経路。現時点では未完成制約を明示し、status/check で確認する。',
-      en: 'macOS app bundle path. Currently documents incomplete constraints through status/check commands.',
+      ja: 'PyInstaller による macOS app bundle 経路。status/check で renderer、resource、bundle contract を確認する。',
+      en: 'Build the macOS app bundle with PyInstaller and inspect renderer, resource, and bundle contracts through status/check.',
     },
     options: ['--help', '--dry-run'],
     examples: ['npm run build:macos:help', 'npm run build:macos:check'],
@@ -393,8 +393,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'build:macos:check',
     usage: 'npm run build:macos:check',
     description: {
-      ja: 'macOS app bundle 未完成理由が README に記録されていることを検査する。',
-      en: 'Check that README records the current macOS app-bundle blockers.',
+      ja: 'macOS app bundle の renderer、font、icon、packaging 境界が README に記録されていることを検査する。',
+      en: 'Check that README records the macOS renderer, font, icon, and packaging boundaries.',
     },
     options: ['なし。'],
     examples: ['npm run build:macos:check'],

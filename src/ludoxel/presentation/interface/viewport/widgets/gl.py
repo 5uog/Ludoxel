@@ -169,7 +169,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._overlay = PauseOverlay(self)
     self._overlay.set_title_image_path(status_overlay_title_image_path(self._resource_root))
     self._settings = SettingsOverlay(None, resource_root=self._resource_root, as_window=True)
-    self._othello_settings = OthelloSettingsOverlay(None, as_window=True)
+    self._othello_settings = OthelloSettingsOverlay(None, resource_root=self._resource_root, as_window=True)
     self._death = DeathOverlay(self)
 
     self._crosshair = CrosshairWidget(self)

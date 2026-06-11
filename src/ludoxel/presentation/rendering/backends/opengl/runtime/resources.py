@@ -12,6 +12,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.mesh_buffer import MeshBu
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
 from ludoxel.presentation.rendering.backends.opengl.resources.image_texture import ImageTexture
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
+from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 
 
@@ -37,6 +38,7 @@ class GLResources:
   empty_vao: int
 
   blocks: BlockRegistry
+  block_texture_dir: Path
 
   @staticmethod
   def load(assets_dir: Path, *, blocks: BlockRegistry) -> "GLResources":
@@ -59,7 +61,8 @@ class GLResources:
 
     tex_names = blocks.required_texture_names()
 
-    atlas = TextureAtlas.build_from_dir(assets_dir / "minecraft" / "textures" / "block", tile_size=64, names=tex_names, pad=1)
+    visual_roots = resolve_visual_asset_roots(assets_dir, required_texture_names=tex_names)
+    atlas = TextureAtlas.build_from_dir(visual_roots.block_texture_dir, tile_size=64, names=tex_names, pad=1)
     skin_texture = ImageTexture.load(assets_dir / "minecraft" / "skins" / "alex.png")
 
     empty_vao = int(glGenVertexArrays(1))
@@ -81,6 +84,7 @@ class GLResources:
       skin_texture=skin_texture,
       empty_vao=empty_vao,
       blocks=blocks,
+      block_texture_dir=visual_roots.block_texture_dir,
     )
 
   def destroy(self) -> None:

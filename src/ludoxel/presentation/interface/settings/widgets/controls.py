@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QPoint, QRect, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFocusEvent, QMouseEvent, QPainter, QPaintEvent, QPen, QWheelEvent
-from PyQt6.QtWidgets import QAbstractButton, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QSlider, QWidget
+from PyQt6.QtWidgets import QAbstractButton, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.keybinds import display_text_for_binding, normalize_binding_text, normalize_key_code
 
@@ -195,23 +195,36 @@ class BedrockToggleRow(QWidget):
 
   def __init__(self, text: str, parent: QWidget | None = None) -> None:
     super().__init__(parent)
-    self.setObjectName("bedrockToggleRow")
+    self.setObjectName("settingsRow")
     self.setCursor(Qt.CursorShape.PointingHandCursor)
     self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     layout = QHBoxLayout(self)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(14)
+    layout.setContentsMargins(12, 8, 12, 8)
+    layout.setSpacing(16)
 
-    self._label = QLabel(str(text), self)
-    self._label.setObjectName("bedrockToggleLabel")
+    text_host = QWidget(self)
+    text_host.setObjectName("settingsRowText")
+    text_layout = QVBoxLayout(text_host)
+    text_layout.setContentsMargins(0, 0, 0, 0)
+    text_layout.setSpacing(0)
+    self._label = QLabel(str(text), text_host)
+    self._label.setObjectName("settingsRowLabel")
     self._label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
     self._label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-    layout.addWidget(self._label, stretch=1)
+    text_layout.addWidget(self._label)
+    layout.addWidget(text_host, stretch=3)
 
-    self._switch = BedrockToggleSwitch(self)
+    control_host = QWidget(self)
+    control_host.setObjectName("settingsRowControl")
+    control_layout = QHBoxLayout(control_host)
+    control_layout.setContentsMargins(0, 0, 0, 0)
+    control_layout.setSpacing(0)
+    control_layout.addStretch(1)
+    self._switch = BedrockToggleSwitch(control_host)
     self._switch.toggled.connect(self.toggled.emit)
-    layout.addWidget(self._switch, stretch=0, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+    control_layout.addWidget(self._switch, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+    layout.addWidget(control_host, stretch=2)
 
     self.setFocusProxy(self._switch)
 
@@ -237,7 +250,7 @@ class BedrockToggleRow(QWidget):
 
   def mouseReleaseEvent(self, event: QMouseEvent) -> None:
     if event.button() == Qt.MouseButton.LeftButton:
-      local_pos = self._switch.mapFromParent(event.position().toPoint())
+      local_pos = self._switch.mapFrom(self, event.position().toPoint())
       if not self._switch.rect().contains(local_pos):
         self._switch.toggle()
         event.accept()
@@ -316,27 +329,41 @@ class KeybindRow(QWidget):
 
   def __init__(self, text: str, parent: QWidget | None = None) -> None:
     super().__init__(parent)
-    self.setObjectName("bedrockToggleRow")
+    self.setObjectName("settingsRow")
 
     layout = QHBoxLayout(self)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(10)
+    layout.setContentsMargins(12, 8, 12, 8)
+    layout.setSpacing(16)
 
-    self._label = QLabel(str(text), self)
-    self._label.setObjectName("bedrockToggleLabel")
+    text_host = QWidget(self)
+    text_host.setObjectName("settingsRowText")
+    text_layout = QVBoxLayout(text_host)
+    text_layout.setContentsMargins(0, 0, 0, 0)
+    text_layout.setSpacing(0)
+    self._label = QLabel(str(text), text_host)
+    self._label.setObjectName("settingsRowLabel")
     self._label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-    layout.addWidget(self._label, stretch=1)
+    text_layout.addWidget(self._label)
+    layout.addWidget(text_host, stretch=3)
 
-    self._button = KeybindCaptureButton(self)
+    control_host = QWidget(self)
+    control_host.setObjectName("settingsRowControl")
+    control_layout = QHBoxLayout(control_host)
+    control_layout.setContentsMargins(0, 0, 0, 0)
+    control_layout.setSpacing(8)
+    control_layout.addStretch(1)
+
+    self._button = KeybindCaptureButton(control_host)
     self._button.setMinimumWidth(132)
     self._button.binding_captured.connect(self.binding_changed.emit)
-    layout.addWidget(self._button, stretch=0)
+    control_layout.addWidget(self._button, stretch=0)
 
-    self._clear_button = QPushButton("Clear", self)
-    self._clear_button.setObjectName("menuBtn")
+    self._clear_button = QPushButton("Clear", control_host)
+    self._clear_button.setObjectName("secondaryBtn")
     self._clear_button.setCursor(Qt.CursorShape.PointingHandCursor)
     self._clear_button.clicked.connect(self.clear_requested.emit)
-    layout.addWidget(self._clear_button, stretch=0)
+    control_layout.addWidget(self._clear_button, stretch=0)
+    layout.addWidget(control_host, stretch=2)
 
   def sync_binding_text(self, binding_text: str | None) -> None:
     self._button.sync_binding_text(binding_text)

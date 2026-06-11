@@ -43,6 +43,8 @@ export const REQUIRED_PACKAGE_SCRIPTS = Object.freeze([
   'clean:check',
   'assets:audio:convert',
   'assets:audio:check',
+  'assets:block-thumbnails:generate',
+  'assets:block-thumbnails:check',
 ]);
 
 export const REJECTED_PACKAGE_SCRIPT_TERMS = Object.freeze(['future_ai_workbench', 'format:python', 'lint:python']);

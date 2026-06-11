@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from ludoxel.application.preferences.audio import AudioPreferences
 from ludoxel.application.preferences.camera import normalize_camera_perspective
+from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_CUSTOM, normalize_crosshair_mode
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name, resolve_session_player_name
 from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, PLAYER_SKIN_KIND_CUSTOM
@@ -139,6 +140,7 @@ def sync_crosshair_widgets(viewport: "RendererViewportWidget") -> None:
   viewport._crosshair.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
   viewport._settings._crosshair_preview.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
   viewport._settings._crosshair_editor.set_pixels(viewport._state.crosshair_pixels)
+  viewport._settings._btn_crosshair_reset.setEnabled(normalize_crosshair_mode(viewport._state.crosshair_mode) == CROSSHAIR_MODE_CUSTOM)
 
 
 def sync_player_skin(viewport: "RendererViewportWidget", *, push_to_renderer: bool = False) -> None:

@@ -17,6 +17,7 @@ _TRANSFORM_ROW_WIDTH = 20
 class WgpuFaceInstances:
   instance_buffer: object
   instance_count: int
+  rows: np.ndarray
 
   def destroy(self) -> None:
     if hasattr(self.instance_buffer, "destroy"):
@@ -58,6 +59,10 @@ def _face_lines(nx, ny, nz, corners):
     (*a, nx, ny, nz, 0.0, 0.0),
     (*b, nx, ny, nz, 1.0, 0.0),
     (*b, nx, ny, nz, 1.0, 0.0),
+    (*c, nx, ny, nz, 1.0, 1.0),
+    (*c, nx, ny, nz, 1.0, 1.0),
+    (*a, nx, ny, nz, 0.0, 0.0),
+    (*a, nx, ny, nz, 0.0, 0.0),
     (*c, nx, ny, nz, 1.0, 1.0),
     (*c, nx, ny, nz, 1.0, 1.0),
     (*d, nx, ny, nz, 0.0, 1.0),
@@ -137,22 +142,6 @@ def normalize_transform_face_rows(arr: np.ndarray | None) -> np.ndarray:
   return np.ascontiguousarray(out, dtype=np.float32)
 
 
-def build_selection_vertices(selection_cell: tuple[int, int, int] | None) -> np.ndarray:
-  if selection_cell is None:
-    return np.zeros((0, 3), dtype=np.float32)
-
-  x, y, z = (int(selection_cell[0]), int(selection_cell[1]), int(selection_cell[2]))
-  x0, y0, z0 = float(x), float(y), float(z)
-  x1, y1, z1 = float(x + 1), float(y + 1), float(z + 1)
-  corners = ((x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0), (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1))
-  edges = ((0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7))
-  out: list[tuple[float, float, float]] = []
-  for a, b in edges:
-    out.append(corners[int(a)])
-    out.append(corners[int(b)])
-  return np.asarray(out, dtype=np.float32)
-
-
 def upload_face_rows(*, device, label: str, rows: np.ndarray | None) -> WgpuFaceInstances | None:
   import wgpu
 
@@ -160,7 +149,7 @@ def upload_face_rows(*, device, label: str, rows: np.ndarray | None) -> WgpuFace
   if int(data.shape[0]) <= 0:
     return None
   buffer = device.create_buffer_with_data(label=str(label), data=data, usage=wgpu.BufferUsage.VERTEX)
-  return WgpuFaceInstances(instance_buffer=buffer, instance_count=int(data.shape[0]))
+  return WgpuFaceInstances(instance_buffer=buffer, instance_count=int(data.shape[0]), rows=data)
 
 
 def upload_transform_face_rows(*, device, label: str, rows: np.ndarray | None) -> WgpuFaceInstances | None:
@@ -170,7 +159,7 @@ def upload_transform_face_rows(*, device, label: str, rows: np.ndarray | None) -
   if int(data.shape[0]) <= 0:
     return None
   buffer = device.create_buffer_with_data(label=str(label), data=data, usage=wgpu.BufferUsage.VERTEX)
-  return WgpuFaceInstances(instance_buffer=buffer, instance_count=int(data.shape[0]))
+  return WgpuFaceInstances(instance_buffer=buffer, instance_count=int(data.shape[0]), rows=data)
 
 
 def upload_chunk_mesh(*, device, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | tuple[np.ndarray, ...] | None) -> WgpuChunkMesh | None:

@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QPalette
-from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 
 class SidebarDialogBase(QDialog):
@@ -75,6 +75,10 @@ class SidebarDialogBase(QDialog):
     self._sidebar_layout = QVBoxLayout(self._sidebar)
     self._sidebar_layout.setContentsMargins(0, 12, 0, 12)
     self._sidebar_layout.setSpacing(0)
+    self._sidebar_title = QLabel(str(window_title), self._sidebar)
+    self._sidebar_title.setObjectName("settingsSidebarTitle")
+    self._sidebar_title.setWordWrap(True)
+    self._sidebar_layout.addWidget(self._sidebar_title)
 
     self._content = QWidget(self._panel)
     self._content.setObjectName(str(content_object_name))

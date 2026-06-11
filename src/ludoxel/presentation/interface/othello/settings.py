@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+from pathlib import Path
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
 
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
+from ludoxel.presentation.interface.settings.surface import add_page_header, add_setting_row, add_settings_card
 from ludoxel.simulation.spaces.othello.game.state import (
   DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR,
   DEFAULT_OTHELLO_BOOK_LEAF_ERROR,
@@ -51,7 +54,7 @@ class OthelloSettingsOverlay(SidebarDialogBase):
   book_import_requested = pyqtSignal()
   book_export_requested = pyqtSignal()
 
-  def __init__(self, parent: QWidget | None = None, *, as_window: bool = False) -> None:
+  def __init__(self, parent: QWidget | None = None, *, resource_root: Path | None = None, as_window: bool = False) -> None:
     super().__init__(
       parent,
       as_window=as_window,
@@ -65,15 +68,28 @@ class OthelloSettingsOverlay(SidebarDialogBase):
       stack_object_name="othelloSettingsStack",
     )
     self._syncing_values: bool = False
+    self._resource_root = None if resource_root is None else Path(resource_root)
 
     self._tab_match = self._make_tab_button("Match", 0, self._set_page)
-    self._tab_book = self._make_tab_button("Opening Book", 1, self._set_page)
+    self._tab_ai = self._make_tab_button("AI", 1, self._set_page)
+    self._tab_book = self._make_tab_button("Book", 2, self._set_page)
+    self._tab_learning = self._make_tab_button("Learning", 3, self._set_page)
+    self._tab_about = self._make_tab_button("About", 4, self._set_page)
     self._sidebar_layout.addWidget(self._tab_match)
+    self._sidebar_layout.addWidget(self._tab_ai)
     self._sidebar_layout.addWidget(self._tab_book)
+    self._sidebar_layout.addWidget(self._tab_learning)
     self._sidebar_layout.addStretch(1)
+    self._sidebar_layout.addWidget(self._tab_about)
 
     self._build_match_page()
+    self._build_ai_page()
     self._build_book_page()
+    self._build_learning_page()
+    self._about_placeholder = QWidget(self._stack)
+    self._about_placeholder.setObjectName("aboutPagePlaceholder")
+    self._stack.addWidget(self._about_placeholder)
+    self._about_built = False
     self._connect_setting_fields()
     self.sync_values(OthelloSettings())
     self.set_book_summary_text("")
@@ -81,10 +97,12 @@ class OthelloSettingsOverlay(SidebarDialogBase):
 
   def _build_match_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
+    add_page_header(layout, host, title="Match", subtitle="Opponent strength, player order, disc animation, and clock behavior.")
+    _card, body, body_layout = add_settings_card(layout, host, title="Match", description="Changes are applied immediately to the persisted Othello settings.")
 
     self._difficulty = self._add_combo(
-      layout,
-      host,
+      body_layout,
+      body,
       "AI difficulty",
       (
         (OTHELLO_DIFFICULTY_WEAK, "Weak"),
@@ -95,8 +113,8 @@ class OthelloSettingsOverlay(SidebarDialogBase):
       ),
     )
     self._time_control = self._add_combo(
-      layout,
-      host,
+      body_layout,
+      body,
       "Time control",
       (
         (OTHELLO_TIME_CONTROL_OFF, "Timer off"),
@@ -110,64 +128,90 @@ class OthelloSettingsOverlay(SidebarDialogBase):
         (OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"),
       ),
     )
-    self._animation_mode = self._add_combo(layout, host, "Disc animation", ((OTHELLO_ANIMATION_OFF, "Animation off"), (OTHELLO_ANIMATION_FAST, "Ripple fast"), (OTHELLO_ANIMATION_SLOW, "Ripple slow")))
-    self._player_side = self._add_combo(layout, host, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
-    self._sacrifice_level = self._add_spin(layout, host, "Sacrifice level", minimum=int(OTHELLO_AI_SACRIFICE_LEVEL_MIN), maximum=int(OTHELLO_AI_SACRIFICE_LEVEL_MAX))
-    self._thread_count = self._add_spin(layout, host, "Worker count", minimum=int(OTHELLO_AI_THREAD_MIN), maximum=int(OTHELLO_AI_THREAD_MAX))
-    self._hash_level = self._add_spin(layout, host, "Hash level", minimum=int(OTHELLO_AI_HASH_LEVEL_MIN), maximum=int(OTHELLO_AI_HASH_LEVEL_MAX))
+    self._animation_mode = self._add_combo(
+      body_layout, body, "Disc animation", ((OTHELLO_ANIMATION_OFF, "Animation off"), (OTHELLO_ANIMATION_FAST, "Ripple fast"), (OTHELLO_ANIMATION_SLOW, "Ripple slow"))
+    )
+    self._player_side = self._add_combo(body_layout, body, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
+    layout.addStretch(1)
+    self._stack.addWidget(scroll)
+
+  def _build_ai_page(self) -> None:
+    """
+    Othello engine の worker、hash、sacrifice 設定を共通 settings card と二列 row へ配置する。
+    control は既存 signal と `OthelloSettings` persistence contract を維持し、UI grouping だけを AI page として分離する。
+    """
+    scroll, host, layout = self._make_scroll_page()
+    add_page_header(layout, host, title="AI", subtitle="Worker, hash, and sacrifice parameters used by the Othello engine.")
+    _card, body, body_layout = add_settings_card(layout, host, title="Engine", description="These values preserve the existing engine and persistence contracts.")
+    self._thread_count = self._add_spin(body_layout, body, "Worker count", minimum=int(OTHELLO_AI_THREAD_MIN), maximum=int(OTHELLO_AI_THREAD_MAX))
+    self._hash_level = self._add_spin(body_layout, body, "Hash level", minimum=int(OTHELLO_AI_HASH_LEVEL_MIN), maximum=int(OTHELLO_AI_HASH_LEVEL_MAX))
+    self._sacrifice_level = self._add_spin(body_layout, body, "Sacrifice level", minimum=int(OTHELLO_AI_SACRIFICE_LEVEL_MIN), maximum=int(OTHELLO_AI_SACRIFICE_LEVEL_MAX))
     layout.addStretch(1)
     self._stack.addWidget(scroll)
 
   def _build_book_page(self) -> None:
+    """
+    opening book の summary、import、export 操作を Book page に配置する。
+    button は既存 request signal を送るだけであり、storage path、book schema、import/export 処理本体を presentation 層へ移さない。
+    """
     scroll, host, layout = self._make_scroll_page()
-
+    add_page_header(layout, host, title="Book", subtitle="Inspect, import, or export the opening-book storage managed by Ludoxel.")
+    _card, body, body_layout = add_settings_card(layout, host, title="Opening Book", description="Import and export are explicit repository-independent user actions.")
     self._book_summary = QLabel("", host)
     self._book_summary.setObjectName("subtitle")
     self._book_summary.setWordWrap(True)
-    layout.addWidget(self._book_summary)
-
-    self._book_learning_depth = self._add_spin(layout, host, "Book depth", minimum=int(OTHELLO_BOOK_LEARNING_DEPTH_MIN), maximum=int(OTHELLO_BOOK_LEARNING_DEPTH_MAX))
-    self._book_per_move_error = self._add_double_spin(
-      layout, host, "Per-move error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR)
-    )
-    self._book_cumulative_error = self._add_double_spin(
-      layout, host, "Cumulative error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR)
-    )
-    self._book_leaf_error = self._add_double_spin(
-      layout, host, "Leaf error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR)
-    )
-
-    self._learning_status = QLabel("", host)
-    self._learning_status.setObjectName("subtitle")
-    self._learning_status.setWordWrap(True)
-    layout.addWidget(self._learning_status)
+    add_setting_row(body_layout, body, label="Book summary", description="Current built-in and user opening-book state.", control=self._book_summary)
 
     io_row = QHBoxLayout()
     self._btn_import_book = QPushButton("Import Book", host)
-    self._btn_import_book.setObjectName("menuBtn")
+    self._btn_import_book.setObjectName("secondaryBtn")
     self._btn_import_book.clicked.connect(self.book_import_requested.emit)
     io_row.addWidget(self._btn_import_book)
 
     self._btn_export_book = QPushButton("Export Book", host)
-    self._btn_export_book.setObjectName("menuBtn")
+    self._btn_export_book.setObjectName("secondaryBtn")
     self._btn_export_book.clicked.connect(self.book_export_requested.emit)
     io_row.addWidget(self._btn_export_book)
     io_row.addStretch(1)
-    layout.addLayout(io_row)
+    body_layout.addLayout(io_row)
+    layout.addStretch(1)
+    self._stack.addWidget(scroll)
 
+  def _build_learning_page(self) -> None:
+    """
+    opening-book learning の数値条件、実行、取消、status を Learning page に配置する。
+    learning worker と error semantics は変更せず、primary/danger button の視覚優先度と row alignment を共通 surface に合わせる。
+    """
+    scroll, host, layout = self._make_scroll_page()
+    add_page_header(layout, host, title="Learning", subtitle="Opening-book learning depth, error limits, progress, and cancellation.")
+    _card, body, body_layout = add_settings_card(layout, host, title="Learning Parameters", description="Learning uses the current Othello settings without changing the book schema.")
+    self._book_learning_depth = self._add_spin(body_layout, body, "Book depth", minimum=int(OTHELLO_BOOK_LEARNING_DEPTH_MIN), maximum=int(OTHELLO_BOOK_LEARNING_DEPTH_MAX))
+    self._book_per_move_error = self._add_double_spin(
+      body_layout, body, "Per-move error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR)
+    )
+    self._book_cumulative_error = self._add_double_spin(
+      body_layout, body, "Cumulative error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR)
+    )
+    self._book_leaf_error = self._add_double_spin(
+      body_layout, body, "Leaf error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR)
+    )
+    self._learning_status = QLabel("", host)
+    self._learning_status.setObjectName("subtitle")
+    self._learning_status.setWordWrap(True)
+    add_setting_row(body_layout, body, label="Learning status", description="Current worker progress or completion state.", control=self._learning_status)
     button_row = QHBoxLayout()
     self._btn_learn_book = QPushButton("Learn Opening Book", host)
-    self._btn_learn_book.setObjectName("menuBtn")
+    self._btn_learn_book.setObjectName("primaryBtn")
     self._btn_learn_book.clicked.connect(self._request_book_learning)
     button_row.addWidget(self._btn_learn_book)
 
     self._btn_cancel_learning = QPushButton("Cancel Learning", host)
-    self._btn_cancel_learning.setObjectName("menuBtn")
+    self._btn_cancel_learning.setObjectName("dangerBtn")
     self._btn_cancel_learning.clicked.connect(self.book_learning_cancel_requested.emit)
     self._btn_cancel_learning.setEnabled(False)
     button_row.addWidget(self._btn_cancel_learning)
     button_row.addStretch(1)
-    layout.addLayout(button_row)
+    body_layout.addLayout(button_row)
 
     layout.addStretch(1)
     self._stack.addWidget(scroll)
@@ -182,43 +226,51 @@ class OthelloSettingsOverlay(SidebarDialogBase):
 
   @staticmethod
   def _add_combo(layout: QVBoxLayout, parent: QWidget, label_text: str, entries: tuple[tuple[object, str], ...]) -> QComboBox:
-    label = QLabel(str(label_text), parent)
-    label.setObjectName("valueLabel")
-    layout.addWidget(label)
-
     combo = QComboBox(parent)
     for value, text in entries:
       combo.addItem(str(text), userData=value)
-    layout.addWidget(combo)
+    add_setting_row(layout, parent, label=str(label_text), description="", control=combo)
     return combo
 
   @staticmethod
   def _add_spin(layout: QVBoxLayout, parent: QWidget, label_text: str, *, minimum: int, maximum: int) -> QSpinBox:
-    label = QLabel(str(label_text), parent)
-    label.setObjectName("valueLabel")
-    layout.addWidget(label)
-
     spin = QSpinBox(parent)
     spin.setRange(int(minimum), int(maximum))
-    layout.addWidget(spin)
+    add_setting_row(layout, parent, label=str(label_text), description="", control=spin)
     return spin
 
   @staticmethod
   def _add_double_spin(layout: QVBoxLayout, parent: QWidget, label_text: str, *, minimum: float, maximum: float, default: float) -> QDoubleSpinBox:
-    label = QLabel(str(label_text), parent)
-    label.setObjectName("valueLabel")
-    layout.addWidget(label)
-
     spin = QDoubleSpinBox(parent)
     spin.setRange(float(minimum), float(maximum))
     spin.setDecimals(1)
     spin.setSingleStep(1.0)
     spin.setValue(float(default))
-    layout.addWidget(spin)
+    add_setting_row(layout, parent, label=str(label_text), description="", control=spin)
     return spin
 
   def _set_page(self, index: int) -> None:
-    self._set_stack_page(index=index, max_index=1, tab_buttons=(self._tab_match, self._tab_book))
+    selected = int(max(0, min(4, int(index))))
+    if selected == 4:
+      self._ensure_about_page()
+    self._set_stack_page(index=selected, max_index=4, tab_buttons=(self._tab_match, self._tab_ai, self._tab_book, self._tab_learning, self._tab_about))
+
+  def _ensure_about_page(self) -> None:
+    """
+    Othello settings の About page を最初の選択時に一度だけ生成する。
+    My World と同じ content、object name、scroll page builder を共有し、stack index と再表示時の widget identity を保つ。
+    """
+    if bool(self._about_built):
+      return
+    from ludoxel.presentation.interface.settings.pages import build_about_tab
+
+    build_about_tab(self)
+    placeholder_index = self._stack.indexOf(self._about_placeholder)
+    if placeholder_index >= 0:
+      placeholder = self._stack.widget(placeholder_index)
+      self._stack.removeWidget(placeholder)
+      placeholder.deleteLater()
+    self._about_built = True
 
   def sync_values(self, settings: OthelloSettings) -> None:
     normalized = settings.normalized()

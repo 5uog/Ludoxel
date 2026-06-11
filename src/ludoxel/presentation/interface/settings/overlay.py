@@ -11,7 +11,7 @@ from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERS
 from ludoxel.application.preferences.keybinds import action_display_name
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.config.pause_overlay import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
-from ludoxel.presentation.interface.settings.pages import build_about_tab, build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
+from ludoxel.presentation.interface.settings.pages import build_audio_tab, build_controls_tab, build_display_tab, build_game_tab, build_world_tab
 from ludoxel.presentation.interface.settings.sync import sync_overlay_values
 from ludoxel.presentation.interface.settings.widgets.controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
 from ludoxel.presentation.rendering.contracts.state import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
@@ -90,23 +90,29 @@ class SettingsOverlay(SidebarDialogBase):
     self._resource_root = None if resource_root is None else Path(resource_root)
     self._keybind_rows: dict[str, KeybindRow] = {}
 
-    self._tab_video = self._make_tab_button("Video", 0, self._set_tab)
-    self._tab_controls = self._make_tab_button("Controls", 1, self._set_tab)
-    self._tab_audio = self._make_tab_button("Audio", 2, self._set_tab)
-    self._tab_game = self._make_tab_button("Game Player", 3, self._set_tab)
-    self._tab_about = self._make_tab_button("About", 4, self._set_tab)
-    self._sidebar_layout.addWidget(self._tab_video)
+    self._tab_display = self._make_tab_button("Display", 0, self._set_tab)
+    self._tab_world = self._make_tab_button("World", 1, self._set_tab)
+    self._tab_game = self._make_tab_button("Player", 2, self._set_tab)
+    self._tab_controls = self._make_tab_button("Controls", 3, self._set_tab)
+    self._tab_audio = self._make_tab_button("Audio", 4, self._set_tab)
+    self._tab_about = self._make_tab_button("About", 5, self._set_tab)
+    self._sidebar_layout.addWidget(self._tab_display)
+    self._sidebar_layout.addWidget(self._tab_world)
+    self._sidebar_layout.addWidget(self._tab_game)
     self._sidebar_layout.addWidget(self._tab_controls)
     self._sidebar_layout.addWidget(self._tab_audio)
-    self._sidebar_layout.addWidget(self._tab_game)
     self._sidebar_layout.addStretch(1)
     self._sidebar_layout.addWidget(self._tab_about)
 
-    build_video_tab(self)
+    build_display_tab(self)
+    build_world_tab(self)
+    build_game_tab(self)
     build_controls_tab(self)
     build_audio_tab(self)
-    build_game_tab(self)
-    build_about_tab(self)
+    self._about_placeholder = QWidget(self._stack)
+    self._about_placeholder.setObjectName("aboutPagePlaceholder")
+    self._stack.addWidget(self._about_placeholder)
+    self._about_built = False
     self._set_tab(0)
 
   @staticmethod
@@ -157,7 +163,27 @@ class SettingsOverlay(SidebarDialogBase):
     self.creative_mode_changed.emit(bool(checked))
 
   def _set_tab(self, index: int) -> None:
-    self._set_stack_page(index=index, max_index=4, tab_buttons=(self._tab_video, self._tab_controls, self._tab_audio, self._tab_game, self._tab_about))
+    selected = int(max(0, min(5, int(index))))
+    if selected == 5:
+      self._ensure_about_tab()
+    self._set_stack_page(index=selected, max_index=5, tab_buttons=(self._tab_display, self._tab_world, self._tab_game, self._tab_controls, self._tab_audio, self._tab_about))
+
+  def _ensure_about_tab(self) -> None:
+    """
+    About page を最初に選択した時点で一度だけ構築し、同じ overlay instance の再表示では生成済み widget tree を再利用する。
+    content module の import と大量 widget 生成を通常の settings 起動経路から外しつつ、stack index 5 を維持する。
+    """
+    if bool(self._about_built):
+      return
+    from ludoxel.presentation.interface.settings.pages import build_about_tab
+
+    build_about_tab(self)
+    placeholder_index = self._stack.indexOf(self._about_placeholder)
+    if placeholder_index >= 0:
+      placeholder = self._stack.widget(placeholder_index)
+      self._stack.removeWidget(placeholder)
+      placeholder.deleteLater()
+    self._about_built = True
 
   def sync_values(self, **kwargs) -> None:
     sync_overlay_values(self, **kwargs)

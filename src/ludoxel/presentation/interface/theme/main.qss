@@ -122,6 +122,7 @@ QWidget#settingsRoot QWidget#settingsPage,
 QWidget#othelloSettingsRoot QWidget#settingsPage,
 QWidget#settingsDialog QWidget#settingsPage,
 QWidget#settingsRoot QWidget#aboutPage,
+QWidget#othelloSettingsRoot QWidget#aboutPage,
 QWidget#settingsDialog QWidget#aboutPage {
   background: #242424;
 }
@@ -239,8 +240,10 @@ QWidget#settingsRoot QWidget#settingsCard,
 QWidget#othelloSettingsRoot QWidget#settingsCard,
 QWidget#settingsDialog QWidget#settingsCard,
 QWidget#settingsRoot QFrame#aboutCard,
+QWidget#othelloSettingsRoot QFrame#aboutCard,
 QWidget#settingsDialog QFrame#aboutCard,
 QWidget#settingsRoot QFrame#aboutProfileCard,
+QWidget#othelloSettingsRoot QFrame#aboutProfileCard,
 QWidget#settingsDialog QFrame#aboutProfileCard {
   background: #303030;
   border-top: 3px solid #5b5b5b;
@@ -950,6 +953,7 @@ QWidget#settingsDialog QWidget#crosshairEditor {
 /* About page */
 
 QWidget#settingsRoot QFrame#aboutProfileCover,
+QWidget#othelloSettingsRoot QFrame#aboutProfileCover,
 QWidget#settingsDialog QFrame#aboutProfileCover {
   background: #203818;
   border-top: none;
@@ -961,12 +965,14 @@ QWidget#settingsDialog QFrame#aboutProfileCover {
 }
 
 QWidget#settingsRoot QWidget#aboutAvatarLayer,
+QWidget#othelloSettingsRoot QWidget#aboutAvatarLayer,
 QWidget#settingsDialog QWidget#aboutAvatarLayer {
   background: transparent;
   border: none;
 }
 
 QWidget#settingsRoot QLabel#aboutProfileMark,
+QWidget#othelloSettingsRoot QLabel#aboutProfileMark,
 QWidget#settingsDialog QLabel#aboutProfileMark {
   color: rgba(255,255,255,235);
   font-size: 32px;
@@ -974,6 +980,7 @@ QWidget#settingsDialog QLabel#aboutProfileMark {
 }
 
 QWidget#settingsRoot QLabel#aboutAvatar,
+QWidget#othelloSettingsRoot QLabel#aboutAvatar,
 QWidget#settingsDialog QLabel#aboutAvatar {
   color: #ffffff;
   background: #2a2a2a;
@@ -988,6 +995,7 @@ QWidget#settingsDialog QLabel#aboutAvatar {
 }
 
 QWidget#settingsRoot QLabel#aboutProfileName,
+QWidget#othelloSettingsRoot QLabel#aboutProfileName,
 QWidget#settingsDialog QLabel#aboutProfileName {
   color: #ffffff;
   font-size: 24px;
@@ -995,24 +1003,30 @@ QWidget#settingsDialog QLabel#aboutProfileName {
 }
 
 QWidget#settingsRoot QLabel#aboutProfileHandle,
+QWidget#othelloSettingsRoot QLabel#aboutProfileHandle,
 QWidget#settingsDialog QLabel#aboutProfileHandle,
 QWidget#settingsRoot QLabel#aboutProfileBio,
+QWidget#othelloSettingsRoot QLabel#aboutProfileBio,
 QWidget#settingsDialog QLabel#aboutProfileBio,
 QWidget#settingsRoot QLabel#aboutProfileRole,
+QWidget#othelloSettingsRoot QLabel#aboutProfileRole,
 QWidget#settingsDialog QLabel#aboutProfileRole,
 QWidget#settingsRoot QLabel#aboutMetaValue,
+QWidget#othelloSettingsRoot QLabel#aboutMetaValue,
 QWidget#settingsDialog QLabel#aboutMetaValue {
   color: rgba(255,255,255,205);
   font-size: 13px;
 }
 
 QWidget#settingsRoot QLabel#aboutProfileRole,
+QWidget#othelloSettingsRoot QLabel#aboutProfileRole,
 QWidget#settingsDialog QLabel#aboutProfileRole {
   color: #ffffff;
   font-weight: 800;
 }
 
 QWidget#settingsRoot QLabel#aboutPill,
+QWidget#othelloSettingsRoot QLabel#aboutPill,
 QWidget#settingsDialog QLabel#aboutPill {
   color: #ffffff;
   background: #4c7f2a;
@@ -1027,6 +1041,7 @@ QWidget#settingsDialog QLabel#aboutPill {
 }
 
 QWidget#settingsRoot QLabel#aboutMetaTitle,
+QWidget#othelloSettingsRoot QLabel#aboutMetaTitle,
 QWidget#settingsDialog QLabel#aboutMetaTitle {
   color: rgba(255,255,255,170);
   font-size: 12px;
@@ -1035,6 +1050,7 @@ QWidget#settingsDialog QLabel#aboutMetaTitle {
 }
 
 QWidget#settingsRoot QLabel#aboutLead,
+QWidget#othelloSettingsRoot QLabel#aboutLead,
 QWidget#settingsDialog QLabel#aboutLead {
   color: #ffffff;
   font-size: 18px;
@@ -1042,6 +1058,7 @@ QWidget#settingsDialog QLabel#aboutLead {
 }
 
 QWidget#settingsRoot QLabel#aboutSectionTitle,
+QWidget#othelloSettingsRoot QLabel#aboutSectionTitle,
 QWidget#settingsDialog QLabel#aboutSectionTitle {
   color: #ffffff;
   font-size: 14px;
@@ -1051,10 +1068,10 @@ QWidget#settingsDialog QLabel#aboutSectionTitle {
 
 QWidget#settingsRoot QLabel#aboutCodeBlock,
 QWidget#settingsRoot QLabel#aboutCodeValue,
-QWidget#settingsRoot QLabel#aboutInlineCode,
+QWidget#othelloSettingsRoot QLabel#aboutCodeBlock,
+QWidget#othelloSettingsRoot QLabel#aboutCodeValue,
 QWidget#settingsDialog QLabel#aboutCodeBlock,
-QWidget#settingsDialog QLabel#aboutCodeValue,
-QWidget#settingsDialog QLabel#aboutInlineCode {
+QWidget#settingsDialog QLabel#aboutCodeValue {
   color: #f5f5f5;
   background: #111111;
   border-top: 2px solid #050505;
@@ -1066,9 +1083,21 @@ QWidget#settingsDialog QLabel#aboutInlineCode {
   font-size: 12px;
 }
 
+QWidget#settingsRoot QLabel#aboutInlineCode,
+QWidget#othelloSettingsRoot QLabel#aboutInlineCode,
+QWidget#settingsDialog QLabel#aboutInlineCode {
+  color: rgba(255,255,255,205);
+  background: transparent;
+  border: none;
+  padding: 0px;
+  font-size: 13px;
+}
+
 QWidget#settingsRoot QPushButton#aboutGithubButton,
+QWidget#othelloSettingsRoot QPushButton#aboutGithubButton,
 QWidget#settingsDialog QPushButton#aboutGithubButton,
 QWidget#settingsRoot QPushButton#linkBtn,
+QWidget#othelloSettingsRoot QPushButton#linkBtn,
 QWidget#settingsDialog QPushButton#linkBtn {
   color: #ffffff;
   background: #5c5c5c;

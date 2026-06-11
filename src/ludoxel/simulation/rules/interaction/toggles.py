@@ -66,7 +66,11 @@ def toggle_fence_gate_if_hit_for_service(service, hit_cell: tuple[int, int, int]
   if nxt is None:
     nxt = make_fence_gate_state(str(base), str(next_facing), open_state=bool(next_open), powered=bool(powered), in_wall=bool(in_wall), waterlogged=bool(waterlogged))
 
+  revision_before = int(service.world.revision)
   service._commit_world_edit(updates={k: str(nxt)})
+  committed_state = service.world.blocks.get(k)
+  if str(committed_state) != str(nxt) or int(service.world.revision) <= int(revision_before):
+    return InteractionOutcome(success=False)
 
   if bool(next_open):
     if service.player.fence_gate_overlap_exemption == k:

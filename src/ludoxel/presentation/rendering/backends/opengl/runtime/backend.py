@@ -199,7 +199,7 @@ class RendererBackend:
       selection=self._selection,
       sel_tint_strength=float(self._sel_tint_strength),
     )
-    self._texture_animations = TextureAnimationController(block_dir=Path(assets_dir) / "minecraft" / "textures" / "block", atlas=self._res.atlas)
+    self._texture_animations = TextureAnimationController(block_dir=self._res.block_texture_dir, atlas=self._res.atlas)
 
     self.apply_runtime_state()
 

@@ -1,6 +1,6 @@
 {
   "name": "ludoxel",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "private": true,
   "license": "LicenseRef-All-Rights-Reserved",
   "type": "module",
@@ -46,6 +46,8 @@
     "clean:check": "node ./tools/clean_build_artifacts/scripts/run/clean-check.run.mjs",
     "assets:audio:convert": "node ./tools/convert_audio_assets/scripts/run/convert.run.mjs",
     "assets:audio:check": "node ./tools/convert_audio_assets/scripts/run/check.run.mjs",
+    "assets:block-thumbnails:generate": "node ./tools/generate_block_thumbnails/scripts/run/generate.run.mjs",
+    "assets:block-thumbnails:check": "node ./tools/generate_block_thumbnails/scripts/run/check.run.mjs",
     "check": "npm run format:check && npm run lint && npm run tools:test && npm run package:check && npm run docs:check && npm run license:check && npm run resources:check && npm run shader:check",
     "ci": "npm run check"
   },

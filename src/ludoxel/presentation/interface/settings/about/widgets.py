@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import html
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QSizePolicy, QWidget
 
-from ludoxel.presentation.interface.settings.about.content import GITHUB_IMAGE_CANDIDATE_NAMES, PROFILE_IMAGE_CANDIDATE_NAMES
+from ludoxel.presentation.interface.settings.about.content import GITHUB_IMAGE_CANDIDATE_NAMES, PROFILE_IMAGE_CANDIDATE_NAMES, AboutRun
 
 
 def _first_existing_asset(resource_root: Path | None, relative_dir: str, candidate_names: tuple[str, ...]) -> Path | None:
@@ -63,6 +64,41 @@ def about_code_block(parent: QWidget, text: str) -> QLabel:
   label = QLabel(str(text).rstrip("\n"), parent)
   label.setObjectName("aboutCodeBlock")
   label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+  label.setWordWrap(True)
+  label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+  return label
+
+
+def about_code_value(parent: QWidget, text: str) -> QLabel:
+  """
+  一行の独立 code value を code block と対応する visual design で描画する。
+  selectable text と minimum height を保持し、paragraph の inline code とは別 widget として扱う。
+  """
+  label = QLabel(str(text).rstrip("\n"), parent)
+  label.setObjectName("aboutCodeValue")
+  label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+  label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+  return label
+
+
+def about_inline_paragraph(parent: QWidget, runs: tuple[AboutRun, ...]) -> QLabel:
+  """
+  構造化済み text/code run を入力順に HTML escape し、一つの paragraph label として描画する。
+  code span だけに code block 対応色、背景、padding を適用し、通常文の空白と句読点を変更しない。
+  """
+  fragments: list[str] = []
+  has_code = False
+  for run in tuple(runs):
+    escaped = html.escape(str(run.text), quote=True)
+    if str(run.kind).strip().lower() == "code":
+      has_code = True
+      fragments.append(f'<span style="font-family: monospace; color: #f3f3f3; background-color: #111111; border: 1px solid #050505; padding: 1px 4px;">{escaped}</span>')
+    else:
+      fragments.append(escaped)
+  label = QLabel("".join(fragments), parent)
+  label.setObjectName("aboutInlineCode" if bool(has_code) else "subtitle")
+  label.setTextFormat(Qt.TextFormat.RichText)
+  label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.LinksAccessibleByMouse)
   label.setWordWrap(True)
   label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   return label

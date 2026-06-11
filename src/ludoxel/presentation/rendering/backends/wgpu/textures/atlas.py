@@ -10,6 +10,8 @@ from typing import Dict, Iterable, Tuple
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QImage, QPainter
 
+from ludoxel.presentation.resources.asset_roots import resolve_block_texture_path
+
 UVRect = Tuple[float, float, float, float]
 
 
@@ -99,17 +101,17 @@ def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None
 
   p = int(max(0, int(pad)))
   if names is None:
-    candidates = tuple(sorted(block_dir.glob("*.png")))
+    candidates = tuple((path.stem, path) for path in sorted(block_dir.glob("*.png")))
   else:
-    candidates = tuple(block_dir / f"{str(name)}.png" for name in names)
+    candidates = tuple((str(name), resolve_block_texture_path(block_dir, str(name))) for name in names)
 
-  for path in candidates:
+  for name, path in candidates:
     if not path.exists():
       continue
     img = QImage(str(path))
     if img.isNull():
       continue
-    out.append((path.stem, _prep_image(img, tile_size=int(tile_size), pad=int(p))))
+    out.append((str(name), _prep_image(img, tile_size=int(tile_size), pad=int(p))))
 
   return out
 

@@ -6,9 +6,11 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 _TITLE_IMAGE_CANDIDATE_NAMES = ("ludoxel.png", "ludoxel.svg", "ludoxel.jpg", "ludoxel.jpeg", "ludoxel.webp", "ludoxel.bmp")
+_TITLE_IMAGE_MAX_HEIGHT = 220
+_TITLE_STATUS_SPACING = 24
 
 
 def status_overlay_title_image_path(resource_root: Path) -> Path | None:
@@ -44,26 +46,30 @@ class StatusOverlayFrame(QFrame):
     self._title_text = str(title_text).strip()
     self._title_pixmap = QPixmap()
 
-    layout = QVBoxLayout(self)
-    layout.setContentsMargins(40, 40, 40, 40)
-    layout.addStretch(1)
+    self._layout = QVBoxLayout(self)
+    self._layout.setContentsMargins(40, 40, 40, 40)
+    self._layout.setSpacing(_TITLE_STATUS_SPACING)
+    self._layout.addStretch(1)
 
     self._title = QLabel(self._title_text, self)
     self._title.setObjectName(str(title_object_name))
     self._title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-    layout.addWidget(self._title)
+    self._title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    self._layout.addWidget(self._title)
 
     self._status = QLabel("", self)
     self._status.setObjectName(str(status_object_name))
     self._status.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-    layout.addWidget(self._status)
+    self._status.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    self._status.setMinimumHeight(int(self._status.fontMetrics().lineSpacing()) + 8)
+    self._layout.addWidget(self._status)
 
-    layout.addStretch(1)
-    self.set_status_text(str(status_text))
+    self._layout.addStretch(1)
     if title_image_path is not None:
       self.set_title_image_path(title_image_path)
     else:
       self.set_title_text(self._title_text)
+    self.set_status_text(str(status_text))
 
   def set_title_text(self, text: str) -> None:
     self._title_text = str(text).strip()
@@ -80,6 +86,9 @@ class StatusOverlayFrame(QFrame):
 
   def set_status_text(self, text: str) -> None:
     self._status.setText(str(text).strip() or "Loading...")
+    self._status.setMinimumHeight(int(self._status.fontMetrics().lineSpacing()) + 8)
+    self._status.updateGeometry()
+    self._layout.activate()
 
   def resizeEvent(self, e) -> None:
     super().resizeEvent(e)
@@ -89,10 +98,19 @@ class StatusOverlayFrame(QFrame):
     if self._title_pixmap.isNull():
       self._title.setPixmap(QPixmap())
       self._title.setText(self._title_text)
+      self._title.setFixedHeight(max(int(self._title.fontMetrics().lineSpacing()) + 8, int(self._title.sizeHint().height())))
+      self._title.updateGeometry()
+      self._layout.activate()
       return
 
     available_width = max(1, int(self.width()) - 80)
-    available_height = max(1, min(220, int(round(float(self.height()) * 0.28))))
+    available_height = max(1, min(_TITLE_IMAGE_MAX_HEIGHT, int(round(float(self.height()) * 0.28))))
+    if int(self.width()) <= 80 or int(self.height()) <= 80:
+      available_width = max(1, min(int(self._title_pixmap.width()), 720))
+      available_height = max(1, min(_TITLE_IMAGE_MAX_HEIGHT, int(self._title_pixmap.height())))
     scaled = self._title_pixmap.scaled(available_width, available_height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
     self._title.setText("")
     self._title.setPixmap(scaled)
+    self._title.setFixedHeight(max(1, int(scaled.height())))
+    self._title.updateGeometry()
+    self._layout.activate()

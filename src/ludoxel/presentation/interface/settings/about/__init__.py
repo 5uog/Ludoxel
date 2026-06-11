@@ -17,10 +17,26 @@ from ludoxel.presentation.interface.settings.about.content import (
   GITHUB_IMAGE_CANDIDATE_NAMES,
   PROFILE_IMAGE_CANDIDATE_NAMES,
   AboutBlock,
+  AboutRun,
   AboutSection,
+  code_run,
+  code_value,
+  inline_code,
+  paragraph_runs,
+  text_run,
 )
 from ludoxel.presentation.interface.settings.about.renderer import render_about_sections
-from ludoxel.presentation.interface.settings.about.widgets import about_card, about_code_block, about_meta_row, about_pill, about_text, github_image_path, profile_image_path
+from ludoxel.presentation.interface.settings.about.widgets import (
+  about_card,
+  about_code_block,
+  about_code_value,
+  about_inline_paragraph,
+  about_meta_row,
+  about_pill,
+  about_text,
+  github_image_path,
+  profile_image_path,
+)
 
 __all__ = [
   "ABOUT_ACADEMIC_DIRECTION_TEXT",
@@ -37,13 +53,21 @@ __all__ = [
   "GITHUB_IMAGE_CANDIDATE_NAMES",
   "PROFILE_IMAGE_CANDIDATE_NAMES",
   "AboutBlock",
+  "AboutRun",
   "AboutSection",
   "about_card",
   "about_code_block",
+  "about_code_value",
+  "about_inline_paragraph",
   "about_meta_row",
   "about_pill",
   "about_text",
   "github_image_path",
+  "code_run",
+  "code_value",
+  "inline_code",
+  "paragraph_runs",
   "profile_image_path",
   "render_about_sections",
+  "text_run",
 ]

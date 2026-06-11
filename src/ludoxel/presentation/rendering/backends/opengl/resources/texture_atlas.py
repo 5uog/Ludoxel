@@ -27,6 +27,8 @@ from OpenGL.GL import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QImage, QPainter
 
+from ludoxel.presentation.resources.asset_roots import resolve_block_texture_path
+
 UVRect = Tuple[float, float, float, float]
 
 
@@ -157,7 +159,7 @@ def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None
 
   for nm in names:
     name = str(nm)
-    q = block_dir / f"{name}.png"
+    q = resolve_block_texture_path(block_dir, name)
     if not q.exists():
       continue
     img = QImage(str(q))
