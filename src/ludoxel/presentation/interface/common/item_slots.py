@@ -2,13 +2,16 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from PyQt6.QtCore import QByteArray, QMimeData, QPoint, QRect, Qt
+from PyQt6.QtCore import QByteArray, QMimeData, QPoint, QRectF, QSize, Qt
 from PyQt6.QtGui import QDrag, QIcon, QMouseEvent, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QPushButton
 
 from ludoxel.presentation.interface.common.hotbar_support import refresh_widget_style
 
 ITEM_SLOT_MIME_TYPE = "application/x-ludoxel-block-id"
+_BLOCK_THUMBNAIL_SOURCE_SIZE = 300
+_BLOCK_THUMBNAIL_HORIZONTAL_BIAS_PX = 0.5
+_BLOCK_THUMBNAIL_VERTICAL_BIAS_PX = 0.5
 
 
 def item_id_from_mime(mime: QMimeData) -> str | None:
@@ -63,50 +66,77 @@ def apply_item_slot_state(button: QPushButton, *, item_id: str | None, tooltip: 
 
 
 class ItemSlotButton(QPushButton):
-  """
-  provider が source の配置契約に従って正規化した item canvas を、slot 外形の幾何中心へ描画する。
-  button style の content rectangle 又は border 幅を item の座標基準に含めないため、通常、hover、selected、drag source の各状態で同じ中心を維持する。
-  """
 
   def __init__(self, parent=None) -> None:
-    """
-    item を持たない slot button を構築し、背景、border、focus state の描画は既存の `QPushButton` style に委譲する。
-    """
     super().__init__(parent)
     self._item_pixmap = QPixmap()
+    self._item_icon_size = QSize(36, 36)
+    super().setIcon(QIcon())
+    super().setIconSize(QSize(0, 0))
+
+  def setIcon(self, icon: QIcon) -> None:
+    del icon
+    super().setIcon(QIcon())
+
+  def setIconSize(self, size: QSize) -> None:
+    requested = QSize(size)
+    self._item_icon_size = QSize(max(1, int(requested.width())), max(1, int(requested.height())))
+    super().setIconSize(QSize(0, 0))
+    self.update()
+
+  def item_icon_size(self) -> QSize:
+    return QSize(self._item_icon_size)
 
   def set_item_pixmap(self, pixmap: QPixmap | None) -> None:
-    """
-    共通 canvas へ正規化済みの pixmap を保持し、`QIcon` の platform style 依存配置を無効化して再描画を要求する。
-    """
-    self.setIcon(QIcon())
+    super().setIcon(QIcon())
     self._item_pixmap = QPixmap() if pixmap is None else QPixmap(pixmap)
     self.update()
 
   def item_pixmap(self) -> QPixmap:
-    """
-    slot 表示と drag preview が共有する pixmap の値 copy を返し、呼び出し側から内部表示状態を分離する。
-    """
     return QPixmap(self._item_pixmap)
 
   def paintEvent(self, event) -> None:
-    """
-    QSS の button 本体を描画した後、device-independent な item canvas を slot 外形の中心へ整数 pixel 単位で配置する。
-    provider の canvas 中心は通常画像の可視画素重心又は special item の論理 frame 中心であり、button state と platform style はこの配置基準を変更しない。
-    """
     super().paintEvent(event)
     pixmap = self._item_pixmap
     if pixmap.isNull():
       return
 
-    target_size = pixmap.deviceIndependentSize().toSize().boundedTo(self.iconSize()).boundedTo(self.size())
-    target_rect = QRect(QPoint(0, 0), target_size)
-    target_rect.moveCenter(self.rect().center())
+    target_rect = self._target_rect_for_pixmap(pixmap)
+    if target_rect.isNull() or target_rect.width() <= 0.0 or target_rect.height() <= 0.0:
+      return
+
+    source_rect = QRectF(0.0, 0.0, float(pixmap.width()), float(pixmap.height()))
 
     painter = QPainter(self)
     painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
-    painter.drawPixmap(target_rect, pixmap)
+    painter.drawPixmap(target_rect, pixmap, source_rect)
     painter.end()
+
+  def _target_rect_for_pixmap(self, pixmap: QPixmap) -> QRectF:
+    source_width = max(1.0, float(pixmap.width()))
+    source_height = max(1.0, float(pixmap.height()))
+    icon_width = max(1.0, float(self._item_icon_size.width()))
+    icon_height = max(1.0, float(self._item_icon_size.height()))
+
+    scale = min(icon_width / source_width, icon_height / source_height)
+    target_width = min(icon_width, source_width * scale, float(max(1, int(self.width()))))
+    target_height = min(icon_height, source_height * scale, float(max(1, int(self.height()))))
+
+    left = (float(self.width()) - float(target_width)) * 0.5 + self._thumbnail_horizontal_bias(pixmap)
+    top = (float(self.height()) - float(target_height)) * 0.5 + self._thumbnail_vertical_bias(pixmap)
+    return QRectF(float(left), float(top), float(target_width), float(target_height))
+
+  @staticmethod
+  def _thumbnail_horizontal_bias(pixmap: QPixmap) -> float:
+    if int(pixmap.width()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE) and int(pixmap.height()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE):
+      return float(_BLOCK_THUMBNAIL_HORIZONTAL_BIAS_PX)
+    return 0.0
+
+  @staticmethod
+  def _thumbnail_vertical_bias(pixmap: QPixmap) -> float:
+    if int(pixmap.width()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE) and int(pixmap.height()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE):
+      return float(_BLOCK_THUMBNAIL_VERTICAL_BIAS_PX)
+    return 0.0
 
 
 class DraggableItemButton(ItemSlotButton):
