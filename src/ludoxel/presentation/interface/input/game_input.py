@@ -153,6 +153,9 @@ class ViewportInput:
       return
     self.ensure_mouse_capture_applied()
     if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
+      delta = self._macos_relative_mouse.poll()
+      if int(delta.dx) != 0 or int(delta.dy) != 0:
+        self._a.add_mouse_delta(float(delta.dx), float(delta.dy))
       return
     if self.capture_sync_pending():
       center = self._center_global()
@@ -185,9 +188,6 @@ class ViewportInput:
     if not bool(self._captured):
       return
     if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
-      delta = self._macos_relative_mouse.poll()
-      if int(delta.dx) != 0 or int(delta.dy) != 0:
-        self._a.add_mouse_delta(float(delta.dx), float(delta.dy))
       return
     if self.capture_sync_pending():
       return
