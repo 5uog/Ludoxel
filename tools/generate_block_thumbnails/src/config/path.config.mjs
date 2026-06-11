@@ -7,4 +7,4 @@ import { fileURLToPath } from 'node:url';
 
 export const TOOL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const PROJECT_ROOT = resolve(TOOL_ROOT, '..', '..');
-export const PYTHON_HELPER = resolve(TOOL_ROOT, 'src', 'service', 'render_thumbnail.py');
+export const SOURCE_ROOT = resolve(PROJECT_ROOT, 'src');

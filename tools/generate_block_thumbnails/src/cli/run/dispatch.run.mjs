@@ -9,15 +9,20 @@ import { runBlockThumbnailTask } from '../../service/task.service.mjs';
 
 export async function runBlockThumbnailCli(argv = [], env = process.env, defaults = {}) {
   const options = validateBlockThumbnailArgs(parseBlockThumbnailArgs(argv, defaults));
+
   if (options.help) {
-    console.log(renderBlockThumbnailHelp(options.command));
+    if (options.errors.length > 0) {
+      for (const error of options.errors) console.error(`Error: ${error}`);
+      return 2;
+    }
+    console.log(renderBlockThumbnailHelp(options.command, options.language));
     return 0;
   }
+
   if (options.errors.length > 0) {
     for (const error of options.errors) console.error(`Error: ${error}`);
-    console.error('');
-    console.error(renderBlockThumbnailHelp(options.command));
     return 2;
   }
+
   return runBlockThumbnailTask(options, { env });
 }

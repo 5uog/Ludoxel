@@ -2,10 +2,19 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { pythonThumbnailArguments } from '../collect/blocks.collect.mjs';
-import { PROJECT_ROOT, PYTHON_HELPER } from '../config/path.config.mjs';
+import { delimiter } from 'node:path';
+import { pythonPreviewArguments } from '../collect/blocks.collect.mjs';
+import { PROJECT_ROOT, SOURCE_ROOT } from '../config/path.config.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
 
+function pythonEnvironment(env = {}) {
+  return {
+    ...env,
+    PYTHONPATH: [SOURCE_ROOT, env.PYTHONPATH].filter(Boolean).join(delimiter),
+  };
+}
+
 export function generateBlockThumbnails(options, context = {}) {
-  return runProcess(context.env?.PYTHON || 'python3', [PYTHON_HELPER, ...pythonThumbnailArguments(options, 'generate')], { cwd: PROJECT_ROOT, env: context.env });
+  const env = pythonEnvironment(context.env);
+  return runProcess(env.PYTHON || 'python3', pythonPreviewArguments(options, 'generate'), { cwd: PROJECT_ROOT, env });
 }

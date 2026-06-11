@@ -43,6 +43,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = Object.freeze([
   'clean:check',
   'assets:audio:convert',
   'assets:audio:check',
+  'assets:block-thumbnails:help',
   'assets:block-thumbnails:generate',
   'assets:block-thumbnails:check',
 ]);

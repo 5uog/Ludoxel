@@ -2,36 +2,27 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-export function pythonThumbnailArguments(options, mode) {
-  const args = [
-    '--mode',
-    mode,
-    '--texture-root',
-    options.textureRoot,
-    '--output-root',
-    options.outputRoot,
-    '--yaw',
-    String(options.yaw),
-    '--pitch',
-    String(options.pitch),
-    '--roll',
-    String(options.roll),
-    '--scale',
-    String(options.scale),
-    '--fit-padding',
-    String(options.fitPadding),
-    '--connectivity-axis',
-    options.connectivityAxis,
-  ];
+export function pythonPreviewArguments(options, mode) {
+  const args = ['-m', 'ludoxel.presentation.rendering.faces.preview', '--mode', mode, '--project-root', '.'];
+
+  if (options.textureRoot) args.push('--texture-root', options.textureRoot);
+  if (options.outputRoot) args.push('--output-root', options.outputRoot);
+
   for (const block of options.blocks) args.push('--block', block);
   if (options.all) args.push('--all');
   if (options.modelCategory) args.push('--model-category', options.modelCategory);
+
   for (const state of options.states) args.push('--state', state);
-  for (const direction of ['north', 'east', 'south', 'west']) {
-    if (options[direction] === true) args.push(`--${direction}`);
-    if (options[direction] === false) args.push(`--no-${direction}`);
-  }
+  for (const neighbor of options.neighbors) args.push('--neighbor', neighbor);
+
+  args.push('--yaw', String(options.yaw));
+  args.push('--pitch', String(options.pitch));
+  args.push('--roll', String(options.roll));
+  args.push('--scale', String(options.scale));
+  args.push('--fit-padding', String(options.fitPadding));
+
   if (options.dryRun) args.push('--dry-run');
   if (options.allowOverwrite) args.push('--allow-overwrite');
+
   return args;
 }
