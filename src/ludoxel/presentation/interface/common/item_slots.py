@@ -66,7 +66,6 @@ def apply_item_slot_state(button: QPushButton, *, item_id: str | None, tooltip: 
 
 
 class ItemSlotButton(QPushButton):
-
   def __init__(self, parent=None) -> None:
     super().__init__(parent)
     self._item_pixmap = QPixmap()

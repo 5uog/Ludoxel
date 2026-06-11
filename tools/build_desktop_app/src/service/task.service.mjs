@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { runMacosBuild } from './macos-build.service.mjs';
-import { checkMacosPackagingDocs, renderMacosStatus } from './macos-status.service.mjs';
+import { checkMacosPackagingInputs, renderMacosStatus } from './macos-status.service.mjs';
 import { runWindowsBuild } from './windows-build.service.mjs';
 
 export function runDesktopBuildTask(options, context = {}) {
@@ -13,7 +13,7 @@ export function runDesktopBuildTask(options, context = {}) {
 
   if (options.command === 'macos') {
     if (options.check) {
-      return checkMacosPackagingDocs();
+      return checkMacosPackagingInputs();
     }
 
     if (options.status) {

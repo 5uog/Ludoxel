@@ -70,7 +70,7 @@ export function renderDesktopBuildHelp(command = null) {
           option('--skip-native-build', 'macOS build 前の native extension build を実行しない。'),
           option('--keep-build-cache', 'PyInstaller の work/spec/staging directory を削除しない。'),
           option('--status', 'macOS app bundle の制約説明を表示する。'),
-          option('--check', 'README/docs に macOS packaging 制約が記載されているか検査する。'),
+          option('--check', 'macOS packaging に必要な実ファイル、依存関係、PyInstaller 設定を検査する。'),
           option('--lang ja|en', 'ヘルプ表示言語を指定する。'),
         ]),
       ),

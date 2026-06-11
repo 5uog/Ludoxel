@@ -33,6 +33,3 @@ export const PYINSTALLER_STAGING_ROOT = 'build/pyinstaller-dist-runs';
 export const PYINSTALLER_CONFIG_ROOT = 'build/pyinstaller-config';
 
 export const LEGAL_MATERIAL_PATHS = Object.freeze(['LICENSE', 'NOTICE', 'third-party']);
-
-export const MACOS_REQUIRED_TERMS = Object.freeze(['macOS', 'Metal', 'wgpu-native', 'PyInstaller', 'font', '.icns']);
-export const MACOS_DOC_CANDIDATES = Object.freeze(['README.md']);
