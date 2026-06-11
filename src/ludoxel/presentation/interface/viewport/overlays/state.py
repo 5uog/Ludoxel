@@ -166,6 +166,15 @@ class ViewportOverlayMixin:
   def _debug_hud_active(self: "RendererViewportWidget") -> bool:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
+  def _ambient_audio_active(self: "RendererViewportWidget") -> bool:
+    """
+    ambient audio を gameplay simulation の可聴状態へ同期し、F1 の HUD 表示選択を音源 lifecycle から分離する。
+    loading、death、pause、Othello settings、inventory では停止する一方、HUD のみを非表示にした gameplay 中は同じ再生位置と音源選択を維持する。
+    """
+    return bool(
+      (not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open())
+    )
+
   def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
     show_gameplay_hud = bool(self._gameplay_hud_active())
     show_othello_hud = bool(
@@ -209,7 +218,7 @@ class ViewportOverlayMixin:
       self._route_overlay.raise_()
     if bool(show_othello_hud):
       self._othello_hud.raise_()
-    self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
+    self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(self._ambient_audio_active()))
     self._sync_player_name_overlays()
 
   def _set_dead_overlay(self: "RendererViewportWidget", on: bool) -> None:

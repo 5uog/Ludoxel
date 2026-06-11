@@ -123,6 +123,9 @@ class ViewportStateMixin:
   def _reset_held_mouse_actions(self: "RendererViewportWidget") -> None:
     self._left_mouse_held = False
     self._right_mouse_held = False
+    dispatched_buttons = getattr(self, "_dispatched_mouse_buttons", None)
+    if dispatched_buttons is not None:
+      dispatched_buttons.clear()
     self._left_mouse_repeat_due_s = 0.0
     self._disable_right_mouse_repeat()
 

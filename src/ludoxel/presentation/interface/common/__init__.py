@@ -4,6 +4,7 @@ from __future__ import annotations
 
 __all__ = [
   "DraggableItemButton",
+  "ItemSlotButton",
   "ITEM_SLOT_MIME_TYPE",
   "ItemPhotoProvider",
   "PhotoPaths",
@@ -34,12 +35,13 @@ def __getattr__(name: str):
     from ludoxel.presentation.interface.common.item_photo_provider import ItemPhotoProvider, PhotoPaths
 
     return {"ItemPhotoProvider": ItemPhotoProvider, "PhotoPaths": PhotoPaths}[str(name)]
-  if str(name) in {"ITEM_SLOT_MIME_TYPE", "DraggableItemButton", "apply_item_slot_state", "item_id_from_mime", "start_item_drag"}:
-    from ludoxel.presentation.interface.common.item_slots import ITEM_SLOT_MIME_TYPE, DraggableItemButton, apply_item_slot_state, item_id_from_mime, start_item_drag
+  if str(name) in {"ITEM_SLOT_MIME_TYPE", "DraggableItemButton", "ItemSlotButton", "apply_item_slot_state", "item_id_from_mime", "start_item_drag"}:
+    from ludoxel.presentation.interface.common.item_slots import ITEM_SLOT_MIME_TYPE, DraggableItemButton, ItemSlotButton, apply_item_slot_state, item_id_from_mime, start_item_drag
 
     return {
       "ITEM_SLOT_MIME_TYPE": ITEM_SLOT_MIME_TYPE,
       "DraggableItemButton": DraggableItemButton,
+      "ItemSlotButton": ItemSlotButton,
       "apply_item_slot_state": apply_item_slot_state,
       "item_id_from_mime": item_id_from_mime,
       "start_item_drag": start_item_drag,

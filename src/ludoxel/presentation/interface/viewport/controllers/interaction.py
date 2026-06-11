@@ -519,8 +519,9 @@ def _current_interaction_hit(viewport: "RendererViewportWidget"):
 def _finalize_right_click(viewport: "RendererViewportWidget", outcome: InteractionOutcome) -> None:
   viewport._first_person_motion.trigger_right_swing(success=bool(outcome.success))
   if bool(outcome.success):
-    viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)
+    viewport._arm_world_change_sync()
     viewport._invalidate_selection_target()
+    viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)
 
 
 def _face_from_cardinal(facing: str) -> int:

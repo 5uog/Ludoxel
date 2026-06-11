@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from PyQt6.QtCore import QByteArray, QMimeData, QPoint, Qt
-from PyQt6.QtGui import QDrag, QIcon, QMouseEvent, QPixmap
+from PyQt6.QtCore import QByteArray, QMimeData, QPoint, QRect, Qt
+from PyQt6.QtGui import QDrag, QIcon, QMouseEvent, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QPushButton
 
 from ludoxel.presentation.interface.common.hotbar_support import refresh_widget_style
@@ -36,7 +36,10 @@ def start_item_drag(source: QPushButton, item_id: str) -> None:
   mime.setText(normalized)
   drag.setMimeData(mime)
 
-  pixmap = source.icon().pixmap(source.iconSize())
+  if isinstance(source, ItemSlotButton):
+    pixmap = source.item_pixmap()
+  else:
+    pixmap = source.icon().pixmap(source.iconSize())
   if not pixmap.isNull():
     drag.setPixmap(pixmap)
 
@@ -46,7 +49,9 @@ def start_item_drag(source: QPushButton, item_id: str) -> None:
 def apply_item_slot_state(button: QPushButton, *, item_id: str | None, tooltip: str, selected: bool, pixmap: QPixmap | None) -> None:
   normalized_item_id = "" if item_id is None else str(item_id).strip()
 
-  if pixmap is None:
+  if isinstance(button, ItemSlotButton):
+    button.set_item_pixmap(pixmap)
+  elif pixmap is None:
     button.setIcon(QIcon())
   else:
     button.setIcon(QIcon(pixmap))
@@ -57,7 +62,54 @@ def apply_item_slot_state(button: QPushButton, *, item_id: str | None, tooltip: 
   refresh_widget_style(button)
 
 
-class DraggableItemButton(QPushButton):
+class ItemSlotButton(QPushButton):
+  """
+  provider が source の配置契約に従って正規化した item canvas を、slot 外形の幾何中心へ描画する。
+  button style の content rectangle 又は border 幅を item の座標基準に含めないため、通常、hover、selected、drag source の各状態で同じ中心を維持する。
+  """
+
+  def __init__(self, parent=None) -> None:
+    """
+    item を持たない slot button を構築し、背景、border、focus state の描画は既存の `QPushButton` style に委譲する。
+    """
+    super().__init__(parent)
+    self._item_pixmap = QPixmap()
+
+  def set_item_pixmap(self, pixmap: QPixmap | None) -> None:
+    """
+    共通 canvas へ正規化済みの pixmap を保持し、`QIcon` の platform style 依存配置を無効化して再描画を要求する。
+    """
+    self.setIcon(QIcon())
+    self._item_pixmap = QPixmap() if pixmap is None else QPixmap(pixmap)
+    self.update()
+
+  def item_pixmap(self) -> QPixmap:
+    """
+    slot 表示と drag preview が共有する pixmap の値 copy を返し、呼び出し側から内部表示状態を分離する。
+    """
+    return QPixmap(self._item_pixmap)
+
+  def paintEvent(self, event) -> None:
+    """
+    QSS の button 本体を描画した後、device-independent な item canvas を slot 外形の中心へ整数 pixel 単位で配置する。
+    provider の canvas 中心は通常画像の可視画素重心又は special item の論理 frame 中心であり、button state と platform style はこの配置基準を変更しない。
+    """
+    super().paintEvent(event)
+    pixmap = self._item_pixmap
+    if pixmap.isNull():
+      return
+
+    target_size = pixmap.deviceIndependentSize().toSize().boundedTo(self.iconSize()).boundedTo(self.size())
+    target_rect = QRect(QPoint(0, 0), target_size)
+    target_rect.moveCenter(self.rect().center())
+
+    painter = QPainter(self)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+    painter.drawPixmap(target_rect, pixmap)
+    painter.end()
+
+
+class DraggableItemButton(ItemSlotButton):
   def __init__(self, parent=None) -> None:
     super().__init__(parent)
     self._drag_item_id = ""

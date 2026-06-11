@@ -7,15 +7,15 @@ from pathlib import Path
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QColor, QPainter
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QWidget
 
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
-from ludoxel.presentation.interface.common import ItemPhotoProvider, apply_item_slot_state, hotbar_slot_tooltip
+from ludoxel.presentation.interface.common import ItemPhotoProvider, ItemSlotButton, apply_item_slot_state, hotbar_slot_tooltip
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 
 
-class _DisplaySlot(QPushButton):
+class _DisplaySlot(ItemSlotButton):
   def __init__(self, parent: QWidget | None = None) -> None:
     super().__init__(parent)
     self.setObjectName("slot")

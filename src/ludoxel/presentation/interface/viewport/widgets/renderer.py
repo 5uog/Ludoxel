@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QImage, QKeyEvent, QMouseEvent, QWheelEvent
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QMessageBox
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QMessageBox, QWidget
 from rendercanvas.qt import QRenderWidget
 
 import ludoxel.presentation.interface.othello.viewport as othello_controller
@@ -83,6 +83,7 @@ _MACOS_CAPTURE_REDIRECT_EVENT_TYPES = tuple(
     _qt_event_type("KeyPress"),
     _qt_event_type("KeyRelease"),
     _qt_event_type("MouseButtonPress"),
+    _qt_event_type("MouseButtonDblClick"),
     _qt_event_type("MouseButtonRelease"),
     _qt_event_type("MouseMove"),
     _qt_event_type("Wheel"),
@@ -176,6 +177,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self._ai_route_hover_index: int | None = None
     self._left_mouse_held: bool = False
     self._right_mouse_held: bool = False
+    self._dispatched_mouse_buttons: set[Qt.MouseButton] = set()
     self._left_mouse_repeat_due_s: float = 0.0
     self._right_mouse_repeat_due_s: float = 0.0
     self._right_mouse_repeat_enabled: bool = False
@@ -335,7 +337,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
       if event_type in _MACOS_CAPTURE_CONSUME_EVENT_TYPES:
         e.accept()
         return True
-      if watched is not self and event_type in _MACOS_CAPTURE_REDIRECT_EVENT_TYPES:
+      if self._redirected_game_input_source(watched) and event_type in _MACOS_CAPTURE_REDIRECT_EVENT_TYPES:
         if event_type == QEvent.Type.KeyPress:
           self.keyPressEvent(e)
           return bool(e.isAccepted())
@@ -344,6 +346,9 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
           return bool(e.isAccepted())
         if event_type == QEvent.Type.MouseButtonPress:
           self.mousePressEvent(e)
+          return bool(e.isAccepted())
+        if event_type == QEvent.Type.MouseButtonDblClick:
+          self.mouseDoubleClickEvent(e)
           return bool(e.isAccepted())
         if event_type == QEvent.Type.MouseButtonRelease:
           self.mouseReleaseEvent(e)
@@ -355,6 +360,26 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
           self.wheelEvent(e)
           return bool(e.isAccepted())
     return super().eventFilter(watched, e)
+
+  def _redirected_game_input_source(self, watched) -> bool:
+    """
+    application-wide event filter からviewportへ転送する対象を、rendercanvasを含む子QWidgetに限定する。
+    同じnative mouse eventに由来するQWindow段階とQWidget段階の双方をinteractionへ配送するとtoggleが二重適用されるため、window objectと無関係なapplication widgetは通常のQt配送へ委譲する。
+    """
+    return bool(watched is not self and isinstance(watched, QWidget) and self.isAncestorOf(watched))
+
+  def _dispatch_game_mouse_press(self, e: QMouseEvent) -> bool:
+    """
+    一つの物理button-downから生じるpress又はdouble-clickを一度だけgameplay interactionへ配送する。
+    button-upまで同じbuttonをactive集合へ保持し、rendercanvasとviewportの重複配送又はnative double-click変換が同一stateを二回toggleして元へ戻すことを防ぐ。
+    """
+    button = e.button()
+    if button != Qt.MouseButton.NoButton and button in self._dispatched_mouse_buttons:
+      e.accept()
+      return True
+    if button != Qt.MouseButton.NoButton:
+      self._dispatched_mouse_buttons.add(button)
+    return bool(interaction_controller.handle_mouse_press(self, e))
 
   def keyPressEvent(self, e: QKeyEvent) -> None:
     if bool(self.loading_active()):
@@ -411,17 +436,33 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     if bool(self.loading_active()):
       e.accept()
       return
-    interaction_controller.handle_mouse_press(self, e)
+    self._dispatch_game_mouse_press(e)
     self._queue_render_after_input()
     if bool(self._macos_game_input_priority_active()):
       e.accept()
       return
     super().mousePressEvent(e)
 
+  def mouseDoubleClickEvent(self, e: QMouseEvent) -> None:
+    """
+    Qt が高速な第2押下を `MouseButtonDblClick` へ置換した場合も、単独の物理押下として gameplay interaction へ配送する。
+    macOS WGPU の rendercanvas 子 widget から転送された event と viewport 自身へ届いた event を同一経路で処理し、長押し repeat の interval は変更しない。
+    """
+    if bool(self.loading_active()):
+      e.accept()
+      return
+    handled = bool(self._dispatch_game_mouse_press(e))
+    self._queue_render_after_input()
+    if bool(handled) or bool(self._macos_game_input_priority_active()):
+      e.accept()
+      return
+    super().mouseDoubleClickEvent(e)
+
   def mouseReleaseEvent(self, e: QMouseEvent) -> None:
     if bool(self.loading_active()):
       e.accept()
       return
+    self._dispatched_mouse_buttons.discard(e.button())
     interaction_controller.handle_mouse_release(self, e)
     self._queue_render_after_input()
     if bool(self._macos_game_input_priority_active()):

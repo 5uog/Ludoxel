@@ -8,7 +8,7 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtGui import QImage, QMovie, QPainter, QPixmap
 
-from ludoxel.presentation.interface.common.special_item_art import build_special_item_icon_image
+from ludoxel.presentation.interface.common.special_item_art import build_special_item_icon_layout
 from ludoxel.presentation.resources.asset_roots import VisualAssetRoots, resolve_visual_asset_roots
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import parse_state
@@ -138,7 +138,8 @@ class ItemPhotoProvider(QObject):
     return bool(self._active) and bool(self._animations_enabled)
 
   def _render_special_item_pixmap(self, icon_key: str) -> QPixmap:
-    return QPixmap.fromImage(self._normalize_item_image(build_special_item_icon_image(str(icon_key), size=int(self._icon))))
+    image, visual_anchor = build_special_item_icon_layout(str(icon_key), size=int(self._icon))
+    return QPixmap.fromImage(self._normalize_item_image(image, source_anchor=visual_anchor))
 
   def _movie_pixmap(self, movie: QMovie) -> QPixmap | None:
     pixmap = movie.currentPixmap()
@@ -151,10 +152,10 @@ class ItemPhotoProvider(QObject):
 
     return QPixmap.fromImage(self._normalize_item_image(image))
 
-  def _normalize_item_image(self, image: QImage) -> QImage:
+  def _normalize_item_image(self, image: QImage, *, source_anchor: tuple[float, float] | None = None) -> QImage:
     """
-    item art の alpha-weighted visual centroid を共通 icon canvas の幾何中心へ移す。
-    元画像の透明余白、17x17 item、300x300 block thumbnail、special item の生成差を吸収し、slot state や button border に依存しない中心基準を返す。
+    item source を共通 icon canvas へ縮小し、明示 anchor 又は alpha-weighted visual center を slot の幾何中心へ一致させる。
+    block thumbnail と通常 item は透明余白を中心根拠にせず可視画素の重み付き中心を使い、その中心から可視端までの最大距離を対称 fit するため、model 全体を欠落させずに種類間の視覚中心を統一する。
     """
     source = QImage(image).convertToFormat(QImage.Format.Format_RGBA8888)
     canvas = QImage(int(self._icon), int(self._icon), QImage.Format.Format_RGBA8888)
@@ -162,17 +163,46 @@ class ItemPhotoProvider(QObject):
     if source.isNull():
       return canvas
     fitted_extent = max(1, int(self._icon) - (2 * int(_ICON_EDGE_MARGIN_PX)))
-    scaled = source.scaled(int(fitted_extent), int(fitted_extent), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+    if source_anchor is None:
+      visual_layout = self._alpha_weighted_visual_layout(source)
+      if visual_layout is None:
+        return canvas
+      anchor_x, anchor_y, half_width, half_height = visual_layout
+      scale = min(float(fitted_extent) / max(1.0, 2.0 * float(half_width)), float(fitted_extent) / max(1.0, 2.0 * float(half_height)))
+      scaled_width = max(1, int(round(float(source.width()) * float(scale))))
+      scaled_height = max(1, int(round(float(source.height()) * float(scale))))
+      scaled = source.scaled(int(scaled_width), int(scaled_height), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation)
+    else:
+      anchor_x = float(source_anchor[0])
+      anchor_y = float(source_anchor[1])
+      scaled = source.scaled(int(fitted_extent), int(fitted_extent), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+    scaled_anchor_x = float(anchor_x) * float(scaled.width()) / float(max(1, int(source.width())))
+    scaled_anchor_y = float(anchor_y) * float(scaled.height()) / float(max(1, int(source.height())))
+    target_center = float(self._icon) * 0.5
+    base_x = int(round(float(target_center) - float(scaled_anchor_x)))
+    base_y = int(round(float(target_center) - float(scaled_anchor_y)))
+    painter = QPainter(canvas)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+    painter.drawImage(int(base_x), int(base_y), scaled)
+    painter.end()
+    return canvas
+
+  @staticmethod
+  def _alpha_weighted_visual_layout(image: QImage) -> tuple[float, float, float, float] | None:
+    """
+    RGBA image の可視画素について alpha を質量とみなし、連続座標上の重心と、その重心から可視端までの最大半径を返す。
+    外接矩形の中央を配置基準にはせず、外接端は重心を固定した対称 scale で全可視画素をcanvas内へ収める制約としてのみ使用する。
+    """
     alpha_sum = 0.0
     weighted_x = 0.0
     weighted_y = 0.0
-    min_x = int(scaled.width())
-    min_y = int(scaled.height())
+    min_x = int(image.width())
+    min_y = int(image.height())
     max_x = -1
     max_y = -1
-    for y in range(int(scaled.height())):
-      for x in range(int(scaled.width())):
-        alpha = int(scaled.pixelColor(int(x), int(y)).alpha())
+    for y in range(int(image.height())):
+      for x in range(int(image.width())):
+        alpha = int(image.pixelColor(int(x), int(y)).alpha())
         if alpha <= 0:
           continue
         weight = float(alpha)
@@ -183,19 +213,13 @@ class ItemPhotoProvider(QObject):
         min_y = min(int(min_y), int(y))
         max_x = max(int(max_x), int(x))
         max_y = max(int(max_y), int(y))
-    base_x = (int(self._icon) - int(scaled.width())) // 2
-    base_y = (int(self._icon) - int(scaled.height())) // 2
-    if alpha_sum > 0.0:
-      target = float(self._icon) * 0.5
-      base_x = int(round(target - (weighted_x / alpha_sum)))
-      base_y = int(round(target - (weighted_y / alpha_sum)))
-      base_x = min(max(int(base_x), -int(min_x)), int(self._icon) - 1 - int(max_x))
-      base_y = min(max(int(base_y), -int(min_y)), int(self._icon) - 1 - int(max_y))
-    painter = QPainter(canvas)
-    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-    painter.drawImage(int(base_x), int(base_y), scaled)
-    painter.end()
-    return canvas
+    if alpha_sum <= 0.0 or max_x < min_x or max_y < min_y:
+      return None
+    center_x = float(weighted_x) / float(alpha_sum)
+    center_y = float(weighted_y) / float(alpha_sum)
+    half_width = max(float(center_x) - float(min_x), float(max_x + 1) - float(center_x), 0.5)
+    half_height = max(float(center_y) - float(min_y), float(max_y + 1) - float(center_y), 0.5)
+    return (float(center_x), float(center_y), float(half_width), float(half_height))
 
   def _sync_movie_playback_state(self, block_id: str, movie: QMovie) -> None:
     if self._movie_should_run():
