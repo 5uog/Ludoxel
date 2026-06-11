@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 import { printCheckResult } from '../../service/report.service.mjs';
-import { REJECTED_PACKAGE_SCRIPT_TERMS, REQUIRED_PACKAGE_SCRIPTS } from '../rules/package.rules.mjs';
+import { REJECTED_PACKAGE_SCRIPT_TERMS, REQUIRED_PACKAGE_SCRIPTS } from './package.rules.mjs';
 
 function readPackageJson() {
   const path = resolve(PROJECT_ROOT, 'package.json');
