@@ -286,13 +286,13 @@ def build_controls_tab(overlay: "SettingsOverlay") -> None:
   for action in HOTBAR_ACTIONS:
     overlay._add_keybind_row(layout, host, str(action))
 
-  row_reset = QHBoxLayout()
-  row_reset.addStretch(1)
+  layout.addWidget(overlay._sep(host))
+
   btn_reset_bindings = QPushButton("Reset Keybinds", host)
   btn_reset_bindings.setObjectName("menuBtn")
+  btn_reset_bindings.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
   btn_reset_bindings.clicked.connect(overlay.keybind_reset_requested.emit)
-  row_reset.addWidget(btn_reset_bindings)
-  layout.addLayout(row_reset)
+  layout.addWidget(btn_reset_bindings)
 
   layout.addStretch(1)
   overlay._stack.addWidget(scroll)
