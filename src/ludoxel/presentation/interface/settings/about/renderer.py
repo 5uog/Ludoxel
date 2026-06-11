@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.presentation.interface.settings.about.content import AboutBlock, AboutSection
 from ludoxel.presentation.interface.settings.about.widgets import about_code_block, about_code_value, about_inline_paragraph
@@ -101,12 +102,14 @@ def _normalized_blocks(blocks: Iterable[AboutBlock]) -> tuple[AboutBlock, ...]:
 
 
 def render_about_sections(*, parent: QWidget, layout: QVBoxLayout, sections: Iterable[AboutSection], text_factory: Callable[[QWidget, str, str], QLabel]) -> None:
+  layout.setAlignment(Qt.AlignmentFlag.AlignTop)
   for section in tuple(sections):
     title = str(section.title).strip()
     if title:
       heading = QLabel(title, parent)
       heading.setObjectName("aboutSectionTitle")
       heading.setWordWrap(True)
+      heading.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
       layout.addWidget(heading)
 
     for block in _normalized_blocks(section.blocks):

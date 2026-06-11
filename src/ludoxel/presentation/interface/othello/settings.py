@@ -74,22 +74,16 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     self._tab_ai = self._make_tab_button("AI", 1, self._set_page)
     self._tab_book = self._make_tab_button("Book", 2, self._set_page)
     self._tab_learning = self._make_tab_button("Learning", 3, self._set_page)
-    self._tab_about = self._make_tab_button("About", 4, self._set_page)
     self._sidebar_layout.addWidget(self._tab_match)
     self._sidebar_layout.addWidget(self._tab_ai)
     self._sidebar_layout.addWidget(self._tab_book)
     self._sidebar_layout.addWidget(self._tab_learning)
     self._sidebar_layout.addStretch(1)
-    self._sidebar_layout.addWidget(self._tab_about)
 
     self._build_match_page()
     self._build_ai_page()
     self._build_book_page()
     self._build_learning_page()
-    self._about_placeholder = QWidget(self._stack)
-    self._about_placeholder.setObjectName("aboutPagePlaceholder")
-    self._stack.addWidget(self._about_placeholder)
-    self._about_built = False
     self._connect_setting_fields()
     self.sync_values(OthelloSettings())
     self.set_book_summary_text("")
@@ -250,27 +244,8 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     return spin
 
   def _set_page(self, index: int) -> None:
-    selected = int(max(0, min(4, int(index))))
-    if selected == 4:
-      self._ensure_about_page()
-    self._set_stack_page(index=selected, max_index=4, tab_buttons=(self._tab_match, self._tab_ai, self._tab_book, self._tab_learning, self._tab_about))
-
-  def _ensure_about_page(self) -> None:
-    """
-    Othello settings の About page を最初の選択時に一度だけ生成する。
-    My World と同じ content、object name、scroll page builder を共有し、stack index と再表示時の widget identity を保つ。
-    """
-    if bool(self._about_built):
-      return
-    from ludoxel.presentation.interface.settings.pages import build_about_tab
-
-    build_about_tab(self)
-    placeholder_index = self._stack.indexOf(self._about_placeholder)
-    if placeholder_index >= 0:
-      placeholder = self._stack.widget(placeholder_index)
-      self._stack.removeWidget(placeholder)
-      placeholder.deleteLater()
-    self._about_built = True
+    selected = int(max(0, min(3, int(index))))
+    self._set_stack_page(index=selected, max_index=3, tab_buttons=(self._tab_match, self._tab_ai, self._tab_book, self._tab_learning))
 
   def sync_values(self, settings: OthelloSettings) -> None:
     normalized = settings.normalized()

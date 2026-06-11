@@ -11,6 +11,20 @@ from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QSizePolicy, QWidget
 from ludoxel.presentation.interface.settings.about.content import GITHUB_IMAGE_CANDIDATE_NAMES, PROFILE_IMAGE_CANDIDATE_NAMES, AboutRun
 
 
+class _AboutWrappingLabel(QLabel):
+  def hasHeightForWidth(self) -> bool:
+    return True
+
+  def resizeEvent(self, event) -> None:
+    super().resizeEvent(event)
+    self.updateGeometry()
+
+
+def _set_about_label_policy(label: QLabel) -> QLabel:
+  label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+  return label
+
+
 def _first_existing_asset(resource_root: Path | None, relative_dir: str, candidate_names: tuple[str, ...]) -> Path | None:
   if resource_root is None:
     return None
@@ -33,14 +47,15 @@ def github_image_path(resource_root: Path | None) -> Path | None:
 def about_card(parent: QWidget, object_name: str = "aboutCard") -> QFrame:
   card = QFrame(parent)
   card.setObjectName(str(object_name))
+  card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   return card
 
 
 def about_text(parent: QWidget, text: str, object_name: str = "subtitle") -> QLabel:
-  label = QLabel(str(text), parent)
+  label = _AboutWrappingLabel(str(text), parent)
   label.setObjectName(str(object_name))
   label.setWordWrap(True)
-  return label
+  return _set_about_label_policy(label)
 
 
 def about_pill(parent: QWidget, text: str) -> QLabel:
@@ -53,15 +68,17 @@ def about_pill(parent: QWidget, text: str) -> QLabel:
 def about_meta_row(layout: QGridLayout, row: int, title: str, value: str, parent: QWidget) -> None:
   title_label = QLabel(str(title), parent)
   title_label.setObjectName("aboutMetaTitle")
-  value_label = QLabel(str(value), parent)
+  title_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+  value_label = _AboutWrappingLabel(str(value), parent)
   value_label.setObjectName("aboutMetaValue")
   value_label.setWordWrap(True)
-  layout.addWidget(title_label, int(row), 0)
+  value_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+  layout.addWidget(title_label, int(row), 0, alignment=Qt.AlignmentFlag.AlignTop)
   layout.addWidget(value_label, int(row), 1)
 
 
 def about_code_block(parent: QWidget, text: str) -> QLabel:
-  label = QLabel(str(text).rstrip("\n"), parent)
+  label = _AboutWrappingLabel(str(text).rstrip("\n"), parent)
   label.setObjectName("aboutCodeBlock")
   label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
   label.setWordWrap(True)
@@ -95,7 +112,7 @@ def about_inline_paragraph(parent: QWidget, runs: tuple[AboutRun, ...]) -> QLabe
       fragments.append(f'<span style="font-family: monospace; color: #f3f3f3; background-color: #111111; border: 1px solid #050505; padding: 1px 4px;">{escaped}</span>')
     else:
       fragments.append(escaped)
-  label = QLabel("".join(fragments), parent)
+  label = _AboutWrappingLabel("".join(fragments), parent)
   label.setObjectName("aboutInlineCode" if bool(has_code) else "subtitle")
   label.setTextFormat(Qt.TextFormat.RichText)
   label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.LinksAccessibleByMouse)

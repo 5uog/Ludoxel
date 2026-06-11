@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ludoxel.application.preferences.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
@@ -473,7 +473,58 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
   overlay._stack.addWidget(scroll)
 
 
-def build_about_tab(overlay: "SettingsOverlay") -> None:
+class _AboutScrollArea(QScrollArea):
+  def __init__(self, parent: QWidget | None = None) -> None:
+    super().__init__(parent)
+    self.setObjectName("settingsScroll")
+    self.setWidgetResizable(False)
+    self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    self.setFrameShape(QFrame.Shape.NoFrame)
+    self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    viewport = self.viewport()
+    viewport.setObjectName("settingsViewport")
+    viewport.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    viewport.setAutoFillBackground(True)
+
+  def resizeEvent(self, event) -> None:
+    super().resizeEvent(event)
+    self.ensure_content_geometry()
+
+  def ensure_content_geometry(self) -> None:
+    host = self.widget()
+    if host is None:
+      return
+    width = int(max(1, self.viewport().width()))
+    if int(host.width()) != width:
+      host.setFixedWidth(width)
+    host.adjustSize()
+    host.updateGeometry()
+
+
+def _make_about_scroll_page(parent: QWidget) -> tuple[_AboutScrollArea, QWidget, QVBoxLayout]:
+  scroll = _AboutScrollArea(parent)
+  host = QWidget(scroll)
+  host.setObjectName("aboutPage")
+  host.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+  host.setAutoFillBackground(True)
+  host.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+  layout = QVBoxLayout(host)
+  layout.setContentsMargins(8, 8, 8, 8)
+  layout.setSpacing(16)
+  layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+  scroll.setWidget(host)
+  scroll.ensure_content_geometry()
+  return scroll, host, layout
+
+
+def _about_minimum_height_widget(widget: QWidget) -> QWidget:
+  widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+  return widget
+
+
+def build_about_tab(overlay: "SettingsOverlay", *, parent: QWidget | None = None) -> QWidget:
   from PyQt6.QtCore import QSize, QUrl
   from PyQt6.QtGui import QDesktopServices, QIcon, QPixmap
 
@@ -498,9 +549,8 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
     render_about_sections,
   )
 
-  scroll, host, layout = overlay._make_scroll_page(page_object_name="aboutPage")
-  layout.setContentsMargins(8, 8, 8, 8)
-  layout.setSpacing(16)
+  page_parent = overlay._stack if parent is None else parent
+  scroll, host, layout = _make_about_scroll_page(page_parent)
   add_page_header(layout, host, title="About", subtitle="Project architecture, runtime behavior, resources, verification, and legal boundaries.")
 
   title_image_path = None if overlay._resource_root is None else status_overlay_title_image_path(overlay._resource_root)
@@ -509,6 +559,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
 
   profile_card = QFrame(host)
   profile_card.setObjectName("aboutProfileCard")
+  profile_card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   profile_layout = QGridLayout(profile_card)
   profile_layout.setContentsMargins(0, 0, 0, 24)
   profile_layout.setHorizontalSpacing(18)
@@ -518,7 +569,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   profile_layout.setColumnStretch(1, 1)
   profile_layout.setRowMinimumHeight(0, 140)
   profile_layout.setRowStretch(0, 0)
-  profile_layout.setRowStretch(1, 1)
+  profile_layout.setRowStretch(1, 0)
 
   cover = QFrame(profile_card)
   cover.setObjectName("aboutProfileCover")
@@ -531,6 +582,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
   mark_label = QLabel("Ludoxel", cover)
   mark_label.setObjectName("aboutProfileMark")
   mark_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+  mark_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
   if title_image_path is not None:
     mark_pixmap = QPixmap(str(title_image_path))
     if not mark_pixmap.isNull():
@@ -541,6 +593,7 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
 
   avatar_layer = QWidget(profile_card)
   avatar_layer.setObjectName("aboutAvatarLayer")
+  avatar_layer.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
   avatar_layer_layout = QVBoxLayout(avatar_layer)
   avatar_layer_layout.setContentsMargins(22, 112, 22, 0)
   avatar_layer_layout.setSpacing(0)
@@ -555,24 +608,27 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
       avatar.setText("")
       avatar.setPixmap(avatar_pixmap.scaled(132, 132, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation))
   avatar_layer_layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-  avatar_layer_layout.addStretch(1)
   profile_layout.addWidget(avatar_layer, 0, 0, 2, 1)
 
   profile_text_column = QVBoxLayout()
   profile_text_column.setContentsMargins(0, 22, 22, 0)
   profile_text_column.setSpacing(8)
+  profile_text_column.setAlignment(Qt.AlignmentFlag.AlignTop)
 
   display_name = QLabel(_CREATOR_DISPLAY_NAME, profile_card)
   display_name.setObjectName("aboutProfileName")
+  display_name.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   profile_text_column.addWidget(display_name)
 
   handle = QLabel(f"@{_CREATOR_HANDLE}", profile_card)
   handle.setObjectName("aboutProfileHandle")
+  handle.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   profile_text_column.addWidget(handle)
 
   role = QLabel(_CREATOR_ROLE, profile_card)
   role.setObjectName("aboutProfileRole")
   role.setWordWrap(True)
+  role.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   profile_text_column.addWidget(role)
 
   pill_row = QHBoxLayout()
@@ -609,10 +665,13 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
 
   meta_card = QFrame(host)
   meta_card.setObjectName("aboutCard")
+  meta_card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   meta_layout = QGridLayout(meta_card)
   meta_layout.setContentsMargins(18, 18, 18, 18)
   meta_layout.setHorizontalSpacing(18)
   meta_layout.setVerticalSpacing(10)
+  meta_layout.setColumnStretch(0, 0)
+  meta_layout.setColumnStretch(1, 1)
   _about_meta_row(meta_layout, 0, "Name", _CREATOR_DISPLAY_NAME, meta_card)
   _about_meta_row(meta_layout, 1, "Handle", f"@{_CREATOR_HANDLE}", meta_card)
   _about_meta_row(meta_layout, 2, "Age", _CREATOR_AGE, meta_card)
@@ -623,12 +682,15 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
 
   etymology_card = QFrame(host)
   etymology_card.setObjectName("aboutCard")
+  etymology_card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   etymology_layout = QVBoxLayout(etymology_card)
   etymology_layout.setContentsMargins(18, 18, 18, 18)
   etymology_layout.setSpacing(10)
+  etymology_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
   etymology_title = QLabel("Etymology", etymology_card)
   etymology_title.setObjectName("sectionTitle")
+  etymology_title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   etymology_layout.addWidget(etymology_title)
 
   for paragraph in ABOUT_ETYMOLOGY_PARAGRAPHS:
@@ -638,15 +700,18 @@ def build_about_tab(overlay: "SettingsOverlay") -> None:
 
   overview_card = QFrame(host)
   overview_card.setObjectName("aboutCard")
+  overview_card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   overview_layout = QVBoxLayout(overview_card)
   overview_layout.setContentsMargins(18, 18, 18, 18)
   overview_layout.setSpacing(10)
+  overview_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
   overview_title = QLabel("Project Overview", overview_card)
   overview_title.setObjectName("sectionTitle")
+  overview_title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
   overview_layout.addWidget(overview_title)
   render_about_sections(parent=overview_card, layout=overview_layout, sections=ABOUT_PROJECT_OVERVIEW_SECTIONS, text_factory=_about_text)
-  layout.addWidget(overview_card)
+  layout.addWidget(_about_minimum_height_widget(overview_card))
 
-  layout.addStretch(1)
-  overlay._stack.addWidget(scroll)
+  scroll.ensure_content_geometry()
+  return scroll

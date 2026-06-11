@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtCore import QEventLoop, Qt, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QProgressBar, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON
 from ludoxel.application.preferences.keybinds import action_display_name
@@ -109,10 +109,10 @@ class SettingsOverlay(SidebarDialogBase):
     build_game_tab(self)
     build_controls_tab(self)
     build_audio_tab(self)
-    self._about_placeholder = QWidget(self._stack)
-    self._about_placeholder.setObjectName("aboutPagePlaceholder")
-    self._stack.addWidget(self._about_placeholder)
     self._about_built = False
+    self._about_content_page: QWidget | None = None
+    self._about_page = self._create_about_page_shell()
+    self._stack.addWidget(self._about_page)
     self._set_tab(0)
 
   @staticmethod
@@ -164,25 +164,106 @@ class SettingsOverlay(SidebarDialogBase):
 
   def _set_tab(self, index: int) -> None:
     selected = int(max(0, min(5, int(index))))
-    if selected == 5:
+    if selected == 5 and not bool(self._about_built):
+      self._set_stack_page(index=selected, max_index=5, tab_buttons=(self._tab_display, self._tab_world, self._tab_game, self._tab_controls, self._tab_audio, self._tab_about))
+      self._show_about_loader()
+      self._paint_about_loader_once()
       self._ensure_about_tab()
+      return
     self._set_stack_page(index=selected, max_index=5, tab_buttons=(self._tab_display, self._tab_world, self._tab_game, self._tab_controls, self._tab_audio, self._tab_about))
+
+  def _create_about_page_shell(self) -> QWidget:
+    page = QWidget(self._stack)
+    page.setObjectName("aboutPage")
+    page.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    page_layout = QVBoxLayout(page)
+    page_layout.setContentsMargins(0, 0, 0, 0)
+    page_layout.setSpacing(0)
+
+    self._about_page_stack = QStackedWidget(page)
+    self._about_page_stack.setObjectName("aboutPageStack")
+    self._about_page_stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    page_layout.addWidget(self._about_page_stack, stretch=1)
+
+    self._about_loader_page = QWidget(self._about_page_stack)
+    self._about_loader_page.setObjectName("aboutLoaderPage")
+    self._about_loader_page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    loader_layout = QVBoxLayout(self._about_loader_page)
+    loader_layout.setContentsMargins(24, 24, 24, 24)
+    loader_layout.setSpacing(12)
+    loader_layout.addStretch(1)
+
+    loader_card = QFrame(self._about_loader_page)
+    loader_card.setObjectName("aboutLoaderCard")
+    loader_card.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+    loader_card.setMinimumWidth(360)
+    loader_card.setMaximumWidth(520)
+
+    loader_card_layout = QVBoxLayout(loader_card)
+    loader_card_layout.setContentsMargins(22, 20, 22, 20)
+    loader_card_layout.setSpacing(12)
+
+    self._about_loader_label = QLabel("Loading About section...", loader_card)
+    self._about_loader_label.setObjectName("settingsPageSubtitle")
+    self._about_loader_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    self._about_loader_label.setWordWrap(True)
+    loader_card_layout.addWidget(self._about_loader_label)
+
+    self._about_loader_progress = QProgressBar(loader_card)
+    self._about_loader_progress.setObjectName("aboutLoaderProgress")
+    self._about_loader_progress.setRange(0, 100)
+    self._about_loader_progress.setValue(0)
+    self._about_loader_progress.setTextVisible(True)
+    self._about_loader_progress.setMinimumHeight(22)
+    self._about_loader_progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    loader_card_layout.addWidget(self._about_loader_progress)
+
+    loader_layout.addWidget(loader_card, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    loader_layout.addStretch(1)
+
+    self._about_page_stack.addWidget(self._about_loader_page)
+    self._about_page_stack.setCurrentWidget(self._about_loader_page)
+    return page
+
+  def _set_about_loader_progress(self, value: int) -> None:
+    progress = int(max(0, min(100, int(value))))
+    self._about_loader_label.setText("Loading About section...")
+    self._about_loader_progress.setValue(progress)
+
+  def _show_about_loader(self) -> None:
+    self._set_about_loader_progress(0)
+    self._about_page_stack.setCurrentWidget(self._about_loader_page)
+
+  def _paint_about_loader_once(self) -> None:
+    self._set_about_loader_progress(25)
+    self._about_loader_page.ensurePolished()
+    self._about_loader_page.updateGeometry()
+    self._about_page_stack.repaint()
+    self._stack.repaint()
+    self._content.repaint()
+    QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
   def _ensure_about_tab(self) -> None:
     """
     About page を最初に選択した時点で一度だけ構築し、同じ overlay instance の再表示では生成済み widget tree を再利用する。
-    content module の import と大量 widget 生成を通常の settings 起動経路から外しつつ、stack index 5 を維持する。
+    About 用 stack index は固定し、その内部で loader view から content view へ切り替える。
     """
     if bool(self._about_built):
+      self._about_page_stack.setCurrentWidget(self._about_content_page)
       return
+
     from ludoxel.presentation.interface.settings.pages import build_about_tab
 
-    build_about_tab(self)
-    placeholder_index = self._stack.indexOf(self._about_placeholder)
-    if placeholder_index >= 0:
-      placeholder = self._stack.widget(placeholder_index)
-      self._stack.removeWidget(placeholder)
-      placeholder.deleteLater()
+    self._set_about_loader_progress(50)
+    content_page = build_about_tab(self, parent=self._about_page_stack)
+    self._set_about_loader_progress(75)
+    self._about_page_stack.addWidget(content_page)
+    self._about_content_page = content_page
+    self._set_about_loader_progress(100)
+    self._about_page_stack.setCurrentWidget(content_page)
     self._about_built = True
 
   def sync_values(self, **kwargs) -> None:

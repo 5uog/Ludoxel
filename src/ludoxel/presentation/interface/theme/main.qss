@@ -952,6 +952,52 @@ QWidget#settingsDialog QWidget#crosshairEditor {
 
 /* About page */
 
+QWidget#settingsRoot QStackedWidget#aboutPageStack,
+QWidget#settingsRoot QWidget#aboutLoaderPage {
+  background: #242424;
+  border: none;
+}
+
+QWidget#settingsRoot QFrame#aboutLoaderCard {
+  background: #303030;
+  border-top: 3px solid #5b5b5b;
+  border-left: 3px solid #5b5b5b;
+  border-right: 3px solid #111111;
+  border-bottom: 3px solid #111111;
+  border-radius: 0px;
+}
+
+QWidget#settingsRoot QProgressBar#aboutLoaderProgress {
+  color: #ffffff;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5b5b5b;
+  border-bottom: 2px solid #5b5b5b;
+  border-radius: 0px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 22px;
+}
+
+QWidget#settingsRoot QProgressBar#aboutLoaderProgress::chunk {
+  background: #8bc45a;
+  border-top: 1px solid #b8e884;
+  border-left: 1px solid #b8e884;
+  border-right: 1px solid #2b4519;
+  border-bottom: 1px solid #2b4519;
+}
+
+QWidget#settingsRoot QProgressBar#aboutLoaderProgress:disabled {
+  color: rgba(255,255,255,115);
+  background: #171717;
+  border-top-color: #080808;
+  border-left-color: #080808;
+  border-right-color: #333333;
+  border-bottom-color: #333333;
+}
+
 QWidget#settingsRoot QFrame#aboutProfileCover,
 QWidget#othelloSettingsRoot QFrame#aboutProfileCover,
 QWidget#settingsDialog QFrame#aboutProfileCover {
