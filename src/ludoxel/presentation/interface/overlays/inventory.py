@@ -226,9 +226,14 @@ class InventoryOverlay(QWidget):
     self.sync_hotbar(slots=self._hotbar_slots, selected_index=self._selected_hotbar_index)
 
   def setVisible(self, visible: bool) -> None:
-    super().setVisible(bool(visible))
-    self._photos.set_active(bool(visible) and bool(self._creative_mode))
-    if bool(visible) and bool(self._creative_mode):
+    normalized_visible = bool(visible)
+    super().setVisible(normalized_visible)
+    self._photos.set_active(normalized_visible and bool(self._creative_mode))
+    if not normalized_visible and hasattr(self, "_search_box"):
+      self._hovered_item_id = None
+      self._search_box.clear()
+      return
+    if normalized_visible and bool(self._creative_mode):
       self._search_box.setFocus(Qt.FocusReason.PopupFocusReason)
       self._search_box.selectAll()
 
