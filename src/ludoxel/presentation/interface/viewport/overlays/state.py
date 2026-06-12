@@ -15,6 +15,7 @@ from ludoxel.foundations.mathematics.linear.transform_matrices import rotate_z_d
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
+from ludoxel.presentation.interface.hud.ai_status_tags import AiStatusTagPool
 
 if TYPE_CHECKING:
   from ludoxel.presentation.interface.viewport.widgets.renderer import RendererViewportWidget
@@ -311,6 +312,39 @@ class ViewportOverlayMixin:
     self._overlay.set_player_preview_name_tag(text, visible=bool(preview_visible), opacity=1.0)
     if not bool(self._world_player_name_visible()) or not bool(text):
       self._hide_world_player_name_tag()
+    if not bool(self._ai_status_tags_visible()):
+      self._hide_ai_status_tags()
+
+  def _ai_status_tag_pool(self: "RendererViewportWidget") -> AiStatusTagPool:
+    """
+    AI nametag と health indicator の widget pool を遅延生成して返す。
+    viewport widget の生成順へ依存しないよう初回参照時に viewport を親として構築し、以後は同一 instance を再利用する。
+    """
+    pool = getattr(self, "_ai_status_tags", None)
+    if pool is None:
+      pool = AiStatusTagPool(self)
+      self._ai_status_tags = pool
+    return pool
+
+  def _hide_ai_status_tags(self: "RendererViewportWidget") -> None:
+    pool = getattr(self, "_ai_status_tags", None)
+    if pool is not None:
+      pool.hide_all()
+
+  def _ai_status_tags_visible(self: "RendererViewportWidget") -> bool:
+    """
+    AI nametag と health indicator を描画してよい viewport 状態かを判定する。
+    判定条件は world player nametag と同一の HUD/overlay 抑制(loading、HUD 非表示、death、pause、settings、Othello settings、inventory)に従うが、AI tag は他者表示であるため first-person 視点でも表示する。
+    """
+    return bool(
+      (not bool(self.loading_active()))
+      and (not bool(self._state.hide_hud))
+      and (not self._overlays.dead())
+      and (not self._overlays.paused())
+      and (not self._overlays.settings_open())
+      and (not self._overlays.othello_settings_open())
+      and (not self._overlays.inventory_open())
+    )
 
   def _player_name_anchor_world_pos(self: "RendererViewportWidget", *, snapshot) -> Vec3:
     player = self._session.player
@@ -367,3 +401,55 @@ class ViewportOverlayMixin:
       opacity *= float(_PLAYER_NAME_OCCLUDED_OPACITY)
 
     self._set_world_player_name_tag(text=text, center_x=float(center_x), bottom_y=float(bottom_y), opacity=float(opacity))
+
+  def _update_ai_status_tags(self: "RendererViewportWidget", *, snapshot, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
+    """
+    現在 frame の camera から見える AI actor の nametag と health indicator を screen 空間へ投影して更新する。
+    投影は world player nametag と同じ view、roll、perspective、NDC 範囲判定、画面遮蔽による減光を用いるが、AI tag は first-person 視点でも表示する。
+    anchor は各 AI の足元位置に身長と nametag offset を加えた頭上点であり、camera の後方、NDC 範囲外、viewport 縮退時は表示しない。
+    snapshot 値は session の ai_render_snapshots() が返す読み取り専用 DTO であり、この更新処理は simulation 状態を変更しない。
+    """
+    if not bool(self._ai_status_tags_visible()) or int(self.width()) <= 1 or int(self.height()) <= 1:
+      self._hide_ai_status_tags()
+      return
+    ai_snapshots = tuple(self._session.ai_render_snapshots())
+    pool = self._ai_status_tag_pool()
+    pool.begin_frame()
+    if len(ai_snapshots) > 0:
+      forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
+      view = mat4.look_dir(eye, forward)
+      if abs(float(roll_deg)) > 1e-6:
+        view = mat4.mul(rotate_z_deg_matrix(float(roll_deg)), view)
+      proj = mat4.perspective(float(snapshot.camera.fov_deg), float(self.width()) / max(float(self.height()), 1.0), 0.01, float(self._renderer._cfg.camera.z_far))
+      view_proj = mat4.mul(proj, view)
+      for ai_snapshot in ai_snapshots:
+        ai_player = ai_snapshot.player
+        anchor = Vec3(float(ai_player.position.x), float(ai_player.position.y) + float(ai_player.height) + float(_PLAYER_NAME_VERTICAL_OFFSET), float(ai_player.position.z))
+        to_anchor = anchor - eye
+        distance = float(to_anchor.length())
+        if float(distance) <= 1e-4:
+          continue
+        clip = view_proj @ np.asarray([float(anchor.x), float(anchor.y), float(anchor.z), 1.0], dtype=np.float32)
+        if float(clip[3]) <= 1e-6:
+          continue
+        ndc_x = float(clip[0]) / float(clip[3])
+        ndc_y = float(clip[1]) / float(clip[3])
+        ndc_z = float(clip[2]) / float(clip[3])
+        if float(ndc_x) < -1.1 or float(ndc_x) > 1.1 or float(ndc_y) < -1.1 or float(ndc_y) > 1.1 or float(ndc_z) < -1.1 or float(ndc_z) > 1.1:
+          continue
+        center_x = (float(ndc_x) * 0.5 + 0.5) * float(self.width())
+        bottom_y = (1.0 - (float(ndc_y) * 0.5 + 0.5)) * float(self.height())
+        opacity = 1.0
+        if self._player_name_occluded(eye=eye, target=anchor, distance=float(distance)):
+          opacity *= float(_PLAYER_NAME_OCCLUDED_OPACITY)
+        pool.show_tag(
+          actor_id=str(ai_snapshot.actor_id),
+          name=str(ai_snapshot.name),
+          health=float(ai_snapshot.health),
+          max_health=float(ai_snapshot.max_health),
+          indicator=str(ai_snapshot.health_indicator),
+          center_x=float(center_x),
+          anchor_bottom_y=float(bottom_y),
+          opacity=float(opacity),
+        )
+    pool.end_frame()

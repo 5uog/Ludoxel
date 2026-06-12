@@ -478,17 +478,19 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
       paragraph(
         code_run("PersistedAiPlayer"),
         text_run(
-          " stores actor identity, AI mode, personality, block-placement permission, held item id, position, velocity, yaw, pitch, health, max health, ground state, flying state, route points, route closed flag, route execution flag, route style, and route target index. It converts to and from "
+          " stores actor identity, AI mode, personality, block-placement permission, held item id, display name, health-indicator position, auto-regeneration settings, position, velocity, yaw, pitch, health, max health, ground state, flying state, route points, route closed flag, route run flag, route style, and route target index. It converts to and from "
         ),
         code_run("AiPlayerState"),
         text_run(", and its "),
         code_run("from_dict()"),
         text_run(
-          " path normalizes unknown modes, personalities, route styles, held items, and coordinates. This makes AI actors first-class persistent domain objects, not renderer decorations or temporary spawn effects."
+          " path normalizes unknown modes, personalities, route styles, held items, indicator positions, regeneration values, and coordinates. Files written before these fields existed load with defaults: an empty name (replaced by an allocated default on restore), indicator "
         ),
+        code_run("off"),
+        text_run(", and auto regeneration disabled. This makes AI actors first-class persistent domain objects, not renderer decorations or temporary spawn effects."),
       ),
       code_block(
-        "application persistence aggregate:\n  AppState.current_space_id\n  AppState.settings\n  AppState.inventory\n  AppState.othello_settings\n  AppState.my_world\n  AppState.othello_space\n\nfile envelopes:\n  PlayerStateFile(version=7)\n  WorldStateFile(version=3)\n\nschema records:\n  PersistedSettings\n  PersistedInventory\n  PersistedPlayer\n  PersistedWorld\n  PersistedAiPlayer\n  PersistedPlaySpace\n  PersistedOthelloSpace\n\nhotbar branches:\n  creative_hotbar_slots\n  survival_hotbar_slots\n  othello_hotbar_slots\n  route_hotbar_slots\n\nplayer persisted fields:\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  on_ground\n  flying\n  auto_jump_cooldown_s\n  crouch_eye_offset\n  health\n  max_health\n\nAI persisted fields:\n  actor_id\n  mode\n  personality\n  can_place_blocks\n  held_item_id\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  health\n  max_health\n  on_ground\n  flying\n  route_points\n  route_closed\n  route_run\n  route_style\n  route_target_index"
+        "application persistence aggregate:\n  AppState.current_space_id\n  AppState.settings\n  AppState.inventory\n  AppState.othello_settings\n  AppState.my_world\n  AppState.othello_space\n\nfile envelopes:\n  PlayerStateFile(version=7)\n  WorldStateFile(version=3)\n\nschema records:\n  PersistedSettings\n  PersistedInventory\n  PersistedPlayer\n  PersistedWorld\n  PersistedAiPlayer\n  PersistedPlaySpace\n  PersistedOthelloSpace\n\nhotbar branches:\n  creative_hotbar_slots\n  survival_hotbar_slots\n  othello_hotbar_slots\n  route_hotbar_slots\n\nplayer persisted fields:\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  on_ground\n  flying\n  auto_jump_cooldown_s\n  crouch_eye_offset\n  health\n  max_health\n\nAI persisted fields:\n  actor_id\n  mode\n  personality\n  can_place_blocks\n  held_item_id\n  name\n  health_indicator\n  auto_regen_enabled\n  regen_start_delay_s\n  regen_interval_s\n  regen_amount_hp\n  regen_cap_hp\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  health\n  max_health\n  on_ground\n  flying\n  route_points\n  route_closed\n  route_run\n  route_style\n  route_target_index"
       ),
     ),
   ),
@@ -1216,8 +1218,21 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         code_run("ludoxel:ai_spawn_egg"),
         text_run(", and the session manager can call "),
         code_run("spawn_ai_player_for_session(session, spawn_cell=..., settings=...)"),
+        text_run(". A freshly spawned actor receives a default display name in the "),
+        code_run("AI#0001"),
         text_run(
-          ". The resulting actor receives per-instance settings, an actor id, initial state, and a persisted identity. This route preserves the distinction between an inventory item, a click interaction, a spawn cell, actor settings, and the AI manager’s internal state."
+          " form: the lowest free four-digit suffix among live AI is allocated, and spawning fails if every suffix up to #9999 is taken. The resulting actor receives per-instance settings, an actor id, initial state, and a persisted identity. This route preserves the distinction between an inventory item, a click interaction, a spawn cell, actor settings, and the AI manager’s internal state."
+        ),
+      ),
+      paragraph(
+        text_run(
+          "Every AI has a display name shown on its in-world nametag. The name body is validated as letters and digits only, must not start with a digit, and is limited to 1 to 16 characters; an optional "
+        ),
+        code_run("#0001"),
+        text_run(" to "),
+        code_run("#9999"),
+        text_run(
+          " suffix distinguishes AI that share the same body. Names of live AI must be unique; the comparison is case-insensitive so that visually identical tags cannot coexist, while the saved value keeps the entered casing. Dead or removed AI release their names. When a requested name collides with a live AI, the settings surface reports the conflict and suggests the lowest free suffixed variant; if all numbered variants of a body are taken, the rename is rejected with an explicit error."
         ),
       ),
       paragraph(
@@ -1235,25 +1250,53 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         code_run("20.0"),
         text_run(", maximum health "),
         code_run("20.0"),
-        text_run(", and route style "),
+        text_run(", route style "),
         code_run("strict"),
-        text_run(". These defaults matter because missing or malformed persisted state must restore to a valid actor rather than crashing the session."),
+        text_run(", health indicator "),
+        code_run("off"),
+        text_run(", and auto regeneration disabled. These defaults matter because missing or malformed persisted state must restore to a valid actor rather than crashing the session."),
+      ),
+      paragraph(
+        text_run("Each AI can draw a heart-row health indicator near its nametag. The position is selectable per actor as "),
+        code_run("Off"),
+        text_run(", "),
+        code_run("Above nametag"),
+        text_run(", or "),
+        code_run("Below nametag"),
+        text_run(
+          ", with Off as the default. The hearts use the same pixel pattern and fill rules as the player's Survival health strip: one heart equals two health points, a half heart equals one health point, and 20 health points render as ten hearts in one row. The indicator is placed so that it does not overlap the nametag, follows the same screen clamping and occlusion dimming as the world nametag, and is drawn by Qt overlay widgets shared by the Windows OpenGL and macOS wgpu viewport paths."
+        ),
+      ),
+      paragraph(
+        text_run(
+          "Auto regeneration is a per-actor setting and is disabled by default, which preserves the previous behavior of never healing. When enabled, the defaults are Minecraft-like: a start delay of "
+        ),
+        code_run("4.0"),
+        text_run(" seconds after the most recent damage, one healing tick of "),
+        code_run("1.0"),
+        text_run(" health point every "),
+        code_run("4.0"),
+        text_run(
+          " seconds, and a cap bounded by the actor's maximum health. Taking damage restarts the delay, healing never exceeds the configured cap, dead actors do not regenerate, and removed actors leave the regeneration path entirely. Regeneration advances inside the fixed-step simulation update of the AI manager, not in the render loop. The settings surface edits the delay, the cap, and the time required to heal the full cap; the per-tick interval is derived from that time."
+        ),
       ),
       paragraph(
         text_run("AI persistence encodes route behavior. Route points are stored as "),
         code_run("AiRoutePoint"),
+        text_run(" triples, together with the route closed flag, the "),
+        code_run("route_run"),
         text_run(
-          " triples, together with route closure, route execution state, route style, and target index. A closed route loops; an open route can traverse and return according to route logic. Persisting the target index means an actor can resume route progression rather than restarting from the first authored point every time the application loads. The route branch of the hotbar and route overlay are presentation tools layered over this domain state."
+          " sprint flag, route style, and target index. A closed route treats the connection from the final point back to the first as an authored patrol segment; an open route still returns toward the first point after the final one, without that closing segment. The run flag controls sprinting along segments, not route advancement. Persisting the target index means an actor can resume route progression rather than restarting from the first authored point every time the application loads. The route branch of the hotbar and route overlay are presentation tools layered over this domain state."
         ),
       ),
       paragraph(
         "AI actors also participate in combat. The local player can pick an AI actor through a ray, apply local melee attack logic, use sprint state from player combat helpers, and receive attack results from the AI manager. Aggressive AI can pursue and attack the local player; peaceful AI avoids combat behavior. Combat must consult health, hit cooldowns, reach, line-of-sight obstruction, movement state, and world collision so that it remains part of the simulation rather than a renderer animation."
       ),
       paragraph(
-        "AI render snapshots are derived from state but do not own state. The manager can expose actor render snapshots and route-path snapshots to presentation code. The renderer can then draw AI bodies, route paths, name tags, held blocks, shadows, and combat indicators without gaining permission to mutate actor decisions. This separation is necessary because AI state is persistent and rule-driven, while rendering is frame-local and backend-dependent."
+        "AI render snapshots are derived from state but do not own state. The manager can expose actor render snapshots and route-path snapshots to presentation code; each snapshot also carries the actor id, display name, current and maximum health, and the configured health-indicator position as read-only values. The renderer and the overlay layer can then draw AI bodies, route paths, nametags, heart indicators, held blocks, shadows, and combat indicators without gaining permission to mutate actor decisions. This separation is necessary because AI state is persistent and rule-driven, while rendering is frame-local and backend-dependent."
       ),
       code_block(
-        "AI modules:\n  simulation/actors/ai_players/state.py\n  simulation/actors/ai_players/settings.py\n  simulation/actors/ai_players/spawning.py\n  simulation/actors/ai_players/serialization.py\n  simulation/actors/ai_players/manager.py\n  simulation/actors/ai_players/idle.py\n  simulation/actors/ai_players/wander.py\n  simulation/actors/ai_players/route.py\n  simulation/actors/ai_players/navigation.py\n  simulation/actors/ai_players/parkour.py\n  simulation/actors/ai_players/recovery.py\n  simulation/actors/ai_players/stuck.py\n  simulation/actors/ai_players/avoidance.py\n  simulation/actors/ai_players/combat.py\n  simulation/actors/ai_players/placement.py\n  simulation/actors/ai_players/planner.py\n  simulation/actors/ai_players/worker.py\n\nAI persisted fields:\n  actor_id\n  mode\n  personality\n  can_place_blocks\n  held_item_id\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  health\n  max_health\n  on_ground\n  flying\n  route_points\n  route_closed\n  route_run\n  route_style\n  route_target_index\n\nAI defaults:\n  mode: idle\n  personality: aggressive\n  route_style: strict\n  health: 20.0\n  max_health: 20.0\n  default held item: minecraft:oak_planks"
+        "AI modules:\n  simulation/actors/ai_players/state.py\n  simulation/actors/ai_players/settings.py\n  simulation/actors/ai_players/naming.py\n  simulation/actors/ai_players/spawning.py\n  simulation/actors/ai_players/serialization.py\n  simulation/actors/ai_players/manager.py\n  simulation/actors/ai_players/idle.py\n  simulation/actors/ai_players/wander.py\n  simulation/actors/ai_players/route.py\n  simulation/actors/ai_players/navigation.py\n  simulation/actors/ai_players/parkour.py\n  simulation/actors/ai_players/recovery.py\n  simulation/actors/ai_players/stuck.py\n  simulation/actors/ai_players/avoidance.py\n  simulation/actors/ai_players/combat.py\n  simulation/actors/ai_players/placement.py\n  simulation/actors/ai_players/planner.py\n  simulation/actors/ai_players/worker.py\n\nAI persisted fields:\n  actor_id\n  mode\n  personality\n  can_place_blocks\n  held_item_id\n  name\n  health_indicator\n  auto_regen_enabled\n  regen_start_delay_s\n  regen_interval_s\n  regen_amount_hp\n  regen_cap_hp\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  health\n  max_health\n  on_ground\n  flying\n  route_points\n  route_closed\n  route_run\n  route_style\n  route_target_index\n\nAI defaults:\n  mode: idle\n  personality: aggressive\n  route_style: strict\n  health: 20.0\n  max_health: 20.0\n  default held item: minecraft:oak_planks\n  spawn name: lowest free AI#0001-style suffix\n  health indicator: off\n  auto regeneration: disabled\n  regen start delay: 4.0 s\n  regen interval: 4.0 s\n  regen amount: 1.0 health point\n  regen cap: bounded by max health\n\nAI name rules:\n  body: letters and digits, no leading digit, 1-16 characters\n  optional suffix: #0001 to #9999\n  live AI names unique (case-insensitive comparison)\n  dead or removed AI release their names"
       ),
     ),
   ),
@@ -1283,19 +1326,22 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         ),
       ),
       paragraph(
-        "Flexible routes and strict routes differ in how they react to navigation failure. A strict route can preserve authored intent and stop or fail when a route point cannot be reached. A flexible route can ask the planner for a support-cell route across a bounded snapshot and follow the resulting path when complete. If no complete route exists, the actor freezes rather than pretending that a partial path reached the authored patrol point. This prevents AI route behavior from drifting into invisible teleportation or silent route truncation."
+        "Flexible routes and strict routes differ in how they react to navigation failure. A strict route preserves authored intent: the actor walks directly toward each route point, does not search for detours, and getting stuck against blocks is accepted behavior. A flexible route asks the planner for a support-cell route across a bounded snapshot in a background worker process and follows the resulting path when complete; it can detour, recover from blocked spots, and use block placement for traversal when placement is allowed. Failed plans retry with exponential backoff, and a route point that keeps failing is placed on a per-actor cooldown blacklist and temporarily skipped in favor of the next route point instead of being retried without limit. If every route point is currently blacklisted, the actor holds position and turns toward the target until a cooldown expires."
       ),
       paragraph(
-        "The background worker exists because route planning can be more expensive than a single frame. Worker logic can receive a bounded snapshot, route point data, actor dimensions, and route settings, then compute route results without blocking the Qt event loop. The application must still preserve synchronization: world edits, actor movement, route cancellation, space switching, and shutdown can invalidate or supersede worker results. Therefore route planning is background work, but route application remains manager-owned."
+        "The background worker exists because route planning can be more expensive than a single frame. Worker logic receives a bounded snapshot, route point data, actor dimensions, and route settings, then computes route results without blocking the Qt event loop; route planning never touches presentation rendering state. Local recovery search inside the manager is also budgeted: its breadth-first escape search caches its result per actor for a short interval and the number of fresh searches per simulation step is capped, so several blocked actors cannot multiply the per-frame search cost. The application must still preserve synchronization: world edits, actor movement, route cancellation, space switching, and shutdown can invalidate or supersede worker results. Therefore route planning is background work, but route application remains manager-owned."
       ),
       paragraph(
-        "Navigation includes stuck detection and recovery. An actor following a route or pursuing a player can become blocked by changed blocks, partial geometry, gravity-settled blocks, player placement, or route edits. Stuck detection, avoidance, recovery, and parkour modules provide corrective behavior. The AI subsystem can cancel navigation for an actor, remove actors, update actor settings, and expose route path snapshots for the HUD and overlay layers. These controls are necessary because route editing is user-driven and persistent."
+        "Navigation includes stuck detection and recovery. An actor following a route or pursuing a player can become blocked by changed blocks, partial geometry, gravity-settled blocks, player placement, or route edits. Stuck detection, avoidance, recovery, and parkour modules provide corrective behavior, including escape candidates from boxed-in positions and placement-based steps when the actor may place blocks. The AI subsystem can cancel navigation for an actor, remove actors, update actor settings, and expose route path snapshots for the HUD and overlay layers. These controls are necessary because route editing is user-driven and persistent."
       ),
       paragraph(
-        "Combat pursuit interacts with route planning. Aggressive AI may suspend route planning during active melee pursuit, because the target is dynamic and route objectives differ from patrol objectives. A peaceful AI can avoid the combat path. An actor allowed to place blocks can use placement behavior as part of traversal, subject to world placement policy and support checks. These distinctions are why mode, personality, route style, placement permission, health, and route target index are persisted together."
+        "Ground movement applies ledge and void safety before each forward step. When an AI walks on the ground in Free Roam, in PVP pursuit, or along a route, it checks whether the column ahead offers a landing surface: in Free Roam and PVP a drop of up to three blocks onto support is allowed, while route following accepts deeper descents only when support exists within eight blocks below. If no landing exists, the actor stops instead of walking off the edge; a wandering actor additionally turns toward a different heading. Planner-verified jumps and drops in flexible routes bypass this gate because their arcs are validated separately. PVP pursuit passes through the same check, so an aggressive AI does not walk into the void to reach its target."
+      ),
+      paragraph(
+        "Block placement is treated as a movement aid with explicit safety rules. Before placing, the AI verifies a clear line of sight from its eye position to the targeted placement face using the picking ray; if another block model obstructs that ray, the placement is cancelled rather than placed through the obstruction. Bridge placement secures the next footing first, and the edge-safety gate keeps the actor from advancing ahead of an unfinished bridge, so the previous behavior of placing one block and walking on into the void no longer occurs. When placement is disabled, the actor never places blocks and prefers stopping or turning away over falling. Combat pursuit interacts with these rules as before: aggressive AI may suspend route planning during melee pursuit, peaceful AI avoids the combat path, and placement permission, mode, personality, route style, health, and route target index are persisted together."
       ),
       code_block(
-        "support-cell route planning definition:\n  route search over physically supportable actor cells\n  route points converted to reachable support cells\n  bounded world snapshot\n  route result applied by AI manager\n\nplanner numeric bounds:\n  max support Y delta: 1\n  parkour search cap: 8\n  parkour sample count: 5\n  drop search depth: 4\n  visit limit minimum: 1024\n  visit limit maximum: 4096\n  target support search radius: 6\n\nroute behavior controls:\n  route_closed\n  route_run\n  route_style: strict or flexible\n  route_target_index\n\nmanager operations:\n  update actor settings\n  cancel actor navigation\n  remove actor\n  pick actor by ray\n  attack actor from local player\n  expose route path snapshots\n  expose render snapshots"
+        "support-cell route planning definition:\n  route search over physically supportable actor cells\n  route points converted to reachable support cells\n  bounded world snapshot\n  route result applied by AI manager\n\nplanner numeric bounds:\n  max support Y delta: 1\n  parkour search cap: 8\n  parkour sample count: 5\n  drop search depth: 4\n  visit limit minimum: 1024\n  visit limit maximum: 4096\n  target support search radius: 6\n\nsearch and retry budgets:\n  route plan requests per step: 1\n  local recovery searches per step: 2\n  local recovery result cache: 0.20 s\n  failed target blacklist after: 3 consecutive plan failures\n  failed target cooldown: 8.0 s\n\nmovement safety:\n  forward footing check before ground steps\n  free roam / PVP safe drop: up to 3 blocks\n  route-following drop window: up to 8 blocks with support below\n  placement line-of-sight check via picking ray\n  bridge placement secures next footing before advancing\n\nroute behavior controls:\n  route_closed\n  route_run\n  route_style: strict or flexible\n  route_target_index\n\nmanager operations:\n  update actor settings\n  validate AI display names\n  cancel actor navigation\n  remove actor\n  pick actor by ray\n  attack actor from local player\n  expose route path snapshots\n  expose render snapshots"
       ),
     ),
   ),
@@ -1854,7 +1900,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
     title="HUD, overlays, settings pages, and About content model",
     blocks=(
       paragraph(
-        "Presentation interface code separates HUD, overlays, settings, and common widgets. HUD modules cover controller logic, payload data, metrics, crosshair art, crosshair widget, hotbar widget, route overlay, and composite HUD widget. Overlay modules cover AI settings, death state, inventory, pause, and skin preview. Settings modules cover overlay shell, page construction, state synchronization, cloud-flow settings, scalar widgets, control widgets, crosshair widgets, and About-page content. This separation allows HUD updates, modal overlays, settings state, and About content to evolve without becoming one unstructured desktop-window file."
+        "Presentation interface code separates HUD, overlays, settings, and common widgets. HUD modules cover controller logic, payload data, metrics, crosshair art, crosshair widget, hotbar widget, route overlay, AI status tags, and composite HUD widget. The AI status tag pool draws each AI's nametag and optional heart-row health indicator as projected Qt overlay widgets, reusing the world nametag style and the Survival heart pattern, and the same pool serves both the Windows OpenGL and macOS wgpu viewport paths. Overlay modules cover AI settings, death state, inventory, pause, and skin preview. Settings modules cover overlay shell, page construction, state synchronization, cloud-flow settings, scalar widgets, control widgets, crosshair widgets, and About-page content. This separation allows HUD updates, modal overlays, settings state, and About content to evolve without becoming one unstructured desktop-window file."
       ),
       paragraph(
         "The HUD consumes structured state. It can display hotbar contents, selected slot, crosshair, health, debug metrics, Othello state, evaluation graph, route lines, and status overlays. It should not own block placement legality, Othello move legality, AI route computation, or renderer resource allocation. HUD visibility can be controlled independently from debug HUD visibility, and Othello HUD is suppressed under conditions where ordinary gameplay HUD or debug HUD state requires it. This keeps user-visible display rules separate from domain state."
@@ -1865,6 +1911,31 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         ),
         code_run("save_state()"),
         text_run(", runtime preferences, input capture, renderer pause state, and application shutdown. They are therefore part of the application contract, not ornamental dialogs."),
+      ),
+      paragraph(
+        text_run("The AI settings overlay is organized by responsibility into "),
+        code_run("Identity"),
+        text_run(", "),
+        code_run("Display"),
+        text_run(", "),
+        code_run("Health"),
+        text_run(", "),
+        code_run("Behavior"),
+        text_run(", "),
+        code_run("Safety"),
+        text_run(", "),
+        code_run("Block Placement"),
+        text_run(", and "),
+        code_run("Route"),
+        text_run(
+          " pages. Identity edits the validated AI name with live duplicate feedback; Display selects the health-indicator position; Health configures auto regeneration through the start delay, the cap, and the time needed to heal the full cap; Behavior selects mode and personality; Safety documents the always-active ledge and void checks; Block Placement holds the placement permission together with its bridging and line-of-sight rules; Route selects strict or flexible style and explains the two route toggles. The "
+        ),
+        code_run("Run route segments"),
+        text_run(" toggle makes the AI sprint while traveling along route segments without changing the route itself, and "),
+        code_run("Treat route as a closed loop"),
+        text_run(
+          " makes the final route point connect back to the first as an authored patrol segment; with the loop disabled the AI still returns toward the first point after the final one, but the direct closing connection is not part of the authored route."
+        ),
       ),
       paragraph(
         text_run("The About page is implemented through "),
@@ -1914,7 +1985,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "The project overview should be technical enough to be useful inside the settings surface. It should mention concrete classes, functions, directories, commands, parameter values, shader resources, backend distinctions, persistence schema, and runtime state. It should avoid generic promotional claims that cannot be traced to code. It should also avoid relying on a README that is not part of the inspected evidence. The About page is part of the program, so its content must be auditable like any other application constant."
       ),
       code_block(
-        "HUD modules:\n  controller.py\n  widget.py\n  payload.py\n  metrics.py\n  crosshair_art.py\n  crosshair_widget.py\n  hotbar_widget.py\n  route_overlay.py\n\noverlay modules:\n  ai_settings.py\n  death.py\n  inventory.py\n  pause.py\n  skin_preview.py\n\nsettings modules:\n  overlay.py\n  pages.py\n  surface.py\n  sync.py\n  cloud_flow.py\n  widgets/scalar.py\n  widgets/controls.py\n  widgets/crosshair.py\n\nAbout data structures:\n  AboutRun(kind, text)\n  AboutBlock(kind, text, runs)\n  AboutSection(title, blocks)\n\nAbout helper functions:\n  paragraph(text)\n  paragraph_runs(*runs)\n  text_run(text)\n  code_run(text)\n  inline_code(text)\n  code_value(text)\n  code_block(text)\n  render_about_sections(parent, layout, sections, text_factory)\n  about_card()\n  about_text()\n  about_inline_paragraph()\n  about_code_value()\n  about_code_block()\n  profile_image_path()\n  github_image_path()"
+        "HUD modules:\n  controller.py\n  widget.py\n  payload.py\n  metrics.py\n  crosshair_art.py\n  crosshair_widget.py\n  hotbar_widget.py\n  route_overlay.py\n  ai_status_tags.py\n\noverlay modules:\n  ai_settings.py\n  death.py\n  inventory.py\n  pause.py\n  skin_preview.py\n\nsettings modules:\n  overlay.py\n  pages.py\n  surface.py\n  sync.py\n  cloud_flow.py\n  widgets/scalar.py\n  widgets/controls.py\n  widgets/crosshair.py\n\nAbout data structures:\n  AboutRun(kind, text)\n  AboutBlock(kind, text, runs)\n  AboutSection(title, blocks)\n\nAbout helper functions:\n  paragraph(text)\n  paragraph_runs(*runs)\n  text_run(text)\n  code_run(text)\n  inline_code(text)\n  code_value(text)\n  code_block(text)\n  render_about_sections(parent, layout, sections, text_factory)\n  about_card()\n  about_text()\n  about_inline_paragraph()\n  about_code_value()\n  about_code_block()\n  profile_image_path()\n  github_image_path()"
       ),
     ),
   ),

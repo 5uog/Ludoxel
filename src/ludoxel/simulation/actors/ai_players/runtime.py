@@ -6,7 +6,17 @@ from dataclasses import dataclass, field
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.actors.ai_players.planner import AiRoutePlanStep
-from ludoxel.simulation.actors.ai_players.state import AI_ROUTE_STYLE_STRICT, AiPlayerState, AiRoutePoint
+from ludoxel.simulation.actors.ai_players.state import (
+  AI_HEALTH_INDICATOR_OFF,
+  AI_REGEN_DEFAULT_AMOUNT_HP,
+  AI_REGEN_DEFAULT_CAP_HP,
+  AI_REGEN_DEFAULT_ENABLED,
+  AI_REGEN_DEFAULT_INTERVAL_S,
+  AI_REGEN_DEFAULT_START_DELAY_S,
+  AI_ROUTE_STYLE_STRICT,
+  AiPlayerState,
+  AiRoutePoint,
+)
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.actors.player.kinematics import PlayerMotionState
 from ludoxel.simulation.rules.interaction.service import InteractionService
@@ -60,6 +70,14 @@ _AI_LOCAL_RECOVERY_VISIT_LIMIT = 72
 _AI_LOCAL_RECOVERY_STEP_PENALTY = 0.18
 _AI_LOCAL_RECOVERY_ALLOW_REGRESSION = 1.10
 _AI_ROUTE_TARGET_SUPPORT_SEARCH_RADIUS = 6
+_AI_LOCAL_RECOVERY_CACHE_S = 0.20
+_AI_LOCAL_RECOVERY_BUDGET_PER_STEP = 2
+_AI_NAV_UNREACHABLE_SKIP_RETRIES = 3
+_AI_NAV_UNREACHABLE_TARGET_COOLDOWN_S = 8.0
+_AI_EDGE_LOOKAHEAD_BLOCKS = 0.85
+_AI_EDGE_SAFE_DROP_DEPTH = 3
+_AI_EDGE_ROUTE_DROP_DEPTH = 8
+_AI_PLACEMENT_LOS_EPS = 0.05
 
 
 @dataclass(frozen=True)
@@ -84,11 +102,23 @@ class AiLocalAttackResult:
 
 @dataclass(frozen=True)
 class AiPlayerRenderSnapshot:
+  """
+  AI actor 一体分の renderer 向け snapshot を表す。
+  player と motion は body pose 描画、held_item_id は手持ち block 描画、attack_*_progress は swing 補間に使われる。
+  name、health、max_health、health_indicator は presentation 側の nametag と heart indicator 表示専用の読み取り値であり、presentation はこの snapshot を通じて actor 状態を変更できない。
+  health_indicator は "off"、"above"、"below" の三値へ正規化済みであることを presentation 側が前提とする。
+  """
+
   player: PlayerEntity
   motion: PlayerMotionState
   held_item_id: str | None
   attack_swing_progress: float
   attack_prev_swing_progress: float
+  actor_id: str = ""
+  name: str = ""
+  health: float = 20.0
+  max_health: float = 20.0
+  health_indicator: str = AI_HEALTH_INDICATOR_OFF
 
 
 @dataclass
@@ -100,6 +130,15 @@ class _AiPlayerRuntime:
   personality: str
   can_place_blocks: bool
   held_item_id: str | None
+  name: str = ""
+  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
+  regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
+  regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
+  regen_amount_hp: float = AI_REGEN_DEFAULT_AMOUNT_HP
+  regen_cap_hp: float = AI_REGEN_DEFAULT_CAP_HP
+  regen_wait_s: float = 0.0
+  regen_tick_s: float = 0.0
   route_points: tuple[AiRoutePoint, ...] = ()
   route_closed: bool = False
   route_run: bool = False
@@ -147,6 +186,10 @@ class _AiPlayerRuntime:
   nav_step_progress_cell: tuple[int, int, int] | None = None
   nav_step_best_distance: float = 1e9
   nav_step_stuck_s: float = 0.0
+  nav_unreachable_targets: dict[int, float] = field(default_factory=dict)
+  local_recovery_cache_target: Vec3 | None = None
+  local_recovery_cache_key: tuple[tuple[int, int, int], tuple[int, int, int] | None] | None = None
+  local_recovery_cache_age_s: float = 1e9
   combat_w_tap_s: float = 0.0
   combat_strafe_timer_s: float = 0.0
   combat_strafe_sign: int = 1
@@ -162,6 +205,13 @@ class _AiPlayerRuntime:
       personality=str(self.personality),
       can_place_blocks=bool(self.can_place_blocks),
       held_item_id=None if self.held_item_id is None else str(self.held_item_id),
+      name=str(self.name),
+      health_indicator=str(self.health_indicator),
+      auto_regen_enabled=bool(self.auto_regen_enabled),
+      regen_start_delay_s=float(self.regen_start_delay_s),
+      regen_interval_s=float(self.regen_interval_s),
+      regen_amount_hp=float(self.regen_amount_hp),
+      regen_cap_hp=float(self.regen_cap_hp),
       pos_x=float(self.player.position.x),
       pos_y=float(self.player.position.y),
       pos_z=float(self.player.position.z),

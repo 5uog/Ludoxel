@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ludoxel.application.sessions.managers.ai_players import (
+  ai_player_name_error_for_session,
   ai_player_settings_for_session,
   ai_render_snapshots_for_session,
   ai_route_paths_for_session,
@@ -143,6 +144,9 @@ class SessionManager:
 
   def update_ai_player_settings(self, *, actor_id: str, settings: AiSpawnEggSettings) -> bool:
     return update_ai_player_settings_for_session(self, actor_id=actor_id, settings=settings)
+
+  def ai_player_name_error(self, *, actor_id: str | None, name: object) -> str | None:
+    return ai_player_name_error_for_session(self, actor_id=actor_id, name=name)
 
   def remove_ai_player(self, actor_id: str) -> bool:
     return remove_ai_player_for_session(self, actor_id)

@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ludoxel.simulation.actors.ai_players.modes import (
+  AI_HEALTH_INDICATOR_ABOVE,
+  AI_HEALTH_INDICATOR_BELOW,
+  AI_HEALTH_INDICATOR_OFF,
   AI_MODE_IDLE,
   AI_MODE_ROUTE,
   AI_MODE_WANDER,
@@ -12,15 +15,31 @@ from ludoxel.simulation.actors.ai_players.modes import (
   AI_PERSONALITY_PEACEFUL,
   AI_ROUTE_STYLE_FLEXIBLE,
   AI_ROUTE_STYLE_STRICT,
+  normalize_ai_health_indicator,
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
 )
 from ludoxel.simulation.actors.ai_players.serialization import AiRoutePoint, normalize_route_points
-from ludoxel.simulation.actors.ai_players.settings import AI_DEFAULT_HELD_ITEM_ID, AiSpawnEggSettings
+from ludoxel.simulation.actors.ai_players.settings import (
+  AI_DEFAULT_HELD_ITEM_ID,
+  AI_REGEN_DEFAULT_AMOUNT_HP,
+  AI_REGEN_DEFAULT_CAP_HP,
+  AI_REGEN_DEFAULT_ENABLED,
+  AI_REGEN_DEFAULT_INTERVAL_S,
+  AI_REGEN_DEFAULT_START_DELAY_S,
+  AiSpawnEggSettings,
+  normalize_ai_regen_amount_hp,
+  normalize_ai_regen_cap_hp,
+  normalize_ai_regen_interval_s,
+  normalize_ai_regen_start_delay_s,
+)
 
 __all__ = (
   "AI_DEFAULT_HELD_ITEM_ID",
+  "AI_HEALTH_INDICATOR_ABOVE",
+  "AI_HEALTH_INDICATOR_BELOW",
+  "AI_HEALTH_INDICATOR_OFF",
   "AI_MODE_IDLE",
   "AI_MODE_ROUTE",
   "AI_MODE_WANDER",
@@ -31,6 +50,7 @@ __all__ = (
   "AiPlayerState",
   "AiRoutePoint",
   "AiSpawnEggSettings",
+  "normalize_ai_health_indicator",
   "normalize_ai_mode",
   "normalize_ai_personality",
   "normalize_ai_route_style",
@@ -45,6 +65,13 @@ class AiPlayerState:
   personality: str = AI_PERSONALITY_AGGRESSIVE
   can_place_blocks: bool = False
   held_item_id: str | None = AI_DEFAULT_HELD_ITEM_ID
+  name: str = ""
+  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
+  regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
+  regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
+  regen_amount_hp: float = AI_REGEN_DEFAULT_AMOUNT_HP
+  regen_cap_hp: float = AI_REGEN_DEFAULT_CAP_HP
   pos_x: float = 0.0
   pos_y: float = 1.0
   pos_z: float = 0.0
@@ -71,6 +98,13 @@ class AiPlayerState:
       personality=normalize_ai_personality(self.personality),
       can_place_blocks=bool(self.can_place_blocks),
       held_item_id=(held_item_id if held_item_id else None),
+      name=str(self.name).strip(),
+      health_indicator=normalize_ai_health_indicator(self.health_indicator),
+      auto_regen_enabled=bool(self.auto_regen_enabled),
+      regen_start_delay_s=normalize_ai_regen_start_delay_s(self.regen_start_delay_s),
+      regen_interval_s=normalize_ai_regen_interval_s(self.regen_interval_s),
+      regen_amount_hp=normalize_ai_regen_amount_hp(self.regen_amount_hp),
+      regen_cap_hp=normalize_ai_regen_cap_hp(self.regen_cap_hp),
       pos_x=float(self.pos_x),
       pos_y=float(self.pos_y),
       pos_z=float(self.pos_z),
