@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import time
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
@@ -25,6 +26,11 @@ _PLAYER_NAME_CROUCH_OFFSET = 0.12
 _PLAYER_NAME_OCCLUDED_OPACITY = 0.45
 _PLAYER_NAME_CROUCH_OPACITY = 0.45
 _PLAYER_NAME_SCREEN_MARGIN_PX = 8
+_AI_TAG_MAX_DISTANCE = 64.0
+_AI_TAG_REFERENCE_DISTANCE = 6.0
+_AI_TAG_MIN_SCALE = 0.25
+_AI_TAG_MAX_SCALE = 1.25
+_AI_TAG_OCCLUSION_CACHE_S = 0.12
 
 
 class ViewportOverlayMixin:
@@ -402,11 +408,34 @@ class ViewportOverlayMixin:
 
     self._set_world_player_name_tag(text=text, center_x=float(center_x), bottom_y=float(bottom_y), opacity=float(opacity))
 
+  def _ai_tag_occluded(self: "RendererViewportWidget", *, actor_id: str, eye: Vec3, anchor: Vec3, distance: float) -> bool:
+    """
+    AI nametag の遮蔽判定結果を actor 単位の短時間 cache 付きで返す。
+    遮蔽判定本体は world player nametag と同じ picking ray であり、AI が遠距離にいるほど ray の DDA 走査が長くなるため、
+    actor ごとに直近結果を _AI_TAG_OCCLUSION_CACHE_S 秒間再利用して frame ごとの ray 本数を抑える。
+    cache は monotonic 時刻で失効管理し、表示状態には遮蔽時の減光のみが影響するため短い遅延は視覚上問題にならない。
+    """
+    cache = getattr(self, "_ai_tag_occlusion_cache", None)
+    if cache is None:
+      cache = {}
+      self._ai_tag_occlusion_cache = cache
+    now = float(time.monotonic())
+    cached = cache.get(str(actor_id))
+    if cached is not None and float(now) - float(cached[0]) < float(_AI_TAG_OCCLUSION_CACHE_S):
+      return bool(cached[1])
+    occluded = bool(self._player_name_occluded(eye=eye, target=anchor, distance=float(distance)))
+    cache[str(actor_id)] = (float(now), bool(occluded))
+    if len(cache) > 64:
+      cache.clear()
+    return bool(occluded)
+
   def _update_ai_status_tags(self: "RendererViewportWidget", *, snapshot, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
     """
     現在 frame の camera から見える AI actor の nametag と health indicator を screen 空間へ投影して更新する。
     投影は world player nametag と同じ view、roll、perspective、NDC 範囲判定、画面遮蔽による減光を用いるが、AI tag は first-person 視点でも表示する。
-    anchor は各 AI の足元位置に身長と nametag offset を加えた頭上点であり、camera の後方、NDC 範囲外、viewport 縮退時は表示しない。
+    anchor は各 AI の足元位置に身長と nametag offset を加えた頭上点であり、camera の後方、NDC 範囲外、_AI_TAG_MAX_DISTANCE 超、viewport 縮退時は表示しない。
+    表示寸法は camera から AI までの world 距離に対する _AI_TAG_REFERENCE_DISTANCE / distance を [_AI_TAG_MIN_SCALE, _AI_TAG_MAX_SCALE] へ clamp して縮尺する。
+    縮尺は nametag と health indicator を合成した block 全体へ適用されるため、遠い AI ほど背景、padding、文字、heart、間隔が一体で小さく描画される。
     snapshot 値は session の ai_render_snapshots() が返す読み取り専用 DTO であり、この更新処理は simulation 状態を変更しない。
     """
     if not bool(self._ai_status_tags_visible()) or int(self.width()) <= 1 or int(self.height()) <= 1:
@@ -427,7 +456,7 @@ class ViewportOverlayMixin:
         anchor = Vec3(float(ai_player.position.x), float(ai_player.position.y) + float(ai_player.height) + float(_PLAYER_NAME_VERTICAL_OFFSET), float(ai_player.position.z))
         to_anchor = anchor - eye
         distance = float(to_anchor.length())
-        if float(distance) <= 1e-4:
+        if float(distance) <= 1e-4 or float(distance) > float(_AI_TAG_MAX_DISTANCE):
           continue
         clip = view_proj @ np.asarray([float(anchor.x), float(anchor.y), float(anchor.z), 1.0], dtype=np.float32)
         if float(clip[3]) <= 1e-6:
@@ -439,8 +468,9 @@ class ViewportOverlayMixin:
           continue
         center_x = (float(ndc_x) * 0.5 + 0.5) * float(self.width())
         bottom_y = (1.0 - (float(ndc_y) * 0.5 + 0.5)) * float(self.height())
+        tag_scale = float(clampf(float(_AI_TAG_REFERENCE_DISTANCE) / max(float(distance), 1e-3), float(_AI_TAG_MIN_SCALE), float(_AI_TAG_MAX_SCALE)))
         opacity = 1.0
-        if self._player_name_occluded(eye=eye, target=anchor, distance=float(distance)):
+        if self._ai_tag_occluded(actor_id=str(ai_snapshot.actor_id), eye=eye, anchor=anchor, distance=float(distance)):
           opacity *= float(_PLAYER_NAME_OCCLUDED_OPACITY)
         pool.show_tag(
           actor_id=str(ai_snapshot.actor_id),
@@ -451,5 +481,6 @@ class ViewportOverlayMixin:
           center_x=float(center_x),
           anchor_bottom_y=float(bottom_y),
           opacity=float(opacity),
+          scale=float(tag_scale),
         )
     pool.end_frame()

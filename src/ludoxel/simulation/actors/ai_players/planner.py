@@ -20,8 +20,9 @@ _PLAN_PARKOUR_SEARCH_CAP = 8
 _PLAN_PARKOUR_SAMPLE_COUNT = 5
 _PLAN_DROP_SEARCH_DEPTH = 4
 _PLAN_VISIT_LIMIT_MIN = 1024
-_PLAN_VISIT_LIMIT_MAX = 4096
+_PLAN_VISIT_LIMIT_MAX = 50000
 _PLAN_TARGET_SUPPORT_SEARCH_RADIUS = 6
+_PLAN_BOUNDS_PAD = 2
 
 _BLOCK_REGISTRY = None
 
@@ -343,22 +344,44 @@ def _support_path_heuristic(cell: tuple[int, int, int], target: tuple[int, int, 
   return float(math.hypot(dx, dz) + abs(dy) * 0.75)
 
 
+def _world_xz_bounds(ctx: _PlannerContext) -> tuple[int, int, int, int] | None:
+  """
+  bounded snapshot に含まれる全 block の x/z 範囲を求め、探索許容領域として padding 付きで返す。
+  返値は (min_x, max_x, min_z, max_z) であり、snapshot が空の場合は None を返す。
+  この範囲は map 全体を覆うため、planner は従来の start/target 周辺 radius に制限されず、map 上に存在する任意の迂回経路を candidate にできる。
+  padding は placement による既存 block 外周 1 cell への bridge step を探索対象に含めるためのものである。
+  """
+  if not ctx.world.blocks:
+    return None
+  min_x = min(int(key[0]) for key in ctx.world.blocks.keys()) - int(_PLAN_BOUNDS_PAD)
+  max_x = max(int(key[0]) for key in ctx.world.blocks.keys()) + int(_PLAN_BOUNDS_PAD)
+  min_z = min(int(key[2]) for key in ctx.world.blocks.keys()) - int(_PLAN_BOUNDS_PAD)
+  max_z = max(int(key[2]) for key in ctx.world.blocks.keys()) + int(_PLAN_BOUNDS_PAD)
+  return (int(min_x), int(max_x), int(min_z), int(max_z))
+
+
 def _plan_support_path(ctx: _PlannerContext, *, start_cell: tuple[int, int, int], target_cell: tuple[int, int, int], search_radius: int) -> tuple[AiRoutePlanStep, ...]:
+  del search_radius
   start = tuple(int(value) for value in start_cell)
   target = tuple(int(value) for value in target_cell)
   if start == target:
     return (AiRoutePlanStep(support_cell=start),)
-  min_x = min(int(start[0]), int(target[0])) - int(search_radius)
-  max_x = max(int(start[0]), int(target[0])) + int(search_radius)
-  min_z = min(int(start[2]), int(target[2])) - int(search_radius)
-  max_z = max(int(start[2]), int(target[2])) + int(search_radius)
+  bounds = _world_xz_bounds(ctx)
+  if bounds is None:
+    return ()
+  min_x, max_x, min_z, max_z = bounds
+  min_x = min(int(min_x), int(start[0]) - int(_PLAN_BOUNDS_PAD), int(target[0]) - int(_PLAN_BOUNDS_PAD))
+  max_x = max(int(max_x), int(start[0]) + int(_PLAN_BOUNDS_PAD), int(target[0]) + int(_PLAN_BOUNDS_PAD))
+  min_z = min(int(min_z), int(start[2]) - int(_PLAN_BOUNDS_PAD), int(target[2]) - int(_PLAN_BOUNDS_PAD))
+  max_z = max(int(max_z), int(start[2]) + int(_PLAN_BOUNDS_PAD), int(target[2]) + int(_PLAN_BOUNDS_PAD))
   parent: dict[tuple[int, int, int], tuple[int, int, int] | None] = {start: None}
   placement_anchor: dict[tuple[int, int, int], tuple[int, int, int] | None] = {}
   jump_required: dict[tuple[int, int, int], bool] = {}
   jump_span: dict[tuple[int, int, int], int] = {}
   cost: dict[tuple[int, int, int], float] = {start: 0.0}
   frontier: list[tuple[float, float, tuple[int, int, int]]] = [(float(_support_path_heuristic(start, target)), 0.0, start)]
-  visit_limit = max(int(_PLAN_VISIT_LIMIT_MIN), min(int(_PLAN_VISIT_LIMIT_MAX), int((2 * int(search_radius) + 1) ** 2 * 2)))
+  column_count = max(1, (int(max_x) - int(min_x) + 1) * (int(max_z) - int(min_z) + 1))
+  visit_limit = max(int(_PLAN_VISIT_LIMIT_MIN), min(int(_PLAN_VISIT_LIMIT_MAX), int(column_count) * 3))
   visited = 0
   reached = False
   while frontier and int(visited) < int(visit_limit):

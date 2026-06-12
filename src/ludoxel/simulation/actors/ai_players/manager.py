@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import time
 from collections import deque
 from dataclasses import dataclass, field
 
@@ -38,18 +39,20 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_COMBAT_STRAFE_DISTANCE_MAX,
   _AI_COMBAT_STRAFE_WINDOW_S,
   _AI_COMBAT_W_TAP_S,
+  _AI_DIRECT_ROUTE_MAX_SPAN,
   _AI_EDGE_LOOKAHEAD_BLOCKS,
   _AI_EDGE_ROUTE_DROP_DEPTH,
   _AI_EDGE_SAFE_DROP_DEPTH,
-  _AI_FLEX_PATH_RADIUS,
   _AI_FLEX_REPLAN_STUCK_INTERVAL_S,
   _AI_INTERACT_COOLDOWN_S,
   _AI_LOCAL_RECOVERY_ALLOW_REGRESSION,
   _AI_LOCAL_RECOVERY_BUDGET_PER_STEP,
   _AI_LOCAL_RECOVERY_CACHE_S,
+  _AI_LOCAL_RECOVERY_PARKOUR_SPAN,
   _AI_LOCAL_RECOVERY_PROGRESS_EPS,
   _AI_LOCAL_RECOVERY_SEARCH_RADIUS,
   _AI_LOCAL_RECOVERY_STEP_PENALTY,
+  _AI_LOCAL_RECOVERY_TIME_BUDGET_S,
   _AI_LOCAL_RECOVERY_VISIT_LIMIT,
   _AI_MAX_SUPPORT_Y_DELTA,
   _AI_NAV_FAILURE_RETRY_BASE_S,
@@ -68,7 +71,6 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_ROUTE_ENGAGE_RANGE,
   _AI_ROUTE_REACHED_EPS,
   _AI_ROUTE_REQUESTS_PER_STEP,
-  _AI_ROUTE_SNAPSHOT_Y_PAD,
   _AI_ROUTE_STUCK_PROGRESS_EPS,
   _AI_ROUTE_STUCK_TIMEOUT_S,
   _AI_ROUTE_TARGET_SUPPORT_SEARCH_RADIUS,
@@ -123,8 +125,8 @@ class AiPlayerManager:
   _next_actor_index: int = field(default=1, init=False, repr=False)
   _route_worker: AiRouteWorker = field(default_factory=AiRouteWorker, init=False, repr=False)
   _route_plan_generation: int = field(default=0, init=False, repr=False)
-  _route_snapshot_cache_revision: int = field(default=-1, init=False, repr=False)
-  _route_snapshot_cache: dict[tuple[int, int, int, int, int, int], tuple[tuple[int, int, int, str], ...]] = field(default_factory=dict, init=False, repr=False)
+  _full_snapshot_revision: int = field(default=-1, init=False, repr=False)
+  _full_snapshot_blocks: tuple[tuple[int, int, int, str], ...] = field(default=(), init=False, repr=False)
   _route_requests_this_step: int = field(default=0, init=False, repr=False)
   _recovery_searches_this_step: int = field(default=0, init=False, repr=False)
 
@@ -139,8 +141,8 @@ class AiPlayerManager:
       self._route_worker.cancel_actor(str(actor_id))
     self._actors.clear()
     self._next_actor_index = 1
-    self._route_snapshot_cache_revision = -1
-    self._route_snapshot_cache.clear()
+    self._full_snapshot_revision = -1
+    self._full_snapshot_blocks = ()
 
   def actors(self) -> tuple[AiPlayerState, ...]:
     return tuple(actor.to_state() for actor in self._actors.values())
@@ -819,47 +821,22 @@ class AiPlayerManager:
       actor.nav_step_stuck_s = 0.0
     return True
 
-  def _route_search_radius(self, actor: _AiPlayerRuntime, *, start_support: tuple[int, int, int]) -> int:
-    cells = [tuple(int(value) for value in start_support)]
-    for route_point in actor.route_points:
-      cells.append(_support_cell_from_point(route_point.as_vec3()))
-    min_x = min(int(cell[0]) for cell in cells)
-    max_x = max(int(cell[0]) for cell in cells)
-    min_z = min(int(cell[2]) for cell in cells)
-    max_z = max(int(cell[2]) for cell in cells)
-    span = max(int(max_x) - int(min_x), int(max_z) - int(min_z))
-    stuck_bonus = int(min(10.0, math.floor(float(actor.route_stuck_s) / float(_AI_ROUTE_STUCK_TIMEOUT_S)) * 3.0))
-    return max(int(_AI_FLEX_PATH_RADIUS), min(32, int(math.ceil(float(span) * 0.5)) + 6 + int(stuck_bonus)))
-
-  def _capture_nav_world_window(self, *, min_x: int, max_x: int, min_y: int, max_y: int, min_z: int, max_z: int) -> tuple[tuple[int, int, int, str], ...]:
-    if int(self._route_snapshot_cache_revision) != int(self.world.revision):
-      self._route_snapshot_cache_revision = int(self.world.revision)
-      self._route_snapshot_cache.clear()
-    cache_key = (int(min_x), int(max_x), int(min_y), int(max_y), int(min_z), int(max_z))
-    cached = self._route_snapshot_cache.get(cache_key)
-    if cached is not None:
-      return cached
-    blocks = self.world.snapshot_block_window(min_x=int(min_x), max_x=int(max_x), min_y=int(min_y), max_y=int(max_y), min_z=int(min_z), max_z=int(max_z))
-    self._route_snapshot_cache[cache_key] = blocks
-    while len(self._route_snapshot_cache) > 8:
-      self._route_snapshot_cache.pop(next(iter(self._route_snapshot_cache)), None)
-    return blocks
+  def _full_world_snapshot(self) -> tuple[tuple[int, int, int, str], ...]:
+    """
+    route planner へ渡す world 全体の block snapshot を world revision 単位で cache して返す。
+    snapshot は world.blocks の一括列挙(block 数に比例する一回の走査)で構築し、同一 revision の間は同じ tuple を再利用するため、
+    複数 actor の plan 要求や actor の移動によって main thread 上の snapshot 構築が繰り返されない。
+    以前の bounds 指定 window snapshot は探索領域を狭め、かつ bounds が変わる度に列挙し直していたため、これを map 全体 snapshot へ置き換えている。
+    """
+    if int(self._full_snapshot_revision) != int(self.world.revision):
+      self._full_snapshot_revision = int(self.world.revision)
+      self._full_snapshot_blocks = tuple((int(x), int(y), int(z), str(state_str)) for x, y, z, state_str in self.world.iter_blocks())
+    return self._full_snapshot_blocks
 
   def _build_route_plan_request(self, actor: _AiPlayerRuntime, *, start_support: tuple[int, int, int]) -> AiRoutePlanRequest | None:
     if len(actor.route_points) <= 0:
       return None
-    search_radius = int(self._route_search_radius(actor, start_support=tuple(int(value) for value in start_support)))
-    route_cells = [_support_cell_from_point(route_point.as_vec3()) for route_point in actor.route_points]
-    xs = [int(start_support[0]), *(int(cell[0]) for cell in route_cells)]
-    ys = [int(start_support[1]), *(int(cell[1]) for cell in route_cells)]
-    zs = [int(start_support[2]), *(int(cell[2]) for cell in route_cells)]
-    min_x = min(xs) - int(search_radius) - 1
-    max_x = max(xs) + int(search_radius) + 1
-    min_y = min(ys) - 2
-    max_y = max(ys) + int(_AI_ROUTE_SNAPSHOT_Y_PAD)
-    min_z = min(zs) - int(search_radius) - 1
-    max_z = max(zs) + int(search_radius) + 1
-    world_blocks = self._capture_nav_world_window(min_x=int(min_x), max_x=int(max_x), min_y=int(min_y), max_y=int(max_y), min_z=int(min_z), max_z=int(max_z))
+    world_blocks = self._full_world_snapshot()
     self._route_plan_generation += 1
     blocked_edges = tuple((tuple(int(value) for value in edge[0]), tuple(int(value) for value in edge[1])) for edge, ttl in actor.nav_blocked_edges.items() if float(ttl) > 1e-6)
     avoid_supports = tuple(tuple(int(value) for value in cell) for cell, ttl in actor.nav_avoid_support_cells.items() if float(ttl) > 1e-6)
@@ -875,7 +852,7 @@ class AiPlayerManager:
       can_place_blocks=bool(actor.can_place_blocks),
       blocked_edges=tuple(blocked_edges),
       avoid_support_cells=tuple(avoid_supports),
-      search_radius=int(search_radius),
+      search_radius=0,
     )
 
   def _request_route_plan(self, actor: _AiPlayerRuntime, *, start_support: tuple[int, int, int]) -> bool:
@@ -1058,11 +1035,11 @@ class AiPlayerManager:
       place_candidate = (int(x) + int(dx), int(y), int(z) + int(dz))
       if place_candidate in avoid_cells or place_candidate in seen:
         continue
-      if bool(self._can_place_support_block(actor, anchor_cell=current, target_cell=place_candidate)):
+      if bool(self._can_place_support_block(actor, anchor_cell=current, target_cell=place_candidate, ignore_cooldown=True)):
         candidates.append(place_candidate)
         seen.add(place_candidate)
-    max_jump_span = int(self._max_parkour_jump_span())
-    max_jump_reach = float(self._parkour_jump_reach_blocks()) + 0.25
+    max_jump_span = min(int(_AI_LOCAL_RECOVERY_PARKOUR_SPAN), int(self._max_parkour_jump_span()))
+    max_jump_reach = min(float(max_jump_span) + 0.45, float(self._parkour_jump_reach_blocks()) + 0.25)
     allow_parkour = True
     if desired_target_cell is not None:
       target_vertical_delta = abs(int(desired_target_cell[1]) - int(y))
@@ -1093,14 +1070,23 @@ class AiPlayerManager:
             break
     return tuple(candidates)
 
-  def _local_recovery_target(self, actor: _AiPlayerRuntime, *, current_support: tuple[int, int, int], desired_target: Vec3) -> Vec3 | None:
+  def _local_recovery_target(self, actor: _AiPlayerRuntime, *, current_support: tuple[int, int, int], desired_target: Vec3, desired_target_support: tuple[int, int, int] | None = None) -> Vec3 | None:
+    """
+    行き詰まり中の actor が短距離で目標へ近づける支持 cell を幅優先探索で求め、その cell 中心を返す。
+    探索は visit 数上限に加えて経過時間 deadline(_AI_LOCAL_RECOVERY_TIME_BUDGET_S)で打ち切り、escape 用 parkour 候補の span も縮小されているため、
+    複数 actor が同時に行き詰まっても 1 回の探索が simulation step の時間を専有しない。
+    desired_target_support は呼び出し側(_cached_local_recovery_target)が cache 済みの目標支持 cell を渡すための引数であり、None の場合のみ近傍探索で補完する。
+    改善候補が無い場合は None を返し、呼び出し側は現在支持 cell の中心へ留まる。
+    """
     current = tuple(int(value) for value in current_support)
     current_center = _support_cell_center(current)
     current_score = float(_point_distance_xz(current_center, desired_target))
     prefer_descent = float(desired_target.y) + 0.25 < float(current_center.y)
     blocked_edges = set(actor.nav_blocked_edges.keys())
     avoid_cells = set(active_avoid_support_cells(actor))
-    desired_target_support = self._nearest_standable_support_cell(actor, _support_cell_from_point(desired_target))
+    if desired_target_support is None:
+      desired_target_support = self._nearest_standable_support_cell(actor, _support_cell_from_point(desired_target))
+    deadline = float(time.perf_counter()) + float(_AI_LOCAL_RECOVERY_TIME_BUDGET_S)
     queue: deque[tuple[tuple[int, int, int], int]] = deque([(current, 0)])
     visited: set[tuple[int, int, int]] = {current}
     best_cell: tuple[int, int, int] | None = None
@@ -1108,6 +1094,8 @@ class AiPlayerManager:
     fallback_cell: tuple[int, int, int] | None = None
     fallback_score = 1e9
     while queue and len(visited) <= int(_AI_LOCAL_RECOVERY_VISIT_LIMIT):
+      if float(time.perf_counter()) >= float(deadline):
+        break
       cell, depth = queue.popleft()
       if int(depth) >= int(_AI_LOCAL_RECOVERY_SEARCH_RADIUS):
         continue
@@ -1153,16 +1141,28 @@ class AiPlayerManager:
         return actor.local_recovery_cache_target
       return None
     self._recovery_searches_this_step += 1
-    result = self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target)
+    result = self._local_recovery_target(
+      actor,
+      current_support=tuple(int(value) for value in current_support),
+      desired_target=desired_target,
+      desired_target_support=None if target_support is None else tuple(int(value) for value in target_support),
+    )
     actor.local_recovery_cache_key = key
     actor.local_recovery_cache_target = result
     actor.local_recovery_cache_age_s = 0.0
     return result
 
-  def _can_place_support_block(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int]) -> bool:
+  def _can_place_support_block(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int], ignore_cooldown: bool = False) -> bool:
+    """
+    anchor cell の側面へ支持 block を一個設置できる状態かを判定する。
+    判定条件は placement 許可、手持ち block の存在、anchor cell の実在、target cell の空き、target 上の headroom であり、
+    ignore_cooldown が偽の場合はこれに加えて place cooldown の経過を要求する。
+    ignore_cooldown は「設置は予定どおり可能だが cooldown 待ちである」状態を、設置不能(経路無効)と区別するために使う。
+    plan step の有効性検査と局所回復の候補列挙は ignore_cooldown=True で呼び、実際の設置実行経路は既定の cooldown 検査を維持する。
+    """
     if actor.held_item_id is None or (not bool(actor.can_place_blocks)):
       return False
-    if float(actor.place_cooldown_s) > 1e-6:
+    if (not bool(ignore_cooldown)) and float(actor.place_cooldown_s) > 1e-6:
       return False
     if self._state_at(int(anchor_cell[0]), int(anchor_cell[1]), int(anchor_cell[2])) is None:
       return False
@@ -1183,12 +1183,58 @@ class AiPlayerManager:
               return candidate
     return None
 
+  def _route_target_support(self, actor: _AiPlayerRuntime, *, desired_target: Vec3) -> tuple[int, int, int] | None:
+    """
+    route 目標点に対応する到達可能な支持 cell を、(目標 cell, world revision) を key とする actor 単位 cache 付きで返す。
+    _nearest_standable_support_cell() は目標近傍に支持 cell が無い場合に半径 6 の全候補を走査するため、
+    cache が無いと同一目標へ向かう間この走査が simulation step ごとに繰り返され、frame 時間を消費していた。
+    world が変化するか目標 cell が変わった時のみ再計算し、それ以外は前回結果(None を含む)を返す。
+    """
+    cell = tuple(int(value) for value in _support_cell_from_point(desired_target))
+    key = (cell, int(self.world.revision))
+    if actor.target_support_cache_key == key:
+      return actor.target_support_cache_value
+    result = self._nearest_standable_support_cell(actor, cell)
+    actor.target_support_cache_key = key
+    actor.target_support_cache_value = None if result is None else tuple(int(value) for value in result)
+    return actor.target_support_cache_value
+
+  def _revalidate_plan_after_world_change(self, actor: _AiPlayerRuntime) -> None:
+    """
+    world revision の変化後に、cache 済み plan の残り step が現在の world でも成立するかを検査し、不成立なら即時再計画へ移行させる。
+    検査対象は現在 index 以降の step であり、placement を伴わない step は standable 性、placement step は target cell が「既に block で埋まり standable」か「空のまま headroom が確保されている」かを確認する。
+    block の設置・破壊・フェンスゲートの開閉は state 変化として standable 性又は headroom を変えるため、この検査が経路閉塞を検出する。
+    不成立を検出した場合は blocked edge を記録せずに plan と pending 要求を破棄し、replan cooldown を 0 として次の step で全 map snapshot による再計画を要求させる。
+    """
+    if len(actor.nav_plan_steps) <= 0:
+      return
+    start_index = max(0, int(actor.nav_plan_index))
+    for step in actor.nav_plan_steps[start_index:]:
+      cell = tuple(int(value) for value in step.support_cell)
+      if step.placement_anchor is None:
+        if bool(self._standable_support_cell(actor, cell)):
+          continue
+      else:
+        if self._state_at(int(cell[0]), int(cell[1]), int(cell[2])) is not None:
+          if bool(self._standable_support_cell(actor, cell)):
+            continue
+        elif bool(self._nav_headroom_clear(cell)):
+          continue
+      if bool(actor.nav_plan_pending):
+        self._cancel_pending_nav_plan(actor)
+      self._clear_nav_plan(actor)
+      self._reset_nav_failure(actor)
+      actor.nav_replan_cooldown_s = 0.0
+      return
+
   def _direct_route_clear(self, actor: _AiPlayerRuntime, *, from_cell: tuple[int, int, int], to_cell: tuple[int, int, int]) -> bool:
     src = tuple(int(value) for value in from_cell)
     dst = tuple(int(value) for value in to_cell)
     if int(src[1]) != int(dst[1]):
       return False
     steps = max(abs(int(dst[0]) - int(src[0])), abs(int(dst[2]) - int(src[2])))
+    if int(steps) > int(_AI_DIRECT_ROUTE_MAX_SPAN):
+      return False
     if int(steps) <= 0:
       return True
     previous = src
@@ -1278,6 +1324,7 @@ class AiPlayerManager:
       actor.local_recovery_cache_key = None
       actor.local_recovery_cache_age_s = 1e9
       self._reset_nav_failure(actor)
+      self._revalidate_plan_after_world_change(actor)
     expired_edges = [edge for edge, ttl in actor.nav_blocked_edges.items() if float(ttl) - max(0.0, float(dt)) <= 1e-6]
     for edge in tuple(expired_edges):
       actor.nav_blocked_edges.pop(edge, None)
@@ -1295,7 +1342,7 @@ class AiPlayerManager:
         return _support_cell_center(tuple(int(value) for value in actor.nav_next_support_cell))
       return desired_target
     current_support = tuple(int(value) for value in start_support)
-    target_support = self._nearest_standable_support_cell(actor, _support_cell_from_point(desired_target))
+    target_support = self._route_target_support(actor, desired_target=desired_target)
     goal_distance = float(_point_distance_xz(actor.player.position, desired_target))
     progress_delta = float(actor.route_last_goal_distance) - float(goal_distance)
     if float(progress_delta) <= float(_AI_ROUTE_STUCK_PROGRESS_EPS):
@@ -1330,23 +1377,28 @@ class AiPlayerManager:
     cached_place_anchor = None if actor.nav_place_anchor_cell is None else tuple(int(value) for value in actor.nav_place_anchor_cell)
     cached_place_target = None if actor.nav_place_target_cell is None else tuple(int(value) for value in actor.nav_place_target_cell)
     if bool(cached_step_active) and cached_next_cell is not None:
+      placement_invalid = bool(
+        cached_place_target is not None
+        and (cached_place_anchor is None or (not bool(self._can_place_support_block(actor, anchor_cell=cached_place_anchor, target_cell=cached_place_target, ignore_cooldown=True))))
+      )
+      waiting_for_placement = bool(cached_place_target is not None and (not bool(placement_invalid)) and float(actor.place_cooldown_s) > 1e-6)
+      if bool(waiting_for_placement):
+        actor.route_stuck_s = 0.0
+        actor.nav_step_stuck_s = 0.0
       step_distance = float(_point_distance_xz(actor.player.position, _support_cell_center(tuple(int(value) for value in cached_next_cell))))
       if actor.nav_step_progress_cell != tuple(int(value) for value in cached_next_cell):
         actor.nav_step_progress_cell = tuple(int(value) for value in cached_next_cell)
         actor.nav_step_best_distance = float(step_distance)
         actor.nav_step_stuck_s = 0.0
-      elif bool(actor.player.on_ground):
+      elif bool(actor.player.on_ground) and (not bool(waiting_for_placement)):
         if float(step_distance) + float(_AI_NAV_STEP_PROGRESS_EPS) < float(actor.nav_step_best_distance):
           actor.nav_step_best_distance = float(step_distance)
           actor.nav_step_stuck_s = 0.0
         elif float(step_distance) > float(_AI_ROUTE_REACHED_EPS) + 0.05:
           actor.nav_step_stuck_s += max(0.0, float(dt))
-      placement_invalid = bool(
-        cached_place_target is not None and (cached_place_anchor is None or (not bool(self._can_place_support_block(actor, anchor_cell=cached_place_anchor, target_cell=cached_place_target))))
-      )
       next_step_invalid = bool(cached_next_cell is not None and cached_next_cell != cached_place_target and (not bool(self._standable_support_cell(actor, cached_next_cell))))
       source_support_invalid = bool(actor.nav_from_support_cell is not None and tuple(int(value) for value in actor.nav_from_support_cell) != tuple(int(value) for value in current_support))
-      stuck_now = bool(float(actor.nav_step_stuck_s) >= float(_AI_NAV_STEP_STUCK_TIMEOUT_S) or float(actor.route_stuck_s) >= float(_AI_STUCK_GOAL_TIMEOUT_S))
+      stuck_now = bool((not bool(waiting_for_placement)) and (float(actor.nav_step_stuck_s) >= float(_AI_NAV_STEP_STUCK_TIMEOUT_S) or float(actor.route_stuck_s) >= float(_AI_STUCK_GOAL_TIMEOUT_S)))
       if bool(placement_invalid or next_step_invalid or source_support_invalid or stuck_now):
         actor.nav_blocked_edges[(tuple(int(value) for value in current_support), tuple(int(value) for value in cached_next_cell))] = float(_AI_BLOCKED_EDGE_COOLDOWN_S)
         remember_avoid_support_cell(actor, tuple(int(value) for value in cached_next_cell))
@@ -1430,6 +1482,13 @@ class AiPlayerManager:
         actor.stuck_jump_retries += 1
     if actor.nav_next_support_cell is None:
       return
+    if actor.nav_place_target_cell is not None and actor.nav_place_anchor_cell is not None:
+      anchor_cell = tuple(int(value) for value in actor.nav_place_anchor_cell)
+      target_cell = tuple(int(value) for value in actor.nav_place_target_cell)
+      if bool(self._can_place_support_block(actor, anchor_cell=anchor_cell, target_cell=target_cell, ignore_cooldown=True)):
+        actor.stuck_support_time_s = 0.0
+        actor.stuck_jump_retries = 0
+        return
     same_spot_stuck = bool(float(actor.stuck_support_time_s) >= float(_AI_STUCK_RECOVERY_SUPPORT_S) and int(actor.stuck_jump_retries) >= int(_AI_STUCK_JUMP_RETRIES))
     no_progress_stuck = bool(float(actor.route_stuck_s) >= float(_AI_STUCK_GOAL_TIMEOUT_S))
     if (not bool(same_spot_stuck)) and (not bool(no_progress_stuck)):
@@ -1633,10 +1692,14 @@ class AiPlayerManager:
     )
     guarded_control, blocked = self._apply_edge_safety(actor, wander_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
     if bool(blocked):
-      turn_seed = (_wander_seed(actor.actor_id) + int(actor.player.position.x * 13.0) + int(actor.player.position.z * 7.0)) & 0x7FFFFFFF
-      actor.wander_heading_deg = float((float(actor.wander_heading_deg) + 120.0 + float(turn_seed % 120)) % 360.0)
-      actor.decision_timer_s = max(float(actor.decision_timer_s), 0.35)
-      actor.wander_forward = 1.0
+      bridging_capable = bool(actor.can_place_blocks and actor.held_item_id is not None and actor.player.on_ground)
+      if not bool(bridging_capable):
+        turn_seed = (_wander_seed(actor.actor_id) + int(actor.player.position.x * 13.0) + int(actor.player.position.z * 7.0)) & 0x7FFFFFFF
+        actor.wander_heading_deg = float((float(actor.wander_heading_deg) + 120.0 + float(turn_seed % 120)) % 360.0)
+        actor.decision_timer_s = max(float(actor.decision_timer_s), 0.35)
+        actor.wander_forward = 1.0
+      else:
+        actor.decision_timer_s = max(float(actor.decision_timer_s), 0.30)
     return guarded_control
 
   def _maybe_interact_or_place(self, actor: _AiPlayerRuntime, *, target_player: PlayerEntity | None) -> None:
