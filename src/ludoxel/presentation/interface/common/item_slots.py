@@ -10,8 +10,8 @@ from ludoxel.presentation.interface.common.hotbar_support import refresh_widget_
 
 ITEM_SLOT_MIME_TYPE = "application/x-ludoxel-block-id"
 _BLOCK_THUMBNAIL_SOURCE_SIZE = 300
-_BLOCK_THUMBNAIL_HORIZONTAL_BIAS_PX = 0.5
-_BLOCK_THUMBNAIL_VERTICAL_BIAS_PX = 0.5
+_BLOCK_THUMBNAIL_SLOT_HORIZONTAL_OFFSET_PX = 0.5
+_BLOCK_THUMBNAIL_SLOT_VERTICAL_OFFSET_PX = 0.5
 
 
 def item_id_from_mime(mime: QMimeData) -> str | None:
@@ -128,13 +128,13 @@ class ItemSlotButton(QPushButton):
   @staticmethod
   def _thumbnail_horizontal_bias(pixmap: QPixmap) -> float:
     if int(pixmap.width()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE) and int(pixmap.height()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE):
-      return float(_BLOCK_THUMBNAIL_HORIZONTAL_BIAS_PX)
+      return float(_BLOCK_THUMBNAIL_SLOT_HORIZONTAL_OFFSET_PX)
     return 0.0
 
   @staticmethod
   def _thumbnail_vertical_bias(pixmap: QPixmap) -> float:
     if int(pixmap.width()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE) and int(pixmap.height()) == int(_BLOCK_THUMBNAIL_SOURCE_SIZE):
-      return float(_BLOCK_THUMBNAIL_VERTICAL_BIAS_PX)
+      return float(_BLOCK_THUMBNAIL_SLOT_VERTICAL_OFFSET_PX)
     return 0.0
 
 

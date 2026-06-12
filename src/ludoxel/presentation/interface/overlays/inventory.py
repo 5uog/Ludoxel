@@ -112,26 +112,10 @@ class _HotbarSlotButton(DraggableItemButton):
 
 class _InventorySearchBox(QLineEdit):
   close_requested = pyqtSignal()
-  hotbar_key_pressed = pyqtSignal(int)
-
-  def __init__(self, parent: QWidget | None = None) -> None:
-    super().__init__(parent)
-    self._keybinds = KeybindSettings()
-
-  def set_keybinds(self, keybinds: KeybindSettings) -> None:
-    self._keybinds = keybinds.normalized()
 
   def keyPressEvent(self, event) -> None:
-    key = int(event.key())
-    bound_action = action_for_key(int(key), self._keybinds)
-    if bound_action == ACTION_TOGGLE_INVENTORY or key == int(Qt.Key.Key_Escape):
+    if int(event.key()) == int(Qt.Key.Key_Escape):
       self.close_requested.emit()
-      event.accept()
-      return
-
-    hotbar_index = hotbar_index_from_key(int(key), self._keybinds)
-    if hotbar_index is not None:
-      self.hotbar_key_pressed.emit(int(hotbar_index))
       event.accept()
       return
 
@@ -195,7 +179,7 @@ class InventoryOverlay(QWidget):
     title_row.addWidget(btn_close)
     pv.addLayout(title_row)
 
-    self._subtitle_label = QLabel("Click assigns the hovered item to the currently selected hotbar slot. Drag items onto any hotbar slot, or hover an item and press 1-9.", panel)
+    self._subtitle_label = QLabel("Click assigns the hovered item to the currently selected hotbar slot. Drag items onto any hotbar slot, or hover an item and press 1-9.")
     self._subtitle_label.setObjectName("subtitle")
     self._subtitle_label.setWordWrap(True)
     pv.addWidget(self._subtitle_label)
@@ -204,7 +188,6 @@ class InventoryOverlay(QWidget):
     self._search_box.setPlaceholderText("Search items by name or id")
     self._search_box.textChanged.connect(self._apply_filter)
     self._search_box.close_requested.connect(self._close)
-    self._search_box.hotbar_key_pressed.connect(self._handle_hotbar_key_request)
     pv.addWidget(self._search_box)
 
     self._catalog_scroll = QScrollArea(panel)
@@ -243,15 +226,19 @@ class InventoryOverlay(QWidget):
     self.sync_hotbar(slots=self._hotbar_slots, selected_index=self._selected_hotbar_index)
 
   def setVisible(self, visible: bool) -> None:
-    super().setVisible(bool(visible))
-    self._photos.set_active(bool(visible) and bool(self._creative_mode))
-    if bool(visible) and bool(self._creative_mode):
+    normalized_visible = bool(visible)
+    super().setVisible(normalized_visible)
+    self._photos.set_active(normalized_visible and bool(self._creative_mode))
+    if not normalized_visible and hasattr(self, "_search_box"):
+      self._hovered_item_id = None
+      self._search_box.clear()
+      return
+    if normalized_visible and bool(self._creative_mode):
       self._search_box.setFocus(Qt.FocusReason.PopupFocusReason)
       self._search_box.selectAll()
 
   def set_keybinds(self, keybinds: KeybindSettings) -> None:
     self._keybinds = keybinds.normalized()
-    self._search_box.set_keybinds(self._keybinds)
 
   def set_animations_enabled(self, enabled: bool) -> None:
     self._photos.set_animations_enabled(bool(enabled))
@@ -262,7 +249,7 @@ class InventoryOverlay(QWidget):
 
     if bool(self._creative_mode):
       self._title_label.setText("CREATIVE INVENTORY")
-      self._subtitle_label.setText("Click assigns the hovered item to the currently selected hotbar slot. Drag items onto any hotbar slot, or hover an item and press 1-9.")
+      self._subtitle_label.setText("Search input takes priority while the search box is focused. Click or drag items to assign them, or hover an item and press 1-9 outside the search box.")
       self._search_box.setVisible(True)
       self._catalog_scroll.setVisible(True)
       self._apply_filter()
@@ -366,11 +353,6 @@ class InventoryOverlay(QWidget):
     self.setVisible(False)
     self.closed.emit()
 
-  def _handle_hotbar_key_request(self, slot_index: int) -> None:
-    self.hotbar_slot_selected.emit(int(slot_index))
-    if bool(self._creative_mode) and self._hovered_item_id is not None:
-      self.hotbar_slot_assigned.emit(int(slot_index), str(self._hovered_item_id))
-
   def _on_item_pixmap_changed(self, item_id: str) -> None:
     normalized = str(item_id).strip()
     if not normalized:
@@ -382,10 +364,21 @@ class InventoryOverlay(QWidget):
 
   def keyPressEvent(self, e) -> None:
     key = int(e.key())
+
+    if bool(self._creative_mode) and self._search_box.isVisible() and self._search_box.hasFocus():
+      if key == int(Qt.Key.Key_Escape):
+        self._close()
+        e.accept()
+        return
+
+      e.accept()
+      return
+
     bound_action = action_for_key(int(key), self._keybinds)
 
     if bound_action == ACTION_TOGGLE_INVENTORY or key == int(Qt.Key.Key_Escape):
       self._close()
+      e.accept()
       return
 
     idx = hotbar_index_from_key(key, self._keybinds)
@@ -393,6 +386,7 @@ class InventoryOverlay(QWidget):
       self.hotbar_slot_selected.emit(int(idx))
       if bool(self._creative_mode) and self._hovered_item_id is not None:
         self.hotbar_slot_assigned.emit(int(idx), str(self._hovered_item_id))
+      e.accept()
       return
 
     super().keyPressEvent(e)
