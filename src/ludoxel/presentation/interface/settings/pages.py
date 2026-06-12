@@ -249,11 +249,12 @@ def build_controls_tab(overlay: "SettingsOverlay") -> None:
   for action in HOTBAR_ACTIONS:
     overlay._add_keybind_row(hotbar_layout, hotbar_body, str(action))
 
-  btn_reset_bindings = QPushButton("Reset Keybinds", host)
+  _reset_card, reset_body, reset_layout = add_settings_card(layout, host, title="Keybind Reset", description="Restore every movement, gameplay, and hotbar key assignment to its built-in default.")
+  btn_reset_bindings = QPushButton("Reset Keybinds", reset_body)
   btn_reset_bindings.setObjectName("dangerBtn")
   btn_reset_bindings.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
   btn_reset_bindings.clicked.connect(overlay.keybind_reset_requested.emit)
-  hotbar_layout.addWidget(btn_reset_bindings)
+  reset_layout.addWidget(btn_reset_bindings)
 
   layout.addStretch(1)
   overlay._stack.addWidget(scroll)
@@ -491,13 +492,31 @@ class _AboutScrollArea(QScrollArea):
     self.ensure_content_geometry()
 
   def ensure_content_geometry(self) -> None:
+    """
+    widgetResizable を無効にした scroll area において、host の幅を viewport 幅へ固定し、その幅での
+    内容高さを layout の height-for-width から求めて host の縦寸法を確定する。host は word wrap を
+    持つ About card を縦に並べるため必要高さは幅の広義単調減少関数であり、幅が広がるほど内容は縦へ縮む。
+    QWidget.adjustSize と QWidget.sizeHint は height-for-width を反映せず初期幅の高さを保持するため、
+    幅拡大後に host が過大なまま残り、最終 card である Project Overview の下にスクロール可能な余白を生む。
+    本 method は layout.heightForWidth(width) を内容高さとし、viewport 高さとの大きい方を採用することで
+    この余白を除く。layout が height-for-width を持たない場合に限り sizeHint().height() へ退避する。
+    """
     host = self.widget()
     if host is None:
       return
-    width = int(max(1, self.viewport().width()))
-    if int(host.width()) != width:
+    viewport = self.viewport()
+    width = int(max(1, viewport.width()))
+    if int(host.minimumWidth()) != width or int(host.maximumWidth()) != width:
       host.setFixedWidth(width)
-    host.adjustSize()
+    host_layout = host.layout()
+    if host_layout is not None:
+      host_layout.activate()
+      content_height = int(host_layout.heightForWidth(width)) if bool(host_layout.hasHeightForWidth()) else int(host.sizeHint().height())
+    else:
+      content_height = int(host.sizeHint().height())
+    height = int(max(content_height, int(viewport.height())))
+    if int(host.width()) != width or int(host.height()) != height:
+      host.resize(width, height)
     host.updateGeometry()
 
 
