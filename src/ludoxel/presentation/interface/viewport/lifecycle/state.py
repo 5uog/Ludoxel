@@ -285,6 +285,21 @@ class ViewportStateMixin:
     )
     return (eye, float(resolved_yaw_deg), float(resolved_pitch_deg), float(roll_deg), direction)
 
+  def _stable_ai_overlay_camera_pose(self: "RendererViewportWidget") -> tuple[Vec3, float, float, float, Vec3]:
+    player = self._session.player
+    stable_anchor_eye = Vec3(float(player.position.x), float(player.position.y) + float(player.eye_height) - float(player.crouch_eye_offset), float(player.position.z))
+    stable_yaw_deg = float(player.yaw_deg)
+    stable_pitch_deg = clampf(float(player.pitch_deg), -float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG), float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG))
+    eye, resolved_yaw_deg, resolved_pitch_deg, direction = resolve_camera(
+      world=self._session.world,
+      block_registry=self._session.block_registry,
+      anchor_eye=stable_anchor_eye,
+      yaw_deg=float(stable_yaw_deg),
+      pitch_deg=float(stable_pitch_deg),
+      perspective=str(self._state.camera_perspective),
+    )
+    return (eye, float(resolved_yaw_deg), float(resolved_pitch_deg), 0.0, direction)
+
   def _interaction_pose_from_snapshot(self: "RendererViewportWidget", snapshot) -> tuple[Vec3, float, float, Vec3]:
     cam = snapshot.camera
     eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
