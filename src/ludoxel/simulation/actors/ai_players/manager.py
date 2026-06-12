@@ -11,6 +11,7 @@ from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y
 from ludoxel.simulation.actors.ai_players.avoidance import active_avoid_support_cells, decay_avoid_support_cells, remember_avoid_support_cell
 from ludoxel.simulation.actors.ai_players.combat import _combat_control
 from ludoxel.simulation.actors.ai_players.idle import idle_control
+from ludoxel.simulation.actors.ai_players.naming import ai_display_name_format_error, ai_name_duplicate_key, allocate_default_spawn_ai_name, allocate_suffixed_ai_name, split_ai_display_name
 from ludoxel.simulation.actors.ai_players.navigation import (
   _horizontal_transition_distance,
   _navigation_transition_target,
@@ -37,10 +38,15 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_COMBAT_STRAFE_DISTANCE_MAX,
   _AI_COMBAT_STRAFE_WINDOW_S,
   _AI_COMBAT_W_TAP_S,
+  _AI_EDGE_LOOKAHEAD_BLOCKS,
+  _AI_EDGE_ROUTE_DROP_DEPTH,
+  _AI_EDGE_SAFE_DROP_DEPTH,
   _AI_FLEX_PATH_RADIUS,
   _AI_FLEX_REPLAN_STUCK_INTERVAL_S,
   _AI_INTERACT_COOLDOWN_S,
   _AI_LOCAL_RECOVERY_ALLOW_REGRESSION,
+  _AI_LOCAL_RECOVERY_BUDGET_PER_STEP,
+  _AI_LOCAL_RECOVERY_CACHE_S,
   _AI_LOCAL_RECOVERY_PROGRESS_EPS,
   _AI_LOCAL_RECOVERY_SEARCH_RADIUS,
   _AI_LOCAL_RECOVERY_STEP_PENALTY,
@@ -53,9 +59,12 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_NAV_PARKOUR_SPEED_SCALE,
   _AI_NAV_STEP_PROGRESS_EPS,
   _AI_NAV_STEP_STUCK_TIMEOUT_S,
+  _AI_NAV_UNREACHABLE_SKIP_RETRIES,
+  _AI_NAV_UNREACHABLE_TARGET_COOLDOWN_S,
   _AI_PARKOUR_SEARCH_CAP,
   _AI_PARKOUR_TAKEOFF_TRIGGER_EPS,
   _AI_PLACE_COOLDOWN_S,
+  _AI_PLACEMENT_LOS_EPS,
   _AI_ROUTE_ENGAGE_RANGE,
   _AI_ROUTE_REACHED_EPS,
   _AI_ROUTE_REQUESTS_PER_STEP,
@@ -81,6 +90,7 @@ from ludoxel.simulation.actors.ai_players.state import (
   AI_ROUTE_STYLE_FLEXIBLE,
   AiPlayerState,
   AiSpawnEggSettings,
+  normalize_ai_health_indicator,
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
@@ -116,6 +126,7 @@ class AiPlayerManager:
   _route_snapshot_cache_revision: int = field(default=-1, init=False, repr=False)
   _route_snapshot_cache: dict[tuple[int, int, int, int, int, int], tuple[tuple[int, int, int, str], ...]] = field(default_factory=dict, init=False, repr=False)
   _route_requests_this_step: int = field(default=0, init=False, repr=False)
+  _recovery_searches_this_step: int = field(default=0, init=False, repr=False)
 
   def __post_init__(self) -> None:
     self._route_worker.warmup()
@@ -176,6 +187,13 @@ class AiPlayerManager:
       personality=normalize_ai_personality(normalized.personality),
       can_place_blocks=bool(normalized.can_place_blocks),
       held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized.can_place_blocks), held_item_id=normalized.held_item_id),
+      name=str(normalized.name),
+      health_indicator=str(normalized.health_indicator),
+      auto_regen_enabled=bool(normalized.auto_regen_enabled),
+      regen_start_delay_s=float(normalized.regen_start_delay_s),
+      regen_interval_s=float(normalized.regen_interval_s),
+      regen_amount_hp=float(normalized.regen_amount_hp),
+      regen_cap_hp=float(normalized.regen_cap_hp),
       route_points=tuple(normalized.route_points),
       route_closed=bool(normalized.route_closed),
       route_run=bool(normalized.route_run),
@@ -216,21 +234,91 @@ class AiPlayerManager:
     actor.nav_step_progress_cell = None
     actor.nav_step_best_distance = 1e9
     actor.nav_step_stuck_s = 0.0
+    actor.nav_unreachable_targets.clear()
+    actor.local_recovery_cache_target = None
+    actor.local_recovery_cache_key = None
+    actor.local_recovery_cache_age_s = 1e9
     actor.combat_w_tap_s = 0.0
     actor.combat_strafe_timer_s = 0.0
     actor.combat_strafe_sign = 1
     actor.void_damage_timer_s = 0.0
+    actor.regen_wait_s = 0.0
+    actor.regen_tick_s = 0.0
     return actor
+
+  def _live_name_keys(self, *, exclude_actor_id: str | None = None) -> set[str]:
+    """
+    名前重複判定の対象となる生存 AI の正規化済み名前 key 集合を返す。
+    対象は現在 manager に登録され、かつ health が正の actor に限られ、dead、despawn 済み、registry から除去済みの AI は名前を占有しない。
+    exclude_actor_id を与えた場合はその actor 自身を除外し、rename 時の自己衝突を防ぐ。
+    """
+    excluded = None if exclude_actor_id is None else str(exclude_actor_id)
+    keys: set[str] = set()
+    for actor in self._actors.values():
+      if excluded is not None and str(actor.actor_id) == excluded:
+        continue
+      if not actor.player.alive():
+        continue
+      name = str(actor.name).strip()
+      if not name:
+        continue
+      keys.add(ai_name_duplicate_key(name))
+    return keys
+
+  def ai_name_error(self, *, actor_id: str | None, name: object) -> str | None:
+    """
+    AI の表示名候補を形式規則と生存 AI 間の重複規則で検査し、不正な場合に UI 表示用の英文 error message を返す。
+    形式規則は naming module が判定し、重複規則は actor_id を除いた生存 actor 集合との case-insensitive 比較で判定する。
+    重複時は同一本体名の空き suffix 候補を提示し、`#0001` から `#9999` がすべて使用済みの場合は numbered variant 枯渇を fallback error として報告する。
+    有効な名前の場合は None を返す。
+    """
+    candidate = str(name).strip()
+    format_error = ai_display_name_format_error(candidate)
+    if format_error is not None:
+      return str(format_error)
+    taken = self._live_name_keys(exclude_actor_id=actor_id)
+    if ai_name_duplicate_key(candidate) not in taken:
+      return None
+    parsed = split_ai_display_name(candidate)
+    body = candidate if parsed is None else str(parsed[0])
+    suggestion = allocate_suffixed_ai_name(str(body), taken)
+    if suggestion is None:
+      return f"All numbered variants of '{body}' up to #9999 are in use by live AI."
+    return f"A live AI already uses this name. Try '{suggestion}'."
+
+  def _resolve_loaded_name(self, *, candidate: str, taken_keys: set[str]) -> str | None:
+    """
+    保存 data から復元した名前を、形式規則と既復元 actor との重複規則の下で確定する。
+    形式が有効かつ未使用ならそのまま採用し、重複している場合は同じ本体名の空き suffix 候補へ振り替える。
+    名前が空、形式不正、又は振替先が枯渇している場合は spawn 既定の `AI#NNNN` 形式を割り当て、それも枯渇している場合は None を返す。
+    """
+    text = str(candidate).strip()
+    if text and ai_display_name_format_error(text) is None:
+      key = ai_name_duplicate_key(text)
+      if key not in taken_keys:
+        return str(text)
+      parsed = split_ai_display_name(text)
+      if parsed is not None:
+        reallocated = allocate_suffixed_ai_name(str(parsed[0]), taken_keys)
+        if reallocated is not None:
+          return str(reallocated)
+    return allocate_default_spawn_ai_name(taken_keys)
 
   def load_states(self, states: object) -> None:
     self.clear()
     if not isinstance(states, (list, tuple)):
       return
     max_index = 0
+    taken_keys: set[str] = set()
     for raw_state in states:
       if not isinstance(raw_state, AiPlayerState):
         continue
       actor = self._state_to_runtime(raw_state)
+      resolved_name = self._resolve_loaded_name(candidate=str(actor.name), taken_keys=taken_keys)
+      if resolved_name is not None:
+        actor.name = str(resolved_name)
+        if actor.player.alive():
+          taken_keys.add(ai_name_duplicate_key(actor.name))
       self._actors[str(actor.actor_id)] = actor
       try:
         suffix = int(str(actor.actor_id).rsplit("_", 1)[1])
@@ -241,6 +329,12 @@ class AiPlayerManager:
 
   def spawn_from_egg(self, *, spawn_cell: tuple[int, int, int], settings: AiSpawnEggSettings) -> str | None:
     normalized_settings = settings.normalized()
+    spawn_name = str(normalized_settings.name).strip()
+    if not spawn_name or self.ai_name_error(actor_id=None, name=spawn_name) is not None:
+      allocated = allocate_default_spawn_ai_name(self._live_name_keys())
+      if allocated is None:
+        return None
+      spawn_name = str(allocated)
     spawn_pos = Vec3(float(spawn_cell[0]) + 0.5, float(spawn_cell[1]), float(spawn_cell[2]) + 0.5)
     actor_id = self._allocate_actor_id()
     state = AiPlayerState(
@@ -249,6 +343,13 @@ class AiPlayerManager:
       personality=str(normalized_settings.personality),
       can_place_blocks=bool(normalized_settings.can_place_blocks),
       held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized_settings.can_place_blocks)),
+      name=str(spawn_name),
+      health_indicator=str(normalized_settings.health_indicator),
+      auto_regen_enabled=bool(normalized_settings.auto_regen_enabled),
+      regen_start_delay_s=float(normalized_settings.regen_start_delay_s),
+      regen_interval_s=float(normalized_settings.regen_interval_s),
+      regen_amount_hp=float(normalized_settings.regen_amount_hp),
+      regen_cap_hp=float(normalized_settings.regen_cap_hp),
       pos_x=float(spawn_pos.x),
       pos_y=float(spawn_pos.y),
       pos_z=float(spawn_pos.z),
@@ -280,6 +381,13 @@ class AiPlayerManager:
       mode=str(actor.mode),
       personality=str(actor.personality),
       can_place_blocks=bool(actor.can_place_blocks),
+      name=str(actor.name),
+      health_indicator=str(actor.health_indicator),
+      auto_regen_enabled=bool(actor.auto_regen_enabled),
+      regen_start_delay_s=float(actor.regen_start_delay_s),
+      regen_interval_s=float(actor.regen_interval_s),
+      regen_amount_hp=float(actor.regen_amount_hp),
+      regen_cap_hp=float(actor.regen_cap_hp),
       route_points=tuple(actor.route_points),
       route_closed=bool(actor.route_closed),
       route_run=bool(actor.route_run),
@@ -293,10 +401,22 @@ class AiPlayerManager:
     normalized = settings.normalized()
     if normalize_ai_mode(normalized.mode) == AI_MODE_ROUTE and len(normalized.route_points) < 2:
       return False
+    requested_name = str(normalized.name).strip()
+    if requested_name and requested_name != str(actor.name):
+      if self.ai_name_error(actor_id=str(actor.actor_id), name=requested_name) is not None:
+        return False
+      actor.name = str(requested_name)
     actor.mode = normalize_ai_mode(normalized.mode)
     actor.personality = normalize_ai_personality(normalized.personality)
     actor.can_place_blocks = bool(normalized.can_place_blocks)
     actor.held_item_id = _held_item_id_for_settings(can_place_blocks=bool(actor.can_place_blocks), held_item_id=actor.held_item_id)
+    actor.health_indicator = normalize_ai_health_indicator(normalized.health_indicator)
+    actor.auto_regen_enabled = bool(normalized.auto_regen_enabled)
+    actor.regen_start_delay_s = float(normalized.regen_start_delay_s)
+    actor.regen_interval_s = float(normalized.regen_interval_s)
+    actor.regen_amount_hp = float(normalized.regen_amount_hp)
+    actor.regen_cap_hp = float(normalized.regen_cap_hp)
+    actor.regen_tick_s = 0.0
     actor.route_points = tuple(normalized.route_points)
     actor.route_closed = bool(normalized.route_closed)
     actor.route_run = bool(normalized.route_run)
@@ -311,6 +431,10 @@ class AiPlayerManager:
     actor.nav_world_revision = int(self.world.revision)
     actor.nav_replan_cooldown_s = 0.0
     actor.nav_avoid_support_cells.clear()
+    actor.nav_unreachable_targets.clear()
+    actor.local_recovery_cache_target = None
+    actor.local_recovery_cache_key = None
+    actor.local_recovery_cache_age_s = 1e9
     return True
 
   def remove_actor(self, actor_id: str) -> bool:
@@ -329,6 +453,22 @@ class AiPlayerManager:
     actor.nav_replan_cooldown_s = 0.0
     return True
 
+  def _skip_unreachable_route_targets(self, actor: _AiPlayerRuntime) -> bool:
+    """
+    flexible route の現在 target index が到達不能 blacklist に含まれる間、次の route point へ前進させる。
+    blacklist は nav_unreachable_targets が保持する index -> 残余 cooldown 秒の対応であり、route 点数分だけ前進を試みても全点が blacklist 済みの場合は偽を返す。
+    偽を返した場合、呼び出し側はその step の追従を停止(旋回のみ)し、cooldown の減衰によって blacklist が解ける時点まで同一 target への無制限な再探索を行わない。
+    """
+    point_count = len(actor.route_points)
+    if point_count <= 0 or not actor.nav_unreachable_targets:
+      return True
+    for _attempt in range(int(point_count)):
+      index_key = int(actor.route_target_index) % int(point_count)
+      if float(actor.nav_unreachable_targets.get(int(index_key), 0.0)) <= 1e-6:
+        return True
+      advance_route_target(actor)
+    return False
+
   def _route_control(self, actor: _AiPlayerRuntime, *, dt: float, target_player: PlayerEntity | None, allow_pvp: bool) -> PlayerStepInput:
     combat_target = self._route_combat_target(actor, target_player=target_player, allow_pvp=bool(allow_pvp))
     flexible_route = normalize_ai_route_style(actor.route_style) == AI_ROUTE_STYLE_FLEXIBLE
@@ -336,10 +476,17 @@ class AiPlayerManager:
       if bool(actor.nav_plan_pending):
         self._cancel_pending_nav_plan(actor)
       default_jump_pressed = bool(actor.player.on_ground) and (float(combat_target.y) > float(actor.player.position.y) + 0.55 or float((combat_target - actor.player.position).length()) <= 3.4)
-      return _combat_control(actor=actor, target=combat_target, dt=float(dt), jump_pressed=bool(default_jump_pressed))
+      combat_control = _combat_control(actor=actor, target=combat_target, dt=float(dt), jump_pressed=bool(default_jump_pressed))
+      guarded_control, _blocked = self._apply_edge_safety(actor, combat_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+      return guarded_control
     target = route_target_point(actor)
     if target is None:
       return idle_control()
+    if bool(flexible_route) and (not self._skip_unreachable_route_targets(actor)):
+      return _turn_only_control(player=actor.player, target=target, dt=float(dt))
+    updated_after_skip = route_target_point(actor)
+    if updated_after_skip is not None:
+      target = updated_after_skip
     player_pos = actor.player.position
     if _point_distance_xz(player_pos, target) <= float(_AI_ROUTE_REACHED_EPS):
       advance_route_target(actor)
@@ -374,7 +521,9 @@ class AiPlayerManager:
       return _parkour_control(
         player=actor.player, target=movement_target, dt=float(dt), sprint=bool(sprint), auto_jump_enabled=bool(auto_jump_enabled), jump_pressed=bool(jump_pressed), crouch=False, commit_forward=True
       )
-    return _pursuit_control(player=actor.player, target=movement_target, dt=float(dt), sprint=bool(sprint), auto_jump_enabled=True, jump_pressed=bool(jump_pressed), crouch=False)
+    pursuit_control = _pursuit_control(player=actor.player, target=movement_target, dt=float(dt), sprint=bool(sprint), auto_jump_enabled=True, jump_pressed=bool(jump_pressed), crouch=False)
+    guarded_control, _blocked = self._apply_edge_safety(actor, pursuit_control, max_drop=int(_AI_EDGE_ROUTE_DROP_DEPTH))
+    return guarded_control
 
   def _update_wander_state(self, actor: _AiPlayerRuntime, *, dt: float) -> None:
     actor.decision_timer_s = max(0.0, float(actor.decision_timer_s) - max(0.0, float(dt)))
@@ -396,6 +545,88 @@ class AiPlayerManager:
     if state_str is None:
       return False
     return bool(has_full_top_support_for_block(str(state_str), self._state_at, self.block_registry.get, int(cell[0]), int(cell[1]), int(cell[2])))
+
+  def _intended_move_direction_xz(self, actor: _AiPlayerRuntime, control: PlayerStepInput) -> Vec3 | None:
+    """
+    制御入力 control が表す水平移動方向を world 座標系の単位 vector として返す。
+    yaw は同一 step 内で適用される yaw_delta_deg を加算した後の値を用い、forward = (-sin(yaw), 0, cos(yaw))、right = (cos(yaw), 0, sin(yaw)) に対し dir = forward*move_f + right*move_s で合成する。
+    移動入力が実質 0、又は合成 vector の長さが 0 に縮退する場合は None を返し、呼び出し側はその step の前進安全判定を省略する。
+    """
+    move_f = float(control.move_f)
+    move_s = float(control.move_s)
+    if abs(move_f) <= 1e-6 and abs(move_s) <= 1e-6:
+      return None
+    yaw_rad = math.radians(float(actor.player.yaw_deg) + float(control.yaw_delta_deg))
+    forward = Vec3(-math.sin(yaw_rad), 0.0, math.cos(yaw_rad))
+    right = Vec3(math.cos(yaw_rad), 0.0, math.sin(yaw_rad))
+    direction = Vec3(float(forward.x) * move_f + float(right.x) * move_s, 0.0, float(forward.z) * move_f + float(right.z) * move_s)
+    if float(direction.length()) <= 1e-6:
+      return None
+    return direction.normalized()
+
+  def _forward_step_safe(self, actor: _AiPlayerRuntime, *, direction: Vec3, max_drop: int) -> bool:
+    """
+    現在の支持 block から direction 方向へ一歩前進した場合に、安全に着地できる足場が存在するかを判定する。
+    前進予定位置は eye ではなく足元位置 + direction * lookahead で求め、その列の支持 cell が現在支持 cell と同一なら同一 cell 内移動として安全とみなす。
+    前方の body 高さ(支持 y + 1)に block がある場合は collision が前進を止めるため落下危険なしとして安全を返す。
+    前方列を支持 y から max_drop 段下まで走査し、full top support を持つ cell が見つかれば安全(意図的 drop を含む)、見つからなければ奈落又は深すぎる落下として不安全を返す。
+    max_drop は Free Roam / PVP では落下 damage が発生しない 3、route 追従では明確な経路上の理由がある drop として 8 を用いる。
+    """
+    support = self._current_support_cell(actor)
+    if support is None:
+      return True
+    probe = Vec3(
+      float(actor.player.position.x) + float(direction.x) * float(_AI_EDGE_LOOKAHEAD_BLOCKS),
+      float(actor.player.position.y),
+      float(actor.player.position.z) + float(direction.z) * float(_AI_EDGE_LOOKAHEAD_BLOCKS),
+    )
+    ahead_x = int(math.floor(float(probe.x)))
+    ahead_z = int(math.floor(float(probe.z)))
+    if ahead_x == int(support[0]) and ahead_z == int(support[2]):
+      return True
+    support_y = int(support[1])
+    if self._state_at(int(ahead_x), int(support_y) + 1, int(ahead_z)) is not None:
+      return True
+    for dy in range(0, -max(0, int(max_drop)) - 1, -1):
+      if self._cell_has_full_top_support((int(ahead_x), int(support_y) + int(dy), int(ahead_z))):
+        return True
+    return False
+
+  @staticmethod
+  def _halted_control(control: PlayerStepInput) -> PlayerStepInput:
+    """
+    前進安全判定で不安全とされた step の制御入力から移動成分と jump 成分を除去し、視線回転だけを残した制御入力を返す。
+    yaw_delta_deg と pitch_delta_deg を保持するため、停止中の AI は対象方向への旋回を継続でき、bridge placement 又は迂回判断の前提となる向きを失わない。
+    """
+    return PlayerStepInput(
+      move_f=0.0,
+      move_s=0.0,
+      jump_held=False,
+      jump_pressed=False,
+      sprint=False,
+      crouch=bool(control.crouch),
+      yaw_delta_deg=float(control.yaw_delta_deg),
+      pitch_delta_deg=float(control.pitch_delta_deg),
+      auto_jump_enabled=False,
+    )
+
+  def _apply_edge_safety(self, actor: _AiPlayerRuntime, control: PlayerStepInput, *, max_drop: int) -> tuple[PlayerStepInput, bool]:
+    """
+    地上歩行中の制御入力に対して ledge / void 安全判定を適用し、(適用後 control, 停止したか) の組を返す。
+    飛行中、空中(on_ground が偽)、又は jump 入力を伴う step は判定対象外としてそのまま通す。jump を伴う遷移の安全性は flexible route の planner 側 arc 検査が担う。
+    前進方向に max_drop 段以内の着地足場が無い場合は移動を停止した control を返し、bridge placement(許可時)又は呼び出し側の方向転換に判断を委ねる。
+    この判定により、AI が自発的に奈落へ前進し続ける挙動を Free Roam、PVP 追跡、route 追従の歩行経路で禁止する。
+    """
+    if bool(actor.player.flying) or (not bool(actor.player.on_ground)):
+      return (control, False)
+    if bool(control.jump_pressed):
+      return (control, False)
+    direction = self._intended_move_direction_xz(actor, control)
+    if direction is None:
+      return (control, False)
+    if self._forward_step_safe(actor, direction=direction, max_drop=int(max_drop)):
+      return (control, False)
+    return (self._halted_control(control), True)
 
   def pick_actor(self, *, origin: Vec3, direction: Vec3, reach: float, block_hit: BlockPick | None) -> str | None:
     target_hit = pick_player_target(
@@ -457,6 +688,46 @@ class AiPlayerManager:
     return (float(player.position.x), float(player.position.y) + float(player.eye_height) * 0.5, float(player.position.z))
 
   @staticmethod
+  def _note_ai_damage(actor: _AiPlayerRuntime) -> None:
+    """
+    AI が damage を受けた事実を自動回復状態へ反映する。
+    regen_wait_s(最終被弾からの経過秒)と regen_tick_s(次回回復までの蓄積秒)を共に 0 へ戻し、回復待機 timer を被弾の度に reset する契約を一箇所へ固定する。
+    呼び出し箇所は fall damage、void damage、local player からの melee damage であり、damage 量が正の場合に限り呼び出す。
+    """
+    actor.regen_wait_s = 0.0
+    actor.regen_tick_s = 0.0
+
+  def _advance_ai_regeneration(self, actor: _AiPlayerRuntime, *, dt: float) -> None:
+    """
+    AI の自動回復を simulation step 内で進行させる。
+    dead actor は対象外であり、despawn 済み actor は manager の registry に存在しないため呼び出されない。
+    regen_wait_s は生存中常に加算され、auto_regen_enabled が偽、現在体力が有効上限以上、又は regen_wait_s が regen_start_delay_s 未満の間は regen_tick_s を 0 へ保つ。
+    有効上限は min(regen_cap_hp, max_health) であり、条件成立中は regen_interval_s ごとに regen_amount_hp を上限まで加算する。
+    既定値は enabled=false、delay=4.0 秒、interval=4.0 秒、amount=1.0 health point、cap=max_health 相当であり、無効のままなら従来どおり一切回復しない。
+    """
+    if not actor.player.alive():
+      actor.regen_tick_s = 0.0
+      return
+    actor.regen_wait_s = float(actor.regen_wait_s) + max(0.0, float(dt))
+    if not bool(actor.auto_regen_enabled):
+      actor.regen_tick_s = 0.0
+      return
+    cap = min(float(actor.regen_cap_hp), float(actor.player.max_health))
+    if float(actor.player.health) >= float(cap) - 1e-9:
+      actor.regen_tick_s = 0.0
+      return
+    if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
+      actor.regen_tick_s = 0.0
+      return
+    interval = max(1e-6, float(actor.regen_interval_s))
+    actor.regen_tick_s = float(actor.regen_tick_s) + max(0.0, float(dt))
+    while float(actor.regen_tick_s) + 1e-9 >= float(interval) and float(actor.player.health) < float(cap) - 1e-9:
+      actor.regen_tick_s = float(actor.regen_tick_s) - float(interval)
+      actor.player.health = min(float(cap), float(actor.player.health) + max(0.0, float(actor.regen_amount_hp)))
+    if float(actor.player.health) >= float(cap) - 1e-9:
+      actor.regen_tick_s = 0.0
+
+  @staticmethod
   def _trigger_attack_swing(actor: _AiPlayerRuntime) -> None:
     actor.attack_swing_progress = 0.0
     actor.attack_prev_swing_progress = 0.0
@@ -483,6 +754,13 @@ class AiPlayerManager:
     actor.nav_failure_retry_s = min(float(_AI_NAV_FAILURE_RETRY_MAX_S), float(_AI_NAV_FAILURE_RETRY_BASE_S) * float(1.45 ** max(0, int(actor.nav_failure_retry_count) - 1)))
     failure_support = self._current_support_cell(actor)
     actor.nav_failed_support_cell = None if failure_support is None else tuple(int(value) for value in failure_support)
+    point_count = len(actor.route_points)
+    if int(actor.nav_failure_retry_count) >= int(_AI_NAV_UNREACHABLE_SKIP_RETRIES) and int(point_count) > 1:
+      index_key = int(target_index) % int(point_count)
+      actor.nav_unreachable_targets[int(index_key)] = float(_AI_NAV_UNREACHABLE_TARGET_COOLDOWN_S)
+      advance_route_target(actor)
+      self._reset_nav_failure(actor)
+      actor.nav_replan_cooldown_s = 0.0
 
   def _reset_nav_failure(self, actor: _AiPlayerRuntime) -> None:
     actor.nav_path_failed = False
@@ -860,6 +1138,27 @@ class AiPlayerManager:
       return None
     return _support_cell_center(fallback_cell)
 
+  def _cached_local_recovery_target(self, actor: _AiPlayerRuntime, *, current_support: tuple[int, int, int], desired_target: Vec3, target_support: tuple[int, int, int] | None) -> Vec3 | None:
+    """
+    _local_recovery_target() の BFS 探索結果を短時間 cache し、探索回数を step 単位の予算内へ制限した上で局所回復目標を返す。
+    cache key は (現在支持 cell, 目標支持 cell) の組であり、key が一致し cache 経過時間が _AI_LOCAL_RECOVERY_CACHE_S 未満の間は前回結果を再利用する。
+    cache が失効していても、同一 simulation step 内の探索実行回数が _AI_LOCAL_RECOVERY_BUDGET_PER_STEP に達している場合は stale な前回結果(無ければ None)を返し、新たな探索を行わない。
+    この制御は、複数 actor が同時に行き詰まった場合でも局所探索が描画 frame 時間を圧迫しないことを目的とし、探索品質は cache 失効ごとの再計算で維持する。
+    """
+    key = (tuple(int(value) for value in current_support), None if target_support is None else tuple(int(value) for value in target_support))
+    if actor.local_recovery_cache_key == key and float(actor.local_recovery_cache_age_s) < float(_AI_LOCAL_RECOVERY_CACHE_S):
+      return actor.local_recovery_cache_target
+    if int(self._recovery_searches_this_step) >= int(_AI_LOCAL_RECOVERY_BUDGET_PER_STEP):
+      if actor.local_recovery_cache_key == key:
+        return actor.local_recovery_cache_target
+      return None
+    self._recovery_searches_this_step += 1
+    result = self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target)
+    actor.local_recovery_cache_key = key
+    actor.local_recovery_cache_target = result
+    actor.local_recovery_cache_age_s = 0.0
+    return result
+
   def _can_place_support_block(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int]) -> bool:
     if actor.held_item_id is None or (not bool(actor.can_place_blocks)):
       return False
@@ -964,10 +1263,20 @@ class AiPlayerManager:
       return desired_target
     actor.nav_replan_cooldown_s = max(0.0, float(actor.nav_replan_cooldown_s) - max(0.0, float(dt)))
     actor.nav_failure_retry_s = max(0.0, float(actor.nav_failure_retry_s) - max(0.0, float(dt)))
+    actor.local_recovery_cache_age_s = float(actor.local_recovery_cache_age_s) + max(0.0, float(dt))
+    expired_unreachable = [index for index, ttl in actor.nav_unreachable_targets.items() if float(ttl) - max(0.0, float(dt)) <= 1e-6]
+    for index in tuple(expired_unreachable):
+      actor.nav_unreachable_targets.pop(int(index), None)
+    for index in tuple(actor.nav_unreachable_targets.keys()):
+      actor.nav_unreachable_targets[int(index)] = max(0.0, float(actor.nav_unreachable_targets[int(index)]) - max(0.0, float(dt)))
     if int(actor.nav_world_revision) != int(self.world.revision):
       actor.nav_world_revision = int(self.world.revision)
       actor.nav_blocked_edges.clear()
       actor.nav_avoid_support_cells.clear()
+      actor.nav_unreachable_targets.clear()
+      actor.local_recovery_cache_target = None
+      actor.local_recovery_cache_key = None
+      actor.local_recovery_cache_age_s = 1e9
       self._reset_nav_failure(actor)
     expired_edges = [edge for edge, ttl in actor.nav_blocked_edges.items() if float(ttl) - max(0.0, float(dt)) <= 1e-6]
     for edge in tuple(expired_edges):
@@ -1002,7 +1311,12 @@ class AiPlayerManager:
       elif float(actor.nav_failure_retry_s) <= 1e-6:
         self._reset_nav_failure(actor)
       else:
-        local_recovery_target = self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target)
+        local_recovery_target = self._cached_local_recovery_target(
+          actor,
+          current_support=tuple(int(value) for value in current_support),
+          desired_target=desired_target,
+          target_support=None if target_support is None else tuple(int(value) for value in target_support),
+        )
         return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
     normalized_target_support = None if target_support is None else tuple(int(value) for value in target_support)
     goal_changed = bool(actor.nav_goal_support_cell != normalized_target_support and (actor.nav_goal_support_cell is not None or normalized_target_support is not None))
@@ -1070,18 +1384,24 @@ class AiPlayerManager:
     should_attempt_local_recovery = bool(len(active_avoid_support_cells(actor)) > 0 or float(actor.route_stuck_s) > 1e-6 or bool(actor.nav_path_failed))
     if bool(actor.nav_plan_pending):
       local_recovery_target = (
-        self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target) if bool(should_attempt_local_recovery) else None
+        self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support)
+        if bool(should_attempt_local_recovery)
+        else None
       )
       return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
     if float(actor.nav_replan_cooldown_s) > 1e-6:
       local_recovery_target = (
-        self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target) if bool(should_attempt_local_recovery) else None
+        self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support)
+        if bool(should_attempt_local_recovery)
+        else None
       )
       return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
     actor.nav_goal_support_cell = None if normalized_target_support is None else tuple(int(value) for value in normalized_target_support)
     self._request_route_plan(actor, start_support=tuple(int(value) for value in current_support))
     local_recovery_target = (
-      self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target) if bool(should_attempt_local_recovery) else None
+      self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support)
+      if bool(should_attempt_local_recovery)
+      else None
     )
     return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
 
@@ -1141,6 +1461,27 @@ class AiPlayerManager:
       return None
     return target
 
+  def _placement_ray_clear(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], face: int) -> bool:
+    """
+    AI の eye position から placement の anchor face 上の照準点までの視線 ray が、空気以外の block に遮られていないかを判定する。
+    照準点は _face_hit_point() が返す face 中央であり、ray は picking 実装(block model の pick 形状を含む DDA)で評価する。
+    ray が何にも当たらない場合と、最初の hit が anchor cell 自身又は照準点距離以遠の場合は可視として真を返す。
+    途中に別の block model 又は collision 形状が存在する場合は偽を返し、呼び出し側は placement を中止する。これにより視界の先が block で覆われた状態での貫通設置を禁止する。
+    """
+    target = _face_hit_point(tuple(int(value) for value in anchor_cell), int(face))
+    eye = actor.player.eye_pos()
+    delta = target - eye
+    distance = float(delta.length())
+    if float(distance) <= 1e-6:
+      return True
+    direction = delta.normalized()
+    hit = actor.interaction.pick_block(reach=float(distance) + 0.5, origin=eye, direction=direction)
+    if hit is None:
+      return True
+    if tuple(int(value) for value in hit.hit) == tuple(int(value) for value in anchor_cell):
+      return True
+    return float(hit.t) >= float(distance) - float(_AI_PLACEMENT_LOS_EPS)
+
   def _place_adjacent_block(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], step_x: int, step_z: int) -> bool:
     if actor.held_item_id is None:
       return False
@@ -1148,6 +1489,8 @@ class AiPlayerManager:
       return False
     place_cell = (int(anchor_cell[0]) + int(step_x), int(anchor_cell[1]), int(anchor_cell[2]) + int(step_z))
     if self._state_at(int(place_cell[0]), int(place_cell[1]), int(place_cell[2])) is not None:
+      return False
+    if not self._placement_ray_clear(actor, anchor_cell=tuple(int(value) for value in anchor_cell), face=int(_face_for_horizontal_step(int(step_x), int(step_z)))):
       return False
     hit = BlockPick(
       hit=tuple(int(value) for value in anchor_cell),
@@ -1167,6 +1510,8 @@ class AiPlayerManager:
       return False
     place_cell = (int(support_cell[0]), int(support_cell[1]) + 1, int(support_cell[2]))
     if self._state_at(int(place_cell[0]), int(place_cell[1]), int(place_cell[2])) is not None:
+      return False
+    if not self._placement_ray_clear(actor, anchor_cell=tuple(int(value) for value in support_cell), face=int(FACE_POS_Y)):
       return False
     hit = BlockPick(
       hit=tuple(int(value) for value in support_cell),
@@ -1268,12 +1613,14 @@ class AiPlayerManager:
         jump_pressed = bool(actor.player.on_ground) and (
           float(target_player.position.y) > float(actor.player.position.y) + 0.55 or (float(actor.player.jump_reset_window_s) > 1e-6 and float(chase_distance) <= 3.4)
         )
-        return _combat_control(actor=actor, target=target, dt=float(dt), jump_pressed=bool(jump_pressed))
+        chase_control = _combat_control(actor=actor, target=target, dt=float(dt), jump_pressed=bool(jump_pressed))
+        guarded_control, _blocked = self._apply_edge_safety(actor, chase_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+        return guarded_control
     self._update_wander_state(actor, dt=float(dt))
     heading_rad = math.radians(float(actor.wander_heading_deg))
     target = Vec3(float(actor.player.position.x) - math.sin(float(heading_rad)) * 3.0, float(actor.player.position.y) + 1.0, float(actor.player.position.z) + math.cos(float(heading_rad)) * 3.0)
     control = _pursuit_control(player=actor.player, target=target, dt=float(dt), sprint=bool(actor.wander_sprint), auto_jump_enabled=True, jump_pressed=False, crouch=False)
-    return PlayerStepInput(
+    wander_control = PlayerStepInput(
       move_f=float(control.move_f) * float(actor.wander_forward),
       move_s=float(control.move_s) * float(actor.wander_forward),
       jump_held=bool(control.jump_held),
@@ -1284,6 +1631,13 @@ class AiPlayerManager:
       pitch_delta_deg=float(control.pitch_delta_deg),
       auto_jump_enabled=bool(control.auto_jump_enabled),
     )
+    guarded_control, blocked = self._apply_edge_safety(actor, wander_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+    if bool(blocked):
+      turn_seed = (_wander_seed(actor.actor_id) + int(actor.player.position.x * 13.0) + int(actor.player.position.z * 7.0)) & 0x7FFFFFFF
+      actor.wander_heading_deg = float((float(actor.wander_heading_deg) + 120.0 + float(turn_seed % 120)) % 360.0)
+      actor.decision_timer_s = max(float(actor.decision_timer_s), 0.35)
+      actor.wander_forward = 1.0
+    return guarded_control
 
   def _maybe_interact_or_place(self, actor: _AiPlayerRuntime, *, target_player: PlayerEntity | None) -> None:
     actor.interact_cooldown_s = max(0.0, float(actor.interact_cooldown_s))
@@ -1352,6 +1706,7 @@ class AiPlayerManager:
     damage_taken = apply_melee_damage(attacker=attacker, target=actor.player, attack_direction=direction, sprinting=bool(sprinting), damage=float(MELEE_ATTACK_DAMAGE))
     if float(damage_taken) <= 1e-6:
       return AiLocalAttackResult()
+    self._note_ai_damage(actor)
     actor.attack_cooldown_s = max(float(actor.attack_cooldown_s), float(MELEE_DAMAGE_COOLDOWN_S) * 0.5)
     if bool(actor.nav_plan_pending):
       self._cancel_pending_nav_plan(actor)
@@ -1360,6 +1715,7 @@ class AiPlayerManager:
   def step(self, *, dt: float, target_player: PlayerEntity | None, allow_pvp: bool, paused_actor_ids: tuple[str, ...] = ()) -> AiStepReport:
     self._drain_completed_route_plans()
     self._route_requests_this_step = 0
+    self._recovery_searches_this_step = 0
     total_player_damage = 0.0
     player_death_reason: str | None = None
     damage_sound_positions: list[tuple[float, float, float]] = []
@@ -1390,7 +1746,9 @@ class AiPlayerManager:
       fall_damage = actor.player.apply_damage(fall_damage_amount(fall_distance_blocks=step_result.fall_distance_blocks), bypass_cooldown=True)
       void_damage, actor.void_damage_timer_s = apply_void_damage(player=actor.player, dt=float(dt), timer_s=float(actor.void_damage_timer_s))
       if float(fall_damage) > 1e-6 or float(void_damage) > 1e-6:
+        self._note_ai_damage(actor)
         damage_sound_positions.append(self._damage_sound_position(actor.player))
+      self._advance_ai_regeneration(actor, dt=float(dt))
       if mode != AI_MODE_IDLE:
         self._maybe_interact_or_place(actor, target_player=target_player)
         attack_report = self._maybe_attack_player(actor, target_player=target_player, allow_pvp=bool(allow_pvp))
@@ -1413,6 +1771,11 @@ class AiPlayerManager:
         held_item_id=None if actor.held_item_id is None else str(actor.held_item_id),
         attack_swing_progress=float(actor.attack_swing_progress),
         attack_prev_swing_progress=float(actor.attack_prev_swing_progress),
+        actor_id=str(actor.actor_id),
+        name=str(actor.name),
+        health=float(actor.player.health),
+        max_health=float(actor.player.max_health),
+        health_indicator=str(actor.health_indicator),
       )
       for actor in self._actors.values()
     )

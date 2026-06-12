@@ -117,7 +117,11 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
   viewport._inp.set_mouse_capture(False)
   settings_controller.sync_cloud_motion_pause(viewport)
   try:
-    dialog = AiSettingsOverlay(parent=viewport.window() if viewport.window() is not None else viewport, settings=viewport._ai_edit_settings)
+    dialog = AiSettingsOverlay(
+      parent=viewport.window() if viewport.window() is not None else viewport,
+      settings=viewport._ai_edit_settings,
+      name_validator=lambda candidate, _actor_id=str(actor_id): viewport._session.ai_player_name_error(actor_id=str(_actor_id), name=str(candidate)),
+    )
     viewport._position_detached_overlay_window(dialog)
     accepted = dialog.exec() == int(AiSettingsOverlay.DialogCode.Accepted)
     if not bool(accepted):
@@ -181,6 +185,13 @@ def _finish_route_edit(viewport: "RendererViewportWidget", *, commit: bool, reop
       mode=AI_MODE_ROUTE,
       personality=viewport._ai_edit_settings.personality,
       can_place_blocks=bool(viewport._ai_edit_settings.can_place_blocks),
+      name=str(viewport._ai_edit_settings.name),
+      health_indicator=str(viewport._ai_edit_settings.health_indicator),
+      auto_regen_enabled=bool(viewport._ai_edit_settings.auto_regen_enabled),
+      regen_start_delay_s=float(viewport._ai_edit_settings.regen_start_delay_s),
+      regen_interval_s=float(viewport._ai_edit_settings.regen_interval_s),
+      regen_amount_hp=float(viewport._ai_edit_settings.regen_amount_hp),
+      regen_cap_hp=float(viewport._ai_edit_settings.regen_cap_hp),
       route_points=tuple(viewport._ai_route_edit_points),
       route_closed=bool(viewport._ai_route_edit_closed),
       route_run=bool(viewport._ai_edit_settings.route_run),

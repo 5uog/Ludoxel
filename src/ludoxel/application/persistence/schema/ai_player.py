@@ -7,10 +7,23 @@ from typing import Any
 
 from ludoxel.application.persistence.schema.player import coerce_xyz_triplet
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_bool, coerce_float, coerce_int, mapping_str
+from ludoxel.simulation.actors.ai_players.settings import (
+  AI_REGEN_DEFAULT_AMOUNT_HP,
+  AI_REGEN_DEFAULT_CAP_HP,
+  AI_REGEN_DEFAULT_ENABLED,
+  AI_REGEN_DEFAULT_INTERVAL_S,
+  AI_REGEN_DEFAULT_START_DELAY_S,
+  normalize_ai_regen_amount_hp,
+  normalize_ai_regen_cap_hp,
+  normalize_ai_regen_interval_s,
+  normalize_ai_regen_start_delay_s,
+)
 from ludoxel.simulation.actors.ai_players.state import (
   AI_DEFAULT_HELD_ITEM_ID,
+  AI_HEALTH_INDICATOR_OFF,
   AiPlayerState,
   AiRoutePoint,
+  normalize_ai_health_indicator,
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
@@ -25,6 +38,13 @@ class PersistedAiPlayer:
   personality: str = "aggressive"
   can_place_blocks: bool = False
   held_item_id: str | None = AI_DEFAULT_HELD_ITEM_ID
+  name: str = ""
+  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
+  regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
+  regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
+  regen_amount_hp: float = AI_REGEN_DEFAULT_AMOUNT_HP
+  regen_cap_hp: float = AI_REGEN_DEFAULT_CAP_HP
   pos_x: float = 0.0
   pos_y: float = 1.0
   pos_z: float = 0.0
@@ -50,6 +70,13 @@ class PersistedAiPlayer:
       "personality": str(self.personality),
       "can_place_blocks": bool(self.can_place_blocks),
       "held_item_id": (None if self.held_item_id is None else str(self.held_item_id)),
+      "name": str(self.name),
+      "health_indicator": str(self.health_indicator),
+      "auto_regen_enabled": bool(self.auto_regen_enabled),
+      "regen_start_delay_s": float(self.regen_start_delay_s),
+      "regen_interval_s": float(self.regen_interval_s),
+      "regen_amount_hp": float(self.regen_amount_hp),
+      "regen_cap_hp": float(self.regen_cap_hp),
       "pos": [float(self.pos_x), float(self.pos_y), float(self.pos_z)],
       "vel": [float(self.vel_x), float(self.vel_y), float(self.vel_z)],
       "yaw_deg": float(self.yaw_deg),
@@ -72,6 +99,13 @@ class PersistedAiPlayer:
       personality=normalize_ai_personality(self.personality),
       can_place_blocks=bool(self.can_place_blocks),
       held_item_id=(None if self.held_item_id is None else str(self.held_item_id)),
+      name=str(self.name).strip(),
+      health_indicator=normalize_ai_health_indicator(self.health_indicator),
+      auto_regen_enabled=bool(self.auto_regen_enabled),
+      regen_start_delay_s=normalize_ai_regen_start_delay_s(self.regen_start_delay_s),
+      regen_interval_s=normalize_ai_regen_interval_s(self.regen_interval_s),
+      regen_amount_hp=normalize_ai_regen_amount_hp(self.regen_amount_hp),
+      regen_cap_hp=normalize_ai_regen_cap_hp(self.regen_cap_hp),
       pos_x=float(self.pos_x),
       pos_y=float(self.pos_y),
       pos_z=float(self.pos_z),
@@ -100,6 +134,13 @@ class PersistedAiPlayer:
       personality=str(normalized.personality),
       can_place_blocks=bool(normalized.can_place_blocks),
       held_item_id=(None if normalized.held_item_id is None else str(normalized.held_item_id)),
+      name=str(normalized.name),
+      health_indicator=str(normalized.health_indicator),
+      auto_regen_enabled=bool(normalized.auto_regen_enabled),
+      regen_start_delay_s=float(normalized.regen_start_delay_s),
+      regen_interval_s=float(normalized.regen_interval_s),
+      regen_amount_hp=float(normalized.regen_amount_hp),
+      regen_cap_hp=float(normalized.regen_cap_hp),
       pos_x=float(normalized.pos_x),
       pos_y=float(normalized.pos_y),
       pos_z=float(normalized.pos_z),
@@ -133,6 +174,13 @@ class PersistedAiPlayer:
       personality=normalize_ai_personality(data.get("personality", "aggressive")),
       can_place_blocks=coerce_bool(data.get("can_place_blocks", False), False),
       held_item_id=(held_item_id if held_item_id else None),
+      name=mapping_str(data, "name", "").strip(),
+      health_indicator=normalize_ai_health_indicator(data.get("health_indicator", AI_HEALTH_INDICATOR_OFF)),
+      auto_regen_enabled=coerce_bool(data.get("auto_regen_enabled", AI_REGEN_DEFAULT_ENABLED), bool(AI_REGEN_DEFAULT_ENABLED)),
+      regen_start_delay_s=normalize_ai_regen_start_delay_s(coerce_float(data.get("regen_start_delay_s", AI_REGEN_DEFAULT_START_DELAY_S), float(AI_REGEN_DEFAULT_START_DELAY_S))),
+      regen_interval_s=normalize_ai_regen_interval_s(coerce_float(data.get("regen_interval_s", AI_REGEN_DEFAULT_INTERVAL_S), float(AI_REGEN_DEFAULT_INTERVAL_S))),
+      regen_amount_hp=normalize_ai_regen_amount_hp(coerce_float(data.get("regen_amount_hp", AI_REGEN_DEFAULT_AMOUNT_HP), float(AI_REGEN_DEFAULT_AMOUNT_HP))),
+      regen_cap_hp=normalize_ai_regen_cap_hp(coerce_float(data.get("regen_cap_hp", AI_REGEN_DEFAULT_CAP_HP), float(AI_REGEN_DEFAULT_CAP_HP))),
       pos_x=pos_x,
       pos_y=pos_y,
       pos_z=pos_z,

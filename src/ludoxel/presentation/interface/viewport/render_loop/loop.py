@@ -227,6 +227,7 @@ class ViewportRenderLoopMixin:
     else:
       self._route_overlay.clear_paths()
     self._update_world_player_name_tag(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
+    self._update_ai_status_tags(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
     self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
     self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
