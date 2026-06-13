@@ -12,7 +12,7 @@ Ludoxel（以下「本アプリケーション」という。）は、小西拳�
 
 本書は、ルートの [`LICENSE`](LICENSE)、第三者素材のライセンス表示、来歴確認を要するローカル資産、実行時利用者データ、通常のアプリケーション出力、配布時法務資料、ホスティングサービスの機能及び利用条件、並びに [`.github/`](.github/) 配下のリポジトリ方針文書の相互関係を整理する補助資料である。
 
-本書に現れる `Application`、`Repository`、`Original Materials`、`Repository Contents`、`Third-Party Materials`、`Provenance-Sensitive Materials`、`User Materials`、`Application Output`、`Contribution`、`Distribution Materials`、`Use`、`Ordinary Application Use`、`AI Use`、`Source Form`、`Object Form`、`Work`、`Derivative Work`、`Licensor`、`Licensee`、及び `Legal Entity` は、別段の明示がない限り、[`LICENSE`](LICENSE) における定義と同じ意味を有する。
+本書において先頭を大文字で表記し、かつ [`LICENSE`](LICENSE) の `1. Definitions` で定義される語は、別段の明示がない限り、[`LICENSE`](LICENSE) における定義と同じ意味を有する。本書は、これらの定義語を再定義せず、[`LICENSE`](LICENSE) の定義を参照する入口としてのみ用いる。
 
 ## 1 支配文書
 
@@ -36,8 +36,7 @@ Ludoxel（以下「本アプリケーション」という。）は、小西拳�
 
 第三者素材には、それぞれのライセンス条件、著作権表示、帰属表示、保証否認、ソース提供条件、再配布条件、予約名、商標上の制限、及びその他の適用条件が適用される。第三者素材のライセンス条件は本アプリケーションの独自素材を再許諾せず、本アプリケーションの独自素材に適用される [`LICENSE`](LICENSE) も第三者素材の条件を変更しない。
 
-第三者素材のライセンス本文は [`third-party/`](third-party/) 配下に原文のまま保持する。第三者素材の帰属表示、著作権表示、
-ライセンス識別子、及び関連する法務記録は、各素材の上流配布物、パッケージメタデータ、同梱ライセンス本文、又は本リポジトリ内の関連文書に従って確認する。
+第三者素材のライセンス本文は、[`LICENSE`](LICENSE) が定義する `Third-Party License Text` であり、[`third-party/`](third-party/) 配下に原文のまま保持する。第三者素材の帰属表示、著作権表示、ライセンス識別子、及び関連する法務記録は、各素材の上流配布物、パッケージメタデータ、同梱ライセンス本文、又は本リポジトリ内の関連文書に従って確認する。
 
 Kaisei Opti フォントは `SIL Open Font License 1.1`（`OFL-1.1`）の対象であり、そのライセンス本文は [`third-party/kaisei-opti/LICENSE.txt`](third-party/kaisei-opti/LICENSE.txt) に原文のまま置かれる。当該ライセンス本文は、README、日本語説明、パッケージメタデータ、又はその他の補助的記述によって置換、翻訳、制限、拡張、又は修正されない。
 
@@ -53,7 +52,7 @@ CPython、PyQt6、Qt 実行環境構成要素、NumPy、PyOpenGL、wgpu、render
 
 ## 5 実行時利用者データ及び通常のアプリケーション出力
 
-実行時利用者データは、本アプリケーションの独自素材、第三者素材、来歴確認を要するローカル資産、及び不変のパッケージ資源から区別される。利用者が通常のアプリケーション利用を通じて作成、入力、編集、保存、又は供給する設定、保存データ、世界編集、インポートされたスキン、利用者作成の記録、及びその他の利用者固有データは、[`LICENSE`](LICENSE) が定義する `User Materials` に含まれ得る。
+実行時利用者データは、本アプリケーションの独自素材、第三者素材、来歴確認を要するローカル資産、及び不変のパッケージ資源から区別される。利用者が通常のアプリケーション利用を通じて作成、入力、編集、保存、又は供給する設定、保存データ、世界編集、インポートされたスキン、利用者作成の記録、及びその他の利用者固有データは、[`LICENSE`](LICENSE) が定義する `User-Created Materials` に含まれ得る。
 
 実行時利用者データは、本アプリケーションによって作成、保存、読込、変換、又は表示される場合であっても、その事実のみを以て本アプリケーションの独自素材とは扱わない。利用者が独自に作成した素材又はデータは、本アプリケーションの通常機能により保存又は表示されたことを理由として、小西拳斗に帰することはない。
 
@@ -76,24 +75,24 @@ third-party/
 
 ## 7 ホスティングサービスの機能及びリポジトリ方針文書
 
-ホスティングサービスの閲覧、フォーク、ダウンロード、アーカイブ、リリース、パッケージ、差分表示、課題投稿、プルリクエスト、議論、アクション実行、パッケージ配布、又はその他の画面機能は、ホスティングサービスと利用者との間の利用条件及びホスティングサービスが提供するサービス機能に従って利用される。これらの機能の法的性質は、本アプリケーションの独自素材に関する [`LICENSE`](LICENSE) の許諾範囲とは区別される。
+GitHub における閲覧、フォーク、ダウンロード、アーカイブ、リリース、パッケージ、差分表示、`Public Issue` の投稿、プルリクエスト、議論、アクション実行、パッケージ配布、又はその他の画面機能は、[`LICENSE`](LICENSE) が定義する `GitHub Platform Terms` 及び GitHub が提供するサービス機能に従って利用される。これらの機能の法的性質は、本アプリケーションの独自素材に関する [`LICENSE`](LICENSE) の許諾範囲とは区別される。
 
-[`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) は、外部提供物を受け付けない方針を示す文書である。外部提供物には、プルリクエスト、パッチ、ソースコード変更、文書変更、翻訳、デザイン資産、生成ファイル、データセット、機能実装、リファクタリング提案、シェーダー書換え、資産、保存済みワールド、AI 作業台出力、及びその他の提出物が含まれる。
+[`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) は、[`LICENSE`](LICENSE) が定義する `External Contribution` を受け付けない方針を示す文書である。`External Contribution` を構成する `Contribution Materials` には、ソースコード、パッチ、プルリクエスト、文書、差替え文案、翻訳、デザイン資産、画像、音声、テクスチャ、生成ファイル、データセット、機能実装、リファクタリング提案、シェーダー書換え、保存済みワールド、提案実装を含む報告、及び人工知能生成物が含まれる。
 
-[`.github/SECURITY.md`](.github/SECURITY.md) は、セキュリティ報告の範囲、非公開報告経路、公開開示の禁止、対象外報告、取扱方針、試験制限、及び支配本文を説明する文書である。セキュリティ報告又はセキュリティ試験は、本アプリケーションの独自素材の再利用を正当化する根拠とはならない。
+[`.github/SECURITY.md`](.github/SECURITY.md) は、[`LICENSE`](LICENSE) が定義する `Security Reporting Policy` を述べる文書であり、`Security Report` の範囲、`Private Reporting Channel`、`Public Issue` における開示禁止情報、対象外報告、取扱方針、及び `Security Testing` の制限を扱う。`Security Report` の提出又は `Security Testing` は、本アプリケーションの独自素材に関する利用許諾を拡張する根拠とはならない。
 
-[`.github/pull_request_template.md`](.github/pull_request_template.md) は、プルリクエストによる外部提供物の提出を排除するためのホスティングサービス上の方針文書である。プルリクエストの画面が存在することは、外部提供物を受け付ける意思表示ではない。
+[`.github/pull_request_template.md`](.github/pull_request_template.md) は、プルリクエストによる `External Contribution` の提出を排除するための GitHub 上の提出時表示文書である。プルリクエストの画面が存在することは、`Contribution Materials` を受け付ける意思表示ではない。
 
-[`.github/ISSUE_TEMPLATE/problem-report.yml`](.github/ISSUE_TEMPLATE/problem-report.yml)、[`.github/ISSUE_TEMPLATE/limited-question.yml`](.github/ISSUE_TEMPLATE/limited-question.yml)、及び [`.github/ISSUE_TEMPLATE/security-contact.yml`](.github/ISSUE_TEMPLATE/security-contact.yml) は、それぞれ、限定された問題報告、限定質問、及び非公開連絡方法の請求に用途を限定する課題テンプレートである。これらのフォームは、ソースコード、パッチ、差替え文案、デザイン資産、データセット、生成ファイル、シェーダー書換え、機能実装、リファクタリング提案、又はその他の外部提供物を受け付けるためのものではない。
+[`.github/ISSUE_TEMPLATE/problem-report.yml`](.github/ISSUE_TEMPLATE/problem-report.yml)、[`.github/ISSUE_TEMPLATE/limited-question.yml`](.github/ISSUE_TEMPLATE/limited-question.yml)、及び [`.github/ISSUE_TEMPLATE/security-contact.yml`](.github/ISSUE_TEMPLATE/security-contact.yml) は、それぞれ、限定された問題報告、限定質問、及び `Private Reporting Channel` の請求に用途を限定する課題テンプレートである。これらのフォームは、`Contribution Materials` の提出又は `External Contribution` のために用いてはならない。
 
-公開課題には、脆弱性の詳細、攻撃手順、実証コード、認証情報、トークン、クッキー、秘匿情報を含むログ、非公開のローカルファイル、第三者の秘密情報、又は公開に適さない再現情報を書いてはならない。セキュリティ報告は、[`.github/SECURITY.md`](.github/SECURITY.md) に従い、利用可能な非公開報告経路を優先する。
+`Public Issue` には、脆弱性の詳細、攻撃手順、実証コード、認証情報、トークン、クッキー、秘匿情報を含むログ、非公開のローカルファイル、第三者の秘密情報、又は公開に適さない再現情報を書いてはならない。`Security Report` は、[`.github/SECURITY.md`](.github/SECURITY.md) が定める `Security Reporting Policy` に従い、利用可能な `Private Reporting Channel` を優先する。
 
 ## 8 準拠法、管轄、及びプラットフォーム利用条件
 
 [`LICENSE`](LICENSE) 第14節は、適用法上許される最大限の範囲で、`Ludoxel Independent License` が日本法に準拠することを定める。同節は、本アプリケーションの独自素材、リポジトリ内容、配布物、又は無許諾利用に関する紛争について、東京地方裁判所を第一審の専属的合意管轄裁判所とすることも定める。
 
-この準拠法及び管轄の定めは、本アプリケーションの独自素材に関する独立ライセンスの解釈、履行、違反、終了、及び無許諾利用に関する関係を対象とする。他方で、ホスティングサービスと利用者との間には、当該サービスの利用条件、追加製品条件、非公開脆弱性報告、課題テンプレート、プルリクエストテンプレート、アクション実行、パッケージ配布、又はその他のサービス機能に関する別個の条件が適用され得る。
+この準拠法及び管轄の定めは、本アプリケーションの独自素材に関する独立ライセンスの解釈、履行、違反、終了、及び無許諾利用に関する関係を対象とする。他方で、GitHub と利用者との間には、[`LICENSE`](LICENSE) が定義する `GitHub Platform Terms`、追加製品条件、`Private Reporting Channel` を含む非公開脆弱性報告、課題テンプレート、プルリクエストテンプレート、アクション実行、パッケージ配布、又はその他のサービス機能に関する別個の条件が適用され得る。
 
-したがって、日本法準拠及び東京地方裁判所の専属的合意管轄に関する [`LICENSE`](LICENSE) の定めと、ホスティングサービスの利用条件に基づくサービス上の機能利用とは、適用対象を異にする。前者は本アプリケーションの独自素材に関する独立ライセンス上の関係を規律し、後者はサービスの利用関係を規律する。
+したがって、日本法準拠及び東京地方裁判所の専属的合意管轄に関する [`LICENSE`](LICENSE) の定めと、`GitHub Platform Terms` に基づくサービス上の機能利用とは、適用対象を異にする。前者は本アプリケーションの独自素材に関する独立ライセンス上の関係を規律し、後者はサービスの利用関係を規律する。
 
 Copyright (c) 2026 Kento Konishi (小西拳斗).

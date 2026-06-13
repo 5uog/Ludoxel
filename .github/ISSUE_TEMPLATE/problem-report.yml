@@ -1,27 +1,27 @@
 name: Limited problem report
-description: Report a reproducible non-security problem without submitting contribution materials.
+description: Report a reproducible non-security problem without submitting Contribution Materials.
 title: '[Problem]: '
 labels: []
 body:
   - type: markdown
     attributes:
       value: |
-        This public form is limited to reproducible, non-security problems in the current repository or official Ludoxel desktop distribution.
+        This public form is limited to reproducible, non-security problems in the Current Repository or an Official Distribution of Ludoxel.
 
-        Do not use this form to submit source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, refactoring proposals, or other contribution materials.
+        Do not use this form to submit Contribution Materials, including source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, or refactoring proposals.
 
-        Do not include vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other information unsuitable for public disclosure. If the problem may be security-relevant, follow `.github/SECURITY.md` instead.
+        Do not include vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other information unsuitable for public disclosure. If the problem may be security-relevant, follow the Security Reporting Policy in `.github/SECURITY.md` instead.
 
   - type: checkboxes
     id: acknowledgement
     attributes:
       label: Acknowledgement
       options:
-        - label: I understand that this public issue must not contain security-sensitive details or non-public reproduction information.
+        - label: I understand that this Public Issue must not contain security-sensitive details or non-public reproduction information.
           required: true
-        - label: I understand that this issue must not contain code contributions, patches, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals.
+        - label: I understand that this Public Issue must not contain Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals.
           required: true
-        - label: I understand that public GitHub features do not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, use as training data, or represent the Original Materials as my own work.
+        - label: I understand that public GitHub features and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the LICENSE.
           required: true
 
   - type: textarea

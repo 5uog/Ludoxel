@@ -5,10 +5,10 @@ SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 # Pull Request Policy
 
-This repository is not an open source project and does not accept external contributions.
+This repository is not an open source project and does not accept an External Contribution.
 
-Do not submit pull requests, patches, source code changes, documentation changes, translations, design assets, generated files, datasets, feature implementations, refactoring proposals, shader rewrites, assets, saved worlds, AI workbench output, or other contribution materials.
+Do not submit Contribution Materials, including pull requests, patches, source code changes, documentation changes, translations, design assets, generated files, datasets, feature implementations, refactoring proposals, shader rewrites, saved worlds, or artificial-intelligence-generated material.
 
-A pull request may be closed without review. Submission of a pull request does not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, use as training data, or represent the repository's Original Materials as one's own work.
+A pull request may be closed without review. Submission of a pull request does not grant permission to Use the Original Materials beyond [`LICENSE`](../LICENSE).
 
-For the controlling terms, see [`LICENSE`](../LICENSE) and [`.github/CONTRIBUTING.md`](./CONTRIBUTING.md). GitHub interface features do not expand the independent license granted by Kento Konishi for the Original Materials.
+For the controlling terms, see [`LICENSE`](../LICENSE) and [`.github/CONTRIBUTING.md`](./CONTRIBUTING.md). The GitHub Platform Terms do not expand the permissions granted by the Licensor for the Original Materials.

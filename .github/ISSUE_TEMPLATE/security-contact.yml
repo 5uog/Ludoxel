@@ -1,35 +1,35 @@
 name: Security contact request
-description: Request a private contact method for a suspected vulnerability. Do not include vulnerability details here.
+description: Request a Private Reporting Channel for a suspected vulnerability. Do not include vulnerability details here.
 title: '[Security Contact Request]: '
 labels: []
 body:
   - type: markdown
     attributes:
       value: |
-        This public form is only for requesting a private contact method when no private reporting channel is available.
+        This public form is only for requesting a Private Reporting Channel when no Private Reporting Channel is available for a Security Report.
 
-        If GitHub private vulnerability reporting or GitHub Security Advisories are available for this repository, use that private reporting channel instead.
+        If GitHub private vulnerability reporting or a GitHub security advisory is available for this repository, use that Private Reporting Channel instead.
 
-        Do not disclose vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or non-public reproduction information in this public issue.
+        Do not disclose vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or non-public reproduction information in this Public Issue.
 
   - type: checkboxes
     id: acknowledgement
     attributes:
       label: Acknowledgement
       options:
-        - label: I have not included vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, or other non-public reproduction information in this public issue.
+        - label: I have not included vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, or other non-public reproduction information in this Public Issue.
           required: true
-        - label: I understand that this request does not grant permission to copy, scrape, mirror, archive, modify, deploy, redistribute, incorporate, relicense, create derivative works from, use as training data, or otherwise reuse the Original Materials.
+        - label: I understand that this request does not grant permission to Use the Original Materials beyond the LICENSE.
           required: true
-        - label: I understand that any security testing must remain lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data that I am authorized to test.
+        - label: I understand that any Security Testing must remain lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data that I am authorized to test.
           required: true
 
   - type: textarea
     id: limited-summary
     attributes:
       label: Limited public summary
-      description: Provide only a minimal category-level description suitable for a public issue.
-      placeholder: I would like to report a suspected vulnerability affecting the current repository or official desktop distribution.
+      description: Provide only a minimal category-level description suitable for a Public Issue.
+      placeholder: I would like to report a suspected vulnerability affecting the Current Repository or an Official Distribution.
     validations:
       required: true
 
@@ -37,7 +37,7 @@ body:
     id: contact
     attributes:
       label: Preferred reply method
-      description: Provide a non-sensitive contact method only if you want to receive a reply outside this public issue.
+      description: Provide a non-sensitive contact method only if you want to receive a reply outside this Public Issue.
       placeholder: GitHub username or email address
     validations:
       required: false

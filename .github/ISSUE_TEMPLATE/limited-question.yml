@@ -1,14 +1,14 @@
 name: Limited question
-description: Ask a limited repository question without submitting contribution materials.
+description: Ask a limited repository question without submitting Contribution Materials.
 title: '[Question]: '
 labels: []
 body:
   - type: markdown
     attributes:
       value: |
-        This public form is limited to questions about repository policy, licensing, ordinary application use, packaging status, or security reporting procedure.
+        This public form is limited to questions about repository policy, the LICENSE, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy.
 
-        Do not use this form to submit source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, refactoring proposals, or other contribution materials.
+        Do not use this form to submit Contribution Materials, including source code, patches, replacement text, design assets, datasets, generated files, shader rewrites, feature implementations, or refactoring proposals.
 
         Do not include vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, or other information unsuitable for public disclosure.
 
@@ -17,9 +17,9 @@ body:
     attributes:
       label: Acknowledgement
       options:
-        - label: I understand that this question must not include contribution materials, replacement repository content, or implementation proposals.
+        - label: I understand that this Public Issue must not include Contribution Materials, replacement repository content, or implementation proposals.
           required: true
-        - label: I understand that public GitHub features do not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, use as training data, or represent the Original Materials as my own work.
+        - label: I understand that public GitHub features and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the LICENSE.
           required: true
 
   - type: dropdown
@@ -28,10 +28,10 @@ body:
       label: Topic
       options:
         - Repository policy
-        - License or third-party material
-        - Ordinary application use
+        - License or Third-Party Materials
+        - Ordinary Application Use
         - Packaging or build status
-        - Security reporting procedure
+        - Security Reporting Policy
         - Other limited question
     validations:
       required: true
@@ -40,6 +40,6 @@ body:
     id: question
     attributes:
       label: Question
-      description: Ask the limited question without submitting code, replacement text, proposed repository content, or non-public security information.
+      description: Ask the limited question without submitting Contribution Materials, proposed repository content, or non-public security information.
     validations:
       required: true
