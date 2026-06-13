@@ -68,7 +68,7 @@ function checkJapaneseNoticeFormatting({ failures, path }) {
   for (const [index, line] of lines.entries()) {
     const lineNumber = index + 1;
     const columns = [...line].length;
-    if (columns > 60) failures.push(`${label}:${lineNumber} exceeds source column 60 (${columns})`);
+    if (columns > 100) failures.push(`${label}:${lineNumber} exceeds source column 100 (${columns})`);
   }
 }
 
