@@ -16,7 +16,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.aggregated_face_batch
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapInfo
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import ShadowParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams
 from ludoxel.presentation.rendering.visuals.selections.chunk import select_visible_chunks, within_render_distance
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 
@@ -31,7 +31,7 @@ class WorldDrawInputs:
   shadow_enabled: bool
   world_wireframe: bool
 
-  shadow: ShadowParams
+  shadow: BackendShadowParams
   shadow_info: ShadowMapInfo
 
   camera_chunk: ChunkKey

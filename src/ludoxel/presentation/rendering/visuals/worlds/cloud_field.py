@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import CloudParams
+from ludoxel.presentation.rendering.contracts.config import BackendCloudParams
 
 
 @dataclass(frozen=True)
@@ -26,7 +26,7 @@ class _RectXZ:
 
 
 class CloudField:
-  def __init__(self, cfg: CloudParams) -> None:
+  def __init__(self, cfg: BackendCloudParams) -> None:
     self._cfg = cfg
 
     self._enabled_density: int = int(max(0, int(cfg.rects_per_cell)))

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 export function pythonPreviewArguments(options, mode) {
-  const args = ['-m', 'ludoxel.presentation.rendering.faces.preview', '--mode', mode, '--project-root', '.'];
+  const args = ['tools/generate_block_thumbnails/src/service/render_thumbnail.py', '--mode', mode, '--project-root', '.'];
 
   if (options.textureRoot) args.push('--texture-root', options.textureRoot);
   if (options.outputRoot) args.push('--output-root', options.outputRoot);

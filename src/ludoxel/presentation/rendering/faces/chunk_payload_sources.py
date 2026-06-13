@@ -6,10 +6,10 @@ from collections.abc import Iterable
 
 import numpy as np
 
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState, UVLookup
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
 from ludoxel.presentation.rendering.faces.row_utils import atlas_face_uv
 from ludoxel.presentation.rendering.faces.visible import iter_visible_faces
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, GetState, UVLookup
 from ludoxel.simulation.blocks.states.codec import parse_state
 
 

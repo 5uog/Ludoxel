@@ -6,8 +6,8 @@ from collections.abc import Iterable
 
 import numpy as np
 
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState, UVLookup
 from ludoxel.presentation.rendering.faces.chunk_payload_sources import BucketCounts, build_chunk_face_sources, split_face_sources_to_buckets
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, GetState, UVLookup
 
 
 def _clone_face_buckets(face_buckets: list[np.ndarray]) -> list[np.ndarray]:

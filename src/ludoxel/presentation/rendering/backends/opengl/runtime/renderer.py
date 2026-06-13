@@ -13,7 +13,7 @@ from ludoxel.foundations.mathematics.chunks.grid import ChunkKey
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.runtime.backend import RendererBackend
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import RendererFrameMetrics
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import GLRendererParams, default_gl_renderer_params
+from ludoxel.presentation.rendering.contracts.config import BackendRendererParams, default_backend_renderer_params
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
@@ -21,8 +21,8 @@ from ludoxel.simulation.blocks.registries.block import BlockRegistry
 
 
 class GLRenderer:
-  def __init__(self, params: GLRendererParams | None = None) -> None:
-    self._cfg = params or default_gl_renderer_params()
+  def __init__(self, params: BackendRendererParams | None = None) -> None:
+    self._cfg = params or default_backend_renderer_params()
 
     self._state = BackendRendererRuntimeState(
       debug_shadow=False,

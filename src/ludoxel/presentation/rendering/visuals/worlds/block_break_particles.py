@@ -8,8 +8,8 @@ from dataclasses import dataclass, replace
 
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup
 from ludoxel.presentation.rendering.faces.row_utils import uv_rect_from_pixels
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, UVLookup
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 
 _PARTICLE_SUBDIVISIONS_PER_BLOCK = 4.0

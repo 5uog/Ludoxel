@@ -108,7 +108,8 @@ from ludoxel.simulation.actors.player.targets import MELEE_ATTACK_REACH_BLOCKS, 
 from ludoxel.simulation.blocks.models.api import has_full_top_support_for_block
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.structures.cardinal import cardinal_from_xz, facing_vec_xz
-from ludoxel.simulation.rules.collision.system import _any_intersection, support_block_beneath
+from ludoxel.simulation.rules.collision.support import world_aabb_intersects
+from ludoxel.simulation.rules.collision.system import support_block_beneath
 from ludoxel.simulation.rules.interaction.service import InteractionService
 from ludoxel.simulation.rules.picking.block import BlockPick
 from ludoxel.simulation.worlds.config.session import SessionSettings
@@ -640,7 +641,7 @@ class AiPlayerManager:
 
   def _player_clear_at(self, actor: _AiPlayerRuntime, *, position: Vec3) -> bool:
     probe_aabb = actor.player.aabb_at(Vec3(float(position.x), float(position.y), float(position.z)))
-    return not bool(_any_intersection(self.world, probe_aabb, self.settings.collision, block_registry=self.block_registry))
+    return not bool(world_aabb_intersects(self.world, probe_aabb, self.settings.collision, block_registry=self.block_registry))
 
   def _support_contact_cell(self, actor: _AiPlayerRuntime) -> tuple[int, int, int] | None:
     contact = support_block_beneath(actor.player, self.world, block_registry=self.block_registry, params=self.settings.collision)

@@ -1,13 +1,13 @@
 Kaisei Opti 通知
 
 補助通知の範囲: 第三者通知
-関連するルート NOTICE の版: 1.0.4
+関連するルート NOTICE の版: 1.0.5
 本文言語: 日本語
 
 この通知は、Ludoxel における Kaisei Opti フォント素材のリポジトリ固
-有の利用関係を記録する補助的な第三者通知である。この通知は、
-third-party/kaisei-opti/LICENSE.txt に置かれた上流のライセンス本
-文を置換、支配的翻訳、制限、拡張、又はその他の方法で修正するものではない。
+有の利用関係を記録する補助的な第三者通知である。この通知は、third-par-
+ty/kaisei-opti/LICENSE.txt に置かれた上流のライセンス本文を置換、支
+配的翻訳、制限、拡張、又はその他の方法で修正するものではない。
 
 次のファイルは、Kaisei Opti フォント素材として扱われる。
 
@@ -15,8 +15,8 @@ third-party/kaisei-opti/LICENSE.txt に置かれた上流のライセンス本
 * assets/fonts/KaiseiOpti-Medium.ttf
 * assets/fonts/KaiseiOpti-Regular.ttf
 
-Kaisei Opti は Ludoxel 独自素材ではない。`Ludoxel Independent
-License` は Kaisei Opti を再許諾せず、SIL Open Font License 1.1
+Kaisei Opti は Ludoxel 独自素材ではない。`Ludoxel Independent L-
+icense` は Kaisei Opti を再許諾せず、SIL Open Font License 1.1
 も Ludoxel 独自素材を再許諾しない。
 
 Ludoxel が権限に基づいて配布される場合、配布物は、Kaisei Opti に適用

@@ -18,7 +18,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.textured_face import 
 from ludoxel.presentation.rendering.backends.opengl.resources.image_texture import ImageTexture
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import ShadowParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
 from ludoxel.presentation.rendering.faces.uv_rects import UVRect
@@ -91,7 +91,7 @@ class PlayerModelPass:
     return face_rows_from_buffers(buffers)
 
   def draw_world(
-    self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: ShadowParams, shadow_info: ShadowMapInfo
+    self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo
   ) -> tuple[int, int]:
     del light_view_proj, debug_shadow, shadow_enabled, shadow, shadow_info
     if self._face_pass is None or self._skin_texture is None or self._atlas is None:
@@ -151,7 +151,7 @@ class PlayerModelPass:
     return (1, int(rows.shape[0]))
 
   def world_metrics(
-    self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: ShadowParams, shadow_info: ShadowMapInfo
+    self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo
   ) -> PassFrameMetrics:
     dc, inst = self.draw_world(
       pose=pose, view_proj=view_proj, light_view_proj=light_view_proj, sun_dir=sun_dir, debug_shadow=bool(debug_shadow), shadow_enabled=bool(shadow_enabled), shadow=shadow, shadow_info=shadow_info

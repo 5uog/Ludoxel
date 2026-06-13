@@ -300,8 +300,3 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self.arm_resume_refresh()
     settings_controller.sync_cloud_motion_pause(self)
     self._sync_runtime_activity()
-
-  def hideEvent(self, e) -> None:
-    self._set_runtime_active(False)
-    settings_controller.sync_cloud_motion_pause(self)
-    super().hideEvent(e)

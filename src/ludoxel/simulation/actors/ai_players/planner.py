@@ -11,7 +11,7 @@ from ludoxel.simulation.actors.ai_players.state import AiRoutePoint
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.blocks.models.api import has_full_top_support_for_block
 from ludoxel.simulation.blocks.registries.default import create_default_registry
-from ludoxel.simulation.rules.collision.system import _any_intersection
+from ludoxel.simulation.rules.collision.support import world_aabb_intersects
 from ludoxel.simulation.worlds.config.session import SessionSettings
 from ludoxel.simulation.worlds.state.world import WorldState
 
@@ -123,7 +123,7 @@ def _nav_headroom_clear(ctx: _PlannerContext, support_cell: tuple[int, int, int]
 
 def _player_clear_at(ctx: _PlannerContext, *, position: Vec3) -> bool:
   probe_aabb = ctx.player.aabb_at(Vec3(float(position.x), float(position.y), float(position.z)))
-  return not bool(_any_intersection(ctx.world, probe_aabb, ctx.settings.collision, block_registry=_block_registry()))
+  return not bool(world_aabb_intersects(ctx.world, probe_aabb, ctx.settings.collision, block_registry=_block_registry()))
 
 
 def _standable_support_cell(ctx: _PlannerContext, support_cell: tuple[int, int, int]) -> bool:

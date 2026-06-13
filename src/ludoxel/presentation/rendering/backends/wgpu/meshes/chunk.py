@@ -8,6 +8,7 @@ import numpy as np
 
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chunk_key
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
+from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices
 
 _INSTANCE_ROW_WIDTH = 12
 _TRANSFORM_ROW_WIDTH = 20
@@ -48,11 +49,6 @@ class WgpuChunkMesh:
     return int(total)
 
 
-def _face(nx, ny, nz, corners):
-  (a, b, c, d) = corners
-  return [(*a, nx, ny, nz, 0.0, 0.0), (*b, nx, ny, nz, 1.0, 0.0), (*c, nx, ny, nz, 1.0, 1.0), (*a, nx, ny, nz, 0.0, 0.0), (*c, nx, ny, nz, 1.0, 1.0), (*d, nx, ny, nz, 0.0, 1.0)]
-
-
 def _face_lines(nx, ny, nz, corners):
   (a, b, c, d) = corners
   return [
@@ -69,22 +65,6 @@ def _face_lines(nx, ny, nz, corners):
     (*d, nx, ny, nz, 0.0, 1.0),
     (*a, nx, ny, nz, 0.0, 0.0),
   ]
-
-
-def _quad_vertices(face: int):
-  p = 0.5
-
-  if face == 0:
-    return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)])
-  if face == 1:
-    return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)])
-  if face == 2:
-    return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)])
-  if face == 3:
-    return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)])
-  if face == 4:
-    return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)])
-  return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)])
 
 
 def _quad_wire_vertices(face: int):
@@ -106,7 +86,7 @@ def _quad_wire_vertices(face: int):
 def build_face_vertex_rows() -> np.ndarray:
   rows = []
   for face_idx in range(FACE_COUNT):
-    rows.extend(_quad_vertices(int(face_idx)))
+    rows.extend(textured_unit_face_vertices(int(face_idx)))
   return np.asarray(rows, dtype=np.float32)
 
 

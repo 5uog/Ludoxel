@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-__all__ = ["interaction_controller", "settings_controller"]
+__all__: tuple[str, ...] = ()

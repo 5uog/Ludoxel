@@ -43,6 +43,8 @@ class ViewportInput:
 
   def reset(self) -> None:
     self._a.reset()
+    if self._macos_relative_mouse is not None:
+      self._macos_relative_mouse.clear_pending_delta()
 
   def captured(self) -> bool:
     return bool(self._captured)

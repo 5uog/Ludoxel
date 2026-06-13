@@ -5,14 +5,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QImage, QPainter
 
+from ludoxel.presentation.rendering.contracts.lookups import UVRect
 from ludoxel.presentation.resources.asset_roots import resolve_block_texture_path
-
-UVRect = Tuple[float, float, float, float]
 
 
 @dataclass(frozen=True)

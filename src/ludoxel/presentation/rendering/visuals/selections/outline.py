@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState
 from ludoxel.presentation.rendering.faces.occlusion import is_block_face_occluded, is_local_face_occluded
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, GetState
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 from ludoxel.simulation.blocks.models.common import LocalBox
 

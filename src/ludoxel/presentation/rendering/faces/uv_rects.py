@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from ludoxel.foundations.mathematics.scalars.numeric import clamp01f, lerpf
 from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
+from ludoxel.presentation.rendering.contracts.lookups import UVRect
 from ludoxel.simulation.blocks.models.common import LocalBox
-
-UVRect = tuple[float, float, float, float]
 
 
 def atlas_uv_rect(atlas: UVRect, u0: float, v0: float, u1: float, v1: float) -> UVRect:

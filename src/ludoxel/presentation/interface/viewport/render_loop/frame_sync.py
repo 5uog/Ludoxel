@@ -11,6 +11,13 @@ _WORLD_CHANGE_FORCE_S = 0.12
 _RESUME_FORCE_S = 0.18
 
 
+def _extend_force_window(current_until_s: float, *, force_duration_s: float) -> float:
+  duration = max(0.0, float(force_duration_s))
+  if duration <= 0.0:
+    return float(current_until_s)
+  return max(float(current_until_s), float(time.perf_counter()) + duration)
+
+
 @dataclass
 class LoadingState:
   active: bool = True
@@ -68,10 +75,7 @@ class WorldUploadCadence:
     self.arm_force(force_duration_s=force_duration_s)
 
   def arm_force(self, *, force_duration_s: float) -> None:
-    duration = max(0.0, float(force_duration_s))
-    if duration <= 0.0:
-      return
-    self.force_until_s = max(float(self.force_until_s), float(time.perf_counter()) + duration)
+    self.force_until_s = _extend_force_window(self.force_until_s, force_duration_s=force_duration_s)
 
   def arm_resume(self) -> None:
     self.last_eye = None
@@ -142,10 +146,7 @@ class SelectionRefreshCadence:
     self.arm_force(force_duration_s=force_duration_s)
 
   def arm_force(self, *, force_duration_s: float) -> None:
-    duration = max(0.0, float(force_duration_s))
-    if duration <= 0.0:
-      return
-    self.force_until_s = max(float(self.force_until_s), float(time.perf_counter()) + duration)
+    self.force_until_s = _extend_force_window(self.force_until_s, force_duration_s=force_duration_s)
 
   def arm_resume(self) -> None:
     self.last_pose = None

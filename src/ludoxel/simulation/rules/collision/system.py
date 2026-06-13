@@ -15,12 +15,12 @@ from ludoxel.simulation.blocks.structures.structural_rules import is_fence_gate
 from ludoxel.simulation.rules.collision.depenetration import _depenetrate
 from ludoxel.simulation.rules.collision.sneak import _apply_sneak_edge_clamp
 from ludoxel.simulation.rules.collision.stepping import _resolve_downward_snap, _resolve_horizontal_axis_move, _try_step_up_height
-from ludoxel.simulation.rules.collision.support import SupportBlockContact, _any_intersection, _ground_probe, _iter_intersections, support_block_beneath
+from ludoxel.simulation.rules.collision.support import SupportBlockContact, _ground_probe, _iter_intersections, support_block_beneath, world_aabb_intersects
 from ludoxel.simulation.rules.gravity.system import GRAVITY_AFFECTED_TAG
 from ludoxel.simulation.worlds.config.collision import DEFAULT_COLLISION_PARAMS, CollisionParams
 from ludoxel.simulation.worlds.state.world import WorldState
 
-__all__ = ("CollisionReport", "SupportBlockContact", "_any_intersection", "can_auto_jump_one_block", "integrate_with_collisions", "support_block_beneath")
+__all__ = ("CollisionReport", "SupportBlockContact", "can_auto_jump_one_block", "integrate_with_collisions", "support_block_beneath")
 
 
 @dataclass(frozen=True)
@@ -121,7 +121,7 @@ def integrate_with_collisions(
   collision_exempt_cell = _active_collision_exempt_cells(player, world, block_registry=block_registry)
   rising_eps = float(max(float(params.eps), 1e-6))
 
-  if _any_intersection(world, player.aabb_at(player.position), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
+  if world_aabb_intersects(world, player.aabb_at(player.position), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
     depenetrated_pos, initial_shift = _depenetrate(player, world, player.position, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
     if abs(float(initial_shift.x)) > 1e-9:
       player.velocity = Vec3(0.0, player.velocity.y, player.velocity.z)

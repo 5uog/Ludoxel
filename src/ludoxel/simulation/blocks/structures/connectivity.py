@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import format_state, parse_state
 from ludoxel.simulation.blocks.states.values import bool_str, str_as_bool
-from ludoxel.simulation.blocks.states.view import def_from_state, world_state_at
+from ludoxel.simulation.blocks.states.view import def_from_state, overlay_world_state_getter, world_state_at
 from ludoxel.simulation.blocks.structures.cardinal import normalize_cardinal
 from ludoxel.simulation.blocks.structures.structural_rules import is_fence_gate, is_wall, wall_side_from_neighbor_state, wall_side_with_top_support, wall_up_rule
 from ludoxel.simulation.worlds.state.world import WorldState
@@ -114,18 +114,7 @@ def structural_neighbor_targets(cells: Iterable[BlockKey]) -> set[BlockKey]:
 
 
 def _overlay_state_getter(world: WorldState, *, overlay_updates: dict[BlockKey, str] | None = None, overlay_removals: Iterable[BlockKey] = ()) -> GetState:
-  updates = {(int(k[0]), int(k[1]), int(k[2])): str(v) for k, v in (overlay_updates or {}).items()}
-  removals = {(int(k[0]), int(k[1]), int(k[2])) for k in overlay_removals}
-
-  def get_state(x: int, y: int, z: int) -> str | None:
-    key = (int(x), int(y), int(z))
-    if key in removals:
-      return None
-    if key in updates:
-      return str(updates[key])
-    return world_state_at(world, int(x), int(y), int(z))
-
-  return get_state
+  return overlay_world_state_getter(world, updates=overlay_updates, removals=overlay_removals)
 
 
 def collect_structural_neighbor_updates(

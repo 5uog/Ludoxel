@@ -24,15 +24,15 @@ from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import Sha
 from ludoxel.presentation.rendering.backends.opengl.passes.special_item import SpecialItemPass
 from ludoxel.presentation.rendering.backends.opengl.passes.sun import SunPass
 from ludoxel.presentation.rendering.backends.opengl.passes.world import WorldDrawInputs, WorldPass
-from ludoxel.presentation.rendering.backends.opengl.runtime.light_space import compute_light_view_proj
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics, RendererFrameMetrics
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import GLRendererParams
 from ludoxel.presentation.rendering.backends.opengl.runtime.selection import SelectionController
+from ludoxel.presentation.rendering.contracts.config import BackendRendererParams
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ludoxel.presentation.rendering.visuals.players.model_pose import build_player_model_pose
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
+from ludoxel.presentation.rendering.visuals.worlds.light_space import compute_light_view_proj
 
 _FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
 _FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20
@@ -48,7 +48,7 @@ def _first_person_viewmodel_fov_deg(world_fov_deg: float) -> float:
 
 @dataclass(frozen=True)
 class FramePipeline:
-  cfg: GLRendererParams
+  cfg: BackendRendererParams
   state: BackendRendererRuntimeState
   shadow_pass: ShadowMapPass
   world_pass: WorldPass

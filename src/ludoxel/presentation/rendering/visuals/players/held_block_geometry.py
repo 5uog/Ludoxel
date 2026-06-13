@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup
 from ludoxel.simulation.blocks.models.common import LocalBox
 from ludoxel.simulation.blocks.models.dimensions import px_box
 from ludoxel.simulation.blocks.models.fence_gate import boxes_for_fence_gate

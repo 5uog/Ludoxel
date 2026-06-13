@@ -62,7 +62,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import Sha
 from ludoxel.presentation.rendering.backends.opengl.gl.state_guard import GLStateGuard
 from ludoxel.presentation.rendering.backends.opengl.passes.aggregated_face_batch import AggregatedFaceBatch
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import ShadowParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams
 from ludoxel.presentation.rendering.visuals.selections.chunk import select_visible_chunks, within_render_distance
 
 
@@ -78,7 +78,7 @@ ExtraShadowDraw = Callable[[np.ndarray], tuple[int, int]]
 
 
 class ShadowMapPass:
-  def __init__(self, cfg: ShadowParams) -> None:
+  def __init__(self, cfg: BackendShadowParams) -> None:
     self._cfg = cfg
 
     self._prog: ShaderProgram | None = None

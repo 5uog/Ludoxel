@@ -25,4 +25,6 @@ export const REQUIRED_NOTICE_TERM_GROUPS = Object.freeze([
   }),
 ]);
 
+export const JAPANESE_NOTICE_PATHS = Object.freeze([LEGAL_PATHS.notice, LEGAL_PATHS.kaiseiNotice, LEGAL_PATHS.pythonRuntimeNotice]);
+
 export const LEGAL_SOURCE_SUFFIXES = Object.freeze(['.py', '.js', '.mjs', '.cjs', '.css', '.qss', '.vert', '.frag', '.comp', '.glsl']);

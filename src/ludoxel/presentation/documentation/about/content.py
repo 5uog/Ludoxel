@@ -733,10 +733,10 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
       ),
       paragraph(
         text_run(
-          "The flat fixture should therefore be described carefully. It is a current generation fixture, not an architectural limit that prevents later generation work. The persistence model already supports arbitrary block mappings and revision tracking, while chunk snapshots and renderer uploads operate over the current world mapping. A future generator can populate "
+          "The flat fixture is the current My World generation result. The persistence model stores arbitrary block mappings and revision tracking, while chunk snapshots and renderer uploads operate over the current world mapping rather than assuming a particular terrain shape. The current fixture populates "
         ),
         code_run("WorldState"),
-        text_run(" differently, but the current v3.6 overview must describe the actual flat fixture, its numerical extent, its default block id, and its relation to persistent user edits."),
+        text_run(" with the numerical extent and default block id shown below, after which persistent user edits update that same world state."),
       ),
       code_block(
         "My World creation path:\n  create_my_world_session(seed=0, block_registry=registry)\n  MyWorldSessionSeed\n  make_my_world_state(seed)\n  generate_test_map(seed)\n  generate_flat_world()\n\nMy World defaults:\n  seed: 0\n  spawn: (0.0, 1.0, -10.0)\n  yaw_deg: 0.0\n  pitch_deg: 0.0\n\nflat generation values:\n  half_extent: 32\n  ground_y: 0\n  block_id: minecraft:grass_block\n  x range: -32..32\n  z range: -32..32\n  side length: 65\n  base ground cells: 4225\n\nWorldState operations:\n  set_block()\n  remove_block()\n  set_blocks_bulk()\n  replace_all()\n  get_block()\n  snapshot_blocks()\n  snapshot_for_chunk_build()\n  snapshot_block_window()\n  snapshot_column()\n  chunk_blocks()\n  chunk_revision()\n  to_persisted_dict()\n  from_persisted_dict()"
@@ -754,12 +754,10 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         text_run(" maps block coordinates to a "),
         code_run("ChunkKey"),
         text_run("; "),
-        code_run("chunk_origin(chunk_key_value)"),
-        text_run(" reconstructs the world-space chunk origin; "),
-        code_run("local_coords(x, y, z)"),
-        text_run(" computes local coordinates; "),
+        code_run("normalize_chunk_key(k)"),
+        text_run(" canonicalizes its three integer components; "),
         code_run("chunk_bounds(k)"),
-        text_run(" returns coordinate bounds; and "),
+        text_run(" returns the half-open world-coordinate bounds and therefore the chunk origin; and "),
         code_run("neighbor_chunk_keys_for_cell(x, y, z)"),
         text_run(
           " determines adjacent chunks affected when an edit occurs on a boundary. This common chunk vocabulary is used by world indexing, structural updates, selection refresh, mesh build snapshots, upload tracking, and renderer eviction."
@@ -798,7 +796,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         ),
       ),
       code_block(
-        "chunk functions:\n  CHUNK_SIZE = 16\n  chunk_key(x, y, z)\n  chunk_origin(chunk_key_value)\n  local_coords(x, y, z)\n  chunk_bounds(k)\n  neighbor_chunk_keys_for_cell(x, y, z)\n\nrender distance:\n  default: 6 chunks\n  clamp minimum: 2 chunks\n  clamp maximum: 50 chunks\n\nupload tracker responsibilities:\n  visible chunk selection\n  asynchronous build scheduling\n  pending build tracking\n  ready result draining\n  resident revision tracking\n  build-result cache\n  chunk eviction\n  initial residency reporting\n\nrenderer upload API:\n  submit_chunk(chunk_key, world_revision, faces, shadow_faces, gpu_face_sources, gpu_bucket_counts)\n  evict_chunks(keep_chunks)\n  clear_selection()\n  set_selection_target(x, y, z, state_str, get_state, world_revision)"
+        "chunk functions:\n  CHUNK_SIZE = 16\n  normalize_chunk_key(k)\n  chunk_key(x, y, z)\n  chunk_bounds(k)\n  neighbor_chunk_keys_for_cell(x, y, z)\n\nrender distance:\n  default: 6 chunks\n  clamp minimum: 2 chunks\n  clamp maximum: 50 chunks\n\nupload tracker responsibilities:\n  visible chunk selection\n  asynchronous build scheduling\n  pending build tracking\n  ready result draining\n  resident revision tracking\n  build-result cache\n  chunk eviction\n  initial residency reporting\n\nrenderer upload API:\n  submit_chunk(chunk_key, world_revision, faces, shadow_faces, gpu_face_sources, gpu_bucket_counts)\n  evict_chunks(keep_chunks)\n  clear_selection()\n  set_selection_target(x, y, z, state_str, get_state, world_revision)"
       ),
     ),
   ),
@@ -1788,9 +1786,13 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         code_run("MacosRelativeMouseCapture"),
         text_run(" uses CoreGraphics through "),
         code_run("ctypes"),
-        text_run(" to disassociate cursor position from mouse motion, hide the display cursor, and read relative deltas from "),
-        code_run("CGGetLastMouseDelta()"),
-        text_run(". The "),
+        text_run(" to disassociate cursor position from mouse motion, hide the display cursor, and accumulate relative deltas from a listen-only "),
+        code_run("CGEventTapCreate()"),
+        text_run(" source through "),
+        code_run("CGEventGetIntegerValueField()"),
+        text_run(
+          ". If the event tap is disabled by timeout or user input, pending displacement is cleared and the first motion event after re-enabling is treated as a synchronization event instead of camera input. The "
+        ),
         code_run(".app"),
         text_run(" bundle declares "),
         code_run("NSInputMonitoringUsageDescription"),
@@ -1806,7 +1808,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "The input path is also connected to keybind persistence. Keybind settings normalize bindings through Qt portable text and reject modifier combinations. The macOS guard maps raw keycodes into the same logical actions. The runtime input frame consumes actions rather than raw platform events. That layered mapping lets the project support configurable controls while still implementing platform-specific capture behavior where the OS requires it."
       ),
       code_block(
-        "input modules:\n  presentation/interface/input/game_input.py\n  presentation/interface/input/qt.py\n  presentation/interface/input/macos_guard.py\n  presentation/interface/input/macos_cursor.py\n\ninput objects:\n  InputFrame\n  QtInputAdapter\n  ViewportInput\n  MacosGameplayInputGuard\n  MacosRelativeMouseCapture\n  MacosRelativeMouseDelta\n\nCoreGraphics mouse operations:\n  CGGetLastMouseDelta()\n  CGAssociateMouseAndMouseCursorPosition(false)\n  CGDisplayHideCursor()\n  CGAssociateMouseAndMouseCursorPosition(true)\n  CGDisplayShowCursor()\n\nmacOS event tap types:\n  key down: 10\n  key up: 11\n  flags changed: 12\n\nbundle permission key:\n  NSInputMonitoringUsageDescription\n\ncapture release states:\n  pause\n  inventory\n  focus loss\n  window deactivation\n  application deactivation\n  explicit release\n  shutdown"
+        "input modules:\n  presentation/interface/input/game_input.py\n  presentation/interface/input/qt.py\n  presentation/interface/input/macos_guard.py\n  presentation/interface/input/macos_cursor.py\n\ninput objects:\n  InputFrame\n  QtInputAdapter\n  ViewportInput\n  MacosGameplayInputGuard\n  MacosRelativeMouseCapture\n  MacosRelativeMouseDelta\n\nCoreGraphics mouse operations:\n  CGEventTapCreate()\n  CGEventTapEnable()\n  CGEventGetIntegerValueField()\n  CGAssociateMouseAndMouseCursorPosition(false)\n  CGDisplayHideCursor()\n  CGAssociateMouseAndMouseCursorPosition(true)\n  CGDisplayShowCursor()\n\nmouse event tap recovery:\n  clear pending displacement\n  re-enable only while capture is active\n  discard first motion event after re-enable\n\nmacOS keyboard event tap types:\n  key down: 10\n  key up: 11\n  flags changed: 12\n\nbundle permission key:\n  NSInputMonitoringUsageDescription\n\ncapture release states:\n  pause\n  inventory\n  focus loss\n  window deactivation\n  application deactivation\n  explicit release\n  shutdown"
       ),
     ),
   ),
@@ -1879,7 +1881,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         ),
       ),
       paragraph(
-        "About content import and widget construction are deferred until the About navigation item is selected. My World and Othello settings keep stable stack indexes with a temporary page object, replace that object exactly once on first selection, and reuse the generated page on later selections. The other settings pages therefore do not pay the About document and widget-tree construction cost during initial overlay creation."
+        "About content import and widget construction are deferred until the About navigation item is selected. The settings stack keeps one stable About shell and displays its loader page while the complete profile, etymology, and Project Overview widget tree is constructed. Only after every section has been created does the nested stack switch to one reusable content page, so partially built About content is never exposed and the other settings pages do not pay the About construction cost during initial overlay creation."
       ),
       paragraph(
         "My World and Othello settings retain the shared left-navigation and stacked-page shell. Their pages use common page-header, card, setting-row, text-column, control-column, and primary, secondary, or danger button hooks. This structural reuse preserves the Minecraft-style theme while allowing each play space to define different settings groups and synchronization behavior."
@@ -2053,7 +2055,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
       code_value("assets/ludoxel/thumbnails/blocks/"),
       paragraph(
         text_run(
-          "The block-thumbnail repository tool accepts a texture root, output root, block selection, model category, orientation, fit, state overrides, connectivity, dry-run, and overwrite policy. Node modules own CLI validation and orchestration, while a Python helper reads the current block registry and model render-box contract and emits deterministic "
+          "The block-thumbnail repository tool accepts a texture root, output root, block selection, model category, orientation, fit, state overrides, connectivity, dry-run, and overwrite policy. Node modules own CLI validation and orchestration, while a Python service reads the current block registry and visible-face contract and delegates deterministic rasterization to the presentation preview API, which emits "
         ),
         code_run("300 x 300"),
         text_run(" RGBA PNG images on a transparent background. Existing Minecraft thumbnails are not overwritten without explicit output and overwrite options."),
@@ -2096,11 +2098,11 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         text_run("Directory export tooling is also part of development workflow. It can output repository contents for inspection, and its own scripts appear under "),
         code_run("tools/export_directory_markdown"),
         text_run(
-          ". That matters because tasks such as this overview audit rely on exported source rather than memory of a README. The application’s About text should be able to be checked against the same exported code and package metadata that project tools can produce."
+          ". Its output is generated inspection material rather than runtime state or package metadata. The About text can therefore be checked against exported source without treating the export itself as an application resource or persistence format."
         ),
       ),
       code_block(
-        "core scripts:\n  npm run help\n  npm run check\n  npm run ci\n  npm run package:check\n  npm run docs:check\n  npm run license:check\n  npm run resources:check\n  npm run shader:check\n  npm run lint\n  npm run format\n  npm run tools:export\n  npm run tools:test\n  npm run build:native\n  npm run build:native:check\n  npm run build:desktop\n  npm run build:windows\n  npm run build:macos\n  npm run build:macos:check\n  npm run clean\n  npm run assets:audio:convert\n  npm run assets:block-thumbnails:generate\n  npm run assets:block-thumbnails:check\n\nvisual asset families:\n  assets/ludoxel/textures/block/\n  assets/ludoxel/thumbnails/blocks/\n  assets/minecraft/textures/block/\n  assets/minecraft/thumbnails/blocks/\n\nthumbnail output contract:\n  300 x 300 RGBA PNG\n  transparent background\n  deterministic model rendering\n  explicit overwrite opt-in\n\nNode metadata:\n  type: module\n  private: true\n  engines: ^20.19.0 || ^22.13.0 || >=24\n\nRuff configuration:\n  line-length: 200\n  indent-width: 2\n  target-version: py313\n  select: E9, F63, F7, F82\n  quote-style: double\n  indent-style: space\n  skip-magic-trailing-comma: true\n  docstring-code-format: false"
+        "core scripts:\n  npm run help\n  npm run check\n  npm run ci\n  npm run package:check\n  npm run docs:check\n  npm run license:check\n  npm run resources:check\n  npm run shader:check\n  npm run lint\n  npm run format\n  npm run tools:export\n  npm run tools:test\n  npm run build:native\n  npm run build:native:check\n  npm run build:desktop\n  npm run build:windows\n  npm run build:macos\n  npm run build:macos:check\n  npm run clean\n  npm run assets:audio:convert\n  npm run assets:block-thumbnails:generate\n  npm run assets:block-thumbnails:check\n\nasset resolver paths:\n  optional complete texture family: assets/ludoxel/textures/block/\n  local generated thumbnail output: assets/ludoxel/thumbnails/blocks/\n  active fallback textures: assets/minecraft/textures/block/\n  active fallback thumbnails: assets/minecraft/thumbnails/blocks/\n\nthumbnail output contract:\n  300 x 300 RGBA PNG\n  transparent background\n  deterministic model rendering\n  explicit overwrite opt-in\n\nNode metadata:\n  type: module\n  private: true\n  engines: ^20.19.0 || ^22.13.0 || >=24\n\nRuff configuration:\n  line-length: 200\n  indent-width: 2\n  target-version: py313\n  select: E9, F63, F7, F82\n  quote-style: double\n  indent-style: space\n  skip-magic-trailing-comma: true\n  docstring-code-format: false"
       ),
     ),
   ),
@@ -2264,7 +2266,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         text_run(" as materials whose provenance, rights, and redistribution status are not established by the repository. Those assets must not be described as Ludoxel original materials."),
       ),
       paragraph(
-        "Runtime user data is treated separately from immutable package resources. Player settings, window state, custom crosshair data, imported player skin, world edits, Othello opening-book user extension, compiled cache, and future user-generated records are written under the app-managed data root. They are not ordinary package resources and should not be bundled back into source distribution as original repository material merely because the application can create or read them. This distinction matters for privacy, distribution, license scope, and persistence migration."
+        "Runtime user data is treated separately from immutable package resources. Player settings, window state, custom crosshair data, imported player skin, world edits, Othello opening-book user extension, compiled cache, and other user-generated records are written under the app-managed data root. They are not ordinary package resources and should not be bundled back into source distribution as original repository material merely because the application can create or read them. This distinction matters for privacy, distribution, license scope, and persistence migration."
       ),
       paragraph(
         text_run("Distribution legal material must accompany desktop artifacts. Windows EXE and macOS app bundle outputs must include at least "),
@@ -2281,7 +2283,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "The legal and governance boundary also affects how the About page should speak. It can state that the repository is private in package metadata and not open source under the license; it can state that third-party materials remain third-party; it can state that app output and user materials are treated separately; it can state that distribution legal material is required. It should not imply that public visibility, clone buttons, fork buttons, dependency licenses, or ordinary desktop use grant reuse rights over original project materials."
       ),
       code_block(
-        "license facts:\n  Ludoxel Independent License\n  license version: 1.0.4\n  original effective date: 2026-06-03\n  current version effective date: 2026-06-11\n  SPDX identifier: LicenseRef-All-Rights-Reserved\n  package.json private: true\n  repository is not open source\n  repository is not free software\n\nthird-party material:\n  third-party/\n  Kaisei Opti\n  SIL Open Font License 1.1\n  third-party/kaisei-opti/NOTICE.txt\n  third-party/kaisei-opti/LICENSE.txt\n\nproject visual asset migration roots:\n  assets/ludoxel/textures/block/\n  assets/ludoxel/thumbnails/blocks/\n\nprovenance-sensitive local assets:\n  assets/minecraft/\n  Minecraft-named font files under assets/fonts/\n\nruntime user data examples:\n  player settings\n  window state\n  custom crosshair\n  imported player skin\n  world edits\n  Othello opening-book user extension\n  compiled cache\n\nrequired distribution legal material:\n  LICENSE\n  NOTICE\n  third-party/"
+        "license facts:\n  Ludoxel Independent License\n  license version: 1.0.4\n  original effective date: 2026-06-03\n  current version effective date: 2026-06-11\n  SPDX identifier: LicenseRef-All-Rights-Reserved\n  package.json private: true\n  repository is not open source\n  repository is not free software\n\nthird-party material:\n  third-party/\n  Kaisei Opti\n  SIL Open Font License 1.1\n  third-party/kaisei-opti/NOTICE.txt\n  third-party/kaisei-opti/LICENSE.txt\n\nasset resolver paths:\n  optional complete texture family: assets/ludoxel/textures/block/\n  local generated thumbnail output: assets/ludoxel/thumbnails/blocks/\n\nprovenance-sensitive local assets:\n  assets/minecraft/\n  Minecraft-named font files under assets/fonts/\n\nruntime user data examples:\n  player settings\n  window state\n  custom crosshair\n  imported player skin\n  world edits\n  Othello opening-book user extension\n  compiled cache\n\nrequired distribution legal material:\n  LICENSE\n  NOTICE\n  third-party/"
       ),
     ),
   ),
