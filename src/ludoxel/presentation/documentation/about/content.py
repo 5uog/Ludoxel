@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from dataclasses import dataclass
+from ludoxel.presentation.documentation.about.model import AboutSection, code_block, code_run, code_value, paragraph, text_run
 
 PROFILE_IMAGE_CANDIDATE_NAMES: tuple[str, ...] = ("profile.png", "profile.jpg", "profile.jpeg", "profile.webp", "profile.bmp")
 GITHUB_IMAGE_CANDIDATE_NAMES: tuple[str, ...] = ("github.png", "github.jpg", "github.jpeg", "github.webp", "github.bmp", "github.svg")
@@ -25,92 +25,6 @@ ABOUT_ETYMOLOGY_PARAGRAPHS: tuple[str, ...] = (
   "'Voxel' is the modern technical contraction of 'volumetric' and 'pixel'. In technical usage, it denotes a discrete element of three-dimensional representation, commonly treated as the spatial analogue of the pixel, and therefore refers to discretized volume rather than to a merely visual style or atmospheric motif.",
   "'Ludoxel' accordingly denotes ludic activity conducted in voxel space. As the title of a sandbox desktop application, the term is operationally exact: the represented environment is voxel-constituted, while the admitted activity remains broadly ludic, extending across local manipulation, traversal, authored routes, AI observation, and a separate board-game space hosted inside the same shell.",
 )
-
-
-@dataclass(frozen=True)
-class AboutRun:
-  """
-  一つの paragraph 内で通常文又は inline code として描画する文字列 run を表す。
-  `kind` は renderer の明示分岐に用い、`text` の空白、句読点、改行を Markdown 推測で変更しない。
-  """
-
-  kind: str
-  text: str
-
-
-@dataclass(frozen=True)
-class AboutBlock:
-  """
-  About section 内の paragraph、run paragraph、code value、code block の一表示単位を表す。
-  単純 block は `text`、構造化 paragraph は順序付き `runs` を使用し、両者の表示 semantics を混在させない。
-  """
-
-  kind: str
-  text: str = ""
-  runs: tuple[AboutRun, ...] = ()
-
-
-@dataclass(frozen=True)
-class AboutSection:
-  title: str
-  blocks: tuple[AboutBlock, ...]
-
-
-def text_run(text: str) -> AboutRun:
-  """
-  paragraph 内の通常文を表す run を生成する。
-  renderer は入力順と文字列を変更せず、code run と連結した際の空白、句読点、改行位置を保持する。
-  """
-  return AboutRun(kind="text", text=str(text))
-
-
-def code_run(text: str) -> AboutRun:
-  """
-  paragraph 内で code design を適用する値、path、command、identifier を表す run を生成する。
-  値そのものだけを保持し、backtick delimiter は renderer 入力へ渡さない。
-  """
-  return AboutRun(kind="code", text=str(text))
-
-
-def inline_code(text: str) -> AboutRun:
-  """
-  `code_run()` と同じ inline code contract を明示名で提供する。
-  About content の文脈に応じて helper 名を選べるが、生成される run semantics は同一である。
-  """
-  return code_run(str(text))
-
-
-def paragraph_runs(*runs: AboutRun) -> AboutBlock:
-  """
-  通常文と inline code を順序付き run 列として一つの paragraph block に固定する。
-  renderer は Markdown parsing を行わず、この列をそのまま一文として描画する。
-  """
-  return AboutBlock(kind="paragraph_runs", runs=tuple(runs))
-
-
-def paragraph(*parts: str | AboutRun) -> AboutBlock:
-  """
-  通常文又は明示的に構造化された text/code run 列から paragraph block を生成する。
-  単一文字列は通常 paragraph とし、run が含まれる場合は入力順を保持した paragraph_runs として扱う。
-  """
-  if len(parts) == 1 and isinstance(parts[0], str):
-    return AboutBlock(kind="paragraph", text=str(parts[0]))
-  runs = tuple(text_run(part) if isinstance(part, str) else part for part in parts)
-  return paragraph_runs(*runs)
-
-
-def code_block(text: str) -> AboutBlock:
-  return AboutBlock(kind="code", text=str(text))
-
-
-def code_value(text: str) -> AboutBlock:
-  """
-  一行の独立した code value を複数行 code block と区別して生成する。
-  path、metadata value、license identifier などを paragraph から分離して示す場合に用いる。
-  """
-  return AboutBlock(kind="code_value", text=str(text))
-
-
 ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
   AboutSection(
     title="Ludoxel v3.6 as an executable desktop system",
@@ -227,7 +141,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
       paragraph(
         code_run("presentation"),
         text_run(
-          " owns the desktop-facing implementation. It includes Qt windows, viewport widgets, input adapters, macOS cursor and keyboard guards, HUD widgets, route overlays, pause inventory and death overlays, skin preview, settings pages, About-page renderer and widgets, theme resources, audio playback catalogues, renderer contracts, OpenGL runtime, wgpu runtime, shader resources, texture atlases, visible-face construction, player visual state, Othello visual state, and render-loop lifecycle. Presentation can consume application and simulation state, but it must not redefine domain legality, persistence format, or package-root ownership."
+          " owns the desktop-facing implementation. It includes user-facing documentation data, Qt windows, viewport widgets, input adapters, macOS cursor and keyboard guards, HUD widgets, route overlays, pause inventory and death overlays, skin preview, settings pages, About-page renderer and widgets, theme resources, audio playback catalogues, renderer contracts, OpenGL runtime, wgpu runtime, shader resources, texture atlases, visible-face construction, player visual state, Othello visual state, and render-loop lifecycle. Presentation can consume application and simulation state, but it must not redefine domain legality, persistence format, or package-root ownership."
         ),
       ),
       paragraph(
@@ -1293,7 +1207,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "AI actors also participate in combat. The local player can pick an AI actor through a ray, apply local melee attack logic, use sprint state from player combat helpers, and receive attack results from the AI manager. Aggressive AI can pursue and attack the local player; peaceful AI avoids combat behavior. Combat must consult health, hit cooldowns, reach, line-of-sight obstruction, movement state, and world collision so that it remains part of the simulation rather than a renderer animation."
       ),
       paragraph(
-        "AI render snapshots are derived from state but do not own state. The manager can expose actor render snapshots and route-path snapshots to presentation code; each snapshot also carries the actor id, display name, current and maximum health, and the configured health-indicator position as read-only values. The renderer and the overlay layer can then draw AI bodies, route paths, nametags, heart indicators, held blocks, shadows, and combat indicators without gaining permission to mutate actor decisions. This separation is necessary because AI state is persistent and rule-driven, while rendering is frame-local and backend-dependent."
+        "AI render snapshots are derived from state but do not own state. The simulation manager exposes actor observations and route-path snapshots to the application session boundary; the application converts each actor observation into an immutable renderer-facing DTO carrying body pose, actor id, display name, current and maximum health, health-indicator position, held item, attack swing, position, and height. The renderer and overlay layer can then draw AI bodies, route paths, nametags, heart indicators, held blocks, shadows, and combat indicators without receiving mutable actor entities. This separation is necessary because AI state is persistent and rule-driven, while rendering is frame-local and backend-dependent."
       ),
       code_block(
         "AI modules:\n  simulation/actors/ai_players/state.py\n  simulation/actors/ai_players/settings.py\n  simulation/actors/ai_players/naming.py\n  simulation/actors/ai_players/spawning.py\n  simulation/actors/ai_players/serialization.py\n  simulation/actors/ai_players/manager.py\n  simulation/actors/ai_players/idle.py\n  simulation/actors/ai_players/wander.py\n  simulation/actors/ai_players/route.py\n  simulation/actors/ai_players/navigation.py\n  simulation/actors/ai_players/parkour.py\n  simulation/actors/ai_players/recovery.py\n  simulation/actors/ai_players/stuck.py\n  simulation/actors/ai_players/avoidance.py\n  simulation/actors/ai_players/combat.py\n  simulation/actors/ai_players/placement.py\n  simulation/actors/ai_players/planner.py\n  simulation/actors/ai_players/worker.py\n\nAI persisted fields:\n  actor_id\n  mode\n  personality\n  can_place_blocks\n  held_item_id\n  name\n  health_indicator\n  auto_regen_enabled\n  regen_start_delay_s\n  regen_interval_s\n  regen_amount_hp\n  regen_cap_hp\n  pos\n  vel\n  yaw_deg\n  pitch_deg\n  health\n  max_health\n  on_ground\n  flying\n  route_points\n  route_closed\n  route_run\n  route_style\n  route_target_index\n\nAI defaults:\n  mode: idle\n  personality: aggressive\n  route_style: strict\n  health: 20.0\n  max_health: 20.0\n  default held item: minecraft:oak_planks\n  spawn name: lowest free AI#0001-style suffix\n  health indicator: off\n  auto regeneration: disabled\n  regen start delay: 4.0 s\n  regen interval: 4.0 s\n  regen amount: 1.0 health point\n  regen cap: bounded by max health\n\nAI name rules:\n  body: letters and digits, no leading digit, 1-16 characters\n  optional suffix: #0001 to #9999\n  live AI names unique (case-insensitive comparison)\n  dead or removed AI release their names"
@@ -1341,7 +1255,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "Block placement is treated as a movement aid with explicit safety rules. Before placing, the AI verifies a clear line of sight from its eye position to the targeted placement face using the picking ray; if another block model obstructs that ray, the placement is cancelled rather than placed through the obstruction. Bridge placement secures the next footing first, and the edge-safety gate keeps the actor from advancing ahead of an unfinished bridge, so the previous behavior of placing one block and walking on into the void no longer occurs. When placement is disabled, the actor never places blocks and prefers stopping or turning away over falling. Combat pursuit interacts with these rules as before: aggressive AI may suspend route planning during melee pursuit, peaceful AI avoids the combat path, and placement permission, mode, personality, route style, health, and route target index are persisted together."
       ),
       code_block(
-        "support-cell route planning definition:\n  route search over physically supportable actor cells\n  route points converted to reachable support cells\n  bounded world snapshot\n  route result applied by AI manager\n\nplanner numeric bounds:\n  max support Y delta: 1\n  parkour search cap: 8\n  parkour sample count: 5\n  drop search depth: 4\n  visit limit minimum: 1024\n  visit limit maximum: 4096\n  target support search radius: 6\n\nsearch and retry budgets:\n  route plan requests per step: 1\n  local recovery searches per step: 2\n  local recovery result cache: 0.20 s\n  failed target blacklist after: 3 consecutive plan failures\n  failed target cooldown: 8.0 s\n\nmovement safety:\n  forward footing check before ground steps\n  free roam / PVP safe drop: up to 3 blocks\n  route-following drop window: up to 8 blocks with support below\n  placement line-of-sight check via picking ray\n  bridge placement secures next footing before advancing\n\nroute behavior controls:\n  route_closed\n  route_run\n  route_style: strict or flexible\n  route_target_index\n\nmanager operations:\n  update actor settings\n  validate AI display names\n  cancel actor navigation\n  remove actor\n  pick actor by ray\n  attack actor from local player\n  expose route path snapshots\n  expose render snapshots"
+        "support-cell route planning definition:\n  route search over physically supportable actor cells\n  route points converted to reachable support cells\n  bounded world snapshot\n  route result applied by AI manager\n\nplanner numeric bounds:\n  max support Y delta: 1\n  parkour search cap: 8\n  parkour sample count: 5\n  drop search depth: 4\n  visit limit minimum: 1024\n  visit limit maximum: 4096\n  target support search radius: 6\n\nsearch and retry budgets:\n  route plan requests per step: 1\n  local recovery searches per step: 1\n  local recovery result cache: 0.30 s\n  failed target blacklist after: 3 consecutive plan failures\n  failed target cooldown: 8.0 s\n\nmovement safety:\n  forward footing check before ground steps\n  free roam / PVP safe drop: up to 3 blocks\n  route-following drop window: up to 8 blocks with support below\n  placement line-of-sight check via picking ray\n  bridge placement secures next footing before advancing\n\nroute behavior controls:\n  route_closed\n  route_run\n  route_style: strict or flexible\n  route_target_index\n\nmanager operations:\n  update actor settings\n  validate AI display names\n  cancel actor navigation\n  remove actor\n  pick actor by ray\n  attack actor from local player\n  expose route path snapshots\n  expose actor observations"
       ),
     ),
   ),
@@ -1682,7 +1596,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "The renderer contract also protects settings and About pages. The About page can describe renderer behavior because renderer APIs, shader resources, package-data declarations, and backend modules exist in code. The settings pages can manipulate visual flags because those flags pass through runtime preferences into backend runtime state. Neither surface should invent renderer claims; both should reflect implemented API methods, resource roots, and backend-specific limitations."
       ),
       code_block(
-        "renderer contract types:\n  BackendRendererApi\n  BackendRendererBackend\n  BackendRendererConfig\n  BackendRendererResources\n  BackendRendererRuntimeState\n  BackendRendererFrameMetrics\n  BackendPassFrameMetrics\n  BackendUploadTracker\n  Renderer\n\nBackendRendererApi methods:\n  initialize()\n  destroy()\n  gl_info()\n  shadow_info()\n  payload_validation_report()\n  frame_metrics()\n  apply_runtime_state()\n  set_cloud_motion_paused()\n  set_texture_animation_paused()\n  atlas_uv_face()\n  world_build_tools()\n  block_display_name()\n  evict_chunks()\n  clear_selection()\n  set_selection_target()\n  submit_chunk()\n  render()\n  set_player_skin_image()\n  render_player_preview_frame()\n\nsnapshot inputs:\n  camera state\n  local player render state\n  AI render states\n  Othello render state\n  chunk payloads\n  selection state\n  falling-block samples\n  break-particle samples\n  route overlay paths\n  HUD metrics"
+        "renderer contract types:\n  BackendRendererApi\n  BackendRendererParams\n  BackendRendererRuntimeState\n  BackendRendererInfo\n  BackendRendererFrameMetrics\n  BackendPassFrameMetrics\n  Renderer\n  WorldUploadTracker\n\nBackendRendererApi methods:\n  initialize()\n  destroy()\n  gl_info()\n  shadow_info()\n  payload_validation_report()\n  frame_metrics()\n  apply_runtime_state()\n  set_cloud_motion_paused()\n  set_texture_animation_paused()\n  atlas_uv_face()\n  world_build_tools()\n  block_display_name()\n  evict_chunks()\n  clear_selection()\n  set_selection_target()\n  submit_chunk()\n  render()\n  set_player_skin_image()\n  render_player_preview_frame()\n\nsnapshot inputs:\n  camera state\n  local player render state\n  AI render states\n  Othello render state\n  chunk payloads\n  selection state\n  falling-block samples\n  break-particle samples\n  route overlay paths\n  HUD metrics"
       ),
     ),
   ),
@@ -1900,7 +1814,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
     title="HUD, overlays, settings pages, and About content model",
     blocks=(
       paragraph(
-        "Presentation interface code separates HUD, overlays, settings, and common widgets. HUD modules cover controller logic, payload data, metrics, crosshair art, crosshair widget, hotbar widget, route overlay, AI status tags, and composite HUD widget. The AI status tag pool draws each AI's nametag and optional heart-row health indicator as one projected Qt overlay block, reusing the world nametag style and the Survival heart pattern, and the same pool serves both the Windows OpenGL and macOS wgpu viewport paths. AI status tag projection uses a stable overlay camera derived from the player body position, crouch-adjusted eye height, yaw, pitch, and camera perspective, so player view bobbing, step-eye vertical bobbing, hurt tilt, and camera-shake translation or roll do not move the tag. The completed block is scaled from stable-camera-to-AI world distance, so its background, padding, text, hearts, and spacing shrink together; tags disappear beyond 64 blocks, and per-actor occlusion ray results are cached briefly so the overlay update does not cast a full ray for every AI on every frame. Overlay modules cover AI settings, death state, inventory, pause, and skin preview. Settings modules cover overlay shell, page construction, state synchronization, cloud-flow settings, scalar widgets, control widgets, crosshair widgets, and About-page content. This separation allows HUD updates, modal overlays, settings state, and About content to evolve without becoming one unstructured desktop-window file."
+        "Presentation interface code separates HUD, overlays, settings, and common widgets. HUD modules cover controller logic, payload data, metrics, crosshair art, crosshair widget, hotbar widget, route overlay, AI status tags, and composite HUD widget. The AI status tag pool draws each AI's nametag and optional heart-row health indicator as one projected Qt overlay block, reusing the world nametag style and the Survival heart pattern, and the same pool serves both the Windows OpenGL and macOS wgpu viewport paths. AI status tag projection uses a stable overlay camera derived from the player body position, crouch-adjusted eye height, yaw, pitch, and camera perspective, so player view bobbing, step-eye vertical bobbing, hurt tilt, and camera-shake translation or roll do not move the tag. The completed block is scaled from stable-camera-to-AI world distance, so its background, padding, text, hearts, and spacing shrink together; tags disappear beyond 64 blocks, and per-actor occlusion ray results are cached briefly so the overlay update does not cast a full ray for every AI on every frame. Overlay modules cover AI settings, death state, inventory, pause, and skin preview. Settings modules cover overlay shell, ordinary page construction, state synchronization, cloud-flow settings, scalar widgets, control widgets, crosshair widgets, and the Qt-specific About page renderer and widget helpers. The lightweight About document is owned separately under presentation documentation. This separation allows HUD updates, modal overlays, settings state, and About content to evolve without becoming one unstructured desktop-window file."
       ),
       paragraph(
         "The HUD consumes structured state. It can display hotbar contents, selected slot, crosshair, health, debug metrics, Othello state, evaluation graph, route lines, and status overlays. It should not own block placement legality, Othello move legality, AI route computation, or renderer resource allocation. HUD visibility can be controlled independently from debug HUD visibility, and Othello HUD is suppressed under conditions where ordinary gameplay HUD or debug HUD state requires it. This keeps user-visible display rules separate from domain state."
@@ -1938,7 +1852,11 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         ),
       ),
       paragraph(
-        text_run("The About page is implemented through "),
+        text_run("The About document contract in "),
+        code_run("presentation/documentation/about/content.py"),
+        text_run(" and the settings renderer in "),
+        code_run("presentation/interface/settings/about/"),
+        text_run(" are implemented through "),
         code_run("AboutRun"),
         text_run(", "),
         code_run("AboutBlock"),
@@ -1985,7 +1903,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         "The project overview should be technical enough to be useful inside the settings surface. It should mention concrete classes, functions, directories, commands, parameter values, shader resources, backend distinctions, persistence schema, and runtime state. It should avoid generic promotional claims that cannot be traced to code. It should also avoid relying on a README that is not part of the inspected evidence. The About page is part of the program, so its content must be auditable like any other application constant."
       ),
       code_block(
-        "HUD modules:\n  controller.py\n  widget.py\n  payload.py\n  metrics.py\n  crosshair_art.py\n  crosshair_widget.py\n  hotbar_widget.py\n  route_overlay.py\n  ai_status_tags.py\n\noverlay modules:\n  ai_settings.py\n  death.py\n  inventory.py\n  pause.py\n  skin_preview.py\n\nsettings modules:\n  overlay.py\n  pages.py\n  surface.py\n  sync.py\n  cloud_flow.py\n  widgets/scalar.py\n  widgets/controls.py\n  widgets/crosshair.py\n\nAbout data structures:\n  AboutRun(kind, text)\n  AboutBlock(kind, text, runs)\n  AboutSection(title, blocks)\n\nAbout helper functions:\n  paragraph(text)\n  paragraph_runs(*runs)\n  text_run(text)\n  code_run(text)\n  inline_code(text)\n  code_value(text)\n  code_block(text)\n  render_about_sections(parent, layout, sections, text_factory)\n  about_card()\n  about_text()\n  about_inline_paragraph()\n  about_code_value()\n  about_code_block()\n  profile_image_path()\n  github_image_path()"
+        "HUD modules:\n  controller.py\n  widget.py\n  payload.py\n  metrics.py\n  crosshair_art.py\n  crosshair_widget.py\n  hotbar_widget.py\n  route_overlay.py\n  ai_status_tags.py\n\noverlay modules:\n  ai_settings.py\n  death.py\n  inventory.py\n  pause.py\n  skin_preview.py\n\nsettings modules:\n  overlay.py\n  pages.py\n  surface.py\n  sync.py\n  cloud_flow.py\n  widgets/scalar.py\n  widgets/controls.py\n  widgets/crosshair.py\n\nAbout documentation and UI modules:\n  presentation/documentation/about/model.py\n  presentation/documentation/about/content.py\n  presentation/interface/settings/about/page.py\n  presentation/interface/settings/about/renderer.py\n  presentation/interface/settings/about/widgets.py\n\nAbout data structures:\n  AboutRun(kind, text)\n  AboutBlock(kind, text, runs)\n  AboutSection(title, blocks)\n\nAbout helper functions:\n  paragraph(text)\n  paragraph_runs(*runs)\n  text_run(text)\n  code_run(text)\n  inline_code(text)\n  code_value(text)\n  code_block(text)\n  render_about_sections(parent, layout, sections, text_factory)\n  about_card()\n  about_text()\n  about_inline_paragraph()\n  about_code_value()\n  about_code_block()\n  profile_image_path()\n  github_image_path()"
       ),
     ),
   ),
@@ -2201,8 +2119,8 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         text_run(" because they do not own application persistence, Qt widgets, renderer buffers, player sessions, Othello matches, or desktop packaging."),
       ),
       paragraph(
-        text_run("The exported repository contains Windows CPython 3.13 "),
-        code_run(".pyd"),
+        text_run("The inspected repository contains Darwin CPython 3.13 "),
+        code_run(".so"),
         text_run(
           " artifacts beside the Python modules for those targets. Those artifacts are interpreter-specific binary outputs, not portable source files and not package-level design documents. They demonstrate that the project can build native replacements for selected foundations modules, while the Python sources remain part of the package and editable source tree. This duality is important because development, source inspection, and fallback execution must still function when native binaries are absent."
         ),
@@ -2232,7 +2150,7 @@ ABOUT_PROJECT_OVERVIEW_SECTIONS: tuple[AboutSection, ...] = (
         ),
       ),
       code_block(
-        "native extension targets:\n  ludoxel.foundations.mathematics.geometry.ray_aabb\n  ludoxel.foundations.mathematics.voxels.dda\n  ludoxel.foundations.mathematics.linear.view_angles\n\nnative command surface:\n  npm run build:native\n  npm run build:native:check\n\nnative tool files:\n  tools/build_native_extensions/scripts/run/build.run.mjs\n  tools/build_native_extensions/scripts/run/verify.run.mjs\n  tools/build_native_extensions/src/collect/source.collect.mjs\n  tools/build_native_extensions/src/collect/binary.collect.mjs\n  tools/build_native_extensions/src/config/native.config.mjs\n  tools/build_native_extensions/src/service/build.service.mjs\n  tools/build_native_extensions/src/service/list.service.mjs\n  tools/build_native_extensions/src/service/verify.service.mjs\n\nobserved Windows binary suffix:\n  cp313-win_amd64.pyd\n\nPython package principle:\n  Python source remains authoritative fallback\n  native build is explicit\n  native targets stay inside foundations mathematics"
+        "native extension targets:\n  ludoxel.foundations.mathematics.geometry.ray_aabb\n  ludoxel.foundations.mathematics.voxels.dda\n  ludoxel.foundations.mathematics.linear.view_angles\n\nnative command surface:\n  npm run build:native\n  npm run build:native:check\n\nnative tool files:\n  tools/build_native_extensions/scripts/run/build.run.mjs\n  tools/build_native_extensions/scripts/run/verify.run.mjs\n  tools/build_native_extensions/src/collect/source.collect.mjs\n  tools/build_native_extensions/src/collect/binary.collect.mjs\n  tools/build_native_extensions/src/config/native.config.mjs\n  tools/build_native_extensions/src/service/build.service.mjs\n  tools/build_native_extensions/src/service/list.service.mjs\n  tools/build_native_extensions/src/service/verify.service.mjs\n\nobserved Darwin binary suffix:\n  cpython-313-darwin.so\n\nPython package principle:\n  Python source remains authoritative fallback\n  native build is explicit\n  native targets stay inside foundations mathematics"
       ),
     ),
   ),

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import math
 
+from ludoxel.application.sessions.pipelines.player_model import build_player_model_snapshot
 from ludoxel.application.sessions.pipelines.render_snapshot import CameraDTO, FallingBlockRenderSampleDTO, RenderSnapshotDTO
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
-from ludoxel.simulation.actors.player.kinematics import PLAYER_WALK_MAX_SWING_SCALE, build_player_model_snapshot
+from ludoxel.simulation.actors.player.kinematics import PLAYER_WALK_MAX_SWING_SCALE
 
 
 def make_camera_snapshot_for_session(session, *, enable_camera_shake: bool = True, camera_shake_strength: float = 0.20) -> CameraDTO:
@@ -90,5 +91,5 @@ def make_render_snapshot_for_session(
     is_first_person=bool(player_model.is_first_person),
   )
 
-  falling_blocks = tuple(FallingBlockRenderSampleDTO(state_str=str(sample.state_str), x=float(sample.x), y=float(sample.y), z=float(sample.z)) for sample in session.gravity.render_samples())
+  falling_blocks = tuple(FallingBlockRenderSampleDTO(state_str=str(sample.state_str), x=float(sample.x), y=float(sample.y), z=float(sample.z)) for sample in session.gravity.interpolated_samples())
   return RenderSnapshotDTO(world_revision=int(session.world.revision), camera=camera, player_model=player_model, falling_blocks=falling_blocks)

@@ -10,7 +10,9 @@ from PyQt6.QtGui import QColor, QPainter
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QWidget
 
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
-from ludoxel.presentation.interface.common import ItemPhotoProvider, ItemSlotButton, apply_item_slot_state, hotbar_slot_tooltip
+from ludoxel.presentation.interface.common.hotbar_visuals import hotbar_slot_tooltip
+from ludoxel.presentation.interface.common.item_photo_provider import ItemPhotoProvider
+from ludoxel.presentation.interface.common.item_slots import ItemSlotButton, apply_item_slot_state
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 

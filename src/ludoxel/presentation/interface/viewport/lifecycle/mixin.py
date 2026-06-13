@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 
-import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
+import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class ViewportLifecycleMixin:
       return
     if bool(self.loading_active()) or self._overlays.dead():
       return
-    interaction_controller.open_pause_menu(self)
+    overlay_controller.open_pause_menu(self)
 
   def _sync_runtime_activity(self: "GLViewportWidget") -> None:
     self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and bool(self._application_active) and (not bool(self._shutdown_done)))

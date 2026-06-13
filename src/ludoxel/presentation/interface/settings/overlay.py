@@ -255,7 +255,7 @@ class SettingsOverlay(SidebarDialogBase):
       self._about_page_stack.setCurrentWidget(self._about_content_page)
       return
 
-    from ludoxel.presentation.interface.settings.pages import build_about_tab
+    from ludoxel.presentation.interface.settings.about.page import build_about_tab
 
     self._set_about_loader_progress(50)
     content_page = build_about_tab(self, parent=self._about_page_stack)

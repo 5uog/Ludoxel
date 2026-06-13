@@ -80,8 +80,8 @@ from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import Rende
 from ludoxel.presentation.rendering.backends.opengl.runtime.params import GLRendererParams
 from ludoxel.presentation.rendering.backends.opengl.runtime.resources import GLResources
 from ludoxel.presentation.rendering.backends.opengl.runtime.selection import SelectionController
-from ludoxel.presentation.rendering.backends.opengl.runtime.state import RendererRuntimeState
 from ludoxel.presentation.rendering.backends.opengl.runtime.texture_animation import TextureAnimationController
+from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.faces.bucket_layout import BucketCounts
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.model_pose import build_player_model_pose
@@ -113,7 +113,7 @@ def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
 
 
 class RendererBackend:
-  def __init__(self, *, cfg: GLRendererParams, state: RendererRuntimeState, sel_tint_strength: float = 0.55) -> None:
+  def __init__(self, *, cfg: GLRendererParams, state: BackendRendererRuntimeState, sel_tint_strength: float = 0.55) -> None:
     self._cfg = cfg
     self._state = state
     self._sel_tint_strength = float(sel_tint_strength)

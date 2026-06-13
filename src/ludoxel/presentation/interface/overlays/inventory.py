@@ -9,7 +9,10 @@ from PyQt6.QtGui import QMouseEvent, QPixmap
 from PyQt6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.keybinds import ACTION_TOGGLE_INVENTORY, KeybindSettings, action_for_key
-from ludoxel.presentation.interface.common import DraggableItemButton, ItemPhotoProvider, apply_item_slot_state, hotbar_index_from_key, hotbar_slot_tooltip, item_id_from_mime
+from ludoxel.presentation.interface.common.hotbar_support import hotbar_index_from_key
+from ludoxel.presentation.interface.common.hotbar_visuals import hotbar_slot_tooltip
+from ludoxel.presentation.interface.common.item_photo_provider import ItemPhotoProvider
+from ludoxel.presentation.interface.common.item_slots import DraggableItemButton, apply_item_slot_state, item_id_from_mime
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ludoxel.simulation.inventories.special_items.registry import iter_catalog_special_items

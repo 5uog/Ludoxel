@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+from ludoxel.application.sessions.pipelines.player_model import build_player_model_snapshot
+from ludoxel.application.sessions.pipelines.render_snapshot import AiPlayerRenderSnapshotDTO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.simulation.actors.ai_players.manager import AiLocalAttackResult, AiRoutePathSnapshot
+from ludoxel.simulation.actors.ai_players.runtime import AiLocalAttackResult, AiRoutePathSnapshot
 from ludoxel.simulation.actors.ai_players.state import AiPlayerState, AiSpawnEggSettings
 from ludoxel.simulation.actors.player.combat import attack_sprinting
 from ludoxel.simulation.actors.player.targets import MELEE_ATTACK_REACH_BLOCKS
@@ -67,5 +69,25 @@ def ai_route_paths_for_session(session) -> tuple[AiRoutePathSnapshot, ...]:
   return session.ai_players.route_paths()
 
 
-def ai_render_snapshots_for_session(session):
-  return session.ai_players.render_snapshots()
+def ai_render_snapshots_for_session(session) -> tuple[AiPlayerRenderSnapshotDTO, ...]:
+  snapshots: list[AiPlayerRenderSnapshotDTO] = []
+  for observation in session.ai_players.actor_observations():
+    player = observation.player
+    snapshots.append(
+      AiPlayerRenderSnapshotDTO(
+        player_model=build_player_model_snapshot(player=player, motion=observation.motion, walk_speed=float(session.settings.movement.walk_speed), is_first_person_view=False),
+        held_item_id=None if observation.held_item_id is None else str(observation.held_item_id),
+        attack_swing_progress=float(observation.attack_swing_progress),
+        attack_prev_swing_progress=float(observation.attack_prev_swing_progress),
+        actor_id=str(observation.actor_id),
+        name=str(observation.name),
+        health=float(observation.health),
+        max_health=float(observation.max_health),
+        health_indicator=str(observation.health_indicator),
+        position_x=float(player.position.x),
+        position_y=float(player.position.y),
+        position_z=float(player.position.z),
+        height=float(player.height),
+      )
+    )
+  return tuple(snapshots)

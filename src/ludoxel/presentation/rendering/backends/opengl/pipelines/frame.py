@@ -28,7 +28,7 @@ from ludoxel.presentation.rendering.backends.opengl.runtime.light_space import c
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics, RendererFrameMetrics
 from ludoxel.presentation.rendering.backends.opengl.runtime.params import GLRendererParams
 from ludoxel.presentation.rendering.backends.opengl.runtime.selection import SelectionController
-from ludoxel.presentation.rendering.backends.opengl.runtime.state import RendererRuntimeState
+from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ludoxel.presentation.rendering.visuals.players.model_pose import build_player_model_pose
@@ -49,7 +49,7 @@ def _first_person_viewmodel_fov_deg(world_fov_deg: float) -> float:
 @dataclass(frozen=True)
 class FramePipeline:
   cfg: GLRendererParams
-  state: RendererRuntimeState
+  state: BackendRendererRuntimeState
   shadow_pass: ShadowMapPass
   world_pass: WorldPass
   falling_block_pass: FallingBlockPass

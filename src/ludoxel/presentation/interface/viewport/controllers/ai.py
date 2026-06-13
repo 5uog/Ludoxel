@@ -296,6 +296,4 @@ def handle_special_right_click(viewport: "RendererViewportWidget", *, origin: Ve
 
 def extra_player_render_states(viewport: "RendererViewportWidget", *, snapshot) -> tuple:
   del snapshot
-  return compose_ai_player_render_states(
-    tuple(viewport._session.ai_render_snapshots()), block_registry=viewport._session.block_registry, walk_speed=float(viewport._session.settings.movement.walk_speed)
-  )
+  return compose_ai_player_render_states(tuple(viewport._session.ai_render_snapshots()), block_registry=viewport._session.block_registry)

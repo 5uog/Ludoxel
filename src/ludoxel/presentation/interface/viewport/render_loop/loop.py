@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
+import ludoxel.presentation.interface.viewport.controllers.effects as effects_controller
 import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -303,7 +304,7 @@ class ViewportRenderLoopMixin:
     self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(step_result.jump_started))
 
     for break_event in tuple(step_result.gravity_broken_blocks):
-      interaction_controller._spawn_break_particles(self, block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
+      effects_controller.spawn_break_effect(self, block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
       self._audio.play_interaction(action="break", block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
 
     if bool(step_result.footstep_triggered):

@@ -77,8 +77,8 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_STUCK_GOAL_TIMEOUT_S,
   _AI_STUCK_JUMP_RETRIES,
   _AI_STUCK_RECOVERY_SUPPORT_S,
+  AiActorObservation,
   AiLocalAttackResult,
-  AiPlayerRenderSnapshot,
   AiRoutePathSnapshot,
   AiStepReport,
   _AiPlayerRuntime,
@@ -1826,9 +1826,9 @@ class AiPlayerManager:
         self._cancel_pending_nav_plan(actor)
     return AiStepReport(player_damage_taken=float(total_player_damage), player_death_reason=player_death_reason, damage_sound_positions=tuple(damage_sound_positions))
 
-  def render_snapshots(self) -> tuple[AiPlayerRenderSnapshot, ...]:
+  def actor_observations(self) -> tuple[AiActorObservation, ...]:
     return tuple(
-      AiPlayerRenderSnapshot(
+      AiActorObservation(
         player=actor.player,
         motion=actor.motion,
         held_item_id=None if actor.held_item_id is None else str(actor.held_item_id),

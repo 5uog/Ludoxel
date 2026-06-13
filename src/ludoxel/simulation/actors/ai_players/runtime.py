@@ -104,12 +104,11 @@ class AiLocalAttackResult:
 
 
 @dataclass(frozen=True)
-class AiPlayerRenderSnapshot:
+class AiActorObservation:
   """
-  AI actor 一体分の renderer 向け snapshot を表す。
-  player と motion は body pose 描画、held_item_id は手持ち block 描画、attack_*_progress は swing 補間に使われる。
-  name、health、max_health、health_indicator は presentation 側の nametag と heart indicator 表示専用の読み取り値であり、presentation はこの snapshot を通じて actor 状態を変更できない。
-  health_indicator は "off"、"above"、"below" の三値へ正規化済みであることを presentation 側が前提とする。
+  application session が AI actor の現在状態を読み取るための domain observation を表す。
+  player と motion は simulation 内の mutable object への参照であるため presentation へ直接渡さず、application pipeline が同一 call 内で不変な renderer-facing DTO へ変換する。
+  health_indicator は `"off"`、`"above"`、`"below"` の三値へ正規化済みである。
   """
 
   player: PlayerEntity

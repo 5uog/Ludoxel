@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
 
-from ludoxel.presentation.interface.settings.about.content import AboutBlock, AboutSection
+from ludoxel.presentation.documentation.about.model import AboutBlock, AboutSection
 from ludoxel.presentation.interface.settings.about.widgets import about_code_block, about_code_value, about_inline_paragraph
 
 

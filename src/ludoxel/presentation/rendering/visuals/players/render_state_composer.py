@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from ludoxel.application.sessions.pipelines.render_snapshot import RenderSnapshotDTO
+from ludoxel.application.sessions.pipelines.render_snapshot import PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ludoxel.presentation.rendering.visuals.players.first_person_motion import FirstPersonMotionSample
 from ludoxel.presentation.rendering.visuals.players.render_state import FirstPersonRenderState, PlayerRenderState
-from ludoxel.simulation.actors.player.motion import PlayerModelSnapshotDTO
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.inventories.special_items.registry import get_special_item_descriptor
 

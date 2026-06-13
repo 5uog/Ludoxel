@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel
 
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
+import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.persistence.schedulers.state import apply_persisted_state_if_present
 from ludoxel.application.preferences.runtime import RuntimePreferences
@@ -24,6 +25,7 @@ from ludoxel.presentation.interface.hud.controller import HudController
 from ludoxel.presentation.interface.hud.crosshair_widget import CrosshairWidget
 from ludoxel.presentation.interface.hud.hotbar_widget import HotbarWidget
 from ludoxel.presentation.interface.hud.route_overlay import RouteOverlayWidget
+from ludoxel.presentation.interface.input.game_input import ViewportInput
 from ludoxel.presentation.interface.input.qt import QtInputAdapter
 from ludoxel.presentation.interface.othello.hud import OthelloHudWidget
 from ludoxel.presentation.interface.othello.settings import OthelloSettingsOverlay
@@ -32,19 +34,15 @@ from ludoxel.presentation.interface.overlays.death import DeathOverlay
 from ludoxel.presentation.interface.overlays.inventory import InventoryOverlay
 from ludoxel.presentation.interface.overlays.pause import PauseOverlay
 from ludoxel.presentation.interface.settings.overlay import SettingsOverlay
-from ludoxel.presentation.interface.viewport import (
-  OverlayRefs,
-  ViewportFrameSync,
-  ViewportInput,
-  ViewportLifecycleMixin,
-  ViewportOverlayMixin,
-  ViewportOverlays,
-  ViewportRenderLoopMixin,
-  ViewportSelectionState,
-  ViewportStateMixin,
-  WorldUploadTracker,
-)
+from ludoxel.presentation.interface.viewport.lifecycle.mixin import ViewportLifecycleMixin
+from ludoxel.presentation.interface.viewport.lifecycle.state import ViewportStateMixin
+from ludoxel.presentation.interface.viewport.overlays.controller import OverlayRefs, ViewportOverlays
+from ludoxel.presentation.interface.viewport.overlays.state import ViewportOverlayMixin
+from ludoxel.presentation.interface.viewport.render_loop.frame_sync import ViewportFrameSync
+from ludoxel.presentation.interface.viewport.render_loop.loop import ViewportRenderLoopMixin
+from ludoxel.presentation.interface.viewport.selection.state import ViewportSelectionState
 from ludoxel.presentation.rendering.backends.opengl import GLRenderer
+from ludoxel.presentation.rendering.uploads.world import WorldUploadTracker
 from ludoxel.presentation.rendering.visuals.players.first_person_motion import FirstPersonMotionController
 from ludoxel.simulation.actors.ai_players.state import AiSpawnEggSettings
 from ludoxel.simulation.spaces.othello.game.state import OthelloAnalysis
@@ -201,7 +199,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._overlay.preview_changed.connect(self.update)
     settings_controller.bind_settings_overlay(self)
     othello_controller.bind_othello_controls(self)
-    interaction_controller.bind_overlay_actions(self)
+    overlay_controller.bind_overlay_actions(self)
 
     self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
     self.setMouseTracking(True)

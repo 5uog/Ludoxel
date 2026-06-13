@@ -7,14 +7,14 @@ from pathlib import Path
 import numpy as np
 from PyQt6.QtGui import QImage
 
+from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.runtime.backend import RendererBackend
-from ludoxel.presentation.rendering.backends.opengl.runtime.cloud_flow import DEFAULT_CLOUD_FLOW_DIRECTION
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import RendererFrameMetrics
 from ludoxel.presentation.rendering.backends.opengl.runtime.params import GLRendererParams, default_gl_renderer_params
-from ludoxel.presentation.rendering.backends.opengl.runtime.state import RendererRuntimeState
+from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
@@ -24,7 +24,7 @@ class GLRenderer:
   def __init__(self, params: GLRendererParams | None = None) -> None:
     self._cfg = params or default_gl_renderer_params()
 
-    self._state = RendererRuntimeState(
+    self._state = BackendRendererRuntimeState(
       debug_shadow=False,
       shadow_enabled=True,
       world_wireframe=False,
@@ -33,7 +33,7 @@ class GLRenderer:
       cloud_enabled=True,
       cloud_density=int(self._cfg.clouds.rects_per_cell),
       cloud_seed=int(self._cfg.clouds.seed),
-      cloud_flow_direction=DEFAULT_CLOUD_FLOW_DIRECTION,
+      cloud_flow_direction=DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION,
       sun_azimuth_deg=float(self._cfg.sun.azimuth_deg),
       sun_elevation_deg=float(self._cfg.sun.elevation_deg),
     )

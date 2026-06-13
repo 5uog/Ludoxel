@@ -452,8 +452,7 @@ class ViewportOverlayMixin:
       proj = mat4.perspective(float(snapshot.camera.fov_deg), float(self.width()) / max(float(self.height()), 1.0), 0.01, float(self._renderer._cfg.camera.z_far))
       view_proj = mat4.mul(proj, view)
       for ai_snapshot in ai_snapshots:
-        ai_player = ai_snapshot.player
-        anchor = Vec3(float(ai_player.position.x), float(ai_player.position.y) + float(ai_player.height) + float(_PLAYER_NAME_VERTICAL_OFFSET), float(ai_player.position.z))
+        anchor = Vec3(float(ai_snapshot.position_x), float(ai_snapshot.position_y) + float(ai_snapshot.height) + float(_PLAYER_NAME_VERTICAL_OFFSET), float(ai_snapshot.position_z))
         to_anchor = anchor - eye
         distance = float(to_anchor.length())
         if float(distance) <= 1e-4 or float(distance) > float(_AI_TAG_MAX_DISTANCE):

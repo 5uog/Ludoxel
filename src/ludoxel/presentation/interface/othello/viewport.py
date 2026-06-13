@@ -32,13 +32,13 @@ if TYPE_CHECKING:
 
 
 def bind_othello_controls(viewport: "RendererViewportWidget") -> None:
-  import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
+  import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 
   viewport._othello_ai.move_ready.connect(lambda generation, move_index: on_ai_move_ready(viewport, int(generation), move_index))
   viewport._othello_ai.analysis_ready.connect(lambda generation, analysis: on_analysis_ready(viewport, int(generation), analysis))
   viewport._othello_ai.book_learning_progress.connect(lambda payload: on_book_learning_progress(viewport, payload))
   viewport._othello_ai.book_learning_ready.connect(lambda payload: on_book_learning_ready(viewport, payload))
-  viewport._othello_settings.back_requested.connect(lambda: interaction_controller.back_from_othello_settings(viewport))
+  viewport._othello_settings.back_requested.connect(lambda: overlay_controller.back_from_othello_settings(viewport))
   viewport._othello_settings.settings_applied.connect(lambda settings: apply_settings(viewport, settings))
   viewport._othello_settings.book_learning_requested.connect(lambda settings: request_book_learning(viewport, settings))
   viewport._othello_settings.book_learning_cancel_requested.connect(lambda: cancel_book_learning(viewport))
@@ -610,7 +610,7 @@ def handle_left_click(viewport: "RendererViewportWidget", render_eye: "Vec3", re
 
 
 def handle_right_click(viewport: "RendererViewportWidget") -> None:
-  import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
+  import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 
   item_id = settings_controller.current_item_id(viewport)
   if item_id == OTHELLO_START_ITEM_ID:
@@ -627,4 +627,4 @@ def handle_right_click(viewport: "RendererViewportWidget") -> None:
 
   if item_id == OTHELLO_SETTINGS_ITEM_ID:
     viewport._first_person_motion.trigger_right_swing(success=True)
-    interaction_controller.open_othello_settings_from_item(viewport)
+    overlay_controller.open_othello_settings_from_item(viewport)

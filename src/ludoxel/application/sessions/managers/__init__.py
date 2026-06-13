@@ -2,17 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from importlib import import_module
+from ludoxel.application.sessions.managers.session import SessionManager
+from ludoxel.application.sessions.managers.stepping import SessionStepResult
 
 __all__ = ["SessionManager", "SessionStepResult"]
-
-
-def __getattr__(name: str):
-  if name in {"SessionManager", "SessionStepResult"}:
-    module = import_module(".session", __name__)
-    return getattr(module, name)
-  raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-def __dir__() -> list[str]:
-  return sorted(set(globals()) | set(__all__))

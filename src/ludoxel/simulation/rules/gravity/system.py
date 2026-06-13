@@ -48,7 +48,12 @@ class GravityBrokenBlock:
 
 
 @dataclass(frozen=True)
-class FallingBlockRenderSample:
+class FallingBlockSample:
+  """
+  active falling block の補間済み domain observation を表す。
+  state_str と world 座標だけを保持し、application はこの値を renderer-facing DTO へ変換して presentation へ渡す。
+  """
+
   state_str: str
   x: float
   y: float
@@ -259,7 +264,7 @@ class GravitySystem:
 
     return GravityStepResult(moved_cells=tuple(sorted(moved_cells)), broken_blocks=tuple(broken_blocks))
 
-  def render_samples(self) -> tuple[FallingBlockRenderSample, ...]:
+  def interpolated_samples(self) -> tuple[FallingBlockSample, ...]:
     if not self._active_blocks:
       return ()
 
@@ -267,10 +272,10 @@ class GravitySystem:
     if float(_FALLING_BLOCK_TICK_S) > float(_FALLING_BLOCK_EPS):
       alpha = max(0.0, min(1.0, float(self._tick_accum_s) / float(_FALLING_BLOCK_TICK_S)))
 
-    samples: list[FallingBlockRenderSample] = []
+    samples: list[FallingBlockSample] = []
     for block in sorted(self._active_blocks.values(), key=lambda item: (int(item.x), float(item.y), int(item.z), int(item.block_id))):
       sample_y = float(block.prev_y) + (float(block.y) - float(block.prev_y)) * float(alpha)
-      samples.append(FallingBlockRenderSample(state_str=str(block.state_str), x=float(block.x), y=float(sample_y), z=float(block.z)))
+      samples.append(FallingBlockSample(state_str=str(block.state_str), x=float(block.x), y=float(sample_y), z=float(block.z)))
 
     return tuple(samples)
 

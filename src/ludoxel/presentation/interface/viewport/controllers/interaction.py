@@ -7,11 +7,12 @@ import time
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
+import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.preferences.keybinds import (
   ACTION_CLEAR_SELECTED_SLOT,
@@ -27,8 +28,8 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z, face_neighbor_offset
 from ludoxel.presentation.audio import PLAYER_EVENT_ATTACK_STRONG, PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_DAMAGE_HIT
-from ludoxel.presentation.interface.common import hotbar_index_from_key
-from ludoxel.presentation.rendering.visuals.worlds.block_break_particles import spawn_block_break_particles
+from ludoxel.presentation.interface.common.hotbar_support import hotbar_index_from_key
+from ludoxel.presentation.interface.viewport.controllers.effects import spawn_break_effect
 from ludoxel.simulation.blocks.models.api import has_full_top_support_for_block
 from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.states.values import slab_type_value
@@ -37,7 +38,7 @@ from ludoxel.simulation.blocks.structures.cardinal import cardinal_from_xz
 from ludoxel.simulation.blocks.structures.structural_rules import is_fence, is_fence_gate, is_slab, is_stairs, is_wall
 from ludoxel.simulation.rules.interaction.outcomes import INTERACTION_ACTION_INTERACT, INTERACTION_ACTION_PLACE, InteractionOutcome
 from ludoxel.simulation.rules.picking.block import BlockPick
-from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
+from ludoxel.simulation.worlds.state.play_space import is_my_world_space
 
 if TYPE_CHECKING:
   from PyQt6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
@@ -76,136 +77,6 @@ _SUPPORT_FACE_CORNER_AXIS_BIAS_EPS = 0.03
 _INITIAL_VERTICAL_ANCHOR_RADIUS = 0.85
 _VERTICAL_REPEAT_LOCK_DISPLACEMENT = 0.05
 _GRAVITY_AFFECTED_TAG = "gravity_affected"
-
-
-def bind_overlay_actions(viewport: "RendererViewportWidget") -> None:
-  viewport._overlay.resume_requested.connect(lambda: resume_from_overlay(viewport))
-  viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
-  viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
-  viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
-  viewport._overlay.save_quit_requested.connect(lambda: save_and_quit(viewport))
-  viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
-  viewport._overlay.reset_skin_requested.connect(lambda: settings_controller.reset_player_skin(viewport))
-  viewport._death.respawn_requested.connect(lambda: respawn(viewport))
-  viewport._inventory.item_selected.connect(lambda item_id: on_inventory_selected(viewport, str(item_id)))
-  viewport._inventory.hotbar_slot_selected.connect(lambda slot_index: settings_controller.select_hotbar_slot(viewport, int(slot_index)))
-  viewport._inventory.hotbar_slot_assigned.connect(lambda slot_index, item_id: settings_controller.assign_hotbar_slot(viewport, int(slot_index), str(item_id)))
-  viewport._inventory.closed.connect(lambda: on_inventory_closed(viewport))
-
-
-def respawn(viewport: "RendererViewportWidget") -> None:
-  viewport._reset_held_mouse_actions()
-  ai_controller.cancel_route_edit(viewport)
-  viewport._session.respawn()
-  viewport._invalidate_selection_target()
-  viewport._renderer.clear_selection()
-  viewport._set_dead_overlay(False)
-  settings_controller.sync_hotbar_widgets(viewport)
-
-
-def resume_from_overlay(viewport: "RendererViewportWidget") -> None:
-  viewport._set_paused_overlay(False)
-  viewport.arm_resume_refresh()
-  settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def open_pause_menu(viewport: "RendererViewportWidget") -> None:
-  if viewport._overlays.dead():
-    return
-  if viewport._overlays.inventory_open():
-    viewport._set_inventory_overlay(False)
-  if viewport._overlays.othello_settings_open():
-    back_from_othello_settings(viewport)
-  if viewport._overlays.settings_open():
-    back_from_settings(viewport)
-  settings_controller.sync_settings_values(viewport)
-  settings_controller.sync_player_skin(viewport)
-  viewport._overlay.set_current_space(viewport._state.current_space_id)
-  viewport._set_paused_overlay(True)
-  settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
-  normalized = normalize_play_space_id(space_id)
-  if normalized == normalize_play_space_id(viewport._state.current_space_id):
-    if resume:
-      resume_from_overlay(viewport)
-    return
-
-  target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
-  viewport._reset_held_mouse_actions()
-  ai_controller.cancel_route_edit(viewport)
-  viewport._clear_block_break_particles()
-  othello_controller.clear_state_for_space_switch(viewport)
-  viewport._state.current_space_id = normalized
-  viewport._state.normalize()
-  viewport._session = viewport._sessions.set_active_space(normalized)
-  viewport._begin_loading(target_label)
-  viewport._overlay.set_current_space(normalized)
-  viewport._upload.reset(viewport._renderer, world=viewport._session.world)
-  viewport._invalidate_selection_target()
-  viewport._renderer.clear_selection()
-  settings_controller.sync_hotbar_widgets(viewport)
-  settings_controller.sync_first_person_target(viewport)
-  othello_controller.sync_hud_text(viewport)
-  viewport._sync_gameplay_hud_visibility()
-
-  if resume:
-    resume_from_overlay(viewport)
-
-  othello_controller.maybe_request_ai(viewport)
-  viewport.update()
-
-
-def open_settings_from_pause(viewport: "RendererViewportWidget") -> None:
-  settings_controller.sync_settings_values(viewport)
-  viewport._set_settings_overlay(True)
-  settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def back_from_settings(viewport: "RendererViewportWidget") -> None:
-  viewport._set_settings_overlay(False)
-  settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def open_othello_settings_from_item(viewport: "RendererViewportWidget") -> None:
-  othello_controller.sync_settings_values(viewport)
-  viewport._set_othello_settings_overlay(True)
-  settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def back_from_othello_settings(viewport: "RendererViewportWidget") -> None:
-  viewport._set_othello_settings_overlay(False)
-  if viewport._state.is_othello_space():
-    viewport._othello_analysis_request_signature = None
-    QTimer.singleShot(120, lambda: othello_controller.maybe_request_analysis(viewport))
-  settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def on_inventory_selected(viewport: "RendererViewportWidget", item_id: str) -> None:
-  if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
-    return
-
-  active_index = viewport._state.active_hotbar_index()
-  viewport._state.set_hotbar_slot(int(active_index), str(item_id))
-  settings_controller.sync_hotbar_widgets(viewport)
-  settings_controller.sync_first_person_target(viewport)
-
-
-def on_inventory_closed(viewport: "RendererViewportWidget") -> None:
-  viewport._set_inventory_overlay(False)
-  viewport.arm_resume_refresh()
-
-
-def save_and_quit(viewport: "RendererViewportWidget") -> None:
-  viewport._reset_held_mouse_actions()
-  try:
-    viewport.save_state()
-  except Exception:
-    pass
-  host = viewport.window()
-  if host is not None:
-    host.close()
 
 
 def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool:
@@ -250,16 +121,16 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
       viewport._set_inventory_overlay(False)
       return True
     if viewport._overlays.othello_settings_open():
-      back_from_othello_settings(viewport)
+      overlay_controller.back_from_othello_settings(viewport)
       return True
     if viewport._overlays.settings_open():
-      back_from_settings(viewport)
+      overlay_controller.back_from_settings(viewport)
       return True
     if viewport._overlays.paused():
       viewport._set_paused_overlay(False)
       settings_controller.sync_cloud_motion_pause(viewport)
     else:
-      open_pause_menu(viewport)
+      overlay_controller.open_pause_menu(viewport)
     return True
 
   if bound_action == ACTION_TOGGLE_CREATIVE_MODE and not viewport._overlays.paused() and not viewport._overlays.dead():
@@ -497,7 +368,7 @@ def _perform_left_click(viewport: "RendererViewportWidget"):
       break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
   viewport._first_person_motion.trigger_left_swing()
   if break_outcome is not None and bool(break_outcome.success):
-    _spawn_break_particles(viewport, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
+    spawn_break_effect(viewport, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
     viewport._audio.play_interaction(action=break_outcome.action, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
     viewport._invalidate_selection_target()
   if bool(attack_success):
@@ -1596,21 +1467,3 @@ def _perform_right_click_place_repeat(viewport: "RendererViewportWidget") -> _Ri
   if vertical_line is not None:
     return _perform_generic_place_repeat(viewport, line=vertical_line, interaction_eye=interaction_eye, interaction_direction=interaction_direction, hit=hit)
   return _perform_generic_place_repeat(viewport, line=line, interaction_eye=interaction_eye, interaction_direction=interaction_direction, hit=hit)
-
-
-def _spawn_break_particles(viewport: "RendererViewportWidget", *, block_state: str | None, position: tuple[int, int, int] | None) -> None:
-  if block_state is None or position is None:
-    return
-  tools = viewport._renderer.world_build_tools()
-  if tools is None:
-    return
-  uv_lookup, def_lookup = tools
-  particles = spawn_block_break_particles(
-    state_str=str(block_state),
-    cell=(int(position[0]), int(position[1]), int(position[2])),
-    uv_lookup=uv_lookup,
-    def_lookup=def_lookup,
-    spawn_rate=float(viewport._state.block_break_particle_spawn_rate),
-    speed_scale=float(viewport._state.block_break_particle_speed_scale),
-  )
-  viewport._append_block_break_particles(particles)

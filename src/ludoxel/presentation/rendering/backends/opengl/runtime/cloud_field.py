@@ -5,8 +5,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.presentation.rendering.backends.opengl.runtime.cloud_flow import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ludoxel.presentation.rendering.backends.opengl.runtime.params import CloudParams
 
 
@@ -32,7 +32,7 @@ class CloudField:
     self._enabled_density: int = int(max(0, int(cfg.rects_per_cell)))
     self._seed: int = int(cfg.seed)
 
-    self._flow_direction: str = normalize_cloud_flow_direction(DEFAULT_CLOUD_FLOW_DIRECTION)
+    self._flow_direction: str = normalize_backend_cloud_flow_direction(DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION)
     self._flow_epoch_s: float = 0.0
     self._flow_base_shift: Vec3 = Vec3(0.0, 0.0, 0.0)
 
@@ -56,7 +56,7 @@ class CloudField:
     self._boxes_cache = []
 
   def set_flow_direction(self, direction: str, *, t_seconds: float = 0.0) -> None:
-    nxt = normalize_cloud_flow_direction(str(direction))
+    nxt = normalize_backend_cloud_flow_direction(str(direction))
     ts = float(max(0.0, t_seconds))
 
     cur = self.shift(ts)
@@ -75,7 +75,7 @@ class CloudField:
 
   def _flow_velocity(self, direction: str) -> tuple[float, float]:
     sp = float(self._flow_speed())
-    d = normalize_cloud_flow_direction(str(direction))
+    d = normalize_backend_cloud_flow_direction(str(direction))
 
     if d == "east_to_west":
       return (-sp, 0.0)

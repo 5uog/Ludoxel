@@ -30,11 +30,11 @@ from OpenGL.GL import (
   glPolygonMode,
 )
 
+from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.mesh_buffer import MeshBuffer
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
 from ludoxel.presentation.rendering.backends.opengl.runtime.cloud_field import CloudField
-from ludoxel.presentation.rendering.backends.opengl.runtime.cloud_flow import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ludoxel.presentation.rendering.backends.opengl.runtime.params import CameraParams, CloudParams
 
 
@@ -53,7 +53,7 @@ class CloudPass:
 
     self._density = int(max(0, int(self._cfg.rects_per_cell)))
     self._seed = int(self._cfg.seed)
-    self._flow_direction = normalize_cloud_flow_direction(DEFAULT_CLOUD_FLOW_DIRECTION)
+    self._flow_direction = normalize_backend_cloud_flow_direction(DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION)
 
     self._motion_paused = False
     self._time_accum = 0.0
@@ -108,7 +108,7 @@ class CloudPass:
 
   def set_flow_direction(self, direction: str) -> None:
     self._advance_clock()
-    nxt = normalize_cloud_flow_direction(str(direction))
+    nxt = normalize_backend_cloud_flow_direction(str(direction))
     if str(nxt) == str(self._flow_direction):
       return
     self._flow_direction = str(nxt)

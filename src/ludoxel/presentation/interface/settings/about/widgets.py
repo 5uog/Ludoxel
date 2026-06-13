@@ -8,7 +8,8 @@ from pathlib import Path
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QSizePolicy, QWidget
 
-from ludoxel.presentation.interface.settings.about.content import GITHUB_IMAGE_CANDIDATE_NAMES, PROFILE_IMAGE_CANDIDATE_NAMES, AboutRun
+from ludoxel.presentation.documentation.about.content import GITHUB_IMAGE_CANDIDATE_NAMES, PROFILE_IMAGE_CANDIDATE_NAMES
+from ludoxel.presentation.documentation.about.model import AboutRun
 
 
 class _AboutWrappingLabel(QLabel):

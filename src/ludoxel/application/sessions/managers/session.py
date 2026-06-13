@@ -27,9 +27,10 @@ from ludoxel.application.sessions.managers.interactions import (
 )
 from ludoxel.application.sessions.managers.snapshots import make_camera_snapshot_for_session, make_render_snapshot_for_session
 from ludoxel.application.sessions.managers.stepping import SessionStepResult, step_session
-from ludoxel.application.sessions.pipelines.render_snapshot import CameraDTO, RenderSnapshotDTO
+from ludoxel.application.sessions.pipelines.render_snapshot import AiPlayerRenderSnapshotDTO, CameraDTO, RenderSnapshotDTO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.simulation.actors.ai_players.manager import AiLocalAttackResult, AiPlayerManager, AiRoutePathSnapshot
+from ludoxel.simulation.actors.ai_players.manager import AiPlayerManager
+from ludoxel.simulation.actors.ai_players.runtime import AiLocalAttackResult, AiRoutePathSnapshot
 from ludoxel.simulation.actors.ai_players.state import AiPlayerState, AiSpawnEggSettings
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.actors.player.kinematics import PlayerMotionState
@@ -163,7 +164,7 @@ class SessionManager:
   def ai_route_paths(self) -> tuple[AiRoutePathSnapshot, ...]:
     return ai_route_paths_for_session(self)
 
-  def ai_render_snapshots(self):
+  def ai_render_snapshots(self) -> tuple[AiPlayerRenderSnapshotDTO, ...]:
     return ai_render_snapshots_for_session(self)
 
   def make_camera_snapshot(self, *, enable_camera_shake: bool = True, camera_shake_strength: float = 0.20) -> CameraDTO:

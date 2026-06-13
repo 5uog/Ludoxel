@@ -22,10 +22,10 @@ if TYPE_CHECKING:
 
 
 def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
-  import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
+  import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 
   overlay = viewport._settings
-  overlay.back_requested.connect(lambda: interaction_controller.back_from_settings(viewport))
+  overlay.back_requested.connect(lambda: overlay_controller.back_from_settings(viewport))
   overlay.fov_changed.connect(lambda value: set_fov(viewport, float(value)))
   overlay.sens_changed.connect(lambda value: set_sens(viewport, float(value)))
   overlay.invert_x_changed.connect(lambda on: set_invert_x(viewport, bool(on)))
