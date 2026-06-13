@@ -11,12 +11,12 @@ export async function runCleanBuildArtifactsCli(argv = [], env = process.env, de
   const options = validateCleanArgs(parseCleanArgs(argv));
 
   if (options.help) {
-    console.log(renderCleanHelp());
+    console.log(renderCleanHelp(options.language));
     return 0;
   }
 
   if (options.errors.length > 0) {
-    console.error(renderCleanErrors(options.errors));
+    console.error(renderCleanErrors(options.errors, options.language));
     return 2;
   }
 

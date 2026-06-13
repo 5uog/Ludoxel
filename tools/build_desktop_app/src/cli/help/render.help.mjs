@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { desktopBuildHelpMessagesFor } from './message.help.mjs';
+
 function lines(values) {
   return values.join('\n');
 }
@@ -14,99 +16,50 @@ function option(flag, description) {
   return `  ${flag.padEnd(30)} ${description}`;
 }
 
-export function renderDesktopBuildHelp(command = null) {
-  if (command === 'windows') {
-    return lines([
-      'desktop build: windows',
-      '',
-      section('目的', '  Ludoxel の Windows onefile EXE を既存 OpenGL renderer 経路のまま PyInstaller で構築する。'),
-      '',
-      section(
-        '起動形式',
-        lines([
-          '  npm run build:desktop -- windows [options]',
-          '  npm run build:desktop -- --windows [options]',
-          '  npm run build:windows -- [options]',
-          '  node tools/build_desktop_app/scripts/run/windows.run.mjs [options]',
-        ]),
-      ),
-      '',
-      section(
-        'オプション',
-        lines([
-          option('help, --help, -h', 'このヘルプを表示して終了する。'),
-          option('--dry-run', 'PyInstaller コマンドを表示し、実行しない。'),
-          option('--skip-native-build', 'Windows build 前の native extension build を実行しない。'),
-          option('--keep-build-cache', 'PyInstaller の work/spec/staging directory を削除しない。'),
-          option('--lang ja|en', 'ヘルプ表示言語を指定する。'),
-        ]),
-      ),
-      '',
-    ]);
-  }
+function renderLineRecords(records) {
+  return lines(records.map((record) => option(record.flag, record.description)));
+}
 
-  if (command === 'macos') {
+function renderIndentedLines(values) {
+  return lines(values.map((value) => `  ${value}`));
+}
+
+function helpKeyForCommand(command) {
+  if (command === 'windows') return 'windows';
+  if (command === 'macos') return 'macos';
+  return 'desktop';
+}
+
+export function renderDesktopBuildHelp(command = null, language = 'ja') {
+  const messages = desktopBuildHelpMessagesFor(language);
+  const key = helpKeyForCommand(command);
+  const help = messages[key];
+
+  if (key === 'desktop') {
     return lines([
-      'desktop build: macos',
+      messages.titles.desktop,
       '',
-      section('目的', '  Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist、gameplay input monitoring 表記を検証する。'),
+      section(messages.labels.purpose, `  ${help.purpose}`),
       '',
-      section(
-        '起動形式',
-        lines([
-          '  npm run build:desktop -- macos [options]',
-          '  npm run build:desktop -- --macos [options]',
-          '  npm run build:macos -- [options]',
-          '  npm run build:macos:help',
-          '  npm run build:macos:check',
-        ]),
-      ),
+      section(messages.labels.synopsis, renderIndentedLines(help.synopsis)),
       '',
-      section(
-        'オプション',
-        lines([
-          option('help, --help, -h', 'このヘルプを表示して終了する。'),
-          option('--dry-run', 'PyInstaller コマンドを表示し、実行しない。'),
-          option('--skip-native-build', 'macOS build 前の native extension build を実行しない。'),
-          option('--keep-build-cache', 'PyInstaller の work/spec/staging directory を削除しない。'),
-          option('--status', 'macOS app bundle の制約説明を表示する。'),
-          option('--check', 'macOS packaging に必要な実ファイル、依存関係、PyInstaller 設定を検査する。'),
-          option('--lang ja|en', 'ヘルプ表示言語を指定する。'),
-        ]),
-      ),
+      section(messages.labels.commands, renderLineRecords(help.commands)),
       '',
     ]);
   }
 
   return lines([
-    'desktop build',
+    messages.titles[key],
     '',
-    section('目的', '  Ludoxel desktop build tool の入口。Windows EXE build と macOS .app build/status/check を扱う。'),
+    section(messages.labels.purpose, `  ${help.purpose}`),
     '',
-    section(
-      '起動形式',
-      lines([
-        '  npm run build:desktop -- help',
-        '  npm run build:desktop -- --help',
-        '  npm run build:desktop -- windows',
-        '  npm run build:desktop -- --windows',
-        '  npm run build:desktop -- macos',
-        '  npm run build:desktop -- --macos',
-      ]),
-    ),
+    section(messages.labels.synopsis, renderIndentedLines(help.synopsis)),
     '',
-    section(
-      '主なコマンド',
-      lines([
-        '  windows, --windows      Windows onefile EXE build を実行する。',
-        '  macos, --macos          macOS .app build/status/check を実行する。',
-        '  help, --help, -h        ヘルプを表示する。',
-      ]),
-    ),
+    section(messages.labels.options, renderLineRecords(help.options)),
     '',
   ]);
 }
 
-export function renderDesktopBuildErrors(errors, command = null) {
-  return [...errors.map((error) => `Error: ${error}`), '', renderDesktopBuildHelp(command)].join('\n');
+export function renderDesktopBuildErrors(errors, command = null, language = 'ja') {
+  return lines([...errors.map((error) => `Error: ${error}`), '', renderDesktopBuildHelp(command, language)]);
 }

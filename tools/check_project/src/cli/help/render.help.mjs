@@ -2,52 +2,42 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-const DESCRIPTIONS = Object.freeze({
-  package: {
-    ja: 'package.json と主要設定の整合性を検査する。',
-    en: 'Check package.json and core configuration consistency.',
-  },
-  docs: {
-    ja: 'README / .github の旧経路・不適切な future tool 化を検査する。',
-    en: 'Check README/.github for stale paths and invalid future tool surfaces.',
-  },
-  legal: {
-    ja: 'LICENSE / third-party / SPDX を検査する。',
-    en: 'Check LICENSE, third-party, and SPDX headers.',
-  },
-  resources: {
-    ja: 'assets / configs / generated output の扱いを検査する。',
-    en: 'Check assets, configs, and generated output policy.',
-  },
-  shaders: {
-    ja: 'Ludoxel の renderer shader 契約を静的検査する。',
-    en: 'Statically check Ludoxel renderer shader sources.',
-  },
-});
+import { checkHelpMessagesFor } from './message.help.mjs';
 
-function text(value, language) {
-  return value?.[language] || value?.ja || value?.en || '';
+function lines(values) {
+  return values.join('\n');
+}
+
+function section(title, content) {
+  return `${title}\n${content}`;
+}
+
+function renderIndentedLines(values) {
+  return lines(values.map((value) => `  ${value}`));
+}
+
+function usageScriptFor(checkName) {
+  if (checkName === 'legal') return 'license:check';
+  if (checkName === 'shaders') return 'shader:check';
+  return `${checkName}:check`;
 }
 
 export function renderCheckHelp(checkName, language = 'ja') {
-  const usageScript = checkName === 'legal' ? 'license:check' : checkName === 'shaders' ? 'shader:check' : `${checkName}:check`;
+  const messages = checkHelpMessagesFor(language);
+  const description = messages.descriptions[checkName] || checkName;
 
-  return [
-    `check_project: ${checkName}`,
+  return lines([
+    `${messages.titlePrefix}: ${checkName}`,
     '',
-    `Purpose: ${text(DESCRIPTIONS[checkName], language)}`,
+    section(messages.labels.purpose, `  ${description}`),
     '',
-    'Options:',
-    '  --help, -h',
-    '  --lang ja|en',
-    '  --language ja|en',
-    '  --locale ja|en',
+    section(messages.labels.options, renderIndentedLines(messages.options)),
     '',
-    `Usage: npm run ${usageScript} -- [options]`,
+    section(messages.labels.synopsis, `  npm run ${usageScriptFor(checkName)} -- [options]`),
     '',
-  ].join('\n');
+  ]);
 }
 
 export function renderCheckErrors(errors, checkName, language = 'ja') {
-  return [...errors.map((error) => `Error: ${error}`), '', renderCheckHelp(checkName, language)].join('\n');
+  return lines([...errors.map((error) => `Error: ${error}`), '', renderCheckHelp(checkName, language)]);
 }

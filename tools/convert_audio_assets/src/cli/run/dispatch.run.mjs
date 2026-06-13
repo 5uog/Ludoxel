@@ -11,12 +11,12 @@ export async function runAudioAssetCli(argv = [], env = process.env, defaults = 
   const options = validateAudioAssetArgs(parseAudioAssetArgs(argv, defaults));
 
   if (options.help) {
-    console.log(renderAudioAssetHelp());
+    console.log(renderAudioAssetHelp(options.language));
     return 0;
   }
 
   if (options.errors.length > 0) {
-    console.error(renderAudioAssetErrors(options.errors));
+    console.error(renderAudioAssetErrors(options.errors, options.language));
     return 2;
   }
 

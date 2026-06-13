@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { cleanHelpMessagesFor } from './message.help.mjs';
+
 function lines(values) {
   return values.join('\n');
 }
@@ -10,30 +12,32 @@ function option(flag, description) {
   return `  ${flag.padEnd(22)} ${description}`;
 }
 
-export function renderCleanHelp() {
+function renderIndentedLines(values) {
+  return lines(values.map((value) => `  ${value}`));
+}
+
+function renderOptionRecords(records) {
+  return lines(records.map((record) => option(record.flag, record.description)));
+}
+
+export function renderCleanHelp(language = 'ja') {
+  const messages = cleanHelpMessagesFor(language);
+
   return lines([
-    'clean build artifacts',
+    messages.title,
     '',
-    '目的',
-    '  Ludoxel の生成物、cache、build artifact を実在確認したうえで削除または列挙する。',
+    messages.labels.purpose,
+    `  ${messages.purpose}`,
     '',
-    '起動形式',
-    '  npm run clean -- help',
-    '  npm run clean -- --help',
-    '  npm run clean -- --dry-run',
-    '  npm run clean -- --all --dry-run',
-    '  npm run clean:check',
-    '  npm run clean:check -- --all',
+    messages.labels.synopsis,
+    renderIndentedLines(messages.synopsis),
     '',
-    'オプション',
-    option('help, --help, -h', 'このヘルプを表示して終了する。'),
-    option('--dry-run', '削除せず、対象だけを表示する。'),
-    option('--all', 'dist、export output、native compiled binaries も対象に含める。'),
-    option('--lang ja|en', 'ヘルプ表示言語を指定する。'),
+    messages.labels.options,
+    renderOptionRecords(messages.options),
     '',
   ]);
 }
 
-export function renderCleanErrors(errors) {
-  return [...errors.map((error) => `Error: ${error}`), '', renderCleanHelp()].join('\n');
+export function renderCleanErrors(errors, language = 'ja') {
+  return lines([...errors.map((error) => `Error: ${error}`), '', renderCleanHelp(language)]);
 }

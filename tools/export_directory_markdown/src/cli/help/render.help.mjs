@@ -3,44 +3,37 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { EXPORT_TARGETS } from '../../config/profile.config.mjs';
+import { exportHelpMessagesFor } from './message.help.mjs';
 
-export function renderExportHelp() {
+function targetDescription(target, messages) {
+  return messages.targetDescriptions[target.name] || target.description;
+}
+
+function renderIndentedLines(values) {
+  return values.map((value) => `  ${value}`);
+}
+
+export function renderExportHelp(language = 'ja') {
+  const messages = exportHelpMessagesFor(language);
+
   return [
-    'export_directory_markdown',
+    messages.title,
     '',
-    'Usage:',
-    '  npm run tools:export -- [target] [options]',
-    '  npm run tools:export -- --target <target> [options]',
-    '  node tools/export_directory_markdown/scripts/run-export.mjs [target] [options]',
-    '  node tools/export_directory_markdown/scripts/run-export.mjs --target <target> [options]',
+    messages.labels.usage,
+    ...renderIndentedLines(messages.usage),
     '',
-    'Targets:',
-    ...Object.values(EXPORT_TARGETS).map((target) => `  ${target.name.padEnd(8)} ${target.description}`),
+    messages.labels.targets,
+    ...Object.values(EXPORT_TARGETS).map((target) => `  ${target.name.padEnd(8)} ${targetDescription(target, messages)}`),
     '',
-    'Options:',
-    '  --help, -h',
-    '  --lang ja|en',
-    '  --target root|src|tools|archive',
-    '  --format tree|code|both',
-    '  --output <path>',
-    '  --overwrite',
-    '  --include-hidden',
-    '  --fail-on-unreadable',
-    '  --max-bytes <number|unlimited>',
-    '  --exclude folder:<name-or-relative-path>[,<name-or-relative-path>...]',
-    '  --exclude ext:<extension>[,<extension>...]',
-    '  --exclude file:<name-or-relative-path>[,<name-or-relative-path>...]',
+    messages.labels.options,
+    ...renderIndentedLines(messages.options),
     '',
-    'Examples:',
-    '  npm run tools:export:root',
-    '  npm run tools:export:src',
-    '  npm run tools:export -- root --format both --overwrite',
-    '  npm run tools:export -- --target root --exclude "folder:ludoxel.egg-info" --exclude "ext:.so,.pyd" --overwrite',
-    '  npm run tools:export -- --target src --exclude "file:src/ludoxel.egg-info/SOURCES.txt,src/ludoxel.egg-info/PKG-INFO" --format code --overwrite',
+    messages.labels.examples,
+    ...renderIndentedLines(messages.examples),
     '',
   ].join('\n');
 }
 
-export function renderExportErrors(errors) {
-  return [...errors.map((error) => `Error: ${error}`), '', renderExportHelp()].join('\n');
+export function renderExportErrors(errors, language = 'ja') {
+  return [...errors.map((error) => `Error: ${error}`), '', renderExportHelp(language)].join('\n');
 }

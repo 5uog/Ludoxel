@@ -11,12 +11,12 @@ export async function runNativeExtensionCli(argv = [], env = process.env, defaul
   const options = validateNativeExtensionArgs(parseNativeExtensionArgs(argv, defaults));
 
   if (options.help) {
-    console.log(renderNativeExtensionHelp());
+    console.log(renderNativeExtensionHelp(options.language));
     return 0;
   }
 
   if (options.errors.length > 0) {
-    console.error(renderNativeExtensionErrors(options.errors));
+    console.error(renderNativeExtensionErrors(options.errors, options.language));
     return 2;
   }
 
