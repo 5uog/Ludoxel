@@ -55,7 +55,6 @@ function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
   addOptionalDataArg(args, 'assets', 'assets', targetPlatform);
   addOptionalDataArg(args, 'src', 'src', targetPlatform);
   addOptionalDataArg(args, 'LICENSE', 'LICENSE', targetPlatform);
-  addOptionalDataArg(args, 'NOTICE', 'NOTICE', targetPlatform);
   addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
 }
 
@@ -87,7 +86,6 @@ function addMacosRequiredDataArgs(args) {
   addRequiredDataArg(args, 'assets', 'assets', 'darwin');
   addRequiredDataArg(args, 'src', 'src', 'darwin');
   addRequiredDataArg(args, 'LICENSE', 'LICENSE', 'darwin');
-  addRequiredDataArg(args, 'NOTICE', 'NOTICE', 'darwin');
   addRequiredDataArg(args, 'third-party', 'third-party', 'darwin');
 }
 

@@ -32,4 +32,4 @@ export const PYINSTALLER_SPEC_ROOT = 'build/pyinstaller-spec-runs';
 export const PYINSTALLER_STAGING_ROOT = 'build/pyinstaller-dist-runs';
 export const PYINSTALLER_CONFIG_ROOT = 'build/pyinstaller-config';
 
-export const LEGAL_MATERIAL_PATHS = Object.freeze(['LICENSE', 'NOTICE', 'third-party']);
+export const LEGAL_MATERIAL_PATHS = Object.freeze(['LICENSE', 'third-party']);

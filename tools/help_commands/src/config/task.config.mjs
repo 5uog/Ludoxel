@@ -30,8 +30,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'docs:check',
     usage: 'npm run docs:check -- [options]',
     description: {
-      ja: 'README、NOTICE、GitHub policy などの文書から旧経路や禁止構造を検査する。',
-      en: 'Check README, NOTICE, GitHub policy files, and documentation for stale paths and banned structures.',
+      ja: 'README、LICENSE、GitHub policy などの文書から旧経路や禁止構造を検査する。',
+      en: 'Check README, LICENSE, GitHub policy files, and documentation for stale paths and banned structures.',
     },
     options: ['--help, -h', '--lang ja|en'],
     examples: ['npm run docs:check', 'npm run docs:check -- --help --lang en'],
@@ -41,8 +41,8 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'license:check',
     usage: 'npm run license:check -- [options]',
     description: {
-      ja: 'LICENSE、NOTICE、third-party、SPDX header、配布用 legal material の整合性を検査する。',
-      en: 'Check LICENSE, NOTICE, third-party material, SPDX headers, and distribution legal material.',
+      ja: 'LICENSE、third-party、SPDX header、配布用 legal material の整合性を検査する。',
+      en: 'Check LICENSE, third-party material, SPDX headers, and distribution legal material.',
     },
     options: ['--help, -h', '--lang ja|en'],
     examples: ['npm run license:check', 'npm run license:check -- --help --lang en'],

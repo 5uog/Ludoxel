@@ -28,7 +28,7 @@ body:
       label: Topic
       options:
         - Repository policy
-        - License or NOTICE
+        - License or third-party material
         - Ordinary application use
         - Packaging or build status
         - Security reporting procedure

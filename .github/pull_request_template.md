@@ -11,4 +11,4 @@ Do not submit pull requests, patches, source code changes, documentation changes
 
 A pull request may be closed without review. Submission of a pull request does not grant permission to copy, reuse, modify, distribute, deploy, incorporate, relicense, create derivative works from, use as training data, or represent the repository's Original Materials as one's own work.
 
-For the controlling terms, see [`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE), and [`.github/CONTRIBUTING.md`](./CONTRIBUTING.md). GitHub interface features do not expand the independent license granted by Kento Konishi for the Original Materials.
+For the controlling terms, see [`LICENSE`](../LICENSE) and [`.github/CONTRIBUTING.md`](./CONTRIBUTING.md). GitHub interface features do not expand the independent license granted by Kento Konishi for the Original Materials.

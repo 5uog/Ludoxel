@@ -65,7 +65,6 @@
     "*.vert": "glsl",
     "*.in": "plaintext",
     "LICENCE": "plaintext",
-    "LICENSE": "plaintext",
-    "NOTICE": "plaintext"
+    "LICENSE": "plaintext"
   }
 }

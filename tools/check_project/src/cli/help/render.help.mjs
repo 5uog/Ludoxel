@@ -12,8 +12,8 @@ const DESCRIPTIONS = Object.freeze({
     en: 'Check README/.github for stale paths and invalid future tool surfaces.',
   },
   legal: {
-    ja: 'LICENSE / NOTICE / third-party / SPDX を検査する。',
-    en: 'Check LICENSE, NOTICE, third-party, and SPDX headers.',
+    ja: 'LICENSE / third-party / SPDX を検査する。',
+    en: 'Check LICENSE, third-party, and SPDX headers.',
   },
   resources: {
     ja: 'assets / configs / generated output の扱いを検査する。',
