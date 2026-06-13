@@ -41,6 +41,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
+from ludoxel.presentation.rendering.contracts.config import DistanceFog, cloud_fog_range, render_distance_fog_range, render_distance_radius_blocks
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -69,7 +70,7 @@ from ludoxel.simulation.blocks.structures.neighborhood import six_neighbor_state
 from ludoxel.simulation.inventories.special_items.registry import special_item_icon_keys
 
 _DEPTH_FORMAT = "depth24plus"
-_UNIFORM_FLOAT_COUNT = 44
+_UNIFORM_FLOAT_COUNT = 52
 _UNIFORM_SIZE_BYTES = _UNIFORM_FLOAT_COUNT * 4
 _OPENGL_TO_WGPU_CLIP = np.asarray(((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.5, 0.5), (0.0, 0.0, 0.0, 1.0)), dtype=np.float32)
 _PREVIEW_EYE = Vec3(0.0, 0.98, 6.8)
@@ -523,15 +524,19 @@ class WgpuRendererBackend:
     sel_block: tuple[int, int, int] | None = None,
     shadow_enabled: bool = False,
     debug_shadow: bool = False,
+    fog: DistanceFog | None = None,
   ) -> bytes:
     vp = _opengl_clip_to_wgpu(view_proj)
     light_vp = vp if light_view_proj is None else _opengl_clip_to_wgpu(light_view_proj)
+    active_fog = fog if fog is not None else DistanceFog.disabled()
     uniform = np.zeros((_UNIFORM_FLOAT_COUNT,), dtype=np.float32)
     uniform[:16] = np.ascontiguousarray(vp.T, dtype=np.float32).reshape(16)
     uniform[16:32] = np.ascontiguousarray(light_vp.T, dtype=np.float32).reshape(16)
     sun = self._state.sun_dir.normalized()
     uniform[32:35] = (float(sun.x), float(sun.y), float(sun.z))
     uniform[35] = float(tint_value)
+    uniform[44:48] = (float(active_fog.cam_x), float(active_fog.cam_z), float(active_fog.start), float(active_fog.end))
+    uniform[48:51] = (float(active_fog.color.x), float(active_fog.color.y), float(active_fog.color.z))
     raw = bytearray(uniform.tobytes())
     ints = np.frombuffer(raw, dtype=np.int32)
     ints[36] = int(face_idx)
@@ -559,9 +564,11 @@ class WgpuRendererBackend:
     aspect = float(max(1, int(width))) / float(max(1, int(height)))
     return mat4.perspective(float(fov_deg), aspect, float(FIRST_PERSON_HAND_NEAR), float(self._cfg.camera.z_far)).astype(np.float32)
 
-  def _light_view_proj(self, *, center: Vec3) -> np.ndarray:
+  def _light_view_proj(self, *, center: Vec3, coverage_radius: float | None = None) -> np.ndarray:
     shadow_size = max(1, int(self._cfg.shadow.size))
-    return compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._cfg.shadow, shadow_size=int(shadow_size)).astype(np.float32)
+    return compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._cfg.shadow, shadow_size=int(shadow_size), coverage_radius=coverage_radius).astype(
+      np.float32
+    )
 
   def _create_frame_uniform_bind_groups(
     self,
@@ -574,6 +581,7 @@ class WgpuRendererBackend:
     sel_block: tuple[int, int, int] | None = None,
     shadow_enabled: bool = False,
     debug_shadow: bool = False,
+    fog: DistanceFog | None = None,
   ) -> tuple[tuple[object, ...], tuple[object, ...]]:
     if self._res is None:
       return ((), ())
@@ -591,6 +599,7 @@ class WgpuRendererBackend:
         sel_block=sel_block,
         shadow_enabled=bool(shadow_enabled),
         debug_shadow=bool(debug_shadow),
+        fog=fog,
       )
       buffer = self._res.device.create_buffer_with_data(label=f"{label}-uniform-face-{face_idx}", data=data, usage=wgpu.BufferUsage.UNIFORM)
       bind_group = self._res.device.create_bind_group(
@@ -638,17 +647,19 @@ class WgpuRendererBackend:
     if not bool(self._cloud_motion_paused):
       self._cloud_time_accum += float(dt)
 
-  def _create_cloud_uniform_bind_group(self, *, view_proj: np.ndarray, shift: Vec3) -> tuple[object | None, object | None]:
+  def _create_cloud_uniform_bind_group(self, *, view_proj: np.ndarray, shift: Vec3, fog: DistanceFog | None = None) -> tuple[object | None, object | None]:
     if self._res is None:
       return (None, None)
     import wgpu
 
     color = self._cfg.clouds.color
-    uniform = np.zeros((28,), dtype=np.float32)
+    active_fog = fog if fog is not None else DistanceFog.disabled()
+    uniform = np.zeros((32,), dtype=np.float32)
     uniform[:16] = np.ascontiguousarray(_opengl_clip_to_wgpu(view_proj).T, dtype=np.float32).reshape(16)
     uniform[16:20] = (float(shift.x), float(shift.y), float(shift.z), float(self._cfg.clouds.alpha))
     uniform[20:24] = (float(color.x), float(color.y), float(color.z), float(self._cfg.clouds.alpha))
     uniform[24:28] = (float(self._state.sun_dir.x), float(self._state.sun_dir.y), float(self._state.sun_dir.z), 0.0)
+    uniform[28:32] = (float(active_fog.cam_x), float(active_fog.cam_z), float(active_fog.start), float(active_fog.end))
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-cloud-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
     bind_group = self._res.device.create_bind_group(
@@ -849,7 +860,7 @@ class WgpuRendererBackend:
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = (),
     block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = (),
   ) -> None:
-    del roll_deg, render_distance_chunks
+    del roll_deg
     if self._res is None or not bool(self._initialized):
       return
     import wgpu
@@ -861,6 +872,14 @@ class WgpuRendererBackend:
     if self._res.depth_view is None:
       return
 
+    z_far = float(self._cfg.camera.z_far)
+    fog_color = self._cfg.sky.clear_color
+    world_fog_start, world_fog_end = render_distance_fog_range(int(render_distance_chunks), float(z_far))
+    world_fog = DistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
+    cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
+    cloud_fog = DistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
+    shadow_coverage_radius = render_distance_radius_blocks(int(render_distance_chunks))
+
     view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg))
     forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
     othello_rows: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
@@ -869,7 +888,7 @@ class WgpuRendererBackend:
     sel_block = self._selection_cell
     sel_mode = 1 if sel_block is not None and bool(self._state.outline_selection_enabled) else (2 if sel_block is not None else 0)
     shadow_requested = bool(self._state.shadow_enabled or self._state.debug_shadow)
-    light_view_proj = self._light_view_proj(center=eye) if bool(shadow_requested) else view_proj
+    light_view_proj = self._light_view_proj(center=eye, coverage_radius=float(shadow_coverage_radius)) if bool(shadow_requested) else view_proj
     player_poses: list[PlayerModelPose] = []
     for state in (player_state, *tuple(extra_player_states)):
       if state is None:
@@ -937,12 +956,15 @@ class WgpuRendererBackend:
       sel_block=sel_block,
       shadow_enabled=bool(shadow_sampling_ok),
       debug_shadow=bool(self._state.debug_shadow),
+      fog=world_fog,
     )
     temp_uniform_buffers.extend(world_uniform_buffers)
     temp_uploads: list[WgpuFaceInstances] = []
     render_pass = encoder.begin_render_pass(
       label="ludoxel-main-pass",
-      color_attachments=[{"view": color_view, "resolve_target": None, "clear_value": (0.54, 0.70, 0.92, 1.0), "load_op": wgpu.LoadOp.clear, "store_op": wgpu.StoreOp.store}],
+      color_attachments=[
+        {"view": color_view, "resolve_target": None, "clear_value": (float(fog_color.x), float(fog_color.y), float(fog_color.z), 1.0), "load_op": wgpu.LoadOp.clear, "store_op": wgpu.StoreOp.store}
+      ],
       depth_stencil_attachment={"view": self._res.depth_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
     )
 
@@ -998,7 +1020,7 @@ class WgpuRendererBackend:
     if self._visuals is not None:
       falling_rows = build_falling_block_face_rows(samples=tuple(falling_blocks), uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
       falling_uniform_buffers, falling_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-falling-block-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None
+        label="ludoxel-falling-block-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog
       )
       temp_uniform_buffers.extend(falling_uniform_buffers)
       dc, inst, uploads = self._draw_transform_buckets(
@@ -1011,7 +1033,7 @@ class WgpuRendererBackend:
     if tuple(block_break_particles):
       particle_rows = build_block_break_particle_face_rows(samples=tuple(block_break_particles), camera_forward=forward)
       particle_uniform_buffers, particle_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-block-break-particle-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None
+        label="ludoxel-block-break-particle-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog
       )
       temp_uniform_buffers.extend(particle_uniform_buffers)
       dc, inst, uploads = self._draw_transform_buckets(
@@ -1030,6 +1052,7 @@ class WgpuRendererBackend:
           tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))),
           sel_mode=0,
           sel_block=None,
+          fog=world_fog,
         )
         temp_uniform_buffers.extend(player_uniform_buffers)
         dc, inst, uploads = self._draw_transform_buckets(
@@ -1040,7 +1063,7 @@ class WgpuRendererBackend:
         temp_uploads.extend(uploads)
       held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
       held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label=f"ludoxel-player-held-frame-{pose_idx}", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None
+        label=f"ludoxel-player-held-frame-{pose_idx}", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog
       )
       temp_uniform_buffers.extend(held_uniform_buffers)
       dc, inst, uploads = self._draw_transform_buckets(
@@ -1060,6 +1083,7 @@ class WgpuRendererBackend:
         sel_block=None,
         shadow_enabled=bool(shadow_sampling_ok),
         debug_shadow=bool(self._state.debug_shadow),
+        fog=world_fog,
       )
       temp_uniform_buffers.extend(othello_uniform_buffers)
       board_rows, highlight_rows, piece_rows = othello_rows
@@ -1111,7 +1135,7 @@ class WgpuRendererBackend:
       cloud_instance_buffer, cloud_instance_count = self._upload_temp_rows(label="ludoxel-cloud-temp", rows=cloud_rows)
       if cloud_instance_buffer is not None and int(cloud_instance_count) > 0:
         temp_uniform_buffers.append(cloud_instance_buffer)
-        cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(view_proj=view_proj, shift=shift)
+        cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(view_proj=view_proj, shift=shift, fog=cloud_fog)
         if cloud_uniform_buffer is not None:
           temp_uniform_buffers.append(cloud_uniform_buffer)
         if cloud_uniform_bind_group is not None:

@@ -22,7 +22,10 @@ in vec3 v_color;
 in float v_alpha;
 
 in vec4 v_lightPos;
+layout(location = 4) in vec3 v_worldPos;
 out vec4 fragColor;
+
+#include "common/distance_fog.glsl"
 
 float shadow_sample(vec3 uvz, float bias) {
     float z = uvz.z - bias;
@@ -73,5 +76,6 @@ void main() {
 
     float ambient = 0.28;
     float lighting = ambient + ((1.0 - ambient) * lambert) * sh;
-    fragColor = vec4(v_color * lighting, v_alpha);
+    vec3 shaded = ldx_apply_distance_fog(v_color * lighting, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    fragColor = vec4(shaded, v_alpha);
 }

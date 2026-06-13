@@ -34,7 +34,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import Sha
 from ludoxel.presentation.rendering.backends.opengl.gl.state_guard import GLStateGuard
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapInfo
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.contracts.config import BackendShadowParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, DistanceFog
 from ludoxel.presentation.rendering.visuals.othello.scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 
@@ -85,6 +85,7 @@ class OthelloPass:
     shadow_enabled: bool,
     shadow: BackendShadowParams,
     shadow_info: ShadowMapInfo,
+    fog: DistanceFog | None = None,
   ) -> PassFrameMetrics:
     if self._world_prog is None or self._board_mesh is None or self._piece_mesh is None or render_state is None or not bool(render_state.enabled):
       return PassFrameMetrics()
@@ -109,6 +110,12 @@ class OthelloPass:
       self._world_prog.set_mat4("u_viewProj", np.asarray(view_proj, dtype=np.float32))
       self._world_prog.set_mat4("u_lightViewProj", np.asarray(light_view_proj, dtype=np.float32))
       self._world_prog.set_vec3("u_sunDir", float(sun_dir.x), float(sun_dir.y), float(sun_dir.z))
+
+      active_fog = fog if fog is not None else DistanceFog.disabled()
+      self._world_prog.set_vec2("u_fogCamXZ", float(active_fog.cam_x), float(active_fog.cam_z))
+      self._world_prog.set_float("u_fogStart", float(active_fog.start))
+      self._world_prog.set_float("u_fogEnd", float(active_fog.end))
+      self._world_prog.set_vec3("u_fogColor", float(active_fog.color.x), float(active_fog.color.y), float(active_fog.color.z))
 
       use_shadow_program = bool(shadow_enabled or debug_shadow)
       shadow_sampling_ok = bool(use_shadow_program and shadow_info.ok and int(shadow_info.tex_id) != 0 and int(shadow_info.inst_count) > 0)

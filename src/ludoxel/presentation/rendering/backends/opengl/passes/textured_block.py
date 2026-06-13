@@ -10,6 +10,7 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
 from ludoxel.presentation.rendering.backends.opengl.passes.textured_face import TexturedFacePass
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
+from ludoxel.presentation.rendering.contracts.config import DistanceFog
 from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup
 
 
@@ -38,7 +39,7 @@ class TexturedBlockPassBase:
   def _ready(self) -> bool:
     return self._face_pass is not None and self._atlas is not None and self._uv_lookup is not None and self._def_lookup is not None
 
-  def _draw_rows(self, *, rows: tuple[np.ndarray, ...], view_proj: np.ndarray, sun_dir: Vec3) -> tuple[int, int]:
+  def _draw_rows(self, *, rows: tuple[np.ndarray, ...], view_proj: np.ndarray, sun_dir: Vec3, fog: DistanceFog | None = None) -> tuple[int, int]:
     if self._face_pass is None or self._atlas is None:
       return (0, 0)
-    return self._face_pass.draw(face_rows=rows, view_proj=view_proj, tex_id=int(self._atlas.tex_id), sun_dir=sun_dir)
+    return self._face_pass.draw(face_rows=rows, view_proj=view_proj, tex_id=int(self._atlas.tex_id), sun_dir=sun_dir, fog=fog)

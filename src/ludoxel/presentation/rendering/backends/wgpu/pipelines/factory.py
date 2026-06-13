@@ -51,6 +51,8 @@ def _camera_uniform_block(name: str) -> str:
     vec4 ldx_sunDirTintMix;
     ivec4 ldx_faceSelMode;
     ivec4 ldx_selBlock;
+    vec4 ldx_fogParams;
+    vec4 ldx_fogColor;
 };
 """
   if name == "selection":
@@ -64,6 +66,8 @@ def _camera_uniform_block(name: str) -> str:
     vec4 ldx_sunDirSelTint;
     ivec4 ldx_faceSelMode;
     ivec4 ldx_selBlock;
+    vec4 ldx_fogParams;
+    vec4 ldx_fogColor;
 };
 """
 
@@ -97,6 +101,7 @@ def _cloud_uniform_block() -> str:
     vec4 ldx_cloudShiftAlpha;
     vec4 ldx_cloudColor;
     vec4 ldx_cloudSunDir;
+    vec4 ldx_cloudFogParams;
 };
 """
 
@@ -146,6 +151,10 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_debugShadow", "ldx_faceSelMode.w")
     text = text.replace("u_selMode", "ldx_faceSelMode.y")
     text = text.replace("u_selTint", "ldx_sunDirSelTint.w")
+    text = text.replace("u_fogCamXZ", "ldx_fogParams.xy")
+    text = text.replace("u_fogStart", "ldx_fogParams.z")
+    text = text.replace("u_fogEnd", "ldx_fogParams.w")
+    text = text.replace("u_fogColor", "ldx_fogColor.xyz")
     return text
 
   if name == "world_no_shadow.frag":
@@ -162,6 +171,10 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_sunDir", "ldx_sunDirSelTint.xyz")
     text = text.replace("u_selMode", "ldx_faceSelMode.y")
     text = text.replace("u_selTint", "ldx_sunDirSelTint.w")
+    text = text.replace("u_fogCamXZ", "ldx_fogParams.xy")
+    text = text.replace("u_fogStart", "ldx_fogParams.z")
+    text = text.replace("u_fogEnd", "ldx_fogParams.w")
+    text = text.replace("u_fogColor", "ldx_fogColor.xyz")
     return text
 
   if name == "selection_line.vert":
@@ -184,6 +197,9 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_color", "ldx_cloudColor.rgb")
     text = text.replace("u_alpha", "ldx_cloudColor.a")
     text = text.replace("u_sunDir", "ldx_cloudSunDir.xyz")
+    text = text.replace("u_fogCamXZ", "ldx_cloudFogParams.xy")
+    text = text.replace("u_fogStart", "ldx_cloudFogParams.z")
+    text = text.replace("u_fogEnd", "ldx_cloudFogParams.w")
     return text
 
   if name == "sun.vert":
@@ -228,6 +244,10 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_sunDir", "ldx_sunDirTintMix.xyz")
     text = text.replace("u_tintColor", "vec3(1.0, 0.32, 0.32)")
     text = text.replace("u_tintMix", "ldx_sunDirTintMix.w")
+    text = text.replace("u_fogCamXZ", "ldx_fogParams.xy")
+    text = text.replace("u_fogStart", "ldx_fogParams.z")
+    text = text.replace("u_fogEnd", "ldx_fogParams.w")
+    text = text.replace("u_fogColor", "ldx_fogColor.xyz")
     return text
 
   if name == "othello.vert":
@@ -259,6 +279,10 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_shadowBiasSlope", "0.00050")
     text = text.replace("u_sunDir", "ldx_sunDirSelTint.xyz")
     text = text.replace("u_debugShadow", "ldx_faceSelMode.w")
+    text = text.replace("u_fogCamXZ", "ldx_fogParams.xy")
+    text = text.replace("u_fogStart", "ldx_fogParams.z")
+    text = text.replace("u_fogEnd", "ldx_fogParams.w")
+    text = text.replace("u_fogColor", "ldx_fogColor.xyz")
     return text
 
   if name == "othello_shadow.vert":

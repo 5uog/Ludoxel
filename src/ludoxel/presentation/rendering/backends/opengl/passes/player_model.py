@@ -18,7 +18,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.textured_face import 
 from ludoxel.presentation.rendering.backends.opengl.resources.image_texture import ImageTexture
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.contracts.config import BackendShadowParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, DistanceFog
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
 from ludoxel.presentation.rendering.faces.uv_rects import UVRect
@@ -91,7 +91,17 @@ class PlayerModelPass:
     return face_rows_from_buffers(buffers)
 
   def draw_world(
-    self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo
+    self,
+    *,
+    pose: PlayerModelPose,
+    view_proj: np.ndarray,
+    light_view_proj: np.ndarray,
+    sun_dir: Vec3,
+    debug_shadow: bool,
+    shadow_enabled: bool,
+    shadow: BackendShadowParams,
+    shadow_info: ShadowMapInfo,
+    fog: DistanceFog | None = None,
   ) -> tuple[int, int]:
     del light_view_proj, debug_shadow, shadow_enabled, shadow, shadow_info
     if self._face_pass is None or self._skin_texture is None or self._atlas is None:
@@ -101,20 +111,20 @@ class PlayerModelPass:
     instances = 0
 
     dc, inst = self._face_pass.draw(
-      face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength))))
+      face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), fog=fog
     )
     draw_calls += int(dc)
     instances += int(inst)
 
     held_block_rows = self._build_held_block_face_rows(pose.held_block_pose)
-    dc, inst = self._face_pass.draw(face_rows=held_block_rows, view_proj=view_proj, tex_id=int(self._atlas.tex_id), sun_dir=sun_dir)
+    dc, inst = self._face_pass.draw(face_rows=held_block_rows, view_proj=view_proj, tex_id=int(self._atlas.tex_id), sun_dir=sun_dir, fog=fog)
     draw_calls += int(dc)
     instances += int(inst)
 
     icon_key = None if pose.visible_special_item_icon is None else str(pose.visible_special_item_icon)
     icon_texture = None if icon_key is None else self._special_item_textures.get(icon_key)
     if icon_texture is not None:
-      dc, inst = self._face_pass.draw(face_rows=pose.special_item_face_rows, view_proj=view_proj, tex_id=int(icon_texture.tex_id), sun_dir=sun_dir)
+      dc, inst = self._face_pass.draw(face_rows=pose.special_item_face_rows, view_proj=view_proj, tex_id=int(icon_texture.tex_id), sun_dir=sun_dir, fog=fog)
       draw_calls += int(dc)
       instances += int(inst)
 

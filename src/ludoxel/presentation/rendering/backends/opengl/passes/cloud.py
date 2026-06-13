@@ -34,7 +34,7 @@ from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.mesh_buffer import MeshBuffer
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
-from ludoxel.presentation.rendering.contracts.config import BackendCameraParams, BackendCloudParams
+from ludoxel.presentation.rendering.contracts.config import BackendCameraParams, BackendCloudParams, DistanceFog
 from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField
 
 
@@ -130,7 +130,7 @@ class CloudPass:
     self._advance_clock()
     self._motion_paused = bool(on)
 
-  def draw(self, eye: Vec3, view_proj: np.ndarray, forward: Vec3, fov_deg: float, aspect: float, sun_dir: Vec3) -> None:
+  def draw(self, eye: Vec3, view_proj: np.ndarray, forward: Vec3, fov_deg: float, aspect: float, sun_dir: Vec3, fog: DistanceFog | None = None) -> None:
     self._advance_clock()
 
     if not bool(self._enabled):
@@ -179,6 +179,11 @@ class CloudPass:
     self._prog.set_float("u_alpha", float(self._cfg.alpha))
 
     self._prog.set_vec3("u_sunDir", sun_dir.x, sun_dir.y, sun_dir.z)
+
+    active_fog = fog if fog is not None else DistanceFog.disabled()
+    self._prog.set_vec2("u_fogCamXZ", float(active_fog.cam_x), float(active_fog.cam_z))
+    self._prog.set_float("u_fogStart", float(active_fog.start))
+    self._prog.set_float("u_fogEnd", float(active_fog.end))
 
     glBindVertexArray(self._mesh.vao)
     glDrawArraysInstanced(GL_TRIANGLES, 0, self._mesh.vertex_count, inst_count)

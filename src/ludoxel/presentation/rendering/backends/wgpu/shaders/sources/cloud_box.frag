@@ -4,12 +4,15 @@
 
 in vec3 v_normal;
 in float v_alphaMul;
+layout(location = 2) in vec3 v_worldPos;
 
 uniform vec3 u_color;
 uniform float u_alpha;
 uniform vec3 u_sunDir;
 
 out vec4 fragColor;
+
+#include "common/distance_fog.glsl"
 
 void main() {
     vec3 n = v_normal;
@@ -18,7 +21,8 @@ void main() {
     float ndl = max(dot(n, l), 0.0);
     float ambient = 0.90;
     float lit = ambient + ndl * (1.0 - ambient) * 0.35;
-    float a = clamp(u_alpha * v_alphaMul, 0.0, 1.0);
+    float fog = ldx_distance_fog_factor(v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd);
+    float a = clamp(u_alpha * v_alphaMul, 0.0, 1.0) * (1.0 - fog);
 
     fragColor = vec4(u_color * lit, a);
 }

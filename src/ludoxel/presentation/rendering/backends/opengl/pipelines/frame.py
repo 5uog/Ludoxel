@@ -26,7 +26,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.sun import SunPass
 from ludoxel.presentation.rendering.backends.opengl.passes.world import WorldDrawInputs, WorldPass
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics, RendererFrameMetrics
 from ludoxel.presentation.rendering.backends.opengl.runtime.selection import SelectionController
-from ludoxel.presentation.rendering.contracts.config import BackendRendererParams
+from ludoxel.presentation.rendering.contracts.config import BackendRendererParams, DistanceFog, cloud_fog_range, render_distance_fog_range, render_distance_radius_blocks
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR
@@ -94,10 +94,20 @@ class FramePipeline:
     bz = int(math.floor(float(eye.z)))
     cam_ck = chunk_key(bx, by, bz)
 
+    z_far = float(self.cfg.camera.z_far)
+    fog_color = self.cfg.sky.clear_color
+    world_fog_start, world_fog_end = render_distance_fog_range(int(render_distance_chunks), float(z_far))
+    world_fog = DistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
+    cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
+    cloud_fog = DistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
+    shadow_coverage_radius = render_distance_radius_blocks(int(render_distance_chunks))
+
     use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
     if bool(use_light_space):
       shadow_info_pre = self.shadow_pass.info()
-      light_vp = compute_light_view_proj(center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))))
+      light_vp = compute_light_view_proj(
+        center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))), coverage_radius=float(shadow_coverage_radius)
+      )
     else:
       light_vp = mat4.identity()
 
@@ -165,10 +175,11 @@ class FramePipeline:
         sel_y=int(sy),
         sel_z=int(sz),
         sel_tint=float(self.sel_tint_strength),
+        fog=world_fog,
       )
     )
 
-    falling_dc, falling_inst = self.falling_block_pass.draw(samples=falling_blocks, view_proj=vp, sun_dir=self.state.sun_dir)
+    falling_dc, falling_inst = self.falling_block_pass.draw(samples=falling_blocks, view_proj=vp, sun_dir=self.state.sun_dir, fog=world_fog)
     world_metrics = PassFrameMetrics(
       cpu_ms=float(world_metrics.cpu_ms),
       draw_calls=int(world_metrics.draw_calls + falling_dc),
@@ -176,7 +187,7 @@ class FramePipeline:
       rendered=bool(world_metrics.rendered or (falling_dc > 0)),
     )
 
-    particle_dc, particle_inst = self.block_break_particle_pass.draw(samples=block_break_particles, view_proj=vp, sun_dir=self.state.sun_dir, camera_forward=forward)
+    particle_dc, particle_inst = self.block_break_particle_pass.draw(samples=block_break_particles, view_proj=vp, sun_dir=self.state.sun_dir, camera_forward=forward, fog=world_fog)
     world_metrics = PassFrameMetrics(
       cpu_ms=float(world_metrics.cpu_ms),
       draw_calls=int(world_metrics.draw_calls + particle_dc),
@@ -196,6 +207,7 @@ class FramePipeline:
         shadow_enabled=bool(self.state.shadow_enabled),
         shadow=self.cfg.shadow,
         shadow_info=shadow_info,
+        fog=world_fog,
       )
       player_dc += int(draw_calls)
       player_inst += int(instances)
@@ -216,6 +228,7 @@ class FramePipeline:
       shadow_enabled=bool(self.state.shadow_enabled),
       shadow=self.cfg.shadow,
       shadow_info=shadow_info,
+      fog=world_fog,
     )
 
     world_metrics = PassFrameMetrics(
@@ -225,7 +238,7 @@ class FramePipeline:
       rendered=bool(world_metrics.rendered or othello_metrics.rendered),
     )
 
-    self.cloud_pass.draw(eye=eye, view_proj=vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir)
+    self.cloud_pass.draw(eye=eye, view_proj=vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir, fog=cloud_fog)
 
     self.selection.draw(view_proj=vp)
 

@@ -20,6 +20,7 @@ out vec3 v_color;
 out float v_alpha;
 
 out vec4 v_lightPos;
+out vec3 v_worldPos;
 
 vec4 mul_row_major(vec4 p) {
     return vec4(dot(i_row0, p), dot(i_row1, p), dot(i_row2, p), dot(i_row3, p));
@@ -40,4 +41,5 @@ void main() {
     v_color = a_color * i_tint.rgb;
     v_alpha = i_tint.a;
     v_lightPos = u_lightViewProj * world_pos;
+    v_worldPos = world_pos.xyz;
 }

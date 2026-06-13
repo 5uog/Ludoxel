@@ -16,6 +16,7 @@ uniform mat4 u_viewProj;
 out vec3 v_normal;
 out vec2 v_uv;
 out vec4 v_uvRect;
+layout(location = 3) out vec3 v_worldPos;
 
 vec4 mul_row_major(vec4 p) {
     return vec4(
@@ -41,4 +42,5 @@ void main() {
     v_normal = normalize(transpose(inverse(model_mat3())) * a_normal);
     v_uv = a_uv;
     v_uvRect = i_uvRect;
+    v_worldPos = worldPos.xyz;
 }

@@ -23,6 +23,7 @@ out vec4 v_uvRect;
 out vec4 v_lightPos;
 out float v_shade;
 out float v_sel;
+out vec3 v_worldPos;
 
 #include "common/face_instance.glsl"
 
@@ -48,6 +49,7 @@ void main() {
     v_uvRect = i_uvRect;
     v_lightPos = u_lightViewProj * vec4(worldPos, 1.0);
     v_shade = i_shade;
+    v_worldPos = worldPos;
 
     ivec3 b = ivec3(floor(i_mn + vec3(1e-6)));
     v_sel = (u_selMode != 0 && all(equal(b, u_selBlock))) ? 1.0 : 0.0;

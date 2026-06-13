@@ -8,13 +8,20 @@ in vec4 v_uvRect;
 
 in float v_shade;
 in float v_sel;
+in vec3 v_worldPos;
 
 uniform sampler2D u_atlas;
 uniform vec3 u_sunDir;
 uniform int u_selMode;
 uniform float u_selTint;
+uniform vec2 u_fogCamXZ;
+uniform float u_fogStart;
+uniform float u_fogEnd;
+uniform vec3 u_fogColor;
 
 out vec4 fragColor;
+
+#include "common/distance_fog.glsl"
 
 float fallback_lighting(vec3 normal, float ndl, float shade) {
     float up = max(normal.y, 0.0);
@@ -48,5 +55,6 @@ void main() {
         base = mix(base, vec3(1.0), t);
     }
 
-    fragColor = vec4(base * lit, tex.a);
+    vec3 shaded = ldx_apply_distance_fog(base * lit, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    fragColor = vec4(shaded, tex.a);
 }

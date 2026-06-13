@@ -13,6 +13,7 @@ uniform vec3 u_shift; // smooth translation (world space)
 
 out vec3 v_normal;
 out float v_alphaMul;
+out vec3 v_worldPos;
 
 void main() {
     vec3 scale = i_data.xyz;
@@ -21,4 +22,5 @@ void main() {
     gl_Position = u_viewProj * vec4(worldPos, 1.0);
     v_normal = a_normal;
     v_alphaMul = i_data.w;
+    v_worldPos = worldPos;
 }
