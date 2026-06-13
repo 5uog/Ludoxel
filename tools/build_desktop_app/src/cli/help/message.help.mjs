@@ -48,8 +48,7 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
       ]),
     }),
     macos: Object.freeze({
-      purpose:
-        'Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist、gameplay input monitoring 表記を検証する。',
+      purpose: 'Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist、gameplay input monitoring 表記を検証する。',
       synopsis: Object.freeze([
         'npm run build:desktop -- macos [options]',
         'npm run build:desktop -- --macos [options]',
@@ -113,8 +112,7 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
       ]),
     }),
     macos: Object.freeze({
-      purpose:
-        'Build the Ludoxel macOS .app bundle with PyInstaller and check the wgpu-native Metal path, bundled fonts, .icns files, Info.plist, and gameplay input-monitoring text.',
+      purpose: 'Build the Ludoxel macOS .app bundle with PyInstaller and check the wgpu-native Metal path, bundled fonts, .icns files, Info.plist, and gameplay input-monitoring text.',
       synopsis: Object.freeze([
         'npm run build:desktop -- macos [options]',
         'npm run build:desktop -- --macos [options]',

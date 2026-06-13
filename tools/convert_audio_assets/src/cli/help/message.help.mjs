@@ -28,10 +28,7 @@ export const AUDIO_ASSET_HELP_MESSAGES = Object.freeze({
       Object.freeze({ flag: '--require-wav', description: '派生 .wav が不足している場合に失敗させる。' }),
       Object.freeze({ flag: '--lang ja|en', description: 'ヘルプ表示言語を指定する。' }),
     ]),
-    defaultBehavior: Object.freeze([
-      'check は .ogg と派生 .wav の状態を報告する。ambient は .ogg を直接参照するため、',
-      '派生 .wav の不足は既定では警告として扱う。',
-    ]),
+    defaultBehavior: Object.freeze(['check は .ogg と派生 .wav の状態を報告する。ambient は .ogg を直接参照するため、', '派生 .wav の不足は既定では警告として扱う。']),
   }),
   en: Object.freeze({
     title: 'audio asset conversion',
@@ -58,10 +55,7 @@ export const AUDIO_ASSET_HELP_MESSAGES = Object.freeze({
       Object.freeze({ flag: '--require-wav', description: 'Fail if derived .wav files are missing.' }),
       Object.freeze({ flag: '--lang ja|en', description: 'Select help language.' }),
     ]),
-    defaultBehavior: Object.freeze([
-      'check reports the .ogg and derived .wav state. Ambient audio references .ogg directly,',
-      'so missing derived .wav files are warnings by default.',
-    ]),
+    defaultBehavior: Object.freeze(['check reports the .ogg and derived .wav state. Ambient audio references .ogg directly,', 'so missing derived .wav files are warnings by default.']),
   }),
 });
 
