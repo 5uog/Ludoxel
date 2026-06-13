@@ -2,11 +2,19 @@
   <img src="assets/branding/ludoxel_banner.png" alt="Ludoxel" width="100%">
 </p>
 
-# Ludoxel v3.6.1 法務情報
+# Ludoxel v3.6.1
 
-当該文書は、Ludoxel リポジトリにおける法務上の基本関係を整理する補助文書である。その対象は、ルートの [`LICENSE`](LICENSE)、ルートの [`NOTICE`](NOTICE)、第三者通知、来歴確認を要するローカル資産、実行時利用者データ、通常のアプリケーション出力、配布時法務資料、GitHub の機能及び利用条件、並びに [`.github/`](.github/) 配下のリポジトリ方針文書の相互関係に限られる。
+Ludoxel は、低水準の数値・幾何契約を担う [`foundations`](src/ludoxel/foundations/)、世界状態と規則を担う [`simulation`](src/ludoxel/simulation/)、起動・設定・セッション・永続化を担う [`application`](src/ludoxel/application/)、Qt による画面、入力、音響及び描画を担う [`presentation`](src/ludoxel/presentation/) の四層を中心に構成される。依存方向を下位契約から上位のデスクトップ表現へ限定し、シミュレーション上の意味、保存形式、描画実装及び UI 操作を同一責務へ混在させないことを設計原則としている。
 
-Ludoxel の機能、実行方法、ビルド方法、内部構造、開発手順、検証方法、又は実装上の設計は、本書の説明対象ではない。これらに関する名称が現れる場合も、その記載は、法務上の対象、素材区分、配布時法務資料、又はリポジトリ方針の適用範囲を特定する限度にとどまる。
+シミュレーション層は、ボクセル世界、ブロック状態、衝突、移動、配置、選択、重力、プレイヤー及び AI アクター、並びにオセロの盤面と規則を所有する。アプリケーション層は、これらの状態をセッションとして組み立て、利用者設定とワールド状態をアプリケーション管理下のデータ領域へ保存し、描画側へ渡すスナップショットとの境界を保つ。永続化は構造化された schema と JSON-backed store を中心とし、一部の実行時ファイルには integrity manifest による検証経路が設けられている。
+
+プレゼンテーション層は、設定画面、HUD、overlay、入力 lifecycle、音響及び renderer contract を所有する。描画 backend は Windows 向け OpenGL 実装と macOS 向け wgpu 実装に分かれ、共通 contract と renderer-facing state を介してシミュレーションから分離される。両 backend は別個の実装であるため、一方の platform で得た検証結果を他方の動作確認として扱わない。
+
+画像、音声、フォント、texture、icon などの資産は [`assets/`](assets/) と package resource の境界で管理され、独自素材、第三者素材及び来歴確認を要するローカル資産を法務上区別する。デスクトップ配布は platform ごとの PyInstaller build path と resource・法務資料の同梱処理を持ち、repository tooling は source formatting、lint、文書、package、license、resource、shader、native extension 及び desktop packaging の整合を検査する。これらの技術的な配置又は同梱可能性は、各素材の配布許諾を意味しない。
+
+# 法務情報
+
+以下は、Ludoxel リポジトリにおける法務上の基本関係を整理する補助文書である。その対象は、ルートの [`LICENSE`](LICENSE)、ルートの [`NOTICE`](NOTICE)、第三者通知、来歴確認を要するローカル資産、実行時利用者データ、通常のアプリケーション出力、配布時法務資料、GitHub の機能及び利用条件、並びに [`.github/`](.github/) 配下のリポジトリ方針文書の相互関係に限られる。法務上の定義、許諾及び制限は、以下の説明と参照先文書に従う。
 
 ## 1 支配文書
 

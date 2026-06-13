@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -49,6 +48,8 @@ def _ensure_python_314(project_root: Path) -> None:
 
   argv = [str(candidate), "-m", "ludoxel", *sys.argv[1:]]
   if os.name == "nt":
+    import subprocess
+
     completed = subprocess.run(argv, env=env, cwd=str(project_root), check=False)
     raise SystemExit(int(completed.returncode))
 

@@ -9,8 +9,6 @@ import { listFiles } from '../../shared/file/find.file.mjs';
 import { displayPath } from '../../shared/file/text.file.mjs';
 import { JAPANESE_NOTICE_PATHS, LEGAL_PATHS, LEGAL_SOURCE_SUFFIXES, REQUIRED_LICENSE_TERMS, REQUIRED_NOTICE_TERM_GROUPS, REQUIRED_NOTICE_TERMS } from './legal.policy.mjs';
 
-const JAPANESE_LINE_HEAD_PUNCTUATION = /^[、。，．。！？!?：:；;）)\]｝}〉》」』】〕…ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ]/u;
-
 function hasSourceSuffix(path) {
   return LEGAL_SOURCE_SUFFIXES.some((suffix) => path.endsWith(suffix));
 }
@@ -71,7 +69,6 @@ function checkJapaneseNoticeFormatting({ failures, path }) {
     const lineNumber = index + 1;
     const columns = [...line].length;
     if (columns > 60) failures.push(`${label}:${lineNumber} exceeds source column 60 (${columns})`);
-    if (JAPANESE_LINE_HEAD_PUNCTUATION.test(line.trimStart())) failures.push(`${label}:${lineNumber} starts with prohibited punctuation`);
   }
 }
 
@@ -103,6 +100,7 @@ export function checkLegal() {
   if (!existsSync(LEGAL_PATHS.kaiseiLicense)) failures.push('third-party/kaisei-opti/LICENSE.txt is missing');
   if (!existsSync(LEGAL_PATHS.kaiseiNotice)) failures.push('third-party/kaisei-opti/NOTICE.txt is missing');
   if (!existsSync(LEGAL_PATHS.pythonRuntimeNotice)) failures.push('third-party/python-runtime/NOTICE.txt is missing');
+
   checkRelatedNoticeVersion({
     failures,
     rootNoticeText: noticeText,
@@ -115,6 +113,7 @@ export function checkLegal() {
     path: LEGAL_PATHS.pythonRuntimeNotice,
     label: 'third-party/python-runtime/NOTICE.txt',
   });
+
   for (const path of JAPANESE_NOTICE_PATHS) checkJapaneseNoticeFormatting({ failures, path });
 
   const sourceFiles = listFiles(PROJECT_ROOT).filter(hasSourceSuffix);

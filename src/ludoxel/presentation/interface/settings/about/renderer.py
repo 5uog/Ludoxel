@@ -7,27 +7,73 @@ from collections.abc import Callable, Iterable
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
 
-from ludoxel.presentation.documentation.about.model import AboutBlock, AboutSection
-from ludoxel.presentation.interface.settings.about.widgets import about_code_block, about_code_value, about_inline_paragraph
+from ludoxel.presentation.documentation.about.model import AboutBlock, AboutRun, code_block, code_run, paragraph, paragraph_runs, text_run
+from ludoxel.presentation.interface.settings.about.widgets import about_code_block, about_inline_paragraph
 
 
 def _fence_length(line: str) -> int:
   stripped = str(line).strip()
-  if not stripped.startswith("``"):
+  if not stripped.startswith("```"):
     return 0
   count = 0
   for char in stripped:
     if char != "`":
       break
     count += 1
-  if count >= 3:
-    return 3
-  if count >= 2:
-    return 2
-  return 0
+  return count if count >= 3 else 0
 
 
-def _paragraph_blocks_from_text(text: str) -> tuple[AboutBlock, ...]:
+def _inline_runs_from_text(text: str) -> tuple[AboutRun, ...]:
+  source = str(text)
+  runs: list[AboutRun] = []
+  text_buffer: list[str] = []
+  code_buffer: list[str] = []
+  in_code = False
+  index = 0
+
+  while index < len(source):
+    char = source[index]
+    if char == "`":
+      if in_code:
+        runs.append(code_run("".join(code_buffer)))
+        code_buffer.clear()
+        in_code = False
+      else:
+        if text_buffer:
+          runs.append(text_run("".join(text_buffer)))
+          text_buffer.clear()
+        in_code = True
+      index += 1
+      continue
+
+    if in_code:
+      code_buffer.append(char)
+    else:
+      text_buffer.append(char)
+    index += 1
+
+  if in_code:
+    text_buffer.append("`")
+    text_buffer.extend(code_buffer)
+  if text_buffer:
+    runs.append(text_run("".join(text_buffer)))
+
+  if len(runs) == 1 and str(runs[0].kind) == "text":
+    return ()
+  return tuple(runs)
+
+
+def _paragraph_block_from_lines(lines: list[str]) -> AboutBlock | None:
+  text = " ".join(line.strip() for line in lines if line.strip()).strip()
+  if not text:
+    return None
+  runs = _inline_runs_from_text(text)
+  if runs:
+    return paragraph_runs(*runs)
+  return paragraph(text)
+
+
+def blocks_from_about_text(text: str) -> tuple[AboutBlock, ...]:
   lines = str(text).splitlines()
   if not lines:
     return ()
@@ -40,22 +86,21 @@ def _paragraph_blocks_from_text(text: str) -> tuple[AboutBlock, ...]:
   def flush_paragraph() -> None:
     if not paragraph_lines:
       return
-    paragraph = " ".join(line.strip() for line in paragraph_lines if line.strip()).strip()
+    block = _paragraph_block_from_lines(paragraph_lines)
     paragraph_lines.clear()
-    if paragraph:
-      blocks.append(AboutBlock(kind="paragraph", text=paragraph))
+    if block is not None:
+      blocks.append(block)
 
   def flush_code() -> None:
     if not code_lines:
       return
-    code = "\n".join(code_lines).rstrip("\n")
+    blocks.append(code_block("\n".join(code_lines).rstrip("\n")))
     code_lines.clear()
-    if code:
-      blocks.append(AboutBlock(kind="code", text=code))
 
   for raw_line in lines:
     line = str(raw_line)
     fence = _fence_length(line)
+
     if active_fence:
       if fence >= active_fence:
         flush_code()
@@ -81,43 +126,27 @@ def _paragraph_blocks_from_text(text: str) -> tuple[AboutBlock, ...]:
   return tuple(blocks)
 
 
-def _normalized_blocks(blocks: Iterable[AboutBlock]) -> tuple[AboutBlock, ...]:
-  normalized: list[AboutBlock] = []
-  for block in tuple(blocks):
-    kind = str(block.kind).strip().lower()
-    if kind == "paragraph_runs" and block.runs:
-      normalized.append(block)
-      continue
-    text = str(block.text)
-    if not text.strip():
-      continue
-    if kind == "code":
-      normalized.append(AboutBlock(kind="code", text=text))
-      continue
-    if kind == "code_value":
-      normalized.append(AboutBlock(kind="code_value", text=text))
-      continue
-    normalized.extend(_paragraph_blocks_from_text(text))
-  return tuple(normalized)
-
-
-def render_about_sections(*, parent: QWidget, layout: QVBoxLayout, sections: Iterable[AboutSection], text_factory: Callable[[QWidget, str, str], QLabel]) -> None:
+def render_about_text(*, parent: QWidget, layout: QVBoxLayout, text: str, text_factory: Callable[[QWidget, str, str], QWidget], object_name: str = "subtitle") -> None:
   layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-  for section in tuple(sections):
-    title = str(section.title).strip()
-    if title:
-      heading = QLabel(title, parent)
-      heading.setObjectName("aboutSectionTitle")
-      heading.setWordWrap(True)
-      heading.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-      layout.addWidget(heading)
+  for block in blocks_from_about_text(str(text)):
+    kind = str(block.kind).strip().lower()
+    if kind == "code":
+      layout.addWidget(about_code_block(parent, block.text))
+    elif kind == "paragraph_runs":
+      layout.addWidget(about_inline_paragraph(parent, block.runs, object_name=object_name))
+    else:
+      layout.addWidget(text_factory(parent, block.text, object_name))
 
-    for block in _normalized_blocks(section.blocks):
-      if block.kind == "code":
-        layout.addWidget(about_code_block(parent, block.text))
-      elif block.kind == "code_value":
-        layout.addWidget(about_code_value(parent, block.text))
-      elif block.kind == "paragraph_runs":
-        layout.addWidget(about_inline_paragraph(parent, block.runs))
-      else:
-        layout.addWidget(text_factory(parent, block.text, "subtitle"))
+
+def render_about_paragraphs(*, parent: QWidget, layout: QVBoxLayout, paragraphs: Iterable[str], text_factory: Callable[[QWidget, str, str], QWidget], object_name: str = "subtitle") -> None:
+  layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+  for paragraph_text in tuple(paragraphs):
+    render_about_text(parent=parent, layout=layout, text=str(paragraph_text), text_factory=text_factory, object_name=object_name)
+
+
+def add_about_section_title(parent: QWidget, layout: QVBoxLayout, title: str) -> None:
+  heading = QLabel(str(title), parent)
+  heading.setObjectName("aboutSectionTitle")
+  heading.setWordWrap(True)
+  heading.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+  layout.addWidget(heading)
