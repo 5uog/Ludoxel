@@ -10,7 +10,7 @@ from ludoxel.simulation.blocks.models.api import collision_aabbs_for_block, has_
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.states.values import slab_type_value
-from ludoxel.simulation.blocks.states.view import def_from_state, world_state_at
+from ludoxel.simulation.blocks.states.view import def_from_state, overlay_world_state_getter
 from ludoxel.simulation.blocks.structures.connectivity import collect_structural_neighbor_updates
 from ludoxel.simulation.blocks.structures.structural_rules import is_fence, is_fence_gate, is_slab, is_stairs, is_wall
 from ludoxel.simulation.worlds.state.world import BlockKey, WorldState
@@ -23,16 +23,7 @@ _FALLING_BLOCK_EPS = 1e-6
 
 
 def _overlay_state_getter(world: WorldState, *, updates: dict[BlockKey, str], removals: set[BlockKey]):
-
-  def get_state(x: int, y: int, z: int) -> str | None:
-    key = (int(x), int(y), int(z))
-    if key in removals:
-      return None
-    if key in updates:
-      return str(updates[key])
-    return world_state_at(world, int(x), int(y), int(z))
-
-  return get_state
+  return overlay_world_state_getter(world, updates=updates, removals=removals)
 
 
 @dataclass(frozen=True)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -16,8 +15,6 @@ from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chun
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.presentation.interface.common.special_item_art import build_special_item_icon_image
-from ludoxel.presentation.rendering.backends.opengl.runtime.cloud_field import CloudField
-from ludoxel.presentation.rendering.backends.opengl.runtime.light_space import compute_light_view_proj
 from ludoxel.presentation.rendering.backends.wgpu.meshes.chunk import (
   WgpuChunkMesh,
   WgpuFaceInstances,
@@ -43,7 +40,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 )
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
-from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import UVRect, WgpuTextureAtlas
+from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -63,10 +60,11 @@ from ludoxel.presentation.rendering.visuals.players.held_block_geometry import h
 from ludoxel.presentation.rendering.visuals.players.model_pose import HeldBlockPose, PlayerModelPose, build_player_model_pose
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
 from ludoxel.presentation.rendering.visuals.selections.outline import SelectionOutlineBuilder
+from ludoxel.presentation.rendering.visuals.worlds.block_visual_resolver import BlockVisualResolver
+from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField
+from ludoxel.presentation.rendering.visuals.worlds.light_space import compute_light_view_proj
 from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
-from ludoxel.simulation.blocks.definitions.block import BlockDefinition
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
-from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.structures.neighborhood import six_neighbor_state_signature
 from ludoxel.simulation.inventories.special_items.registry import special_item_icon_keys
 
@@ -79,34 +77,6 @@ _PREVIEW_TARGET = Vec3(0.0, 0.78, 0.0)
 _PREVIEW_FOV_DEG = 26.0
 _PREVIEW_NEAR = 0.1
 _PREVIEW_FAR = 10.0
-
-
-@dataclass(frozen=True)
-class _WgpuBlockVisualResolver:
-  atlas: WgpuTextureAtlas
-  blocks: BlockRegistry
-
-  def def_lookup(self, base_id: str) -> BlockDefinition | None:
-    return self.blocks.get(str(base_id))
-
-  def atlas_uv_face(self, block_state_or_id: str, face_idx: int) -> UVRect:
-    base_id, _props = parse_state(str(block_state_or_id))
-    block = self.blocks.get(str(base_id))
-    tex_name = block.texture_for_face(int(face_idx)) if block is not None else "default"
-    uv = self.atlas.uv.get(str(tex_name))
-    if uv is None:
-      uv = self.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
-    return (float(uv[0]), float(uv[1]), float(uv[2]), float(uv[3]))
-
-  def display_name(self, block_state_or_id: str) -> str:
-    base_id, _props = parse_state(str(block_state_or_id))
-    block = self.blocks.get(str(base_id))
-    if block is None:
-      return str(base_id)
-    return str(block.display_name)
-
-  def world_build_tools(self):
-    return (self.atlas_uv_face, self.def_lookup)
 
 
 def _adapter_info_value(info, name: str) -> str:
@@ -171,7 +141,7 @@ class WgpuRendererBackend:
 
     self._res: WgpuRendererResources | None = None
     self._atlas: WgpuTextureAtlas | None = None
-    self._visuals: _WgpuBlockVisualResolver | None = None
+    self._visuals: BlockVisualResolver | None = None
     self._info = BackendRendererInfo(api="WebGPU/wgpu-native", shading_language="GLSL 450")
     self._chunks: dict[ChunkKey, WgpuChunkMesh] = {}
     self._selection_cell: tuple[int, int, int] | None = None
@@ -331,7 +301,7 @@ class WgpuRendererBackend:
     self._special_item_textures = special_item_textures
     self._special_item_bind_groups = special_item_bind_groups
     self._atlas = atlas
-    self._visuals = _WgpuBlockVisualResolver(atlas=atlas, blocks=block_registry)
+    self._visuals = BlockVisualResolver(uv_by_texture=atlas.uv, blocks=block_registry)
     self._selection_outline_builder = SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup)
     self.apply_runtime_state()
 
@@ -788,13 +758,6 @@ class WgpuRendererBackend:
     visible = (float(eye_value) - surface) > 0.0 if positive else (float(eye_value) - surface) < 0.0
     return np.ascontiguousarray(data[visible], dtype=np.float32)
 
-  def _draw_transform_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
-    if self._res is None or int(face.instance_count) <= 0:
-      return 0
-    render_pass.set_vertex_buffer(1, face.instance_buffer)
-    render_pass.draw(6, int(face.instance_count), int(face_idx) * 6, 0)
-    return int(face.instance_count)
-
   def _upload_temp_face_buckets(self, face_buckets: list[np.ndarray] | tuple[np.ndarray, ...], *, label: str) -> list[WgpuFaceInstances | None]:
     if self._res is None:
       return [None for _ in range(FACE_COUNT)]
@@ -852,7 +815,7 @@ class WgpuRendererBackend:
         continue
       live_uploads.append(face)
       render_pass.set_bind_group(0, frame_bgs[int(face_idx)])
-      count = self._draw_transform_face_instances(render_pass, face_idx=int(face_idx), face=face)
+      count = self._draw_face_instances(render_pass, face_idx=int(face_idx), face=face)
       if count <= 0:
         continue
       draw_calls += 1

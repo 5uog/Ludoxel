@@ -1071,6 +1071,16 @@ QWidget#settingsDialog QLabel#aboutProfileRole {
   font-weight: 800;
 }
 
+QWidget#settingsRoot QWidget#aboutTagFlow,
+QWidget#othelloSettingsRoot QWidget#aboutTagFlow,
+QWidget#settingsDialog QWidget#aboutTagFlow,
+QWidget#settingsRoot QWidget#aboutInlineParagraph,
+QWidget#othelloSettingsRoot QWidget#aboutInlineParagraph,
+QWidget#settingsDialog QWidget#aboutInlineParagraph {
+  background: transparent;
+  border: none;
+}
+
 QWidget#settingsRoot QLabel#aboutPill,
 QWidget#othelloSettingsRoot QLabel#aboutPill,
 QWidget#settingsDialog QLabel#aboutPill {
@@ -1093,14 +1103,7 @@ QWidget#settingsDialog QLabel#aboutMetaTitle {
   font-size: 12px;
   font-weight: 800;
   min-width: 142px;
-}
-
-QWidget#settingsRoot QLabel#aboutLead,
-QWidget#othelloSettingsRoot QLabel#aboutLead,
-QWidget#settingsDialog QLabel#aboutLead {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 800;
+  qproperty-alignment: 'AlignRight | AlignVCenter';
 }
 
 QWidget#settingsRoot QLabel#aboutSectionTitle,
@@ -1113,11 +1116,8 @@ QWidget#settingsDialog QLabel#aboutSectionTitle {
 }
 
 QWidget#settingsRoot QLabel#aboutCodeBlock,
-QWidget#settingsRoot QLabel#aboutCodeValue,
 QWidget#othelloSettingsRoot QLabel#aboutCodeBlock,
-QWidget#othelloSettingsRoot QLabel#aboutCodeValue,
-QWidget#settingsDialog QLabel#aboutCodeBlock,
-QWidget#settingsDialog QLabel#aboutCodeValue {
+QWidget#settingsDialog QLabel#aboutCodeBlock {
   color: #f5f5f5;
   background: #111111;
   border-top: 2px solid #050505;
@@ -1132,11 +1132,15 @@ QWidget#settingsDialog QLabel#aboutCodeValue {
 QWidget#settingsRoot QLabel#aboutInlineCode,
 QWidget#othelloSettingsRoot QLabel#aboutInlineCode,
 QWidget#settingsDialog QLabel#aboutInlineCode {
-  color: rgba(255,255,255,205);
-  background: transparent;
-  border: none;
-  padding: 0px;
-  font-size: 13px;
+  color: #f5f5f5;
+  background: #111111;
+  border-top: 1px solid #050505;
+  border-left: 1px solid #050505;
+  border-right: 1px solid #5c5c5c;
+  border-bottom: 1px solid #5c5c5c;
+  border-radius: 0px;
+  padding: 1px 4px;
+  font-size: 12px;
 }
 
 QWidget#settingsRoot QPushButton#aboutGithubButton,
@@ -1160,6 +1164,7 @@ QWidget#settingsDialog QPushButton#linkBtn {
 }
 
 QWidget#settingsRoot QPushButton#aboutGithubButton:hover,
+QWidget#othelloSettingsRoot QPushButton#aboutGithubButton:hover,
 QWidget#settingsDialog QPushButton#aboutGithubButton:hover,
 QWidget#settingsRoot QPushButton#linkBtn:hover,
 QWidget#settingsDialog QPushButton#linkBtn:hover {
@@ -1167,6 +1172,7 @@ QWidget#settingsDialog QPushButton#linkBtn:hover {
 }
 
 QWidget#settingsRoot QPushButton#aboutGithubButton:pressed,
+QWidget#othelloSettingsRoot QPushButton#aboutGithubButton:pressed,
 QWidget#settingsDialog QPushButton#aboutGithubButton:pressed,
 QWidget#settingsRoot QPushButton#linkBtn:pressed,
 QWidget#settingsDialog QPushButton#linkBtn:pressed {

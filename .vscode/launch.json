@@ -12,13 +12,11 @@
     },
     {
       "name": "Ludoxel: native build verify",
-      "type": "debugpy",
+      "type": "node",
       "request": "launch",
-      "module": "tools.build_native_extensions",
-      "args": ["verify"],
+      "program": "${workspaceFolder}/tools/build_native_extensions/scripts/run/verify.run.mjs",
       "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false
+      "console": "integratedTerminal"
     }
   ]
 }

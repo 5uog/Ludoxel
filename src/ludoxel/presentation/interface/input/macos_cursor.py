@@ -104,6 +104,7 @@ class MacosRelativeMouseCapture:
     self._lock = Lock()
     self._pending_dx = 0
     self._pending_dy = 0
+    self._discard_next_motion_event = False
 
   def active(self) -> bool:
     """
@@ -122,7 +123,7 @@ class MacosRelativeMouseCapture:
     if bool(self._active):
       return True
     try:
-      self._reset_pending_delta()
+      self.clear_pending_delta()
       point = _CGPoint(float(x), float(y))
       if int(self._cg.CGWarpMouseCursorPosition(point)) != 0:
         return False
@@ -131,8 +132,8 @@ class MacosRelativeMouseCapture:
       display_id = int(self._cg.CGMainDisplayID())
       if int(self._cg.CGDisplayHideCursor(display_id)) == 0:
         self._cursor_hidden = True
-      self._cg.CGEventTapEnable(self._event_tap, True)
       self._active = True
+      self._cg.CGEventTapEnable(self._event_tap, True)
       return True
     except Exception as exc:
       self._load_error = str(exc).strip() or type(exc).__name__
@@ -162,8 +163,9 @@ class MacosRelativeMouseCapture:
     if cg is None:
       self._active = False
       self._cursor_hidden = False
-      self._reset_pending_delta()
+      self.clear_pending_delta()
       return
+    self._active = False
     try:
       if self._event_tap is not None:
         cg.CGEventTapEnable(self._event_tap, False)
@@ -178,9 +180,8 @@ class MacosRelativeMouseCapture:
         cg.CGDisplayShowCursor(int(cg.CGMainDisplayID()))
       except Exception:
         pass
-    self._active = False
     self._cursor_hidden = False
-    self._reset_pending_delta()
+    self.clear_pending_delta()
 
   def close(self) -> None:
     """
@@ -189,10 +190,25 @@ class MacosRelativeMouseCapture:
     """
     self.end()
 
-  def _reset_pending_delta(self) -> None:
+  def clear_pending_delta(self) -> None:
+    """
+    capture lifecycle 又は input reset より前に蓄積した相対 displacement を破棄する。
+    通常の poll と同じ lock で処理し、古い delta が次の gameplay step へ混入しないようにする。
+    """
     with self._lock:
       self._pending_dx = 0
       self._pending_dy = 0
+      self._discard_next_motion_event = False
+
+  def _prepare_event_tap_resync(self) -> None:
+    """
+    event tap の再有効化境界で累積 delta を破棄し、再開直後の一件を同期用として読み捨てる。
+    timeout 又は user-input disable 中の移動を一括適用して視点を跳ばさない。
+    """
+    with self._lock:
+      self._pending_dx = 0
+      self._pending_dy = 0
+      self._discard_next_motion_event = True
 
   def _handle_event(self, _proxy, event_type: int, event, _refcon):
     """
@@ -200,6 +216,9 @@ class MacosRelativeMouseCapture:
     listen-only tap なので event は消費せず、そのまま system と Qt へ流す。
     """
     if int(event_type) in (_CG_EVENT_TAP_DISABLED_BY_TIMEOUT, _CG_EVENT_TAP_DISABLED_BY_USER_INPUT):
+      if not bool(self._active):
+        return event
+      self._prepare_event_tap_resync()
       try:
         if self._event_tap is not None:
           self._cg.CGEventTapEnable(self._event_tap, True)
@@ -216,6 +235,9 @@ class MacosRelativeMouseCapture:
     if dx == 0 and dy == 0:
       return event
     with self._lock:
+      if bool(self._discard_next_motion_event):
+        self._discard_next_motion_event = False
+        return event
       self._pending_dx += int(dx)
       self._pending_dy += int(dy)
     return event

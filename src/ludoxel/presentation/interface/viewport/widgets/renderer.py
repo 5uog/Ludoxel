@@ -558,8 +558,3 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     settings_controller.sync_cloud_motion_pause(self)
     self._sync_runtime_activity()
     self._request_render()
-
-  def hideEvent(self, e) -> None:
-    self._set_runtime_active(False)
-    settings_controller.sync_cloud_motion_pause(self)
-    super().hideEvent(e)

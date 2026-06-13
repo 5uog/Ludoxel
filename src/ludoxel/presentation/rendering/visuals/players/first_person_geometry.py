@@ -11,9 +11,9 @@ import numpy as np
 from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Z
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, UVLookup
 from ludoxel.presentation.rendering.visuals.players.held_block_geometry import held_block_kind_scale_multiplier, held_block_model_boxes
 from ludoxel.presentation.rendering.visuals.players.render_state import FirstPersonRenderState
 from ludoxel.presentation.rendering.visuals.players.skin_uv_maps import SLIM_RIGHT_ARM_BASE_UV_PX, SLIM_RIGHT_ARM_SLEEVE_UV_PX

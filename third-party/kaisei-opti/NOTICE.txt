@@ -1,13 +1,12 @@
 Kaisei Opti 通知
 
 補助通知の範囲: 第三者通知
-関連するルート NOTICE の版: 1.0.4
+関連するルート NOTICE の版: 1.0.5
 本文言語: 日本語
 
-この通知は、Ludoxel における Kaisei Opti フォント素材のリポジトリ固
-有の利用関係を記録する補助的な第三者通知である。この通知は、
-third-party/kaisei-opti/LICENSE.txt に置かれた上流のライセンス本
-文を置換、支配的翻訳、制限、拡張、又はその他の方法で修正するものではない。
+この通知は、Ludoxel における Kaisei Opti フォント素材のリポジトリ固有の利用関係を記録する補助的な第三者通知である。
+この通知は、third-party/kaisei-opti/LICENSE.txt に置かれた上流のライセンス本文を置換、
+支配的翻訳、制限、拡張、又はその他の方法で修正するものではない。
 
 次のファイルは、Kaisei Opti フォント素材として扱われる。
 
@@ -15,30 +14,30 @@ third-party/kaisei-opti/LICENSE.txt に置かれた上流のライセンス本
 * assets/fonts/KaiseiOpti-Medium.ttf
 * assets/fonts/KaiseiOpti-Regular.ttf
 
-Kaisei Opti は Ludoxel 独自素材ではない。`Ludoxel Independent
-License` は Kaisei Opti を再許諾せず、SIL Open Font License 1.1
-も Ludoxel 独自素材を再許諾しない。
+Kaisei Opti は Ludoxel 独自素材ではない。
+Ludoxel Independent License は Kaisei Opti を再許諾せず、
+SIL Open Font License 1.1 も Ludoxel 独自素材を再許諾しない。
 
-Ludoxel が権限に基づいて配布される場合、配布物は、Kaisei Opti に適用
-されるライセンス本文及びこのリポジトリ通知を、合理的に参照できる場所に保
-持する必要がある。ソースリポジトリにおける関連パスは次のとおりである。
+Ludoxel が権限に基づいて配布される場合、配布物は、
+Kaisei Opti に適用されるライセンス本文及びこのリポジトリ通知を、
+合理的に参照できる場所に保持する必要がある。
+ソースリポジトリにおける関連パスは次のとおりである。
 
 * third-party/kaisei-opti/LICENSE.txt
 * third-party/kaisei-opti/NOTICE.txt
 
 Kaisei Opti フォントファイルを改変、サブセット化、改名、変換、埋込み、
-又はその他の方法で加工する場合、その行為には SIL Open Font License
-1.1 の要件が適用される。予約名、通知、保証否認、及び加工後の表示に関する
-条件は、当該ライセンス本文に従う。
+又はその他の方法で加工する場合、その行為には SIL Open Font License 1.1 の要件が適用される。
+予約名、通知、保証否認、及び加工後の表示に関する条件は、当該ライセンス本文に従う。
 
-この通知は、assets/fonts/ に存在する他のフォントファイルが Kaisei
-Opti、オープンソース素材、パブリックドメイン素材、又は自由に再配布できる
-素材であると述べるものではない。他のフォントファイルは、それぞれの来歴及
-びライセンス記録に従って扱われる。
+この通知は、assets/fonts/ に存在する他のフォントファイルが Kaisei Opti、
+オープンソース素材、パブリックドメイン素材、又は自由に再配布できる素材であると述べるものではない。
+他のフォントファイルは、それぞれの来歴及びライセンス記録に従って扱われる。
 
-この通知は、Ludoxel の配布許諾を発生させない。Ludoxel の配布は、ルート
-の LICENSE 又は小西拳斗が署名した別個の書面に基づく許諾を要する。
+この通知は、Ludoxel の配布許諾を発生させない。Ludoxel の配布は、
+ルートのライセンス又は小西拳斗が署名した別個の書面に基づく許諾を要する。
 
-この通知は、`Ludoxel Independent License`、ルートの NOTICE、又は
-SIL Open Font License 1.1 について、独立した版体系を作成するもので
-はない。関連するルート NOTICE の版は、上記の記録に従う。
+この通知は、`Ludoxel Independent License`、
+ルートの NOTICE、又は SIL Open Font License 1.1 について、
+独立した版体系を作成するものではない。
+関連するルート NOTICE の版は、上記の記録に従う。

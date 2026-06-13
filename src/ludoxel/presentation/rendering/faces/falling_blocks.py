@@ -6,9 +6,9 @@ import numpy as np
 
 from ludoxel.application.sessions.pipelines.render_snapshot import FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.linear.transform_matrices import translate_matrix
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, UVLookup
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 from ludoxel.simulation.blocks.states.codec import parse_state
 

@@ -34,12 +34,12 @@ from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.mesh_buffer import MeshBuffer
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
-from ludoxel.presentation.rendering.backends.opengl.runtime.cloud_field import CloudField
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import CameraParams, CloudParams
+from ludoxel.presentation.rendering.contracts.config import BackendCameraParams, BackendCloudParams
+from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField
 
 
 class CloudPass:
-  def __init__(self, clouds: CloudParams, camera: CameraParams) -> None:
+  def __init__(self, clouds: BackendCloudParams, camera: BackendCameraParams) -> None:
     self._cfg = clouds
     self._cam = camera
 

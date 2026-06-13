@@ -19,23 +19,22 @@ LicenseRef-All-Rights-Reserved identifies this independent license. It
 does not identify any standardized permissive, copyleft, public-domain,
 open-content, or community license.
 
-For purposes of this License, "Original Materials" means all
-copyrightable expression and all other protectable original materials in
-or distributed from this repository that were created by Kento Konishi,
-including source code, documentation, repository text, configuration
-files, build scripts, validation tools, shaders, user interface text,
-generated metadata, packaged files, desktop application packaging
-material, project-specific assets, project-specific textures, branding
-material, application icons, user interface assets, and other repository
-contents.
+For purposes of this License, "Original Materials" means all copyrightable
+expression and all other protectable original materials in or distributed
+from this repository that were created by Kento Konishi, including source
+code, documentation, repository text, configuration files, build scripts,
+validation tools, shaders, user interface text, generated metadata,
+packaged files, desktop application packaging material, project-specific
+assets, project-specific textures, branding material, application icons,
+user interface assets, and other repository contents.
 
 For purposes of this License, "Repository Contents" means all files,
 directories, text, source code, metadata, configuration, documentation,
 scripts, shaders, assets, resources, packaged materials, generated
 materials, and other materials made available in, through, or from this
 repository, whether viewed through a browser, accessed through a hosting
-service, downloaded, cloned, forked, mirrored, archived, copied,
-indexed, or otherwise accessed.
+service, downloaded, cloned, forked, mirrored, archived, copied, indexed,
+or otherwise accessed.
 
 Generated files, generated data, images, metadata, packaged files,
 distribution files, and bundled resources are Original Materials to the
@@ -43,68 +42,60 @@ extent that they were created by Kento Konishi, generated from materials
 created by Kento Konishi, or otherwise protected by copyrights or other
 rights held by Kento Konishi.
 
-Original Materials exclude third-party libraries, fonts, external
-packages, vendor files, platform SDKs, toolchain components, and
-materials whose provenance, authorship, or license is identified
-separately in NOTICE, third-party/, package metadata, or other
-repository legal material.
+Original Materials exclude third-party libraries, fonts, external packages,
+vendor files, platform SDKs, toolchain components, and materials whose
+provenance, authorship, or license is identified separately in NOTICE,
+third-party/, package metadata, or other repository legal material.
 
 A material remains within the scope of Original Materials when it is
-compiled, minified, optimized, transformed, rendered, exported,
-embedded, bundled, copied into a distribution directory, included in a
-package, or converted into another technical format from Original
-Materials.
+compiled, minified, optimized, transformed, rendered, exported, embedded,
+bundled, copied into a distribution directory, included in a package,
+or converted into another technical format from Original Materials.
 
-All copyrights and all other protectable rights in the Original
-Materials are reserved by Kento Konishi.
+All copyrights and all other protectable rights in the Original Materials
+are reserved by Kento Konishi.
 
 2. User Materials and Application Output
 
-For purposes of this License, "User Materials" means player names,
-player settings, key bindings, window state, custom crosshair data,
-imported skins, world edits, save data, Othello settings, user-created
-text, user-created images, user-created video, chat content, AI
-workbench history, and other materials that a user independently
-creates, inputs, edits, records, or prepares through ordinary use of the
-Ludoxel application.
+For purposes of this License, "User Materials" means player names, player
+settings, key bindings, window state, custom crosshair data, imported
+skins, world edits, save data, Othello settings, user-created text,
+user-created images, user-created video, chat content, AI workbench history,
+and other materials that a user independently creates, inputs, edits,
+records, or prepares through ordinary use of the Ludoxel application.
 
 For purposes of this License, "Application Output" means ordinary
-screenshots, screen recordings, save files, logs, generated AI
-workbench records, rendered states, configuration files, and other
-output produced by the Ludoxel application through ordinary application
-use.
+screenshots, screen recordings, save files, logs, generated AI workbench
+records, rendered states, configuration files, and other output produced
+by the Ludoxel application through ordinary application use.
 
 User Materials do not become Original Materials merely because they are
 entered, edited, generated, saved, exported, displayed, recorded, or
 shared through the Ludoxel application.
 
-Subject to this License and to applicable third-party rights, a user may
-use, record, reproduce, publish, and share that user's own User
-Materials and Application Output, including ordinary screenshots,
-ordinary screen recordings, save data, and user-created AI workbench
-output.
+Subject to this License and to applicable third-party rights, a user
+may use, record, reproduce, publish, and share that user's own User
+Materials and Application Output, including ordinary screenshots, ordinary
+screen recordings, save data, and user-created AI workbench output.
 
-The preceding permission does not authorize copying, extracting,
-modifying, publishing, distributing, deploying, incorporating,
-relicensing, selling, sublicensing, creating derivative works from,
-representing as one's own, or using as training data any Original
-Materials, third-party materials, repository text, implementation text,
-visual assets, bundled resources, project-specific textures, branding
-material, application icons, user interface assets, shaders, or any
-substantially derived work based on them.
+The preceding permission does not authorize copying, extracting, modifying,
+publishing, distributing, deploying, incorporating, relicensing, selling,
+sublicensing, creating derivative works from, representing as one's own,
+or using as training data any Original Materials, third-party materials,
+repository text, implementation text, visual assets, bundled resources,
+project-specific textures, branding material, application icons, user
+interface assets, shaders, or any substantially derived work based on them.
 
 If User Materials or Application Output contain a material part of the
-Original Materials, third-party materials, repository text, user
-interface text, visual assets, bundled resources, project-specific
-textures, branding material, application icons, or other protected
-content, the included protected material remains subject to its
-applicable legal terms.
+Original Materials, third-party materials, repository text, user interface
+text, visual assets, bundled resources, project-specific textures, branding
+material, application icons, or other protected content, the included
+protected material remains subject to its applicable legal terms.
 
-No statement in this Section 2 represents that User Materials or
-Application Output are free from third-party rights or suitable for
-publication, competition use, commercial use, educational use,
-training-data use, dataset use, model evaluation, or any other specific
-purpose.
+No statement in this Section 2 represents that User Materials or Application
+Output are free from third-party rights or suitable for publication,
+competition use, commercial use, educational use, training-data use,
+dataset use, model evaluation, or any other specific purpose.
 
 3. Limited Permission to View Repository Contents
 
@@ -113,11 +104,10 @@ only to view Repository Contents for human review and verification.
 
 The viewing permission does not include any right to copy, reproduce,
 download, clone, fork, scrape, crawl, index, mirror, archive, store,
-modify, adapt, translate, merge, restructure, refactor, optimize,
-minify, bundle, compile, transpile, publish, distribute, transmit,
-sublicense, sell, rent, lend, host, deploy, make available, incorporate,
-relicense, create derivative works from, or otherwise reuse the Original
-Materials.
+modify, adapt, translate, merge, restructure, refactor, optimize, minify,
+bundle, compile, transpile, publish, distribute, transmit, sublicense,
+sell, rent, lend, host, deploy, make available, incorporate, relicense,
+create derivative works from, or otherwise reuse the Original Materials.
 
 Public repository visibility, availability of source code, package
 metadata, generated files, or hosting-service features such as browsing,

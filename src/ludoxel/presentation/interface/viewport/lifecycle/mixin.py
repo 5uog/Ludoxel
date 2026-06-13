@@ -15,6 +15,11 @@ if TYPE_CHECKING:
 
 
 class ViewportLifecycleMixin:
+  def hideEvent(self: "GLViewportWidget", e) -> None:
+    self._set_runtime_active(False)
+    settings_controller.sync_cloud_motion_pause(self)
+    super().hideEvent(e)
+
   def _on_application_state_changed(self: "GLViewportWidget", state) -> None:
     was_active = bool(self._application_active)
     self._application_active = bool(state == Qt.ApplicationState.ApplicationActive)

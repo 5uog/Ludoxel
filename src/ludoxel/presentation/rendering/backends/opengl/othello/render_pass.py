@@ -34,7 +34,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import Sha
 from ludoxel.presentation.rendering.backends.opengl.gl.state_guard import GLStateGuard
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapInfo
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import ShadowParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams
 from ludoxel.presentation.rendering.visuals.othello.scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 
@@ -83,7 +83,7 @@ class OthelloPass:
     sun_dir: Vec3,
     debug_shadow: bool,
     shadow_enabled: bool,
-    shadow: ShadowParams,
+    shadow: BackendShadowParams,
     shadow_info: ShadowMapInfo,
   ) -> PassFrameMetrics:
     if self._world_prog is None or self._board_mesh is None or self._piece_mesh is None or render_state is None or not bool(render_state.enabled):

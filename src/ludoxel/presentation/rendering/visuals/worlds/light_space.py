@@ -6,7 +6,7 @@ import numpy as np
 
 import ludoxel.foundations.mathematics.linear.mat4 as mat4
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import ShadowParams, SunParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, BackendSunParams
 
 
 def _snap(value: float, quantum: float) -> float:
@@ -21,7 +21,7 @@ def _light_up_hint(light_forward: Vec3) -> Vec3:
   return Vec3(0.0, 0.0, 1.0) if abs(float(light_forward.z)) < 0.999 else Vec3(1.0, 0.0, 0.0)
 
 
-def compute_light_view_proj(*, center: Vec3, sun_dir: Vec3, sun: SunParams, shadow: ShadowParams, shadow_size: int) -> np.ndarray:
+def compute_light_view_proj(*, center: Vec3, sun_dir: Vec3, sun: BackendSunParams, shadow: BackendShadowParams, shadow_size: int) -> np.ndarray:
   sdir = sun_dir.normalized()
   light_forward = Vec3(-sdir.x, -sdir.y, -sdir.z).normalized()
   up_hint = _light_up_hint(light_forward)

@@ -23,11 +23,11 @@ from OpenGL.GL import (
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
-from ludoxel.presentation.rendering.backends.opengl.runtime.params import SunParams
+from ludoxel.presentation.rendering.contracts.config import BackendSunParams
 
 
 class SunPass:
-  def __init__(self, cfg: SunParams) -> None:
+  def __init__(self, cfg: BackendSunParams) -> None:
     self._cfg = cfg
     self._prog: ShaderProgram | None = None
 

@@ -6,9 +6,9 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 
 from ludoxel.foundations.mathematics.voxels.faces import face_neighbor_offset
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState
 from ludoxel.presentation.rendering.faces.axes import face_touches_cell_boundary
 from ludoxel.presentation.rendering.faces.occlusion import is_block_face_occluded, is_local_face_occluded
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, GetState
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 from ludoxel.simulation.blocks.models.common import LocalBox
 from ludoxel.simulation.blocks.states.codec import parse_state

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from ludoxel.foundations.mathematics.voxels.faces import face_neighbor_offset
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState
 from ludoxel.presentation.rendering.faces.axes import FACE_EPSILON, approx_eq, face_rect, face_touches_cell_boundary
-from ludoxel.presentation.rendering.snapshots.dto import DefLookup, GetState
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 from ludoxel.simulation.blocks.models.common import LocalBox
 from ludoxel.simulation.blocks.states.codec import parse_state

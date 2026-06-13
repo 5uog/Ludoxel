@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ludoxel.presentation.rendering.faces.uv_rects import UVRect
 from ludoxel.simulation.blocks.definitions.block import BlockDefinition
 
+UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 GetState = Callable[[int, int, int], str | None]

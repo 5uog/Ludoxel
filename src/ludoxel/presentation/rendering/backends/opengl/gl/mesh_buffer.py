@@ -14,6 +14,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.instanced_mesh_common imp
   upload_instance_rows,
   upload_instance_rows_range,
 )
+from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices
 
 
 def _create_default_vertex_buffer(vertices: np.ndarray) -> tuple[int, int, int]:
@@ -51,7 +52,7 @@ class MeshBuffer:
 
   @staticmethod
   def create_quad_instanced(face: int) -> "MeshBuffer":
-    vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_quad_vertices(face), dtype=np.float32))
+    vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(textured_unit_face_vertices(face), dtype=np.float32))
     instance_vbo = attach_instance_buffer(stride_bytes=12 * 4, attrs=((3, 3, 0), (4, 3, 12), (5, 4, 24), (6, 1, 40), (7, 1, 44)))
 
     glBindVertexArray(0)
@@ -61,7 +62,7 @@ class MeshBuffer:
 
   @staticmethod
   def create_quad_transform_instanced(face: int) -> "MeshBuffer":
-    vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_quad_vertices(face), dtype=np.float32))
+    vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(textured_unit_face_vertices(face), dtype=np.float32))
     instance_vbo = attach_instance_buffer(stride_bytes=20 * 4, attrs=((3, 4, 0), (4, 4, 16), (5, 4, 32), (6, 4, 48), (7, 4, 64)))
 
     glBindVertexArray(0)
@@ -86,36 +87,8 @@ class MeshBuffer:
     self.instance_capacity = 0
 
 
-def _face(nx, ny, nz, corners):
-  (a, b, c, d) = corners
-  return [(*a, nx, ny, nz, 0.0, 0.0), (*b, nx, ny, nz, 1.0, 0.0), (*c, nx, ny, nz, 1.0, 1.0), (*a, nx, ny, nz, 0.0, 0.0), (*c, nx, ny, nz, 1.0, 1.0), (*d, nx, ny, nz, 0.0, 1.0)]
-
-
-def _quad_vertices(face: int):
-  p = 0.5
-
-  if face == 0:
-    return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)])
-  if face == 1:
-    return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)])
-  if face == 2:
-    return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)])
-  if face == 3:
-    return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)])
-  if face == 4:
-    return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)])
-  return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)])
-
-
 def _cube_vertices():
-  p = 0.5
   faces = []
-
-  faces.extend(_face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)]))
-  faces.extend(_face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)]))
-  faces.extend(_face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)]))
-  faces.extend(_face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)]))
-  faces.extend(_face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)]))
-  faces.extend(_face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)]))
-
+  for face_idx in range(6):
+    faces.extend(textured_unit_face_vertices(face_idx))
   return faces

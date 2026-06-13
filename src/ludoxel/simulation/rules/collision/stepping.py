@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
-from ludoxel.simulation.rules.collision.support import _any_intersection, _iter_intersections
+from ludoxel.simulation.rules.collision.support import _iter_intersections, world_aabb_intersects
 from ludoxel.simulation.worlds.config.collision import CollisionParams
 from ludoxel.simulation.worlds.state.world import WorldState
 
@@ -59,11 +59,11 @@ def _try_step_up_height(
     return None
 
   up = Vec3(pos.x, pos.y + sh, pos.z)
-  if _any_intersection(world, player.aabb_at(up), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
+  if world_aabb_intersects(world, player.aabb_at(up), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
     return None
 
   moved = Vec3(up.x + float(dx), up.y, up.z + float(dz))
-  if _any_intersection(world, player.aabb_at(moved), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
+  if world_aabb_intersects(world, player.aabb_at(moved), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
     return None
 
   landed, hit_ground = _resolve_downward_snap(player, world, moved, sh, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
@@ -120,7 +120,7 @@ def _resolve_horizontal_axis_move(
     step_dx = 0.0
     step_dz = float(delta)
 
-  if allow_step and _any_intersection(world, player.aabb_at(pos_try), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
+  if allow_step and world_aabb_intersects(world, player.aabb_at(pos_try), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
     stepped = _try_step_up_height(player, world, pos, float(step_dx), float(step_dz), float(params.step_height), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
     if stepped is not None:
       return _HorizontalMoveResult(pos=stepped, hit_ground=True, stepped_up=True, step_up_dy=float(stepped.y - pos.y))
