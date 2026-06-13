@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
+from ludoxel.simulation.actors.player.damage import VOID_DAMAGE_START_Y
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.blocks.models.api import collision_aabbs_for_block, has_full_top_support_for_block
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
@@ -20,6 +21,12 @@ _FALLING_BLOCK_TICK_S = 1.0 / 20.0
 _FALLING_BLOCK_GRAVITY_PER_TICK = 0.04
 _FALLING_BLOCK_DRAG = 0.98
 _FALLING_BLOCK_EPS = 1e-6
+FALLING_BLOCK_VOID_CLEANUP_Y = float(VOID_DAMAGE_START_Y)
+"""
+active falling block を奈落で破棄する高度の下限を、player の void damage 開始高度 `VOID_DAMAGE_START_Y` と同一値として共有する。
+重力影響 block は被ダメージ entity ではないため、この高度未満へ落下した active block には damage tick を適用せず、active 集合から取り除いて world、render snapshot、persistence snapshot のいずれにも残さない。
+player damage と falling block cleanup は意味を分けたまま、奈落の境界 y 座標だけを単一の定数から取得する。
+"""
 
 
 def _overlay_state_getter(world: WorldState, *, updates: dict[BlockKey, str], removals: set[BlockKey]):
@@ -220,6 +227,10 @@ class GravitySystem:
           landed_cells.add(dst)
           if player is not None and self._player_intersects_landed_block(player, world, cell=dst, state_str=str(block.state_str), updates=landed_updates, removals=removals):
             player_overlap_exemptions.add(dst)
+        completed_ids.append(int(block.block_id))
+        continue
+
+      if float(next_y) < float(FALLING_BLOCK_VOID_CLEANUP_Y):
         completed_ids.append(int(block.block_id))
         continue
 
