@@ -361,6 +361,16 @@ class WgpuRendererBackend:
   def apply_runtime_state(self) -> None:
     self._cloud_field.set_density(int(self._state.cloud_density))
     self._cloud_field.set_seed(int(self._state.cloud_seed))
+    self._cloud_field.set_speed_variation(bool(self._state.cloud_speed_variation_enabled), float(self._state.cloud_speed_min_blocks_per_second), float(self._state.cloud_speed_max_blocks_per_second))
+    self._cloud_field.set_height_variation(
+      bool(self._state.cloud_height_variation_enabled),
+      int(self._state.cloud_fixed_y),
+      int(self._state.cloud_spawn_y_min),
+      int(self._state.cloud_spawn_y_max),
+      int(self._state.cloud_preferred_y_min),
+      int(self._state.cloud_preferred_y_max),
+      int(self._state.cloud_preferred_y_probability_percent),
+    )
     direction = str(self._state.cloud_flow_direction)
     if direction != str(self._cloud_flow_direction):
       self._advance_cloud_clock()
@@ -705,8 +715,8 @@ class WgpuRendererBackend:
   def _cloud_instance_rows(self, *, eye: Vec3, forward: Vec3, fov_deg: float, aspect: float, shift: Vec3) -> np.ndarray:
     boxes = self._cloud_field.visible_boxes(eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(aspect), z_far=float(self._cfg.camera.z_far))
     if not boxes:
-      return np.zeros((0, 7), dtype=np.float32)
-    rows = [[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul] for b in boxes]
+      return np.zeros((0, 8), dtype=np.float32)
+    rows = [[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul, b.speed_multiplier] for b in boxes]
     return np.ascontiguousarray(rows, dtype=np.float32)
 
   def _draw_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
@@ -748,13 +758,13 @@ class WgpuRendererBackend:
     """
     data = np.asarray(rows, dtype=np.float32)
     if data.ndim != 2 or int(data.shape[0]) <= 0:
-      return np.zeros((0, 7), dtype=np.float32)
+      return np.zeros((0, 8), dtype=np.float32)
     fi = int(face_idx)
     axis = 0 if fi in (0, 1) else (1 if fi in (2, 3) else 2)
     positive = fi in (0, 2, 4)
     eye_value = (float(eye.x), float(eye.y), float(eye.z))[axis]
     shift_value = (float(shift.x), float(shift.y), float(shift.z))[axis]
-    surface = data[:, axis] + float(shift_value) + ((0.5 if positive else -0.5) * data[:, axis + 3])
+    surface = data[:, axis] + float(shift_value) * data[:, 7] + ((0.5 if positive else -0.5) * data[:, axis + 3])
     visible = (float(eye_value) - surface) > 0.0 if positive else (float(eye_value) - surface) < 0.0
     return np.ascontiguousarray(data[visible], dtype=np.float32)
 

@@ -113,6 +113,18 @@ class CloudPass:
       return
     self._flow_direction = str(nxt)
     self._field.set_flow_direction(str(self._flow_direction), t_seconds=float(self._time_accum))
+    self._visible_signature = None
+    self._visible_instance_count = 0
+
+  def set_speed_variation(self, enabled: bool, min_speed: float, max_speed: float) -> None:
+    if self._field.set_speed_variation(bool(enabled), float(min_speed), float(max_speed)):
+      self._visible_signature = None
+      self._visible_instance_count = 0
+
+  def set_height_variation(self, enabled: bool, fixed_y: int, spawn_y_min: int, spawn_y_max: int, preferred_y_min: int, preferred_y_max: int, preferred_y_probability_percent: int) -> None:
+    if self._field.set_height_variation(bool(enabled), int(fixed_y), int(spawn_y_min), int(spawn_y_max), int(preferred_y_min), int(preferred_y_max), int(preferred_y_probability_percent)):
+      self._visible_signature = None
+      self._visible_instance_count = 0
 
   def set_motion_paused(self, on: bool) -> None:
     self._advance_clock()
@@ -138,7 +150,7 @@ class CloudPass:
 
     signature = tuple(int(id(box)) for box in boxes)
     if self._visible_signature != signature:
-      data = np.array([[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul] for b in boxes], dtype=np.float32)
+      data = np.array([[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul, b.speed_multiplier] for b in boxes], dtype=np.float32)
       self._mesh.upload_instances(data)
       self._visible_signature = signature
       self._visible_instance_count = int(data.shape[0])

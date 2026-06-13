@@ -4,6 +4,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ludoxel.application.preferences.clouds import (
+  DEFAULT_CLOUD_FIXED_Y,
+  DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED,
+  DEFAULT_CLOUD_PREFERRED_Y_MAX,
+  DEFAULT_CLOUD_PREFERRED_Y_MIN,
+  DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT,
+  DEFAULT_CLOUD_SPAWN_Y_MAX,
+  DEFAULT_CLOUD_SPAWN_Y_MIN,
+  DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND,
+  DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND,
+  DEFAULT_CLOUD_SPEED_VARIATION_ENABLED,
+)
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 
 
@@ -40,7 +52,7 @@ class BackendSunParams:
 
 @dataclass(frozen=True)
 class BackendCloudParams:
-  y: int = 28
+  y: int = DEFAULT_CLOUD_FIXED_Y
   thickness: int = 3
   macro: int = 32
   rects_per_cell: int = 1
@@ -48,10 +60,18 @@ class BackendCloudParams:
   view_radius: int = 150
   speed_x: float = 0.70
   speed_z: float = 0.10
+  speed_variation_enabled: bool = DEFAULT_CLOUD_SPEED_VARIATION_ENABLED
+  speed_min_blocks_per_second: float = DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND
+  speed_max_blocks_per_second: float = DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND
+  height_variation_enabled: bool = DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED
+  spawn_y_min: int = DEFAULT_CLOUD_SPAWN_Y_MIN
+  spawn_y_max: int = DEFAULT_CLOUD_SPAWN_Y_MAX
+  preferred_y_min: int = DEFAULT_CLOUD_PREFERRED_Y_MIN
+  preferred_y_max: int = DEFAULT_CLOUD_PREFERRED_Y_MAX
+  preferred_y_probability_percent: int = DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT
   color: Vec3 = Vec3(1.0, 1.0, 1.0)
   alpha: float = 0.90
   seed: int = 1337
-  lane_offsets: tuple[int, int, int] = (-1, 0, 1)
   candidate_drop_threshold: float = 0.20
   overlap_thresh: float = 0.35
   rect_margin: int = 5

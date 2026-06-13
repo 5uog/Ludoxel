@@ -235,6 +235,16 @@ class RendererBackend:
     self._cloud.set_density(int(self._state.cloud_density))
     self._cloud.set_seed(int(self._state.cloud_seed))
     self._cloud.set_flow_direction(str(self._state.cloud_flow_direction))
+    self._cloud.set_speed_variation(bool(self._state.cloud_speed_variation_enabled), float(self._state.cloud_speed_min_blocks_per_second), float(self._state.cloud_speed_max_blocks_per_second))
+    self._cloud.set_height_variation(
+      bool(self._state.cloud_height_variation_enabled),
+      int(self._state.cloud_fixed_y),
+      int(self._state.cloud_spawn_y_min),
+      int(self._state.cloud_spawn_y_max),
+      int(self._state.cloud_preferred_y_min),
+      int(self._state.cloud_preferred_y_max),
+      int(self._state.cloud_preferred_y_probability_percent),
+    )
     if self._texture_animations is not None:
       self._texture_animations.set_enabled(bool(self._state.animated_textures_enabled))
 

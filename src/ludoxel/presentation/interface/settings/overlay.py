@@ -43,6 +43,16 @@ class SettingsOverlay(SidebarDialogBase):
   cloud_density_changed = pyqtSignal(int)
   cloud_seed_changed = pyqtSignal(int)
   cloud_flow_direction_changed = pyqtSignal(str)
+  cloud_speed_variation_enabled_changed = pyqtSignal(bool)
+  cloud_speed_min_changed = pyqtSignal(float)
+  cloud_speed_max_changed = pyqtSignal(float)
+  cloud_height_variation_enabled_changed = pyqtSignal(bool)
+  cloud_fixed_y_changed = pyqtSignal(int)
+  cloud_spawn_y_min_changed = pyqtSignal(int)
+  cloud_spawn_y_max_changed = pyqtSignal(int)
+  cloud_preferred_y_min_changed = pyqtSignal(int)
+  cloud_preferred_y_max_changed = pyqtSignal(int)
+  cloud_preferred_y_probability_changed = pyqtSignal(int)
   world_wireframe_changed = pyqtSignal(bool)
   shadow_enabled_changed = pyqtSignal(bool)
   sun_azimuth_changed = pyqtSignal(float)
@@ -294,11 +304,33 @@ class SettingsOverlay(SidebarDialogBase):
   def _update_cloud_controls_enabled(self, enabled: bool) -> None:
     self._sld_cloud_density.setEnabled(bool(enabled))
     self._sld_cloud_seed.setEnabled(bool(enabled))
+    self._tg_cloud_speed_variation.setEnabled(bool(enabled))
+    self._tg_cloud_height_variation.setEnabled(bool(enabled))
+    speed_variation_enabled = bool(enabled) and bool(self._tg_cloud_speed_variation.isChecked())
+    self._ctl_cloud_speed_min.setEnabled(bool(speed_variation_enabled))
+    self._ctl_cloud_speed_max.setEnabled(bool(speed_variation_enabled))
+    height_variation_enabled = bool(enabled) and bool(self._tg_cloud_height_variation.isChecked())
+    self._ctl_cloud_fixed_y.setEnabled(bool(enabled) and (not bool(height_variation_enabled)))
+    self._ctl_cloud_spawn_y_min.setEnabled(bool(height_variation_enabled))
+    self._ctl_cloud_spawn_y_max.setEnabled(bool(height_variation_enabled))
+    self._ctl_cloud_preferred_y_min.setEnabled(bool(height_variation_enabled))
+    self._ctl_cloud_preferred_y_max.setEnabled(bool(height_variation_enabled))
+    self._ctl_cloud_preferred_y_probability.setEnabled(bool(height_variation_enabled))
 
   def _on_clouds_toggled(self, on: bool) -> None:
     enabled = bool(on)
     self._update_cloud_controls_enabled(enabled)
     self.clouds_enabled_changed.emit(enabled)
+
+  def _on_cloud_speed_variation_toggled(self, on: bool) -> None:
+    enabled = bool(on)
+    self._update_cloud_controls_enabled(bool(self._tg_clouds_enabled.isChecked()))
+    self.cloud_speed_variation_enabled_changed.emit(enabled)
+
+  def _on_cloud_height_variation_toggled(self, on: bool) -> None:
+    enabled = bool(on)
+    self._update_cloud_controls_enabled(bool(self._tg_clouds_enabled.isChecked()))
+    self.cloud_height_variation_enabled_changed.emit(enabled)
 
   def _on_view_bobbing_strength(self, value: int) -> None:
     percent = int(max(int(self._params.bob_strength_percent_min), min(int(self._params.bob_strength_percent_max), int(value))))

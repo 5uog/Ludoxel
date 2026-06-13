@@ -9,6 +9,24 @@ from typing import ClassVar
 from ludoxel.application.preferences.audio import AudioPreferences
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, cycle_camera_perspective, is_first_person_camera_perspective, normalize_camera_perspective
 from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
+from ludoxel.application.preferences.clouds import (
+  CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND,
+  CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND,
+  CLOUD_Y_MAX,
+  CLOUD_Y_MIN,
+  DEFAULT_CLOUD_FIXED_Y,
+  DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED,
+  DEFAULT_CLOUD_PREFERRED_Y_MAX,
+  DEFAULT_CLOUD_PREFERRED_Y_MIN,
+  DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT,
+  DEFAULT_CLOUD_SPAWN_Y_MAX,
+  DEFAULT_CLOUD_SPAWN_Y_MIN,
+  DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND,
+  DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND,
+  DEFAULT_CLOUD_SPEED_VARIATION_ENABLED,
+  normalize_cloud_height_settings,
+  normalize_cloud_speed_range,
+)
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
@@ -98,6 +116,18 @@ class RuntimePreferences:
   DEFAULT_ARM_SWING_DURATION_S: ClassVar[float] = 6.0 / 20.0
   ARM_SWING_DURATION_MIN_S: ClassVar[float] = 0.05
   ARM_SWING_DURATION_MAX_S: ClassVar[float] = 1.50
+  CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND: ClassVar[float] = CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND
+  CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND: ClassVar[float] = CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND
+  DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND: ClassVar[float] = DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND
+  DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND: ClassVar[float] = DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND
+  CLOUD_Y_MIN: ClassVar[int] = CLOUD_Y_MIN
+  CLOUD_Y_MAX: ClassVar[int] = CLOUD_Y_MAX
+  DEFAULT_CLOUD_FIXED_Y: ClassVar[int] = DEFAULT_CLOUD_FIXED_Y
+  DEFAULT_CLOUD_SPAWN_Y_MIN: ClassVar[int] = DEFAULT_CLOUD_SPAWN_Y_MIN
+  DEFAULT_CLOUD_SPAWN_Y_MAX: ClassVar[int] = DEFAULT_CLOUD_SPAWN_Y_MAX
+  DEFAULT_CLOUD_PREFERRED_Y_MIN: ClassVar[int] = DEFAULT_CLOUD_PREFERRED_Y_MIN
+  DEFAULT_CLOUD_PREFERRED_Y_MAX: ClassVar[int] = DEFAULT_CLOUD_PREFERRED_Y_MAX
+  DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT: ClassVar[int] = DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT
 
   current_space_id: str = PLAY_SPACE_MY_WORLD
   invert_x: bool = False
@@ -108,6 +138,16 @@ class RuntimePreferences:
   cloud_density: int = 1
   cloud_seed: int = 1337
   cloud_flow_direction: str = DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
+  cloud_speed_variation_enabled: bool = DEFAULT_CLOUD_SPEED_VARIATION_ENABLED
+  cloud_speed_min_blocks_per_second: float = DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND
+  cloud_speed_max_blocks_per_second: float = DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND
+  cloud_height_variation_enabled: bool = DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED
+  cloud_fixed_y: int = DEFAULT_CLOUD_FIXED_Y
+  cloud_spawn_y_min: int = DEFAULT_CLOUD_SPAWN_Y_MIN
+  cloud_spawn_y_max: int = DEFAULT_CLOUD_SPAWN_Y_MAX
+  cloud_preferred_y_min: int = DEFAULT_CLOUD_PREFERRED_Y_MIN
+  cloud_preferred_y_max: int = DEFAULT_CLOUD_PREFERRED_Y_MAX
+  cloud_preferred_y_probability_percent: int = DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT
   world_wire: bool = False
   shadow_enabled: bool = True
   creative_mode: bool = False
@@ -173,6 +213,8 @@ class RuntimePreferences:
     self.outline_selection = bool(self.outline_selection)
     self.cloud_wire = bool(self.cloud_wire)
     self.cloud_enabled = bool(self.cloud_enabled)
+    self.cloud_speed_variation_enabled = bool(self.cloud_speed_variation_enabled)
+    self.cloud_height_variation_enabled = bool(self.cloud_height_variation_enabled)
     self.world_wire = bool(self.world_wire)
     self.shadow_enabled = bool(self.shadow_enabled)
     self.creative_mode = bool(self.creative_mode)
@@ -198,6 +240,12 @@ class RuntimePreferences:
     self.cloud_density = clampi(int(self.cloud_density), 0, 4)
     self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
     self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
+    self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = (
+      normalize_cloud_height_settings(
+        self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+      )
+    )
     self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
     self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
     self.camera_shake_strength = clampf(float(self.camera_shake_strength), 0.0, 1.0)
@@ -392,6 +440,16 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
       cloud_density=int(runtime.cloud_density),
       cloud_seed=int(runtime.cloud_seed),
       cloud_flow_direction=str(runtime.cloud_flow_direction),
+      cloud_speed_variation_enabled=bool(runtime.cloud_speed_variation_enabled),
+      cloud_speed_min_blocks_per_second=float(runtime.cloud_speed_min_blocks_per_second),
+      cloud_speed_max_blocks_per_second=float(runtime.cloud_speed_max_blocks_per_second),
+      cloud_height_variation_enabled=bool(runtime.cloud_height_variation_enabled),
+      cloud_fixed_y=int(runtime.cloud_fixed_y),
+      cloud_spawn_y_min=int(runtime.cloud_spawn_y_min),
+      cloud_spawn_y_max=int(runtime.cloud_spawn_y_max),
+      cloud_preferred_y_min=int(runtime.cloud_preferred_y_min),
+      cloud_preferred_y_max=int(runtime.cloud_preferred_y_max),
+      cloud_preferred_y_probability_percent=int(runtime.cloud_preferred_y_probability_percent),
       world_wire=bool(runtime.world_wire),
       shadow_enabled=bool(runtime.shadow_enabled),
       creative_mode=bool(runtime.creative_mode),

@@ -25,6 +25,16 @@ def apply_runtime_to_renderer(runtime: RuntimePreferences, renderer) -> None:
   renderer.set_cloud_density(int(runtime.cloud_density))
   renderer.set_cloud_seed(int(runtime.cloud_seed))
   renderer.set_cloud_flow_direction(str(runtime.cloud_flow_direction))
+  renderer.set_cloud_speed_variation(bool(runtime.cloud_speed_variation_enabled), float(runtime.cloud_speed_min_blocks_per_second), float(runtime.cloud_speed_max_blocks_per_second))
+  renderer.set_cloud_height_variation(
+    bool(runtime.cloud_height_variation_enabled),
+    int(runtime.cloud_fixed_y),
+    int(runtime.cloud_spawn_y_min),
+    int(runtime.cloud_spawn_y_max),
+    int(runtime.cloud_preferred_y_min),
+    int(runtime.cloud_preferred_y_max),
+    int(runtime.cloud_preferred_y_probability_percent),
+  )
   renderer.set_animated_textures_enabled(bool(runtime.animated_textures_enabled))
   renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
   renderer.set_world_wireframe(bool(runtime.world_wire))
@@ -71,6 +81,16 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
     cloud_density=int(settings.cloud_density),
     cloud_seed=int(settings.cloud_seed),
     cloud_flow_direction=str(settings.cloud_flow_direction),
+    cloud_speed_variation_enabled=bool(settings.cloud_speed_variation_enabled),
+    cloud_speed_min_blocks_per_second=float(settings.cloud_speed_min_blocks_per_second),
+    cloud_speed_max_blocks_per_second=float(settings.cloud_speed_max_blocks_per_second),
+    cloud_height_variation_enabled=bool(settings.cloud_height_variation_enabled),
+    cloud_fixed_y=int(settings.cloud_fixed_y),
+    cloud_spawn_y_min=int(settings.cloud_spawn_y_min),
+    cloud_spawn_y_max=int(settings.cloud_spawn_y_max),
+    cloud_preferred_y_min=int(settings.cloud_preferred_y_min),
+    cloud_preferred_y_max=int(settings.cloud_preferred_y_max),
+    cloud_preferred_y_probability_percent=int(settings.cloud_preferred_y_probability_percent),
     creative_mode=bool(settings.creative_mode),
     block_break_repeat_interval_s=float(settings.block_break_repeat_interval_s),
     block_place_repeat_interval_s=float(loaded_place_repeat_interval_s),
@@ -139,6 +159,16 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
     cloud_density=int(runtime.cloud_density),
     cloud_seed=int(runtime.cloud_seed),
     cloud_flow_direction=str(runtime.cloud_flow_direction),
+    cloud_speed_variation_enabled=bool(runtime.cloud_speed_variation_enabled),
+    cloud_speed_min_blocks_per_second=float(runtime.cloud_speed_min_blocks_per_second),
+    cloud_speed_max_blocks_per_second=float(runtime.cloud_speed_max_blocks_per_second),
+    cloud_height_variation_enabled=bool(runtime.cloud_height_variation_enabled),
+    cloud_fixed_y=int(runtime.cloud_fixed_y),
+    cloud_spawn_y_min=int(runtime.cloud_spawn_y_min),
+    cloud_spawn_y_max=int(runtime.cloud_spawn_y_max),
+    cloud_preferred_y_min=int(runtime.cloud_preferred_y_min),
+    cloud_preferred_y_max=int(runtime.cloud_preferred_y_max),
+    cloud_preferred_y_probability_percent=int(runtime.cloud_preferred_y_probability_percent),
     creative_mode=bool(runtime.creative_mode),
     block_break_repeat_interval_s=float(runtime.block_break_repeat_interval_s),
     block_place_repeat_interval_s=float(runtime.block_place_repeat_interval_s),

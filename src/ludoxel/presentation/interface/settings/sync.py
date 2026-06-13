@@ -111,6 +111,17 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
   cloud_seed = clampi(int(values["cloud_seed"]), 0, 9999)
   _block_signals_set_value(overlay._sld_cloud_seed, cloud_seed)
   overlay._lbl_cloud_seed.setText(f"Cloud seed: {cloud_seed}")
+
+  _sync_toggle(overlay._tg_cloud_speed_variation, bool(values["cloud_speed_variation_enabled"]))
+  overlay._ctl_cloud_speed_min.set_value(float(values["cloud_speed_min_blocks_per_second"]))
+  overlay._ctl_cloud_speed_max.set_value(float(values["cloud_speed_max_blocks_per_second"]))
+  _sync_toggle(overlay._tg_cloud_height_variation, bool(values["cloud_height_variation_enabled"]))
+  overlay._ctl_cloud_fixed_y.set_value(float(values["cloud_fixed_y"]))
+  overlay._ctl_cloud_spawn_y_min.set_value(float(values["cloud_spawn_y_min"]))
+  overlay._ctl_cloud_spawn_y_max.set_value(float(values["cloud_spawn_y_max"]))
+  overlay._ctl_cloud_preferred_y_min.set_value(float(values["cloud_preferred_y_min"]))
+  overlay._ctl_cloud_preferred_y_max.set_value(float(values["cloud_preferred_y_max"]))
+  overlay._ctl_cloud_preferred_y_probability.set_value(float(values["cloud_preferred_y_probability_percent"]))
   overlay._update_cloud_controls_enabled(bool(values["clouds_enabled"]))
 
   overlay._btn_mode_toggle.blockSignals(True)

@@ -193,7 +193,7 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   overlay._ctl_block_break_particle_speed_scale.value_changed.connect(overlay.block_break_particle_speed_scale_changed.emit)
   particles_layout.addWidget(overlay._ctl_block_break_particle_speed_scale)
 
-  _cloud_card, cloud_body, cloud_layout = add_settings_card(layout, host, title="Clouds", description="Visibility, wireframe, density, seed, and flow direction.")
+  _cloud_card, cloud_body, cloud_layout = add_settings_card(layout, host, title="Clouds", description="Visibility, placement, height, and horizontal flow behavior.")
 
   overlay._tg_clouds_enabled = overlay._add_toggle(cloud_layout, cloud_body, "Show clouds", overlay._on_clouds_toggled)
   overlay._tg_cloud_wire = overlay._add_toggle(cloud_layout, cloud_body, "Cloud wireframe", overlay.cloud_wireframe_changed.emit)
@@ -216,6 +216,104 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   overlay._sld_cloud_seed = overlay._new_slider(host, 0, 9999)
   overlay._sld_cloud_seed.valueChanged.connect(overlay._on_cloud_seed)
   add_setting_row(cloud_layout, cloud_body, label="Cloud seed", description="Deterministic seed used by cloud placement.", control=overlay._sld_cloud_seed, label_widget=overlay._lbl_cloud_seed)
+
+  overlay._tg_cloud_speed_variation = overlay._add_toggle(cloud_layout, cloud_body, "Enable per-cloud speed variation", overlay._on_cloud_speed_variation_toggled)
+  overlay._ctl_cloud_speed_min = AdvancedScalarControl(
+    title="Slowest cloud speed (blocks/s)",
+    min_value=float(RuntimePreferences.CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND),
+    max_value=float(RuntimePreferences.CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND),
+    slider_scale=100.0,
+    decimals=2,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_speed_min.value_changed.connect(overlay.cloud_speed_min_changed.emit)
+  cloud_layout.addWidget(overlay._ctl_cloud_speed_min)
+
+  overlay._ctl_cloud_speed_max = AdvancedScalarControl(
+    title="Fastest cloud speed (blocks/s)",
+    min_value=float(RuntimePreferences.CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND),
+    max_value=float(RuntimePreferences.CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND),
+    slider_scale=100.0,
+    decimals=2,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_speed_max.value_changed.connect(overlay.cloud_speed_max_changed.emit)
+  cloud_layout.addWidget(overlay._ctl_cloud_speed_max)
+
+  overlay._tg_cloud_height_variation = overlay._add_toggle(cloud_layout, cloud_body, "Enable cloud height variation", overlay._on_cloud_height_variation_toggled)
+  overlay._ctl_cloud_fixed_y = AdvancedScalarControl(
+    title="Fixed cloud Y coordinate",
+    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
+    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
+    slider_scale=1.0,
+    decimals=0,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_FIXED_Y),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_fixed_y.value_changed.connect(lambda value: overlay.cloud_fixed_y_changed.emit(int(round(float(value)))))
+  cloud_layout.addWidget(overlay._ctl_cloud_fixed_y)
+
+  overlay._ctl_cloud_spawn_y_min = AdvancedScalarControl(
+    title="Random spawn Y range minimum",
+    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
+    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
+    slider_scale=1.0,
+    decimals=0,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MIN),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_spawn_y_min.value_changed.connect(lambda value: overlay.cloud_spawn_y_min_changed.emit(int(round(float(value)))))
+  cloud_layout.addWidget(overlay._ctl_cloud_spawn_y_min)
+
+  overlay._ctl_cloud_spawn_y_max = AdvancedScalarControl(
+    title="Random spawn Y range maximum",
+    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
+    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
+    slider_scale=1.0,
+    decimals=0,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MAX),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_spawn_y_max.value_changed.connect(lambda value: overlay.cloud_spawn_y_max_changed.emit(int(round(float(value)))))
+  cloud_layout.addWidget(overlay._ctl_cloud_spawn_y_max)
+
+  overlay._ctl_cloud_preferred_y_min = AdvancedScalarControl(
+    title="Preferred Y interval minimum",
+    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
+    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
+    slider_scale=1.0,
+    decimals=0,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MIN),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_preferred_y_min.value_changed.connect(lambda value: overlay.cloud_preferred_y_min_changed.emit(int(round(float(value)))))
+  cloud_layout.addWidget(overlay._ctl_cloud_preferred_y_min)
+
+  overlay._ctl_cloud_preferred_y_max = AdvancedScalarControl(
+    title="Preferred Y interval maximum",
+    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
+    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
+    slider_scale=1.0,
+    decimals=0,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MAX),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_preferred_y_max.value_changed.connect(lambda value: overlay.cloud_preferred_y_max_changed.emit(int(round(float(value)))))
+  cloud_layout.addWidget(overlay._ctl_cloud_preferred_y_max)
+
+  overlay._ctl_cloud_preferred_y_probability = AdvancedScalarControl(
+    title="Preferred Y interval probability (%)",
+    min_value=0.0,
+    max_value=100.0,
+    slider_scale=1.0,
+    decimals=0,
+    default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT),
+    parent=cloud_body,
+  )
+  overlay._ctl_cloud_preferred_y_probability.value_changed.connect(lambda value: overlay.cloud_preferred_y_probability_changed.emit(int(round(float(value)))))
+  cloud_layout.addWidget(overlay._ctl_cloud_preferred_y_probability)
 
   _sun_card, sun_body, sun_layout = add_settings_card(layout, host, title="Sun", description="Azimuth and elevation used by scene lighting.")
 

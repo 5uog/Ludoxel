@@ -399,9 +399,13 @@ def create_cloud_pipeline(*, device, target_format, depth_format, camera_bind_gr
           "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
         },
         {
-          "array_stride": 7 * 4,
+          "array_stride": 8 * 4,
           "step_mode": "instance",
-          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3}, {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4}],
+          "attributes": [
+            {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3},
+            {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4},
+            {"format": wgpu.VertexFormat.float32, "offset": 7 * 4, "shader_location": 5},
+          ],
         },
       ],
     },
@@ -430,9 +434,13 @@ def create_cloud_wireframe_pipeline(*, device, target_format, depth_format, came
           "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
         },
         {
-          "array_stride": 7 * 4,
+          "array_stride": 8 * 4,
           "step_mode": "instance",
-          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3}, {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4}],
+          "attributes": [
+            {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3},
+            {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4},
+            {"format": wgpu.VertexFormat.float32, "offset": 7 * 4, "shader_location": 5},
+          ],
         },
       ],
     },

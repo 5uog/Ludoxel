@@ -6,8 +6,11 @@ import math
 from dataclasses import dataclass
 
 from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
+from ludoxel.application.preferences.clouds import normalize_cloud_height_settings, normalize_cloud_speed_range
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.contracts.config import BackendCloudParams
+
+_CLOUD_SPEED_LANE_COUNT = 5
 
 
 @dataclass(frozen=True)
@@ -15,6 +18,7 @@ class CloudBox:
   center: Vec3
   size: Vec3
   alpha_mul: float
+  speed_multiplier: float
 
 
 @dataclass(frozen=True)
@@ -31,29 +35,83 @@ class CloudField:
 
     self._enabled_density: int = int(max(0, int(cfg.rects_per_cell)))
     self._seed: int = int(cfg.seed)
+    self._speed_variation_enabled: bool = bool(cfg.speed_variation_enabled)
+    self._speed_min_blocks_per_second, self._speed_max_blocks_per_second = normalize_cloud_speed_range(cfg.speed_min_blocks_per_second, cfg.speed_max_blocks_per_second)
+    self._height_variation_enabled: bool = bool(cfg.height_variation_enabled)
+    (self._fixed_y, self._spawn_y_min, self._spawn_y_max, self._preferred_y_min, self._preferred_y_max, self._preferred_y_probability_percent) = normalize_cloud_height_settings(
+      cfg.y, cfg.spawn_y_min, cfg.spawn_y_max, cfg.preferred_y_min, cfg.preferred_y_max, cfg.preferred_y_probability_percent
+    )
 
     self._flow_direction: str = normalize_backend_cloud_flow_direction(DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION)
     self._flow_epoch_s: float = 0.0
     self._flow_base_shift: Vec3 = Vec3(0.0, 0.0, 0.0)
 
-    self._anchor_key: tuple[int, int] | None = None
+    self._anchor_key: tuple[tuple[int, int], ...] | None = None
     self._boxes_cache: list[CloudBox] = []
+
+  def _invalidate_cache(self) -> None:
+    self._anchor_key = None
+    self._boxes_cache = []
 
   def set_density(self, density: int) -> None:
     d = int(max(0, density))
     if d == int(self._enabled_density):
       return
     self._enabled_density = d
-    self._anchor_key = None
-    self._boxes_cache = []
+    self._invalidate_cache()
 
   def set_seed(self, seed: int) -> None:
     s = int(seed)
     if s == int(self._seed):
       return
     self._seed = s
-    self._anchor_key = None
-    self._boxes_cache = []
+    self._invalidate_cache()
+
+  def set_speed_variation(self, enabled: bool, min_speed: float, max_speed: float) -> bool:
+    """
+    雲ごとの速度 lane を有効化し、絶対速度の最小値と最大値を block/second 単位で更新する。
+    速度倍率は生成済み instance payload に含まれるため、設定値が変化した場合だけ cache を破棄する。
+    """
+    speed_min, speed_max = normalize_cloud_speed_range(min_speed, max_speed)
+    signature = (bool(enabled), float(speed_min), float(speed_max))
+    current = (bool(self._speed_variation_enabled), float(self._speed_min_blocks_per_second), float(self._speed_max_blocks_per_second))
+    if signature == current:
+      return False
+    self._speed_variation_enabled = bool(enabled)
+    self._speed_min_blocks_per_second = float(speed_min)
+    self._speed_max_blocks_per_second = float(speed_max)
+    self._invalidate_cache()
+    return True
+
+  def set_height_variation(self, enabled: bool, fixed_y: int, spawn_y_min: int, spawn_y_max: int, preferred_y_min: int, preferred_y_max: int, preferred_y_probability_percent: int) -> bool:
+    """
+    雲の固定高度又は重み付き生成高度を更新し、seed 固定の box 配置 cache へ反映する。
+    優先区間は全体生成範囲へ clamp 済みで保持するため、逆転値や範囲外値を生成処理へ渡さない。
+    """
+    fixed, spawn_min, spawn_max, preferred_min, preferred_max, probability = normalize_cloud_height_settings(
+      fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, preferred_y_probability_percent
+    )
+    signature = (bool(enabled), int(fixed), int(spawn_min), int(spawn_max), int(preferred_min), int(preferred_max), int(probability))
+    current = (
+      bool(self._height_variation_enabled),
+      int(self._fixed_y),
+      int(self._spawn_y_min),
+      int(self._spawn_y_max),
+      int(self._preferred_y_min),
+      int(self._preferred_y_max),
+      int(self._preferred_y_probability_percent),
+    )
+    if signature == current:
+      return False
+    self._height_variation_enabled = bool(enabled)
+    self._fixed_y = int(fixed)
+    self._spawn_y_min = int(spawn_min)
+    self._spawn_y_max = int(spawn_max)
+    self._preferred_y_min = int(preferred_min)
+    self._preferred_y_max = int(preferred_max)
+    self._preferred_y_probability_percent = int(probability)
+    self._invalidate_cache()
+    return True
 
   def set_flow_direction(self, direction: str, *, t_seconds: float = 0.0) -> None:
     nxt = normalize_backend_cloud_flow_direction(str(direction))
@@ -64,6 +122,7 @@ class CloudField:
     self._flow_direction = str(nxt)
     self._flow_epoch_s = float(ts)
     self._flow_base_shift = Vec3(float(cur.x), 0.0, float(cur.z))
+    self._invalidate_cache()
 
   def _flow_speed(self) -> float:
     sx = abs(float(self._cfg.speed_x))
@@ -92,25 +151,43 @@ class CloudField:
     vx, vz = self._flow_velocity(self._flow_direction)
     return Vec3(float(self._flow_base_shift.x) + vx * dt, 0.0, float(self._flow_base_shift.z) + vz * dt)
 
+  def _speed_multipliers(self) -> tuple[float, ...]:
+    """
+    absolute cloud speed を既存 flow speed に対する有限個の倍率 lane へ変換する。
+    variation 無効時は倍率 1 の単一 lane を返すため、従来の global shift と同じ移動量になる。
+    """
+    if not bool(self._speed_variation_enabled):
+      return (1.0,)
+
+    base_speed = float(self._flow_speed())
+    if float(base_speed) <= 1e-9:
+      return (1.0,)
+
+    speed_min = float(self._speed_min_blocks_per_second)
+    speed_max = float(self._speed_max_blocks_per_second)
+    if math.isclose(float(speed_min), float(speed_max), rel_tol=0.0, abs_tol=1e-9):
+      return (float(speed_min) / float(base_speed),)
+
+    last_lane = int(_CLOUD_SPEED_LANE_COUNT - 1)
+    return tuple((float(speed_min) + (float(speed_max) - float(speed_min)) * (float(lane_index) / float(last_lane))) / float(base_speed) for lane_index in range(int(_CLOUD_SPEED_LANE_COUNT)))
+
   def ensure_cache(self, eye: Vec3, shift: Vec3) -> None:
     if int(self._enabled_density) <= 0:
-      self._anchor_key = None
-      self._boxes_cache = []
+      self._invalidate_cache()
       return
-
-    px = float(eye.x) - float(shift.x)
-    pz = float(eye.z) - float(shift.z)
 
     m = int(self._cfg.macro)
-    ax = self._floor_div(int(math.floor(px)), m)
-    az = self._floor_div(int(math.floor(pz)), m)
-    key = (ax, az)
+    speed_multipliers = self._speed_multipliers()
+    anchors = tuple(
+      (self._floor_div(int(math.floor(float(eye.x) - float(shift.x) * float(speed_multiplier))), m), self._floor_div(int(math.floor(float(eye.z) - float(shift.z) * float(speed_multiplier))), m))
+      for speed_multiplier in speed_multipliers
+    )
 
-    if self._anchor_key == key:
+    if self._anchor_key == anchors:
       return
 
-    self._anchor_key = key
-    self._boxes_cache = self._build_cloud_boxes(anchor_mx=ax, anchor_mz=az)
+    self._anchor_key = anchors
+    self._boxes_cache = self._build_cloud_boxes(anchors=anchors, speed_multipliers=speed_multipliers)
 
   def visible_boxes(self, eye: Vec3, shift: Vec3, forward: Vec3, fov_deg: float, aspect: float, z_far: float) -> list[CloudBox]:
     self.ensure_cache(eye=eye, shift=shift)
@@ -127,7 +204,7 @@ class CloudField:
 
     out: list[CloudBox] = []
     for b in self._boxes_cache:
-      c_world = Vec3(b.center.x + shift.x, b.center.y, b.center.z + shift.z)
+      c_world = Vec3(b.center.x + shift.x * float(b.speed_multiplier), b.center.y, b.center.z + shift.z * float(b.speed_multiplier))
 
       hx = b.size.x * 0.5
       hy = b.size.y * 0.5
@@ -154,7 +231,7 @@ class CloudField:
 
     return out
 
-  def _build_cloud_boxes(self, anchor_mx: int, anchor_mz: int) -> list[CloudBox]:
+  def _build_cloud_boxes(self, *, anchors: tuple[tuple[int, int], ...], speed_multipliers: tuple[float, ...]) -> list[CloudBox]:
     m = int(self._cfg.macro)
     r = int(self._cfg.view_radius)
 
@@ -169,49 +246,73 @@ class CloudField:
     candidates_per_cell = int(max(rects_per_cell, int(self._cfg.candidates_per_cell)))
 
     boxes: list[CloudBox] = []
-    for mx in range(anchor_mx - span, anchor_mx + span + 1):
-      for mz in range(anchor_mz - span, anchor_mz + span + 1):
-        accepted: list[_RectXZ] = []
+    for speed_lane, ((anchor_mx, anchor_mz), speed_multiplier) in enumerate(zip(anchors, speed_multipliers, strict=True)):
+      for mx in range(anchor_mx - span, anchor_mx + span + 1):
+        for mz in range(anchor_mz - span, anchor_mz + span + 1):
+          accepted: list[_RectXZ] = []
 
-        for i in range(candidates_per_cell):
-          r_keep = self._hash3(mx, mz, i, int(self._seed) ^ 0x51ED270B)
-          if r_keep < float(self._cfg.candidate_drop_threshold):
-            continue
+          for i in range(candidates_per_cell):
+            r_keep = self._hash3(mx, mz, i, int(self._seed) ^ 0x51ED270B)
+            if r_keep < float(self._cfg.candidate_drop_threshold):
+              continue
 
-          cx, cz, sx, sz = self._rect_params(mx, mz, i, m)
+            cx, cz, sx, sz = self._rect_params(mx, mz, i, m)
 
-          min_x = mx * m + (cx - sx)
-          max_x = mx * m + (cx + sx + 1)
-          min_z = mz * m + (cz - sz)
-          max_z = mz * m + (cz + sz + 1)
+            min_x = mx * m + (cx - sx)
+            max_x = mx * m + (cx + sx + 1)
+            min_z = mz * m + (cz - sz)
+            max_z = mz * m + (cz + sz + 1)
 
-          rect = _RectXZ(min_x=min_x, max_x=max_x, min_z=min_z, max_z=max_z)
+            rect = _RectXZ(min_x=min_x, max_x=max_x, min_z=min_z, max_z=max_z)
 
-          if self._overlaps_too_much(rect, accepted, thresh=float(self._cfg.overlap_thresh)):
-            continue
+            if self._overlaps_too_much(rect, accepted, thresh=float(self._cfg.overlap_thresh)):
+              continue
 
-          accepted.append(rect)
-          if len(accepted) >= rects_per_cell:
-            break
+            accepted.append(rect)
+            if len(accepted) >= rects_per_cell:
+              break
 
-        for ridx, rect in enumerate(accepted):
-          size_x = float(rect.max_x - rect.min_x)
-          size_z = float(rect.max_z - rect.min_z)
-          bx = float(rect.min_x) + size_x * 0.5
-          bz = float(rect.min_z) + size_z * 0.5
+          for ridx, rect in enumerate(accepted):
+            assigned_lane = self._speed_lane(mx, mz, ridx, lane_count=len(speed_multipliers))
+            if int(assigned_lane) != int(speed_lane):
+              continue
 
-          lane_r = self._hash3(mx, mz, ridx, int(self._seed) ^ 0xA24BAEDB)
-          lanes = self._cfg.lane_offsets
-          lane = lanes[0] if lane_r < 0.33 else (lanes[1] if lane_r < 0.66 else lanes[2])
+            size_x = float(rect.max_x - rect.min_x)
+            size_z = float(rect.max_z - rect.min_z)
+            bx = float(rect.min_x) + size_x * 0.5
+            bz = float(rect.min_z) + size_z * 0.5
 
-          y0 = float(int(self._cfg.y) + int(lane))
-          cy = y0 + size_y * 0.5
+            y0 = float(self._cloud_y(mx, mz, ridx))
+            cy = y0 + size_y * 0.5
 
-          a = float(self._cfg.alpha_min) + float(self._cfg.alpha_range) * self._hash3(mx, mz, ridx, int(self._seed) ^ 0xB5297A4D)
+            a = float(self._cfg.alpha_min) + float(self._cfg.alpha_range) * self._hash3(mx, mz, ridx, int(self._seed) ^ 0xB5297A4D)
 
-          boxes.append(CloudBox(center=Vec3(bx, cy, bz), size=Vec3(size_x, size_y, size_z), alpha_mul=float(a)))
+            boxes.append(CloudBox(center=Vec3(bx, cy, bz), size=Vec3(size_x, size_y, size_z), alpha_mul=float(a), speed_multiplier=float(speed_multiplier)))
 
     return boxes
+
+  def _speed_lane(self, mx: int, mz: int, rect_index: int, *, lane_count: int) -> int:
+    count = max(1, int(lane_count))
+    if count <= 1:
+      return 0
+    lane_random = self._hash3(mx, mz, rect_index, int(self._seed) ^ 0xA24BAEDB)
+    return min(int(count - 1), int(float(lane_random) * float(count)))
+
+  def _cloud_y(self, mx: int, mz: int, rect_index: int) -> int:
+    if not bool(self._height_variation_enabled):
+      return int(self._fixed_y)
+
+    preferred_roll = self._hash3(mx, mz, rect_index, int(self._seed) ^ 0xC2B2AE35)
+    preferred_probability = float(self._preferred_y_probability_percent) / 100.0
+    if float(preferred_roll) < float(preferred_probability):
+      y_min = int(self._preferred_y_min)
+      y_max = int(self._preferred_y_max)
+      sample = self._hash3(mx, mz, rect_index, int(self._seed) ^ 0x27D4EB2F)
+    else:
+      y_min = int(self._spawn_y_min)
+      y_max = int(self._spawn_y_max)
+      sample = self._hash3(mx, mz, rect_index, int(self._seed) ^ 0x165667B1)
+    return int(y_min + min(int(y_max - y_min), int(float(sample) * float(y_max - y_min + 1))))
 
   def _rect_params(self, mx: int, mz: int, idx: int, m: int) -> tuple[int, int, int, int]:
     s = int(self._seed) ^ (idx * 0x9E3779B9)

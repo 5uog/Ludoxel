@@ -32,6 +32,16 @@ class Renderer:
       cloud_density=int(self._cfg.clouds.rects_per_cell),
       cloud_seed=int(self._cfg.clouds.seed),
       cloud_flow_direction=DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION,
+      cloud_speed_variation_enabled=bool(self._cfg.clouds.speed_variation_enabled),
+      cloud_speed_min_blocks_per_second=float(self._cfg.clouds.speed_min_blocks_per_second),
+      cloud_speed_max_blocks_per_second=float(self._cfg.clouds.speed_max_blocks_per_second),
+      cloud_height_variation_enabled=bool(self._cfg.clouds.height_variation_enabled),
+      cloud_fixed_y=int(self._cfg.clouds.y),
+      cloud_spawn_y_min=int(self._cfg.clouds.spawn_y_min),
+      cloud_spawn_y_max=int(self._cfg.clouds.spawn_y_max),
+      cloud_preferred_y_min=int(self._cfg.clouds.preferred_y_min),
+      cloud_preferred_y_max=int(self._cfg.clouds.preferred_y_max),
+      cloud_preferred_y_probability_percent=int(self._cfg.clouds.preferred_y_probability_percent),
       sun_azimuth_deg=float(self._cfg.sun.azimuth_deg),
       sun_elevation_deg=float(self._cfg.sun.elevation_deg),
     )
@@ -71,6 +81,14 @@ class Renderer:
 
   def set_cloud_flow_direction(self, direction: str) -> None:
     self._state.set_cloud_flow_direction(str(direction))
+    self._backend.apply_runtime_state()
+
+  def set_cloud_speed_variation(self, enabled: bool, min_speed: float, max_speed: float) -> None:
+    self._state.set_cloud_speed_variation(bool(enabled), float(min_speed), float(max_speed))
+    self._backend.apply_runtime_state()
+
+  def set_cloud_height_variation(self, enabled: bool, fixed_y: int, spawn_y_min: int, spawn_y_max: int, preferred_y_min: int, preferred_y_max: int, preferred_y_probability_percent: int) -> None:
+    self._state.set_cloud_height_variation(bool(enabled), int(fixed_y), int(spawn_y_min), int(spawn_y_max), int(preferred_y_min), int(preferred_y_max), int(preferred_y_probability_percent))
     self._backend.apply_runtime_state()
 
   def set_cloud_motion_paused(self, on: bool) -> None:

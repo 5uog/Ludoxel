@@ -50,6 +50,16 @@ def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
   overlay.cloud_density_changed.connect(lambda value: set_cloud_density(viewport, int(value)))
   overlay.cloud_seed_changed.connect(lambda value: set_cloud_seed(viewport, int(value)))
   overlay.cloud_flow_direction_changed.connect(lambda direction: set_cloud_flow_direction(viewport, str(direction)))
+  overlay.cloud_speed_variation_enabled_changed.connect(lambda on: set_cloud_speed_variation_enabled(viewport, bool(on)))
+  overlay.cloud_speed_min_changed.connect(lambda value: set_cloud_speed_min(viewport, float(value)))
+  overlay.cloud_speed_max_changed.connect(lambda value: set_cloud_speed_max(viewport, float(value)))
+  overlay.cloud_height_variation_enabled_changed.connect(lambda on: set_cloud_height_variation_enabled(viewport, bool(on)))
+  overlay.cloud_fixed_y_changed.connect(lambda value: set_cloud_fixed_y(viewport, int(value)))
+  overlay.cloud_spawn_y_min_changed.connect(lambda value: set_cloud_spawn_y_min(viewport, int(value)))
+  overlay.cloud_spawn_y_max_changed.connect(lambda value: set_cloud_spawn_y_max(viewport, int(value)))
+  overlay.cloud_preferred_y_min_changed.connect(lambda value: set_cloud_preferred_y_min(viewport, int(value)))
+  overlay.cloud_preferred_y_max_changed.connect(lambda value: set_cloud_preferred_y_max(viewport, int(value)))
+  overlay.cloud_preferred_y_probability_changed.connect(lambda value: set_cloud_preferred_y_probability(viewport, int(value)))
   overlay.world_wireframe_changed.connect(lambda on: set_world_wire(viewport, bool(on)))
   overlay.shadow_enabled_changed.connect(lambda on: set_shadow_enabled(viewport, bool(on)))
   overlay.sun_azimuth_changed.connect(lambda value: set_sun_azimuth(viewport, float(value)))
@@ -218,6 +228,16 @@ def sync_settings_values(viewport: "RendererViewportWidget") -> None:
     cloud_density=int(viewport._state.cloud_density),
     cloud_seed=int(viewport._state.cloud_seed),
     cloud_flow_direction=str(viewport._state.cloud_flow_direction),
+    cloud_speed_variation_enabled=bool(viewport._state.cloud_speed_variation_enabled),
+    cloud_speed_min_blocks_per_second=float(viewport._state.cloud_speed_min_blocks_per_second),
+    cloud_speed_max_blocks_per_second=float(viewport._state.cloud_speed_max_blocks_per_second),
+    cloud_height_variation_enabled=bool(viewport._state.cloud_height_variation_enabled),
+    cloud_fixed_y=int(viewport._state.cloud_fixed_y),
+    cloud_spawn_y_min=int(viewport._state.cloud_spawn_y_min),
+    cloud_spawn_y_max=int(viewport._state.cloud_spawn_y_max),
+    cloud_preferred_y_min=int(viewport._state.cloud_preferred_y_min),
+    cloud_preferred_y_max=int(viewport._state.cloud_preferred_y_max),
+    cloud_preferred_y_probability_percent=int(viewport._state.cloud_preferred_y_probability_percent),
     world_wire=viewport._state.world_wire,
     shadow_enabled=viewport._state.shadow_enabled,
     block_break_particle_spawn_rate=float(viewport._state.block_break_particle_spawn_rate),
@@ -406,6 +426,94 @@ def set_cloud_flow_direction(viewport: "RendererViewportWidget", direction: str)
   viewport._state.cloud_flow_direction = str(direction)
   viewport._state.normalize()
   viewport._renderer.set_cloud_flow_direction(str(viewport._state.cloud_flow_direction))
+
+
+def _apply_cloud_speed_variation(viewport: "RendererViewportWidget") -> None:
+  viewport._renderer.set_cloud_speed_variation(
+    bool(viewport._state.cloud_speed_variation_enabled), float(viewport._state.cloud_speed_min_blocks_per_second), float(viewport._state.cloud_speed_max_blocks_per_second)
+  )
+
+
+def _apply_cloud_height_variation(viewport: "RendererViewportWidget") -> None:
+  viewport._renderer.set_cloud_height_variation(
+    bool(viewport._state.cloud_height_variation_enabled),
+    int(viewport._state.cloud_fixed_y),
+    int(viewport._state.cloud_spawn_y_min),
+    int(viewport._state.cloud_spawn_y_max),
+    int(viewport._state.cloud_preferred_y_min),
+    int(viewport._state.cloud_preferred_y_max),
+    int(viewport._state.cloud_preferred_y_probability_percent),
+  )
+
+
+def set_cloud_speed_variation_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
+  viewport._state.cloud_speed_variation_enabled = bool(on)
+  viewport._state.normalize()
+  _apply_cloud_speed_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_speed_min(viewport: "RendererViewportWidget", speed: float) -> None:
+  viewport._state.cloud_speed_min_blocks_per_second = float(speed)
+  viewport._state.normalize()
+  _apply_cloud_speed_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_speed_max(viewport: "RendererViewportWidget", speed: float) -> None:
+  viewport._state.cloud_speed_max_blocks_per_second = float(speed)
+  viewport._state.normalize()
+  _apply_cloud_speed_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_height_variation_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
+  viewport._state.cloud_height_variation_enabled = bool(on)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_fixed_y(viewport: "RendererViewportWidget", value: int) -> None:
+  viewport._state.cloud_fixed_y = int(value)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_spawn_y_min(viewport: "RendererViewportWidget", value: int) -> None:
+  viewport._state.cloud_spawn_y_min = int(value)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_spawn_y_max(viewport: "RendererViewportWidget", value: int) -> None:
+  viewport._state.cloud_spawn_y_max = int(value)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_preferred_y_min(viewport: "RendererViewportWidget", value: int) -> None:
+  viewport._state.cloud_preferred_y_min = int(value)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_preferred_y_max(viewport: "RendererViewportWidget", value: int) -> None:
+  viewport._state.cloud_preferred_y_max = int(value)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
+
+
+def set_cloud_preferred_y_probability(viewport: "RendererViewportWidget", value: int) -> None:
+  viewport._state.cloud_preferred_y_probability_percent = int(value)
+  viewport._state.normalize()
+  _apply_cloud_height_variation(viewport)
+  sync_settings_values(viewport)
 
 
 def set_world_wire(viewport: "RendererViewportWidget", on: bool) -> None:

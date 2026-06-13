@@ -7,6 +7,7 @@ from typing import Any
 
 from ludoxel.application.preferences.audio import AudioPreferences
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, normalize_camera_perspective
+from ludoxel.application.preferences.clouds import normalize_cloud_height_settings, normalize_cloud_speed_range
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
@@ -38,6 +39,16 @@ class PersistedSettings:
   cloud_density: int = 1
   cloud_seed: int = 1337
   cloud_flow_direction: str = "west_to_east"
+  cloud_speed_variation_enabled: bool = True
+  cloud_speed_min_blocks_per_second: float = float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND)
+  cloud_speed_max_blocks_per_second: float = float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND)
+  cloud_height_variation_enabled: bool = True
+  cloud_fixed_y: int = int(RuntimePreferences.DEFAULT_CLOUD_FIXED_Y)
+  cloud_spawn_y_min: int = int(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MIN)
+  cloud_spawn_y_max: int = int(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MAX)
+  cloud_preferred_y_min: int = int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MIN)
+  cloud_preferred_y_max: int = int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MAX)
+  cloud_preferred_y_probability_percent: int = int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT)
 
   creative_mode: bool = False
   block_break_repeat_interval_s: float = float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S)
@@ -86,6 +97,22 @@ class PersistedSettings:
   keybinds: KeybindSettings = field(default_factory=KeybindSettings)
   audio: AudioPreferences = field(default_factory=AudioPreferences)
 
+  def __post_init__(self) -> None:
+    speed_min, speed_max = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, probability = normalize_cloud_height_settings(
+      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+    )
+    object.__setattr__(self, "cloud_speed_variation_enabled", bool(self.cloud_speed_variation_enabled))
+    object.__setattr__(self, "cloud_speed_min_blocks_per_second", float(speed_min))
+    object.__setattr__(self, "cloud_speed_max_blocks_per_second", float(speed_max))
+    object.__setattr__(self, "cloud_height_variation_enabled", bool(self.cloud_height_variation_enabled))
+    object.__setattr__(self, "cloud_fixed_y", int(fixed_y))
+    object.__setattr__(self, "cloud_spawn_y_min", int(spawn_y_min))
+    object.__setattr__(self, "cloud_spawn_y_max", int(spawn_y_max))
+    object.__setattr__(self, "cloud_preferred_y_min", int(preferred_y_min))
+    object.__setattr__(self, "cloud_preferred_y_max", int(preferred_y_max))
+    object.__setattr__(self, "cloud_preferred_y_probability_percent", int(probability))
+
   def to_dict(self) -> dict[str, Any]:
     return {
       "fov_deg": float(self.fov_deg),
@@ -102,6 +129,16 @@ class PersistedSettings:
       "cloud_density": int(self.cloud_density),
       "cloud_seed": int(self.cloud_seed),
       "cloud_flow_direction": str(self.cloud_flow_direction),
+      "cloud_speed_variation_enabled": bool(self.cloud_speed_variation_enabled),
+      "cloud_speed_min_blocks_per_second": float(self.cloud_speed_min_blocks_per_second),
+      "cloud_speed_max_blocks_per_second": float(self.cloud_speed_max_blocks_per_second),
+      "cloud_height_variation_enabled": bool(self.cloud_height_variation_enabled),
+      "cloud_fixed_y": int(self.cloud_fixed_y),
+      "cloud_spawn_y_min": int(self.cloud_spawn_y_min),
+      "cloud_spawn_y_max": int(self.cloud_spawn_y_max),
+      "cloud_preferred_y_min": int(self.cloud_preferred_y_min),
+      "cloud_preferred_y_max": int(self.cloud_preferred_y_max),
+      "cloud_preferred_y_probability_percent": int(self.cloud_preferred_y_probability_percent),
       "creative_mode": bool(self.creative_mode),
       "block_break_repeat_interval_s": float(self.block_break_repeat_interval_s),
       "block_place_repeat_interval_s": float(self.block_place_repeat_interval_s),
@@ -166,6 +203,16 @@ class PersistedSettings:
       cloud_density=mapping_int(d, "cloud_density", 1),
       cloud_seed=mapping_int(d, "cloud_seed", 1337),
       cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"),
+      cloud_speed_variation_enabled=mapping_bool(d, "cloud_speed_variation_enabled", True),
+      cloud_speed_min_blocks_per_second=mapping_float(d, "cloud_speed_min_blocks_per_second", float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND)),
+      cloud_speed_max_blocks_per_second=mapping_float(d, "cloud_speed_max_blocks_per_second", float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND)),
+      cloud_height_variation_enabled=mapping_bool(d, "cloud_height_variation_enabled", True),
+      cloud_fixed_y=mapping_int(d, "cloud_fixed_y", int(RuntimePreferences.DEFAULT_CLOUD_FIXED_Y)),
+      cloud_spawn_y_min=mapping_int(d, "cloud_spawn_y_min", int(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MIN)),
+      cloud_spawn_y_max=mapping_int(d, "cloud_spawn_y_max", int(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MAX)),
+      cloud_preferred_y_min=mapping_int(d, "cloud_preferred_y_min", int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MIN)),
+      cloud_preferred_y_max=mapping_int(d, "cloud_preferred_y_max", int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MAX)),
+      cloud_preferred_y_probability_percent=mapping_int(d, "cloud_preferred_y_probability_percent", int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT)),
       creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)),
       block_break_repeat_interval_s=mapping_float(d, "block_break_repeat_interval_s", float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S)),
       block_place_repeat_interval_s=mapping_float(d, "block_place_repeat_interval_s", float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)),
