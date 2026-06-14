@@ -281,8 +281,7 @@ class OthelloMatchController:
   def submit_ai_move(self, square_index: int | None) -> bool:
     """
     controller が `ai_turn` のとき AI move を適用する。
-    呼び出し側の move が `None` 又は illegal である場合は先頭の legal move を採用し、
-    非同期 AI 結果で状態機械が未定義にならないようにする。
+    呼び出し側の move が `None` 又は illegal である場合は先頭の legal move を採用し、非同期 AI 結果で状態機械が未定義にならないようにする。
     """
     state = self._state.normalized()
     if state.status != OTHELLO_GAME_STATE_AI_TURN:
@@ -340,8 +339,7 @@ class OthelloMatchController:
   def _coerce_loaded_state(self, state: OthelloGameState) -> OthelloGameState:
     """
     persisted snapshot を live transition invariants へ調停する。
-    stale animation を消し、board と turn から legal moves を再計算し、
-    terminal state と idle state を非 transient な形に整える。
+    stale animation を消し、board と turn から legal moves を再計算し、terminal state と idle state を非 transient な形に整える。
     """
     normalized = state.normalized()
     if normalized.status == OTHELLO_GAME_STATE_IDLE:
@@ -356,8 +354,7 @@ class OthelloMatchController:
   def _resolve_turn_transition(self, *, message_prefix: str, reset_per_move_timer: bool) -> OthelloGameState:
     """
     pass rule、legal move generation、terminal detection、per-move timer reload を閉包として適用する。
-    現在 side が打てる場合はその legal moves を公開し、打てない場合は pass を試み、
-    双方が打てない場合は winner を評価して finished state へ入る。
+    現在 side が打てる場合はその legal moves を公開し、打てない場合は pass を試み、双方が打てない場合は winner を評価して finished state へ入る。
     """
     state = self._state.normalized()
     if state.status == OTHELLO_GAME_STATE_FINISHED:

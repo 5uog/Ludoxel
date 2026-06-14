@@ -29,7 +29,8 @@ class SystemInfo:
 class ProcessMemorySnapshot:
   """
   現在プロセスの常駐集合サイズと物理メモリ総量を同じ単位で保持する。
-  `rss_bytes` と `total_bytes` は byte 単位の整数又は取得不能を表す `None` であり、HUD 側の MiB 表示と欠落表示はこの型の `None` 契約に依存する。
+  `rss_bytes` と `total_bytes` は byte 単位の整数又は取得不能を表す `None` であり、
+  HUD 側の MiB 表示と欠落表示はこの型の `None` 契約に依存する。
   """
 
   rss_bytes: int | None
@@ -92,7 +93,8 @@ def _posix_total_mem_bytes_sysconf() -> int | None:
 def _linux_read_first_cpu_field(key: str) -> str:
   """
   Linux の `/proc/cpuinfo` から指定 key に一致する最初の field 値を読み出す。
-  読取失敗、区切り記号欠落、該当 field 欠落はいずれも空文字列へ正規化され、CPU 名と MHz 取得の上位処理は例外を意識せずに欠落を判定できる。
+  読取失敗、区切り記号欠落、該当 field 欠落はいずれも空文字列へ正規化され、
+  CPU 名と MHz 取得の上位処理は例外を意識せずに欠落を判定できる。
   """
   p = "/proc/cpuinfo"
   try:
@@ -149,7 +151,8 @@ def _linux_rss_bytes_proc() -> int | None:
 def _posix_rss_bytes_ps() -> int | None:
   """
   POSIX `ps -o rss=` の出力から現在プロセスの RSS を byte 単位で取得する。
-  `ps` の失敗、timeout、空出力、非正値はいずれも `None` へ正規化され、Linux と macOS の memory snapshot が同じ欠落規則で扱われる。
+  `ps` の失敗、timeout、空出力、非正値はいずれも `None` へ正規化され、
+  Linux と macOS の memory snapshot が同じ欠落規則で扱われる。
   """
   try:
     pid = str(os.getpid())

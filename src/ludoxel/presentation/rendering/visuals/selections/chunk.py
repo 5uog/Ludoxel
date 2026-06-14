@@ -14,8 +14,11 @@ ChunkPredicate = Callable[[ChunkKey], bool]
 
 def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_distance_chunks: int) -> bool:
   """
-  chunk key と camera chunk を正規化したうえで、水平距離を render distance、垂直距離を固定範囲 `|dy| <= 1` によって判定する。
-  renderer は水平方向だけを設定可能距離とし、垂直方向は局所作業帯に制限する。
+  chunk key と camera chunk を正規化したうえで、x, y, z の三軸に同一の render distance 半径を適用する chebyshev 判定で draw-visible 可否を返す。
+  返値は `max(abs(dx), abs(dy), abs(dz)) <= render_distance_chunks` の真偽であり、ここで `(dx, dy, dz)` は chunk と camera chunk の各軸 chunk 距離である。
+  水平方向と同様に垂直方向も render distance に比例させ、Y 軸だけを固定帯に制限しないため、camera の上昇・下降時にも resident chunk が draw pass の predicate で突然除外されない。
+  world geometry の fog 終端は block 単位で `min(render_distance_chunks * CHUNK_SIZE, z_far)` であり常に `render_distance_chunks` chunk 以内に収まるため、この立方体は fog でまだ視認可能な距離にある geometry の chunk を draw 対象から落とさない。
+  視錐台による棄却は `select_visible_chunks` 側の frustum clip が別途担い、この predicate は render distance policy のみを表す。
   """
   ck = normalize_chunk_key(chunk_key)
   cam = normalize_chunk_key(camera_chunk)
@@ -24,7 +27,7 @@ def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_d
   dx = abs(int(ck[0]) - int(cam[0]))
   dy = abs(int(ck[1]) - int(cam[1]))
   dz = abs(int(ck[2]) - int(cam[2]))
-  return (dx <= rd) and (dy <= 1) and (dz <= rd)
+  return (dx <= rd) and (dy <= rd) and (dz <= rd)
 
 
 def select_visible_chunks(chunk_keys: Iterable[ChunkKey], matrix: np.ndarray, *, predicate: ChunkPredicate | None = None) -> list[ChunkKey]:
