@@ -11,7 +11,7 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
 from ludoxel.presentation.rendering.backends.opengl.passes.textured_face import TexturedFacePass
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
-from ludoxel.presentation.rendering.contracts.config import DistanceFog
+from ludoxel.presentation.rendering.contracts.config import GeometryDistanceFog
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
 
 
@@ -31,7 +31,7 @@ class BlockBreakParticlePass:
     self._face_pass = None
     self._atlas = None
 
-  def draw(self, *, samples: tuple[BlockBreakParticleRenderSampleDTO, ...], view_proj: np.ndarray, sun_dir: Vec3, camera_forward: Vec3, fog: DistanceFog | None = None) -> tuple[int, int]:
+  def draw(self, *, samples: tuple[BlockBreakParticleRenderSampleDTO, ...], view_proj: np.ndarray, sun_dir: Vec3, camera_forward: Vec3, fog: GeometryDistanceFog | None = None) -> tuple[int, int]:
     if self._face_pass is None or self._atlas is None or not samples:
       return (0, 0)
 

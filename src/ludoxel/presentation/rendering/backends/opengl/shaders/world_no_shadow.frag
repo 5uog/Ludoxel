@@ -14,7 +14,7 @@ uniform sampler2D u_atlas;
 uniform vec3 u_sunDir;
 uniform int u_selMode;
 uniform float u_selTint;
-uniform vec2 u_fogCamXZ;
+uniform vec3 u_fogCamPos;
 uniform float u_fogStart;
 uniform float u_fogEnd;
 uniform vec3 u_fogColor;
@@ -55,6 +55,6 @@ void main() {
         base = mix(base, vec3(1.0), t);
     }
 
-    vec3 shaded = ldx_apply_distance_fog(base * lit, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    vec3 shaded = ldx_apply_geometry_distance_fog(base * lit, v_worldPos, u_fogCamPos, u_fogStart, u_fogEnd, u_fogColor);
     fragColor = vec4(shaded, tex.a);
 }

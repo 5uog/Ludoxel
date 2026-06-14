@@ -18,7 +18,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.textured_face import 
 from ludoxel.presentation.rendering.backends.opengl.resources.image_texture import ImageTexture
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, DistanceFog
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, GeometryDistanceFog
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
 from ludoxel.presentation.rendering.faces.uv_rects import UVRect
@@ -101,7 +101,7 @@ class PlayerModelPass:
     shadow_enabled: bool,
     shadow: BackendShadowParams,
     shadow_info: ShadowMapInfo,
-    fog: DistanceFog | None = None,
+    fog: GeometryDistanceFog | None = None,
   ) -> tuple[int, int]:
     del light_view_proj, debug_shadow, shadow_enabled, shadow, shadow_info
     if self._face_pass is None or self._skin_texture is None or self._atlas is None:

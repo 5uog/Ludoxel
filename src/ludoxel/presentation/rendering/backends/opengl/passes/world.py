@@ -16,7 +16,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.aggregated_face_batch
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapInfo
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, DistanceFog
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, GeometryDistanceFog
 from ludoxel.presentation.rendering.visuals.selections.chunk import select_visible_chunks, within_render_distance
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 
@@ -43,7 +43,7 @@ class WorldDrawInputs:
   sel_z: int
   sel_tint: float
 
-  fog: DistanceFog
+  fog: GeometryDistanceFog
 
 
 class WorldPass:
@@ -111,7 +111,7 @@ class WorldPass:
       prog.set_int("u_selMode", int(inp.sel_mode))
       prog.set_ivec3("u_selBlock", int(inp.sel_x), int(inp.sel_y), int(inp.sel_z))
       prog.set_float("u_selTint", float(inp.sel_tint))
-      prog.set_vec2("u_fogCamXZ", float(inp.fog.cam_x), float(inp.fog.cam_z))
+      prog.set_vec3("u_fogCamPos", float(inp.fog.cam_x), float(inp.fog.cam_y), float(inp.fog.cam_z))
       prog.set_float("u_fogStart", float(inp.fog.start))
       prog.set_float("u_fogEnd", float(inp.fog.end))
       prog.set_vec3("u_fogColor", float(inp.fog.color.x), float(inp.fog.color.y), float(inp.fog.color.z))

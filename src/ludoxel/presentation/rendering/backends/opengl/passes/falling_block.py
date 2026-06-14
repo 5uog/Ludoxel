@@ -7,12 +7,12 @@ import numpy as np
 from ludoxel.application.sessions.pipelines.render_snapshot import FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.passes.textured_block import TexturedBlockPassBase
-from ludoxel.presentation.rendering.contracts.config import DistanceFog
+from ludoxel.presentation.rendering.contracts.config import GeometryDistanceFog
 from ludoxel.presentation.rendering.faces.falling_blocks import build_falling_block_face_rows
 
 
 class FallingBlockPass(TexturedBlockPassBase):
-  def draw(self, *, samples: tuple[FallingBlockRenderSampleDTO, ...], view_proj: np.ndarray, sun_dir: Vec3, fog: DistanceFog | None = None) -> tuple[int, int]:
+  def draw(self, *, samples: tuple[FallingBlockRenderSampleDTO, ...], view_proj: np.ndarray, sun_dir: Vec3, fog: GeometryDistanceFog | None = None) -> tuple[int, int]:
     if not self._ready() or self._uv_lookup is None or self._def_lookup is None:
       return (0, 0)
 

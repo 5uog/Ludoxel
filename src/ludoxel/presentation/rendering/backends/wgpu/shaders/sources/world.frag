@@ -101,6 +101,6 @@ void main() {
         base = mix(base, vec3(1.0), t);
     }
 
-    vec3 shaded = ldx_apply_distance_fog(base * lit, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    vec3 shaded = ldx_apply_geometry_distance_fog(base * lit, v_worldPos, u_fogCamPos, u_fogStart, u_fogEnd, u_fogColor);
     fragColor = vec4(shaded, tex.a);
 }

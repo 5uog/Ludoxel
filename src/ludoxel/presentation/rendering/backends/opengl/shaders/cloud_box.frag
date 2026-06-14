@@ -24,7 +24,7 @@ void main() {
     float ndl = max(dot(n, l), 0.0);
     float ambient = 0.90;
     float lit = ambient + ndl * (1.0 - ambient) * 0.35;
-    float fog = ldx_distance_fog_factor(v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd);
+    float fog = ldx_cloud_fog_factor(v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd);
     float a = clamp(u_alpha * v_alphaMul, 0.0, 1.0) * (1.0 - fog);
 
     fragColor = vec4(u_color * lit, a);

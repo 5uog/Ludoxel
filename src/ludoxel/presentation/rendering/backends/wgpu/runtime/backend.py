@@ -41,7 +41,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
-from ludoxel.presentation.rendering.contracts.config import DistanceFog, cloud_fog_range, render_distance_fog_range, render_distance_radius_blocks
+from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range, render_distance_radius_blocks
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -524,19 +524,19 @@ class WgpuRendererBackend:
     sel_block: tuple[int, int, int] | None = None,
     shadow_enabled: bool = False,
     debug_shadow: bool = False,
-    fog: DistanceFog | None = None,
+    fog: GeometryDistanceFog | None = None,
   ) -> bytes:
     vp = _opengl_clip_to_wgpu(view_proj)
     light_vp = vp if light_view_proj is None else _opengl_clip_to_wgpu(light_view_proj)
-    active_fog = fog if fog is not None else DistanceFog.disabled()
+    active_fog = fog if fog is not None else GeometryDistanceFog.disabled()
     uniform = np.zeros((_UNIFORM_FLOAT_COUNT,), dtype=np.float32)
     uniform[:16] = np.ascontiguousarray(vp.T, dtype=np.float32).reshape(16)
     uniform[16:32] = np.ascontiguousarray(light_vp.T, dtype=np.float32).reshape(16)
     sun = self._state.sun_dir.normalized()
     uniform[32:35] = (float(sun.x), float(sun.y), float(sun.z))
     uniform[35] = float(tint_value)
-    uniform[44:48] = (float(active_fog.cam_x), float(active_fog.cam_z), float(active_fog.start), float(active_fog.end))
-    uniform[48:51] = (float(active_fog.color.x), float(active_fog.color.y), float(active_fog.color.z))
+    uniform[44:48] = (float(active_fog.cam_x), float(active_fog.cam_y), float(active_fog.cam_z), float(active_fog.start))
+    uniform[48:52] = (float(active_fog.color.x), float(active_fog.color.y), float(active_fog.color.z), float(active_fog.end))
     raw = bytearray(uniform.tobytes())
     ints = np.frombuffer(raw, dtype=np.int32)
     ints[36] = int(face_idx)
@@ -581,7 +581,7 @@ class WgpuRendererBackend:
     sel_block: tuple[int, int, int] | None = None,
     shadow_enabled: bool = False,
     debug_shadow: bool = False,
-    fog: DistanceFog | None = None,
+    fog: GeometryDistanceFog | None = None,
   ) -> tuple[tuple[object, ...], tuple[object, ...]]:
     if self._res is None:
       return ((), ())
@@ -647,13 +647,13 @@ class WgpuRendererBackend:
     if not bool(self._cloud_motion_paused):
       self._cloud_time_accum += float(dt)
 
-  def _create_cloud_uniform_bind_group(self, *, view_proj: np.ndarray, shift: Vec3, fog: DistanceFog | None = None) -> tuple[object | None, object | None]:
+  def _create_cloud_uniform_bind_group(self, *, view_proj: np.ndarray, shift: Vec3, fog: CloudDistanceFog | None = None) -> tuple[object | None, object | None]:
     if self._res is None:
       return (None, None)
     import wgpu
 
     color = self._cfg.clouds.color
-    active_fog = fog if fog is not None else DistanceFog.disabled()
+    active_fog = fog if fog is not None else CloudDistanceFog.disabled()
     uniform = np.zeros((32,), dtype=np.float32)
     uniform[:16] = np.ascontiguousarray(_opengl_clip_to_wgpu(view_proj).T, dtype=np.float32).reshape(16)
     uniform[16:20] = (float(shift.x), float(shift.y), float(shift.z), float(self._cfg.clouds.alpha))
@@ -875,9 +875,9 @@ class WgpuRendererBackend:
     z_far = float(self._cfg.camera.z_far)
     fog_color = self._cfg.sky.clear_color
     world_fog_start, world_fog_end = render_distance_fog_range(int(render_distance_chunks), float(z_far))
-    world_fog = DistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
+    world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
     cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
-    cloud_fog = DistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
+    cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
     shadow_coverage_radius = render_distance_radius_blocks(int(render_distance_chunks))
 
     view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg))

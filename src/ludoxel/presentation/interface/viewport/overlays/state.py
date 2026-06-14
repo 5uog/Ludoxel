@@ -457,10 +457,9 @@ class ViewportOverlayMixin:
         anchor = Vec3(float(ai_snapshot.position_x), float(ai_snapshot.position_y) + float(ai_snapshot.height) + float(_PLAYER_NAME_VERTICAL_OFFSET), float(ai_snapshot.position_z))
         to_anchor = anchor - eye
         distance = float(to_anchor.length())
-        distance_xz = float(Vec3(float(to_anchor.x), 0.0, float(to_anchor.z)).length())
         if float(distance) <= 1e-4 or float(distance) > float(_AI_TAG_MAX_DISTANCE):
           continue
-        if float(fog_end) > float(fog_start) and float(distance_xz) >= float(fog_end):
+        if float(fog_end) > float(fog_start) and float(distance) >= float(fog_end):
           continue
         clip = view_proj @ np.asarray([float(anchor.x), float(anchor.y), float(anchor.z), 1.0], dtype=np.float32)
         if float(clip[3]) <= 1e-6:
@@ -475,7 +474,7 @@ class ViewportOverlayMixin:
         tag_scale = float(clampf(float(_AI_TAG_REFERENCE_DISTANCE) / max(float(distance), 1e-3), float(_AI_TAG_MIN_SCALE), float(_AI_TAG_MAX_SCALE)))
         opacity = 1.0
         if float(fog_end) > float(fog_start):
-          fog_factor = float(clampf((float(distance_xz) - float(fog_start)) / max(float(fog_end) - float(fog_start), 1e-3), 0.0, 1.0))
+          fog_factor = float(clampf((float(distance) - float(fog_start)) / max(float(fog_end) - float(fog_start), 1e-3), 0.0, 1.0))
           opacity *= float(1.0 - fog_factor)
         if self._ai_tag_occluded(actor_id=str(ai_snapshot.actor_id), eye=eye, anchor=anchor, distance=float(distance)):
           opacity *= float(_PLAYER_NAME_OCCLUDED_OPACITY)

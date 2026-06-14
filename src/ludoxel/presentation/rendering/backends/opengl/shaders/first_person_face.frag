@@ -11,7 +11,7 @@ uniform sampler2D u_texture;
 uniform vec3 u_sunDir;
 uniform vec3 u_tintColor;
 uniform float u_tintMix;
-uniform vec2 u_fogCamXZ;
+uniform vec3 u_fogCamPos;
 uniform float u_fogStart;
 uniform float u_fogEnd;
 uniform vec3 u_fogColor;
@@ -50,6 +50,6 @@ void main() {
         shaded = mix(shaded, tinted, tintMix);
     }
 
-    shaded = ldx_apply_distance_fog(shaded, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    shaded = ldx_apply_geometry_distance_fog(shaded, v_worldPos, u_fogCamPos, u_fogStart, u_fogEnd, u_fogColor);
     fragColor = vec4(shaded, tex.a);
 }

@@ -22,6 +22,7 @@ from ludoxel.simulation.worlds.config.render_distance import clamp_render_distan
 
 RENDER_DISTANCE_FADE_START_FRACTION: float = 0.85
 CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 1.5
+CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 128.0
 SHADOW_MAX_ORTHO_RADIUS: float = 128.0
 
 
@@ -36,10 +37,10 @@ def render_distance_radius_blocks(render_distance_chunks: int) -> float:
 
 def render_distance_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
   """
-  world geometry に適用する距離 fog の開始距離と終了距離を、XZ 平面距離 (block 単位) の組として返す。
+  world geometry に適用する距離 fog の開始距離と終了距離を、camera からの 3D 距離 (block 単位) の組として返す。
   終了距離は render distance 半径と camera far plane `z_far` の小さい方であり、far plane による硬い clip より手前で完全に fog 色へ収束させる。
   開始距離は終了距離に `RENDER_DISTANCE_FADE_START_FRACTION` を乗じた値であり、返値は常に `start <= end` を満たす。
-  この範囲は world block、falling block、break particle、player/AI model、Othello piece が共有し、render distance 端での abrupt cutoff を fog への段階的遷移へ置き換える。
+  この範囲は world block、falling block、break particle、player/AI model、Othello piece が共有し、shader 及び CPU 側ではこの組を camera と対象の 3D 距離 `length(world_pos - camera_world_pos)` と比較するため、横移動だけでなく camera の上昇・下降にも fade が反応する。
   """
   end = min(float(render_distance_radius_blocks(int(render_distance_chunks))), float(z_far))
   start = float(end) * float(RENDER_DISTANCE_FADE_START_FRACTION)
@@ -48,22 +49,48 @@ def render_distance_fog_range(render_distance_chunks: int, z_far: float) -> tupl
 
 def cloud_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
   """
-  雲専用の距離 fog 範囲を、XZ 平面距離 (block 単位) の組として返す。
-  雲は通常 geometry より遠くまで存在し得るため、終了距離は render distance 半径に `CLOUD_RENDER_DISTANCE_MULTIPLIER` を乗じた値を camera far plane `z_far` で頭打ちにした距離とする。
+  雲専用の距離 fog 範囲を、camera と雲の水平 (XZ 平面) 距離 (block 単位) の組として返す。
+  雲は world block ではなく sky layer として扱うため、終了距離は render distance 半径に `CLOUD_RENDER_DISTANCE_MULTIPLIER` を乗じた値と最低可視半径 `CLOUD_MIN_VISIBLE_RADIUS_BLOCKS` の大きい方を採り、それを camera far plane `z_far` で頭打ちにする。最低可視半径により、render distance が狭い場合でも空が極端に空白にならない。
   開始距離は終了距離に `RENDER_DISTANCE_FADE_START_FRACTION` を乗じた値であり、返値は常に `start <= end` を満たす。
-  これにより雲は通常 render distance より少し遠くまで見えつつ、端では sky へ滑らかに消える一方で、world block、AI、Othello、falling block の距離規則とは分離される。
+  雲は geometry 用の 3D 距離規則を用いず、水平距離のみで fade するため、y=250 付近の高い雲でも camera との高度差だけで消えることはない。
   """
-  end = min(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(z_far))
+  end = min(max(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(CLOUD_MIN_VISIBLE_RADIUS_BLOCKS)), float(z_far))
   start = float(end) * float(RENDER_DISTANCE_FADE_START_FRACTION)
   return (float(start), float(end))
 
 
 @dataclass(frozen=True)
-class DistanceFog:
+class GeometryDistanceFog:
   """
-  描画対象を camera 中心の水平距離で fog 色又は透明度へ収束させるための frame 単位の距離 fade 入力を表す。
-  `cam_x` と `cam_z` は camera eye の world 座標 XZ 成分、`start` と `end` は fade 開始・終了距離 (block 単位、`start <= end`)、`color` は不透明 geometry を寄せる fog 色である。
-  fade は XZ 平面距離のみで判定するため、雲のように高い対象でも水平距離だけで一貫して評価される。`end <= start` の場合 shader 側は fade を無効として扱う。
+  world geometry を camera からの 3D 距離で fog 色へ収束させるための frame 単位の距離 fade 入力を表す。
+  `cam_x`、`cam_y`、`cam_z` は camera eye の world 座標、`start` と `end` は fade 開始・終了距離 (block 単位、`start <= end`)、`color` は不透明 geometry を寄せる fog 色である。
+  fade は `length(world_pos - vec3(cam_x, cam_y, cam_z))` の 3D 距離で判定するため、camera の横移動だけでなく上昇・下降にも反応する。`end <= start` の場合 shader 及び CPU 側は fade を無効として扱う。
+  world block、falling block、break particle、player/AI model、Othello piece に渡し、雲には渡さない。
+  """
+
+  cam_x: float
+  cam_y: float
+  cam_z: float
+  start: float
+  end: float
+  color: Vec3 = Vec3(0.55, 0.72, 0.98)
+
+  @staticmethod
+  def disabled() -> "GeometryDistanceFog":
+    """
+    fade を発生させない無効 geometry fog を返す。`end <= start` を満たすため、この値を受け取った shader は距離 fade を適用しない。
+    first-person hand、held block、special item のように render distance fade の対象外とする描画へ渡す。
+    """
+    return GeometryDistanceFog(cam_x=0.0, cam_y=0.0, cam_z=0.0, start=0.0, end=-1.0, color=Vec3(0.0, 0.0, 0.0))
+
+
+@dataclass(frozen=True)
+class CloudDistanceFog:
+  """
+  雲を camera との水平 (XZ 平面) 距離のみで透明度 fade させるための frame 単位の距離 fade 入力を表す。
+  `cam_x` と `cam_z` は camera eye の world 座標 XZ 成分、`start` と `end` は fade 開始・終了距離 (block 単位、`start <= end`)、`color` は将来 fog 色を要する拡張のために保持する基準色である。
+  雲は sky layer として扱うため、camera との Y 差は fade に使わない。これにより y=250 付近の高い雲でも、水平距離が近ければ camera の高度に関わらず維持される。`end <= start` の場合 shader は fade を無効として扱う。
+  geometry 用の 3D 距離規則とは別の contract であり、両者を取り違えないために型として分離する。
   """
 
   cam_x: float
@@ -73,12 +100,11 @@ class DistanceFog:
   color: Vec3 = Vec3(0.55, 0.72, 0.98)
 
   @staticmethod
-  def disabled() -> "DistanceFog":
+  def disabled() -> "CloudDistanceFog":
     """
-    fade を発生させない無効 fog を返す。`end <= start` を満たすため、この値を受け取った shader は距離 fade を適用しない。
-    first-person hand、held block、special item、sun、selection のように render distance fade の対象外とする描画へ渡す。
+    fade を発生させない無効 cloud fog を返す。`end <= start` を満たすため、この値を受け取った shader は水平距離 fade を適用しない。
     """
-    return DistanceFog(cam_x=0.0, cam_z=0.0, start=0.0, end=-1.0, color=Vec3(0.0, 0.0, 0.0))
+    return CloudDistanceFog(cam_x=0.0, cam_z=0.0, start=0.0, end=-1.0, color=Vec3(0.0, 0.0, 0.0))
 
 
 @dataclass(frozen=True)

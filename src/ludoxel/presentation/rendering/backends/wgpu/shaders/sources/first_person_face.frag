@@ -46,6 +46,6 @@ void main() {
         shaded = mix(shaded, tinted, tintMix);
     }
 
-    shaded = ldx_apply_distance_fog(shaded, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    shaded = ldx_apply_geometry_distance_fog(shaded, v_worldPos, u_fogCamPos, u_fogStart, u_fogEnd, u_fogColor);
     fragColor = vec4(shaded, tex.a);
 }

@@ -76,6 +76,6 @@ void main() {
 
     float ambient = 0.28;
     float lighting = ambient + ((1.0 - ambient) * lambert) * sh;
-    vec3 shaded = ldx_apply_distance_fog(v_color * lighting, v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd, u_fogColor);
+    vec3 shaded = ldx_apply_geometry_distance_fog(v_color * lighting, v_worldPos, u_fogCamPos, u_fogStart, u_fogEnd, u_fogColor);
     fragColor = vec4(shaded, v_alpha);
 }
