@@ -79,40 +79,21 @@ _VERTICAL_REPEAT_LOCK_DISPLACEMENT = 0.05
 _GRAVITY_AFFECTED_TAG = "gravity_affected"
 
 
+def _overlay_blocks_gameplay_keybinds(viewport: "RendererViewportWidget") -> bool:
+  return bool(viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open())
+
+
+def _overlay_blocks_inventory_toggle_keybind(viewport: "RendererViewportWidget") -> bool:
+  return bool(viewport._overlays.paused() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open())
+
+
+def _is_gameplay_keybind(bound_action: str | None, hotbar_idx: int | None) -> bool:
+  return bool(hotbar_idx is not None or (bound_action is not None and str(bound_action) != ACTION_TOGGLE_INVENTORY))
+
+
 def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool:
   bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
   hotbar_idx = hotbar_index_from_key(int(e.key()), viewport._state.keybinds)
-
-  if hotbar_idx is not None and not viewport._overlays.paused() and not viewport._overlays.dead() and not viewport._overlays.settings_open() and not viewport._overlays.othello_settings_open():
-    if not viewport._overlays.inventory_open():
-      settings_controller.select_hotbar_slot(viewport, int(hotbar_idx))
-      return True
-
-  if bound_action == ACTION_TOGGLE_DEBUG_SHADOW:
-    viewport._state.debug_shadow = not bool(viewport._state.debug_shadow)
-    viewport._renderer.set_debug_shadow(bool(viewport._state.debug_shadow))
-    return True
-
-  if bound_action == ACTION_TOGGLE_DEBUG_HUD:
-    viewport._state.hud_visible = not bool(viewport._state.hud_visible)
-    viewport._sync_gameplay_hud_visibility()
-    return True
-
-  if bound_action == ACTION_TOGGLE_GAMEPLAY_HUD:
-    settings_controller.set_hide_hud(viewport, not bool(viewport._state.hide_hud))
-    settings_controller.sync_settings_values(viewport)
-    return True
-
-  if (
-    bound_action == ACTION_CYCLE_CAMERA_PERSPECTIVE
-    and not viewport._overlays.paused()
-    and not viewport._overlays.dead()
-    and not viewport._overlays.settings_open()
-    and not viewport._overlays.othello_settings_open()
-    and not viewport._overlays.inventory_open()
-  ):
-    settings_controller.cycle_camera_perspective(viewport)
-    return True
 
   if int(e.key()) == int(Qt.Key.Key_Escape):
     if viewport._overlays.dead():
@@ -133,29 +114,50 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
       overlay_controller.open_pause_menu(viewport)
     return True
 
-  if bound_action == ACTION_TOGGLE_CREATIVE_MODE and not viewport._overlays.paused() and not viewport._overlays.dead():
+  if _overlay_blocks_gameplay_keybinds(viewport):
+    if _is_gameplay_keybind(bound_action, hotbar_idx):
+      return True
+    if bound_action == ACTION_TOGGLE_INVENTORY and _overlay_blocks_inventory_toggle_keybind(viewport):
+      return True
+
+  if hotbar_idx is not None:
+    settings_controller.select_hotbar_slot(viewport, int(hotbar_idx))
+    return True
+
+  if bound_action == ACTION_TOGGLE_DEBUG_SHADOW:
+    viewport._state.debug_shadow = not bool(viewport._state.debug_shadow)
+    viewport._renderer.set_debug_shadow(bool(viewport._state.debug_shadow))
+    return True
+
+  if bound_action == ACTION_TOGGLE_DEBUG_HUD:
+    viewport._state.hud_visible = not bool(viewport._state.hud_visible)
+    viewport._sync_gameplay_hud_visibility()
+    return True
+
+  if bound_action == ACTION_TOGGLE_GAMEPLAY_HUD:
+    settings_controller.set_hide_hud(viewport, not bool(viewport._state.hide_hud))
+    settings_controller.sync_settings_values(viewport)
+    return True
+
+  if bound_action == ACTION_CYCLE_CAMERA_PERSPECTIVE:
+    settings_controller.cycle_camera_perspective(viewport)
+    return True
+
+  if bound_action == ACTION_TOGGLE_CREATIVE_MODE:
     settings_controller.set_creative_mode(viewport, not viewport._state.creative_mode)
     settings_controller.sync_settings_values(viewport)
     return True
 
-  if bound_action == ACTION_TOGGLE_INVENTORY and not viewport._overlays.paused() and not viewport._overlays.dead():
+  if bound_action == ACTION_TOGGLE_INVENTORY:
     if settings_controller.inventory_available(viewport):
       viewport._set_inventory_overlay(not viewport._overlays.inventory_open())
     return True
 
-  if (
-    bound_action == ACTION_CLEAR_SELECTED_SLOT
-    and is_my_world_space(viewport._state.current_space_id)
-    and not viewport._overlays.paused()
-    and not viewport._overlays.inventory_open()
-    and not viewport._overlays.dead()
-    and not viewport._overlays.settings_open()
-    and not viewport._overlays.othello_settings_open()
-  ):
+  if bound_action == ACTION_CLEAR_SELECTED_SLOT and is_my_world_space(viewport._state.current_space_id):
     settings_controller.clear_selected_hotbar_slot(viewport)
     return True
 
-  if not viewport._overlays.paused() and not viewport._overlays.inventory_open() and not viewport._overlays.dead() and not viewport._overlays.othello_settings_open():
+  if not _overlay_blocks_gameplay_keybinds(viewport):
     viewport._inp.on_key_press(e)
   return False
 
