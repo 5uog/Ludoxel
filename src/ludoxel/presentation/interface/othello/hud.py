@@ -9,6 +9,19 @@ from PyQt6.QtWidgets import QLabel, QWidget
 from ludoxel.presentation.interface.hud.payload import HudPayload
 from ludoxel.presentation.interface.hud.widget import HUDWidget
 
+_OTHELLO_HOTBAR_SLOT_SIDE_PX = 46
+_OTHELLO_HOTBAR_SLOT_GAP_PX = 6
+_OTHELLO_HOTBAR_BOTTOM_MARGIN_PX = 18
+_OTHELLO_RESULT_HOTBAR_GAP_PX = 12
+_OTHELLO_RESULT_MIN_HEIGHT_PX = 72
+_OTHELLO_RESULT_HEIGHT_PAD_PX = 12
+_OTHELLO_RESULT_SCREEN_MARGIN_PX = 10
+_OTHELLO_HOTBAR_SLOT_COUNT = 9
+
+
+def _othello_hotbar_width() -> int:
+  return int(_OTHELLO_HOTBAR_SLOT_COUNT) * int(_OTHELLO_HOTBAR_SLOT_SIDE_PX) + max(0, int(_OTHELLO_HOTBAR_SLOT_COUNT) - 1) * int(_OTHELLO_HOTBAR_SLOT_GAP_PX)
+
 
 class OthelloEvaluationGraphWidget(QWidget):
   def __init__(self, parent=None) -> None:
@@ -133,10 +146,15 @@ class OthelloHudWidget(HUDWidget):
       self._title_label.setVisible(False)
       return
 
-    width = min(max(360, self.width() - 96), 980)
-    height = max(64, self._title_label.sizeHint().height() + 18)
-    x = max(0, (self.width() - int(width)) // 2)
-    y = max(18, min(max(18, self.height() // 6), max(18, self.height() - int(height) - 18)))
+    width = min(max(1, int(self.width()) - int(_OTHELLO_RESULT_SCREEN_MARGIN_PX) * 2), int(_othello_hotbar_width()))
+    content_height = int(self._title_label.heightForWidth(int(width)))
+    if content_height <= 0:
+      content_height = int(self._title_label.sizeHint().height())
+    height = max(int(_OTHELLO_RESULT_MIN_HEIGHT_PX), int(content_height) + int(_OTHELLO_RESULT_HEIGHT_PAD_PX))
+
+    hotbar_y = max(0, int(self.height()) - int(_OTHELLO_HOTBAR_SLOT_SIDE_PX) - int(_OTHELLO_HOTBAR_BOTTOM_MARGIN_PX))
+    x = max(0, (int(self.width()) - int(width)) // 2)
+    y = max(0, int(hotbar_y) - int(height) - int(_OTHELLO_RESULT_HOTBAR_GAP_PX))
     self._title_label.setGeometry(int(x), int(y), int(width), int(height))
     self._title_label.setVisible(True)
     self._title_label.raise_()

@@ -41,9 +41,10 @@ QLabel#othelloTitle {
   border-left: 3px solid #5a5a5a;
   border-right: 3px solid #080808;
   border-bottom: 3px solid #080808;
-  padding: 10px 18px;
-  font-size: 24px;
+  padding: 12px 14px;
+  font-size: 18px;
   font-weight: 800;
+  min-height: 52px;
 }
 
 QWidget#pauseRoot,
