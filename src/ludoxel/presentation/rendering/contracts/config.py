@@ -23,7 +23,6 @@ from ludoxel.simulation.worlds.config.render_distance import clamp_render_distan
 RENDER_DISTANCE_FADE_START_FRACTION: float = 0.85
 CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 1.5
 CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 128.0
-SHADOW_MAX_ORTHO_RADIUS: float = 128.0
 
 
 def render_distance_radius_blocks(render_distance_chunks: int) -> float:

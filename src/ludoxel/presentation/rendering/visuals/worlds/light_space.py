@@ -6,8 +6,7 @@ import numpy as np
 
 import ludoxel.foundations.mathematics.linear.mat4 as mat4
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.scalars.numeric import clampf
-from ludoxel.presentation.rendering.contracts.config import SHADOW_MAX_ORTHO_RADIUS, BackendShadowParams, BackendSunParams
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, BackendSunParams
 
 
 def _snap(value: float, quantum: float) -> float:
@@ -17,14 +16,21 @@ def _snap(value: float, quantum: float) -> float:
 
 def _coverage_scaled_sun_extents(sun: BackendSunParams, coverage_radius: float | None) -> tuple[float, float, float, float]:
   """
-  shadow の light-space orthographic 範囲を render distance に合わせて拡縮した `(ortho_radius, light_distance, ortho_near, ortho_far)` を返す。
-  `coverage_radius` が `None` の場合は `BackendSunParams` の既定値をそのまま返す。値が与えられた場合は、覆うべき水平半径を `[sun.ortho_radius, SHADOW_MAX_ORTHO_RADIUS]` へ clamp し、その比率 `scale = ortho_radius / sun.ortho_radius (>= 1)` を light distance と far plane へ同じく乗じる。
-  これにより既定 render distance では従来と同一の影品質を保ちつつ、render distance を広げた場合は同じ shadow map 解像度を広い範囲へ割り当てて、render distance 内の caster が light frustum から外れて影が欠落することを防ぐ。near plane は基準値を維持し、far plane と light distance のみ拡大することで coverage 拡大に伴う深度範囲不足を避ける。
+  shadow の light-space orthographic 範囲を、覆うべき可視半径に合わせて拡縮した `(ortho_radius, light_distance, ortho_near, ortho_far)` を返す。
+  `coverage_radius` が `None` の場合は `BackendSunParams` の既定値をそのまま返す。値が与えられた場合は、orthographic 半径を `ortho_radius = max(sun.ortho_radius, coverage_radius)` とし、
+  基準半径 `sun.ortho_radius` に対する比率 `scale = ortho_radius / sun.ortho_radius (>= 1)` を light distance と far plane へ同じく乗じる。near plane は `sun.ortho_near` を維持する。
+  呼び出し側は `coverage_radius` に geometry distance fog の 3D fade 終端、すなわち `min(render_distance_radius_blocks, z_far)` を渡す。
+  light box は camera を中心とし、light 方向に直交する平面で半径 `r = ortho_radius` の角柱を成し、light 軸に沿った深度は light_pos からの距離で区間 `[ortho_near, ortho_far]` を占める。
+  camera 中心は light_pos から距離 `light_distance` にあるため、camera を中心とする半径 `r` の球は深度方向で区間 `[light_distance - r, light_distance + r]` を占める。
+  既定 `BackendSunParams` の比率では `light_distance = 2 r` かつ `ortho_far = (140 / 30) r` となるため、near 側余裕は `light_distance - ortho_near = 2 r - ortho_near >= r`、
+  far 側余裕は `ortho_far - light_distance = (80 / 30) r >= r` を満たし、視差方向の半幅も `r` であるから、light box は半径 `r` の球を全方向で内包する。
+  この結果、`coverage_radius` を geometry fog 終端に一致させれば、fog がまだ完全に fog 色へ収束させていない `length(world_pos - camera) <= fog_end` の geometry はすべて light box の coverage に入り、
+  影が fog fade より手前で hard cut しない。半径に人為的な上限を設けず geometry fog 終端へ追従させるが、終端自体が camera far plane `z_far` で頭打ちであるため、light box が際限なく拡大することはない。
   """
   base_radius = float(sun.ortho_radius)
   if coverage_radius is None or base_radius <= 1e-6:
     return (base_radius, float(sun.light_distance), float(sun.ortho_near), float(sun.ortho_far))
-  ortho_radius = float(clampf(float(coverage_radius), float(base_radius), float(SHADOW_MAX_ORTHO_RADIUS)))
+  ortho_radius = float(max(float(base_radius), float(coverage_radius)))
   scale = float(ortho_radius) / float(base_radius)
   return (float(ortho_radius), float(sun.light_distance) * float(scale), float(sun.ortho_near), float(sun.ortho_far) * float(scale))
 

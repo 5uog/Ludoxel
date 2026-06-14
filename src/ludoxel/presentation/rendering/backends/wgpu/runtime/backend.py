@@ -41,7 +41,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
-from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range, render_distance_radius_blocks
+from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -878,7 +878,7 @@ class WgpuRendererBackend:
     world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
     cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
     cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
-    shadow_coverage_radius = render_distance_radius_blocks(int(render_distance_chunks))
+    shadow_coverage_radius = float(world_fog_end)
 
     view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg))
     forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))

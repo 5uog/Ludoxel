@@ -26,7 +26,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.sun import SunPass
 from ludoxel.presentation.rendering.backends.opengl.passes.world import WorldDrawInputs, WorldPass
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics, RendererFrameMetrics
 from ludoxel.presentation.rendering.backends.opengl.runtime.selection import SelectionController
-from ludoxel.presentation.rendering.contracts.config import BackendRendererParams, CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range, render_distance_radius_blocks
+from ludoxel.presentation.rendering.contracts.config import BackendRendererParams, CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR
@@ -100,7 +100,7 @@ class FramePipeline:
     world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
     cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
     cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
-    shadow_coverage_radius = render_distance_radius_blocks(int(render_distance_chunks))
+    shadow_coverage_radius = float(world_fog_end)
 
     use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
     if bool(use_light_space):
