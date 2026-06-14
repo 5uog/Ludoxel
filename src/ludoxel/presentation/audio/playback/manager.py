@@ -6,7 +6,7 @@ import random
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QUrl
-from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
+from PyQt6.QtMultimedia import QSoundEffect
 
 from ludoxel.application.preferences.audio import AUDIO_CATEGORY_AMBIENT, AudioPreferences
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -39,12 +39,13 @@ class AudioManager(QObject):
     self._block_registry = block_registry
     self._preferences = AudioPreferences()
 
-    self._ambient_player: QMediaPlayer | None = None
-    self._ambient_output: QAudioOutput | None = None
+    self._ambient_effect: QSoundEffect | None = None
     self._ambient_key: str | None = None
     self._ambient_source_key: str = ""
     self._ambient_enabled: bool = False
     self._ambient_space_id: str = ""
+    self._ambient_pending_play: bool = False
+    self._ambient_transitioning: bool = False
 
     self._pool_specs: dict[str, AudioSamplePool] = self._collect_named_pools()
     self._resolved_urls: dict[str, tuple[QUrl, ...]] = {}
@@ -67,14 +68,13 @@ class AudioManager(QObject):
     self.prime_effects()
 
   def shutdown(self) -> None:
-    if self._ambient_player is not None:
-      self._ambient_player.stop()
-      self._ambient_player.deleteLater()
-      self._ambient_player = None
-
-    if self._ambient_output is not None:
-      self._ambient_output.deleteLater()
-      self._ambient_output = None
+    if self._ambient_effect is not None:
+      self._ambient_transitioning = True
+      self._ambient_effect.stop()
+      self._ambient_effect.deleteLater()
+      self._ambient_effect = None
+      self._ambient_transitioning = False
+      self._ambient_pending_play = False
 
     for prepared_group in tuple(self._prepared_sources.values()):
       for prepared in tuple(prepared_group):
@@ -92,8 +92,8 @@ class AudioManager(QObject):
   def set_preferences(self, preferences: AudioPreferences) -> None:
     self._preferences = preferences.normalized()
 
-    if self._ambient_output is not None:
-      self._ambient_output.setVolume(float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)))
+    if self._ambient_effect is not None:
+      self._ambient_effect.setVolume(float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)))
 
     for pool_key, prepared_group in self._prepared_sources.items():
       pool = self._pool_specs.get(str(pool_key))
@@ -343,21 +343,18 @@ class AudioManager(QObject):
     slot.effect.play()
     return True
 
-  def _ensure_ambient_player(self) -> QMediaPlayer:
-    if self._ambient_player is not None:
-      return self._ambient_player
+  def _ensure_ambient_effect(self) -> QSoundEffect:
+    if self._ambient_effect is not None:
+      return self._ambient_effect
 
-    output = QAudioOutput(self)
-    output.setVolume(float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)))
+    effect = QSoundEffect(self)
+    effect.setLoopCount(1)
+    effect.setVolume(float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)))
+    effect.playingChanged.connect(self._on_ambient_playing_changed)
+    effect.statusChanged.connect(self._on_ambient_status_changed)
 
-    player = QMediaPlayer(self)
-    player.setAudioOutput(output)
-    player.setLoops(1)
-    player.mediaStatusChanged.connect(self._on_ambient_media_status_changed)
-
-    self._ambient_output = output
-    self._ambient_player = player
-    return player
+    self._ambient_effect = effect
+    return effect
 
   def _ambient_desired_key(self) -> str | None:
     return ambient_desired_key(enabled=bool(self._ambient_enabled), current_space_id=str(self._ambient_space_id))
@@ -367,15 +364,14 @@ class AudioManager(QObject):
     volume = float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT))
 
     if desired_key is None or volume <= 1e-6:
-      if self._ambient_player is not None:
-        self._ambient_player.stop()
+      self._stop_ambient_effect()
       self._ambient_key = None
       self._ambient_source_key = ""
+      self._ambient_pending_play = False
       return
 
-    player = self._ensure_ambient_player()
-    if self._ambient_output is not None:
-      self._ambient_output.setVolume(volume)
+    effect = self._ensure_ambient_effect()
+    effect.setVolume(volume)
 
     if self._ambient_key != str(desired_key):
       self._ambient_key = str(desired_key)
@@ -383,8 +379,16 @@ class AudioManager(QObject):
       self._start_next_ambient_source()
       return
 
-    if player.playbackState() != QMediaPlayer.PlaybackState.PlayingState:
+    if not effect.isPlaying() and not self._ambient_pending_play:
       self._start_next_ambient_source()
+
+  def _stop_ambient_effect(self) -> None:
+    if self._ambient_effect is None:
+      return
+
+    self._ambient_transitioning = True
+    self._ambient_effect.stop()
+    self._ambient_transitioning = False
 
   def _pick_existing_url(self, pool_key: str, pool: AudioSamplePool) -> QUrl | None:
     urls = self._resolved_urls.get(str(pool_key))
@@ -413,24 +417,53 @@ class AudioManager(QObject):
 
     url = self._pick_existing_url(f"ambient:{self._ambient_key}", pool)
     if url is None:
-      if self._ambient_player is not None:
-        self._ambient_player.stop()
+      self._stop_ambient_effect()
       self._ambient_source_key = ""
+      self._ambient_pending_play = False
       return
 
-    player = self._ensure_ambient_player()
+    effect = self._ensure_ambient_effect()
     source_key = self._source_key_for_url(url)
 
-    player.stop()
+    self._ambient_transitioning = True
+    effect.stop()
     if self._ambient_source_key != source_key:
-      player.setSource(url)
+      effect.setSource(url)
       self._ambient_source_key = source_key
-    else:
-      player.setPosition(0)
-    player.play()
+    self._ambient_transitioning = False
 
-  def _on_ambient_media_status_changed(self, status) -> None:
-    if self._ambient_key is None:
+    self._ambient_pending_play = True
+    self._play_ambient_effect_when_ready()
+
+  def _play_ambient_effect_when_ready(self) -> None:
+    if self._ambient_key is None or self._ambient_effect is None:
+      self._ambient_pending_play = False
       return
-    if status == QMediaPlayer.MediaStatus.EndOfMedia:
+
+    volume = float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT))
+    if volume <= 1e-6:
+      self._ambient_pending_play = False
+      self._stop_ambient_effect()
+      return
+
+    if not self._ambient_effect.isLoaded():
+      self._ambient_pending_play = True
+      return
+
+    self._ambient_effect.setVolume(volume)
+    self._ambient_pending_play = False
+    self._ambient_effect.play()
+
+  def _on_ambient_status_changed(self) -> None:
+    if self._ambient_pending_play:
+      self._play_ambient_effect_when_ready()
+
+  def _on_ambient_playing_changed(self) -> None:
+    if self._ambient_effect is None:
+      return
+
+    if self._ambient_transitioning or self._ambient_pending_play:
+      return
+
+    if self._ambient_key is not None and not self._ambient_effect.isPlaying():
       self._start_next_ambient_source()
