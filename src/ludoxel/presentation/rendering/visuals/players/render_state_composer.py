@@ -26,7 +26,13 @@ def compose_player_render_state(
 
 
 def compose_player_render_state_from_parts(
-  *, player_model: PlayerModelSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float
+  *,
+  player_model: PlayerModelSnapshotDTO,
+  motion: FirstPersonMotionSample,
+  block_registry: BlockRegistry,
+  arm_rotation_limit_min_deg: float,
+  arm_rotation_limit_max_deg: float,
+  skin_texture_key: str | None = None,
 ) -> PlayerRenderState:
   """
   権威的な player-model snapshot と sampled first-person motion state を合成し、
@@ -69,5 +75,6 @@ def compose_player_render_state_from_parts(
     crouch_amount=float(player_model.crouch_amount),
     hurt_tint_strength=float(player_model.hurt_tint_strength),
     is_first_person=bool(player_model.is_first_person),
+    skin_texture_key=None if skin_texture_key is None else str(skin_texture_key),
     first_person=first_person,
   )

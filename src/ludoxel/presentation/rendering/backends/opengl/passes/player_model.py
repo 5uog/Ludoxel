@@ -7,6 +7,7 @@ from typing import Callable
 
 import numpy as np
 from OpenGL.GL import GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LESS, GL_TRIANGLES, glBindVertexArray, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable
+from PyQt6.QtGui import QImage
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.interface.common.special_item_art import build_special_item_icon_image
@@ -34,6 +35,7 @@ class PlayerModelPass:
   _shadow_mesh: MeshBuffer | None = None
   _atlas: TextureAtlas | None = None
   _skin_texture: ImageTexture | None = None
+  _ai_skin_textures: dict[str, ImageTexture] = field(default_factory=dict)
   _uv_lookup: Callable[[str, int], UVRect] | None = None
   _special_item_textures: dict[str, ImageTexture] = field(default_factory=dict)
   _shadow_upload_key: tuple[object, ...] | None = None
@@ -64,9 +66,26 @@ class PlayerModelPass:
     for texture in self._special_item_textures.values():
       texture.destroy()
     self._special_item_textures.clear()
+    for texture in self._ai_skin_textures.values():
+      texture.destroy()
+    self._ai_skin_textures.clear()
 
   def set_skin_texture(self, skin_texture: ImageTexture) -> None:
     self._skin_texture = skin_texture
+
+  def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
+    next_textures: dict[str, ImageTexture] = {}
+    try:
+      for skin_id, image in images.items():
+        next_textures[str(skin_id)] = ImageTexture.from_image(QImage(image))
+    except Exception:
+      for texture in next_textures.values():
+        texture.destroy()
+      raise
+    previous_textures = self._ai_skin_textures
+    self._ai_skin_textures = next_textures
+    for texture in previous_textures.values():
+      texture.destroy()
 
   def _build_held_block_face_rows(self, pose: HeldBlockPose | None) -> tuple[np.ndarray, ...]:
     if pose is None or self._uv_lookup is None:
@@ -104,14 +123,17 @@ class PlayerModelPass:
     fog: GeometryDistanceFog | None = None,
   ) -> tuple[int, int]:
     del light_view_proj, debug_shadow, shadow_enabled, shadow, shadow_info
-    if self._face_pass is None or self._skin_texture is None or self._atlas is None:
+    skin_texture = self._skin_texture
+    if pose.skin_texture_key is not None:
+      skin_texture = self._ai_skin_textures.get(str(pose.skin_texture_key), skin_texture)
+    if self._face_pass is None or skin_texture is None or self._atlas is None:
       return (0, 0)
 
     draw_calls = 0
     instances = 0
 
     dc, inst = self._face_pass.draw(
-      face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(self._skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), fog=fog
+      face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), fog=fog
     )
     draw_calls += int(dc)
     instances += int(inst)

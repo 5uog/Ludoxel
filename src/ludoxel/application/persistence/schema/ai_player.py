@@ -20,13 +20,16 @@ from ludoxel.simulation.actors.ai_players.settings import (
 )
 from ludoxel.simulation.actors.ai_players.state import (
   AI_DEFAULT_HELD_ITEM_ID,
-  AI_HEALTH_INDICATOR_OFF,
+  AI_HEALTH_INDICATOR_ABOVE,
+  AI_SKIN_MODE_PLAYER,
   AiPlayerState,
   AiRoutePoint,
   normalize_ai_health_indicator,
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
+  normalize_ai_skin_id,
+  normalize_ai_skin_mode,
   normalize_route_points,
 )
 
@@ -39,7 +42,9 @@ class PersistedAiPlayer:
   can_place_blocks: bool = False
   held_item_id: str | None = AI_DEFAULT_HELD_ITEM_ID
   name: str = ""
-  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
+  skin_mode: str = AI_SKIN_MODE_PLAYER
+  skin_id: str = ""
   auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
   regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
   regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
@@ -72,6 +77,8 @@ class PersistedAiPlayer:
       "held_item_id": (None if self.held_item_id is None else str(self.held_item_id)),
       "name": str(self.name),
       "health_indicator": str(self.health_indicator),
+      "skin_mode": str(self.skin_mode),
+      "skin_id": str(self.skin_id),
       "auto_regen_enabled": bool(self.auto_regen_enabled),
       "regen_start_delay_s": float(self.regen_start_delay_s),
       "regen_interval_s": float(self.regen_interval_s),
@@ -101,6 +108,8 @@ class PersistedAiPlayer:
       held_item_id=(None if self.held_item_id is None else str(self.held_item_id)),
       name=str(self.name).strip(),
       health_indicator=normalize_ai_health_indicator(self.health_indicator),
+      skin_mode=normalize_ai_skin_mode(self.skin_mode),
+      skin_id=str(self.skin_id),
       auto_regen_enabled=bool(self.auto_regen_enabled),
       regen_start_delay_s=normalize_ai_regen_start_delay_s(self.regen_start_delay_s),
       regen_interval_s=normalize_ai_regen_interval_s(self.regen_interval_s),
@@ -136,6 +145,8 @@ class PersistedAiPlayer:
       held_item_id=(None if normalized.held_item_id is None else str(normalized.held_item_id)),
       name=str(normalized.name),
       health_indicator=str(normalized.health_indicator),
+      skin_mode=str(normalized.skin_mode),
+      skin_id=str(normalized.skin_id),
       auto_regen_enabled=bool(normalized.auto_regen_enabled),
       regen_start_delay_s=float(normalized.regen_start_delay_s),
       regen_interval_s=float(normalized.regen_interval_s),
@@ -168,6 +179,10 @@ class PersistedAiPlayer:
     vel_x, vel_y, vel_z = coerce_xyz_triplet(data.get("vel"), default=(0.0, 0.0, 0.0))
     held_item_id_raw = data.get("held_item_id", AI_DEFAULT_HELD_ITEM_ID)
     held_item_id = None if held_item_id_raw is None else str(held_item_id_raw).strip()
+    skin_id = normalize_ai_skin_id(data.get("skin_id", ""))
+    skin_mode = normalize_ai_skin_mode(data.get("skin_mode", AI_SKIN_MODE_PLAYER))
+    if skin_mode != AI_SKIN_MODE_PLAYER and not skin_id:
+      skin_mode = AI_SKIN_MODE_PLAYER
     return PersistedAiPlayer(
       actor_id=mapping_str(data, "actor_id", ""),
       mode=normalize_ai_mode(data.get("mode", "idle")),
@@ -175,7 +190,9 @@ class PersistedAiPlayer:
       can_place_blocks=coerce_bool(data.get("can_place_blocks", False), False),
       held_item_id=(held_item_id if held_item_id else None),
       name=mapping_str(data, "name", "").strip(),
-      health_indicator=normalize_ai_health_indicator(data.get("health_indicator", AI_HEALTH_INDICATOR_OFF)),
+      health_indicator=normalize_ai_health_indicator(data.get("health_indicator", AI_HEALTH_INDICATOR_ABOVE)),
+      skin_mode=skin_mode,
+      skin_id=skin_id,
       auto_regen_enabled=coerce_bool(data.get("auto_regen_enabled", AI_REGEN_DEFAULT_ENABLED), bool(AI_REGEN_DEFAULT_ENABLED)),
       regen_start_delay_s=normalize_ai_regen_start_delay_s(coerce_float(data.get("regen_start_delay_s", AI_REGEN_DEFAULT_START_DELAY_S), float(AI_REGEN_DEFAULT_START_DELAY_S))),
       regen_interval_s=normalize_ai_regen_interval_s(coerce_float(data.get("regen_interval_s", AI_REGEN_DEFAULT_INTERVAL_S), float(AI_REGEN_DEFAULT_INTERVAL_S))),

@@ -242,6 +242,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     settings_controller.sync_hotbar_widgets(self)
     settings_controller.sync_crosshair_widgets(self)
     settings_controller.sync_player_skin(self)
+    settings_controller.sync_ai_skins(self)
     settings_controller.sync_first_person_target(self)
     settings_controller.sync_view_model_visibility(self)
     othello_controller.sync_settings_values(self)

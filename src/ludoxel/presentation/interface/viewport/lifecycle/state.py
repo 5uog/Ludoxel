@@ -15,8 +15,9 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.presentation.rendering.visuals.cameras.third_person import resolve_camera
-from ludoxel.presentation.rendering.visuals.players.skin import load_player_skin_image
+from ludoxel.presentation.rendering.visuals.players.skin import load_custom_ai_skin_image, load_player_skin_image
 from ludoxel.presentation.rendering.visuals.worlds.block_break_particles import advance_block_break_particles, render_samples_from_block_break_particles
+from ludoxel.simulation.actors.ai_players.state import AI_SKIN_MODE_CUSTOM, normalize_ai_skin_id, normalize_ai_skin_mode
 
 if TYPE_CHECKING:
   from ludoxel.presentation.interface.viewport.widgets.renderer import RendererViewportWidget
@@ -62,6 +63,30 @@ class ViewportStateMixin:
     self._invalidate_pause_preview_cache()
     if bool(push_to_renderer):
       self._push_player_skin_to_renderer(context_current=bool(context_current))
+
+  def _push_ai_skins_to_renderer(self: "RendererViewportWidget", *, context_current: bool = False) -> None:
+    if bool(context_current):
+      self._renderer.set_ai_skin_images(dict(self._ai_skin_images))
+      return
+    initialized = bool(getattr(self, "_renderer_initialized", False) or getattr(self, "_gl_initialized", False))
+    if not bool(initialized):
+      return
+    self._renderer.set_ai_skin_images(dict(self._ai_skin_images))
+    self.update()
+
+  def _sync_ai_skin_designs(self: "RendererViewportWidget", *, push_to_renderer: bool = False, context_current: bool = False) -> None:
+    images: dict[str, QImage] = {}
+    for session in self._sessions.all_sessions():
+      for state in session.ai_states():
+        skin_id = normalize_ai_skin_id(state.skin_id)
+        if normalize_ai_skin_mode(state.skin_mode) != AI_SKIN_MODE_CUSTOM or not skin_id or skin_id in images:
+          continue
+        image = load_custom_ai_skin_image(self._data_root, skin_id)
+        if image is not None:
+          images[skin_id] = QImage(image)
+    self._ai_skin_images = images
+    if bool(push_to_renderer):
+      self._push_ai_skins_to_renderer(context_current=bool(context_current))
 
   def save_state(self: "RendererViewportWidget") -> None:
     settings_controller.sync_state_from_renderer_sun(self)

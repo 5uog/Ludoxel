@@ -157,6 +157,10 @@ def sync_player_skin(viewport: "RendererViewportWidget", *, push_to_renderer: bo
   viewport._sync_player_skin_design(push_to_renderer=bool(push_to_renderer))
 
 
+def sync_ai_skins(viewport: "RendererViewportWidget", *, push_to_renderer: bool = False) -> None:
+  viewport._sync_ai_skin_designs(push_to_renderer=bool(push_to_renderer))
+
+
 def current_item_id(viewport: "RendererViewportWidget") -> str | None:
   viewport._state.normalize()
   return viewport._state.current_item_id()

@@ -282,6 +282,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     settings_controller.sync_hotbar_widgets(self)
     settings_controller.sync_crosshair_widgets(self)
     settings_controller.sync_player_skin(self)
+    settings_controller.sync_ai_skins(self)
     settings_controller.sync_first_person_target(self)
     settings_controller.sync_view_model_visibility(self)
     othello_controller.sync_settings_values(self)
@@ -521,6 +522,7 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     self._state.vsync_on = False
     self._frame_sync.reset_after_gl_initialize()
     self._sync_player_skin_design(push_to_renderer=True, context_current=True)
+    self._sync_ai_skin_designs(push_to_renderer=True, context_current=True)
     settings_controller.apply_runtime_to_renderer(self)
     settings_controller.sync_input_bindings(self)
     settings_controller.sync_audio_preferences(self)

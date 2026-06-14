@@ -154,6 +154,7 @@ class ViewportRenderLoopMixin:
     self._frame_sync.reset_after_gl_initialize()
 
     self._sync_player_skin_design(push_to_renderer=True, context_current=True)
+    self._sync_ai_skin_designs(push_to_renderer=True, context_current=True)
     settings_controller.apply_runtime_to_renderer(self)
     settings_controller.sync_input_bindings(self)
     settings_controller.sync_audio_preferences(self)

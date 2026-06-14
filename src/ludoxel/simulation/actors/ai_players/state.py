@@ -15,10 +15,14 @@ from ludoxel.simulation.actors.ai_players.modes import (
   AI_PERSONALITY_PEACEFUL,
   AI_ROUTE_STYLE_FLEXIBLE,
   AI_ROUTE_STYLE_STRICT,
+  AI_SKIN_MODE_CUSTOM,
+  AI_SKIN_MODE_PLAYER,
   normalize_ai_health_indicator,
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
+  normalize_ai_skin_id,
+  normalize_ai_skin_mode,
 )
 from ludoxel.simulation.actors.ai_players.serialization import AiRoutePoint, normalize_route_points
 from ludoxel.simulation.actors.ai_players.settings import (
@@ -47,6 +51,8 @@ __all__ = (
   "AI_PERSONALITY_PEACEFUL",
   "AI_ROUTE_STYLE_FLEXIBLE",
   "AI_ROUTE_STYLE_STRICT",
+  "AI_SKIN_MODE_CUSTOM",
+  "AI_SKIN_MODE_PLAYER",
   "AiPlayerState",
   "AiRoutePoint",
   "AiSpawnEggSettings",
@@ -54,6 +60,8 @@ __all__ = (
   "normalize_ai_mode",
   "normalize_ai_personality",
   "normalize_ai_route_style",
+  "normalize_ai_skin_id",
+  "normalize_ai_skin_mode",
   "normalize_route_points",
 )
 
@@ -66,7 +74,9 @@ class AiPlayerState:
   can_place_blocks: bool = False
   held_item_id: str | None = AI_DEFAULT_HELD_ITEM_ID
   name: str = ""
-  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
+  skin_mode: str = AI_SKIN_MODE_PLAYER
+  skin_id: str = ""
   auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
   regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
   regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
@@ -92,6 +102,10 @@ class AiPlayerState:
 
   def normalized(self) -> "AiPlayerState":
     held_item_id = None if self.held_item_id is None else str(self.held_item_id).strip()
+    skin_id = normalize_ai_skin_id(self.skin_id)
+    skin_mode = normalize_ai_skin_mode(self.skin_mode)
+    if skin_mode == AI_SKIN_MODE_CUSTOM and not skin_id:
+      skin_mode = AI_SKIN_MODE_PLAYER
     return AiPlayerState(
       actor_id=str(self.actor_id).strip(),
       mode=normalize_ai_mode(self.mode),
@@ -100,6 +114,8 @@ class AiPlayerState:
       held_item_id=(held_item_id if held_item_id else None),
       name=str(self.name).strip(),
       health_indicator=normalize_ai_health_indicator(self.health_indicator),
+      skin_mode=skin_mode,
+      skin_id=skin_id,
       auto_regen_enabled=bool(self.auto_regen_enabled),
       regen_start_delay_s=normalize_ai_regen_start_delay_s(self.regen_start_delay_s),
       regen_interval_s=normalize_ai_regen_interval_s(self.regen_interval_s),

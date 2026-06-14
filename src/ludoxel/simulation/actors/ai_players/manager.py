@@ -96,6 +96,7 @@ from ludoxel.simulation.actors.ai_players.state import (
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
+  normalize_ai_skin_mode,
 )
 from ludoxel.simulation.actors.ai_players.stuck import stuck_edge_key
 from ludoxel.simulation.actors.ai_players.wander import _wander_interval_s, _wander_seed
@@ -192,6 +193,8 @@ class AiPlayerManager:
       held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized.can_place_blocks), held_item_id=normalized.held_item_id),
       name=str(normalized.name),
       health_indicator=str(normalized.health_indicator),
+      skin_mode=str(normalized.skin_mode),
+      skin_id=str(normalized.skin_id),
       auto_regen_enabled=bool(normalized.auto_regen_enabled),
       regen_start_delay_s=float(normalized.regen_start_delay_s),
       regen_interval_s=float(normalized.regen_interval_s),
@@ -348,6 +351,8 @@ class AiPlayerManager:
       held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized_settings.can_place_blocks)),
       name=str(spawn_name),
       health_indicator=str(normalized_settings.health_indicator),
+      skin_mode=str(normalized_settings.skin_mode),
+      skin_id=str(normalized_settings.skin_id),
       auto_regen_enabled=bool(normalized_settings.auto_regen_enabled),
       regen_start_delay_s=float(normalized_settings.regen_start_delay_s),
       regen_interval_s=float(normalized_settings.regen_interval_s),
@@ -386,6 +391,8 @@ class AiPlayerManager:
       can_place_blocks=bool(actor.can_place_blocks),
       name=str(actor.name),
       health_indicator=str(actor.health_indicator),
+      skin_mode=str(actor.skin_mode),
+      skin_id=str(actor.skin_id),
       auto_regen_enabled=bool(actor.auto_regen_enabled),
       regen_start_delay_s=float(actor.regen_start_delay_s),
       regen_interval_s=float(actor.regen_interval_s),
@@ -414,6 +421,8 @@ class AiPlayerManager:
     actor.can_place_blocks = bool(normalized.can_place_blocks)
     actor.held_item_id = _held_item_id_for_settings(can_place_blocks=bool(actor.can_place_blocks), held_item_id=actor.held_item_id)
     actor.health_indicator = normalize_ai_health_indicator(normalized.health_indicator)
+    actor.skin_mode = normalize_ai_skin_mode(normalized.skin_mode)
+    actor.skin_id = str(normalized.skin_id)
     actor.auto_regen_enabled = bool(normalized.auto_regen_enabled)
     actor.regen_start_delay_s = float(normalized.regen_start_delay_s)
     actor.regen_interval_s = float(normalized.regen_interval_s)
@@ -1845,6 +1854,8 @@ class AiPlayerManager:
         health=float(actor.player.health),
         max_health=float(actor.player.max_health),
         health_indicator=str(actor.health_indicator),
+        skin_mode=str(actor.skin_mode),
+        skin_id=str(actor.skin_id),
       )
       for actor in self._actors.values()
     )

@@ -63,6 +63,8 @@ class AiPlayerRenderSnapshotDTO:
   health: float
   max_health: float
   health_indicator: str
+  skin_mode: str
+  skin_id: str
   position_x: float
   position_y: float
   position_z: float

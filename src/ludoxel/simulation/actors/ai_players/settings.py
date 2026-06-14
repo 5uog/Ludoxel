@@ -5,14 +5,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ludoxel.simulation.actors.ai_players.modes import (
-  AI_HEALTH_INDICATOR_OFF,
+  AI_HEALTH_INDICATOR_ABOVE,
   AI_MODE_IDLE,
   AI_PERSONALITY_AGGRESSIVE,
   AI_ROUTE_STYLE_STRICT,
+  AI_SKIN_MODE_CUSTOM,
+  AI_SKIN_MODE_PLAYER,
   normalize_ai_health_indicator,
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
+  normalize_ai_skin_id,
+  normalize_ai_skin_mode,
 )
 from ludoxel.simulation.actors.ai_players.serialization import AiRoutePoint, normalize_route_points
 
@@ -86,14 +90,17 @@ class AiSpawnEggSettings:
   """
   AI Settings overlay と spawn egg が往復させる actor 単位の設定一式を表す。
   name は `#` suffix を含む表示名全体であり、空文字は spawn 時の自動割当(`AI#0001` 形式)を要求する値として扱う。
-  health_indicator は "off"、"above"、"below" の三値、自動回復 parameter は normalize_ai_regen_*() の値域、route 設定は従来どおり mode が route の場合にのみ意味を持つ。
+  health_indicator は "off"、"above"、"below" の三値、skin_mode は player skin 共有又は actor 固有 custom skin の二値である。
+  custom skin は path ではなく opaque な skin_id で参照し、自動回復 parameter と route 設定は従来の正規化規則に従う。
   """
 
   mode: str = AI_MODE_IDLE
   personality: str = AI_PERSONALITY_AGGRESSIVE
   can_place_blocks: bool = False
   name: str = ""
-  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
+  skin_mode: str = AI_SKIN_MODE_PLAYER
+  skin_id: str = ""
   auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
   regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
   regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
@@ -105,12 +112,18 @@ class AiSpawnEggSettings:
   route_style: str = AI_ROUTE_STYLE_STRICT
 
   def normalized(self) -> "AiSpawnEggSettings":
+    skin_id = normalize_ai_skin_id(self.skin_id)
+    skin_mode = normalize_ai_skin_mode(self.skin_mode)
+    if skin_mode == AI_SKIN_MODE_CUSTOM and not skin_id:
+      skin_mode = AI_SKIN_MODE_PLAYER
     return AiSpawnEggSettings(
       mode=normalize_ai_mode(self.mode),
       personality=normalize_ai_personality(self.personality),
       can_place_blocks=bool(self.can_place_blocks),
       name=str(self.name).strip(),
       health_indicator=normalize_ai_health_indicator(self.health_indicator),
+      skin_mode=skin_mode,
+      skin_id=skin_id,
       auto_regen_enabled=bool(self.auto_regen_enabled),
       regen_start_delay_s=normalize_ai_regen_start_delay_s(self.regen_start_delay_s),
       regen_interval_s=normalize_ai_regen_interval_s(self.regen_interval_s),

@@ -9,6 +9,7 @@ from PyQt6.QtGui import QImage
 from ludoxel.application.persistence.integrity.manifest import update_runtime_integrity_manifest, verify_runtime_file
 from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_CUSTOM, normalize_player_skin_kind
 from ludoxel.foundations.locations.roots import runtime_state_root
+from ludoxel.simulation.actors.ai_players.state import normalize_ai_skin_id
 
 _SKIN_WIDTH = 64
 _SKIN_HEIGHT = 64
@@ -28,6 +29,21 @@ def custom_player_skin_path(data_root: Path) -> Path:
   user-supplied skin は repository-level configs へ書き込まず、app-managed state として保存する。
   """
   return runtime_state_root(Path(data_root)) / "player_skin.png"
+
+
+def custom_ai_skin_relative_path(skin_id: object) -> str:
+  """
+  actor 固有 skin identifier を runtime state 配下の相対 PNG path へ変換する。
+  path separator を含む任意文字列は受け付けず、domain normalizer が認める UUID hex だけを file name に使用する。
+  """
+  normalized_id = normalize_ai_skin_id(skin_id)
+  if not normalized_id:
+    raise ValueError("The AI skin identifier is invalid.")
+  return f"state/ai_skins/{normalized_id}.png"
+
+
+def custom_ai_skin_path(data_root: Path, skin_id: object) -> Path:
+  return Path(data_root) / Path(custom_ai_skin_relative_path(skin_id))
 
 
 def normalize_player_skin_image(image: QImage) -> QImage:
@@ -77,6 +93,54 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
   if not normalized.save(str(target), "PNG"):
     raise RuntimeError(f"Unable to save the custom player skin to {target}.")
   update_runtime_integrity_manifest(Path(data_root), ("state/player_skin.png",))
+
+
+def load_custom_ai_skin_image(data_root: Path, skin_id: object) -> QImage | None:
+  """
+  actor 固有 skin file が存在し、integrity と 64x64 atlas 検査を満たす場合だけ正規化済み画像を返す。
+  欠落、改変、不正画像は player skin fallback を許可するため None として扱う。
+  """
+  try:
+    relative_path = custom_ai_skin_relative_path(skin_id)
+  except ValueError:
+    return None
+  if not verify_runtime_file(Path(data_root), relative_path):
+    return None
+  image = QImage(str(Path(data_root) / Path(relative_path)))
+  if image.isNull():
+    return None
+  try:
+    return normalize_player_skin_image(image)
+  except ValueError:
+    return None
+
+
+def write_custom_ai_skin(data_root: Path, skin_id: object, image: QImage) -> None:
+  """
+  actor 固有 skin を正規化して runtime state の ID 別 PNG file へ保存する。
+  保存後は当該動的 path の HMAC entry だけを integrity manifest に追加又は更新する。
+  """
+  normalized = normalize_player_skin_image(image)
+  relative_path = custom_ai_skin_relative_path(skin_id)
+  target = Path(data_root) / Path(relative_path)
+  target.parent.mkdir(parents=True, exist_ok=True)
+  if not normalized.save(str(target), "PNG"):
+    raise RuntimeError(f"Unable to save the custom AI skin to {target}.")
+  update_runtime_integrity_manifest(Path(data_root), (relative_path,))
+
+
+def delete_custom_ai_skin(data_root: Path, skin_id: object) -> None:
+  """
+  actor 固有 skin file と対応する integrity manifest entry を削除する冪等操作である。
+  """
+  try:
+    relative_path = custom_ai_skin_relative_path(skin_id)
+  except ValueError:
+    return
+  target = Path(data_root) / Path(relative_path)
+  if target.exists():
+    target.unlink()
+  update_runtime_integrity_manifest(Path(data_root), (relative_path,))
 
 
 def delete_custom_player_skin(data_root: Path) -> None:
