@@ -380,11 +380,6 @@ class RendererBackend:
     self._player.set_skin_texture(skin_texture)
     self._first_person_arm.set_skin_texture(skin_texture)
 
-  def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
-    if self._res is None:
-      return
-    self._player.set_ai_skin_images(dict(images))
-
   def render_player_preview_frame(
     self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
   ) -> QImage:

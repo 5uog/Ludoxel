@@ -53,5 +53,4 @@ class PlayerRenderState:
   crouch_amount: float
   hurt_tint_strength: float = 0.0
   is_first_person: bool = True
-  skin_texture_key: str | None = None
   first_person: FirstPersonRenderState | None = None
