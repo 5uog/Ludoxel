@@ -49,9 +49,7 @@
   "files.trimTrailingWhitespace": true,
 
   "python.analysis.extraPaths": ["src"],
-  "python.analysis.ignore": [
-    "src/ludoxel/presentation/rendering/backends/wgpu"
-  ],
+  "python.analysis.ignore": ["src/ludoxel/presentation/rendering/backends/wgpu"],
 
   "[python]": {
     "editor.formatOnSave": false,

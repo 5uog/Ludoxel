@@ -179,7 +179,6 @@ class ViewportRenderLoopMixin:
     camera_snapshot = snapshot.camera
     upload_eye = Vec3(float(camera_snapshot.eye_x), float(camera_snapshot.eye_y), float(camera_snapshot.eye_z))
     render_eye, render_yaw_deg, render_pitch_deg, render_roll_deg, _render_direction = self._effective_camera_from_snapshot(snapshot)
-    ai_overlay_eye, ai_overlay_yaw_deg, ai_overlay_pitch_deg, ai_overlay_roll_deg, _ai_overlay_direction = self._stable_ai_overlay_camera_pose()
     interaction_eye, interaction_yaw_deg, interaction_pitch_deg, _interaction_direction = self._interaction_pose_from_snapshot(snapshot)
     self._audio.cache_listener_pose(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
 
@@ -229,7 +228,7 @@ class ViewportRenderLoopMixin:
     else:
       self._route_overlay.clear_paths()
     self._update_world_player_name_tag(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
-    self._update_ai_status_tags(snapshot=snapshot, eye=ai_overlay_eye, yaw_deg=float(ai_overlay_yaw_deg), pitch_deg=float(ai_overlay_pitch_deg), roll_deg=float(ai_overlay_roll_deg))
+    self._update_ai_status_tags(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
     self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
     self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
