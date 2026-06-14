@@ -48,6 +48,11 @@
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
 
+  "python.analysis.extraPaths": ["src"],
+  "python.analysis.ignore": [
+    "src/ludoxel/presentation/rendering/backends/wgpu"
+  ],
+
   "[python]": {
     "editor.formatOnSave": false,
     "editor.wordWrap": "wordWrapColumn",
@@ -59,10 +64,10 @@
   "files.associations": {
     "*.pyi": "python",
     "*.qss": "plaintext",
-    "*.glsl": "glsl",
-    "*.comp": "glsl",
-    "*.frag": "glsl",
-    "*.vert": "glsl",
+    "*.glsl": "plaintext",
+    "*.comp": "plaintext",
+    "*.frag": "plaintext",
+    "*.vert": "plaintext",
     "*.in": "plaintext",
     "LICENCE": "plaintext",
     "LICENSE": "plaintext"
