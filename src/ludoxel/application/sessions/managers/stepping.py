@@ -19,6 +19,7 @@ class SessionStepResult:
   fall_distance_blocks: float | None
   damage_taken: float = 0.0
   death_reason: str | None = None
+  death_killer_name: str | None = None
   gravity_broken_blocks: tuple[GravityBrokenBlock, ...] = ()
   play_damage_sound: bool = False
   ai_damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
@@ -99,6 +100,7 @@ def step_session(
     fall_distance_blocks=step_result.fall_distance_blocks,
     damage_taken=float(damage_taken),
     death_reason=death_reason,
+    death_killer_name=None if death_reason != "pvp" or ai_report.player_killer_name is None else str(ai_report.player_killer_name),
     gravity_broken_blocks=tuple(gravity_result.broken_blocks),
     play_damage_sound=bool(play_damage_sound),
     ai_damage_sound_positions=tuple(ai_report.damage_sound_positions),

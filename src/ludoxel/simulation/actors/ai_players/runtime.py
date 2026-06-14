@@ -94,6 +94,7 @@ class AiRoutePathSnapshot:
 class AiStepReport:
   player_damage_taken: float = 0.0
   player_death_reason: str | None = None
+  player_killer_name: str | None = None
   damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
 
 

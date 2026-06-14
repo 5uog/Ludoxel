@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 
 class DeathOverlay(QWidget):
@@ -24,26 +24,26 @@ class DeathOverlay(QWidget):
     panel = QFrame(self)
     panel.setObjectName("panel")
     panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-    panel.setMinimumWidth(560)
+    panel.setMinimumWidth(420)
 
     pv = QVBoxLayout(panel)
-    pv.setContentsMargins(18, 16, 18, 16)
+    pv.setContentsMargins(20, 18, 20, 20)
     pv.setSpacing(12)
 
     title = QLabel("YOU DIED", panel)
     title.setObjectName("title")
+    title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
     pv.addWidget(title)
 
-    self._message = QLabel("You died. Respawn returns you to the session spawn position.", panel)
+    self._message = QLabel("Player died.", panel)
     self._message.setWordWrap(True)
+    self._message.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
     pv.addWidget(self._message)
 
-    btn_row = QHBoxLayout()
     btn = QPushButton("Respawn", panel)
+    btn.setObjectName("menuBtn")
     btn.clicked.connect(self.respawn_requested.emit)
-    btn_row.addWidget(btn)
-    btn_row.addStretch(1)
-    pv.addLayout(btn_row)
+    pv.addWidget(btn)
 
     root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
     root.addStretch(1)
@@ -51,5 +51,5 @@ class DeathOverlay(QWidget):
   def set_message(self, text: str) -> None:
     body = str(text).strip()
     if not body:
-      body = "You died. Respawn returns you to the session spawn position."
+      body = "Player died."
     self._message.setText(body)

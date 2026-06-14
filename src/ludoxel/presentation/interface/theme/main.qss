@@ -353,7 +353,7 @@ QWidget#settingsDialog QPushButton#navBtn:disabled {
 
 QWidget#pauseRoot QPushButton#menuBtn,
 QWidget#inventoryRoot QPushButton#closeBtn,
-QWidget#deathRoot QPushButton,
+QWidget#deathRoot QPushButton#menuBtn,
 QWidget#settingsRoot QPushButton#menuBtn,
 QWidget#othelloSettingsRoot QPushButton#menuBtn,
 QWidget#settingsDialog QPushButton#menuBtn,
@@ -378,7 +378,7 @@ QDialog#playerNameDialog QPushButton#playerNameContinue {
 
 QWidget#pauseRoot QPushButton#menuBtn:hover,
 QWidget#inventoryRoot QPushButton#closeBtn:hover,
-QWidget#deathRoot QPushButton:hover,
+QWidget#deathRoot QPushButton#menuBtn:hover,
 QWidget#settingsRoot QPushButton#menuBtn:hover,
 QWidget#othelloSettingsRoot QPushButton#menuBtn:hover,
 QWidget#settingsDialog QPushButton#menuBtn:hover,
@@ -396,7 +396,7 @@ QDialog#playerNameDialog QPushButton#playerNameContinue:hover {
 
 QWidget#pauseRoot QPushButton#menuBtn:pressed,
 QWidget#inventoryRoot QPushButton#closeBtn:pressed,
-QWidget#deathRoot QPushButton:pressed,
+QWidget#deathRoot QPushButton#menuBtn:pressed,
 QWidget#settingsRoot QPushButton#menuBtn:pressed,
 QWidget#othelloSettingsRoot QPushButton#menuBtn:pressed,
 QWidget#settingsDialog QPushButton#menuBtn:pressed,
@@ -416,7 +416,7 @@ QDialog#playerNameDialog QPushButton#playerNameContinue:pressed {
 
 QWidget#pauseRoot QPushButton#menuBtn:focus,
 QWidget#inventoryRoot QPushButton#closeBtn:focus,
-QWidget#deathRoot QPushButton:focus,
+QWidget#deathRoot QPushButton#menuBtn:focus,
 QWidget#settingsRoot QPushButton#menuBtn:focus,
 QWidget#othelloSettingsRoot QPushButton#menuBtn:focus,
 QWidget#settingsDialog QPushButton#menuBtn:focus,
@@ -432,7 +432,7 @@ QDialog#playerNameDialog QPushButton#playerNameContinue:focus {
 
 QWidget#pauseRoot QPushButton#menuBtn:disabled,
 QWidget#inventoryRoot QPushButton#closeBtn:disabled,
-QWidget#deathRoot QPushButton:disabled,
+QWidget#deathRoot QPushButton#menuBtn:disabled,
 QWidget#settingsRoot QPushButton#menuBtn:disabled,
 QWidget#othelloSettingsRoot QPushButton#menuBtn:disabled,
 QWidget#settingsDialog QPushButton#menuBtn:disabled,

@@ -1756,7 +1756,8 @@ class AiPlayerManager:
     actor.combat_strafe_timer_s = float(_AI_COMBAT_STRAFE_WINDOW_S if float((target_player.position - actor.player.position).length()) <= float(_AI_COMBAT_STRAFE_DISTANCE_MAX) else 0.0)
     actor.combat_strafe_sign = -1 if float(actor.player.hurt_tilt_sign) < 0.0 else 1
     death_reason = "pvp" if not target_player.alive() else None
-    return AiStepReport(player_damage_taken=float(damage_taken), player_death_reason=death_reason)
+    killer_name = str(actor.name) if death_reason is not None else None
+    return AiStepReport(player_damage_taken=float(damage_taken), player_death_reason=death_reason, player_killer_name=killer_name)
 
   def player_attack_from_local(self, *, attacker: PlayerEntity, origin: Vec3, direction: Vec3, reach: float, world_hit: BlockPick | None, sprinting: bool) -> AiLocalAttackResult:
     target_hit = pick_player_target(
@@ -1782,6 +1783,7 @@ class AiPlayerManager:
     self._recovery_searches_this_step = 0
     total_player_damage = 0.0
     player_death_reason: str | None = None
+    player_killer_name: str | None = None
     damage_sound_positions: list[tuple[float, float, float]] = []
     removed_actor_ids: list[str] = []
     paused_ids = {str(actor_id) for actor_id in paused_actor_ids}
@@ -1819,13 +1821,16 @@ class AiPlayerManager:
         total_player_damage += float(attack_report.player_damage_taken)
         if attack_report.player_death_reason is not None:
           player_death_reason = str(attack_report.player_death_reason)
+          player_killer_name = None if attack_report.player_killer_name is None else str(attack_report.player_killer_name)
       if not actor.player.alive():
         removed_actor_ids.append(str(actor.actor_id))
     for actor_id in removed_actor_ids:
       actor = self._actors.pop(str(actor_id), None)
       if actor is not None:
         self._cancel_pending_nav_plan(actor)
-    return AiStepReport(player_damage_taken=float(total_player_damage), player_death_reason=player_death_reason, damage_sound_positions=tuple(damage_sound_positions))
+    return AiStepReport(
+      player_damage_taken=float(total_player_damage), player_death_reason=player_death_reason, player_killer_name=player_killer_name, damage_sound_positions=tuple(damage_sound_positions)
+    )
 
   def actor_observations(self) -> tuple[AiActorObservation, ...]:
     return tuple(

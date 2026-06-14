@@ -322,7 +322,16 @@ class ViewportRenderLoopMixin:
       self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
 
     if step_result.death_reason is not None:
-      self._death.set_message("You died. Respawn returns you to the session spawn position.")
+      player_name = str(self._state.resolved_player_name).strip() or "Player"
+      if step_result.death_reason == "fall":
+        death_message = f"{player_name} died from falling."
+      elif step_result.death_reason == "void":
+        death_message = f"{player_name} fell into the void."
+      elif step_result.death_reason == "pvp" and step_result.death_killer_name is not None:
+        death_message = f"{player_name} was killed by {str(step_result.death_killer_name)}."
+      else:
+        death_message = f"{player_name} died."
+      self._death.set_message(death_message)
       self._set_dead_overlay(True)
       return
 
