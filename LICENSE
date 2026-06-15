@@ -1,9 +1,9 @@
 Ludoxel Independent License
 LicenseRef-All-Rights-Reserved
 
-Version: 2.2.0
+Version: 2.3.0
 Original Effective Date: 2026-06-03
-Current Version Effective Date: 2026-06-14
+Current Version Effective Date: 2026-06-15
 
 Copyright (c) 2026 Kento Konishi (小西拳斗).
 
@@ -21,8 +21,8 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   controlling text for the Original Materials.
 
 * "Licensor" means Kento Konishi, also written in Japanese as
-  小西拳斗, who owns or controls the Original Materials and grants
-  the permissions stated in this License.
+  小西拳斗, who owns or controls the Original Materials and is the
+  only person granting the permissions stated in this License.
 
 * "Maintainer" means the Licensor acting in the capacity of
   administering the Repository, including triaging a Public Issue
@@ -32,11 +32,11 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 * "Licensee" means any natural person, Legal Entity, organization,
   institution, governmental body, educational body, research body,
   business entity, association, or other person or entity that views,
-  accesses, obtains, downloads, clones, forks, stores,　executes,
+  accesses, obtains, downloads, clones, forks, stores, executes,
   uses, analyzes, copies, modifies, distributes, transmits, publishes,
   deploys, incorporates, trains on, evaluates with, or otherwise
-  interacts with Ludoxel, the Repository, the　Original Materials,
-  the Distribution Materials, or any material　derived from them.
+  interacts with Ludoxel, the Repository, the Original Materials,
+  the Distribution Materials, or any material derived from them.
 
 * "Legal Entity" means any corporation, company, partnership,
   association, foundation, institution, governmental body,
@@ -55,10 +55,10 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   templates, workflow files, distribution preparation materials,
   and other repository contents.
 
-* "Current Repository" means the current state of the Repository as
-  published by the Licensor. Older commits, archived copies, forks,
-  mirrors, downloaded copies, and modified versions are not the
-  Current Repository.
+* "Current Repository" means the state of the Repository made
+  available by the Licensor as current. Older commits, archived
+  copies, forks, mirrors, downloaded copies, and modified versions are
+  not the Current Repository.
 
 * "Repository Contents" means all files, directories, text, source
   code, documentation, metadata, configuration files, scripts,
@@ -240,7 +240,7 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 
 2. Legal Character
 
-This License is an independent all-rights-reserved license for the
+This License is the independent all-rights-reserved license for the
 Original Materials. It is not an open source license, free software
 license, public-content license, permissive license, copyleft
 license, public-domain dedication, community contribution license, or
@@ -253,20 +253,20 @@ license, public-domain dedication, or any other standardized open
 source, free software, public-content, permissive, or community
 license.
 
-Public visibility of the Repository, availability of Source Form,
-existence of Object Form, availability of package metadata, technical
-accessibility, and presence of hosting-service features do not grant
-any rights except the rights expressly granted in this License.
+No public visibility of the Repository, availability of Source Form,
+existence of Object Form, package metadata, technical accessibility,
+or hosting-service feature grants any right except the rights
+expressly granted in this License.
 
 3. Limited Grant
 
-Subject to complete compliance with this License, the Licensor grants
-the Licensee a limited, non-exclusive, non-transferable,
+Subject only to complete compliance with this License, the Licensor
+grants the Licensee a limited, non-exclusive, non-transferable,
 non-sublicensable, revocable permission to view Repository Contents
 solely for human review and verification.
 
-Subject to complete compliance with this License, the Licensor also
-grants the Licensee a limited, non-exclusive, non-transferable,
+Subject only to complete compliance with this License, the Licensor
+also grants the Licensee a limited, non-exclusive, non-transferable,
 non-sublicensable, revocable permission to use Ludoxel solely for
 Ordinary Application Use.
 
@@ -448,19 +448,19 @@ Desktop Distribution or other Distribution Materials published by any
 other party is not an Official Distribution and is not endorsed by the
 Licensor, even when derived from the Current Repository.
 
-A party distributing any Distribution Materials is responsible for
-confirming that the distribution is authorized, that all required
-legal materials are included, that Third-Party Materials may be
-redistributed under their applicable Third-Party License Text, and
+A party authorized to distribute Distribution Materials is responsible
+for confirming that the distribution remains authorized, that all
+required legal materials are included, that Third-Party Materials may
+be redistributed under their applicable Third-Party License Text, and
 that Provenance-Sensitive Materials are not distributed without
 confirmed permission.
 
 10. GitHub Platform Terms
 
-The GitHub Platform Terms may govern the relationship between the
-hosting service operated by GitHub and its users. The GitHub Platform
-Terms may permit service-level actions as between that hosting service
-and the user, such as displaying files or using interface functions.
+The GitHub Platform Terms govern the relationship between the hosting
+service operated by GitHub and its users. Any service-level permission
+under the GitHub Platform Terms operates only between that hosting
+service and the user, including file display and interface functions.
 
 The GitHub Platform Terms do not grant a copyright license, patent
 license, trademark license, database-right license, trade-secret
@@ -468,7 +468,8 @@ license, or any other permission from the Licensor beyond Section 3.
 
 A fork, clone, download, archive, Public Issue, pull request, action
 run, release, package, diff, patch view, or other hosting-service
-feature does not authorize Use of the Original Materials.
+feature does not authorize Use of the Original Materials outside
+Section 3.
 
 11. Termination
 
@@ -616,3 +617,9 @@ other right, remedy, claim, or protection.
   Ludoxel; and aligned the contribution, security reporting,
   distribution, controlling-text, and platform-terms provisions with
   those definitions.
+
+* Version 2.3.0, effective 2026-06-15, tightened the legal character,
+  limited grant, repository-visibility, distribution, and GitHub
+  platform-terms language into a more declarative rights-boundary
+  form; corrected non-ASCII spacing in the Licensee definition; and
+  preserved the existing all-rights-reserved scope.
