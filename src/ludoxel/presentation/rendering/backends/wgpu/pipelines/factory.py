@@ -68,6 +68,8 @@ def _camera_uniform_block(name: str) -> str:
     ivec4 ldx_selBlock;
     vec4 ldx_fogCamPosStart;
     vec4 ldx_fogColorEnd;
+    vec4 ldx_shadowParams;
+    vec4 ldx_shadowParams2;
 };
 """
 
@@ -134,7 +136,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
       "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in vec2 v_uv;\nlayout(location = 2) in vec4 v_uvRect;\nlayout(location = 3) in vec4 v_lightPos;\n\nlayout(location = 4) in float v_shade;\nlayout(location = 5) in float v_sel;",
     )
     text = text.replace(
-      "uniform sampler2D u_atlas;\nuniform sampler2DShadow u_shadowMap;\nuniform int u_shadowEnabled;\nuniform vec2 u_shadowTexel;\nuniform float u_shadowDarkMul;\nuniform float u_shadowBiasMin;\nuniform float u_shadowBiasSlope;\nuniform vec3 u_sunDir;\nuniform int u_debugShadow;\nuniform int u_selMode;\nuniform float u_selTint;\n",
+      "uniform sampler2D u_atlas;\nuniform sampler2DShadow u_shadowMap;\nuniform int u_shadowEnabled;\nuniform vec2 u_shadowTexel;\nuniform float u_shadowDarkMul;\nuniform float u_shadowBiasMin;\nuniform float u_shadowBiasSlope;\nuniform float u_shadowPcfRadius;\nuniform vec3 u_sunDir;\nuniform int u_debugShadow;\nuniform int u_selMode;\nuniform float u_selTint;\n",
       _camera_uniform_block("world")
       + "\nlayout(set = 1, binding = 0) uniform texture2D ldx_atlasTexture;\nlayout(set = 1, binding = 1) uniform sampler ldx_atlasSampler;\nlayout(set = 2, binding = 0) uniform texture2D ldx_shadowTexture;\nlayout(set = 2, binding = 1) uniform samplerShadow ldx_shadowSampler;\n",
     )
@@ -143,10 +145,11 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("texture(u_shadowMap, vec3(uvz.xy, z))", "texture(sampler2DShadow(ldx_shadowTexture, ldx_shadowSampler), vec3(uvz.xy, z))")
     text = text.replace("texture(u_atlas, uv)", "texture(sampler2D(ldx_atlasTexture, ldx_atlasSampler), uv)")
     text = text.replace("u_shadowEnabled", "ldx_faceSelMode.z")
-    text = text.replace("u_shadowTexel", "vec2(1.0 / 2048.0, 1.0 / 2048.0)")
-    text = text.replace("u_shadowDarkMul", "0.20")
-    text = text.replace("u_shadowBiasMin", "0.00005")
-    text = text.replace("u_shadowBiasSlope", "0.00050")
+    text = text.replace("u_shadowTexel", "vec2(ldx_shadowParams.x, ldx_shadowParams.x)")
+    text = text.replace("u_shadowDarkMul", "ldx_shadowParams.y")
+    text = text.replace("u_shadowBiasMin", "ldx_shadowParams.z")
+    text = text.replace("u_shadowBiasSlope", "ldx_shadowParams.w")
+    text = text.replace("u_shadowPcfRadius", "ldx_shadowParams2.x")
     text = text.replace("u_sunDir", "ldx_sunDirSelTint.xyz")
     text = text.replace("u_debugShadow", "ldx_faceSelMode.w")
     text = text.replace("u_selMode", "ldx_faceSelMode.y")
@@ -262,7 +265,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
 
   if name == "othello.frag":
     text = text.replace(
-      "uniform vec3 u_sunDir;\n\nuniform sampler2DShadow u_shadowMap;\n\nuniform int u_shadowEnabled;\n\nuniform vec2 u_shadowTexel;\n\nuniform float u_shadowDarkMul;\nuniform float u_shadowBiasMin;\nuniform float u_shadowBiasSlope;\n\nuniform int u_debugShadow;\n",
+      "uniform vec3 u_sunDir;\n\nuniform sampler2DShadow u_shadowMap;\n\nuniform int u_shadowEnabled;\n\nuniform vec2 u_shadowTexel;\n\nuniform float u_shadowDarkMul;\nuniform float u_shadowBiasMin;\nuniform float u_shadowBiasSlope;\nuniform float u_shadowPcfRadius;\n\nuniform int u_debugShadow;\n",
       _camera_uniform_block("world") + "\nlayout(set = 1, binding = 0) uniform texture2D ldx_shadowTexture;\nlayout(set = 1, binding = 1) uniform samplerShadow ldx_shadowSampler;\n",
     )
     text = text.replace(
@@ -273,10 +276,11 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("vec3 uvz = ndc * 0.5 + 0.5;", "vec3 uvz = vec3(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5, ndc.z);")
     text = text.replace("texture(u_shadowMap, vec3(uvz.xy, z))", "texture(sampler2DShadow(ldx_shadowTexture, ldx_shadowSampler), vec3(uvz.xy, z))")
     text = text.replace("u_shadowEnabled", "ldx_faceSelMode.z")
-    text = text.replace("u_shadowTexel", "vec2(1.0 / 2048.0, 1.0 / 2048.0)")
-    text = text.replace("u_shadowDarkMul", "0.20")
-    text = text.replace("u_shadowBiasMin", "0.00005")
-    text = text.replace("u_shadowBiasSlope", "0.00050")
+    text = text.replace("u_shadowTexel", "vec2(ldx_shadowParams.x, ldx_shadowParams.x)")
+    text = text.replace("u_shadowDarkMul", "ldx_shadowParams.y")
+    text = text.replace("u_shadowBiasMin", "ldx_shadowParams.z")
+    text = text.replace("u_shadowBiasSlope", "ldx_shadowParams.w")
+    text = text.replace("u_shadowPcfRadius", "ldx_shadowParams2.x")
     text = text.replace("u_sunDir", "ldx_sunDirSelTint.xyz")
     text = text.replace("u_debugShadow", "ldx_faceSelMode.w")
     text = text.replace("u_fogCamPos", "ldx_fogCamPosStart.xyz")

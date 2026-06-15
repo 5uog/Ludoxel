@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QProgressBar, QSizePol
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON
 from ludoxel.application.preferences.keybinds import action_display_name
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, SHADOW_MAP_QUALITY_ORDER, normalize_shadow_map_quality
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.config.pause_overlay import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ludoxel.presentation.interface.settings.pages import build_audio_tab, build_controls_tab, build_display_tab, build_game_tab, build_world_tab
@@ -55,6 +56,7 @@ class SettingsOverlay(SidebarDialogBase):
   cloud_preferred_y_probability_changed = pyqtSignal(int)
   world_wireframe_changed = pyqtSignal(bool)
   shadow_enabled_changed = pyqtSignal(bool)
+  shadow_map_quality_changed = pyqtSignal(int)
   sun_azimuth_changed = pyqtSignal(float)
   sun_elevation_changed = pyqtSignal(float)
   creative_mode_changed = pyqtSignal(bool)
@@ -145,6 +147,30 @@ class SettingsOverlay(SidebarDialogBase):
   def _current_camera_perspective_value(self) -> str:
     data = self._cmb_camera_perspective.currentData()
     return str(CAMERA_PERSPECTIVE_FIRST_PERSON) if data is None else str(data)
+
+  def _current_shadow_map_quality_value(self) -> int:
+    data = self._cmb_shadow_quality.currentData()
+    return int(SHADOW_MAP_QUALITY_DEFAULT) if data is None else int(data)
+
+  def _on_shadow_enabled_toggled(self, on: bool) -> None:
+    enabled = bool(on)
+    self._cmb_shadow_quality.setEnabled(enabled)
+    self.shadow_enabled_changed.emit(enabled)
+
+  def _on_shadow_map_quality(self, _index: int) -> None:
+    self.shadow_map_quality_changed.emit(int(self._current_shadow_map_quality_value()))
+
+  def _sync_shadow_map_quality(self, quality: int, shadow_enabled: bool) -> None:
+    normalized = normalize_shadow_map_quality(quality)
+    index = 0
+    for candidate_index, candidate in enumerate(SHADOW_MAP_QUALITY_ORDER):
+      if int(candidate) == int(normalized):
+        index = int(candidate_index)
+        break
+    self._cmb_shadow_quality.blockSignals(True)
+    self._cmb_shadow_quality.setCurrentIndex(int(index))
+    self._cmb_shadow_quality.blockSignals(False)
+    self._cmb_shadow_quality.setEnabled(bool(shadow_enabled))
 
   def _new_slider(self, parent: QWidget, min_value: int, max_value: int) -> WheelPassthroughSlider:
     slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, parent)

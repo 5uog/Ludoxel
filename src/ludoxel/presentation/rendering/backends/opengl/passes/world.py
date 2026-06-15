@@ -129,6 +129,7 @@ class WorldPass:
         prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
         prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
         prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
+        prog.set_float("u_shadowPcfRadius", float(inp.shadow.pcf_radius))
 
       glActiveTexture(GL_TEXTURE0)
       glBindTexture(GL_TEXTURE_2D, int(self._atlas.tex_id))

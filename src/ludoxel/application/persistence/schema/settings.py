@@ -13,6 +13,7 @@ from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
 from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
 from ludoxel.application.preferences.runtime import RuntimePreferences
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
@@ -31,6 +32,7 @@ class PersistedSettings:
   cloud_wireframe: bool = False
   world_wireframe: bool = False
   shadow_enabled: bool = True
+  shadow_map_quality: int = SHADOW_MAP_QUALITY_DEFAULT
 
   sun_az_deg: float = 45.0
   sun_el_deg: float = 60.0
@@ -112,6 +114,7 @@ class PersistedSettings:
     object.__setattr__(self, "cloud_preferred_y_min", int(preferred_y_min))
     object.__setattr__(self, "cloud_preferred_y_max", int(preferred_y_max))
     object.__setattr__(self, "cloud_preferred_y_probability_percent", int(probability))
+    object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self.shadow_map_quality))
 
   def to_dict(self) -> dict[str, Any]:
     return {
@@ -123,6 +126,7 @@ class PersistedSettings:
       "cloud_wireframe": bool(self.cloud_wireframe),
       "world_wireframe": bool(self.world_wireframe),
       "shadow_enabled": bool(self.shadow_enabled),
+      "shadow_map_quality": int(self.shadow_map_quality),
       "sun_az_deg": float(self.sun_az_deg),
       "sun_el_deg": float(self.sun_el_deg),
       "cloud_enabled": bool(self.cloud_enabled),
@@ -197,6 +201,7 @@ class PersistedSettings:
       cloud_wireframe=mapping_bool(d, "cloud_wireframe", mapping_bool(d, "cloud_wire", False)),
       world_wireframe=mapping_bool(d, "world_wireframe", mapping_bool(d, "world_wire", False)),
       shadow_enabled=mapping_bool(d, "shadow_enabled", True),
+      shadow_map_quality=normalize_shadow_map_quality(d.get("shadow_map_quality", SHADOW_MAP_QUALITY_DEFAULT)),
       sun_az_deg=mapping_float(d, "sun_az_deg", 45.0),
       sun_el_deg=mapping_float(d, "sun_el_deg", 60.0),
       cloud_enabled=mapping_bool(d, "cloud_enabled", True),

@@ -62,6 +62,7 @@ def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
   overlay.cloud_preferred_y_probability_changed.connect(lambda value: set_cloud_preferred_y_probability(viewport, int(value)))
   overlay.world_wireframe_changed.connect(lambda on: set_world_wire(viewport, bool(on)))
   overlay.shadow_enabled_changed.connect(lambda on: set_shadow_enabled(viewport, bool(on)))
+  overlay.shadow_map_quality_changed.connect(lambda value: set_shadow_map_quality(viewport, int(value)))
   overlay.sun_azimuth_changed.connect(lambda value: set_sun_azimuth(viewport, float(value)))
   overlay.sun_elevation_changed.connect(lambda value: set_sun_elevation(viewport, float(value)))
   overlay.creative_mode_changed.connect(lambda on: set_creative_mode(viewport, bool(on)))
@@ -248,6 +249,7 @@ def sync_settings_values(viewport: "RendererViewportWidget") -> None:
     cloud_preferred_y_probability_percent=int(viewport._state.cloud_preferred_y_probability_percent),
     world_wire=viewport._state.world_wire,
     shadow_enabled=viewport._state.shadow_enabled,
+    shadow_map_quality=int(viewport._state.shadow_map_quality),
     block_break_particle_spawn_rate=float(viewport._state.block_break_particle_spawn_rate),
     block_break_particle_speed_scale=float(viewport._state.block_break_particle_speed_scale),
     sun_az_deg=viewport._state.sun_az_deg,
@@ -532,6 +534,12 @@ def set_world_wire(viewport: "RendererViewportWidget", on: bool) -> None:
 def set_shadow_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.shadow_enabled = bool(on)
   viewport._renderer.set_shadow_enabled(bool(viewport._state.shadow_enabled))
+
+
+def set_shadow_map_quality(viewport: "RendererViewportWidget", quality: int) -> None:
+  viewport._state.shadow_map_quality = int(quality)
+  viewport._state.normalize()
+  viewport._renderer.set_shadow_map_quality(int(viewport._state.shadow_map_quality))
 
 
 def set_sun_azimuth(viewport: "RendererViewportWidget", azimuth_deg: float) -> None:

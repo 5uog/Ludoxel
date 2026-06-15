@@ -31,6 +31,7 @@ from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_DEFAULT, EM
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
 from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.scalars.numeric import clampf, clampi
 from ludoxel.simulation.inventories.hotbars.ai_route_defaults import default_ai_route_hotbar_slots
 from ludoxel.simulation.inventories.hotbars.defaults import default_hotbar_slots
@@ -150,6 +151,7 @@ class RuntimePreferences:
   cloud_preferred_y_probability_percent: int = DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT
   world_wire: bool = False
   shadow_enabled: bool = True
+  shadow_map_quality: int = SHADOW_MAP_QUALITY_DEFAULT
   creative_mode: bool = False
   creative_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots_list)
   creative_selected_hotbar_index: int = 0
@@ -217,6 +219,7 @@ class RuntimePreferences:
     self.cloud_height_variation_enabled = bool(self.cloud_height_variation_enabled)
     self.world_wire = bool(self.world_wire)
     self.shadow_enabled = bool(self.shadow_enabled)
+    self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
     self.creative_mode = bool(self.creative_mode)
     self.route_edit_active = bool(self.route_edit_active)
     self.auto_jump_enabled = bool(self.auto_jump_enabled)
@@ -455,6 +458,7 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
       cloud_preferred_y_probability_percent=int(runtime.cloud_preferred_y_probability_percent),
       world_wire=bool(runtime.world_wire),
       shadow_enabled=bool(runtime.shadow_enabled),
+      shadow_map_quality=normalize_shadow_map_quality(runtime.shadow_map_quality),
       creative_mode=bool(runtime.creative_mode),
       creative_hotbar_slots=list(runtime.creative_hotbar_slots),
       creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index),

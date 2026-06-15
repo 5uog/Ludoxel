@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QLineEdit
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ludoxel.application.preferences.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
 from ludoxel.application.preferences.runtime import RuntimePreferences
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_LABELS, SHADOW_MAP_QUALITY_ORDER
 from ludoxel.presentation.interface.settings.cloud_flow import CLOUD_FLOW_OPTIONS
 from ludoxel.presentation.interface.settings.surface import add_page_header, add_setting_row, add_settings_card
 from ludoxel.presentation.interface.settings.widgets.crosshair import CrosshairPixelEditor, CrosshairPreviewWidget
@@ -165,7 +166,21 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   overlay._tg_animated_textures = overlay._add_toggle(world_layout, world_body, "Animated Textures", overlay.animated_textures_changed.emit)
   overlay._tg_outline_sel = overlay._add_toggle(world_layout, world_body, "Outline selection", overlay.outline_selection_changed.emit)
   overlay._tg_world_wire = overlay._add_toggle(world_layout, world_body, "World wireframe", overlay.world_wireframe_changed.emit)
-  overlay._tg_shadow_enabled = overlay._add_toggle(world_layout, world_body, "Shadow map", overlay.shadow_enabled_changed.emit)
+  overlay._tg_shadow_enabled = overlay._add_toggle(world_layout, world_body, "Shadow map", overlay._on_shadow_enabled_toggled)
+
+  overlay._lbl_shadow_quality = QLabel("Shadow map quality", host)
+  overlay._cmb_shadow_quality = QComboBox(host)
+  for value in SHADOW_MAP_QUALITY_ORDER:
+    overlay._cmb_shadow_quality.addItem(str(SHADOW_MAP_QUALITY_LABELS[int(value)]), userData=int(value))
+  overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_quality)
+  add_setting_row(
+    world_layout,
+    world_body,
+    label="Shadow map quality",
+    description="Shadow map resolution and filtering, independent of render distance.",
+    control=overlay._cmb_shadow_quality,
+    label_widget=overlay._lbl_shadow_quality,
+  )
 
   _particles_card, particles_body, particles_layout = add_settings_card(layout, host, title="Particles", description="Block-break particle emission and movement.")
 

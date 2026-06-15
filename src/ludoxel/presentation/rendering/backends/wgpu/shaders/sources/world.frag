@@ -18,6 +18,7 @@ uniform vec2 u_shadowTexel;
 uniform float u_shadowDarkMul;
 uniform float u_shadowBiasMin;
 uniform float u_shadowBiasSlope;
+uniform float u_shadowPcfRadius;
 uniform vec3 u_sunDir;
 uniform int u_debugShadow;
 uniform int u_selMode;
@@ -32,15 +33,17 @@ float shadow_sample(vec3 uvz, float bias) {
     return texture(u_shadowMap, vec3(uvz.xy, z));
 }
 
-float shadow_pcf4(vec3 uvz, float bias) {
-    vec2 t = u_shadowTexel;
+float shadow_pcf(vec3 uvz, float bias) {
+    vec2 t = u_shadowTexel * max(u_shadowPcfRadius, 0.0);
 
-    float s0 = shadow_sample(vec3(uvz.xy + vec2(-0.5, -0.5) * t, uvz.z), bias);
-    float s1 = shadow_sample(vec3(uvz.xy + vec2( 0.5, -0.5) * t, uvz.z), bias);
-    float s2 = shadow_sample(vec3(uvz.xy + vec2(-0.5,  0.5) * t, uvz.z), bias);
-    float s3 = shadow_sample(vec3(uvz.xy + vec2( 0.5,  0.5) * t, uvz.z), bias);
+    float sum = 0.0;
+    for (int j = -1; j <= 1; ++j) {
+        for (int i = -1; i <= 1; ++i) {
+            sum += shadow_sample(vec3(uvz.xy + vec2(float(i), float(j)) * t, uvz.z), bias);
+        }
+    }
 
-    return 0.25 * (s0 + s1 + s2 + s3);
+    return sum * (1.0 / 9.0);
 }
 
 float shadow_factor(float ndl) {
@@ -63,7 +66,7 @@ float shadow_factor(float ndl) {
     float bias = max(u_shadowBiasMin, u_shadowBiasSlope * (1.0 - ndl));
     bias += 0.35 * tex;
 
-    float lit = shadow_pcf4(uvz, bias);
+    float lit = shadow_pcf(uvz, bias);
     return mix(u_shadowDarkMul, 1.0, lit);
 }
 

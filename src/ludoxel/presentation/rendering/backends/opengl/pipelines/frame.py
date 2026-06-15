@@ -26,7 +26,15 @@ from ludoxel.presentation.rendering.backends.opengl.passes.sun import SunPass
 from ludoxel.presentation.rendering.backends.opengl.passes.world import WorldDrawInputs, WorldPass
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics, RendererFrameMetrics
 from ludoxel.presentation.rendering.backends.opengl.runtime.selection import SelectionController
-from ludoxel.presentation.rendering.contracts.config import BackendRendererParams, CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range
+from ludoxel.presentation.rendering.contracts.config import (
+  BackendRendererParams,
+  CloudDistanceFog,
+  GeometryDistanceFog,
+  cloud_fog_range,
+  effective_backend_shadow_params,
+  max_unfogged_render_distance_radius_blocks,
+  render_distance_fog_range,
+)
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR
@@ -100,13 +108,16 @@ class FramePipeline:
     world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
     cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
     cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
-    shadow_coverage_radius = float(world_fog_end)
+
+    shadow = effective_backend_shadow_params(self.cfg.shadow, int(self.state.shadow_quality))
+    self.shadow_pass.ensure_size(int(shadow.size))
+    shadow_coverage_radius = max(float(shadow.coverage_radius), float(max_unfogged_render_distance_radius_blocks(float(z_far))))
 
     use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
     if bool(use_light_space):
       shadow_info_pre = self.shadow_pass.info()
       light_vp = compute_light_view_proj(
-        center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))), coverage_radius=float(shadow_coverage_radius)
+        center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=shadow, shadow_size=int(max(1, int(shadow_info_pre.size))), coverage_radius=float(shadow_coverage_radius)
       )
     else:
       light_vp = mat4.identity()
@@ -166,7 +177,7 @@ class FramePipeline:
         debug_shadow=bool(self.state.debug_shadow),
         shadow_enabled=bool(self.state.shadow_enabled),
         world_wireframe=bool(self.state.world_wireframe),
-        shadow=self.cfg.shadow,
+        shadow=shadow,
         shadow_info=shadow_info,
         camera_chunk=cam_ck,
         render_distance_chunks=int(render_distance_chunks),
@@ -205,7 +216,7 @@ class FramePipeline:
         sun_dir=self.state.sun_dir,
         debug_shadow=bool(self.state.debug_shadow),
         shadow_enabled=bool(self.state.shadow_enabled),
-        shadow=self.cfg.shadow,
+        shadow=shadow,
         shadow_info=shadow_info,
         fog=world_fog,
       )
@@ -226,7 +237,7 @@ class FramePipeline:
       sun_dir=self.state.sun_dir,
       debug_shadow=bool(self.state.debug_shadow),
       shadow_enabled=bool(self.state.shadow_enabled),
-      shadow=self.cfg.shadow,
+      shadow=shadow,
       shadow_info=shadow_info,
       fog=world_fog,
     )

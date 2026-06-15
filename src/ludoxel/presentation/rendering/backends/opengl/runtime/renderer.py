@@ -106,6 +106,9 @@ class GLRenderer:
   def set_shadow_enabled(self, on: bool) -> None:
     self._state.shadow_enabled = bool(on)
 
+  def set_shadow_map_quality(self, quality: int) -> None:
+    self._state.set_shadow_quality(int(quality))
+
   def set_debug_shadow(self, on: bool) -> None:
     self._state.debug_shadow = bool(on)
 

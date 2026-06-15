@@ -95,6 +95,7 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
   _sync_toggle(overlay._tg_outline_sel, bool(values["outline_selection"]))
   _sync_toggle(overlay._tg_world_wire, bool(values["world_wire"]))
   _sync_toggle(overlay._tg_shadow_enabled, bool(values["shadow_enabled"]))
+  overlay._sync_shadow_map_quality(int(values["shadow_map_quality"]), bool(values["shadow_enabled"]))
   overlay._ctl_block_break_particle_spawn_rate.set_value(float(values["block_break_particle_spawn_rate"]))
   overlay._ctl_block_break_particle_speed_scale.set_value(float(values["block_break_particle_speed_scale"]))
   _sync_toggle(overlay._tg_clouds_enabled, bool(values["clouds_enabled"]))

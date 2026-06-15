@@ -19,6 +19,7 @@ from ludoxel.application.preferences.clouds import (
   normalize_cloud_height_settings,
   normalize_cloud_speed_range,
 )
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import sun_dir_from_az_el_deg
 
@@ -27,6 +28,7 @@ from ludoxel.foundations.mathematics.linear.view_angles import sun_dir_from_az_e
 class BackendRendererRuntimeState:
   debug_shadow: bool = False
   shadow_enabled: bool = True
+  shadow_quality: int = SHADOW_MAP_QUALITY_DEFAULT
   world_wireframe: bool = False
   outline_selection_enabled: bool = True
 
@@ -52,6 +54,7 @@ class BackendRendererRuntimeState:
   sun_dir: Vec3 = field(init=False)
 
   def __post_init__(self) -> None:
+    self.set_shadow_quality(int(self.shadow_quality))
     self.set_sun_angles(float(self.sun_azimuth_deg), float(self.sun_elevation_deg))
     self.set_cloud_density(int(self.cloud_density))
     self.set_cloud_seed(int(self.cloud_seed))
@@ -66,6 +69,13 @@ class BackendRendererRuntimeState:
       int(self.cloud_preferred_y_max),
       int(self.cloud_preferred_y_probability_percent),
     )
+
+  def set_shadow_quality(self, quality: int) -> None:
+    """
+    Shadow map quality 段階を `[1, 5]` の有効値へ正規化して保持する。
+    型不一致、欠落、範囲外値はいずれも `Standard` (3) へ収束させ、renderer backend はこの段階値から `effective_backend_shadow_params` を通じて実効 shadow パラメータを毎 frame 解決する。この段階は render distance とは独立であり、render distance chunks の変更ではこの値は変化しない。
+    """
+    self.shadow_quality = normalize_shadow_map_quality(quality)
 
   def set_sun_angles(self, azimuth_deg: float, elevation_deg: float) -> None:
     az = float(azimuth_deg) % 360.0

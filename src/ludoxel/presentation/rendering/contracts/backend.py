@@ -105,6 +105,10 @@ class Renderer:
     self._state.shadow_enabled = bool(on)
     self._backend.apply_runtime_state()
 
+  def set_shadow_map_quality(self, quality: int) -> None:
+    self._state.set_shadow_quality(int(quality))
+    self._backend.apply_runtime_state()
+
   def set_debug_shadow(self, on: bool) -> None:
     self._state.debug_shadow = bool(on)
     self._backend.apply_runtime_state()

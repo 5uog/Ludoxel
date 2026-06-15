@@ -127,6 +127,7 @@ class OthelloPass:
       self._world_prog.set_float("u_shadowDarkMul", float(shadow.dark_mul))
       self._world_prog.set_float("u_shadowBiasMin", float(shadow.bias_min))
       self._world_prog.set_float("u_shadowBiasSlope", float(shadow.bias_slope))
+      self._world_prog.set_float("u_shadowPcfRadius", float(shadow.pcf_radius))
 
       glActiveTexture(GL_TEXTURE1)
       glBindTexture(GL_TEXTURE_2D, int(shadow_info.tex_id) if shadow_sampling_ok else 0)

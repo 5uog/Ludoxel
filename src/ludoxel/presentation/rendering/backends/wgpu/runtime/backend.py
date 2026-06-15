@@ -41,7 +41,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
-from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, render_distance_fog_range
+from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, effective_backend_shadow_params, render_distance_fog_range
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -71,7 +71,7 @@ from ludoxel.simulation.blocks.structures.neighborhood import six_neighbor_state
 from ludoxel.simulation.inventories.special_items.registry import special_item_icon_keys
 
 _DEPTH_FORMAT = "depth24plus"
-_UNIFORM_FLOAT_COUNT = 52
+_UNIFORM_FLOAT_COUNT = 60
 _UNIFORM_SIZE_BYTES = _UNIFORM_FLOAT_COUNT * 4
 _OPENGL_TO_WGPU_CLIP = np.asarray(((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.5, 0.5), (0.0, 0.0, 0.0, 1.0)), dtype=np.float32)
 _PREVIEW_EYE = Vec3(0.0, 0.98, 6.8)
@@ -172,6 +172,7 @@ class WgpuRendererBackend:
     self._last_shadow_ok = False
     self._last_shadow_size = 0
     self._last_shadow_instances = 0
+    self._effective_shadow = effective_backend_shadow_params(self._cfg.shadow, int(self._state.shadow_quality))
     self._initialized = False
 
   def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
@@ -491,7 +492,7 @@ class WgpuRendererBackend:
       return False
     import wgpu
 
-    size = max(1, int(self._cfg.shadow.size))
+    size = max(1, int(self._effective_shadow.size))
     if self._res.shadow_texture is not None and int(self._res.shadow_size) == int(size) and self._res.shadow_bind_group is not None:
       return True
 
@@ -545,6 +546,10 @@ class WgpuRendererBackend:
     uniform[35] = float(tint_value)
     uniform[44:48] = (float(active_fog.cam_x), float(active_fog.cam_y), float(active_fog.cam_z), float(active_fog.start))
     uniform[48:52] = (float(active_fog.color.x), float(active_fog.color.y), float(active_fog.color.z), float(active_fog.end))
+    shadow = self._effective_shadow
+    shadow_texel = 1.0 / float(max(1, int(shadow.size)))
+    uniform[52:56] = (float(shadow_texel), float(shadow.dark_mul), float(shadow.bias_min), float(shadow.bias_slope))
+    uniform[56:60] = (float(shadow.pcf_radius), 0.0, 0.0, 0.0)
     raw = bytearray(uniform.tobytes())
     ints = np.frombuffer(raw, dtype=np.int32)
     ints[36] = int(face_idx)
@@ -573,8 +578,8 @@ class WgpuRendererBackend:
     return mat4.perspective(float(fov_deg), aspect, float(FIRST_PERSON_HAND_NEAR), float(self._cfg.camera.z_far)).astype(np.float32)
 
   def _light_view_proj(self, *, center: Vec3, coverage_radius: float | None = None) -> np.ndarray:
-    shadow_size = max(1, int(self._cfg.shadow.size))
-    return compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._cfg.shadow, shadow_size=int(shadow_size), coverage_radius=coverage_radius).astype(
+    shadow_size = max(1, int(self._effective_shadow.size))
+    return compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._effective_shadow, shadow_size=int(shadow_size), coverage_radius=coverage_radius).astype(
       np.float32
     )
 
@@ -886,7 +891,9 @@ class WgpuRendererBackend:
     world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
     cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
     cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
-    shadow_coverage_radius = float(world_fog_end)
+
+    self._effective_shadow = effective_backend_shadow_params(self._cfg.shadow, int(self._state.shadow_quality))
+    shadow_coverage_radius = max(float(self._effective_shadow.coverage_radius), float(max_unfogged_render_distance_radius_blocks(float(z_far))))
 
     view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg))
     forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))

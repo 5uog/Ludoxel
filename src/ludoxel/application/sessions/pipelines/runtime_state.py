@@ -37,6 +37,7 @@ def apply_runtime_to_renderer(runtime: RuntimePreferences, renderer) -> None:
   )
   renderer.set_animated_textures_enabled(bool(runtime.animated_textures_enabled))
   renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
+  renderer.set_shadow_map_quality(int(runtime.shadow_map_quality))
   renderer.set_world_wireframe(bool(runtime.world_wire))
   renderer.set_sun_angles(float(runtime.sun_az_deg), float(runtime.sun_el_deg))
 
@@ -75,6 +76,7 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
     cloud_wire=bool(settings.cloud_wireframe),
     world_wire=bool(settings.world_wireframe),
     shadow_enabled=bool(settings.shadow_enabled),
+    shadow_map_quality=int(settings.shadow_map_quality),
     sun_az_deg=float(settings.sun_az_deg),
     sun_el_deg=float(settings.sun_el_deg),
     cloud_enabled=bool(settings.cloud_enabled),
@@ -153,6 +155,7 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
     cloud_wireframe=bool(runtime.cloud_wire),
     world_wireframe=bool(runtime.world_wire),
     shadow_enabled=bool(runtime.shadow_enabled),
+    shadow_map_quality=int(runtime.shadow_map_quality),
     sun_az_deg=float(runtime.sun_az_deg),
     sun_el_deg=float(runtime.sun_el_deg),
     cloud_enabled=bool(runtime.cloud_enabled),
