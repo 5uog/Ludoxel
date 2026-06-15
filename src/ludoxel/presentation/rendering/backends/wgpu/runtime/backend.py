@@ -41,7 +41,14 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
-from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_fog_range, effective_backend_shadow_params, render_distance_fog_range
+from ludoxel.presentation.rendering.contracts.config import (
+  CloudDistanceFog,
+  GeometryDistanceFog,
+  cloud_fog_range,
+  effective_backend_shadow_params,
+  max_unfogged_render_distance_radius_blocks,
+  render_distance_fog_range,
+)
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
