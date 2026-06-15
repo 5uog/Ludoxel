@@ -158,7 +158,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._skin_mode_combo.addItem("Imported PNG", userData=AI_SKIN_MODE_CUSTOM)
     add_setting_row(body_layout, body, label="Skin source", description="Applied immediately to this AI.", control=self._skin_mode_combo)
 
-
     self._skin_status = QLabel("", body)
     self._skin_status.setObjectName("settingsCardDescription")
     self._skin_status.setWordWrap(True)

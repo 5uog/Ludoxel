@@ -8,7 +8,6 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
-
 _DIALOG_WINDOW_BACKGROUND = QColor("#151515")
 _DIALOG_PANEL_BACKGROUND = QColor("#242424")
 _DIALOG_SIDEBAR_BACKGROUND = QColor("#1a1a1a")
