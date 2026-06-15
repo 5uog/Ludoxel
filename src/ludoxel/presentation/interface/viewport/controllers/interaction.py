@@ -79,12 +79,27 @@ _VERTICAL_REPEAT_LOCK_DISPLACEMENT = 0.05
 _GRAVITY_AFFECTED_TAG = "gravity_affected"
 
 
+def _ai_settings_open(viewport: "RendererViewportWidget") -> bool:
+  """
+  本体画面へ埋め込んだ AI Settings overlay が開いているかを返す。
+  AI Settings overlay は viewport の子 widget として覆い被さるが、Pause や Settings と同様に gameplay 入力を抑止する必要があるため、`_ai_settings_overlay_open` flag を gameplay 抑止判定へ取り込む。flag 未初期化時は閉じているものとして扱う。
+  """
+  return bool(getattr(viewport, "_ai_settings_overlay_open", False))
+
+
 def _overlay_blocks_gameplay_keybinds(viewport: "RendererViewportWidget") -> bool:
-  return bool(viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open())
+  return bool(
+    viewport._overlays.paused()
+    or viewport._overlays.inventory_open()
+    or viewport._overlays.dead()
+    or viewport._overlays.settings_open()
+    or viewport._overlays.othello_settings_open()
+    or _ai_settings_open(viewport)
+  )
 
 
 def _overlay_blocks_inventory_toggle_keybind(viewport: "RendererViewportWidget") -> bool:
-  return bool(viewport._overlays.paused() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open())
+  return bool(viewport._overlays.paused() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or _ai_settings_open(viewport))
 
 
 def _is_gameplay_keybind(bound_action: str | None, hotbar_idx: int | None) -> bool:
@@ -97,6 +112,10 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
 
   if int(e.key()) == int(Qt.Key.Key_Escape):
     if viewport._overlays.dead():
+      return True
+    ai_dialog = getattr(viewport, "_ai_settings_dialog", None)
+    if ai_dialog is not None and _ai_settings_open(viewport):
+      ai_dialog.reject()
       return True
     if viewport._overlays.inventory_open():
       viewport._set_inventory_overlay(False)
@@ -163,7 +182,14 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
 
 
 def handle_wheel(viewport: "RendererViewportWidget", e: "QWheelEvent") -> bool:
-  if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open():
+  if (
+    viewport._overlays.paused()
+    or viewport._overlays.inventory_open()
+    or viewport._overlays.dead()
+    or viewport._overlays.settings_open()
+    or viewport._overlays.othello_settings_open()
+    or _ai_settings_open(viewport)
+  ):
     return False
 
   delta_y = int(e.angleDelta().y())
@@ -181,7 +207,14 @@ def handle_wheel(viewport: "RendererViewportWidget", e: "QWheelEvent") -> bool:
 def handle_mouse_press(viewport: "RendererViewportWidget", e: "QMouseEvent") -> bool:
   viewport.setFocus(Qt.FocusReason.MouseFocusReason)
 
-  if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open():
+  if (
+    viewport._overlays.paused()
+    or viewport._overlays.inventory_open()
+    or viewport._overlays.dead()
+    or viewport._overlays.settings_open()
+    or viewport._overlays.othello_settings_open()
+    or _ai_settings_open(viewport)
+  ):
     return False
 
   if not viewport._inp.captured():
@@ -292,6 +325,7 @@ def handle_held_mouse_buttons_pre_step(viewport: "RendererViewportWidget") -> No
     or viewport._overlays.dead()
     or viewport._overlays.settings_open()
     or viewport._overlays.othello_settings_open()
+    or _ai_settings_open(viewport)
     or (not viewport._inp.captured())
     or viewport._state.is_othello_space()
   ):
@@ -322,6 +356,7 @@ def handle_held_mouse_buttons(viewport: "RendererViewportWidget") -> None:
     or viewport._overlays.dead()
     or viewport._overlays.settings_open()
     or viewport._overlays.othello_settings_open()
+    or _ai_settings_open(viewport)
     or (not viewport._inp.captured())
     or viewport._state.is_othello_space()
   ):

@@ -171,63 +171,140 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
   viewport._ai_settings_overlay_open = True
   viewport._inp.set_mouse_capture(False)
   settings_controller.sync_cloud_motion_pause(viewport)
-  try:
 
-    def apply_settings(candidate: AiSpawnEggSettings) -> bool:
-      """
-      AI Settings dialog の有効な変更を session 境界へ即時反映し、変更種別に応じた最小限の presentation 側更新だけを行う。
-      session 側 update が失敗した場合は偽を返して反映しない。反映成功時は、直前に反映済みの settings との比較で skin_mode 又は skin_id が実際に変化した場合に限り、孤立した旧 import skin file の解放と AI skin resource の再解決・renderer push を一度だけ行う。name、health indicator、regen、behavior、route の変更では skin resource の reload も renderer push も行わない。navigation cache の破棄は simulation 側 update_actor_settings が nav 影響変更に限定して処理するため、ここでは追加の navigation 操作を行わない。
-      """
-      normalized = candidate.normalized()
-      previous = viewport._ai_edit_settings
-      updated = viewport._session.update_ai_player_settings(actor_id=str(actor_id), settings=normalized)
-      if not bool(updated):
-        return False
-      previous_skin_id = normalize_ai_skin_id(previous.skin_id)
-      next_skin_id = normalize_ai_skin_id(normalized.skin_id)
-      skin_changed = bool(str(normalized.skin_mode) != str(previous.skin_mode) or next_skin_id != previous_skin_id)
-      viewport._ai_edit_settings = normalized
-      if bool(skin_changed):
-        if previous_skin_id and previous_skin_id != next_skin_id:
-          _delete_unreferenced_ai_skin(viewport, previous_skin_id)
-        settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
-      return True
+  def apply_settings(candidate: AiSpawnEggSettings) -> bool:
+    """
+    AI Settings dialog の有効な変更を session 境界へ即時反映し、変更種別に応じた最小限の presentation 側更新だけを行う。
+    session 側 update が失敗した場合は偽を返して反映しない。反映成功時は、直前に反映済みの settings との比較で skin_mode 又は skin_id が実際に変化した場合に限り、孤立した旧 import skin file の解放と AI skin resource の再解決・renderer push を一度だけ行う。name、health indicator、regen、behavior、route の変更では skin resource の reload も renderer push も行わない。navigation cache の破棄は simulation 側 update_actor_settings が nav 影響変更に限定して処理するため、ここでは追加の navigation 操作を行わない。
+    """
+    normalized = candidate.normalized()
+    previous = viewport._ai_edit_settings
+    updated = viewport._session.update_ai_player_settings(actor_id=str(actor_id), settings=normalized)
+    if not bool(updated):
+      return False
+    previous_skin_id = normalize_ai_skin_id(previous.skin_id)
+    next_skin_id = normalize_ai_skin_id(normalized.skin_id)
+    skin_changed = bool(str(normalized.skin_mode) != str(previous.skin_mode) or next_skin_id != previous_skin_id)
+    viewport._ai_edit_settings = normalized
+    if bool(skin_changed):
+      if previous_skin_id and previous_skin_id != next_skin_id:
+        _delete_unreferenced_ai_skin(viewport, previous_skin_id)
+      settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
+    return True
 
-    dialog = AiSettingsOverlay(
-      parent=viewport.window() if viewport.window() is not None else viewport,
-      settings=viewport._ai_edit_settings,
-      name_validator=lambda candidate, _actor_id=str(actor_id): viewport._session.ai_player_name_error(actor_id=str(_actor_id), name=str(candidate)),
-      settings_updater=apply_settings,
-      skin_importer=lambda current_skin_id: _import_ai_skin(viewport, str(current_skin_id)),
-      skin_available=lambda skin_id: _ai_skin_is_available(viewport, str(skin_id)),
+  dialog = AiSettingsOverlay(
+    parent=viewport,
+    settings=viewport._ai_edit_settings,
+    name_validator=lambda candidate, _actor_id=str(actor_id): viewport._session.ai_player_name_error(actor_id=str(_actor_id), name=str(candidate)),
+    settings_updater=apply_settings,
+    skin_importer=lambda current_skin_id: _import_ai_skin(viewport, str(current_skin_id)),
+    skin_available=lambda skin_id: _ai_skin_is_available(viewport, str(skin_id)),
+    as_window=False,
+  )
+  viewport._ai_settings_dialog = dialog
+  dialog.preview_requested.connect(lambda: open_ai_settings_preview(viewport))
+  dialog.finished.connect(
+    lambda _result, captured_dialog=dialog, captured_actor=str(actor_id), captured_was_captured=bool(was_captured): _on_actor_dialog_finished(
+      viewport, actor_id=captured_actor, was_captured=captured_was_captured, dialog=captured_dialog
     )
-    viewport._position_detached_overlay_window(dialog)
+  )
+  dialog.setGeometry(0, 0, max(1, int(viewport.width())), max(1, int(viewport.height())))
+  dialog.setVisible(True)
+  dialog.raise_()
+  dialog.setFocus()
+  viewport._sync_gameplay_hud_visibility()
+  viewport.update()
+  return True
+
+
+def _on_actor_dialog_finished(viewport: "RendererViewportWidget", *, actor_id: str, was_captured: bool, dialog) -> None:
+  """
+  本体画面へ非 modal で埋め込んだ AI Settings overlay が閉じられた時に、modal exec 時代の `finally` 経路が担っていた後処理を実行する。
+  まず付随する AI Settings Preview dialog を閉じ、overlay が記録した delete 要求と route 編集要求、及び route 編集へ引き継ぐ設定値を、dialog 破棄前に読み出す。次に AI overlay 開放 flag を下ろして入力状態を初期化し、delete 要求があれば actor と孤立 import skin の解放を行い、route 編集要求があれば world 上の route 編集へ遷移する。最後に route 編集中でなければ編集対象 actor 参照を解除し、開始時に mouse capture されていてかつ他の modal overlay が無く loading 中でもなければ gameplay の mouse capture を復帰する。
+  """
+  close_ai_settings_preview(viewport)
+  try:
+    delete_requested = bool(dialog.delete_requested())
+  except RuntimeError:
+    delete_requested = False
+  try:
+    route_requested = bool(dialog.route_edit_requested())
+  except RuntimeError:
+    route_requested = False
+  route_settings = None
+  if bool(route_requested):
     try:
-      dialog.exec()
-      if bool(dialog.delete_requested()):
-        removed_skin_id = normalize_ai_skin_id(viewport._ai_edit_settings.skin_id)
-        removed = viewport._session.remove_ai_player(str(actor_id))
-        if bool(removed):
-          if removed_skin_id and not _skin_id_is_referenced(viewport, removed_skin_id):
-            delete_custom_ai_skin(viewport._data_root, removed_skin_id)
-            settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
-          _sync_ai_visuals(viewport)
-        return bool(removed)
-      if bool(dialog.route_edit_requested()):
-        begin_route_edit(viewport, actor_id=str(actor_id), settings=dialog.settings())
-        return True
-      return True
-    finally:
-      dialog.deleteLater()
-  finally:
-    viewport._ai_settings_overlay_open = False
-    viewport._inp.reset()
-    if not bool(route_edit_active(viewport)):
-      viewport._ai_edit_actor_id = None
-    settings_controller.sync_cloud_motion_pause(viewport)
-    if bool(was_captured) and not viewport._overlays.any_modal_open() and not bool(viewport.loading_active()):
-      viewport._inp.set_mouse_capture(True)
-      viewport.arm_resume_refresh()
+      route_settings = dialog.settings()
+    except RuntimeError:
+      route_settings = None
+  if viewport._ai_settings_dialog is dialog:
+    viewport._ai_settings_dialog = None
+  dialog.deleteLater()
+
+  viewport._ai_settings_overlay_open = False
+  viewport._inp.reset()
+
+  if bool(delete_requested):
+    removed_skin_id = normalize_ai_skin_id(viewport._ai_edit_settings.skin_id)
+    removed = viewport._session.remove_ai_player(str(actor_id))
+    if bool(removed):
+      if removed_skin_id and not _skin_id_is_referenced(viewport, removed_skin_id):
+        delete_custom_ai_skin(viewport._data_root, removed_skin_id)
+        settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
+      _sync_ai_visuals(viewport)
+  elif bool(route_requested):
+    begin_route_edit(viewport, actor_id=str(actor_id), settings=route_settings)
+
+  if not bool(route_edit_active(viewport)):
+    viewport._ai_edit_actor_id = None
+  settings_controller.sync_cloud_motion_pause(viewport)
+  if bool(was_captured) and not viewport._overlays.any_modal_open() and not bool(viewport.loading_active()):
+    viewport._inp.set_mouse_capture(True)
+    viewport.arm_resume_refresh()
+  viewport._sync_gameplay_hud_visibility()
+  viewport.update()
+
+
+def open_ai_settings_preview(viewport: "RendererViewportWidget") -> None:
+  """
+  本体画面へ埋め込んだ AI Settings overlay の Preview button から、対象 AI を中央に据えた Debug 用 preview dialog を明示的に開く。
+  preview dialog は埋め込み overlay とは別の detached dialog として生成し、編集対象 actor が無い場合や既に開いている場合は生成しない。dialog の view_changed は次 frame の preview 再描画を要求するために viewport の再描画へ接続し、closed は preview lifecycle を終了させる close_ai_settings_preview へ接続する。preview frame の生成自体は paint 経路の `_update_ai_preview_frame` が担うため、ここでは dialog の生成と表示のみを行う。
+  """
+  if getattr(viewport, "_ai_preview", None) is not None:
+    return
+  if viewport._ai_edit_actor_id is None:
+    return
+
+  from ludoxel.presentation.interface.overlays.ai_preview import AiPreviewDialog
+
+  host = viewport.window() if viewport.window() is not None else viewport
+  dialog = AiPreviewDialog(host, title="AI Preview")
+  viewport._ai_preview = dialog
+  dialog.view_changed.connect(viewport.update)
+  dialog.closed.connect(lambda: close_ai_settings_preview(viewport))
+  viewport._position_detached_overlay_window(dialog)
+  dialog.show()
+  dialog.raise_()
+  dialog.activateWindow()
+  viewport.update()
+
+
+def close_ai_settings_preview(viewport: "RendererViewportWidget") -> None:
+  """
+  AI Settings Preview dialog を閉じ、preview frame の供給を止める。
+  二重呼び出しに備えて先に参照を切ってから dialog を破棄するため、これ以降の paint では `_update_ai_preview_frame` が preview を検出せず offscreen render を発行しない。
+  """
+  dialog = getattr(viewport, "_ai_preview", None)
+  if dialog is None:
+    return
+  viewport._ai_preview = None
+  try:
+    dialog.blockSignals(True)
+  except Exception:
+    pass
+  dialog.hide()
+  dialog.deleteLater()
+  viewport.update()
 
 
 def begin_route_edit(viewport: "RendererViewportWidget", *, actor_id: str, settings: AiSpawnEggSettings | None = None) -> None:

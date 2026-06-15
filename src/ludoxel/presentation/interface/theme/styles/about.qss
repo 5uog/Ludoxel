@@ -1,0 +1,240 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* About page presentation inside the Settings surface. */
+
+/* About page */
+
+QWidget#settingsRoot QStackedWidget#aboutPageStack,
+QWidget#settingsRoot QWidget#aboutLoaderPage {
+  background: #242424;
+  border: none;
+}
+
+QWidget#settingsRoot QFrame#aboutLoaderCard {
+  background: #303030;
+  border-top: 3px solid #5b5b5b;
+  border-left: 3px solid #5b5b5b;
+  border-right: 3px solid #111111;
+  border-bottom: 3px solid #111111;
+  border-radius: 0px;
+}
+
+QWidget#settingsRoot QProgressBar#aboutLoaderProgress {
+  color: #ffffff;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5b5b5b;
+  border-bottom: 2px solid #5b5b5b;
+  border-radius: 0px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 22px;
+}
+
+QWidget#settingsRoot QProgressBar#aboutLoaderProgress::chunk {
+  background: #8bc45a;
+  border-top: 1px solid #b8e884;
+  border-left: 1px solid #b8e884;
+  border-right: 1px solid #2b4519;
+  border-bottom: 1px solid #2b4519;
+}
+
+QWidget#settingsRoot QProgressBar#aboutLoaderProgress:disabled {
+  color: rgba(255,255,255,115);
+  background: #171717;
+  border-top-color: #080808;
+  border-left-color: #080808;
+  border-right-color: #333333;
+  border-bottom-color: #333333;
+}
+
+QWidget#settingsRoot QFrame#aboutProfileCover,
+QWidget#othelloSettingsRoot QFrame#aboutProfileCover,
+QWidget#settingsDialog QFrame#aboutProfileCover {
+  background: #203818;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 4px solid #0b0b0b;
+  min-height: 140px;
+  max-height: 140px;
+}
+
+QWidget#settingsRoot QWidget#aboutAvatarLayer,
+QWidget#othelloSettingsRoot QWidget#aboutAvatarLayer,
+QWidget#settingsDialog QWidget#aboutAvatarLayer {
+  background: transparent;
+  border: none;
+}
+
+QWidget#settingsRoot QLabel#aboutProfileMark,
+QWidget#othelloSettingsRoot QLabel#aboutProfileMark,
+QWidget#settingsDialog QLabel#aboutProfileMark {
+  color: rgba(255,255,255,235);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QLabel#aboutAvatar,
+QWidget#othelloSettingsRoot QLabel#aboutAvatar,
+QWidget#settingsDialog QLabel#aboutAvatar {
+  color: #ffffff;
+  background: #2a2a2a;
+  border-top: 4px solid #777777;
+  border-left: 4px solid #777777;
+  border-right: 4px solid #080808;
+  border-bottom: 4px solid #080808;
+  border-radius: 0px;
+  padding: 0px;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QLabel#aboutProfileName,
+QWidget#othelloSettingsRoot QLabel#aboutProfileName,
+QWidget#settingsDialog QLabel#aboutProfileName {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QLabel#aboutProfileHandle,
+QWidget#othelloSettingsRoot QLabel#aboutProfileHandle,
+QWidget#settingsDialog QLabel#aboutProfileHandle,
+QWidget#settingsRoot QLabel#aboutProfileBio,
+QWidget#othelloSettingsRoot QLabel#aboutProfileBio,
+QWidget#settingsDialog QLabel#aboutProfileBio,
+QWidget#settingsRoot QLabel#aboutProfileRole,
+QWidget#othelloSettingsRoot QLabel#aboutProfileRole,
+QWidget#settingsDialog QLabel#aboutProfileRole,
+QWidget#settingsRoot QLabel#aboutMetaValue,
+QWidget#othelloSettingsRoot QLabel#aboutMetaValue,
+QWidget#settingsDialog QLabel#aboutMetaValue {
+  color: rgba(255,255,255,205);
+  font-size: 13px;
+}
+
+QWidget#settingsRoot QLabel#aboutProfileRole,
+QWidget#othelloSettingsRoot QLabel#aboutProfileRole,
+QWidget#settingsDialog QLabel#aboutProfileRole {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QWidget#aboutTagFlow,
+QWidget#othelloSettingsRoot QWidget#aboutTagFlow,
+QWidget#settingsDialog QWidget#aboutTagFlow,
+QWidget#settingsRoot QWidget#aboutInlineParagraph,
+QWidget#othelloSettingsRoot QWidget#aboutInlineParagraph,
+QWidget#settingsDialog QWidget#aboutInlineParagraph {
+  background: transparent;
+  border: none;
+}
+
+QWidget#settingsRoot QLabel#aboutPill,
+QWidget#othelloSettingsRoot QLabel#aboutPill,
+QWidget#settingsDialog QLabel#aboutPill {
+  color: #ffffff;
+  background: #4c7f2a;
+  border-top: 2px solid #83bc54;
+  border-left: 2px solid #83bc54;
+  border-right: 2px solid #1d3510;
+  border-bottom: 2px solid #1d3510;
+  border-radius: 0px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QLabel#aboutMetaTitle,
+QWidget#othelloSettingsRoot QLabel#aboutMetaTitle,
+QWidget#settingsDialog QLabel#aboutMetaTitle {
+  color: rgba(255,255,255,170);
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 142px;
+  qproperty-alignment: 'AlignRight | AlignVCenter';
+}
+
+QWidget#settingsRoot QLabel#aboutSectionTitle,
+QWidget#othelloSettingsRoot QLabel#aboutSectionTitle,
+QWidget#settingsDialog QLabel#aboutSectionTitle {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  padding-top: 8px;
+}
+
+QWidget#settingsRoot QLabel#aboutCodeBlock,
+QWidget#othelloSettingsRoot QLabel#aboutCodeBlock,
+QWidget#settingsDialog QLabel#aboutCodeBlock {
+  color: #f5f5f5;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+  border-radius: 0px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+QWidget#settingsRoot QLabel#aboutInlineCode,
+QWidget#othelloSettingsRoot QLabel#aboutInlineCode,
+QWidget#settingsDialog QLabel#aboutInlineCode {
+  color: #f5f5f5;
+  background: #111111;
+  border-top: 1px solid #050505;
+  border-left: 1px solid #050505;
+  border-right: 1px solid #5c5c5c;
+  border-bottom: 1px solid #5c5c5c;
+  border-radius: 0px;
+  padding: 1px 4px;
+  font-size: 12px;
+}
+
+QWidget#settingsRoot QPushButton#aboutGithubButton,
+QWidget#othelloSettingsRoot QPushButton#aboutGithubButton,
+QWidget#settingsDialog QPushButton#aboutGithubButton,
+QWidget#settingsRoot QPushButton#linkBtn,
+QWidget#othelloSettingsRoot QPushButton#linkBtn,
+QWidget#settingsDialog QPushButton#linkBtn {
+  color: #ffffff;
+  background: #5c5c5c;
+  border-top: 3px solid #8f8f8f;
+  border-left: 3px solid #8f8f8f;
+  border-right: 3px solid #202020;
+  border-bottom: 3px solid #202020;
+  border-radius: 0px;
+  padding: 7px 14px;
+  min-height: 24px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
+QWidget#settingsRoot QPushButton#aboutGithubButton:hover,
+QWidget#othelloSettingsRoot QPushButton#aboutGithubButton:hover,
+QWidget#settingsDialog QPushButton#aboutGithubButton:hover,
+QWidget#settingsRoot QPushButton#linkBtn:hover,
+QWidget#settingsDialog QPushButton#linkBtn:hover {
+  background: #6d6d6d;
+}
+
+QWidget#settingsRoot QPushButton#aboutGithubButton:pressed,
+QWidget#othelloSettingsRoot QPushButton#aboutGithubButton:pressed,
+QWidget#settingsDialog QPushButton#aboutGithubButton:pressed,
+QWidget#settingsRoot QPushButton#linkBtn:pressed,
+QWidget#settingsDialog QPushButton#linkBtn:pressed {
+  background: #484848;
+  border-top-color: #202020;
+  border-left-color: #202020;
+  border-right-color: #8f8f8f;
+  border-bottom-color: #8f8f8f;
+}
+

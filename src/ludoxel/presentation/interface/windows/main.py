@@ -16,10 +16,11 @@ from ludoxel.presentation.interface.common.player_name_dialog import PlayerNameD
 from ludoxel.presentation.interface.common.single_instance import SingleInstanceRelay
 from ludoxel.presentation.interface.common.status_overlay import StatusOverlayFrame, status_overlay_title_image_path
 from ludoxel.presentation.interface.theme.fonts import application_font_stylesheet, apply_application_font, install_minecraft_fonts
+from ludoxel.presentation.interface.theme.stylesheet import load_theme_stylesheet
 from ludoxel.presentation.interface.windows.game_screen import GameScreen
 
-_MIN_WINDOW_WIDTH = 980
-_MIN_WINDOW_HEIGHT = 620
+_MIN_WINDOW_WIDTH = 1040
+_MIN_WINDOW_HEIGHT = 700
 _MACOS_APP_ICON_CANDIDATE_NAMES = ("app_icon_1024x1024.icns", "app_icon_512x512.icns", "app_icon_256x256.icns", "app_icon_128x128.icns", "app_icon_32x32.icns", "app_icon_16x16.icns")
 _WINDOWS_APP_ICON_CANDIDATE_NAMES = ("app_icon_256x256.ico", "app_icon_128x128.ico", "app_icon_32x32.ico", "app_icon_16x16.ico")
 
@@ -223,9 +224,10 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   print(f"[ludoxel] registered bundled UI font: {fonts.family}; fallbacks={','.join(tuple(fonts.fallback_families))}; paths={','.join(str(path) for path in tuple(fonts.font_paths))}", file=sys.stderr)
 
   font_qss = application_font_stylesheet(family=str(fonts.family), fallback_families=tuple(fonts.fallback_families))
-  qss = Path(__file__).resolve().parents[1] / "theme" / "main.qss"
-  if qss.exists():
-    qss_text = str(font_qss) + qss.read_text(encoding="utf-8")
+  styles_dir = Path(__file__).resolve().parents[1] / "theme" / "styles"
+  theme_qss = load_theme_stylesheet(styles_dir)
+  if theme_qss:
+    qss_text = str(font_qss) + theme_qss
     arrow_up = (bundled_root / "assets" / "ui" / "settings" / "arrow_up.svg").resolve().as_posix()
     arrow_down = (bundled_root / "assets" / "ui" / "settings" / "arrow_down.svg").resolve().as_posix()
     qss_text = qss_text.replace("__ARROW_UP__", str(arrow_up))

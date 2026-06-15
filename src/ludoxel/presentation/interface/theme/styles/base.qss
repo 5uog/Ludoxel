@@ -1,0 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Ludoxel base chrome: main window surface and tooltips. */
+
+QMainWindow {
+  background: #101010;
+}
+
+QToolTip {
+  color: #ffffff;
+  background: #1e1e1e;
+  border-top: 2px solid #5f5f5f;
+  border-left: 2px solid #5f5f5f;
+  border-right: 2px solid #0a0a0a;
+  border-bottom: 2px solid #0a0a0a;
+  padding: 6px 8px;
+}
+

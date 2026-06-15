@@ -58,7 +58,7 @@ version = { attr = "ludoxel.foundations.identity.version.__version__" }
 
 [tool.setuptools.package-data]
 ludoxel = [
-    "presentation/interface/theme/*.qss",
+    "presentation/interface/theme/styles/*.qss",
     "presentation/rendering/backends/opengl/shaders/*.vert",
     "presentation/rendering/backends/opengl/shaders/*.frag",
     "presentation/rendering/backends/opengl/shaders/*.comp",

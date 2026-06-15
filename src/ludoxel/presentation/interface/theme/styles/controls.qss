@@ -1,0 +1,376 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Form controls for the settings surfaces: text fields, combos, spin boxes, checkboxes, sliders, scrollbars, and the crosshair editors. */
+
+/* Form controls */
+
+QDialog#playerNameDialog QLineEdit#playerNameEdit,
+QWidget#settingsRoot QLineEdit,
+QWidget#othelloSettingsRoot QLineEdit,
+QWidget#settingsDialog QLineEdit,
+QWidget#inventoryRoot QLineEdit,
+QWidget#settingsRoot QComboBox,
+QWidget#othelloSettingsRoot QComboBox,
+QWidget#settingsDialog QComboBox,
+QWidget#settingsRoot QSpinBox,
+QWidget#settingsRoot QDoubleSpinBox,
+QWidget#othelloSettingsRoot QSpinBox,
+QWidget#othelloSettingsRoot QDoubleSpinBox,
+QWidget#settingsDialog QSpinBox,
+QWidget#settingsDialog QDoubleSpinBox {
+  color: #ffffff;
+  background: #111111;
+  border-top: 3px solid #050505;
+  border-left: 3px solid #050505;
+  border-right: 3px solid #555555;
+  border-bottom: 3px solid #555555;
+  border-radius: 0px;
+  padding: 7px 10px;
+  min-height: 24px;
+  selection-background-color: #5b8f35;
+  selection-color: #ffffff;
+}
+
+QWidget#settingsRoot QComboBox,
+QWidget#othelloSettingsRoot QComboBox,
+QWidget#settingsDialog QComboBox,
+QWidget#settingsRoot QSpinBox,
+QWidget#settingsRoot QDoubleSpinBox,
+QWidget#othelloSettingsRoot QSpinBox,
+QWidget#othelloSettingsRoot QDoubleSpinBox,
+QWidget#settingsDialog QSpinBox,
+QWidget#settingsDialog QDoubleSpinBox {
+  padding-right: 30px;
+}
+
+QDialog#playerNameDialog QLineEdit#playerNameEdit:hover,
+QWidget#settingsRoot QLineEdit:hover,
+QWidget#othelloSettingsRoot QLineEdit:hover,
+QWidget#settingsDialog QLineEdit:hover,
+QWidget#inventoryRoot QLineEdit:hover,
+QWidget#settingsRoot QComboBox:hover,
+QWidget#othelloSettingsRoot QComboBox:hover,
+QWidget#settingsDialog QComboBox:hover,
+QWidget#settingsRoot QSpinBox:hover,
+QWidget#settingsRoot QDoubleSpinBox:hover,
+QWidget#othelloSettingsRoot QSpinBox:hover,
+QWidget#othelloSettingsRoot QDoubleSpinBox:hover,
+QWidget#settingsDialog QSpinBox:hover,
+QWidget#settingsDialog QDoubleSpinBox:hover {
+  background: #181818;
+  border-right-color: #707070;
+  border-bottom-color: #707070;
+}
+
+QDialog#playerNameDialog QLineEdit#playerNameEdit:focus,
+QWidget#settingsRoot QLineEdit:focus,
+QWidget#othelloSettingsRoot QLineEdit:focus,
+QWidget#settingsDialog QLineEdit:focus,
+QWidget#inventoryRoot QLineEdit:focus,
+QWidget#settingsRoot QComboBox:focus,
+QWidget#othelloSettingsRoot QComboBox:focus,
+QWidget#settingsDialog QComboBox:focus,
+QWidget#settingsRoot QSpinBox:focus,
+QWidget#settingsRoot QDoubleSpinBox:focus,
+QWidget#othelloSettingsRoot QSpinBox:focus,
+QWidget#othelloSettingsRoot QDoubleSpinBox:focus,
+QWidget#settingsDialog QSpinBox:focus,
+QWidget#settingsDialog QDoubleSpinBox:focus {
+  border-top-color: #d7ff9b;
+  border-left-color: #d7ff9b;
+  border-right-color: #d7ff9b;
+  border-bottom-color: #d7ff9b;
+}
+
+QDialog#playerNameDialog QLineEdit#playerNameEdit:disabled,
+QWidget#settingsRoot QLineEdit:disabled,
+QWidget#othelloSettingsRoot QLineEdit:disabled,
+QWidget#settingsDialog QLineEdit:disabled,
+QWidget#inventoryRoot QLineEdit:disabled,
+QWidget#settingsRoot QComboBox:disabled,
+QWidget#othelloSettingsRoot QComboBox:disabled,
+QWidget#settingsDialog QComboBox:disabled,
+QWidget#settingsRoot QSpinBox:disabled,
+QWidget#settingsRoot QDoubleSpinBox:disabled,
+QWidget#othelloSettingsRoot QSpinBox:disabled,
+QWidget#othelloSettingsRoot QDoubleSpinBox:disabled,
+QWidget#settingsDialog QSpinBox:disabled,
+QWidget#settingsDialog QDoubleSpinBox:disabled {
+  color: rgba(255,255,255,115);
+  background: #171717;
+  border-top-color: #080808;
+  border-left-color: #080808;
+  border-right-color: #333333;
+  border-bottom-color: #333333;
+}
+
+QWidget#settingsRoot QComboBox::drop-down,
+QWidget#othelloSettingsRoot QComboBox::drop-down,
+QWidget#settingsDialog QComboBox::drop-down {
+  width: 26px;
+  background: #4f4f4f;
+  border-left: 2px solid #080808;
+}
+
+QWidget#settingsRoot QComboBox::down-arrow,
+QWidget#othelloSettingsRoot QComboBox::down-arrow,
+QWidget#settingsDialog QComboBox::down-arrow {
+  image: url("__ARROW_DOWN__");
+  width: 10px;
+  height: 6px;
+}
+
+QWidget#settingsRoot QComboBox QAbstractItemView,
+QWidget#othelloSettingsRoot QComboBox QAbstractItemView,
+QWidget#settingsDialog QComboBox QAbstractItemView {
+  color: #ffffff;
+  background: #202020;
+  border-top: 2px solid #5c5c5c;
+  border-left: 2px solid #5c5c5c;
+  border-right: 2px solid #080808;
+  border-bottom: 2px solid #080808;
+  outline: none;
+  selection-background-color: #4c7f2a;
+  selection-color: #ffffff;
+}
+
+QWidget#settingsRoot QSpinBox::up-button,
+QWidget#settingsRoot QSpinBox::down-button,
+QWidget#settingsRoot QDoubleSpinBox::up-button,
+QWidget#settingsRoot QDoubleSpinBox::down-button,
+QWidget#othelloSettingsRoot QSpinBox::up-button,
+QWidget#othelloSettingsRoot QSpinBox::down-button,
+QWidget#othelloSettingsRoot QDoubleSpinBox::up-button,
+QWidget#othelloSettingsRoot QDoubleSpinBox::down-button,
+QWidget#settingsDialog QSpinBox::up-button,
+QWidget#settingsDialog QSpinBox::down-button,
+QWidget#settingsDialog QDoubleSpinBox::up-button,
+QWidget#settingsDialog QDoubleSpinBox::down-button {
+  width: 22px;
+  background: #4f4f4f;
+  border-left: 2px solid #080808;
+}
+
+QWidget#settingsRoot QSpinBox::up-arrow,
+QWidget#settingsRoot QDoubleSpinBox::up-arrow,
+QWidget#othelloSettingsRoot QSpinBox::up-arrow,
+QWidget#othelloSettingsRoot QDoubleSpinBox::up-arrow,
+QWidget#settingsDialog QSpinBox::up-arrow,
+QWidget#settingsDialog QDoubleSpinBox::up-arrow {
+  image: url("__ARROW_UP__");
+  width: 10px;
+  height: 6px;
+}
+
+QWidget#settingsRoot QSpinBox::down-arrow,
+QWidget#settingsRoot QDoubleSpinBox::down-arrow,
+QWidget#othelloSettingsRoot QSpinBox::down-arrow,
+QWidget#othelloSettingsRoot QDoubleSpinBox::down-arrow,
+QWidget#settingsDialog QSpinBox::down-arrow,
+QWidget#settingsDialog QDoubleSpinBox::down-arrow {
+  image: url("__ARROW_DOWN__");
+  width: 10px;
+  height: 6px;
+}
+
+/* Checkboxes */
+
+QWidget#settingsRoot QCheckBox,
+QWidget#othelloSettingsRoot QCheckBox,
+QWidget#settingsDialog QCheckBox {
+  color: #ffffff;
+  spacing: 8px;
+  margin-right: 18px;
+  padding-right: 10px;
+  min-height: 22px;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QCheckBox:disabled,
+QWidget#othelloSettingsRoot QCheckBox:disabled,
+QWidget#settingsDialog QCheckBox:disabled {
+  color: rgba(255,255,255,115);
+}
+
+QWidget#settingsRoot QCheckBox::indicator,
+QWidget#othelloSettingsRoot QCheckBox::indicator,
+QWidget#settingsDialog QCheckBox::indicator {
+  width: 18px;
+  height: 18px;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+}
+
+QWidget#settingsRoot QCheckBox::indicator:hover,
+QWidget#othelloSettingsRoot QCheckBox::indicator:hover,
+QWidget#settingsDialog QCheckBox::indicator:hover {
+  background: #1a1a1a;
+  border-right-color: #7a7a7a;
+  border-bottom-color: #7a7a7a;
+}
+
+QWidget#settingsRoot QCheckBox::indicator:checked,
+QWidget#othelloSettingsRoot QCheckBox::indicator:checked,
+QWidget#settingsDialog QCheckBox::indicator:checked {
+  background: #4c7f2a;
+  border-top-color: #83bc54;
+  border-left-color: #83bc54;
+  border-right-color: #1d3510;
+  border-bottom-color: #1d3510;
+}
+
+QWidget#settingsRoot QCheckBox::indicator:disabled,
+QWidget#othelloSettingsRoot QCheckBox::indicator:disabled,
+QWidget#settingsDialog QCheckBox::indicator:disabled {
+  background: #171717;
+  border-top-color: #080808;
+  border-left-color: #080808;
+  border-right-color: #333333;
+  border-bottom-color: #333333;
+}
+
+/* Sliders */
+
+QWidget#settingsRoot QSlider::groove:horizontal,
+QWidget#othelloSettingsRoot QSlider::groove:horizontal,
+QWidget#settingsDialog QSlider::groove:horizontal {
+  height: 8px;
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+}
+
+QWidget#settingsRoot QSlider::sub-page:horizontal,
+QWidget#othelloSettingsRoot QSlider::sub-page:horizontal,
+QWidget#settingsDialog QSlider::sub-page:horizontal {
+  background: #4c7f2a;
+  border-top: 1px solid #83bc54;
+  border-left: 1px solid #83bc54;
+  border-right: 1px solid #1d3510;
+  border-bottom: 1px solid #1d3510;
+}
+
+QWidget#settingsRoot QSlider::add-page:horizontal,
+QWidget#othelloSettingsRoot QSlider::add-page:horizontal,
+QWidget#settingsDialog QSlider::add-page:horizontal {
+  background: #111111;
+  border: none;
+}
+
+QWidget#settingsRoot QSlider::handle:horizontal,
+QWidget#othelloSettingsRoot QSlider::handle:horizontal,
+QWidget#settingsDialog QSlider::handle:horizontal {
+  background: #c8c8c8;
+  border-top: 3px solid #ffffff;
+  border-left: 3px solid #ffffff;
+  border-right: 3px solid #4a4a4a;
+  border-bottom: 3px solid #4a4a4a;
+  width: 16px;
+  height: 16px;
+  margin: -6px 0px;
+}
+
+QWidget#settingsRoot QSlider::handle:horizontal:hover,
+QWidget#othelloSettingsRoot QSlider::handle:horizontal:hover,
+QWidget#settingsDialog QSlider::handle:horizontal:hover {
+  background: #e0e0e0;
+}
+
+QWidget#settingsRoot QSlider::handle:horizontal:disabled,
+QWidget#othelloSettingsRoot QSlider::handle:horizontal:disabled,
+QWidget#settingsDialog QSlider::handle:horizontal:disabled {
+  background: #646464;
+  border-top-color: #858585;
+  border-left-color: #858585;
+  border-right-color: #2c2c2c;
+  border-bottom-color: #2c2c2c;
+}
+
+/* Scrollbars */
+
+QWidget#settingsRoot QScrollBar:vertical,
+QWidget#othelloSettingsRoot QScrollBar:vertical,
+QWidget#settingsDialog QScrollBar:vertical,
+QWidget#inventoryRoot QScrollBar:vertical {
+  width: 14px;
+  background: #111111;
+  border-left: 2px solid #080808;
+  margin: 0px;
+}
+
+QWidget#settingsRoot QScrollBar::handle:vertical,
+QWidget#othelloSettingsRoot QScrollBar::handle:vertical,
+QWidget#settingsDialog QScrollBar::handle:vertical,
+QWidget#inventoryRoot QScrollBar::handle:vertical {
+  min-height: 30px;
+  background: #5a5a5a;
+  border-top: 2px solid #8a8a8a;
+  border-left: 2px solid #8a8a8a;
+  border-right: 2px solid #202020;
+  border-bottom: 2px solid #202020;
+}
+
+QWidget#settingsRoot QScrollBar::handle:vertical:hover,
+QWidget#othelloSettingsRoot QScrollBar::handle:vertical:hover,
+QWidget#settingsDialog QScrollBar::handle:vertical:hover,
+QWidget#inventoryRoot QScrollBar::handle:vertical:hover {
+  background: #6a6a6a;
+}
+
+QWidget#settingsRoot QScrollBar::handle:vertical:pressed,
+QWidget#othelloSettingsRoot QScrollBar::handle:vertical:pressed,
+QWidget#settingsDialog QScrollBar::handle:vertical:pressed,
+QWidget#inventoryRoot QScrollBar::handle:vertical:pressed {
+  background: #505050;
+  border-top-color: #777777;
+  border-left-color: #777777;
+  border-right-color: #1c1c1c;
+  border-bottom-color: #1c1c1c;
+}
+
+QWidget#settingsRoot QScrollBar::add-line:vertical,
+QWidget#settingsRoot QScrollBar::sub-line:vertical,
+QWidget#othelloSettingsRoot QScrollBar::add-line:vertical,
+QWidget#othelloSettingsRoot QScrollBar::sub-line:vertical,
+QWidget#settingsDialog QScrollBar::add-line:vertical,
+QWidget#settingsDialog QScrollBar::sub-line:vertical,
+QWidget#inventoryRoot QScrollBar::add-line:vertical,
+QWidget#inventoryRoot QScrollBar::sub-line:vertical {
+  height: 0px;
+  background: transparent;
+  border: none;
+}
+
+QWidget#settingsRoot QScrollBar::add-page:vertical,
+QWidget#settingsRoot QScrollBar::sub-page:vertical,
+QWidget#othelloSettingsRoot QScrollBar::add-page:vertical,
+QWidget#othelloSettingsRoot QScrollBar::sub-page:vertical,
+QWidget#settingsDialog QScrollBar::add-page:vertical,
+QWidget#settingsDialog QScrollBar::sub-page:vertical,
+QWidget#inventoryRoot QScrollBar::add-page:vertical,
+QWidget#inventoryRoot QScrollBar::sub-page:vertical {
+  background: transparent;
+}
+
+/* Crosshair widgets */
+
+QWidget#settingsRoot QWidget#crosshairPreview,
+QWidget#settingsRoot QWidget#crosshairEditor,
+QWidget#settingsDialog QWidget#crosshairPreview,
+QWidget#settingsDialog QWidget#crosshairEditor {
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+  border-radius: 0px;
+}
+

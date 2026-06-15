@@ -1,0 +1,72 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Othello adjuncts, inventory and hotbar slots, and the themed notice dialog. */
+
+/* Othello adjuncts */
+
+QWidget#othelloGraph {
+  background: #111111;
+  border-top: 2px solid #050505;
+  border-left: 2px solid #050505;
+  border-right: 2px solid #5c5c5c;
+  border-bottom: 2px solid #5c5c5c;
+  border-radius: 0px;
+}
+
+QWidget#othelloSettingsRoot QLabel#othelloBookStatus,
+QWidget#settingsDialog QLabel#othelloBookStatus {
+  color: rgba(255,255,255,205);
+  font-size: 12px;
+}
+
+/* Inventory and hotbar */
+
+QWidget#inventoryRoot QPushButton#slot,
+QWidget#hotbarRoot QPushButton#slot {
+  background: rgba(20,20,20,240);
+  border-top: 2px solid #555555;
+  border-left: 2px solid #555555;
+  border-right: 2px solid #080808;
+  border-bottom: 2px solid #080808;
+  border-radius: 0px;
+  padding: 0px;
+}
+
+QWidget#inventoryRoot QPushButton#slot:hover,
+QWidget#hotbarRoot QPushButton#slot:hover {
+  background: rgba(32,32,32,245);
+  border-top-color: #777777;
+  border-left-color: #777777;
+}
+
+QWidget#inventoryRoot QPushButton#slot[selected="true"],
+QWidget#hotbarRoot QPushButton#slot[selected="true"] {
+  background: rgba(45,72,30,245);
+  border-top: 3px solid #b8e884;
+  border-left: 3px solid #b8e884;
+  border-right: 3px solid #1c2d12;
+  border-bottom: 3px solid #1c2d12;
+}
+
+QWidget#hotbarRoot QFrame#hotbarPanel {
+  background: transparent;
+  border: none;
+}
+
+/* Notice dialog */
+
+QWidget#noticeDialog {
+  background: rgba(0,0,0,0);
+}
+
+QWidget#noticeDialog QFrame#noticePanel {
+  background: rgba(30,30,30,240);
+  border-top: 3px solid #5f5f5f;
+  border-left: 3px solid #5f5f5f;
+  border-right: 3px solid #080808;
+  border-bottom: 3px solid #080808;
+  border-radius: 0px;
+}

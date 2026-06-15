@@ -79,6 +79,10 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     self._sidebar_layout.addWidget(self._tab_book)
     self._sidebar_layout.addWidget(self._tab_learning)
     self._sidebar_layout.addStretch(1)
+    self._close_button: QPushButton | None = None
+    if not bool(as_window):
+      self._close_button = self._make_sidebar_action_button("Close", self.back_requested.emit)
+      self._sidebar_layout.addWidget(self._close_button)
 
     self._build_match_page()
     self._build_ai_page()

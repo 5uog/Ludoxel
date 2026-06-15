@@ -22,10 +22,22 @@ if TYPE_CHECKING:
 
 
 def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
+  """
+  本体画面へ埋め込んだ Settings overlay の signal を controller へ束ねる。
+  値変更系 signal は Preview dialog と共有する `bind_settings_overlay_value_signals` で束ね、埋め込み overlay 固有の navigation だけをここで接続する。back_requested は埋め込み Settings を閉じてゲーム画面へ戻し、preview_requested は Debug 用の Settings Preview dialog を開く。
+  """
   import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 
-  overlay = viewport._settings
-  overlay.back_requested.connect(lambda: overlay_controller.back_from_settings(viewport))
+  bind_settings_overlay_value_signals(viewport, viewport._settings)
+  viewport._settings.back_requested.connect(lambda: overlay_controller.back_from_settings(viewport))
+  viewport._settings.preview_requested.connect(lambda: overlay_controller.open_settings_preview(viewport))
+
+
+def bind_settings_overlay_value_signals(viewport: "RendererViewportWidget", overlay) -> None:
+  """
+  Settings overlay instance の値変更 signal を controller 経路へ接続する。
+  本体画面へ埋め込んだ overlay と Debug 用 Preview dialog の双方が同一の controller を共有するため、対象 overlay を引数で受け取り、いずれの instance でも各変更が runtime preference、session settings、renderer、audio へ即時反映されるようにする。navigation 用の back_requested と preview_requested はここでは接続しない。
+  """
   overlay.fov_changed.connect(lambda value: set_fov(viewport, float(value)))
   overlay.sens_changed.connect(lambda value: set_sens(viewport, float(value)))
   overlay.invert_x_changed.connect(lambda on: set_invert_x(viewport, bool(on)))
@@ -147,11 +159,18 @@ def sync_hotbar_widgets(viewport: "RendererViewportWidget") -> None:
   sync_hotbar_status(viewport)
 
 
+def _sync_overlay_crosshair_widgets(viewport: "RendererViewportWidget", overlay) -> None:
+  overlay._crosshair_preview.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
+  overlay._crosshair_editor.set_pixels(viewport._state.crosshair_pixels)
+  overlay._btn_crosshair_reset.setEnabled(normalize_crosshair_mode(viewport._state.crosshair_mode) == CROSSHAIR_MODE_CUSTOM)
+
+
 def sync_crosshair_widgets(viewport: "RendererViewportWidget") -> None:
   viewport._crosshair.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
-  viewport._settings._crosshair_preview.set_pattern(mode=viewport._state.crosshair_mode, custom_pixels=viewport._state.crosshair_pixels)
-  viewport._settings._crosshair_editor.set_pixels(viewport._state.crosshair_pixels)
-  viewport._settings._btn_crosshair_reset.setEnabled(normalize_crosshair_mode(viewport._state.crosshair_mode) == CROSSHAIR_MODE_CUSTOM)
+  _sync_overlay_crosshair_widgets(viewport, viewport._settings)
+  preview = getattr(viewport, "_settings_preview", None)
+  if preview is not None:
+    _sync_overlay_crosshair_widgets(viewport, preview)
 
 
 def sync_player_skin(viewport: "RendererViewportWidget", *, push_to_renderer: bool = False) -> None:
@@ -212,7 +231,7 @@ def clear_selected_hotbar_slot(viewport: "RendererViewportWidget") -> None:
 
 def sync_settings_values(viewport: "RendererViewportWidget") -> None:
   sync_state_from_renderer_sun(viewport)
-  viewport._settings.sync_values(
+  values = dict(
     fov_deg=viewport._session.settings.fov_deg,
     sens_deg_per_px=viewport._session.settings.mouse_sens_deg_per_px,
     inv_x=viewport._state.invert_x,
@@ -277,6 +296,10 @@ def sync_settings_values(viewport: "RendererViewportWidget") -> None:
     audio_block=float(viewport._state.audio.block),
     audio_player=float(viewport._state.audio.player),
   )
+  viewport._settings.sync_values(**values)
+  preview = getattr(viewport, "_settings_preview", None)
+  if preview is not None:
+    preview.sync_values(**values)
 
 
 def refresh_player_identity(viewport: "RendererViewportWidget", *, regenerate_if_blank: bool) -> None:

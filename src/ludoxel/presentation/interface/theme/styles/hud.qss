@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Gameplay HUD labels: status readout, player nametag, Othello HUD and title. */
+
+/* Gameplay HUD */
+
+QLabel#hud,
+QLabel#playerNameTag,
+QLabel#othelloHud {
+  color: rgba(255,255,255,240);
+  background: rgba(18,18,18,170);
+  border: 2px solid rgba(0,0,0,210);
+  padding: 8px 10px;
+}
+
+QLabel#playerNameTag {
+  border: none;
+}
+
+QLabel#othelloTitle {
+  color: #ffffff;
+  background: rgba(22,22,22,205);
+  border-top: 3px solid #5a5a5a;
+  border-left: 3px solid #5a5a5a;
+  border-right: 3px solid #080808;
+  border-bottom: 3px solid #080808;
+  padding: 12px 14px;
+  font-size: 18px;
+  font-weight: 800;
+  min-height: 52px;
+}
+

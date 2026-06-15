@@ -1,0 +1,192 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Modal surfaces and typography shared by pause, death, inventory, Settings, AI Settings, and Othello Settings: root backdrops, stone panels, sidebars, content frames, scroll hosts, text scale, and separators. */
+
+QWidget#pauseRoot,
+QWidget#inventoryRoot,
+QWidget#deathRoot {
+  background: rgba(0,0,0,150);
+}
+
+QWidget#settingsRoot[detachedWindow="false"],
+QWidget#othelloSettingsRoot[detachedWindow="false"],
+QWidget#settingsDialog[detachedWindow="false"] {
+  background: #151515;
+}
+
+QWidget#settingsRoot[detachedWindow="true"],
+QWidget#othelloSettingsRoot[detachedWindow="true"],
+QWidget#settingsDialog[detachedWindow="true"] {
+  background: #151515;
+}
+
+/* Main stone panels */
+
+QWidget#pauseRoot QFrame#panel,
+QWidget#inventoryRoot QFrame#panel,
+QWidget#deathRoot QFrame#panel,
+QDialog#playerNameDialog QFrame#playerNamePanel {
+  background: #2a2a2a;
+  border-top: 4px solid #666666;
+  border-left: 4px solid #666666;
+  border-right: 4px solid #0b0b0b;
+  border-bottom: 4px solid #0b0b0b;
+  border-radius: 0px;
+}
+
+QWidget#settingsRoot QFrame#panel,
+QWidget#othelloSettingsRoot QFrame#panel,
+QWidget#settingsDialog QFrame#panel {
+  background: #242424;
+  border: none;
+  border-radius: 0px;
+}
+
+QWidget#settingsRoot QWidget#settingsSidebar,
+QWidget#othelloSettingsRoot QWidget#othelloSettingsSidebar,
+QWidget#settingsDialog QWidget#settingsSidebar {
+  background: #1a1a1a;
+  border-top: none;
+  border-left: none;
+  border-right: 4px solid #080808;
+  border-bottom: none;
+}
+
+QWidget#settingsRoot QLabel#settingsSidebarTitle,
+QWidget#othelloSettingsRoot QLabel#settingsSidebarTitle,
+QWidget#settingsDialog QLabel#settingsSidebarTitle {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 12px 16px 10px 16px;
+}
+
+QWidget#settingsRoot QWidget#settingsContent,
+QWidget#othelloSettingsRoot QWidget#othelloSettingsContent,
+QWidget#settingsDialog QWidget#settingsContent,
+QWidget#settingsRoot QStackedWidget#settingsStack,
+QWidget#othelloSettingsRoot QStackedWidget#othelloSettingsStack,
+QWidget#settingsDialog QStackedWidget#settingsStack {
+  background: #242424;
+  border: none;
+}
+
+QWidget#settingsRoot QWidget#settingsViewport,
+QWidget#othelloSettingsRoot QWidget#settingsViewport,
+QWidget#settingsDialog QWidget#settingsViewport,
+QWidget#settingsRoot QWidget#settingsPage,
+QWidget#othelloSettingsRoot QWidget#settingsPage,
+QWidget#settingsDialog QWidget#settingsPage,
+QWidget#settingsRoot QWidget#aboutPage,
+QWidget#othelloSettingsRoot QWidget#aboutPage,
+QWidget#settingsDialog QWidget#aboutPage {
+  background: #242424;
+}
+
+QWidget#settingsRoot QScrollArea,
+QWidget#othelloSettingsRoot QScrollArea,
+QWidget#settingsDialog QScrollArea,
+QWidget#inventoryRoot QScrollArea {
+  background: transparent;
+  border: none;
+}
+
+/* Text */
+
+QWidget#pauseRoot QLabel,
+QWidget#settingsRoot QLabel,
+QWidget#othelloSettingsRoot QLabel,
+QWidget#settingsDialog QLabel,
+QWidget#inventoryRoot QLabel,
+QWidget#deathRoot QLabel,
+QDialog#playerNameDialog QLabel,
+QWidget#noticeDialog QLabel {
+  color: #ffffff;
+  font-size: 13px;
+}
+
+QWidget#pauseRoot QLabel#title,
+QWidget#inventoryRoot QLabel#title,
+QWidget#deathRoot QLabel#title,
+QDialog#playerNameDialog QLabel#playerNameTitle {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+QWidget#deathRoot QLabel#title {
+  color: #ff7777;
+}
+
+QWidget#settingsRoot QLabel#settingsPageTitle,
+QWidget#othelloSettingsRoot QLabel#settingsPageTitle,
+QWidget#settingsDialog QLabel#settingsPageTitle {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+  padding: 0px 0px 2px 0px;
+}
+
+QWidget#pauseRoot QLabel#subtitle,
+QWidget#settingsRoot QLabel#subtitle,
+QWidget#othelloSettingsRoot QLabel#subtitle,
+QWidget#settingsDialog QLabel#subtitle,
+QWidget#inventoryRoot QLabel#subtitle,
+QWidget#deathRoot QLabel#subtitle,
+QDialog#playerNameDialog QLabel#playerNameSubtitle,
+QWidget#settingsRoot QLabel#settingsPageSubtitle,
+QWidget#othelloSettingsRoot QLabel#settingsPageSubtitle,
+QWidget#settingsDialog QLabel#settingsPageSubtitle {
+  color: rgba(255,255,255,205);
+  font-size: 13px;
+}
+
+QWidget#pauseRoot QLabel#sectionTitle,
+QWidget#settingsRoot QLabel#sectionTitle,
+QWidget#othelloSettingsRoot QLabel#sectionTitle,
+QWidget#settingsDialog QLabel#sectionTitle,
+QWidget#settingsRoot QLabel#settingsCardTitle,
+QWidget#othelloSettingsRoot QLabel#settingsCardTitle,
+QWidget#settingsDialog QLabel#settingsCardTitle,
+QWidget#noticeDialog QLabel#noticeTitle {
+  color: #f5f5f5;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+QWidget#settingsRoot QLabel#settingsCardDescription,
+QWidget#othelloSettingsRoot QLabel#settingsCardDescription,
+QWidget#settingsDialog QLabel#settingsCardDescription,
+QWidget#settingsRoot QLabel#settingsRowDescription,
+QWidget#othelloSettingsRoot QLabel#settingsRowDescription,
+QWidget#settingsDialog QLabel#settingsRowDescription,
+QWidget#noticeDialog QLabel#noticeMessage {
+  color: rgba(255,255,255,195);
+  font-size: 12px;
+}
+
+QWidget#settingsRoot QLabel#valueLabel,
+QWidget#othelloSettingsRoot QLabel#valueLabel,
+QWidget#settingsDialog QLabel#valueLabel,
+QWidget#settingsRoot QLabel#settingsRowLabel,
+QWidget#othelloSettingsRoot QLabel#settingsRowLabel,
+QWidget#settingsDialog QLabel#settingsRowLabel,
+QWidget#settingsRoot QLabel#bedrockToggleLabel,
+QWidget#othelloSettingsRoot QLabel#bedrockToggleLabel,
+QWidget#settingsDialog QLabel#bedrockToggleLabel {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+QFrame#sep {
+  color: #0b0b0b;
+  background: #0b0b0b;
+  min-height: 3px;
+  max-height: 3px;
+  border: none;
+}
+

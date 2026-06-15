@@ -71,10 +71,18 @@ class ViewportOverlayMixin:
     overlay.move(int(x), int(y))
 
   def _position_settings_window(self: "RendererViewportWidget") -> None:
-    self._position_detached_overlay_window(self._settings)
+    """
+    本体画面へ埋め込んだ Settings overlay を viewport 全体へ広げて配置する。
+    Settings overlay は detached window ではなく viewport の子 widget として表示されるため、`_layout_viewport_overlays` と同じく原点から viewport の幅・高さへ一致させる。overlay の root layout は余白なしで panel を全面へ伸張し、root 背景も不透明であるため、配置後は不透明な設定画面が viewport 全体を覆い、背後のゲーム描画は見えない。
+    """
+    self._settings.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
 
   def _position_othello_settings_window(self: "RendererViewportWidget") -> None:
-    self._position_detached_overlay_window(self._othello_settings)
+    """
+    本体画面へ埋め込んだ Othello Settings overlay を viewport 全体へ広げて配置する。
+    Settings overlay と同様に viewport の子 widget として原点から viewport の幅・高さへ一致させ、余白なしで panel を全面へ伸張する不透明な設定画面として viewport 全体を覆う。
+    """
+    self._othello_settings.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
 
   @staticmethod
   def _pause_preview_key(*, player_state, width: int, height: int, device_pixel_ratio: float) -> tuple[object, ...] | None:
@@ -131,11 +139,63 @@ class ViewportOverlayMixin:
     self._pause_preview_frame = QImage(frame)
     self._overlay.set_player_preview_frame(frame)
 
+  def _update_ai_preview_frame(self: "RendererViewportWidget", *, fb_w: int, fb_h: int, dpr: float) -> None:
+    """
+    AI Settings Preview dialog が開いている間、編集対象 AI を中央に据えた preview frame を renderer の offscreen player preview 経路で 1 frame 生成し、dialog の preview widget へ供給する。
+    対象 actor は `_ai_edit_actor_id` で特定し、その render snapshot から third-person render state を合成して skin texture 選択子を継承させたうえで、原点中央・正面向き・third-person の preview pose へ写し替える。回転角は dialog の preview widget から取得した body yaw、head yaw、head pitch を用いる。
+    preview が閉じている、対象 actor が存在しない、preview widget が縮退している場合は何もしないか frame を空にする。renderer 呼び出しが例外を送出した場合でも main render path を巻き込まないよう退避し、preview frame を空へ戻して dialog 側の描画を抑止する。
+    """
+    preview = getattr(self, "_ai_preview", None)
+    if preview is None:
+      return
+    actor_id = self._ai_edit_actor_id
+    if actor_id is None:
+      return
+    widget = preview.preview_widget()
+    if int(widget.width()) <= 1 or int(widget.height()) <= 1:
+      return
+    try:
+      from ludoxel.presentation.rendering.visuals.players.ai_player_render_state import compose_ai_player_render_states
+
+      snapshots = tuple(snapshot for snapshot in self._session.ai_render_snapshots() if str(getattr(snapshot, "actor_id", "")) == str(actor_id))
+      if not snapshots:
+        widget.set_frame_image(QImage())
+        return
+      states = compose_ai_player_render_states(snapshots, block_registry=self._session.block_registry)
+      if not states:
+        widget.set_frame_image(QImage())
+        return
+      body_yaw_deg, head_yaw_deg, head_pitch_deg = widget.preview_angles()
+      preview_state = replace(
+        states[0], base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False
+      )
+      w = max(1, int(round(float(widget.width()) * max(1.0, float(dpr)))))
+      h = max(1, int(round(float(widget.height()) * max(1.0, float(dpr)))))
+      frame = self._renderer.render_player_preview_frame(
+        w=int(w),
+        h=int(h),
+        player_state=preview_state,
+        restore_framebuffer=int(self.defaultFramebufferObject()),
+        restore_viewport=(0, 0, int(fb_w), int(fb_h)),
+        device_pixel_ratio=float(max(1.0, float(dpr))),
+      )
+      widget.set_frame_image(frame)
+    except Exception:
+      try:
+        widget.set_frame_image(QImage())
+      except Exception:
+        pass
+
   def _layout_viewport_overlays(self: "RendererViewportWidget", *, width: int, height: int) -> None:
     if self._hud is not None:
       self._hud.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._othello_hud.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._overlay.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+    self._settings.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+    self._othello_settings.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+    ai_settings = getattr(self, "_ai_settings_dialog", None)
+    if ai_settings is not None and not bool(getattr(ai_settings, "_as_window", True)):
+      ai_settings.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._crosshair.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._hotbar.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._route_overlay.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
@@ -167,7 +227,9 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
+      and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
+      and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
       and (not self._overlays.inventory_open())
     )
 
@@ -203,6 +265,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.inventory_open())
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
+      and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
       and ((not self._state.is_othello_space()) and (bool(self._state.route_edit_active) or len(self._session.ai_route_paths()) > 0))
     )
 
@@ -228,6 +291,22 @@ class ViewportOverlayMixin:
       self._othello_hud.raise_()
     self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(self._ambient_audio_active()))
     self._sync_player_name_overlays()
+    self._raise_open_settings_surface()
+
+  def _raise_open_settings_surface(self: "RendererViewportWidget") -> None:
+    """
+    本体画面へ埋め込んだ Settings、AI Settings、Othello Settings overlay のいずれかが開いている場合、その overlay を viewport の子 widget 群の最前面へ上げる。
+    Pause、inventory、death と異なり、これらの設定 overlay は HUD やゲーム描画より常に上に来なければならないため、HUD の表示・最前面化を行う `_sync_gameplay_hud_visibility` の末尾で改めて最前面へ上げ、crosshair、F3 HUD、hotbar、route overlay が設定 overlay より前へ出ないことを保証する。設定 overlay が閉じている場合は何もしない。
+    """
+    if self._overlays.othello_settings_open() and self._othello_settings.isVisible():
+      self._othello_settings.raise_()
+      return
+    if self._overlays.settings_open() and self._settings.isVisible():
+      self._settings.raise_()
+      return
+    ai_dialog = getattr(self, "_ai_settings_dialog", None)
+    if ai_dialog is not None and bool(getattr(self, "_ai_settings_overlay_open", False)) and ai_dialog.isVisible():
+      ai_dialog.raise_()
 
   def _set_dead_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
@@ -247,26 +326,26 @@ class ViewportOverlayMixin:
     settings_controller.sync_cloud_motion_pause(self)
 
   def _set_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
+    """
+    本体画面へ埋め込んだ Settings overlay の表示・非表示を切り替える。
+    overlay は viewport の子 widget であるため、detached window 時代に必要だった全画面解除の往復は行わず、表示時に viewport 全面へ配置してから overlay state machine へ委譲する。全画面のまま埋め込み Settings を重ねて表示できる。
+    """
     if bool(on):
       self._reset_held_mouse_actions()
-      if bool(self._state.fullscreen):
-        self.fullscreen_changed.emit(False)
       self._position_settings_window()
     self._overlays.set_settings_open(bool(on))
-    if (not bool(on)) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()):
-      self.fullscreen_changed.emit(bool(self._state.fullscreen))
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
   def _set_othello_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
+    """
+    本体画面へ埋め込んだ Othello Settings overlay の表示・非表示を切り替える。
+    Settings overlay と同様に viewport の子 widget として全面へ配置するため、全画面解除の往復は行わずに overlay state machine へ委譲する。
+    """
     if bool(on):
       self._reset_held_mouse_actions()
-      if bool(self._state.fullscreen):
-        self.fullscreen_changed.emit(False)
       self._position_othello_settings_window()
     self._overlays.set_othello_settings_open(bool(on))
-    if (not bool(on)) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()):
-      self.fullscreen_changed.emit(bool(self._state.fullscreen))
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 

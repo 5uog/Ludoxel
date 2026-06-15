@@ -1,0 +1,71 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Settings cards and rows used by the sidebar settings surfaces. */
+
+/* Settings cards and rows */
+
+QWidget#settingsRoot QFrame#settingsCard,
+QWidget#othelloSettingsRoot QFrame#settingsCard,
+QWidget#settingsDialog QFrame#settingsCard,
+QWidget#settingsRoot QWidget#settingsCard,
+QWidget#othelloSettingsRoot QWidget#settingsCard,
+QWidget#settingsDialog QWidget#settingsCard,
+QWidget#settingsRoot QFrame#aboutCard,
+QWidget#othelloSettingsRoot QFrame#aboutCard,
+QWidget#settingsDialog QFrame#aboutCard,
+QWidget#settingsRoot QFrame#aboutProfileCard,
+QWidget#othelloSettingsRoot QFrame#aboutProfileCard,
+QWidget#settingsDialog QFrame#aboutProfileCard {
+  background: #303030;
+  border-top: 3px solid #5b5b5b;
+  border-left: 3px solid #5b5b5b;
+  border-right: 3px solid #111111;
+  border-bottom: 3px solid #111111;
+  border-radius: 0px;
+}
+
+QWidget#settingsRoot QWidget#settingsCardBody,
+QWidget#othelloSettingsRoot QWidget#settingsCardBody,
+QWidget#settingsDialog QWidget#settingsCardBody,
+QWidget#settingsRoot QWidget#settingsRowText,
+QWidget#othelloSettingsRoot QWidget#settingsRowText,
+QWidget#settingsDialog QWidget#settingsRowText,
+QWidget#settingsRoot QWidget#settingsRowControl,
+QWidget#othelloSettingsRoot QWidget#settingsRowControl,
+QWidget#settingsDialog QWidget#settingsRowControl,
+QWidget#settingsRoot QWidget#settingsPageHeader,
+QWidget#othelloSettingsRoot QWidget#settingsPageHeader,
+QWidget#settingsDialog QWidget#settingsPageHeader {
+  background: transparent;
+  border: none;
+}
+
+QWidget#settingsRoot QWidget#settingsRow,
+QWidget#othelloSettingsRoot QWidget#settingsRow,
+QWidget#settingsDialog QWidget#settingsRow,
+QWidget#settingsRoot QWidget#bedrockToggleRow,
+QWidget#othelloSettingsRoot QWidget#bedrockToggleRow,
+QWidget#settingsDialog QWidget#bedrockToggleRow {
+  background: #262626;
+  border-top: 2px solid #4a4a4a;
+  border-left: 2px solid #4a4a4a;
+  border-right: 2px solid #101010;
+  border-bottom: 2px solid #101010;
+  border-radius: 0px;
+  min-height: 42px;
+}
+
+QWidget#settingsRoot QWidget#settingsRow:hover,
+QWidget#othelloSettingsRoot QWidget#settingsRow:hover,
+QWidget#settingsDialog QWidget#settingsRow:hover,
+QWidget#settingsRoot QWidget#bedrockToggleRow:hover,
+QWidget#othelloSettingsRoot QWidget#bedrockToggleRow:hover,
+QWidget#settingsDialog QWidget#bedrockToggleRow:hover {
+  background: #2d2d2d;
+  border-top-color: #606060;
+  border-left-color: #606060;
+}
+

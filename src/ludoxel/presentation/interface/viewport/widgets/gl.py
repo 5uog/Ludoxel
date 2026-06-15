@@ -128,6 +128,9 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._block_break_particles = ()
     self._ai_edit_settings = AiSpawnEggSettings().normalized()
     self._ai_settings_overlay_open: bool = False
+    self._ai_settings_dialog = None
+    self._settings_preview = None
+    self._ai_preview = None
     self._transient_modal_depth: int = 0
     self._ai_edit_actor_id: str | None = None
     self._ai_route_edit_actor_id: str | None = None
@@ -167,8 +170,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
 
     self._overlay = PauseOverlay(self)
     self._overlay.set_title_image_path(status_overlay_title_image_path(self._resource_root))
-    self._settings = SettingsOverlay(None, resource_root=self._resource_root, as_window=True)
-    self._othello_settings = OthelloSettingsOverlay(None, resource_root=self._resource_root, as_window=True)
+    self._settings = SettingsOverlay(self, resource_root=self._resource_root, as_window=False)
+    self._othello_settings = OthelloSettingsOverlay(self, resource_root=self._resource_root, as_window=False)
     self._death = DeathOverlay(self)
 
     self._crosshair = CrosshairWidget(self)

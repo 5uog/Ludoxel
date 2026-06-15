@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import QEventLoop, Qt, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QProgressBar, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QProgressBar, QPushButton, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON
 from ludoxel.application.preferences.keybinds import action_display_name
@@ -84,8 +84,11 @@ class SettingsOverlay(SidebarDialogBase):
   block_volume_changed = pyqtSignal(float)
   player_volume_changed = pyqtSignal(float)
   player_name_changed = pyqtSignal(str)
+  preview_requested = pyqtSignal()
 
-  def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS, *, resource_root: Path | None = None, as_window: bool = False) -> None:
+  def __init__(
+    self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS, *, resource_root: Path | None = None, as_window: bool = False, include_preview_button: bool = True
+  ) -> None:
     super().__init__(
       parent,
       as_window=as_window,
@@ -113,8 +116,16 @@ class SettingsOverlay(SidebarDialogBase):
     self._sidebar_layout.addWidget(self._tab_game)
     self._sidebar_layout.addWidget(self._tab_controls)
     self._sidebar_layout.addWidget(self._tab_audio)
+    self._preview_button: QPushButton | None = None
+    if bool(include_preview_button):
+      self._preview_button = self._make_sidebar_action_button("Preview", self.preview_requested.emit)
+      self._sidebar_layout.addWidget(self._preview_button)
     self._sidebar_layout.addStretch(1)
     self._sidebar_layout.addWidget(self._tab_about)
+    self._close_button: QPushButton | None = None
+    if not bool(as_window):
+      self._close_button = self._make_sidebar_action_button("Close", self.back_requested.emit)
+      self._sidebar_layout.addWidget(self._close_button)
 
     build_display_tab(self)
     build_world_tab(self)

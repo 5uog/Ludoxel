@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import replace
 
-from PyQt6.QtCore import QSignalBlocker
+from PyQt6.QtCore import QSignalBlocker, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton, QWidget
 
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
@@ -46,9 +46,14 @@ class AiSettingsOverlay(SidebarDialogBase):
   footer の Save/Cancel button は持たず、有効な各変更は settings_updater を介して session 境界へ即時反映するため、dialog の close 又は reject は既に反映済みの値を取り消さない。
   入力は AiSpawnEggSettings として受け取り、settings() は現在の control 状態を同型の正規化済み値として返す。
   名前の重複検査は生存 actor 集合を知る session 側 validator を name_validator として注入する。
-  skin source は player skin 共有、同梱 Alex skin、actor 固有 import PNG の三択であり、actor 固有 import PNG の登録は Skin source combo で Imported PNG を選択した時だけ skin_importer を介して presentation の skin resource 経路へ委譲する。import 済み PNG の実体保存・参照解決・renderer push は dialog の外側が担い、dialog は skin_mode と skin_id の選択だけを所有する。
+  skin source は player skin 共有、同梱 Alex skin、actor 固有 import PNG の三択であり、
+  actor 固有 import PNG の登録は Skin source combo で Imported PNG を選択した時だけ skin_importer を介して presentation の skin resource 経路へ委譲する。
+  import 済み PNG の実体保存・参照解決・renderer push は dialog の外側が担い、dialog は skin_mode と skin_id の選択だけを所有する。
   自動回復の interval は UI 上では「上限まで回復し切るのに要する秒数」として編集し、保存時に interval = time_to_cap * amount / cap へ写像する。amount は既存設定値を保持する。
+  本体画面への埋め込みでは as_window を偽として viewport の子 widget として表示し、Debug 用の AI Settings Preview dialog を sidebar の Preview button から開く。
   """
+
+  preview_requested = pyqtSignal()
 
   def __init__(
     self,
@@ -59,10 +64,12 @@ class AiSettingsOverlay(SidebarDialogBase):
     settings_updater: Callable[[AiSpawnEggSettings], bool] | None = None,
     skin_importer: Callable[[str], str | None] | None = None,
     skin_available: Callable[[str], bool] | None = None,
+    as_window: bool = False,
+    include_preview_button: bool = True,
   ) -> None:
     super().__init__(
       parent,
-      as_window=True,
+      as_window=as_window,
       root_object_name="settingsRoot",
       window_title="AI Settings",
       window_size=(1000, 740),
@@ -89,6 +96,10 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._tab_buttons = (self._tab_identity, self._tab_display, self._tab_skin, self._tab_health, self._tab_behavior, self._tab_placement)
     for button in self._tab_buttons:
       self._sidebar_layout.addWidget(button)
+    self._preview_button: QPushButton | None = None
+    if bool(include_preview_button):
+      self._preview_button = self._make_sidebar_action_button("Preview", self.preview_requested.emit)
+      self._sidebar_layout.addWidget(self._preview_button)
     self._sidebar_layout.addStretch(1)
 
     self._delete_button = self._make_tab_button("Delete AI", 0, self._request_delete)
@@ -96,6 +107,10 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._delete_button.setCheckable(False)
     self._delete_button.setAutoExclusive(False)
     self._sidebar_layout.addWidget(self._delete_button)
+    self._close_button: QPushButton | None = None
+    if not bool(as_window):
+      self._close_button = self._make_sidebar_action_button("Close", self.reject)
+      self._sidebar_layout.addWidget(self._close_button)
 
     self._build_identity_page()
     self._build_display_page()
@@ -329,7 +344,8 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _load_settings(self, settings: AiSpawnEggSettings) -> None:
     """
     与えられた settings の値を各 control へ反映し、派生表示も初期化する。
-    この呼び出しは _connect_immediate_updates より前に行われ、ここで control 値を設定しても即時反映経路は起動しない。skin source の combo 反映後に _sync_skin_controls を呼び、skin status を初期化する。
+    この呼び出しは _connect_immediate_updates より前に行われ、ここで control 値を設定しても即時反映経路は起動しない。
+    skin source の combo 反映後に _sync_skin_controls を呼び、skin status を初期化する。
     """
     self._settings = settings.normalized()
     self._name_edit.setText(str(self._settings.name))
@@ -467,7 +483,8 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _on_skin_mode_changed(self, _index: int) -> None:
     """
     skin source combo の変更を処理する。
-    Imported PNG を選択し、かつ有効な import 済み PNG が無い場合は import を要求し、import が失敗又は cancel された場合は直前に反映済みの skin source へ戻して反映しない。それ以外は現在の skin source を即時反映し、status 表記を更新する。
+    Imported PNG を選択し、かつ有効な import 済み PNG が無い場合は import を要求し、import が失敗又は cancel された場合は直前に反映済みの skin source へ戻して反映しない。
+    それ以外は現在の skin source を即時反映し、status 表記を更新する。
     """
     if str(self._skin_mode_combo.currentData()) == AI_SKIN_MODE_CUSTOM and not self._has_available_imported_skin():
       previous_mode = str(self._settings.skin_mode)
@@ -483,7 +500,8 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _import_custom_skin(self) -> bool:
     """
     actor 固有 import PNG の登録を要求し、成功した場合に Imported PNG mode と新 skin_id を即時反映する。
-    skin_importer が未注入の場合は通知して偽を返す。importer が新 skin_id を返した場合は combo を Imported PNG へ揃えてから skin_mode と skin_id を含む候補を反映する。反映に失敗した場合は combo を直前の skin source へ戻す。旧 skin_id file の解放は呼び出し側 apply 経路が skin_id の変化として処理する。
+    skin_importer が未注入の場合は通知して偽を返す。importer が新 skin_id を返した場合は combo を Imported PNG へ揃えてから skin_mode と skin_id を含む候補を反映する。
+    反映に失敗した場合は combo を直前の skin source へ戻す。旧 skin_id file の解放は呼び出し側 apply 経路が skin_id の変化として処理する。
     """
     if self._skin_importer is None:
       show_themed_notice(parent=self, title="AI Skin", message="AI skin import is not available in this context.", nav_label="AI Skin")
@@ -516,7 +534,8 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _persist_candidate(self, candidate: AiSpawnEggSettings, *, show_failure: bool = False) -> bool:
     """
     正規化済み候補を session 境界へ反映する。
-    候補が直前に反映済みの settings と同一なら no-op として真を返す。settings_updater が注入され、反映に失敗した場合は必要に応じて通知して偽を返し、反映済み settings は更新しない。反映に成功した場合は反映済み settings を候補へ更新し、route summary を再表示する。
+    候補が直前に反映済みの settings と同一なら no-op として真を返す。settings_updater が注入され、反映に失敗した場合は必要に応じて通知して偽を返し、反映済み settings は更新しない。
+    反映に成功した場合は反映済み settings を候補へ更新し、route summary を再表示する。
     """
     normalized = candidate.normalized()
     if normalized == self._settings:

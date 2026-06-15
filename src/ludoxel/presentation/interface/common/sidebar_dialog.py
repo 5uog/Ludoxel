@@ -57,13 +57,11 @@ class SidebarDialogBase(QDialog):
       self.resize(int(window_size[0]), int(window_size[1]))
       self.setMinimumSize(int(minimum_window_size[0]), int(minimum_window_size[1]))
       _apply_solid_palette(self, _DIALOG_WINDOW_BACKGROUND)
+    else:
+      self.setWindowFlags(Qt.WindowType.Widget)
 
     self._root_layout = QVBoxLayout(self)
-    if bool(self._as_window):
-      self._root_layout.setContentsMargins(0, 0, 0, 0)
-    else:
-      self._root_layout.setContentsMargins(32, 28, 32, 28)
-      self._root_layout.addStretch(1)
+    self._root_layout.setContentsMargins(0, 0, 0, 0)
     self._root_layout.setSpacing(0)
 
     self._panel = QFrame(self)
@@ -104,11 +102,7 @@ class SidebarDialogBase(QDialog):
     self._panel_layout.addWidget(self._sidebar, stretch=2)
     self._panel_layout.addWidget(self._content, stretch=8)
 
-    if bool(self._as_window):
-      self._root_layout.addWidget(self._panel, stretch=1)
-    else:
-      self._root_layout.addWidget(self._panel, alignment=Qt.AlignmentFlag.AlignHCenter)
-      self._root_layout.addStretch(1)
+    self._root_layout.addWidget(self._panel, stretch=1)
 
   def prepare_to_show(self) -> None:
     if not bool(self._as_window):
@@ -186,6 +180,25 @@ class SidebarDialogBase(QDialog):
     button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
     button.setFixedHeight(64)
     button.clicked.connect(lambda _checked=False, i=index: on_selected(i))
+    return button
+
+  def _make_sidebar_action_button(self, text: str, on_clicked: Callable[[], None], parent: QWidget | None = None) -> QPushButton:
+    """
+    sidebar 上の page 切替 tab とは異なり、page を選択せず単発の動作を起動するための sidebar button を生成する。
+    page 切替用の `_make_tab_button` と同じ `navBtn` objectName と寸法を与えて既存の sidebar 視覚仕様を共有するが、checkable と autoExclusive を無効にすることで、押下しても tab の選択状態に影響しない。
+    `on_clicked` は引数を取らない呼び出し可能体であり、button の clicked から checked 引数を捨てて呼び出す。装飾は `navBtn` selector が theme resource 側で所有するため、ここでは objectName、layout 上の size policy、固定高さ、及び signal 接続のみを設定する。
+    """
+    button_parent = self._sidebar if parent is None else parent
+    button = QPushButton(str(text), button_parent)
+    button.setObjectName("navBtn")
+    button.setCheckable(False)
+    button.setAutoExclusive(False)
+    button.setAutoDefault(False)
+    button.setDefault(False)
+    button.setFlat(True)
+    button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    button.setFixedHeight(64)
+    button.clicked.connect(lambda _checked=False: on_clicked())
     return button
 
   def _make_scroll_page(self, *, viewport_object_name: str | None = "settingsViewport", page_object_name: str = "settingsPage") -> tuple[QScrollArea, QWidget, QVBoxLayout]:
