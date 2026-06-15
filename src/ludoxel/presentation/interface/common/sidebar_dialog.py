@@ -9,6 +9,20 @@ from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 
+_DIALOG_WINDOW_BACKGROUND = QColor("#151515")
+_DIALOG_PANEL_BACKGROUND = QColor("#242424")
+_DIALOG_SIDEBAR_BACKGROUND = QColor("#1a1a1a")
+
+
+def _apply_solid_palette(widget: QWidget, color: QColor) -> None:
+  palette = widget.palette()
+  palette.setColor(QPalette.ColorRole.Window, color)
+  palette.setColor(QPalette.ColorRole.Base, color)
+  palette.setColor(QPalette.ColorRole.AlternateBase, color)
+  widget.setPalette(palette)
+  widget.setAutoFillBackground(True)
+
+
 class SidebarDialogBase(QDialog):
   def __init__(
     self,
@@ -43,12 +57,7 @@ class SidebarDialogBase(QDialog):
       self.setWindowTitle(str(window_title))
       self.resize(int(window_size[0]), int(window_size[1]))
       self.setMinimumSize(int(minimum_window_size[0]), int(minimum_window_size[1]))
-      self.setAutoFillBackground(True)
-      self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
-      palette = self.palette()
-      palette.setColor(QPalette.ColorRole.Window, QColor("#181818"))
-      palette.setColor(QPalette.ColorRole.Base, QColor("#181818"))
-      self.setPalette(palette)
+      _apply_solid_palette(self, _DIALOG_WINDOW_BACKGROUND)
 
     self._root_layout = QVBoxLayout(self)
     if bool(self._as_window):
@@ -60,6 +69,7 @@ class SidebarDialogBase(QDialog):
 
     self._panel = QFrame(self)
     self._panel.setObjectName("panel")
+    _apply_solid_palette(self._panel, _DIALOG_PANEL_BACKGROUND)
     self._panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     self._panel.setMinimumWidth(int(panel_minimum_size[0]))
     self._panel.setMinimumHeight(int(panel_minimum_size[1]))
@@ -70,6 +80,7 @@ class SidebarDialogBase(QDialog):
 
     self._sidebar = QWidget(self._panel)
     self._sidebar.setObjectName(str(sidebar_object_name))
+    _apply_solid_palette(self._sidebar, _DIALOG_SIDEBAR_BACKGROUND)
     self._sidebar.setMinimumWidth(236)
     self._sidebar.setMaximumWidth(280)
     self._sidebar_layout = QVBoxLayout(self._sidebar)
@@ -82,11 +93,13 @@ class SidebarDialogBase(QDialog):
 
     self._content = QWidget(self._panel)
     self._content.setObjectName(str(content_object_name))
+    _apply_solid_palette(self._content, _DIALOG_PANEL_BACKGROUND)
     self._content_layout = QVBoxLayout(self._content)
     self._content_layout.setContentsMargins(18, 18, 18, 18)
     self._content_layout.setSpacing(0)
     self._stack = QStackedWidget(self._content)
     self._stack.setObjectName(str(stack_object_name))
+    _apply_solid_palette(self._stack, _DIALOG_PANEL_BACKGROUND)
     self._content_layout.addWidget(self._stack, stretch=1)
 
     self._panel_layout.addWidget(self._sidebar, stretch=2)
@@ -105,17 +118,46 @@ class SidebarDialogBase(QDialog):
     self.setWindowOpacity(0.0)
     self.winId()
     self.ensurePolished()
+    self._refresh_surface_palettes()
     layout = self.layout()
     if layout is not None:
       layout.activate()
     self.adjustSize()
     self.updateGeometry()
+    self.update()
 
   def showEvent(self, event) -> None:
     if bool(self._as_window) and bool(self._deferred_reveal_pending):
       self.setWindowOpacity(0.0)
-      QTimer.singleShot(0, self._finish_deferred_reveal)
+      self._refresh_surface_palettes()
+      QTimer.singleShot(0, self._finish_deferred_reveal_after_first_paint)
     super().showEvent(event)
+
+  def _refresh_surface_palettes(self) -> None:
+    if bool(self._as_window):
+      _apply_solid_palette(self, _DIALOG_WINDOW_BACKGROUND)
+    _apply_solid_palette(self._panel, _DIALOG_PANEL_BACKGROUND)
+    _apply_solid_palette(self._sidebar, _DIALOG_SIDEBAR_BACKGROUND)
+    _apply_solid_palette(self._content, _DIALOG_PANEL_BACKGROUND)
+    _apply_solid_palette(self._stack, _DIALOG_PANEL_BACKGROUND)
+    for index in range(self._stack.count()):
+      page = self._stack.widget(index)
+      if isinstance(page, QScrollArea):
+        _apply_solid_palette(page.viewport(), _DIALOG_PANEL_BACKGROUND)
+        page_host = page.widget()
+        if page_host is not None:
+          _apply_solid_palette(page_host, _DIALOG_PANEL_BACKGROUND)
+
+  def _finish_deferred_reveal_after_first_paint(self) -> None:
+    if not bool(self._deferred_reveal_pending):
+      return
+    if not self.isVisible():
+      self._deferred_reveal_pending = False
+      self.setWindowOpacity(1.0)
+      return
+    self._refresh_surface_palettes()
+    self.repaint()
+    QTimer.singleShot(0, self._finish_deferred_reveal)
 
   def _finish_deferred_reveal(self) -> None:
     if not bool(self._deferred_reveal_pending):
@@ -158,12 +200,12 @@ class SidebarDialogBase(QDialog):
     if viewport_object_name is not None:
       viewport.setObjectName(str(viewport_object_name))
     viewport.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-    viewport.setAutoFillBackground(True)
+    _apply_solid_palette(viewport, _DIALOG_PANEL_BACKGROUND)
 
     host = QWidget(scroll)
     host.setObjectName(str(page_object_name))
     host.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-    host.setAutoFillBackground(True)
+    _apply_solid_palette(host, _DIALOG_PANEL_BACKGROUND)
     layout = QVBoxLayout(host)
     layout.setContentsMargins(4, 4, 4, 4)
     layout.setSpacing(12)

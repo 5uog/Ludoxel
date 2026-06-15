@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import replace
 
 from PyQt6.QtCore import QSignalBlocker
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton, QWidget
 
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.common.themed_notice_dialog import show_themed_notice
@@ -46,7 +46,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   footer の Save/Cancel button は持たず、有効な各変更は settings_updater を介して session 境界へ即時反映するため、dialog の close 又は reject は既に反映済みの値を取り消さない。
   入力は AiSpawnEggSettings として受け取り、settings() は現在の control 状態を同型の正規化済み値として返す。
   名前の重複検査は生存 actor 集合を知る session 側 validator を name_validator として注入する。
-  skin source は player skin 共有、同梱 Alex skin、actor 固有 import PNG の三択であり、import PNG の登録・差し替え・削除は skin_importer と skin_available を介して presentation の skin resource 経路へ委譲する。import 済み PNG の実体保存・参照解決・renderer push は dialog の外側が担い、dialog は skin_mode と skin_id の選択だけを所有する。
+  skin source は player skin 共有、同梱 Alex skin、actor 固有 import PNG の三択であり、actor 固有 import PNG の登録は Skin source combo で Imported PNG を選択した時だけ skin_importer を介して presentation の skin resource 経路へ委譲する。import 済み PNG の実体保存・参照解決・renderer push は dialog の外側が担い、dialog は skin_mode と skin_id の選択だけを所有する。
   自動回復の interval は UI 上では「上限まで回復し切るのに要する秒数」として編集し、保存時に interval = time_to_cap * amount / cap へ写像する。amount は既存設定値を保持する。
   """
 
@@ -145,12 +145,12 @@ class AiSettingsOverlay(SidebarDialogBase):
 
   def _build_skin_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
-    add_page_header(layout, host, title="Skin", subtitle="Choose the skin source for this AI and manage its imported PNG skin.")
+    add_page_header(layout, host, title="Skin", subtitle="Choose the skin source for this AI.")
     _card, body, body_layout = add_settings_card(
       layout,
       host,
       title="Skin Source",
-      description="Same as player follows the player's current skin. Bundled Alex uses the built-in Alex skin. Imported PNG uses a 64x64 image registered for this AI only.",
+      description="Same as player follows the player's current skin. Bundled Alex uses the built-in Alex skin. Imported PNG opens a PNG picker when no valid imported image is already registered, then uses that 64x64 image for this AI only.",
     )
     self._skin_mode_combo = QComboBox(body)
     self._skin_mode_combo.addItem("Same as player", userData=AI_SKIN_MODE_PLAYER)
@@ -158,18 +158,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._skin_mode_combo.addItem("Imported PNG", userData=AI_SKIN_MODE_CUSTOM)
     add_setting_row(body_layout, body, label="Skin source", description="Applied immediately to this AI.", control=self._skin_mode_combo)
 
-    self._import_skin_button = QPushButton("Import PNG Skin...", body)
-    self._import_skin_button.setObjectName("primaryBtn")
-    self._remove_skin_button = QPushButton("Remove PNG Skin", body)
-    self._remove_skin_button.setObjectName("secondaryBtn")
-    buttons_host = QWidget(body)
-    buttons_layout = QHBoxLayout(buttons_host)
-    buttons_layout.setContentsMargins(0, 0, 0, 0)
-    buttons_layout.setSpacing(8)
-    buttons_layout.addWidget(self._import_skin_button)
-    buttons_layout.addWidget(self._remove_skin_button)
-    buttons_layout.addStretch(1)
-    add_setting_row(body_layout, body, label="Imported image", description="Register, replace, or remove this AI's own 64x64 Minecraft PNG skin.", control=buttons_host)
 
     self._skin_status = QLabel("", body)
     self._skin_status.setObjectName("settingsCardDescription")
@@ -304,8 +292,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._name_edit.textChanged.connect(self._on_name_changed)
     self._health_indicator_combo.currentIndexChanged.connect(self._persist_current_settings)
     self._skin_mode_combo.currentIndexChanged.connect(self._on_skin_mode_changed)
-    self._import_skin_button.clicked.connect(self._import_custom_skin)
-    self._remove_skin_button.clicked.connect(self._remove_custom_skin)
     self._regen_enabled.toggled.connect(self._on_regen_changed)
     self._regen_delay_spin.valueChanged.connect(self._on_regen_changed)
     self._regen_cap_spin.valueChanged.connect(self._on_regen_changed)
@@ -344,7 +330,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _load_settings(self, settings: AiSpawnEggSettings) -> None:
     """
     与えられた settings の値を各 control へ反映し、派生表示も初期化する。
-    この呼び出しは _connect_immediate_updates より前に行われ、ここで control 値を設定しても即時反映経路は起動しない。skin source の combo 反映後に _sync_skin_controls を呼び、import button の表記、remove button の活性、skin status を初期化する。
+    この呼び出しは _connect_immediate_updates より前に行われ、ここで control 値を設定しても即時反映経路は起動しない。skin source の combo 反映後に _sync_skin_controls を呼び、skin status を初期化する。
     """
     self._settings = settings.normalized()
     self._name_edit.setText(str(self._settings.name))
@@ -420,23 +406,25 @@ class AiSettingsOverlay(SidebarDialogBase):
       f"After {delay:.1f} s without damage, the AI heals {amount:.1f} health point(s) every {interval:.1f} s up to {cap:.0f} health points. Restoring the full cap takes about {time_to_cap:.1f} s."
     )
 
+  def _has_available_imported_skin(self) -> bool:
+    skin_id = str(self._settings.skin_id)
+    return bool(skin_id) and (self._skin_available is None or bool(self._skin_available(skin_id)))
+
   def _sync_skin_controls(self) -> None:
     """
-    現在の skin_mode と skin_id の状態から、import button の表記、remove button の活性、skin status 文言を更新する。
-    skin_available が注入されている場合はその判定で import 済み PNG の参照切れ又は改竄を検出し、利用可能なら Replace、欠落なら Import の語を示す。remove button は import 済み PNG が存在する場合だけ活性化し、status には import 状態と現在選択中の skin source の双方を表示する。
+    現在の skin_mode と skin_id の状態から、Skin Source card 内の skin status 文言だけを更新する。
+    Imported PNG は独立した section や button を持たず、Skin source combo の三択だけで選択する。
     """
     skin_id = str(self._settings.skin_id)
     has_import = bool(skin_id)
-    available = bool(has_import) and (self._skin_available is None or bool(self._skin_available(skin_id)))
+    available = self._has_available_imported_skin()
     mode = str(self._skin_mode_combo.currentData())
-    self._import_skin_button.setText("Replace PNG Skin..." if available else "Import PNG Skin...")
-    self._remove_skin_button.setEnabled(bool(has_import))
     if available:
       status = "An imported PNG skin is stored for this AI."
     elif has_import:
-      status = "The imported PNG skin file is missing or invalid. Import a replacement PNG."
+      status = "The imported PNG skin file is missing or invalid. Select Imported PNG again to choose a replacement PNG."
     else:
-      status = "No PNG skin has been imported for this AI."
+      status = "No PNG skin has been imported for this AI. Select Imported PNG to choose a 64x64 PNG file."
     if mode == AI_SKIN_MODE_CUSTOM:
       status += " This AI uses its imported PNG skin." if available else " Imported PNG is selected but no valid image is available, so the player skin is shown until one is imported."
     elif mode == AI_SKIN_MODE_ALEX:
@@ -480,12 +468,13 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _on_skin_mode_changed(self, _index: int) -> None:
     """
     skin source combo の変更を処理する。
-    Imported PNG を選択し、かつまだ有効な import 済み PNG が無い場合は import を要求し、import が失敗又は cancel された場合は combo を Same as player へ戻して反映しない。それ以外は現在の skin source を即時反映し、status 表記を更新する。
+    Imported PNG を選択し、かつ有効な import 済み PNG が無い場合は import を要求し、import が失敗又は cancel された場合は直前に反映済みの skin source へ戻して反映しない。それ以外は現在の skin source を即時反映し、status 表記を更新する。
     """
-    if str(self._skin_mode_combo.currentData()) == AI_SKIN_MODE_CUSTOM and not str(self._settings.skin_id):
+    if str(self._skin_mode_combo.currentData()) == AI_SKIN_MODE_CUSTOM and not self._has_available_imported_skin():
+      previous_mode = str(self._settings.skin_mode)
       if not self._import_custom_skin():
         blocker = QSignalBlocker(self._skin_mode_combo)
-        self._set_combo_value(self._skin_mode_combo, AI_SKIN_MODE_PLAYER)
+        self._set_combo_value(self._skin_mode_combo, previous_mode)
         del blocker
         self._sync_skin_controls()
       return
@@ -494,8 +483,8 @@ class AiSettingsOverlay(SidebarDialogBase):
 
   def _import_custom_skin(self) -> bool:
     """
-    actor 固有 import PNG の登録又は差し替えを要求し、成功した場合に Imported PNG mode と新 skin_id を即時反映する。
-    skin_importer が未注入の場合は通知して偽を返す。importer が新 skin_id を返した場合は combo を Imported PNG へ揃えてから skin_mode と skin_id を含む候補を反映する。反映に失敗した場合は combo を直前の skin source へ戻す。差し替え時の旧 skin_id file の解放は呼び出し側 apply 経路が skin_id の変化として処理する。
+    actor 固有 import PNG の登録を要求し、成功した場合に Imported PNG mode と新 skin_id を即時反映する。
+    skin_importer が未注入の場合は通知して偽を返す。importer が新 skin_id を返した場合は combo を Imported PNG へ揃えてから skin_mode と skin_id を含む候補を反映する。反映に失敗した場合は combo を直前の skin source へ戻す。旧 skin_id file の解放は呼び出し側 apply 経路が skin_id の変化として処理する。
     """
     if self._skin_importer is None:
       show_themed_notice(parent=self, title="AI Skin", message="AI skin import is not available in this context.", nav_label="AI Skin")
@@ -515,20 +504,6 @@ class AiSettingsOverlay(SidebarDialogBase):
       return False
     self._sync_skin_controls()
     return True
-
-  def _remove_custom_skin(self) -> None:
-    """
-    現在の actor 固有 import PNG を取り外し、skin source を Same as player へ戻して即時反映する。
-    import 済み PNG が無い場合は何もしない。反映後の skin_id は空となり、孤立した旧 import skin file の削除は呼び出し側 apply 経路が skin_id の変化として処理する。
-    """
-    if not str(self._settings.skin_id):
-      return
-    blocker = QSignalBlocker(self._skin_mode_combo)
-    self._set_combo_value(self._skin_mode_combo, AI_SKIN_MODE_PLAYER)
-    del blocker
-    candidate = replace(self.settings(), skin_mode=AI_SKIN_MODE_PLAYER, skin_id="").normalized()
-    self._persist_candidate(candidate, show_failure=True)
-    self._sync_skin_controls()
 
   def _on_mode_changed(self, _index: int) -> None:
     self._sync_route_controls()
