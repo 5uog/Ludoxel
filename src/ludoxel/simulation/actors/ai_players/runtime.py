@@ -7,13 +7,14 @@ from dataclasses import dataclass, field
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.actors.ai_players.planner import AiRoutePlanStep
 from ludoxel.simulation.actors.ai_players.state import (
-  AI_HEALTH_INDICATOR_OFF,
+  AI_HEALTH_INDICATOR_ABOVE,
   AI_REGEN_DEFAULT_AMOUNT_HP,
   AI_REGEN_DEFAULT_CAP_HP,
   AI_REGEN_DEFAULT_ENABLED,
   AI_REGEN_DEFAULT_INTERVAL_S,
   AI_REGEN_DEFAULT_START_DELAY_S,
   AI_ROUTE_STYLE_STRICT,
+  AI_SKIN_MODE_PLAYER,
   AiPlayerState,
   AiRoutePoint,
 )
@@ -109,7 +110,7 @@ class AiActorObservation:
   """
   application session が AI actor の現在状態を読み取るための domain observation を表す。
   player と motion は simulation 内の mutable object への参照であるため presentation へ直接渡さず、application pipeline が同一 call 内で不変な renderer-facing DTO へ変換する。
-  health_indicator は `"off"`、`"above"`、`"below"` の三値へ正規化済みである。
+  health_indicator は `"off"`、`"above"`、`"below"` の三値、skin_mode は player skin 共有を表す `"player"`、同梱 Alex skin を表す `"alex"`、actor 固有 import skin を表す `"custom"` の三値へ正規化済みであり、skin_id は import skin file を指す opaque identifier 又は空文字である。
   """
 
   player: PlayerEntity
@@ -121,7 +122,9 @@ class AiActorObservation:
   name: str = ""
   health: float = 20.0
   max_health: float = 20.0
-  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
+  skin_mode: str = AI_SKIN_MODE_PLAYER
+  skin_id: str = ""
 
 
 @dataclass
@@ -134,7 +137,9 @@ class _AiPlayerRuntime:
   can_place_blocks: bool
   held_item_id: str | None
   name: str = ""
-  health_indicator: str = AI_HEALTH_INDICATOR_OFF
+  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
+  skin_mode: str = AI_SKIN_MODE_PLAYER
+  skin_id: str = ""
   auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
   regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
   regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
@@ -212,6 +217,8 @@ class _AiPlayerRuntime:
       held_item_id=None if self.held_item_id is None else str(self.held_item_id),
       name=str(self.name),
       health_indicator=str(self.health_indicator),
+      skin_mode=str(self.skin_mode),
+      skin_id=str(self.skin_id),
       auto_regen_enabled=bool(self.auto_regen_enabled),
       regen_start_delay_s=float(self.regen_start_delay_s),
       regen_interval_s=float(self.regen_interval_s),

@@ -116,6 +116,7 @@ class PlayerModelPose:
   """
   third-person player の pose synthesis 結果を保持する cached record である。
   skin face rows、held block pose、special item rows、icon、shadow cuboid rows をまとめ、OpenGL pass は高価な kinematics ではなく packing 済み入力だけを読む。
+  skin_texture_key は body 描画に用いる skin texture の選択子であり、None は player skin、文字列は renderer に登録済みの actor 固有 skin texture key を表す。pose を生成した render state の skin_texture_key を引き継ぐため、cache 一貫性は render state 側の hash に従う。
   """
 
   skin_face_rows: tuple[np.ndarray, ...]
@@ -123,6 +124,7 @@ class PlayerModelPose:
   special_item_face_rows: tuple[np.ndarray, ...]
   visible_special_item_icon: str | None
   hurt_tint_strength: float
+  skin_texture_key: str | None
   shadow_rows: np.ndarray
 
 
@@ -182,7 +184,9 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   empty_shadow = np.zeros((0, 16), dtype=np.float32)
   empty_faces = empty_textured_face_rows()
   if state is None:
-    return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, hurt_tint_strength=0.0, shadow_rows=empty_shadow)
+    return PlayerModelPose(
+      skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, hurt_tint_strength=0.0, skin_texture_key=None, shadow_rows=empty_shadow
+    )
 
   crouch = clampf(float(state.crouch_amount), 0.0, 1.0)
   body_yaw = math.radians(float(state.body_yaw_deg))
@@ -319,7 +323,13 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
 
   if bool(state.is_first_person):
     return PlayerModelPose(
-      skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, hurt_tint_strength=float(state.hurt_tint_strength), shadow_rows=shadow_rows
+      skin_face_rows=empty_faces,
+      held_block_pose=None,
+      special_item_face_rows=empty_faces,
+      visible_special_item_icon=None,
+      hurt_tint_strength=float(state.hurt_tint_strength),
+      skin_texture_key=None if state.skin_texture_key is None else str(state.skin_texture_key),
+      shadow_rows=shadow_rows,
     )
 
   skin_buffers: list[list[list[float]]] = [[] for _ in range(6)]
@@ -345,6 +355,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
     special_item_face_rows=special_item_face_rows,
     visible_special_item_icon=visible_special_item_icon,
     hurt_tint_strength=float(state.hurt_tint_strength),
+    skin_texture_key=None if state.skin_texture_key is None else str(state.skin_texture_key),
     shadow_rows=shadow_rows,
   )
 

@@ -211,7 +211,8 @@ _KEY_CODE_BY_NAME: dict[str, int] = {str(name): int(code) for code, name in _KEY
 def keybind_actions() -> tuple[str, ...]:
   """
   操作設定として保存対象になる action identifier の固定順序を返す。
-  返値は設定保存、設定画面表示、重複 binding 解決が共有する順序であり、hotbar action は末尾に 1 から 9 までの slot 順で並ぶ。
+  返値は設定保存、設定画面表示、重複 binding 解決が共有する順序であり、
+  hotbar action は末尾に 1 から 9 までの slot 順で並ぶ。
   """
   return KEYBIND_ACTION_ORDER
 
@@ -219,7 +220,8 @@ def keybind_actions() -> tuple[str, ...]:
 def default_keybinds_map() -> dict[str, str]:
   """
   既定 keybind を呼び出し側が破壊できない新しい辞書として返す。
-  返値の key は action identifier、value は Qt compatible な portable text であり、保存 schema と runtime preference の初期値として扱われる。
+  返値の key は action identifier、value は Qt compatible な portable text であり、
+  保存 schema と runtime preference の初期値として扱われる。
   """
   return dict(DEFAULT_KEYBINDS)
 
@@ -236,7 +238,8 @@ def action_display_name(action: str) -> str:
 def hotbar_action_for_index(index: int) -> str | None:
   """
   zero-based hotbar index を対応する action identifier へ変換する。
-  `index` が 0 以上 8 以下に正規化できる場合だけ action を返し、範囲外では呼び出し側が未割当として扱えるように `None` を返す。
+  `index` が 0 以上 8 以下に正規化できる場合だけ action を返し、
+  範囲外では呼び出し側が未割当として扱えるように `None` を返す。
   """
   idx = int(index)
   if 0 <= idx < len(HOTBAR_ACTIONS):
@@ -247,7 +250,8 @@ def hotbar_action_for_index(index: int) -> str | None:
 def hotbar_index_for_action(action: str | None) -> int | None:
   """
   hotbar slot action identifier を zero-based hotbar index へ戻す。
-  `None` 又は hotbar 以外の action は `None` とし、HUD、inventory、viewport controller が通常 action と slot action を混同しないようにする。
+  `None` 又は hotbar 以外の action は `None` とし、HUD、inventory、
+  viewport controller が通常 action と slot action を混同しないようにする。
   """
   normalized = "" if action is None else str(action).strip()
   for index, candidate in enumerate(HOTBAR_ACTIONS):
@@ -260,7 +264,8 @@ def hotbar_index_for_action(action: str | None) -> int | None:
 def portable_text_for_key(key: int) -> str:
   """
   Qt key code を application 層で保存可能な portable text へ変換する。
-  この関数は PyQt6 を import せず、Qt の安定 key code 値に対応する ASCII key、function key、navigation key、modifier key だけを受理する。
+  この関数は PyQt6 を import せず、Qt の安定 key code 値に対応する ASCII key、
+  function key、navigation key、modifier key だけを受理する。
   """
   try:
     normalized_key = int(key)
@@ -272,7 +277,8 @@ def portable_text_for_key(key: int) -> str:
 def normalize_key_code(key: int) -> str:
   """
   UI event から渡された key code を keybind 保存用の正規 portable text に変換する。
-  正の整数に変換できない値、又は本 module が対応しない Qt key code は、保存可能な binding ではないため空文字列にする。
+  正の整数に変換できない値、又は本 module が対応しない Qt key code は、
+  保存可能な binding ではないため空文字列にする。
   """
   try:
     normalized_key = int(key)
@@ -311,7 +317,8 @@ def normalize_binding_text(value: object) -> str:
 def _binding_to_key_cached(normalized_binding: str) -> int | None:
   """
   正規化済み binding 文字列を Qt key code へ変換する。
-  空 binding と未知 binding は未割当を意味する `None` とし、runtime input adapter が無効な key code を pressed set へ登録しないようにする。
+  空 binding と未知 binding は未割当を意味する `None` とし、
+  runtime input adapter が無効な key code を pressed set へ登録しないようにする。
   """
   if not normalized_binding:
     return None
@@ -332,7 +339,8 @@ def binding_to_key(binding: str | None) -> int | None:
 def _display_text_for_binding_cached(normalized_binding: str) -> str:
   """
   正規化済み binding 文字列を設定画面と tool tip で表示する文字列へ変換する。
-  application 層では platform native text を生成しないため、未割当は `Unbound`、有効 binding は portable text のまま返す。
+  application 層では platform native text を生成しないため、
+  未割当は `Unbound`、有効 binding は portable text のまま返す。
   """
   if not normalized_binding:
     return "Unbound"
@@ -353,7 +361,8 @@ def display_text_for_binding(binding: str | None) -> str:
 def _normalized_bindings_from_items(items: Iterable[tuple[str, str]]) -> dict[str, str]:
   """
   action と binding の列を既定 action 全体を含む正規化済み mapping へ変換する。
-  同じ key が複数 action に指定された場合は後勝ちとし、古い action 側を空 binding にすることで runtime 入力の一対一性を維持する。
+  同じ key が複数 action に指定された場合は後勝ちとし、
+  古い action 側を空 binding にすることで runtime 入力の一対一性を維持する。
   """
   normalized = {str(action): "" for action in KEYBIND_ACTION_ORDER}
   seen_by_binding: dict[str, str] = {}
@@ -396,7 +405,8 @@ def _key_maps_for_bindings(bindings: dict[str, str]) -> tuple[dict[str, int | No
 class KeybindSettings:
   """
   保存用 keybind 文字列と runtime 用 key code lookup を一体で保持する不変設定である。
-  `bindings` は action identifier から portable text への mapping であり、生成時に既定 action 全体を補完し、重複 key を後勝ちで解決する。
+  `bindings` は action identifier から portable text への mapping であり、
+  生成時に既定 action 全体を補完し、重複 key を後勝ちで解決する。
   """
 
   bindings: dict[str, str] = field(default_factory=default_keybinds_map)
@@ -432,7 +442,8 @@ class KeybindSettings:
   def binding_for_action(self, action: str) -> str:
     """
     指定 action に対応する保存用 binding 文字列を返す。
-    未知 action は未割当と同じ空文字列にし、設定 UI と runtime 入力処理が未知 action を有効 key として扱わないようにする。
+    未知 action は未割当と同じ空文字列にし、
+    設定 UI と runtime 入力処理が未知 action を有効 key として扱わないようにする。
     """
     return str(self.bindings.get(str(action).strip(), ""))
 
@@ -446,7 +457,8 @@ class KeybindSettings:
   def action_for_key_code(self, key: int) -> str | None:
     """
     Qt key code から対応 action identifier を逆引きする。
-    `key` が整数へ変換できない場合又は割当が存在しない場合は、呼び出し側で通常 key event として扱えるように `None` を返す。
+    `key` が整数へ変換できない場合又は割当が存在しない場合は、
+    呼び出し側で通常 key event として扱えるように `None` を返す。
     """
     try:
       normalized_key = int(key)
@@ -457,14 +469,16 @@ class KeybindSettings:
   def display_text_for_action(self, action: str) -> str:
     """
     指定 action の binding を利用者向け表示文字列として返す。
-    設定 UI、HUD tooltip、inventory 操作表示が同じ未割当表記と同じ portable key 名を使うための補助 method である。
+    設定 UI、HUD tooltip、inventory 操作表示が、
+    「同じ未割当表記」と「同じ portable key 名」を使うための補助 method である。
     """
     return display_text_for_binding(self.binding_for_action(str(action)))
 
   def with_binding(self, action: str, binding: str | None) -> "KeybindSettings":
     """
     一つの action binding だけを差し替えた新しい設定 object を返す。
-    未知 action は現在の object をそのまま返し、既知 action では新しい mapping 全体を再正規化して重複 binding の解決を再実行する。
+    未知 action は現在の object をそのまま返し、
+    既知 action では新しい mapping 全体を再正規化して重複 binding の解決を再実行する。
     """
     normalized_action = str(action).strip()
     if normalized_action not in self.bindings:
@@ -498,6 +512,7 @@ class KeybindSettings:
 def action_for_key(key: int, bindings: "KeybindSettings") -> str | None:
   """
   key code と keybind 設定から現在割り当てられている action identifier を返す。
-  呼び出し側は viewport、inventory、hotbar の入力経路でこの関数を共有し、保存済み binding と runtime event key の照合規則を統一する。
+  呼び出し側は viewport、inventory、hotbar の入力経路でこの関数を共有し、
+  保存済み binding と runtime event key の照合規則を統一する。
   """
   return bindings.normalized().action_for_key_code(int(key))

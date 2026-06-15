@@ -122,6 +122,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._runtime_active = False
     self._frame_sync = ViewportFrameSync()
     self._player_skin_image = QImage()
+    self._ai_skin_images: dict[str, QImage] = {}
     self._pause_preview_cache_key: tuple[object, ...] | None = None
     self._pause_preview_frame = QImage()
     self._block_break_particles = ()
@@ -242,6 +243,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     settings_controller.sync_hotbar_widgets(self)
     settings_controller.sync_crosshair_widgets(self)
     settings_controller.sync_player_skin(self)
+    settings_controller.sync_ai_skins(self)
     settings_controller.sync_first_person_target(self)
     settings_controller.sync_view_model_visibility(self)
     othello_controller.sync_settings_values(self)

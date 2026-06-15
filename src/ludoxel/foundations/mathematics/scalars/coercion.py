@@ -12,7 +12,8 @@ _BOOL_FALSE_TOKENS = frozenset({"0", "false", "no", "off"})
 def coerce_float(value: object, default: float) -> float:
   """
   任意の入力を `float(value)` で実数へ変換し、失敗時は `float(default)` を返す。
-  返値は例外送出を伴わない `float` であり、保存値復元、UI 入力復元、runtime preference の正規化は malformed value を個別処理せず既定値へ退避できる。
+  返値は例外送出を伴わない `float` であり、保存値復元、UI 入力復元、
+  runtime preference の正規化は malformed value を個別処理せず既定値へ退避できる。
   """
   try:
     return float(value)

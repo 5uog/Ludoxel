@@ -10,7 +10,8 @@ from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, chunk_bounds
 def chunk_corners_homogeneous(chunk_key: ChunkKey) -> np.ndarray:
   """
   chunk の八頂点を homogeneous coordinate の `np.float32` 配列として生成する。
-  返値 shape は `(8, 4)`、各 row は `(x, y, z, 1)` であり、座標範囲は `chunk_bounds` の半開境界の下端と上端を用いる。
+  返値 shape は `(8, 4)`、各 row は `(x, y, z, 1)` であり、
+  座標範囲は `chunk_bounds` の半開境界の下端と上端を用いる。
   """
   x0, x1, y0, y1, z0, z1 = chunk_bounds(chunk_key)
   return np.asarray(

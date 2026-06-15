@@ -6,7 +6,7 @@ import math
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QColor, QPainter, QPixmap
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QWidget
+from PyQt6.QtWidgets import QLabel, QWidget
 
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.actors.ai_players.state import AI_HEALTH_INDICATOR_ABOVE, AI_HEALTH_INDICATOR_BELOW, normalize_ai_health_indicator
@@ -68,7 +68,12 @@ def _paint_heart_strip(painter: QPainter, *, x: int, y: int, health: float, max_
 class _AiStatusTagWidget(QWidget):
   """
   AI 一体分の nametag と health indicator を一枚の基準解像度 pixmap へ合成して表示する。
-  距離スケールは完成した pixmap の表示 geometry と描画先矩形へ適用するため、文字だけでなく背景、padding、heart、間隔を含む block 全体が同じ比率で縮小される。
+  距離スケールは完成した pixmap の表示 geometry と描画先矩形へ適用するため、
+  文字だけでなく背景、padding、heart、間隔を含む block 全体が同じ比率で縮小される。
+  透過は QGraphicsOpacityEffect を用いず paintEvent 内の painter opacity として適用し、
+  effect 経由の offscreen 再描画を毎フレーム発生させない。place() は geometry、opacity、
+  内容のいずれも変化しない frame では setGeometry、update、raise を呼ばないため、
+  可視 tag が多数ある場合でも frame ごとの compositing 負荷を最小化する。
   """
 
   def __init__(self, parent: QWidget) -> None:
@@ -83,12 +88,12 @@ class _AiStatusTagWidget(QWidget):
     self._name_bottom_px = 1
     self._content_key: tuple[object, ...] | None = None
     self._display_scale = 1.0
+    self._opacity = 1.0
+    self._placed_geometry: tuple[int, int, int, int] | None = None
+    self._content_dirty = True
     self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
     self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
     self.setVisible(False)
-    self._opacity_effect = QGraphicsOpacityEffect(self)
-    self._opacity_effect.setOpacity(1.0)
-    self.setGraphicsEffect(self._opacity_effect)
 
   def set_content(self, *, name: str, health: float, max_health: float, indicator: str) -> bool:
     text = str(name).strip()
@@ -99,6 +104,7 @@ class _AiStatusTagWidget(QWidget):
     if content_key != self._content_key:
       self._content_key = content_key
       self._rebuild_base_pixmap(name=text, health=float(next_health), max_health=float(next_max), indicator=str(mode))
+      self._content_dirty = True
     return bool(text) or mode in (AI_HEALTH_INDICATOR_ABOVE, AI_HEALTH_INDICATOR_BELOW)
 
   def _render_name_pixmap(self, text: str) -> QPixmap | None:
@@ -147,9 +153,15 @@ class _AiStatusTagWidget(QWidget):
 
     self._base_pixmap = pixmap
     self._name_bottom_px = int(name_y + name_h) if name_h > 0 else int(base_h)
-    self.update()
 
   def place(self, *, center_x: float, anchor_bottom_y: float, scale: float, opacity: float, viewport_w: int, viewport_h: int) -> None:
+    """
+    一体の AI tag を screen 空間へ配置する。geometry、opacity、合成 pixmap のいずれも、
+    前回 placement から変化しない frame では Qt への再描画要求を出さない。
+    raise は hidden から visible へ遷移した時にだけ行い、毎 frame の z-order 再評価と sibling 再描画を避ける。
+    geometry は前回値と異なる時だけ setGeometry し、再描画(update)は表示開始、geometry 変化、opacity 変化、
+    内容更新のいずれかが生じた時だけ要求する。これにより停止中の可視 tag は frame ごとに実質ゼロの compositing コストとなる。
+    """
     self._display_scale = max(0.05, float(scale))
     display_w = max(1, int(round(float(self._base_pixmap.width()) * float(self._display_scale))))
     display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._display_scale))))
@@ -159,16 +171,29 @@ class _AiStatusTagWidget(QWidget):
     y = int(round(float(anchor_bottom_y) - float(name_bottom)))
     x = max(margin, min(max(margin, int(viewport_w) - int(display_w) - margin), int(x)))
     y = max(margin, min(max(margin, int(viewport_h) - int(display_h) - margin), int(y)))
-    self._opacity_effect.setOpacity(float(clampf(float(opacity), 0.0, 1.0)))
-    self.setGeometry(int(x), int(y), int(display_w), int(display_h))
-    self.setVisible(True)
-    self.raise_()
-    self.update()
+
+    new_geometry = (int(x), int(y), int(display_w), int(display_h))
+    new_opacity = float(clampf(float(opacity), 0.0, 1.0))
+    was_hidden = not self.isVisible()
+    geometry_changed = new_geometry != self._placed_geometry
+    opacity_changed = abs(float(new_opacity) - float(self._opacity)) > (1.0 / 255.0)
+
+    self._opacity = float(new_opacity)
+    if bool(geometry_changed):
+      self.setGeometry(int(x), int(y), int(display_w), int(display_h))
+      self._placed_geometry = new_geometry
+    if bool(was_hidden):
+      self.setVisible(True)
+      self.raise_()
+    if bool(was_hidden) or bool(geometry_changed) or bool(opacity_changed) or bool(self._content_dirty):
+      self._content_dirty = False
+      self.update()
 
   def paintEvent(self, event) -> None:
     del event
     painter = QPainter(self)
     painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+    painter.setOpacity(float(clampf(float(self._opacity), 0.0, 1.0)))
     painter.drawPixmap(self.rect(), self._base_pixmap)
     painter.end()
 

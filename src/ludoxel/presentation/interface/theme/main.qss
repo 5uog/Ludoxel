@@ -521,7 +521,10 @@ QWidget#settingsDialog QPushButton#dangerBtn:hover {
 
 QWidget#settingsRoot QPushButton#dangerBtn:pressed,
 QWidget#othelloSettingsRoot QPushButton#dangerBtn:pressed,
-QWidget#settingsDialog QPushButton#dangerBtn:pressed {
+QWidget#settingsDialog QPushButton#dangerBtn:pressed,
+QWidget#settingsRoot QPushButton#dangerBtn:checked,
+QWidget#othelloSettingsRoot QPushButton#dangerBtn:checked,
+QWidget#settingsDialog QPushButton#dangerBtn:checked {
   background: #702424;
   border-top-color: #3c1111;
   border-left-color: #3c1111;

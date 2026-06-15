@@ -15,7 +15,8 @@ class RayHitFace:
   """
   ray と AABB の交差結果として、侵入又は脱出 parameter、交点、対応 face を保持する。
   `t_enter` は `origin + direction * t` の `t`、`point` は world 空間上の交点、
-  `face` は `faces.py` の face index であり、block picking と third-person camera collision はこの face 契約に依存する。
+  `face` は `faces.py` の face index であり、
+  block picking と third-person camera collision はこの face 契約に依存する。
   """
 
   t_enter: float
@@ -50,8 +51,10 @@ def _exit_face_for_axis(axis: int, inv_dir: float) -> int:
 def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
   """
   三次元 ray と AABB の最初の可観測交差を slab 法で計算する。
-  各軸で `t1 = (mn - o) / d`、`t2 = (mx - o) / d` を比較し、`abs(d) < 1e-12` の平行軸では origin が区間外にある場合だけ非交差とする。
-  返値は前方交差が存在する場合の `RayHitFace` 又は `None` であり、この Python source は native extension build の対象でもあるため、
+  各軸で `t1 = (mn - o) / d`、`t2 = (mx - o) / d` を比較し、
+  `abs(d) < 1e-12` の平行軸では origin が区間外にある場合だけ非交差とする。
+  返値は前方交差が存在する場合の `RayHitFace` 又は `None` であり、
+  この Python source は native extension build の対象でもあるため、
   picking と camera collision は Python fallback と compiled module の同じ契約に依存する。
   """
   d = ray.direction

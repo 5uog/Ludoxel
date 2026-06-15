@@ -56,7 +56,7 @@
     "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 200,
     "editor.tabSize": 2,
-    "editor.rulers": [88, 100]
+    "editor.rulers": [70, 100]
   },
 
   "files.associations": {

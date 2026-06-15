@@ -296,7 +296,8 @@ class RuntimePreferences:
 
   def is_first_person_view(self) -> bool:
     """
-    現在の camera perspective が first-person view を指すかを、application.preferences.camera の正規化規則に従って判定する。
+    現在の camera perspective が first-person view を指すかを、
+    application.preferences.camera の正規化規則に従って判定する。
     """
     return is_first_person_camera_perspective(self.camera_perspective)
 
@@ -389,7 +390,8 @@ class RuntimePreferences:
   def set_hotbar_slot(self, index: int, item_id: str | None) -> None:
     """
     現在の active hotbar 分岐へ item 識別子を割り当てる。
-    割当前に runtime 全体を正規化するため、creative、survival、Othello、route のいずれを対象にしても slot 数と index の整合性が保たれる。
+    割当前に runtime 全体を正規化するため、creative、survival、Othello、
+    route のいずれを対象にしても slot 数と index の整合性が保たれる。
     """
     self.normalize()
     slots_attr, _index_attr = self._active_hotbar_state_attrs()
@@ -427,7 +429,8 @@ class RuntimePreferences:
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
   """
   runtime 設定を複製し、指定された override だけを上書きした正規化済みインスタンスを返す。
-  persistence、settings UI、session application はこの関数を通じて、部分更新が全体の許容領域を破らないことに依存する。
+  persistence、settings UI、session application はこの関数を通じて、
+  部分更新が全体の許容領域を破らないことに依存する。
   """
   if runtime is not None:
     out = RuntimePreferences(

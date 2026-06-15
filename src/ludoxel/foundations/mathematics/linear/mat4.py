@@ -37,7 +37,8 @@ def perspective(fov_y_deg: float, aspect: float, z_near: float, z_far: float) ->
 def ortho(left: float, right: float, bottom: float, top: float, z_near: float, z_far: float) -> np.ndarray:
   """
   左右、上下、near、far の直方体 view volume を clip 空間へ写す orthographic projection matrix を生成する。
-  各幅は最低 `1e-9` に下限処理され、返値は shape `(4, 4)`、dtype `np.float32` の行列として shadow map などの正射影経路へ渡される。
+  各幅は最低 `1e-9` に下限処理され、返値は shape `(4, 4)`、
+  dtype `np.float32` の行列として shadow map などの正射影経路へ渡される。
   """
   m = np.zeros((4, 4), dtype=np.float32)
   rl = max(right - left, 1e-9)
@@ -58,7 +59,8 @@ def ortho(left: float, right: float, bottom: float, top: float, z_near: float, z
 def look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3 = Vec3(0.0, 1.0, 0.0)) -> np.ndarray:
   """
   視点位置、forward 方向、上向き候補から view matrix を構成する。
-  `forward` を正規化し、`right = cross(up_hint, forward)`、`up = cross(forward, right)` により直交基底を得たうえで、
+  `forward` を正規化し、`right = cross(up_hint, forward)`、
+  `up = cross(forward, right)` により直交基底を得たうえで、
   行列の上三行に基底成分と `eye` に対する内積を格納する。
   """
   f = forward.normalized()
@@ -79,6 +81,7 @@ def look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3 = Vec3(0.0, 1.0, 0.0)) -> n
 def mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
   """
   二つの shape `(4, 4)` の変換行列を NumPy の行列積 `a @ b` で合成し、`np.float32` に戻す。
-  呼び出し側は返値の dtype と積順が維持されることに依存して、projection、view、model の合成結果を renderer へ渡す。
+  呼び出し側は返値の dtype と積順が維持されることに依存して、
+  projection、view、model の合成結果を renderer へ渡す。
   """
   return (a @ b).astype(np.float32)

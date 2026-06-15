@@ -11,7 +11,8 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 class AABB:
   """
   world 空間又は block local 空間の軸平行境界箱を最小点 `mn` と最大点 `mx` で表す。
-  各成分は `Vec3` であり、collision、picking、camera occlusion はこの型を半開区間 `[mn, mx)` の直方体として扱う。
+  各成分は `Vec3` であり、collision、picking、camera occlusion は、
+  この型を半開区間 `[mn, mx)` の直方体として扱う。
   """
 
   mn: Vec3

@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import uuid4
+
+from PyQt6.QtGui import QImage
+from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -12,7 +16,8 @@ from ludoxel.presentation.interface.common.themed_notice_dialog import show_them
 from ludoxel.presentation.interface.hud.route_overlay import RouteOverlayPath
 from ludoxel.presentation.interface.overlays.ai_settings import AiSettingsOverlay
 from ludoxel.presentation.rendering.visuals.players.ai_player_render_state import compose_ai_player_render_states
-from ludoxel.simulation.actors.ai_players.state import AI_MODE_IDLE, AI_MODE_ROUTE, AiRoutePoint, AiSpawnEggSettings
+from ludoxel.presentation.rendering.visuals.players.skin import delete_custom_ai_skin, load_custom_ai_skin_image, normalize_player_skin_image, write_custom_ai_skin
+from ludoxel.simulation.actors.ai_players.state import AI_MODE_IDLE, AI_MODE_ROUTE, AiRoutePoint, AiSpawnEggSettings, normalize_ai_skin_id
 from ludoxel.simulation.inventories.hotbars.ai_route_defaults import default_ai_route_hotbar_slots
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE
 from ludoxel.simulation.inventories.special_items.core import AI_ROUTE_CANCEL_ITEM_ID, AI_ROUTE_CONFIRM_ITEM_ID, AI_ROUTE_ERASE_ITEM_ID, AI_SPAWN_EGG_ITEM_ID
@@ -95,6 +100,56 @@ def _spawn_ai_at_hit(viewport: "RendererViewportWidget", *, hit) -> bool:
   return True
 
 
+def _import_ai_skin(viewport: "RendererViewportWidget", current_skin_id: str) -> str | None:
+  """
+  file dialog で選択された PNG を 64x64 atlas として検証し、actor 固有 import skin file として保存して新しい skin_id を返す。
+  import と replace のいずれの場合も新規 UUID hex を採番して別 file として保存するため、apply 経路は skin_id の変化として skin resource 更新を確実に検出でき、置換前の旧 skin_id は呼び出し側 apply 経路の orphan 削除で処理される。選択 cancel では None を返し、decode 失敗、寸法不一致、保存失敗では警告を表示して None を返す。
+  current_skin_id は将来の差分判定のための参考値であり、この関数自身は renderer への push を行わない。push は呼び出し側 apply 経路が skin_id の変化を検出した時に一度だけ実行する。
+  """
+  del current_skin_id
+  selected_path, _selected_filter = QFileDialog.getOpenFileName(viewport, "Select AI Skin", "", "PNG Files (*.png)")
+  if not str(selected_path).strip():
+    return None
+  try:
+    image = normalize_player_skin_image(QImage(str(selected_path)))
+    skin_id = uuid4().hex
+    write_custom_ai_skin(viewport._data_root, skin_id, image)
+  except Exception as exc:
+    QMessageBox.warning(viewport, "Invalid AI Skin", str(exc))
+    return None
+  return str(skin_id)
+
+
+def _ai_skin_is_available(viewport: "RendererViewportWidget", skin_id: str) -> bool:
+  """
+  指定 skin_id の actor 固有 import skin file が存在し、integrity 検証と 64x64 検査を満たして読み込める場合に真を返す。
+  dialog 側の skin status 表示が、参照切れ又は改竄により fallback へ落ちる状態を区別するために用いる。
+  """
+  return load_custom_ai_skin_image(viewport._data_root, skin_id) is not None
+
+
+def _skin_id_is_referenced(viewport: "RendererViewportWidget", skin_id: str) -> bool:
+  """
+  指定 skin_id を import skin として参照する生存 AI が、いずれかの play-space に一体でも存在する場合に真を返す。
+  skin 差し替え、skin 削除、AI 削除の際に共有されていない import skin file だけを安全に削除するための参照計数として用いる。無効 id は常に偽を返す。
+  """
+  normalized_id = normalize_ai_skin_id(skin_id)
+  if not normalized_id:
+    return False
+  return any(normalize_ai_skin_id(state.skin_id) == normalized_id for session in viewport._sessions.all_sessions() for state in session.ai_states())
+
+
+def _delete_unreferenced_ai_skin(viewport: "RendererViewportWidget", skin_id: str) -> None:
+  """
+  指定 skin_id の import skin file を、どの生存 AI からも参照されていない場合に限り削除する。
+  skin 差し替え時の旧 skin_id、skin 削除時の旧 skin_id、AI 削除時の旧 skin_id の解放に用い、まだ参照する AI が居る場合は削除しない。
+  """
+  normalized_id = normalize_ai_skin_id(skin_id)
+  if not normalized_id or _skin_id_is_referenced(viewport, normalized_id):
+    return
+  delete_custom_ai_skin(viewport._data_root, normalized_id)
+
+
 def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, initial_settings: AiSpawnEggSettings | None = None) -> bool:
   settings = None if initial_settings is None else initial_settings.normalized()
   if settings is None:
@@ -117,28 +172,53 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
   viewport._inp.set_mouse_capture(False)
   settings_controller.sync_cloud_motion_pause(viewport)
   try:
+
+    def apply_settings(candidate: AiSpawnEggSettings) -> bool:
+      """
+      AI Settings dialog の有効な変更を session 境界へ即時反映し、変更種別に応じた最小限の presentation 側更新だけを行う。
+      session 側 update が失敗した場合は偽を返して反映しない。反映成功時は、直前に反映済みの settings との比較で skin_mode 又は skin_id が実際に変化した場合に限り、孤立した旧 import skin file の解放と AI skin resource の再解決・renderer push を一度だけ行う。name、health indicator、regen、behavior、route の変更では skin resource の reload も renderer push も行わない。navigation cache の破棄は simulation 側 update_actor_settings が nav 影響変更に限定して処理するため、ここでは追加の navigation 操作を行わない。
+      """
+      normalized = candidate.normalized()
+      previous = viewport._ai_edit_settings
+      updated = viewport._session.update_ai_player_settings(actor_id=str(actor_id), settings=normalized)
+      if not bool(updated):
+        return False
+      previous_skin_id = normalize_ai_skin_id(previous.skin_id)
+      next_skin_id = normalize_ai_skin_id(normalized.skin_id)
+      skin_changed = bool(str(normalized.skin_mode) != str(previous.skin_mode) or next_skin_id != previous_skin_id)
+      viewport._ai_edit_settings = normalized
+      if bool(skin_changed):
+        if previous_skin_id and previous_skin_id != next_skin_id:
+          _delete_unreferenced_ai_skin(viewport, previous_skin_id)
+        settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
+      return True
+
     dialog = AiSettingsOverlay(
       parent=viewport.window() if viewport.window() is not None else viewport,
       settings=viewport._ai_edit_settings,
       name_validator=lambda candidate, _actor_id=str(actor_id): viewport._session.ai_player_name_error(actor_id=str(_actor_id), name=str(candidate)),
+      settings_updater=apply_settings,
+      skin_importer=lambda current_skin_id: _import_ai_skin(viewport, str(current_skin_id)),
+      skin_available=lambda skin_id: _ai_skin_is_available(viewport, str(skin_id)),
     )
     viewport._position_detached_overlay_window(dialog)
-    accepted = dialog.exec() == int(AiSettingsOverlay.DialogCode.Accepted)
-    if not bool(accepted):
-      return False
-    if bool(dialog.delete_requested()):
-      removed = viewport._session.remove_ai_player(str(actor_id))
-      if bool(removed):
-        _sync_ai_visuals(viewport)
-      return bool(removed)
-    viewport._ai_edit_settings = dialog.settings()
-    if bool(dialog.route_edit_requested()):
-      begin_route_edit(viewport, actor_id=str(actor_id), settings=viewport._ai_edit_settings)
+    try:
+      dialog.exec()
+      if bool(dialog.delete_requested()):
+        removed_skin_id = normalize_ai_skin_id(viewport._ai_edit_settings.skin_id)
+        removed = viewport._session.remove_ai_player(str(actor_id))
+        if bool(removed):
+          if removed_skin_id and not _skin_id_is_referenced(viewport, removed_skin_id):
+            delete_custom_ai_skin(viewport._data_root, removed_skin_id)
+            settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
+          _sync_ai_visuals(viewport)
+        return bool(removed)
+      if bool(dialog.route_edit_requested()):
+        begin_route_edit(viewport, actor_id=str(actor_id), settings=dialog.settings())
+        return True
       return True
-    updated = viewport._session.update_ai_player_settings(actor_id=str(actor_id), settings=viewport._ai_edit_settings)
-    if bool(updated):
-      _sync_ai_visuals(viewport)
-    return bool(updated)
+    finally:
+      dialog.deleteLater()
   finally:
     viewport._ai_settings_overlay_open = False
     viewport._inp.reset()
@@ -187,6 +267,8 @@ def _finish_route_edit(viewport: "RendererViewportWidget", *, commit: bool, reop
       can_place_blocks=bool(viewport._ai_edit_settings.can_place_blocks),
       name=str(viewport._ai_edit_settings.name),
       health_indicator=str(viewport._ai_edit_settings.health_indicator),
+      skin_mode=str(viewport._ai_edit_settings.skin_mode),
+      skin_id=str(viewport._ai_edit_settings.skin_id),
       auto_regen_enabled=bool(viewport._ai_edit_settings.auto_regen_enabled),
       regen_start_delay_s=float(viewport._ai_edit_settings.regen_start_delay_s),
       regen_interval_s=float(viewport._ai_edit_settings.regen_interval_s),
@@ -212,6 +294,9 @@ def _finish_route_edit(viewport: "RendererViewportWidget", *, commit: bool, reop
   settings_controller.sync_first_person_target(viewport)
   _sync_ai_visuals(viewport)
   if bool(reopen_dialog) and actor_id is not None:
+    current_settings = viewport._session.ai_player_settings(str(actor_id))
+    if current_settings is not None:
+      reopen_settings = current_settings.normalized()
     _open_actor_dialog(viewport, actor_id=str(actor_id), initial_settings=reopen_settings)
   else:
     viewport._ai_edit_actor_id = None

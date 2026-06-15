@@ -40,6 +40,7 @@ class PlayerRenderState:
   """
   third-person player model synthesis の cache key となる不変入力 record である。
   base pose、locomotion phase、crouch、perspective flag、first-person extension から、可視 body と shadow pose が決定される。
+  skin_texture_key は描画時に用いる skin texture を選択するための解決済み参照であり、None は player skin texture を、文字列は当該 key で renderer に登録済みの actor 固有 skin texture を指す。この field は pose cache key の一部であるため、同一 pose でも異なる skin を要求する actor が別 cache entry として扱われる。
   """
 
   base_x: float
@@ -53,4 +54,5 @@ class PlayerRenderState:
   crouch_amount: float
   hurt_tint_strength: float = 0.0
   is_first_person: bool = True
+  skin_texture_key: str | None = None
   first_person: FirstPersonRenderState | None = None

@@ -96,6 +96,7 @@ from ludoxel.simulation.actors.ai_players.state import (
   normalize_ai_mode,
   normalize_ai_personality,
   normalize_ai_route_style,
+  normalize_ai_skin_mode,
 )
 from ludoxel.simulation.actors.ai_players.stuck import stuck_edge_key
 from ludoxel.simulation.actors.ai_players.wander import _wander_interval_s, _wander_seed
@@ -192,6 +193,8 @@ class AiPlayerManager:
       held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized.can_place_blocks), held_item_id=normalized.held_item_id),
       name=str(normalized.name),
       health_indicator=str(normalized.health_indicator),
+      skin_mode=str(normalized.skin_mode),
+      skin_id=str(normalized.skin_id),
       auto_regen_enabled=bool(normalized.auto_regen_enabled),
       regen_start_delay_s=float(normalized.regen_start_delay_s),
       regen_interval_s=float(normalized.regen_interval_s),
@@ -348,6 +351,8 @@ class AiPlayerManager:
       held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized_settings.can_place_blocks)),
       name=str(spawn_name),
       health_indicator=str(normalized_settings.health_indicator),
+      skin_mode=str(normalized_settings.skin_mode),
+      skin_id=str(normalized_settings.skin_id),
       auto_regen_enabled=bool(normalized_settings.auto_regen_enabled),
       regen_start_delay_s=float(normalized_settings.regen_start_delay_s),
       regen_interval_s=float(normalized_settings.regen_interval_s),
@@ -386,6 +391,8 @@ class AiPlayerManager:
       can_place_blocks=bool(actor.can_place_blocks),
       name=str(actor.name),
       health_indicator=str(actor.health_indicator),
+      skin_mode=str(actor.skin_mode),
+      skin_id=str(actor.skin_id),
       auto_regen_enabled=bool(actor.auto_regen_enabled),
       regen_start_delay_s=float(actor.regen_start_delay_s),
       regen_interval_s=float(actor.regen_interval_s),
@@ -398,46 +405,88 @@ class AiPlayerManager:
     ).normalized()
 
   def update_actor_settings(self, *, actor_id: str, settings: AiSpawnEggSettings) -> bool:
+    """
+    既存 actor の編集可能 settings を正規化済み値で差分適用し、変更種別に応じて必要最小限の runtime 側更新だけを行う。
+    route mode で route point が 2 点未満の要求は適用不能として偽を返し、正規化後の値が現行 settings と完全一致する no-op は何も変更せず真を返す。名前は形式規則と生存 AI 間重複規則を満たす場合だけ更新し、満たさない rename 要求は偽を返す。
+    navigation cache(pending/active plan、nav failure、avoid cell、unreachable target、local recovery cache、world revision、replan cooldown)の破棄は mode、can_place_blocks、route point 列、route closed、route run、route style の何れかが実際に変化した場合に限定する。回復 tick の位相 reset(regen_tick_s = 0)は自動回復の有効状態、開始遅延、間隔、回復量、上限の何れかが実際に変化した場合に限定する。これにより name、health_indicator、skin_mode、skin_id の変更だけでは navigation 再計画も回復位相 reset も発生しない。
+    """
     actor = self._actors.get(str(actor_id))
     if actor is None:
       return False
     normalized = settings.normalized()
     if normalize_ai_mode(normalized.mode) == AI_MODE_ROUTE and len(normalized.route_points) < 2:
       return False
+
     requested_name = str(normalized.name).strip()
+    resolved_name = str(actor.name)
     if requested_name and requested_name != str(actor.name):
       if self.ai_name_error(actor_id=str(actor.actor_id), name=requested_name) is not None:
         return False
-      actor.name = str(requested_name)
-    actor.mode = normalize_ai_mode(normalized.mode)
+      resolved_name = str(requested_name)
+
+    next_mode = normalize_ai_mode(normalized.mode)
+    next_can_place_blocks = bool(normalized.can_place_blocks)
+    next_route_points = tuple(normalized.route_points)
+    next_route_closed = bool(normalized.route_closed)
+    next_route_run = bool(normalized.route_run)
+    next_route_style = normalize_ai_route_style(normalized.route_style)
+    nav_affecting_changed = bool(
+      next_mode != str(actor.mode)
+      or next_can_place_blocks != bool(actor.can_place_blocks)
+      or next_route_points != tuple(actor.route_points)
+      or next_route_closed != bool(actor.route_closed)
+      or next_route_run != bool(actor.route_run)
+      or next_route_style != str(actor.route_style)
+    )
+
+    next_regen_enabled = bool(normalized.auto_regen_enabled)
+    next_regen_start_delay_s = float(normalized.regen_start_delay_s)
+    next_regen_interval_s = float(normalized.regen_interval_s)
+    next_regen_amount_hp = float(normalized.regen_amount_hp)
+    next_regen_cap_hp = float(normalized.regen_cap_hp)
+    regen_changed = bool(
+      next_regen_enabled != bool(actor.auto_regen_enabled)
+      or next_regen_start_delay_s != float(actor.regen_start_delay_s)
+      or next_regen_interval_s != float(actor.regen_interval_s)
+      or next_regen_amount_hp != float(actor.regen_amount_hp)
+      or next_regen_cap_hp != float(actor.regen_cap_hp)
+    )
+
+    actor.name = str(resolved_name)
+    actor.mode = next_mode
     actor.personality = normalize_ai_personality(normalized.personality)
-    actor.can_place_blocks = bool(normalized.can_place_blocks)
-    actor.held_item_id = _held_item_id_for_settings(can_place_blocks=bool(actor.can_place_blocks), held_item_id=actor.held_item_id)
+    if next_can_place_blocks != bool(actor.can_place_blocks):
+      actor.can_place_blocks = next_can_place_blocks
+      actor.held_item_id = _held_item_id_for_settings(can_place_blocks=bool(actor.can_place_blocks), held_item_id=actor.held_item_id)
     actor.health_indicator = normalize_ai_health_indicator(normalized.health_indicator)
-    actor.auto_regen_enabled = bool(normalized.auto_regen_enabled)
-    actor.regen_start_delay_s = float(normalized.regen_start_delay_s)
-    actor.regen_interval_s = float(normalized.regen_interval_s)
-    actor.regen_amount_hp = float(normalized.regen_amount_hp)
-    actor.regen_cap_hp = float(normalized.regen_cap_hp)
-    actor.regen_tick_s = 0.0
-    actor.route_points = tuple(normalized.route_points)
-    actor.route_closed = bool(normalized.route_closed)
-    actor.route_run = bool(normalized.route_run)
-    actor.route_style = normalize_ai_route_style(normalized.route_style)
+    actor.skin_mode = normalize_ai_skin_mode(normalized.skin_mode)
+    actor.skin_id = str(normalized.skin_id)
+    actor.auto_regen_enabled = next_regen_enabled
+    actor.regen_start_delay_s = next_regen_start_delay_s
+    actor.regen_interval_s = next_regen_interval_s
+    actor.regen_amount_hp = next_regen_amount_hp
+    actor.regen_cap_hp = next_regen_cap_hp
+    if bool(regen_changed):
+      actor.regen_tick_s = 0.0
+    actor.route_points = next_route_points
+    actor.route_closed = next_route_closed
+    actor.route_run = next_route_run
+    actor.route_style = next_route_style
     if len(actor.route_points) <= 0:
       actor.route_target_index = 0
     else:
       actor.route_target_index = int(actor.route_target_index) % len(actor.route_points)
-    self._cancel_pending_nav_plan(actor)
-    self._clear_nav_plan(actor)
-    self._reset_nav_failure(actor)
-    actor.nav_world_revision = int(self.world.revision)
-    actor.nav_replan_cooldown_s = 0.0
-    actor.nav_avoid_support_cells.clear()
-    actor.nav_unreachable_targets.clear()
-    actor.local_recovery_cache_target = None
-    actor.local_recovery_cache_key = None
-    actor.local_recovery_cache_age_s = 1e9
+    if bool(nav_affecting_changed):
+      self._cancel_pending_nav_plan(actor)
+      self._clear_nav_plan(actor)
+      self._reset_nav_failure(actor)
+      actor.nav_world_revision = int(self.world.revision)
+      actor.nav_replan_cooldown_s = 0.0
+      actor.nav_avoid_support_cells.clear()
+      actor.nav_unreachable_targets.clear()
+      actor.local_recovery_cache_target = None
+      actor.local_recovery_cache_key = None
+      actor.local_recovery_cache_age_s = 1e9
     return True
 
   def remove_actor(self, actor_id: str) -> bool:
@@ -1845,6 +1894,8 @@ class AiPlayerManager:
         health=float(actor.player.health),
         max_health=float(actor.player.max_health),
         health_indicator=str(actor.health_indicator),
+        skin_mode=str(actor.skin_mode),
+        skin_id=str(actor.skin_id),
       )
       for actor in self._actors.values()
     )

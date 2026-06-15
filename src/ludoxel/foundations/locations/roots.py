@@ -10,7 +10,8 @@ from pathlib import Path
 def _start_directory(path: Path) -> Path:
   """
   探索開始点を file path と directory path の双方から同じ directory 基準へ正規化する。
-  入力が file の場合は親 directory、directory の場合はその解決済み path を返し、project root 探索と resource root 探索の起点を一致させる。
+  入力が file の場合は親 directory、directory の場合はその解決済み path を返し、
+  project root 探索と resource root 探索の起点を一致させる。
   """
   resolved = Path(path).resolve()
   return resolved.parent if resolved.is_file() else resolved
@@ -19,7 +20,8 @@ def _start_directory(path: Path) -> Path:
 def is_frozen_application() -> bool:
   """
   現在の Python 実行環境が PyInstaller などの frozen application であるかを判定する。
-  `sys.frozen` の真偽だけを読み、application bootstrap と resource root 解決はこの基礎述語により source tree 実行と packaged 実行を分岐する。
+  `sys.frozen` の真偽だけを読み、application bootstrap と resource root 解決は、
+  この基礎述語により source tree 実行と packaged 実行を分岐する。
   """
   return bool(getattr(sys, "frozen", False))
 
@@ -173,7 +175,8 @@ def default_runtime_data_root(project_root: Path | None = None) -> Path:
 def runtime_state_root(data_root: Path) -> Path:
   """
   runtime data root の下にある永続状態 directory を返す。
-  返値は `state` 固定の child path であり、player state、world state、integrity manifest、user opening book の保存先構成がこの関数に依存する。
+  返値は `state` 固定の child path であり、player state、world state、
+  integrity manifest、user opening book の保存先構成がこの関数に依存する。
   """
   return Path(data_root) / "state"
 
@@ -181,7 +184,8 @@ def runtime_state_root(data_root: Path) -> Path:
 def runtime_cache_root(data_root: Path) -> Path:
   """
   runtime data root の下にある再生成可能 cache directory を返す。
-  返値は `cache` 固定の child path であり、compiled opening book cache など state から再構築できる file の置き場として使われる。
+  返値は `cache` 固定の child path であり、compiled opening book cache など、
+  state から再構築できる file の置き場として使われる。
   """
   return Path(data_root) / "cache"
 
@@ -189,7 +193,8 @@ def runtime_cache_root(data_root: Path) -> Path:
 def runtime_state_manifest_path(data_root: Path) -> Path:
   """
   runtime state directory 内の integrity manifest file path を返す。
-  application persistence はこの path に HMAC manifest を保存し、foundations 層は保存内容の意味を所有せず path 契約だけを提供する。
+  application persistence はこの path に HMAC manifest を保存し、
+  foundations 層は保存内容の意味を所有せず path 契約だけを提供する。
   """
   return runtime_state_root(data_root) / "state_manifest.json"
 
@@ -197,7 +202,8 @@ def runtime_state_manifest_path(data_root: Path) -> Path:
 def runtime_integrity_key_path(data_root: Path) -> Path:
   """
   runtime state directory 内の integrity key file path を返す。
-  manifest 更新と検証は application persistence が行い、この関数は key file の配置を一貫させる基礎 path contract を与える。
+  manifest 更新と検証は application persistence が行い、
+  この関数は key file の配置を一貫させる基礎 path contract を与える。
   """
   return runtime_state_root(data_root) / "integrity_key.bin"
 
@@ -205,6 +211,7 @@ def runtime_integrity_key_path(data_root: Path) -> Path:
 def previous_configs_root(project_root: Path) -> Path:
   """
   旧仕様の repository-local `configs` directory を project root から導く。
-  application persistence は移行読取の補助 path として参照し、現在の通常保存先は runtime data root 系の path を用いる。
+  application persistence は移行読取の補助 path として参照し、
+  現在の通常保存先は runtime data root 系の path を用いる。
   """
   return Path(project_root) / "configs"

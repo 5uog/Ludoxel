@@ -60,6 +60,7 @@ from ludoxel.presentation.rendering.visuals.players.first_person_geometry import
 from ludoxel.presentation.rendering.visuals.players.held_block_geometry import held_block_model_boxes_for_kind
 from ludoxel.presentation.rendering.visuals.players.model_pose import HeldBlockPose, PlayerModelPose, build_player_model_pose
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
+from ludoxel.presentation.rendering.visuals.players.skin import normalize_player_skin_image
 from ludoxel.presentation.rendering.visuals.selections.outline import SelectionOutlineBuilder
 from ludoxel.presentation.rendering.visuals.worlds.block_visual_resolver import BlockVisualResolver
 from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField
@@ -156,6 +157,11 @@ class WgpuRendererBackend:
     self._skin_texture_view: object | None = None
     self._skin_sampler: object | None = None
     self._skin_size: tuple[int, int] = (0, 0)
+    self._ai_skin_images: dict[str, QImage] = {}
+    self._ai_skin_textures: dict[str, object] = {}
+    self._ai_skin_texture_views: dict[str, object] = {}
+    self._ai_skin_samplers: dict[str, object] = {}
+    self._ai_skin_bind_groups: dict[str, object] = {}
     self._special_item_textures: dict[str, object] = {}
     self._special_item_bind_groups: dict[str, object] = {}
     self._cloud_field = CloudField(self._cfg.clouds)
@@ -304,6 +310,7 @@ class WgpuRendererBackend:
     self._atlas = atlas
     self._visuals = BlockVisualResolver(uv_by_texture=atlas.uv, blocks=block_registry)
     self._selection_outline_builder = SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup)
+    self._replace_ai_skin_gpu_resources()
     self.apply_runtime_state()
 
     info = getattr(adapter, "info", None)
@@ -331,6 +338,7 @@ class WgpuRendererBackend:
     self._skin_texture_view = None
     self._skin_sampler = None
     self._skin_size = (0, 0)
+    self._destroy_ai_skin_gpu_resources()
     for texture in tuple(self._special_item_textures.values()):
       if texture is not None and hasattr(texture, "destroy"):
         texture.destroy()
@@ -1044,7 +1052,10 @@ class WgpuRendererBackend:
       temp_uploads.extend(uploads)
 
     for pose_idx, pose in enumerate(player_poses):
-      if self._res.skin_bind_group is not None:
+      skin_bind_group = self._res.skin_bind_group
+      if pose.skin_texture_key is not None:
+        skin_bind_group = self._ai_skin_bind_groups.get(str(pose.skin_texture_key), skin_bind_group)
+      if skin_bind_group is not None:
         player_uniform_buffers, player_uniform_bind_groups = self._create_frame_uniform_bind_groups(
           label=f"ludoxel-player-skin-frame-{pose_idx}",
           view_proj=view_proj,
@@ -1056,7 +1067,7 @@ class WgpuRendererBackend:
         )
         temp_uniform_buffers.extend(player_uniform_buffers)
         dc, inst, uploads = self._draw_transform_buckets(
-          render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label=f"ludoxel-player-skin-temp-{pose_idx}", camera_bind_groups=player_uniform_bind_groups
+          render_pass, buckets=pose.skin_face_rows, texture_bind_group=skin_bind_group, label=f"ludoxel-player-skin-temp-{pose_idx}", camera_bind_groups=player_uniform_bind_groups
         )
         draw_calls += int(dc)
         instances += int(inst)
@@ -1240,6 +1251,58 @@ class WgpuRendererBackend:
     self._skin_sampler = sampler
     self._skin_size = (int(width), int(height))
     self._res.skin_bind_group = bind_group
+
+  def _destroy_ai_skin_gpu_resources(self) -> None:
+    """
+    現在保持している全 AI skin texture を破壊し、対応する view、sampler、bind group の参照辞書を空にする。
+    GPU 資源破壊は context teardown 又は skin set 差し替えの前段でのみ呼ばれ、CPU 側 image cache(_ai_skin_images)は保持して context 再生成時に再構築できるようにする。
+    """
+    for texture in self._ai_skin_textures.values():
+      if texture is not None and hasattr(texture, "destroy"):
+        texture.destroy()
+    self._ai_skin_textures.clear()
+    self._ai_skin_texture_views.clear()
+    self._ai_skin_samplers.clear()
+    self._ai_skin_bind_groups.clear()
+
+  def _replace_ai_skin_gpu_resources(self) -> None:
+    """
+    CPU 側の AI skin image cache から GPU texture、view、sampler、bind group の集合を再構築する。
+    既存 GPU 資源を破壊してから skin key(同梱 Alex skin を表す固定 key と、custom mode actor の import skin を表す skin_id key)ごとに atlas と同一 bind group layout の texture bind group を mirror_y で生成する。途中で生成に失敗した場合はその時点までに生成した texture をすべて破壊して例外を再送出し、半端な GPU 状態を残さない。device 未初期化(_res is None)の場合は CPU cache を保持したまま GPU 構築を行わない。
+    """
+    self._destroy_ai_skin_gpu_resources()
+    if self._res is None:
+      return
+    textures: dict[str, object] = {}
+    texture_views: dict[str, object] = {}
+    samplers: dict[str, object] = {}
+    bind_groups: dict[str, object] = {}
+    try:
+      for skin_key, image in self._ai_skin_images.items():
+        texture, view, sampler, bind_group, _width, _height = _create_texture_bind_group(
+          device=self._res.device, layout=self._res.atlas_bind_group_layout, label=f"ludoxel-ai-skin-{skin_key}", image=image, mirror_y=True
+        )
+        textures[str(skin_key)] = texture
+        texture_views[str(skin_key)] = view
+        samplers[str(skin_key)] = sampler
+        bind_groups[str(skin_key)] = bind_group
+    except Exception:
+      for texture in textures.values():
+        if texture is not None and hasattr(texture, "destroy"):
+          texture.destroy()
+      raise
+    self._ai_skin_textures = textures
+    self._ai_skin_texture_views = texture_views
+    self._ai_skin_samplers = samplers
+    self._ai_skin_bind_groups = bind_groups
+
+  def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
+    """
+    AI actor 向けの名前付き skin 画像の集合を CPU cache へ正規化保存し、GPU 資源を即時に再構築する。
+    各 image は skin key(同梱 Alex skin を表す固定 key と、custom mode actor の import skin を表す skin_id key)を key とする 64x64 RGBA atlas へ正規化され、空 dict を渡すと AI skin texture を全解放して player skin fallback だけが残る。この呼び出しは GL 初期化、context 再生成、及び skin import / delete / mode 切替のように skin resource が実際に変化した時にだけ行われ、frame 毎には呼ばれない。
+    """
+    self._ai_skin_images = {str(skin_key): normalize_player_skin_image(QImage(image)) for skin_key, image in images.items()}
+    self._replace_ai_skin_gpu_resources()
 
   def render_player_preview_frame(
     self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0

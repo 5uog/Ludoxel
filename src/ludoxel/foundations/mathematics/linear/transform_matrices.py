@@ -10,7 +10,8 @@ import numpy as np
 def identity_matrix() -> np.ndarray:
   """
   `np.float32` の shape `(4, 4)` を持つ単位変換行列を返す。
-  model-space から world-space への個別変換を組み立てる関数群は、この行列を基準に translation、scale、rotation 成分を上書きする。
+  model-space から world-space への個別変換を組み立てる関数群は、
+  この行列を基準に translation、scale、rotation 成分を上書きする。
   """
   return np.identity(4, dtype=np.float32)
 
@@ -30,7 +31,8 @@ def translate_matrix(x: float, y: float, z: float) -> np.ndarray:
 def scale_matrix(x: float, y: float, z: float) -> np.ndarray:
   """
   各軸の独立 scale を shape `(4, 4)` の homogeneous transform として表す。
-  `x`、`y`、`z` は対角成分 `m[0,0]`、`m[1,1]`、`m[2,2]` に入り、block や player visual の model matrix 生成で形状寸法を固定する。
+  `x`、`y`、`z` は対角成分 `m[0,0]`、`m[1,1]`、`m[2,2]` に入り、
+  block や player visual の model matrix 生成で形状寸法を固定する。
   """
   matrix = identity_matrix()
   matrix[0, 0] = float(x)
@@ -42,7 +44,8 @@ def scale_matrix(x: float, y: float, z: float) -> np.ndarray:
 def rotate_x_rad_matrix(rad: float) -> np.ndarray:
   """
   x 軸まわりの回転角 `rad` を radian 単位で受け取り、shape `(4, 4)` の回転行列を返す。
-  y-z 平面の成分に `cos(rad)` と `sin(rad)` を配置し、右手系の column vector 変換として後続の model matrix 合成に使われる。
+  y-z 平面の成分に `cos(rad)` と `sin(rad)` を配置し、
+  右手系の column vector 変換として後続の model matrix 合成に使われる。
   """
   matrix = identity_matrix()
   c = math.cos(float(rad))
@@ -57,7 +60,8 @@ def rotate_x_rad_matrix(rad: float) -> np.ndarray:
 def rotate_y_rad_matrix(rad: float) -> np.ndarray:
   """
   y 軸まわりの回転角 `rad` を radian 単位で受け取り、shape `(4, 4)` の回転行列を返す。
-  x-z 平面の成分に `cos(rad)` と `sin(rad)` を配置し、yaw や item pose の水平方向回転を同じ積順で表す。
+  x-z 平面の成分に `cos(rad)` と `sin(rad)` を配置し、
+  yaw や item pose の水平方向回転を同じ積順で表す。
   """
   matrix = identity_matrix()
   c = math.cos(float(rad))
@@ -72,7 +76,8 @@ def rotate_y_rad_matrix(rad: float) -> np.ndarray:
 def rotate_z_rad_matrix(rad: float) -> np.ndarray:
   """
   z 軸まわりの回転角 `rad` を radian 単位で受け取り、shape `(4, 4)` の回転行列を返す。
-  x-y 平面の成分に `cos(rad)` と `sin(rad)` を配置し、HUD から独立した三次元 model pose の基礎回転として用いる。
+  x-y 平面の成分に `cos(rad)` と `sin(rad)` を配置し、
+  HUD から独立した三次元 model pose の基礎回転として用いる。
   """
   matrix = identity_matrix()
   c = math.cos(float(rad))

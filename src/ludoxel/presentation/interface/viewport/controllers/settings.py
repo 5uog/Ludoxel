@@ -157,6 +157,14 @@ def sync_player_skin(viewport: "RendererViewportWidget", *, push_to_renderer: bo
   viewport._sync_player_skin_design(push_to_renderer=bool(push_to_renderer))
 
 
+def sync_ai_skins(viewport: "RendererViewportWidget", *, push_to_renderer: bool = False) -> None:
+  """
+  AI actor が用いる skin texture 集合(同梱 Alex skin と custom mode actor の import skin)を CPU 側へ解決し、push_to_renderer が真の場合だけ renderer backend へ反映する。
+  この helper は GL 初期化、context 再生成、及び skin import / delete / mode 切替のように skin resource が実際に変化する契機でだけ呼ばれることを前提とし、AI settings の name、health indicator、regen、behavior、route といった skin と無関係な変更経路からは呼ばない。
+  """
+  viewport._sync_ai_skin_designs(push_to_renderer=bool(push_to_renderer))
+
+
 def current_item_id(viewport: "RendererViewportWidget") -> str | None:
   viewport._state.normalize()
   return viewport._state.current_item_id()

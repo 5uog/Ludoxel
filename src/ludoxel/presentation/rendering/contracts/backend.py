@@ -192,6 +192,9 @@ class Renderer:
   def set_player_skin_image(self, image: QImage) -> None:
     self._backend.set_player_skin_image(image)
 
+  def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
+    self._backend.set_ai_skin_images(dict(images))
+
   def render_player_preview_frame(
     self, *, w: int, h: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
   ) -> QImage:

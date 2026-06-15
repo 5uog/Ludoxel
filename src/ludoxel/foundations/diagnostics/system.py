@@ -51,7 +51,7 @@ def _safe_float(x: object) -> float | None:
 def _windows_hidden_subprocess_kwargs() -> dict[str, object]:
   """
   Windows 上で補助コマンドを実行する際に console window を表示させない `subprocess` 引数を構成する。
-  非 Windows では空辞書を返し、`CREATE_NO_WINDOW` と `STARTUPINFO` が利用不能な環境では
+  非 Windows では空辞書を返し、`CREATE_NO_WINDOW` と `STARTUPINFO` が利用不能な環境では、
   設定可能な範囲だけを返すため、診断処理は UI 表示を乱さず失敗を吸収できる。
   """
   if not sys.platform.startswith("win"):
@@ -171,7 +171,8 @@ def _posix_rss_bytes_ps() -> int | None:
 def _mac_sysctl_str(name: str) -> str:
   """
   macOS の `sysctl -n` から指定名の文字列値を取得する。
-  コマンド失敗又は timeout は空文字列へ正規化され、CPU brand string などの表示用診断値について、取得不能状態を数値 0 や例外送出と区別して表す。
+  コマンド失敗又は timeout は空文字列へ正規化され、CPU brand string などの表示用診断値について、
+  取得不能状態を数値 0 や例外送出と区別して表す。
   """
   try:
     out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
@@ -183,7 +184,8 @@ def _mac_sysctl_str(name: str) -> str:
 def _mac_sysctl_int(name: str) -> int | None:
   """
   macOS の `sysctl` 文字列結果を整数へ変換し、変換不能時に `None` を返す。
-  `hw.cpufrequency` や `hw.memsize` の取得経路はこの関数により、OS コマンド出力を byte 又は Hz の整数値として扱う。
+  `hw.cpufrequency` や `hw.memsize` の取得経路はこの関数により、
+  OS コマンド出力を byte 又は Hz の整数値として扱う。
   """
   s = _mac_sysctl_str(name)
   try:
@@ -195,7 +197,8 @@ def _mac_sysctl_int(name: str) -> int | None:
 def _windows_cpu_name() -> str:
   """
   Windows registry から processor name string を読み取り、表示用 CPU 名として返す。
-  registry 参照や値取得が失敗した場合は空文字列を返し、上位の system info 取得は `platform.processor()` へ退避する。
+  registry 参照や値取得が失敗した場合は空文字列を返し、
+  上位の system info 取得は `platform.processor()` へ退避する。
   """
   try:
     import winreg  # type: ignore
@@ -225,7 +228,8 @@ def _windows_cpu_mhz() -> int | None:
 def _windows_total_mem_bytes() -> int | None:
   """
   Windows `GlobalMemoryStatusEx` から物理メモリ総量を byte 単位で取得する。
-  内部の `MEMORYSTATUSEX` は Win32 API が要求する構造体 layout を表し、API 呼出しが失敗した場合は `None` を返して他の診断値取得を継続させる。
+  内部の `MEMORYSTATUSEX` は Win32 API が要求する構造体 layout を表し、
+  API 呼出しが失敗した場合は `None` を返して他の診断値取得を継続させる。
   """
   try:
     import ctypes
@@ -233,7 +237,8 @@ def _windows_total_mem_bytes() -> int | None:
     class MEMORYSTATUSEX(ctypes.Structure):
       """
       Win32 `GlobalMemoryStatusEx` が書き込むメモリ状態構造体を ctypes 上で表す。
-      field 順序と整数幅は Windows API の layout に合わせられ、Ludoxel 側では `ullTotalPhys` だけを物理メモリ総量として読む。
+      field 順序と整数幅は Windows API の layout に合わせられ、
+      Ludoxel 側では `ullTotalPhys` だけを物理メモリ総量として読む。
       """
 
       _fields_ = [
@@ -270,7 +275,8 @@ def _windows_rss_bytes_psapi() -> int | None:
     class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
       """
       Windows PSAPI が現在プロセスの memory counter を書き込む ctypes 構造体である。
-      Ludoxel の診断処理はこの構造体の `WorkingSetSize` を RSS 相当の値として扱い、他 field は API layout を満たすために保持する。
+      Ludoxel の診断処理はこの構造体の `WorkingSetSize` を RSS 相当の値として扱い、
+      他 field は API layout を満たすために保持する。
       """
 
       _fields_ = [
@@ -415,7 +421,8 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 def _nvidia_smi_util_percent() -> float | None:
   """
   `nvidia-smi` から GPU 使用率を percent 単位で取得し、閉区間 [0, 100] へ収める。
-  NVIDIA GPU 又はコマンドが存在しない環境、timeout、形式不一致は `None` に正規化され、HUD の外部 probe は GPU 診断の任意性を保持できる。
+  NVIDIA GPU 又はコマンドが存在しない環境、timeout、形式不一致は `None` に正規化され、
+  HUD の外部 probe は GPU 診断の任意性を保持できる。
   """
   try:
     out = subprocess.check_output(
@@ -436,7 +443,8 @@ def _nvidia_smi_util_percent() -> float | None:
 class GpuUtilizationSampler:
   """
   GPU 使用率の外部コマンド照会を最小間隔で間引く状態ful sampler である。
-  `min_interval_s` 未満の連続呼出しでは直前値を返すため、HUD 更新周期が短い場合でも `nvidia-smi` の起動負荷と表示値の欠落規則を安定させる。
+  `min_interval_s` 未満の連続呼出しでは直前値を返すため、
+  HUD 更新周期が短い場合でも `nvidia-smi` の起動負荷と表示値の欠落規則を安定させる。
   """
 
   min_interval_s: float = 1.0
@@ -446,7 +454,8 @@ class GpuUtilizationSampler:
   def sample(self) -> float | None:
     """
     現在時刻と前回照会時刻を比較し、必要な場合だけ GPU 使用率を再取得する。
-    返値は percent 単位の `float` 又は取得不能を表す `None` であり、短時間内の呼出しでは `_last` を返して外部 probe thread の負荷を抑える。
+    返値は percent 単位の `float` 又は取得不能を表す `None` であり、
+    短時間内の呼出しでは `_last` を返して外部 probe thread の負荷を抑える。
     """
     now = time.perf_counter()
     if (now - float(self._last_t)) < float(self.min_interval_s):

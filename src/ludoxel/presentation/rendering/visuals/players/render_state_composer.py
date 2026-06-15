@@ -26,12 +26,19 @@ def compose_player_render_state(
 
 
 def compose_player_render_state_from_parts(
-  *, player_model: PlayerModelSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float
+  *,
+  player_model: PlayerModelSnapshotDTO,
+  motion: FirstPersonMotionSample,
+  block_registry: BlockRegistry,
+  arm_rotation_limit_min_deg: float,
+  arm_rotation_limit_max_deg: float,
+  skin_texture_key: str | None = None,
 ) -> PlayerRenderState:
   """
   権威的な player-model snapshot と sampled first-person motion state を合成し、
   registry と special-item lookup を加えて不変 render-state record を生成する。
   pose builder はこの record だけから body、hand、item の描画入力を再構成する。
+  skin_texture_key は描画に用いる skin texture の選択子であり、None は player skin、文字列は renderer に登録済みの actor 固有 skin texture key を表す。既定が None であるため player 本体や既存呼び出し側の挙動は変化しない。
   """
   visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))
   special_descriptor = None if motion.visible_item_id is None else get_special_item_descriptor(motion.visible_item_id)
@@ -69,5 +76,6 @@ def compose_player_render_state_from_parts(
     crouch_amount=float(player_model.crouch_amount),
     hurt_tint_strength=float(player_model.hurt_tint_strength),
     is_first_person=bool(player_model.is_first_person),
+    skin_texture_key=None if skin_texture_key is None else str(skin_texture_key),
     first_person=first_person,
   )
