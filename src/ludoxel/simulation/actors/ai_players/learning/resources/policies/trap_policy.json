@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "policy_id": "bundled_trap_v1",
+  "policy_name": "Bundled Trap Policy",
+  "policy_version": 1,
+  "compatibility_target": "ludoxel.ai.v1",
+  "created_at": "2026-06-15",
+  "skill_categories": ["trap_building", "block_placement", "block_breaking"],
+  "evaluation_summary": {
+    "passed": true,
+    "note": "Authored bias artifact. It only reweights actions already permitted by the action mask and cannot bypass any safety rule."
+  },
+  "action_weight_overrides": {
+    "trap_prepare_hole": 0.08,
+    "trap_block_landing_path": 0.08
+  },
+  "utility_score_modifiers": {
+    "trap": 0.1,
+    "trap_building": 0.08
+  }
+}

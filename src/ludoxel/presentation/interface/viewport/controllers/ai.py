@@ -14,6 +14,7 @@ from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y
 from ludoxel.presentation.interface.common.themed_notice_dialog import show_themed_notice
 from ludoxel.presentation.interface.hud.route_overlay import RouteOverlayPath
+from ludoxel.presentation.interface.overlays.ai_learning_controller import AiLearningController
 from ludoxel.presentation.interface.overlays.ai_settings import AiSettingsOverlay
 from ludoxel.presentation.rendering.visuals.players.ai_player_render_state import compose_ai_player_render_states
 from ludoxel.presentation.rendering.visuals.players.skin import delete_custom_ai_skin, load_custom_ai_skin_image, normalize_player_skin_image, write_custom_ai_skin
@@ -192,6 +193,7 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
       settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
     return True
 
+  learning_controller = AiLearningController(project_root=viewport._project_root, data_root=viewport._data_root)
   dialog = AiSettingsOverlay(
     parent=viewport,
     settings=viewport._ai_edit_settings,
@@ -199,6 +201,7 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
     settings_updater=apply_settings,
     skin_importer=lambda current_skin_id: _import_ai_skin(viewport, str(current_skin_id)),
     skin_available=lambda skin_id: _ai_skin_is_available(viewport, str(skin_id)),
+    learning_controller=learning_controller,
     as_window=False,
   )
   viewport._ai_settings_dialog = dialog

@@ -13,5 +13,6 @@ recursive-include src/ludoxel/presentation/interface/theme *.qss
 recursive-include src/ludoxel/presentation/rendering/backends/opengl/shaders *.vert *.frag *.comp *.glsl
 recursive-include src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources *.vert *.frag *.comp *.glsl
 recursive-include src/ludoxel/simulation/spaces/othello/resources *.json
+recursive-include src/ludoxel/simulation/actors/ai_players/learning/resources *.json
 
 global-exclude __pycache__ *.py[cod]

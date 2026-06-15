@@ -4,13 +4,37 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QSignalBlocker, pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton, QWidget
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QLabel, QLineEdit, QPushButton, QWidget
 
+from ludoxel.application.persistence.schema.ai_learning import (
+  LEARNING_MODE_OBSERVE_ONLY,
+  LEARNING_MODE_OFF,
+  LEARNING_MODE_TRAIN_FROM_PLAYER_DATA,
+  LEARNING_MODE_TRAIN_IN_SANDBOX,
+  LEARNING_MODE_USE_LEARNED_POLICY,
+  is_active_learning_mode,
+)
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.common.themed_notice_dialog import show_themed_notice
 from ludoxel.presentation.interface.settings.surface import add_page_header, add_setting_row, add_settings_card
+from ludoxel.simulation.actors.ai_players.learning.actions import SKILL_CATEGORIES
+from ludoxel.simulation.actors.ai_players.learning.dataset import (
+  RECORD_AI_DEATHS,
+  RECORD_AI_DECISIONS,
+  RECORD_AI_ESCAPE_ATTEMPTS,
+  RECORD_AI_FAILURES,
+  RECORD_AI_ROUTE_FAILURES,
+  RECORD_PLAYER_BLOCK_BREAKING,
+  RECORD_PLAYER_BLOCK_PLACEMENT,
+  RECORD_PLAYER_COMBAT,
+  RECORD_PLAYER_MOVEMENT,
+  RECORD_PLAYER_PARKOUR,
+  RECORD_PLAYER_TRAP,
+)
+from ludoxel.simulation.actors.ai_players.learning.policy_registry import POLICY_KIND_BUNDLED, POLICY_KIND_LABELS
 from ludoxel.simulation.actors.ai_players.naming import AI_NAME_BODY_MAX_LENGTH, ai_display_name_format_error
 from ludoxel.simulation.actors.ai_players.state import (
   AI_HEALTH_INDICATOR_ABOVE,
@@ -27,6 +51,31 @@ from ludoxel.simulation.actors.ai_players.state import (
   AI_SKIN_MODE_CUSTOM,
   AI_SKIN_MODE_PLAYER,
   AiSpawnEggSettings,
+)
+
+if TYPE_CHECKING:
+  from ludoxel.presentation.interface.overlays.ai_learning_controller import AiLearningTabController
+
+_LEARNING_MODE_LABELS: tuple[tuple[str, str], ...] = (
+  (LEARNING_MODE_OFF, "Off"),
+  (LEARNING_MODE_OBSERVE_ONLY, "Observe Only"),
+  (LEARNING_MODE_USE_LEARNED_POLICY, "Use Learned Policy"),
+  (LEARNING_MODE_TRAIN_FROM_PLAYER_DATA, "Train From Player Data"),
+  (LEARNING_MODE_TRAIN_IN_SANDBOX, "Train In Sandbox"),
+)
+
+_LEARNING_CAPTURE_LABELS: tuple[tuple[str, str], ...] = (
+  (RECORD_PLAYER_MOVEMENT, "Player movement"),
+  (RECORD_PLAYER_COMBAT, "Player combat"),
+  (RECORD_PLAYER_BLOCK_PLACEMENT, "Player block placement"),
+  (RECORD_PLAYER_BLOCK_BREAKING, "Player block breaking"),
+  (RECORD_PLAYER_PARKOUR, "Player parkour"),
+  (RECORD_PLAYER_TRAP, "Player trap behavior"),
+  (RECORD_AI_DECISIONS, "AI decisions"),
+  (RECORD_AI_FAILURES, "AI failures"),
+  (RECORD_AI_DEATHS, "AI deaths"),
+  (RECORD_AI_ROUTE_FAILURES, "AI route failures"),
+  (RECORD_AI_ESCAPE_ATTEMPTS, "AI escape attempts"),
 )
 
 _AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + 5
@@ -64,6 +113,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     settings_updater: Callable[[AiSpawnEggSettings], bool] | None = None,
     skin_importer: Callable[[str], str | None] | None = None,
     skin_available: Callable[[str], bool] | None = None,
+    learning_controller: "AiLearningTabController | None" = None,
     as_window: bool = False,
     include_preview_button: bool = True,
   ) -> None:
@@ -84,6 +134,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._settings_updater = settings_updater
     self._skin_importer = skin_importer
     self._skin_available = skin_available
+    self._learning_controller = learning_controller
     self._edit_route_requested = False
     self._delete_requested = False
 
@@ -93,7 +144,12 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._tab_health = self._make_tab_button("Health", 3, self._set_page)
     self._tab_behavior = self._make_tab_button("Behavior", 4, self._set_page)
     self._tab_placement = self._make_tab_button("Block Placement", 5, self._set_page)
-    self._tab_buttons = (self._tab_identity, self._tab_display, self._tab_skin, self._tab_health, self._tab_behavior, self._tab_placement)
+    tab_buttons = [self._tab_identity, self._tab_display, self._tab_skin, self._tab_health, self._tab_behavior, self._tab_placement]
+    self._tab_learning: QPushButton | None = None
+    if self._learning_controller is not None:
+      self._tab_learning = self._make_tab_button("Learning", len(tab_buttons), self._set_page)
+      tab_buttons.append(self._tab_learning)
+    self._tab_buttons = tuple(tab_buttons)
     for button in self._tab_buttons:
       self._sidebar_layout.addWidget(button)
     self._preview_button: QPushButton | None = None
@@ -118,6 +174,8 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._build_health_page()
     self._build_behavior_page()
     self._build_placement_page()
+    if self._learning_controller is not None:
+      self._build_learning_page()
     self._load_settings(self._settings)
     self._connect_immediate_updates()
     self._sync_route_controls()
@@ -295,6 +353,269 @@ class AiSettingsOverlay(SidebarDialogBase):
     safety_layout.addWidget(safety_text)
     layout.addStretch(1)
     self._stack.addWidget(scroll)
+
+  def _build_learning_page(self) -> None:
+    """
+    AI 学習基盤の全体設定を編集する Learning page を構築する。
+    本 page は actor 個別ではなく学習基盤全体の設定であり、注入された learning controller を介して読み書きする。Learning Mode、Data Capture、Skill Categories、Policy Selection、Evaluation、Data Management の card を責務別に並べ、装飾は theme QSS が所有する objectName(settingsCard、settingsRow、primaryBtn、dangerBtn 等)に委ね、Python では widget 生成・objectName・layout・signal 接続・状態反映だけを行う。Clear と Reset は破壊操作として dangerBtn、Restore と Export と Import と評価実行はその意味に応じた button 種別を与え、互いの意味を混同しない。本 page は controller が注入された場合にのみ構築され、未注入時は存在しない。
+    """
+    controller = self._learning_controller
+    if controller is None:
+      return
+    state = controller.state()
+    scroll, host, layout = self._make_scroll_page()
+    add_page_header(layout, host, title="Learning", subtitle="Demonstration capture and learned-policy settings shared by all AI.")
+
+    _mode_card, mode_body, mode_layout = add_settings_card(
+      layout, host, title="Learning Mode", description="Off, Observe Only, and Use Learned Policy apply during normal play. Train modes are saved but do not run heavy training in this build."
+    )
+    self._learning_mode_combo = QComboBox(mode_body)
+    for value, label in _LEARNING_MODE_LABELS:
+      self._learning_mode_combo.addItem(label, userData=value)
+    add_setting_row(mode_layout, mode_body, label="Mode", description="Selects how the learning foundation participates.", control=self._learning_mode_combo)
+    self._learning_mode_notice = QLabel("", mode_body)
+    self._learning_mode_notice.setObjectName("settingsCardDescription")
+    self._learning_mode_notice.setWordWrap(True)
+    mode_layout.addWidget(self._learning_mode_notice)
+
+    _capture_card, capture_body, capture_layout = add_settings_card(
+      layout, host, title="Data Capture", description="Recorded only while the mode is Observe Only. Records are game state and actions, never screen images."
+    )
+    self._learning_capture_checks: dict[str, QCheckBox] = {}
+    for kind, label in _LEARNING_CAPTURE_LABELS:
+      check = QCheckBox(label, capture_body)
+      add_setting_row(capture_layout, capture_body, label=label, description="", control=check)
+      self._learning_capture_checks[kind] = check
+
+    _skill_card, skill_body, skill_layout = add_settings_card(layout, host, title="Skill Categories", description="Skills selected for demonstration capture and future evaluation.")
+    self._learning_skill_checks: dict[str, QCheckBox] = {}
+    for skill_id, label in SKILL_CATEGORIES:
+      check = QCheckBox(label, skill_body)
+      add_setting_row(skill_layout, skill_body, label=label, description="", control=check)
+      self._learning_skill_checks[skill_id] = check
+
+    _policy_card, policy_body, policy_layout = add_settings_card(
+      layout, host, title="Policy Selection", description="A broken or unevaluated policy is never used; the AI falls back to the built-in deterministic baseline."
+    )
+    self._learning_policy_kind_combo = QComboBox(policy_body)
+    for value, label in POLICY_KIND_LABELS:
+      self._learning_policy_kind_combo.addItem(label, userData=value)
+    add_setting_row(policy_layout, policy_body, label="Policy source", description="Which policy the AI uses during play.", control=self._learning_policy_kind_combo)
+    self._learning_policy_id_combo = QComboBox(policy_body)
+    self._learning_policy_id_combo.addItem("Automatic", userData="")
+    for policy_id, policy_name in controller.bundled_policy_options():
+      self._learning_policy_id_combo.addItem(str(policy_name), userData=str(policy_id))
+    add_setting_row(policy_layout, policy_body, label="Bundled policy", description="Used only when the source is a bundled learned policy.", control=self._learning_policy_id_combo)
+
+    _eval_card, eval_body, eval_layout = add_settings_card(layout, host, title="Evaluation", description="Runs the minimal evaluation entry and reports the pass or fail state.")
+    self._learning_eval_button = QPushButton("Run minimal evaluation", eval_body)
+    self._learning_eval_button.setObjectName("primaryBtn")
+    add_setting_row(eval_layout, eval_body, label="Minimal evaluation", description="Reports the latest evaluation result and pass/fail state.", control=self._learning_eval_button)
+    self._learning_eval_label = QLabel("", eval_body)
+    self._learning_eval_label.setObjectName("settingsCardDescription")
+    self._learning_eval_label.setWordWrap(True)
+    eval_layout.addWidget(self._learning_eval_label)
+
+    _data_card, data_body, data_layout = add_settings_card(layout, host, title="Data Management", description="Export, import, and clear recorded data, and manage the learned policy.")
+    self._learning_export_button = QPushButton("Export learning data", data_body)
+    add_setting_row(data_layout, data_body, label="Export", description="Write recorded demonstrations to a JSON Lines file.", control=self._learning_export_button)
+    self._learning_import_button = QPushButton("Import learning data", data_body)
+    add_setting_row(data_layout, data_body, label="Import", description="Append demonstrations from a JSON Lines file.", control=self._learning_import_button)
+    self._learning_clear_button = QPushButton("Clear player demonstration data", data_body)
+    self._learning_clear_button.setObjectName("dangerBtn")
+    add_setting_row(data_layout, data_body, label="Clear data", description="Delete all recorded demonstrations for this dataset.", control=self._learning_clear_button)
+    self._learning_reset_button = QPushButton("Reset learned policy", data_body)
+    self._learning_reset_button.setObjectName("dangerBtn")
+    add_setting_row(data_layout, data_body, label="Reset policy", description="Return to the built-in deterministic baseline.", control=self._learning_reset_button)
+    self._learning_restore_button = QPushButton("Restore bundled policy", data_body)
+    add_setting_row(data_layout, data_body, label="Restore policy", description="Use a bundled learned policy as the source.", control=self._learning_restore_button)
+    self._learning_dataset_label = QLabel("", data_body)
+    self._learning_dataset_label.setObjectName("settingsCardDescription")
+    self._learning_dataset_label.setWordWrap(True)
+    data_layout.addWidget(self._learning_dataset_label)
+    self._learning_training_label = QLabel("", data_body)
+    self._learning_training_label.setObjectName("settingsCardDescription")
+    self._learning_training_label.setWordWrap(True)
+    data_layout.addWidget(self._learning_training_label)
+    self._learning_policy_version_label = QLabel("", data_body)
+    self._learning_policy_version_label.setObjectName("settingsCardDescription")
+    self._learning_policy_version_label.setWordWrap(True)
+    data_layout.addWidget(self._learning_policy_version_label)
+
+    layout.addStretch(1)
+    self._stack.addWidget(scroll)
+
+    self._load_learning_controls(state)
+    self._connect_learning_updates()
+    self._refresh_learning_dynamic()
+
+  def _load_learning_controls(self, state) -> None:
+    """
+    learning controller の状態を Learning page の各 control へ反映する。
+    combo と checkbox の値設定中は QSignalBlocker で signal を遮断し、初期反映が controller への保存経路を起動しないようにする。Learning Mode、capture flag、skill flag、policy source、bundled policy を状態から設定し、派生表示(mode notice、bundled policy combo の有効状態)を同期する。
+    """
+    settings = state.settings
+    blockers = [QSignalBlocker(self._learning_mode_combo), QSignalBlocker(self._learning_policy_kind_combo), QSignalBlocker(self._learning_policy_id_combo)]
+    self._set_combo_value(self._learning_mode_combo, str(settings.learning_mode))
+    for kind, check in self._learning_capture_checks.items():
+      blocker = QSignalBlocker(check)
+      check.setChecked(bool(settings.capture_flags.get(kind, False)))
+      del blocker
+    for skill_id, check in self._learning_skill_checks.items():
+      blocker = QSignalBlocker(check)
+      check.setChecked(bool(settings.skill_flags.get(skill_id, True)))
+      del blocker
+    self._set_combo_value(self._learning_policy_kind_combo, str(settings.selected_policy_kind))
+    self._set_combo_value(self._learning_policy_id_combo, str(settings.selected_policy_id))
+    del blockers
+    self._sync_learning_mode_notice()
+    self._sync_learning_policy_id_enabled()
+
+  def _connect_learning_updates(self) -> None:
+    """
+    Learning page の各 control を controller への即時反映 handler へ接続する。
+    接続は _load_learning_controls の後に行うため、初期反映中の signal は保存経路を起動しない。capture と skill の checkbox は対象 key を既定引数で束縛した handler へ接続し、押下した行だけを更新する。
+    """
+    self._learning_mode_combo.currentIndexChanged.connect(self._on_learning_mode_changed)
+    for kind, check in self._learning_capture_checks.items():
+      check.toggled.connect(lambda checked, captured_kind=str(kind): self._learning_controller.set_capture_flag(captured_kind, bool(checked)))
+    for skill_id, check in self._learning_skill_checks.items():
+      check.toggled.connect(lambda checked, captured_skill=str(skill_id): self._learning_controller.set_skill_flag(captured_skill, bool(checked)))
+    self._learning_policy_kind_combo.currentIndexChanged.connect(self._on_learning_policy_changed)
+    self._learning_policy_id_combo.currentIndexChanged.connect(self._on_learning_policy_changed)
+    self._learning_eval_button.clicked.connect(self._on_run_minimal_evaluation)
+    self._learning_export_button.clicked.connect(self._on_export_learning_data)
+    self._learning_import_button.clicked.connect(self._on_import_learning_data)
+    self._learning_clear_button.clicked.connect(self._on_clear_learning_data)
+    self._learning_reset_button.clicked.connect(self._on_reset_learned_policy)
+    self._learning_restore_button.clicked.connect(self._on_restore_bundled_policy)
+
+  def _sync_learning_mode_notice(self) -> None:
+    """
+    現在の Learning Mode に応じた説明文を mode notice へ反映する。
+    通常 play で有効化しない Train 系 mode では学習が実行されない旨を明示し、Observe Only では AI 挙動を変えずに記録する旨、Use Learned Policy では評価通過 policy のみ使用し fallback する旨、Off では記録しない旨を示す。
+    """
+    mode = str(self._learning_mode_combo.currentData())
+    if not is_active_learning_mode(mode):
+      self._learning_mode_notice.setText("This mode is saved but does not run heavy training in this build. Recording and policy use are unchanged.")
+      return
+    if mode == LEARNING_MODE_OBSERVE_ONLY:
+      self._learning_mode_notice.setText("Observe Only records the selected demonstration data without changing how the AI behaves.")
+      return
+    if mode == LEARNING_MODE_USE_LEARNED_POLICY:
+      self._learning_mode_notice.setText("Use Learned Policy applies the selected policy only if it passed evaluation; otherwise the deterministic baseline is used.")
+      return
+    self._learning_mode_notice.setText("Learning is off. No demonstrations are recorded and the deterministic baseline drives the AI.")
+
+  def _sync_learning_policy_id_enabled(self) -> None:
+    """
+    bundled policy combo の有効状態を policy source に応じて切り替える。
+    source が bundled learned policy の場合のみ bundled policy の選択を有効にし、それ以外では選択を無効化する。
+    """
+    self._learning_policy_id_combo.setEnabled(str(self._learning_policy_kind_combo.currentData()) == POLICY_KIND_BUNDLED)
+
+  def _on_learning_mode_changed(self, _index: int = 0) -> None:
+    """
+    Learning Mode の変更を controller へ保存し、mode notice を更新する。
+    """
+    self._learning_controller.set_learning_mode(str(self._learning_mode_combo.currentData()))
+    self._sync_learning_mode_notice()
+
+  def _on_learning_policy_changed(self, _index: int = 0) -> None:
+    """
+    policy source と bundled policy の選択を controller へ保存し、bundled combo の有効状態を更新する。
+    """
+    self._learning_controller.set_policy(str(self._learning_policy_kind_combo.currentData()), str(self._learning_policy_id_combo.currentData()))
+    self._sync_learning_policy_id_enabled()
+
+  def _on_run_minimal_evaluation(self) -> None:
+    """
+    最小評価を controller 経由で実行し、結果要約と dynamic 表示を更新する。
+    本段階の評価は dry-run であり、結果は合否未確定(not run)として表示される。
+    """
+    self._learning_controller.run_minimal_evaluation()
+    self._refresh_learning_dynamic()
+
+  def _on_export_learning_data(self) -> None:
+    """
+    保存先 file を選択させ、選択された場合に dataset を書き出して件数を通知する。
+    file 未選択(cancel)では何もしない。書き出し後に dataset 表示を更新する。
+    """
+    path, _filter = QFileDialog.getSaveFileName(self, "Export learning data", "ludoxel_demonstrations.jsonl", "JSON Lines (*.jsonl)")
+    if not path:
+      return
+    count = self._learning_controller.export_dataset(str(path))
+    self._refresh_learning_dynamic()
+    show_themed_notice(parent=self, title="Learning Data", message=f"Exported {int(count)} demonstration record(s).", nav_label="Learning")
+
+  def _on_import_learning_data(self) -> None:
+    """
+    取り込み元 file を選択させ、選択された場合に dataset へ追記して件数を通知する。
+    file 未選択(cancel)では何もしない。取り込み後に dataset 表示を更新する。
+    """
+    path, _filter = QFileDialog.getOpenFileName(self, "Import learning data", "", "JSON Lines (*.jsonl)")
+    if not path:
+      return
+    count = self._learning_controller.import_dataset(str(path))
+    self._refresh_learning_dynamic()
+    show_themed_notice(parent=self, title="Learning Data", message=f"Imported {int(count)} demonstration record(s).", nav_label="Learning")
+
+  def _on_clear_learning_data(self) -> None:
+    """
+    記録済み demonstration data を削除し、dataset 表示を更新する。
+    """
+    self._learning_controller.clear_dataset()
+    self._refresh_learning_dynamic()
+    show_themed_notice(parent=self, title="Learning Data", message="Cleared the recorded demonstration data.", nav_label="Learning")
+
+  def _on_reset_learned_policy(self) -> None:
+    """
+    learned policy を組み込み deterministic baseline へ戻し、policy 関連 control と dynamic 表示を再読込する。
+    """
+    state = self._learning_controller.reset_learned_policy()
+    self._reload_learning_policy_controls(state)
+    self._refresh_learning_dynamic()
+
+  def _on_restore_bundled_policy(self) -> None:
+    """
+    policy source を同梱学習 policy へ切り替え、policy 関連 control と dynamic 表示を再読込する。
+    """
+    state = self._learning_controller.restore_bundled_policy()
+    self._reload_learning_policy_controls(state)
+    self._refresh_learning_dynamic()
+
+  def _reload_learning_policy_controls(self, state) -> None:
+    """
+    policy source と bundled policy の combo を状態から再設定する。
+    再設定中は QSignalBlocker で signal を遮断し、再読込が保存経路を二重に起動しないようにする。設定後に bundled combo の有効状態を同期する。
+    """
+    blockers = [QSignalBlocker(self._learning_policy_kind_combo), QSignalBlocker(self._learning_policy_id_combo)]
+    self._set_combo_value(self._learning_policy_kind_combo, str(state.settings.selected_policy_kind))
+    self._set_combo_value(self._learning_policy_id_combo, str(state.settings.selected_policy_id))
+    del blockers
+    self._sync_learning_policy_id_enabled()
+
+  def _refresh_learning_dynamic(self) -> None:
+    """
+    dataset 規模、直近の学習結果、policy 版、直近の評価結果という動的表示を controller の状態から更新する。
+    dataset 規模は記録件数と byte 長を要約し、学習結果は本段階で未実行である旨、評価結果は last evaluation summary の合否未確定を表示する。これらの走査は page 表示時と各操作後にのみ行い、毎 frame では行わない。
+    """
+    summary = self._learning_controller.dataset_summary()
+    state = self._learning_controller.state()
+    self._learning_dataset_label.setText(f"Dataset size: {int(summary.record_count)} record(s), {int(summary.byte_size)} byte(s).")
+    training = state.last_training_summary or {}
+    if training:
+      self._learning_training_label.setText(f"Last training: {str(training.get('status', 'unknown'))}.")
+    else:
+      self._learning_training_label.setText("Last training: none run in this build.")
+    self._learning_policy_version_label.setText(f"Policy version: {int(state.policy_version)}.")
+    evaluation = state.last_evaluation_summary or {}
+    if evaluation:
+      passed = bool(evaluation.get("passed", False))
+      result_count = len(evaluation.get("results", []) or [])
+      self._learning_eval_label.setText(f"Last evaluation: {'passed' if passed else 'not passed'} across {int(result_count)} task(s).")
+    else:
+      self._learning_eval_label.setText("Last evaluation: not run yet.")
 
   def _connect_immediate_updates(self) -> None:
     """

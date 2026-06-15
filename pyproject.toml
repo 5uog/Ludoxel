@@ -68,6 +68,7 @@ ludoxel = [
     "presentation/rendering/backends/wgpu/shaders/sources/*.comp",
     "presentation/rendering/backends/wgpu/shaders/sources/common/*.glsl",
     "simulation/spaces/othello/resources/*.json",
+    "simulation/actors/ai_players/learning/resources/policies/*.json",
 ]
 
 [tool.setuptools.packages.find]
