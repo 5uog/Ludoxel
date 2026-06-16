@@ -8,9 +8,9 @@ import HeroSection from '../components/HeroSection';
 
 export default function HomePage(): React.JSX.Element {
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden flex flex-col">
       <Header activePath="/" />
-      <main>
+      <main className="flex-1">
         <HeroSection />
       </main>
       <Footer />

@@ -18,10 +18,12 @@ export type DocsSidebarSection = {
   items: DocsSidebarItem[];
 };
 
+export const docsHomeHref = '/docs/introduction';
+
 export const mainNavigation: NavigationItem[] = [
   {
     label: 'Docs',
-    href: '/docs/overview',
+    href: docsHomeHref,
   },
   {
     label: 'Changelog',
@@ -31,42 +33,57 @@ export const mainNavigation: NavigationItem[] = [
 
 export const docsSidebarSections: DocsSidebarSection[] = [
   {
-    title: 'Getting Started',
+    title: 'Application',
     items: [
       {
-        title: 'Overview',
-        href: '/docs/overview',
+        title: 'Introduction',
+        href: '/docs/introduction',
         icon: 'file',
       },
       {
-        title: 'What is Ludoxel?',
-        href: '/docs/overview#what-is-ludoxel',
-        icon: 'wrench',
+        title: 'World Runtime',
+        href: '/docs/world-runtime',
+        icon: 'layers',
       },
       {
-        title: 'Core Features',
-        href: '/docs/overview#core-features',
+        title: 'Othello Mode',
+        href: '/docs/othello',
         icon: 'sparkles',
       },
     ],
   },
   {
-    title: 'Runtime & Systems',
+    title: 'Systems',
     items: [
       {
-        title: 'Project Architecture',
-        href: '/docs/overview#project-architecture',
+        title: 'Rendering Backends',
+        href: '/docs/rendering',
         icon: 'layers',
       },
       {
-        title: 'Settings and Backends',
-        href: '/docs/overview#settings-and-backends',
-        icon: 'settings',
+        title: 'AI NPC Systems',
+        href: '/docs/ai-npcs',
+        icon: 'wrench',
       },
       {
-        title: 'Getting Help',
-        href: '/docs/overview#getting-help',
+        title: 'Settings Surface',
+        href: '/docs/settings',
+        icon: 'settings',
+      },
+    ],
+  },
+  {
+    title: 'Project',
+    items: [
+      {
+        title: 'Project Structure',
+        href: '/docs/project-structure',
         icon: 'shield',
+      },
+      {
+        title: 'Support and Reports',
+        href: '/docs/support',
+        icon: 'file',
       },
     ],
   },

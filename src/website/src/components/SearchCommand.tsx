@@ -2,8 +2,9 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { ArrowRight, Clock, FileText, Search } from 'lucide-react';
+import { ArrowRight, Clock, FileText, Layers, Search, Shield } from 'lucide-react';
 import { type ChangeEvent, type ComponentType, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
 import { searchIndex, type SearchIndexEntry } from '../data/searchIndex';
@@ -25,9 +26,17 @@ type SearchRow = {
 };
 
 const SECTION_META: Record<string, SearchSectionMeta> = {
-  docs: {
-    label: 'Documentation',
+  application: {
+    label: 'Application',
     Icon: FileText,
+  },
+  systems: {
+    label: 'Systems',
+    Icon: Layers,
+  },
+  project: {
+    label: 'Project',
+    Icon: Shield,
   },
   updates: {
     label: 'Updates',
@@ -181,6 +190,107 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
 
   const buttonClassName = variant === 'header' ? HEADER_BUTTON_CLASS_NAME : variant === 'hero' ? HERO_BUTTON_CLASS_NAME : ICON_BUTTON_CLASS_NAME;
 
+  const searchDialog = isOpen ? (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 md:pt-32" role="dialog" aria-modal="true" aria-label="Search documentation">
+      <button className="search-dialog-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm" type="button" aria-label="Close search" onClick={closeSearch} />
+
+      <div className="search-dialog-panel relative z-10 w-full max-w-[600px] mx-4">
+        <div className="rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
+          <div className="flex items-center border-b border-border px-4">
+            <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />
+
+            <input
+              ref={inputRef}
+              autoFocus
+              className="flex h-14 w-full bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
+              placeholder="Search documentation..."
+              value={query}
+            />
+
+            <kbd className="ml-2 hidden sm:flex items-center justify-center h-6 px-2 rounded bg-secondary text-xs font-medium text-muted-foreground">ESC</kbd>
+          </div>
+
+          <div className="max-h-[400px] overflow-y-auto scrollbar-none p-2">
+            {normalizedQuery.length >= 2 && filteredRows.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-muted-foreground">No results found for &quot;{normalizedQuery}&quot;</p>
+              </div>
+            ) : null}
+
+            {normalizedQuery.length < 2 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-muted-foreground">Type at least 2 characters to search...</p>
+              </div>
+            ) : null}
+
+            {Object.entries(groupedRows).map(([sectionKey, rows]) => {
+              const sectionMeta = getSectionMeta(sectionKey);
+              const Icon = sectionMeta.Icon;
+
+              return (
+                <div
+                  className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:py-2"
+                  key={sectionKey}
+                >
+                  <div cmdk-group-heading="">{sectionMeta.label}</div>
+
+                  {rows.map((row) => {
+                    const resultIndex = filteredRows.findIndex((candidate) => candidate.index === row.index);
+                    const isSelected = resultIndex === selectedIndex;
+
+                    return (
+                      <button
+                        className="group flex items-center gap-3 px-3 py-3 cursor-pointer rounded-lg data-[selected=true]:bg-accent w-full text-left"
+                        data-selected={isSelected ? 'true' : 'false'}
+                        key={row.entry.href}
+                        type="button"
+                        onClick={() => selectEntry(row.entry)}
+                        onMouseEnter={() => setSelectedIndex(resultIndex)}
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-muted-foreground group-data-[selected=true]:bg-primary/10 group-data-[selected=true]:text-primary">
+                          <Icon className="h-4 w-4" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{row.entry.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{row.entry.description}</p>
+                        </div>
+
+                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-data-[selected=true]:opacity-100 transition-opacity" />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+
+          {filteredRows.length > 0 ? (
+            <div className="border-t border-border px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {filteredRows.length} result
+                {filteredRows.length !== 1 ? 's' : ''}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono">↑↓</kbd>
+                  navigate
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono">↵</kbd>
+                  select
+                </span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       <button className={buttonClassName} type="button" aria-label={variant === 'icon' ? 'Search' : undefined} onClick={openSearch}>
@@ -217,106 +327,7 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
         )}
       </button>
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 md:pt-32" role="dialog" aria-modal="true" aria-label="Search documentation">
-          <button className="search-dialog-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm" type="button" aria-label="Close search" onClick={closeSearch} />
-
-          <div className="search-dialog-panel relative z-10 w-full max-w-[600px] mx-4">
-            <div className="rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
-              <div className="flex items-center border-b border-border px-4">
-                <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />
-
-                <input
-                  ref={inputRef}
-                  autoFocus
-                  className="flex h-14 w-full bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                  onChange={handleInputChange}
-                  onKeyDown={handleInputKeyDown}
-                  placeholder="Search documentation..."
-                  value={query}
-                />
-
-                <kbd className="ml-2 hidden sm:flex items-center justify-center h-6 px-2 rounded bg-secondary text-xs font-medium text-muted-foreground">ESC</kbd>
-              </div>
-
-              <div className="max-h-[400px] overflow-y-auto p-2">
-                {normalizedQuery.length >= 2 && filteredRows.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <p className="text-sm text-muted-foreground">No results found for &quot;{normalizedQuery}&quot;</p>
-                  </div>
-                ) : null}
-
-                {normalizedQuery.length < 2 ? (
-                  <div className="py-12 text-center">
-                    <p className="text-sm text-muted-foreground">Type at least 2 characters to search...</p>
-                  </div>
-                ) : null}
-
-                {Object.entries(groupedRows).map(([sectionKey, rows]) => {
-                  const sectionMeta = getSectionMeta(sectionKey);
-                  const Icon = sectionMeta.Icon;
-
-                  return (
-                    <div
-                      className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:py-2"
-                      key={sectionKey}
-                    >
-                      <div cmdk-group-heading="">{sectionMeta.label}</div>
-
-                      {rows.map((row) => {
-                        const resultIndex = filteredRows.findIndex((candidate) => candidate.index === row.index);
-                        const isSelected = resultIndex === selectedIndex;
-
-                        return (
-                          <button
-                            className="group flex items-center gap-3 px-3 py-3 cursor-pointer rounded-lg data-[selected=true]:bg-accent w-full text-left"
-                            data-selected={isSelected ? 'true' : 'false'}
-                            key={row.entry.href}
-                            type="button"
-                            onClick={() => selectEntry(row.entry)}
-                            onMouseEnter={() => setSelectedIndex(resultIndex)}
-                          >
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-muted-foreground group-data-[selected=true]:bg-primary/10 group-data-[selected=true]:text-primary">
-                              <Icon className="h-4 w-4" />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{row.entry.title}</p>
-                              <p className="text-xs text-muted-foreground truncate">{row.entry.description}</p>
-                            </div>
-
-                            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-data-[selected=true]:opacity-100 transition-opacity" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {filteredRows.length > 0 ? (
-                <div className="border-t border-border px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {filteredRows.length} result
-                    {filteredRows.length !== 1 ? 's' : ''}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono">↑↓</kbd>
-                      navigate
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono">↵</kbd>
-                      select
-                    </span>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {searchDialog === null ? null : createPortal(searchDialog, document.body)}
     </>
   );
 }

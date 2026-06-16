@@ -9,10 +9,10 @@ import { changelogEntries } from '../data/changelog';
 
 export default function ChangelogPage(): React.JSX.Element {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <Header activePath="/changelog" />
 
-      <main className="pt-24 pb-16">
+      <main className="flex-1 pt-24 pb-16">
         <div className="max-w-4xl mx-auto px-4 md:px-8">
           <div className="mb-16">
             <div className="page-reveal mb-3">

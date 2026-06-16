@@ -9,11 +9,15 @@ export type ShortcutLink = {
 
 export const heroShortcuts: ShortcutLink[] = [
   {
-    label: 'Overview',
-    href: '/docs/overview',
+    label: 'Introduction',
+    href: '/docs/introduction',
   },
   {
-    label: 'Core Features',
-    href: '/docs/overview#core-features',
+    label: 'Rendering Backends',
+    href: '/docs/rendering',
+  },
+  {
+    label: 'AI NPC Systems',
+    href: '/docs/ai-npcs',
   },
 ];

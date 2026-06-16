@@ -18,24 +18,17 @@ function isNavigationItemActive(currentPath: string, href: string): boolean {
     return currentPath === '/';
   }
 
+  if (href.startsWith('/docs')) {
+    return currentPath.startsWith('/docs');
+  }
+
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
 export default function Header({ activePath }: HeaderProps): React.JSX.Element {
   const location = useLocation();
   const currentPath = activePath ?? location.pathname;
-  const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    const updateScrolled = (): void => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    updateScrolled();
-    window.addEventListener('scroll', updateScrolled);
-    return () => window.removeEventListener('scroll', updateScrolled);
-  }, []);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -57,14 +50,12 @@ export default function Header({ activePath }: HeaderProps): React.JSX.Element {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMobileMenuOpen]);
 
-  const headerClassName = `fixed top-0 left-0 right-0 z-50 w-full transition-colors duration-300 ${isScrolled ? 'bg-background border-b border-border' : 'bg-transparent border-b border-white/10'}`;
-
   const closeMobileMenu = (): void => {
     setIsMobileMenuOpen(false);
   };
 
   return (
-    <header className={headerClassName}>
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-border bg-background">
       <nav className="flex items-center justify-between w-full max-w-[90rem] mx-auto px-4 md:px-8 py-4">
         <div className="flex items-center gap-6">
           <Link className="flex items-center gap-2" to="/" onClick={closeMobileMenu}>

@@ -6,8 +6,8 @@ import { ChevronRight, FileText, Home as HomeIcon, Layers, List, Menu, Settings,
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { docsIntro, docsSections, onThisPage } from '../data/docs';
-import { docsSidebarSections, type DocsSidebarItem } from '../data/navigation';
+import { type DocsPageContent, getDocsPageHref, getOnThisPage } from '../data/docs';
+import { docsHomeHref, docsSidebarSections, type DocsSidebarItem } from '../data/navigation';
 import AnimatedText from './AnimatedText';
 
 const iconMap: Record<DocsSidebarItem['icon'], React.ComponentType<{ className?: string }>> = {
@@ -19,7 +19,12 @@ const iconMap: Record<DocsSidebarItem['icon'], React.ComponentType<{ className?:
   shield: Shield,
 };
 
-function splitHref(href: string): { pathname: string; hash: string } {
+type SplitHref = {
+  pathname: string;
+  hash: string;
+};
+
+function splitHref(href: string): SplitHref {
   const [pathname, hash = ''] = href.split('#');
   return {
     pathname,
@@ -27,14 +32,9 @@ function splitHref(href: string): { pathname: string; hash: string } {
   };
 }
 
-function isSidebarItemActive(currentPathname: string, currentHash: string, href: string): boolean {
+function isSidebarItemActive(currentPathname: string, href: string): boolean {
   const target = splitHref(href);
-
-  if (target.hash.length > 0) {
-    return currentPathname === target.pathname && currentHash === target.hash;
-  }
-
-  return currentPathname === target.pathname && currentHash.length === 0;
+  return currentPathname === target.pathname;
 }
 
 function isOnThisPageItemActive(currentHash: string, href: string, index: number): boolean {
@@ -47,11 +47,10 @@ function isOnThisPageItemActive(currentHash: string, href: string, index: number
 
 type DocsSidebarProps = {
   currentPathname: string;
-  currentHash: string;
   onNavigate?: () => void;
 };
 
-function DocsSidebar({ currentPathname, currentHash, onNavigate }: DocsSidebarProps): React.JSX.Element {
+function DocsSidebar({ currentPathname, onNavigate }: DocsSidebarProps): React.JSX.Element {
   return (
     <div className="relative overflow-hidden h-full py-6">
       <div className="h-full w-full rounded-[inherit] overflow-y-auto scrollbar-none">
@@ -61,12 +60,12 @@ function DocsSidebar({ currentPathname, currentHash, onNavigate }: DocsSidebarPr
               <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{section.title}</h3>
 
               <div className="relative mt-1">
-                <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-sidebar-border" />
+                <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border" />
 
                 <div className="relative">
                   {section.items.map((item) => {
                     const Icon = iconMap[item.icon];
-                    const isActive = isSidebarItemActive(currentPathname, currentHash, item.href);
+                    const isActive = isSidebarItemActive(currentPathname, item.href);
 
                     return (
                       <Link
@@ -79,8 +78,8 @@ function DocsSidebar({ currentPathname, currentHash, onNavigate }: DocsSidebarPr
                         to={item.href}
                         onClick={onNavigate}
                       >
-                        {isActive ? <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-sidebar-primary" /> : null}
-                        <Icon className={isActive ? 'h-4 w-4 shrink-0 text-sidebar-primary' : 'h-4 w-4 shrink-0'} />
+                        {isActive ? <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-foreground" /> : null}
+                        <Icon className={isActive ? 'h-4 w-4 shrink-0 text-foreground' : 'h-4 w-4 shrink-0'} />
                         <span className="truncate">{item.title}</span>
                       </Link>
                     );
@@ -95,12 +94,18 @@ function DocsSidebar({ currentPathname, currentHash, onNavigate }: DocsSidebarPr
   );
 }
 
-export default function DocsLayout(): React.JSX.Element {
+type DocsLayoutProps = {
+  page: DocsPageContent;
+};
+
+export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element {
   const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
   const currentPathname = location.pathname;
   const currentHash = location.hash;
+  const pageHref = getDocsPageHref(page);
+  const onThisPage = getOnThisPage(page);
 
   useEffect(() => {
     if (!isMobileSidebarOpen) {
@@ -142,7 +147,7 @@ export default function DocsLayout(): React.JSX.Element {
         <div className="fixed inset-0 z-50 lg:hidden" id="mobile-docs-navigation" role="dialog" aria-modal="true" aria-label="Documentation navigation">
           <button className="mobile-sheet-backdrop fixed inset-0 bg-black/80" type="button" aria-label="Close navigation" onClick={closeMobileSidebar} />
 
-          <aside className="mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-sidebar-border bg-sidebar-background shadow-lg">
+          <aside className="mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg">
             <button
               aria-label="Close navigation"
               className="absolute right-4 top-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -153,43 +158,45 @@ export default function DocsLayout(): React.JSX.Element {
               <span className="sr-only">Close</span>
             </button>
 
-            <DocsSidebar currentPathname={currentPathname} currentHash={currentHash} onNavigate={closeMobileSidebar} />
+            <DocsSidebar currentPathname={currentPathname} onNavigate={closeMobileSidebar} />
           </aside>
         </div>
       ) : null}
 
-      <aside className="hidden lg:block w-64 shrink-0 border-r border-sidebar-border bg-sidebar-background sticky top-16 h-[calc(100vh-4rem)]">
-        <DocsSidebar currentPathname={currentPathname} currentHash={currentHash} />
+      <aside className="hidden lg:block w-64 shrink-0 border-r border-border sticky top-16 h-[calc(100vh-4rem)]">
+        <DocsSidebar currentPathname={currentPathname} />
       </aside>
 
       <main className="flex-1 min-w-0 px-4 md:px-6 lg:px-12 pt-16 lg:pt-10 pb-10 overflow-hidden page-reveal">
         <div className="max-w-3xl w-full">
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <Link className="hover:text-foreground transition-colors flex items-center gap-1" to="/docs/overview">
+            <Link className="hover:text-foreground transition-colors flex items-center gap-1" to={docsHomeHref}>
               <HomeIcon className="h-4 w-4" />
               <span>Docs</span>
             </Link>
 
             <div className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4" />
-              <span className="hover:text-foreground transition-colors cursor-pointer">{docsIntro.eyebrow}</span>
+              <span className="hover:text-foreground transition-colors cursor-pointer">{page.eyebrow}</span>
             </div>
 
             <div className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4" />
-              <span className="text-foreground font-medium">{docsIntro.title}</span>
+              <Link className="text-foreground font-medium" to={pageHref}>
+                {page.title}
+              </Link>
             </div>
           </nav>
 
           <div>
             <h1 className="text-4xl font-bold tracking-tight mb-4">
-              <AnimatedText text={docsIntro.title} />
+              <AnimatedText text={page.title} />
             </h1>
-            <p className="text-lg text-muted-foreground mb-12">{docsIntro.description}</p>
+            <p className="text-lg text-muted-foreground mb-12">{page.description}</p>
           </div>
 
           <div className="space-y-12">
-            {docsSections.map((section, index) => (
+            {page.sections.map((section, index) => (
               <section className={`scroll-mt-24 page-reveal page-reveal-delay-${Math.min(index + 1, 4)}`} id={section.id} key={section.id}>
                 <h2 className="font-semibold tracking-tight mb-4 text-2xl">{section.title}</h2>
 
@@ -219,7 +226,7 @@ export default function DocsLayout(): React.JSX.Element {
         </div>
 
         <nav className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-sidebar-border" />
+          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-border" />
 
           <div className="relative">
             {onThisPage.map((item, index) => {
@@ -235,7 +242,7 @@ export default function DocsLayout(): React.JSX.Element {
                   href={item.href}
                   key={item.href}
                 >
-                  {isActive ? <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-sidebar-primary" /> : null}
+                  {isActive ? <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground" /> : null}
                   {item.label}
                 </a>
               );
