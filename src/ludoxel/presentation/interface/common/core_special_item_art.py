@@ -13,7 +13,8 @@ _ICON_VISUAL_ANCHORS: dict[str, tuple[float, float]] = {"ai_spawn_egg": (9.5, 9.
 def core_special_item_icon_visual_anchor(icon_key: str) -> tuple[float, float] | None:
   """
   core special item の17x17 frame 中心を、18x18 source canvas の連続座標 `(9.5, 9.5)` として返す。
-  返値は Othello special item と共通の pixel design contract であり、inventory と hotbar が全 special item を同じ基準へ配置するために使う。
+  返値は Othello special item と共通の pixel design contract であり、
+  inventory と hotbar が全 special item を同じ基準へ配置するために使う。
   """
   anchor = _ICON_VISUAL_ANCHORS.get(str(icon_key).strip().lower())
   if anchor is None:
@@ -42,7 +43,8 @@ def build_core_special_item_icon_image(icon_key: str) -> QImage | None:
 def _paint_frame(image: QImage) -> None:
   """
   Othello special item と同じ `(1, 1)` 起点、幅17、高さ17の背景 frame を描画する。
-  frame は symbol 用の1 pixel offset を適用せず、18x18 source canvas 内で右端と下端を含む authored bounds を固定する。
+  frame は symbol 用の1 pixel offset を適用せず、
+  18x18 source canvas 内で右端と下端を含む authored bounds を固定する。
   """
   paint_frame(image, fill="#2f2f2f", outline="#111111", x=1, y=1, width=17, height=17)
 

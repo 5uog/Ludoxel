@@ -100,7 +100,8 @@ def rotate_x_deg_matrix(deg: float) -> np.ndarray:
 def rotate_y_deg_matrix(deg: float) -> np.ndarray:
   """
   degree 単位の y 軸回転角を radian へ変換して回転行列を生成する。
-  player yaw や third-person visual など degree で保持される角度を、matrix 生成時に一貫して radian へ射影する。
+  player yaw や third-person visual など degree で保持される角度を、
+  matrix 生成時に一貫して radian へ射影する。
   """
   return rotate_y_rad_matrix(math.radians(float(deg)))
 

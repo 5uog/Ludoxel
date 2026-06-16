@@ -46,7 +46,8 @@ from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, is_o
 def _coerce_optional_int(value: object) -> int | None:
   """
   window geometry で `None` が意味を持つ欄だけに使う部分的な整数変換である。
-  変換に失敗した値は 0 に潰さず `None` として残し、保存されていない位置情報と不正な位置情報を同じ欠落状態へ正規化する。
+  変換に失敗した値は 0 に潰さず `None` として残し、
+  保存されていない位置情報と不正な位置情報を同じ欠落状態へ正規化する。
   """
   if value is None:
     return None
@@ -293,7 +294,8 @@ class RuntimePreferences:
 
   def is_othello_space(self) -> bool:
     """
-    現在の play-space 識別子が Othello 空間を指すかを、`normalize_play_space_id` と同じ識別子体系で判定する。
+    現在の play-space 識別子が Othello 空間を指すかを、
+    `normalize_play_space_id` と同じ識別子体系で判定する。
     """
     return is_othello_space(self.current_space_id)
 
@@ -373,7 +375,8 @@ class RuntimePreferences:
 
   def current_block_id(self) -> str | None:
     """
-    現在の item 識別子から special item を除外し、通常 block として配置又は表示できる識別子だけを返す。
+    現在の item 識別子から special item を除外し、
+    通常 block として配置又は表示できる識別子だけを返す。
     """
     item_id = self.current_item_id()
     if item_id is None or is_special_item_id(item_id):

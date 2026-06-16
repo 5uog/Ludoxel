@@ -26,8 +26,10 @@ class DDAHit:
 def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
   """
   ray が通過する voxel cell を Amanatides-Woo 型の DDA で順に生成する。
-  `origin` と `direction` は同じ world 座標系の `Vec3`、`cell_size` は正の grid 間隔として扱われ、direction が零 vector の場合は何も yield しない。
-  この Python source は native extension build の対象でもあり、block picking と third-person camera collision は traversal 順序と face index の同じ契約に依存する。
+  `origin` と `direction` は同じ world 座標系の `Vec3`、`cell_size` は
+  正の grid 間隔として扱われ、direction が零 vector の場合は何も yield しない。
+  この Python source は native extension build の対象でもあり、block picking と
+  third-person camera collision は traversal 順序と face index の同じ契約に依存する。
   """
   d = direction
   if abs(d.x) < 1e-12 and abs(d.y) < 1e-12 and abs(d.z) < 1e-12:
@@ -44,7 +46,8 @@ def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: fl
   def int_bound(s: float, ds: float) -> float:
     """
     現在位置から次の整数 grid 境界までの ray parameter 増分を一軸について計算する。
-    `ds > 0` では上側境界までの距離、`ds <= 0` では下側境界までの距離を返し、DDA の `tmx`、`tmy`、`tmz` 初期値を決定する。
+    `ds > 0` では上側境界までの距離、`ds <= 0` では下側境界までの距離を返し、
+    DDA の `tmx`、`tmy`、`tmz` 初期値を決定する。
     """
     if ds > 0:
       s = s - math.floor(s)

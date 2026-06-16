@@ -28,7 +28,8 @@ class Vec3:
   def __sub__(self, o: "Vec3") -> "Vec3":
     """
     同じ座標系に属する二つの `Vec3` を成分ごとに減算する。
-    返値は `(x1-x2, y1-y2, z1-z2)` を持つ displacement vector として扱われ、距離、方向、ray 構成の基礎演算になる。
+    返値は `(x1-x2, y1-y2, z1-z2)` を持つ displacement vector として扱われ、
+    距離、方向、ray 構成の基礎演算になる。
     """
     return Vec3(self.x - o.x, self.y - o.y, self.z - o.z)
 

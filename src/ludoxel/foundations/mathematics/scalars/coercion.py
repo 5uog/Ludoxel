@@ -24,7 +24,8 @@ def coerce_float(value: object, default: float) -> float:
 def coerce_int(value: object, default: int) -> int:
   """
   任意の入力を `int(value)` で整数へ変換し、失敗時は `int(default)` を返す。
-  返値は例外送出を伴わない `int` であり、index、個数、version、座標成分の復元処理は欠落値と変換不能値を同じ既定値規則で扱う。
+  返値は例外送出を伴わない `int` であり、index、個数、version、
+  座標成分の復元処理は欠落値と変換不能値を同じ既定値規則で扱う。
   """
   try:
     return int(value)
@@ -54,7 +55,8 @@ def coerce_bool(value: object, default: bool) -> bool:
 def coerce_str(value: object, default: str) -> str:
   """
   `None` を欠落値として扱い、それ以外の入力を `str(value)` へ変換する。
-  保存 payload の識別子、label、path 断片を復元する呼び出し側は、`None` による例外経路を作らず指定既定値を得る。
+  保存 payload の識別子、label、path 断片を復元する呼び出し側は、
+  `None` による例外経路を作らず指定既定値を得る。
   """
   if value is None:
     return str(default)
@@ -73,7 +75,8 @@ def mapping_float(d: Mapping[str, Any], key: str, default: float) -> float:
 def mapping_int(d: Mapping[str, Any], key: str, default: int) -> int:
   """
   mapping から指定 key を読み取り、欠落又は変換不能時に既定値を返す整数射影である。
-  保存 version、hotbar index、window geometry、個数などの field はこの関数により同じ `int` 変換規則を共有する。
+  保存 version、hotbar index、window geometry、
+  個数などの field はこの関数により同じ `int` 変換規則を共有する。
   """
   return coerce_int(d.get(str(key), default), int(default))
 

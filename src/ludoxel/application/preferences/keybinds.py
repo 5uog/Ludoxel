@@ -229,7 +229,8 @@ def default_keybinds_map() -> dict[str, str]:
 def action_display_name(action: str) -> str:
   """
   action identifier を設定画面向けの表示名へ変換する。
-  未知の action は破棄せず、前後空白だけを除いた identifier を返すことで、内部設定値の診断可能性を残す。
+  未知の action は破棄せず、前後空白だけを除いた identifier を返すことで、
+  内部設定値の診断可能性を残す。
   """
   normalized = str(action).strip()
   return str(KEYBIND_DISPLAY_NAMES.get(normalized, normalized))
@@ -293,7 +294,8 @@ def normalize_key_code(key: int) -> str:
 def _normalize_binding_text_cached(raw: str) -> str:
   """
   入力文字列を保存用の単一 key binding へ正規化する。
-  modifier を含む sequence、複数 key sequence、未知名は受理せず、単一の Qt key code に対応する名称だけを返す。
+  modifier を含む sequence、複数 key sequence、未知名は受理せず、
+  単一の Qt key code に対応する名称だけを返す。
   """
   source = str(raw).strip()
   if not source:
@@ -308,7 +310,8 @@ def _normalize_binding_text_cached(raw: str) -> str:
 def normalize_binding_text(value: object) -> str:
   """
   任意の設定入力値を keybind 保存用の正規文字列へ変換する。
-  呼び出し側が `None`、数値、又は UI 由来文字列を渡しても、返値は常に保存 schema が扱う文字列になる。
+  呼び出し側が `None`、数値、又は UI 由来文字列を渡しても、
+  返値は常に保存 schema が扱う文字列になる。
   """
   return _normalize_binding_text_cached(str(value))
 
@@ -329,7 +332,8 @@ def _binding_to_key_cached(normalized_binding: str) -> int | None:
 def binding_to_key(binding: str | None) -> int | None:
   """
   保存済み又は編集中の binding 文字列を runtime 比較用の Qt key code へ変換する。
-  入力は先に正規化されるため、別表記の `Ctrl` と `Control`、`Esc` と `Escape` は同じ key code として扱われる。
+  入力は先に正規化されるため、別表記の `Ctrl` と `Control`、
+  `Esc` と `Escape` は同じ key code として扱われる。
   """
   normalized = normalize_binding_text("" if binding is None else binding)
   return _binding_to_key_cached(str(normalized))
@@ -352,7 +356,8 @@ def _display_text_for_binding_cached(normalized_binding: str) -> str:
 def display_text_for_binding(binding: str | None) -> str:
   """
   保存済み binding を利用者向け表示文字列へ変換する。
-  正規化不能な入力は未割当として表示し、設定画面、HUD、hotbar tooltip の表示が保存値の揺れに依存しないようにする。
+  正規化不能な入力は未割当として表示し、設定画面、HUD、
+  hotbar tooltip の表示が保存値の揺れに依存しないようにする。
   """
   normalized = normalize_binding_text("" if binding is None else binding)
   return _display_text_for_binding_cached(str(normalized))

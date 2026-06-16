@@ -46,7 +46,8 @@ def clamp01f(x: float) -> float:
 def round_clampi(x: float, lo: int, hi: int) -> int:
   """
   実数制御値を Python の `round` で整数化し、その後 `[lo, hi]` へ射影する。
-  settings slider など連続入力から離散的な個数又は index を得る場合に、丸め規則と範囲制限を一つの処理として固定する。
+  settings slider など連続入力から離散的な個数又は index を得る場合に、
+  丸め規則と範囲制限を一つの処理として固定する。
   """
   return clampi(int(round(float(x))), int(lo), int(hi))
 
@@ -54,7 +55,8 @@ def round_clampi(x: float, lo: int, hi: int) -> int:
 def coerce_clampi(value: object, *, default: int, lo: int, hi: int) -> int:
   """
   外部入力を整数へ変換し、失敗時は `default` を採用した後で `[lo, hi]` へ射影する。
-  返値は常に有効範囲内の `int` であり、保存値や UI 入力の破損が hotbar、設定値、盤面 index の未定義参照へ進まない。
+  返値は常に有効範囲内の `int` であり、保存値や UI 入力の破損が hotbar、
+  設定値、盤面 index の未定義参照へ進まない。
   """
   try:
     numeric = int(value)
@@ -66,7 +68,8 @@ def coerce_clampi(value: object, *, default: int, lo: int, hi: int) -> int:
 def coerce_clampf(value: object, *, default: float, lo: float, hi: float) -> float:
   """
   外部入力を実数へ変換し、失敗時は `default` を採用した後で `[lo, hi]` へ射影する。
-  返値は常に有効範囲内の `float` であり、renderer、audio、runtime preference に渡る scalar の境界条件をこの層で固定する。
+  返値は常に有効範囲内の `float` であり、renderer、audio、
+  runtime preference に渡る scalar の境界条件をこの層で固定する。
   """
   try:
     numeric = float(value)
@@ -78,6 +81,7 @@ def coerce_clampf(value: object, *, default: float, lo: float, hi: float) -> flo
 def lerpf(a: float, b: float, t: float) -> float:
   """
   二つの実数 `a` と `b` の affine interpolation を `a + (b - a) * t` として計算する。
-  `t` はこの関数内で clamp されないため、呼び出し側は補間、外挿、animation easing のどの意味で用いるかを事前に決める必要がある。
+  `t` はこの関数内で clamp されないため、呼び出し側は補間、外挿、
+  animation easing のどの意味で用いるかを事前に決める必要がある。
   """
   return float(a) + (float(b) - float(a)) * float(t)

@@ -26,9 +26,12 @@ SHADOW_MAP_QUALITY_LABELS: dict[int, str] = {
 def normalize_shadow_map_quality(value: object) -> int:
   """
   shadow map / shadow shader の実効品質を選ぶ離散段階を、`[1, 5]` の整数 5 段階のいずれかへ正規化する。
-  段階は 1 を `Lowest`、2 を `Low`、3 を `Standard`、4 を `High`、5 を `Ultra` とし、値が大きいほど shadow map の実効 texel 密度と PCF の鋭さが上がる。
+  段階は 1 を `Lowest`、2 を `Low`、3 を `Standard`、4 を `High`、5 を `Ultra` とし、
+  値が大きいほど shadow map の実効 texel 密度と PCF の鋭さが上がる。
   この設定は render distance とは独立した shadow 専用の品質方針であり、render distance chunks を変更しても段階値は変化しない。
-  入力は persistence、settings UI、renderer state が共有する保存値であり、型不一致、欠落、旧形式、`[1, 5]` の範囲外といった不正値はいずれも安全側として `Standard` (3) へ収束させる。返値は常に有効な段階 `SHADOW_MAP_QUALITY_MIN <= quality <= SHADOW_MAP_QUALITY_MAX` を満たす。
+  入力は persistence、settings UI、renderer state が共有する保存値であり、
+  型不一致、欠落、旧形式、`[1, 5]` の範囲外といった不正値はいずれも安全側として `Standard` (3) へ収束させる。
+  返値は常に有効な段階 `SHADOW_MAP_QUALITY_MIN <= quality <= SHADOW_MAP_QUALITY_MAX` を満たす。
   """
   try:
     quality = int(value)

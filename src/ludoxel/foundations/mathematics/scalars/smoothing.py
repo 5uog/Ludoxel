@@ -8,7 +8,8 @@ import math
 def exp_alpha(rate: float, dt: float) -> float:
   """
   rate と経過時間 dt から指数平滑の混合係数 `1 - exp(-rate * dt)` を計算する。
-  `rate` と `dt` はそれぞれ 0 以上へ下限処理され、どちらかが `1e-9` 以下の場合は 0.0 を返すため、時間停止時と無効 rate 時に補間が進まない。
+  `rate` と `dt` はそれぞれ 0 以上へ下限処理され、どちらかが `1e-9` 以下の場合は 0.0 を返すため、
+  時間停止時と無効 rate 時に補間が進まない。
   """
   r = float(max(0.0, rate))
   t = float(max(0.0, dt))

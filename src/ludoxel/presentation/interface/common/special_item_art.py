@@ -14,7 +14,8 @@ _BASE_SIZE = 18
 def build_special_item_icon_layout(icon_key: str, *, size: int) -> tuple[QImage, tuple[float, float]]:
   """
   special item image と、同じ出力座標系に拡大した authored visual anchor を返す。
-  core と Othello の art owner が定義する anchor を画像と同じ倍率で変換し、呼び出し側が alpha 分布から中心を推測せずに配置できるようにする。
+  core と Othello の art owner が定義する anchor を画像と同じ倍率で変換し、
+  呼び出し側が alpha 分布から中心を推測せずに配置できるようにする。
   """
   normalized = str(icon_key).strip().lower()
   image = build_core_special_item_icon_image(normalized)

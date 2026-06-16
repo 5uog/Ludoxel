@@ -15,7 +15,9 @@ _MOVE_EPS: float = 0.3
 def _player_movement_action(*, move_f: float, move_s: float, jump_pressed: bool, sprint: bool, crouch: bool) -> str | None:
   """
   player の移動入力を demonstration 記録用の action id へ写像する。
-  jump 入力を最優先し、水平移動が実質 0 の場合は crouch なら sneak、そうでなければ記録不要として None を返す。前後左右と斜めは閾値 _MOVE_EPS で分類し、前進かつ sprint なら sprint とする。None を返した step は移動実演として記録しない。
+  jump 入力を最優先し、水平移動が実質 0 の場合は crouch なら sneak、そうでなければ記録不要として None を返す。
+  前後左右と斜めは閾値 _MOVE_EPS で分類し、前進かつ sprint なら sprint とする。
+  None を返した step は移動実演として記録しない。
   """
   if bool(jump_pressed):
     return "jump"

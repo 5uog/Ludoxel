@@ -40,7 +40,8 @@ class AudioPreferences:
 
   def __post_init__(self) -> None:
     """
-    生成時に全音量係数を `_clamp_volume` へ通し、データクラス内部の値を保存形式と再生処理が共有できる正規形に固定する。
+    生成時に全音量係数を `_clamp_volume` へ通し、
+    データクラス内部の値を保存形式と再生処理が共有できる正規形に固定する。
     """
     object.__setattr__(self, "master", _clamp_volume(self.master))
     object.__setattr__(self, "ambient", _clamp_volume(self.ambient))
@@ -76,7 +77,8 @@ class AudioPreferences:
   @staticmethod
   def from_dict(data: object) -> "AudioPreferences":
     """
-    外部入力が辞書である場合に限りカテゴリ別音量を読み取り、各成分を [0, 1] へ射影して `AudioPreferences` を構成する。
+    外部入力が辞書である場合に限りカテゴリ別音量を読み取り、
+    各成分を [0, 1] へ射影して `AudioPreferences` を構成する。
     辞書以外の値は既定設定として扱う。
     """
     if not isinstance(data, dict):
