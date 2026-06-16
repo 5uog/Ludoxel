@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -75,21 +74,152 @@
       linear-gradient(rgb(255, 255, 255) 0 0);
   }
 
-  .support-panel-background {
-    background-image: radial-gradient(circle at 20% 20%, rgb(255 255 255 / 0.08), transparent 30%), linear-gradient(135deg, rgb(255 255 255 / 0.04), transparent 45%);
-    background-position: center;
-    background-size: cover;
-  }
-
-  .visual-placeholder {
-    @apply absolute inset-0 bg-[#121314];
-  }
-
   .changelog-badge {
     @apply inline-flex w-fit rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground;
   }
 
-  .docs-shell {
-    @apply flex min-h-screen bg-background pt-16;
+  .animated-text {
+    display: inline;
+  }
+
+  .animated-text__char {
+    display: inline-block;
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(20px);
+    animation: ludoxel-enter 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: opacity, filter, transform;
+  }
+
+  .page-reveal {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(20px);
+    animation: ludoxel-enter 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: opacity, filter, transform;
+  }
+
+  .page-reveal-delay-1 {
+    animation-delay: 90ms;
+  }
+
+  .page-reveal-delay-2 {
+    animation-delay: 160ms;
+  }
+
+  .page-reveal-delay-3 {
+    animation-delay: 230ms;
+  }
+
+  .page-reveal-delay-4 {
+    animation-delay: 300ms;
+  }
+
+  .search-dialog-backdrop {
+    animation: ludoxel-fade-in 0.15s ease-out forwards;
+  }
+
+  .search-dialog-panel {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+    animation: ludoxel-dialog-in 0.2s ease-out forwards;
+    will-change: opacity, transform;
+  }
+
+  .mobile-sheet-backdrop {
+    animation: ludoxel-fade-in 0.18s ease-out forwards;
+  }
+
+  .mobile-sheet-panel-right {
+    transform: translateX(100%);
+    animation: ludoxel-slide-in-right 0.5s ease-out forwards;
+    will-change: transform;
+  }
+
+  .mobile-sheet-panel-left {
+    transform: translateX(-100%);
+    animation: ludoxel-slide-in-left 0.5s ease-out forwards;
+    will-change: transform;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+@keyframes ludoxel-enter {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes ludoxel-fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes ludoxel-dialog-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ludoxel-slide-in-right {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ludoxel-slide-in-left {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-text__char,
+  .page-reveal,
+  .search-dialog-backdrop,
+  .search-dialog-panel,
+  .mobile-sheet-backdrop,
+  .mobile-sheet-panel-right,
+  .mobile-sheet-panel-left {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    animation: none;
   }
 }

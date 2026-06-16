@@ -2,8 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-
-import { ArrowRight, Clock, FileText, Package, Search } from 'lucide-react';
+import { ArrowRight, Clock, FileText, Search } from 'lucide-react';
 import { type ChangeEvent, type ComponentType, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,10 +28,6 @@ const SECTION_META: Record<string, SearchSectionMeta> = {
   docs: {
     label: 'Documentation',
     Icon: FileText,
-  },
-  project: {
-    label: 'Project',
-    Icon: Package,
   },
   updates: {
     label: 'Updates',
@@ -224,9 +219,9 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
 
       {isOpen ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 md:pt-32" role="dialog" aria-modal="true" aria-label="Search documentation">
-          <button className="absolute inset-0 bg-black/60 backdrop-blur-sm" type="button" aria-label="Close search" onClick={closeSearch} />
+          <button className="search-dialog-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm" type="button" aria-label="Close search" onClick={closeSearch} />
 
-          <div className="relative z-10 w-full max-w-[600px] mx-4">
+          <div className="search-dialog-panel relative z-10 w-full max-w-[600px] mx-4">
             <div className="rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
               <div className="flex items-center border-b border-border px-4">
                 <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />

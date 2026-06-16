@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-
 const withAlpha = (variableName) => `hsl(var(${variableName}) / <alpha-value>)`;
 
 const config = {

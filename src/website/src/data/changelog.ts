@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
 export type ChangelogSection = {
   title: string;
   items: string[];
@@ -15,12 +19,12 @@ export const changelogEntries: ChangelogEntry[] = [
     tags: ['Website', 'Documentation'],
     sections: [
       {
-        title: 'Reference-style public website',
+        title: 'Public website updates',
         items: [
-          'The website is rebuilt as a documentation hub matching the captured reference layout while replacing Compass copy with Ludoxel documentation content.',
-          'Home keeps the fixed header, centered hero, gradient search field, shortcut row, category cards, support section, assistant section, and footer.',
-          'Docs keeps the overview page structure and removes the standalone Architecture page.',
-          'Changelog keeps public website notes only and does not invent release artifacts.',
+          'Removed the standalone Download page from routing, navigation, and search.',
+          'Changed the Get started action to open the Ludoxel GitHub repository.',
+          'Removed the home category, support, assistant preview, application image, and custom visual sections.',
+          'Restored the documentation navigation layout, active section indicators, mobile navigation access, and search dialog behavior.',
         ],
       },
     ],

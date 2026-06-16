@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
 export type SearchIndexEntry = {
   title: string;
   description: string;
@@ -13,28 +17,34 @@ export const searchIndex: SearchIndexEntry[] = [
     section: 'Docs',
   },
   {
-    title: 'Renderer and Backends',
-    description: 'OpenGL, WGPU, chunks, fog, shadows, clouds, selections, and HUD output.',
-    href: '/docs/overview#renderer-and-backends',
+    title: 'What is Ludoxel?',
+    description: 'Desktop voxel sandbox, Python core, PyQt6 interface, OpenGL, and WGPU.',
+    href: '/docs/overview#what-is-ludoxel',
     section: 'Docs',
   },
   {
-    title: 'AI NPCs',
-    description: 'Movement, combat, placement, status tags, health indicators, and learning modes.',
-    href: '/docs/overview#ai-npcs',
+    title: 'Core Features',
+    description: 'Voxel runtime, renderer paths, AI NPCs, Othello mode, and settings.',
+    href: '/docs/overview#core-features',
     section: 'Docs',
   },
   {
-    title: 'Othello Mode',
-    description: 'Board state, rules, engines, resources, HUD, settings, and presentation paths.',
-    href: '/docs/overview#othello-mode',
+    title: 'Project Architecture',
+    description: 'Foundations, application, simulation, presentation, and website boundaries.',
+    href: '/docs/overview#project-architecture',
     section: 'Docs',
   },
   {
-    title: 'Download',
-    description: 'Current public build status without placeholder installer claims.',
-    href: '/download',
-    section: 'Project',
+    title: 'Settings and Backends',
+    description: 'Display, world, player, audio, camera, cloud, shadow, AI, and renderer backend notes.',
+    href: '/docs/overview#settings-and-backends',
+    section: 'Docs',
+  },
+  {
+    title: 'Getting Help',
+    description: 'Where to start before changing the Ludoxel application.',
+    href: '/docs/overview#getting-help',
+    section: 'Docs',
   },
   {
     title: 'Changelog',

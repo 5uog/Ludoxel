@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
 export type NavigationItem = {
   label: string;
   href: string;
@@ -20,10 +24,6 @@ export const mainNavigation: NavigationItem[] = [
     href: '/docs/overview',
   },
   {
-    label: 'Download',
-    href: '/download',
-  },
-  {
     label: 'Changelog',
     href: '/changelog',
   },
@@ -39,42 +39,37 @@ export const docsSidebarSections: DocsSidebarSection[] = [
         icon: 'file',
       },
       {
-        title: 'Set Up Your Ludoxel Session',
-        href: '/docs/overview#desktop-runtime',
+        title: 'What is Ludoxel?',
+        href: '/docs/overview#what-is-ludoxel',
         icon: 'wrench',
       },
       {
-        title: 'Renderer and Backends',
-        href: '/docs/overview#renderer-and-backends',
-        icon: 'layers',
-      },
-      {
-        title: 'Settings',
-        href: '/docs/overview#settings',
-        icon: 'settings',
-      },
-      {
-        title: 'AI NPCs',
-        href: '/docs/overview#ai-npcs',
+        title: 'Core Features',
+        href: '/docs/overview#core-features',
         icon: 'sparkles',
       },
     ],
   },
   {
-    title: 'Modes & Runtime',
+    title: 'Runtime & Systems',
     items: [
       {
-        title: 'Othello Mode',
-        href: '/docs/overview#othello-mode',
+        title: 'Project Architecture',
+        href: '/docs/overview#project-architecture',
         icon: 'layers',
       },
       {
-        title: 'Assets and Legal Notes',
-        href: '/docs/overview#assets-and-legal-notes',
+        title: 'Settings and Backends',
+        href: '/docs/overview#settings-and-backends',
+        icon: 'settings',
+      },
+      {
+        title: 'Getting Help',
+        href: '/docs/overview#getting-help',
         icon: 'shield',
       },
     ],
   },
 ];
 
-export const getStartedHref = '/docs/overview';
+export const getStartedHref = 'https://github.com/5uog/Ludoxel';

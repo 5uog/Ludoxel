@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-
 import type { Config } from 'tailwindcss';
 
 const withAlpha = (variableName: string): string => `hsl(var(${variableName}) / <alpha-value>)`;

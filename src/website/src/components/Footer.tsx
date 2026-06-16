@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
 export default function Footer(): React.JSX.Element {
   return (
     <footer className="border-t border-border py-6">

@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
