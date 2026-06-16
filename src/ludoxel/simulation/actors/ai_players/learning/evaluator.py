@@ -2,106 +2,65 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
+
+from ludoxel.simulation.actors.ai_players.learning.action_mask import build_action_mask
+from ludoxel.simulation.actors.ai_players.learning.actions import ACTION_CATALOG
+from ludoxel.simulation.actors.ai_players.learning.feature_encoder import is_feature_key
+from ludoxel.simulation.actors.ai_players.learning.observation import AiObservation, DirectionProbe
+from ludoxel.simulation.actors.ai_players.learning.policy import POLICY_COMPATIBILITY_TARGET, POLICY_SCHEMA_VERSION, DeterministicPolicy, Policy
 
 EVALUATION_SCHEMA_VERSION: int = 1
 
 EVALUATION_STATUS_PASSED: str = "passed"
 EVALUATION_STATUS_FAILED: str = "failed"
-EVALUATION_STATUS_NOT_RUN: str = "not_run"
-EVALUATION_STATUS_UNSUPPORTED: str = "unsupported"
 
-EVALUATION_STATUSES: tuple[str, ...] = (EVALUATION_STATUS_PASSED, EVALUATION_STATUS_FAILED, EVALUATION_STATUS_NOT_RUN, EVALUATION_STATUS_UNSUPPORTED)
+EVALUATION_STATUSES: tuple[str, ...] = (EVALUATION_STATUS_PASSED, EVALUATION_STATUS_FAILED)
 
-TASK_SURVIVAL_30S: str = "survival_30s"
-TASK_BRIDGE_TO_GOAL: str = "bridge_to_goal"
-TASK_ESCAPE_ENCLOSURE: str = "escape_enclosure"
-TASK_LOW_HEALTH_RETREAT: str = "low_health_retreat"
-TASK_ROUTE_REPLAN: str = "route_replan"
-TASK_FENCE_GATE_HANDLING: str = "fence_gate_handling"
+TASK_SCHEMA_VALIDATION: str = "schema_validation"
+TASK_COMPATIBILITY_VALIDATION: str = "compatibility_validation"
+TASK_ACTION_CATALOG_VALIDATION: str = "action_catalog_validation"
+TASK_FEATURE_ENCODER_VALIDATION: str = "feature_encoder_validation"
+TASK_MASK_COMPLIANCE: str = "mask_compliance"
+TASK_SANDBOX_BEHAVIOR: str = "sandbox_behavior"
 
 
 @dataclass(frozen=True)
 class EvaluationTask:
   """
-  評価 sandbox における単一の評価課題の定義を表す不変記述である。
-  task_id は安定識別子、name は表示名、success_condition と failure_condition は合否判定の条件を述べた英文、timeout_s は課題打ち切りまでの秒数である。本段階では sandbox 実行本体を実装せず、本定義は課題目録と result schema の骨格を与える。実行が実装された際、各課題はこの条件と timeout に従い合否と result summary を生成する。
+  policy 評価における単一検査項目の定義を表す不変記述である。
+  task_id は識別子、name は表示名、description は検査内容の英文説明である。検査は schema 妥当性、互換性、行動目録妥当性、feature 符号化器妥当性、mask 準拠、sandbox 行動の各観点に対応する。
   """
 
   task_id: str
   name: str
-  success_condition: str
-  failure_condition: str
-  timeout_s: float
+  description: str
 
   def to_dict(self) -> dict[str, Any]:
     """
-    課題定義を JSON 直列化可能な mapping へ変換する。
-    返値は task_id、name、success_condition、failure_condition、timeout_s を含み、UI の課題説明表示と評価 result の照合に用いる。
+    検査項目定義を JSON 直列化可能な mapping へ変換する。
+    返値は task_id、name、description を含み、UI の検査一覧表示に用いる。
     """
-    return {
-      "task_id": str(self.task_id),
-      "name": str(self.name),
-      "success_condition": str(self.success_condition),
-      "failure_condition": str(self.failure_condition),
-      "timeout_s": float(self.timeout_s),
-    }
+    return {"task_id": str(self.task_id), "name": str(self.name), "description": str(self.description)}
 
 
 EVALUATION_TASKS: tuple[EvaluationTask, ...] = (
-  EvaluationTask(
-    task_id=TASK_SURVIVAL_30S,
-    name="Survive 30 seconds",
-    success_condition="The AI remains alive for the full duration without falling into the void.",
-    failure_condition="The AI dies or falls into the void before the duration elapses.",
-    timeout_s=30.0,
-  ),
-  EvaluationTask(
-    task_id=TASK_BRIDGE_TO_GOAL,
-    name="Bridge to goal",
-    success_condition="The AI bridges a gap with placed blocks and reaches the goal footing.",
-    failure_condition="The AI fails to reach the goal or falls while bridging before the timeout.",
-    timeout_s=45.0,
-  ),
-  EvaluationTask(
-    task_id=TASK_ESCAPE_ENCLOSURE,
-    name="Escape an enclosure",
-    success_condition="The AI breaks or stacks out of a fully boxed position and stands outside it.",
-    failure_condition="The AI remains enclosed when the timeout elapses.",
-    timeout_s=30.0,
-  ),
-  EvaluationTask(
-    task_id=TASK_LOW_HEALTH_RETREAT,
-    name="Retreat at low health",
-    success_condition="At low health the AI increases distance or shields while avoiding death.",
-    failure_condition="The AI dies while threatened at low health before the timeout.",
-    timeout_s=20.0,
-  ),
-  EvaluationTask(
-    task_id=TASK_ROUTE_REPLAN,
-    name="Replan a blocked route",
-    success_condition="After the route is obstructed the AI replans and reaches the next route point.",
-    failure_condition="The AI keeps walking into the obstruction or never reaches the next point.",
-    timeout_s=40.0,
-  ),
-  EvaluationTask(
-    task_id=TASK_FENCE_GATE_HANDLING,
-    name="Handle a fence gate",
-    success_condition="The AI treats a fence gate as passable when open and as an obstacle when closed.",
-    failure_condition="The AI is blocked by an openable gate or walks through a closed gate.",
-    timeout_s=25.0,
-  ),
+  EvaluationTask(task_id=TASK_SCHEMA_VALIDATION, name="Schema validation", description="The policy schema version matches the engine's policy schema."),
+  EvaluationTask(task_id=TASK_COMPATIBILITY_VALIDATION, name="Compatibility validation", description="The policy compatibility target, feature encoder, and action catalog versions match the engine."),
+  EvaluationTask(task_id=TASK_ACTION_CATALOG_VALIDATION, name="Action catalog validation", description="Every action referenced by the policy exists in the action catalog."),
+  EvaluationTask(task_id=TASK_FEATURE_ENCODER_VALIDATION, name="Feature encoder validation", description="Every feature key referenced by the policy is produced by the feature encoder."),
+  EvaluationTask(task_id=TASK_MASK_COMPLIANCE, name="Mask compliance", description="Across sample observations the policy never selects an action forbidden by the action mask."),
+  EvaluationTask(task_id=TASK_SANDBOX_BEHAVIOR, name="Sandbox behavior", description="The policy scores at least as well as the deterministic baseline across the headless sandbox tasks."),
 )
-
-_TASK_INDEX: dict[str, EvaluationTask] = {task.task_id: task for task in EVALUATION_TASKS}
 
 
 @dataclass(frozen=True)
 class EvaluationResult:
   """
-  単一評価課題に対する判定結果を表す不変値である。
-  task_id は対象課題、status は EVALUATION_STATUSES の何れか、summary は人間可読の英文要約、score は任意の数値指標(未算出時 None)、detail は補助 mapping である。status は passed と failed のほか、実行されなかった not_run、当該構成で非対応の unsupported を区別し、未実装課題を成功扱いしない不変条件を保持する。
+  単一検査項目に対する判定結果を表す不変値である。
+  task_id は対象、status は passed か failed、summary は英文要約、score は任意の数値指標(未算出時 None)、detail は補助 mapping である。未実装や未実行を passed と偽らず、検査が成立しなかった場合は failed を返す。
   """
 
   task_id: str
@@ -113,14 +72,14 @@ class EvaluationResult:
   def passed(self) -> bool:
     """
     本結果が合格を表すかを返す。
-    status が passed の場合のみ真を返し、not_run と unsupported と failed はすべて偽を返す。評価未通過 policy を本番使用させない判定はこの述語に依存する。
+    status が passed の場合のみ真を返す。
     """
     return str(self.status) == EVALUATION_STATUS_PASSED
 
   def to_dict(self) -> dict[str, Any]:
     """
     結果を JSON 直列化可能な mapping へ変換する。
-    返値は task_id、status、summary、score、detail を含み、score の未算出は None として保持する。persistence の last evaluation summary と UI の合否表示が同一形式を共有する。
+    返値は task_id、status、summary、score、detail を含む。
     """
     return {"task_id": str(self.task_id), "status": str(self.status), "summary": str(self.summary), "score": (None if self.score is None else float(self.score)), "detail": dict(self.detail or {})}
 
@@ -128,57 +87,194 @@ class EvaluationResult:
 @dataclass(frozen=True)
 class EvaluationReport:
   """
-  一連の評価課題に対する結果集合と総合判定を表す不変値である。
-  schema_version は形式版、results は課題別結果の列、passed は全対象課題が合格した場合に真となる総合合否である。not_run 又は unsupported を含む報告は passed を真にしないため、未実行・非対応の課題を含む policy を合格と誤認しない。
+  policy に対する一連の検査結果と総合判定を表す不変値である。
+  schema_version は形式版、policy_id は被評価 policy、results は項目別結果、passed は全検査合格の総合判定、score は policy の sandbox score、baseline_score は deterministic baseline の sandbox score、policy_score は policy の sandbox score、mask_violations は mask 違反件数、schema_errors と compatibility_errors は検査で検出した不整合の説明、created_at は生成時刻である。一つでも failed があれば passed は偽となり、評価未通過 policy の本番使用を防ぐ。
   """
 
+  policy_id: str = ""
   results: tuple[EvaluationResult, ...] = ()
   passed: bool = False
+  score: float = 0.0
+  baseline_score: float = 0.0
+  policy_score: float = 0.0
+  mask_violations: int = 0
+  schema_errors: tuple[str, ...] = ()
+  compatibility_errors: tuple[str, ...] = ()
+  created_at: str = ""
   schema_version: int = EVALUATION_SCHEMA_VERSION
 
   def to_dict(self) -> dict[str, Any]:
     """
     報告を JSON 直列化可能な mapping へ変換する。
-    返値は schema_version、passed、results(各結果 mapping の列)を含み、persistence の last evaluation summary 保存に用いる。
+    返値は schema_version、policy_id、passed、score、baseline_score、policy_score、mask_violations、schema_errors、compatibility_errors、created_at、及び項目別結果の列を含み、persistence の評価保存と UI 表示が同一形式を共有する。
     """
-    return {"schema_version": int(self.schema_version), "passed": bool(self.passed), "results": [result.to_dict() for result in self.results]}
+    return {
+      "schema_version": int(self.schema_version),
+      "policy_id": str(self.policy_id),
+      "passed": bool(self.passed),
+      "score": float(self.score),
+      "baseline_score": float(self.baseline_score),
+      "policy_score": float(self.policy_score),
+      "mask_violations": int(self.mask_violations),
+      "schema_errors": [str(value) for value in self.schema_errors],
+      "compatibility_errors": [str(value) for value in self.compatibility_errors],
+      "created_at": str(self.created_at),
+      "results": [result.to_dict() for result in self.results],
+    }
 
 
 def describe_tasks() -> tuple[EvaluationTask, ...]:
   """
-  定義済み評価課題の目録を定義順で返す。
-  UI の課題説明と選択提示はこの目録を用いる。返値は EVALUATION_TASKS への参照であり、課題集合は実行時に変化しない。
+  定義済み評価検査項目の目録を定義順で返す。
+  UI の検査説明表示に用いる。返値は EVALUATION_TASKS への参照である。
   """
   return EVALUATION_TASKS
 
 
-def get_task(task_id: str) -> EvaluationTask | None:
+def _sample_observations() -> tuple[AiObservation, ...]:
   """
-  task_id から課題定義を取得し、未知 id では None を返す。
-  返値は共有 frozen 定義への参照であり、評価実行や result 照合での課題特定に用いる。
+  mask 準拠検査に用いる代表観測の集合を構築して返す。
+  戦闘射程内・cooldown 可否、低体力かつ脅威圏、route 閉塞、前方奈落など、行動 mask が異なる禁止集合を返す状況を網羅し、policy が各状況で禁止行動を選ばないことを検査できるようにする。
   """
-  return _TASK_INDEX.get(str(task_id))
+  void_dir = {name: DirectionProbe(direction=name, is_void=True) for name in ("n", "s", "e", "w", "ne", "nw", "se", "sw")}
+  return (
+    AiObservation(visible_player=True, attack_in_range=True, attack_cooldown_ready=True, on_ground=True, jump_available=True, distance_to_player=2.0, health=20.0, max_health=20.0),
+    AiObservation(
+      visible_player=True,
+      attack_in_range=True,
+      attack_cooldown_ready=False,
+      on_ground=True,
+      jump_available=True,
+      distance_to_player=2.0,
+      health=4.0,
+      max_health=20.0,
+      low_health=True,
+      low_health_in_threat=True,
+    ),
+    AiObservation(visible_player=True, attack_in_range=False, distance_to_player=8.0, on_ground=True, jump_available=True, health=20.0, max_health=20.0),
+    AiObservation(route_present=True, route_blocked=True, route_target=(5.0, 1.0, 5.0), on_ground=True, jump_available=True),
+    AiObservation(on_ground=True, jump_available=True, directions=void_dir),
+  )
 
 
-def run_evaluation(task_ids: tuple[str, ...] | None = None) -> EvaluationReport:
+def _validate_schema(policy: Policy) -> tuple[EvaluationResult, list[str]]:
   """
-  指定課題(省略時は全課題)に対する評価を実行し、報告を返す。
-  本段階では sandbox 実行本体を実装していないため、各対象課題は status を not_run、未知 task_id は unsupported とする lightweight な dry-run として結果を生成する。未実装課題を成功扱いしない不変条件に従い passed は偽となり、UI の最小評価呼び出しは合否未確定として安全に表示できる。task_ids に既知 id が含まれない場合も例外を送出せず、unsupported 結果だけを含む報告を返す。
+  policy の schema version を検査する。
+  POLICY_SCHEMA_VERSION と一致すれば passed、不一致なら failed を返す。第二要素は schema 不整合の説明列で、報告へ集約する。
   """
-  selected = tuple(str(value) for value in task_ids) if task_ids is not None else tuple(task.task_id for task in EVALUATION_TASKS)
+  errors: list[str] = []
+  if int(policy.schema_version) != int(POLICY_SCHEMA_VERSION):
+    errors.append(f"policy schema_version {int(policy.schema_version)} != engine {int(POLICY_SCHEMA_VERSION)}")
+  status = EVALUATION_STATUS_PASSED if not errors else EVALUATION_STATUS_FAILED
+  return EvaluationResult(task_id=TASK_SCHEMA_VALIDATION, status=status, summary=("Schema version matches." if not errors else "; ".join(errors))), errors
+
+
+def _validate_compatibility(policy: Policy) -> tuple[EvaluationResult, list[str]]:
+  """
+  policy の互換性(契約版・feature 符号化器版・行動目録版)を検査する。
+  Policy.is_usable と同じ整合条件のうち評価通過要件を除いた版整合を検査し、不一致を failed として説明列へ集約する。
+  """
+  errors: list[str] = []
+  if str(policy.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
+    errors.append(f"compatibility_target '{policy.compatibility_target}' != '{POLICY_COMPATIBILITY_TARGET}'")
+  from ludoxel.simulation.actors.ai_players.learning.actions import ACTION_SCHEMA_VERSION
+  from ludoxel.simulation.actors.ai_players.learning.feature_encoder import FEATURE_ENCODER_VERSION
+
+  if int(policy.feature_encoder_version) not in (0, int(FEATURE_ENCODER_VERSION)):
+    errors.append(f"feature_encoder_version {int(policy.feature_encoder_version)} != {int(FEATURE_ENCODER_VERSION)}")
+  if int(policy.action_catalog_version) not in (0, int(ACTION_SCHEMA_VERSION)):
+    errors.append(f"action_catalog_version {int(policy.action_catalog_version)} != {int(ACTION_SCHEMA_VERSION)}")
+  status = EVALUATION_STATUS_PASSED if not errors else EVALUATION_STATUS_FAILED
+  return EvaluationResult(task_id=TASK_COMPATIBILITY_VALIDATION, status=status, summary=("Compatible with the engine." if not errors else "; ".join(errors))), errors
+
+
+def _validate_action_catalog(policy: Policy) -> EvaluationResult:
+  """
+  policy が参照する全 action が行動目録に存在するかを検査する。
+  action_weights、negative_modifiers、action_weight_overrides の action id を走査し、未知 id があれば failed を返す。
+  """
+  unknown: list[str] = []
+  for mapping in policy.action_weights.values():
+    unknown.extend(action_id for action_id in mapping if action_id not in ACTION_CATALOG)
+  unknown.extend(action_id for action_id in policy.negative_modifiers if action_id not in ACTION_CATALOG)
+  unknown.extend(action_id for action_id in policy.action_weight_overrides if action_id not in ACTION_CATALOG)
+  unknown = sorted(set(unknown))
+  status = EVALUATION_STATUS_PASSED if not unknown else EVALUATION_STATUS_FAILED
+  summary = "All referenced actions exist." if not unknown else f"Unknown actions: {', '.join(unknown)}"
+  return EvaluationResult(task_id=TASK_ACTION_CATALOG_VALIDATION, status=status, summary=summary, detail={"unknown_actions": unknown})
+
+
+def _validate_feature_encoder(policy: Policy) -> EvaluationResult:
+  """
+  policy の feature 条件 key がすべて符号化器の生成しうる key であるかを検査する。
+  action_weights の feature key と utility_modifiers の feature 候補を走査し、未知 feature key があれば failed を返す。category/skill 由来の utility_modifiers key は feature でないため検査対象外とする。
+  """
+  unknown = sorted({str(feature) for feature in policy.action_weights if not is_feature_key(feature)})
+  status = EVALUATION_STATUS_PASSED if not unknown else EVALUATION_STATUS_FAILED
+  summary = "All feature keys are valid." if not unknown else f"Unknown feature keys: {', '.join(unknown)}"
+  return EvaluationResult(task_id=TASK_FEATURE_ENCODER_VALIDATION, status=status, summary=summary, detail={"unknown_features": unknown})
+
+
+def _check_mask_compliance(policy: Policy) -> tuple[EvaluationResult, int]:
+  """
+  代表観測群に対し、policy 補正下の決定が常に行動 mask の許可集合内に収まるかを検査する。
+  各観測で mask を構築し、DeterministicPolicy.decide に policy を与えて決定を得て、選択行動が許可集合に含まれない場合を mask 違反として計数する。違反が 0 なら passed、1 件以上なら failed を返す。これにより policy 補正が安全境界を越えないことを検証する。
+  """
+  deterministic = DeterministicPolicy()
+  violations = 0
+  for observation in _sample_observations():
+    mask = build_action_mask(observation)
+    decision = deterministic.decide(observation, mask, policy)
+    if not mask.is_allowed(decision.action_id):
+      violations += 1
+  status = EVALUATION_STATUS_PASSED if int(violations) == 0 else EVALUATION_STATUS_FAILED
+  summary = "No mask violations across sample observations." if violations == 0 else f"{int(violations)} mask violation(s) detected."
+  return EvaluationResult(task_id=TASK_MASK_COMPLIANCE, status=status, summary=summary, detail={"violations": int(violations)}), int(violations)
+
+
+def run_evaluation(policy: Policy | None = None) -> EvaluationReport:
+  """
+  与えた policy を実評価し、合否・score・項目別詳細を持つ報告を返す。
+  policy を省略した場合は組み込み deterministic baseline を評価する。検査は schema 妥当性、互換性、行動目録妥当性、feature 符号化器妥当性、mask 準拠、及び headless sandbox 行動の各項目を実行する。sandbox 行動検査では、policy と deterministic baseline の aggregate score を同一 scenario 群で測り、policy が baseline 以上であれば passed とする。総合 passed は全項目合格を要し、一つでも failed があれば偽となる。これにより評価未通過・schema 不一致・互換不一致・mask 違反の policy は本番使用されない。本評価は外部 ML framework を用いず Ludoxel の実規則のみで完結し、UI thread を塞がないため background で実行する。
+  """
+  from ludoxel.simulation.actors.ai_players.learning.policy import builtin_deterministic_policy
+
+  effective_policy = policy if isinstance(policy, Policy) else builtin_deterministic_policy()
   results: list[EvaluationResult] = []
-  for task_id in selected:
-    task = get_task(task_id)
-    if task is None:
-      results.append(EvaluationResult(task_id=str(task_id), status=EVALUATION_STATUS_UNSUPPORTED, summary="Unknown evaluation task; no sandbox is defined for this id."))
-      continue
-    results.append(
-      EvaluationResult(
-        task_id=str(task.task_id),
-        status=EVALUATION_STATUS_NOT_RUN,
-        summary="Sandbox evaluation is not executed in this build; the task schema and entry point are available for future runs.",
-        detail={"timeout_s": float(task.timeout_s)},
-      )
+
+  schema_result, schema_errors = _validate_schema(effective_policy)
+  compatibility_result, compatibility_errors = _validate_compatibility(effective_policy)
+  catalog_result = _validate_action_catalog(effective_policy)
+  feature_result = _validate_feature_encoder(effective_policy)
+  mask_result, mask_violations = _check_mask_compliance(effective_policy)
+  results.extend([schema_result, compatibility_result, catalog_result, feature_result, mask_result])
+
+  from ludoxel.simulation.actors.ai_players.learning.sandbox import _aggregate_score, default_scenarios
+
+  scenarios = default_scenarios()
+  baseline_score, _baseline_results = _aggregate_score(scenarios, None)
+  policy_score, sandbox_results = _aggregate_score(scenarios, effective_policy if bool(effective_policy.is_usable() or effective_policy.action_weights) else None)
+  sandbox_passed = bool(float(policy_score) >= float(baseline_score) - 1e-6)
+  results.append(
+    EvaluationResult(
+      task_id=TASK_SANDBOX_BEHAVIOR,
+      status=(EVALUATION_STATUS_PASSED if bool(sandbox_passed) else EVALUATION_STATUS_FAILED),
+      summary=f"Policy score {policy_score:.3f} vs baseline {baseline_score:.3f}.",
+      score=float(policy_score),
+      detail={"baseline_score": float(baseline_score), "policy_score": float(policy_score), "tasks": list(sandbox_results)},
     )
-  passed = bool(results) and all(result.passed() for result in results)
-  return EvaluationReport(results=tuple(results), passed=bool(passed))
+  )
+
+  passed = all(result.passed() for result in results)
+  return EvaluationReport(
+    policy_id=str(effective_policy.policy_id),
+    results=tuple(results),
+    passed=bool(passed),
+    score=float(policy_score),
+    baseline_score=float(baseline_score),
+    policy_score=float(policy_score),
+    mask_violations=int(mask_violations),
+    schema_errors=tuple(schema_errors),
+    compatibility_errors=tuple(compatibility_errors),
+    created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+  )

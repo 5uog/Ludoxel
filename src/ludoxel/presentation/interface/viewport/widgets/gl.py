@@ -16,6 +16,7 @@ import ludoxel.presentation.interface.viewport.controllers.settings as settings_
 from ludoxel.application.persistence.schedulers.state import apply_persisted_state_if_present
 from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.sessions.context.play_space import PlaySpaceContext
+from ludoxel.application.sessions.managers.learning import AiLearningRuntime
 from ludoxel.application.sessions.runners.fixed_step import FixedStepRunner
 from ludoxel.presentation.audio import AudioManager
 from ludoxel.presentation.interface.common.status_overlay import status_overlay_title_image_path
@@ -234,6 +235,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     if launch_player_name is not None:
       self._state.player_name = str(launch_player_name)
     self._session = self._sessions.set_active_space(self._state.current_space_id)
+    self._learning_runtime = AiLearningRuntime(project_root=self._project_root, data_root=self._data_root)
+    self._learning_runtime.configure_session(self._session)
     self._othello_match.set_default_settings(self._state.othello_settings)
     self._othello_match.set_game_state(persisted_othello_state)
     self._overlay.set_current_space(self._state.current_space_id)

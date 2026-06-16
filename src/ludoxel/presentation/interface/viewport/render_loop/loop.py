@@ -291,6 +291,9 @@ class ViewportRenderLoopMixin:
       auto_jump_enabled=bool(self._state.auto_jump_enabled),
       paused_ai_actor_ids=tuple(paused_ai_actor_ids),
     )
+    _learning_runtime = getattr(self, "_learning_runtime", None)
+    if _learning_runtime is not None:
+      _learning_runtime.tick(self._session, float(dt))
     settings_controller.sync_hotbar_status(self)
     delta_player_y = float(self._session.player.position.y) - float(prev_player_y)
     if float(delta_player_y) >= 1e-4:

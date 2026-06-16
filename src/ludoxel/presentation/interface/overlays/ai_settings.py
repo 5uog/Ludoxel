@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QSignalBlocker, pyqtSignal
+from PyQt6.QtCore import QSignalBlocker, QThread, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QLabel, QLineEdit, QPushButton, QWidget
 
 from ludoxel.application.persistence.schema.ai_learning import (
@@ -34,7 +34,7 @@ from ludoxel.simulation.actors.ai_players.learning.dataset import (
   RECORD_PLAYER_PARKOUR,
   RECORD_PLAYER_TRAP,
 )
-from ludoxel.simulation.actors.ai_players.learning.policy_registry import POLICY_KIND_BUNDLED, POLICY_KIND_LABELS
+from ludoxel.simulation.actors.ai_players.learning.policy_registry import POLICY_KIND_BUNDLED, POLICY_KIND_LABELS, POLICY_KIND_USER
 from ludoxel.simulation.actors.ai_players.naming import AI_NAME_BODY_MAX_LENGTH, ai_display_name_format_error
 from ludoxel.simulation.actors.ai_players.state import (
   AI_HEALTH_INDICATOR_ABOVE,
@@ -77,6 +77,35 @@ _LEARNING_CAPTURE_LABELS: tuple[tuple[str, str], ...] = (
   (RECORD_AI_ROUTE_FAILURES, "AI route failures"),
   (RECORD_AI_ESCAPE_ATTEMPTS, "AI escape attempts"),
 )
+
+
+class _LearningTaskThread(QThread):
+  """
+  Learning タブの重い学習・評価処理を UI thread の外で実行する worker thread を表す。
+  訓練(player data / sandbox)と評価は数秒の計算と file I/O を伴うため、frame loop と UI thread を塞がないよう本 thread の run で実行する。run は与えた callable を呼び、結果(又は例外時の失敗 mapping)を task_finished signal で main thread へ返す。signal の queued 接続により、結果処理(表示更新・通知)は main thread 側で行われる。
+  """
+
+  task_finished = pyqtSignal(object)
+
+  def __init__(self, task, parent: QWidget | None = None) -> None:
+    """
+    実行する引数なし callable を保持して初期化する。
+    task は controller の学習・評価 method を想定し、戻り値は結果 mapping 又は評価 report である。
+    """
+    super().__init__(parent)
+    self._task = task
+
+  def run(self) -> None:
+    """
+    保持した callable を本 worker thread 上で実行し、結果を task_finished で通知する。
+    callable が例外を送出した場合は status を failed とする mapping を結果として送出し、UI 側の異常終了を防ぐ。
+    """
+    try:
+      result = self._task()
+    except Exception as exc:  # noqa: BLE001
+      result = {"status": "failed", "message": str(exc)}
+    self.task_finished.emit(result)
+
 
 _AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + 5
 _REGEN_CAP_MIN_UI = 1.0
@@ -366,8 +395,12 @@ class AiSettingsOverlay(SidebarDialogBase):
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Learning", subtitle="Demonstration capture and learned-policy settings shared by all AI.")
 
+    self._learning_task_thread: _LearningTaskThread | None = None
     _mode_card, mode_body, mode_layout = add_settings_card(
-      layout, host, title="Learning Mode", description="Off, Observe Only, and Use Learned Policy apply during normal play. Train modes are saved but do not run heavy training in this build."
+      layout,
+      host,
+      title="Learning Mode",
+      description="Off, Observe Only, and Use Learned Policy apply during play. Selecting a Train mode runs training in the background and then switches to Use Learned Policy.",
     )
     self._learning_mode_combo = QComboBox(mode_body)
     for value, label in _LEARNING_MODE_LABELS:
@@ -377,6 +410,10 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_mode_notice.setObjectName("settingsCardDescription")
     self._learning_mode_notice.setWordWrap(True)
     mode_layout.addWidget(self._learning_mode_notice)
+    self._learning_busy_label = QLabel("", mode_body)
+    self._learning_busy_label.setObjectName("settingsCardDescription")
+    self._learning_busy_label.setWordWrap(True)
+    mode_layout.addWidget(self._learning_busy_label)
 
     _capture_card, capture_body, capture_layout = add_settings_card(
       layout, host, title="Data Capture", description="Recorded only while the mode is Observe Only. Records are game state and actions, never screen images."
@@ -402,15 +439,15 @@ class AiSettingsOverlay(SidebarDialogBase):
       self._learning_policy_kind_combo.addItem(label, userData=value)
     add_setting_row(policy_layout, policy_body, label="Policy source", description="Which policy the AI uses during play.", control=self._learning_policy_kind_combo)
     self._learning_policy_id_combo = QComboBox(policy_body)
-    self._learning_policy_id_combo.addItem("Automatic", userData="")
-    for policy_id, policy_name in controller.bundled_policy_options():
-      self._learning_policy_id_combo.addItem(str(policy_name), userData=str(policy_id))
-    add_setting_row(policy_layout, policy_body, label="Bundled policy", description="Used only when the source is a bundled learned policy.", control=self._learning_policy_id_combo)
+    add_setting_row(policy_layout, policy_body, label="Selected policy", description="Used when the source is a bundled or user learned policy.", control=self._learning_policy_id_combo)
+    self._populate_learning_policy_id_combo()
 
-    _eval_card, eval_body, eval_layout = add_settings_card(layout, host, title="Evaluation", description="Runs the minimal evaluation entry and reports the pass or fail state.")
-    self._learning_eval_button = QPushButton("Run minimal evaluation", eval_body)
+    _eval_card, eval_body, eval_layout = add_settings_card(
+      layout, host, title="Evaluation", description="Evaluates the selected policy against the engine and the headless sandbox, then reports pass or fail."
+    )
+    self._learning_eval_button = QPushButton("Run evaluation", eval_body)
     self._learning_eval_button.setObjectName("primaryBtn")
-    add_setting_row(eval_layout, eval_body, label="Minimal evaluation", description="Reports the latest evaluation result and pass/fail state.", control=self._learning_eval_button)
+    add_setting_row(eval_layout, eval_body, label="Evaluate selected policy", description="Validates schema, compatibility, mask compliance, and sandbox behavior.", control=self._learning_eval_button)
     self._learning_eval_label = QLabel("", eval_body)
     self._learning_eval_label.setObjectName("settingsCardDescription")
     self._learning_eval_label.setWordWrap(True)
@@ -441,6 +478,10 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_policy_version_label.setObjectName("settingsCardDescription")
     self._learning_policy_version_label.setWordWrap(True)
     data_layout.addWidget(self._learning_policy_version_label)
+    self._learning_path_label = QLabel("", data_body)
+    self._learning_path_label.setObjectName("settingsCardDescription")
+    self._learning_path_label.setWordWrap(True)
+    data_layout.addWidget(self._learning_path_label)
 
     layout.addStretch(1)
     self._stack.addWidget(scroll)
@@ -496,8 +537,14 @@ class AiSettingsOverlay(SidebarDialogBase):
     通常 play で有効化しない Train 系 mode では学習が実行されない旨を明示し、Observe Only では AI 挙動を変えずに記録する旨、Use Learned Policy では評価通過 policy のみ使用し fallback する旨、Off では記録しない旨を示す。
     """
     mode = str(self._learning_mode_combo.currentData())
+    if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:
+      self._learning_mode_notice.setText("Train From Player Data learns a policy from the recorded demonstrations, evaluates it, then switches to Use Learned Policy.")
+      return
+    if mode == LEARNING_MODE_TRAIN_IN_SANDBOX:
+      self._learning_mode_notice.setText("Train In Sandbox improves a policy in the headless sandbox against the deterministic baseline, then switches to Use Learned Policy.")
+      return
     if not is_active_learning_mode(mode):
-      self._learning_mode_notice.setText("This mode is saved but does not run heavy training in this build. Recording and policy use are unchanged.")
+      self._learning_mode_notice.setText("This mode is not active during play.")
       return
     if mode == LEARNING_MODE_OBSERVE_ONLY:
       self._learning_mode_notice.setText("Observe Only records the selected demonstration data without changing how the AI behaves.")
@@ -507,19 +554,128 @@ class AiSettingsOverlay(SidebarDialogBase):
       return
     self._learning_mode_notice.setText("Learning is off. No demonstrations are recorded and the deterministic baseline drives the AI.")
 
+  def _populate_learning_policy_id_combo(self) -> None:
+    """
+    選択 policy combo へ、自動選択・同梱 policy・user 学習 policy の選択肢を構築する。
+    再構築中は signal を遮断し、構築自体が保存経路を起動しないようにする。先頭は識別子空の自動選択、続いて controller が提示する同梱 policy と user 学習 policy を、それぞれ表示名と識別子で並べる。訓練で user policy が追加された後の再読込でも最新の選択肢を反映できる。
+    """
+    blocker = QSignalBlocker(self._learning_policy_id_combo)
+    self._learning_policy_id_combo.clear()
+    self._learning_policy_id_combo.addItem("Automatic", userData="")
+    for policy_id, policy_name in self._learning_controller.bundled_policy_options():
+      self._learning_policy_id_combo.addItem(f"Bundled: {policy_name}", userData=str(policy_id))
+    for policy_id, policy_name in self._learning_controller.user_policy_options():
+      self._learning_policy_id_combo.addItem(f"User: {policy_name}", userData=str(policy_id))
+    del blocker
+
   def _sync_learning_policy_id_enabled(self) -> None:
     """
-    bundled policy combo の有効状態を policy source に応じて切り替える。
-    source が bundled learned policy の場合のみ bundled policy の選択を有効にし、それ以外では選択を無効化する。
+    選択 policy combo の有効状態を policy source に応じて切り替える。
+    source が同梱学習 policy 又は user 学習 policy の場合に選択を有効にし、組み込み deterministic 等では無効化する。
     """
-    self._learning_policy_id_combo.setEnabled(str(self._learning_policy_kind_combo.currentData()) == POLICY_KIND_BUNDLED)
+    kind = str(self._learning_policy_kind_combo.currentData())
+    self._learning_policy_id_combo.setEnabled(kind in (POLICY_KIND_BUNDLED, POLICY_KIND_USER))
 
   def _on_learning_mode_changed(self, _index: int = 0) -> None:
     """
-    Learning Mode の変更を controller へ保存し、mode notice を更新する。
+    Learning Mode の変更を処理する。
+    Train From Player Data 又は Train In Sandbox を選択した場合は、対応する学習を background worker で起動し、UI を塞がない。それ以外の active mode は controller へ即時保存する。学習の起動中は busy 表示で他操作を抑止し、完了後に mode を Use Learned Policy へ切り替える。
     """
-    self._learning_controller.set_learning_mode(str(self._learning_mode_combo.currentData()))
+    mode = str(self._learning_mode_combo.currentData())
     self._sync_learning_mode_notice()
+    if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:
+      self._run_learning_task(self._learning_controller.train_from_player_data, self._on_training_done, busy_text="Training from player data...")
+      return
+    if mode == LEARNING_MODE_TRAIN_IN_SANDBOX:
+      self._run_learning_task(self._learning_controller.train_in_sandbox, self._on_training_done, busy_text="Training in sandbox...")
+      return
+    self._learning_controller.set_learning_mode(mode)
+
+  def _run_learning_task(self, task, on_done, *, busy_text: str) -> None:
+    """
+    重い学習・評価 callable を background worker で実行し、完了後に on_done を main thread で呼ぶ。
+    既に worker 実行中の場合は新たな起動を抑止する。起動時に busy 表示と操作抑止を有効化し、worker の task_finished を受けて抑止解除・結果処理・worker 破棄を行う。これにより訓練・評価の数秒間も UI thread と frame loop を塞がない。
+    """
+    if self._learning_task_thread is not None:
+      return
+    self._set_learning_busy(True, busy_text)
+    thread = _LearningTaskThread(task, self)
+    self._learning_task_thread = thread
+    thread.task_finished.connect(lambda result, captured=thread: self._finish_learning_task(result, on_done, captured))
+    thread.start()
+
+  def _finish_learning_task(self, result, on_done, thread) -> None:
+    """
+    worker 完了時に操作抑止を解除し、結果処理を行って worker を破棄する。
+    on_done が例外を送出しても busy 解除と worker 破棄は確実に行い、UI が抑止状態のまま残らないようにする。
+    """
+    self._set_learning_busy(False, "")
+    if self._learning_task_thread is thread:
+      self._learning_task_thread = None
+    try:
+      on_done(result)
+    finally:
+      thread.deleteLater()
+
+  def _set_learning_busy(self, busy: bool, text: str) -> None:
+    """
+    学習・評価実行中の操作抑止と busy 表示を切り替える。
+    busy が真の間は mode combo、評価、訓練起動、policy 選択、data 管理 button を無効化し、busy text を表示する。これにより実行中の二重起動と設定競合を防ぐ。busy が偽で抑止を解除する。
+    """
+    enabled = not bool(busy)
+    self._learning_busy_label.setText(str(text))
+    for widget in (
+      self._learning_mode_combo,
+      self._learning_eval_button,
+      self._learning_policy_kind_combo,
+      self._learning_policy_id_combo,
+      self._learning_export_button,
+      self._learning_import_button,
+      self._learning_clear_button,
+      self._learning_reset_button,
+      self._learning_restore_button,
+    ):
+      widget.setEnabled(bool(enabled))
+    if bool(enabled):
+      self._sync_learning_policy_id_enabled()
+
+  def _on_training_done(self, result) -> None:
+    """
+    訓練 worker の完了結果を処理する。
+    成功時は mode を Use Learned Policy へ切り替えて保存し、policy 選択肢を再構築して新規 user policy を反映する。失敗時は保存済み mode へ戻す。いずれも policy 関連表示と dynamic 表示を更新し、結果と保存先を通知する。
+    """
+    status = str(result.get("status", "failed")) if isinstance(result, dict) else "failed"
+    message = str(result.get("message", "Training failed.")) if isinstance(result, dict) else "Training failed."
+    self._populate_learning_policy_id_combo()
+    if status == "completed":
+      blocker = QSignalBlocker(self._learning_mode_combo)
+      self._set_combo_value(self._learning_mode_combo, LEARNING_MODE_USE_LEARNED_POLICY)
+      del blocker
+      self._learning_controller.set_learning_mode(LEARNING_MODE_USE_LEARNED_POLICY)
+    else:
+      blocker = QSignalBlocker(self._learning_mode_combo)
+      self._set_combo_value(self._learning_mode_combo, str(self._learning_controller.state().settings.learning_mode))
+      del blocker
+    self._reload_learning_policy_controls(self._learning_controller.state())
+    self._sync_learning_mode_notice()
+    self._refresh_learning_dynamic()
+    detail = message
+    if status == "completed" and isinstance(result, dict) and result.get("policy_path"):
+      passed = "passed evaluation" if bool(result.get("passed")) else "did not pass evaluation"
+      detail = f"{message} The policy {passed}. Saved to {result.get('policy_path')}."
+    show_themed_notice(parent=self, title="Training", message=detail, nav_label="Learning")
+
+  def _on_evaluation_done(self, report) -> None:
+    """
+    評価 worker の完了結果を処理する。
+    dynamic 表示を更新し、合否と score を通知する。report は EvaluationReport を想定し、属性が無い場合でも安全に表示する。
+    """
+    self._reload_learning_policy_controls(self._learning_controller.state())
+    self._refresh_learning_dynamic()
+    passed = bool(getattr(report, "passed", False))
+    score = float(getattr(report, "score", 0.0))
+    baseline = float(getattr(report, "baseline_score", 0.0))
+    show_themed_notice(parent=self, title="Evaluation", message=f"Evaluation {'passed' if passed else 'failed'} (policy score {score:.2f} vs baseline {baseline:.2f}).", nav_label="Learning")
 
   def _on_learning_policy_changed(self, _index: int = 0) -> None:
     """
@@ -530,11 +686,10 @@ class AiSettingsOverlay(SidebarDialogBase):
 
   def _on_run_minimal_evaluation(self) -> None:
     """
-    最小評価を controller 経由で実行し、結果要約と dynamic 表示を更新する。
-    本段階の評価は dry-run であり、結果は合否未確定(not run)として表示される。
+    選択 policy の実評価を background worker で実行する。
+    評価は schema・互換・行動目録・feature 符号化器・mask 準拠・sandbox 行動の実検査であり、完了後に dynamic 表示を更新して合否を通知する。実行中は UI を塞がない。
     """
-    self._learning_controller.run_minimal_evaluation()
-    self._refresh_learning_dynamic()
+    self._run_learning_task(self._learning_controller.run_minimal_evaluation, self._on_evaluation_done, busy_text="Evaluating selected policy...")
 
   def _on_export_learning_data(self) -> None:
     """
@@ -586,9 +741,10 @@ class AiSettingsOverlay(SidebarDialogBase):
 
   def _reload_learning_policy_controls(self, state) -> None:
     """
-    policy source と bundled policy の combo を状態から再設定する。
-    再設定中は QSignalBlocker で signal を遮断し、再読込が保存経路を二重に起動しないようにする。設定後に bundled combo の有効状態を同期する。
+    policy source と選択 policy の combo を状態から再設定する。
+    選択肢を最新の同梱・user policy で再構築してから、再設定中は signal を遮断して現在の選択値を反映する。設定後に選択 combo の有効状態を同期する。訓練で user policy が追加された後もこの再読込で選択肢と選択値を整合させる。
     """
+    self._populate_learning_policy_id_combo()
     blockers = [QSignalBlocker(self._learning_policy_kind_combo), QSignalBlocker(self._learning_policy_id_combo)]
     self._set_combo_value(self._learning_policy_kind_combo, str(state.settings.selected_policy_kind))
     self._set_combo_value(self._learning_policy_id_combo, str(state.settings.selected_policy_id))
@@ -597,23 +753,27 @@ class AiSettingsOverlay(SidebarDialogBase):
 
   def _refresh_learning_dynamic(self) -> None:
     """
-    dataset 規模、直近の学習結果、policy 版、直近の評価結果という動的表示を controller の状態から更新する。
-    dataset 規模は記録件数と byte 長を要約し、学習結果は本段階で未実行である旨、評価結果は last evaluation summary の合否未確定を表示する。これらの走査は page 表示時と各操作後にのみ行い、毎 frame では行わない。
+    dataset 規模、直近の学習結果、policy 版、直近の評価結果、保存先 path という動的表示を controller の状態から更新する。
+    dataset 規模は記録件数と byte 長を、学習結果は直近 training の status とメッセージを、評価結果は last evaluation summary の合否と score を表示し、policy 保存 path を併記する。走査は page 表示時と各操作後にのみ行い、毎 frame では行わない。
     """
     summary = self._learning_controller.dataset_summary()
     state = self._learning_controller.state()
     self._learning_dataset_label.setText(f"Dataset size: {int(summary.record_count)} record(s), {int(summary.byte_size)} byte(s).")
     training = state.last_training_summary or {}
     if training:
-      self._learning_training_label.setText(f"Last training: {str(training.get('status', 'unknown'))}.")
+      self._learning_training_label.setText(f"Last training: {str(training.get('status', 'unknown'))} - {str(training.get('message', ''))}")
     else:
-      self._learning_training_label.setText("Last training: none run in this build.")
-    self._learning_policy_version_label.setText(f"Policy version: {int(state.policy_version)}.")
+      self._learning_training_label.setText("Last training: none yet.")
+    self._learning_policy_version_label.setText(
+      f"Selected policy: {str(state.settings.selected_policy_kind)} '{str(state.settings.selected_policy_id) or 'automatic'}' (version {int(state.policy_version)})."
+    )
+    self._learning_path_label.setText(f"Policy folder: {self._learning_controller.policy_save_path()}")
     evaluation = state.last_evaluation_summary or {}
     if evaluation:
       passed = bool(evaluation.get("passed", False))
-      result_count = len(evaluation.get("results", []) or [])
-      self._learning_eval_label.setText(f"Last evaluation: {'passed' if passed else 'not passed'} across {int(result_count)} task(s).")
+      score = float(evaluation.get("score", 0.0) or 0.0)
+      baseline = float(evaluation.get("baseline_score", 0.0) or 0.0)
+      self._learning_eval_label.setText(f"Last evaluation: {'passed' if passed else 'not passed'} (policy score {score:.2f} vs baseline {baseline:.2f}).")
     else:
       self._learning_eval_label.setText("Last evaluation: not run yet.")
 

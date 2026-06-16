@@ -77,6 +77,10 @@ def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resu
   viewport._state.current_space_id = normalized
   viewport._state.normalize()
   viewport._session = viewport._sessions.set_active_space(normalized)
+  _learning_runtime = getattr(viewport, "_learning_runtime", None)
+  if _learning_runtime is not None:
+    _learning_runtime.flush(viewport._session)
+    _learning_runtime.configure_session(viewport._session)
   viewport._begin_loading(target_label)
   viewport._overlay.set_current_space(normalized)
   viewport._upload.reset(viewport._renderer, world=viewport._session.world)

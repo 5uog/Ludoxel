@@ -125,6 +125,12 @@ class ViewportLifecycleMixin:
     except Exception:
       pass
     try:
+      _learning_runtime = getattr(self, "_learning_runtime", None)
+      if _learning_runtime is not None:
+        _learning_runtime.flush(self._session)
+    except Exception:
+      pass
+    try:
       self.save_state()
     except Exception:
       pass

@@ -12,6 +12,10 @@ from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y
 from ludoxel.simulation.actors.ai_players.avoidance import active_avoid_support_cells, decay_avoid_support_cells, remember_avoid_support_cell
 from ludoxel.simulation.actors.ai_players.combat import _combat_control
 from ludoxel.simulation.actors.ai_players.idle import idle_control
+from ludoxel.simulation.actors.ai_players.learning.action_mask import build_action_mask
+from ludoxel.simulation.actors.ai_players.learning.coordinator import ACTION_SOURCE_DETERMINISTIC, ACTION_SOURCE_LEARNED_POLICY, LearningCoordinator
+from ludoxel.simulation.actors.ai_players.learning.observation import DIRECTION_OFFSETS, AiObservation, build_neighborhood
+from ludoxel.simulation.actors.ai_players.learning.rewards import RewardTransition
 from ludoxel.simulation.actors.ai_players.naming import ai_display_name_format_error, ai_name_duplicate_key, allocate_default_spawn_ai_name, allocate_suffixed_ai_name, split_ai_display_name
 from ludoxel.simulation.actors.ai_players.navigation import (
   _horizontal_transition_distance,
@@ -117,11 +121,75 @@ from ludoxel.simulation.worlds.config.session import SessionSettings
 from ludoxel.simulation.worlds.state.world import WorldState
 
 
+class _ManagerNeighborhoodProbe:
+  """
+  AiPlayerManager の形状規則述語へ委譲して learning observation の周辺標本を供給する probe adapter である。
+  本 adapter は NeighborhoodProbe Protocol を満たし、足場・頭上・通行・配置可否・落差を manager の既存述語(_standable_support_cell、_nav_headroom_clear、_nav_cell_empty、_can_place_support_block、_cell_has_full_top_support)へ委譲する。これらは has_full_top_support_for_block と world_aabb_intersects に基づき半 block・階段・フェンス・フェンスゲート・壁の形状を反映するため、observation は full block 仮定に陥らない。actor を保持するのは standable と placement 判定が actor 固有の collision body と placement 許可へ依存するためである。
+  """
+
+  def __init__(self, manager: "AiPlayerManager", actor: _AiPlayerRuntime, *, max_drop: int) -> None:
+    """
+    委譲先 manager、対象 actor、安全とみなす最大落差段数を保持して初期化する。
+    max_drop は support_drop_depth が奈落とみなすまでの下方走査段数の上限であり、edge safety の安全段数と一致させる。
+    """
+    self._manager = manager
+    self._actor = actor
+    self._max_drop = int(max_drop)
+
+  def standable(self, cell: tuple[int, int, int]) -> bool:
+    """
+    指定 cell が actor の足場として有効かを manager の形状規則で判定する。
+    上面の完全足場と body 頭上空間の双方を要求する _standable_support_cell へ委譲する。
+    """
+    return bool(self._manager._standable_support_cell(self._actor, tuple(int(value) for value in cell)))
+
+  def headroom_clear(self, cell: tuple[int, int, int]) -> bool:
+    """
+    指定 support cell の直上 body 区間が通過可能かを判定する。
+    支持 y+1 と y+2 の空き判定 _nav_headroom_clear へ委譲する。
+    """
+    return bool(self._manager._nav_headroom_clear(tuple(int(value) for value in cell)))
+
+  def passable(self, cell: tuple[int, int, int]) -> bool:
+    """
+    指定 cell が body の一部として進入可能(空)かを判定する。
+    cell が空である場合に真を返す _nav_cell_empty へ委譲する。
+    """
+    return bool(self._manager._nav_cell_empty(tuple(int(value) for value in cell)))
+
+  def block_state(self, cell: tuple[int, int, int]) -> str | None:
+    """
+    指定 cell の block state 文字列を返し、block が無ければ None を返す。
+    """
+    return self._manager._state_at(int(cell[0]), int(cell[1]), int(cell[2]))
+
+  def can_place_against(self, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int]) -> bool:
+    """
+    anchor へ支持 block を配置して target を足場化できるかを判定する。
+    cooldown を無視した _can_place_support_block へ委譲し、配置許可・在庫・anchor 実在・target 空き・頭上を確認する。
+    """
+    return bool(
+      self._manager._can_place_support_block(self._actor, anchor_cell=tuple(int(value) for value in anchor_cell), target_cell=tuple(int(value) for value in target_cell), ignore_cooldown=True)
+    )
+
+  def support_drop_depth(self, column_cell: tuple[int, int, int], max_depth: int) -> int:
+    """
+    指定列について support y から下方 max_depth 段までに最初に現れる足場までの段数を返す。
+    各段で完全上面足場 _cell_has_full_top_support を確認し、最初に成立した段数を返す。max_depth 以内に足場が無ければ奈落として -1 を返す。
+    """
+    x, y, z = (int(column_cell[0]), int(column_cell[1]), int(column_cell[2]))
+    for depth in range(0, int(max_depth) + 1):
+      if bool(self._manager._cell_has_full_top_support((int(x), int(y) - int(depth), int(z)))):
+        return int(depth)
+    return -1
+
+
 @dataclass
 class AiPlayerManager:
   world: WorldState
   block_registry: BlockRegistry
   settings: SessionSettings
+  warm_route_worker: bool = True
 
   _actors: dict[str, _AiPlayerRuntime] = field(default_factory=dict, init=False, repr=False)
   _next_actor_index: int = field(default=1, init=False, repr=False)
@@ -133,7 +201,8 @@ class AiPlayerManager:
   _recovery_searches_this_step: int = field(default=0, init=False, repr=False)
 
   def __post_init__(self) -> None:
-    self._route_worker.warmup()
+    if bool(self.warm_route_worker):
+      self._route_worker.warmup()
 
   def shutdown(self) -> None:
     self._route_worker.shutdown()
@@ -1826,10 +1895,191 @@ class AiPlayerManager:
       self._cancel_pending_nav_plan(actor)
     return AiLocalAttackResult(success=True, target_position=self._damage_sound_position(actor.player))
 
-  def step(self, *, dt: float, target_player: PlayerEntity | None, allow_pvp: bool, paused_actor_ids: tuple[str, ...] = ()) -> AiStepReport:
+  def _fence_gate_operable(self, support_cell: tuple[int, int, int]) -> bool:
+    """
+    actor の足元 cell の body 高さ 4 近傍に操作可能なフェンスゲートが存在するかを判定する。
+    支持 y+1 の前後左右 cell の state 文字列に "fence_gate" を含む block があれば操作可能とみなす。これは action mask が toggle_fence_gate を許可する前提値であり、フェンスゲートを通行物としても遮断物としても扱うための観測標本である。該当が無ければ偽を返す。
+    """
+    x, y, z = (int(support_cell[0]), int(support_cell[1]), int(support_cell[2]))
+    for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+      state = self._state_at(int(x) + int(dx), int(y) + 1, int(z) + int(dz))
+      if state is not None and "fence_gate" in str(state):
+        return True
+    return False
+
+  def _build_observation(self, actor: _AiPlayerRuntime, *, target_player: PlayerEntity | None, allow_pvp: bool) -> AiObservation:
+    """
+    live actor 状態から learning 用 AiObservation を構築する。
+    周辺標本は _ManagerNeighborhoodProbe を介して manager の形状規則述語から導くため、半 block・階段・フェンス・フェンスゲート・壁を full block 仮定で潰さない。player 情報は視認できる場合のみ位置・速度・体力・距離を与え、視認できない場合はすべて None として透視的利用を防ぐ。攻撃可否は視認・射程・cooldown から、route 状態は mode と nav_path_failed から、低体力と脅威圏は体力割合と射程内滞留から導く。返値は JSON 直列化可能であり、action mask と policy の入力として用いる。
+    """
+    support = self._current_support_cell(actor)
+    if support is None:
+      support = _support_cell_beneath(actor.player)
+    support = tuple(int(value) for value in support)
+    probe = _ManagerNeighborhoodProbe(self, actor, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+    directions = build_neighborhood(probe, support_cell=support, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+    player_pos = actor.player.position
+    visible = False
+    visible_pos: tuple[float, float, float] | None = None
+    player_velocity: tuple[float, float, float] | None = None
+    player_health: float | None = None
+    distance: float | None = None
+    if target_player is not None and bool(allow_pvp) and target_player.alive():
+      target_eye = Vec3(float(target_player.position.x), float(target_player.position.y) + 1.0, float(target_player.position.z))
+      if bool(self._can_see_point(actor, target_eye)):
+        visible = True
+        visible_pos = (float(target_player.position.x), float(target_player.position.y), float(target_player.position.z))
+        player_velocity = (float(target_player.velocity.x), float(target_player.velocity.y), float(target_player.velocity.z))
+        player_health = float(target_player.health)
+        distance = float((target_player.position - player_pos).length())
+    attack_in_range = bool(visible and distance is not None and float(distance) <= float(MELEE_ATTACK_REACH_BLOCKS))
+    can_place = bool(actor.can_place_blocks and actor.held_item_id is not None)
+    mode = normalize_ai_mode(actor.mode)
+    route_present = bool(mode == AI_MODE_ROUTE and len(actor.route_points) > 0)
+    route_blocked = bool(route_present and actor.nav_path_failed)
+    route_target_tuple: tuple[float, float, float] | None = None
+    if bool(route_present):
+      route_point = route_target_point(actor)
+      if route_point is not None:
+        route_target_tuple = (float(route_point.x), float(route_point.y), float(route_point.z))
+    max_health = max(1.0, float(actor.player.max_health))
+    low_health = bool(float(actor.player.health) <= float(max_health) * 0.35)
+    low_health_in_threat = bool(low_health and attack_in_range)
+    hazards = tuple((int(support[0]) + int(dx), int(support[1]), int(support[2]) + int(dz)) for name, dx, dz in DIRECTION_OFFSETS if bool(directions[name].is_void))
+    void_present = any(bool(directions[name].is_void) for name in directions)
+    last_damage_source = "stuck" if (mode == AI_MODE_ROUTE and float(actor.route_stuck_s) >= float(_AI_ROUTE_STUCK_TIMEOUT_S)) else None
+    return AiObservation(
+      actor_id=str(actor.actor_id),
+      self_position=(float(player_pos.x), float(player_pos.y), float(player_pos.z)),
+      self_velocity=(float(actor.player.velocity.x), float(actor.player.velocity.y), float(actor.player.velocity.z)),
+      self_yaw_deg=float(actor.player.yaw_deg),
+      self_pitch_deg=float(actor.player.pitch_deg),
+      health=float(actor.player.health),
+      max_health=float(max_health),
+      on_ground=bool(actor.player.on_ground),
+      jump_available=bool(actor.player.on_ground),
+      support_cell=support,
+      self_footing_present=bool(self._cell_has_full_top_support(support)),
+      fall_risk=0.0,
+      void_risk=1.0 if bool(void_present) else 0.0,
+      visible_player=bool(visible),
+      player_visible_position=visible_pos,
+      player_last_known_position=visible_pos,
+      player_velocity=player_velocity,
+      player_health=player_health,
+      distance_to_player=distance,
+      attack_in_range=bool(attack_in_range),
+      attack_cooldown_ready=bool(float(actor.attack_cooldown_s) <= 1e-6),
+      attack_cooldown_remaining_s=float(max(0.0, float(actor.attack_cooldown_s))),
+      can_place_blocks=bool(can_place),
+      selected_block_id=(None if actor.held_item_id is None else str(actor.held_item_id)),
+      available_block_count=(999 if bool(can_place) else 0),
+      fence_gate_operable=bool(self._fence_gate_operable(support)),
+      nearby_hazards=hazards,
+      visible_target_blocks=(),
+      directions=directions,
+      route_present=bool(route_present),
+      route_blocked=bool(route_blocked),
+      route_target=route_target_tuple,
+      low_health=bool(low_health),
+      low_health_in_threat=bool(low_health_in_threat),
+      last_action=(None if actor.learn_last_action is None else str(actor.learn_last_action)),
+      last_action_success=None,
+      last_damage_source=last_damage_source,
+      last_death_reason=None,
+    )
+
+  @staticmethod
+  def _control_to_action_id(control: PlayerStepInput) -> str:
+    """
+    deterministic AI が生成した制御入力を、記録用の代表 action id へ写像する。
+    水平移動成分 move_f と move_s を閾値 0.3 で前後左右と斜めへ分類し、前進かつ sprint なら sprint、移動が実質 0 で jump 入力があれば jump、いずれも無ければ no_op を返す。本写像は demonstration 記録における deterministic 決定の行動ラベル付けに用い、実行そのものは変更しない。
+    """
+    move_f = float(control.move_f)
+    move_s = float(control.move_s)
+    if abs(move_f) < 0.3 and abs(move_s) < 0.3:
+      return "jump" if bool(control.jump_pressed) else "no_op"
+    forward = bool(move_f > 0.3)
+    backward = bool(move_f < -0.3)
+    left = bool(move_s < -0.3)
+    right = bool(move_s > 0.3)
+    if forward and left:
+      return "move_forward_left"
+    if forward and right:
+      return "move_forward_right"
+    if backward and left:
+      return "move_back_left"
+    if backward and right:
+      return "move_back_right"
+    if forward:
+      return "sprint" if bool(control.sprint) else "move_forward"
+    if backward:
+      return "move_back"
+    if left:
+      return "move_left"
+    if right:
+      return "move_right"
+    return "no_op"
+
+  def _apply_learned_action(self, actor: _AiPlayerRuntime, control: PlayerStepInput, action_id: str) -> PlayerStepInput:
+    """
+    Use Learned Policy 時に、選択された micro action へ向けて制御入力の水平移動成分のみを安全な範囲で調整する。
+    対象は後退・斜め後退・横移動・横移動攻撃・停止といった spacing 行動に限り、前進・攻撃・配置・破壊・跳躍・フェンスゲートなどは既存制御をそのまま用いて既存の navigation・combat・placement 経路へ委ねる。yaw/pitch/jump/crouch/auto_jump は保持し、後退と横移動では sprint を解除する。調整後は必ず _apply_edge_safety を通すため、policy が選んだ後退・横移動が奈落へ踏み出すことはない。本写像は Free Roam / PVP(wander)に限定し、route navigation の制御は変更しない。
+    """
+    aid = str(action_id)
+    strafe_sign = 1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0
+    move_f = float(control.move_f)
+    move_s = float(control.move_s)
+    sprint = bool(control.sprint)
+    if aid in ("move_back", "backpedal_attack"):
+      move_f = -1.0
+      move_s = 0.0
+      sprint = False
+    elif aid == "move_back_left":
+      move_f = -1.0
+      move_s = -1.0
+      sprint = False
+    elif aid == "move_back_right":
+      move_f = -1.0
+      move_s = 1.0
+      sprint = False
+    elif aid == "strafe_attack":
+      move_s = float(strafe_sign) * 0.8
+      move_f = min(float(move_f), 0.4)
+    elif aid == "move_left":
+      move_f = 0.0
+      move_s = -1.0
+      sprint = False
+    elif aid == "move_right":
+      move_f = 0.0
+      move_s = 1.0
+      sprint = False
+    elif aid in ("stop", "no_op"):
+      move_f = 0.0
+      move_s = 0.0
+      sprint = False
+    else:
+      return control
+    adjusted = PlayerStepInput(
+      move_f=float(move_f),
+      move_s=float(move_s),
+      jump_held=bool(control.jump_held),
+      jump_pressed=bool(control.jump_pressed),
+      sprint=bool(sprint),
+      crouch=bool(control.crouch),
+      yaw_delta_deg=float(control.yaw_delta_deg),
+      pitch_delta_deg=float(control.pitch_delta_deg),
+      auto_jump_enabled=bool(control.auto_jump_enabled),
+    )
+    guarded_control, _blocked = self._apply_edge_safety(actor, adjusted, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+    return guarded_control
+
+  def step(self, *, dt: float, target_player: PlayerEntity | None, allow_pvp: bool, paused_actor_ids: tuple[str, ...] = (), learning: LearningCoordinator | None = None) -> AiStepReport:
     self._drain_completed_route_plans()
     self._route_requests_this_step = 0
     self._recovery_searches_this_step = 0
+    if learning is not None:
+      learning.begin_tick()
     total_player_damage = 0.0
     player_death_reason: str | None = None
     player_killer_name: str | None = None
@@ -1856,6 +2106,22 @@ class AiPlayerManager:
         control = self._wander_control(actor, dt=float(dt), target_player=target_player, allow_pvp=bool(allow_pvp))
       else:
         control = idle_control()
+      learn_observation: AiObservation | None = None
+      learn_mask = None
+      learn_action_id: str | None = None
+      learn_action_source = ACTION_SOURCE_DETERMINISTIC
+      if learning is not None and bool(learning.active()):
+        learn_observation = self._build_observation(actor, target_player=target_player, allow_pvp=bool(allow_pvp))
+        learn_mask = build_action_mask(learn_observation)
+        if mode == AI_MODE_WANDER and bool(learning.policy_enabled()):
+          decision = learning.decide(learn_observation, learn_mask)
+          learn_action_id = str(decision.action_id)
+          learn_action_source = ACTION_SOURCE_LEARNED_POLICY
+          control = self._apply_learned_action(actor, control, str(decision.action_id))
+        else:
+          learn_action_id = self._control_to_action_id(control)
+          learn_action_source = ACTION_SOURCE_DETERMINISTIC
+        actor.learn_last_action = str(learn_action_id)
       step_result = advance_runtime_player(player=actor.player, world=self.world, block_registry=self.block_registry, settings=self.settings, motion=actor.motion, dt=float(dt), control=control)
       self._update_stuck_recovery_state(actor, dt=float(dt), jump_started=bool(step_result.jump_started))
       fall_damage = actor.player.apply_damage(fall_damage_amount(fall_distance_blocks=step_result.fall_distance_blocks), bypass_cooldown=True)
@@ -1864,13 +2130,48 @@ class AiPlayerManager:
         self._note_ai_damage(actor)
         damage_sound_positions.append(self._damage_sound_position(actor.player))
       self._advance_ai_regeneration(actor, dt=float(dt))
+      actor_damage_dealt = 0.0
       if mode != AI_MODE_IDLE:
         self._maybe_interact_or_place(actor, target_player=target_player)
         attack_report = self._maybe_attack_player(actor, target_player=target_player, allow_pvp=bool(allow_pvp))
+        actor_damage_dealt = float(attack_report.player_damage_taken)
         total_player_damage += float(attack_report.player_damage_taken)
         if attack_report.player_death_reason is not None:
           player_death_reason = str(attack_report.player_death_reason)
           player_killer_name = None if attack_report.player_killer_name is None else str(attack_report.player_killer_name)
+      if learning is not None and learn_observation is not None and learn_action_id is not None and bool(learning.recording()):
+        alive_after = bool(actor.player.alive())
+        died = not bool(alive_after)
+        void_death = bool(died and float(void_damage) > 1e-6)
+        if bool(void_death):
+          failure_reason: str | None = "void_fall"
+        elif bool(died):
+          failure_reason = "death"
+        elif mode == AI_MODE_ROUTE and bool(actor.nav_path_failed):
+          failure_reason = "failed_route"
+        else:
+          failure_reason = None
+        transition = RewardTransition(
+          survived=bool(alive_after),
+          progress_delta=0.0,
+          damage_dealt=float(actor_damage_dealt),
+          damage_taken=float(fall_damage) + float(void_damage),
+          fell=bool(float(fall_damage) > 1e-6),
+          died=bool(died),
+          void_death=bool(void_death),
+        )
+        learning.record_decision(
+          observation=learn_observation,
+          mask=learn_mask,
+          action_id=str(learn_action_id),
+          action_source=str(learn_action_source),
+          actor_id=str(actor.actor_id),
+          transition=transition,
+          failure_reason=failure_reason,
+          route_state={"mode": str(mode), "route_present": bool(learn_observation.route_present), "route_blocked": bool(learn_observation.route_blocked)},
+          combat_state={"visible_player": bool(learn_observation.visible_player), "attack_in_range": bool(learn_observation.attack_in_range)},
+          placement_state={"can_place": bool(learn_observation.can_place_blocks)},
+        )
       if not actor.player.alive():
         removed_actor_ids.append(str(actor.actor_id))
     for actor_id in removed_actor_ids:

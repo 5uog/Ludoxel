@@ -260,6 +260,9 @@ def _on_actor_dialog_finished(viewport: "RendererViewportWidget", *, actor_id: s
 
   if not bool(route_edit_active(viewport)):
     viewport._ai_edit_actor_id = None
+  _learning_runtime = getattr(viewport, "_learning_runtime", None)
+  if _learning_runtime is not None:
+    _learning_runtime.configure_session(viewport._session)
   settings_controller.sync_cloud_motion_pause(viewport)
   if bool(was_captured) and not viewport._overlays.any_modal_open() and not bool(viewport.loading_active()):
     viewport._inp.set_mouse_capture(True)

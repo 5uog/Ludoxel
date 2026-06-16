@@ -4,9 +4,42 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ludoxel.simulation.actors.ai_players.learning.dataset import RECORD_PLAYER_MOVEMENT
 from ludoxel.simulation.actors.player.damage import apply_void_damage
 from ludoxel.simulation.actors.player.kinematics import PlayerStepInput, advance_runtime_player, fall_damage_amount
 from ludoxel.simulation.rules.gravity.system import GravityBrokenBlock
+
+_MOVE_EPS: float = 0.3
+
+
+def _player_movement_action(*, move_f: float, move_s: float, jump_pressed: bool, sprint: bool, crouch: bool) -> str | None:
+  """
+  player の移動入力を demonstration 記録用の action id へ写像する。
+  jump 入力を最優先し、水平移動が実質 0 の場合は crouch なら sneak、そうでなければ記録不要として None を返す。前後左右と斜めは閾値 _MOVE_EPS で分類し、前進かつ sprint なら sprint とする。None を返した step は移動実演として記録しない。
+  """
+  if bool(jump_pressed):
+    return "jump"
+  forward = bool(float(move_f) > _MOVE_EPS)
+  backward = bool(float(move_f) < -_MOVE_EPS)
+  left = bool(float(move_s) < -_MOVE_EPS)
+  right = bool(float(move_s) > _MOVE_EPS)
+  if not (forward or backward or left or right):
+    return "sneak" if bool(crouch) else None
+  if forward and left:
+    return "move_forward_left"
+  if forward and right:
+    return "move_forward_right"
+  if backward and left:
+    return "move_back_left"
+  if backward and right:
+    return "move_back_right"
+  if forward:
+    return "sprint" if bool(sprint) else "move_forward"
+  if backward:
+    return "move_back"
+  if left:
+    return "move_left"
+  return "move_right"
 
 
 @dataclass(frozen=True)
@@ -75,7 +108,13 @@ def step_session(
     void_damage, session._void_damage_timer_s = apply_void_damage(player=session.player, dt=float(dt), timer_s=float(session._void_damage_timer_s))
   else:
     session._void_damage_timer_s = 0.0
-  ai_report = session.ai_players.step(dt=float(dt), target_player=session.player, allow_pvp=(not bool(creative_mode)), paused_actor_ids=tuple(str(actor_id) for actor_id in paused_ai_actor_ids))
+  ai_report = session.ai_players.step(
+    dt=float(dt), target_player=session.player, allow_pvp=(not bool(creative_mode)), paused_actor_ids=tuple(str(actor_id) for actor_id in paused_ai_actor_ids), learning=session.learning
+  )
+  if session.learning.recording():
+    movement_action = _player_movement_action(move_f=float(move_f), move_s=float(move_s), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch))
+    if movement_action is not None:
+      session._record_player_action(kind=RECORD_PLAYER_MOVEMENT, action_id=str(movement_action))
   damage_taken = float(fall_damage) + float(void_damage) + float(ai_report.player_damage_taken)
   play_damage_sound = bool(float(void_damage) > 1e-6 or float(ai_report.player_damage_taken) > 1e-6)
 
