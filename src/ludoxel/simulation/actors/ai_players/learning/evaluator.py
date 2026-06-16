@@ -8,7 +8,7 @@ from typing import Any
 
 from ludoxel.simulation.actors.ai_players.learning.action_mask import build_action_mask
 from ludoxel.simulation.actors.ai_players.learning.actions import ACTION_CATALOG
-from ludoxel.simulation.actors.ai_players.learning.feature_encoder import is_feature_key
+from ludoxel.simulation.actors.ai_players.learning.feature_encoder import encode_features, is_feature_key
 from ludoxel.simulation.actors.ai_players.learning.observation import AiObservation, DirectionProbe
 from ludoxel.simulation.actors.ai_players.learning.policy import POLICY_COMPATIBILITY_TARGET, POLICY_SCHEMA_VERSION, DeterministicPolicy, Policy
 
@@ -31,7 +31,8 @@ TASK_SANDBOX_BEHAVIOR: str = "sandbox_behavior"
 class EvaluationTask:
   """
   policy 評価における単一検査項目の定義を表す不変記述である。
-  task_id は識別子、name は表示名、description は検査内容の英文説明である。検査は schema 妥当性、互換性、行動目録妥当性、feature 符号化器妥当性、mask 準拠、sandbox 行動の各観点に対応する。
+  task_id は識別子、name は表示名、description は検査内容の英文説明である。
+  検査は schema 妥当性、互換性、行動目録妥当性、feature 符号化器妥当性、mask 準拠、sandbox 行動の各観点に対応する。
   """
 
   task_id: str
@@ -60,7 +61,8 @@ EVALUATION_TASKS: tuple[EvaluationTask, ...] = (
 class EvaluationResult:
   """
   単一検査項目に対する判定結果を表す不変値である。
-  task_id は対象、status は passed か failed、summary は英文要約、score は任意の数値指標(未算出時 None)、detail は補助 mapping である。未実装や未実行を passed と偽らず、検査が成立しなかった場合は failed を返す。
+  task_id は対象、status は passed か failed、summary は英文要約、score は任意の数値指標(未算出時 None)、
+  detail は補助 mapping である。未実装や未実行を passed と偽らず、検査が成立しなかった場合は failed を返す。
   """
 
   task_id: str
@@ -88,7 +90,12 @@ class EvaluationResult:
 class EvaluationReport:
   """
   policy に対する一連の検査結果と総合判定を表す不変値である。
-  schema_version は形式版、policy_id は被評価 policy、results は項目別結果、passed は全検査合格の総合判定、score は policy の sandbox score、baseline_score は deterministic baseline の sandbox score、policy_score は policy の sandbox score、mask_violations は mask 違反件数、schema_errors と compatibility_errors は検査で検出した不整合の説明、created_at は生成時刻である。一つでも failed があれば passed は偽となり、評価未通過 policy の本番使用を防ぐ。
+  schema_version は形式版、policy_id は被評価 policy、results は項目別結果、
+  passed は全検査合格の総合判定、score は policy の sandbox score、
+  baseline_score は deterministic baseline の sandbox score、
+  policy_score は policy の sandbox score、mask_violations は mask 違反件数、
+  schema_errors と compatibility_errors は検査で検出した不整合の説明、created_at は生成時刻である。
+  一つでも failed があれば passed は偽となり、評価未通過 policy の本番使用を防ぐ。
   """
 
   policy_id: str = ""
@@ -100,13 +107,16 @@ class EvaluationReport:
   mask_violations: int = 0
   schema_errors: tuple[str, ...] = ()
   compatibility_errors: tuple[str, ...] = ()
+  decision_diff: tuple[dict[str, Any], ...] = ()
   created_at: str = ""
   schema_version: int = EVALUATION_SCHEMA_VERSION
 
   def to_dict(self) -> dict[str, Any]:
     """
     報告を JSON 直列化可能な mapping へ変換する。
-    返値は schema_version、policy_id、passed、score、baseline_score、policy_score、mask_violations、schema_errors、compatibility_errors、created_at、及び項目別結果の列を含み、persistence の評価保存と UI 表示が同一形式を共有する。
+    返値は schema_version、policy_id、passed、score、baseline_score、
+    policy_score、mask_violations、schema_errors、compatibility_errors、
+    created_at、及び項目別結果の列を含み、persistence の評価保存と UI 表示が同一形式を共有する。
     """
     return {
       "schema_version": int(self.schema_version),
@@ -118,6 +128,7 @@ class EvaluationReport:
       "mask_violations": int(self.mask_violations),
       "schema_errors": [str(value) for value in self.schema_errors],
       "compatibility_errors": [str(value) for value in self.compatibility_errors],
+      "decision_diff": [dict(row) for row in self.decision_diff],
       "created_at": str(self.created_at),
       "results": [result.to_dict() for result in self.results],
     }
@@ -131,18 +142,38 @@ def describe_tasks() -> tuple[EvaluationTask, ...]:
   return EVALUATION_TASKS
 
 
+def _flat_directions() -> dict[str, DirectionProbe]:
+  """
+  全 8 方向が平坦な足場(奈落でなく一歩で歩行遷移でき、配置も可能)である方向標本を返す。
+  これにより、移動・横移動・後退・配置を伴う代表観測で行動 mask が方向起因の禁止を返さず、
+  policy が移動系・配置系の選好を反映できるかを検査できる。
+  """
+  return {name: DirectionProbe(direction=name, standable_step=True, headroom_clear=True, is_void=False, drop_depth=0, can_place_support=True) for name in ("n", "s", "e", "w", "ne", "nw", "se", "sw")}
+
+
+def _void_directions() -> dict[str, DirectionProbe]:
+  """
+  全 8 方向が奈落である方向標本を返す。
+  奈落への移動を mask が禁止すること、及び閉塞状況での選好を検査するために用いる。
+  """
+  return {name: DirectionProbe(direction=name, is_void=True) for name in ("n", "s", "e", "w", "ne", "nw", "se", "sw")}
+
+
 def _sample_observations() -> tuple[AiObservation, ...]:
   """
-  mask 準拠検査に用いる代表観測の集合を構築して返す。
-  戦闘射程内・cooldown 可否、低体力かつ脅威圏、route 閉塞、前方奈落など、行動 mask が異なる禁止集合を返す状況を網羅し、policy が各状況で禁止行動を選ばないことを検査できるようにする。
+  mask 準拠検査と決定差分の評価に用いる代表観測の集合を構築して返す。
+  戦闘射程内かつ平坦地形、低体力かつ脅威圏かつ平坦地形、遠距離かつ平坦地形、route 閉塞かつ配置可能、
+  前方奈落の各状況を含む。平坦地形の標本では移動・横移動・後退・配置が許可されるため、
+  policy の移動系・配置系選好が決定を変え得るかを検査でき、奈落標本では移動が禁止されることを検査する。
   """
-  void_dir = {name: DirectionProbe(direction=name, is_void=True) for name in ("n", "s", "e", "w", "ne", "nw", "se", "sw")}
   return (
-    AiObservation(visible_player=True, attack_in_range=True, attack_cooldown_ready=True, on_ground=True, jump_available=True, distance_to_player=2.0, health=20.0, max_health=20.0),
+    AiObservation(
+      visible_player=True, attack_in_range=True, attack_cooldown_ready=True, on_ground=True, jump_available=True, distance_to_player=2.0, health=20.0, max_health=20.0, directions=_flat_directions()
+    ),
     AiObservation(
       visible_player=True,
       attack_in_range=True,
-      attack_cooldown_ready=False,
+      attack_cooldown_ready=True,
       on_ground=True,
       jump_available=True,
       distance_to_player=2.0,
@@ -150,10 +181,24 @@ def _sample_observations() -> tuple[AiObservation, ...]:
       max_health=20.0,
       low_health=True,
       low_health_in_threat=True,
+      directions=_flat_directions(),
     ),
-    AiObservation(visible_player=True, attack_in_range=False, distance_to_player=8.0, on_ground=True, jump_available=True, health=20.0, max_health=20.0),
-    AiObservation(route_present=True, route_blocked=True, route_target=(5.0, 1.0, 5.0), on_ground=True, jump_available=True),
-    AiObservation(on_ground=True, jump_available=True, directions=void_dir),
+    AiObservation(
+      visible_player=True,
+      attack_in_range=False,
+      distance_to_player=8.0,
+      on_ground=True,
+      jump_available=True,
+      health=20.0,
+      max_health=20.0,
+      can_place_blocks=True,
+      available_block_count=999,
+      directions=_flat_directions(),
+    ),
+    AiObservation(
+      route_present=True, route_blocked=True, route_target=(5.0, 1.0, 5.0), on_ground=True, jump_available=True, can_place_blocks=True, available_block_count=999, directions=_flat_directions()
+    ),
+    AiObservation(on_ground=True, jump_available=True, directions=_void_directions()),
   )
 
 
@@ -172,7 +217,8 @@ def _validate_schema(policy: Policy) -> tuple[EvaluationResult, list[str]]:
 def _validate_compatibility(policy: Policy) -> tuple[EvaluationResult, list[str]]:
   """
   policy の互換性(契約版・feature 符号化器版・行動目録版)を検査する。
-  Policy.is_usable と同じ整合条件のうち評価通過要件を除いた版整合を検査し、不一致を failed として説明列へ集約する。
+  Policy.is_usable と同じ整合条件のうち評価通過要件を除いた版整合を検査し、
+  不一致を failed として説明列へ集約する。
   """
   errors: list[str] = []
   if str(policy.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
@@ -191,7 +237,8 @@ def _validate_compatibility(policy: Policy) -> tuple[EvaluationResult, list[str]
 def _validate_action_catalog(policy: Policy) -> EvaluationResult:
   """
   policy が参照する全 action が行動目録に存在するかを検査する。
-  action_weights、negative_modifiers、action_weight_overrides の action id を走査し、未知 id があれば failed を返す。
+  action_weights、negative_modifiers、action_weight_overrides の action id を走査し、
+  未知 id があれば failed を返す。
   """
   unknown: list[str] = []
   for mapping in policy.action_weights.values():
@@ -207,7 +254,8 @@ def _validate_action_catalog(policy: Policy) -> EvaluationResult:
 def _validate_feature_encoder(policy: Policy) -> EvaluationResult:
   """
   policy の feature 条件 key がすべて符号化器の生成しうる key であるかを検査する。
-  action_weights の feature key と utility_modifiers の feature 候補を走査し、未知 feature key があれば failed を返す。category/skill 由来の utility_modifiers key は feature でないため検査対象外とする。
+  action_weights の feature key と utility_modifiers の feature 候補を走査し、
+  未知 feature key があれば failed を返す。category/skill 由来の utility_modifiers key は feature でないため検査対象外とする。
   """
   unknown = sorted({str(feature) for feature in policy.action_weights if not is_feature_key(feature)})
   status = EVALUATION_STATUS_PASSED if not unknown else EVALUATION_STATUS_FAILED
@@ -218,7 +266,9 @@ def _validate_feature_encoder(policy: Policy) -> EvaluationResult:
 def _check_mask_compliance(policy: Policy) -> tuple[EvaluationResult, int]:
   """
   代表観測群に対し、policy 補正下の決定が常に行動 mask の許可集合内に収まるかを検査する。
-  各観測で mask を構築し、DeterministicPolicy.decide に policy を与えて決定を得て、選択行動が許可集合に含まれない場合を mask 違反として計数する。違反が 0 なら passed、1 件以上なら failed を返す。これにより policy 補正が安全境界を越えないことを検証する。
+  各観測で mask を構築し、DeterministicPolicy.decide に policy を与えて決定を得て、
+  選択行動が許可集合に含まれない場合を mask 違反として計数する。違反が 0 なら passed、1 件以上なら failed を返す。
+  これにより policy 補正が安全境界を越えないことを検証する。
   """
   deterministic = DeterministicPolicy()
   violations = 0
@@ -232,10 +282,36 @@ def _check_mask_compliance(policy: Policy) -> tuple[EvaluationResult, int]:
   return EvaluationResult(task_id=TASK_MASK_COMPLIANCE, status=status, summary=summary, detail={"violations": int(violations)}), int(violations)
 
 
+def _decision_diff(policy: Policy) -> tuple[dict[str, Any], ...]:
+  """
+  代表観測群に対し、deterministic baseline と policy 補正後の選択行動の差分を返す。
+  各観測で mask を構築し、policy なし(baseline)と policy ありの決定を求めて、
+  特徴・baseline 行動・learned 行動・変化有無を記録する。
+  これにより「policy が決定をどう変えたか」を観測単位で具体的に確認でき、
+  評価が pass/fail だけに終わらないようにする。
+  """
+  deterministic = DeterministicPolicy()
+  rows: list[dict[str, Any]] = []
+  for observation in _sample_observations():
+    mask = build_action_mask(observation)
+    baseline_action = deterministic.decide(observation, mask, None).action_id
+    learned_action = deterministic.decide(observation, mask, policy).action_id
+    rows.append({"features": list(encode_features(observation)), "baseline_action": str(baseline_action), "learned_action": str(learned_action), "changed": bool(baseline_action != learned_action)})
+  return tuple(rows)
+
+
 def run_evaluation(policy: Policy | None = None) -> EvaluationReport:
   """
   与えた policy を実評価し、合否・score・項目別詳細を持つ報告を返す。
-  policy を省略した場合は組み込み deterministic baseline を評価する。検査は schema 妥当性、互換性、行動目録妥当性、feature 符号化器妥当性、mask 準拠、及び headless sandbox 行動の各項目を実行する。sandbox 行動検査では、policy と deterministic baseline の aggregate score を同一 scenario 群で測り、policy が baseline 以上であれば passed とする。総合 passed は全項目合格を要し、一つでも failed があれば偽となる。これにより評価未通過・schema 不一致・互換不一致・mask 違反の policy は本番使用されない。本評価は外部 ML framework を用いず Ludoxel の実規則のみで完結し、UI thread を塞がないため background で実行する。
+  policy を省略した場合は組み込み deterministic baseline を評価する。
+  検査は schema 妥当性、互換性、行動目録妥当性、feature 符号化器妥当性、
+  mask 準拠、及び headless sandbox 行動の各項目を実行する。
+  sandbox 行動検査では、policy と deterministic baseline の aggregate score を同一 scenario 群で測り、
+  policy が baseline 以上であれば passed とする。
+  総合 passed は全項目合格を要し、一つでも failed があれば偽となる。
+  これにより評価未通過・schema 不一致・互換不一致・mask 違反の policy は本番使用されない。
+  本評価は外部 ML framework を用いず Ludoxel の実規則のみで完結し、
+  UI thread を塞がないため background で実行する。
   """
   from ludoxel.simulation.actors.ai_players.learning.policy import builtin_deterministic_policy
 
@@ -276,5 +352,6 @@ def run_evaluation(policy: Policy | None = None) -> EvaluationReport:
     mask_violations=int(mask_violations),
     schema_errors=tuple(schema_errors),
     compatibility_errors=tuple(compatibility_errors),
+    decision_diff=_decision_diff(effective_policy),
     created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
   )

@@ -25,10 +25,15 @@ FEATURE_HAZARD_DEEP_DROP_AHEAD: str = "hazard:deep_drop_ahead"
 FEATURE_TERRAIN_ENCLOSED: str = "terrain:enclosed"
 FEATURE_TERRAIN_BRIDGE_NEEDED: str = "terrain:bridge_needed"
 FEATURE_TERRAIN_JUMP_NEEDED: str = "terrain:jump_needed"
+FEATURE_TERRAIN_GAP_AHEAD: str = "terrain:gap_ahead"
+FEATURE_TERRAIN_TOWER_NEEDED: str = "terrain:tower_needed"
 FEATURE_TERRAIN_FENCE_GATE_CLOSED: str = "terrain:fence_gate_closed"
 FEATURE_PLACEMENT_CAN_PLACE_BRIDGE: str = "placement:can_place_bridge"
 FEATURE_PLACEMENT_CAN_PLACE_DEFENSE: str = "placement:can_place_defense"
 FEATURE_BREAKING_CAN_BREAK_ESCAPE: str = "breaking:can_break_escape"
+FEATURE_ROUTE_FAILED_RECENTLY: str = "route:failed_recently"
+FEATURE_TRAP_HOLE_AVAILABLE: str = "trap:hole_available"
+FEATURE_TRAP_SEAL_OPPORTUNITY: str = "trap:seal_opportunity"
 FEATURE_STUCK_RECENTLY_STUCK: str = "stuck:recently_stuck"
 
 FEATURE_KEYS: tuple[str, ...] = (
@@ -50,10 +55,15 @@ FEATURE_KEYS: tuple[str, ...] = (
   FEATURE_TERRAIN_ENCLOSED,
   FEATURE_TERRAIN_BRIDGE_NEEDED,
   FEATURE_TERRAIN_JUMP_NEEDED,
+  FEATURE_TERRAIN_GAP_AHEAD,
+  FEATURE_TERRAIN_TOWER_NEEDED,
   FEATURE_TERRAIN_FENCE_GATE_CLOSED,
   FEATURE_PLACEMENT_CAN_PLACE_BRIDGE,
   FEATURE_PLACEMENT_CAN_PLACE_DEFENSE,
   FEATURE_BREAKING_CAN_BREAK_ESCAPE,
+  FEATURE_ROUTE_FAILED_RECENTLY,
+  FEATURE_TRAP_HOLE_AVAILABLE,
+  FEATURE_TRAP_SEAL_OPPORTUNITY,
   FEATURE_STUCK_RECENTLY_STUCK,
 )
 
@@ -88,7 +98,14 @@ def _forward_direction_probe(observation: AiObservation) -> DirectionProbe | Non
 def encode_features(observation: AiObservation) -> tuple[str, ...]:
   """
   observation を、policy が条件付けに用いる安定した feature key の列へ変換する。
-  本符号化は学習と適用の双方で同一でなければならず、FEATURE_ENCODER_VERSION で版を識別する。体力は max_health に対する割合で low(35%以下)と critical(15%以下)を、player は最後に観測した距離で near(3 以下)・mid(7 以下)・far、及び現在視認(visible)か最後の既知位置のみ(last_known_only)かを付与する。combat は cooldown の可否と射程内、route は閉塞・喪失・利用可能、hazard は前方標本に基づく奈落と深い落差、terrain は周囲閉塞・橋掛け必要・跳躍必要・閉じたフェンスゲート、placement は橋と防御の配置可否、breaking は脱出のための破壊可否、stuck は直近の行き詰まりを付与する。前方依存 feature は yaw 最寄り方向の標本から導く。返値は重複の無い feature key の tuple であり、未知 key を含まない。
+  本符号化は学習と適用の双方で同一でなければならず、FEATURE_ENCODER_VERSION で版を識別する。
+  体力は max_health に対する割合で low(35%以下)と critical(15%以下)を、
+  player は最後に観測した距離で near(3 以下)・mid(7 以下)・far、
+  及び現在視認(visible)か最後の既知位置のみ(last_known_only)かを付与する。
+  combat は cooldown の可否と射程内、route は閉塞・喪失・利用可能、
+  hazard は前方標本に基づく奈落と深い落差、terrain は周囲閉塞・橋掛け必要・跳躍必要・閉じたフェンスゲート、
+  placement は橋と防御の配置可否、breaking は脱出のための破壊可否、stuck は直近の行き詰まりを付与する。
+  前方依存 feature は yaw 最寄り方向の標本から導く。返値は重複の無い feature key の tuple であり、未知 key を含まない。
   """
   features: list[str] = []
   max_health = max(1e-6, float(observation.max_health))
@@ -121,6 +138,8 @@ def encode_features(observation: AiObservation) -> tuple[str, ...]:
   if bool(observation.route_present):
     if bool(observation.route_blocked):
       features.append(FEATURE_ROUTE_BLOCKED)
+      if str(observation.last_action) == "replan_route" or str(observation.last_damage_source) == "stuck":
+        features.append(FEATURE_ROUTE_FAILED_RECENTLY)
     else:
       features.append(FEATURE_ROUTE_AVAILABLE)
   elif observation.route_target is not None:
@@ -132,10 +151,17 @@ def encode_features(observation: AiObservation) -> tuple[str, ...]:
       features.append(FEATURE_HAZARD_VOID_AHEAD)
     elif int(forward.drop_depth) >= int(_DEEP_DROP_BLOCKS):
       features.append(FEATURE_HAZARD_DEEP_DROP_AHEAD)
+    if not bool(forward.standable_step):
+      features.append(FEATURE_TERRAIN_GAP_AHEAD)
     if (not bool(forward.standable_step)) and bool(forward.can_place_support):
       features.append(FEATURE_TERRAIN_BRIDGE_NEEDED)
     if bool(forward.blocked_by_wall) and not bool(forward.standable_step):
       features.append(FEATURE_TERRAIN_JUMP_NEEDED)
+
+  player_position = observation.player_visible_position if observation.player_visible_position is not None else observation.player_last_known_position
+  if bool(observation.visible_player) and player_position is not None and bool(observation.on_ground):
+    if float(player_position[1]) >= float(observation.self_position[1]) + 1.5:
+      features.append(FEATURE_TERRAIN_TOWER_NEEDED)
 
   enclosed = sum(1 for probe in observation.directions.values() if not bool(probe.standable_step)) >= 6
   if bool(enclosed):
@@ -150,6 +176,12 @@ def encode_features(observation: AiObservation) -> tuple[str, ...]:
     features.append(FEATURE_PLACEMENT_CAN_PLACE_DEFENSE)
   if len(observation.visible_target_blocks) > 0:
     features.append(FEATURE_BREAKING_CAN_BREAK_ESCAPE)
+
+  player_near_or_mid = distance is not None and float(distance) <= float(_PLAYER_MID_BLOCKS)
+  if bool(player_near_or_mid) and any(bool(probe.is_void) or int(probe.drop_depth) >= int(_DEEP_DROP_BLOCKS) for probe in observation.directions.values()):
+    features.append(FEATURE_TRAP_HOLE_AVAILABLE)
+  if bool(can_place) and bool(player_near_or_mid) and any(bool(probe.can_place_support) for probe in observation.directions.values()):
+    features.append(FEATURE_TRAP_SEAL_OPPORTUNITY)
 
   if str(observation.last_damage_source) == "stuck" or str(observation.last_action) == "replan_route" and bool(observation.route_blocked):
     features.append(FEATURE_STUCK_RECENTLY_STUCK)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -12,8 +13,9 @@ from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y
 from ludoxel.simulation.actors.ai_players.avoidance import active_avoid_support_cells, decay_avoid_support_cells, remember_avoid_support_cell
 from ludoxel.simulation.actors.ai_players.combat import _combat_control
 from ludoxel.simulation.actors.ai_players.idle import idle_control
-from ludoxel.simulation.actors.ai_players.learning.action_mask import build_action_mask
+from ludoxel.simulation.actors.ai_players.learning.action_mask import AiActionMask, build_action_mask
 from ludoxel.simulation.actors.ai_players.learning.coordinator import ACTION_SOURCE_DETERMINISTIC, ACTION_SOURCE_LEARNED_POLICY, LearningCoordinator
+from ludoxel.simulation.actors.ai_players.learning.feature_encoder import encode_features
 from ludoxel.simulation.actors.ai_players.learning.observation import DIRECTION_OFFSETS, AiObservation, build_neighborhood
 from ludoxel.simulation.actors.ai_players.learning.rewards import RewardTransition
 from ludoxel.simulation.actors.ai_players.naming import ai_display_name_format_error, ai_name_duplicate_key, allocate_default_spawn_ai_name, allocate_suffixed_ai_name, split_ai_display_name
@@ -121,16 +123,32 @@ from ludoxel.simulation.worlds.config.session import SessionSettings
 from ludoxel.simulation.worlds.state.world import WorldState
 
 
+def _ai_decision_debug_enabled() -> bool:
+  """
+  AI 意思決定の一時 debug log を出力してよいかを返す。
+  環境変数 `LUDOXEL_AI_DEBUG` が `1`、`true`、`yes`、`on` の何れかである場合に限り真を返す。
+  既定では偽であり、通常 gameplay で意思決定ごとの冗長な log を出さない。
+  本判定は毎 step 呼ばれ得るため、環境変数の評価のみの軽量処理に留める。
+  """
+  return str(os.environ.get("LUDOXEL_AI_DEBUG", "")).strip().lower() in ("1", "true", "yes", "on")
+
+
 class _ManagerNeighborhoodProbe:
   """
   AiPlayerManager の形状規則述語へ委譲して learning observation の周辺標本を供給する probe adapter である。
-  本 adapter は NeighborhoodProbe Protocol を満たし、足場・頭上・通行・配置可否・落差を manager の既存述語(_standable_support_cell、_nav_headroom_clear、_nav_cell_empty、_can_place_support_block、_cell_has_full_top_support)へ委譲する。これらは has_full_top_support_for_block と world_aabb_intersects に基づき半 block・階段・フェンス・フェンスゲート・壁の形状を反映するため、observation は full block 仮定に陥らない。actor を保持するのは standable と placement 判定が actor 固有の collision body と placement 許可へ依存するためである。
+  本 adapter は NeighborhoodProbe Protocol を満たし、足場・頭上・通行・配置可否・落差を
+  manager の既存述語(_standable_support_cell、_nav_headroom_clear、_nav_cell_empty、
+  _can_place_support_block、_cell_has_full_top_support)へ委譲する。
+  これらは has_full_top_support_for_block と world_aabb_intersects に基づき
+  半 block・階段・フェンス・フェンスゲート・壁の形状を反映するため、observation は full block 仮定に陥らない。
+  actor を保持するのは standable と placement 判定が actor 固有の collision body と placement 許可へ依存するためである。
   """
 
   def __init__(self, manager: "AiPlayerManager", actor: _AiPlayerRuntime, *, max_drop: int) -> None:
     """
     委譲先 manager、対象 actor、安全とみなす最大落差段数を保持して初期化する。
-    max_drop は support_drop_depth が奈落とみなすまでの下方走査段数の上限であり、edge safety の安全段数と一致させる。
+    max_drop は support_drop_depth が奈落とみなすまでの下方走査段数の上限であり、
+    edge safety の安全段数と一致させる。
     """
     self._manager = manager
     self._actor = actor
@@ -1792,6 +1810,24 @@ class AiPlayerManager:
           float(target_player.position.y) > float(actor.player.position.y) + 0.55 or (float(actor.player.jump_reset_window_s) > 1e-6 and float(chase_distance) <= 3.4)
         )
         chase_control = _combat_control(actor=actor, target=target, dt=float(dt), jump_pressed=bool(jump_pressed))
+        max_health = max(1.0, float(actor.player.max_health))
+        low_health = bool(float(actor.player.health) <= float(max_health) * 0.35)
+        if bool(low_health) and float(chase_distance) <= float(_AI_COMBAT_STRAFE_DISTANCE_MAX) + 1.5:
+          strafe_sign = 1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0
+          retreat_control = PlayerStepInput(
+            move_f=-1.0,
+            move_s=float(strafe_sign) * 0.5,
+            jump_held=False,
+            jump_pressed=False,
+            sprint=False,
+            crouch=False,
+            yaw_delta_deg=float(chase_control.yaw_delta_deg),
+            pitch_delta_deg=float(chase_control.pitch_delta_deg),
+            auto_jump_enabled=True,
+          )
+          guarded_retreat, retreat_blocked = self._apply_edge_safety(actor, retreat_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
+          if not bool(retreat_blocked):
+            return guarded_retreat
         guarded_control, _blocked = self._apply_edge_safety(actor, chase_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
         return guarded_control
     self._update_wander_state(actor, dt=float(dt))
@@ -1947,6 +1983,11 @@ class AiPlayerManager:
     low_health_in_threat = bool(low_health and attack_in_range)
     hazards = tuple((int(support[0]) + int(dx), int(support[1]), int(support[2]) + int(dz)) for name, dx, dz in DIRECTION_OFFSETS if bool(directions[name].is_void))
     void_present = any(bool(directions[name].is_void) for name in directions)
+    forward_vec = actor.player.view_forward()
+    facing = cardinal_from_xz(float(forward_vec.x), float(forward_vec.z), default="south")
+    facing_step_x, facing_step_z = facing_vec_xz(str(facing))
+    forward_body_cell = (int(support[0]) + int(facing_step_x), int(support[1]) + 1, int(support[2]) + int(facing_step_z))
+    forward_targets = (forward_body_cell,) if self._state_at(int(forward_body_cell[0]), int(forward_body_cell[1]), int(forward_body_cell[2])) is not None else ()
     last_damage_source = "stuck" if (mode == AI_MODE_ROUTE and float(actor.route_stuck_s) >= float(_AI_ROUTE_STUCK_TIMEOUT_S)) else None
     return AiObservation(
       actor_id=str(actor.actor_id),
@@ -1976,7 +2017,7 @@ class AiPlayerManager:
       available_block_count=(999 if bool(can_place) else 0),
       fence_gate_operable=bool(self._fence_gate_operable(support)),
       nearby_hazards=hazards,
-      visible_target_blocks=(),
+      visible_target_blocks=forward_targets,
       directions=directions,
       route_present=bool(route_present),
       route_blocked=bool(route_blocked),
@@ -2023,15 +2064,36 @@ class AiPlayerManager:
 
   def _apply_learned_action(self, actor: _AiPlayerRuntime, control: PlayerStepInput, action_id: str) -> PlayerStepInput:
     """
-    Use Learned Policy 時に、選択された micro action へ向けて制御入力の水平移動成分のみを安全な範囲で調整する。
-    対象は後退・斜め後退・横移動・横移動攻撃・停止といった spacing 行動に限り、前進・攻撃・配置・破壊・跳躍・フェンスゲートなどは既存制御をそのまま用いて既存の navigation・combat・placement 経路へ委ねる。yaw/pitch/jump/crouch/auto_jump は保持し、後退と横移動では sprint を解除する。調整後は必ず _apply_edge_safety を通すため、policy が選んだ後退・横移動が奈落へ踏み出すことはない。本写像は Free Roam / PVP(wander)に限定し、route navigation の制御は変更しない。
+    Use Learned Policy 時に、選択された micro action を制御入力(PlayerStepInput)の移動・跳躍成分へ写像する。
+    前進・斜め前進・sprint・後退・斜め後退・横移動・横移動攻撃・後退攻撃・停止は水平移動成分を、
+    jump・parkour_jump・tower_step・escape_stack_block は跳躍成分を設定する。
+    配置・破壊・フェンスゲート・経路再計画など世界状態を変える行動は本写像では制御を変えず、
+    _execute_policy_action が advance 後に既存 helper 経由で実行する。
+    yaw/pitch は既存制御の対象追従値を保持し、後退・横移動では sprint を解除する。
+    調整後は必ず _apply_edge_safety を通すため、policy が選んだ移動が奈落へ踏み出すことはない。
+    本写像は Free Roam / PVP(wander)に限定する。
     """
     aid = str(action_id)
     strafe_sign = 1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0
     move_f = float(control.move_f)
     move_s = float(control.move_s)
     sprint = bool(control.sprint)
-    if aid in ("move_back", "backpedal_attack"):
+    jump_pressed = bool(control.jump_pressed)
+    jump_held = bool(control.jump_held)
+    if aid == "move_forward":
+      move_f = 1.0
+      move_s = 0.0
+    elif aid == "sprint":
+      move_f = 1.0
+      move_s = 0.0
+      sprint = True
+    elif aid == "move_forward_left":
+      move_f = 1.0
+      move_s = -1.0
+    elif aid == "move_forward_right":
+      move_f = 1.0
+      move_s = 1.0
+    elif aid in ("move_back", "backpedal_attack"):
       move_f = -1.0
       move_s = 0.0
       sprint = False
@@ -2054,6 +2116,20 @@ class AiPlayerManager:
       move_f = 0.0
       move_s = 1.0
       sprint = False
+    elif aid == "parkour_jump":
+      move_f = 1.0
+      sprint = True
+      jump_pressed = True
+      jump_held = True
+    elif aid == "jump":
+      jump_pressed = True
+      jump_held = True
+    elif aid in ("tower_step", "escape_stack_block"):
+      move_f = 0.0
+      move_s = 0.0
+      sprint = False
+      jump_pressed = True
+      jump_held = True
     elif aid in ("stop", "no_op"):
       move_f = 0.0
       move_s = 0.0
@@ -2063,8 +2139,8 @@ class AiPlayerManager:
     adjusted = PlayerStepInput(
       move_f=float(move_f),
       move_s=float(move_s),
-      jump_held=bool(control.jump_held),
-      jump_pressed=bool(control.jump_pressed),
+      jump_held=bool(jump_held),
+      jump_pressed=bool(jump_pressed),
       sprint=bool(sprint),
       crouch=bool(control.crouch),
       yaw_delta_deg=float(control.yaw_delta_deg),
@@ -2073,6 +2149,126 @@ class AiPlayerManager:
     )
     guarded_control, _blocked = self._apply_edge_safety(actor, adjusted, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
     return guarded_control
+
+  def _policy_place_forward(self, actor: _AiPlayerRuntime) -> bool:
+    """
+    AI の正面足元方向へ支持 block を 1 個配置する。
+    facing から水平 step を求め、現在支持 cell を anchor として _place_adjacent_block で配置する。
+    bridge_step・place_block・defensive_block の実行に共用し、橋の足場兼前方遮蔽として働く。
+    配置可否(anchor 実在・target 空き・LOS・cooldown)は helper が検証し、成立時のみ world state を変える。
+    配置できた場合に真を返す。
+    """
+    if actor.held_item_id is None or float(actor.place_cooldown_s) > 1e-6:
+      return False
+    support_cell = self._current_support_cell(actor)
+    if support_cell is None:
+      return False
+    forward = actor.player.view_forward()
+    facing = cardinal_from_xz(float(forward.x), float(forward.z), default="south")
+    step_x, step_z = facing_vec_xz(str(facing))
+    return bool(self._place_adjacent_block(actor, anchor_cell=tuple(int(value) for value in support_cell), step_x=int(step_x), step_z=int(step_z)))
+
+  def _policy_break_forward(self, actor: _AiPlayerRuntime) -> bool:
+    """
+    AI の視線方向にある block を破壊する。
+    interact cooldown 経過時に限り、eye 位置から視線方向へ reach 3.0 の picking で当たった block を interaction.break_block で破壊する。
+    破壊対象は前方 body 高さの障害物であり、足元支持 cell は視線が下を向かない限り対象にならない。
+    さらに escape_break / break は observation の visible_target_blocks(前方 body block)が存在する時だけ mask が許可するため、足場破壊は選ばれない。
+    破壊できた場合に真を返し、interact cooldown を設定する。
+    """
+    if float(actor.interact_cooldown_s) > 1e-6:
+      return False
+    forward = actor.player.view_forward()
+    eye = actor.player.eye_pos()
+    outcome = actor.interaction.break_block(reach=3.0, origin=eye, direction=forward)
+    if not bool(getattr(outcome, "success", False)):
+      return False
+    actor.interact_cooldown_s = float(_AI_INTERACT_COOLDOWN_S)
+    return True
+
+  def _policy_toggle_fence_gate(self, actor: _AiPlayerRuntime) -> bool:
+    """
+    AI の正面にあるフェンスゲートを開閉する。
+    interact cooldown 経過時に限り、reach 2.2 の picking で当たった block を interact_block_at_hit で操作する。
+    フェンスゲートは通行物としても遮断物としても扱われ、開閉により通行可否が変わる。
+    操作が成立した場合に真を返し、interact cooldown を設定する。
+    """
+    if float(actor.interact_cooldown_s) > 1e-6:
+      return False
+    forward = actor.player.view_forward()
+    eye = actor.player.eye_pos()
+    hit = actor.interaction.pick_block(reach=2.2, origin=eye, direction=forward)
+    if hit is None:
+      return False
+    outcome = actor.interaction.interact_block_at_hit(tuple(int(value) for value in hit.hit))
+    if not bool(getattr(outcome, "success", False)):
+      return False
+    actor.interact_cooldown_s = float(_AI_INTERACT_COOLDOWN_S)
+    return True
+
+  def _execute_policy_action(self, actor: _AiPlayerRuntime, action_id: str, *, support_before: tuple[int, int, int] | None) -> bool:
+    """
+    Use Learned Policy が選んだ世界変更 action を advance 後に既存 helper 経由で実行する。
+    配置(bridge_step・place_block・defensive_block)は正面への block 配置、tower_step・escape_stack_block は跳躍後の足元への block 配置(高さ獲得)、
+    break_block・escape_break_block は正面 block の破壊、toggle_fence_gate はフェンスゲート開閉、replan_route は route 計画の破棄による再計画要求へ写像する。
+    いずれも対応 helper が安全条件(配置可否・cooldown・LOS・支持)を検証するため、unsafe な配置・破壊・足場除去は実行されない。
+    世界変更を行った場合に真を返す。move/jump 系や attack はここでは扱わず(_apply_learned_action と既存 attack 経路が担う)偽を返す。
+    """
+    aid = str(action_id)
+    if aid in ("bridge_step", "place_block", "defensive_block"):
+      return bool(self._policy_place_forward(actor))
+    if aid in ("tower_step", "escape_stack_block"):
+      if support_before is not None and (not bool(actor.player.on_ground)):
+        return bool(self._place_block_on_support(actor, support_cell=tuple(int(value) for value in support_before)))
+      return False
+    if aid in ("break_block", "escape_break_block"):
+      return bool(self._policy_break_forward(actor))
+    if aid == "toggle_fence_gate":
+      return bool(self._policy_toggle_fence_gate(actor))
+    if aid == "replan_route" and normalize_ai_mode(actor.mode) == AI_MODE_ROUTE:
+      if bool(actor.nav_plan_pending):
+        self._cancel_pending_nav_plan(actor)
+      self._clear_nav_plan(actor)
+      actor.nav_replan_cooldown_s = 0.0
+      return True
+    return False
+
+  def _log_ai_decision(
+    self,
+    *,
+    actor: _AiPlayerRuntime,
+    mode: str,
+    observation: AiObservation,
+    mask: AiActionMask,
+    deterministic_ranked: tuple[tuple[str, float], ...],
+    learned_ranked: tuple[tuple[str, float], ...],
+    selected_action: str,
+    source: str,
+    policy_id: str,
+    policy_usable: bool,
+    control: PlayerStepInput,
+    world_action: bool,
+  ) -> None:
+    """
+    一 actor の意思決定内容を、環境変数で有効化された時のみ一時 debug log として出力する。
+    出力には actor id、mode、選択 policy id と使用可否、observation の feature key、
+    許可・禁止 action 数、deterministic 上位 5 行動、policy 補正後上位 5 行動、選択行動、
+    行動源、最終制御の移動・跳躍成分、世界変更実行有無を含める。
+    これにより Off / Observe Only / Use Learned Policy の各 mode で、policy が決定をどう変えたか、
+    最終的に何が実行されたかを 1 行で確認できる。本 log は既定で無効であり、通常 gameplay を汚さない。
+    """
+    features = ",".join(encode_features(observation))
+    forbidden = ",".join(sorted(mask.forbidden.keys()))
+    det_top = ",".join(f"{action}:{score:.2f}" for action, score in deterministic_ranked[:5])
+    learned_top = ",".join(f"{action}:{score:.2f}" for action, score in learned_ranked[:5])
+    control_summary = f"f={float(control.move_f):.2f},s={float(control.move_s):.2f},jump={bool(control.jump_pressed)},sprint={bool(control.sprint)}"
+    print(
+      f"[AI-DECISION] actor={actor.actor_id} mode={mode} policy={policy_id or 'none'} usable={bool(policy_usable)} "
+      f"features=[{features}] allowed={len(mask.allowed)} blocked=[{forbidden}] "
+      f"det_top5=[{det_top}] learned_top5=[{learned_top}] selected={selected_action} source={source} "
+      f"control=({control_summary}) world_action={bool(world_action)}",
+      flush=True,
+    )
 
   def step(self, *, dt: float, target_player: PlayerEntity | None, allow_pvp: bool, paused_actor_ids: tuple[str, ...] = (), learning: LearningCoordinator | None = None) -> AiStepReport:
     self._drain_completed_route_plans()
@@ -2110,9 +2306,12 @@ class AiPlayerManager:
       learn_mask = None
       learn_action_id: str | None = None
       learn_action_source = ACTION_SOURCE_DETERMINISTIC
+      learn_support_before: tuple[int, int, int] | None = None
+      learn_world_action = False
       if learning is not None and bool(learning.active()):
         learn_observation = self._build_observation(actor, target_player=target_player, allow_pvp=bool(allow_pvp))
         learn_mask = build_action_mask(learn_observation)
+        learn_support_before = learn_observation.support_cell
         if mode == AI_MODE_WANDER and bool(learning.policy_enabled()):
           decision = learning.decide(learn_observation, learn_mask)
           learn_action_id = str(decision.action_id)
@@ -2132,6 +2331,8 @@ class AiPlayerManager:
       self._advance_ai_regeneration(actor, dt=float(dt))
       actor_damage_dealt = 0.0
       if mode != AI_MODE_IDLE:
+        if learn_action_id is not None and learn_action_source == ACTION_SOURCE_LEARNED_POLICY:
+          learn_world_action = self._execute_policy_action(actor, learn_action_id, support_before=learn_support_before)
         self._maybe_interact_or_place(actor, target_player=target_player)
         attack_report = self._maybe_attack_player(actor, target_player=target_player, allow_pvp=bool(allow_pvp))
         actor_damage_dealt = float(attack_report.player_damage_taken)
@@ -2171,6 +2372,22 @@ class AiPlayerManager:
           route_state={"mode": str(mode), "route_present": bool(learn_observation.route_present), "route_blocked": bool(learn_observation.route_blocked)},
           combat_state={"visible_player": bool(learn_observation.visible_player), "attack_in_range": bool(learn_observation.attack_in_range)},
           placement_state={"can_place": bool(learn_observation.can_place_blocks)},
+        )
+      if learning is not None and learn_observation is not None and learn_mask is not None and learn_action_id is not None and bool(_ai_decision_debug_enabled()):
+        deterministic_ranked, learned_ranked, debug_policy_id, debug_policy_usable = learning.debug_rankings(learn_observation, learn_mask)
+        self._log_ai_decision(
+          actor=actor,
+          mode=str(mode),
+          observation=learn_observation,
+          mask=learn_mask,
+          deterministic_ranked=deterministic_ranked,
+          learned_ranked=learned_ranked,
+          selected_action=str(learn_action_id),
+          source=str(learn_action_source),
+          policy_id=str(debug_policy_id),
+          policy_usable=bool(debug_policy_usable),
+          control=control,
+          world_action=bool(learn_world_action),
         )
       if not actor.player.alive():
         removed_actor_ids.append(str(actor.actor_id))

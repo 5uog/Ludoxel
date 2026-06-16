@@ -27,13 +27,23 @@ ACTION_SOURCE_FALLBACK: str = "fallback"
 class LearningCoordinator:
   """
   live simulation tick における学習基盤の振る舞いを束ねる調整器である。
-  本調整器は simulation 層に属し、保存 file path や user data root を知らない。記録の蓄積は DemonstrationRecorder へ、行動決定は DeterministicPolicy(及び選択 policy)へ委譲し、application 層が mode・capture 種別・選択 policy を configure で注入し、flush 先 DatasetSink を与える。mode が off の間は記録も policy 適用も行わず AI 挙動へ干渉しない。observe_only では deterministic AI の決定を変えずに観測・行動・結果を記録する。use_learned_policy では選択済みかつ評価通過 policy を deterministic 効用へ重畳して行動を選ぶが、最終行動は必ず行動 mask を通すため unsafe action は実行されない。policy が None 又は使用不能なら deterministic fallback する。
+  本調整器は simulation 層に属し、保存 file path や user data root を知らない。
+  記録の蓄積は DemonstrationRecorder へ、行動決定は DeterministicPolicy(及び選択 policy)へ委譲し、
+  application 層が mode・capture 種別・選択 policy を configure で注入し、flush 先 DatasetSink を与える。
+  mode が off の間は記録も policy 適用も行わず AI 挙動へ干渉しない。
+  observe_only では deterministic AI の決定を変えずに観測・行動・結果を記録する。
+  use_learned_policy では選択済みかつ評価通過 policy を deterministic 効用へ重畳して行動を選ぶが、
+  最終行動は必ず行動 mask を通すため unsafe action は実行されない。
+  policy が None 又は使用不能なら deterministic fallback する。
   """
 
   def __init__(self, *, session_id: str = "", recorder: DemonstrationRecorder | None = None, deterministic: DeterministicPolicy | None = None) -> None:
     """
     記録器・決定器・session 識別子を確定して初期化する。
-    recorder を省略した場合は無効状態の DemonstrationRecorder を生成し、deterministic を省略した場合は DeterministicPolicy を生成する。session_id は記録 detail に埋め込む論理識別子である。初期 mode は off であり、configure を受けるまで記録も policy 適用も行わない。
+    recorder を省略した場合は無効状態の DemonstrationRecorder を生成し、
+    deterministic を省略した場合は DeterministicPolicy を生成する。
+    session_id は記録 detail に埋め込む論理識別子である。
+    初期 mode は off であり、configure を受けるまで記録も policy 適用も行わない。
     """
     self._session_id = str(session_id)
     self._recorder = recorder if isinstance(recorder, DemonstrationRecorder) else DemonstrationRecorder()
@@ -45,7 +55,11 @@ class LearningCoordinator:
   def configure(self, *, mode: str, captured_kinds: Iterable[str], policy: Policy | None) -> None:
     """
     実行時の mode、記録対象種別、選択 policy を更新する。
-    mode が observe_only の場合のみ recorder を有効化し、その capture 対象を captured_kinds へ更新する。policy は use_learned_policy のときに参照する候補であり、is_usable が偽なら適用時に無視されて deterministic fallback する。設定更新は軽量であり、毎 frame ではなく mode 変更時に呼ぶ前提である。
+    mode が observe_only の場合のみ recorder を有効化し、
+    その capture 対象を captured_kinds へ更新する。
+    policy は use_learned_policy のときに参照する候補であり、
+    is_usable が偽なら適用時に無視されて deterministic fallback する。
+    設定更新は軽量であり、毎 frame ではなく mode 変更時に呼ぶ前提である。
     """
     self._mode = str(mode)
     self._policy = policy if isinstance(policy, Policy) else None
@@ -54,7 +68,8 @@ class LearningCoordinator:
   def active(self) -> bool:
     """
     現在の mode が observation 構築を要するかを返す。
-    observe_only(記録のため)又は use_learned_policy(policy 適用のため)で真を返す。off では偽を返し、呼び出し側は observation 構築費用を省略して AI 挙動へ一切干渉しない。
+    observe_only(記録のため)又は use_learned_policy(policy 適用のため)で真を返す。
+    off では偽を返し、呼び出し側は observation 構築費用を省略して AI 挙動へ一切干渉しない。
     """
     return self._mode in (LEARNING_RUNTIME_OBSERVE_ONLY, LEARNING_RUNTIME_USE_LEARNED_POLICY)
 
@@ -68,22 +83,46 @@ class LearningCoordinator:
   def policy_enabled(self) -> bool:
     """
     選択 policy を live 決定へ適用してよい状態かを返す。
-    mode が use_learned_policy であり、選択 policy が存在し、かつ is_usable(schema・互換・版整合・評価通過)が真の場合に限り真を返す。これらを欠く場合は偽を返し、deterministic fallback する。
+    mode が use_learned_policy であり、選択 policy が存在し、
+    かつ is_usable(schema・互換・版整合・評価通過)が真の場合に限り真を返す。
+    これらを欠く場合は偽を返し、deterministic fallback する。
     """
     return self._mode == LEARNING_RUNTIME_USE_LEARNED_POLICY and isinstance(self._policy, Policy) and bool(self._policy.is_usable())
 
   def decide(self, observation: AiObservation, mask: AiActionMask) -> PolicyDecision:
     """
     観測と行動 mask から行動決定を返す。
-    policy_enabled が真なら選択 policy を deterministic 効用へ重畳して決定し、そうでなければ deterministic baseline のみで決定する。いずれの場合も決定は mask の許可集合内に限られ、禁止行動は選ばれない。
+    policy_enabled が真なら選択 policy を deterministic 効用へ重畳して決定し、
+    そうでなければ deterministic baseline のみで決定する。
+    いずれの場合も決定は mask の許可集合内に限られ、禁止行動は選ばれない。
     """
     policy = self._policy if self.policy_enabled() else None
     return self._deterministic.decide(observation, mask, policy)
 
+  def selected_policy_id(self) -> str:
+    """
+    現在保持する選択 policy の識別子を返す。
+    policy が未設定の場合は空文字を返す。debug log の選択 policy 表示に用いる。
+    """
+    return str(self._policy.policy_id) if isinstance(self._policy, Policy) else ""
+
+  def debug_rankings(self, observation: AiObservation, mask: AiActionMask) -> tuple[tuple[tuple[str, float], ...], tuple[tuple[str, float], ...], str, bool]:
+    """
+    deterministic baseline のみの効用順位と、選択 policy を重畳した効用順位の組を返す。
+    返値は (deterministic 順位, learned 順位, 選択 policy 識別子, policy 適用可否) であり、
+    policy_enabled が偽の場合 learned 順位は deterministic と一致する。
+    本 method は debug log のためにのみ呼び、policy の使用可否は is_usable に従う。
+    """
+    deterministic = self._deterministic.decide(observation, mask, None)
+    policy = self._policy if self.policy_enabled() else None
+    learned = self._deterministic.decide(observation, mask, policy)
+    return (deterministic.ranked, learned.ranked, self.selected_policy_id(), bool(self.policy_enabled()))
+
   def begin_tick(self) -> None:
     """
     simulation step の冒頭で tick 計数を進める。
-    記録の時系列順序を表す単調増加 tick を更新する。記録を行わない mode でも安価に呼べる。
+    記録の時系列順序を表す単調増加 tick を更新する。
+    記録を行わない mode でも安価に呼べる。
     """
     self._tick += 1
 
@@ -103,7 +142,11 @@ class LearningCoordinator:
   ) -> bool:
     """
     一 actor の決定と結果を demonstration として記録する。
-    記録は recording が真(observe_only)かつ ai_decisions 種別が capture 対象の場合のみ行い、それ以外は何もせず偽を返す。記録には観測、選択行動、行動源、許可/禁止 mask 要約、結果から算出した success と reward、reward 構成、feature key 列、failure_reason、route/combat/placement/health/position 要約を含める。reward は RewardTransition から compute_step_reward で算出する。success は被害を受けず死亡しなかった step を真とする。記録した場合は真を返す。
+    記録は recording が真(observe_only)かつ ai_decisions 種別が capture 対象の場合のみ行い、それ以外は何もせず偽を返す。
+    記録には観測、選択行動、行動源、許可/禁止 mask 要約、結果から算出した success と reward、reward 構成、
+    feature key 列、failure_reason、route/combat/placement/health/position 要約を含める。
+    reward は RewardTransition から compute_step_reward で算出する。
+    success は被害を受けず死亡しなかった step を真とする。記録した場合は真を返す。
     """
     if not self._recorder.captures(RECORD_AI_DECISIONS):
       return False
@@ -139,7 +182,10 @@ class LearningCoordinator:
   def record_player_demonstration(self, *, kind: str, observation: AiObservation | dict[str, Any] | None, action_id: str, actor_id: str = "player", detail: dict[str, Any] | None = None) -> bool:
     """
     player の入力に基づく実演を記録する。
-    記録は recording が真かつ当該種別が capture 対象の場合のみ行う。player 実演は専門家の正例として success を真で記録し、detail に actor_kind=player、feature_keys、行動源 player、時刻、session を埋める。observation を省略した場合は空観測として記録する。記録した場合は真を返す。
+    記録は recording が真かつ当該種別が capture 対象の場合のみ行う。
+    player 実演は専門家の正例として success を真で記録し、detail に actor_kind=player、feature_keys、
+    行動源 player、時刻、session を埋める。observation を省略した場合は空観測として記録する。
+    記録した場合は真を返す。
     """
     if not self._recorder.captures(kind):
       return False
@@ -175,7 +221,8 @@ class LearningCoordinator:
   def flush(self, sink: DatasetSink) -> int:
     """
     buffer 内の記録を sink へ書き出し、件数を返す。
-    sink は application 層が所有する user data root への追記器であり、本調整器は path を知らない。書き出しは毎 frame ではなく interval / shutdown で行う前提である。
+    sink は application 層が所有する user data root への追記器であり、本調整器は path を知らない。
+    書き出しは毎 frame ではなく interval / shutdown で行う前提である。
     """
     return self._recorder.flush(sink)
 

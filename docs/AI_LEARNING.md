@@ -64,16 +64,28 @@ user data root は OS により異なり、Windows では `%LOCALAPPDATA%\Ludoxe
 
 ## 期待できる挙動変化と、期待してはいけないこと
 
-期待できること。
+本機能は、決定論的 AI を置き換える学習ではなく、決定論的 AI の効用スコアに状況依存の補正を加える軽量な選好補正層である。この前提の上で、何ができて何ができないかを正直に述べる。
 
-- `Use Learned Policy` で、AI の意思決定の傾向が変わる。例えば、退避を選好する policy では低体力時に後退・横移動・遮蔽を選びやすくなり、接近を選好する policy では間合いを詰めやすくなる。
-- 学習は、記録した実演や sandbox の課題に応じて、行動の選好(効用)を傾ける。
+できること(policy が選好し、action mask が許可すれば、実ゲームの実行経路へ到達する)。
+
+- 接近時に前進だけでなく斜め前進(W+A / W+D)や sprint を選ぶ。
+- 戦闘で後退攻撃(backpedal)や横移動攻撃(strafe)を選ぶ。
+- 低体力時に、単純突撃ではなく後退・横移動・距離取りを選ぶ。
+- 前方の gap に対して bridge block を配置する。
+- 接近者に対して defensive block を配置する。
+- 脱出のために前方の block を破壊する(自分の足場は破壊しない)。
+- tower up(跳躍して足元に block を置き高さを得る)。
+- 隣接するフェンスゲートを開閉する。
+- route が閉塞した場合に route 再計画を要求する。
+
+これらの戦術行動は、policy 決定が PlayerStepInput、placement、breaking、route 更新といった実際の実行経路へ変換されることで反映される。
 
 期待してはいけないこと。
 
-- policy は決定論的 AI を完全に置き換えるものではない。既存の navigation・combat・placement・parkour・recovery・route 処理はそのまま使われ、policy はその上で行動選好を補正する。
-- policy が安全規則を越えることはない。危険な行動を学習させても、action mask により実行されない。
-- 巨大な学習による人間超えの戦術や、長時間学習による劇的な能力獲得は対象外である。本機能は軽量な選好学習である。
+- 決定論的 AI の完全な置き換え。既存の navigation・combat・placement・parkour・recovery・route 処理はそのまま使われ、policy はその上で選好を補正するだけである。
+- 安全規則の超越。危険な行動を学習させても、action mask と縁の安全判定により最終実行されない。
+- 人間超えの戦術や、長時間学習による劇的な能力獲得。本機能は feature 条件付きの軽量な選好学習であり、巨大 neural network や外部 ML framework は用いない。
+- learning policy が無くても、決定論的 AI 自体は低体力時に後退・横移動を選ぶよう改善されているが、これも限定的な改善である。
 
 ## トラブルシューティング
 
@@ -82,3 +94,4 @@ user data root は OS により異なり、Windows では `%LOCALAPPDATA%\Ludoxe
 - **記録が増えない**: `Learning Mode` が `Observe Only` であること、`Data Capture` で対象種別が有効であることを確認する。`Off` では記録されない。
 - **壊れた JSONL 行がある**: 学習時に壊れた行は skip され、件数が学習結果の報告に残る。健全な行だけが学習に使われる。
 - **挙動を元に戻したい**: `Data Management` の `Reset learned policy` で組み込みの決定論的挙動へ戻す。`Restore bundled policy` で同梱 policy を選択し直す。
+- **何が選ばれているか確認したい(開発者向け)**: 環境変数 `LUDOXEL_AI_DEBUG=1` を設定して起動すると、AI の意思決定ごとに、actor id、mode、選択 policy と使用可否、観測 feature、許可・禁止 action、deterministic 上位行動、policy 補正後上位行動、選択行動、行動源、最終制御、世界変更実行有無が一時 debug log として標準出力に出る。既定では無効であり、通常プレイでは出力されない。
