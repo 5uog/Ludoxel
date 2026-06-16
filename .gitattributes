@@ -41,6 +41,10 @@ node_modules/ export-ignore
 dist/ export-ignore
 build/ export-ignore
 coverage/ export-ignore
+src/website/dist/ export-ignore
+src/website/.vite/ export-ignore
+src/website/node_modules/ export-ignore
+src/website/.vercel/ export-ignore
 .venv/ export-ignore
 .venv_ludoxel/ export-ignore
 tools/export_directory_markdown/output/ export-ignore

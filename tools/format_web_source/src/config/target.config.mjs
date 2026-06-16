@@ -15,8 +15,8 @@ export const WEB_SOURCE_TARGET_GROUPS = Object.freeze({
 
 const PRETTIER_TARGETS = Object.freeze([
   Object.freeze({
-    path: '*.{html,css,js,cjs,mjs,json,jsonc,webmanifest,md,yml,yaml}',
-    role: 'root web, Node, JSON, Markdown, and YAML files',
+    path: '*.{html,css,js,cjs,mjs,ts,tsx,json,jsonc,webmanifest,md,yml,yaml}',
+    role: 'root web, TypeScript, Node, JSON, Markdown, and YAML files',
   }),
   Object.freeze({
     path: '.github/**/*.{md,yml,yaml}',
@@ -27,11 +27,11 @@ const PRETTIER_TARGETS = Object.freeze([
     role: 'workspace editor and task configuration',
   }),
   Object.freeze({
-    path: 'tools/**/*.{html,css,js,cjs,mjs,json,jsonc,webmanifest,md,yml,yaml}',
+    path: 'tools/**/*.{html,css,js,cjs,mjs,ts,tsx,json,jsonc,webmanifest,md,yml,yaml}',
     role: 'repository tool source and configuration',
   }),
   Object.freeze({
-    path: 'src/**/*.{html,css,js,cjs,mjs,json,jsonc,webmanifest,md,yml,yaml}',
+    path: 'src/**/*.{html,css,js,cjs,mjs,ts,tsx,json,jsonc,webmanifest,md,yml,yaml}',
     role: 'package-adjacent web or configuration files',
   }),
   Object.freeze({

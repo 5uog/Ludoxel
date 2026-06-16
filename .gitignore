@@ -8,6 +8,10 @@ node_modules/
 dist/
 build/
 coverage/
+src/website/dist/
+src/website/.vite/
+src/website/node_modules/
+src/website/.vercel/
 
 # Local analysis, inventory, code-dump, and temporary pip target outputs.
 .artifacts/
