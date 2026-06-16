@@ -7,7 +7,7 @@ import type { Config } from 'tailwindcss';
 const withAlpha = (variableName: string): string => `hsl(var(${variableName}) / <alpha-value>)`;
 
 const config: Config = {
-  darkMode: ['class'],
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
