@@ -10,7 +10,8 @@ import AnimatedText from './AnimatedText';
 import SearchCommand from './SearchCommand';
 
 const heroTitle = 'Challenge AI across blocks and boards.';
-const heroDescription = 'Ludoxel is a desktop voxel sandbox built with Python, PyQt6, OpenGL, and WGPU. This site documents the application structure, renderer behavior, AI NPC systems, Othello mode, settings, and project changes.';
+const heroDescription =
+  'Ludoxel is a desktop voxel sandbox built with Python, PyQt6, OpenGL, and WGPU. This site documents the application structure, renderer behavior, AI NPC systems, Othello mode, settings, and project changes.';
 
 export default function HeroSection(): React.JSX.Element {
   return (
