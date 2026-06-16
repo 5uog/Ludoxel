@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+const withAlpha = (variableName) => `hsl(var(${variableName}) / <alpha-value>)`;
+
 const config = {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -7,23 +14,36 @@ const config = {
         sans: ['Satoshi', 'sans-serif'],
       },
       colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        card: 'hsl(var(--card))',
-        'card-foreground': 'hsl(var(--card-foreground))',
-        popover: 'hsl(var(--popover))',
-        'popover-foreground': 'hsl(var(--popover-foreground))',
-        primary: 'hsl(var(--primary))',
-        'primary-foreground': 'hsl(var(--primary-foreground))',
-        secondary: 'hsl(var(--secondary))',
-        'secondary-foreground': 'hsl(var(--secondary-foreground))',
-        muted: 'hsl(var(--muted))',
-        'muted-foreground': 'hsl(var(--muted-foreground))',
-        accent: 'hsl(var(--accent))',
-        'accent-foreground': 'hsl(var(--accent-foreground))',
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
+        background: withAlpha('--background'),
+        foreground: withAlpha('--foreground'),
+        card: withAlpha('--card'),
+        'card-foreground': withAlpha('--card-foreground'),
+        popover: withAlpha('--popover'),
+        'popover-foreground': withAlpha('--popover-foreground'),
+        primary: withAlpha('--primary'),
+        'primary-foreground': withAlpha('--primary-foreground'),
+        secondary: withAlpha('--secondary'),
+        'secondary-foreground': withAlpha('--secondary-foreground'),
+        muted: withAlpha('--muted'),
+        'muted-foreground': withAlpha('--muted-foreground'),
+        accent: withAlpha('--accent'),
+        'accent-foreground': withAlpha('--accent-foreground'),
+        destructive: withAlpha('--destructive'),
+        'destructive-foreground': withAlpha('--destructive-foreground'),
+        border: withAlpha('--border'),
+        input: withAlpha('--input'),
+        ring: withAlpha('--ring'),
+        sidebar: {
+          DEFAULT: withAlpha('--sidebar-background'),
+          background: withAlpha('--sidebar-background'),
+          foreground: withAlpha('--sidebar-foreground'),
+          primary: withAlpha('--sidebar-primary'),
+          'primary-foreground': withAlpha('--sidebar-primary-foreground'),
+          accent: withAlpha('--sidebar-accent'),
+          'accent-foreground': withAlpha('--sidebar-accent-foreground'),
+          border: withAlpha('--sidebar-border'),
+          ring: withAlpha('--sidebar-ring'),
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -34,4 +54,5 @@ const config = {
   },
   plugins: [],
 };
+
 export default config;
