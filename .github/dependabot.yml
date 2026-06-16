@@ -9,6 +9,19 @@ updates:
       prefix: 'deps'
       include: 'scope'
 
+  - package-ecosystem: 'npm'
+    directory: '/src/website'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 3
+    groups:
+      npm-and-yarn:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: 'deps'
+      include: 'scope'
+
   - package-ecosystem: 'pip'
     directory: '/'
     schedule:

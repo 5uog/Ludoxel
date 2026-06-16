@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 Kento Konishi
+# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+
+# Node dependency tree installed by npm.
+node_modules/
+
+# Vite, Vercel, and build outputs.
+dist/
+.vite/
+.vercel/
+
+# TypeScript build metadata and previously emitted config artifacts.
+*.tsbuildinfo
+tailwind.config.js
+tailwind.config.d.ts
+vite.config.js
+vite.config.d.ts
