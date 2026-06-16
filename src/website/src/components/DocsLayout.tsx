@@ -24,6 +24,8 @@ type SplitHref = {
   hash: string;
 };
 
+type InlineTextPart = string | React.JSX.Element;
+
 function splitHref(href: string): SplitHref {
   const [pathname, hash = ''] = href.split('#');
   return {
@@ -43,6 +45,20 @@ function isOnThisPageItemActive(currentHash: string, href: string, index: number
   }
 
   return currentHash === href;
+}
+
+function renderInlineText(text: string): InlineTextPart[] {
+  return text.split(/(`[^`]+`)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 1) {
+      return (
+        <code className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={`${part}-${index}`}>
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+
+    return part;
+  });
 }
 
 type DocsSidebarProps = {
@@ -201,20 +217,34 @@ export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element
                 <h2 className="font-semibold tracking-tight mb-4 text-2xl">{section.title}</h2>
 
                 <div className="text-muted-foreground leading-relaxed space-y-4">
-                  {section.body.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
+                  {section.body.map((paragraph, paragraphIndex) => (
+                    <p key={`${section.id}-paragraph-${paragraphIndex}`}>{renderInlineText(paragraph)}</p>
                   ))}
 
                   {section.items ? (
                     <ul className="list-disc list-inside space-y-2 ml-2 mt-4">
-                      {section.items.map((item) => (
-                        <li key={item}>{item}</li>
+                      {section.items.map((item, itemIndex) => (
+                        <li key={`${section.id}-item-${itemIndex}`}>{renderInlineText(item)}</li>
                       ))}
                     </ul>
                   ) : null}
                 </div>
               </section>
             ))}
+
+            {page.references && page.references.length > 0 ? (
+              <section className="scroll-mt-24 border-t border-border pt-8" id="references">
+                <h2 className="font-semibold tracking-tight mb-4 text-2xl">References</h2>
+                <div className="grid gap-3">
+                  {page.references.map((reference) => (
+                    <Link className="rounded-lg border border-border bg-secondary/20 px-4 py-3 transition-colors hover:bg-secondary/40" key={reference.href} to={reference.href}>
+                      <span className="block text-sm font-medium text-foreground">{reference.title}</span>
+                      <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{renderInlineText(reference.description)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
         </div>
       </main>
