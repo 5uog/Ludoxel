@@ -31,7 +31,7 @@ export default function HeroSection(): React.JSX.Element {
         <AnimatedText text={heroDescription} delayStepMs={8} initialDelayMs={260} />
       </p>
 
-      <div className="page-reveal page-reveal-delay-2 w-full max-w-2xl">
+      <div className="page-reveal page-reveal-delay-2 w-full max-w-[600px]">
         <SearchCommand variant="hero" placeholder="Search (e.g. renderer, AI NPC)" />
       </div>
 
