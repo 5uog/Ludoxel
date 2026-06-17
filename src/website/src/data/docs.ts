@@ -71,7 +71,7 @@ function titleForCollection(pathSegments: string[], pages: DocsPageContent[]): s
 
 function descriptionForCollection(pathSegments: string[], pages: DocsPageContent[]): string {
   if (pathSegments.length === 0) {
-    return 'Browse the Ludoxel documentation categories and open the article placeholders that still need full body text.';
+    return 'Browse Ludoxel documentation by category, subcategory, group, and article.';
   }
 
   const firstPage = pages[0];
@@ -153,6 +153,42 @@ export function getDocsBreadcrumbs(page: DocsPageContent): DocsBreadcrumb[] {
       href: getDocsPageHref(page),
     },
   ];
+}
+
+export function getDocsCollectionBreadcrumbs(collection: DocsCollection): DocsBreadcrumb[] {
+  const breadcrumbs: DocsBreadcrumb[] = [
+    {
+      label: 'Docs',
+      href: '/docs',
+    },
+  ];
+
+  if (collection.pathSegments.length === 0) {
+    return breadcrumbs;
+  }
+
+  const firstPage = collection.pages[0];
+
+  breadcrumbs.push({
+    label: firstPage.category,
+    href: getDocsCollectionHref(firstPage.pathSegments.slice(0, 1)),
+  });
+
+  if (collection.pathSegments.length >= 2) {
+    breadcrumbs.push({
+      label: firstPage.subcategory,
+      href: getDocsCollectionHref(firstPage.pathSegments.slice(0, 2)),
+    });
+  }
+
+  if (collection.pathSegments.length >= 3) {
+    breadcrumbs.push({
+      label: firstPage.group,
+      href: getDocsCollectionHref(firstPage.pathSegments.slice(0, 3)),
+    });
+  }
+
+  return breadcrumbs;
 }
 
 export function getOnThisPage(page: DocsPageContent): { label: string; href: string }[] {

@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { ArrowRight, Clock, FileText, Layers, Search, Shield } from 'lucide-react';
+import { ArrowRight, Clock, FileText, Layers, Search, Settings, Shield, Sparkles, Wrench } from 'lucide-react';
 import { type ChangeEvent, type ComponentType, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ type SearchCommandProps = {
   variant: 'header' | 'hero' | 'icon';
   placeholder: string;
   enableShortcut?: boolean;
+  entries?: SearchIndexEntry[];
 };
 
 type SearchSectionMeta = {
@@ -26,13 +27,45 @@ type SearchRow = {
 };
 
 const SECTION_META: Record<string, SearchSectionMeta> = {
-  application: {
-    label: 'Application',
+  manual: {
+    label: 'Manual',
     Icon: FileText,
+  },
+  gameplay: {
+    label: 'Gameplay',
+    Icon: Sparkles,
   },
   systems: {
     label: 'Systems',
     Icon: Layers,
+  },
+  settings: {
+    label: 'Settings',
+    Icon: Settings,
+  },
+  data: {
+    label: 'Data',
+    Icon: FileText,
+  },
+  distribution: {
+    label: 'Distribution',
+    Icon: Wrench,
+  },
+  legal: {
+    label: 'Legal',
+    Icon: Shield,
+  },
+  support: {
+    label: 'Support',
+    Icon: FileText,
+  },
+  developer: {
+    label: 'Developer',
+    Icon: Wrench,
+  },
+  application: {
+    label: 'Application',
+    Icon: FileText,
   },
   project: {
     label: 'Project',
@@ -68,7 +101,7 @@ function getSectionMeta(sectionKey: string): SearchSectionMeta {
   );
 }
 
-export default function SearchCommand({ variant, placeholder, enableShortcut = false }: SearchCommandProps): React.JSX.Element {
+export default function SearchCommand({ variant, placeholder, enableShortcut = false, entries }: SearchCommandProps): React.JSX.Element {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const closeTimerRef = useRef<number | null>(null);
@@ -77,6 +110,7 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
   const [query, setQuery] = useState<string>('');
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
+  const activeEntries = entries ?? searchIndex;
   const normalizedQuery = query.trim().toLowerCase();
 
   const filteredRows = useMemo<SearchRow[]>(() => {
@@ -84,13 +118,13 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
       return [];
     }
 
-    return searchIndex
+    return activeEntries
       .map((entry, index) => ({ entry, index }))
       .filter(({ entry }) => {
         const searchableText = `${entry.title} ${entry.description} ${entry.section}`.toLowerCase();
         return searchableText.includes(normalizedQuery);
       });
-  }, [normalizedQuery]);
+  }, [activeEntries, normalizedQuery]);
 
   const groupedRows = useMemo(() => {
     return filteredRows.reduce<Record<string, SearchRow[]>>((groups, row) => {
@@ -227,24 +261,24 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
       <button className={searchDialogBackdropClassName} type="button" aria-label="Close search" onClick={closeSearch} />
 
       <div className={searchDialogPanelClassName}>
-        <div className="rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-border bg-background shadow-2xl">
           <div className="flex items-center border-b border-border px-4">
             <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />
 
             <input
               ref={inputRef}
               autoFocus
-              className="flex h-14 w-full bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              className="flex h-14 w-full bg-transparent py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
               placeholder="Search documentation..."
               value={query}
             />
 
-            <kbd className="ml-2 hidden sm:flex items-center justify-center h-6 px-2 rounded bg-secondary text-xs font-medium text-muted-foreground">ESC</kbd>
+            <kbd className="ml-2 hidden h-6 items-center justify-center rounded bg-secondary px-2 text-xs font-medium text-muted-foreground sm:flex">ESC</kbd>
           </div>
 
-          <div className="max-h-[400px] overflow-y-auto scrollbar-none p-2">
+          <div className="max-h-[400px] overflow-y-auto p-2 scrollbar-none">
             {normalizedQuery.length >= 2 && filteredRows.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm text-muted-foreground">No results found for &quot;{normalizedQuery}&quot;</p>
@@ -257,13 +291,13 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
               </div>
             ) : null}
 
-            {Object.entries(groupedRows).map(([sectionKey, rows]) => {
+            {(Object.entries(groupedRows) as [string, SearchRow[]][]).map(([sectionKey, rows]) => {
               const sectionMeta = getSectionMeta(sectionKey);
               const Icon = sectionMeta.Icon;
 
               return (
                 <div
-                  className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:py-2"
+                  className="[&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
                   key={sectionKey}
                 >
                   <div cmdk-group-heading="">{sectionMeta.label}</div>
@@ -274,7 +308,7 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
 
                     return (
                       <button
-                        className="group flex items-center gap-3 px-3 py-3 cursor-pointer rounded-lg data-[selected=true]:bg-accent w-full text-left"
+                        className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-left data-[selected=true]:bg-accent"
                         data-selected={isSelected ? 'true' : 'false'}
                         key={row.entry.href}
                         type="button"
@@ -285,12 +319,12 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
                           <Icon className="h-4 w-4" />
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{row.entry.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{row.entry.description}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{row.entry.title}</p>
+                          <p className="truncate text-xs text-muted-foreground">{row.entry.description}</p>
                         </div>
 
-                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-data-[selected=true]:opacity-100 transition-opacity" />
+                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
                       </button>
                     );
                   })}
@@ -300,7 +334,7 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
           </div>
 
           {filteredRows.length > 0 ? (
-            <div className="border-t border-border px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
               <span>
                 {filteredRows.length} result
                 {filteredRows.length !== 1 ? 's' : ''}
@@ -308,11 +342,11 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
 
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono">↑↓</kbd>
+                  <kbd className="rounded bg-secondary px-1.5 py-0.5 font-mono">↑↓</kbd>
                   navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-secondary font-mono">↵</kbd>
+                  <kbd className="rounded bg-secondary px-1.5 py-0.5 font-mono">↵</kbd>
                   select
                 </span>
               </div>
@@ -327,20 +361,20 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
     <>
       <button className={buttonClassName} type="button" aria-label={variant === 'icon' ? 'Search' : undefined} onClick={openSearch}>
         {variant === 'icon' ? (
-          <Search className="w-5 h-5" />
+          <Search className="h-5 w-5" />
         ) : (
           <>
-            <div className="flex items-center gap-3 flex-1">
-              <Search className={variant === 'hero' ? 'w-5 h-5 text-muted-foreground flex-shrink-0' : 'w-4 h-4 text-muted-foreground flex-shrink-0'} />
+            <div className="flex flex-1 items-center gap-3">
+              <Search className={variant === 'hero' ? 'h-5 w-5 shrink-0 text-muted-foreground' : 'h-4 w-4 shrink-0 text-muted-foreground'} />
               <span className={variant === 'hero' ? 'text-base text-muted-foreground' : 'text-sm text-muted-foreground'}>{placeholder}</span>
             </div>
 
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex shrink-0 items-center gap-1">
               <kbd
                 className={
                   variant === 'hero'
-                    ? 'flex items-center justify-center w-7 h-7 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-xs font-semibold text-muted-foreground'
-                    : 'flex items-center justify-center w-6 h-6 rounded-md bg-secondary text-xs font-semibold text-muted-foreground'
+                    ? 'flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-xs font-semibold text-muted-foreground backdrop-blur-sm'
+                    : 'flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-muted-foreground'
                 }
               >
                 ⌘
@@ -348,8 +382,8 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
               <kbd
                 className={
                   variant === 'hero'
-                    ? 'flex items-center justify-center w-7 h-7 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 text-xs font-semibold text-muted-foreground'
-                    : 'flex items-center justify-center w-6 h-6 rounded-md bg-secondary text-xs font-semibold text-muted-foreground'
+                    ? 'flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-xs font-semibold text-muted-foreground backdrop-blur-sm'
+                    : 'flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-muted-foreground'
                 }
               >
                 K
