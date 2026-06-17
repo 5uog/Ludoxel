@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { ChevronRight, FileText, Home as HomeIcon, Layers, List, Menu, Settings, Shield, Sparkles, Wrench, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { type DocsPageContent, getDocsPageHref, getOnThisPage } from '../data/docs';
@@ -18,6 +18,8 @@ const iconMap: Record<DocsSidebarItem['icon'], React.ComponentType<{ className?:
   sparkles: Sparkles,
   shield: Shield,
 };
+
+const MOBILE_SHEET_ANIMATION_MS = 500;
 
 type SplitHref = {
   pathname: string;
@@ -119,44 +121,94 @@ type DocsLayoutProps = {
 
 export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element {
   const location = useLocation();
+  const currentLocationKey = `${location.pathname}${location.hash}`;
+  const previousLocationKeyRef = useRef<string>(currentLocationKey);
+  const closeTimerRef = useRef<number | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+  const [isMobileSidebarClosing, setIsMobileSidebarClosing] = useState<boolean>(false);
 
   const currentPathname = location.pathname;
   const currentHash = location.hash;
   const pageHref = getDocsPageHref(page);
   const onThisPage = getOnThisPage(page);
 
+  const clearCloseTimer = (): void => {
+    if (closeTimerRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  };
+
+  const openMobileSidebar = (): void => {
+    clearCloseTimer();
+    setIsMobileSidebarClosing(false);
+    setIsMobileSidebarOpen(true);
+  };
+
+  const closeMobileSidebar = (): void => {
+    if (!isMobileSidebarOpen || closeTimerRef.current !== null) {
+      return;
+    }
+
+    setIsMobileSidebarClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      setIsMobileSidebarOpen(false);
+      setIsMobileSidebarClosing(false);
+      closeTimerRef.current = null;
+    }, MOBILE_SHEET_ANIMATION_MS);
+  };
+
   useEffect(() => {
-    if (!isMobileSidebarOpen) {
+    return () => clearCloseTimer();
+  }, []);
+
+  useEffect(() => {
+    if (previousLocationKeyRef.current === currentLocationKey) {
+      return;
+    }
+
+    previousLocationKeyRef.current = currentLocationKey;
+
+    if (isMobileSidebarOpen) {
+      closeMobileSidebar();
+    }
+  }, [currentLocationKey, isMobileSidebarOpen]);
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen || isMobileSidebarClosing) {
       return;
     }
 
     const handleKeyDown = (event: globalThis.KeyboardEvent): void => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        setIsMobileSidebarOpen(false);
+        closeMobileSidebar();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobileSidebarOpen]);
+  }, [isMobileSidebarOpen, isMobileSidebarClosing]);
 
-  const closeMobileSidebar = (): void => {
-    setIsMobileSidebarOpen(false);
-  };
+  const mobileSidebarBackdropClassName = isMobileSidebarClosing ? 'mobile-sheet-backdrop mobile-sheet-backdrop-exit fixed inset-0 bg-black/80' : 'mobile-sheet-backdrop fixed inset-0 bg-black/80';
+
+  const mobileSidebarPanelClassName = isMobileSidebarClosing
+    ? 'mobile-sheet-panel-left mobile-sheet-panel-left-exit fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg'
+    : 'mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg';
 
   return (
     <div className="flex pt-16 max-w-[90rem] mx-auto flex-1 w-full">
       <div className="lg:hidden fixed top-20 left-4 z-40">
         <button
           aria-controls="mobile-docs-navigation"
-          aria-expanded={isMobileSidebarOpen}
+          aria-expanded={isMobileSidebarOpen && !isMobileSidebarClosing}
           aria-haspopup="dialog"
           aria-label="Open navigation"
           className="p-2 rounded-md bg-background border border-border hover:bg-secondary transition-colors"
           type="button"
-          onClick={() => setIsMobileSidebarOpen(true)}
+          onClick={openMobileSidebar}
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -164,9 +216,9 @@ export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element
 
       {isMobileSidebarOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden" id="mobile-docs-navigation" role="dialog" aria-modal="true" aria-label="Documentation navigation">
-          <button className="mobile-sheet-backdrop fixed inset-0 bg-black/80" type="button" aria-label="Close navigation" onClick={closeMobileSidebar} />
+          <button className={mobileSidebarBackdropClassName} type="button" aria-label="Close navigation" onClick={closeMobileSidebar} />
 
-          <aside className="mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg">
+          <aside className={mobileSidebarPanelClassName}>
             <button
               aria-label="Close navigation"
               className="absolute right-4 top-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { ArrowUpRight, Menu, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { getStartedHref, mainNavigation } from '../data/navigation';
@@ -12,6 +12,8 @@ import SearchCommand from './SearchCommand';
 type HeaderProps = {
   activePath?: string;
 };
+
+const MOBILE_SHEET_ANIMATION_MS = 500;
 
 function isNavigationItemActive(currentPath: string, href: string): boolean {
   if (href === '/') {
@@ -28,31 +30,76 @@ function isNavigationItemActive(currentPath: string, href: string): boolean {
 export default function Header({ activePath }: HeaderProps): React.JSX.Element {
   const location = useLocation();
   const currentPath = activePath ?? location.pathname;
+  const previousPathRef = useRef<string>(currentPath);
+  const closeTimerRef = useRef<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isMobileMenuClosing, setIsMobileMenuClosing] = useState<boolean>(false);
+
+  const clearCloseTimer = (): void => {
+    if (closeTimerRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  };
+
+  const openMobileMenu = (): void => {
+    clearCloseTimer();
+    setIsMobileMenuClosing(false);
+    setIsMobileMenuOpen(true);
+  };
+
+  const closeMobileMenu = (): void => {
+    if (!isMobileMenuOpen || closeTimerRef.current !== null) {
+      return;
+    }
+
+    setIsMobileMenuClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      setIsMobileMenuOpen(false);
+      setIsMobileMenuClosing(false);
+      closeTimerRef.current = null;
+    }, MOBILE_SHEET_ANIMATION_MS);
+  };
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [currentPath]);
+    return () => clearCloseTimer();
+  }, []);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) {
+    if (previousPathRef.current === currentPath) {
+      return;
+    }
+
+    previousPathRef.current = currentPath;
+
+    if (isMobileMenuOpen) {
+      closeMobileMenu();
+    }
+  }, [currentPath, isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen || isMobileMenuClosing) {
       return;
     }
 
     const handleKeyDown = (event: globalThis.KeyboardEvent): void => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        setIsMobileMenuOpen(false);
+        closeMobileMenu();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isMobileMenuClosing]);
 
-  const closeMobileMenu = (): void => {
-    setIsMobileMenuOpen(false);
-  };
+  const mobileMenuBackdropClassName = isMobileMenuClosing ? 'mobile-sheet-backdrop mobile-sheet-backdrop-exit fixed inset-0 z-50 bg-black/80' : 'mobile-sheet-backdrop fixed inset-0 z-50 bg-black/80';
+
+  const mobileMenuPanelClassName = isMobileMenuClosing
+    ? 'mobile-sheet-panel-right mobile-sheet-panel-right-exit fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg'
+    : 'mobile-sheet-panel-right fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-border bg-background">
@@ -94,12 +141,12 @@ export default function Header({ activePath }: HeaderProps): React.JSX.Element {
 
             <button
               aria-controls="mobile-header-navigation"
-              aria-expanded={isMobileMenuOpen}
+              aria-expanded={isMobileMenuOpen && !isMobileMenuClosing}
               aria-haspopup="dialog"
               aria-label="Open menu"
               className="flex items-center justify-center w-10 h-10 rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground hover:border-muted-foreground/50"
               type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
+              onClick={openMobileMenu}
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -109,9 +156,9 @@ export default function Header({ activePath }: HeaderProps): React.JSX.Element {
 
       {isMobileMenuOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden" id="mobile-header-navigation" role="dialog" aria-modal="true" aria-label="Menu">
-          <button className="mobile-sheet-backdrop fixed inset-0 z-50 bg-black/80" type="button" aria-label="Close menu" onClick={closeMobileMenu} />
+          <button className={mobileMenuBackdropClassName} type="button" aria-label="Close menu" onClick={closeMobileMenu} />
 
-          <div className="mobile-sheet-panel-right fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg">
+          <div className={mobileMenuPanelClassName}>
             <button
               aria-label="Close"
               className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"

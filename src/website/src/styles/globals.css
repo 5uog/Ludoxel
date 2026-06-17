@@ -141,6 +141,14 @@
     will-change: opacity, transform;
   }
 
+  .search-dialog-backdrop-exit {
+    animation: ludoxel-fade-out 0.15s ease-in forwards;
+  }
+
+  .search-dialog-panel-exit {
+    animation: ludoxel-dialog-out 0.2s ease-in forwards;
+  }
+
   .mobile-sheet-backdrop {
     animation: ludoxel-fade-in 0.18s ease-out forwards;
   }
@@ -155,6 +163,18 @@
     transform: translateX(-100%);
     animation: ludoxel-slide-in-left 0.5s ease-out forwards;
     will-change: transform;
+  }
+
+  .mobile-sheet-backdrop-exit {
+    animation: ludoxel-fade-out 0.18s ease-in forwards;
+  }
+
+  .mobile-sheet-panel-right-exit {
+    animation: ludoxel-slide-out-right 0.5s ease-in forwards;
+  }
+
+  .mobile-sheet-panel-left-exit {
+    animation: ludoxel-slide-out-left 0.5s ease-in forwards;
   }
 
   .scrollbar-none {
@@ -192,6 +212,16 @@
   }
 }
 
+@keyframes ludoxel-fade-out {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes ludoxel-dialog-in {
   0% {
     opacity: 0;
@@ -201,6 +231,18 @@
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ludoxel-dialog-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
   }
 }
 
@@ -224,14 +266,39 @@
   }
 }
 
+@keyframes ludoxel-slide-out-right {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ludoxel-slide-out-left {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animated-text__char,
   .page-reveal,
   .search-dialog-backdrop,
+  .search-dialog-backdrop-exit,
   .search-dialog-panel,
+  .search-dialog-panel-exit,
   .mobile-sheet-backdrop,
+  .mobile-sheet-backdrop-exit,
   .mobile-sheet-panel-right,
-  .mobile-sheet-panel-left {
+  .mobile-sheet-panel-right-exit,
+  .mobile-sheet-panel-left,
+  .mobile-sheet-panel-left-exit {
     opacity: 1;
     filter: none;
     transform: none;

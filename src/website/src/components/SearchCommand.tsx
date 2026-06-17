@@ -53,6 +53,8 @@ const HERO_BUTTON_CLASS_NAME =
 const ICON_BUTTON_CLASS_NAME =
   'flex items-center justify-center w-10 h-10 rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground hover:border-muted-foreground/50';
 
+const SEARCH_DIALOG_ANIMATION_MS = 200;
+
 function getSectionKey(entry: SearchIndexEntry): string {
   return entry.section.trim().toLowerCase();
 }
@@ -69,7 +71,9 @@ function getSectionMeta(sectionKey: string): SearchSectionMeta {
 export default function SearchCommand({ variant, placeholder, enableShortcut = false }: SearchCommandProps): React.JSX.Element {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
@@ -98,6 +102,40 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
     }, {});
   }, [filteredRows]);
 
+  const clearCloseTimer = (): void => {
+    if (closeTimerRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  };
+
+  const openSearch = (): void => {
+    clearCloseTimer();
+    setIsClosing(false);
+    setIsOpen(true);
+  };
+
+  const closeSearch = (): void => {
+    if (!isOpen || closeTimerRef.current !== null) {
+      return;
+    }
+
+    setIsClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+      setQuery('');
+      setSelectedIndex(0);
+      closeTimerRef.current = null;
+    }, SEARCH_DIALOG_ANIMATION_MS);
+  };
+
+  useEffect(() => {
+    return () => clearCloseTimer();
+  }, []);
+
   useEffect(() => {
     if (!enableShortcut) {
       return;
@@ -108,7 +146,7 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
 
       if (isCommandSearch) {
         event.preventDefault();
-        setIsOpen(true);
+        openSearch();
       }
     };
 
@@ -117,16 +155,14 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
   }, [enableShortcut]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
+    if (!isOpen || isClosing) {
       return;
     }
 
     const handleKeyDown = (event: globalThis.KeyboardEvent): void => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        setIsOpen(false);
+        closeSearch();
       }
     };
 
@@ -134,7 +170,7 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
     window.setTimeout(() => inputRef.current?.focus(), 0);
 
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, isClosing]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -145,14 +181,6 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
       setSelectedIndex(Math.max(0, filteredRows.length - 1));
     }
   }, [filteredRows.length, selectedIndex]);
-
-  const openSearch = (): void => {
-    setIsOpen(true);
-  };
-
-  const closeSearch = (): void => {
-    setIsOpen(false);
-  };
 
   const selectEntry = (entry: SearchIndexEntry): void => {
     closeSearch();
@@ -189,12 +217,16 @@ export default function SearchCommand({ variant, placeholder, enableShortcut = f
   };
 
   const buttonClassName = variant === 'header' ? HEADER_BUTTON_CLASS_NAME : variant === 'hero' ? HERO_BUTTON_CLASS_NAME : ICON_BUTTON_CLASS_NAME;
+  const searchDialogBackdropClassName = isClosing
+    ? 'search-dialog-backdrop search-dialog-backdrop-exit absolute inset-0 bg-black/60 backdrop-blur-sm'
+    : 'search-dialog-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm';
+  const searchDialogPanelClassName = isClosing ? 'search-dialog-panel search-dialog-panel-exit relative z-10 w-full max-w-[600px] mx-4' : 'search-dialog-panel relative z-10 w-full max-w-[600px] mx-4';
 
   const searchDialog = isOpen ? (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 md:pt-32" role="dialog" aria-modal="true" aria-label="Search documentation">
-      <button className="search-dialog-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm" type="button" aria-label="Close search" onClick={closeSearch} />
+      <button className={searchDialogBackdropClassName} type="button" aria-label="Close search" onClick={closeSearch} />
 
-      <div className="search-dialog-panel relative z-10 w-full max-w-[600px] mx-4">
+      <div className={searchDialogPanelClassName}>
         <div className="rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
           <div className="flex items-center border-b border-border px-4">
             <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />
