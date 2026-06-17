@@ -149,6 +149,28 @@ function ArticleTitleList({ pages }: { pages: DocsPageContent[] }): React.JSX.El
   );
 }
 
+type ArticleGroupHeadingLevel = 'h3' | 'h4';
+
+function ArticleGroupList({ pagesByGroup, headingLevel }: { pagesByGroup: Map<string, DocsPageContent[]>; headingLevel: ArticleGroupHeadingLevel }): React.JSX.Element {
+  const Heading = headingLevel;
+
+  return (
+    <div className="space-y-5 border-l border-border pl-4">
+      {[...pagesByGroup.entries()].map(([group, groupPages]) => (
+        <div key={group}>
+          <Heading className="mb-2 text-sm font-medium">
+            <Link className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline" to={firstPageHrefForGroup(groupPages)}>
+              {group}
+            </Link>
+          </Heading>
+
+          <ArticleTitleList pages={groupPages} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DocsRootCollection({ pagesByCategory }: { pagesByCategory: Map<DocsSearchSection, DocsPageContent[]> }): React.JSX.Element {
   return (
     <div className="space-y-10">
@@ -182,19 +204,7 @@ function DocsRootCollection({ pagesByCategory }: { pagesByCategory: Map<DocsSear
                         </Link>
                       </h3>
 
-                      <div className="space-y-5">
-                        {[...pagesByGroup.entries()].map(([group, groupPages]) => (
-                          <div key={group}>
-                            <h4 className="mb-2 text-sm font-medium">
-                              <Link className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline" to={firstPageHrefForGroup(groupPages)}>
-                                {group}
-                              </Link>
-                            </h4>
-
-                            <ArticleTitleList pages={groupPages} />
-                          </div>
-                        ))}
-                      </div>
+                      <ArticleGroupList pagesByGroup={pagesByGroup} headingLevel="h4" />
                     </div>
                   );
                 })}
@@ -221,19 +231,7 @@ function DocsCategoryCollection({ pagesBySubcategory }: { pagesBySubcategory: Ma
               </Link>
             </h2>
 
-            <div className="space-y-5 border-l border-border pl-4">
-              {[...pagesByGroup.entries()].map(([group, groupPages]) => (
-                <div key={group}>
-                  <h3 className="mb-2 text-sm font-medium">
-                    <Link className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline" to={firstPageHrefForGroup(groupPages)}>
-                      {group}
-                    </Link>
-                  </h3>
-
-                  <ArticleTitleList pages={groupPages} />
-                </div>
-              ))}
-            </div>
+            <ArticleGroupList pagesByGroup={pagesByGroup} headingLevel="h3" />
           </section>
         );
       })}
