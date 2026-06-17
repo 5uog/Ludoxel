@@ -331,43 +331,41 @@ type DocsSidebarProps = {
 
 function DocsSidebar({ currentPathname, onNavigate }: DocsSidebarProps): React.JSX.Element {
   return (
-    <div className="relative h-full overflow-hidden py-6">
-      <div className="h-full w-full overflow-y-auto rounded-[inherit] scrollbar-none">
-        <div className="space-y-6 px-4">
-          {docsSidebarSections.map((section) => (
-            <div key={section.title}>
-              <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{section.title}</h3>
+    <div className="h-full overflow-y-auto py-6 scrollbar-none">
+      <div className="space-y-6 px-4">
+        {docsSidebarSections.map((section) => (
+          <div key={section.title}>
+            <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{section.title}</h3>
 
-              <div className="relative mt-1">
-                <div className="absolute bottom-0 left-3 top-0 w-0.5 bg-border" />
+            <div className="relative mt-1">
+              <div className="absolute bottom-0 left-3 top-0 w-0.5 bg-border" />
 
-                <div className="relative">
-                  {section.items.map((item) => {
-                    const Icon = iconMap[item.icon];
-                    const isActive = isSidebarItemActive(currentPathname, item.href);
+              <div className="relative">
+                {section.items.map((item) => {
+                  const Icon = iconMap[item.icon];
+                  const isActive = isSidebarItemActive(currentPathname, item.href);
 
-                    return (
-                      <Link
-                        className={
-                          isActive
-                            ? 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm font-medium text-foreground transition-colors'
-                            : 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm text-muted-foreground transition-colors hover:text-foreground'
-                        }
-                        key={item.href}
-                        to={item.href}
-                        onClick={onNavigate}
-                      >
-                        {isActive ? <div className="absolute bottom-0 left-3 top-0 w-0.5 bg-foreground" /> : null}
-                        <Icon className={isActive ? 'h-4 w-4 shrink-0 text-foreground' : 'h-4 w-4 shrink-0'} />
-                        <span className="truncate">{item.title}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                  return (
+                    <Link
+                      className={
+                        isActive
+                          ? 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm font-medium text-foreground transition-colors'
+                          : 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm text-muted-foreground transition-colors hover:text-foreground'
+                      }
+                      key={item.href}
+                      to={item.href}
+                      onClick={onNavigate}
+                    >
+                      {isActive ? <div className="absolute bottom-0 left-3 top-0 w-0.5 bg-foreground" /> : null}
+                      <Icon className={isActive ? 'h-4 w-4 shrink-0 text-foreground' : 'h-4 w-4 shrink-0'} />
+                      <span className="truncate">{item.title}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -471,7 +469,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
   const contentWidthClassName = view.kind === 'article' ? 'w-full max-w-3xl' : view.collection.pathSegments.length === 0 ? 'w-full max-w-6xl' : 'w-full max-w-5xl';
 
   return (
-    <div className="mx-auto flex w-full max-w-[90rem] flex-1 pt-16">
+    <div className="mx-auto flex w-full max-w-[90rem] grow items-start pt-16">
       <div className="fixed left-4 top-20 z-40 lg:hidden">
         <button
           aria-controls="mobile-docs-navigation"
@@ -510,7 +508,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
         <DocsSidebar currentPathname={currentPathname} />
       </aside>
 
-      <main className="page-reveal min-w-0 flex-1 overflow-hidden px-4 pb-10 pt-16 md:px-6 lg:px-12 lg:pt-10">
+      <main className="page-reveal min-w-0 flex-1 overflow-visible px-4 pb-10 pt-16 md:px-6 lg:px-12 lg:pt-10">
         <div className={contentWidthClassName}>
           <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
             {view.breadcrumbs.map((breadcrumb, index) => {
@@ -548,7 +546,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
       </main>
 
       {view.kind === 'article' ? (
-        <aside className="sticky top-24 hidden h-fit w-56 shrink-0 pr-6 xl:block">
+        <aside className="sticky top-24 hidden h-fit w-56 shrink-0 self-start pr-6 xl:block">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <List className="h-4 w-4" />
             <span>On this page</span>

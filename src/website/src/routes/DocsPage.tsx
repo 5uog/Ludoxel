@@ -17,7 +17,7 @@ export default function DocsPage(): React.JSX.Element {
 
   if (page !== undefined) {
     return (
-      <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
+      <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
         <Header activePath={getDocsPageHref(page)} />
         <DocsLayout page={page} />
         <Footer />
@@ -29,7 +29,7 @@ export default function DocsPage(): React.JSX.Element {
 
   if (collection !== undefined) {
     return (
-      <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
+      <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
         <Header activePath={getDocsCollectionHref(collection.pathSegments)} />
         <DocsLayout collection={collection} />
         <Footer />
