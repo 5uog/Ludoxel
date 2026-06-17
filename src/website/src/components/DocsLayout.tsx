@@ -538,7 +538,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
 
           <div>
             <h1 className="mb-4 text-4xl font-bold tracking-tight">
-              <AnimatedText text={view.title} />
+              <AnimatedText animationKey={currentPathname} text={view.title} />
             </h1>
             <p className="mb-12 text-lg text-muted-foreground">{view.description}</p>
           </div>
