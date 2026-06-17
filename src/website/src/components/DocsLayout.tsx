@@ -173,7 +173,7 @@ function ArticleGroupList({ pagesByGroup, headingLevel }: { pagesByGroup: Map<st
 
 function DocsRootCollection({ pagesByCategory }: { pagesByCategory: Map<DocsSearchSection, DocsPageContent[]> }): React.JSX.Element {
   return (
-    <div className="space-y-10">
+    <div className="grid items-start gap-x-10 gap-y-12 xl:grid-cols-2 2xl:grid-cols-3">
       {docsSearchSections
         .map((section) => {
           const sectionPages = pagesByCategory.get(section);
@@ -468,6 +468,8 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
     ? 'mobile-sheet-panel-left mobile-sheet-panel-left-exit fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg'
     : 'mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg';
 
+  const contentWidthClassName = view.kind === 'article' ? 'w-full max-w-3xl' : view.collection.pathSegments.length === 0 ? 'w-full max-w-6xl' : 'w-full max-w-5xl';
+
   return (
     <div className="mx-auto flex w-full max-w-[90rem] flex-1 pt-16">
       <div className="fixed left-4 top-20 z-40 lg:hidden">
@@ -509,7 +511,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
       </aside>
 
       <main className="page-reveal min-w-0 flex-1 overflow-hidden px-4 pb-10 pt-16 md:px-6 lg:px-12 lg:pt-10">
-        <div className={view.kind === 'article' ? 'w-full max-w-3xl' : 'w-full max-w-5xl'}>
+        <div className={contentWidthClassName}>
           <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
             {view.breadcrumbs.map((breadcrumb, index) => {
               const isLast = index === view.breadcrumbs.length - 1;
