@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { useLayoutEffect, useRef } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 
-import { docsHomeHref } from './data/navigation';
 import ChangelogPage from './routes/ChangelogPage';
 import DocsPage from './routes/DocsPage';
 import HomePage from './routes/HomePage';
@@ -77,9 +76,7 @@ export default function App(): React.JSX.Element {
       <RouteScrollRestoration />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/docs" element={<Navigate to={docsHomeHref} replace />} />
-        <Route path="/docs/overview" element={<Navigate to={docsHomeHref} replace />} />
-        <Route path="/docs/:slug" element={<DocsPage />} />
+        <Route path="/docs/*" element={<DocsPage />} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

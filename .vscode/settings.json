@@ -43,14 +43,11 @@
   "editor.defaultFormatter": null,
   "editor.accessibilitySupport": "off",
   "editor.useTabStops": true,
-
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
-
   "python.analysis.extraPaths": ["src"],
   "python.analysis.ignore": ["src/ludoxel/presentation/rendering/backends/wgpu"],
-
   "[python]": {
     "editor.formatOnSave": false,
     "editor.wordWrap": "wordWrapColumn",
@@ -58,7 +55,6 @@
     "editor.tabSize": 2,
     "editor.rulers": [70, 100]
   },
-
   "files.associations": {
     "*.pyi": "python",
     "*.qss": "plaintext",
@@ -69,5 +65,8 @@
     "*.in": "plaintext",
     "LICENCE": "plaintext",
     "LICENSE": "plaintext"
-  }
+  },
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore"
 }

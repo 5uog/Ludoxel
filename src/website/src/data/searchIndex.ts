@@ -11,24 +11,12 @@ export type SearchIndexEntry = {
   section: string;
 };
 
-const docsSearchEntries: SearchIndexEntry[] = docsPages.flatMap((page) => {
-  const pageHref = getDocsPageHref(page);
-  const pageEntry: SearchIndexEntry = {
-    title: page.title,
-    description: page.description,
-    href: pageHref,
-    section: page.searchSection,
-  };
-
-  const sectionEntries = page.sections.map((section) => ({
-    title: section.title,
-    description: section.body[0] ?? page.description,
-    href: `${pageHref}#${section.id}`,
-    section: page.searchSection,
-  }));
-
-  return [pageEntry, ...sectionEntries];
-});
+const docsSearchEntries: SearchIndexEntry[] = docsPages.map((page) => ({
+  title: page.title,
+  description: page.description,
+  href: getDocsPageHref(page),
+  section: page.searchSection,
+}));
 
 export const searchIndex: SearchIndexEntry[] = [
   ...docsSearchEntries,

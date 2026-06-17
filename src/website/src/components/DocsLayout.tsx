@@ -6,8 +6,8 @@ import { ChevronRight, FileText, Home as HomeIcon, Layers, List, Menu, Settings,
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { type DocsPageContent, getDocsPageHref, getOnThisPage } from '../data/docs';
-import { docsHomeHref, docsSidebarSections, type DocsSidebarItem } from '../data/navigation';
+import { type DocsPageContent, getDocsBreadcrumbs, getOnThisPage } from '../data/docs';
+import { docsSidebarSections, type DocsSidebarItem } from '../data/navigation';
 import AnimatedText from './AnimatedText';
 
 const iconMap: Record<DocsSidebarItem['icon'], React.ComponentType<{ className?: string }>> = {
@@ -129,8 +129,8 @@ export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element
 
   const currentPathname = location.pathname;
   const currentHash = location.hash;
-  const pageHref = getDocsPageHref(page);
   const onThisPage = getOnThisPage(page);
+  const breadcrumbs = getDocsBreadcrumbs(page);
 
   const clearCloseTimer = (): void => {
     if (closeTimerRef.current === null) {
@@ -240,23 +240,24 @@ export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element
 
       <main className="flex-1 min-w-0 px-4 md:px-6 lg:px-12 pt-16 lg:pt-10 pb-10 overflow-hidden page-reveal">
         <div className="max-w-3xl w-full">
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <Link className="hover:text-foreground transition-colors flex items-center gap-1" to={docsHomeHref}>
-              <HomeIcon className="h-4 w-4" />
-              <span>Docs</span>
-            </Link>
+          <nav className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
+            {breadcrumbs.map((breadcrumb, index) => {
+              const isLast = index === breadcrumbs.length - 1;
 
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
-              <span className="hover:text-foreground transition-colors cursor-pointer">{page.eyebrow}</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
-              <Link className="text-foreground font-medium" to={pageHref}>
-                {page.title}
-              </Link>
-            </div>
+              return (
+                <div className="flex items-center gap-2" key={breadcrumb.href}>
+                  {index === 0 ? null : <ChevronRight className="h-4 w-4" />}
+                  <Link
+                    aria-current={isLast ? 'page' : undefined}
+                    className={isLast ? 'text-foreground font-medium' : 'hover:text-foreground transition-colors flex items-center gap-1'}
+                    to={breadcrumb.href}
+                  >
+                    {index === 0 ? <HomeIcon className="h-4 w-4" /> : null}
+                    <span>{breadcrumb.label}</span>
+                  </Link>
+                </div>
+              );
+            })}
           </nav>
 
           <div>
@@ -288,16 +289,17 @@ export default function DocsLayout({ page }: DocsLayoutProps): React.JSX.Element
             ))}
 
             {page.references && page.references.length > 0 ? (
-              <section className="scroll-mt-24 border-t border-border pt-8" id="references">
-                <h2 className="font-semibold tracking-tight mb-4 text-2xl">References</h2>
-                <div className="grid gap-3">
+              <section className="scroll-mt-24 border-t border-border pt-8" id="see-also">
+                <h2 className="font-semibold tracking-tight mb-4 text-2xl">See also</h2>
+                <ul className="list-disc space-y-2 pl-5">
                   {page.references.map((reference) => (
-                    <Link className="rounded-lg border border-border bg-secondary/20 px-4 py-3 transition-colors hover:bg-secondary/40" key={reference.href} to={reference.href}>
-                      <span className="block text-sm font-medium text-foreground">{reference.title}</span>
-                      <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{renderInlineText(reference.description)}</span>
-                    </Link>
+                    <li className="text-muted-foreground" key={reference.href}>
+                      <Link className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline underline-offset-4" to={reference.href}>
+                        {reference.title}
+                      </Link>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </section>
             ) : null}
           </div>

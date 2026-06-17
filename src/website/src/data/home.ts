@@ -9,15 +9,15 @@ export type ShortcutLink = {
 
 export const heroShortcuts: ShortcutLink[] = [
   {
-    label: 'Introduction',
-    href: '/docs/introduction',
+    label: 'Starting Ludoxel',
+    href: '/docs/manual/first-use/application/starting-ludoxel',
   },
   {
-    label: 'Rendering Backends',
-    href: '/docs/rendering',
+    label: 'Rendering Systems',
+    href: '/docs/systems/rendering/backend-and-world-rendering/understanding-render-distance-fog-and-shadows',
   },
   {
     label: 'AI NPC Systems',
-    href: '/docs/ai-npcs',
+    href: '/docs/systems/intelligence/ai-and-othello-systems/understanding-ai-action-selection',
   },
 ];
