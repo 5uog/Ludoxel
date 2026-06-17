@@ -5,9 +5,9 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { heroShortcuts } from '../data/home';
-import AnimatedText from './AnimatedText';
-import SearchCommand from './SearchCommand';
+import { heroShortcuts } from '../../data/home';
+import AnimatedText from '../animation/AnimatedText';
+import SearchCommand from '../search/SearchCommand';
 
 const heroTitle = 'Challenge AI across blocks and boards.';
 const heroDescription =

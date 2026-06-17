@@ -6,21 +6,13 @@ import { ChevronRight, FileText, Home as HomeIcon, Layers, List, Menu, Settings,
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import {
-  docsSearchSections,
-  type DocsCollection,
-  type DocsPageContent,
-  type DocsSearchSection,
-  getDocsBreadcrumbs,
-  getDocsCollectionBreadcrumbs,
-  getDocsCollectionHref,
-  getDocsPageHref,
-  getOnThisPage,
-} from '../data/docs';
-import { createDocsSearchEntries } from '../data/searchIndex';
-import { docsSidebarSections, type DocsSidebarItem } from '../data/navigation';
-import AnimatedText from './AnimatedText';
-import SearchCommand from './SearchCommand';
+import { getDocsPageHref } from '../../data/docs/articles';
+import { type DocsCollection, getDocsBreadcrumbs, getDocsCollectionBreadcrumbs, getDocsCollectionHref, getOnThisPage } from '../../data/docs/collections';
+import { docsSearchSections, type DocsPageContent, type DocsSearchSection } from '../../data/docs/types';
+import { createDocsSearchEntries } from '../../data/docs/search';
+import { docsSidebarSections, type DocsSidebarItem } from '../../data/docs/navigation';
+import AnimatedText from '../animation/AnimatedText';
+import SearchCommand from '../search/SearchCommand';
 
 const iconMap: Record<DocsSidebarItem['icon'], React.ComponentType<{ className?: string }>> = {
   file: FileText,

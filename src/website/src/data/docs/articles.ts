@@ -2,15 +2,15 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { dataPages } from './data';
-import { developerPages } from './developer';
-import { distributionPages } from './distribution';
-import { gameplayPages } from './gameplay';
-import { legalPages } from './legal';
-import { manualPages } from './manual';
-import { settingsPages } from './settings';
-import { supportPages } from './support';
-import { systemsPages } from './systems';
+import { dataPages } from './content/data';
+import { developerPages } from './content/developer';
+import { distributionPages } from './content/distribution';
+import { gameplayPages } from './content/gameplay';
+import { legalPages } from './content/legal';
+import { manualPages } from './content/manual';
+import { settingsPages } from './content/settings';
+import { supportPages } from './content/support';
+import { systemsPages } from './content/systems';
 import { getDocsHrefFromSegments, type DocsPageContent, type DocsReference } from './types';
 
 const rawDocsPages: DocsPageContent[] = [...manualPages, ...gameplayPages, ...systemsPages, ...settingsPages, ...dataPages, ...distributionPages, ...legalPages, ...supportPages, ...developerPages];
@@ -38,3 +38,11 @@ function withResolvedReferences(pages: DocsPageContent[]): DocsPageContent[] {
 }
 
 export const docsPages: DocsPageContent[] = withResolvedReferences(rawDocsPages);
+
+export function getDocsPagePath(page: DocsPageContent): string {
+  return page.pathSegments.join('/');
+}
+
+export function getDocsPageHref(page: DocsPageContent): string {
+  return getDocsHrefFromSegments(page.pathSegments);
+}

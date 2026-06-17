@@ -2,7 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { docsPages, getDocsPageHref, type DocsPageContent } from './docs';
+import { docsPages, getDocsPageHref } from './articles';
+import { type DocsPageContent } from './types';
 
 export type SearchIndexEntry = {
   title: string;

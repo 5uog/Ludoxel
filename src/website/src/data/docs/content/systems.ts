@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { defineDocsArticle, type DocsPageContent } from './types';
+import { defineDocsArticle, type DocsPageContent } from '../types';
 
 export const systemsPages: DocsPageContent[] = [
   defineDocsArticle({

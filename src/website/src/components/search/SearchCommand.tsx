@@ -7,7 +7,7 @@ import { type ChangeEvent, type ComponentType, type KeyboardEvent, useEffect, us
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
-import { searchIndex, type SearchIndexEntry } from '../data/searchIndex';
+import { searchIndex, type SearchIndexEntry } from '../../data/docs/search';
 
 type SearchCommandProps = {
   variant: 'header' | 'hero' | 'icon';

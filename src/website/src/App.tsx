@@ -5,10 +5,10 @@
 import { useLayoutEffect, useRef } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 
-import ChangelogPage from './routes/ChangelogPage';
-import DocsPage from './routes/DocsPage';
-import HomePage from './routes/HomePage';
-import NotFoundPage from './routes/NotFoundPage';
+import ChangelogPage from './pages/changelog/ChangelogPage';
+import DocsPage from './pages/docs/DocsPage';
+import HomePage from './pages/home/HomePage';
+import NotFoundPage from './pages/not-found/NotFoundPage';
 
 type ScrollPosition = {
   left: number;

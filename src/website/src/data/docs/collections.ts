@@ -2,12 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { docsPages } from './docs/index';
-import { docsSearchSections, getDocsHrefFromSegments, type DocsPageContent, type DocsSearchSection } from './docs/types';
-
-export type { DocsPageContent, DocsReference, DocsSearchSection, DocsSection } from './docs/types';
-
-export { docsPages, docsSearchSections };
+import { docsPages, getDocsPageHref, getDocsPagePath } from './articles';
+import { getDocsHrefFromSegments, type DocsPageContent, type DocsSearchSection } from './types';
 
 export type DocsCollection = {
   title: string;
@@ -87,10 +83,6 @@ function descriptionForCollection(pathSegments: string[], pages: DocsPageContent
   return `Articles under ${firstPage.category} / ${firstPage.subcategory} / ${firstPage.group}.`;
 }
 
-export function getDocsPagePath(page: DocsPageContent): string {
-  return page.pathSegments.join('/');
-}
-
 export function getDocsPage(path: string | undefined): DocsPageContent | undefined {
   const requestedPath = normalizeDocsPath(path);
 
@@ -120,10 +112,6 @@ export function getDocsCollection(path: string | undefined): DocsCollection | un
     pathSegments,
     pages,
   };
-}
-
-export function getDocsPageHref(page: DocsPageContent): string {
-  return getDocsHrefFromSegments(page.pathSegments);
 }
 
 export function getDocsCollectionHref(pathSegments: string[]): string {

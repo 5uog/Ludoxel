@@ -6,8 +6,8 @@ import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { getStartedHref, mainNavigation } from '../data/navigation';
-import SearchCommand from './SearchCommand';
+import { getStartedHref, mainNavigation } from '../../data/navigation';
+import SearchCommand from '../search/SearchCommand';
 
 type HeaderProps = {
   activePath?: string;
