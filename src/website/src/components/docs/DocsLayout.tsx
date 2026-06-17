@@ -8,9 +8,9 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { getDocsPageHref } from '../../data/docs/articles';
 import { type DocsCollection, getDocsBreadcrumbs, getDocsCollectionBreadcrumbs, getDocsCollectionHref, getOnThisPage } from '../../data/docs/collections';
-import { docsSearchSections, type DocsPageContent, type DocsSearchSection } from '../../data/docs/types';
-import { createDocsSearchEntries } from '../../data/docs/search';
 import { docsSidebarSections, type DocsSidebarItem } from '../../data/docs/navigation';
+import { createDocsSearchEntries } from '../../data/docs/search';
+import { docsSearchSections, type DocsPageContent, type DocsSearchSection } from '../../data/docs/types';
 import AnimatedText from '../animation/AnimatedText';
 import SearchCommand from '../search/SearchCommand';
 
@@ -24,6 +24,7 @@ const iconMap: Record<DocsSidebarItem['icon'], React.ComponentType<{ className?:
 };
 
 const MOBILE_SHEET_ANIMATION_MS = 500;
+const DESKTOP_HEADER_OFFSET_PX = 64;
 
 type SplitHref = {
   pathname: string;
@@ -416,6 +417,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
   const closeTimerRef = useRef<number | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [isMobileSidebarClosing, setIsMobileSidebarClosing] = useState<boolean>(false);
+  const [footerOverlapPx, setFooterOverlapPx] = useState<number>(0);
 
   const view =
     'page' in props
@@ -437,6 +439,54 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
   const currentPathname = location.pathname;
   const currentHash = location.hash;
   const onThisPage = view.kind === 'article' ? getOnThisPage(view.page) : [];
+
+  const layoutClassName =
+    view.kind === 'article'
+      ? 'mx-auto flex w-full max-w-[90rem] grow items-start pt-16 lg:pl-64 xl:pr-56'
+      : 'mx-auto flex w-full max-w-[90rem] grow items-start pt-16 lg:pl-64';
+
+  useEffect(() => {
+    let animationFrameId: number | null = null;
+    let lastFooterOverlapPx = -1;
+
+    const updateFooterOverlap = (): void => {
+      animationFrameId = null;
+
+      const footer = document.querySelector('footer');
+      const viewportHeight = window.innerHeight;
+      const maxOverlapPx = Math.max(0, viewportHeight - DESKTOP_HEADER_OFFSET_PX);
+      const nextFooterOverlapPx =
+        footer instanceof HTMLElement ? Math.min(maxOverlapPx, Math.max(0, Math.ceil(viewportHeight - footer.getBoundingClientRect().top))) : 0;
+
+      if (nextFooterOverlapPx === lastFooterOverlapPx) {
+        return;
+      }
+
+      lastFooterOverlapPx = nextFooterOverlapPx;
+      setFooterOverlapPx(nextFooterOverlapPx);
+    };
+
+    const scheduleFooterOverlapUpdate = (): void => {
+      if (animationFrameId !== null) {
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(updateFooterOverlap);
+    };
+
+    scheduleFooterOverlapUpdate();
+    window.addEventListener('scroll', scheduleFooterOverlapUpdate, { passive: true });
+    window.addEventListener('resize', scheduleFooterOverlapUpdate);
+
+    return () => {
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      window.removeEventListener('scroll', scheduleFooterOverlapUpdate);
+      window.removeEventListener('resize', scheduleFooterOverlapUpdate);
+    };
+  }, [currentLocationKey]);
 
   const clearCloseTimer = (): void => {
     if (closeTimerRef.current === null) {
@@ -507,7 +557,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
   const contentWidthClassName = view.kind === 'article' ? 'w-full max-w-3xl' : view.collection.pathSegments.length === 0 ? 'w-full max-w-6xl' : 'w-full max-w-5xl';
 
   return (
-    <div className="mx-auto flex w-full max-w-[90rem] grow items-start pt-16">
+    <div className={layoutClassName}>
       <div className="fixed left-4 top-20 z-40 lg:hidden">
         <button
           aria-controls="mobile-docs-navigation"
@@ -542,11 +592,14 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
         </div>
       ) : null}
 
-      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-border lg:block">
+      <aside
+        className="fixed left-[max(0px,calc((100vw-90rem)/2))] top-16 z-30 hidden w-64 shrink-0 overflow-hidden border-r border-border bg-background transition-[bottom] duration-300 ease-out lg:block"
+        style={{ bottom: `${footerOverlapPx}px` }}
+      >
         <DocsSidebar currentPathname={currentPathname} />
       </aside>
 
-      <main className="page-reveal min-w-0 flex-1 overflow-visible px-4 pb-10 pt-16 md:px-6 lg:px-12 lg:pt-10">
+      <main className="page-reveal min-w-0 flex-1 overflow-visible px-4 pb-20 pt-16 md:px-6 lg:px-12 lg:pt-10">
         <div className={contentWidthClassName}>
           <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label="Breadcrumb">
             {view.breadcrumbs.map((breadcrumb, index) => {
@@ -584,7 +637,10 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
       </main>
 
       {view.kind === 'article' ? (
-        <aside className="sticky top-24 hidden h-fit w-56 shrink-0 self-start pr-6 xl:block">
+        <aside
+          className="fixed right-[max(0px,calc((100vw-90rem)/2))] top-24 z-20 hidden w-56 shrink-0 overflow-y-auto pr-6 transition-[max-height] duration-300 ease-out xl:block"
+          style={{ maxHeight: `calc(100vh - 6rem - ${footerOverlapPx}px)` }}
+        >
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <List className="h-4 w-4" />
             <span>On this page</span>
