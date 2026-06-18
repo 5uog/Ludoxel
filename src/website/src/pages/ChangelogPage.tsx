@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import AnimatedText from '../../components/animation/AnimatedText';
-import Footer from '../../components/layout/Footer';
-import Header from '../../components/layout/Header';
-import { changelogEntries } from '../../data/changelog';
+import AnimatedText from '../components/animation/AnimatedText';
+import Footer from '../components/layout/Footer';
+import Header from '../components/layout/Header';
+import { changelogEntries } from '../data/changelog';
 
 export default function ChangelogPage(): React.JSX.Element {
   return (

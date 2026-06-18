@@ -1,0 +1,5 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+export const SEARCH_DIALOG_ANIMATION_MS = 200;

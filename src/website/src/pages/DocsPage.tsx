@@ -4,12 +4,12 @@
  */
 import { useParams } from 'react-router-dom';
 
-import DocsLayout from '../../components/docs/DocsLayout';
-import Footer from '../../components/layout/Footer';
-import Header from '../../components/layout/Header';
-import { getDocsPageHref } from '../../data/docs/articles';
-import { getDocsCollection, getDocsCollectionHref, getDocsPage } from '../../data/docs/collections';
-import NotFoundPage from '../not-found/NotFoundPage';
+import DocsLayout from '../components/docs/DocsLayout';
+import Footer from '../components/layout/Footer';
+import Header from '../components/layout/Header';
+import { getDocsPageHref } from '../data/docs/articles';
+import { getDocsCollection, getDocsCollectionHref, getDocsPage } from '../data/docs/collections';
+import NotFoundPage from './NotFoundPage';
 
 export default function DocsPage(): React.JSX.Element {
   const params = useParams();
