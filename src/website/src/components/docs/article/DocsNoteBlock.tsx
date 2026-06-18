@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { CircleAlert, TriangleAlert } from 'lucide-react';
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -57,23 +58,11 @@ function isExternalHref(href: string): boolean {
 }
 
 function renderInfoIcon(style: DocsNoteBlockStyle): React.JSX.Element {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className={style.iconClassName} aria-label={style.iconLabel}>
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M7 1.3C10.14 1.3 12.7 3.86 12.7 7C12.7 10.14 10.14 12.7 7 12.7C5.48908 12.6974 4.0408 12.096 2.97241 11.0276C1.90403 9.9592 1.30264 8.51092 1.3 7C1.3 3.86 3.86 1.3 7 1.3ZM7 0C3.14 0 0 3.14 0 7C0 10.86 3.14 14 7 14C10.86 14 14 10.86 14 7C14 3.14 10.86 0 7 0ZM8 3H6V8H8V3ZM8 9H6V11H8V9Z"
-      />
-    </svg>
-  );
+  return <CircleAlert aria-label={style.iconLabel} className={style.iconClassName} />;
 }
 
 function renderWarningIcon(style: DocsNoteBlockStyle): React.JSX.Element {
-  return (
-    <svg className={style.iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-label={style.iconLabel}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-  );
+  return <TriangleAlert aria-label={style.iconLabel} className={style.iconClassName} />;
 }
 
 function renderNoteBlockIcon(type: DocsNoteBlockType, style: DocsNoteBlockStyle): React.JSX.Element {
