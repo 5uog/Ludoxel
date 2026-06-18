@@ -5,6 +5,10 @@
 import { type DocsNoteBlock as DocsNoteBlockContent } from '../../../data/docs/types';
 import DocsNoteBlock from './DocsNoteBlock';
 
+type DocsCopyrightBannerProps = {
+  animationKey: string;
+};
+
 const COPYRIGHT_NOTICE: DocsNoteBlockContent = {
   type: 'warning',
   content: [
@@ -18,9 +22,9 @@ const COPYRIGHT_NOTICE: DocsNoteBlockContent = {
   ],
 };
 
-export default function DocsCopyrightBanner(): React.JSX.Element {
+export default function DocsCopyrightBanner({ animationKey }: DocsCopyrightBannerProps): React.JSX.Element {
   return (
-    <div aria-label="Copyright notice" className="mb-8">
+    <div aria-label="Copyright notice" className="page-reveal page-reveal-delay-2 mb-8" key={`${animationKey}-copyright-notice`}>
       <DocsNoteBlock block={COPYRIGHT_NOTICE} blockIndex={0} sectionId="docs-copyright-notice" />
     </div>
   );

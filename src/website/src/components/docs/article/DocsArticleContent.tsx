@@ -77,7 +77,7 @@ function splitDisplayMath(text: string): DisplayMathTextBlock[] {
       if (mathEnd !== -1) {
         const leadingText = text.slice(textStart, cursor);
 
-        if (leadingText.trim().length > 0) {
+        if (leadingText.length > 0) {
           blocks.push({ kind: 'text', text: leadingText });
         }
 
@@ -85,26 +85,7 @@ function splitDisplayMath(text: string): DisplayMathTextBlock[] {
           kind: 'math',
           expression: text.slice(cursor + 2, mathEnd).trim(),
         });
-        cursor = mathEnd + 2;
-        textStart = cursor;
-        continue;
-      }
-    }
 
-    if (text.startsWith('\\[', cursor)) {
-      const mathEnd = findUnescapedSequence(text, '\\]', cursor + 2);
-
-      if (mathEnd !== -1) {
-        const leadingText = text.slice(textStart, cursor);
-
-        if (leadingText.trim().length > 0) {
-          blocks.push({ kind: 'text', text: leadingText });
-        }
-
-        blocks.push({
-          kind: 'math',
-          expression: text.slice(cursor + 2, mathEnd).trim(),
-        });
         cursor = mathEnd + 2;
         textStart = cursor;
         continue;
@@ -116,7 +97,7 @@ function splitDisplayMath(text: string): DisplayMathTextBlock[] {
 
   const trailingText = text.slice(textStart);
 
-  if (trailingText.trim().length > 0) {
+  if (trailingText.length > 0) {
     blocks.push({ kind: 'text', text: trailingText });
   }
 
@@ -185,9 +166,11 @@ function renderSectionContent(section: DocsSection): React.JSX.Element[] {
 }
 
 export default function DocsArticleContent({ page }: DocsArticleContentProps): React.JSX.Element {
+  const articleAnimationKey = page.pathSegments.join('/');
+
   return (
     <div className="space-y-12">
-      <DocsCopyrightBanner />
+      <DocsCopyrightBanner animationKey={articleAnimationKey} key={`${articleAnimationKey}-copyright-banner`} />
 
       {page.sections.map((section, index) => (
         <section className={`scroll-mt-24 page-reveal page-reveal-delay-${Math.min(index + 1, 4)}`} id={section.id} key={section.id}>
