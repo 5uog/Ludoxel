@@ -36,6 +36,20 @@
 *.bin binary
 *.pyc binary
 
+# Website source files must stay LF text files.
+src/website/**/*.ts text eol=lf
+src/website/**/*.tsx text eol=lf
+src/website/**/*.js text eol=lf
+src/website/**/*.jsx text eol=lf
+src/website/**/*.mjs text eol=lf
+src/website/**/*.cjs text eol=lf
+src/website/**/*.css text eol=lf
+src/website/**/*.html text eol=lf
+src/website/**/*.json text eol=lf
+src/website/**/*.md text eol=lf
+src/website/**/*.yml text eol=lf
+src/website/**/*.yaml text eol=lf
+
 # Exclude dependency, build, cache, and local-output directories from generated Git archives.
 node_modules/ export-ignore
 dist/ export-ignore

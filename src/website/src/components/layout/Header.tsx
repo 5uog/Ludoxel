@@ -60,12 +60,7 @@ export default function Header({ activePath }: HeaderProps): React.JSX.Element {
       </nav>
 
       {mobileNavigation.isOpen ? (
-        <MobileHeaderNavigation
-          backdropClassName={mobileNavigation.backdropClassName}
-          currentPath={currentPath}
-          panelClassName={mobileNavigation.panelClassName}
-          onClose={mobileNavigation.close}
-        />
+        <MobileHeaderNavigation backdropClassName={mobileNavigation.backdropClassName} currentPath={currentPath} panelClassName={mobileNavigation.panelClassName} onClose={mobileNavigation.close} />
       ) : null}
     </header>
   );

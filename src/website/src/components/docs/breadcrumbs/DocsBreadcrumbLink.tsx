@@ -17,11 +17,7 @@ export default function DocsBreadcrumbLink({ breadcrumb, index, isLast }: DocsBr
   return (
     <Link
       aria-current={isLast ? 'page' : undefined}
-      className={
-        isLast
-          ? 'inline-flex items-center gap-1 whitespace-nowrap font-medium text-foreground'
-          : 'inline-flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground'
-      }
+      className={isLast ? 'inline-flex items-center gap-1 whitespace-nowrap font-medium text-foreground' : 'inline-flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground'}
       to={breadcrumb.href}
     >
       {index === 0 ? <HomeIcon className="h-4 w-4 shrink-0" /> : null}
