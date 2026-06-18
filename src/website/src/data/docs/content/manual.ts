@@ -982,6 +982,22 @@ if idx is not None:
       {
         id: 'looking-around-relative-delta',
         title: 'Looking Uses Relative Mouse Deltas',
+        mediaBlocks: [
+          {
+            kind: 'video',
+            sources: [
+              {
+                src: '/assets/docs/videos/looking-around-relative-delta.mp4',
+                type: 'video/mp4',
+              },
+            ],
+            controls: false,
+            loop: true,
+            autoPlay: true,
+            muted: true,
+            playsInline: true,
+          },
+        ],
         body: [
           'Camera rotation is driven by relative mouse movement, not the absolute cursor position. The input adapter accumulates a mouse delta as the pointer moves, and the consume step reads that delta and resets it for the next frame.',
           'Accumulating deltas means rotation is continuous and unbounded by the screen edges: the pointer is held at the center of the viewport while only its movement is reported. This is what allows you to keep turning in one direction without the cursor leaving the window.',

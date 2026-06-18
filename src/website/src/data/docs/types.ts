@@ -20,12 +20,63 @@ export type DocsCodeBlock = {
   caption?: string;
 };
 
+export type DocsVideoSource = {
+  src: string;
+  type: string;
+};
+
+export type DocsImageMediaBlock = {
+  kind: 'image';
+  src: string;
+  alt: string;
+  caption?: string;
+  controls?: boolean;
+  loop?: boolean;
+  poster?: string;
+};
+
+export type DocsVideoMediaBlock = {
+  kind: 'video';
+  sources: DocsVideoSource[];
+  caption?: string;
+  controls?: boolean;
+  loop?: boolean;
+  autoPlay?: boolean;
+  muted?: boolean;
+  playsInline?: boolean;
+  poster?: string;
+};
+
+export type DocsMediaBlock = DocsImageMediaBlock | DocsVideoMediaBlock;
+
+export type DocsParagraphBlock = {
+  kind: 'paragraph';
+  text: string;
+};
+
+export type DocsListBlock = {
+  kind: 'list';
+  items: string[];
+};
+
+export type DocsCodeContentBlock = DocsCodeBlock & {
+  kind: 'code';
+};
+
+export type DocsMediaContentBlock = {
+  kind: 'media';
+  media: DocsMediaBlock;
+};
+
+export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock;
+
 export type DocsSection = {
   id: string;
   title: string;
   body: string[];
   items?: string[];
   codeBlocks?: DocsCodeBlock[];
+  mediaBlocks?: DocsMediaBlock[];
 };
 
 export type DocsPageContent = {
