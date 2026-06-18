@@ -31,7 +31,7 @@ export default function DocsCodeBlock({ block, blockIndex, sectionId }: DocsCode
       </div>
 
       <pre className="overflow-x-auto bg-secondary/30 px-4 py-4 font-mono text-sm leading-7">
-        <code className="table min-w-full">
+        <code className="block min-w-full">
           <DocsHighlightedCode code={block.code} language={block.language} />
         </code>
       </pre>

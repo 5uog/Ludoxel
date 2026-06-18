@@ -38,9 +38,9 @@ export default function DocsHighlightedCode({ code, language }: DocsHighlightedC
   return (
     <>
       {highlightedLines.map((line, lineIndex) => (
-        <span className="table-row" key={lineIndex}>
-          <span className="table-cell select-none pr-5 text-right text-muted-foreground/70">{lineIndex + 1}</span>
-          <span className="table-cell min-w-full whitespace-pre">
+        <span className="flex w-max min-w-full" key={lineIndex}>
+          <span className="w-12 shrink-0 select-none pr-5 text-right text-muted-foreground/70">{lineIndex + 1}</span>
+          <span className="whitespace-pre">
             {line.tokens.map((token, tokenIndex) => (
               <span className={TOKEN_CLASS_NAMES[token.kind]} key={`${lineIndex}-${tokenIndex}`}>
                 {token.value}
