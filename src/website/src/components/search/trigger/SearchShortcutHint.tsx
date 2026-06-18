@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { Command } from 'lucide-react';
+
 import { type SearchCommandVariant } from '../logic/searchCommand.types';
 
 type SearchShortcutHintProps = {
@@ -19,7 +21,9 @@ export default function SearchShortcutHint({ variant }: SearchShortcutHintProps)
 
   return (
     <div className="flex shrink-0 items-center gap-1">
-      <kbd className={keyClassName}>⌘</kbd>
+      <kbd className={keyClassName} aria-label="Command">
+        <Command className="h-3.5 w-3.5" aria-hidden="true" />
+      </kbd>
       <kbd className={keyClassName}>K</kbd>
     </div>
   );
