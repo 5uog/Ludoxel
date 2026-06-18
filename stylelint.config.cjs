@@ -24,10 +24,11 @@ module.exports = {
     'selector-class-pattern': null,
     'custom-property-pattern': null,
     'font-family-name-quotes': null,
+    'import-notation': 'string',
     'at-rule-no-unknown': [
       true,
       {
-        ignoreAtRules: ['tailwind', 'apply', 'layer', 'screen', 'variants', 'responsive'],
+        ignoreAtRules: ['tailwind', 'apply', 'layer', 'screen', 'variants', 'responsive', 'theme', 'custom-variant'],
       },
     ],
   },

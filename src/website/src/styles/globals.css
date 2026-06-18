@@ -8,8 +8,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: Satoshi, sans-serif;
-
+  --font-sans: 'Satoshi', sans-serif;
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -29,7 +28,6 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-
   --color-sidebar-background: hsl(var(--sidebar-background));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-primary: hsl(var(--sidebar-primary));
@@ -38,7 +36,6 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
-
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -90,7 +87,7 @@
 
   html {
     min-height: 100%;
-    font-family: Satoshi, sans-serif;
+    font-family: 'Satoshi', sans-serif;
     scroll-behavior: smooth;
   }
 
@@ -324,7 +321,6 @@
   }
 }
 
-
 @layer components {
   .docs-math {
     max-width: 100%;
@@ -339,8 +335,7 @@
   .docs-math--display {
     display: block;
     max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: auto hidden;
     padding: 0.25rem 0;
     scrollbar-width: thin;
   }
@@ -370,7 +365,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .docs-math--display {
     margin-right: -1rem;
     padding-right: 1rem;
