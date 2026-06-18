@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ludoxel.vercel.app/sitemap.xml

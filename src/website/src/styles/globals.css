@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+@import 'katex/dist/katex.min.css';
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -320,6 +321,59 @@
 
   100% {
     transform: translateX(-100%);
+  }
+}
+
+
+@layer components {
+  .docs-math {
+    max-width: 100%;
+  }
+
+  .docs-math--inline {
+    display: inline;
+    overflow-wrap: anywhere;
+    vertical-align: baseline;
+  }
+
+  .docs-math--display {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+  }
+
+  .docs-math--display::-webkit-scrollbar {
+    display: block;
+    height: 0.35rem;
+  }
+
+  .docs-math--display .katex-display {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .docs-math--display .katex {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .docs-math--display .katex-html {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .docs-math--display .base {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .docs-math--display {
+    margin-right: -1rem;
+    padding-right: 1rem;
   }
 }
 

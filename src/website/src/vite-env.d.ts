@@ -3,3 +3,5 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 /// <reference types="vite/client" />
+
+declare module '*.css';

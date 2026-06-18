@@ -49,6 +49,12 @@ export type DocsVideoMediaBlock = {
 
 export type DocsMediaBlock = DocsImageMediaBlock | DocsVideoMediaBlock;
 
+export type DocsMathBlock = {
+  expression: string;
+  displayMode?: boolean;
+  caption?: string;
+};
+
 export type DocsParagraphBlock = {
   kind: 'paragraph';
   text: string;
@@ -68,7 +74,12 @@ export type DocsMediaContentBlock = {
   media: DocsMediaBlock;
 };
 
-export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock;
+export type DocsMathContentBlock = {
+  kind: 'math';
+  math: DocsMathBlock;
+};
+
+export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock | DocsMathContentBlock;
 
 export type DocsSection = {
   id: string;
@@ -77,6 +88,7 @@ export type DocsSection = {
   items?: string[];
   codeBlocks?: DocsCodeBlock[];
   mediaBlocks?: DocsMediaBlock[];
+  mathBlocks?: DocsMathBlock[];
 };
 
 export type DocsPageContent = {

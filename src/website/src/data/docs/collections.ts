@@ -18,9 +18,9 @@ export type DocsBreadcrumb = {
 };
 
 const docsCollectionDescriptions: Record<DocsSearchSection, string> = {
-  Manual: 'User-facing guides for starting Ludoxel, reading the window, controlling the player, and using everyday overlays.',
-  Gameplay: 'Gameplay guides for My World, AI NPC interaction, and Othello match play.',
-  Systems: 'Runtime, rendering, audio, input, AI, learning, and Othello system documentation.',
+  Manual: 'Technical operation notes for practitioners who need precise startup, window, control, and overlay behavior.',
+  Gameplay: 'Gameplay documentation for readers who can follow My World state, AI NPC interaction, and Othello match constraints.',
+  Systems: 'Runtime, rendering, audio, input, AI, learning, and Othello system notes tied to implementation boundaries.',
   Settings: 'Guides for camera, crosshair, cloud, shadow, audio, keybind, player, AI, and Othello settings.',
   Data: 'Local user data, saved state, generated learning data, output, and material-boundary documentation.',
   Distribution: 'Desktop package, build, check, license-inclusion, and release-boundary documentation.',
@@ -67,7 +67,7 @@ function titleForCollection(pathSegments: string[], pages: DocsPageContent[]): s
 
 function descriptionForCollection(pathSegments: string[], pages: DocsPageContent[]): string {
   if (pathSegments.length === 0) {
-    return 'Browse Ludoxel documentation by category, subcategory, group, and article.';
+    return 'Technical Ludoxel documentation for practitioners, researchers, developers, and programming-literate readers.';
   }
 
   const firstPage = pages[0];

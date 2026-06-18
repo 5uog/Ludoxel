@@ -2,21 +2,116 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import DocsMath from './DocsMath';
+
 type InlineTextPart = string | React.JSX.Element;
 
-export function renderInlineText(text: string): InlineTextPart[] {
-  return text
-    .split(/(`[^`]+`)/g)
-    .filter(Boolean)
-    .map((part, index) => {
-      if (part.startsWith('`') && part.endsWith('`') && part.length > 1) {
-        return (
-          <code className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={`${part}-${index}`}>
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
+function isEscaped(text: string, index: number): boolean {
+  let backslashCount = 0;
 
-      return part;
-    });
+  for (let cursor = index - 1; cursor >= 0 && text[cursor] === '\\'; cursor -= 1) {
+    backslashCount += 1;
+  }
+
+  return backslashCount % 2 === 1;
+}
+
+function findUnescapedSequence(text: string, sequence: string, fromIndex: number): number {
+  let cursor = fromIndex;
+
+  while (cursor < text.length) {
+    const nextIndex = text.indexOf(sequence, cursor);
+
+    if (nextIndex === -1) {
+      return -1;
+    }
+
+    if (!isEscaped(text, nextIndex)) {
+      return nextIndex;
+    }
+
+    cursor = nextIndex + sequence.length;
+  }
+
+  return -1;
+}
+
+function findInlineDollarEnd(text: string, fromIndex: number): number {
+  let cursor = fromIndex;
+
+  while (cursor < text.length) {
+    const nextIndex = text.indexOf('$', cursor);
+
+    if (nextIndex === -1) {
+      return -1;
+    }
+
+    if (!isEscaped(text, nextIndex) && text[nextIndex - 1] !== '$' && text[nextIndex + 1] !== '$') {
+      return nextIndex;
+    }
+
+    cursor = nextIndex + 1;
+  }
+
+  return -1;
+}
+
+function pushTextPart(parts: InlineTextPart[], text: string): void {
+  if (text.length > 0) {
+    parts.push(text);
+  }
+}
+
+export function renderInlineText(text: string): InlineTextPart[] {
+  const parts: InlineTextPart[] = [];
+  let cursor = 0;
+  let plainStart = 0;
+
+  while (cursor < text.length) {
+    if (text[cursor] === '`') {
+      const codeEnd = text.indexOf('`', cursor + 1);
+
+      if (codeEnd !== -1) {
+        pushTextPart(parts, text.slice(plainStart, cursor));
+        const code = text.slice(cursor + 1, codeEnd);
+        parts.push(
+          <code className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={`code-${cursor}-${codeEnd}`}>
+            {code}
+          </code>,
+        );
+        cursor = codeEnd + 1;
+        plainStart = cursor;
+        continue;
+      }
+    }
+
+    if (text.startsWith('\\(', cursor)) {
+      const mathEnd = findUnescapedSequence(text, '\\)', cursor + 2);
+
+      if (mathEnd !== -1) {
+        pushTextPart(parts, text.slice(plainStart, cursor));
+        parts.push(<DocsMath displayMode={false} expression={text.slice(cursor + 2, mathEnd)} key={`math-paren-${cursor}-${mathEnd}`} />);
+        cursor = mathEnd + 2;
+        plainStart = cursor;
+        continue;
+      }
+    }
+
+    if (text[cursor] === '$' && text[cursor + 1] !== '$' && !isEscaped(text, cursor)) {
+      const mathEnd = findInlineDollarEnd(text, cursor + 1);
+
+      if (mathEnd !== -1) {
+        pushTextPart(parts, text.slice(plainStart, cursor));
+        parts.push(<DocsMath displayMode={false} expression={text.slice(cursor + 1, mathEnd)} key={`math-dollar-${cursor}-${mathEnd}`} />);
+        cursor = mathEnd + 1;
+        plainStart = cursor;
+        continue;
+      }
+    }
+
+    cursor += 1;
+  }
+
+  pushTextPart(parts, text.slice(plainStart));
+  return parts;
 }
