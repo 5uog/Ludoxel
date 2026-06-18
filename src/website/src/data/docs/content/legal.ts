@@ -17,7 +17,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'License Authority and Materials',
     group: 'Authority Text',
     title: 'Understanding Controlling Text',
-    relatedTitles: ['Understanding License Authority', 'Reading License Responsibilities', 'Including License Text'],
+    relatedTitles: ['Understanding License Authority', 'Including License Text', 'Understanding Original Materials'],
   }),
   defineDocsArticle({
     category: 'Legal',
