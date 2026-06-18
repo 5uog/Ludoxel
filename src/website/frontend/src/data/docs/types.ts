@@ -12,13 +12,27 @@ export type DocsReference = {
   description: string;
 };
 
-export type DocsCodeBlockLanguage = 'py' | 'ts' | 'tsx' | 'json' | 'sh' | 'toml' | 'qss' | 'css' | 'glsl' | 'vert' | 'frag' | 'comp' | 'wgsl';
+export type DocsCodeBlockLanguage = 'js' | 'py' | 'ts' | 'tsx' | 'json' | 'sh' | 'toml' | 'qss' | 'css' | 'glsl' | 'vert' | 'frag' | 'comp' | 'wgsl';
 
-export type DocsCodeBlock = {
+export type DocsSingleCodeBlock = {
   language: DocsCodeBlockLanguage;
   code: string;
   caption?: string;
 };
+
+export type DocsTabbedCodeBlockTab = {
+  label: string;
+  language: DocsCodeBlockLanguage;
+  code: string;
+};
+
+export type DocsTabbedCodeBlock = {
+  caption?: string;
+  tabs: DocsTabbedCodeBlockTab[];
+  defaultTabIndex?: number;
+};
+
+export type DocsCodeBlock = DocsSingleCodeBlock | DocsTabbedCodeBlock;
 
 export type DocsVideoSource = {
   src: string;
@@ -78,6 +92,7 @@ export type DocsParagraphBlock = {
 export type DocsListBlock = {
   kind: 'list';
   items: string[];
+  ordered?: boolean;
 };
 
 export type DocsCodeContentBlock = DocsCodeBlock & {
@@ -99,17 +114,29 @@ export type DocsNoteContentBlock = {
   note: DocsNoteBlock;
 };
 
-export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock | DocsMathContentBlock | DocsNoteContentBlock;
+export type DocsStepItem = {
+  id?: string;
+  title: string;
+  content: DocsArticleContentBlock[];
+};
+
+export type DocsStepsBlock = {
+  kind: 'steps';
+  steps: DocsStepItem[];
+};
+
+export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock | DocsMathContentBlock | DocsNoteContentBlock | DocsStepsBlock;
 
 export type DocsSection = {
   id: string;
   title: string;
-  body: string[];
+  body?: string[];
   items?: string[];
   codeBlocks?: DocsCodeBlock[];
   mediaBlocks?: DocsMediaBlock[];
   mathBlocks?: DocsMathBlock[];
   noteBlocks?: DocsNoteBlock[];
+  content?: DocsArticleContentBlock[];
 };
 
 export type DocsPageContent = {
