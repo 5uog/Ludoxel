@@ -8,6 +8,7 @@ import DocsCodeBlock from './DocsCodeBlock';
 import { renderInlineText } from './DocsInlineText';
 import DocsMath from './DocsMath';
 import DocsMediaBlock from './DocsMediaBlock';
+import DocsSectionHeading from './DocsSectionHeading';
 
 type DocsArticleContentProps = {
   page: DocsPageContent;
@@ -172,7 +173,7 @@ export default function DocsArticleContent({ page }: DocsArticleContentProps): R
     <div className="space-y-12">
       {page.sections.map((section, index) => (
         <section className={`scroll-mt-24 page-reveal page-reveal-delay-${Math.min(index + 1, 4)}`} id={section.id} key={section.id}>
-          <h2 className="mb-4 text-2xl font-semibold tracking-tight">{section.title}</h2>
+          <DocsSectionHeading sectionId={section.id} title={section.title} />
 
           <div className="space-y-4 leading-relaxed text-muted-foreground">{renderSectionContent(section)}</div>
         </section>
