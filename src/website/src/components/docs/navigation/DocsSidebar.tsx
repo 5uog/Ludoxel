@@ -37,7 +37,7 @@ export default function DocsSidebar({ currentPathname, onNavigate }: DocsSidebar
 
           return (
             <div key={section.title}>
-              <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h3 className="px-3 py-2 text-sm font-semibold text-muted-foreground">
                 <button
                   aria-controls={sectionPanelId}
                   aria-expanded={isSectionOpen}
