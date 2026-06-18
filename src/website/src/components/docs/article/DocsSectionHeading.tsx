@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { Link2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { copyTextToClipboard, createDocsSectionPermalink } from '../logic/docsSectionPermalink';
@@ -14,14 +15,6 @@ type DocsSectionHeadingProps = {
 type CopyState = 'idle' | 'copied' | 'failed';
 
 const COPY_FEEDBACK_RESET_DELAY_MS = 1200;
-
-function DocsSectionLinkIcon(): React.JSX.Element {
-  return (
-    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="12px" viewBox="0 0 576 512">
-      <path d="M0 256C0 167.6 71.6 96 160 96h72c13.3 0 24 10.7 24 24s-10.7 24-24 24H160C98.1 144 48 194.1 48 256s50.1 112 112 112h72c13.3 0 24 10.7 24 24s-10.7 24-24 24H160C71.6 416 0 344.4 0 256zm576 0c0 88.4-71.6 160-160 160H344c-13.3 0-24-10.7-24-24s10.7-24 24-24h72c61.9 0 112-50.1 112-112s-50.1-112-112-112H344c-13.3 0-24-10.7-24-24s10.7-24 24-24h72c88.4 0 160 71.6 160 160zM184 232H392c13.3 0 24 10.7 24 24s-10.7 24-24 24H184c-13.3 0-24-10.7-24-24s10.7-24 24-24z" />
-    </svg>
-  );
-}
 
 function getCopyButtonLabel(copyState: CopyState, title: string): string {
   if (copyState === 'copied') {
@@ -72,7 +65,7 @@ export default function DocsSectionHeading({ sectionId, title }: DocsSectionHead
         type="button"
       >
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-card text-muted-foreground shadow-sm brightness-[1.35] ring-1 ring-border/80 transition-[filter,box-shadow,color,border-color] duration-150 hover:text-foreground hover:brightness-150 hover:ring-muted-foreground/60 group-focus/link:border-2 group-focus/link:border-primary">
-          <DocsSectionLinkIcon />
+          <Link2 className="h-3 w-3" aria-hidden="true" />
         </span>
       </button>
 
