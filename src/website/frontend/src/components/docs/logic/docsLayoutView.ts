@@ -26,7 +26,7 @@ export function getDocsLayoutView(props: DocsLayoutProps): DocsLayoutView {
 }
 
 export function getDocsLayoutClassName(view: DocsLayoutView): string {
-  return view.kind === 'article' ? 'mx-auto flex w-full max-w-[90rem] grow items-start pt-16 lg:pl-64 xl:pr-56' : 'mx-auto flex w-full max-w-[90rem] grow items-start pt-16 lg:pl-64';
+  return view.kind === 'article' ? 'mx-auto flex w-full max-w-360 grow items-start pt-16 lg:pl-64 xl:pr-56' : 'mx-auto flex w-full max-w-360 grow items-start pt-16 lg:pl-64';
 }
 
 export function getDocsContentWidthClassName(view: DocsLayoutView): string {

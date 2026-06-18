@@ -31,7 +31,7 @@ export default function ChangelogPage(): React.JSX.Element {
           <div className="space-y-12">
             {changelogEntries.map((entry, entryIndex) => (
               <div className={`page-reveal page-reveal-delay-${Math.min(entryIndex + 1, 4)} flex flex-col md:flex-row gap-6 md:gap-12`} key={entry.date}>
-                <div className="md:w-48 md:sticky md:top-24 md:self-start flex-shrink-0">
+                <div className="md:w-48 md:sticky md:top-24 md:self-start shrink-0">
                   <div className="flex flex-col gap-3">
                     <span className="text-sm font-medium text-muted-foreground">{entry.date}</span>
 
@@ -54,7 +54,7 @@ export default function ChangelogPage(): React.JSX.Element {
                         <ul className="space-y-2">
                           {section.items.map((item) => (
                             <li className="flex items-start gap-2 text-muted-foreground text-sm leading-relaxed" key={item}>
-                              <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
+                              <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-current shrink-0" />
                               <span>{item}</span>
                             </li>
                           ))}

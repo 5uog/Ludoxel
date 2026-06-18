@@ -61,7 +61,7 @@ export default function SearchDialog({
             <kbd className="ml-2 hidden h-6 items-center justify-center rounded bg-secondary px-2 text-xs font-medium text-muted-foreground sm:flex">ESC</kbd>
           </div>
 
-          <div className="max-h-[400px] overflow-y-auto p-2 scrollbar-none">
+          <div className="max-h-100 overflow-y-auto p-2 scrollbar-none">
             {normalizedQuery.length >= 2 && filteredRows.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm text-muted-foreground">No results found for &quot;{normalizedQuery}&quot;</p>

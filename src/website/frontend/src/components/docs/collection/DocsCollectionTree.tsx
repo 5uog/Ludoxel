@@ -41,7 +41,7 @@ export function DocsTree({ children, className }: DocsTreeProps): React.JSX.Elem
 
 export function DocsTreeItem({ children, isLast, lineOffset, className, contentClassName }: DocsTreeItemProps): React.JSX.Element {
   return (
-    <li className={combineClassNames('relative py-[var(--docs-tree-item-py)] pl-6', className)} style={getDocsTreeItemStyle(lineOffset)}>
+    <li className={combineClassNames('relative py-(--docs-tree-item-py) pl-6', className)} style={getDocsTreeItemStyle(lineOffset)}>
       <span aria-hidden="true" className="absolute left-0 top-0 h-[calc(var(--docs-tree-item-py)+var(--docs-tree-line-y))] w-4 border-b border-l border-border" />
 
       {isLast ? null : <span aria-hidden="true" className="absolute bottom-0 left-0 top-[calc(var(--docs-tree-item-py)+var(--docs-tree-line-y))] border-l border-border" />}

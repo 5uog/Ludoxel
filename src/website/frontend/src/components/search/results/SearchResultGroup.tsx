@@ -20,7 +20,7 @@ export default function SearchResultGroup({ filteredRows, rows, sectionKey, sele
   const sectionMeta = getSectionMeta(sectionKey);
 
   return (
-    <div className="[&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground">
+    <div className="**:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-muted-foreground">
       <div cmdk-group-heading="">{sectionMeta.label}</div>
 
       {rows.map((row) => {

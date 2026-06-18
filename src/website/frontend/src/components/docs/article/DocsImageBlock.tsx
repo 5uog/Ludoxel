@@ -47,9 +47,9 @@ export default function DocsImageBlock({ block, blockIndex, sectionId }: DocsIma
 
       <div className="relative overflow-hidden bg-secondary/30">
         {isPlaying ? (
-          <img className="block max-h-[34rem] w-full object-contain" key={imageKey} src={block.src} alt={block.alt} loading="lazy" />
+          <img className="block max-h-136 w-full object-contain" key={imageKey} src={block.src} alt={block.alt} loading="lazy" />
         ) : block.poster ? (
-          <img className="block max-h-[34rem] w-full object-contain" src={block.poster} alt={block.alt} loading="lazy" />
+          <img className="block max-h-136 w-full object-contain" src={block.poster} alt={block.alt} loading="lazy" />
         ) : (
           <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-muted-foreground">Animated image stopped.</div>
         )}

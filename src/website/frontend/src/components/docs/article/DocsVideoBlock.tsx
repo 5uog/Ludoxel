@@ -40,7 +40,7 @@ export default function DocsVideoBlock({ block, blockIndex, sectionId }: DocsVid
       <div className="bg-secondary/30">
         <video
           ref={playback.videoRef}
-          className="block max-h-[34rem] w-full object-contain"
+          className="block max-h-136 w-full object-contain"
           autoPlay={block.autoPlay === true}
           controls={false}
           loop={block.loop === true}

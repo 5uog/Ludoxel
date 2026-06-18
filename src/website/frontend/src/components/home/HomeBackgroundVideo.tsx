@@ -11,7 +11,7 @@ export default function HomeBackgroundVideo(): React.JSX.Element {
       </video>
 
       <div className="absolute inset-0 bg-background/15" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/30 to-background" />
+      <div className="absolute inset-0 bg-linear-to-b from-background/60 via-background/30 to-background" />
     </div>
   );
 }
