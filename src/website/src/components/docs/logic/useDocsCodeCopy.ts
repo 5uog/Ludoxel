@@ -4,43 +4,43 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type DocsCodeCopyLabel = 'Copy' | 'Copied' | 'Failed';
+export type DocsCodeCopyStatus = 'idle' | 'copied' | 'failed';
 
-const COPY_LABEL_RESET_DELAY_MS = 1600;
+const COPY_STATUS_RESET_DELAY_MS = 1600;
 
-export function useDocsCodeCopy(code: string): { copyCode: () => void; copyLabel: DocsCodeCopyLabel } {
-  const [copyLabel, setCopyLabel] = useState<DocsCodeCopyLabel>('Copy');
+export function useDocsCodeCopy(code: string): { copyCode: () => void; copyStatus: DocsCodeCopyStatus } {
+  const [copyStatus, setCopyStatus] = useState<DocsCodeCopyStatus>('idle');
   const resetTimerRef = useRef<number | null>(null);
 
-  const resetCopyLabelLater = useCallback(() => {
+  const resetCopyStatusLater = useCallback(() => {
     if (resetTimerRef.current !== null) {
       window.clearTimeout(resetTimerRef.current);
     }
 
     resetTimerRef.current = window.setTimeout(() => {
-      setCopyLabel('Copy');
+      setCopyStatus('idle');
       resetTimerRef.current = null;
-    }, COPY_LABEL_RESET_DELAY_MS);
+    }, COPY_STATUS_RESET_DELAY_MS);
   }, []);
 
   const copyCode = useCallback(() => {
     if (navigator.clipboard?.writeText === undefined) {
-      setCopyLabel('Failed');
-      resetCopyLabelLater();
+      setCopyStatus('failed');
+      resetCopyStatusLater();
       return;
     }
 
     void navigator.clipboard.writeText(code).then(
       () => {
-        setCopyLabel('Copied');
-        resetCopyLabelLater();
+        setCopyStatus('copied');
+        resetCopyStatusLater();
       },
       () => {
-        setCopyLabel('Failed');
-        resetCopyLabelLater();
+        setCopyStatus('failed');
+        resetCopyStatusLater();
       },
     );
-  }, [code, resetCopyLabelLater]);
+  }, [code, resetCopyStatusLater]);
 
   useEffect(
     () => () => {
@@ -53,6 +53,6 @@ export function useDocsCodeCopy(code: string): { copyCode: () => void; copyLabel
 
   return {
     copyCode,
-    copyLabel,
+    copyStatus,
   };
 }
