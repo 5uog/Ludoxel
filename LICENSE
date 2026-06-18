@@ -1,9 +1,9 @@
 Ludoxel Independent License
 LicenseRef-All-Rights-Reserved
 
-Version: 2.3.0
+Version: 2.4.0
 Original Effective Date: 2026-06-03
-Current Version Effective Date: 2026-06-15
+Current Version Effective Date: 2026-06-19
 
 Copyright (c) 2026 Kento Konishi (小西拳斗).
 
@@ -35,8 +35,9 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   accesses, obtains, downloads, clones, forks, stores, executes,
   uses, analyzes, copies, modifies, distributes, transmits, publishes,
   deploys, incorporates, trains on, evaluates with, or otherwise
-  interacts with Ludoxel, the Repository, the Original Materials,
-  the Distribution Materials, or any material derived from them.
+  interacts with Ludoxel, the Documentation Site, the Repository,
+  the Original Materials, the Distribution Materials, or any material
+  derived from them.
 
 * "Legal Entity" means any corporation, company, partnership,
   association, foundation, institution, governmental body,
@@ -48,12 +49,20 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 * "Ludoxel" means the desktop application made available by the
   Licensor under that name.
 
+* "Documentation Site" means the web documentation site for Ludoxel,
+  including the website source tree under src/website/ in the
+  Repository, documentation content, website source code, user
+  interface text, styling, media blocks, images, videos, static
+  assets, search data, metadata, configuration files, build
+  configuration, generated static-site output, and any official
+  deployment or publication of that site by the Licensor.
+
 * "Repository" means the repository containing or associated with
-  Ludoxel, including source code, documentation, configuration
-  files, build scripts, validation tools, shaders, assets,
-  resources, metadata, package files, legal materials, issue
-  templates, workflow files, distribution preparation materials,
-  and other repository contents.
+  Ludoxel and the Documentation Site, including source code,
+  documentation, configuration files, build scripts, validation
+  tools, shaders, assets, resources, metadata, package files, legal
+  materials, issue templates, workflow files, website materials,
+  distribution preparation materials, and other repository contents.
 
 * "Current Repository" means the state of the Repository made
   available by the Licensor as current. Older commits, archived
@@ -61,37 +70,38 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   not the Current Repository.
 
 * "Repository Contents" means all files, directories, text, source
-  code, documentation, metadata, configuration files, scripts,
-  shaders, assets, resources, package materials, generated
-  materials, legal materials, workflow materials, templates, and
-  other materials made available in, through, or from the
-  Repository, whether viewed through a browser, accessed through a
+  code, documentation, website source code, website content, metadata,
+  configuration files, scripts, shaders, assets, resources, package
+  materials, generated materials, legal materials, workflow materials,
+  templates, and other materials made available in, through, or from
+  the Repository, whether viewed through a browser, accessed through a
   hosting service, downloaded, cloned, forked, mirrored, archived,
   copied, indexed, or otherwise accessed.
 
 * "Source Form" means the preferred or customary form of a Work for
   human reading, review, editing, maintenance, verification, or
   modification, including source code, scripts, Markdown files,
-  configuration files, shader source files, style sheets,
-  structured metadata files, editable asset files, and other
-  comparable human-oriented forms.
+  configuration files, shader source files, style sheets, website
+  source files, structured metadata files, editable asset files, and
+  other comparable human-oriented forms.
 
 * "Object Form" means any form of a Work resulting from compilation,
   assembly, bundling, packaging, optimization, minification,
-  conversion, embedding, rendering, export, compression, or other
-  transformation of Source Form, including executables, application
-  bundles, installers, wheels, archives, compiled extensions, binary
-  files, generated assets, optimized assets, embedded resources,
-  distribution directories, and other machine-oriented or
-  distribution-oriented forms.
+  conversion, embedding, rendering, export, compression, static-site
+  generation, or other transformation of Source Form, including
+  executables, application bundles, installers, wheels, archives,
+  compiled extensions, binary files, generated assets, optimized
+  assets, embedded resources, static-site output, distribution
+  directories, and other machine-oriented or distribution-oriented
+  forms.
 
 * "Work" means any copyrightable work, protected expression,
   protected compilation, protected selection, protected arrangement,
-  source code, object code, text, documentation, image, audio,
-  texture, shader, user interface material, metadata, data file,
-  configuration file, package material, generated file, or other
-  material capable of protection under copyright law or any other
-  applicable law.
+  source code, object code, text, documentation, website content,
+  image, audio, video, texture, shader, user interface material,
+  metadata, data file, configuration file, package material,
+  generated file, or other material capable of protection under
+  copyright law or any other applicable law.
 
 * "Derivative Work" means any Work or other material that is based
   on, derived from, adapted from, modified from, translated from,
@@ -103,27 +113,29 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   applicable law.
 
 * "Original Materials" means all Works and other protectable
-  materials in, distributed from, or associated with the Repository
-  or Ludoxel that were created by the Licensor, are owned by the
-  Licensor, or are controlled by the Licensor for purposes of this
-  License. Original Materials include Source Form and Object Form
-  materials, repository text, source code, documentation,
-  configuration files, build scripts, validation tools, shaders,
-  user interface text, generated metadata, package metadata,
-  packaging material, distribution preparation material,
-  project-specific assets, project-specific textures, branding
-  material, application icons, and other protected repository
-  contents, to the extent that such materials are not Third-Party
-  Materials.
+  materials in, distributed from, displayed through, deployed from,
+  or associated with the Repository, Ludoxel, or the Documentation
+  Site that were created by the Licensor, are owned by the Licensor,
+  or are controlled by the Licensor for purposes of this License.
+  Original Materials include Source Form and Object Form materials,
+  repository text, source code, documentation, website source code,
+  Documentation Site content, configuration files, build scripts,
+  validation tools, shaders, user interface text, generated metadata,
+  package metadata, packaging material, distribution preparation
+  material, static-site output, project-specific assets,
+  project-specific textures, branding material, application icons,
+  and other protected repository contents, to the extent that such
+  materials are not Third-Party Materials.
 
 * "Third-Party Materials" means all materials that are not Original
   Materials and that are owned, authored, licensed, maintained, or
   supplied by a third party. Third-Party Materials include external
   libraries, runtime environments, software development kits,
   platform components, toolchain components, fonts, packages, vendor
-  materials, external images, external audio, external textures,
-  external icons, and other materials whose rights are not owned or
-  controlled by the Licensor for purposes of this License.
+  materials, external images, external audio, external video,
+  external textures, external icons, and other materials whose rights
+  are not owned or controlled by the Licensor for purposes of this
+  License.
 
 * "Third-Party License Text" means the license texts, copyright
   statements, and attribution texts of Third-Party Materials,
@@ -133,11 +145,12 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   not govern the Original Materials.
 
 * "Provenance-Sensitive Materials" means materials present in or
-  referenced by the Repository or Ludoxel whose authorship, source,
-  rights holder, license status, redistribution permission,
-  modification permission, trademark status, attribution
-  requirements, or distribution eligibility requires separate
-  confirmation before reuse or distribution.
+  referenced by the Repository, Ludoxel, or the Documentation Site
+  whose authorship, source, rights holder, license status,
+  redistribution permission, web-deployment permission, modification
+  permission, trademark status, attribution requirements, or
+  distribution eligibility requires separate confirmation before reuse,
+  distribution, or deployment.
 
 * "User-Created Materials" means materials independently created,
   entered, edited, supplied, imported, or saved by a Licensee
@@ -154,9 +167,10 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 * "Distribution Materials" means application bundles, executable
   files, installers, archives, wheels, source distributions,
   generated distribution directories, packages, release artifacts,
-  embedded resources, copied legal materials, metadata, and other
-  materials prepared for distribution of Ludoxel or Repository
-  Contents.
+  static-site build output, website deployment materials, embedded
+  resources, copied legal materials, metadata, and other materials
+  prepared for distribution of Ludoxel, the Documentation Site, or
+  Repository Contents.
 
 * "Desktop Distribution" means Distribution Materials in the form of
   a packaged desktop build of Ludoxel, including a PyInstaller
@@ -164,19 +178,20 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   end-user installation or execution.
 
 * "Official Distribution" means Distribution Materials, including any
-  Desktop Distribution, that the Licensor has published as an
-  official distribution of Ludoxel. Forks, mirrors, modified
-  versions, and other third-party redistributions are not an
-  Official Distribution.
+  Desktop Distribution or Documentation Site deployment, that the
+  Licensor has published as an official distribution or official
+  deployment of Ludoxel or the Documentation Site. Forks, mirrors,
+  modified versions, third-party website deployments, and other
+  third-party redistributions are not an Official Distribution.
 
 * "Use" means any act of viewing, accessing, obtaining, downloading,
   cloning, forking, storing, copying, executing, displaying,
   modifying, adapting, translating, merging, restructuring,
   refactoring, compiling, bundling, embedding, extracting,
-  publishing, distributing, transmitting, hosting, deploying,
-  sublicensing, selling, lending, renting, incorporating, training
-  on, evaluating with, indexing, or otherwise using a Work or
-  material.
+  scraping, crawling, mirroring, publishing, distributing,
+  transmitting, hosting, deploying, sublicensing, selling, lending,
+  renting, incorporating, training on, evaluating with, indexing, or
+  otherwise using a Work or material.
 
 * "Ordinary Application Use" means using Ludoxel as a desktop
   application for its ordinary interactive functions, including
@@ -185,31 +200,38 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   screenshots, recording ordinary screen footage, and performing
   directly related local actions.
 
+* "Ordinary Documentation Site Viewing" means human reading,
+  browsing, and reference use of the Documentation Site through an
+  Official Distribution or a Repository view, without copying,
+  extraction, scraping, crawling, mirroring, embedding, dataset
+  creation, AI Use, republication, redistribution, or deployment.
+
 * "AI Use" means using any Original Materials, Repository Contents,
-  Distribution Materials, Derivative Works, Application Output
-  containing protected material, or any substantial part of them to
-  create, train, fine-tune, evaluate, benchmark, validate, test,
-  improve, populate, operate, index, retrieve for, or generate data
-  for any artificial intelligence system, machine learning system,
-  generative model, code model, image model, multimodal model,
-  search index, embedding system, vector database, dataset,
-  benchmark, evaluation suite, synthetic data pipeline, or
-  comparable computational system.
+  Documentation Site materials, Distribution Materials, Derivative
+  Works, Application Output containing protected material, or any
+  substantial part of them to create, train, fine-tune, evaluate,
+  benchmark, validate, test, improve, populate, operate, index,
+  retrieve for, or generate data for any artificial intelligence
+  system, machine learning system, generative model, code model,
+  image model, multimodal model, search index, embedding system,
+  vector database, dataset, benchmark, evaluation suite, synthetic
+  data pipeline, or comparable computational system.
 
 * "External Contribution" means any submission, proposal,
   transmission, posting, attachment, or disclosure by a Licensee or
   any third party for possible inclusion in, modification of,
   replacement of, improvement of, review of, or use with Ludoxel,
-  the Repository, the Original Materials, or the Distribution
-  Materials.
+  the Documentation Site, the Repository, the Original Materials, or
+  the Distribution Materials.
 
 * "Contribution Materials" means the materials comprising an
   External Contribution, including source code, patches, pull
-  requests, documentation text, replacement text, translations,
-  design assets, images, audio, textures, generated files, datasets,
-  feature implementations, refactoring proposals, shader rewrites,
-  saved worlds, reports containing proposed implementation material,
-  and artificial-intelligence-generated material.
+  requests, documentation text, website text, replacement text,
+  translations, design assets, images, audio, video, textures,
+  generated files, datasets, feature implementations, refactoring
+  proposals, shader rewrites, saved worlds, reports containing
+  proposed implementation material, and artificial-intelligence-
+  generated material.
 
 * "Public Issue" means a publicly visible issue, pull request,
   discussion, comment, or other public submission made through a
@@ -222,8 +244,8 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   designated by the Maintainer.
 
 * "Security Report" means a report of a suspected security
-  vulnerability affecting the Current Repository or an Official
-  Distribution.
+  vulnerability affecting the Current Repository, an Official
+  Distribution, or an official Documentation Site deployment.
 
 * "Security Reporting Policy" means the security reporting policy
   stated in the SECURITY.md file of the Repository, which states the
@@ -240,48 +262,50 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 
 2. Legal Character
 
-This License is the independent all-rights-reserved license for the
-Original Materials. It is not an open source license, free software
-license, public-content license, permissive license, copyleft
-license, public-domain dedication, community contribution license, or
-implied permission to reuse protected material.
+This License is an all-rights-reserved, limited-permission license for
+the Original Materials.
 
-The identifier LicenseRef-All-Rights-Reserved refers only to this
-License within the Repository. It does not refer to the Apache License
-2.0, MIT License, BSD License, GPL, AGPL, LGPL, MPL, Creative Commons
-license, public-domain dedication, or any other standardized open
-source, free software, public-content, permissive, or community
-license.
+The expression LicenseRef-All-Rights-Reserved is an internal license
+identifier used in the Repository to refer only to this License within
+the Repository. It does not refer to the Apache License 2.0, MIT
+License, BSD License, GPL, AGPL, LGPL, MPL, Creative Commons license,
+public-domain dedication, or any other standardized open source, free
+software, public-content, permissive, or community license.
 
 No public visibility of the Repository, availability of Source Form,
 existence of Object Form, package metadata, technical accessibility,
-or hosting-service feature grants any right except the rights
-expressly granted in this License.
+Documentation Site publication, static-site deployment, preview
+deployment, or hosting-service feature grants any right except the
+rights expressly granted in this License.
 
 3. Limited Grant
 
 Subject only to complete compliance with this License, the Licensor
-grants the Licensee a limited, non-exclusive, non-transferable,
-non-sublicensable, revocable permission to view Repository Contents
-solely for human review and verification.
+grants the Licensee limited, non-exclusive, non-transferable,
+non-sublicensable, revocable permissions to do only the following:
 
-Subject only to complete compliance with this License, the Licensor
-also grants the Licensee a limited, non-exclusive, non-transferable,
-non-sublicensable, revocable permission to use Ludoxel solely for
-Ordinary Application Use.
+(a) view Repository Contents solely for human review and verification;
+
+(b) view the Documentation Site solely for Ordinary Documentation Site
+Viewing; and
+
+(c) use Ludoxel solely for Ordinary Application Use.
 
 The permissions granted in this Section are exhaustive. They do not
 include permission to reuse Original Materials, prepare Derivative
 Works, distribute Distribution Materials, conduct AI Use, extract
-assets or resources, remove legal markings, or incorporate the
-Original Materials into any other Work, repository, product, service,
-dataset, model, benchmark, index, library, template collection, or
+assets or resources, scrape the Documentation Site, mirror the
+Documentation Site, deploy the Documentation Site, remove legal
+markings, or incorporate the Original Materials into any other Work,
+repository, product, service, dataset, model, benchmark, index,
+library, template collection, website, documentation site, or
 comparable material.
 
 An unavoidable temporary technical copy created solely by a browser,
-proxy, cache, network system, or hosting-service display mechanism as
-an incidental consequence of viewing Repository Contents does not
-create any additional right and must not be repurposed.
+proxy, cache, network system, static-site host, or hosting-service
+display mechanism as an incidental consequence of viewing Repository
+Contents or the Documentation Site does not create any additional right
+and must not be repurposed.
 
 4. Reservation of Rights
 
@@ -291,9 +315,10 @@ neighboring rights, trade secret rights, and all other protectable
 rights in the Original Materials are reserved by the Licensor.
 
 No right is granted by implication, estoppel, repository visibility,
-technical accessibility, platform functionality, course of dealing,
-silence, failure to object, availability of Repository Contents, or
-existence of Distribution Materials.
+technical accessibility, platform functionality, Documentation Site
+availability, website deployment, course of dealing, silence, failure
+to object, availability of Repository Contents, or existence of
+Distribution Materials.
 
 Any Use of the Original Materials outside Section 3 is prohibited
 unless separately authorized in a written instrument signed by the
@@ -306,40 +331,42 @@ This exclusion covers reuse, modification, adaptation, translation,
 restructuring, refactoring, optimization, compilation, bundling,
 embedding, publication, distribution, transmission, sublicensing,
 sale, rental, lending, hosting, deployment, incorporation, resource
-extraction, asset extraction, reverse engineering, decompilation,
-disassembly, and preparation of Derivative Works, except to the
-extent a restriction cannot be enforced under applicable law.
+extraction, asset extraction, website cloning, website mirroring,
+scraping, crawling, reverse engineering, decompilation, disassembly,
+and preparation of Derivative Works, except to the extent a
+restriction cannot be enforced under applicable law.
 
-The Licensee must not conduct AI Use. This exclusion applies
-regardless of whether the relevant material is used as input data,
-training data, fine-tuning data, evaluation data, benchmark data,
-validation data, retrieval material, embedding material,
-synthetic-data seed material, code-generation reference material,
-image-generation reference material, or comparable computational
+The Licensee must not conduct AI Use. This exclusion applies regardless
+of whether the relevant material is used as input data, training data,
+fine-tuning data, evaluation data, benchmark data, validation data,
+retrieval material, embedding material, synthetic-data seed material,
+code-generation reference material, image-generation reference
+material, website-corpus material, or comparable computational
 material.
 
-The Licensee must not represent the Original Materials, any
-Derivative Work, or any substantial part of them as the Licensee's
-own work or as the work of any third party other than the Licensor.
+The Licensee must not represent the Original Materials, the
+Documentation Site, any Derivative Work, or any substantial part of
+them as the Licensee's own work or as the work of any third party
+other than the Licensor.
 
 The Licensee must not remove, alter, obscure, suppress, misstate, or
 misrepresent any copyright statement, license statement, SPDX
 identifier, attribution statement, author information, provenance
-information, legal marking, repository marking, or third-party legal
-marking.
+information, legal marking, repository marking, website legal marking,
+or third-party legal marking.
 
 The Licensee must not use the name, project name, repository name,
-application name, branding material, application icon, logo, handle,
-or other identifying element of the Licensor or Ludoxel in a manner
-that suggests endorsement, sponsorship, affiliation, approval,
-authorship, joint development, authorization, or permission where
-none exists.
+application name, Documentation Site name, branding material,
+application icon, logo, handle, or other identifying element of the
+Licensor or Ludoxel in a manner that suggests endorsement,
+sponsorship, affiliation, approval, authorship, joint development,
+authorization, or permission where none exists.
 
 6. User-Created Materials and Application Output
 
-User-Created Materials do not become Original Materials merely
-because they are entered, edited, displayed, saved, imported,
-exported, recorded, or processed through Ludoxel.
+User-Created Materials do not become Original Materials merely because
+they are entered, edited, displayed, saved, imported, exported,
+recorded, or processed through Ludoxel.
 
 Subject to this License and applicable third-party rights, the
 Licensee may use, reproduce, publish, and share the Licensee's own
@@ -350,8 +377,9 @@ If User-Created Materials or Application Output contain any material
 part of the Original Materials, Third-Party Materials,
 Provenance-Sensitive Materials, user interface text, visual assets,
 bundled resources, project-specific textures, branding material,
-application icons, shaders, or other protected material, the included
-protected material remains subject to its applicable legal terms.
+application icons, shaders, Documentation Site material, or other
+protected material, the included protected material remains subject to
+its applicable legal terms.
 
 Nothing in this License represents that User-Created Materials or
 Application Output are free from third-party rights or suitable for
@@ -373,38 +401,41 @@ amend, supersede, translate, narrow, expand, relicense, or otherwise
 alter the terms governing Third-Party Materials or the Third-Party
 License Text.
 
-The presence of Third-Party Materials in the Repository, Ludoxel,
-Distribution Materials, package metadata, third-party directories,
-user interface displays, or build outputs does not place the Original
-Materials under the terms governing those Third-Party Materials and
-does not grant permission to Use the Original Materials beyond this
-License.
+The presence of Third-Party Materials in the Repository, Ludoxel, the
+Documentation Site, Distribution Materials, package metadata,
+third-party directories, user interface displays, website displays, or
+build outputs does not place the Original Materials under the terms
+governing those Third-Party Materials and does not grant permission to
+Use the Original Materials beyond this License.
 
 Provenance-Sensitive Materials must not be treated as Original
 Materials, public-domain materials, open source materials,
-free-to-use materials, redistributable materials, or materials
-cleared for modification merely because they are present in the
-Repository, loaded by Ludoxel, displayed by Ludoxel, referenced by
-documentation, or technically capable of being bundled.
+free-to-use materials, redistributable materials, web-deployable
+materials, or materials cleared for modification merely because they
+are present in the Repository, loaded by Ludoxel, displayed by
+Ludoxel, referenced by documentation, displayed by the Documentation
+Site, or technically capable of being bundled or deployed.
 
-Before any distribution, reuse, modification, extraction,
-publication, or incorporation of Provenance-Sensitive Materials, the
+Before any distribution, reuse, modification, extraction, publication,
+deployment, or incorporation of Provenance-Sensitive Materials, the
 responsible party must separately confirm authorship, rights
 ownership, source, license status, redistribution permission,
-modification permission, trademark status, attribution requirements,
-and distribution eligibility for the specific material.
+web-deployment permission, modification permission, trademark status,
+attribution requirements, and distribution eligibility for the
+specific material.
 
 8. External Contributions and Security Reports
 
 The Repository is not maintained as an open contribution project. An
 External Contribution is not requested and is not accepted through a
-public pull request, a Public Issue, a discussion, a patch, or a
-comparable submission. Contribution Materials submitted as an External
-Contribution are not accepted.
+public pull request, a Public Issue, a discussion, a patch, a website
+text proposal, or a comparable submission. Contribution Materials
+submitted as an External Contribution are not accepted.
 
 Submission of an External Contribution does not create any obligation
 for the Licensor to review, accept, preserve, credit, respond to,
-incorporate, license, or return the Contribution Materials.
+incorporate, license, publish, deploy, or return the Contribution
+Materials.
 
 Submission of an External Contribution does not expand the Licensee's
 rights in the Original Materials and does not grant the Licensee any
@@ -432,30 +463,67 @@ submit.
 
 9. Distribution Materials
 
-Distribution Materials, including any Desktop Distribution, that
-contain Original Materials remain subject to this License. Packaging,
-bundling, compilation, copying into a distribution directory,
-embedding in an application bundle, inclusion in an installer, or
-inclusion in an archive does not create any additional license or
+Distribution Materials, including any Desktop Distribution,
+Documentation Site build output, or Documentation Site deployment
+material, that contain Original Materials remain subject to this
+License. Packaging, bundling, compilation, copying into a distribution
+directory, embedding in an application bundle, inclusion in an
+installer, inclusion in an archive, static-site generation, or
+deployment preparation does not create any additional license or
 permission.
 
 Inclusion of License Text, Third-Party License Text, SPDX identifiers,
-package metadata, or other legal materials in Distribution Materials
-does not itself grant distribution permission.
+package metadata, website metadata, or other legal materials in
+Distribution Materials does not itself grant distribution permission,
+deployment permission, republication permission, or redistribution
+permission.
 
-Only the Licensor may publish an Official Distribution of Ludoxel. A
-Desktop Distribution or other Distribution Materials published by any
-other party is not an Official Distribution and is not endorsed by the
-Licensor, even when derived from the Current Repository.
+Only the Licensor may publish an Official Distribution of Ludoxel or
+an official deployment of the Documentation Site. A Desktop
+Distribution, Documentation Site deployment, or other Distribution
+Materials published by any other party is not an Official Distribution
+and is not endorsed by the Licensor, even when derived from the
+Current Repository.
 
-A party authorized to distribute Distribution Materials is responsible
-for confirming that the distribution remains authorized, that all
-required legal materials are included, that Third-Party Materials may
-be redistributed under their applicable Third-Party License Text, and
-that Provenance-Sensitive Materials are not distributed without
+A party authorized to distribute or deploy Distribution Materials is
+responsible for confirming that the distribution or deployment remains
+authorized, that all required legal materials are included or retained,
+that Third-Party Materials may be redistributed or deployed under
+their applicable Third-Party License Text, and that
+Provenance-Sensitive Materials are not distributed or deployed without
 confirmed permission.
 
-10. GitHub Platform Terms
+10. Documentation Site and Hosting
+
+The Documentation Site is part of the Original Materials to the extent
+it consists of materials created, owned, or controlled by the
+Licensor. Its publication as a website, static site, preview
+deployment, or hosted page does not convert it into open content,
+public-domain material, free documentation, or reusable website
+template material.
+
+The Documentation Site may contain explanatory text, code blocks,
+configuration examples, command examples, images, videos, user
+interface text, navigation data, search data, and legal notices. Their
+presence in a public website is not a grant to copy, modify,
+translate, republish, redistribute, mirror, scrape, crawl, index,
+embed, train on, evaluate with, deploy, or incorporate them into any
+other Work, product, service, repository, website, documentation set,
+dataset, model, benchmark, or search system.
+
+Any hosting-service terms applicable to display, caching, previewing,
+building, deploying, or transmitting the Documentation Site govern
+only the relationship between that hosting service and its users. They
+do not grant a copyright license, patent license, trademark license,
+database-right license, trade-secret license, website republication
+license, or any other permission from the Licensor beyond Section 3.
+
+A Documentation Site build, preview deployment, production deployment,
+cache, screenshot, generated static file, indexed excerpt, or browser
+display does not authorize Use of the Original Materials outside
+Section 3.
+
+11. GitHub Platform Terms
 
 The GitHub Platform Terms govern the relationship between the hosting
 service operated by GitHub and its users. Any service-level permission
@@ -464,14 +532,15 @@ service and the user, including file display and interface functions.
 
 The GitHub Platform Terms do not grant a copyright license, patent
 license, trademark license, database-right license, trade-secret
-license, or any other permission from the Licensor beyond Section 3.
+license, website republication license, or any other permission from
+the Licensor beyond Section 3.
 
 A fork, clone, download, archive, Public Issue, pull request, action
-run, release, package, diff, patch view, or other hosting-service
-feature does not authorize Use of the Original Materials outside
-Section 3.
+run, release, package, diff, patch view, website preview, or other
+hosting-service feature does not authorize Use of the Original
+Materials outside Section 3.
 
-11. Termination
+12. Termination
 
 Any permission granted under this License terminates immediately and
 automatically if the Licensee violates any term of this License.
@@ -479,78 +548,82 @@ automatically if the Licensee violates any term of this License.
 Upon termination, the Licensee must immediately cease all Use of the
 Original Materials and must delete or destroy all unauthorized copies,
 derivatives, extracts, archives, mirrors, stored versions, transformed
-versions, compiled versions, bundled versions, datasets, embeddings,
-indexes, model inputs, model outputs that substantially reproduce
-protected material, and other unauthorized reproductions or
-derivatives under the Licensee's possession or control, except to the
-extent retention is strictly required by applicable law.
+versions, compiled versions, bundled versions, website deployments,
+datasets, embeddings, indexes, model inputs, model outputs that
+substantially reproduce protected material, and other unauthorized
+reproductions or derivatives under the Licensee's possession or
+control, except to the extent retention is strictly required by
+applicable law.
 
 Termination does not limit any rights, remedies, claims, injunctions,
 damages, or other relief available to the Licensor under copyright
 law, contract law, unfair competition law, trademark law, database
-law, trade secret law, platform terms, or any other applicable law.
+law, trade secret law, platform terms, hosting-service terms, or any
+other applicable law.
 
-12. No Warranty
+13. No Warranty
 
-Ludoxel, the Repository, the Original Materials, the Repository
-Contents, the Distribution Materials, User-Created Materials,
-Application Output, Third-Party Materials, and Provenance-Sensitive
-Materials are provided "AS IS" and "AS AVAILABLE", without warranty of
-any kind, whether express, implied, statutory, or otherwise.
+Ludoxel, the Documentation Site, the Repository, the Original
+Materials, the Repository Contents, the Distribution Materials,
+User-Created Materials, Application Output, Third-Party Materials, and
+Provenance-Sensitive Materials are provided "AS IS" and "AS
+AVAILABLE", without warranty of any kind, whether express, implied,
+statutory, or otherwise.
 
 The Licensor disclaims all warranties, including warranties of title,
 non-infringement, merchantability, fitness for a particular purpose,
 accuracy, availability, security, absence of defects, correctness of
 game rules, correctness of artificial intelligence behavior,
-correctness of generated content, suitability for publication,
-suitability for distribution, and freedom from third-party claims.
+correctness of generated content, correctness of Documentation Site
+content, suitability for publication, suitability for distribution,
+suitability for deployment, and freedom from third-party claims.
 
-13. Limitation of Liability
+14. Limitation of Liability
 
 To the maximum extent permitted by applicable law, the Licensor shall
 not be liable for any direct, indirect, incidental, special,
 consequential, exemplary, punitive, or other damages, or for any loss
 of profits, revenue, data, goodwill, business opportunity, or use,
-arising out of or relating to Ludoxel, the Repository, the Original
-Materials, the Repository Contents, the Distribution Materials,
-User-Created Materials, Application Output, Third-Party Materials,
-Provenance-Sensitive Materials, this License, permitted viewing,
-Ordinary Application Use, unauthorized use, or prohibited use,
-regardless of legal theory and even if advised of the possibility of
-such damages.
+arising out of or relating to Ludoxel, the Documentation Site, the
+Repository, the Original Materials, the Repository Contents, the
+Distribution Materials, User-Created Materials, Application Output,
+Third-Party Materials, Provenance-Sensitive Materials, this License,
+permitted viewing, Ordinary Application Use, Ordinary Documentation
+Site Viewing, unauthorized use, or prohibited use, regardless of legal
+theory and even if advised of the possibility of such damages.
 
-14. Governing Law and Forum
+15. Governing Law and Forum
 
 This License is governed by the laws of Japan, excluding
 conflict-of-law rules that would require application of another
 jurisdiction's law, to the maximum extent permitted by applicable law.
 
 Any dispute arising out of or relating to this License, the Original
-Materials, Repository Contents, Distribution Materials, or
-unauthorized use of those materials is subject to the exclusive
-jurisdiction of the Tokyo District Court as the court of first
-instance, to the maximum extent permitted by applicable law.
+Materials, Repository Contents, the Documentation Site, Distribution
+Materials, or unauthorized use of those materials is subject to the
+exclusive jurisdiction of the Tokyo District Court as the court of
+first instance, to the maximum extent permitted by applicable law.
 
 This governing-law and forum provision does not purport to alter
 mandatory rules that cannot be altered by agreement under applicable
 law.
 
-15. Controlling Text
+16. Controlling Text
 
 The License Text is the controlling text for the Original Materials.
 
 If README descriptions, package metadata, SPDX headers,
 generated-file markings, summaries, translations, issue text, pull
-request text, release text, documentation, generated documentation,
-application user interface text, or other repository statements
-conflict with the License Text, the License Text controls for the
-Original Materials.
+request text, release text, documentation, Documentation Site content,
+generated documentation, application user interface text, website user
+interface text, or other repository statements conflict with the
+License Text, the License Text controls for the Original Materials.
 
 No statement outside this License grants any permission to Use the
 Original Materials unless that statement expressly amends this License
 through a later written instrument signed by the Licensor.
 
-16. Severability and Non-Waiver
+17. Severability and Non-Waiver
 
 If any provision of this License is held invalid, unenforceable, or
 inapplicable in a particular jurisdiction or circumstance, the
@@ -561,7 +634,7 @@ Failure by the Licensor to enforce any provision of this License in
 any instance does not constitute a waiver of that provision or of any
 other right, remedy, claim, or protection.
 
-17. Revision History
+18. Revision History
 
 * Version 1.0.0, effective 2026-06-03, was the initial independent
   viewing-only license for the Original Materials.
@@ -623,3 +696,13 @@ other right, remedy, claim, or protection.
   platform-terms language into a more declarative rights-boundary
   form; corrected non-ASCII spacing in the Licensee definition; and
   preserved the existing all-rights-reserved scope.
+
+* Version 2.4.0, effective 2026-06-19, added the Documentation Site to
+  the definitions, limited grant, rights reservations, excluded uses,
+  distribution treatment, hosting treatment, disclaimers, liability
+  limits, governing-law provisions, and controlling-text provisions;
+  clarified that public website availability, static-site output,
+  previews, and hosting-service features do not grant reuse,
+  redistribution, scraping, mirroring, deployment, or AI Use rights;
+  and preserved the all-rights-reserved control of the Original
+  Materials.
