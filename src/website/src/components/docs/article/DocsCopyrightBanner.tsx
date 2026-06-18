@@ -12,13 +12,13 @@ type DocsCopyrightBannerProps = {
 const COPYRIGHT_NOTICE: DocsNoteBlockContent = {
   type: 'warning',
   content: [
-    'Ludoxel code excerpts, documentation text, examples, and other Ludoxel original materials displayed in these documentation pages are protected under the copyright of Kento Konishi (小西拳斗) and governed by the root LICENSE. ',
+    'Ludoxel code excerpts, documentation text, examples, and other Ludoxel original materials displayed in these documentation pages are protected under the copyright of Kento Konishi (小西拳斗) and governed by the root ',
     {
       kind: 'link',
-      label: 'Read the root LICENSE.',
+      label: 'LICENSE',
       href: 'https://github.com/5uog/Ludoxel/blob/main/LICENSE',
     },
-    ' This non-dismissible notice is part of the documentation page and does not grant permission beyond the controlling license text.',
+    '. Unauthorized use does not receive any permission from this notice. Any dispute arising out of or relating to the LICENSE, Ludoxel original materials, the Documentation Site, or unauthorized use is governed by the laws of Japan and is subject to the exclusive jurisdiction of the Tokyo District Court as the court of first instance, to the maximum extent permitted by applicable law.',
   ],
 };
 
