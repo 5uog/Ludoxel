@@ -11,15 +11,14 @@ export const manualPages: DocsPageContent[] = [
     group: 'Launch and Space Selection',
     title: 'Starting Ludoxel',
     description:
-      'Explains what happens between launching Ludoxel and seeing the playable desktop window. The page follows the real startup path from the module entry point, through application bootstrap and root resolution, into the PyQt presentation shell, so players can separate launch evidence from saved data, rendering, packaging, and support issues.',
+      'Follows the real startup path from the Python module entry point, through application bootstrap and root resolution, into the PyQt presentation shell, so you can tell launch evidence apart from saved-data, rendering, packaging, and support issues. Each visible milestone names a different place where startup can stop.',
     sections: [
       {
         id: 'starting-ludoxel-entry-point',
         title: 'The Launch Starts at the Desktop Entry Point',
         body: [
-          'Starting Ludoxel begins with the Python module entry point. The file does not build the window itself, does not choose a play space, and does not load renderer resources directly. Its job is narrower: prepare multiprocessing support for packaged execution and delegate control to `ludoxel.application.run_app`.',
-          'That boundary matters for the Manual page. If the application never opens a window, the first confirmed fact is that the entry point attempted to enter the application bootstrap. A player-facing explanation should not jump from that symptom to renderer failure, saved-world corruption, or official release status unless later evidence points there.',
-          'The entry point also shows why this article should avoid claiming that startup is a website route or a documentation action. The user is starting the desktop application, and the next owner is the application bootstrap layer.',
+          'Starting Ludoxel begins with the Python module entry point. The file does not build the window itself, does not choose a play space, and does not load renderer resources. Its job is narrow: prepare multiprocessing support for packaged execution and hand control to `ludoxel.application.run_app`.',
+          'If the application never opens a window, the first confirmed fact is that the entry point attempted to enter the application bootstrap. Starting Ludoxel is a desktop application action. The first visible milestone is either an application dialog, a splash or loading surface, the main window, or no visible window at all.',
         ],
         codeBlocks: [
           {
@@ -43,14 +42,13 @@ if __name__ == "__main__":
         id: 'starting-ludoxel-application-export',
         title: 'The Public Application Export Is Lazy',
         body: [
-          '`ludoxel.application` exposes `run_app` without importing the whole bootstrap path eagerly. The module uses `__getattr__` to import `ludoxel.application.bootstrap` only when `run_app` is requested. For a public manual article, this is worth mentioning only as a boundary: the entry point asks the application layer to start the app, and the application layer resolves the concrete bootstrap function.',
-          'This is not a player control, but it keeps the startup explanation honest. The entry point is not secretly constructing widgets, loading the theme, or restoring play-space state. Those actions happen later. If a report says the process exits before any visible window appears, the relevant evidence is still before the presentation surface.',
-          'The page should use this boundary to prevent false conclusions. A missing desktop window is not automatically an Othello problem, a hotbar problem, or a camera problem; those systems are only available after the bootstrap reaches the presentation shell.',
+          '`ludoxel.application` exposes `run_app` without importing the whole bootstrap path eagerly. The package uses `__getattr__` to import `ludoxel.application.bootstrap` only when `run_app` is requested. The entry point asks the application layer to start, and the application layer resolves the concrete bootstrap function on demand.',
+          'This keeps the startup explanation honest. The entry point is not secretly constructing widgets, loading the theme, or restoring play-space state; those actions happen later. A missing desktop window is therefore not automatically an Othello problem, a hotbar problem, or a camera problem, because those systems only exist after the bootstrap reaches the presentation shell.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The application package resolves `run_app` through the bootstrap module only when it is requested.',
+            caption: 'The application package resolves run_app through the bootstrap module only when requested.',
             code: `from importlib import import_module
 
 __all__ = ["run_app"]
@@ -67,9 +65,8 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-root-resolution',
         title: 'Bootstrap Resolves the Roots Before the Window Exists',
         body: [
-          'The application bootstrap determines three roots before the presentation window is started: the project root, the resource root, and the runtime data root. Those roots answer different questions. The project root identifies the application context, the resource root identifies bundled assets such as fonts, icons, theme material, shaders, and data files, and the runtime data root identifies where user-specific state should live.',
-          'This is the correct place to explain why startup is not the same subject as saved state. The bootstrap needs a data root before the window opens, but that does not mean every saved world or setting has already been displayed. It means the application has selected the storage location that later persistence code can use.',
-          'The same distinction also prevents a local run from being described as a distribution result. Root resolution supports both source-tree execution and packaged execution, but seeing a local window does not by itself prove that a package is official, complete, or redistributable.',
+          'The application bootstrap determines three roots before the presentation window is started: the project root, the resource root, and the runtime data root. The project root identifies the application context, the resource root identifies bundled assets such as fonts, icons, theme material, shaders, and data files, and the runtime data root identifies where user-specific state should live.',
+          'A data root is needed before the window opens, but that does not mean every saved world or setting has already been displayed. It only means the application has selected the storage location that later persistence code will use. Root resolution supports both source-tree execution and packaged execution, so seeing a local window does not prove that a package is official, complete, or redistributable.',
         ],
         codeBlocks: [
           {
@@ -93,9 +90,8 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-python-runtime',
         title: 'Runtime Selection Happens Before User Interaction',
         body: [
-          'The bootstrap checks the Python runtime before the PyQt window is created. In source-tree execution, it can look for a preferred Python 3.14 executable and re-execute the module with that interpreter. In frozen execution, the runtime is already part of the packaged application, so the check returns without replacing the process.',
-          'For a player, the visible consequence is simple: a failure before any window appears may belong to the startup environment, not to a play-space rule or UI overlay. That is why this article should describe the window as the first user-visible milestone rather than the first startup operation.',
-          'The article should not ask ordinary players to edit interpreter paths as a normal gameplay step. It should only explain that the supported runtime check occurs before the window is available, so reports about a missing window should preserve environment evidence separately from in-game evidence.',
+          'The bootstrap checks the Python runtime before the PyQt window is created. In source-tree execution it can look for a preferred Python 3.14 executable and re-execute the module with that interpreter. In frozen execution the runtime is already part of the packaged application, so the check returns without replacing the process.',
+          'For a player the visible consequence is simple: a failure before any window appears may belong to the startup environment, not to a play-space rule or UI overlay. The supported-runtime check runs before the window is available, so a missing window can come from the launch environment, and that evidence should be preserved separately from in-game evidence.',
         ],
         codeBlocks: [
           {
@@ -117,9 +113,8 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-runtime-data-root',
         title: 'The Data Root Is User State, Not Source Code',
         body: [
-          'The runtime data root is where Ludoxel stores user-specific runtime state. It can be overridden with `LUDOXEL_DATA_ROOT`, otherwise it follows platform conventions: LocalAppData on Windows, Application Support on macOS, XDG data home on compatible systems, or a user-local fallback. This keeps normal saved data out of the repository source tree.',
-          'This is the correct basis for explaining startup reports that mention previous worlds or preferences. If the window opens but previous state is absent, startup itself has already passed the window milestone. The next question is whether the expected runtime data root was used, whether the relevant state file exists, and whether persistence accepted it.',
-          'The Manual page should not turn that storage rule into a full persistence article. It should only explain enough for the player to separate “Ludoxel did not start” from “Ludoxel started, but did not show the data I expected.”',
+          'The runtime data root is where Ludoxel stores user-specific runtime state. It can be overridden with `LUDOXEL_DATA_ROOT`; otherwise it follows platform conventions: LocalAppData on Windows, Application Support on macOS, XDG data home on compatible systems, or a user-local fallback. This keeps normal saved data out of the repository source tree.',
+          'If the window opens but previous state is absent, startup itself has already passed the window milestone. The next questions are whether the expected runtime data root was used, whether the relevant state file exists, and whether persistence accepted it. That separates "Ludoxel did not start" from "Ludoxel started, but did not show the data I expected."',
         ],
         codeBlocks: [
           {
@@ -144,9 +139,8 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-othello-storage-hook',
         title: 'Othello Storage Hooks Are Installed During Bootstrap',
         body: [
-          'The bootstrap installs Othello opening-book storage hooks before it enters the presentation shell. That does not mean the player is already in Othello, and it does not mean the Othello board has been drawn. It means the application-level storage functions are registered early enough that Othello code can use the same root and persistence rules once the relevant play space is active.',
-          'This is a useful example of startup work that should not be mistaken for visible gameplay. A player cannot infer the active play space only from the existence of Othello storage preparation. The active surface must still be read from the desktop window after it appears.',
-          'If the user reports a launch problem, mention Othello storage only when the failure evidence reaches application bootstrap or opening-book state. If the window opens and the board is visible, the next page should be about Othello state or settings, not the generic startup path.',
+          'The bootstrap installs Othello opening-book storage hooks before it enters the presentation shell. This does not mean the player is already in Othello or that the board has been drawn. It means the application-level storage functions are registered early enough that Othello code can use the same root and persistence rules once that play space becomes active.',
+          'The active surface cannot be inferred from the existence of Othello storage preparation alone. It must be read from the desktop window after it appears. If a launch problem reaches application bootstrap or opening-book state, Othello storage is relevant; if the window opens and the board is visible, the next subject is Othello state or settings, not the generic startup path.',
         ],
         codeBlocks: [
           {
@@ -164,9 +158,8 @@ _run(project_root=project_root, resource_root=resource_root, data_root=data_root
         id: 'starting-ludoxel-presentation-shell',
         title: 'The Presentation Shell Creates the Desktop Application',
         body: [
-          'After bootstrap, control enters the presentation shell. That shell creates the `QApplication`, sets application identity, loads an application icon when available, registers bundled fonts, loads the QSS theme, configures single-instance activation, and then prepares the main window. This is the point where startup begins to become visible to the player.',
-          'The Manual article should describe this as the transition from application preparation to desktop presentation. If the process reaches this phase but the user sees a font or theme failure, the evidence is different from a failure before root resolution. If a second launch only activates an existing window, the evidence also belongs to presentation-level activation rather than play-space state.',
-          'The presentation shell is still not the renderer. It prepares the Qt application and host window. The viewport and renderer-facing session state are reached through the game screen and viewport widget after the main window is created.',
+          'After bootstrap, control enters the presentation shell. The shell creates the `QApplication`, sets application identity, loads an application icon when available, registers bundled fonts, loads the QSS theme, configures single-instance activation, and then prepares the main window. This is the point where startup begins to become visible.',
+          'A font or theme failure at this phase is different evidence from a failure before root resolution, and a second launch that only activates an existing window belongs to presentation-level activation rather than play-space state. The presentation shell is still not the renderer; it prepares the Qt application and host window. The viewport and renderer-facing session state are reached through the game screen and viewport widget after the main window is created.',
         ],
         codeBlocks: [
           {
@@ -189,9 +182,8 @@ _run(project_root=project_root, resource_root=resource_root, data_root=data_root
         id: 'starting-ludoxel-font-and-theme-loading',
         title: 'Fonts and Theme Are Startup Requirements',
         body: [
-          'The presentation shell registers bundled UI fonts and applies the theme stylesheet before the player reaches the final visible game window. If bundled font registration fails, the implementation raises a runtime error rather than continuing with a partially styled application. That makes font and theme evidence part of launch troubleshooting, not a cosmetic afterthought.',
-          'This also explains why the startup article should not tell players to fix visual problems by editing Python widgets. The application loads the theme through QSS and font helpers, then applies the resulting stylesheet to the Qt application. Player-facing documentation should describe the visible symptom and direct theme implementation details to developer-facing pages only when necessary.',
-          'If a player reports that the startup splash appears but the game surface never arrives, the visible status text, font error, or theme loading error can be relevant evidence. If the game window is fully visible and only a later overlay looks wrong, the report should move to the page for that overlay or UI surface.',
+          'The presentation shell registers bundled UI fonts and applies the theme stylesheet before the final game window. If bundled font registration fails, the shell raises a runtime error rather than continuing with a partially styled application. Font and theme behavior is part of launch troubleshooting, not a cosmetic afterthought.',
+          'The application loads the theme through QSS and font helpers, then applies the resulting stylesheet to the Qt application, so visual problems are not fixed by editing Python widgets. If the startup splash appears but the game surface never arrives, the visible status text, font error, or theme loading error can be relevant. If the game window is fully visible and only a later overlay looks wrong, that belongs to the page for that overlay or surface.',
         ],
         codeBlocks: [
           {
@@ -213,9 +205,8 @@ if theme_qss:
         id: 'starting-ludoxel-single-instance-activation',
         title: 'A Second Launch Can Activate the Existing Window',
         body: [
-          'Startup also checks whether another Ludoxel instance is already listening for activation. If an existing instance accepts the activation request, the new launch returns instead of opening a second independent game window. From the player perspective, the visible result may be that the already-running window comes forward.',
-          'This behavior belongs in Starting Ludoxel because it changes what a “launch” looks like. A player may double-click the application and see an existing session activate rather than a fresh window. That is not saved-state restoration and not a play-space switch; it is single-instance activation.',
-          'Reports should therefore distinguish “nothing happened,” “an existing window came forward,” and “a new window opened.” Those are different startup observations and should not be flattened into the same symptom.',
+          'Startup checks whether another Ludoxel instance is already listening for activation. If an existing instance accepts the activation request, the new launch returns instead of opening a second independent game window, and the already-running window comes forward.',
+          'This changes what a "launch" looks like: double-clicking the application may activate an existing session rather than open a fresh window. That is not saved-state restoration and not a play-space switch; it is single-instance activation. Reports should distinguish "nothing happened," "an existing window came forward," and "a new window opened," because these are different startup observations.',
         ],
         codeBlocks: [
           {
@@ -234,8 +225,7 @@ app.aboutToQuit.connect(relay.close)`,
         title: 'The Player Name Dialog Can Appear Before the Main Window',
         body: [
           'Before creating the main window, the presentation shell loads persisted application state and checks whether a normalized player name is already available. If no launch player name is available, it opens the player name dialog. That dialog is part of startup because the game window has not yet been created.',
-          'A player who sees the name dialog has passed the entry point, bootstrap, root resolution, runtime check, storage hook installation, Qt application setup, font registration, and theme loading. The report should not say that Ludoxel failed to start at the earliest stage. The correct observation is that startup is waiting for the player-name gate.',
-          'If the dialog is cancelled, the presentation shell returns before the main window is created. That is an intentional exit path and should be described separately from a crash or renderer failure.',
+          'Seeing the name dialog means startup has already passed the entry point, bootstrap, root resolution, runtime check, storage-hook installation, Qt application setup, font registration, and theme loading. If the dialog is cancelled, the shell returns before the main window is created, which is an intentional exit path rather than a crash or renderer failure.',
         ],
         codeBlocks: [
           {
@@ -259,9 +249,8 @@ if not launch_player_name:
         id: 'starting-ludoxel-main-window',
         title: 'The Main Window Hosts the Game Screen',
         body: [
-          'The main window is the desktop host for the game screen. It receives the project root, resource root, data root, and launch player name, creates `GameScreen`, installs it as the central widget, and connects fullscreen behavior to the viewport. That is the point where the startup path becomes the visible desktop application structure.',
-          'This is the correct place to separate the window from the play space. The main window hosts the screen; it does not mean that the user has already interacted with My World or Othello. The active play space still needs to be read from the viewport and session state after the screen is live.',
-          'When writing reports, “the main window appeared” is a different milestone from “the viewport finished loading.” A visible host window with a preparing overlay can still be in startup; a loaded viewport with active controls has moved into ordinary session use.',
+          'The main window is the desktop host for the game screen. It receives the project root, resource root, data root, and launch player name, creates `GameScreen`, installs it as the central widget, and connects fullscreen behavior to the viewport. This is where the startup path becomes the visible desktop application structure.',
+          'The main window hosts the screen; it does not mean the player has already interacted with My World or Othello. The active play space still has to be read from the viewport and session state after the screen is live. "The main window appeared" is a different milestone from "the viewport finished loading": a visible host window with a preparing overlay can still be in startup, while a loaded viewport with active controls has moved into ordinary session use.',
         ],
         codeBlocks: [
           {
@@ -283,9 +272,8 @@ if not launch_player_name:
         id: 'starting-ludoxel-viewport-preparation',
         title: 'The Game Screen Shows Viewport Preparation',
         body: [
-          '`GameScreen` creates the platform-specific viewport widget and the HUD, then shows a loading overlay while the viewport is preparing. The overlay text is “Preparing viewport...”, and it is tied to viewport loading state and loading status signals. This is the first visible feedback that belongs directly to the game surface rather than the outer bootstrap.',
-          'That visible loading overlay is important evidence. If the window appears with “Preparing viewport...” and stays there, the application has passed startup phases that occur before `GameScreen`. The relevant report should include the overlay text and whether it changes, not just say that the application did not start.',
-          'When the viewport finishes loading, the overlay hides and the viewport receives focus. That is the handoff from launch into ordinary world or play-space interaction.',
+          '`GameScreen` creates the platform-specific viewport widget and the HUD, then shows a loading overlay while the viewport is preparing. The overlay reads "Preparing viewport...", and its visibility is tied to the viewport loading state and loading-status signals. This is the first visible feedback that belongs directly to the game surface rather than the outer bootstrap.',
+          'If the window appears with "Preparing viewport..." and stays there, the application has passed the phases that occur before `GameScreen`, so a useful report includes the overlay text and whether it changes. When the viewport finishes loading, the overlay hides and the viewport receives focus; that is the handoff from launch into ordinary world or play-space interaction.',
         ],
         codeBlocks: [
           {
@@ -306,39 +294,11 @@ self.viewport.loading_finished.connect(self._handle_loading_finished)`,
         ],
       },
       {
-        id: 'starting-ludoxel-first-observation',
-        title: 'First Observation Should Name the Visible Milestone',
+        id: 'starting-ludoxel-visible-milestone',
+        title: 'Name the Latest Visible Milestone',
         body: [
-          'The first observation should name the latest visible milestone. Examples include “no window appears,” “the player name dialog appears,” “the startup splash appears,” “the main window appears with Preparing viewport,” or “the viewport is loaded and accepts input.” Each sentence points to a different part of the startup path.',
-          'This page should not use vague evidence such as “startup is broken” when a more precise visible milestone exists. A precise observation lets another reader decide whether the problem belongs before bootstrap, during root resolution, inside Qt presentation setup, at the player-name gate, while preparing the viewport, or after the session becomes interactive.',
-          'The observation should also name whether the visible surface is accepting input. A dialog, splash, loading overlay, active viewport, settings overlay, or Othello board each changes what the next key or mouse action means.',
-        ],
-      },
-      {
-        id: 'starting-ludoxel-play-space-context',
-        title: 'The Active Play Space Comes After Startup Preparation',
-        body: [
-          'Startup prepares the application so that a play space can become visible, but it should not be described as the same thing as playing My World or Othello. Once the viewport is loaded, the user can read the active play space from the visible surface and then use play-space-specific pages.',
-          'This matters because My World and Othello have different control expectations. My World uses movement, camera control, hotbar state, inventory, and block interaction. Othello uses a board surface, legal move selection, side state, settings, and board animation. Starting Ludoxel should only carry the reader to the point where the correct surface can be identified.',
-          'If the visible surface after launch is not the one the player expected, the follow-up is `Switching Play Spaces` or a saved-state page, not a rewrite of the startup path. Startup answers how the desktop session reached a visible surface; play-space documentation answers what that surface means.',
-        ],
-      },
-      {
-        id: 'starting-ludoxel-saved-state-boundary',
-        title: 'Saved State Begins After the Data Root Is Chosen',
-        body: [
-          'The startup path chooses the data root and later the presentation shell loads persisted application state. That does not make saved state the same subject as launch. Saved state has its own evidence: player state, world state, Othello settings, inventory, and runtime integrity behavior.',
-          'The article should therefore separate “the app opened” from “the expected state appeared.” If the player name dialog appears unexpectedly, the persisted state may not contain a usable player name. If the viewport opens but the expected world is missing, the application has still started; the report has moved to saved-world or play-space restoration.',
-          'This boundary keeps the manual useful. Players can describe the visible launch result first, then move to data pages only when the desktop window is already available and the missing evidence is specifically saved content.',
-        ],
-      },
-      {
-        id: 'starting-ludoxel-reportable-evidence',
-        title: 'Report the Startup Milestone, Not a Guess',
-        body: [
-          'A useful startup report names the action, the latest visible milestone, the expected result, the actual result, and the environment. It should avoid private paths, credentials, tokens, or unrelated source edits. The goal is to identify where the startup path stopped without asking the user to publish unsafe information.',
-          'Good evidence for this page includes whether a second launch activates an existing window, whether the player name dialog appears, whether “Preparing viewport...” is visible, whether the splash closes, whether the main window appears, and whether the viewport receives focus after loading. These are concrete facts from the actual startup flow.',
-          'A report should not conclude that the renderer, Othello engine, packaging process, or legal distribution status is responsible unless the symptom reaches that subject. Starting Ludoxel is a launch article, so the report should stay inside launch evidence until another page becomes clearly relevant.',
+          'A precise startup observation names the latest visible milestone: "no window appears," "the player name dialog appears," "the startup splash appears," "the main window appears with Preparing viewport," or "the viewport is loaded and accepts input." Each sentence points to a different part of the startup path and lets another reader decide where the problem belongs.',
+          'The observation should also state whether the visible surface is accepting input. A dialog, splash, loading overlay, active viewport, settings overlay, or Othello board each changes what the next key or mouse action does, so naming the focused surface is more useful than saying "startup is broken."',
         ],
         codeBlocks: [
           {
@@ -356,21 +316,19 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         ],
       },
       {
-        id: 'starting-ludoxel-adjacent-pages',
-        title: 'Use Adjacent Pages Only After the Subject Changes',
+        id: 'starting-ludoxel-play-space-context',
+        title: 'The Active Play Space Comes After Startup',
         body: [
-          'The related pages are real handoffs, not filler. Use `Reading the Main Window` after the desktop window is visible and the player needs help identifying surfaces. Use `Switching Play Spaces` after the window is interactive and the question is which mode or play space is active. Use `Changing Camera Preferences` after the viewport receives input but the camera response itself needs adjustment.',
-          'The startup article should not repeat those pages. Its job is to explain the path to the first usable window and the evidence that proves how far startup progressed. Once the player is asking about hotbar selection, Othello moves, camera feel, inventory, saved worlds, or support routing, the subject has changed.',
-          'This also protects the article from legal or distribution drift. A local run, a visible window, or a loaded viewport does not create redistribution permission, official release status, or private support routing. Those topics belong to Distribution, Legal, and Support pages.',
+          'Startup prepares the application so a play space can become visible, but reaching the viewport is not the same as playing My World or Othello. Once the viewport is loaded, the active play space can be read from the visible surface, after which the matching play-space pages apply.',
+          'My World and Othello have different control expectations: My World uses movement, camera control, hotbar state, inventory, and block interaction, while Othello uses a board surface, legal-move selection, side state, settings, and board animation. If the visible surface after launch is not the one expected, the follow-up is `Switching Play Spaces` or a saved-state page, not a rewrite of the startup path.',
         ],
       },
       {
-        id: 'starting-ludoxel-closing-check',
-        title: 'Closing Check for a Successful Start',
+        id: 'starting-ludoxel-saved-state-boundary',
+        title: 'Saved State Begins After the Data Root Is Chosen',
         body: [
-          'A successful start means Ludoxel moved from the module entry point, through application bootstrap, through root resolution, through presentation shell setup, through any player-name gate, and into a visible game window. If the viewport finishes loading and receives focus, the player can continue with ordinary Manual pages.',
-          'The player should finish this article with a concrete sentence: “Ludoxel opened to the desktop window and the viewport is ready,” or “Ludoxel stopped at the player name dialog,” or “Ludoxel showed Preparing viewport and did not continue.” Those statements are narrow enough to act on and precise enough to hand off to the correct next page.',
-          'That precision is the point of this article. It makes startup explainable without pretending to cover every saved-state, renderer, settings, Othello, support, distribution, or legal question in the project.',
+          'The startup path chooses the data root, and later the presentation shell loads persisted application state. Saved state has its own evidence: player state, world state, Othello settings, inventory, and runtime integrity behavior. "The app opened" and "the expected state appeared" are separate facts.',
+          'If the player name dialog appears unexpectedly, the persisted state may not contain a usable player name. If the viewport opens but the expected world is missing, the application has still started and the report has moved to saved-world or play-space restoration. Describing the visible launch result first keeps the manual useful; data pages come into play only once the desktop window is already available and the missing evidence is specifically saved content.',
         ],
       },
     ],
@@ -382,150 +340,155 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Launch and Space Selection',
     title: 'Switching Play Spaces',
     description:
-      'Describes how the active My World or Othello space is selected and persisted. This page treats play-space selection as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains how the pause menu switches the active session between My World and Othello, how each space keeps its own world and controller state, and how the selected space is normalized, loaded, and persisted with player preferences. Switching changes the active session context; it does not merge My World and Othello data.',
     sections: [
       {
-        id: 'switching-play-spaces-scope',
-        title: 'Switching Play Spaces Player Scope',
+        id: 'switching-play-spaces-two-sessions',
+        title: 'Two Independent Sessions Exist at Once',
         body: [
-          'Ludoxel stores the current play-space id as runtime state. The value selects My World or Othello, and unknown values normalize back to the default My World space. The fact also tells the reader which evidence to preserve for player scope: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Player Scope.',
-          'Player Scope defines the useful size of Switching Play Spaces. The article should be broad enough to explain play-space selection, but narrow enough that merging My World and Othello state remains outside the conclusion.',
-          'Use player scope to keep Switching Play Spaces tied to Starting the Application; use a related page only when the reader needs a different owner.',
+          'Ludoxel does not keep one flat runtime object that toggles between modes. The play-space context constructs a separate `SessionManager` for My World and for Othello, both backed by the same default block registry, and remembers which one is active. My World state, Othello state, player state, AI state, and settings meet only at the application aggregate; each session keeps its own domain meaning.',
+          'Because both sessions exist simultaneously, switching is a change of which session is active, not a rebuild of the other. The active space id starts at My World and is normalized so that unknown values fall back to My World rather than producing an undefined state.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The play-space context owns both sessions and tracks the active space id.',
+            code: `@dataclass
+class PlaySpaceContext:
+  my_world: SessionManager
+  othello: SessionManager
+  active_space_id: str = PLAY_SPACE_MY_WORLD
+
+  def session_for(self, space_id: object) -> SessionManager:
+    normalized = normalize_play_space_id(space_id)
+    if normalized == PLAY_SPACE_OTHELLO:
+      return self.othello
+    return self.my_world
+
+  def set_active_space(self, space_id: object) -> SessionManager:
+    normalized = normalize_play_space_id(space_id)
+    self.active_space_id = normalized
+    return self.session_for(normalized)`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-first-observation',
-        title: 'Switching Play Spaces First Observation',
+        id: 'switching-play-spaces-pause-menu',
+        title: 'The Pause Menu Triggers the Switch',
         body: [
-          'Player Scope defines the useful size of Switching Play Spaces. The article should be broad enough to explain play-space selection, but narrow enough that merging My World and Othello state remains outside the conclusion. The fact also tells the reader which evidence to preserve for first observation: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / First Observation.',
-          'A direct observation for Switching Play Spaces should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'A public report based on the first observation part of Switching Play Spaces should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Switching is initiated from the pause overlay. The overlay emits `play_my_world_requested` and `play_othello_requested`, which the overlay-navigation controller binds to `switch_play_space` with `resume=True` so the game resumes immediately after the new space is loaded.',
+          'Because the request comes from the pause menu, the player is never mid-input when the switch happens. Held mouse actions are reset, any in-progress AI route edit is cancelled, and block-break particles are cleared before the active session changes.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Pause-overlay signals are bound to the play-space switch with immediate resume.',
+            code: `viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
+viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-input-surface',
-        title: 'Switching Play Spaces Input Surface',
+        id: 'switching-play-spaces-same-space-guard',
+        title: 'Requesting the Active Space Only Resumes',
         body: [
-          'Use player scope to keep Switching Play Spaces tied to Starting the Application; use a related page only when the reader needs a different owner. The fact also tells the reader which evidence to preserve for input surface: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Input Surface.',
-          'Switching Play Spaces separates the surface that accepts input from the component or document that controls the result. This is especially important when changing the active game context crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the input surface part of Switching Play Spaces should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'If the requested space equals the currently active space, `switch_play_space` does not tear anything down. It either resumes from the pause overlay (when `resume` is set) or returns. This guard keeps a redundant request from reloading a world that is already live.',
+          'The comparison is made on normalized ids, so a stray or differently cased value resolves to the same canonical space before the equality check, and the same-space path is taken rather than a spurious reload.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'A request for the already-active space short-circuits to resume.',
+            code: `def switch_play_space(viewport, space_id, *, resume=False):
+  normalized = normalize_play_space_id(space_id)
+  if normalized == normalize_play_space_id(viewport._state.current_space_id):
+    if resume:
+      resume_from_overlay(viewport)
+    return`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-session-owner',
-        title: 'Switching Play Spaces Session Owner',
+        id: 'switching-play-spaces-loading-label',
+        title: 'A Loading Overlay Names the Target Space',
         body: [
-          'Play-space switching selects between My World and Othello through the current play-space id. Each space keeps its own world and controller state instead of sharing one flat runtime object. The point matters in session owner because changing the active game context can otherwise be mistaken for merging My World and Othello state. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Session Owner.',
-          'Ownership in Switching Play Spaces is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'The useful result of Switching Play Spaces session owner is a bounded explanation of play-space selection: enough detail to act, and enough restraint to avoid claims outside Launch and Space Selection.',
+          'When the space actually changes, the viewport begins a loading phase with a label that names the destination: "Loading My World..." or "Loading Play Othello...". This is the same preparing-overlay machinery used at startup, reused for the transition so the visible feedback is consistent.',
+          'During this phase the active session reference is replaced, the world upload tracker is reset against the new world, the previous selection target is invalidated, and the renderer selection is cleared. The label is the player-visible signal that the switch is in progress rather than stalled.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The loading label is chosen from the normalized destination space.',
+            code: `target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
+viewport._state.current_space_id = normalized
+viewport._session = viewport._sessions.set_active_space(normalized)
+viewport._begin_loading(target_label)
+viewport._upload.reset(viewport._renderer, world=viewport._session.world)`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-visible-feedback',
-        title: 'Switching Play Spaces Visible Feedback',
+        id: 'switching-play-spaces-learning-runtime',
+        title: 'The AI Learning Runtime Follows the Active Session',
         body: [
-          'A direct observation for Switching Play Spaces should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for visible feedback: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Visible Feedback.',
-          'Visible feedback for Switching Play Spaces should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Launch and Space Selection.',
-          'A public report based on the visible feedback part of Switching Play Spaces should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'If an AI learning runtime is attached, switching flushes it against the session that is being left and reconfigures it for the session that is becoming active. This keeps generated learning data tied to the session that produced it instead of bleeding across spaces.',
+          'The flush happens before the new session is configured, so any pending learning state from the previous space is committed first. Only after that does the runtime begin observing the new active session.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The learning runtime is flushed and reconfigured around the session swap.',
+            code: `_learning_runtime = getattr(viewport, "_learning_runtime", None)
+if _learning_runtime is not None:
+  _learning_runtime.flush(viewport._session)
+  _learning_runtime.configure_session(viewport._session)`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-saved-state-link',
-        title: 'Switching Play Spaces Saved State Link',
+        id: 'switching-play-spaces-hud-resync',
+        title: 'HUD and First-Person Targets Resync to the New Space',
         body: [
-          'A public report based on the first observation part of Switching Play Spaces should state the action, expected result, actual result, environment, and any redaction needed before sharing. That reading gives Switching Play Spaces a public anchor for saved state link without adding behavior that the current category does not own. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Saved State Link.',
-          'When Switching Play Spaces touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for saved state link does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Switching Play Spaces should be treated as an observation rather than a confirmed cause.',
+          'After the session changes, the controller resynchronizes the surfaces that depend on the active space: hotbar widgets, the first-person held-item target, the Othello HUD text, and gameplay HUD visibility. Othello hides the block-gameplay HUD that My World shows, so the HUD must follow the destination space rather than carrying over.',
+          'If the destination is Othello, an AI move request may be issued as part of the switch. These resyncs are why a switched-into space looks complete immediately instead of showing leftover widgets from the previous space.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Surface resynchronization after the active session changes.',
+            code: `settings_controller.sync_hotbar_widgets(viewport)
+settings_controller.sync_first_person_target(viewport)
+othello_controller.sync_hud_text(viewport)
+viewport._sync_gameplay_hud_visibility()
+othello_controller.maybe_request_ai(viewport)`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-space-context',
-        title: 'Switching Play Spaces Play-Space Context',
+        id: 'switching-play-spaces-persistence',
+        title: 'The Selected Space Is Saved and Restored',
         body: [
-          'Each play space keeps its own world, player, AI, and game-specific state. Switching spaces changes the session context; it does not merge Othello board data into My World or flatten My World blocks into Othello state. Switching Play Spaces uses the fact as play-space context evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Play-Space Context.',
-          'The surrounding context for Switching Play Spaces decides which adjacent topic is relevant. Switching Play Spaces should be compared with Starting Ludoxel, Reading Saved World State, Reading Saved Othello State only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Switching Play Spaces crosses from play-space context into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The active space id is part of saved runtime state, so the space a session is left in is the space it returns to. On load, the value is normalized through the same `normalize_play_space_id` rule, which means a missing or invalid stored id resolves to My World instead of failing.',
+          'Persistence stores the selection, not the merged contents of both spaces. Reading a saved world or saved Othello board is a separate concern handled by the corresponding data pages; switching only records which space should be active when the session resumes.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Known space ids and the My World default used during normalization.',
+            code: `def known_space_ids(self) -> tuple[str, ...]:
+  return PLAY_SPACE_IDS
+
+def active_session(self) -> SessionManager:
+  return self.session_for(self.active_space_id)`,
+          },
         ],
       },
       {
-        id: 'switching-play-spaces-recovery-path',
-        title: 'Switching Play Spaces Recovery Path',
+        id: 'switching-play-spaces-no-merge',
+        title: 'Switching Never Merges State',
         body: [
-          'Switching Play Spaces separates the surface that accepts input from the component or document that controls the result. This is especially important when changing the active game context crosses a saved value, a renderer output, or a public form. Switching Play Spaces uses the fact as recovery path evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Recovery Path.',
-          'Recovery or follow-up for Switching Play Spaces should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use recovery path to keep Switching Play Spaces tied to Starting the Application; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-confusion-risk',
-        title: 'Switching Play Spaces Confusion Risk',
-        body: [
-          'A public report based on the input surface part of Switching Play Spaces should state the action, expected result, actual result, environment, and any redaction needed before sharing. Switching Play Spaces uses the fact as confusion risk evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Confusion Risk.',
-          'The main confusion risk in Switching Play Spaces is merging My World and Othello state. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Switching Play Spaces crosses from confusion risk into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-reportable-evidence',
-        title: 'Switching Play Spaces Reportable Evidence',
-        body: [
-          'My World state, Othello state, player state, AI state, and settings meet at the application aggregate, but each play space keeps its own domain meaning. The point matters in reportable evidence because changing the active game context can otherwise be mistaken for merging My World and Othello state. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Reportable Evidence.',
-          'Reportable evidence for Switching Play Spaces should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Switching Play Spaces should not use reportable evidence to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-adjacent-pages',
-        title: 'Switching Play Spaces Adjacent Pages',
-        body: [
-          'Ownership in Switching Play Spaces is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. That reading gives Switching Play Spaces a public anchor for adjacent pages without adding behavior that the current category does not own. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Adjacent Pages.',
-          'Adjacent pages matter for Switching Play Spaces, but adjacency does not move authority. Switching Play Spaces should be compared with Starting Ludoxel, Reading Saved World State, Reading Saved Othello State only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Switching Play Spaces adjacent pages is a bounded explanation of play-space selection: enough detail to act, and enough restraint to avoid claims outside Launch and Space Selection.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-public-boundary',
-        title: 'Switching Play Spaces Public Boundary',
-        body: [
-          'The useful result of Switching Play Spaces session owner is a bounded explanation of play-space selection: enough detail to act, and enough restraint to avoid claims outside Launch and Space Selection. In Switching Play Spaces, public boundary is the difference between reading play-space selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Public Boundary.',
-          'The public boundary for Switching Play Spaces is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Switching Play Spaces should not use public boundary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-operator-reading',
-        title: 'Switching Play Spaces Operator Reading',
-        body: [
-          'The selected space is saved with player preferences and restored through the persistence schema. If saved data is missing or invalid, the factories rebuild the appropriate default space state. In Switching Play Spaces, operator reading is the difference between reading play-space selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Operator Reading.',
-          'An operator reading Switching Play Spaces should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'Switching Play Spaces should not use operator reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-implementation-limit',
-        title: 'Switching Play Spaces Implementation Limit',
-        body: [
-          'Visible feedback for Switching Play Spaces should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Launch and Space Selection. In Switching Play Spaces, implementation limit is the difference between reading play-space selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Implementation Limit.',
-          'Implementation limits for Switching Play Spaces keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for implementation limit does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Switching Play Spaces should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-safe-summary',
-        title: 'Switching Play Spaces Safe Summary',
-        body: [
-          'Ludoxel stores the current play-space id as runtime state. The value selects My World or Othello, and unknown values normalize back to the default My World space. The fact also tells the reader which evidence to preserve for safe summary: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Safe Summary.',
-          'The summary value of Switching Play Spaces is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use safe summary to keep Switching Play Spaces tied to Starting the Application; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'switching-play-spaces-closing-check',
-        title: 'Switching Play Spaces Closing Check',
-        body: [
-          'Player Scope defines the useful size of Switching Play Spaces. The article should be broad enough to explain play-space selection, but narrow enough that merging My World and Othello state remains outside the conclusion. In Switching Play Spaces, closing check is the difference between reading play-space selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Switching Play Spaces / Starting the Application / Launch and Space Selection / Closing Check.',
-          'A final check for Switching Play Spaces should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Switching Play Spaces should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'A frequent misreading is that switching combines the two spaces. It does not. Othello board state is never written into My World, and My World blocks are never flattened into Othello. The two sessions are constructed independently and only the active reference is exchanged.',
+          'If a switch appears to lose or duplicate state, the evidence belongs to the specific session that owns that state, not to the switch itself. The switch changes context; the per-space world, player, and AI state are owned by `SessionManager`, and saved-state questions route to the data pages for that space.',
         ],
       },
     ],
@@ -537,150 +500,159 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Window and Item Surfaces',
     title: 'Reading the Main Window',
     description:
-      'Identifies the visible areas of the Ludoxel game window and the state behind them. This page treats window composition as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Identifies the visible regions of the Ludoxel game window and the components behind them: the renderer-drawn central viewport, the HUD layered above it, the preparing overlay, and the modal surfaces that take focus. Rendered labels are not the saved schema, and overlays read and write through controllers rather than renderer buffers.',
     sections: [
       {
-        id: 'reading-the-main-window-scope',
-        title: 'Main Window Player Scope',
+        id: 'reading-the-main-window-composition',
+        title: 'The Game Screen Stacks a Viewport and a HUD',
         body: [
-          'The central viewport is drawn by the active renderer backend. HUD text, crosshair, hotbar, Othello overlays, AI tags, and debug metrics are layered above renderer output without owning simulation rules. The point matters in player scope because reading the visible desktop surface can otherwise be mistaken for treating a rendered label as the saved schema. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Player Scope.',
-          'Player Scope defines the useful size of Reading the Main Window. The article should be broad enough to explain window composition, but narrow enough that treating a rendered label as the saved schema remains outside the conclusion.',
-          'The useful result of Reading the Main Window player scope is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
+          '`GameScreen` is the central widget of the main window. It places a platform-specific viewport widget in a zero-margin vertical layout and creates a HUD widget that is driven from the viewport. The viewport renders the world; the HUD is layered above it and receives payloads through a signal connection.',
+          'On macOS the viewport is the wgpu-backed renderer widget; on every other platform it is the OpenGL widget. Both present the same game surface to the player, so what you see in the central region is renderer output, and the labels drawn over it are HUD elements, not the underlying simulation or save data.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The game screen wires the viewport to the HUD and selects the backend by platform.',
+            code: `if sys.platform == "darwin":
+  from ludoxel.presentation.interface.viewport.widgets.renderer import RendererViewportWidget as ViewportWidget
+else:
+  from ludoxel.presentation.interface.viewport.widgets.gl import GLViewportWidget as ViewportWidget
+
+self.viewport = ViewportWidget(project_root=self.project_root, resource_root=self.resource_root, data_root=self.data_root, launch_player_name=launch_player_name)
+self.hud = HUDWidget()
+self.viewport.set_hud(self.hud)
+self.viewport.hud_updated.connect(self.hud.set_payload)`,
+          },
         ],
       },
       {
-        id: 'reading-the-main-window-first-observation',
-        title: 'Main Window First Observation',
+        id: 'reading-the-main-window-preparing-overlay',
+        title: 'The Preparing Overlay Covers the Surface While Loading',
         body: [
-          'Player Scope defines the useful size of Reading the Main Window. The article should be broad enough to explain window composition, but narrow enough that treating a rendered label as the saved schema remains outside the conclusion. The point matters in first observation because reading the visible desktop surface can otherwise be mistaken for treating a rendered label as the saved schema. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / First Observation.',
-          'A direct observation for Reading the Main Window should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'Reading the Main Window should not use first observation to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'A `StatusOverlayFrame` is created over the game screen with the title "Ludoxel" and status text "Preparing viewport...". It is sized to the full screen, raised above the viewport, and shown whenever the viewport reports active loading. When loading finishes it hides and hands focus to the viewport.',
+          'If this overlay is visible, the central region is not yet interactive. The overlay tracks the viewport loading state and status text through signals, so the status line can change while the surface is still preparing. A visible preparing overlay is a load-in-progress state, distinct from a finished, input-accepting viewport.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The overlay follows viewport loading state and resizes with the screen.',
+            code: `self._loading_overlay.setVisible(bool(self.viewport.loading_active()))
+self.viewport.loading_state_changed.connect(self._handle_loading_state_changed)
+self.viewport.loading_status_changed.connect(self._loading_overlay.set_status_text)
+self.viewport.loading_finished.connect(self._handle_loading_finished)
+
+def resizeEvent(self, e) -> None:
+  super().resizeEvent(e)
+  self._loading_overlay.setGeometry(0, 0, max(1, self.width()), max(1, self.height()))`,
+          },
         ],
       },
       {
-        id: 'reading-the-main-window-input-surface',
-        title: 'Main Window Input Surface',
+        id: 'reading-the-main-window-hud-layers',
+        title: 'HUD Elements Are Layered, Not Part of the World',
         body: [
-          'The useful result of Reading the Main Window player scope is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces. The point matters in input surface because reading the visible desktop surface can otherwise be mistaken for treating a rendered label as the saved schema. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Input Surface.',
-          'Reading the Main Window separates the surface that accepts input from the component or document that controls the result. This is especially important when reading the visible desktop surface crosses a saved value, a renderer output, or a public form.',
-          'Reading the Main Window should not use input surface to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The HUD draws on top of renderer output: the hotbar and its health strip near the bottom, the crosshair at the center, and text payloads supplied by the viewport. AI status tags and debug metrics are also HUD layers. None of these own simulation rules; they display values produced elsewhere.',
+          'The HUD payload is a small frozen dataclass with left and right text fields, pushed from the viewport via `hud_updated`. Reading a number off the HUD is reading a presentation label, so a wrong HUD value is a display question, while a wrong saved value is a persistence question handled by the data pages.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The HUD payload is a presentation value object, separate from saved state.',
+            code: `@dataclass(frozen=True, slots=True)
+class HudPayload:
+  left_text: str
+  right_text: str = ""
+
+  @property
+  def text(self) -> str:
+    return str(self.left_text)`,
+          },
         ],
       },
       {
-        id: 'reading-the-main-window-session-owner',
-        title: 'Main Window Session Owner',
+        id: 'reading-the-main-window-hotbar-strip',
+        title: 'The Hotbar and Health Strip Sit at the Bottom',
         body: [
-          'Reading the Main Window should be read as interpretation for the main window within Starting the Application and Window and Item Surfaces. For Reading the Main Window, that fact identifies the first concrete boundary for session owner: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Session Owner.',
-          'Ownership in Reading the Main Window is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'A public report based on the session owner part of Reading the Main Window should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The hotbar widget centers a fixed row of nine slots near the bottom of the screen, with a pixel-art health strip positioned just above it. The hotbar is transparent to mouse events; it reflects the selected slot and item icons but does not capture clicks, so pointer input passes through to the captured viewport.',
+          'The health strip is only visible when the active mode shows health. It draws hearts from a fixed bitmap mask scaled to the strip width, filling proportionally to the current health relative to the maximum. Both surfaces are positioned in code, while their colors and styling come from the theme.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The hotbar centers its panel and places the health strip above it.',
+            code: `def _layout_children(self) -> None:
+  pw = int(self._panel.sizeHint().width())
+  ph = int(self._panel.sizeHint().height())
+  x = max(0, (int(self.width()) - pw) // 2)
+  y = max(0, int(self.height()) - ph - 18)
+  self._panel.setGeometry(x, y, pw, ph)
+
+  hh = int(self._health_strip.sizeHint().height())
+  hy = max(0, int(y) - hh - 8)
+  self._health_strip.setGeometry(int(x), int(hy), int(pw), int(hh))`,
+          },
         ],
       },
       {
-        id: 'reading-the-main-window-visible-feedback',
-        title: 'Main Window Visible Feedback',
+        id: 'reading-the-main-window-modal-overlays',
+        title: 'Modal Surfaces Temporarily Take Focus',
         body: [
-          'A direct observation for Reading the Main Window should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. That reading gives Reading the Main Window a public anchor for visible feedback without adding behavior that the current category does not own. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Visible Feedback.',
-          'Visible feedback for Reading the Main Window should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Window and Item Surfaces.',
-          'If the available evidence for visible feedback does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Reading the Main Window should be treated as an observation rather than a confirmed cause.',
+          'Inventory, pause, settings, death, AI settings, and Othello settings are overlay widgets that temporarily take input focus over the viewport. While one is open, gameplay input is blocked, and the overlay reads and writes through controllers rather than mutating renderer buffers directly.',
+          'These surfaces sit above the viewport in the same window. Which overlay is open determines what a key press or click does next, so when describing the window state it matters whether the central viewport is live or whether an overlay such as the inventory or pause menu currently owns input.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Opening the pause menu closes other overlays before it takes focus.',
+            code: `def open_pause_menu(viewport):
+  if viewport._overlays.dead():
+    return
+  if viewport._overlays.inventory_open():
+    viewport._set_inventory_overlay(False)
+  if viewport._overlays.settings_open():
+    back_from_settings(viewport)
+  viewport._overlay.set_current_space(viewport._state.current_space_id)
+  viewport._set_paused_overlay(True)`,
+          },
         ],
       },
       {
-        id: 'reading-the-main-window-saved-state-link',
-        title: 'Main Window Saved State Link',
+        id: 'reading-the-main-window-death-overlay',
+        title: 'The Death Overlay Replaces Interaction With a Respawn Prompt',
         body: [
-          'Reading the Main Window should not use first observation to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. Reading the Main Window uses the fact as saved state link evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Saved State Link.',
-          'When Reading the Main Window touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Use saved state link to keep Reading the Main Window tied to Starting the Application; use a related page only when the reader needs a different owner.',
+          'When the player dies, the death overlay shows a "YOU DIED" panel with a message line and a Respawn button. While it is visible the pause menu cannot be opened, so this surface takes priority over the other overlays.',
+          'The message text is set from the cause of death and defaults to "Player died." The Respawn button emits a single request that the controller turns into a respawn. Recognizing this surface in the window tells you the session is in the dead state rather than active play.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The death overlay exposes a respawn request and a settable message.',
+            code: `class DeathOverlay(QWidget):
+  respawn_requested = pyqtSignal()
+
+  def set_message(self, text: str) -> None:
+    body = str(text).strip()
+    if not body:
+      body = "Player died."
+    self._message.setText(body)`,
+          },
         ],
       },
       {
-        id: 'reading-the-main-window-space-context',
-        title: 'Main Window Play-Space Context',
+        id: 'reading-the-main-window-background',
+        title: 'The Game Screen Has a Solid Background',
         body: [
-          'Inventory, pause, settings, death, AI settings, and Othello settings surfaces temporarily take input focus. They read and write through controllers rather than directly mutating renderer buffers. The point matters in play-space context because reading the visible desktop surface can otherwise be mistaken for treating a rendered label as the saved schema. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Play-Space Context.',
-          'The surrounding context for Reading the Main Window decides which adjacent topic is relevant. Reading the Main Window should be compared with Using the Hotbar, Using the Inventory Overlay, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'The useful result of Reading the Main Window play-space context is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
+          'The game screen sets a styled dark background so that, before or around viewport content, the window is a solid surface rather than transparent. The background color is applied with a narrow object-name selector on the game screen widget itself.',
+          'This is why the window never shows desktop bleed-through behind the viewport: the central widget paints its own background, the viewport renders over it, and the HUD and overlays stack above. The visible window is therefore a deliberate stack of solid background, renderer output, HUD, and any active overlay.',
         ],
-      },
-      {
-        id: 'reading-the-main-window-recovery-path',
-        title: 'Main Window Recovery Path',
-        body: [
-          'Reading the Main Window separates the surface that accepts input from the component or document that controls the result. This is especially important when reading the visible desktop surface crosses a saved value, a renderer output, or a public form. In Reading the Main Window, recovery path is the difference between reading window composition and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Recovery Path.',
-          'Recovery or follow-up for Reading the Main Window should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for recovery path does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Reading the Main Window should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-confusion-risk',
-        title: 'Main Window Confusion Risk',
-        body: [
-          'Reading the Main Window should not use input surface to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in confusion risk because reading the visible desktop surface can otherwise be mistaken for treating a rendered label as the saved schema. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Confusion Risk.',
-          'The main confusion risk in Reading the Main Window is treating a rendered label as the saved schema. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Reading the Main Window should not use confusion risk to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-reportable-evidence',
-        title: 'Main Window Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. The fact also tells the reader which evidence to preserve for reportable evidence: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Reportable Evidence.',
-          'Reportable evidence for Reading the Main Window should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the reportable evidence part of Reading the Main Window should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-adjacent-pages',
-        title: 'Main Window Adjacent Pages',
-        body: [
-          'Ownership in Reading the Main Window is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. Reading the Main Window uses the fact as adjacent pages evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Adjacent Pages.',
-          'Adjacent pages matter for Reading the Main Window, but adjacency does not move authority. Reading the Main Window should be compared with Using the Hotbar, Using the Inventory Overlay, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'When Reading the Main Window crosses from adjacent pages into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-public-boundary',
-        title: 'Main Window Public Boundary',
-        body: [
-          'A public report based on the session owner part of Reading the Main Window should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for public boundary: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Public Boundary.',
-          'The public boundary for Reading the Main Window is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Use public boundary to keep Reading the Main Window tied to Starting the Application; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-operator-reading',
-        title: 'Main Window Operator Reading',
-        body: [
-          'The session manager remains the owner of player state, world state, AI state, and stepping. The main window coordinates presentation and input, then asks the session pipeline for current runtime data. Reading the Main Window uses the fact as operator reading evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Operator Reading.',
-          'An operator reading Reading the Main Window should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'Use operator reading to keep Reading the Main Window tied to Starting the Application; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-implementation-limit',
-        title: 'Main Window Implementation Limit',
-        body: [
-          'Visible feedback for Reading the Main Window should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Window and Item Surfaces. For Reading the Main Window, that fact identifies the first concrete boundary for implementation limit: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Implementation Limit.',
-          'Implementation limits for Reading the Main Window keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the implementation limit part of Reading the Main Window should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-safe-summary',
-        title: 'Main Window Safe Summary',
-        body: [
-          'The central viewport is drawn by the active renderer backend. HUD text, crosshair, hotbar, Othello overlays, AI tags, and debug metrics are layered above renderer output without owning simulation rules. That reading gives Reading the Main Window a public anchor for safe summary without adding behavior that the current category does not own. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Safe Summary.',
-          'The summary value of Reading the Main Window is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Reading the Main Window safe summary is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
-        ],
-      },
-      {
-        id: 'reading-the-main-window-closing-check',
-        title: 'Main Window Closing Check',
-        body: [
-          'Player Scope defines the useful size of Reading the Main Window. The article should be broad enough to explain window composition, but narrow enough that treating a rendered label as the saved schema remains outside the conclusion. Reading the Main Window uses the fact as closing check evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Reading the Main Window / Starting the Application / Window and Item Surfaces / Closing Check.',
-          'A final check for Reading the Main Window should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'When Reading the Main Window crosses from closing check into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The game screen paints a solid background under the viewport.',
+            code: `self.setObjectName("gameScreen")
+self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+self.setStyleSheet("QWidget#gameScreen { background: #121212; }")`,
+          },
         ],
       },
     ],
@@ -692,150 +664,150 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Window and Item Surfaces',
     title: 'Using the Hotbar',
     description:
-      'Explains the nine-slot hotbar and why different modes keep separate slot sets. This page treats item selection as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Describes the nine-slot hotbar: how the selected slot is chosen with the number keys and the mouse wheel, how the currently held item is resolved, how slots are cleared, and how the display widget mirrors the simulation hotbar without owning it. The HUD hotbar is a transparent display layer over the viewport.',
     sections: [
       {
-        id: 'using-the-hotbar-scope',
-        title: 'Hotbar Player Scope',
+        id: 'using-the-hotbar-nine-slots',
+        title: 'The Hotbar Has Exactly Nine Slots',
         body: [
-          'The hotbar exposes nine selectable slots. Number keys select slots through the current keybind settings, and the selected slot decides the item used for placement, special tools, or empty-hand interaction. The fact also tells the reader which evidence to preserve for player scope: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Player Scope.',
-          'Player Scope defines the useful size of Using the Hotbar. The article should be broad enough to explain item selection, but narrow enough that confusing UI selection with material ownership remains outside the conclusion.',
-          'A public report based on the player scope part of Using the Hotbar should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The hotbar size is fixed at nine. Slot contents are normalized to a tuple of nine item-id strings, padding with empty strings and truncating extras, so the hotbar always has a well-defined width regardless of what was loaded or assigned.',
+          'Each slot holds an item id or the empty string for an empty hand. The selected index is also normalized into the valid range, clamping out-of-range values to the nearest endpoint rather than wrapping unexpectedly.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Slot contents and the selected index are normalized to the fixed hotbar width.',
+            code: `HOTBAR_SIZE: int = 9
+
+
+def normalize_hotbar_index(index: int, *, size: int = HOTBAR_SIZE) -> int:
+  width = int(max(1, int(size)))
+  try:
+    idx = int(index)
+  except Exception:
+    idx = 0
+  return max(0, min(width - 1, idx))`,
+          },
         ],
       },
       {
-        id: 'using-the-hotbar-first-observation',
-        title: 'Hotbar First Observation',
+        id: 'using-the-hotbar-number-keys',
+        title: 'Number Keys 1-9 Select Slots',
         body: [
-          'Player Scope defines the useful size of Using the Hotbar. The article should be broad enough to explain item selection, but narrow enough that confusing UI selection with material ownership remains outside the conclusion. Using the Hotbar uses the fact as first observation evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / First Observation.',
-          'A direct observation for Using the Hotbar should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'When Using the Hotbar crosses from first observation into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'Each hotbar slot has its own bound action, named for its one-based slot number. The default bindings map the digit keys 1 through 9 directly onto the nine slots, so pressing a number selects the matching slot.',
+          'These are real keybinds, resolved through the same keybind settings as movement and other actions. Because hotbar actions are distinguished from ordinary actions, the input path never confuses a slot selection with another bound key.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Hotbar slot actions and their default digit bindings.',
+            code: `HOTBAR_ACTIONS = tuple(f"hotbar_slot_{int(index) + 1}" for index in range(9))
+
+for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
+  DEFAULT_KEYBINDS[_action] = str(int(_index))`,
+          },
         ],
       },
       {
-        id: 'using-the-hotbar-input-surface',
-        title: 'Hotbar Input Surface',
+        id: 'using-the-hotbar-scroll-cycle',
+        title: 'The Mouse Wheel Cycles the Selection',
         body: [
-          'A public report based on the player scope part of Using the Hotbar should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for input surface: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Input Surface.',
-          'Using the Hotbar separates the surface that accepts input from the component or document that controls the result. This is especially important when moving between selected items and inventory surfaces crosses a saved value, a renderer output, or a public form.',
-          'Use input surface to keep Using the Hotbar tied to Starting the Application; use a related page only when the reader needs a different owner.',
+          'The selection can also be moved by a number of steps, which is how the mouse wheel changes slots. Cycling wraps around the nine slots using modular arithmetic, so scrolling past the last slot returns to the first and scrolling before the first moves to the last.',
+          'A step of zero leaves the selection unchanged. This wrap-around behavior is intentionally different from the clamping used for direct index selection, because cycling is meant to be continuous.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Cycling the hotbar index wraps around the nine slots.',
+            code: `def cycle_hotbar_index(selected_index: int, delta_steps: int, *, size: int = HOTBAR_SIZE) -> int:
+  width = int(max(1, int(size)))
+  idx = normalize_hotbar_index(int(selected_index), size=width)
+  step = int(delta_steps)
+  if step == 0:
+    return idx
+  return int((idx + step) % width)`,
+          },
         ],
       },
       {
-        id: 'using-the-hotbar-session-owner',
-        title: 'Hotbar Session Owner',
+        id: 'using-the-hotbar-held-item',
+        title: 'The Held Item Comes From the Selected Slot',
         body: [
-          'Using the Hotbar should be read as topic for using the hotbar within Starting the Application and Window and Item Surfaces. Using the Hotbar uses the fact as first observation evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / First Observation. That reading gives Using the Hotbar a public anchor for session owner without adding behavior that the current category does not own. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Session Owner.',
-          'Ownership in Using the Hotbar is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'The useful result of Using the Hotbar session owner is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
+          'The currently held item is the content of the selected slot. The resolver normalizes the slots and index, reads the item id at the selected slot, and returns it, or returns nothing when that slot is empty.',
+          'This single source of truth is what the first-person held-item visual and placement logic read. An empty selected slot means an empty hand, which is why selecting an empty slot stops showing a held block.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The held block id is read from the selected, normalized slot.',
+            code: `def current_hotbar_block_id(slots, selected_index, *, size: int = HOTBAR_SIZE) -> str | None:
+  norm = normalize_hotbar_slots(slots, size=int(size))
+  idx = normalize_hotbar_index(int(selected_index), size=int(size))
+  bid = str(norm[idx]).strip()
+  return bid if bid else None`,
+          },
         ],
       },
       {
-        id: 'using-the-hotbar-visible-feedback',
-        title: 'Hotbar Visible Feedback',
+        id: 'using-the-hotbar-assign-and-clear',
+        title: 'Slots Can Be Assigned and Cleared',
         body: [
-          'A direct observation for Using the Hotbar should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. For Using the Hotbar, that fact identifies the first concrete boundary for visible feedback: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Visible Feedback.',
-          'Visible feedback for Using the Hotbar should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Window and Item Surfaces.',
-          'A public report based on the visible feedback part of Using the Hotbar should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'A slot can be set to a specific item id, or cleared by assigning nothing. Assignment normalizes the existing slots first, replaces the chosen index, and returns a new tuple, leaving the other slots untouched. Passing nothing as the item produces an empty slot.',
+          'The default "Clear Selected Slot" action is bound to Q. It empties the selected slot, which is the quick way to return a slot to an empty hand without opening the inventory.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Assigning a slot replaces only the chosen index.',
+            code: `def with_hotbar_assignment(slots, index, block_id, *, size: int = HOTBAR_SIZE):
+  out = list(normalize_hotbar_slots(slots, size=int(size)))
+  idx = normalize_hotbar_index(int(index), size=int(size))
+  out[idx] = "" if block_id is None else str(block_id).strip()
+  return tuple(out)`,
+          },
         ],
       },
       {
-        id: 'using-the-hotbar-saved-state-link',
-        title: 'Hotbar Saved State Link',
+        id: 'using-the-hotbar-display-widget',
+        title: 'The HUD Hotbar Is a Display Mirror',
         body: [
-          'When Using the Hotbar crosses from first observation into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Using the Hotbar a public anchor for saved state link without adding behavior that the current category does not own. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Saved State Link.',
-          'When Using the Hotbar touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Using the Hotbar saved state link is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
+          'The on-screen hotbar widget is a display of the simulation hotbar, not its owner. It builds nine fixed-size display slots, marks itself transparent to mouse events, and is synchronized by being told the slot contents and the selected index. It renders icons and tooltips but never captures input.',
+          'When synchronized, the widget normalizes the incoming slots and index exactly as the simulation does, then sets each slot button to the matching item, tooltip, and selected state. Item icons are supplied asynchronously by a photo provider and updated as they become available.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The display hotbar synchronizes its slots from normalized simulation values.',
+            code: `def sync_hotbar(self, *, slots, selected_index: int) -> None:
+  norm = normalize_hotbar_slots(slots, size=HOTBAR_SIZE)
+  idx = normalize_hotbar_index(selected_index, size=HOTBAR_SIZE)
+  for i, btn in enumerate(self._slots):
+    item_id = str(norm[i]).strip()
+    self._slot_item_ids[i] = str(item_id)
+    btn.set_slot_state(item_id=item_id, tooltip=hotbar_slot_tooltip(self._registry, slot_index=i, item_id=item_id), selected=(int(i) == int(idx)), photos=self._photos)`,
+          },
         ],
       },
       {
-        id: 'using-the-hotbar-space-context',
-        title: 'Hotbar Play-Space Context',
+        id: 'using-the-hotbar-tooltips',
+        title: 'Slot Tooltips Name the Item',
         body: [
-          'Ludoxel stores separate hotbar branches for creative, survival, Othello, and route-editing contexts. This keeps Othello and route tools from replacing normal building selections. Using the Hotbar uses the fact as play-space context evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Play-Space Context.',
-          'The surrounding context for Using the Hotbar decides which adjacent topic is relevant. Using the Hotbar should be compared with Using the Inventory Overlay, Understanding Application Output only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use play-space context to keep Using the Hotbar tied to Starting the Application; use a related page only when the reader needs a different owner.',
+          'Each display slot carries a tooltip generated from the block registry for the slot index and item id. An empty slot reports an empty hand; a filled slot reports the item it holds. The tooltip text is derived, not stored, so it always reflects the current slot content.',
+          'Because the tooltip is computed from the registry, it stays consistent with the item icons. When the photo provider reports a new icon for an item, the matching slots are re-synced so icon and tooltip update together.',
         ],
-      },
-      {
-        id: 'using-the-hotbar-recovery-path',
-        title: 'Hotbar Recovery Path',
-        body: [
-          'Using the Hotbar separates the surface that accepts input from the component or document that controls the result. This is especially important when moving between selected items and inventory surfaces crosses a saved value, a renderer output, or a public form. Using the Hotbar uses the fact as recovery path evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Recovery Path.',
-          'Recovery or follow-up for Using the Hotbar should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Using the Hotbar crosses from recovery path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-confusion-risk',
-        title: 'Hotbar Confusion Risk',
-        body: [
-          'Use input surface to keep Using the Hotbar tied to Starting the Application; use a related page only when the reader needs a different owner. For Using the Hotbar, that fact identifies the first concrete boundary for confusion risk: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Confusion Risk.',
-          'The main confusion risk in Using the Hotbar is confusing UI selection with material ownership. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Using the Hotbar crosses from confusion risk into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-reportable-evidence',
-        title: 'Hotbar Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. The point matters in reportable evidence because moving between selected items and inventory surfaces can otherwise be mistaken for confusing UI selection with material ownership. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Reportable Evidence.',
-          'Reportable evidence for Using the Hotbar should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Using the Hotbar reportable evidence is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-adjacent-pages',
-        title: 'Hotbar Adjacent Pages',
-        body: [
-          'Ownership in Using the Hotbar is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. That reading gives Using the Hotbar a public anchor for adjacent pages without adding behavior that the current category does not own. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Adjacent Pages.',
-          'Adjacent pages matter for Using the Hotbar, but adjacency does not move authority. Using the Hotbar should be compared with Using the Inventory Overlay, Understanding Application Output only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for adjacent pages does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using the Hotbar should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-public-boundary',
-        title: 'Hotbar Public Boundary',
-        body: [
-          'The useful result of Using the Hotbar session owner is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces. That reading gives Using the Hotbar a public anchor for public boundary without adding behavior that the current category does not own. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Public Boundary.',
-          'The public boundary for Using the Hotbar is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Using the Hotbar public boundary is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-operator-reading',
-        title: 'Hotbar Operator Reading',
-        body: [
-          'A selected hotbar item is only a request. Placement, breaking, Othello moves, and special tools still pass through the current simulation or controller rules before state changes. That reading gives Using the Hotbar a public anchor for operator reading without adding behavior that the current category does not own. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Operator Reading.',
-          'An operator reading Using the Hotbar should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'The useful result of Using the Hotbar operator reading is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-implementation-limit',
-        title: 'Hotbar Implementation Limit',
-        body: [
-          'Visible feedback for Using the Hotbar should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Window and Item Surfaces. In Using the Hotbar, implementation limit is the difference between reading item selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Implementation Limit.',
-          'Implementation limits for Using the Hotbar keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Using the Hotbar should not use implementation limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-safe-summary',
-        title: 'Hotbar Safe Summary',
-        body: [
-          'The hotbar exposes nine selectable slots. Number keys select slots through the current keybind settings, and the selected slot decides the item used for placement, special tools, or empty-hand interaction. For Using the Hotbar, that fact identifies the first concrete boundary for safe summary: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Safe Summary.',
-          'The summary value of Using the Hotbar is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'When Using the Hotbar crosses from safe summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'using-the-hotbar-closing-check',
-        title: 'Hotbar Closing Check',
-        body: [
-          'Player Scope defines the useful size of Using the Hotbar. The article should be broad enough to explain item selection, but narrow enough that confusing UI selection with material ownership remains outside the conclusion. In Using the Hotbar, closing check is the difference between reading item selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using the Hotbar / Starting the Application / Window and Item Surfaces / Closing Check.',
-          'A final check for Using the Hotbar should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using the Hotbar should be treated as an observation rather than a confirmed cause.',
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'A new item icon re-syncs every slot that holds that item.',
+            code: `def _on_item_pixmap_changed(self, item_id: str) -> None:
+  normalized = str(item_id).strip()
+  if not normalized:
+    return
+  for index, btn in enumerate(self._slots):
+    if str(self._slot_item_ids[index]).strip() != normalized:
+      continue
+    btn.set_slot_state(item_id=normalized, tooltip=hotbar_slot_tooltip(self._registry, slot_index=index, item_id=normalized), selected=bool(btn.property("selected")), photos=self._photos)`,
+          },
         ],
       },
     ],
@@ -847,150 +819,153 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Window and Item Surfaces',
     title: 'Using the Inventory Overlay',
     description:
-      'Covers the creative and survival inventory overlay behavior. This page treats item selection as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the inventory overlay: how it opens and closes, how creative and survival modes differ, how the searchable item grid is built from the block registry and special-item catalog, and how clicking, dragging, or pressing a number key assigns an item to a hotbar slot. The overlay edits hotbar state through signals.',
     sections: [
       {
-        id: 'using-the-inventory-overlay-scope',
-        title: 'Inventory Overlay Player Scope',
+        id: 'using-the-inventory-overlay-toggle',
+        title: 'The Inventory Opens With E and Closes With E or Escape',
         body: [
-          'In creative mode, the inventory shows a searchable item catalog. Items can be clicked, dragged to a hotbar slot, or assigned through number keys while the catalog is active. For Using the Inventory Overlay, that fact identifies the first concrete boundary for player scope: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Player Scope.',
-          'Player Scope defines the useful size of Using the Inventory Overlay. The article should be broad enough to explain item selection, but narrow enough that confusing UI selection with material ownership remains outside the conclusion.',
-          'When Using the Inventory Overlay crosses from player scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The inventory is bound to the toggle-inventory action, which defaults to E. Inside the overlay, the same bound action or the Escape key closes it. Closing emits a closed signal so the controller can hide the overlay and re-arm the viewport.',
+          'While the overlay is open it holds input focus, so the keys that would otherwise move the player are interpreted by the overlay. This is why opening the inventory is a deliberate state change rather than a transient popup.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The bound inventory action or Escape closes the overlay.',
+            code: `bound_action = action_for_key(int(key), self._keybinds)
+if bound_action == ACTION_TOGGLE_INVENTORY or key == int(Qt.Key.Key_Escape):
+  self._close()
+  e.accept()
+  return`,
+          },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-first-observation',
-        title: 'Inventory Overlay First Observation',
+        id: 'using-the-inventory-overlay-modes',
+        title: 'Creative and Survival Modes Show Different Panels',
         body: [
-          'Player Scope defines the useful size of Using the Inventory Overlay. The article should be broad enough to explain item selection, but narrow enough that confusing UI selection with material ownership remains outside the conclusion. For Using the Inventory Overlay, that fact identifies the first concrete boundary for first observation: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / First Observation.',
-          'A direct observation for Using the Inventory Overlay should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'A public report based on the first observation part of Using the Inventory Overlay should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'In creative mode the overlay is titled "CREATIVE INVENTORY" and shows the searchable item catalog and search box. In survival mode it is titled "SURVIVAL INVENTORY", hides the catalog and search, and states that creative item selection is unavailable.',
+          'The creative-mode toggle defaults to B. Switching modes changes the title, the subtitle instructions, and whether the catalog grid and search box are visible, while the hotbar row at the bottom remains in both modes.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Survival mode hides the creative catalog and search.',
+            code: `if bool(self._creative_mode):
+  self._title_label.setText("CREATIVE INVENTORY")
+  self._search_box.setVisible(True)
+  self._catalog_scroll.setVisible(True)
+  self._apply_filter()
+  return
+
+self._title_label.setText("SURVIVAL INVENTORY")
+self._subtitle_label.setText("Creative item selection is unavailable in Survival Mode.")
+self._search_box.setVisible(False)
+self._catalog_scroll.setVisible(False)`,
+          },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-input-surface',
-        title: 'Inventory Overlay Input Surface',
+        id: 'using-the-inventory-overlay-catalog',
+        title: 'The Item Grid Is Built From Blocks and Special Items',
         body: [
-          'When Using the Inventory Overlay crosses from player scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. Using the Inventory Overlay uses the fact as input surface evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Input Surface.',
-          'Using the Inventory Overlay separates the surface that accepts input from the component or document that controls the result. This is especially important when moving between selected items and inventory surfaces crosses a saved value, a renderer output, or a public form.',
-          'When Using the Inventory Overlay crosses from input surface into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The catalog is assembled from every block in the block registry plus every special item in the special-item catalog. Each entry becomes a draggable button with an icon and a search key built from its display name and id, and special items add their description to the search key.',
+          'The grid is laid out twelve columns wide. Because the entries come straight from the registry and catalog, the inventory always reflects the items the simulation actually knows about rather than a hard-coded list.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Blocks and special items are both added to the inventory grid.',
+            code: `for block_def in self._reg.all_blocks():
+  item_id = str(block_def.block_id)
+  display_name = str(block_def.display_name)
+  button = _InventoryItemButton(item_id, display_name, self)
+  self._slot_entries.append((str(item_id), f"{display_name.casefold()} {item_id.casefold()}", button))
+
+for descriptor in iter_catalog_special_items():
+  item_id = str(descriptor.item_id)
+  display_name = str(descriptor.display_name)
+  button = _InventoryItemButton(item_id, display_name, self)
+  search_key = f"{display_name.casefold()} {item_id.casefold()} {str(descriptor.description).casefold()}"
+  self._slot_entries.append((str(item_id), search_key, button))`,
+          },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-session-owner',
-        title: 'Inventory Overlay Session Owner',
+        id: 'using-the-inventory-overlay-search',
+        title: 'The Search Box Filters by Name and Id',
         body: [
-          'Using the Inventory Overlay should be read as topic for using the inventory overlay within Starting the Application and Window and Item Surfaces. That reading gives Using the Inventory Overlay a public anchor for session owner without adding behavior that the current category does not own. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Session Owner.',
-          'Ownership in Using the Inventory Overlay is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'The useful result of Using the Inventory Overlay session owner is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
+          'The search box filters the catalog by splitting the query into tokens and keeping only entries whose search key contains every token. The search key is case-folded name, id, and (for special items) description, so a partial name or id narrows the grid.',
+          'While the search box has focus it takes priority: typing edits the query, and only Escape is treated specially to close the overlay. This keeps number keys and other shortcuts from firing while you are typing a search.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Every query token must be present in an entry to keep it visible.',
+            code: `query_text = str(self._search_box.text() or "").strip().casefold()
+tokens = tuple(token for token in query_text.split() if token)
+matching_entries = [entry for entry in self._slot_entries if all(token in entry[1] for token in tokens)]`,
+          },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-visible-feedback',
-        title: 'Inventory Overlay Visible Feedback',
+        id: 'using-the-inventory-overlay-assign',
+        title: 'Click, Drag, or Press a Number to Assign',
         body: [
-          'A direct observation for Using the Inventory Overlay should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for visible feedback: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Visible Feedback.',
-          'Visible feedback for Using the Inventory Overlay should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Window and Item Surfaces.',
-          'Use visible feedback to keep Using the Inventory Overlay tied to Starting the Application; use a related page only when the reader needs a different owner.',
+          'There are three ways to put an item into the hotbar. Clicking an item assigns it to the currently selected hotbar slot. Dragging an item onto a specific hotbar slot assigns it there. Hovering an item and pressing 1-9 assigns it to that numbered slot. Each path emits a hotbar-assignment signal that the controller applies.',
+          'The hotbar row inside the overlay is itself made of slots that accept drops and report selection. Dropping an item both assigns the slot and selects it, so a drag leaves that slot active.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Hovering an item and pressing a number assigns it to that slot.',
+            code: `idx = hotbar_index_from_key(key, self._keybinds)
+if idx is not None:
+  self.hotbar_slot_selected.emit(int(idx))
+  if bool(self._creative_mode) and self._hovered_item_id is not None:
+    self.hotbar_slot_assigned.emit(int(idx), str(self._hovered_item_id))
+  e.accept()
+  return`,
+          },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-saved-state-link',
-        title: 'Inventory Overlay Saved State Link',
+        id: 'using-the-inventory-overlay-signals',
+        title: 'The Overlay Edits Hotbar State Through Signals',
         body: [
-          'A public report based on the first observation part of Using the Inventory Overlay should state the action, expected result, actual result, environment, and any redaction needed before sharing. That reading gives Using the Inventory Overlay a public anchor for saved state link without adding behavior that the current category does not own. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Saved State Link.',
-          'When Using the Inventory Overlay touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Using the Inventory Overlay saved state link is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces.',
+          'The overlay does not write hotbar state directly. It emits item-selected, hotbar-slot-selected, and hotbar-slot-assigned signals, which the overlay-navigation controller connects to the settings controller. A creative selection sets the active slot to the chosen item and re-syncs the hotbar and first-person target.',
+          'This signal boundary is why the inventory is a presentation surface that requests changes rather than a direct mutator of simulation state. The controller decides whether the change is allowed (for example, only in creative mode) before applying it.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'A creative inventory selection is applied to the active hotbar slot by the controller.',
+            code: `def on_inventory_selected(viewport, item_id: str) -> None:
+  if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
+    return
+  active_index = viewport._state.active_hotbar_index()
+  viewport._state.set_hotbar_slot(int(active_index), str(item_id))
+  settings_controller.sync_hotbar_widgets(viewport)
+  settings_controller.sync_first_person_target(viewport)`,
+          },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-space-context',
-        title: 'Inventory Overlay Play-Space Context',
+        id: 'using-the-inventory-overlay-icons',
+        title: 'Item Icons Load Asynchronously',
         body: [
-          'In survival mode, the same overlay surface opens as survival inventory, but the creative catalog is hidden. The hotbar remains visible as the practical item selection surface. Using the Inventory Overlay uses the fact as input surface evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Input Surface. For Using the Inventory Overlay, that fact identifies the first concrete boundary for play-space context: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Play-Space Context.',
-          'The surrounding context for Using the Inventory Overlay decides which adjacent topic is relevant. Using the Inventory Overlay should be compared with Using the Hotbar, Understanding Overlay Input Blocking, Reading the Main Window only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Using the Inventory Overlay crosses from play-space context into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'Item icons are provided by a photo provider that becomes active only while the overlay is visible in creative mode. As icons become available the overlay updates the matching catalog buttons and re-syncs the hotbar row, so icons can appear shortly after the grid is shown.',
+          'Because the provider is deactivated when the overlay is hidden, the inventory does not keep generating icons in the background. This keeps icon work tied to the time the catalog is actually on screen.',
         ],
-      },
-      {
-        id: 'using-the-inventory-overlay-recovery-path',
-        title: 'Inventory Overlay Recovery Path',
-        body: [
-          'Using the Inventory Overlay separates the surface that accepts input from the component or document that controls the result. This is especially important when moving between selected items and inventory surfaces crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for recovery path: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Recovery Path.',
-          'Recovery or follow-up for Using the Inventory Overlay should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use recovery path to keep Using the Inventory Overlay tied to Starting the Application; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-confusion-risk',
-        title: 'Inventory Overlay Confusion Risk',
-        body: [
-          'When Using the Inventory Overlay crosses from input surface into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for confusion risk: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Confusion Risk.',
-          'The main confusion risk in Using the Inventory Overlay is confusing UI selection with material ownership. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'A public report based on the confusion risk part of Using the Inventory Overlay should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-reportable-evidence',
-        title: 'Inventory Overlay Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. That reading gives Using the Inventory Overlay a public anchor for reportable evidence without adding behavior that the current category does not own. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Reportable Evidence.',
-          'Reportable evidence for Using the Inventory Overlay should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'If the available evidence for reportable evidence does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using the Inventory Overlay should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-adjacent-pages',
-        title: 'Inventory Overlay Adjacent Pages',
-        body: [
-          'Ownership in Using the Inventory Overlay is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. In Using the Inventory Overlay, adjacent pages is the difference between reading item selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Adjacent Pages.',
-          'Adjacent pages matter for Using the Inventory Overlay, but adjacency does not move authority. Using the Inventory Overlay should be compared with Using the Hotbar, Understanding Overlay Input Blocking, Reading the Main Window only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Using the Inventory Overlay should not use adjacent pages to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-public-boundary',
-        title: 'Inventory Overlay Public Boundary',
-        body: [
-          'The useful result of Using the Inventory Overlay session owner is a bounded explanation of item selection: enough detail to act, and enough restraint to avoid claims outside Window and Item Surfaces. The point matters in public boundary because moving between selected items and inventory surfaces can otherwise be mistaken for confusing UI selection with material ownership. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Public Boundary.',
-          'The public boundary for Using the Inventory Overlay is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Using the Inventory Overlay should not use public boundary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-operator-reading',
-        title: 'Inventory Overlay Operator Reading',
-        body: [
-          'The inventory overlay takes focus while open. Search input, escape handling, and hotbar assignment are handled by the overlay so gameplay capture does not receive those keystrokes. In Using the Inventory Overlay, operator reading is the difference between reading item selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Operator Reading.',
-          'An operator reading Using the Inventory Overlay should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'If the available evidence for operator reading does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using the Inventory Overlay should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-implementation-limit',
-        title: 'Inventory Overlay Implementation Limit',
-        body: [
-          'Visible feedback for Using the Inventory Overlay should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Starting the Application / Window and Item Surfaces. That reading gives Using the Inventory Overlay a public anchor for implementation limit without adding behavior that the current category does not own. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Implementation Limit.',
-          'Implementation limits for Using the Inventory Overlay keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for implementation limit does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using the Inventory Overlay should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-safe-summary',
-        title: 'Inventory Overlay Safe Summary',
-        body: [
-          'In creative mode, the inventory shows a searchable item catalog. Items can be clicked, dragged to a hotbar slot, or assigned through number keys while the catalog is active. Using the Inventory Overlay uses the fact as safe summary evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Safe Summary.',
-          'The summary value of Using the Inventory Overlay is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use safe summary to keep Using the Inventory Overlay tied to Starting the Application; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'using-the-inventory-overlay-closing-check',
-        title: 'Inventory Overlay Closing Check',
-        body: [
-          'Player Scope defines the useful size of Using the Inventory Overlay. The article should be broad enough to explain item selection, but narrow enough that confusing UI selection with material ownership remains outside the conclusion. In Using the Inventory Overlay, closing check is the difference between reading item selection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using the Inventory Overlay / Starting the Application / Window and Item Surfaces / Closing Check.',
-          'A final check for Using the Inventory Overlay should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using the Inventory Overlay should be treated as an observation rather than a confirmed cause.',
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The icon provider activates only while the creative catalog is visible.',
+            code: `def setVisible(self, visible: bool) -> None:
+  normalized_visible = bool(visible)
+  super().setVisible(normalized_visible)
+  self._photos.set_active(normalized_visible and bool(self._creative_mode))`,
+          },
         ],
       },
     ],
@@ -1002,150 +977,141 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Camera and Capture',
     title: 'Looking Around',
     description:
-      'Explains camera input, perspective selection, and the values that affect view direction. This page treats camera and pointer control as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains how mouse movement turns into camera rotation: relative mouse deltas become yaw and pitch changes applied to the player each fixed step, pitch is clamped to avoid flipping, and the look axes can be inverted. Camera rotation is applied through the player step, not directly to the renderer camera.',
     sections: [
       {
-        id: 'looking-around-scope',
-        title: 'Around Player Scope',
+        id: 'looking-around-relative-delta',
+        title: 'Looking Uses Relative Mouse Deltas',
         body: [
-          'Mouse movement is converted into yaw and pitch using the configured sensitivity and axis inversion preferences. The resulting view direction is part of the player state used by picking and rendering. The point matters in player scope because moving the view through input capture can otherwise be mistaken for mixing input focus with saved preference ownership. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Player Scope.',
-          'Player Scope defines the useful size of Looking Around. The article should be broad enough to explain camera and pointer control, but narrow enough that mixing input focus with saved preference ownership remains outside the conclusion.',
-          'The useful result of Looking Around player scope is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
+          'Camera rotation is driven by relative mouse movement, not the absolute cursor position. The input adapter accumulates a mouse delta as the pointer moves, and the consume step reads that delta and resets it for the next frame.',
+          'Accumulating deltas means rotation is continuous and unbounded by the screen edges: the pointer is held at the center of the viewport while only its movement is reported. This is what allows you to keep turning in one direction without the cursor leaving the window.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The input adapter accumulates and then drains the mouse delta per frame.',
+            code: `def add_mouse_delta(self, dx: float, dy: float) -> None:
+  self._mdx += float(dx)
+  self._mdy += float(dy)
+
+def consume(self) -> InputFrame:
+  out = InputFrame(mdx=float(self._mdx), mdy=float(self._mdy))
+  self._mdx = 0.0
+  self._mdy = 0.0
+  return out`,
+          },
         ],
       },
       {
-        id: 'looking-around-first-observation',
-        title: 'Around First Observation',
+        id: 'looking-around-invert-axes',
+        title: 'The Look Axes Can Be Inverted',
         body: [
-          'Player Scope defines the useful size of Looking Around. The article should be broad enough to explain camera and pointer control, but narrow enough that mixing input focus with saved preference ownership remains outside the conclusion. That reading gives Looking Around a public anchor for first observation without adding behavior that the current category does not own. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / First Observation.',
-          'A direct observation for Looking Around should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'The useful result of Looking Around first observation is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
+          'When the input frame is consumed, the horizontal and vertical mouse deltas can each be negated according to the invert-x and invert-y preferences. This is applied at the boundary between raw input and camera control, so a single setting flips the corresponding look direction.',
+          'Because inversion happens at consume time, the rest of the pipeline always receives a delta in the player’s preferred orientation. Nothing downstream needs to know whether the axes were inverted.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Look-axis inversion is applied when the frame is consumed.',
+            code: `def consume(self, *, invert_x: bool, invert_y: bool) -> tuple[InputFrame, MouseDelta]:
+  fr = self._a.consume()
+  mdx = float(fr.mdx)
+  mdy = float(fr.mdy)
+  if bool(invert_x):
+    mdx = -mdx
+  if bool(invert_y):
+    mdy = -mdy
+  return fr, MouseDelta(dx=float(mdx), dy=float(mdy))`,
+          },
         ],
       },
       {
-        id: 'looking-around-input-surface',
-        title: 'Around Input Surface',
+        id: 'looking-around-yaw-pitch',
+        title: 'Yaw and Pitch Are Applied in the Player Step',
         body: [
-          'The useful result of Looking Around player scope is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture. That reading gives Looking Around a public anchor for input surface without adding behavior that the current category does not own. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Input Surface.',
-          'Looking Around separates the surface that accepts input from the component or document that controls the result. This is especially important when moving the view through input capture crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Looking Around input surface is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
+          'The mouse delta is converted into yaw and pitch deltas that are passed into the player step input. Each fixed step adds the yaw delta and pitch delta to the player’s heading and elevation before movement and collision are resolved.',
+          'Rotation is therefore part of the same fixed-step simulation as movement, not a separate camera-only update. The yaw and pitch the renderer reads come from the player entity after the step, so the view direction stays consistent with what collision and picking use.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Yaw and pitch deltas are added to the player at the start of each step.',
+            code: `player.yaw_deg += float(control.yaw_delta_deg)
+player.pitch_deg += float(control.pitch_delta_deg)
+player.clamp_pitch()`,
+          },
         ],
       },
       {
-        id: 'looking-around-session-owner',
-        title: 'Around Session Owner',
+        id: 'looking-around-pitch-clamp',
+        title: 'Pitch Is Clamped to Prevent Flipping',
         body: [
-          'Looking Around should be read as topic for looking around within Controlling the Session and Camera and Capture. For Looking Around, that fact identifies the first concrete boundary for session owner: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Session Owner.',
-          'Ownership in Looking Around is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'A public report based on the session owner part of Looking Around should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'After the pitch delta is applied, the player pitch is clamped so the view cannot roll past straight up or straight down. This keeps the camera from flipping over when you push the mouse to its vertical limit.',
+          'Yaw is free to accumulate without a limit, since turning all the way around is expected. The asymmetry between a clamped pitch and an unbounded yaw matches normal first-person look behavior.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The player step input carries per-step yaw and pitch deltas alongside movement.',
+            code: `@dataclass(frozen=True)
+class PlayerStepInput:
+  move_f: float
+  move_s: float
+  jump_held: bool
+  jump_pressed: bool
+  sprint: bool
+  crouch: bool
+  yaw_delta_deg: float
+  pitch_delta_deg: float
+  auto_jump_enabled: bool`,
+          },
         ],
       },
       {
-        id: 'looking-around-visible-feedback',
-        title: 'Around Visible Feedback',
+        id: 'looking-around-perspective',
+        title: 'Camera Perspective Cycles With F5',
         body: [
-          'A direct observation for Looking Around should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. In Looking Around, visible feedback is the difference between reading camera and pointer control and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Visible Feedback.',
-          'Visible feedback for Looking Around should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Camera and Capture.',
-          'Looking Around should not use visible feedback to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Looking changes the view direction, while the camera perspective changes how the player is framed. The cycle-camera-perspective action, bound to F5 by default, switches between first-person and third-person views without changing movement or look input.',
+          'The perspective is a renderer framing choice applied on top of the same yaw and pitch. Switching it does not alter the player’s heading or the collision and picking that depend on it; only the camera placement the renderer uses changes.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The perspective cycle is a bound action with a default of F5.',
+            code: `ACTION_CYCLE_CAMERA_PERSPECTIVE = "cycle_camera_perspective"
+
+DEFAULT_KEYBINDS[ACTION_CYCLE_CAMERA_PERSPECTIVE] = "F5"`,
+          },
         ],
       },
       {
-        id: 'looking-around-saved-state-link',
-        title: 'Around Saved State Link',
+        id: 'looking-around-requires-capture',
+        title: 'Looking Requires Mouse Capture',
         body: [
-          'The useful result of Looking Around first observation is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture. The fact also tells the reader which evidence to preserve for saved state link: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Saved State Link.',
-          'When Looking Around touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the saved state link part of Looking Around should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Relative look deltas are only produced while the mouse is captured. When capture is off, the pointer is a normal cursor and no look delta is generated, which is why menus and overlays do not rotate the camera.',
+          'On the polling path, the captured cursor is repeatedly compared against the viewport center and warped back, turning each frame’s offset into a delta. If you cannot look around, the first thing to confirm is whether the viewport is captured.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Capture polling converts the offset from center into a look delta.',
+            code: `center = self._center_global()
+cur = QCursor.pos()
+dx = float(cur.x() - center.x())
+dy = float(cur.y() - center.y())
+if dx == 0.0 and dy == 0.0:
+  return
+self._a.add_mouse_delta(dx, dy)
+self._warp_cursor_to_center()`,
+          },
         ],
       },
       {
-        id: 'looking-around-space-context',
-        title: 'Around Play-Space Context',
+        id: 'looking-around-sensitivity',
+        title: 'Sensitivity Scales the Delta Into Degrees',
         body: [
-          'The camera preference supports first-person, third-person back, and third-person front views. The selected perspective changes how the renderer frames the player without changing movement rules. That reading gives Looking Around a public anchor for play-space context without adding behavior that the current category does not own. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Play-Space Context.',
-          'The surrounding context for Looking Around decides which adjacent topic is relevant. Looking Around should be compared with Using Mouse Capture, Changing Camera Preferences, Understanding Keybind Resolution only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for play-space context does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Looking Around should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'looking-around-recovery-path',
-        title: 'Around Recovery Path',
-        body: [
-          'Looking Around separates the surface that accepts input from the component or document that controls the result. This is especially important when moving the view through input capture crosses a saved value, a renderer output, or a public form. In Looking Around, recovery path is the difference between reading camera and pointer control and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Recovery Path.',
-          'Recovery or follow-up for Looking Around should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for recovery path does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Looking Around should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'looking-around-confusion-risk',
-        title: 'Around Confusion Risk',
-        body: [
-          'The useful result of Looking Around input surface is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture. That reading gives Looking Around a public anchor for confusion risk without adding behavior that the current category does not own. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Confusion Risk.',
-          'The main confusion risk in Looking Around is mixing input focus with saved preference ownership. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Looking Around confusion risk is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
-        ],
-      },
-      {
-        id: 'looking-around-reportable-evidence',
-        title: 'Around Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. Looking Around uses the fact as reportable evidence evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Reportable Evidence.',
-          'Reportable evidence for Looking Around should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use reportable evidence to keep Looking Around tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'looking-around-adjacent-pages',
-        title: 'Around Adjacent Pages',
-        body: [
-          'Ownership in Looking Around is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The fact also tells the reader which evidence to preserve for adjacent pages: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Adjacent Pages.',
-          'Adjacent pages matter for Looking Around, but adjacency does not move authority. Looking Around should be compared with Using Mouse Capture, Changing Camera Preferences, Understanding Keybind Resolution only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use adjacent pages to keep Looking Around tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'looking-around-public-boundary',
-        title: 'Around Public Boundary',
-        body: [
-          'A public report based on the session owner part of Looking Around should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for public boundary: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Public Boundary.',
-          'The public boundary for Looking Around is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Use public boundary to keep Looking Around tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'looking-around-operator-reading',
-        title: 'Around Operator Reading',
-        body: [
-          'The session pipeline sends camera eye position, yaw, pitch, roll, field of view, and render distance to the renderer in a snapshot. The renderer draws from that data rather than reading input directly. In Looking Around, visible feedback is the difference between reading camera and pointer control and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Visible Feedback. Looking Around uses the fact as operator reading evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Operator Reading.',
-          'An operator reading Looking Around should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'Use operator reading to keep Looking Around tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'looking-around-implementation-limit',
-        title: 'Around Implementation Limit',
-        body: [
-          'Visible feedback for Looking Around should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Camera and Capture. For Looking Around, that fact identifies the first concrete boundary for implementation limit: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Implementation Limit.',
-          'Implementation limits for Looking Around keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the implementation limit part of Looking Around should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'looking-around-safe-summary',
-        title: 'Around Safe Summary',
-        body: [
-          'Mouse movement is converted into yaw and pitch using the configured sensitivity and axis inversion preferences. The resulting view direction is part of the player state used by picking and rendering. In Looking Around, safe summary is the difference between reading camera and pointer control and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Safe Summary.',
-          'The summary value of Looking Around is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for safe summary does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Looking Around should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'looking-around-closing-check',
-        title: 'Around Closing Check',
-        body: [
-          'Player Scope defines the useful size of Looking Around. The article should be broad enough to explain camera and pointer control, but narrow enough that mixing input focus with saved preference ownership remains outside the conclusion. For Looking Around, that fact identifies the first concrete boundary for closing check: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Looking Around / Controlling the Session / Camera and Capture / Closing Check.',
-          'A final check for Looking Around should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Looking Around should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The raw pixel delta is not used directly as a degree value. It is scaled by the mouse-sensitivity preference when forming the yaw and pitch deltas, so the same pointer movement turns the view more or less depending on the setting.',
+          'Because sensitivity is applied before the player step, changing it adjusts how far the view turns per unit of mouse movement without affecting movement speed or any other input. Camera feel is therefore a settings concern that builds on the look pipeline described here.',
         ],
       },
     ],
@@ -1157,150 +1123,131 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Camera and Capture',
     title: 'Using Mouse Capture',
     description:
-      'Describes how Ludoxel captures relative mouse input during gameplay. This page treats camera and pointer control as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains pointer capture during gameplay: how the viewport grabs the mouse and keyboard, hides the cursor, and recenters it so movement becomes a relative look delta, including the macOS native relative-capture and keyboard-guard paths. Capture is released when an overlay opens or the viewport loses focus.',
     sections: [
       {
-        id: 'using-mouse-capture-scope',
-        title: 'Mouse Capture Player Scope',
+        id: 'using-mouse-capture-grab',
+        title: 'Capture Grabs the Mouse and Keyboard',
         body: [
-          'Mouse capture lets the viewport read relative movement for camera control while gameplay has focus. Click-to-capture behavior is part of the presentation input layer, not the simulation layer. Using Mouse Capture uses the fact as player scope evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Player Scope. Using Mouse Capture uses the fact as player scope evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Player Scope.',
-          'Player Scope defines the useful size of Using Mouse Capture. The article should be broad enough to explain camera and pointer control, but narrow enough that mixing input focus with saved preference ownership remains outside the conclusion.',
-          'When Using Mouse Capture crosses from player scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'Turning capture on activates the window, focuses the viewport, hides the cursor with a blank cursor override, and grabs both the mouse and keyboard. Grabbing routes pointer and key events to the viewport so gameplay input is not stolen by other widgets.',
+          'The cursor is hidden both through a Qt override cursor and by setting the blank cursor on the viewport and its host window, so the pointer does not reappear over the window chrome while you play.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Enabling capture focuses the viewport, hides the cursor, and grabs input.',
+            code: `self._w.setFocus(Qt.FocusReason.MouseFocusReason)
+self._sync_override_cursor(hidden=True)
+self._w.setCursor(Qt.CursorShape.BlankCursor)
+if host_window is not None:
+  host_window.setCursor(Qt.CursorShape.BlankCursor)
+self._w.grabMouse()
+self._w.grabKeyboard()`,
+          },
         ],
       },
       {
-        id: 'using-mouse-capture-first-observation',
-        title: 'Mouse Capture First Observation',
+        id: 'using-mouse-capture-recenter',
+        title: 'The Cursor Is Recentered to Produce Deltas',
         body: [
-          'Player Scope defines the useful size of Using Mouse Capture. The article should be broad enough to explain camera and pointer control, but narrow enough that mixing input focus with saved preference ownership remains outside the conclusion. The fact also tells the reader which evidence to preserve for first observation: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / First Observation.',
-          'A direct observation for Using Mouse Capture should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'A public report based on the first observation part of Using Mouse Capture should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'On the non-native path, capture works by warping the cursor back to the viewport center and measuring how far it moved before each warp. The offset from center becomes the look delta, and recentering keeps the pointer from reaching a screen edge.',
+          'Right after enabling capture, a short settling window ignores the first cursor moves so the initial warp does not register as a large jump. This is the capture-sync-pending state, which clears once the cursor reports stable, near-center positions.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'A warp recenters the cursor and briefly ignores the resulting moves.',
+            code: `def _warp_cursor_to_center(self) -> None:
+  self._ignore_mouse_move_until_s = max(float(self._ignore_mouse_move_until_s), float(time.perf_counter()) + 0.025)
+  self._ignore_mouse_move_events = max(int(self._ignore_mouse_move_events), 2)
+  center = self._center_global()
+  warped = False
+  if self._macos_cursor_warp is not None:
+    warped = bool(self._macos_cursor_warp.warp(x=int(center.x()), y=int(center.y())).succeeded)
+  if not bool(warped):
+    QCursor.setPos(center)`,
+          },
         ],
       },
       {
-        id: 'using-mouse-capture-input-surface',
-        title: 'Mouse Capture Input Surface',
+        id: 'using-mouse-capture-macos-relative',
+        title: 'macOS Uses Native Relative Capture',
         body: [
-          'When Using Mouse Capture crosses from player scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. For Using Mouse Capture, that fact identifies the first concrete boundary for input surface: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Input Surface.',
-          'Using Mouse Capture separates the surface that accepts input from the component or document that controls the result. This is especially important when moving the view through input capture crosses a saved value, a renderer output, or a public form.',
-          'When Using Mouse Capture crosses from input surface into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'On macOS, capture prefers a native relative-mouse path. When it begins successfully, the system reports relative deltas directly and no cursor warping is needed, so the capture-sync-pending settling step is skipped.',
+          'If the native relative capture cannot start, the code falls back to the warp-and-recenter method. Either way the viewport receives a relative delta; only the mechanism that produces it differs by platform.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Native relative capture is tried first; warping is the fallback.',
+            code: `self._a.clear_mouse_delta()
+center = self._center_global()
+native_relative = bool(self._macos_relative_mouse is not None and self._macos_relative_mouse.begin(x=int(center.x()), y=int(center.y())))
+if not bool(native_relative):
+  self._warp_cursor_to_center()
+self._capture_sync_pending = not bool(native_relative)`,
+          },
         ],
       },
       {
-        id: 'using-mouse-capture-session-owner',
-        title: 'Mouse Capture Session Owner',
+        id: 'using-mouse-capture-macos-guard',
+        title: 'A macOS Keyboard Guard Is Separate From Cursor Capture',
         body: [
-          'Using Mouse Capture should be read as topic for using mouse capture within Controlling the Session and Camera and Capture. In Using Mouse Capture, session owner is the difference between reading camera and pointer control and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Session Owner.',
-          'Ownership in Using Mouse Capture is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'Using Mouse Capture should not use session owner to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'On macOS, gameplay also installs a keyboard input guard that is distinct from mouse capture. The guard is activated and deactivated alongside capture but handles native key events; it is not the cursor-warp or relative-mouse mechanism.',
+          'Keeping the keyboard guard separate from cursor handling means a problem with one does not imply a problem with the other. Cursor capture concerns pointer hiding and look deltas, while the guard concerns native key delivery during play.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The macOS keyboard guard is toggled with capture but is a separate component.',
+            code: `if self._macos_input_guard is not None:
+  self._macos_input_guard.set_active(True)
+# on release:
+if self._macos_relative_mouse is not None:
+  self._macos_relative_mouse.end()
+if self._macos_input_guard is not None:
+  self._macos_input_guard.set_active(False)`,
+          },
         ],
       },
       {
-        id: 'using-mouse-capture-visible-feedback',
-        title: 'Mouse Capture Visible Feedback',
+        id: 'using-mouse-capture-polling',
+        title: 'Relative Movement Is Polled Each Frame',
         body: [
-          'A direct observation for Using Mouse Capture should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for visible feedback: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Visible Feedback.',
-          'Visible feedback for Using Mouse Capture should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Camera and Capture.',
-          'A public report based on the visible feedback part of Using Mouse Capture should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'While captured, the relative delta is polled each frame. On the native path it reads accumulated relative movement; on the warp path it measures the cursor offset from center, adds it to the input adapter, and warps back. The captured-move event handler feeds the same adapter when Qt delivers move events.',
+          'The poll re-applies the capture state every frame, which keeps focus, the hidden cursor, and the grabs in place even if the window manager tried to change them. This is why capture stays stable during continuous play.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Polling reads native relative movement when it is active.',
+            code: `if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
+  delta = self._macos_relative_mouse.poll()
+  if int(delta.dx) != 0 or int(delta.dy) != 0:
+    self._a.add_mouse_delta(float(delta.dx), float(delta.dy))
+  return`,
+          },
         ],
       },
       {
-        id: 'using-mouse-capture-saved-state-link',
-        title: 'Mouse Capture Saved State Link',
+        id: 'using-mouse-capture-release',
+        title: 'Capture Releases Cleanly',
         body: [
-          'A public report based on the first observation part of Using Mouse Capture should state the action, expected result, actual result, environment, and any redaction needed before sharing. That reading gives Using Mouse Capture a public anchor for saved state link without adding behavior that the current category does not own. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Saved State Link.',
-          'When Using Mouse Capture touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for saved state link does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using Mouse Capture should be treated as an observation rather than a confirmed cause.',
+          'Turning capture off ends native relative capture, deactivates the keyboard guard, releases the keyboard and mouse grabs, restores the override cursor, and unsets the blank cursor on both the viewport and its host window. The pointer becomes a normal cursor again.',
+          'Capture is released when an overlay takes focus, when the viewport loses focus, and on shutdown. Because release also resets the pending mouse delta, no leftover movement is applied after the cursor returns.',
         ],
-      },
-      {
-        id: 'using-mouse-capture-space-context',
-        title: 'Mouse Capture Play-Space Context',
-        body: [
-          'The input adapter handles the active platform path. macOS cursor capture and keyboard guarding are separate code paths, so mouse capture and keyboard event protection should not be treated as the same feature. For Using Mouse Capture, that fact identifies the first concrete boundary for play-space context: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Play-Space Context.',
-          'The surrounding context for Using Mouse Capture decides which adjacent topic is relevant. Using Mouse Capture should be compared with Looking Around, Understanding Keybind Resolution, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'A public report based on the play-space context part of Using Mouse Capture should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-recovery-path',
-        title: 'Mouse Capture Recovery Path',
-        body: [
-          'Using Mouse Capture separates the surface that accepts input from the component or document that controls the result. This is especially important when moving the view through input capture crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for recovery path: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Recovery Path.',
-          'Recovery or follow-up for Using Mouse Capture should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the recovery path part of Using Mouse Capture should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-confusion-risk',
-        title: 'Mouse Capture Confusion Risk',
-        body: [
-          'When Using Mouse Capture crosses from input surface into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for confusion risk: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Confusion Risk.',
-          'The main confusion risk in Using Mouse Capture is mixing input focus with saved preference ownership. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use confusion risk to keep Using Mouse Capture tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-reportable-evidence',
-        title: 'Mouse Capture Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. In Using Mouse Capture, session owner is the difference between reading camera and pointer control and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Session Owner. That reading gives Using Mouse Capture a public anchor for reportable evidence without adding behavior that the current category does not own. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Reportable Evidence.',
-          'Reportable evidence for Using Mouse Capture should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Using Mouse Capture reportable evidence is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-adjacent-pages',
-        title: 'Mouse Capture Adjacent Pages',
-        body: [
-          'Ownership in Using Mouse Capture is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. That reading gives Using Mouse Capture a public anchor for adjacent pages without adding behavior that the current category does not own. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Adjacent Pages.',
-          'Adjacent pages matter for Using Mouse Capture, but adjacency does not move authority. Using Mouse Capture should be compared with Looking Around, Understanding Keybind Resolution, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Using Mouse Capture adjacent pages is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-public-boundary',
-        title: 'Mouse Capture Public Boundary',
-        body: [
-          'Using Mouse Capture should not use session owner to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in public boundary because moving the view through input capture can otherwise be mistaken for mixing input focus with saved preference ownership. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Public Boundary.',
-          'The public boundary for Using Mouse Capture is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Using Mouse Capture public boundary is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-operator-reading',
-        title: 'Mouse Capture Operator Reading',
-        body: [
-          'Capture is released or blocked while overlays and dialogs need normal pointer interaction. Close the overlay or return focus to the viewport before testing gameplay camera movement. That reading gives Using Mouse Capture a public anchor for operator reading without adding behavior that the current category does not own. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Operator Reading.',
-          'An operator reading Using Mouse Capture should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'If the available evidence for operator reading does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Using Mouse Capture should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-implementation-limit',
-        title: 'Mouse Capture Implementation Limit',
-        body: [
-          'Visible feedback for Using Mouse Capture should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Camera and Capture. That reading gives Using Mouse Capture a public anchor for implementation limit without adding behavior that the current category does not own. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Implementation Limit.',
-          'Implementation limits for Using Mouse Capture keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'The useful result of Using Mouse Capture implementation limit is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-safe-summary',
-        title: 'Mouse Capture Safe Summary',
-        body: [
-          'Mouse capture lets the viewport read relative movement for camera control while gameplay has focus. Click-to-capture behavior is part of the presentation input layer, not the simulation layer. Using Mouse Capture uses the fact as player scope evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Player Scope. Using Mouse Capture uses the fact as safe summary evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Safe Summary.',
-          'The summary value of Using Mouse Capture is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'When Using Mouse Capture crosses from safe summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'using-mouse-capture-closing-check',
-        title: 'Mouse Capture Closing Check',
-        body: [
-          'Player Scope defines the useful size of Using Mouse Capture. The article should be broad enough to explain camera and pointer control, but narrow enough that mixing input focus with saved preference ownership remains outside the conclusion. The point matters in closing check because moving the view through input capture can otherwise be mistaken for mixing input focus with saved preference ownership. The local reading frame is Using Mouse Capture / Controlling the Session / Camera and Capture / Closing Check.',
-          'A final check for Using Mouse Capture should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'The useful result of Using Mouse Capture closing check is a bounded explanation of camera and pointer control: enough detail to act, and enough restraint to avoid claims outside Camera and Capture.',
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Disabling capture releases the grabs and restores the cursor.',
+            code: `self._w.releaseKeyboard()
+self._w.releaseMouse()
+self._sync_override_cursor(hidden=False)
+self._w.unsetCursor()
+host_window = self._w.window()
+if host_window is not None:
+  host_window.unsetCursor()`,
+          },
         ],
       },
     ],
@@ -1312,150 +1259,163 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Movement and Recovery',
     title: 'Moving the Player',
     description:
-      'Explains normal player movement, movement assists, and recovery-sensitive hazards. This page treats player movement and recovery as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Describes movement: how WASD, jump, crouch, and sprint are read from keybinds into a per-frame input frame, how the fixed-step player advance applies walking, flying, jumping, and auto-jump, and how collision integration resolves the result. Movement is part of the same fixed step as camera rotation and collision.',
     sections: [
       {
-        id: 'moving-the-player-scope',
-        title: 'Player Player Scope',
+        id: 'moving-the-player-wasd',
+        title: 'Movement Comes From Bound Keys',
         body: [
-          'Player movement uses walk, sprint, crouch, jump, fly, gravity, and collision parameters from the active settings. The stepping system advances those values on fixed simulation steps. The point matters in player scope because reading motion, collision, and recovery state can otherwise be mistaken for diagnosing a gameplay result as a renderer problem. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Player Scope.',
-          'Player Scope defines the useful size of Moving the Player. The article should be broad enough to explain player movement and recovery, but narrow enough that diagnosing a gameplay result as a renderer problem remains outside the conclusion.',
-          'Moving the Player should not use player scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Forward, backward, left, and right are bound actions resolved through the keybind settings. The defaults are W, S, A, and D. The input adapter checks which movement actions are currently pressed and combines them into a forward and a strafe value for the frame.',
+          'Forward minus backward gives the forward axis, and right minus left gives the strafe axis, so opposing keys cancel out. The result is a small movement vector that the player step turns into velocity.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Pressed movement actions are combined into forward and strafe values.',
+            code: `if self._action_pressed(ACTION_MOVE_FORWARD):
+  f += 1.0
+if self._action_pressed(ACTION_MOVE_BACKWARD):
+  f -= 1.0
+if self._action_pressed(ACTION_MOVE_RIGHT):
+  s += 1.0
+if self._action_pressed(ACTION_MOVE_LEFT):
+  s -= 1.0`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-first-observation',
-        title: 'Player First Observation',
+        id: 'moving-the-player-jump-crouch-sprint',
+        title: 'Jump, Crouch, and Sprint Have Held and Edge States',
         body: [
-          'Player Scope defines the useful size of Moving the Player. The article should be broad enough to explain player movement and recovery, but narrow enough that diagnosing a gameplay result as a renderer problem remains outside the conclusion. That reading gives Moving the Player a public anchor for first observation without adding behavior that the current category does not own. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / First Observation.',
-          'A direct observation for Moving the Player should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'If the available evidence for first observation does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Moving the Player should be treated as an observation rather than a confirmed cause.',
+          'Jump defaults to Space, crouch to Shift, and sprint to Control. The adapter tracks both the held state of jump and a one-shot pressed edge, so a single press can trigger a jump while holding can queue further jumps. Crouch and sprint are read as held states.',
+          'Auto-repeat key events are ignored, so holding a key does not produce a stream of fresh presses. The jump pressed edge is consumed when the frame is read, which is what distinguishes a tap from a hold in the movement logic.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Jump tracks a held state and a single pressed edge.',
+            code: `def on_key_press(self, e: QKeyEvent) -> None:
+  if bool(e.isAutoRepeat()):
+    return
+  k = int(e.key())
+  self._keys.add(k)
+  if self._action_keys.get(ACTION_JUMP) == int(k):
+    self._jump_pressed_edge = True`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-input-surface',
-        title: 'Player Input Surface',
+        id: 'moving-the-player-step-input',
+        title: 'Input Becomes a Per-Step Control Object',
         body: [
-          'Moving the Player should not use player scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. In Moving the Player, input surface is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Input Surface.',
-          'Moving the Player separates the surface that accepts input from the component or document that controls the result. This is especially important when reading motion, collision, and recovery state crosses a saved value, a renderer output, or a public form.',
-          'Moving the Player should not use input surface to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Each fixed step, the consumed input frame and the look deltas are packed into a player step input. It carries the clamped forward and strafe values, the jump held and pressed flags, sprint and crouch, the yaw and pitch deltas, and whether auto-jump is enabled.',
+          'This single control object is the only movement input the player advance reads. Packing everything for the step keeps movement deterministic with respect to the fixed timestep rather than depending on event timing.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The fixed-step advance reads one control object per step.',
+            code: `def advance_runtime_player(*, player, world, block_registry, settings, motion, dt, control: PlayerStepInput):
+  player.advance_hurt_state(float(dt))
+  player.yaw_deg += float(control.yaw_delta_deg)
+  player.pitch_deg += float(control.pitch_delta_deg)
+  player.clamp_pitch()`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-session-owner',
-        title: 'Player Session Owner',
+        id: 'moving-the-player-walk-vs-fly',
+        title: 'Walking and Flying Use Different Movement Models',
         body: [
-          'Moving the Player should be read as topic for moving the player within Controlling the Session and Movement and Recovery. Moving the Player uses the fact as session owner evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Session Owner.',
-          'Ownership in Moving the Player is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'Use session owner to keep Moving the Player tied to Controlling the Session; use a related page only when the reader needs a different owner.',
+          'If the player is flying, movement uses the flying model and collision integration with flying enabled, and ground-related state such as airborne tracking is cleared. Otherwise movement uses the grounded model, where gravity, jumping, and support contact apply.',
+          'Both paths end by integrating against the world with collisions, but the velocity model that feeds the integration differs. This is why flying ignores fall state while grounded movement tracks the fall start height.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The grounded path steps the walking model then integrates with collisions.',
+            code: `step_bedrock(player, move_input, float(dt), params=settings.movement)
+report = integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=bool(control.crouch), jump_pressed=bool(jump_pulse), flying=False)`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-visible-feedback',
-        title: 'Player Visible Feedback',
+        id: 'moving-the-player-jump-pulse',
+        title: 'A Jump Pulse Is Decided Before Stepping',
         body: [
-          'A direct observation for Moving the Player should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. In Moving the Player, visible feedback is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Visible Feedback.',
-          'Visible feedback for Moving the Player should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Movement and Recovery.',
-          'If the available evidence for visible feedback does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Moving the Player should be treated as an observation rather than a confirmed cause.',
+          'A jump only fires when the player is on the ground. A fresh jump press produces a pulse, and a queued hold-jump can also produce one while the jump key stays held. The pulse is then passed into the movement model so the upward impulse is applied that step.',
+          'Landing while still holding jump queues the next jump, which is how holding the jump key produces repeated hops. The queue is cleared as soon as the jump key is released.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Ground state and the press or hold queue decide the jump pulse.',
+            code: `jump_pulse = False
+if bool(player.on_ground) and bool(control.jump_pressed):
+  jump_pulse = True
+elif bool(player.on_ground) and bool(player.hold_jump_queued) and bool(control.jump_held):
+  jump_pulse = True
+  player.hold_jump_queued = False`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-saved-state-link',
-        title: 'Player Saved State Link',
+        id: 'moving-the-player-auto-jump',
+        title: 'Auto-Jump Steps Up One Block',
         body: [
-          'If the available evidence for first observation does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Moving the Player should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for saved state link: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Saved State Link.',
-          'When Moving the Player touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Use saved state link to keep Moving the Player tied to Controlling the Session; use a related page only when the reader needs a different owner.',
+          'When auto-jump is enabled and the jump key is not held, the step probes ahead in the wished direction. If a one-block step up is possible there, a jump pulse is generated automatically and an auto-jump is marked pending so the result can be checked on landing.',
+          'Auto-jump has a cooldown that is set only after a successful step up, which prevents it from firing every frame while walking into a wall it cannot climb. This is the behavior that lets the player walk up single-block ledges without pressing jump.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Auto-jump probes one block ahead in the wished direction.',
+            code: `wish = wish_dir_from_input(player, forward, strafe)
+probe = float(settings.movement.auto_jump_probe)
+if can_auto_jump_one_block(player, world, dx=float(wish.x) * probe, dz=float(wish.z) * probe, block_registry=block_registry, params=settings.collision):
+  jump_pulse = True
+  player.auto_jump_pending = True
+  player.auto_jump_start_y = float(player.position.y)`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-space-context',
-        title: 'Player Play-Space Context',
+        id: 'moving-the-player-footsteps',
+        title: 'Walking Advances a Phase for Footsteps and View Bob',
         body: [
-          'Auto-jump and auto-sprint are preferences that modify movement intent. Creative mode also enables flight behavior, while survival movement remains subject to gravity, collision, fall damage, and void damage. In Moving the Player, input surface is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Input Surface. In Moving the Player, play-space context is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Play-Space Context.',
-          'The surrounding context for Moving the Player decides which adjacent topic is relevant. Moving the Player should be compared with Surviving Fall and Void Hazards, Understanding Block Shapes, Changing Keybind Preferences only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for play-space context does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Moving the Player should be treated as an observation rather than a confirmed cause.',
+          'Each grounded step advances a walk phase proportional to horizontal speed relative to the configured walk speed. Crossing a half-cycle of that phase while grounded and moving above a minimum speed triggers a footstep event, which the audio and view systems read.',
+          'The phase is also what drives view bobbing and the held-item swing. Because it scales with speed, footsteps and bob keep pace with how fast the player is actually moving rather than ticking at a fixed rate.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'A footstep fires when the walk phase crosses a half cycle while grounded.',
+            code: `rate = float(PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED) * (float(speed) / float(base))
+motion.walk_phase_total_rad = float(previous_total + rate * float(dt))
+if bool(player.flying) or (not bool(player.on_ground)) or speed < float(PLAYER_FOOTSTEP_MIN_SPEED):
+  return False
+return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.walk_phase_total_rad) / math.pi))`,
+          },
         ],
       },
       {
-        id: 'moving-the-player-recovery-path',
-        title: 'Player Recovery Path',
+        id: 'moving-the-player-crouch-eye',
+        title: 'Crouch Lowers the Eye Smoothly',
         body: [
-          'Moving the Player separates the surface that accepts input from the component or document that controls the result. This is especially important when reading motion, collision, and recovery state crosses a saved value, a renderer output, or a public form. In Moving the Player, recovery path is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Recovery Path.',
-          'Recovery or follow-up for Moving the Player should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Moving the Player should not use recovery path to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Crouching does not snap the camera down. The crouch eye offset eases toward its target each step with an exponential approach, and eases back up when crouch is released. A separate step eye offset smooths the small vertical correction when the collision system steps the player up a ledge.',
+          'These eased offsets are applied to the eye height the renderer reads, so the view settles instead of jumping. They are visual smoothing on top of the collision result, not changes to the player’s collision box.',
         ],
-      },
-      {
-        id: 'moving-the-player-confusion-risk',
-        title: 'Player Confusion Risk',
-        body: [
-          'Moving the Player should not use input surface to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in confusion risk because reading motion, collision, and recovery state can otherwise be mistaken for diagnosing a gameplay result as a renderer problem. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Confusion Risk.',
-          'The main confusion risk in Moving the Player is diagnosing a gameplay result as a renderer problem. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Moving the Player confusion risk is a bounded explanation of player movement and recovery: enough detail to act, and enough restraint to avoid claims outside Movement and Recovery.',
-        ],
-      },
-      {
-        id: 'moving-the-player-reportable-evidence',
-        title: 'Player Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. Moving the Player uses the fact as session owner evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Session Owner. The fact also tells the reader which evidence to preserve for reportable evidence: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Reportable Evidence.',
-          'Reportable evidence for Moving the Player should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use reportable evidence to keep Moving the Player tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'moving-the-player-adjacent-pages',
-        title: 'Player Adjacent Pages',
-        body: [
-          'Ownership in Moving the Player is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. Moving the Player uses the fact as adjacent pages evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Adjacent Pages.',
-          'Adjacent pages matter for Moving the Player, but adjacency does not move authority. Moving the Player should be compared with Surviving Fall and Void Hazards, Understanding Block Shapes, Changing Keybind Preferences only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use adjacent pages to keep Moving the Player tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'moving-the-player-public-boundary',
-        title: 'Player Public Boundary',
-        body: [
-          'Use session owner to keep Moving the Player tied to Controlling the Session; use a related page only when the reader needs a different owner. The fact also tells the reader which evidence to preserve for public boundary: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Public Boundary.',
-          'The public boundary for Moving the Player is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the public boundary part of Moving the Player should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'moving-the-player-operator-reading',
-        title: 'Player Operator Reading',
-        body: [
-          'Support checks decide whether the player is grounded and what block material is underfoot. Those checks also feed landing, footstep, damage, and audio feedback. In Moving the Player, visible feedback is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Visible Feedback. The fact also tells the reader which evidence to preserve for operator reading: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Operator Reading.',
-          'An operator reading Moving the Player should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'Use operator reading to keep Moving the Player tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'moving-the-player-implementation-limit',
-        title: 'Player Implementation Limit',
-        body: [
-          'Visible feedback for Moving the Player should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Movement and Recovery. For Moving the Player, that fact identifies the first concrete boundary for implementation limit: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Implementation Limit.',
-          'Implementation limits for Moving the Player keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Moving the Player crosses from implementation limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'moving-the-player-safe-summary',
-        title: 'Player Safe Summary',
-        body: [
-          'Player movement uses walk, sprint, crouch, jump, fly, gravity, and collision parameters from the active settings. The stepping system advances those values on fixed simulation steps. That reading gives Moving the Player a public anchor for safe summary without adding behavior that the current category does not own. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Safe Summary.',
-          'The summary value of Moving the Player is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for safe summary does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Moving the Player should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'moving-the-player-closing-check',
-        title: 'Player Closing Check',
-        body: [
-          'Player Scope defines the useful size of Moving the Player. The article should be broad enough to explain player movement and recovery, but narrow enough that diagnosing a gameplay result as a renderer problem remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Moving the Player / Controlling the Session / Movement and Recovery / Closing Check.',
-          'A final check for Moving the Player should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Moving the Player should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The crouch eye offset eases toward its target each step.',
+            code: `def _update_crouch_eye(player, *, dt: float, crouch: bool) -> None:
+  target = float(player.crouch_eye_drop) if bool(crouch) else 0.0
+  current = float(player.crouch_eye_offset)
+  alpha = 1.0 - math.exp(-18.0 * max(0.0, float(dt)))
+  next_value = current + (target - current) * alpha
+  player.crouch_eye_offset = max(0.0, min(float(player.crouch_eye_drop), float(next_value)))`,
+          },
         ],
       },
     ],
@@ -1467,150 +1427,147 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Movement and Recovery',
     title: 'Recovering after Death',
     description:
-      'Explains what the death overlay resets and what it leaves untouched. This page treats player movement and recovery as a player-facing operating guide for the desktop window, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the death and respawn flow: how fall distance and the void produce damage, what the death overlay shows, and what respawn resets and preserves. Fall damage starts beyond a safe distance, void damage applies in intervals below a threshold depth, and respawn restores the player without erasing saved content.',
     sections: [
       {
-        id: 'recovering-after-death-scope',
-        title: 'after Death Player Scope',
+        id: 'recovering-after-death-health',
+        title: 'Health Is the Default Twenty Points',
         body: [
-          'Death can come from void damage, fall damage, or AI combat damage. The session reports a death reason, and the presentation layer displays the death overlay. That reading gives Recovering after Death a public anchor for player scope without adding behavior that the current category does not own. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Player Scope.',
-          'Player Scope defines the useful size of Recovering after Death. The article should be broad enough to explain player movement and recovery, but narrow enough that diagnosing a gameplay result as a renderer problem remains outside the conclusion.',
-          'The useful result of Recovering after Death player scope is a bounded explanation of player movement and recovery: enough detail to act, and enough restraint to avoid claims outside Movement and Recovery.',
+          'The player starts with twenty health points, shown by the hotbar health strip as ten hearts. Damage reduces this value, and reaching zero is what puts the session into the dead state. The health strip fills each heart proportionally, so half-heart amounts are visible.',
+          'Health is simulation state, while the heart strip is a HUD display of it. Recovering after death is about how that value reaches zero and how respawn restores it, not about the way the hearts are drawn.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The health strip draws hearts from the current and maximum health.',
+            code: `def set_state(self, *, show_health: bool, health: float, max_health: float) -> None:
+  self._show_health = bool(show_health)
+  self._max_health = max(2.0, float(max_health))
+  self._health = max(0.0, min(float(health), float(self._max_health)))
+  self.update()`,
+          },
         ],
       },
       {
-        id: 'recovering-after-death-first-observation',
-        title: 'after Death First Observation',
+        id: 'recovering-after-death-fall-damage',
+        title: 'Fall Damage Starts Beyond a Safe Distance',
         body: [
-          'Player Scope defines the useful size of Recovering after Death. The article should be broad enough to explain player movement and recovery, but narrow enough that diagnosing a gameplay result as a renderer problem remains outside the conclusion. That reading gives Recovering after Death a public anchor for first observation without adding behavior that the current category does not own. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / First Observation.',
-          'A direct observation for Recovering after Death should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state.',
-          'If the available evidence for first observation does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause.',
+          'Fall damage is computed from the distance fallen, measured from the height where the player became airborne to where they land. Falls up to the safe distance of three blocks do no damage; beyond that, damage is the whole number of blocks past the safe distance.',
+          'The fall distance is captured on landing, using the recorded airborne start height. This is why a long drop hurts while stepping off a small ledge does not, and why the damage scales with how far past three blocks you fell.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Fall damage is the rounded-up distance past the safe distance.',
+            code: `FALL_DAMAGE_SAFE_DISTANCE_BLOCKS = 3.0
+
+
+def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
+  if fall_distance_blocks is None:
+    return 0.0
+  distance = max(0.0, float(fall_distance_blocks))
+  if distance <= float(FALL_DAMAGE_SAFE_DISTANCE_BLOCKS):
+    return 0.0
+  return float(math.ceil(float(distance) - float(FALL_DAMAGE_SAFE_DISTANCE_BLOCKS)))`,
+          },
         ],
       },
       {
-        id: 'recovering-after-death-input-surface',
-        title: 'after Death Input Surface',
+        id: 'recovering-after-death-void',
+        title: 'The Void Applies Repeating Damage Below a Threshold',
         body: [
-          'The useful result of Recovering after Death player scope is a bounded explanation of player movement and recovery: enough detail to act, and enough restraint to avoid claims outside Movement and Recovery. That reading gives Recovering after Death a public anchor for input surface without adding behavior that the current category does not own. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Input Surface.',
-          'Recovering after Death separates the surface that accepts input from the component or document that controls the result. This is especially important when reading motion, collision, and recovery state crosses a saved value, a renderer output, or a public form.',
-          'If the available evidence for input surface does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause.',
+          'Below the void threshold depth, the player takes repeating damage. While the player is alive and below the threshold, the void timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so it keeps ticking.',
+          'This is a steady drain rather than a single hit, so falling into the void leads to death over a short time unless the player gets back above the threshold. The remaining sub-interval time is carried over so the cadence stays consistent across frames.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Void damage ticks at a fixed interval below the threshold depth.',
+            code: `VOID_DAMAGE_START_Y = -64.0
+VOID_DAMAGE_INTERVAL_S = 0.50
+VOID_DAMAGE_AMOUNT = 4.0
+
+
+def apply_void_damage(*, player, dt, timer_s):
+  if (not bool(player.alive())) or float(player.position.y) >= float(VOID_DAMAGE_START_Y):
+    return (0.0, 0.0)
+  remaining = max(0.0, float(timer_s)) + max(0.0, float(dt))
+  damage_taken = 0.0
+  while float(remaining) + 1e-9 >= float(VOID_DAMAGE_INTERVAL_S) and bool(player.alive()):
+    remaining -= float(VOID_DAMAGE_INTERVAL_S)
+    damage_taken += float(player.apply_damage(float(VOID_DAMAGE_AMOUNT), bypass_cooldown=True))
+  return (float(damage_taken), max(0.0, float(remaining)))`,
+          },
         ],
       },
       {
-        id: 'recovering-after-death-session-owner',
-        title: 'after Death Session Owner',
+        id: 'recovering-after-death-overlay',
+        title: 'The Death Overlay Shows a Cause and a Respawn Button',
         body: [
-          'Recovering after Death should be read as state recovery for death within Controlling the Session and Movement and Recovery. The fact also tells the reader which evidence to preserve for session owner: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Session Owner.',
-          'Ownership in Recovering after Death is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents.',
-          'A public report based on the session owner part of Recovering after Death should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'When health reaches zero, the death overlay appears with a "YOU DIED" title, a message line, and a Respawn button. The message is set from the cause of death and falls back to "Player died." when no specific text is supplied.',
+          'While the death overlay is visible, the pause menu cannot be opened, so the only forward action from this state is to respawn. The overlay itself only emits a respawn request; the controller decides what that does.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The death overlay sets its message and emits a respawn request.',
+            code: `class DeathOverlay(QWidget):
+  respawn_requested = pyqtSignal()
+
+  def set_message(self, text: str) -> None:
+    body = str(text).strip()
+    if not body:
+      body = "Player died."
+    self._message.setText(body)`,
+          },
         ],
       },
       {
-        id: 'recovering-after-death-visible-feedback',
-        title: 'after Death Visible Feedback',
+        id: 'recovering-after-death-respawn',
+        title: 'Respawn Resets the Player and Clears the Overlay',
         body: [
-          'A direct observation for Recovering after Death should name what the user or reader actually sees before it assigns cause. That keeps the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input ahead of guesses about hidden state. In Recovering after Death, visible feedback is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Visible Feedback.',
-          'Visible feedback for Recovering after Death should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Movement and Recovery.',
-          'If the available evidence for visible feedback does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause.',
+          'Pressing Respawn resets held mouse actions, cancels any pending AI route edit, respawns the session player, invalidates the current selection target, clears the renderer selection, hides the dead overlay, and re-syncs the hotbar widgets. After this, the viewport is back to ordinary play.',
+          'Respawn is handled by the overlay-navigation controller, not by the overlay itself. Because it clears selection and held actions, you do not resume mid-interaction; you start fresh from the respawn position with the hotbar restored.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Respawn resets player state and clears the dead overlay.',
+            code: `def respawn(viewport) -> None:
+  viewport._reset_held_mouse_actions()
+  ai_controller.cancel_route_edit(viewport)
+  viewport._session.respawn()
+  viewport._invalidate_selection_target()
+  viewport._renderer.clear_selection()
+  viewport._set_dead_overlay(False)
+  settings_controller.sync_hotbar_widgets(viewport)`,
+          },
         ],
       },
       {
-        id: 'recovering-after-death-saved-state-link',
-        title: 'after Death Saved State Link',
+        id: 'recovering-after-death-preserves-data',
+        title: 'Respawn Restores the Player, Not the World',
         body: [
-          'If the available evidence for first observation does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause. For Recovering after Death, that fact identifies the first concrete boundary for saved state link: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Saved State Link.',
-          'When Recovering after Death touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the saved state link part of Recovering after Death should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Respawn returns the player to the active space’s spawn state with restored health. It does not erase the saved world, the Othello board, hotbar contents, preferences, or AI learning artifacts. Those belong to persistence and the other play space, not to the death-and-respawn cycle.',
+          'This separation is why dying is recoverable: only the player’s position and condition are reset, while everything you built or configured remains. If something other than the player appears to have been lost after a death, that points to a saved-state question rather than the respawn itself.',
         ],
       },
       {
-        id: 'recovering-after-death-space-context',
-        title: 'after Death Play-Space Context',
+        id: 'recovering-after-death-hurt-feedback',
+        title: 'Taking Damage Produces Hurt Feedback',
         body: [
-          'Respawn resets the player to the active space spawn state with restored health. It does not erase the saved world, Othello board, hotbars, preferences, or learning artifacts. That reading gives Recovering after Death a public anchor for play-space context without adding behavior that the current category does not own. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Play-Space Context.',
-          'The surrounding context for Recovering after Death decides which adjacent topic is relevant. Recovering after Death should be compared with Surviving Fall and Void Hazards, Reading Saved World State, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'The useful result of Recovering after Death play-space context is a bounded explanation of player movement and recovery: enough detail to act, and enough restraint to avoid claims outside Movement and Recovery.',
+          'Non-fatal damage advances a hurt state on the player each step, which drives a short hurt flash and a brief view tilt. These are timed effects that decay on their own, so they fade after a hit rather than persisting.',
+          'This feedback is what signals that damage occurred before death. If health is dropping without an obvious cause, the hurt feedback and the death message together identify whether the damage came from a fall, the void, or melee.',
         ],
-      },
-      {
-        id: 'recovering-after-death-recovery-path',
-        title: 'after Death Recovery Path',
-        body: [
-          'Recovering after Death separates the surface that accepts input from the component or document that controls the result. This is especially important when reading motion, collision, and recovery state crosses a saved value, a renderer output, or a public form. That reading gives Recovering after Death a public anchor for recovery path without adding behavior that the current category does not own. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Recovery Path.',
-          'Recovery or follow-up for Recovering after Death should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for recovery path does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-confusion-risk',
-        title: 'after Death Confusion Risk',
-        body: [
-          'If the available evidence for input surface does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause. That reading gives Recovering after Death a public anchor for confusion risk without adding behavior that the current category does not own. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Confusion Risk.',
-          'The main confusion risk in Recovering after Death is diagnosing a gameplay result as a renderer problem. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'If the available evidence for confusion risk does not identify the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents, Recovering after Death should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-reportable-evidence',
-        title: 'after Death Reportable Evidence',
-        body: [
-          'The relevant state is constrained by the article category: Manual treats this topic as player-facing operation. Recovering after Death uses the fact as reportable evidence evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Reportable Evidence.',
-          'Reportable evidence for Recovering after Death should be small, concrete, and public. the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'When Recovering after Death crosses from reportable evidence into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-adjacent-pages',
-        title: 'after Death Adjacent Pages',
-        body: [
-          'Ownership in Recovering after Death is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. Recovering after Death uses the fact as adjacent pages evidence, then keeps the explanation inside Manual rather than turning it into a project-wide claim. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Adjacent Pages.',
-          'Adjacent pages matter for Recovering after Death, but adjacency does not move authority. Recovering after Death should be compared with Surviving Fall and Void Hazards, Reading Saved World State, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use adjacent pages to keep Recovering after Death tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-public-boundary',
-        title: 'after Death Public Boundary',
-        body: [
-          'A public report based on the session owner part of Recovering after Death should state the action, expected result, actual result, environment, and any redaction needed before sharing. For Recovering after Death, that fact identifies the first concrete boundary for public boundary: the active session, input adapter, viewport, overlay stack, hotbar surface, and player state that the desktop window presents. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Public Boundary.',
-          'The public boundary for Recovering after Death is part of the article, not an afterthought. It does not define release status, source architecture, legal permission, or security-reporting procedure. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Recovering after Death crosses from public boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-operator-reading',
-        title: 'after Death Operator Reading',
-        body: [
-          'When reporting an unexpected death, describe the active play space, mode, position, recent movement, nearby AI, and relevant settings. Do not include private save files or unrelated local paths in a public report. In Recovering after Death, visible feedback is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Visible Feedback. The fact also tells the reader which evidence to preserve for operator reading: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Operator Reading.',
-          'An operator reading Recovering after Death should follow manual use starts with a player action, passes through session ownership, and reaches a visible surface only when that surface is the consumer of the state. That order prevents a visible result from being treated as the first source of truth.',
-          'Use operator reading to keep Recovering after Death tied to Controlling the Session; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-implementation-limit',
-        title: 'after Death Implementation Limit',
-        body: [
-          'Visible feedback for Recovering after Death should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Manual / Controlling the Session / Movement and Recovery. The fact also tells the reader which evidence to preserve for implementation limit: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Implementation Limit.',
-          'Implementation limits for Recovering after Death keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the implementation limit part of Recovering after Death should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-safe-summary',
-        title: 'after Death Safe Summary',
-        body: [
-          'Death can come from void damage, fall damage, or AI combat damage. The session reports a death reason, and the presentation layer displays the death overlay. In Recovering after Death, safe summary is the difference between reading player movement and recovery and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Safe Summary.',
-          'The summary value of Recovering after Death is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Recovering after Death should not use safe summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'recovering-after-death-closing-check',
-        title: 'after Death Closing Check',
-        body: [
-          'Player Scope defines the useful size of Recovering after Death. The article should be broad enough to explain player movement and recovery, but narrow enough that diagnosing a gameplay result as a renderer problem remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the active play space, focused surface, selected item, visible message, movement or camera response, and whether an overlay is accepting input. The local reading frame is Recovering after Death / Controlling the Session / Movement and Recovery / Closing Check.',
-          'A final check for Recovering after Death should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Recovering after Death should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Melee damage uses a cooldown, hurt flash, and view tilt.',
+            code: `MELEE_ATTACK_DAMAGE = 1.0
+MELEE_DAMAGE_COOLDOWN_S = 0.50
+MELEE_HURT_FLASH_S = 0.50
+MELEE_HURT_TILT_S = 0.18`,
+          },
         ],
       },
     ],
