@@ -53,7 +53,7 @@ export default function DocsArticleFeedback({ pagePath }: DocsArticleFeedbackPro
   const isSubmitting = status === 'saving';
 
   return (
-    <section aria-labelledby="docs-article-feedback-title" className="feedback-toolbar flex w-full flex-col gap-y-8 pb-16">
+    <>
       <div className="flex flex-row flex-wrap items-center justify-between gap-4">
         <p className="inline-block whitespace-nowrap text-sm text-muted-foreground" id="docs-article-feedback-title">
           Was this page helpful?
@@ -71,6 +71,6 @@ export default function DocsArticleFeedback({ pagePath }: DocsArticleFeedbackPro
         {status === 'saved' ? 'Feedback saved.' : null}
         {status === 'error' ? 'Feedback could not be saved.' : null}
       </p>
-    </section>
+    </>
   );
 }

@@ -37,6 +37,16 @@ function withResolvedReferences(pages: DocsPageContent[]): DocsPageContent[] {
   }));
 }
 
+export type DocsArticlePaginationLink = {
+  title: string;
+  href: string;
+};
+
+export type DocsArticlePaginationLinks = {
+  previous: DocsArticlePaginationLink | null;
+  next: DocsArticlePaginationLink | null;
+};
+
 export const docsPages: DocsPageContent[] = withResolvedReferences(rawDocsPages);
 
 export function getDocsPagePath(page: DocsPageContent): string {
@@ -45,4 +55,31 @@ export function getDocsPagePath(page: DocsPageContent): string {
 
 export function getDocsPageHref(page: DocsPageContent): string {
   return getDocsHrefFromSegments(page.pathSegments);
+}
+
+function toDocsArticlePaginationLink(page: DocsPageContent | undefined): DocsArticlePaginationLink | null {
+  if (page === undefined) {
+    return null;
+  }
+
+  return {
+    title: page.navigationTitle,
+    href: getDocsPageHref(page),
+  };
+}
+
+export function getDocsArticlePaginationLinks(page: DocsPageContent): DocsArticlePaginationLinks {
+  const currentPageIndex = docsPages.findIndex((candidatePage) => getDocsPagePath(candidatePage) === getDocsPagePath(page));
+
+  if (currentPageIndex === -1) {
+    return {
+      previous: null,
+      next: null,
+    };
+  }
+
+  return {
+    previous: toDocsArticlePaginationLink(docsPages[currentPageIndex - 1]),
+    next: toDocsArticlePaginationLink(docsPages[currentPageIndex + 1]),
+  };
 }

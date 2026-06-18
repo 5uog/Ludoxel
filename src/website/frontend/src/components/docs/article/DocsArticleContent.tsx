@@ -2,8 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { getDocsArticlePaginationLinks } from '../../../data/docs/articles';
 import { type DocsMathBlock, type DocsNoteBlock as DocsNoteBlockContent, type DocsPageContent, type DocsSection, getDocsHrefFromSegments } from '../../../data/docs/types';
 import DocsArticleFeedback from './DocsArticleFeedback';
+import DocsArticlePagination from './DocsArticlePagination';
 import DocsArticleReferences from './DocsArticleReferences';
 import DocsCodeBlock from './DocsCodeBlock';
 import DocsCopyrightBanner from './DocsCopyrightBanner';
@@ -169,6 +171,7 @@ function renderSectionContent(section: DocsSection): React.JSX.Element[] {
 export default function DocsArticleContent({ page }: DocsArticleContentProps): React.JSX.Element {
   const articleAnimationKey = page.pathSegments.join('/');
   const pagePath = getDocsHrefFromSegments(page.pathSegments);
+  const paginationLinks = getDocsArticlePaginationLinks(page);
 
   return (
     <div className="space-y-12">
@@ -183,7 +186,11 @@ export default function DocsArticleContent({ page }: DocsArticleContentProps): R
       ))}
 
       <DocsArticleReferences references={page.references} />
-      <DocsArticleFeedback pagePath={pagePath} />
+
+      <section aria-labelledby="docs-article-feedback-title" className="feedback-toolbar flex w-full flex-col gap-y-8 pb-16">
+        <DocsArticleFeedback pagePath={pagePath} />
+        <DocsArticlePagination links={paginationLinks} />
+      </section>
     </div>
   );
 }
