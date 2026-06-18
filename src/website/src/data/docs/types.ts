@@ -55,6 +55,21 @@ export type DocsMathBlock = {
   caption?: string;
 };
 
+export type DocsNoteBlockType = 'note' | 'info' | 'warning';
+
+export type DocsNoteBlockLink = {
+  kind: 'link';
+  label: string;
+  href: string;
+};
+
+export type DocsNoteBlockContentPart = string | DocsNoteBlockLink;
+
+export type DocsNoteBlock = {
+  type: DocsNoteBlockType;
+  content: DocsNoteBlockContentPart | DocsNoteBlockContentPart[];
+};
+
 export type DocsParagraphBlock = {
   kind: 'paragraph';
   text: string;
@@ -79,7 +94,12 @@ export type DocsMathContentBlock = {
   math: DocsMathBlock;
 };
 
-export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock | DocsMathContentBlock;
+export type DocsNoteContentBlock = {
+  kind: 'note';
+  note: DocsNoteBlock;
+};
+
+export type DocsArticleContentBlock = DocsParagraphBlock | DocsListBlock | DocsCodeContentBlock | DocsMediaContentBlock | DocsMathContentBlock | DocsNoteContentBlock;
 
 export type DocsSection = {
   id: string;
@@ -89,6 +109,7 @@ export type DocsSection = {
   codeBlocks?: DocsCodeBlock[];
   mediaBlocks?: DocsMediaBlock[];
   mathBlocks?: DocsMathBlock[];
+  noteBlocks?: DocsNoteBlock[];
 };
 
 export type DocsPageContent = {

@@ -2,12 +2,13 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-import { type DocsMathBlock, type DocsPageContent, type DocsSection } from '../../../data/docs/types';
+import { type DocsMathBlock, type DocsNoteBlock as DocsNoteBlockContent, type DocsPageContent, type DocsSection } from '../../../data/docs/types';
 import DocsArticleReferences from './DocsArticleReferences';
 import DocsCodeBlock from './DocsCodeBlock';
 import { renderInlineText } from './DocsInlineText';
 import DocsMath from './DocsMath';
 import DocsMediaBlock from './DocsMediaBlock';
+import DocsNoteBlock from './DocsNoteBlock';
 import DocsSectionHeading from './DocsSectionHeading';
 
 type DocsArticleContentProps = {
@@ -134,6 +135,10 @@ function renderMathBlock(block: DocsMathBlock, sectionId: string, blockIndex: nu
   );
 }
 
+function renderNoteBlock(block: DocsNoteBlockContent, sectionId: string, blockIndex: number): React.JSX.Element {
+  return <DocsNoteBlock block={block} blockIndex={blockIndex} key={`${sectionId}-note-${blockIndex}`} sectionId={sectionId} />;
+}
+
 function renderSectionEntry(section: DocsSection, key: string): React.JSX.Element[] {
   if (key === 'body') {
     return section.body.flatMap((paragraph, paragraphIndex) => renderBodyParagraph(section, paragraph, paragraphIndex));
@@ -159,6 +164,10 @@ function renderSectionEntry(section: DocsSection, key: string): React.JSX.Elemen
 
   if (key === 'mathBlocks' && section.mathBlocks) {
     return section.mathBlocks.map((block, blockIndex) => renderMathBlock(block, section.id, blockIndex));
+  }
+
+  if (key === 'noteBlocks' && section.noteBlocks) {
+    return section.noteBlocks.map((block, blockIndex) => renderNoteBlock(block, section.id, blockIndex));
   }
 
   return [];
