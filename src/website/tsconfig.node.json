@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "tailwind.config.ts"]
+  "include": ["backend/**/*.ts", "tailwind.config.ts", "vite.config.ts"]
 }

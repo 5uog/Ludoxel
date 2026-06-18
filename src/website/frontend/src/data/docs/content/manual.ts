@@ -987,7 +987,7 @@ if idx is not None:
             kind: 'video',
             sources: [
               {
-                src: '/assets/docs/videos/looking-around-relative-delta.mp4',
+                src: '/assets/videos/looking-around-relative-delta.mp4',
                 type: 'video/mp4',
               },
             ],

@@ -20,8 +20,8 @@ type UseDocsArticleFeedbackResult = {
   submitFeedback: (vote: DocsArticleFeedbackVote) => void;
 };
 
-const FEEDBACK_STORAGE_PREFIX = 'ludoxel:docs-feedback:';
-const FEEDBACK_VOTER_ID_STORAGE_KEY = 'ludoxel:docs-feedback:voter-id';
+const FEEDBACK_STORAGE_PREFIX = 'ludoxel:docs:article-feedback:';
+const FEEDBACK_VOTER_ID_STORAGE_KEY = 'ludoxel:docs:article-feedback:voter-id';
 
 function isDocsArticleFeedbackVote(value: string | null): value is DocsArticleFeedbackVote {
   return value === 'yes' || value === 'no';
@@ -72,7 +72,7 @@ function writeStoredVote(pagePath: string, vote: DocsArticleFeedbackVote): void 
 }
 
 async function postDocsArticleFeedback(request: DocsArticleFeedbackRequest): Promise<void> {
-  const response = await fetch('/api/docs-feedback', {
+  const response = await fetch('/api/vote', {
     body: JSON.stringify(request),
     headers: {
       'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ async function postDocsArticleFeedback(request: DocsArticleFeedbackRequest): Pro
   });
 
   if (!response.ok) {
-    throw new Error('Docs article feedback request failed.');
+    throw new Error('Docs article feedback vote request failed.');
   }
 }
 
