@@ -12,11 +12,20 @@ export type DocsReference = {
   description: string;
 };
 
+export type DocsCodeBlockLanguage = 'py' | 'ts' | 'tsx' | 'json' | 'sh' | 'toml' | 'qss' | 'css' | 'glsl' | 'vert' | 'frag' | 'comp' | 'wgsl';
+
+export type DocsCodeBlock = {
+  language: DocsCodeBlockLanguage;
+  code: string;
+  caption?: string;
+};
+
 export type DocsSection = {
   id: string;
   title: string;
   body: string[];
   items?: string[];
+  codeBlocks?: DocsCodeBlock[];
 };
 
 export type DocsPageContent = {
@@ -40,10 +49,22 @@ export type DefineDocsArticleInput = {
   subcategory: string;
   group: string;
   title: string;
+  description?: string;
+  sections?: DocsSection[];
   relatedTitles?: string[];
 };
 
 const ARTICLE_PLACEHOLDER = 'This article does not exist yet.';
+
+function fallbackDocsSections(): DocsSection[] {
+  return [
+    {
+      id: 'article-status',
+      title: 'Article status',
+      body: [ARTICLE_PLACEHOLDER],
+    },
+  ];
+}
 
 export function toDocsSlug(value: string): string {
   return value
@@ -73,15 +94,9 @@ export function defineDocsArticle(input: DefineDocsArticleInput): DocsPageConten
     navigationTitle: input.title,
     eyebrow: input.category,
     title: input.title,
-    description: ARTICLE_PLACEHOLDER,
+    description: input.description ?? ARTICLE_PLACEHOLDER,
     searchSection: input.category,
-    sections: [
-      {
-        id: 'article-status',
-        title: 'Article status',
-        body: [ARTICLE_PLACEHOLDER],
-      },
-    ],
+    sections: input.sections ?? fallbackDocsSections(),
     relatedTitles: input.relatedTitles,
   };
 }
