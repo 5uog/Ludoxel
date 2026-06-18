@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { type DocsNoteBlock as DocsNoteBlockContent } from '../../../data/docs/types';
-import DocsNoteBlock from '../article/DocsNoteBlock';
+import DocsNoteBlock from './DocsNoteBlock';
 
 const COPYRIGHT_NOTICE: DocsNoteBlockContent = {
   type: 'warning',

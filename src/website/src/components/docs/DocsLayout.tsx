@@ -11,7 +11,6 @@ import AnimatedText from '../animation/AnimatedText';
 import DocsArticleContent from './article/DocsArticleContent';
 import DocsBreadcrumbs from './breadcrumbs/DocsBreadcrumbs';
 import DocsCollectionContent from './collection/DocsCollectionContent';
-import DocsCopyrightBanner from './legal/DocsCopyrightBanner';
 import { type DocsLayoutProps } from './logic/docsLayout.types';
 import { getDocsContentWidthClassName, getDocsLayoutClassName, getDocsLayoutView } from './logic/docsLayoutView';
 import { useDocsFooterOverlap } from './logic/useDocsFooterOverlap';
@@ -86,8 +85,6 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
               <AnimatedText animationKey={`${currentPathname}-description`} text={view.description} />
             </p>
           </div>
-
-          <DocsCopyrightBanner />
 
           {view.kind === 'article' ? <DocsArticleContent page={view.page} /> : <DocsCollectionContent collection={view.collection} />}
         </div>

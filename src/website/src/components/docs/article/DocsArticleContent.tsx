@@ -5,6 +5,7 @@
 import { type DocsMathBlock, type DocsNoteBlock as DocsNoteBlockContent, type DocsPageContent, type DocsSection } from '../../../data/docs/types';
 import DocsArticleReferences from './DocsArticleReferences';
 import DocsCodeBlock from './DocsCodeBlock';
+import DocsCopyrightBanner from './DocsCopyrightBanner';
 import { renderInlineText } from './DocsInlineText';
 import DocsMath from './DocsMath';
 import DocsMediaBlock from './DocsMediaBlock';
@@ -80,7 +81,10 @@ function splitDisplayMath(text: string): DisplayMathTextBlock[] {
           blocks.push({ kind: 'text', text: leadingText });
         }
 
-        blocks.push({ kind: 'math', expression: text.slice(cursor + 2, mathEnd).trim() });
+        blocks.push({
+          kind: 'math',
+          expression: text.slice(cursor + 2, mathEnd).trim(),
+        });
         cursor = mathEnd + 2;
         textStart = cursor;
         continue;
@@ -97,7 +101,10 @@ function splitDisplayMath(text: string): DisplayMathTextBlock[] {
           blocks.push({ kind: 'text', text: leadingText });
         }
 
-        blocks.push({ kind: 'math', expression: text.slice(cursor + 2, mathEnd).trim() });
+        blocks.push({
+          kind: 'math',
+          expression: text.slice(cursor + 2, mathEnd).trim(),
+        });
         cursor = mathEnd + 2;
         textStart = cursor;
         continue;
@@ -180,6 +187,8 @@ function renderSectionContent(section: DocsSection): React.JSX.Element[] {
 export default function DocsArticleContent({ page }: DocsArticleContentProps): React.JSX.Element {
   return (
     <div className="space-y-12">
+      <DocsCopyrightBanner />
+
       {page.sections.map((section, index) => (
         <section className={`scroll-mt-24 page-reveal page-reveal-delay-${Math.min(index + 1, 4)}`} id={section.id} key={section.id}>
           <DocsSectionHeading sectionId={section.id} title={section.title} />
