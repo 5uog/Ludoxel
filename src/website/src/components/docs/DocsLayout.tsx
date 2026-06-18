@@ -81,9 +81,16 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
             <h1 className="mb-4 text-4xl font-bold tracking-tight">
               <AnimatedText animationKey={currentPathname} text={view.title} />
             </h1>
-            <p className="mb-8 text-lg text-muted-foreground">
-              <AnimatedText animationKey={`${currentPathname}-description`} text={view.description} />
-            </p>
+
+            {view.kind === 'article' ? (
+              <p className="page-reveal page-reveal-delay-1 mb-8 text-lg text-muted-foreground" key={`${currentPathname}-article-description`}>
+                {view.description}
+              </p>
+            ) : (
+              <p className="mb-8 text-lg text-muted-foreground">
+                <AnimatedText animationKey={`${currentPathname}-description`} text={view.description} />
+              </p>
+            )}
           </div>
 
           {view.kind === 'article' ? <DocsArticleContent page={view.page} /> : <DocsCollectionContent collection={view.collection} />}
