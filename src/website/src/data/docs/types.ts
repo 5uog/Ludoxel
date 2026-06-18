@@ -49,22 +49,10 @@ export type DefineDocsArticleInput = {
   subcategory: string;
   group: string;
   title: string;
-  description?: string;
-  sections?: DocsSection[];
+  description: string;
+  sections: DocsSection[];
   relatedTitles?: string[];
 };
-
-const ARTICLE_PLACEHOLDER = 'This article does not exist yet.';
-
-function fallbackDocsSections(): DocsSection[] {
-  return [
-    {
-      id: 'article-status',
-      title: 'Article status',
-      body: [ARTICLE_PLACEHOLDER],
-    },
-  ];
-}
 
 export function toDocsSlug(value: string): string {
   return value
@@ -94,9 +82,9 @@ export function defineDocsArticle(input: DefineDocsArticleInput): DocsPageConten
     navigationTitle: input.title,
     eyebrow: input.category,
     title: input.title,
-    description: input.description ?? ARTICLE_PLACEHOLDER,
+    description: input.description,
     searchSection: input.category,
-    sections: input.sections ?? fallbackDocsSections(),
+    sections: input.sections,
     relatedTitles: input.relatedTitles,
   };
 }
