@@ -14,9 +14,7 @@ type DocsArticleContentProps = {
 
 function renderSectionEntry(section: DocsSection, key: string): React.JSX.Element[] {
   if (key === 'body') {
-    return section.body.map((paragraph, paragraphIndex) => (
-      <p key={`${section.id}-body-${paragraphIndex}`}>{renderInlineText(paragraph)}</p>
-    ));
+    return section.body.map((paragraph, paragraphIndex) => <p key={`${section.id}-body-${paragraphIndex}`}>{renderInlineText(paragraph)}</p>);
   }
 
   if (key === 'items' && section.items) {
@@ -30,15 +28,11 @@ function renderSectionEntry(section: DocsSection, key: string): React.JSX.Elemen
   }
 
   if (key === 'codeBlocks' && section.codeBlocks) {
-    return section.codeBlocks.map((block, blockIndex) => (
-      <DocsCodeBlock block={block} blockIndex={blockIndex} key={`${section.id}-code-${blockIndex}`} sectionId={section.id} />
-    ));
+    return section.codeBlocks.map((block, blockIndex) => <DocsCodeBlock block={block} blockIndex={blockIndex} key={`${section.id}-code-${blockIndex}`} sectionId={section.id} />);
   }
 
   if (key === 'mediaBlocks' && section.mediaBlocks) {
-    return section.mediaBlocks.map((block, blockIndex) => (
-      <DocsMediaBlock block={block} blockIndex={blockIndex} key={`${section.id}-media-${blockIndex}`} sectionId={section.id} />
-    ));
+    return section.mediaBlocks.map((block, blockIndex) => <DocsMediaBlock block={block} blockIndex={blockIndex} key={`${section.id}-media-${blockIndex}`} sectionId={section.id} />);
   }
 
   return [];
