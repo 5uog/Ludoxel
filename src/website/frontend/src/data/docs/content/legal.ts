@@ -1465,7 +1465,7 @@ export const legalPages: DocsPageContent[] = [
             note: {
               type: 'warning',
               content:
-                'Output that contains protected material must not be treated as clean training material, benchmark material, retrieval material, or dataset material merely because it was produced during ordinary application operation. Computational ingestion of protected material is AI Use and remains prohibited outside the limited grant.',
+                'Output that contains protected material must not be treated as clean training material, benchmark material, retrieval material, or dataset material merely because it was produced during ordinary application operation. Computational ingestion of protected material is AI Use, and the limited grant supplies no authority for it.',
             },
           },
         ],
@@ -1484,7 +1484,7 @@ export const legalPages: DocsPageContent[] = [
             ', does not classify saved files as data, does not authorize redistribution, does not authorize AI Use, does not clear third-party or provenance-sensitive content, and does not decide whether any particular file may be published.',
           ],
           [
-            'Its conclusion is narrow: output created through Ordinary Application Use is the Licensee’s to use subject to the License and applicable third-party rights, but it does not become Original Materials, does not relicense embedded protected material, and does not grant any right to reuse the underlying ',
+            'Its conclusion is narrow: output created through Ordinary Application Use may be used only as output, and only subject to the License Text and applicable third-party rights. It is not a laundering rule for embedded protected material, does not become Original Materials, does not relicense embedded protected material, and does not grant any right to extract, redistribute, train on, or reuse the underlying ',
             {
               kind: 'link',
               label: 'Original Materials',
@@ -1725,7 +1725,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding Derivative Work Restrictions',
     description:
-      'Explains why modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, and website redesign of Ludoxel Original Materials are restricted, and why private technical capability does not create permission to prepare or circulate a public derivative work.',
+      'Explains why modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, and website redesign of Ludoxel Original Materials are restricted, and why private technical capability does not create permission to prepare, use, publish, or circulate a derivative work.',
     sections: [
       {
         id: 'understanding-derivative-work-restrictions-juridical-function',
@@ -1843,8 +1843,8 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-derivative-work-restrictions-private-versus-public',
         title: 'Private Experiment and Public Derivative Circulation',
         body: [
-          'A strictly private, local alteration that is never distributed, deployed, published, incorporated, or submitted raises a different practical posture from public derivative circulation, because public circulation additionally engages the redistribution restriction and may engage AI-use and contribution boundaries. This article does not declare private local experimentation to be an affirmative grant; it states that the gravest and clearest prohibitions attach the moment a derivative leaves the Licensee’s private control.',
-          'The decisive point is that the existence of a private capability cannot be advanced as evidence of a public permission. A Licensee cannot reason from the ability to experiment locally to a right to publish, distribute, deploy, or otherwise circulate a derivative work to others.',
+          'A strictly private, local alteration that is never distributed, deployed, published, incorporated, or submitted may present a different evidentiary posture from public derivative circulation, because public circulation additionally engages redistribution, AI-use, and contribution boundaries. This article does not declare private local experimentation to be an affirmative grant. The License Text, not practical privacy, determines whether preparation or use of the derivative is authorized.',
+          'The decisive point is that the existence of a private capability cannot be advanced as evidence of any broader permission. A Licensee cannot reason from the ability to experiment locally to a right to publish, distribute, deploy, submit, incorporate, or otherwise circulate a derivative work to others.',
         ],
       },
       {
@@ -1907,7 +1907,7 @@ export const legalPages: DocsPageContent[] = [
               label: 'Ordinary Application Use',
               href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
             },
-            ', because launching Ludoxel and obtaining output is permitted operation, while ingesting protected material into a model or dataset is not.',
+            ', because launching Ludoxel and obtaining output are runtime acts, while ingesting protected material into a model, dataset, index, benchmark, or retrieval system is a separate restricted act outside the ordinary-use grant.',
           ],
           'The function of the restriction is to prevent the limited grant, the public availability of the materials, or the presence of machine-learning functionality inside Ludoxel from being read as consent to computational reuse of protected expression.',
         ],
@@ -2003,7 +2003,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Internal AI Features Are Not External AI Permission',
         body: [
           'Ludoxel contains AI-controlled non-player actors and produces AI learning records as part of its ordinary operation. Those features are runtime behavior of the application and the resulting records are user data produced locally. Their existence does not grant permission to train, evaluate, benchmark, or otherwise ingest Ludoxel Original Materials into any external model, dataset, index, or benchmark.',
-          'The internal learning behavior operates on the application’s own runtime data within Ordinary Application Use. It is not a representation that the project source, assets, documentation, or package contents are available as training, evaluation, or dataset material for systems outside Ludoxel. The presence of machine-learning functionality inside the application must not be read as consent to AI Use of the protected materials that compose the application.',
+          'The internal learning behavior operates within the application’s own runtime context. It is not a representation that the project source, assets, documentation, or package contents are available as training, evaluation, indexing, benchmark, retrieval, embedding, or dataset material for systems outside Ludoxel. The presence of machine-learning functionality inside the application must not be read as consent to AI Use of the protected materials that compose the application.',
         ],
       },
       {
@@ -2100,7 +2100,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-public-issue-limits-permitted-categories',
         title: 'Permitted Public-Issue Categories',
         body: [
-          'A public issue is admitted only for a reproducible non-security problem report concerning the Current Repository or an Official Distribution; for a limited question about repository policy, the License, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy; and for a minimal request for a Private Reporting Channel when no such channel is available.',
+          'A public issue is admitted only for a reproducible non-security problem report concerning the Current Repository or an Official Distribution; for a limited question about repository policy, the License, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy; and for a minimal request for a Private Reporting Channel when no such channel is available. Each category is admitted only as a narrow report-routing surface and does not become an invitation to submit patches, replacement text, exploit detail, feature proposals, design material, or implementation material.',
           'These categories are exhaustive for the public surface. A submission that does not fall within one of them is outside the permitted scope of the public issue channel, regardless of how it is labelled.',
         ],
       },
@@ -2566,7 +2566,7 @@ export const legalPages: DocsPageContent[] = [
             '.',
           ],
           [
-            'Because pull-request contents alter or replace protected material, they are also a Derivative Work within the License Text, and their preparation is governed by the ',
+            'To the extent pull-request contents alter, replace, adapt, translate, restructure, refactor, port, reimplement, or otherwise derive from protected material, they are also Derivative Works within the License Text, and their preparation is governed by the ',
             {
               kind: 'link',
               label: 'derivative-work',
