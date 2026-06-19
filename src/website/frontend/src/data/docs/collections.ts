@@ -26,7 +26,6 @@ const docsCollectionDescriptions: Record<DocsSearchSection, string> = {
   Distribution: 'Desktop package, build, check, license-inclusion, and release-boundary documentation.',
   Legal: 'License authority, material scope, use restrictions, and repository-governance documentation.',
   Support: 'Problem report, limited question, security contact, and unsupported-request documentation.',
-  Developer: 'Repository boundary, documentation source, tooling, GitHub policy, and authorized-operation documentation.',
 };
 
 function normalizeDocsPath(path: string | undefined): string {
@@ -67,7 +66,7 @@ function titleForCollection(pathSegments: string[], pages: DocsPageContent[]): s
 
 function descriptionForCollection(pathSegments: string[], pages: DocsPageContent[]): string {
   if (pathSegments.length === 0) {
-    return 'Technical Ludoxel documentation for practitioners, researchers, developers, and programming-literate readers.';
+    return 'Technical Ludoxel documentation for practitioners, researchers, and programming-literate readers.';
   }
 
   const firstPage = pages[0];

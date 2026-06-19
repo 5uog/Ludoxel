@@ -39,10 +39,6 @@ const SECTION_META: Record<string, SearchSectionMeta> = {
     label: 'Support',
     Icon: FileText,
   },
-  developer: {
-    label: 'Developer',
-    Icon: Wrench,
-  },
   application: {
     label: 'Application',
     Icon: FileText,

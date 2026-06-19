@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
-export const docsSearchSections = ['Manual', 'Gameplay', 'Systems', 'Settings', 'Data', 'Distribution', 'Legal', 'Support', 'Developer'] as const;
+export const docsSearchSections = ['Manual', 'Gameplay', 'Systems', 'Settings', 'Data', 'Distribution', 'Legal', 'Support'] as const;
 
 export type DocsSearchSection = (typeof docsSearchSections)[number];
 

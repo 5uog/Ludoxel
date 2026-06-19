@@ -14,7 +14,7 @@ export type SeoMetadata = {
 export const siteOrigin = 'https://ludoxel.vercel.app';
 
 const siteTitle = 'Ludoxel';
-const technicalAudience = 'practitioners, researchers, developers, and programming-literate readers';
+const technicalAudience = 'practitioners, researchers, and programming-literate readers';
 const homeTitle = 'Ludoxel - Technical Voxel Sandbox Documentation';
 const homeDescription =
   'Technical Ludoxel documentation for practitioners and programming-literate readers covering renderer behavior, AI NPC systems, Othello rules, settings, distribution boundaries, and legal material scope.';
@@ -134,7 +134,7 @@ export function buildStructuredData(metadata: SeoMetadata): Record<string, unkno
     inLanguage: 'en',
     audience: {
       '@type': 'Audience',
-      audienceType: 'Practitioners, researchers, developers, and programming-literate readers',
+      audienceType: 'Practitioners, researchers, and programming-literate readers',
     },
     isPartOf: {
       '@type': 'WebSite',

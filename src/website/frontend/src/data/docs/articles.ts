@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { dataPages } from './content/data';
-import { developerPages } from './content/developer';
 import { distributionPages } from './content/distribution';
 import { gameplayPages } from './content/gameplay';
 import { legalPages } from './content/legal';
@@ -13,7 +12,7 @@ import { supportPages } from './content/support';
 import { systemsPages } from './content/systems';
 import { getDocsHrefFromSegments, type DocsPageContent, type DocsReference } from './types';
 
-const rawDocsPages: DocsPageContent[] = [...manualPages, ...gameplayPages, ...systemsPages, ...settingsPages, ...dataPages, ...distributionPages, ...legalPages, ...supportPages, ...developerPages];
+const rawDocsPages: DocsPageContent[] = [...manualPages, ...gameplayPages, ...systemsPages, ...settingsPages, ...dataPages, ...distributionPages, ...legalPages, ...supportPages];
 
 function buildReferenceMap(pages: DocsPageContent[]): Map<string, DocsReference> {
   return new Map(

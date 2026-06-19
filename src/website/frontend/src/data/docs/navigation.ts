@@ -25,7 +25,6 @@ const docsCategoryIcons: Record<DocsSearchSection, DocsSidebarItem['icon']> = {
   Distribution: 'wrench',
   Legal: 'shield',
   Support: 'file',
-  Developer: 'wrench',
 };
 
 export const docsSidebarSections: DocsSidebarSection[] = docsSearchSections.map((section) => ({
