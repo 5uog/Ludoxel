@@ -11,150 +11,104 @@ export const legalPages: DocsPageContent[] = [
     group: 'Authority Text',
     title: 'Understanding License Authority',
     description:
-      'Explains which text governs Ludoxel original materials. This page treats license interpretation as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains where permission for Ludoxel original materials comes from, which public texts can only point to that authority, and when the reader must stop instead of treating visibility, summaries, or platform behavior as permission.',
     sections: [
       {
-        id: 'understanding-license-authority-authority-scope',
-        title: 'License Authority Authority Scope',
+        id: 'understanding-license-authority-meaning',
+        title: 'What License Authority Means',
         body: [
-          'The repository LICENSE is the controlling authority for Ludoxel original materials. Public website text, README summaries, and issue templates point readers toward it. The point matters in authority scope because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding License Authority. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'The useful result of Understanding License Authority authority scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Authority Text.',
+          'This article answers one narrow question: which text or written act can grant permission for Ludoxel original materials. It does not classify every material type, restate every restriction, resolve third-party terms, or decide every distribution question.',
+          'For Ludoxel original materials, authority starts from the root `LICENSE`. Other public materials may explain, point to, or display that authority, but they do not become an independent permission source unless the `LICENSE` or a later signed written instrument gives them that effect.',
+          'This article therefore treats authority as a gatekeeping issue. Before a reader asks whether a proposed use is allowed, the reader must first identify whether the claimed permission comes from the controlling license text or from a non-controlling surface such as a summary, page notice, platform interface, generated artifact, or public repository view.',
         ],
       },
       {
-        id: 'understanding-license-authority-controlling-text',
-        title: 'License Authority Controlling Text',
+        id: 'understanding-license-authority-controlling-source',
+        title: 'Controlling Source',
         body: [
-          'Authority Scope defines the useful size of Understanding License Authority. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. In Understanding License Authority, controlling text is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Controlling Text.',
-          'A direct observation for Understanding License Authority should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'If the available evidence for controlling text does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding License Authority should be treated as an observation rather than a confirmed cause.',
+          'The root `LICENSE` is the controlling license text for Ludoxel original materials. It is the place where the permission grant, reservation of rights, and legal limits must be read.',
+          '`README.md` can introduce that structure and direct the reader to the license, but it remains explanatory. The same is true of documentation notices, SPDX headers, package metadata, release text, issue templates, pull-request text, website metadata, and generated documentation text.',
+          'A public page can make the controlling text easier to find. It cannot enlarge the grant, remove a restriction, or convert ordinary viewing into reuse, redistribution, deployment, scraping, indexing, dataset creation, model training, benchmark use, or incorporation into another work.',
         ],
       },
       {
-        id: 'understanding-license-authority-material-class',
-        title: 'License Authority Material Class',
+        id: 'understanding-license-authority-non-authority-surfaces',
+        title: 'Non-Authority Surfaces',
         body: [
-          'The useful result of Understanding License Authority authority scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Authority Text. That reading gives Understanding License Authority a public anchor for material class without adding behavior that the current category does not own. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Material Class.',
-          'Understanding License Authority separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding License Authority material class is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Authority Text.',
+          'Repository visibility is not license authority. Documentation-site publication is not license authority. A hosted preview, generated static page, build artifact, package file, source browser, search result, copied excerpt, or platform button is not license authority.',
+          'Those surfaces may be evidence that a text is public, visible, or technically accessible. They are not evidence that the licensor granted permission beyond the controlling license text.',
+          'The same rule applies to summaries and notices. A summary can describe the license hierarchy, and a notice can warn that displayed material remains protected, but neither one becomes a new grant of rights.',
         ],
       },
       {
-        id: 'understanding-license-authority-ordinary-use',
-        title: 'License Authority Ordinary Use',
-        body: [
-          'License authority is determined by the root LICENSE for Ludoxel original materials. Public documentation can point to that text, but it cannot add permissions or remove restrictions. In Understanding License Authority, controlling text is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Controlling Text. For Understanding License Authority, that fact identifies the first concrete boundary for ordinary use: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Ordinary Use.',
-          'Ownership in Understanding License Authority is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'A public report based on the ordinary use part of Understanding License Authority should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'understanding-license-authority-reading-order',
+        title: 'License Reading Order',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The reading order stays narrow. It tests the source of permission before it moves to material scope, third-party status, output handling, distribution, or enforcement. Those later questions belong to their own legal articles after authority has been identified.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-license-authority-reading-order-claim',
+                title: 'Identify the claimed permission source.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The first question is not whether the desired use feels ordinary, useful, public, or technically possible. The first question is where the claimed permission is said to come from: the root `LICENSE`, a later written instrument signed by the licensor, a README explanation, a documentation notice, a platform interface, a generated artifact, or mere public visibility.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-license-authority-reading-order-control',
+                title: 'Give controlling force only to the controlling text.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'For Ludoxel original materials, controlling force belongs to the English license text in the root `LICENSE`, except where a later signed written instrument validly changes the grant. Explanatory repository text and public documentation text remain subordinate to that controlling source.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-license-authority-reading-order-reject-surrogates',
+                title: 'Reject visibility and summaries as substitute grants.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Public access, source-form availability, Documentation Site display, code excerpts, examples, search data, metadata, package configuration, generated output, and hosting-service behavior do not supply missing permission. They may show that material is visible; they do not show that a broader license has been granted.',
+                  },
+                  {
+                    kind: 'note',
+                    note: {
+                      type: 'warning',
+                      content:
+                        'A public notice on a documentation page confirms that the displayed material remains under the stated license authority. It is not a second license and not an exception to the root LICENSE.',
+                    },
+                  },
+                ],
+              },
+              {
+                id: 'understanding-license-authority-reading-order-stop-boundary',
+                title: 'Stop once authority is identified.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'After the controlling source is identified, this article has done its job. Questions about what counts as original material, what third-party terms require, what repository visibility permits, what license text must accompany materials, or what distribution artifacts contain belong to the neighboring Legal articles.',
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-license-authority-restricted-use',
-        title: 'License Authority Restricted Use',
+        id: 'understanding-license-authority-boundary',
+        title: 'Article Boundary',
         body: [
-          'A direct observation for Understanding License Authority should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. Understanding License Authority uses the fact as restricted use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Restricted Use.',
-          'Visible feedback for Understanding License Authority should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Authority Text.',
-          'When Understanding License Authority crosses from restricted use into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-third-party-split',
-        title: 'License Authority Third-Party Split',
-        body: [
-          'If the available evidence for controlling text does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding License Authority should be treated as an observation rather than a confirmed cause. In Understanding License Authority, third-party split is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Third-Party Split.',
-          'When Understanding License Authority touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for third-party split does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding License Authority should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-public-summary-limit',
-        title: 'License Authority Public Summary Limit',
-        body: [
-          'A documentation page does not expand use, redistribution, derivative-work, warranty, or AI-use permissions. Rights and restrictions must be read from the license itself. That reading gives Understanding License Authority a public anchor for public summary limit without adding behavior that the current category does not own. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Public Summary Limit.',
-          'The surrounding context for Understanding License Authority decides which adjacent topic is relevant. Understanding License Authority should be compared with Understanding Controlling Text, Including License Text, Understanding Repository Visibility only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for public summary limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding License Authority should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-reporting-limit',
-        title: 'License Authority Reporting Limit',
-        body: [
-          'Understanding License Authority separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for reporting limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Reporting Limit.',
-          'Recovery or follow-up for Understanding License Authority should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the reporting limit part of Understanding License Authority should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-distribution-limit',
-        title: 'License Authority Distribution Limit',
-        body: [
-          'The useful result of Understanding License Authority material class is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Authority Text. The point matters in distribution limit because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Distribution Limit.',
-          'The main confusion risk in Understanding License Authority is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Understanding License Authority should not use distribution limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-ai-use-limit',
-        title: 'License Authority AI Use Limit',
-        body: [
-          'The legal state of a material depends on whether it is Ludoxel original material, third-party material, provenance-sensitive material, user-created material, application output, or distribution material. Understanding License Authority uses the fact as ai use limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / AI Use Limit.',
-          'Reportable evidence for Understanding License Authority should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use ai use limit to keep Understanding License Authority tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-evidence',
-        title: 'License Authority Legal Evidence',
-        body: [
-          'Ownership in Understanding License Authority is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The fact also tells the reader which evidence to preserve for legal evidence: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Legal Evidence.',
-          'Adjacent pages matter for Understanding License Authority, but adjacency does not move authority. Understanding License Authority should be compared with Understanding Controlling Text, Including License Text, Understanding Repository Visibility only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the legal evidence part of Understanding License Authority should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-related-legal',
-        title: 'License Authority Related Legal',
-        body: [
-          'A public report based on the ordinary use part of Understanding License Authority should state the action, expected result, actual result, environment, and any redaction needed before sharing. In Understanding License Authority, related legal is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Related Legal.',
-          'The public boundary for Understanding License Authority is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Understanding License Authority should not use related legal to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-reader-risk',
-        title: 'License Authority Reader Risk',
-        body: [
-          'Third-party materials keep their own license text. The Ludoxel license governs original materials and does not erase separate third-party requirements. Understanding License Authority uses the fact as restricted use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Restricted Use. The fact also tells the reader which evidence to preserve for reader risk: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Reader Risk.',
-          'An operator reading Understanding License Authority should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'Use reader risk to keep Understanding License Authority tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-non-advice',
-        title: 'License Authority Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding License Authority should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Authority Text. The fact also tells the reader which evidence to preserve for non-advice boundary: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Non-Advice Boundary.',
-          'Implementation limits for Understanding License Authority keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the non-advice boundary part of Understanding License Authority should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-public-summary',
-        title: 'License Authority Public Summary',
-        body: [
-          'The repository LICENSE is the controlling authority for Ludoxel original materials. Public website text, README summaries, and issue templates point readers toward it. In Understanding License Authority, public summary is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Public Summary.',
-          'The summary value of Understanding License Authority is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for public summary does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding License Authority should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-license-authority-closing-check',
-        title: 'License Authority Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding License Authority. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding License Authority / License Authority and Materials / Authority Text / Closing Check.',
-          'A final check for Understanding License Authority should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding License Authority tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
+          'This page should not become a general legal index. It does not restate the full definition of original materials, third-party materials, provenance-sensitive materials, user-created materials, application output, distribution materials, hosting terms, governing law, forum, or AI-use restrictions.',
+          'Its conclusion is narrower: permission for Ludoxel original materials must come from the controlling license authority, not from public visibility, summaries, notices, metadata, build output, website deployment, platform functions, or nearby policy text.',
         ],
       },
     ],
