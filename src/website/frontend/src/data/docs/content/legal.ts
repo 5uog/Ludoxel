@@ -114,7 +114,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-license-authority-boundary',
         title: 'Article Boundary',
         body: [
-          'This article must not be expanded into a general legal index. It does not restate the full definition of Original Materials, third-party materials, provenance-sensitive materials, user-created materials, application output, distribution materials, ordinary application use, AI-use restrictions, contribution refusal, security reporting, governing law, forum, or enforcement posture.',
+          [
+            'This article must not be expanded into a general legal index. It does not restate the full definition of Original Materials, third-party materials, provenance-sensitive materials, user-created materials, application output, distribution materials, ',
+            {
+              kind: 'link',
+              label: 'ordinary application use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', AI-use restrictions, contribution refusal, security reporting, governing law, forum, or enforcement posture.',
+          ],
           [
             'Its conclusion is narrow and severe: permission for Ludoxel Original Materials must come from the ',
             {
@@ -133,7 +141,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding Controlling Text', 'Including License Text', 'Understanding Repository Visibility'],
+    relatedTitles: ['Understanding Controlling Text', 'Including License Text', 'Understanding Repository Visibility', 'Understanding Ordinary Application Use'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -147,7 +155,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-controlling-text-doctrinal-function',
         title: 'Doctrinal Function of the Controlling Text Rule',
         body: [
-          'The controlling-text rule is a rule of juridical priority. It does not identify the Licensor, classify every material, authorize distribution, enlarge ordinary use, resolve third-party clearance, accept contributions, or route security reports. Its function is narrower: when a Ludoxel-related statement has been identified and that statement is alleged to alter the legal position, the rule determines whether the statement can operate against the License Text.',
+          [
+            'The controlling-text rule is a rule of juridical priority. It does not identify the Licensor, classify every material, authorize distribution, enlarge ',
+            {
+              kind: 'link',
+              label: 'ordinary use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', resolve third-party clearance, accept contributions, or route security reports. Its function is narrower: when a Ludoxel-related statement has been identified and that statement is alleged to alter the legal position, the rule determines whether the statement can operate against the License Text.',
+          ],
           'For Original Materials, the operative source is the English License Text in the root `LICENSE`. Subordinate statements may describe, summarize, warn, label, expose, render, index, package, deploy, route, or explain the project. They do not obtain equal legal rank by appearing in the repository, in the Documentation Site, in build output, in metadata, in a generated file, in a hosted preview, in a public issue surface, or in an interface element.',
           'The consequence is not merely interpretive preference. A subordinate statement that conflicts with the License Text has no operative effect to the extent of the conflict unless it is itself a later competent written instrument that expressly changes the legal position. The conflict is not solved by popularity, convenience, visibility, reliance, technical availability, platform design, or ordinary user expectation.',
         ],
@@ -165,7 +181,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-controlling-text-conflict-threshold',
         title: 'Threshold for Conflict',
         body: [
-          'A conflict exists where a subordinate statement and the License Text cannot both be given effect in the same legal respect. The conflict may be express, as where a subordinate statement purports to allow redistribution that the License Text does not grant. It may also be functional, as where the subordinate statement would permit the same practical legal result by calling the act viewing, access, example use, repository use, documentation use, ordinary use, or platform use.',
+          [
+            'A conflict exists where a subordinate statement and the License Text cannot both be given effect in the same legal respect. The conflict may be express, as where a subordinate statement purports to allow redistribution that the License Text does not grant. It may also be functional, as where the subordinate statement would permit the same practical legal result by calling the act viewing, access, example use, repository use, documentation use, ',
+            {
+              kind: 'link',
+              label: 'ordinary use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', or platform use.',
+          ],
           'No conflict exists merely because the subordinate statement is shorter, less complete, more accessible, less technical, or directed at ordinary readers. A non-conflicting explanation can point to the License Text, warn about the License Text, or summarize a boundary without becoming the boundary.',
           'The threshold is therefore legal inconsistency, not linguistic difference. A simplified statement may coexist with the License Text only while it remains subordinate and non-expansive. The moment it would create a grant, waiver, exception, amendment, substitution, sublicense, release, public-domain dedication, estoppel theory, or implied license contrary to the License Text, it is non-operative to that extent.',
         ],
@@ -296,7 +320,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding License Authority', 'Understanding Repository Visibility', 'Including License Text'],
+    relatedTitles: ['Understanding License Authority', 'Understanding Repository Visibility', 'Including License Text', 'Understanding Ordinary Application Use'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -418,7 +442,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-repository-visibility-article-boundary',
         title: 'Article Boundary',
         body: [
-          'This article addresses visibility and access only. It does not classify all materials, decide the full scope of Original Materials, determine third-party clearance, authorize distribution, decide generated-output permissions, define ordinary application use, accept contributions, route security reports, or determine whether a release is official.',
+          [
+            'This article addresses visibility and access only. It does not classify all materials, decide the full scope of Original Materials, determine third-party clearance, authorize distribution, decide generated-output permissions, define ',
+            {
+              kind: 'link',
+              label: 'ordinary application use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', accept contributions, route security reports, or determine whether a release is official.',
+          ],
           [
             'Its conclusion is narrow: a public repository, public Documentation Site, public deployment surface, public cache, public index, or public platform interface does not grant permission beyond the ',
             {
@@ -437,7 +469,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding License Authority', 'Understanding Controlling Text', 'Understanding Original Materials'],
+    relatedTitles: ['Understanding License Authority', 'Understanding Controlling Text', 'Understanding Original Materials', 'Understanding Ordinary Application Use'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -602,7 +634,15 @@ export const legalPages: DocsPageContent[] = [
         title: 'Permission Boundary',
         body: [
           'Classifying a material as Original Materials does not authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark creation, deployment, sublicensing, sale, rental, lending, or removal of legal markings.',
-          'The License Text contains an exhaustive limited grant for human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and Ordinary Application Use, and separately reserves rights and excludes uses outside that grant. This article does not restate every exclusion; it states why classification must be settled before those exclusions are applied.',
+          [
+            'The License Text contains an exhaustive limited grant for human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and ',
+            {
+              kind: 'link',
+              label: 'Ordinary Application Use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', and separately reserves rights and excludes uses outside that grant. This article does not restate every exclusion; it states why classification must be settled before those exclusions are applied.',
+          ],
           'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later competent written instrument. It must not be inferred from material classification, public availability, technical accessibility, package form, hosting-service behavior, documentation examples, or ordinary user expectation.',
         ],
       },
@@ -610,7 +650,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-original-materials-article-boundary',
         title: 'Article Boundary',
         body: [
-          'This article classifies Ludoxel materials that fall within the Original Materials perimeter under the License Text. It does not classify every third-party asset, prove provenance for every local file, determine whether a specific output may be shared, authorize distribution, decide ordinary application use, resolve AI-use restrictions, accept contributions, route security reports, or determine official release status.',
+          [
+            'This article classifies Ludoxel materials that fall within the Original Materials perimeter under the License Text. It does not classify every third-party asset, prove provenance for every local file, determine whether a specific output may be shared, authorize distribution, decide ',
+            {
+              kind: 'link',
+              label: 'ordinary application use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', resolve AI-use restrictions, accept contributions, route security reports, or determine official release status.',
+          ],
           [
             'Its conclusion is narrow: Ludoxel Original Materials are the project materials created, owned, or controlled by the Licensor for purposes of the License Text, including the specified source, object, documentation, website, metadata, package, shader, asset, branding, icon, distribution-preparation, and static-site materials to the extent they are not Third-Party Materials. The legal force of that conclusion remains subject to the ',
             {
@@ -895,6 +943,7 @@ export const legalPages: DocsPageContent[] = [
       'Understanding Controlling Text',
       'Understanding Repository Visibility',
       'Understanding Original Materials',
+      'Understanding Ordinary Application Use',
       'Including License Text',
       'Including Third Party License Text',
       'Running Package Checks with Permission',
@@ -912,154 +961,319 @@ export const legalPages: DocsPageContent[] = [
     group: 'Ordinary Use and Output',
     title: 'Understanding Ordinary Application Use',
     description:
-      'Explains the limited ordinary-use context for running Ludoxel. This page treats license interpretation as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the limited permission to use Ludoxel as a desktop application, separates ordinary interactive operation from restricted uses of Ludoxel Original Materials, and states the boundary between local use, user-created materials, application output, distribution, and AI Use.',
     sections: [
       {
-        id: 'understanding-ordinary-application-use-authority-scope',
-        title: 'Ordinary Application Use Authority Scope',
+        id: 'understanding-ordinary-application-use-juridical-function',
+        title: 'Juridical Function of Ordinary Application Use',
         body: [
-          'Ordinary application use means running the desktop application and interacting with its normal features, settings, worlds, Othello play, screenshots, recordings, and save data. For Understanding Ordinary Application Use, that fact identifies the first concrete boundary for authority scope: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Ordinary Application Use. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'When Understanding Ordinary Application Use crosses from authority scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          [
+            'Ordinary Application Use is the defined endpoint of the limited permission to use Ludoxel as a desktop application. It is a permitted mode of application operation under the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text; it is not a general license to reuse the repository, the Documentation Site, package contents, source files, assets, branding, shaders, metadata, or other ',
+            {
+              kind: 'link',
+              label: 'Original Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+            },
+            '.',
+          ],
+          'The legal function of the term is restrictive. It marks the ordinary local operation of Ludoxel that the License Text permits, while excluding uses that transform application operation into reuse of protected project materials, circulation of project artifacts, extraction of resources, derivative preparation, AI processing, website mirroring, or public deployment.',
+          [
+            'This article therefore answers a narrow question: whether a proposed act remains within ordinary local application use, or whether it has moved into ',
+            {
+              kind: 'link',
+              label: 'generated output',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-generated-output',
+            },
+            ', redistribution, derivative preparation, AI Use, third-party clearance, distribution status, or another legal question controlled by a different article.',
+          ],
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-controlling-text',
-        title: 'Ordinary Application Use Controlling Text',
+        id: 'understanding-ordinary-application-use-operative-text',
+        title: 'Operative Text and Exhaustive Grant',
         body: [
-          'Authority Scope defines the useful size of Understanding Ordinary Application Use. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. For Understanding Ordinary Application Use, that fact identifies the first concrete boundary for controlling text: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Controlling Text.',
-          'A direct observation for Understanding Ordinary Application Use should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'When Understanding Ordinary Application Use crosses from controlling text into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          [
+            'The License Text grants only limited, non-exclusive, non-transferable, non-sublicensable, revocable permission to use Ludoxel solely for Ordinary Application Use, subject to complete compliance with the License Text. That permission must be read under the ',
+            {
+              kind: 'link',
+              label: 'license-authority',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority',
+            },
+            ' structure and cannot be enlarged by explanatory documentation, interface wording, package presence, repository access, or user expectation.',
+          ],
+          'The grant is exhaustive. Ordinary Application Use is not an open-ended example of permitted conduct; it is the maximum permitted use category for running Ludoxel unless a later competent written instrument signed by the Licensor grants a further permission.',
+          [
+            'Because the grant is exhaustive, conduct outside the definition remains ungranted. That consequence is not altered by public ',
+            {
+              kind: 'link',
+              label: 'visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            ', technical accessibility, platform functionality, application availability, package form, local convenience, educational purpose, noncommercial purpose, or the fact that a user can cause the application to display or save something.',
+          ],
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-material-class',
-        title: 'Ordinary Application Use Material Class',
+        id: 'understanding-ordinary-application-use-definition',
+        title: 'Definition of Ordinary Application Use',
         body: [
-          'When Understanding Ordinary Application Use crosses from authority scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. Understanding Ordinary Application Use uses the fact as material class evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Material Class.',
-          'Understanding Ordinary Application Use separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'Use material class to keep Understanding Ordinary Application Use tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
+          'Ordinary Application Use means using Ludoxel as a desktop application for its ordinary interactive functions. The License Text identifies launching Ludoxel, using its user interface, changing settings, saving and loading user-specific data, taking ordinary screenshots, recording ordinary screen footage, and performing directly related local actions.',
+          'The word ordinary is legally limiting. It confines the permission to application-facing, local, interactive operation and directly related local actions. It does not convert every technically possible action involving Ludoxel into a permitted action.',
+          'The definition must not be read backward from a desired result. If the proposed act requires copying protected project material, extracting resources, publishing a package, deploying website output, preparing a derivative work, training a model, creating a dataset, or circulating Ludoxel materials, the act is not made ordinary merely because Ludoxel was first launched or displayed.',
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-ordinary-use',
-        title: 'Ordinary Application Use Ordinary Use',
-        body: [
-          'Understanding Ordinary Application Use should be read as conceptual boundary for ordinary application use within Use Permissions and Restrictions and Ordinary Use and Output. That reading gives Understanding Ordinary Application Use a public anchor for ordinary use without adding behavior that the current category does not own. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Ordinary Use.',
-          'Ownership in Understanding Ordinary Application Use is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'If the available evidence for ordinary use does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Ordinary Application Use should be treated as an observation rather than a confirmed cause.',
+        id: 'understanding-ordinary-application-use-reading-sequence',
+        title: 'Ordinary Application Use Reading Sequence',
+        content: [
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-ordinary-application-use-reading-sequence-act',
+                title: 'Identify the proposed act.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The first question is not whether Ludoxel is publicly available or technically usable. The first question is the exact act: launching, interacting, configuring, saving, loading, screenshotting, recording, extracting, copying, publishing, distributing, deploying, training, or incorporating.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-ordinary-application-use-reading-sequence-application-function',
+                title: 'Test whether the act is ordinary desktop operation.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The act remains inside this article only if it is use of Ludoxel as a desktop application for ordinary interactive functions or a directly related local action. The inquiry is functional and legal, not merely technical.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-ordinary-application-use-reading-sequence-materials',
+                title: 'Separate application operation from material use.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'Running Ludoxel may involve Original Materials, Third-Party Materials, user-created data, and Application Output. Ordinary Application Use does not collapse those categories. Material classification remains governed by ',
+                      {
+                        kind: 'link',
+                        label: 'Original Materials',
+                        href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+                      },
+                      ', third-party terms, user-created-material rules, and output-specific boundaries.',
+                    ],
+                  },
+                ],
+              },
+              {
+                id: 'understanding-ordinary-application-use-reading-sequence-output',
+                title: 'Treat output as output, not as source permission.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'Screenshots, recordings, save files, logs, settings, and other results of ordinary operation may raise an ',
+                      {
+                        kind: 'link',
+                        label: 'output',
+                        href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-generated-output',
+                      },
+                      ' question. They do not grant permission to reuse the underlying source files, website materials, assets, interface text, branding, shaders, or package contents.',
+                    ],
+                  },
+                ],
+              },
+              {
+                id: 'understanding-ordinary-application-use-reading-sequence-exclusion',
+                title: 'Exclude restricted uses without softening them.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'If the proposed act is redistribution, derivative preparation, resource extraction, Documentation Site scraping, website mirroring, deployment, incorporation into another work, legal-marking removal, or ',
+                      {
+                        kind: 'link',
+                        label: 'AI Use',
+                        href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-ai-use-restrictions',
+                      },
+                      ', the act has left Ordinary Application Use. The restricted-use article, not this article, controls the next analysis.',
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-restricted-use',
-        title: 'Ordinary Application Use Restricted Use',
+        id: 'understanding-ordinary-application-use-permitted-local-operation',
+        title: 'Permitted Local Operation',
         body: [
-          'A direct observation for Understanding Ordinary Application Use should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. That reading gives Understanding Ordinary Application Use a public anchor for restricted use without adding behavior that the current category does not own. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Restricted Use.',
-          'Visible feedback for Understanding Ordinary Application Use should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Ordinary Use and Output.',
-          'If the available evidence for restricted use does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Ordinary Application Use should be treated as an observation rather than a confirmed cause.',
+          'Launching Ludoxel, using the interface, changing settings, saving and loading user-specific data, taking ordinary screenshots, recording ordinary screen footage, and performing directly related local actions are the core acts identified by the License Text as ordinary application use.',
+          'This permission is local and operational. It permits the Licensee to run and interact with the desktop application within the narrow category stated in the License Text. It does not transfer ownership, does not create sublicensing authority, does not authorize project-material reuse, and does not make repository or website materials available for separate exploitation.',
+          'The fact that a local action is permitted does not mean that every later use of the resulting file, image, recording, save state, or data record is automatically permitted. Later publication, sharing, redistribution, commercial use, competition use, dataset use, benchmark use, or AI Use requires its own boundary analysis under the License Text and applicable third-party rights.',
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-third-party-split',
-        title: 'Ordinary Application Use Third-Party Split',
-        body: [
-          'When Understanding Ordinary Application Use crosses from controlling text into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for third-party split: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Third-Party Split.',
-          'When Understanding Ordinary Application Use touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Use third-party split to keep Understanding Ordinary Application Use tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
+        id: 'understanding-ordinary-application-use-restricted-acts',
+        title: 'Restricted Acts Are Not Ordinary Use',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'Ordinary Application Use does not include permission to reuse Original Materials, prepare ',
+              {
+                kind: 'link',
+                label: 'Derivative Works',
+                href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-derivative-work-restrictions',
+              },
+              ', distribute Distribution Materials, conduct AI Use, extract assets or resources, scrape the Documentation Site, mirror the Documentation Site, deploy the Documentation Site, remove legal markings, or incorporate Original Materials into another work, repository, product, service, dataset, model, benchmark, index, library, template collection, website, documentation site, or comparable material.',
+            ],
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content: [
+                'A restricted act is not rehabilitated by calling it personal, local, educational, noncommercial, experimental, incidental, or ordinary. If the ',
+                {
+                  kind: 'link',
+                  label: 'controlling',
+                  href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+                },
+                ' License Text does not grant the act, Ordinary Application Use does not supply the missing permission.',
+              ],
+            },
+          },
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-public-summary-limit',
-        title: 'Ordinary Application Use Public Summary Limit',
+        id: 'understanding-ordinary-application-use-user-created-materials-and-output',
+        title: 'User-Created Materials and Application Output',
         body: [
-          'Ordinary use is distinct from redistributing original materials, publishing package artifacts, training on project materials, or creating derivative repository content. Understanding Ordinary Application Use uses the fact as material class evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Material Class. Understanding Ordinary Application Use uses the fact as public summary limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Public Summary Limit.',
-          'The surrounding context for Understanding Ordinary Application Use decides which adjacent topic is relevant. Understanding Ordinary Application Use should be compared with Understanding User-Created Materials, Understanding Generated Output, Understanding Redistribution Restrictions only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding Ordinary Application Use crosses from public summary limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'User-Created Materials do not become Original Materials merely because they are entered, edited, displayed, saved, imported, exported, recorded, or processed through Ludoxel. Ordinary Application Use therefore does not confiscate user-created material into Ludoxel Original Materials by the mere fact of application handling.',
+          [
+            'Subject to the License Text and applicable third-party rights, the Licensee may use, reproduce, publish, and share the Licensee’s own User-Created Materials and Application Output created through Ordinary Application Use. The data-classification details belong to ',
+            {
+              kind: 'link',
+              label: 'User-Created Materials',
+              href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-user-created-materials',
+            },
+            ' and ',
+            {
+              kind: 'link',
+              label: 'Application Output',
+              href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-application-output',
+            },
+            '.',
+          ],
+          'That permission is not unconditional. If User-Created Materials or Application Output contain material parts of Original Materials, Third-Party Materials, Provenance-Sensitive Materials, user interface text, visual assets, bundled resources, project-specific textures, branding material, application icons, shaders, Documentation Site material, or other protected material, the included protected material remains governed by its applicable legal terms.',
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-reporting-limit',
-        title: 'Ordinary Application Use Reporting Limit',
+        id: 'understanding-ordinary-application-use-third-party-and-provenance-boundary',
+        title: 'Third-Party and Provenance Boundary',
         body: [
-          'Understanding Ordinary Application Use separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. In Understanding Ordinary Application Use, reporting limit is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Reporting Limit.',
-          'Recovery or follow-up for Understanding Ordinary Application Use should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Understanding Ordinary Application Use should not use reporting limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Ordinary Application Use does not relicense Third-Party Materials. Third-Party Materials remain subject to their own license terms, copyright statements, attribution requirements, warranty disclaimers, source-offer obligations, redistribution conditions, reserved names, trademark restrictions, and other applicable terms.',
+          'Ordinary Application Use also does not clear Provenance-Sensitive Materials. The fact that such material may be present in the repository, loaded by Ludoxel, displayed by Ludoxel, referenced by documentation, or technically capable of being bundled or deployed does not make it Original Materials, public-domain material, open source material, redistributable material, web-deployable material, or material cleared for modification.',
+          'The legal result is strict separation. Local application operation may be permitted while reuse, publication, redistribution, extraction, modification, deployment, or incorporation of a third-party or provenance-sensitive component remains unconfirmed or prohibited.',
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-distribution-limit',
-        title: 'Ordinary Application Use Distribution Limit',
+        id: 'understanding-ordinary-application-use-distribution-and-public-sharing',
+        title: 'Distribution and Public Sharing Boundary',
         body: [
-          'Use material class to keep Understanding Ordinary Application Use tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner. For Understanding Ordinary Application Use, that fact identifies the first concrete boundary for distribution limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Distribution Limit.',
-          'The main confusion risk in Understanding Ordinary Application Use is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Understanding Ordinary Application Use crosses from distribution limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          [
+            'Using Ludoxel locally does not authorize distribution of Ludoxel, application bundles, executable files, installers, archives, wheels, source distributions, generated distribution directories, packages, release artifacts, website deployment material, embedded resources, copied legal materials, metadata, or other ',
+            {
+              kind: 'link',
+              label: 'Distribution Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
+            },
+            '.',
+          ],
+          [
+            'A user may have a separate output-sharing question when sharing the user’s own screenshots, recordings, save data, logs, configuration files, rendered states, or other output. That question must be resolved under the License Text, applicable third-party rights, protected-material inclusion, and the ',
+            {
+              kind: 'link',
+              label: 'redistribution',
+              href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
+            },
+            ' boundary where public circulation of protected material is involved.',
+          ],
+          'Ordinary Application Use is therefore not a distribution permission. It is a local-use permission whose downstream public consequences remain legally conditional.',
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-ai-use-limit',
-        title: 'Ordinary Application Use AI Use Limit',
+        id: 'understanding-ordinary-application-use-ai-use-boundary',
+        title: 'AI Use Boundary',
         body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. That reading gives Understanding Ordinary Application Use a public anchor for ai use limit without adding behavior that the current category does not own. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / AI Use Limit.',
-          'Reportable evidence for Understanding Ordinary Application Use should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Understanding Ordinary Application Use ai use limit is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Ordinary Use and Output.',
+          [
+            'AI Use is outside Ordinary Application Use. The License Text separately defines AI Use and excludes it from the limited grant. Running Ludoxel, viewing its interface, recording ordinary footage, or obtaining output does not authorize creation, training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, population, operation, indexing, retrieval, embedding, vector-database use, dataset creation, synthetic-data generation, or comparable computational use involving protected material.',
+          ],
+          [
+            'If Application Output contains protected material, that protected portion remains subject to the applicable legal terms. It must not be treated as clean training material, benchmark material, retrieval material, or dataset material merely because it arose during ordinary application operation. The detailed restriction belongs to ',
+            {
+              kind: 'link',
+              label: 'AI Use',
+              href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-ai-use-restrictions',
+            },
+            '.',
+          ],
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-evidence',
-        title: 'Ordinary Application Use Legal Evidence',
+        id: 'understanding-ordinary-application-use-no-expansion-by-interface',
+        title: 'No Expansion by Interface or Expectation',
         body: [
-          'Ownership in Understanding Ordinary Application Use is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. That reading gives Understanding Ordinary Application Use a public anchor for legal evidence without adding behavior that the current category does not own. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Legal Evidence.',
-          'Adjacent pages matter for Understanding Ordinary Application Use, but adjacency does not move authority. Understanding Ordinary Application Use should be compared with Understanding User-Created Materials, Understanding Generated Output, Understanding Redistribution Restrictions only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Understanding Ordinary Application Use legal evidence is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Ordinary Use and Output.',
+          'An interface control, settings screen, screenshot function, recording workflow, save operation, package file, visible asset, public route, application window, cache file, local data file, or generated display does not amend the License Text.',
+          [
+            'A technical affordance may explain how an act occurred. It does not prove that the act is authorized. The same rule applies to repository access and platform surfaces: access may be factually possible, but legal authority must still come from the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text or a later competent written instrument.',
+          ],
+          'Ordinary Application Use must therefore be read as a controlled legal term, not as a user’s intuitive description of whatever feels normal while using an application.',
         ],
       },
       {
-        id: 'understanding-ordinary-application-use-related-legal',
-        title: 'Ordinary Application Use Related Legal',
+        id: 'understanding-ordinary-application-use-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'If the available evidence for ordinary use does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Ordinary Application Use should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for related legal: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Related Legal.',
-          'The public boundary for Understanding Ordinary Application Use is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the related legal part of Understanding Ordinary Application Use should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-ordinary-application-use-reader-risk',
-        title: 'Ordinary Application Use Reader Risk',
-        body: [
-          'User output may have a different boundary from original materials, but embedded project or third-party material can still affect how that output is shared. That reading gives Understanding Ordinary Application Use a public anchor for reader risk without adding behavior that the current category does not own. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Reader Risk.',
-          'An operator reading Understanding Ordinary Application Use should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'The useful result of Understanding Ordinary Application Use reader risk is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Ordinary Use and Output.',
-        ],
-      },
-      {
-        id: 'understanding-ordinary-application-use-non-advice',
-        title: 'Ordinary Application Use Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Ordinary Application Use should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Ordinary Use and Output. The point matters in non-advice boundary because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Non-Advice Boundary.',
-          'Implementation limits for Understanding Ordinary Application Use keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Understanding Ordinary Application Use should not use non-advice boundary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ordinary-application-use-public-summary',
-        title: 'Ordinary Application Use Public Summary',
-        body: [
-          'Ordinary application use means running the desktop application and interacting with its normal features, settings, worlds, Othello play, screenshots, recordings, and save data. For Understanding Ordinary Application Use, that fact identifies the first concrete boundary for public summary: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Public Summary.',
-          'The summary value of Understanding Ordinary Application Use is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'When Understanding Ordinary Application Use crosses from public summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ordinary-application-use-closing-check',
-        title: 'Ordinary Application Use Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Ordinary Application Use. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. That reading gives Understanding Ordinary Application Use a public anchor for closing check without adding behavior that the current category does not own. The local reading frame is Understanding Ordinary Application Use / Use Permissions and Restrictions / Ordinary Use and Output / Closing Check.',
-          'A final check for Understanding Ordinary Application Use should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'The useful result of Understanding Ordinary Application Use closing check is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Ordinary Use and Output.',
+          [
+            'This article defines the limited ordinary-use scope for running Ludoxel as a desktop application. It does not classify every output file, decide whether a specific screenshot or recording may be published, authorize redistribution, authorize deployment, resolve derivative-work status, clear third-party materials, clear provenance-sensitive materials, decide AI-use restrictions beyond identifying the boundary, accept contributions, route security reports, or determine official distribution status.',
+          ],
+          [
+            'Its conclusion is narrow: Ordinary Application Use permits only the ordinary local operation of Ludoxel identified by the License Text. It does not grant rights in Original Materials beyond that operation, does not make output universally publishable, does not create distribution permission, does not create AI-use permission, and does not enlarge the License Text through public visibility, technical possibility, interface affordance, or ordinary user expectation.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Understanding User-Created Materials', 'Understanding Generated Output', 'Understanding Redistribution Restrictions'],
+    relatedTitles: [
+      'Understanding License Authority',
+      'Understanding Controlling Text',
+      'Understanding Repository Visibility',
+      'Understanding Original Materials',
+      'Understanding Distribution Materials',
+      'Understanding Generated Output',
+      'Understanding Redistribution Restrictions',
+      'Understanding Derivative Work Restrictions',
+      'Understanding AI Use Restrictions',
+      'Understanding Application Output',
+      'Understanding User-Created Materials',
+      'Understanding Third Party Material Boundaries',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
