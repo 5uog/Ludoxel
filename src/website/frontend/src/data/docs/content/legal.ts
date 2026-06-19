@@ -83,8 +83,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content:
-                        'Do not treat a public Ludoxel page, repository view, or platform control as a route around the License Text. The legal question is authorization, not obtainability.',
+                      content: 'Do not treat a public Ludoxel page, repository view, or platform control as a route around the License Text. The legal question is authorization, not obtainability.',
                     },
                   },
                 ],
