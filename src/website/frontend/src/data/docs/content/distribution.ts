@@ -11,60 +11,177 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Platform Packages',
     title: 'Understanding the Windows Executable',
     description:
-      'Explains the Windows one-file desktop artifact as a PyInstaller output, identifies the concrete files and build stages that constitute the artifact, and separates artifact inspection from any legal conclusion about permission, release status, or endorsement.',
+      'Treats the Windows one-file executable as the product of the build_desktop_app Windows path — the PyInstaller command builder, the host and entry gates, the publication function with its lock handling, and the legal-material copy — and keeps artifact construction separate from release authority.',
     sections: [
       {
-        id: 'understanding-the-windows-executable-artifact-boundary',
-        title: 'Windows Executable Artifact Boundary',
-        body: [
-          'The Windows desktop artifact is the one-file PyInstaller executable published as dist/windows/Ludoxel.exe. That file is the operational package produced from the Ludoxel Python entry point, the collected package data, the bundled application resources, the selected Windows icon candidate, and the hidden bootstrap imports required by the application startup path. It is not an installer, not a store package, not a repository archive, and not an official-release declaration by its physical form alone.',
-          'This article treats the executable as a build artifact. The relevant questions are whether the file was produced by the intended Windows build path, whether the expected project inputs were present, whether legal and third-party material was copied beside the published executable, whether stale onedir output was removed, and whether the build log gives a coherent account of the generated file. Those questions are technical and evidentiary; they do not decide whether a party may distribute the file.',
-        ],
-        codeBlocks: [
+        id: 'understanding-the-windows-executable-owner-files',
+        title: 'Owner Files and Artifact Definition',
+        content: [
           {
+            kind: 'paragraph',
+            text: 'The Windows desktop artifact is the one-file executable published as `dist/windows/Ludoxel.exe`. A binary with that name is not the same thing as the artifact. The artifact is whatever the Windows path of `tools/build_desktop_app` actually produces: the constants in `src/config/build.config.mjs`, the command builder `buildWindowsPyinstallerCommand` in `src/command/pyinstaller/build-command.pyinstaller.mjs`, the publication logic in `src/service/windows-build.service.mjs`, and the legal-material copy in `src/service/legal-copy.service.mjs`. A file that cannot be traced back to those four owners is a loose executable, not a recognized Ludoxel Windows distribution artifact.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The two entry points that produce it are the following, and both feed the same Windows service.',
+          },
+          {
+            kind: 'code',
             language: 'sh',
-            code: 'npm run build:desktop -- windows\nnpm run build:windows',
-            caption: 'Windows build entry points exposed by package scripts.',
+            caption: 'Windows build entry points from package.json.',
+            code: `npm run build:windows
+npm run build:desktop -- windows`,
           },
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-pyinstaller-inputs',
-        title: 'Windows PyInstaller Inputs',
-        body: [
-          'The Windows command is built around src/ludoxel/__main__.py, adds the project src directory to the Python path, collects Ludoxel package data, and uses PyInstaller one-file mode under the application name Ludoxel. Common optional data arguments include assets, src, LICENSE, and third-party. The Windows icon is selected from the configured .ico candidates when a candidate exists, and the application bootstrap modules are added as hidden imports so the packaged entry point can resolve the startup path consistently.',
-          'The Windows package therefore depends on more than the top-level executable byte stream. A coherent artifact must be traceable back to the configured entry script, the source and package-data collection rules, the resource roots that the runtime expects, and the legal material copy step. A copied executable with no corresponding build log, no retained legal material, or no evidence of the configured PyInstaller path is only a loose binary, not a confirmed Ludoxel Windows distribution artifact.',
-        ],
-        codeBlocks: [
           {
-            language: 'yaml',
-            code: 'entry: src/ludoxel/__main__.py\npublish directory: dist/windows\npublished executable: dist/windows/Ludoxel.exe\ncommon data roots: assets, src, LICENSE, third-party',
-            caption: 'Material Windows artifact coordinates.',
+            kind: 'paragraph',
+            text: 'What a finished `Ludoxel.exe` proves is deliberately small. It proves that the publication function reached its success path on a Windows host. It does not prove that any party may distribute the file, that the file is an official release, or that the third-party material carried inside it has been cleared. Those are decided by the controlling License Text and by separate release authority, never by the mere existence of the executable.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'A produced `Ludoxel.exe` is an implementation result. It is not a release, not a permission, and not a third-party clearance. None of those follow from the file being on disk.',
+            },
           },
         ],
       },
       {
-        id: 'understanding-the-windows-executable-publication-step',
-        title: 'Publication Step and Lock Handling',
-        body: [
-          'The Windows service publishes from a tokenized PyInstaller staging directory into dist/windows. Before publication, obsolete dist/windows/Ludoxel onedir output is removed so an older directory package does not coexist with the one-file executable and mislead a later inspection. The publication step then copies legal material into the staging directory, copies the staged executable to dist/windows/Ludoxel.exe, and copies legal material into the published directory as well.',
-          'A locked published executable is handled as a technical file-system condition, not as a successful replacement. If Windows reports EPERM, EBUSY, or EACCES while replacing the published executable, the staged executable is preserved and the log identifies the locked publish target. The retained staging file may be useful for diagnosis, but the presence of a staged executable does not prove that the intended public-facing artifact was replaced in dist/windows.',
+        id: 'understanding-the-windows-executable-command-construction',
+        title: 'PyInstaller Command Construction',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`buildWindowsPyinstallerCommand` turns the abstract instruction to package into one deterministic argument vector. It runs PyInstaller in `--onefile` mode under the application name `Ludoxel`, points `--distpath`, `--workpath`, and `--specpath` at tokenized roots, adds `src` to the import search path, and collects package data with `--collect-data ludoxel`. It then appends the application bootstrap hidden imports and the common data roots before the entry script `src/ludoxel/__main__.py`.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'addCommonOptionalDataArgs and addApplicationBootstrapHiddenImports in build-command.pyinstaller.mjs.',
+            code: `function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
+  addOptionalDataArg(args, 'assets', 'assets', targetPlatform);
+  addOptionalDataArg(args, 'src', 'src', targetPlatform);
+  addOptionalDataArg(args, 'LICENSE', 'LICENSE', targetPlatform);
+  addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
+}
+
+function addApplicationBootstrapHiddenImports(args) {
+  args.push('--hidden-import', 'ludoxel.application.bootstrap');
+  args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Two details in this excerpt decide what the Windows executable actually contains. The data roots `assets`, `src`, `LICENSE`, and `third-party` are added through `addOptionalDataArg`, which silently skips any root that is absent; on Windows their absence does not abort the command, so a build can complete while quietly missing one of them. And the renderer backend is not collected here at all: `addRendererBackendArgs` returns immediately unless the target is `darwin`, so the Windows executable carries the OpenGL renderer path and never bundles `wgpu` or `rendercanvas`. A description that merges the Windows and macOS commands into one generic "the build packages the app" erases this divergence and misstates the contents of the file.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Because the command is built from named constants and an explicit data list, the executable is reconstructible and its inputs are auditable. That is the whole value of constructing the command instead of writing a spec file by hand: a reviewer can read the printed command and know whether the executable is the OpenGL-path Ludoxel build with its package data, rather than guessing from a binary that merely shares the name.',
+          },
         ],
       },
       {
-        id: 'understanding-the-windows-executable-inspection-method',
-        title: 'Inspection Method',
-        body: [
-          'A Windows artifact should be inspected from the outside inward. The first layer is the command log: it should show the PyInstaller invocation, the tokenized work, spec, and staging roots, and the final publication line for dist/windows/Ludoxel.exe. The second layer is the file system: dist/windows should contain the executable and the copied legal material. The third layer is the repository-state evidence: package, legal, resource, and shader checks should be read as separate signals, not collapsed into a single release verdict.',
-          'A dry-run command can confirm the intended PyInstaller command without producing or replacing the artifact. That is useful when reviewing path construction, icon selection, and data arguments, but it is not a substitute for a completed build. Conversely, a completed executable without the expected copied legal material remains defective as a distribution artifact even if the binary launches locally.',
+        id: 'understanding-the-windows-executable-publication',
+        title: 'Publication and Lock Handling',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'After PyInstaller succeeds, the only function permitted to write the public-facing `dist/windows/Ludoxel.exe` is `publishWindowsExecutable`. Before it writes, `removeObsoleteOnedir` deletes any stale `dist/windows/Ludoxel` one-directory output, so an older directory package cannot sit beside the one-file executable and confuse a later inspection. The function then copies legal material into the staging directory, replaces the published executable, and copies legal material beside it.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'publishWindowsExecutable in windows-build.service.mjs.',
+            code: `function publishWindowsExecutable(stagingDir) {
+  const stagedExe = resolve(stagingDir, \`\${APP_NAME}.exe\`);
+  const publishDir = resolve(PROJECT_ROOT, WINDOWS_PUBLISH_DIR);
+  const publishExe = resolve(publishDir, \`\${APP_NAME}.exe\`);
+
+  if (!existsSync(stagedExe)) {
+    throw new Error(\`PyInstaller did not produce staged executable: \${stagedExe}\`);
+  }
+
+  ensureDirectory(publishDir);
+  copyLegalMaterial(stagingDir);
+
+  try {
+    if (existsSync(publishExe)) {
+      unlinkSync(publishExe);
+    }
+
+    copyFileSync(stagedExe, publishExe);
+    copyLegalMaterial(publishDir);
+    console.log(\`[build_desktop_app] published Windows executable: \${publishExe}\`);
+  } catch (error) {
+    if (error?.code === 'EPERM' || error?.code === 'EBUSY' || error?.code === 'EACCES') {
+      console.log(\`[build_desktop_app] published executable is locked; staged executable preserved: \${stagedExe}\`);
+      return;
+    }
+
+    throw error;
+  }
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The function refuses two situations in opposite ways. A missing staged executable throws, because there is nothing to publish. A locked publish target raising `EPERM`, `EBUSY`, or `EACCES` is treated as a recoverable condition: the staged executable is left in place and the log records that the published target was not replaced. That second branch is the one most often misread. The preserved staging file is a diagnostic remnant, not a published artifact, and treating the locked branch as a successful publication describes a public-facing file in `dist/windows` that was never actually written.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'When the success line `published Windows executable` does appear, it means only that `copyFileSync` and the following legal copy completed. It says nothing about whether the binary launches on a clean host, whether the package data is complete, or whether anyone may circulate it. The legal copy inside this function keeps the controlling text next to the executable; keeping it there is not the same as being permitted to ship it.',
+          },
         ],
       },
       {
-        id: 'understanding-the-windows-executable-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not grant permission to distribute the executable, does not declare the executable to be an official release, does not clear third-party material, and does not decide whether a recipient may mirror, upload, redistribute, or repackage it. Those conclusions belong to the controlling License Text or to a later competent written instrument. The Distribution function here is narrower: it gives the technical criteria for recognizing and inspecting the Windows executable artifact after authority has already been settled elsewhere.',
-          'The correct use of this article is therefore evidentiary. It tells the reader what a Windows artifact is, how the build path constructs it, which surrounding files matter, and which build-output facts must be read before anyone describes the artifact publicly. It does not turn successful local execution into authorization.',
+        id: 'understanding-the-windows-executable-inspection-order',
+        title: 'Inspection Order',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A Windows artifact is read from the command surface inward, so that each fact is taken from the layer that produced it rather than inferred from the file alone.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Read the printed PyInstaller command and confirm `--onefile`, the application name, the tokenized roots, `--collect-data ludoxel`, the bootstrap hidden imports, and the entry script.',
+              'Confirm the publication line. A `published Windows executable` line and a `published executable is locked` line are different outcomes and must never be conflated.',
+              'Inspect `dist/windows` on disk for `Ludoxel.exe` and for the `LICENSE` and `third-party` material that `copyLegalMaterial` writes beside it.',
+              'Read the repository checks as separate signals, not as one release verdict.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'A dry run exercises only the first step. It prints the constructed command and returns before host enforcement, native building, and publication, so it produces no `dist/windows/Ludoxel.exe` at all.',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'A Windows dry run prints the command without producing the executable.',
+            code: `npm run build:windows -- --dry-run`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A completed executable that lacks the copied legal material is still defective as a distribution artifact even if it launches locally, because the controlling text has been severed from the file it governs. The dry-run command and the real build therefore answer different questions, and the inspection must not borrow a conclusion from one to describe the other.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-windows-executable-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'This article fixes how to recognize and inspect the Windows executable. It does not grant permission to distribute it, does not declare it an official release, and does not clear the third-party material inside it. Whether the executable may be published as an official build is settled by the controlling ',
+              { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
+              ', not by the build tool, which decides only what is constructed and where it is written.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The use of the Windows path is therefore evidentiary. It tells a reviewer what the artifact is, which command produced it, which surrounding files must travel with it, and which output lines must be read before the artifact is described to anyone. It never turns a successful local build into authorization.',
+          },
         ],
       },
     ],
@@ -76,60 +193,148 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Platform Packages',
     title: 'Understanding the macOS Application Bundle',
     description:
-      'Explains the macOS .app bundle as the platform-specific PyInstaller output for Ludoxel, including bundle identity, WGPU and Metal-oriented runtime inclusion, resource verification, ad-hoc signing, and the line between local packaging and release work.',
+      'Treats the macOS .app bundle as the product of the build_desktop_app macOS path: the windowed PyInstaller command and its WGPU renderer inclusions, Info.plist patching, ad-hoc codesign and verification, bundled-resource tolerance, and the line between local construction and Apple release work.',
     sections: [
       {
-        id: 'understanding-the-macos-application-bundle-artifact-boundary',
-        title: 'macOS Bundle Artifact Boundary',
-        body: [
-          'The macOS desktop artifact is a Ludoxel.app bundle published under dist/macos. It is generated through PyInstaller windowed mode, named Ludoxel, and configured with the bundle identifier com.kentokonishi.ludoxel. The artifact is not a bare executable: its technical identity is distributed across Contents/MacOS, Contents/Resources, Contents/Frameworks, Info.plist, bundled resources, copied legal material, the Python shared-library link, and the final signature state of the bundle.',
-          'That structure gives the macOS article a different subject from the Windows executable article. Windows inspection can focus on a one-file executable and its neighboring legal material. macOS inspection must treat the bundle as a directory-shaped application container whose executable, metadata, icon, Python runtime linkage, renderer dependencies, resource locations, and signature verification all participate in the artifact.',
-        ],
-        codeBlocks: [
+        id: 'understanding-the-macos-application-bundle-owner-files',
+        title: 'Owner Files and Bundle Definition',
+        content: [
           {
+            kind: 'paragraph',
+            text: 'The macOS desktop artifact is a `Ludoxel.app` bundle published under `dist/macos`. It is owned by `buildMacosPyinstallerCommand` in `src/command/pyinstaller/build-command.pyinstaller.mjs`, by the verification and publication path in `src/service/macos-build.service.mjs`, and by the prerequisite inspector in `src/service/macos-status.service.mjs`. Unlike the Windows one-file executable, a bundle is a directory whose identity is spread across `Contents/MacOS`, `Contents/Resources`, `Contents/Frameworks`, `Info.plist`, bundled resources, the Python shared-library link, copied legal material, and the final signature state.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The macOS path exposes a build command and a prerequisite check, which answer different questions before any artifact exists.',
+          },
+          {
+            kind: 'code',
             language: 'sh',
-            code: 'npm run build:desktop -- macos\nnpm run build:macos\nnpm run build:macos:check',
-            caption: 'macOS build and packaging-check entry points.',
+            caption: 'macOS build and packaging-check entry points from package.json.',
+            code: `npm run build:macos
+npm run build:macos:check`,
           },
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-renderer-path',
-        title: 'Renderer and Runtime Path',
-        body: [
-          'The macOS build path is specific to the WGPU and Metal-oriented renderer route. The PyInstaller command collects wgpu and rendercanvas, adds hidden imports for wgpu.backends.wgpu_native, rendercanvas.qt, rendercanvas.pyqt6, and the macOS cursor helper, and requires the Darwin-only runtime dependencies to be present in the project configuration. This is not an ornamental packaging detail: without those inputs, the packaged application may exist while the renderer path or gameplay mouse-capture helper is materially incomplete.',
-          'The bundle check also verifies macOS-specific project inputs before build execution. It requires the entry script, package metadata, pyproject metadata, bundled source and assets roots, the default Alex skin, legal material, font assets, and WGPU source paths. The resulting documentable fact is not merely that PyInstaller ran; the fact is that a known macOS runtime envelope was constructed for the renderer path that Ludoxel expects on macOS.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-plist-signature',
-        title: 'Info.plist and Signature Verification',
-        body: [
-          'After PyInstaller produces the staged bundle, the macOS service patches Info.plist so the bundle name, display name, bundle identifier, executable name, short version, bundle version, icon file, and input-monitoring usage description match the Ludoxel package identity. Those fields are not marketing copy. They are part of the bundle identity that macOS, diagnostic tools, users, and release operators read when deciding whether a directory is the intended application bundle.',
-          'The service performs ad-hoc signing, verifies the bundle with codesign, copies the verified staged bundle into dist/macos, signs the published bundle again, and verifies it again. This establishes local bundle integrity for the produced artifact. It does not perform notarization and does not convert a local build into a public release. Notarization, distribution-channel preparation, and final public release authority remain outside this tool path.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-resource-verification',
-        title: 'Resource Verification',
-        body: [
-          'A macOS artifact is incomplete if the directory exists but required bundled resources are absent. The service verifies the Python framework link, Info.plist identity fields, at least one bundled .icns icon under Contents/Resources, the default Alex skin at an accepted bundled resource location, and each required Minecraft and Kaisei font asset. It then copies legal material beside the published application bundle in dist/macos.',
-          'The accepted resource locations reflect the practical variation in PyInstaller bundle layout. The check accepts either Contents/Frameworks or Contents/Resources for several bundled assets because PyInstaller may place collected data under different internal bundle roots. That tolerance is not a license to omit the asset; it is a recognition that the same required file may be packaged under more than one valid macOS container location.',
-        ],
-        codeBlocks: [
           {
-            language: 'yaml',
-            code: 'publish directory: dist/macos\npublished bundle: dist/macos/Ludoxel.app\nbundle identifier: com.kentokonishi.ludoxel\nrequired app executable: Contents/MacOS/Ludoxel',
-            caption: 'Material macOS bundle coordinates.',
+            kind: 'paragraph',
+            text: 'Because the identity is spread across the container, a bare directory named `Ludoxel.app` is not yet the artifact. The macOS bundle counts as coherent only when its executable, renderer-runtime envelope, identity metadata, icon, resource locations, signature, and copied legal material are all present. That is a stricter standard than the Windows case, where a single file plus its neighboring legal material is the whole object.',
           },
         ],
       },
       {
-        id: 'understanding-the-macos-application-bundle-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article describes the local .app artifact and its verification path. It does not claim that the bundle is notarized, accepted by Apple, approved for public download, cleared for redistribution, or legally distributable by any party other than one whose authority is established elsewhere. A signed local bundle is still only a locally produced bundle unless the legal and release-status questions are separately answered.',
-          'The narrow conclusion is that a macOS Ludoxel distribution artifact must be a coherent .app bundle with the expected executable, metadata, resources, renderer-runtime inclusions, signature verification, and copied legal material. Anything less should be described as a failed, partial, or unverified build output rather than as a macOS release.',
+        id: 'understanding-the-macos-application-bundle-renderer-envelope',
+        title: 'Renderer Runtime Envelope',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The macOS command is built for the WGPU and Metal-oriented renderer route, not the OpenGL path. `addMacosRendererBackendArgs` collects `wgpu` and `rendercanvas` and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`. `addMacosRequiredDataArgs` adds `assets`, `src`, `LICENSE`, and `third-party` as required data and asserts the default Alex skin exists. On macOS these are required inputs, not optional ones, so their absence aborts the command instead of yielding a quietly incomplete bundle.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The prerequisite inspector enforces the same envelope before a build runs. `checkMacosPackagingInputs` requires the entry script, `package.json`, `pyproject.toml`, the bundled `assets` and `src` roots, the Alex skin, every legal-material path, every required font, and a specific set of WGPU renderer source files. It also confirms that `pyproject.toml` declares the Darwin-only `wgpu` and `rendercanvas` dependencies and a PyInstaller development dependency, and that the PyInstaller command source still contains the `wgpu.backends.wgpu_native`, `rendercanvas.pyqt6`, and `macos_cursor` terms. The fact worth documenting is not that PyInstaller ran; it is that a known renderer envelope was assembled for the path Ludoxel uses on macOS.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'A macOS bundle that exists but omits the WGPU and cursor-helper inclusions is materially incomplete. The renderer path or gameplay mouse capture can be broken while the `.app` directory looks present.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-macos-application-bundle-identity-and-signature',
+        title: 'Identity Patching and Signature Verification',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`patchMacosInfoPlist` rewrites the bundle name, display name, the bundle identifier `com.kentokonishi.ludoxel`, the executable name, the short and bundle versions, the icon file, and the input-monitoring usage description so they match the Ludoxel package identity. `requireMacosInfoPlist` then verifies those fields and rejects a bundle whose `Info.plist` lacks any required pair, a `.icns` icon entry, or the `NSInputMonitoringUsageDescription` string that gameplay input capture depends on. These fields are the identity that macOS, diagnostic tools, and release operators read when deciding whether a directory is the intended application.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Signing is handed to the system `codesign` binary through one helper, and verification is a hard gate that stops the build on any nonzero status.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'runCodesign, signMacosAppBundle, and verifyMacosCodeSignature in macos-build.service.mjs.',
+            code: `function runCodesign(args, label) {
+  const result = spawnSync('codesign', args, {
+    cwd: PROJECT_ROOT,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  });
+
+  if (result.status !== 0) {
+    const stderr = String(result.stderr || '').trim();
+    const stdout = String(result.stdout || '').trim();
+    const detail = stderr || stdout || \`exit \${result.status}\`;
+    throw new Error(\`\${label} failed: \${detail}\`);
+  }
+}
+
+function signMacosAppBundle(appPath) {
+  runCodesign(['--force', '--deep', '--sign', '-', appPath], \`macOS app bundle ad-hoc signing (\${appPath})\`);
+}
+
+function verifyMacosCodeSignature(appPath) {
+  runCodesign(['--verify', '--deep', '--strict', appPath], \`macOS app bundle signature verification (\${appPath})\`);
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The signing is ad-hoc: `signMacosAppBundle` passes `--sign -`, and `verifyMacosCodeSignature` passes `--verify --deep --strict`. That establishes local bundle integrity, and nothing more. It is not Developer ID signing and it is not notarization; the status service says as much in its own text, listing codesigning with a real identity and notarization as release work outside the tool. A verified ad-hoc signature proves the bundle was internally consistent at verification time. It proves nothing about Apple distribution eligibility, and reading it as notarization is a category error.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-macos-application-bundle-resource-tolerance',
+        title: 'Resource Verification and Publication',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`verifyMacosAppBundle` rejects a bundle that exists but is missing required content: the `Contents/MacOS/Ludoxel` executable, the `Contents/Frameworks/Python` shared-library link, a `.icns` icon under `Contents/Resources`, the patched `Info.plist` fields, the default Alex skin, and each required font. Several of those are accepted under more than one container location, which is what `requireBundledResource` and `bundledAssetCandidates` express.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'bundledAssetCandidates and requireBundledResource in macos-build.service.mjs.',
+            code: `function bundledAssetCandidates(relativeAssetPath) {
+  return Object.freeze([\`Contents/Frameworks/\${relativeAssetPath}\`, \`Contents/Resources/\${relativeAssetPath}\`]);
+}
+
+function requireBundledResource(appPath, label, relativePaths) {
+  const matchedPath = relativePaths.find((relativePath) => bundledResourceExists(appPath, relativePath));
+
+  if (!matchedPath) {
+    throw new Error(\`macOS app bundle is missing \${label}. Checked: \${relativePaths.join(', ')}\`);
+  }
+
+  return matchedPath;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The tolerance is bounded, not lax. PyInstaller may place collected data under either `Contents/Frameworks` or `Contents/Resources`, so the verifier accepts either location for the Alex skin and the fonts, but `requireBundledResource` still throws when none of the candidates holds the file. The point is that the check survives a harmless variation in bundle layout while still failing a genuinely missing resource. Misreading the tolerance as optionality — assuming an asset need not be present because two paths are listed — inverts the rule.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Publication is the last step that writes `dist/macos`. `publishMacosApp` patches the plist, signs and verifies the staged bundle, removes any existing published bundle, copies the staged bundle in with symlinks preserved, then signs and verifies the published copy again before copying legal material beside it. The sign-and-verify is duplicated on both the staged and the published copy on purpose: copying a signed bundle can disturb its signature, so the published artifact is re-established and re-verified rather than assumed equal to the staged one.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-the-macos-application-bundle-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'This article describes the local `.app` artifact and its verification path. It does not assert that the bundle is notarized, accepted by Apple, approved for public download, or distributable by any party whose authority is not established elsewhere. A locally signed bundle remains a locally produced bundle. Notarization, distribution-channel preparation, and public release authority are outside this tool path and outside this article.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The standard is plain: a macOS Ludoxel artifact must be a coherent `.app` bundle with the expected executable, renderer envelope, identity metadata, resources, verified signature, and copied legal material. Anything short of that is a failed, partial, or unverified build output, never a macOS release.',
+          },
         ],
       },
     ],
@@ -141,53 +346,125 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Native and Runtime Materials',
     title: 'Understanding Native Extension Fallbacks',
     description:
-      'Explains how native extension artifacts and Python fallback sources are treated during Ludoxel packaging, why missing compiled extensions must be read precisely, and why fallback availability is not a reason to conceal runtime or distribution defects.',
+      'Explains how build_native_extensions and the foundations Python fallbacks relate: the configured candidates, compiled-suffix detection, the generated build payload, the require-built verification gate, and the separation of source availability, compiled acceleration, verification policy, and release permission.',
     sections: [
       {
-        id: 'understanding-native-extension-fallbacks-artifact-boundary',
-        title: 'Native Extension Artifact Boundary',
-        body: [
-          'Ludoxel recognizes three native-extension candidates in the current tooling: ray_aabb, voxel_dda, and view_angles. Their module names point into the foundations mathematics packages, and their source paths remain ordinary Python source files under src/ludoxel. The compiled artifacts are recognized by platform suffixes such as .pyd, .so, and .dylib, while the Python source remains the fallback implementation and the semantic reference point for the module contract.',
-          'A native extension in this distribution context is therefore not an independent feature package. It is an acceleration or platform-specific execution artifact for a function that remains tied to a named source module. The distribution question is whether the produced desktop artifact and the surrounding build evidence account for the native state accurately, not whether the mere presence or absence of a compiled binary changes the public legal status of the project.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-build-behavior',
-        title: 'Build Behavior',
-        body: [
-          'The desktop build path invokes native-extension building before the Windows or macOS package step unless the operator explicitly skips that phase. The native build service collects the source modules, writes a generated Python build script and payload under the build-native tooling area, runs the configured Python executable, and then verifies that compiled artifacts exist when verification is required. A nonzero native build exit code stops the desktop build before PyInstaller packaging proceeds.',
-          'This ordering matters because the packaged application should not silently cross from an optimized native path to a fallback path without evidence. If the operator used --skip-native-build, that choice should remain visible in the build context. If the build attempted native compilation and failed, the failure is not cured by later producing a desktop artifact through some unrelated process.',
-        ],
-        codeBlocks: [
+        id: 'understanding-native-extension-fallbacks-owner-files',
+        title: 'Owner Files and Candidate Set',
+        content: [
           {
-            language: 'sh',
-            code: 'npm run build:native\nnpm run build:native:check',
-            caption: 'Native extension build and verification entry points.',
+            kind: 'paragraph',
+            text: 'Native extension behavior is owned by `tools/build_native_extensions` and grounded in the Python sources under `src/ludoxel/foundations/mathematics`. The candidate set and the recognized compiled suffixes are declared in `src/config/native.config.mjs`. Each candidate names a Python module whose source stays an ordinary file; the compiled binary, when it exists, is an acceleration of that same module, not a separate feature.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'NATIVE_EXTENSION_MODULES and COMPILED_EXTENSION_SUFFIXES in native.config.mjs.',
+            code: `export const NATIVE_EXTENSION_MODULES = Object.freeze([
+  Object.freeze({
+    id: 'ray_aabb',
+    moduleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
+    sourcePath: 'src/ludoxel/foundations/mathematics/geometry/ray_aabb.py',
+  }),
+  Object.freeze({
+    id: 'voxel_dda',
+    moduleName: 'ludoxel.foundations.mathematics.voxels.dda',
+    sourcePath: 'src/ludoxel/foundations/mathematics/voxels/dda.py',
+  }),
+  Object.freeze({
+    id: 'view_angles',
+    moduleName: 'ludoxel.foundations.mathematics.linear.view_angles',
+    sourcePath: 'src/ludoxel/foundations/mathematics/linear/view_angles.py',
+  }),
+]);
+
+export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib']);`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'There are exactly three candidates: ray and AABB intersection, voxel DDA traversal, and view-angle math. The Python source for each remains the reference implementation. The distribution question is never whether a compiled binary exists in the abstract; it is whether the produced desktop artifact and its build log record the native state accurately. The presence or absence of a `.pyd`, `.so`, or `.dylib` changes runtime speed, not the legal status of the project.',
           },
         ],
       },
       {
-        id: 'understanding-native-extension-fallbacks-verification-reading',
-        title: 'Verification Reading',
-        body: [
-          'Native verification prints each native source, its module name, the source path, and the compiled extension files found for that source. When no compiled extension is present, the verifier explicitly states that no compiled extension exists and that the Python fallback source exists. If --require-built is supplied and any source lacks a compiled binary, verification fails and names the missing compiled extension by source id and module name.',
-          'That distinction is the article’s practical center. No compiled extension is not the same as no implementation. A Python fallback is not the same as a successful native build. A successful native build is not the same as release permission. Each statement belongs to a different evidentiary layer, and a distribution document must not flatten those layers into a single comforting status word.',
+        id: 'understanding-native-extension-fallbacks-suffix-detection',
+        title: 'Compiled-Suffix Detection',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`compiledBinariesForSource` in `src/collect/binary.collect.mjs` is what decides whether a source is compiled or fallback-only. It derives the stem from the Python file name, lists the source directory, and keeps the files whose extension is a recognized compiled suffix and whose base name begins with that stem.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'compiledBinariesForSource in binary.collect.mjs.',
+            code: `export function compiledBinariesForSource(source) {
+  const stem = basename(source.sourcePath, '.py');
+
+  return listFiles(source.sourceDirectory).filter((path) => {
+    const extension = extname(path);
+    if (!COMPILED_EXTENSION_SUFFIXES.includes(extension)) return false;
+    return basename(path).startsWith(stem);
+  });
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A source is fallback-only exactly when this function returns an empty list — when no file in the module directory both carries a recognized suffix and begins with the source stem. Computing the answer from the directory contents rather than from a build flag is what makes detection portable: it reports the same state whether or not a build was attempted in the current session, and on whichever platform the inspection runs. The cost of bypassing this function and assuming a compiled module is present is that a packaged artifact can quietly run on the Python fallback while its documentation claims native acceleration.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-native-extension-fallbacks-build-and-verify',
+        title: 'Build Payload and Verification Gate',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`buildNativeExtensions` in `src/service/build.service.mjs` collects the sources, writes a generated Python build script and a JSON payload under `build/native-extension-scripts`, resolves a Python executable, runs the script, and then verifies the result with the require-built policy enabled unless it was told to skip verification. The generated script uses Cython and setuptools to compile the extensions in place, and tells the operator to install the development dependencies if Cython or setuptools is missing. The generated script root is always removed in a `finally` block, so the payload is never left behind as a stale artifact. The two entry points are:',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'Native build and verification entry points from package.json.',
+            code: `npm run build:native
+npm run build:native:check`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`verifyNativeExtensions` prints each source, its module name, and the compiled files found, and turns a missing-binary condition into a failure only when the require-built policy is active.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'The require-built gate in verify.service.mjs.',
+            code: `if (options.requireBuilt && missingCompiled.length > 0) {
+  console.error('Native extension verification failed because --require-built was specified.');
+
+  for (const source of missingCompiled) {
+    console.error(\`  - missing compiled extension for \${source.id}: \${source.moduleName}\`);
+  }
+
+  return 1;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only source and still returns success, because a fallback is a valid runtime state. With it, a single fallback-only candidate fails the whole verification. This is the distinction the article exists to keep: source availability, compiled acceleration, verification policy, and release permission are four separate things. No compiled extension is not no implementation; a Python fallback is not a successful native build; a successful native build is not release permission. Collapsing these into one reassuring word is exactly the outcome the verifier is built to prevent.',
+          },
         ],
       },
       {
         id: 'understanding-native-extension-fallbacks-package-effect',
-        title: 'Package Effect',
-        body: [
-          'A desktop package may launch through fallback code when native binaries are absent, but distribution inspection must still record the native state accurately. The package evidence should identify whether native building was run, whether verification was required, which compiled suffixes were found, and whether the PyInstaller command collected the Ludoxel package data from a source tree that still contains the fallback modules.',
-          'The package effect is therefore not binary. The artifact may be runnable, yet still fail a native-build requirement imposed for a particular distribution candidate. Conversely, the artifact may satisfy native verification while still fail legal-material inclusion, shader validation, resource-root checks, or release-language constraints. Native verification is one axis of distribution evidence, not a universal pass.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not instruct readers to evade native-build failures by relying on fallback behavior. It also does not require every informal local run to contain compiled native extensions. Its narrower function is to preserve the distinction between source availability, compiled acceleration, verification policy, and package evidence.',
-          'When the artifact is described publicly, the description must not imply that native binaries were built unless the build and verification evidence show that they were built. It must also not imply that fallback execution authorizes distribution. The native state is a technical property of the artifact, not a legal grant.',
+        title: 'Effect on the Desktop Package',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'In the desktop build, `buildNativeExtensionsBeforeDesktop` runs the native build before PyInstaller packaging unless the operator passes `--skip-native-build` or runs a dry run, and a nonzero native exit code stops the desktop build before packaging. The package effect is therefore not a single bit. A desktop artifact may run through the Python fallback when no compiled binary is present and still fail a require-built policy imposed for a particular distribution candidate; conversely it may satisfy native verification and still fail legal-material inclusion, shader validation, resource-root checks, or release-language constraints.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'This article does not tell readers to evade native-build failures by leaning on the fallback, and it does not require every informal local run to contain compiled extensions. It keeps the four layers apart. A public description of the artifact must not imply that native binaries were built unless the build and verification output show that they were, and must not imply that fallback execution authorizes distribution. The native state is a technical property of the artifact and never a legal grant.',
+          },
         ],
       },
     ],
@@ -199,67 +476,133 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Legal Material Inclusion',
     title: 'Including License Text',
     description:
-      'Explains the operational requirement that Ludoxel desktop artifacts retain the root License Text and related legal material, without treating inclusion as permission, endorsement, release approval, or third-party clearance.',
+      'Explains the legal-material copy path in build_desktop_app — the configured material set, the copy service and its existence-guarded operation, the Windows and macOS publish coordinates, and the repository legal check — and holds the line that inclusion is retention, not permission.',
     sections: [
       {
-        id: 'including-license-text-inclusion-boundary',
-        title: 'License Text Inclusion Boundary',
-        body: [
-          'License Text inclusion is a distribution-operations requirement. The build configuration names LICENSE and third-party as legal material paths, and the desktop build service copies those paths into the relevant staging or publish location when they exist. PyInstaller data arguments also include LICENSE and third-party in the common data set, with macOS treating the same legal material as required bundle input. The purpose is physical retention of controlling and attribution material around the artifact.',
-          'That physical retention has a strictly limited meaning. Including LICENSE does not create permission to distribute the package, does not convert a local build into an official release, does not make a recipient an authorized distributor, and does not relax any reservation in the License Text. It prevents the distribution artifact from being severed from the legal text that governs it; it does not itself confer authority.',
-        ],
-        noteBlocks: [
+        id: 'including-license-text-owner-files',
+        title: 'Owner Files and Retention Premise',
+        content: [
           {
-            type: 'warning',
-            content:
-              'A package that contains LICENSE may still be unauthorized. A package that lacks LICENSE is defective as a distribution artifact even if some other page or repository surface can be opened in a browser.',
+            kind: 'paragraph',
+            text: 'Including the License Text in a desktop artifact is an operations requirement owned by `LEGAL_MATERIAL_PATHS` in `src/config/build.config.mjs`, the copy service in `src/service/legal-copy.service.mjs`, and the existence-guarded helper `copyIfExists` in `src/shared/file/path.file.mjs`. The configured material set is `LICENSE` and `third-party`, and PyInstaller also lists both among its data arguments — optionally on Windows, as required inputs on macOS. The purpose is to keep the controlling and attribution material physically next to the artifact.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'That retention means one narrow thing and nothing more. Including `LICENSE` does not create permission to distribute the package, does not turn a local build into an official release, does not make a recipient an authorized distributor, and does not relax any reservation in the controlling text. It only prevents the artifact from being separated from the legal text that governs it. Separation is a defect; attachment is not authority.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'A package that contains `LICENSE` may still be unauthorized. A package that lacks `LICENSE` is defective even if some repository surface can be opened in a browser. Presence and permission are independent questions.',
+            },
           },
         ],
       },
       {
-        id: 'including-license-text-build-copy-path',
-        title: 'Build Copy Path',
-        body: [
-          'The operational copy path is explicit. The legal-copy service iterates over the configured legal material paths and copies each existing path from the project root into the target directory. Windows calls this service for the staging directory and for dist/windows. macOS copies legal material into dist/macos after the bundle is published, and the macOS input check also treats each configured legal material path as a required project input before a valid bundle build is accepted.',
-          'The practical consequence is that legal material must be inspected in the same coordinate system as the artifact. For Windows, the inspection target is the directory containing Ludoxel.exe. For macOS, the inspection target is dist/macos around Ludoxel.app, not only the application bundle internals. A review that looks only at the executable or only at the app bundle while ignoring the surrounding publish directory is incomplete.',
-        ],
-        codeBlocks: [
+        id: 'including-license-text-copy-service',
+        title: 'The Copy Service',
+        content: [
           {
-            language: 'yaml',
-            code: 'legal material paths: LICENSE, third-party\nWindows publish target: dist/windows\nmacOS publish target: dist/macos',
-            caption: 'Legal material copy coordinates.',
+            kind: 'paragraph',
+            text: '`copyLegalMaterial` moves the configured material into a target directory. It takes one target path, iterates the fixed `LEGAL_MATERIAL_PATHS` list, writes only into that directory, and logs each path as copied or skipped, so the build record states which legal material actually reached the target.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'copyLegalMaterial in legal-copy.service.mjs.',
+            code: `export function copyLegalMaterial(targetDir) {
+  for (const relativePath of LEGAL_MATERIAL_PATHS) {
+    const copied = copyIfExists(resolve(PROJECT_ROOT, relativePath), resolve(targetDir, relativePath));
+    if (copied) {
+      console.log(\`[build_desktop_app] copied legal material: \${relativePath}\`);
+    } else {
+      console.log(\`[build_desktop_app] legal material not found, skipped: \${relativePath}\`);
+    }
+  }
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'It delegates the actual move to `copyIfExists`, which refuses to invent material it cannot find and signals the absence by returning false instead of throwing.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'copyIfExists in path.file.mjs.',
+            code: `export function copyIfExists(source, destination) {
+  if (!existsSync(source)) return false;
+  ensureDirectory(dirname(destination));
+  cpSync(source, destination, { recursive: true, force: true });
+  return true;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Because the move is existence-guarded and returns a boolean, a missing `LICENSE` does not crash the build; it produces a visible `skipped` line. So the build record, not silence, is the evidence that legal material was retained. Ignoring those log lines is how a package comes to be called complete when the build itself reported that the controlling text was never copied.',
+          },
+        ],
+      },
+      {
+        id: 'including-license-text-publish-coordinates',
+        title: 'Publish Coordinates',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The copy runs in platform-specific coordinates, and the place to inspect follows those coordinates. On Windows, `publishWindowsExecutable` calls the copy service for the staging directory and for `dist/windows`, so the target to inspect is the directory holding `Ludoxel.exe`. On macOS, `publishMacosApp` copies legal material into `dist/macos` after the bundle is published, and the macOS prerequisite check additionally treats each configured legal-material path as a required input before a build is accepted.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'For a Windows artifact, look in `dist/windows` for `LICENSE` and `third-party` beside `Ludoxel.exe`.',
+              'For a macOS artifact, look in `dist/macos` around `Ludoxel.app`, not only inside the bundle, because the copy writes beside the bundle.',
+              'After any later copy, compression, upload, or transfer, inspect the transferred artifact again, because a downstream step can strip what the build correctly produced.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'A review that looks only at the executable, or only at the bundle internals, while ignoring the surrounding publish directory is incomplete. The legal material lives in the publish coordinate system, and that is where its presence has to be confirmed.',
           },
         ],
       },
       {
         id: 'including-license-text-check-reading',
-        title: 'Check Reading',
-        body: [
-          'The legal check reads the root LICENSE, verifies required terms including Ludoxel Independent License, LicenseRef-All-Rights-Reserved, and third-party/, verifies that third-party/ exists, and checks required third-party license files. It also scans source-like files for the required SPDX license identifier outside excluded asset, config, and third-party paths. Its output is a repository-state check, not a package-by-package forensic audit of every generated directory.',
-          'That distinction should be preserved when writing documentation. A passed legal check supports the proposition that the repository has the required legal text and SPDX discipline at the time of the check. It does not by itself prove that a previously copied artifact contains the legal material, that a modified artifact retained it, or that a third party may circulate it.',
-        ],
-        codeBlocks: [
+        title: 'What the Legal Check Proves',
+        content: [
           {
+            kind: 'paragraph',
+            text: 'The repository legal check reads the root `LICENSE` and verifies the required terms `Ludoxel Independent License`, `LicenseRef-All-Rights-Reserved`, and `third-party/`; verifies that `third-party/` exists; checks the required third-party license file; and scans source-like files for the required SPDX identifier outside excluded asset, config, and third-party paths.',
+          },
+          {
+            kind: 'code',
             language: 'sh',
-            code: 'npm run license:check',
-            caption: 'Repository legal-material and SPDX check.',
+            caption: 'Repository legal-material and SPDX check from package.json.',
+            code: `npm run license:check`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Its output is a statement about the repository at the time of the check, not a forensic audit of any generated directory. A passing legal check supports the claim that the repository carries the required legal text and SPDX discipline. It does not prove that a previously copied artifact still contains the legal material, that a modified artifact retained it, or that a third party may circulate it. A failure must be read by its named cause: a missing root `LICENSE` is a different defect from a missing SPDX header in a source file, and a missing third-party license is different again. Naming the failed evidence is what keeps a distribution report from collapsing every failure into the same vague "not ready".',
           },
         ],
       },
       {
-        id: 'including-license-text-failure-reading',
-        title: 'Failure Reading',
-        body: [
-          'A missing LICENSE file is a hard defect for a distribution artifact. It deprives the artifact of the controlling text that the recipient must be able to inspect. A missing third-party directory is also a defect when the artifact includes materials whose third-party notices are expected to travel with the package. These are not cosmetic omissions and should not be described as documentation polish.',
-          'A failed legal check should be read by its named failure. If the root LICENSE is missing, the defect is not the same as a missing SPDX header in a source file. If the Kaisei license is missing, the defect is not the same as a missing LicenseRef term in package metadata. Distribution writing must name the failed evidence instead of converting every failure into the same vague statement that the package is not ready.',
-        ],
-      },
-      {
-        id: 'including-license-text-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not interpret the license grant, define the scope of Original Materials, decide whether Distribution Materials may be shared, or determine the legal effect of public repository visibility. Those issues belong to Legal. This article remains operational: it identifies the required legal text, the tool path that copies it, the check that reads it, and the artifact defects caused by omission.',
-          'The narrow conclusion is severe but simple: a distribution artifact must not be detached from its controlling legal material; nevertheless, attachment to the controlling legal material is not permission to distribute the artifact.',
+        id: 'including-license-text-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'This article does not interpret the license grant, define the scope of Original Materials, decide whether Distribution Materials may be shared, or determine the effect of public repository visibility. Those questions belong to the controlling ',
+              { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
+              ' and to the Legal category. Here the concern is operational: the required material, the service that copies it, the publish coordinates, the check that reads the repository, and the defects caused by omission.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The conclusion is severe and simple. A distribution artifact must not be detached from its controlling legal material; and attachment to that material is still not permission to distribute the artifact.',
+          },
         ],
       },
     ],
@@ -271,67 +614,152 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Legal Material Inclusion',
     title: 'Including Third Party License Text',
     description:
-      'Explains how third-party license material is retained and checked for Ludoxel distribution artifacts, with particular attention to Kaisei Opti font material and the distinction between notice inclusion and complete third-party provenance analysis.',
+      'Explains how third-party license text, in particular the Kaisei Opti font notice, is retained and checked: the legal policy constant, the required-terms checker, the macOS font requirements, and the boundary between notice retention and redistribution clearance.',
     sections: [
       {
-        id: 'including-third-party-license-text-inclusion-boundary',
-        title: 'Third-Party Inclusion Boundary',
-        body: [
-          'Third-party license inclusion concerns the physical retention of license texts for third-party material that is carried by the repository or by a desktop artifact. In the current tooling, third-party/ is a configured legal material path, and the legal policy specifically requires third-party/kaisei-opti/LICENSE.txt to contain Kaisei, SIL Open Font License, and Version 1.1. macOS packaging also requires the Kaisei Opti font assets that are used by the application’s visual surface.',
-          'This is not the same inquiry as classifying every material in the repository. The presence of the Kaisei Opti license file supports the statement that the required Kaisei license notice is present. It does not decide the provenance of every Minecraft-derived texture, every local asset, every generated thumbnail, or every material whose history requires separate review. Distribution writing must not inflate one verified third-party notice into universal clearance.',
-        ],
-        noteBlocks: [
+        id: 'including-third-party-license-text-owner-files',
+        title: 'Owner Files and Retention Scope',
+        content: [
           {
-            type: 'warning',
-            content:
-              'Third-party license inclusion is a package-retention and notice problem. It is not a blanket provenance certificate for every asset that appears in the repository, a build output, or a rendered scene.',
+            kind: 'paragraph',
+            text: 'Third-party license inclusion is about keeping the license texts of third-party material physically present in the repository and in any artifact that carries that material. It is owned by the policy constants in `tools/check_project/src/check/legal/legal.policy.mjs`, the required-terms checker in `legal.check.mjs`, and the configured `third-party` material path that `copyLegalMaterial` writes into each publish directory. The one third-party license the policy verifies in detail is the Kaisei Opti font notice.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'REQUIRED_THIRD_PARTY_LICENSES in legal.policy.mjs.',
+            code: `export const REQUIRED_THIRD_PARTY_LICENSES = Object.freeze([
+  Object.freeze({
+    label: 'third-party/kaisei-opti/LICENSE.txt',
+    path: LEGAL_PATHS.kaiseiLicense,
+    terms: Object.freeze(['Kaisei', 'SIL Open Font License', 'Version 1.1']),
+  }),
+]);`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This is not the same task as classifying every material in the repository. The policy proves that the Kaisei notice contains the expected identifying terms. It does not settle the provenance of every Minecraft-derived texture, every local asset, every generated thumbnail, or every provenance-sensitive material. One verified notice must not be inflated into a blanket clearance.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Third-party license inclusion is a notice-retention problem. It is not a provenance certificate for every asset that appears in the repository, a build output, or a rendered scene.',
+            },
           },
         ],
       },
       {
-        id: 'including-third-party-license-text-kaisei-font-path',
-        title: 'Kaisei Font Path',
-        body: [
-          'The Kaisei Opti license text is stored under third-party/kaisei-opti/LICENSE.txt. The macOS build path separately verifies KaiseiOpti-Regular.ttf, KaiseiOpti-Medium.ttf, and KaiseiOpti-Bold.ttf under assets/fonts, together with the Minecraft font files that the application uses for its interface. The relationship is evidentiary: the font asset path shows that the material may be bundled, while the third-party license path carries the notice text that must not be lost during packaging.',
-          'A bundle that contains the font file but omits the corresponding third-party license text is defective. A repository that contains the license text but omits the font asset may pass one legal-text check while failing a macOS resource prerequisite. The two facts should be kept distinct because they answer different questions: one asks whether notice material exists; the other asks whether runtime resources needed by the platform package are present.',
-        ],
-        codeBlocks: [
+        id: 'including-third-party-license-text-checker',
+        title: 'The Required-Terms Checker',
+        content: [
           {
-            language: 'yaml',
-            code: 'third-party/kaisei-opti/LICENSE.txt\nassets/fonts/KaiseiOpti-Regular.ttf\nassets/fonts/KaiseiOpti-Medium.ttf\nassets/fonts/KaiseiOpti-Bold.ttf',
-            caption: 'Kaisei license and font asset coordinates.',
+            kind: 'paragraph',
+            text: 'The same `checkRequiredTerms` helper that validates the root `LICENSE` validates the Kaisei notice. It takes a label, a path, and a term set; it fails on a missing file or a missing term; and it reports the defect with a message that names it.',
           },
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-check-reading',
-        title: 'Check Reading',
-        body: [
-          'The legal check treats the Kaisei Opti license as a required third-party license. If the file is absent, or if the required terms are missing, the check reports the defect by the required license label. This check gives a precise, reproducible signal about a named third-party notice. It should be cited only for that signal and for the broader fact that third-party/ exists as a legal-material root.',
-          'The check does not read the full license obligations into a legal opinion and does not certify redistribution of every artifact that embeds a font. It verifies the presence of selected terms. The distribution article may therefore state that a package process must retain this license text; it must not state that the check alone authorizes public distribution of the resulting desktop package.',
-        ],
-        codeBlocks: [
           {
+            kind: 'code',
+            language: 'js',
+            caption: 'checkRequiredTerms in legal.check.mjs.',
+            code: `function checkRequiredTerms({ failures, label, path, terms }) {
+  if (!existsSync(path)) {
+    failures.push(\`\${label} is missing\`);
+    return null;
+  }
+
+  const text = readFileSync(path, 'utf8');
+  for (const term of terms) {
+    if (!text.includes(term)) failures.push(\`\${label} missing term: \${term}\`);
+  }
+
+  return text;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The check is run as part of the repository legal check.',
+          },
+          {
+            kind: 'code',
             language: 'sh',
-            code: 'npm run license:check',
-            caption: 'Repository third-party license check.',
+            caption: 'The third-party notice is verified by the legal check.',
+            code: `npm run license:check`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'What it proves is exact. If `third-party/kaisei-opti/LICENSE.txt` is absent or lacks `Kaisei`, `SIL Open Font License`, or `Version 1.1`, the check reports the defect by the license label. It does not read the full obligations of the SIL Open Font License into a legal opinion, and it does not certify redistribution of any artifact that embeds the font. It confirms the presence of selected terms in a named notice file. A distribution article may state that a package process must keep this notice; it may not state that the check authorizes public distribution of the package.',
           },
         ],
       },
       {
-        id: 'including-third-party-license-text-artifact-reading',
-        title: 'Artifact Reading',
-        body: [
-          'Artifact review should trace third-party notice material from the repository root into the publish target. For Windows, third-party should be present beside the published executable after the legal-copy step. For macOS, third-party should be present in the published dist/macos directory after the bundle is copied and verified. The review should not assume that PyInstaller internal data collection and the surrounding legal-copy step are identical merely because both mention third-party.',
-          'When a distribution package is inspected after copying, compression, upload, or transfer, the third-party notice directory must be checked again in the transferred artifact. The repository may have been correct, and the build output may have been correct, yet a later packaging step may still have stripped the directory. Distribution documentation should therefore describe third-party license inclusion as an end-to-end retention requirement rather than a single build-time event.',
+        id: 'including-third-party-license-text-notice-versus-resource',
+        title: 'Notice Versus Runtime Resource',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The Kaisei notice text and the Kaisei font files answer different questions, and the macOS path treats the font files as runtime resources alongside the Minecraft interface fonts.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'MACOS_REQUIRED_FONT_ASSET_PATHS in macos-build.service.mjs.',
+            code: `const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
+  'assets/fonts/MinecraftRegular-Bmg3.otf',
+  'assets/fonts/MinecraftBold-nMK1.otf',
+  'assets/fonts/MinecraftItalic-R8Mo.otf',
+  'assets/fonts/MinecraftBoldItalic-1y1e.otf',
+  'assets/fonts/KaiseiOpti-Regular.ttf',
+  'assets/fonts/KaiseiOpti-Medium.ttf',
+  'assets/fonts/KaiseiOpti-Bold.ttf',
+]);`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The font asset path shows that the material can be bundled into the macOS application; the third-party license path carries the notice that must not be lost during packaging. They are not interchangeable. A bundle that contains `KaiseiOpti-Regular.ttf` but omits the corresponding notice is defective as a distribution artifact, while a repository that contains the notice but omits the font asset passes the legal check yet fails the macOS resource prerequisite. One question asks whether notice material exists; the other asks whether a platform-required runtime resource is present. Treating them as one misreports both.',
+          },
         ],
       },
       {
-        id: 'including-third-party-license-text-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not classify all third-party material, decide whether a specific third-party license permits a particular external redistribution act, resolve provenance-sensitive assets, or replace the Legal category’s material-boundary articles. It concerns the operational retention of named third-party license text and the package defects that follow from omission.',
-          'The resulting rule is narrow: if a distribution artifact carries third-party material, the corresponding third-party license material must remain attached in the artifact’s distribution coordinate system. That attachment is necessary evidence of notice retention, not proof of general legal clearance.',
+        id: 'including-third-party-license-text-end-to-end',
+        title: 'End-to-End Retention',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Because `third-party` is a configured legal-material path, `copyLegalMaterial` copies it into each publish directory, so the notice should travel from the repository root into the artifact.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Confirm the notice exists at the repository root under `third-party/`.',
+              'For a Windows artifact, confirm `third-party` is beside `Ludoxel.exe` after the legal-copy step.',
+              'For a macOS artifact, confirm `third-party` is present in `dist/macos` after the bundle is published and verified.',
+              'After any later copy, compression, or transfer, inspect the transferred artifact again, because PyInstaller internal data collection and the surrounding legal-copy step are distinct operations and a downstream step can strip the directory.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'Third-party license inclusion is therefore an end-to-end retention requirement, not a single build-time event. The repository can be correct and the build output can be correct, and a later packaging step can still remove the directory.',
+          },
+        ],
+      },
+      {
+        id: 'including-third-party-license-text-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'This article does not classify all third-party material, decide whether a specific third-party license permits a particular external redistribution act, or resolve provenance-sensitive assets. The full analysis of ',
+              { kind: 'link', label: 'third-party material boundaries', href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries' },
+              ' belongs to the Data and Legal categories. Here the concern is the operational retention of a named third-party notice and the defects that follow from omission.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The rule is narrow: if an artifact carries third-party material, the corresponding notice must stay attached in the artifact’s publish coordinates. That attachment is evidence of notice retention, never proof of general legal clearance.',
+          },
         ],
       },
     ],
@@ -343,67 +771,175 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Local Build Procedure',
     title: 'Running a Desktop Build with Permission',
     description:
-      'Explains the authorized local operation of Ludoxel desktop build commands, the supported target selection model, host constraints, dry-run behavior, native-build ordering, and generated build roots without treating command availability as permission.',
+      'Documents the build_desktop_app command surface as an operational entry point for an already-authorized operator: parsing and validation, task dispatch, host gates, dry-run and check modes, native-build and cache ordering, and the separation of command availability from permission.',
     sections: [
       {
         id: 'running-a-desktop-build-with-permission-authority-premise',
         title: 'Authority Premise',
-        body: [
-          'This article assumes that the operator already has authority to run the relevant local build command under the controlling License Text or a separate competent written permission. The existence of a package script does not itself grant that authority. The Distribution question begins only after that premise is satisfied: which command is being run, which target is selected, which host is required, which inputs are read, and which artifact paths are created.',
-          'That premise prevents this article from collapsing into Legal. Legal decides whether a person may perform a given act. Distribution records how the build act is performed when authority is not in dispute. The build command is therefore described as an operational entry point, not as a permission surface.',
-        ],
-        noteBlocks: [
+        content: [
           {
-            type: 'warning',
-            content:
-              'Do not cite this article as permission to build, distribute, publish, mirror, or upload Ludoxel. It describes the technical path for an operator whose authority is already established elsewhere.',
+            kind: 'paragraph',
+            text: 'This article assumes the operator already holds authority to run the relevant local build under the controlling License Text or a separate competent written permission. A package script existing does not confer that authority. The Distribution question begins only after the premise is satisfied: which command runs, which target is selected, which host is required, which inputs are read, and which artifact paths are written.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'That premise is what keeps this article out of Legal. Legal decides whether a person may perform an act; Distribution records how the build act is carried out when the authority is not in dispute. The build command is an operational entry point, not a permission surface.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Do not cite this article as permission to build, distribute, publish, mirror, or upload Ludoxel. It describes the technical path for an operator whose authority is established elsewhere.',
+            },
           },
         ],
       },
       {
-        id: 'running-a-desktop-build-with-permission-target-selection',
-        title: 'Target Selection',
-        body: [
-          'The desktop build CLI accepts windows and macos targets, corresponding wrapper scripts also exist for each platform, and the generic build command defaults to Windows when no command is supplied and the user did not request help. The CLI also accepts --dry-run, --skip-native-build, --keep-build-cache, --status, --check, and language selection for help rendering. Conflicting target declarations and unsupported language values are rejected before task execution.',
-          'Target selection is not a cosmetic argument because the Windows and macOS services impose different host gates and produce different artifact forms. Windows produces a one-file executable under dist/windows. macOS produces a .app bundle under dist/macos and exposes additional status and packaging-check behavior. A distribution document must identify the selected target before discussing any generated artifact.',
-        ],
-        codeBlocks: [
+        id: 'running-a-desktop-build-with-permission-parse-validate',
+        title: 'Parsing and Validation',
+        content: [
           {
+            kind: 'paragraph',
+            text: '`parseDesktopBuildArgs` reads the command line. It recognizes the `windows` and `macos` targets, the flags `--dry-run`, `--skip-native-build`, `--keep-build-cache`, `--status`, and `--check`, and a language selection for help rendering; it records a conflict when two different targets are declared and rejects unknown options and commands. The targets and the diagnostic modes are reached through the package scripts:',
+          },
+          {
+            kind: 'code',
             language: 'sh',
-            code: 'npm run build:desktop -- windows\nnpm run build:desktop -- macos\nnpm run build:desktop -- macos --check\nnpm run build:desktop -- macos --status',
-            caption: 'Targeted desktop build invocations.',
+            caption: 'Targeted desktop build invocations from package.json.',
+            code: `npm run build:desktop -- windows
+npm run build:desktop -- macos
+npm run build:macos:check
+npm run build:macos -- --status`,
           },
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-host-gates',
-        title: 'Host Gates and Dry Runs',
-        body: [
-          'The Windows service requires a Windows host for a real build and verifies that the Windows entry script exists. A Windows dry run can display the constructed PyInstaller command without enforcing the same host requirement because it does not execute the build. The macOS service requires a macOS host before running its build path and also requires the entry script, default Alex skin, a macOS icon candidate, and required font assets before PyInstaller execution.',
-          'The dry-run distinction must be read precisely. A dry run can show command construction and path choices, but it does not produce dist/windows/Ludoxel.exe or dist/macos/Ludoxel.app. A packaging check can verify prerequisites for the macOS path, but it does not publish a bundle. Treating either diagnostic mode as a completed build is a factual error.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-native-and-cache-ordering',
-        title: 'Native Build and Cache Ordering',
-        body: [
-          'Unless explicitly skipped, native extensions are built before desktop packaging. A nonzero native build result stops the desktop build. The desktop build then creates tokenized PyInstaller work, spec, staging, and configuration roots under build/, prints the constructed PyInstaller command, executes it with the resolved Python executable, publishes the resulting artifact, and removes tokenized build roots unless --keep-build-cache is supplied.',
-          'The generated roots are part of the audit trail. They explain where intermediate files were written and why a staged artifact may exist after a publication problem. They should not be mistaken for release locations. The durable platform publish directories are dist/windows and dist/macos; the tokenized build roots are implementation details unless retained for inspection.',
-        ],
-        codeBlocks: [
           {
-            language: 'yaml',
-            code: 'build/pyinstaller-runs/<token>\nbuild/pyinstaller-spec-runs/<token>\nbuild/pyinstaller-dist-runs/<token>\nbuild/pyinstaller-config',
-            caption: 'PyInstaller build and configuration roots.',
+            kind: 'paragraph',
+            text: '`validateDesktopBuildArgs` then resolves the default target and forbids contradictory diagnostic modes.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'validateDesktopBuildArgs in cli/args/validate.args.mjs.',
+            code: `export function validateDesktopBuildArgs(parsed) {
+  const errors = [...parsed.errors];
+  const command = parsed.command || (parsed.help ? null : 'windows');
+
+  if (!SUPPORTED_LANGUAGES.has(parsed.language)) {
+    errors.push(\`Unsupported language: \${parsed.language}\`);
+  }
+
+  if (parsed.status && parsed.check) {
+    errors.push('--status and --check cannot be used together.');
+  }
+
+  return {
+    ...parsed,
+    command,
+    language: SUPPORTED_LANGUAGES.has(parsed.language) ? parsed.language : 'ja',
+    errors,
+  };
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Two of these decisions matter downstream. When no target is supplied and help is not requested, the command defaults to `windows`, so a bare invocation selects the Windows path rather than failing open. And `--status` with `--check` is rejected, because the macOS status report and the macOS prerequisite check are distinct modes that cannot both be requested at once. The validation runs before any task: when the error list is non-empty, the dispatcher prints the errors and returns exit code 2 without building anything.',
           },
         ],
       },
       {
-        id: 'running-a-desktop-build-with-permission-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not describe installer creation, update delivery, store submission, notarized public release, website download publication, or external redistribution. It also does not decide whether a given operator has permission to run the command. Those are separate legal and release-management questions.',
-          'The narrow conclusion is operational. An authorized local desktop build is a target-specific task that validates inputs, may build native extensions, constructs a PyInstaller command, writes intermediate roots, publishes a platform artifact, and emits logs that must be read before the artifact is described or transferred.',
+        id: 'running-a-desktop-build-with-permission-dispatch',
+        title: 'Task Dispatch and Host Gates',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`runDesktopBuildTask` routes a validated option set to a platform service, and encodes the macOS-only diagnostic modes inline so that `--check` and `--status` short-circuit before a real build.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'runDesktopBuildTask in service/task.service.mjs.',
+            code: `export function runDesktopBuildTask(options, context = {}) {
+  if (options.command === 'windows') {
+    return runWindowsBuild({ ...options, env: context.env });
+  }
+
+  if (options.command === 'macos') {
+    if (options.check) {
+      return checkMacosPackagingInputs();
+    }
+
+    if (options.status) {
+      console.log(renderMacosStatus());
+      return 0;
+    }
+
+    return runMacosBuild({ ...options, env: context.env });
+  }
+
+  console.error(\`Unknown desktop build command: \${options.command}\`);
+  return 2;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The two platform services impose different host gates. `runWindowsBuild` requires a Windows host for a real build and checks that the Windows entry script exists, though a Windows dry run skips the host requirement because it does not execute. `runMacosBuild` requires a macOS host and additionally requires the entry script, the default Alex skin, a macOS `.icns` icon candidate, and every required font asset before PyInstaller runs. This is why the target must be identified before any artifact is discussed: the hosts, the renderer paths, and the artifact forms differ, and treating the two as one generic desktop build silently confuses all three.',
+          },
+        ],
+      },
+      {
+        id: 'running-a-desktop-build-with-permission-native-and-cache',
+        title: 'Native Build and Cache Ordering',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Unless explicitly skipped, native extensions are built before packaging, and a nonzero native result stops the desktop build.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'Native-build ordering gate in windows-build.service.mjs.',
+            code: `if (!options.skipNativeBuild && !options.dryRun) {
+  const nativeExitCode = buildNativeExtensionsBeforeDesktop(options);
+
+  if (nativeExitCode !== 0) {
+    return nativeExitCode;
+  }
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'After the native phase, the service constructs tokenized PyInstaller work, spec, and staging roots under `build/`, prints the command, runs it with the resolved Python executable, publishes the artifact, and removes the tokenized roots unless `--keep-build-cache` is supplied. Reading that order is how a reviewer reconstructs what happened.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Validate the target, host, and required inputs.',
+              'Build native extensions unless `--skip-native-build` or a dry run, and stop on a nonzero native result.',
+              'Construct and print the PyInstaller command.',
+              'Execute PyInstaller into tokenized staging roots under `build/`.',
+              'Publish the artifact into `dist/windows` or `dist/macos` and copy legal material.',
+              'Remove tokenized build roots unless `--keep-build-cache` is supplied.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The durable publish directories are `dist/windows` and `dist/macos`; the tokenized roots are implementation detail and part of the audit trail, not release locations. A staged artifact that survives because of a publication problem is not a published one.',
+          },
+        ],
+      },
+      {
+        id: 'running-a-desktop-build-with-permission-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'This article does not describe installer creation, update delivery, store submission, notarized public release, website download publication, or external redistribution, and it does not decide whether a given operator may run the command. Those are separate legal and release-management questions.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'An authorized local desktop build is a target-specific task that validates inputs, may build native extensions, constructs a PyInstaller command, writes intermediate roots, publishes a platform artifact, and emits logs that have to be read before the artifact is described or transferred. That is the whole of what running the command establishes.',
+          },
         ],
       },
     ],
@@ -415,53 +951,129 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Local Build Procedure',
     title: 'Reading Build Output',
     description:
-      'Explains how to read Ludoxel build and check output as structured evidence, distinguishing command display, pass and failure lines, notes, staged artifacts, locked publish targets, and unsupported conclusions.',
+      'Explains how to read build and check output as evidence at the exact granularity the tools emit it: the printed PyInstaller command, the report function pass and failure shape, native verification lines, and the platform publication results, none of which establish permission or release status.',
     sections: [
       {
         id: 'reading-build-output-evidentiary-function',
-        title: 'Evidentiary Function of Build Output',
-        body: [
-          'Build output is a record of what a tool attempted, what it verified, what it skipped, and where it wrote artifacts. It is not a substitute for artifact inspection. A log line that prints a PyInstaller command shows command construction; a log line that reports a published artifact shows that the publication function reached its success path; a check line that says passed shows that a named check returned zero. None of those lines alone proves legal permission, official release status, or third-party clearance.',
-          'The correct reading order is concrete. First identify the tool and target. Next identify whether the run was diagnostic or productive. Then read named failures and notes without generalizing them beyond their check. Finally compare the reported output path with the file system. A distribution article should never convert an optimistic build transcript into a completed, authorized, transferable release without these intermediate readings.',
+        title: 'Evidentiary Function',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Build output records what a tool attempted, verified, skipped, and wrote. It is not a substitute for inspecting the artifact, and it is not a release verdict. A printed PyInstaller command shows command construction; a published-artifact line shows a publication function reached its success path; a `passed` line shows a named check returned zero. None of those lines on its own proves permission, official release status, or third-party clearance.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The reading follows a fixed order, so each line is taken for what it is.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Identify the tool and target that produced the line.',
+              'Determine whether the run was diagnostic (dry run, status, or check) or productive (a real build).',
+              'Read named failures and notes without generalizing them beyond the check that emitted them.',
+              'Compare the reported output path against the file system.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'Skipping those steps is how an optimistic transcript becomes a claim of a completed, authorized, transferable release.',
+          },
         ],
       },
       {
         id: 'reading-build-output-command-display',
         title: 'Command Display',
-        body: [
-          'The desktop build service prints the PyInstaller command before execution. The displayed command includes the Python executable, PyInstaller module invocation, clean and confirmation flags, application name, output roots, project source path, collected package data, hidden imports, data arguments, icons, and the entry script. On dry run, that displayed command is the principal output because the tool returns before PyInstaller execution.',
-          'A displayed command should be read as an intended invocation, not as a completed artifact. It is useful for diagnosing whether the selected target, entry script, icon, data roots, hidden imports, and staging paths are correct. It cannot prove that PyInstaller succeeded, that the output file exists, or that legal material was copied after publication.',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The desktop build service prints the PyInstaller command before execution, and on a dry run that printed command is the principal output because the service returns before PyInstaller runs. The line shows the Python executable, the PyInstaller module invocation, the clean and confirmation flags, the application name, the output roots, the source path, the collected package data, the hidden imports, the data arguments, the icon, and the entry script. The dry run is reached as:',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'A dry run prints the command and returns before building.',
+            code: `npm run build:windows -- --dry-run`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A displayed command is an intended invocation, not a completed artifact. It is useful for checking that the target, entry script, icon, data roots, hidden imports, and staging paths are right. It cannot show that PyInstaller succeeded, that the output file exists, or that legal material was copied after publication. Reading a dry-run command print as a finished build is the most common error and a factual one.',
+          },
         ],
       },
       {
-        id: 'reading-build-output-pass-failure-and-notes',
+        id: 'reading-build-output-pass-failure-notes',
         title: 'Pass, Failure, and Notes',
-        body: [
-          'Check output uses a deliberately simple form: a named check prints passed or failed, optional notes are printed as notes, and failures are printed as individual failure lines. A note is not a failure, and a failure line is not a general condemnation of the entire repository. The text after the check name controls the reading because each check has its own evidence set and its own boundaries.',
-          'For example, resources notes may record that assets/ exists and must stay ignored until provenance is reviewed, that previous-format configs/ exists, or that generated export output exists. Those notes are not the same as failure lines. Conversely, a missing runtime path module, a missing legal term, or a missing package script is not a mere warning. Distribution writing must preserve these severities.',
-        ],
-        codeBlocks: [
+        content: [
           {
-            language: 'yaml',
-            code: '<name>: passed\n  note: <diagnostic note>\n\n<name>: failed\n  - <specific failure>',
-            caption: 'Generic check-output shape.',
+            kind: 'paragraph',
+            text: 'Every repository check renders its result through one function, `printCheckResult`, and its shape dictates how the output is read.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'printCheckResult in tools/check_project/src/service/report.service.mjs.',
+            code: `export function printCheckResult(name, failures, notes = []) {
+  if (failures.length === 0) {
+    console.log(\`\${name}: passed\`);
+  } else {
+    console.error(\`\${name}: failed\`);
+  }
+
+  for (const note of notes) {
+    console.log(\`  note: \${note}\`);
+  }
+
+  for (const failure of failures) {
+    console.error(\`  - \${failure}\`);
+  }
+
+  return failures.length === 0 ? 0 : 1;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Three severities live here and must not be merged. A `name: passed` line means that named check found no failures. A `note:` line is diagnostic context, not a failure — the resource check, for example, notes that `assets/` exists and must stay ignored until provenance is reviewed. A `- failure` line is a specific, named defect. The text after the check name controls the reading, because each check carries its own evidence set and its own boundary. A note is never a failure, and one failure line is never a verdict on the whole repository.',
           },
         ],
       },
       {
         id: 'reading-build-output-publication-results',
-        title: 'Publication Results',
-        body: [
-          'Windows and macOS report publication differently because the artifacts differ. Windows reports the published executable path when dist/windows/Ludoxel.exe is replaced successfully, but it may instead report that the published executable is locked and that the staged executable was preserved. macOS reports a published app bundle after Info.plist patching, signing, verification, copying, re-signing, re-verification, and legal-material copying.',
-          'These messages must be read with their platform semantics. A preserved staged Windows executable is not the same as a replaced published executable. A verified macOS bundle is not the same as notarization. A copied legal-material line is not a legal grant. Each message is a fact about a tool step, and the final artifact description must be assembled from those facts rather than inferred from a single favorable line.',
+        title: 'Publication and Verification Results',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Windows and macOS report publication differently because the artifacts differ. Windows prints `published Windows executable` when `dist/windows/Ludoxel.exe` is replaced, but it may instead print that the published executable is locked and that the staged executable was preserved. macOS prints a published app bundle only after Info.plist patching, ad-hoc signing, verification, copying, re-signing, re-verification, and legal-material copying. Native verification prints a line per source and an explicit fallback statement for any fallback-only source.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'Per-source output and the fallback statement in verify.service.mjs.',
+            code: `console.log(\`native source: \${source.id}: \${source.moduleName} -> \${source.displayPath}\`);
+
+if (source.binaries.length === 0) {
+  console.log('  compiled extension: none; Python fallback source exists.');
+  continue;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Each message carries its own meaning. A preserved staged Windows executable is not a replaced published executable. A `compiled extension: none` line is a fallback fact, not a build failure. An ad-hoc verified macOS bundle is not a notarized bundle. A copied-legal-material line is not a legal grant. The final description of the artifact has to be assembled from these specific facts, never inferred from one favorable line — and that assembly is the whole discipline of reading build output.',
+          },
         ],
       },
       {
-        id: 'reading-build-output-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not teach generic PyInstaller debugging, Python packaging theory, operating-system code-signing law, or license interpretation. It explains the Ludoxel-specific reading discipline for the build and check output that the repository tools emit.',
-          'The narrow conclusion is that build output is admissible technical evidence only when it is read at the granularity at which the tool emitted it. A line about a command, a note, a failure, a staged artifact, or a published artifact cannot be promoted into a legal or release-status conclusion.',
+        id: 'reading-build-output-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'This article does not teach generic PyInstaller debugging, Python packaging theory, operating-system code-signing law, or license interpretation. It describes the Ludoxel-specific reading discipline for the build and check output the repository tools emit.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Build output is admissible technical evidence only at the granularity at which the tool emitted it. A line about a command, a note, a failure, a staged artifact, or a published artifact cannot be promoted into a legal or release-status conclusion.',
+          },
         ],
       },
     ],
@@ -473,66 +1085,126 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Package Inspection',
     title: 'Running Package Checks with Permission',
     description:
-      'Explains the repository package, documentation, and legal checks that inform distribution readiness, including what they verify, what they deliberately do not verify, and how their output should be read before artifact publication.',
+      'Explains the check_project dispatcher and the package, legal, and documentation policies: named-check selection, the package identity and script-surface rules, and the rule that a passing check is evidence only for the policy that produced it.',
     sections: [
       {
         id: 'running-package-checks-with-permission-authority-premise',
         title: 'Authority Premise',
-        body: [
-          'This article assumes that the operator has authority to run repository checks in the local working copy. The checks are executable repository tools, not public grants of permission. Their value is evidentiary: they report whether selected repository invariants are satisfied before a party describes a build as coherent, complete, or ready for a further authorized step.',
-          'A passed check must therefore be used with discipline. It can support a statement about the condition that the check actually verifies. It cannot authorize distribution, waive a license condition, certify external redistribution, approve a release, or replace inspection of a concrete artifact after it has been copied or compressed.',
-        ],
-        noteBlocks: [
+        content: [
           {
-            type: 'warning',
-            content: 'A green check is a repository signal. It is not a release approval, not legal permission, and not evidence that a later copied artifact still contains every required file.',
+            kind: 'paragraph',
+            text: 'This article assumes the operator may run repository checks in the local working copy. The checks are executable repository tools, not public grants. Their value is evidentiary: they report whether selected repository invariants hold before a build is described as coherent or ready for a further authorized step.',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'Package-adjacent checks from package.json.',
+            code: `npm run package:check
+npm run docs:check
+npm run license:check
+npm run check`,
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content: 'A passing check is a repository signal. It is not a release approval, not legal permission, and not evidence that a later copied artifact still contains every required file.',
+            },
           },
         ],
       },
       {
-        id: 'running-package-checks-with-permission-package-check',
-        title: 'Package Check',
-        body: [
-          'The package check reads package.json and verifies basic project identity, including the package name and license identifier. It also requires the declared script surface to contain the expected Ludoxel scripts, rejects known obsolete or improper script terms, verifies that node-based script entry files exist, rejects a root scripts/ directory, and rejects the future_ai_workbench tooling directory if it appears as executable tooling rather than as removed design material.',
-          'This is a structural repository check. It does not build the desktop application, inspect dist/windows or dist/macos, execute PyInstaller, validate renderer parity, or decide whether a generated artifact may be distributed. Its proper use in Distribution is to show that the repository script surface and package metadata have not drifted away from the expected tooling contract.',
-        ],
-        codeBlocks: [
+        id: 'running-package-checks-with-permission-dispatcher',
+        title: 'The Named-Check Dispatcher',
+        content: [
           {
-            language: 'sh',
-            code: 'npm run package:check',
-            caption: 'Package metadata and script-surface check.',
+            kind: 'paragraph',
+            text: 'The check harness is a closed dispatch table in `tools/check_project/src/service/check.service.mjs`. A check name supplied by a run script selects a single policy from the frozen `CHECKS` map, and an unknown name returns exit code 2 instead of running an arbitrary function.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'The CHECKS table and runProjectCheck in check.service.mjs.',
+            code: `const CHECKS = Object.freeze({
+  package: checkPackage,
+  docs: checkDocs,
+  legal: checkLegal,
+  resources: checkResources,
+  shaders: checkShaders,
+});
+
+export async function runProjectCheck(checkName, options = {}) {
+  const check = CHECKS[checkName];
+
+  if (!check) {
+    console.error(\`Unknown check: \${checkName}\`);
+    return 2;
+  }
+
+  return check(options);
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Freezing the table is what gives the checks their granularity. Each name selects exactly one policy, and the composite `npm run check` runs them in sequence rather than as a single undifferentiated pass. So "the checks passed" is never one global guarantee; each name proves only the predicate set of the policy it selected. The evidence belongs to the individual dispatch entry, not to the aggregate run.',
           },
         ],
       },
       {
-        id: 'running-package-checks-with-permission-legal-and-docs-checks',
-        title: 'Legal and Documentation Checks',
-        body: [
-          'The legal check verifies the root License Text terms, the third-party root, required third-party license text, and SPDX headers on source-like files outside excluded paths. The documentation check verifies that README.md exists and contains the required Ludoxel legal-information terms. These checks are narrower than the documents they touch. They verify the presence of required terms and markers; they do not interpret the full legal text or certify that every public explanation is complete.',
-          'In Distribution, these checks are useful because package candidates must not be detached from legal and documentation invariants. A package made from a repository that fails these checks should be treated as suspect even before inspecting the platform artifact. But the inverse is not absolute: passing the checks does not prove that a generated archive, installer, upload, or copied directory preserved the relevant material.',
-        ],
-        codeBlocks: [
+        id: 'running-package-checks-with-permission-package-policy',
+        title: 'The Package Policy',
+        content: [
           {
-            language: 'sh',
-            code: 'npm run license:check\nnpm run docs:check',
-            caption: 'Legal material and README-term checks.',
+            kind: 'paragraph',
+            text: '`checkPackage` reads `package.json` and verifies project identity and the declared script surface. It requires the name `ludoxel` and the license identifier `LicenseRef-All-Rights-Reserved`, requires the expected Ludoxel scripts to be present, rejects known obsolete or improper script terms, checks that node-based script entry files exist, rejects a root `scripts/` directory, and rejects the `future_ai_workbench` tooling directory.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'Identity and required-script verification in package.check.mjs.',
+            code: `if (packageJson.name !== 'ludoxel') failures.push('package.json name must be ludoxel');
+if (packageJson.license !== 'LicenseRef-All-Rights-Reserved') failures.push('package.json license must be LicenseRef-All-Rights-Reserved');
+
+const scripts = packageJson.scripts || {};
+
+for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
+  if (!Object.hasOwn(scripts, scriptName)) {
+    failures.push(\`package.json missing script: \${scriptName}\`);
+  }
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This is a structural repository check. It does not build the desktop application, inspect `dist/windows` or `dist/macos`, run PyInstaller, validate renderer parity, or decide whether a generated artifact may be distributed. Its Distribution use is to show that the script surface and package metadata have not drifted from the expected tooling contract — a precondition for repository-to-artifact continuity, not a release authority.',
+          },
+        ],
+      },
+      {
+        id: 'running-package-checks-with-permission-legal-and-docs',
+        title: 'Legal and Documentation Policies',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The legal check verifies the root License Text terms, the `third-party` root, the required third-party license text, and SPDX headers on source-like files outside excluded paths. The documentation check verifies that `README.md` exists and contains the required Ludoxel legal-information terms. Both are narrower than the documents they touch: they confirm that required terms and markers are present; they do not interpret the full legal text or certify that every public explanation is complete.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'This is where a passing check is most often over-read. A green legal or documentation check confirms exactly the conditions that policy inspected and no others. It does not entail redistribution authority. In Distribution the checks still matter, because a package built from a repository that fails them should be treated as suspect even before the platform artifact is inspected; but the converse does not hold. Passing the checks does not prove that a generated archive, installer, upload, or copied directory preserved the relevant material.',
           },
         ],
       },
       {
         id: 'running-package-checks-with-permission-composite-reading',
         title: 'Composite Reading',
-        body: [
-          'Package readiness is a composite judgment only in the engineering sense. package:check, license:check, docs:check, resources:check, shader:check, and the platform build checks each inspect a different layer. A failure in any one layer should be named by its layer. A pass in one layer should not be used to excuse missing evidence in another layer.',
-          'This is especially important for generated desktop artifacts. The repository may pass package:check while macOS packaging prerequisites fail. The macOS packaging check may pass while the later PyInstaller run fails. The PyInstaller run may succeed while a copied artifact later loses third-party material. Distribution documentation should therefore speak in terms of layer-specific evidence rather than broad release readiness slogans.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not replace continuous integration policy, legal review, release approval, third-party provenance analysis, or manual artifact inspection. It also does not define the contents of the License Text. It explains how package-adjacent checks contribute evidence to the Distribution category.',
-          'The narrow conclusion is that package checks are necessary discipline for repository-to-artifact continuity. They are not sufficient authority for distribution and not sufficient proof that a concrete artifact remains complete after it leaves the publish directory.',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Package readiness is composite only in the engineering sense. `package:check`, `license:check`, `docs:check`, `resources:check`, `shader:check`, and the platform build checks each inspect a different layer. A failure in any layer must be named by its layer, and a pass in one layer must not excuse missing evidence in another. The repository may pass `package:check` while macOS packaging prerequisites fail; the macOS packaging check may pass while a later PyInstaller run fails; the PyInstaller run may succeed while a copied artifact later loses third-party material.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'This article does not replace continuous-integration policy, legal review, release approval, third-party provenance analysis, or manual artifact inspection, and it does not define the contents of the License Text. Package checks are necessary discipline for repository-to-artifact continuity. They are neither sufficient authority for distribution nor proof that a concrete artifact stays complete after it leaves the publish directory.',
+          },
         ],
       },
     ],
@@ -544,60 +1216,128 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Package Inspection',
     title: 'Running Resource and Shader Checks with Permission',
     description:
-      'Explains the Ludoxel resource and shader checks as distribution evidence for runtime roots, generated-material boundaries, renderer shader contract compliance, and platform-specific packaging risk.',
+      'Explains the resource and shader policies in check_project: the runtime-path, integrity, and asset-root invariants with their generated-material notes, and the shader source contract with its GLSL version bound and vertex-index macro rule, each held to exactly what it inspects.',
     sections: [
       {
         id: 'running-resource-and-shader-checks-with-permission-authority-premise',
         title: 'Authority Premise',
-        body: [
-          'This article assumes that the operator has authority to run repository checks and inspect the local working copy. The checks are not permission to redistribute resources, shaders, assets, or generated artifacts. Their function is to identify whether the repository state still satisfies selected runtime and renderer invariants that matter before a desktop artifact is described as distribution-ready.',
-          'Resource and shader checks are grouped here because both protect package behavior after code is frozen into a desktop artifact. Resource failures tend to produce missing paths, missing runtime data roots, lost assets, or broken persistence boundaries. Shader failures tend to produce renderer compilation problems or backend contract drift. Neither check decides legal material scope or third-party rights.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-resource-check',
-        title: 'Resource Check',
-        body: [
-          'The resource check reads .gitignore for generated and local exclusion terms, verifies the runtime path module, verifies the persistence integrity manifest module, and verifies the shared visual asset root resolver. It specifically expects runtime path handling to mention default_runtime_data_root, state_manifest.json, and integrity_key.bin, and it expects the visual asset resolver to cover the Ludoxel and Minecraft asset roots together with block texture and thumbnail directories.',
-          'The notes emitted by this check are part of its discipline. The existence of assets/ is noted because assets must remain ignored until provenance is reviewed. The existence of previous-format configs/ is noted because runtime writes must use the app-managed data root and may only migrate previous-format input. The existence of generated export output is noted because it must remain generated and ignored. Those notes are evidence of boundary management, not incidental commentary.',
-        ],
-        codeBlocks: [
+        content: [
           {
-            language: 'sh',
-            code: 'npm run resources:check',
-            caption: 'Runtime path, generated-material, and asset-root check.',
+            kind: 'paragraph',
+            text: 'This article assumes the operator may run repository checks and inspect the local working copy. The checks are not permission to redistribute resources, shaders, assets, or generated artifacts. They identify whether the repository still satisfies selected runtime and renderer invariants before a desktop artifact is called distribution-ready.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The two are grouped because both protect package behavior after the code is frozen into a desktop artifact. Resource failures tend to produce missing runtime data roots, lost assets, or broken persistence boundaries; shader failures tend to produce renderer compilation problems or backend contract drift. Neither check decides legal material scope or third-party rights.',
           },
         ],
       },
       {
-        id: 'running-resource-and-shader-checks-with-permission-shader-check',
-        title: 'Shader Check',
-        body: [
-          'The shader check scans the OpenGL shader root and the WGPU shader source root, filters shader files by accepted suffix, and validates stage-specific shader text. Non-include shader files must declare a GLSL version accepted by the Ludoxel validation contract, and vertex shaders must use the compatibility macro for vertex indexing instead of raw gl_VertexID unless the macro is present. The check also reports the number of shader files inspected.',
-          'This check is significant for Distribution because renderer source can be packaged into a desktop artifact and then fail at runtime on a target platform. The check does not prove visual equivalence between OpenGL and WGPU, does not render frames, and does not validate every driver behavior. It verifies a source-level shader contract that must hold before the artifact is treated as technically coherent.',
-        ],
-        codeBlocks: [
+        id: 'running-resource-and-shader-checks-with-permission-resource-policy',
+        title: 'The Resource Policy',
+        content: [
           {
+            kind: 'paragraph',
+            text: '`checkResources` reads `.gitignore` for generated and local exclusion terms, verifies the runtime path module, the persistence integrity manifest module, and the shared visual asset root resolver. The exact terms it requires are declared in `resources.policy.mjs`, and the check is reached through the package script.',
+          },
+          {
+            kind: 'code',
             language: 'sh',
-            code: 'npm run shader:check',
-            caption: 'Renderer shader source-contract check.',
+            caption: 'Runtime-path, generated-material, and asset-root check from package.json.',
+            code: `npm run resources:check`,
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'GENERATED_IGNORE_TERMS and REQUIRED_RUNTIME_PATH_TERMS in resources.policy.mjs.',
+            code: `export const GENERATED_IGNORE_TERMS = Object.freeze(['node_modules/', 'dist/', 'build/', '__pycache__/', '.venv_ludoxel/', 'tools/export_directory_markdown/output/']);
+
+export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_root', 'state_manifest.json', 'integrity_key.bin']);`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The check expects the runtime path module to mention `default_runtime_data_root`, `state_manifest.json`, and `integrity_key.bin`, and expects the visual asset resolver to cover the `assets/ludoxel` and `assets/minecraft` roots together with the block texture and thumbnail directories. Its notes are part of the discipline rather than incidental commentary: it notes that `assets/` exists and must stay ignored until provenance is reviewed, that a previous-format `configs/` exists and that runtime writes must use the app-managed data root, and that the export-tool output exists and must remain generated and ignored. Each note marks a boundary between source, generated material, and provenance-sensitive assets.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'In distribution terms, the resource check protects the runtime data boundary that a frozen desktop artifact depends on: it confirms the modules that resolve the user data root, the integrity manifest, and the asset roots are present and reference the expected names. It does not pack those resources into a bundle and does not certify their provenance; those belong to the build path and to the Data and Legal categories.',
+          },
+        ],
+      },
+      {
+        id: 'running-resource-and-shader-checks-with-permission-shader-policy',
+        title: 'The Shader Policy',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`checkShaders` scans the OpenGL shader root and the WGPU shader source root, filters by the accepted suffixes `.vert`, `.frag`, `.comp`, and `.glsl`, and validates each non-include file against a stage-aware contract. `checkShader` is the predicate that produces the failures, and it is reached through the package script.',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'Renderer shader source-contract check from package.json.',
+            code: `npm run shader:check`,
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'checkShader in shaders.check.mjs.',
+            code: `function checkShader(path) {
+  const failures = [];
+  const text = readFileSync(path, 'utf8');
+  const display = displayPath(path);
+  const version = text.match(SHADER_VERSION_RE);
+  const stage = shaderStage(path);
+
+  if (stage !== 'include') {
+    if (!version) {
+      failures.push(\`\${display}: missing #version\`);
+    } else if (Number(version[1]) > 430) {
+      failures.push(\`\${display}: #version \${version[1]} exceeds Ludoxel renderer shader contract\`);
+    } else if (Number(version[1]) < 140) {
+      failures.push(\`\${display}: #version \${version[1]} is lower than the minimum accepted GLSL version for tool validation\`);
+    }
+  }
+
+  if (stage === 'vertex' && RAW_VERTEX_ID_RE.test(text) && !text.includes('LUDOXEL_VERTEX_INDEX')) {
+    failures.push(\`\${display}: use the LUDOXEL_VERTEX_INDEX compatibility macro instead of raw gl_VertexID\`);
+  }
+
+  return failures;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A non-include shader must declare a `#version`, and the declared version is accepted only when it is at least 140 and at most 430; anything below the floor or above the ceiling is a failure named with the file and the offending version. A vertex shader that references raw `gl_VertexID` without the `LUDOXEL_VERTEX_INDEX` compatibility macro fails as well. The distribution significance is that renderer source is packaged into a desktop artifact and can fail at runtime on a target platform, so this contract is enforced before the artifact is treated as coherent. What the check does not do is equally clear: it does not prove visual equivalence between the OpenGL and WGPU backends, does not render frames, and does not validate driver behavior. It validates shader source text.',
           },
         ],
       },
       {
         id: 'running-resource-and-shader-checks-with-permission-platform-effect',
         title: 'Platform Effect',
-        body: [
-          'The platform effect is different for Windows and macOS. Windows retains the OpenGL renderer path and packages common data roots into a one-file executable. macOS uses the WGPU and Metal-oriented path and requires WGPU source, rendercanvas, wgpu-native imports, the cursor helper, fonts, and bundled resource locations to survive the application-bundle process. Resource and shader checks therefore inform, but do not replace, platform-specific packaging checks.',
-          'A resource check can pass while macOS still fails to bundle a font or Alex skin in an accepted bundle location. A shader check can pass while a platform dependency is missing from the macOS build environment. Distribution writing must state the exact level verified: repository resource invariants, shader-source contract, platform packaging prerequisites, or final artifact inspection.',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The platform effect differs by target. Windows keeps the OpenGL renderer path and packages common data roots into a one-file executable. macOS uses the WGPU and Metal-oriented path and requires WGPU source, `rendercanvas`, the `wgpu_native` import, the cursor helper, fonts, and bundled resource locations to survive the bundle process. Resource and shader checks inform, but do not replace, the platform-specific packaging checks.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'A resource check can pass while macOS still fails to bundle a font or the Alex skin in an accepted bundle location, and a shader check can pass while a platform dependency is missing from the macOS build environment. A distribution statement has to name the exact level it verified: repository resource invariants, the shader-source contract, platform packaging prerequisites, or final artifact inspection. Each is a separate layer of evidence.',
+          },
         ],
       },
       {
-        id: 'running-resource-and-shader-checks-with-permission-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not classify asset provenance, license third-party textures, authorize generated thumbnails, certify visual parity, or provide general renderer debugging. It describes two repository checks whose outputs are relevant to distribution readiness because desktop packages carry resources and shader source into a frozen runtime context.',
-          'The narrow conclusion is that resource and shader checks are necessary technical evidence for package integrity, but their success must remain attached to what they actually inspect. They cannot be transformed into a legal conclusion, a release approval, or a promise that every runtime path in every transferred artifact remains intact.',
+        id: 'running-resource-and-shader-checks-with-permission-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'This article does not classify asset provenance, license third-party textures, authorize generated thumbnails, certify visual parity, or provide general renderer debugging. It reads two repository checks whose output bears on distribution readiness because desktop packages carry resources and shader source into a frozen runtime context.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Resource and shader checks are necessary technical evidence for package integrity, and their success stays attached to what they actually inspect. They cannot be turned into a legal conclusion, a release approval, or a promise that every runtime path in every transferred artifact remains intact.',
+          },
         ],
       },
     ],
@@ -609,53 +1349,118 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Public Identification',
     title: 'Avoiding Unofficial Release Claims',
     description:
-      'Explains how to describe local builds, preview artifacts, copied desktop packages, CI results, and documentation references without implying official release status, legal clearance, or public redistribution permission.',
+      'Explains why release wording is part of artifact handling: the tool’s own publish coordinates and its explicit statement that codesigning and notarization are outside the tool, and the rule that an artifact label is never an authority label.',
     sections: [
       {
         id: 'avoiding-unofficial-release-claims-identification-boundary',
         title: 'Identification Boundary',
-        body: [
-          'Unofficial release claims arise when a technical artifact is described with institutional force it does not possess. A locally built executable, a locally built .app bundle, a preserved staging file, a CI artifact, a Vercel preview, a copied folder, a compressed archive, or a screenshot of a successful check may be real evidence of technical activity. None of those facts, by itself, establishes that the artifact is an official Ludoxel release or that a third party may circulate it.',
-          'The Distribution category controls the public wording used around those artifacts because wording is part of artifact handling. A release label can cause readers to infer approval, authority, support expectations, or redistribution permission. If the evidentiary basis is only local generation or technical accessibility, the label must remain local, diagnostic, or unofficial.',
-        ],
-        noteBlocks: [
+        content: [
           {
-            type: 'warning',
-            content:
-              'Do not call a local build, preview deployment, copied artifact, preserved staging file, or check result an official release unless the separate release authority and release-status evidence actually exist.',
+            kind: 'paragraph',
+            text: 'An unofficial release claim is what happens when a technical artifact is described with institutional force it does not have. A locally built executable, a locally built `.app` bundle, a preserved staging file, a CI artifact, a Vercel preview, a copied folder, a compressed archive, or a screenshot of a passing check can all be genuine evidence of technical activity. None of them, on its own, establishes that the artifact is an official Ludoxel release or that any third party may circulate it.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Wording is part of artifact handling because a label carries inference with it. A release label invites the reader to assume approval, authority, support, or redistribution permission. When the only evidence is local generation or technical access, the label has to stay local, diagnostic, or unofficial. That is the wording the Distribution category controls.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Do not call a local build, preview deployment, copied artifact, preserved staging file, or check result an official release unless separate release authority and release-status evidence actually exist.',
+            },
           },
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-safe-description',
-        title: 'Safe Description',
-        body: [
-          'A safe description names the technical source and refuses surplus authority. Acceptable wording can say that an artifact is a local Windows build, a local macOS bundle, a PyInstaller output, a package candidate, a test artifact, a preview artifact, a staged executable preserved after a locked publish target, or a repository check result. Those phrases describe evidence without representing approval by the Licensor or readiness for public circulation.',
-          'Unsafe wording says or implies official release, authorized public download, redistribution-ready package, legally cleared build, approved mirror, endorsed upload, or final release artifact when the only evidence is local build output or tool success. The defect is not merely stylistic. It misstates the artifact’s status and invites the reader to infer permission from technical availability.',
+        id: 'avoiding-unofficial-release-claims-tool-self-limitation',
+        title: 'The Tool Limits Itself',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The build tool does not claim to produce a release, and it says so in plain text. `renderMacosStatus` in `macos-status.service.mjs` lists what the build path performs and then separates the real release work as outside the tool. The status text is reached with the status flag:',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'The macOS status text is printed by the build command with --status.',
+            code: `npm run build:macos -- --status`,
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'Closing lines of renderMacosStatus in macos-status.service.mjs.',
+            code: `    'Release work outside this tool:',
+    '  - Codesigning and notarization.',
+    '',
+  ].join('\\n');`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This is the tool’s own boundary statement. The macOS path performs ad-hoc signing and verification to establish local bundle integrity, but Developer ID codesigning and notarization are named as release work outside the tool. So even the most complete local macOS build, with a verified signature, has not crossed into Apple-distributable status. Treating the ad-hoc verification as notarization is exactly the false inference this article suppresses.',
+          },
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-support-and-documentation-context',
-        title: 'Support and Documentation Context',
-        body: [
-          'Support and documentation surfaces should preserve the same distinction. A support answer may ask for the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. It should not transform the user’s artifact into an endorsed release by repeating the user’s label without qualification. Documentation should also avoid presenting local build commands as public download instructions.',
-          'A public documentation article may describe how the build tool works because that is a technical fact about the repository. The article must still make clear that command availability, repository visibility, static-site publication, or package output does not itself produce release authority. The safest public text names the artifact’s technical origin and then stops.',
+        id: 'avoiding-unofficial-release-claims-label-versus-authority',
+        title: 'Artifact Label Versus Authority Label',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The publish coordinates make the same point. The artifact is named `Ludoxel.exe` or `Ludoxel.app` and is written under `dist/windows` or `dist/macos`, and those are declared constants in the build configuration.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'Artifact name and publish directories declared in build.config.mjs.',
+            code: `export const APP_NAME = 'Ludoxel';
+export const WINDOWS_PUBLISH_DIR = 'dist/windows';
+export const MACOS_PUBLISH_DIR = 'dist/macos';`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The name `Ludoxel` and the path `dist` are construction labels chosen by the build configuration, not authority labels. A file called `Ludoxel.exe` in `dist/windows` is the deterministic output of `publishWindowsExecutable`; the name says what the tool built, not who may distribute it. Mistaking that artifact label for an authority label is the precise error this article forbids: an output named like a product is still only an output. Safe description names the technical source and refuses any surplus authority.',
+          },
+          {
+            kind: 'list',
+            items: [
+              'Acceptable: a local Windows build, a local macOS bundle, a PyInstaller output, a package candidate, a staged executable preserved after a locked publish target, or a repository check result.',
+              'Unsafe: official release, authorized public download, redistribution-ready package, legally cleared build, approved mirror, endorsed upload, or final release artifact, when the only evidence is local build output or tool success.',
+            ],
+          },
         ],
       },
       {
         id: 'avoiding-unofficial-release-claims-evidence-required',
         title: 'Evidence Required for Stronger Claims',
-        body: [
-          'A stronger release claim requires stronger evidence than an artifact path. At minimum, the claim must be tied to the controlling release decision, the exact artifact or build identifier, the platform target, the included legal and third-party material, the relevant check results, and the public surface on which the release is intentionally presented. If any of those elements is absent, the statement should remain a local or candidate description.',
-          'The absence of evidence must not be cured with vague language such as appears to be official, should be fine, effectively released, probably cleared, or generated by the official repo. Distribution prose should be exact even when the answer is inconvenient: a package can be technically generated and still lack release status.',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A stronger release claim needs stronger evidence than an artifact path. At minimum it has to be tied to the controlling release decision, the exact artifact or build identifier, the platform target, the included legal and third-party material, the relevant check results, and the public surface on which the release is intentionally presented. If any of those is absent, the statement stays a local or candidate description.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The absence of evidence must not be patched over with vague language such as appears to be official, should be fine, effectively released, probably cleared, or generated by the official repo. Distribution prose has to be exact even when the answer is inconvenient: a package can be technically generated and still lack release status.',
+          },
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-boundary',
-        title: 'Boundary of the Article',
-        body: [
-          'This article does not decide who may grant official release status, how legal permission is created, whether a particular artifact is licensed for distribution, or how public releases should be announced outside the documentation. It controls the narrower documentation problem of avoiding false release language around technical artifacts.',
-          'The narrow conclusion is that Distribution documentation must speak with evidentiary restraint. A build artifact may be named, inspected, diagnosed, and compared against the expected package structure. It must not be promoted into an official or authorized release by rhetorical force.',
+        id: 'avoiding-unofficial-release-claims-authority-boundary',
+        title: 'Authority Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'This article does not decide who may grant official release status, how legal permission is created, whether a particular artifact is licensed for distribution, or how official releases are announced. Under the controlling License Text, only the Licensor publishes an ',
+              { kind: 'link', label: 'Official Distribution', href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials' },
+              '; here the concern is the narrower problem of not attaching false release language to a technical artifact.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'Distribution documentation speaks with evidentiary restraint. A build artifact may be named, inspected, diagnosed, and compared against the expected package structure. It may not be promoted into an official or authorized release by rhetorical force.',
+          },
         ],
       },
     ],

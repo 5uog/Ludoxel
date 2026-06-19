@@ -28,14 +28,14 @@ const NOTE_BLOCK_STYLES: Record<DocsNoteBlockType, DocsNoteBlockStyle> = {
   note: {
     calloutClassName: 'callout my-4 flex gap-3 overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-600/20',
     contentClassName:
-      'prose min-w-0 w-full text-sm text-blue-800 dark:prose-invert dark:text-blue-300 [&_a]:border-current [&_a]:!text-current [&_code]:!text-current [&_kbd]:!text-current [&_kbd]:bg-background-light dark:[&_kbd]:bg-background-dark [&_strong]:!text-current',
+      'prose min-w-0 w-full text-sm text-blue-800 dark:prose-invert dark:text-blue-300 [&_a]:border-current [&_a]:!text-current [&_code]:!border-border [&_code]:!bg-secondary [&_code]:!text-foreground [&_kbd]:!text-current [&_kbd]:bg-background-light dark:[&_kbd]:bg-background-dark [&_strong]:!text-current',
     iconClassName: 'size-4 text-blue-800 dark:text-blue-300',
     iconLabel: 'Note',
   },
   info: {
     calloutClassName: 'callout my-4 flex gap-3 overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-600/20',
     contentClassName:
-      'prose min-w-0 w-full text-sm text-blue-800 dark:prose-invert dark:text-blue-300 [&_a]:border-current [&_a]:!text-current [&_code]:!text-current [&_kbd]:!text-current [&_kbd]:bg-background-light dark:[&_kbd]:bg-background-dark [&_strong]:!text-current',
+      'prose min-w-0 w-full text-sm text-blue-800 dark:prose-invert dark:text-blue-300 [&_a]:border-current [&_a]:!text-current [&_code]:!border-border [&_code]:!bg-secondary [&_code]:!text-foreground [&_kbd]:!text-current [&_kbd]:bg-background-light dark:[&_kbd]:bg-background-dark [&_strong]:!text-current',
     iconClassName: 'size-4 text-blue-800 dark:text-blue-300',
     iconLabel: 'Info',
   },
@@ -43,7 +43,7 @@ const NOTE_BLOCK_STYLES: Record<DocsNoteBlockType, DocsNoteBlockStyle> = {
     calloutClassName:
       "callout my-4 flex gap-3 overflow-hidden rounded-2xl border border-yellow-200 bg-yellow-50 px-5 py-4 dark:border-yellow-900 dark:bg-yellow-600/20 [&_[data-component-part='callout-icon']]:mt-px",
     contentClassName:
-      'prose min-w-0 w-full text-sm text-yellow-800 dark:prose-invert dark:text-yellow-300 [&_a]:border-current [&_a]:!text-current [&_code]:!text-current [&_kbd]:!text-current [&_kbd]:bg-background-light dark:[&_kbd]:bg-background-dark [&_strong]:!text-current',
+      'prose min-w-0 w-full text-sm text-yellow-800 dark:prose-invert dark:text-yellow-300 [&_a]:border-current [&_a]:!text-current [&_code]:!border-border [&_code]:!bg-secondary [&_code]:!text-foreground [&_kbd]:!text-current [&_kbd]:bg-background-light dark:[&_kbd]:bg-background-dark [&_strong]:!text-current',
     iconClassName: 'size-5 flex-none text-yellow-800 dark:text-yellow-300',
     iconLabel: 'Warning',
   },
