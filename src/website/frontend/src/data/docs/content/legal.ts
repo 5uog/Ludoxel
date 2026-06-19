@@ -434,154 +434,181 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Original Materials',
     description:
-      'Explains the project materials governed by the Ludoxel license. This page treats material classification as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains which Ludoxel materials are treated as Original Materials under the License Text, how that classification is separated from third-party materials, user-created materials, application output, distribution form, and public visibility, and why classification does not itself enlarge permission.',
     sections: [
       {
-        id: 'understanding-original-materials-authority-scope',
-        title: 'Original Materials Authority Scope',
+        id: 'understanding-original-materials-juridical-function',
+        title: 'Juridical Function of Original Materials',
         body: [
-          'Original materials include Ludoxel source code, documentation, project-created assets, shaders, package resources, website content, and distribution material created for the project. For Understanding Original Materials, that fact identifies the first concrete boundary for authority scope: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Original Materials. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion.',
-          'A public report based on the authority scope part of Understanding Original Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Original Materials is the material-scope classification that determines which project materials are governed by the Ludoxel Independent License as materials created, owned, or controlled by the Licensor for purposes of that license. The classification is not a permission grant, not a release status, not a distribution authorization, and not a conclusion about whether a proposed use is allowed.',
+          [
+            'The classification works after license ',
+            {
+              kind: 'link',
+              label: 'authority',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority',
+            },
+            ' has been identified and before a restricted act is evaluated. It tells the reader what material falls inside the Licensor-controlled legal perimeter. It does not decide whether the act is permitted, waived, excused, or expanded by a public surface.',
+          ],
+          'The legal point is therefore exact and limited: Original Materials are the protected Ludoxel materials to which the License Text applies as Ludoxel-controlled materials. Once a material is classified that way, the reader must still read the actual grant, reservation, restriction, and exclusion provisions before concluding that any Use is permitted.',
         ],
       },
       {
-        id: 'understanding-original-materials-controlling-text',
-        title: 'Original Materials Controlling Text',
+        id: 'understanding-original-materials-operative-text-and-owner',
+        title: 'Operative Text and Owner',
         body: [
-          'Authority Scope defines the useful size of Understanding Original Materials. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. Understanding Original Materials uses the fact as controlling text evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Controlling Text.',
-          'A direct observation for Understanding Original Materials should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'When Understanding Original Materials crosses from controlling text into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The operative text is the root `LICENSE`. It defines the License Text as the English text in the repository license file, defines the Licensor as Kento Konishi, also written as 小西拳斗, and states that the Licensor owns or controls the Original Materials and is the only person granting the permissions stated in the License.',
+          [
+            'That ownership and control statement supplies the legal center of this article. If a subordinate repository page, documentation paragraph, package field, generated artifact, hosted preview, translation, issue text, pull request text, summary, or user interface statement conflicts with the License Text, the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' text rule decides the conflict; this article does not elevate subordinate statements into separate authority.',
+          ],
+          'The classification must therefore be made from the License Text and confirmed repository materials, not from convenience labels, repository location alone, file extension alone, display route alone, or assumptions about common open-source practice.',
         ],
       },
       {
-        id: 'understanding-original-materials-material-class',
-        title: 'Original Materials Material Class',
-        body: [
-          'A public report based on the authority scope part of Understanding Original Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for material class: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Material Class.',
-          'Understanding Original Materials separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form.',
-          'Use material class to keep Understanding Original Materials tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
+        id: 'understanding-original-materials-classification-test',
+        title: 'Classification Test',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The License Text defines Original Materials as Works and other protectable materials in, distributed from, displayed through, deployed from, or associated with the Repository, Ludoxel, or the Documentation Site that were created by the Licensor, are owned by the Licensor, or are controlled by the Licensor for purposes of the License.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The classification test has four distinct elements:',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'The material must be a Work or other protectable material.',
+              'The material must have the required connection to the Repository, Ludoxel, or the Documentation Site.',
+              'The material must be created, owned, or controlled by the Licensor for license purposes.',
+              'The material must not instead be Third-Party Materials.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'A material does not become Original Materials merely because it is nearby, bundled, rendered, cached, displayed, indexed, or discussed. Conversely, a Licensor-created project material does not lose Original Materials status merely because it appears in Source Form, Object Form, generated metadata, static-site output, package metadata, distribution preparation material, or a public browser view.',
+          },
         ],
       },
       {
-        id: 'understanding-original-materials-ordinary-use',
-        title: 'Original Materials Ordinary Use',
+        id: 'understanding-original-materials-included-classes',
+        title: 'Included Material Classes',
         body: [
-          'Understanding Original Materials should be read as conceptual boundary for original materials within License Authority and Materials and Material Scope. Understanding Original Materials uses the fact as controlling text evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Controlling Text. That reading gives Understanding Original Materials a public anchor for ordinary use without adding behavior that the current category does not own. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Ordinary Use.',
-          'Ownership in Understanding Original Materials is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'The useful result of Understanding Original Materials ordinary use is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          'The License Text expressly includes Source Form and Object Form materials, repository text, source code, documentation, website source code, Documentation Site content, configuration files, build scripts, validation tools, shaders, user interface text, generated metadata, package metadata, packaging material, distribution preparation material, static-site output, project-specific assets, project-specific textures, branding material, application icons, and other protected repository contents, to the extent that those materials are not Third-Party Materials.',
+          'This inclusion language is intentionally form-neutral. A protected Ludoxel source file, a compiled or bundled form of that source file, a generated website artifact derived from Ludoxel website source, a project-specific shader, a project-specific asset, or a project-specific metadata file may remain within the Original Materials perimeter even though the technical form has changed.',
+          'The reader must therefore avoid a false distinction between editable files and generated files. Source Form may be easier to read, and Object Form may be easier to distribute or execute, but neither form itself removes the material from the Original Materials classification when the material is otherwise created, owned, or controlled by the Licensor.',
         ],
       },
       {
-        id: 'understanding-original-materials-restricted-use',
-        title: 'Original Materials Restricted Use',
+        id: 'understanding-original-materials-excluded-materials',
+        title: 'Excluded Materials',
         body: [
-          'A direct observation for Understanding Original Materials should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. The point matters in restricted use because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Restricted Use.',
-          'Visible feedback for Understanding Original Materials should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Material Scope.',
-          'Understanding Original Materials should not use restricted use to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          [
+            'Third-Party Materials are outside Original Materials. Their presence in the repository, Ludoxel, the Documentation Site, Distribution Materials, package metadata, user interface displays, website displays, or build output does not make them Ludoxel Original Materials and does not place Original Materials under the third-party terms. The separate boundary for third-party material handling belongs to ',
+            {
+              kind: 'link',
+              label: 'third-party material boundaries',
+              href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries',
+            },
+            '.',
+          ],
+          [
+            'User-Created Materials and Application Output also require separation. The License Text states that User-Created Materials do not become Original Materials merely because they are entered, edited, displayed, saved, imported, exported, recorded, or processed through Ludoxel. The output-specific boundary belongs to ',
+            {
+              kind: 'link',
+              label: 'output',
+              href: '/docs/data/learning-and-material-data/output-and-material-boundaries/separating-original-materials-from-output',
+            },
+            ' and to the generated-output legal article when the question is about output permissions rather than material classification.',
+          ],
+          'Provenance-Sensitive Materials must not be treated as Original Materials, public-domain materials, open source materials, free-to-use materials, redistributable materials, web-deployable materials, or materials cleared for modification merely because they are present, loaded, displayed, referenced, bundled, or technically capable of deployment.',
         ],
       },
       {
-        id: 'understanding-original-materials-third-party-split',
-        title: 'Original Materials Third-Party Split',
+        id: 'understanding-original-materials-documentation-site',
+        title: 'Documentation Site Materials',
         body: [
-          'When Understanding Original Materials crosses from controlling text into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for third-party split: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Third-Party Split.',
-          'When Understanding Original Materials touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the third-party split part of Understanding Original Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The Documentation Site is part of the Original Materials to the extent it consists of materials created, owned, or controlled by the Licensor. This includes website source code, documentation content, user interface text, styling, media blocks, images, videos, static assets, search data, metadata, configuration files, build configuration, generated static-site output, and an official deployment or publication by the Licensor, when those materials satisfy the License Text definition.',
+          'Publication of the Documentation Site does not convert the site into open content, public-domain material, free documentation, reusable website template material, or a source of permission beyond the License Text. Code blocks, configuration examples, command examples, images, videos, navigation data, search data, and legal notices remain governed by their applicable material classification.',
+          [
+            'Public display, technical retrievability, browser access, static generation, deployment preview, caching, indexing, screenshotting, repository browsing, and hosting-service rendering are immaterial to any asserted entitlement to reuse Original Materials. Such circumstances do not, individually or cumulatively, transmute protected Ludoxel material into public-domain material, open content, redistributable material, template material, training material, extractable data, or material encumbered by an implied license. The contrary position is not a classification argument; it is an attempt to derive authorization from mere visibility. The License Text precludes that derivation, and the visibility-specific analysis belongs to ',
+            {
+              kind: 'link',
+              label: 'repository visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            '.',
+          ],
         ],
       },
       {
-        id: 'understanding-original-materials-public-summary-limit',
-        title: 'Original Materials Public Summary Limit',
+        id: 'understanding-original-materials-distribution-form',
+        title: 'Distribution Form Does Not Change Classification',
         body: [
-          'Third-party materials and user-created materials are treated separately when their boundaries apply. Their existence inside or beside the project does not merge all rights into one category. Understanding Original Materials uses the fact as public summary limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Public Summary Limit.',
-          'The surrounding context for Understanding Original Materials decides which adjacent topic is relevant. Understanding Original Materials should be compared with Separating Original Materials from Output, Understanding Third Party Material Boundaries, Understanding License Authority only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use public summary limit to keep Understanding Original Materials tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
+          'Distribution Materials that contain Original Materials remain subject to the License. Packaging, bundling, compilation, copying into a distribution directory, embedding in an application bundle, inclusion in an installer, inclusion in an archive, static-site generation, or deployment preparation does not create a new license category that displaces the Original Materials classification.',
+          [
+            'The consequence addressed here is confined to material scope. Distribution form is not a juridical solvent. Packaging, bundling, compilation, static generation, deployment preparation, or inclusion in a website build does not dissolve Original Materials into freely circulable matter and does not generate any entitlement to distribute, deploy, publish, mirror, host, redistribute, sublicense, or otherwise circulate Ludoxel materials. Authorization for such acts must be found affirmatively in the License Text; it cannot be manufactured from build form, package form, deployment form, operational convenience, or technical reproducibility. The distribution-form boundary belongs to ',
+            {
+              kind: 'link',
+              label: 'distribution materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
+            },
+            ', while permission to distribute must be resolved under the distribution-permission articles.',
+          ],
+          'The same protected expression may therefore be read through several technical states: source repository material, generated object material, package material, website build output, or displayed documentation. Those states may matter for evidence and handling, but they do not themselves remove the underlying protected Ludoxel material from the Original Materials analysis.',
         ],
       },
       {
-        id: 'understanding-original-materials-reporting-limit',
-        title: 'Original Materials Reporting Limit',
+        id: 'understanding-original-materials-permission-boundary',
+        title: 'Permission Boundary',
         body: [
-          'Understanding Original Materials separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form. The point matters in reporting limit because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Reporting Limit.',
-          'Recovery or follow-up for Understanding Original Materials should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Understanding Original Materials should not use reporting limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Classifying a material as Original Materials does not itself authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark creation, deployment, sublicensing, sale, rental, lending, or removal of legal markings.',
+          'The License Text contains an exhaustive limited grant for human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and Ordinary Application Use. It separately reserves rights and excludes uses outside that grant. This article does not restate every exclusion; it states why the classification matters before those exclusions are applied.',
+          'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later written instrument signed by the Licensor. It must not be inferred from material classification, public availability, technical accessibility, package form, hosting-service behavior, documentation examples, or ordinary user expectation.',
         ],
       },
       {
-        id: 'understanding-original-materials-distribution-limit',
-        title: 'Original Materials Distribution Limit',
+        id: 'understanding-original-materials-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Use material class to keep Understanding Original Materials tied to License Authority and Materials; use a related page only when the reader needs a different owner. Understanding Original Materials uses the fact as distribution limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Distribution Limit.',
-          'The main confusion risk in Understanding Original Materials is inferring permission from visibility. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Understanding Original Materials crosses from distribution limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-ai-use-limit',
-        title: 'Original Materials AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. In Understanding Original Materials, ai use limit is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / AI Use Limit.',
-          'Reportable evidence for Understanding Original Materials should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Understanding Original Materials should not use ai use limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-evidence',
-        title: 'Original Materials Legal Evidence',
-        body: [
-          'Ownership in Understanding Original Materials is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The point matters in legal evidence because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Legal Evidence.',
-          'Adjacent pages matter for Understanding Original Materials, but adjacency does not move authority. Understanding Original Materials should be compared with Separating Original Materials from Output, Understanding Third Party Material Boundaries, Understanding License Authority only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Understanding Original Materials legal evidence is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-related-legal',
-        title: 'Original Materials Related Legal',
-        body: [
-          'The useful result of Understanding Original Materials ordinary use is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope. For Understanding Original Materials, that fact identifies the first concrete boundary for related legal: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Related Legal.',
-          'The public boundary for Understanding Original Materials is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the related legal part of Understanding Original Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-reader-risk',
-        title: 'Original Materials Reader Risk',
-        body: [
-          'Original materials remain governed by the license even if local tools can copy, edit, package, or analyze them. Technical access is not a permission grant. That reading gives Understanding Original Materials a public anchor for reader risk without adding behavior that the current category does not own. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Reader Risk.',
-          'An operator reading Understanding Original Materials should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'If the available evidence for reader risk does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Original Materials should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-non-advice',
-        title: 'Original Materials Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Original Materials should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Material Scope. The point matters in non-advice boundary because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Non-Advice Boundary.',
-          'Implementation limits for Understanding Original Materials keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'The useful result of Understanding Original Materials non-advice boundary is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-public-summary',
-        title: 'Original Materials Public Summary',
-        body: [
-          'Original materials include Ludoxel source code, documentation, project-created assets, shaders, package resources, website content, and distribution material created for the project. For Understanding Original Materials, that fact identifies the first concrete boundary for public summary: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Public Summary.',
-          'The summary value of Understanding Original Materials is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'A public report based on the public summary part of Understanding Original Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-original-materials-closing-check',
-        title: 'Original Materials Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Original Materials. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. In Understanding Original Materials, closing check is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Original Materials / License Authority and Materials / Material Scope / Closing Check.',
-          'A final check for Understanding Original Materials should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Original Materials should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'This article classifies the Ludoxel materials that fall within the Original Materials perimeter under the License Text. It does not classify every third-party asset, prove provenance for every local file, determine whether a specific output may be shared, authorize distribution, decide ordinary application use, resolve AI-use restrictions, accept contributions, route security reports, or determine official release status.',
+          [
+            'Its conclusion is narrower: Ludoxel Original Materials are the project materials created, owned, or controlled by the Licensor for purposes of the License, including the specified source, object, documentation, website, metadata, package, shader, asset, branding, icon, distribution-preparation, and static-site materials to the extent they are not Third-Party Materials. The legal force of that conclusion remains subject to the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text and cannot be expanded by public ',
+            {
+              kind: 'link',
+              label: 'visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            '.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Separating Original Materials from Output', 'Understanding Third Party Material Boundaries', 'Understanding License Authority'],
+    relatedTitles: [
+      'Understanding License Authority',
+      'Understanding Controlling Text',
+      'Understanding Repository Visibility',
+      'Understanding Distribution Materials',
+      'Understanding Ordinary Application Use',
+      'Understanding Generated Output',
+      'Understanding AI Use Restrictions',
+      'Separating Original Materials from Output',
+      'Understanding Third Party Material Boundaries',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
