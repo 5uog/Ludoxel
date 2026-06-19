@@ -11,98 +11,98 @@ export const legalPages: DocsPageContent[] = [
     group: 'Authority Text',
     title: 'Understanding License Authority',
     description:
-      'Explains where permission for Ludoxel original materials comes from, which public texts can only point to that authority, and when the reader must stop instead of treating visibility, summaries, or platform behavior as permission.',
+      'Explains the juridical source of permission for Ludoxel Original Materials, the non-authoritative character of public surfaces, and the point at which authority analysis must stop before material classification or distribution analysis begins.',
     sections: [
       {
-        id: 'understanding-license-authority-meaning',
-        title: 'What License Authority Means',
+        id: 'understanding-license-authority-juridical-function',
+        title: 'Juridical Function of License Authority',
         body: [
-          'This article answers one narrow question: which text or written act can grant permission for Ludoxel original materials. It does not classify every material type, restate every restriction, resolve third-party terms, or decide every distribution question.',
-          'For Ludoxel original materials, authority starts from the root `LICENSE`. Other public materials may explain, point to, or display that authority, but they do not become an independent permission source unless the `LICENSE` or a later signed written instrument gives them that effect.',
-          'This article therefore treats authority as a gatekeeping issue. Before a reader asks whether a proposed use is allowed, the reader must first identify whether the claimed permission comes from the controlling license text or from a non-controlling surface such as a summary, page notice, platform interface, generated artifact, or public repository view.',
+          'License authority is the legal capacity of a text or later written instrument to grant, withhold, limit, condition, reserve, or terminate permission in relation to Ludoxel Original Materials. It is not the same thing as public availability, technical retrievability, documentation display, repository visibility, platform affordance, package presence, static-site generation, or operational convenience.',
+          'The question answered by this article is deliberately anterior to material scope and distribution permission. Before the reader asks whether a proposed act is permitted, the reader must first identify the source from which the asserted permission is alleged to arise. A claim that begins from a repository page, browser-rendered documentation page, clone button, fork button, download archive, preview deployment, generated website output, issue form, release page, package manifest, metadata field, build log, search index, or public cache begins from an access condition, not from license authority.',
+          'For Ludoxel Original Materials, license authority is not diffused across every public surface on which Ludoxel material appears. It is centralized in the controlling License Text, subject only to a later written instrument that is competent to alter that legal position. Everything else is subordinate evidence, explanation, notice, routing, or platform behavior unless the controlling source itself gives it operative legal force.',
         ],
       },
       {
         id: 'understanding-license-authority-controlling-source',
-        title: 'Controlling Source',
+        title: 'Controlling Source of Permission',
         body: [
-          'The root `LICENSE` is the controlling license text for Ludoxel original materials. It is the place where the permission grant, reservation of rights, and legal limits must be read.',
-          '`README.md` can introduce that structure and direct the reader to the license, but it remains explanatory. The same is true of documentation notices, SPDX headers, package metadata, release text, issue templates, pull-request text, website metadata, and generated documentation text.',
-          'A public page can make the controlling text easier to find. It cannot enlarge the grant, remove a restriction, or convert ordinary viewing into reuse, redistribution, deployment, scraping, indexing, dataset creation, model training, benchmark use, or incorporation into another work.',
+          'The root `LICENSE` is the controlling License Text for Ludoxel Original Materials. It is the place where the permission grant, the reservation of rights, the exclusions from permission, the definitions, the governing-law terms, and the legal limits must be read as legal text rather than as descriptive website copy.',
+          '`README.md`, documentation notices, code-block captions, SPDX headers, package metadata, release notes, issue templates, pull-request templates, website metadata, generated documentation text, build output, public summaries, translation fragments, and platform interface text can assist the reader in finding or understanding the License Text. They do not become independent grants, waivers, amendments, exceptions, sublicenses, estoppel instruments, or public-domain dedications merely because they are visible, helpful, or adjacent to protected material.',
+          'A public page can point to authority. It cannot substitute itself for authority. A notice can warn the reader that material remains protected. It cannot create an additional permission class. A platform button can make copying technically possible. It cannot transform technical capability into legal authorization.',
         ],
       },
       {
         id: 'understanding-license-authority-non-authority-surfaces',
-        title: 'Non-Authority Surfaces',
+        title: 'Surfaces That Do Not Confer Authority',
         body: [
-          'Repository visibility is not license authority. Documentation-site publication is not license authority. A hosted preview, generated static page, build artifact, package file, source browser, search result, copied excerpt, or platform button is not license authority.',
-          'Those surfaces may be evidence that a text is public, visible, or technically accessible. They are not evidence that the licensor granted permission beyond the controlling license text.',
-          'The same rule applies to summaries and notices. A summary can describe the license hierarchy, and a notice can warn that displayed material remains protected, but neither one becomes a new grant of rights.',
+          'Repository visibility is not license authority. Documentation-site publication is not license authority. Browser rendering is not license authority. Static-site output is not license authority. Deployment preview is not license authority. Source browsing, search indexing, cached display, copied excerpt display, package inspection, archived download, generated artifact availability, and hosting-service operation are not license authority.',
+          'Those surfaces may establish that material was public, visible, indexed, rendered, obtainable, downloadable, previewed, archived, cached, or technically reproducible. That is an evidentiary proposition about access. It is not a juridical proposition about permission.',
+          'The same rule governs explanatory summaries. A summary may accurately say that a reader may inspect repository contents under the License Text. It may not be inflated into a broader right to modify, redistribute, mirror, scrape, crawl, train models on, benchmark with, incorporate, deploy, sublicense, or republish Ludoxel Original Materials unless the controlling License Text grants that act.',
         ],
       },
       {
         id: 'understanding-license-authority-reading-order',
-        title: 'License Reading Order',
+        title: 'License Authority Reading Order',
         content: [
           {
             kind: 'paragraph',
-            text: 'The reading order stays narrow. It tests the source of permission before it moves to material scope, third-party status, output handling, distribution, or enforcement. Those later questions belong to their own legal articles after authority has been identified.',
+            text: 'The reading order below is the legal sequence for authority only. It is retained as a steps block because each stage asks a separate juridical question and may require the reader to reject a different non-authoritative surface before moving to material scope or permission analysis.',
           },
           {
             kind: 'steps',
             steps: [
               {
-                id: 'understanding-license-authority-reading-order-claim',
-                title: 'Identify the claimed permission source.',
+                id: 'understanding-license-authority-reading-order-source',
+                title: 'Identify the asserted source of permission.',
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'The first question is not whether the desired use feels ordinary, useful, public, or technically possible. The first question is where the claimed permission is said to come from: the root `LICENSE`, a later written instrument signed by the licensor, a README explanation, a documentation notice, a platform interface, a generated artifact, or mere public visibility.',
+                    text: 'The reader must first name the alleged source: the root `LICENSE`, a later written instrument signed by the Licensor, a README statement, a documentation notice, a public website page, a platform affordance, a generated artifact, a repository visibility setting, a deployment surface, or an ordinary assumption drawn from access.',
                   },
                 ],
               },
               {
-                id: 'understanding-license-authority-reading-order-control',
-                title: 'Give controlling force only to the controlling text.',
+                id: 'understanding-license-authority-reading-order-rank',
+                title: 'Assign legal rank to that source.',
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'For Ludoxel original materials, controlling force belongs to the English license text in the root `LICENSE`, except where a later signed written instrument validly changes the grant. Explanatory repository text and public documentation text remain subordinate to that controlling source.',
+                    text: 'Only the controlling License Text, or a later competent written instrument that expressly changes the legal position, receives operative rank as a permission source. Explanatory and platform surfaces remain subordinate even when they are official, public, prominent, or technically convenient.',
                   },
                 ],
               },
               {
-                id: 'understanding-license-authority-reading-order-reject-surrogates',
-                title: 'Reject visibility and summaries as substitute grants.',
+                id: 'understanding-license-authority-reading-order-reject-access',
+                title: 'Reject access conditions as substitute grants.',
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'Public access, source-form availability, Documentation Site display, code excerpts, examples, search data, metadata, package configuration, generated output, and hosting-service behavior do not supply missing permission. They may show that material is visible; they do not show that a broader license has been granted.',
+                    text: 'If the asserted permission depends on public display, source-form availability, documentation rendering, code examples, static-site output, clone or fork functionality, download availability, cache visibility, indexing, screenshots, or hosting-service behavior, the assertion fails at the authority stage. It may show access; it does not show grant.',
                   },
                   {
                     kind: 'note',
                     note: {
                       type: 'warning',
                       content:
-                        'A public notice on a documentation page confirms that the displayed material remains under the stated license authority. It is not a second license and not an exception to the root LICENSE.',
+                        'Do not treat a public Ludoxel page, repository view, or platform control as a route around the License Text. The legal question is authorization, not obtainability.',
                     },
                   },
                 ],
               },
               {
-                id: 'understanding-license-authority-reading-order-stop-boundary',
-                title: 'Stop once authority is identified.',
+                id: 'understanding-license-authority-reading-order-stop',
+                title: 'Stop before taking over neighboring articles.',
                 content: [
                   {
                     kind: 'paragraph',
                     text: [
-                      'After the controlling source is identified, this article has done its job. Questions about what counts as original material, what third-party terms require, what ',
+                      'After the controlling source has been identified, this article has reached its endpoint. Questions about what counts as Original Materials, what third-party terms require, what ',
                       {
                         kind: 'link',
                         label: 'repository visibility',
                         href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
                       },
-                      ' permits, what license text must accompany materials, or what distribution artifacts contain belong to the neighboring Legal articles.',
+                      ' means, what license text must accompany distribution, or what an output contains belong to the neighboring Legal and Data articles.',
                     ],
                   },
                 ],
@@ -115,21 +115,21 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-license-authority-boundary',
         title: 'Article Boundary',
         body: [
-          'This page should not become a general legal index. It does not restate the full definition of original materials, third-party materials, provenance-sensitive materials, user-created materials, application output, distribution materials, hosting terms, governing law, forum, or AI-use restrictions.',
+          'This article must not be expanded into a general legal index. It does not restate the full definition of Original Materials, third-party materials, provenance-sensitive materials, user-created materials, application output, distribution materials, ordinary application use, AI-use restrictions, contribution refusal, security reporting, governing law, forum, or enforcement posture.',
           [
-            'Its conclusion is narrower: permission for Ludoxel original materials must come from the ',
+            'Its conclusion is narrow and severe: permission for Ludoxel Original Materials must come from the ',
             {
               kind: 'link',
               label: 'controlling',
               href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
             },
-            ' license authority, not from ',
+            ' License Text or from a later competent written instrument, not from ',
             {
               kind: 'link',
               label: 'public visibility',
               href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
             },
-            ', summaries, notices, metadata, build output, website deployment, platform functions, or nearby policy text.',
+            ', repository access, documentation publication, platform affordance, generated output, metadata, summaries, notices, cache state, indexing, deployment, or nearby policy text.',
           ],
         ],
       },
@@ -142,85 +142,132 @@ export const legalPages: DocsPageContent[] = [
     group: 'Authority Text',
     title: 'Understanding Controlling Text',
     description:
-      'Explains the legal effect of textual conflict between the root LICENSE and subordinate repository, documentation, metadata, generated, hosted, interface, issue, release, summary, or translation statements.',
+      'Explains the legal priority of the root License Text over inconsistent repository, documentation, metadata, generated, hosted, interface, issue, release, summary, or translation statements.',
     sections: [
       {
         id: 'understanding-controlling-text-doctrinal-function',
         title: 'Doctrinal Function of the Controlling Text Rule',
         body: [
-          'The controlling-text rule is a rule of juridical priority. It does not identify the Licensor, classify materials, describe ordinary use, authorize distribution, or enlarge any permission. Those questions remain governed by their own provisions and their own articles. This page addresses the narrower situation in which a reader has already identified a Ludoxel-related legal or quasi-legal statement and must decide what consequence follows if that statement is inconsistent with the License Text.',
-          'For Original Materials, the operative legal source is the English License Text in the root `LICENSE`. Subordinate statements may describe, summarize, warn, label, index, render, expose, package, deploy, route, or explain the project, but they do not obtain equal interpretive rank merely because they appear in the same repository, the same website, the same package, the same user interface, or the same public platform surface.',
-          'The rule therefore performs a negative function before it performs any explanatory function. It disables reliance on an inconsistent subordinate statement as a license grant, waiver, estoppel-like assurance, interpretive override, implied permission, public dedication, or modification of the rights reserved in the License Text.',
+          'The controlling-text rule is a rule of juridical priority. It does not identify the Licensor, classify every material, authorize distribution, enlarge ordinary use, resolve third-party clearance, accept contributions, or route security reports. Its function is narrower: when a Ludoxel-related statement has been identified and that statement is alleged to alter the legal position, the rule determines whether the statement can operate against the License Text.',
+          'For Original Materials, the operative source is the English License Text in the root `LICENSE`. Subordinate statements may describe, summarize, warn, label, expose, render, index, package, deploy, route, or explain the project. They do not obtain equal legal rank by appearing in the repository, in the Documentation Site, in build output, in metadata, in a generated file, in a hosted preview, in a public issue surface, or in an interface element.',
+          'The consequence is not merely interpretive preference. A subordinate statement that conflicts with the License Text has no operative effect to the extent of the conflict unless it is itself a later competent written instrument that expressly changes the legal position. The conflict is not solved by popularity, convenience, visibility, reliance, technical availability, platform design, or ordinary user expectation.',
         ],
       },
       {
         id: 'understanding-controlling-text-objects-of-subordination',
         title: 'Objects of Subordination',
         body: [
-          'The subordinate class is intentionally broad. README descriptions, package metadata, SPDX headers, generated-file markings, summaries, translations, issue text, pull request text, release text, documentation, Documentation Site content, generated documentation, application user interface text, website user interface text, and other repository statements may all inform a reader where to look, but they do not control over the License Text when inconsistency exists.',
-          'This breadth is legally significant because the risk is not limited to traditional prose documentation. A package field may appear permissive; a generated file may look self-sufficient; a website label may appear to license displayed material; an issue template may appear to invite broader use; a platform button may technically permit copying, forking, cloning, downloading, indexing, or previewing. None of those surfaces is elevated into controlling legal authority for the Original Materials by its visibility or operational availability.',
-          'The same analysis applies to public legal notices that correctly warn readers but are not themselves the License Text. A notice may state the existence of rights, restrictions, jurisdictional terms, or ownership. Unless it is the License Text or a later written instrument signed by the Licensor that expressly amends the License, it remains subordinate to the License Text when the two cannot be reconciled.',
+          'Subordinate statements include repository prose, README summaries, documentation paragraphs, documentation banners, code-block captions, comment explanations, SPDX notices, package metadata, generated documentation, search data, sitemap data, robots text, release descriptions, changelog entries, issue templates, pull-request templates, security-contact pages, contribution text, build output, deployment metadata, public previews, and platform interface copy.',
+          'Subordination does not mean that such statements are irrelevant. They may evidence notice, routing, project organization, public presentation, or factual context. It means that they are legally incapable of overriding the License Text when the question is whether permission has been granted, restricted, withheld, reserved, conditioned, or enlarged for Original Materials.',
+          'A subordinate statement can be accurate only within its assigned responsibility. When it speaks outside that responsibility, it must not be used to displace the controlling legal text or to import conclusions from a neighboring article.',
         ],
       },
       {
         id: 'understanding-controlling-text-conflict-threshold',
         title: 'Threshold for Conflict',
         body: [
-          'A conflict exists when the subordinate statement and the License Text cannot reasonably be read together without changing the legal effect of the License Text. The relevant inquiry is not whether the subordinate statement is shorter, simpler, less precise, less complete, or written for a different audience. Mere incompleteness is not conflict. Conflict arises when the subordinate statement purports, expressly or by necessary implication, to grant, waive, narrow, expand, displace, replace, excuse, or condition something differently from the License Text.',
-          'A statement that says less than the License Text is usually subordinate but not contradictory. A statement that directs the reader to the License Text is likewise not contradictory. By contrast, a statement that appears to authorize copying, modification, redistribution, deployment, republication, mirroring, scraping, AI processing, derivative preparation, or third-party relicensing beyond the License Text must be treated as legally ineffective to the extent of that inconsistency.',
-          [
-            'The conflict analysis must be made at the level of legal consequence, not at the level of vocabulary. Different words may be consistent if they preserve the same operative effect. Similar words may conflict if they alter the class of covered materials, the scope of use, the identity of the granting authority, the condition of permission, the survival of reservations, the treatment of third-party material, or the legal status of ',
-            {
-              kind: 'link',
-              label: 'public visibility',
-              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
-            },
-            '.',
-          ],
+          'A conflict exists where a subordinate statement and the License Text cannot both be given effect in the same legal respect. The conflict may be express, as where a subordinate statement purports to allow redistribution that the License Text does not grant. It may also be functional, as where the subordinate statement would permit the same practical legal result by calling the act viewing, access, example use, repository use, documentation use, ordinary use, or platform use.',
+          'No conflict exists merely because the subordinate statement is shorter, less complete, more accessible, less technical, or directed at ordinary readers. A non-conflicting explanation can point to the License Text, warn about the License Text, or summarize a boundary without becoming the boundary.',
+          'The threshold is therefore legal inconsistency, not linguistic difference. A simplified statement may coexist with the License Text only while it remains subordinate and non-expansive. The moment it would create a grant, waiver, exception, amendment, substitution, sublicense, release, public-domain dedication, estoppel theory, or implied license contrary to the License Text, it is non-operative to that extent.',
+        ],
+      },
+      {
+        id: 'understanding-controlling-text-conflict-reading-sequence',
+        title: 'Conflict Reading Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The controlling-text inquiry must be conducted in a fixed legal order. The reader must not begin from the most permissive sentence, the most visible page, the most convenient platform surface, or the most favorable summary. The analysis begins with the License Text and permits subordinate text to survive only inside the legal space that the License Text leaves available.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-controlling-text-conflict-reading-sequence-license',
+                title: 'Read the License Text as the dispositive instrument.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'For Ludoxel Original Materials, the English License Text in the root `LICENSE` is the juridical source against which any asserted permission, reservation, condition, exclusion, waiver, amendment, or enlargement must be measured. A subordinate statement is not read first merely because it is shorter, more public, easier to quote, or closer to the material being viewed.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-controlling-text-conflict-reading-sequence-subordinate',
+                title: 'Identify the subordinate statement and its assigned function.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The next step is to identify the exact repository, documentation, metadata, generated, hosted, interface, issue, release, summary, translation, package, or platform statement relied upon, and to ask what function that statement can legitimately perform. It may route, warn, summarize, label, describe, or evidence context; it does not acquire dispositive force merely by being adjacent to the material.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-controlling-text-conflict-reading-sequence-effect',
+                title: 'Compare legal effect rather than vocabulary.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The comparison must be made at the level of legal consequence. The question is whether the subordinate statement would alter the grant, reserved rights, restrictions, conditions, excluded uses, material classification, license-text inclusion, governing instrument, or source of permission. Different words are tolerable only where they preserve the same legal effect.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-controlling-text-conflict-reading-sequence-exclude',
+                title: 'Exclude only the inconsistent legal effect.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'If conflict exists, the inconsistent subordinate effect is excluded. The statement may remain as non-operative explanation or routing where possible, but it cannot supply permission, erase a reservation, create a waiver, authorize redistribution, justify deployment, permit AI Use, permit derivative preparation, excuse notice removal, or convert public access into a legal grant.',
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
         id: 'understanding-controlling-text-priority-and-exclusion',
         title: 'Priority and Exclusion',
         body: [
-          'Once conflict is identified, the priority rule is categorical. The License Text governs the Original Materials, and the inconsistent subordinate statement is excluded from operative effect to the extent of the inconsistency. The subordinate statement is not harmonized by silently rewriting the License Text; the License Text is not diluted to preserve a more convenient public summary; and the reader may not select the less restrictive formulation as an alternative source of permission.',
-          'The exclusion is partial only when the inconsistency is partial. A subordinate statement may remain useful for navigation, factual description, warning, interface labeling, packaging context, or public explanation insofar as it does not alter the legal consequence of the License Text. It loses legal effect only where reliance on it would contradict, enlarge, reduce, or bypass the License Text.',
-          'The priority rule also prevents argumentative inversion. A reader may not reason from the existence of a public summary to a broader license, from a hosted page to open-content status, from metadata to redistribution authority, from a platform function to copyright permission, from generated documentation to republication authority, or from interface text to a waiver of restrictions. Each such inference is subordinate to the License Text and fails where it conflicts with that text.',
+          'Priority means that the License Text governs the legal result. Exclusion means that the inconsistent subordinate statement is excluded from operative effect to the extent it conflicts. The subordinate statement may remain visible, readable, historically explainable, or factually relevant, but it cannot serve as the missing permission.',
+          'This priority applies to both grants and reservations. If the License Text does not grant an act, a subordinate statement cannot supply the grant. If the License Text reserves a right, a subordinate statement cannot waive that reservation. If the License Text imposes a condition, a subordinate statement cannot dispense with the condition. If the License Text excludes a use, a subordinate statement cannot recharacterize the excluded use as permitted.',
+          'The result is categorical for restricted acts: modification, redistribution, republication, mirroring, public hosting, static-site copying, deployment, scraping, crawling, extraction, dataset creation, AI Use, benchmark construction, derivative preparation, incorporation, sublicensing, removal of notices, and commercial exploitation require affirmative authority in the License Text or a later competent written instrument. They cannot be generated from subordinate text.',
         ],
       },
       {
         id: 'understanding-controlling-text-no-amendment-by-context',
         title: 'No Amendment by Context',
         body: [
-          'A conflicting subordinate statement does not amend the License by adjacency, repetition, deployment, indexing, formatting, packaging, caching, release publication, website availability, or technical usability. Context may explain why the statement exists, but it does not supply the formal legal act required to change the License.',
-          'The required legal distinction is between evidence of communication and alteration of legal rights. Repository text, website text, generated output, labels, buttons, issue text, release descriptions, and package metadata may communicate information. They do not, by that communicative function alone, alter the grant, the restrictions, the reserved rights, the termination consequence, the warranty disclaimer, the jurisdictional clause, or the treatment of Original Materials.',
-          'A later statement can alter the License only if it is a later written instrument signed by the Licensor and expressly operates as an amendment or separate grant. Ambiguity is insufficient. Convenience is insufficient. Public reliance on a platform feature is insufficient. A broad reading of a summary is insufficient. The controlling legal inquiry remains whether the formal source of permission has actually changed.',
+          'The legal force of the License Text is not amended by repository layout, branch naming, file placement, source browsing, website routing, documentation navigation, search indexing, preview deployment, static generation, package structure, interface state, public form availability, issue visibility, or release-page design.',
+          'Nor is it amended by the fact that a protected file can be copied, cloned, forked, downloaded, screenshotted, cached, indexed, opened in a browser, imported into an editor, or retrieved from a public URL. Those facts describe technical obtainability. They do not describe legal permission.',
+          'A contrary approach would make the controlling license depend on every public surface through which material can be seen. That is precisely the error the controlling-text rule prevents.',
         ],
       },
       {
         id: 'understanding-controlling-text-harmonization-limits',
         title: 'Limits of Harmonization',
         body: [
-          'Harmonization is permissible only while it preserves the hierarchy of sources. A subordinate statement may be read narrowly so that it remains consistent with the License Text. It may be understood as descriptive rather than operative, illustrative rather than granting, cautionary rather than permissive, or referential rather than dispositive.',
-          'Harmonization becomes impermissible when it requires the reader to treat the subordinate statement as if it rewrote the License Text. A summary cannot delete a restriction by omitting it. A documentation paragraph cannot create a distribution license by describing a public build. Metadata cannot reduce a reservation of rights by using a short label. A user interface cannot transform technical access into legal authorization.',
-          'The legally correct reading is therefore conservative. The subordinate statement should be saved, if possible, by narrowing its office to explanation or routing. If it cannot be saved without changing the License Text, it must yield. The License Text remains the dispositive source for the Original Materials.',
+          'Non-conflicting statements should be harmonized where harmonization preserves the License Text and the subordinate statement inside their respective functions. A documentation notice saying that material is protected, for example, can be harmonized with the License Text because it points to the controlling source and does not enlarge permission.',
+          'Harmonization ends where it would rewrite the License Text or treat subordinate prose as a hidden exception. The reader must not soften an exclusion, dilute a reservation, expand a grant, or relocate a defined term merely to save an inconsistent sentence from legal consequences.',
+          'The correct method is strict: read the License Text first, read the subordinate statement only within its assigned responsibility, and reject any meaning that would give the subordinate statement operative force beyond the License Text.',
         ],
       },
       {
         id: 'understanding-controlling-text-third-party-non-merger',
         title: 'Third-Party Non-Merger',
         body: [
-          'The controlling-text rule for the Ludoxel License does not merge Third-Party License Text into the Ludoxel License, and it does not merge the Ludoxel License into third-party terms. Third-Party License Text remains separate legal text governing the Third-Party Materials to which it applies. It is not License Text for Original Materials.',
-          'If a third-party notice, third-party license file, attribution text, package notice, or dependency display appears beside Ludoxel Original Materials, that proximity does not place the Original Materials under third-party terms. Conversely, the Ludoxel License does not replace, amend, supersede, translate, narrow, expand, relicense, or otherwise alter the separate terms governing Third-Party Materials.',
-          'This non-merger rule matters in conflict analysis because a reader must not cure a conflict by borrowing authority from the wrong legal instrument. The License Text controls the Original Materials. Third-Party License Text controls the relevant Third-Party Materials. Neither category becomes a substitute for the other merely because both appear in the repository, build output, Documentation Site, user interface, or package materials.',
+          'The controlling-text rule for Ludoxel Original Materials does not absorb third-party materials into Ludoxel terms. A third-party license, attribution file, asset license, font license, texture license, platform term, or dependency license retains its own legal character where applicable.',
+          'Conversely, the presence of third-party material does not reduce the License Text for Ludoxel Original Materials. The categories do not merge merely because they appear in the same repository, package, documentation page, build output, or application bundle.',
+          'When the problem is third-party clearance, the answer belongs to the third-party boundary article. When the problem is conflict between a subordinate Ludoxel statement and the Ludoxel License Text, this article controls the priority question and nothing more.',
         ],
       },
       {
         id: 'understanding-controlling-text-publication-and-platform-surfaces',
         title: 'Publication and Platform Surfaces',
         body: [
-          'Public display is a common source of false conflict. A repository page, website page, preview deployment, production deployment, generated static file, cached excerpt, search result, browser display, package preview, fork button, clone button, download button, archive, issue form, pull request page, action log, or release page may make material visible or technically obtainable. That surface condition does not supply a license term inconsistent with the License Text.',
-          'When a platform surface appears to enable an act that the License Text does not authorize, the legal result is not that the platform surface expands the License. The result is that the reader must distinguish technical capability, service-level functionality, and interface affordance from permission granted by the Licensor.',
+          'Public display is the usual source of false conflict. A repository page, website page, preview deployment, production deployment, generated static file, cached excerpt, search result, browser display, package preview, fork button, clone button, download button, archive, issue form, pull-request page, action log, or release page may make material visible or technically obtainable. That surface condition does not supply a license term inconsistent with the License Text.',
+          'When a platform surface appears to enable an act that the License Text does not authorize, the legal result is not that the platform surface expands the License. The result is that technical capability, service-level functionality, and interface affordance must be separated from permission granted by the Licensor.',
           'The same reasoning applies to Documentation Site content. Code blocks, configuration examples, command examples, images, videos, navigation data, search data, legal notices, and interface text may be publicly displayed, but their display remains subordinate to the License Text. A public page can inform the reader of a legal boundary; it cannot erase that boundary by being public.',
         ],
       },
@@ -228,9 +275,9 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-controlling-text-legal-consequence',
         title: 'Legal Consequence of Reliance on an Inconsistent Statement',
         body: [
-          'Reliance on an inconsistent subordinate statement does not create permission where the License Text withholds it. The user who relies on the subordinate statement bears the risk that the statement is non-operative to the extent of conflict. The statement may explain how the mistake occurred, but it does not become a defense built into the License Text.',
+          'Reliance on an inconsistent subordinate statement does not create permission where the License Text withholds it. The user who relies on the subordinate statement bears the risk that the statement is non-operative to the extent of conflict. The statement may explain how a misunderstanding occurred, but it does not become a defense written into the License Text.',
           'The legally material consequence is that the proposed act must still be tested against the License Text. If the License Text does not grant the act, a conflicting subordinate statement does not supply the missing grant. If the License Text reserves a right, a conflicting subordinate statement does not waive the reservation. If the License Text imposes a condition, a conflicting subordinate statement does not dispense with performance of that condition.',
-          'This rule is especially strict for acts that would otherwise affect copyright, patent, trademark, database rights, trade secrets, website republication, redistribution, deployment, AI processing, derivative preparation, or sublicensing. A subordinate statement cannot be used to convert a restricted act into an authorized act when the License Text does not do so.',
+          'This rule is especially strict for acts affecting copyright, patent, trademark, database rights, trade secrets, website republication, redistribution, deployment, AI processing, derivative preparation, sublicensing, and removal of legal markings. A subordinate statement cannot convert a restricted act into an authorized act when the License Text does not do so.',
         ],
       },
       {
@@ -244,9 +291,9 @@ export const legalPages: DocsPageContent[] = [
               label: 'repository is public',
               href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
             },
-            ', what license text must be included in a distribution, whether a user-created output is separate from Original Materials, whether a third-party asset is cleared, whether a specific restricted use is permitted, whether contribution material is accepted, or how security reports must be routed.',
+            ', what license text must be included in a distribution, whether user-created output is separate from Original Materials, whether a third-party asset is cleared, whether a specific restricted use is permitted, whether contribution material is accepted, or how security reports must be routed.',
           ],
-          'Its limited conclusion is this: where a subordinate repository, documentation, metadata, generated, hosted, interface, issue, release, summary, translation, package, or platform statement conflicts with the License Text, the License Text controls for the Original Materials, and the inconsistent subordinate statement has no operative effect as a grant, waiver, exception, amendment, substitution, or enlargement of permission unless it is itself a later written instrument signed by the Licensor and expressly changing the legal position.',
+          'Its conclusion is confined to priority. Where a subordinate repository, documentation, metadata, generated, hosted, interface, issue, release, summary, translation, package, or platform statement conflicts with the License Text, the License Text controls for Ludoxel Original Materials, and the inconsistent subordinate statement has no operative effect as a grant, waiver, exception, amendment, substitution, release, estoppel theory, implied license, sublicense, or enlargement of permission unless it is itself a later competent written instrument expressly changing the legal position.',
         ],
       },
     ],
@@ -258,88 +305,51 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Repository Visibility',
     description:
-      'Explains why public repository visibility, Source Form availability, Documentation Site display, hosting-service functions, public submission surfaces, and technical obtainability do not grant permission beyond the root LICENSE.',
+      'Explains why public repository visibility, platform affordances, browser access, static-site publication, cache state, indexing, and technical obtainability do not grant rights in Ludoxel materials beyond the License Text.',
     sections: [
       {
         id: 'understanding-repository-visibility-juridical-function',
         title: 'Juridical Function of Repository Visibility',
         body: [
-          'Repository visibility is a condition of access. It is not a juridical act of licensing, not a waiver of reserved rights, not a public dedication, not an open-source declaration, not an implied covenant, not a course-of-dealing authorization, and not a substitute for an express grant by the Licensor.',
-          [
-            'The legal analysis therefore begins after license ',
-            {
-              kind: 'link',
-              label: 'authority',
-              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority',
-            },
-            ' has been identified. For Ludoxel Original Materials, the relevant public surface is only a place where material may be seen, reached, downloaded, indexed, submitted against, or technically handled. It is not the source that decides whether the proposed act is permitted.',
-          ],
-          'The controlling distinction is between factual exposure and legal authorization. A file may be public without being free for reuse. A repository may be cloneable without granting redistribution. A page may be rendered by a browser without authorizing republication. A platform may provide buttons, archives, previews, issue forms, pull request forms, action logs, or release pages without converting those functions into permission from the Licensor.',
+          'Repository visibility is an access condition. It is not a license grant, not a waiver, not a public-domain dedication, not an open-source declaration, not a redistribution authorization, not a deployment authorization, not a derivative-work authorization, not an AI-use authorization, and not a permission to remove legal markings.',
+          'The legal significance of visibility is therefore negative and limiting. It may explain why a reader can see repository contents, Documentation Site source, generated website output, public legal text, issue templates, metadata, package configuration, or deployment-adjacent files. It does not explain why the reader may reuse them.',
+          'A repository can be public while the relevant legal permissions remain narrow. Public visibility makes the License Text discoverable; it does not enlarge the License Text. The reader who treats visibility as permission has confused access with authority.',
         ],
       },
       {
         id: 'understanding-repository-visibility-technical-obtainability',
         title: 'Technical Obtainability Is Not Permission',
         body: [
-          'Technical obtainability is not legal permission. If a person obtains Repository Contents through a browser, source viewer, clone command, fork interface, download archive, cached page, search result, generated static file, package preview, deployment preview, action artifact, diff view, patch view, issue page, pull request page, or other public surface, that route of acquisition does not itself grant any right to Use the acquired material.',
-          'The same rule applies when the access path appears to make a restricted act practically possible. The fact that a file can be copied does not authorize copying for a restricted purpose. The fact that a repository can be cloned does not authorize redistribution, sublicensing, derivative preparation, dataset creation, AI Use, website mirroring, republication, or incorporation into another project. The fact that a public form can receive text does not authorize submission of material that the repository policy refuses to accept.',
-          'Nor may a public access route be used as an evasion mechanism. A user cannot avoid the LICENSE by obtaining the same material through a public clone, fork, archive, cache, preview, static-site output, search index, copied code block, browser cache, or platform-generated representation. If the License Text withholds the act, the access route does not cure the absence of permission.',
-        ],
-        noteBlocks: [
-          {
-            type: 'warning',
-            content:
-              'Visibility may explain how a person acquired material. It does not supply the grant, waiver, exception, estoppel, sublicense, amendment, or defense that the LICENSE does not provide.',
-          },
+          'A material may be technically obtainable through clone, fork, download, archive generation, raw-file access, browser rendering, static-site output, Documentation Site display, deployment preview, platform preview, package view, package inspection, source browsing, issue form, pull-request form, action artifact, release page, screenshotting, search indexing, caching, mirroring by an infrastructure layer, or copying from a displayed page. None of those obtainability paths grants permission, creates waiver, amends the License Text, creates sublicense, supplies estoppel or defense, or provides a route around the License Text.',
+          'The rule applies equally to the Documentation Site. Documentation content, repository files, browser-rendered pages, static site output, deployment previews, generated routes, videos, images, media blocks, code examples, configuration examples, legal banners, search data, sitemap data, and metadata remain subject to the controlling material classification and the License Text. The fact that a browser can render them does not create a right to republish them.',
+          'Technical obtainability can be relevant as evidence of access, notice, or copying. It is not relevant as evidence of permission unless the controlling License Text or a later competent written instrument makes it relevant.',
         ],
       },
       {
         id: 'understanding-repository-visibility-limited-viewing',
         title: 'Limited Viewing and Verification',
         body: [
-          'The only visibility-related permission relevant here is narrow inspection. Public repository access may allow human review and verification of Repository Contents within the limits stated by the LICENSE. That permission is not a reservoir from which broader rights may be implied.',
-          'Viewing remains viewing only while it remains within the authorized purpose. Once the asserted act becomes redistribution, modification, derivative preparation, republication, mirrored hosting, training, dataset extraction, automated harvesting, incorporation into another work, sublicensing, or deployment of Ludoxel Original Materials outside the authorized boundary, the act must be justified by an express grant. Repository visibility supplies no such grant.',
-          'Incidental technical copies created by browser display, network transmission, local caching, page rendering, static hosting, or service-side presentation remain legally incidental to the permitted viewing context. They must not be repurposed into copies for an excluded use.',
+          'The License Text may allow a narrow form of human review and verification of repository contents. That limited allowance must be read as a bounded permission, not as a general license to use everything that the repository makes visible.',
+          'Viewing, reading, inspecting, or verifying does not include modification, redistribution, republication, mirroring, crawling, scraping, dataset creation, model training, benchmark creation, incorporation into another work, sublicensing, deployment, public hosting, removal of notices, or extraction of protected expression for a separate project.',
+          'If the proposed act is not the limited viewing or verification contemplated by the License Text, the fact that the repository is public does not cure the absence of permission.',
         ],
       },
       {
         id: 'understanding-repository-visibility-platform-functions',
         title: 'Platform Functions and Interface Affordances',
         body: [
-          'Hosting-service functions are not license provisions. GitHub Platform Terms, repository interface behavior, fork and clone affordances, download controls, archive generation, issue forms, pull request forms, action logs, release pages, deployment previews, package views, and generated site pages may regulate or facilitate interaction with a service. They do not become copyright, patent, trademark, database-right, website republication, distribution, contribution, or AI-use permission from the Licensor.',
-          [
-            'If a platform surface appears to enable an act that the License Text does not authorize, the legal consequence is not enlargement of the License. The consequence is the same as under the ',
-            {
-              kind: 'link',
-              label: 'controlling',
-              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
-            },
-            ' text rule: technical possibility, service-level function, public display, or interface availability must yield to the written license boundary.',
-          ],
-          'The same analysis applies to the Documentation Site. Code blocks, configuration examples, command examples, images, videos, legal notices, navigation data, search data, and interface text may be publicly displayed. Their display may notify the reader of a boundary. It cannot dissolve the boundary by making the material public.',
+          'A hosting platform may present controls that permit a user to fork, clone, download, copy a raw URL, open a file, view history, search contents, inspect a deployment, submit an issue, open a pull request, or read generated output. These controls are service functions. They are not legal conclusions about the scope of the Ludoxel License.',
+          'No platform affordance converts viewing into modification, redistribution, derivative preparation, dataset creation, AI Use, website mirroring, republication, sublicensing, deployment, or public hosting. Nor does a platform affordance create an exception to legal markings, license inclusion requirements, third-party boundaries, contribution refusal, or security-report routing.',
+          'If a platform makes an act technically possible while the License Text does not grant that act, the legal result is absence of authorization, not implied enlargement of permission.',
         ],
       },
       {
         id: 'understanding-repository-visibility-public-policy-surfaces',
         title: 'Public Policy Surfaces',
         body: [
-          'Public repository policy files confirm that visibility is not consent. Contribution guidance, pull request templates, issue templates, and security-contact templates are public, but their public character does not transform them into permission to Use Ludoxel Original Materials outside the LICENSE.',
-          [
-            'Those files matter here only for the visibility proposition. They show that a public form, visible template, public button, or public page is not a grant. The separate limits on what may be filed in a Public Issue belong to ',
-            {
-              kind: 'link',
-              label: 'public issue limits',
-              href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-public-issue-limits',
-            },
-            ', and the separate legal boundary for pull request submission belongs to ',
-            {
-              kind: 'link',
-              label: 'pull request boundaries',
-              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-pull-request-boundaries',
-            },
-            '.',
-          ],
-          'A person who uses a public policy surface must therefore distinguish access from entitlement. The ability to open a form, paste text, submit an issue, create a branch, propose a patch, or expose repository material in a public thread does not establish that the submitted act is authorized.',
+          'Public legal files, documentation banners, README notices, issue templates, pull-request templates, security-contact documents, contribution documents, changelog pages, and support articles may be visible in the same repository or Documentation Site. Their visibility does not merge their responsibilities.',
+          'A public issue form does not invite unrestricted publication of exploit details. A pull-request page does not prove that contributions are accepted. A changelog page does not prove that an unofficial build is authorized. A legal banner does not become a second license. A documentation page does not become open documentation because it is rendered on the web.',
+          'Those public surfaces must be read according to the controlling text and the article that owns their legal topic. Repository visibility is the wrong tool for creating permissions that the License Text withholds.',
         ],
       },
       {
@@ -348,7 +358,7 @@ export const legalPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'A repository-visibility question must be resolved by legal source, not by surface mechanics. The error to avoid is beginning with a public interface and treating its existence as proof of permission.',
+            text: 'The reading order remains a steps block because visibility disputes usually proceed by smuggling an access route into a permission conclusion. Each step separates the route of access from the legal act alleged to be permitted.',
           },
           {
             kind: 'steps',
@@ -359,7 +369,7 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'Name the surface being relied on: source view, clone, fork, archive, browser display, cache, generated static file, Documentation Site page, package preview, deployment preview, issue form, pull request form, action log, release page, diff, patch, or another hosting-service function.',
+                    text: 'Name the surface precisely: repository page, raw file, clone path, fork path, download archive, browser-rendered documentation page, generated static output, deployment preview, search index, cache, issue form, pull-request surface, release page, package manifest, metadata file, video, image, or public legal notice.',
                   },
                 ],
               },
@@ -369,17 +379,17 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'The legally material question is not only how the material was reached. It is what the user proposes to do with it after reaching it. Viewing, verification, redistribution, derivative preparation, republication, mirroring, training, dataset creation, automated extraction, contribution submission, and deployment are different legal acts.',
+                    text: 'The legally operative question is what the user proposes to do with the material. Viewing, copying for redistribution, mirroring, deployment, scraping, AI processing, derivative preparation, republication, packaging, sublicensing, and contribution submission are different acts even when they begin from the same public surface.',
                   },
                 ],
               },
               {
                 id: 'understanding-repository-visibility-reading-order-license',
-                title: 'Test that act against the LICENSE.',
+                title: 'Test that act against the License Text.',
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'If the LICENSE grants the act, the act depends on that grant, not on visibility. If the LICENSE does not grant the act, the public surface does not supply the missing permission. The route by which the material was obtained cannot be used to circumvent the reserved-rights structure.',
+                    text: 'The proposed act must be tested against the controlling License Text and, where relevant, the proper neighboring article. It must not be tested against the mere fact that a button, URL, preview, cache, browser, or search result made the material obtainable.',
                   },
                 ],
               },
@@ -389,7 +399,15 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'The proper conclusion is that repository visibility is legally non-operative as a grant, waiver, exception, amendment, sublicense, estoppel, or enlargement of permission. It may be evidence of access; it is not authority for restricted Use.',
+                    text: 'If the License Text does not grant the act, the conclusion is not that public visibility fills the gap. The conclusion is that visibility has no grant effect. The user remains without authorization for the act unless another competent written instrument supplies it.',
+                  },
+                  {
+                    kind: 'note',
+                    note: {
+                      type: 'warning',
+                      content:
+                        'Public access may explain how a person obtained material. It does not make the acquisition, reuse, or republication lawful where the License Text withholds permission.',
+                    },
                   },
                 ],
               },
@@ -401,32 +419,26 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-repository-visibility-article-boundary',
         title: 'Article Boundary',
         body: [
-          'This article does not classify every Original Material, decide third-party clearance, state distribution-package requirements, define Ordinary Application Use, determine generated-output ownership, decide whether a particular AI-processing act is permitted, accept contribution material, route private security reports, or determine whether a local artifact is an official release.',
+          'This article addresses visibility and access only. It does not classify all materials, decide the full scope of Original Materials, determine third-party clearance, authorize distribution, decide generated-output permissions, define ordinary application use, accept contributions, route security reports, or determine whether a release is official.',
           [
-            'Its conclusion is narrower and stricter: public repository visibility, Source Form availability, Documentation Site display, hosting-service functions, public forms, technical obtainability, cache behavior, and generated public surfaces do not grant permission to Use Ludoxel Original Materials beyond the LICENSE and cannot be used to evade the LICENSE. Material classification belongs to ',
+            'Its conclusion is narrow: a public repository, public Documentation Site, public deployment surface, public cache, public index, or public platform interface does not grant permission beyond the ',
             {
               kind: 'link',
-              label: 'original materials',
-              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
             },
-            ', and contribution-submission refusal belongs to ',
+            ' License Text, does not amend that text, does not create waiver, sublicense, estoppel, defense, or implied permission, and does not change what counts as ',
             {
               kind: 'link',
-              label: 'contribution refusal',
-              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+              label: 'Original Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
             },
             '.',
           ],
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding License Authority',
-      'Understanding Controlling Text',
-      'Understanding Original Materials',
-      'Understanding Public Issue Limits',
-      'Understanding Pull Request Boundaries',
-    ],
+    relatedTitles: ['Understanding License Authority', 'Understanding Controlling Text', 'Understanding Original Materials'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -434,67 +446,87 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Original Materials',
     description:
-      'Explains which Ludoxel materials are treated as Original Materials under the License Text, how that classification is separated from third-party materials, user-created materials, application output, distribution form, and public visibility, and why classification does not itself enlarge permission.',
+      'Explains the legal classification of Ludoxel Original Materials, the exclusion of third-party and user-created materials, and the boundary between material classification and permission to use or distribute.',
     sections: [
       {
         id: 'understanding-original-materials-juridical-function',
         title: 'Juridical Function of Original Materials',
         body: [
-          'Original Materials is the material-scope classification that determines which project materials are governed by the Ludoxel Independent License as materials created, owned, or controlled by the Licensor for purposes of that license. The classification is not a permission grant, not a release status, not a distribution authorization, and not a conclusion about whether a proposed use is allowed.',
-          [
-            'The classification works after license ',
-            {
-              kind: 'link',
-              label: 'authority',
-              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority',
-            },
-            ' has been identified and before a restricted act is evaluated. It tells the reader what material falls inside the Licensor-controlled legal perimeter. It does not decide whether the act is permitted, waived, excused, or expanded by a public surface.',
-          ],
-          'The legal point is therefore exact and limited: Original Materials are the protected Ludoxel materials to which the License Text applies as Ludoxel-controlled materials. Once a material is classified that way, the reader must still read the actual grant, reservation, restriction, and exclusion provisions before concluding that any Use is permitted.',
+          'Original Materials is a material-scope classification. It identifies the Ludoxel materials to which the License Text applies as Ludoxel materials created, owned, or controlled by the Licensor. It is not itself a permission grant, not a distribution authorization, not an AI-use authorization, not an open-content declaration, and not a waiver of rights.',
+          'The classification matters because the License Text cannot be applied accurately until the material being discussed has been placed in the correct legal category. A source file, shader, website component, documentation paragraph, legal banner, generated static-site output, package configuration, metadata file, icon, branding element, asset, video, image, or distribution-preparation file may require different evidence, but the question remains whether it falls within the protected Ludoxel material perimeter.',
+          'This article is therefore about what the material is. It does not decide whether the reader may copy, modify, redistribute, mirror, deploy, scrape, crawl, train on, benchmark with, incorporate, sublicense, or republish it. Those acts require separate permission analysis under the License Text and the neighboring legal articles.',
         ],
       },
       {
         id: 'understanding-original-materials-operative-text-and-owner',
         title: 'Operative Text and Owner',
         body: [
-          'The operative text is the root `LICENSE`. It defines the License Text as the English text in the repository license file, defines the Licensor as Kento Konishi, also written as 小西拳斗, and states that the Licensor owns or controls the Original Materials and is the only person granting the permissions stated in the License.',
-          [
-            'That ownership and control statement supplies the legal center of this article. If a subordinate repository page, documentation paragraph, package field, generated artifact, hosted preview, translation, issue text, pull request text, summary, or user interface statement conflicts with the License Text, the ',
-            {
-              kind: 'link',
-              label: 'controlling',
-              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
-            },
-            ' text rule decides the conflict; this article does not elevate subordinate statements into separate authority.',
-          ],
-          'The classification must therefore be made from the License Text and confirmed repository materials, not from convenience labels, repository location alone, file extension alone, display route alone, or assumptions about common open-source practice.',
+          'The operative definition is supplied by the License Text. The relevant owner for Ludoxel Original Materials is Kento Konishi as the Licensor where the material is created, owned, or controlled by that Licensor for Ludoxel.',
+          'Ownership or control is not inferred from public display alone. A file may be visible without being free to use. A page may be rendered without becoming public-domain material. A build artifact may be generated without becoming redistributable. A documentation example may be readable without becoming reusable template material.',
+          'The inverse is also true. The fact that a material appears in object form, generated form, bundled form, website-build form, or package form does not remove it from Original Materials when the underlying protected expression is Ludoxel material created, owned, or controlled by the Licensor.',
         ],
       },
       {
         id: 'understanding-original-materials-classification-test',
         title: 'Classification Test',
+        body: [
+          'The classification inquiry begins with the material itself, not with the access route. The reader must identify the concrete material at issue: source code, documentation text, website source, static output, shader, package configuration, build metadata, icon, branding, media block, image, video, search data, legal notice, application resource, or distribution-preparation artifact.',
+          'The reader then asks whether that material is created, owned, or controlled by the Licensor as Ludoxel material. If the answer is yes, the material falls within the Original Materials perimeter to the extent the License Text includes it and to the extent it is not excluded by third-party status, user-created status, application-output status, or provenance-sensitive status.',
+          'The reader must not replace this classification test with a visibility test. Public repository presence, browser rendering, static-site generation, deployment preview, cache state, indexing, package inclusion, or source-form availability does not decide whether the material is Original Materials and does not grant permission to use it.',
+        ],
+      },
+      {
+        id: 'understanding-original-materials-classification-sequence',
+        title: 'Original-Material Classification Sequence',
         content: [
           {
             kind: 'paragraph',
-            text: 'The License Text defines Original Materials as Works and other protectable materials in, distributed from, displayed through, deployed from, or associated with the Repository, Ludoxel, or the Documentation Site that were created by the Licensor, are owned by the Licensor, or are controlled by the Licensor for purposes of the License.',
+            text: 'Original Materials must be classified by legal source, legal relation, and exclusion analysis. The sequence is deliberately narrower than a permission analysis. It identifies whether the material is inside the Ludoxel Original Materials perimeter and then stops before deciding what restricted act, if any, has been authorized.',
           },
           {
-            kind: 'paragraph',
-            text: 'The classification test has four distinct elements:',
-          },
-          {
-            kind: 'list',
-            ordered: true,
-            items: [
-              'The material must be a Work or other protectable material.',
-              'The material must have the required connection to the Repository, Ludoxel, or the Documentation Site.',
-              'The material must be created, owned, or controlled by the Licensor for license purposes.',
-              'The material must not instead be Third-Party Materials.',
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-original-materials-classification-sequence-object',
+                title: 'Identify the concrete material, not the surrounding surface.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The object of classification must be the actual source file, documentation text, website component, generated static-site output, shader, package metadata, legal notice, media block, image, video, icon, branding element, build script, application resource, or distribution-preparation artifact. The repository page, browser view, deployment preview, cache, index, or package surface through which it is reached is not the object being classified.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-original-materials-classification-sequence-owner',
+                title: 'Test creation, ownership, or control by the Licensor.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The material enters the Original Materials analysis only where it is Ludoxel material created, owned, or controlled by Kento Konishi as Licensor, to the extent the License Text so treats it. Visibility, possession of a copy, technical retrievability, static generation, compilation, bundling, or hosting-service publication does not replace this owner-and-control inquiry.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-original-materials-classification-sequence-exclusions',
+                title: 'Remove materials governed by a separate category.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Third-Party Materials, User-Created Materials, Application Output, Provenance-Sensitive Materials, and materials governed by separate third-party legal terms must not be absorbed into Original Materials by adjacency, packaging, rendering, repository placement, Documentation Site display, build output, metadata reference, or distribution preparation.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-original-materials-classification-sequence-permission',
+                title: 'Do not convert classification into permission.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'A finding that material is Original Materials only identifies the legal material perimeter. It does not authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark construction, deployment, sublicensing, or removal of legal markings. Permission remains a separate License Text question.',
+                  },
+                ],
+              },
             ],
-          },
-          {
-            kind: 'paragraph',
-            text: 'A material does not become Original Materials merely because it is nearby, bundled, rendered, cached, displayed, indexed, or discussed. Conversely, a Licensor-created project material does not lose Original Materials status merely because it appears in Source Form, Object Form, generated metadata, static-site output, package metadata, distribution preparation material, or a public browser view.',
           },
         ],
       },
@@ -502,9 +534,9 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-original-materials-included-classes',
         title: 'Included Material Classes',
         body: [
-          'The License Text expressly includes Source Form and Object Form materials, repository text, source code, documentation, website source code, Documentation Site content, configuration files, build scripts, validation tools, shaders, user interface text, generated metadata, package metadata, packaging material, distribution preparation material, static-site output, project-specific assets, project-specific textures, branding material, application icons, and other protected repository contents, to the extent that those materials are not Third-Party Materials.',
-          'This inclusion language is intentionally form-neutral. A protected Ludoxel source file, a compiled or bundled form of that source file, a generated website artifact derived from Ludoxel website source, a project-specific shader, a project-specific asset, or a project-specific metadata file may remain within the Original Materials perimeter even though the technical form has changed.',
-          'The reader must therefore avoid a false distinction between editable files and generated files. Source Form may be easier to read, and Object Form may be easier to distribute or execute, but neither form itself removes the material from the Original Materials classification when the material is otherwise created, owned, or controlled by the Licensor.',
+          'Original Materials may include Ludoxel source code, website source code, documentation content, legal notices, interface text, project-specific shaders, project-specific metadata, project-specific configuration, package files, build scripts, generated documentation output, generated static-site output, branding elements, icons, images, videos, media blocks, application resources, and distribution-preparation materials where they satisfy the License Text definition.',
+          'The form of the material is not decisive. Source Form and Object Form are both capable of remaining within the Original Materials perimeter. Compilation, bundling, static-site generation, minification, packaging, deployment preparation, or inclusion in an application bundle changes technical form; it does not itself destroy the protected Ludoxel character of the material.',
+          'The classification should be stated with precision. It is enough to say that the material is treated as Original Materials to the extent it is Ludoxel material created, owned, or controlled by the Licensor and not excluded. It is not proper to turn that classification into a statement that every adjacent asset, dependency, user output, or third-party component has the same legal status.',
         ],
       },
       {
@@ -512,7 +544,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Excluded Materials',
         body: [
           [
-            'Third-Party Materials are outside Original Materials. Their presence in the repository, Ludoxel, the Documentation Site, Distribution Materials, package metadata, user interface displays, website displays, or build output does not make them Ludoxel Original Materials and does not place Original Materials under the third-party terms. The separate boundary for third-party material handling belongs to ',
+            'Third-Party Materials are outside Original Materials. Their presence in the repository, Ludoxel, the Documentation Site, Distribution Materials, package metadata, user interface displays, website displays, or build output does not make them Ludoxel Original Materials and does not place Original Materials under third-party terms. The separate boundary for third-party material handling belongs to ',
             {
               kind: 'link',
               label: 'third-party material boundaries',
@@ -521,25 +553,25 @@ export const legalPages: DocsPageContent[] = [
             '.',
           ],
           [
-            'User-Created Materials and Application Output also require separation. The License Text states that User-Created Materials do not become Original Materials merely because they are entered, edited, displayed, saved, imported, exported, recorded, or processed through Ludoxel. The output-specific boundary belongs to ',
+            'User-Created Materials and Application Output also require separation. User materials do not become Original Materials merely because they are entered, edited, displayed, saved, imported, exported, recorded, or processed through Ludoxel. The output-specific boundary belongs to ',
             {
               kind: 'link',
               label: 'output',
               href: '/docs/data/learning-and-material-data/output-and-material-boundaries/separating-original-materials-from-output',
             },
-            ' and to the generated-output legal article when the question is about output permissions rather than material classification.',
+            ' and to the generated-output legal article when the question concerns output permission rather than material classification.',
           ],
-          'Provenance-Sensitive Materials must not be treated as Original Materials, public-domain materials, open source materials, free-to-use materials, redistributable materials, web-deployable materials, or materials cleared for modification merely because they are present, loaded, displayed, referenced, bundled, or technically capable of deployment.',
+          'Provenance-Sensitive Materials must not be treated as Original Materials, public-domain materials, open-source materials, free-to-use materials, redistributable materials, web-deployable materials, or materials cleared for modification merely because they are present, loaded, displayed, referenced, bundled, rendered, indexed, or technically capable of deployment.',
         ],
       },
       {
         id: 'understanding-original-materials-documentation-site',
         title: 'Documentation Site Materials',
         body: [
-          'The Documentation Site is part of the Original Materials to the extent it consists of materials created, owned, or controlled by the Licensor. This includes website source code, documentation content, user interface text, styling, media blocks, images, videos, static assets, search data, metadata, configuration files, build configuration, generated static-site output, and an official deployment or publication by the Licensor, when those materials satisfy the License Text definition.',
-          'Publication of the Documentation Site does not convert the site into open content, public-domain material, free documentation, reusable website template material, or a source of permission beyond the License Text. Code blocks, configuration examples, command examples, images, videos, navigation data, search data, and legal notices remain governed by their applicable material classification.',
+          'The Documentation Site falls within Original Materials to the extent it consists of materials created, owned, or controlled by the Licensor. That may include website source code, documentation content, user interface text, styling, media blocks, images, videos, static assets, search data, metadata, configuration files, build configuration, generated static-site output, and official deployment material where those materials satisfy the License Text definition.',
+          'Publication of the Documentation Site does not convert the site into open content, public-domain material, free documentation, reusable website template material, or a source of permission beyond the License Text. Code blocks, configuration examples, command examples, images, videos, navigation data, search data, and legal notices remain governed by their material classification and the License Text.',
           [
-            'Public display, technical retrievability, browser access, static generation, deployment preview, caching, indexing, screenshotting, repository browsing, and hosting-service rendering are immaterial to any asserted entitlement to reuse Original Materials. Such circumstances do not, individually or cumulatively, transmute protected Ludoxel material into public-domain material, open content, redistributable material, template material, training material, extractable data, or material encumbered by an implied license. The contrary position is not a classification argument; it is an attempt to derive authorization from mere visibility. The License Text precludes that derivation, and the visibility-specific analysis belongs to ',
+            'Public display, technical retrievability, browser access, static generation, deployment preview, caching, indexing, screenshotting, repository browsing, and hosting-service rendering are immaterial to any asserted entitlement to reuse Original Materials. Such circumstances do not transmute protected Ludoxel material into public-domain material, open content, redistributable material, template material, training material, extractable data, or material encumbered by an implied license. The visibility-specific analysis belongs to ',
             {
               kind: 'link',
               label: 'repository visibility',
@@ -553,9 +585,9 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-original-materials-distribution-form',
         title: 'Distribution Form Does Not Change Classification',
         body: [
-          'Distribution Materials that contain Original Materials remain subject to the License. Packaging, bundling, compilation, copying into a distribution directory, embedding in an application bundle, inclusion in an installer, inclusion in an archive, static-site generation, or deployment preparation does not create a new license category that displaces the Original Materials classification.',
+          'Distribution Materials that contain Original Materials remain subject to the License Text. Packaging, bundling, compilation, copying into a distribution directory, embedding in an application bundle, inclusion in an installer, inclusion in an archive, static-site generation, or deployment preparation does not create a new license category that displaces Original Materials classification.',
           [
-            'The consequence addressed here is confined to material scope. Distribution form is not a juridical solvent. Packaging, bundling, compilation, static generation, deployment preparation, or inclusion in a website build does not dissolve Original Materials into freely circulable matter and does not generate any entitlement to distribute, deploy, publish, mirror, host, redistribute, sublicense, or otherwise circulate Ludoxel materials. Authorization for such acts must be found affirmatively in the License Text; it cannot be manufactured from build form, package form, deployment form, operational convenience, or technical reproducibility. The distribution-form boundary belongs to ',
+            'The consequence addressed here is confined to material scope. Distribution form is not a juridical solvent. Packaging, bundling, compilation, static generation, deployment preparation, or inclusion in a website build does not dissolve Original Materials into freely circulable matter and does not generate entitlement to distribute, deploy, publish, mirror, host, redistribute, sublicense, or otherwise circulate Ludoxel materials. The distribution-form boundary belongs to ',
             {
               kind: 'link',
               label: 'distribution materials',
@@ -563,25 +595,25 @@ export const legalPages: DocsPageContent[] = [
             },
             ', while permission to distribute must be resolved under the distribution-permission articles.',
           ],
-          'The same protected expression may therefore be read through several technical states: source repository material, generated object material, package material, website build output, or displayed documentation. Those states may matter for evidence and handling, but they do not themselves remove the underlying protected Ludoxel material from the Original Materials analysis.',
+          'The same protected expression may therefore be read through several technical states: source repository material, generated object material, package material, website build output, or displayed documentation. Those states may matter for evidence and handling, but they do not remove the underlying protected Ludoxel material from the Original Materials analysis.',
         ],
       },
       {
         id: 'understanding-original-materials-permission-boundary',
         title: 'Permission Boundary',
         body: [
-          'Classifying a material as Original Materials does not itself authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark creation, deployment, sublicensing, sale, rental, lending, or removal of legal markings.',
-          'The License Text contains an exhaustive limited grant for human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and Ordinary Application Use. It separately reserves rights and excludes uses outside that grant. This article does not restate every exclusion; it states why the classification matters before those exclusions are applied.',
-          'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later written instrument signed by the Licensor. It must not be inferred from material classification, public availability, technical accessibility, package form, hosting-service behavior, documentation examples, or ordinary user expectation.',
+          'Classifying a material as Original Materials does not authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark creation, deployment, sublicensing, sale, rental, lending, or removal of legal markings.',
+          'The License Text contains an exhaustive limited grant for human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and Ordinary Application Use, and separately reserves rights and excludes uses outside that grant. This article does not restate every exclusion; it states why classification must be settled before those exclusions are applied.',
+          'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later competent written instrument. It must not be inferred from material classification, public availability, technical accessibility, package form, hosting-service behavior, documentation examples, or ordinary user expectation.',
         ],
       },
       {
         id: 'understanding-original-materials-article-boundary',
         title: 'Article Boundary',
         body: [
-          'This article classifies the Ludoxel materials that fall within the Original Materials perimeter under the License Text. It does not classify every third-party asset, prove provenance for every local file, determine whether a specific output may be shared, authorize distribution, decide ordinary application use, resolve AI-use restrictions, accept contributions, route security reports, or determine official release status.',
+          'This article classifies Ludoxel materials that fall within the Original Materials perimeter under the License Text. It does not classify every third-party asset, prove provenance for every local file, determine whether a specific output may be shared, authorize distribution, decide ordinary application use, resolve AI-use restrictions, accept contributions, route security reports, or determine official release status.',
           [
-            'Its conclusion is narrower: Ludoxel Original Materials are the project materials created, owned, or controlled by the Licensor for purposes of the License, including the specified source, object, documentation, website, metadata, package, shader, asset, branding, icon, distribution-preparation, and static-site materials to the extent they are not Third-Party Materials. The legal force of that conclusion remains subject to the ',
+            'Its conclusion is narrow: Ludoxel Original Materials are the project materials created, owned, or controlled by the Licensor for purposes of the License Text, including the specified source, object, documentation, website, metadata, package, shader, asset, branding, icon, distribution-preparation, and static-site materials to the extent they are not Third-Party Materials. The legal force of that conclusion remains subject to the ',
             {
               kind: 'link',
               label: 'controlling',
