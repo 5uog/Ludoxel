@@ -10,7 +10,7 @@ type DocsCopyrightBannerProps = {
 };
 
 const COPYRIGHT_NOTICE: DocsNoteBlockContent = {
-  type: 'warning',
+  type: 'info',
   content: [
     'Ludoxel code excerpts, documentation text, examples, and other Ludoxel original materials displayed in these documentation pages are protected under the copyright of Kento Konishi (小西拳斗) and governed by the root ',
     {
