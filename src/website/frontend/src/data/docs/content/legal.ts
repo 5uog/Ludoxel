@@ -647,154 +647,264 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Distribution Materials',
     description:
-      'Explains the content and constraints of packaged Ludoxel materials. This page treats material classification as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the legal classification of Ludoxel Distribution Materials, the continued operation of the License Text over packaged or deployed materials, the non-permissive character of legal-text inclusion, and the boundary between distribution form, official status, third-party clearance, and distribution permission.',
     sections: [
       {
-        id: 'understanding-distribution-materials-authority-scope',
-        title: 'Distribution Materials Authority Scope',
+        id: 'understanding-distribution-materials-juridical-function',
+        title: 'Juridical Function of Distribution Materials',
         body: [
-          'Distribution materials can include executable code, package resources, shaders, theme data, assets, native components, legal text, third-party notices, and generated packaging metadata. The point matters in authority scope because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Distribution Materials. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion.',
-          'The useful result of Understanding Distribution Materials authority scope is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          'Distribution Materials is a material-scope classification for materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents. It identifies a technical and legal state in which repository or website materials have been packaged, bundled, copied, generated, deployed, archived, or otherwise prepared for circulation. It is not itself a grant of permission, not an official-release declaration, not an endorsement statement, not a third-party clearance decision, and not a waiver of the Licensor’s reserved rights.',
+          [
+            'The classification matters because distribution form is a common source of false authority arguments. A file may appear inside an executable, application bundle, installer, archive, wheel, source distribution, generated distribution directory, package, release artifact, static-site build output, website deployment material, embedded resource set, copied legal-material set, or metadata output without ceasing to be governed by the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text.',
+          ],
+          'This article therefore answers what Distribution Materials are and what legal consequences follow from that classification. It does not answer how to run a build command, how to inspect a package check, whether a local artifact is fit for release, whether a third-party dependency is cleared, or whether a particular party has permission to distribute.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-controlling-text',
-        title: 'Distribution Materials Controlling Text',
+        id: 'understanding-distribution-materials-operative-definition',
+        title: 'Operative Definition',
         body: [
-          'Authority Scope defines the useful size of Understanding Distribution Materials. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. That reading gives Understanding Distribution Materials a public anchor for controlling text without adding behavior that the current category does not own. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Controlling Text.',
-          'A direct observation for Understanding Distribution Materials should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'The useful result of Understanding Distribution Materials controlling text is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          'The operative definition is supplied by the License Text. Distribution Materials include application bundles, executable files, installers, archives, wheels, source distributions, generated distribution directories, packages, release artifacts, static-site build output, website deployment materials, embedded resources, copied legal materials, metadata, and other materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents.',
+          'The definition is functional rather than cosmetic. A material does not become Distribution Materials merely because it is visible, downloadable, generated, cached, logged, compressed, or placed near packaging metadata. The relevant question is whether the material has been prepared as part of a distribution, deployment, package, release artifact, static-site output, or comparable circulation form for Ludoxel, the Documentation Site, or Repository Contents.',
+          'The definition also does not erase the classification of the materials carried inside the distribution form. Distribution Materials may contain Original Materials, Third-Party Materials, Provenance-Sensitive Materials, copied legal materials, generated metadata, package data, website deployment files, or other contents with separate legal consequences.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-material-class',
-        title: 'Distribution Materials Material Class',
-        body: [
-          'The useful result of Understanding Distribution Materials authority scope is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope. The point matters in material class because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Material Class.',
-          'Understanding Distribution Materials separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form.',
-          'Understanding Distribution Materials should not use material class to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'understanding-distribution-materials-classification-sequence',
+        title: 'Distribution-Material Classification Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Distribution Materials must be classified by distribution form, carried material, legal text, official status, and permission boundary. The sequence is deliberately narrower than a build guide and stricter than a package inventory. It identifies the legal state of the material and then stops before converting that state into distribution permission.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-distribution-materials-classification-sequence-form',
+                title: 'Identify the distribution form.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The first question is whether the object is an application bundle, executable, installer, archive, wheel, source distribution, generated distribution directory, package, release artifact, static-site build output, website deployment material, embedded resource set, copied legal-material set, metadata output, or other material prepared for distribution. A repository page, local working file, build log, cache entry, preview surface, or ordinary browser display is not enough by itself.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-distribution-materials-classification-sequence-carried-material',
+                title: 'Classify the material carried inside that form.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Packaging does not merge all carried material into one legal category. Ludoxel source code, documentation content, website code, shaders, branding, icons, project-specific metadata, and generated static-site output may remain Original Materials. Third-party assets, external packages, runtime components, toolchain materials, fonts, textures, and provenance-sensitive local assets must remain subject to their own classification.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-distribution-materials-classification-sequence-legal-text',
+                title: 'Separate legal-text inclusion from permission.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The presence of `LICENSE`, Third-Party License Text, SPDX identifiers, package metadata, website metadata, copyright notices, or other legal materials is evidence that legal materials are present. It is not itself permission to distribute, deploy, republish, redistribute, sublicense, mirror, or host the Distribution Materials.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-distribution-materials-classification-sequence-official-status',
+                title: 'Separate artifact existence from official status.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'A Desktop Distribution, Documentation Site deployment, package, archive, preview, fork build, mirror, or modified artifact is not an Official Distribution merely because it was technically produced from the Current Repository. Official status exists only where the Licensor publishes the material as an official distribution or official deployment.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-distribution-materials-classification-sequence-permission',
+                title: 'Stop before distribution permission unless the License Text grants it.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'After the material is classified, any proposed act must still be tested against the License Text or a later competent written instrument. Distribution form does not authorize distribution. Package existence does not authorize republication. Deployment output does not authorize redeployment. Legal-material inclusion does not authorize circulation.',
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-distribution-materials-ordinary-use',
-        title: 'Distribution Materials Ordinary Use',
+        id: 'understanding-distribution-materials-original-materials-in-distribution-form',
+        title: 'Original Materials in Distribution Form',
         body: [
-          'Understanding Distribution Materials should be read as conceptual boundary for distribution materials within License Authority and Materials and Material Scope. Understanding Distribution Materials uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Ordinary Use.',
-          'Ownership in Understanding Distribution Materials is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'When Understanding Distribution Materials crosses from ordinary use into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          [
+            'Distribution Materials that contain ',
+            {
+              kind: 'link',
+              label: 'Original Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+            },
+            ' remain subject to the License Text. Packaging, bundling, compilation, copying into a distribution directory, embedding in an application bundle, inclusion in an installer, inclusion in an archive, static-site generation, or deployment preparation does not create an additional license or permission.',
+          ],
+          'The same protected expression can pass through source form, object form, generated form, bundled form, packaged form, and deployed form without losing its protected Ludoxel character. Technical transformation may matter for evidence, reproduction, inspection, and package composition. It does not dissolve the Licensor’s reserved-rights structure.',
+          'The contrary argument is legally defective. A person cannot say that Ludoxel material became freely distributable because it was compiled, minified, copied into a bundle, emitted into static-site output, placed in an archive, or made reachable through a deployment surface. Those facts describe form, not authorization.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-restricted-use',
-        title: 'Distribution Materials Restricted Use',
+        id: 'understanding-distribution-materials-legal-text-and-metadata',
+        title: 'Legal Text and Metadata Do Not Grant Permission',
         body: [
-          'A direct observation for Understanding Distribution Materials should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. Understanding Distribution Materials uses the fact as restricted use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Restricted Use.',
-          'Visible feedback for Understanding Distribution Materials should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Material Scope.',
-          'When Understanding Distribution Materials crosses from restricted use into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          [
+            'Distribution Materials may contain the License Text, Third-Party License Text, SPDX identifiers, package metadata, website metadata, copyright notices, attribution records, and other legal or descriptive materials. Their inclusion may be required for a lawful or authorized distribution context, and the practical packaging treatment belongs to ',
+            {
+              kind: 'link',
+              label: 'Including License Text',
+              href: '/docs/distribution/desktop-artifacts/packaged-components/including-license-text',
+            },
+            ' and ',
+            {
+              kind: 'link',
+              label: 'third-party license text',
+              href: '/docs/distribution/desktop-artifacts/packaged-components/including-third-party-license-text',
+            },
+            '.',
+          ],
+          'That inclusion is not a permission source. A copy of `LICENSE` inside a package does not authorize that package. A third-party notice inside a package does not relicense Ludoxel Original Materials. A package manifest, SPDX header, website metadata field, generated file marker, or artifact name does not create distribution permission, deployment permission, republication permission, or redistribution permission.',
+          'Legal materials must therefore be read as legal evidence and required retained text, not as a self-executing grant. Where permission is disputed, the reader returns to the License Text and to any later competent written instrument. The package surface does not supply the missing authority.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-third-party-split',
-        title: 'Distribution Materials Third-Party Split',
+        id: 'understanding-distribution-materials-official-distribution-status',
+        title: 'Official Distribution Status',
         body: [
-          'The useful result of Understanding Distribution Materials controlling text is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope. That reading gives Understanding Distribution Materials a public anchor for third-party split without adding behavior that the current category does not own. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Third-Party Split.',
-          'When Understanding Distribution Materials touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Understanding Distribution Materials third-party split is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          'Only the Licensor may publish an Official Distribution of Ludoxel or an official deployment of the Documentation Site. That rule is not displaced by successful local packaging, possession of a build artifact, repository visibility, a fork, a mirror, a downloaded archive, a generated site directory, a package view, an action artifact, a preview deployment, or a third-party hosting-service interface.',
+          [
+            'A Desktop Distribution, Documentation Site deployment, or other Distribution Materials published by any party other than the Licensor is not an Official Distribution and is not endorsed by the Licensor, even when the material is derived from the Current Repository. The public-access analysis remains governed by ',
+            {
+              kind: 'link',
+              label: 'repository visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            ', not by the fact that the artifact can be obtained.',
+          ],
+          'The official-status rule is a legal boundary, not a branding preference. A third-party artifact must not be described as official merely because it resembles the official application, includes legal text, uses Ludoxel names, contains repository files, or was produced by a repository build path.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-public-summary-limit',
-        title: 'Distribution Materials Public Summary Limit',
-        body: [
-          'Packaging original materials does not create redistribution authority by itself. The license and official distribution path control what may be shared. In Understanding Distribution Materials, public summary limit is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Public Summary Limit.',
-          'The surrounding context for Understanding Distribution Materials decides which adjacent topic is relevant. Understanding Distribution Materials should be compared with Including License Text, Avoiding Unofficial Release Claims, Understanding Redistribution Restrictions only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Distribution Materials should not use public summary limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'understanding-distribution-materials-third-party-and-provenance-boundary',
+        title: 'Third-Party and Provenance Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Distribution Materials can carry materials that are not Ludoxel Original Materials. Third-Party Materials remain subject to their respective license terms, copyright statements, attribution requirements, warranty disclaimers, source-offer obligations, redistribution conditions, reserved names, trademark restrictions, and other applicable terms. Their presence in Distribution Materials does not place Ludoxel Original Materials under third-party terms and does not grant additional permission to use Ludoxel Original Materials.',
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'Provenance-Sensitive Materials must be treated with separate legal caution. Technical inclusion, loading, display, bundling, static generation, packaging, deployment preparation, or apparent compatibility does not establish authorship, rights ownership, source, license status, redistribution permission, web-deployment permission, modification permission, trademark status, attribution requirements, or distribution eligibility. The broader material split belongs to ',
+              {
+                kind: 'link',
+                label: 'third-party material boundaries',
+                href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries',
+              },
+              '.',
+            ],
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Even a non-Licensor party that has received the Licensor’s written permission to distribute or deploy particular Distribution Materials remains responsible for proving that the proposed act stays within the granted scope, that all required legal materials are included or retained, that Third-Party Materials may lawfully be redistributed or deployed under their applicable Third-Party License Text, and that no Provenance-Sensitive Materials are distributed or deployed without confirmed provenance and confirmed permission.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-distribution-materials-reporting-limit',
-        title: 'Distribution Materials Reporting Limit',
+        id: 'understanding-distribution-materials-build-and-deployment-evidence',
+        title: 'Build and Deployment Evidence',
         body: [
-          'Understanding Distribution Materials separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for reporting limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Reporting Limit.',
-          'Recovery or follow-up for Understanding Distribution Materials should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the reporting limit part of Understanding Distribution Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'A build command, package check, generated directory, artifact name, website deployment, preview deployment, cache, release-adjacent file, or static-site output may provide evidence that a distribution form exists. It does not decide legal authority. Evidence of production is not evidence of permission.',
+          [
+            'When the reader needs the mechanical build path, package contents, local artifact inspection, or release-adjacent check result, the subject has moved from this legal material-scope article to the Distribution articles, including ',
+            {
+              kind: 'link',
+              label: 'package checks',
+              href: '/docs/distribution/build-and-release-checks/release-checks-and-claims/running-package-checks-with-permission',
+            },
+            ' and ',
+            {
+              kind: 'link',
+              label: 'unofficial release claims',
+              href: '/docs/distribution/build-and-release-checks/release-checks-and-claims/avoiding-unofficial-release-claims',
+            },
+            '.',
+          ],
+          'The legal reading remains narrower: an artifact can exist, contain the right files, retain legal text, and still lack distribution permission. Conversely, a missing legal material may be a packaging defect, but correcting that defect does not itself create permission to circulate the package.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-distribution-limit',
-        title: 'Distribution Materials Distribution Limit',
+        id: 'understanding-distribution-materials-permission-boundary',
+        title: 'Permission Boundary',
         body: [
-          'Understanding Distribution Materials should not use material class to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. That reading gives Understanding Distribution Materials a public anchor for distribution limit without adding behavior that the current category does not own. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Distribution Limit.',
-          'The main confusion risk in Understanding Distribution Materials is inferring permission from visibility. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding Distribution Materials distribution limit is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          [
+            'Classifying material as Distribution Materials does not authorize distribution, deployment, republication, redistribution, mirroring, hosting, transmission, sublicensing, sale, rental, lending, incorporation into another work, preparation of derivative works, AI Use, dataset creation, benchmark construction, extraction, or removal of legal markings. The separate restricted-use analysis belongs to ',
+            {
+              kind: 'link',
+              label: 'redistribution',
+              href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
+            },
+            ', derivative-work, and AI-use articles when those acts are proposed.',
+          ],
+          'The limited grant in the License Text covers only the expressly stated permissions. It does not include permission to distribute Distribution Materials. It does not include permission to deploy the Documentation Site. It does not include permission to republish a package or release artifact. It does not include permission to use distribution form as a substitute for written authorization.',
+          'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later competent written instrument. It must not be inferred from package form, official-looking structure, legal-text inclusion, build success, repository visibility, static-site deployment, preview availability, metadata, or ordinary user expectation.',
         ],
       },
       {
-        id: 'understanding-distribution-materials-ai-use-limit',
-        title: 'Distribution Materials AI Use Limit',
+        id: 'understanding-distribution-materials-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding Distribution Materials uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Ordinary Use. The fact also tells the reader which evidence to preserve for ai use limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / AI Use Limit.',
-          'Reportable evidence for Understanding Distribution Materials should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the ai use limit part of Understanding Distribution Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-distribution-materials-evidence',
-        title: 'Distribution Materials Legal Evidence',
-        body: [
-          'Ownership in Understanding Distribution Materials is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The fact also tells the reader which evidence to preserve for legal evidence: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Legal Evidence.',
-          'Adjacent pages matter for Understanding Distribution Materials, but adjacency does not move authority. Understanding Distribution Materials should be compared with Including License Text, Avoiding Unofficial Release Claims, Understanding Redistribution Restrictions only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the legal evidence part of Understanding Distribution Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-distribution-materials-related-legal',
-        title: 'Distribution Materials Related Legal',
-        body: [
-          'When Understanding Distribution Materials crosses from ordinary use into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Understanding Distribution Materials a public anchor for related legal without adding behavior that the current category does not own. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Related Legal.',
-          'The public boundary for Understanding Distribution Materials is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for related legal does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Distribution Materials should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-distribution-materials-reader-risk',
-        title: 'Distribution Materials Reader Risk',
-        body: [
-          'Distribution review should include legal text, third-party licenses, resource inclusion, platform renderer dependencies, native extension behavior, and generated output separation. Understanding Distribution Materials uses the fact as restricted use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Restricted Use. The fact also tells the reader which evidence to preserve for reader risk: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Reader Risk.',
-          'An operator reading Understanding Distribution Materials should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'Use reader risk to keep Understanding Distribution Materials tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-distribution-materials-non-advice',
-        title: 'Distribution Materials Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Distribution Materials should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Material Scope. The fact also tells the reader which evidence to preserve for non-advice boundary: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Non-Advice Boundary.',
-          'Implementation limits for Understanding Distribution Materials keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the non-advice boundary part of Understanding Distribution Materials should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-distribution-materials-public-summary',
-        title: 'Distribution Materials Public Summary',
-        body: [
-          'Distribution materials can include executable code, package resources, shaders, theme data, assets, native components, legal text, third-party notices, and generated packaging metadata. The point matters in public summary because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Public Summary.',
-          'The summary value of Understanding Distribution Materials is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Distribution Materials should not use public summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-distribution-materials-closing-check',
-        title: 'Distribution Materials Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Distribution Materials. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. Understanding Distribution Materials uses the fact as closing check evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Distribution Materials / License Authority and Materials / Material Scope / Closing Check.',
-          'A final check for Understanding Distribution Materials should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'When Understanding Distribution Materials crosses from closing check into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'This article classifies Distribution Materials and states the legal consequences of that classification under the License Text. It does not provide build instructions, certify artifact completeness, approve release status, clear third-party materials, clear provenance-sensitive assets, decide ordinary application output, authorize redistribution, authorize deployment, accept contributions, route security reports, or determine whether a specific third-party package may be circulated.',
+          [
+            'Its conclusion is narrow: Distribution Materials are materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents, but distribution form does not create permission, legal-text inclusion does not create permission, third-party inclusion does not relicense Original Materials, and official distribution status exists only where the Licensor publishes the material as official. The legal force of that conclusion remains subject to the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text and cannot be enlarged by public ',
+            {
+              kind: 'link',
+              label: 'visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            '.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Including License Text', 'Avoiding Unofficial Release Claims', 'Understanding Redistribution Restrictions'],
+    relatedTitles: [
+      'Understanding License Authority',
+      'Understanding Controlling Text',
+      'Understanding Repository Visibility',
+      'Understanding Original Materials',
+      'Including License Text',
+      'Including Third Party License Text',
+      'Running Package Checks with Permission',
+      'Avoiding Unofficial Release Claims',
+      'Understanding Redistribution Restrictions',
+      'Understanding Derivative Work Restrictions',
+      'Understanding AI Use Restrictions',
+      'Understanding Generated Output',
+      'Understanding Third Party Material Boundaries',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
