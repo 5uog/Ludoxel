@@ -13,7 +13,7 @@ export type DocsHighlightToken = {
 
 const C_STYLE_LANGUAGES = new Set<DocsCodeBlockLanguage>(['js', 'ts', 'tsx', 'glsl', 'vert', 'frag', 'comp', 'wgsl']);
 
-const HASH_COMMENT_LANGUAGES = new Set<DocsCodeBlockLanguage>(['py', 'sh', 'toml']);
+const HASH_COMMENT_LANGUAGES = new Set<DocsCodeBlockLanguage>(['py', 'yaml', 'sh', 'toml']);
 
 const JAVASCRIPT_KEYWORDS = new Set([
   'as',
@@ -120,6 +120,7 @@ const LANGUAGE_KEYWORDS: Partial<Record<DocsCodeBlockLanguage, Set<string>>> = {
   json: new Set(['false', 'null', 'true']),
   sh: new Set(['case', 'cd', 'do', 'done', 'elif', 'else', 'esac', 'exit', 'export', 'fi', 'for', 'function', 'if', 'in', 'local', 'read', 'return', 'set', 'shift', 'then', 'while']),
   toml: new Set(['false', 'true']),
+  yaml: new Set(['false', 'null', 'true']),
   glsl: SHADER_KEYWORDS,
   vert: SHADER_KEYWORDS,
   frag: SHADER_KEYWORDS,
@@ -248,6 +249,10 @@ function tokenKindForIdentifier(language: DocsCodeBlockLanguage, line: string, v
   }
 
   if (language === 'toml' && nextNonSpaceCharacter(line, nextIndex) === '=') {
+    return 'property';
+  }
+
+  if (language === 'yaml' && nextNonSpaceCharacter(line, nextIndex) === ':') {
     return 'property';
   }
 

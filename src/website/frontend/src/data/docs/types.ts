@@ -12,7 +12,7 @@ export type DocsReference = {
   description: string;
 };
 
-export type DocsCodeBlockLanguage = 'js' | 'py' | 'ts' | 'tsx' | 'json' | 'sh' | 'toml' | 'qss' | 'css' | 'glsl' | 'vert' | 'frag' | 'comp' | 'wgsl';
+export type DocsCodeBlockLanguage = 'js' | 'py' | 'ts' | 'tsx' | 'json' | 'yaml' | 'sh' | 'toml' | 'qss' | 'css' | 'glsl' | 'vert' | 'frag' | 'comp' | 'wgsl';
 
 export type DocsSingleCodeBlock = {
   language: DocsCodeBlockLanguage;

@@ -2100,7 +2100,27 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-public-issue-limits-permitted-categories',
         title: 'Permitted Public-Issue Categories',
         body: [
-          'A public issue is admitted only for a reproducible non-security problem report concerning the Current Repository or an Official Distribution; for a limited question about repository policy, the License, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy; and for a minimal request for a Private Reporting Channel when no such channel is available. Each category is admitted only as a narrow report-routing surface and does not become an invitation to submit patches, replacement text, exploit detail, feature proposals, design material, or implementation material.',
+          [
+            'A public issue is admitted only for a reproducible non-security ',
+            {
+              kind: 'link',
+              label: 'problem report',
+              href: '/docs/support/public-problem-support/issue-report-content/writing-a-problem-report',
+            },
+            ' concerning the Current Repository or an Official Distribution; for a ',
+            {
+              kind: 'link',
+              label: 'limited question',
+              href: '/docs/support/scope-and-closure-support/limited-question-scope/asking-a-limited-question',
+            },
+            ' about repository policy, the License, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy; and for a minimal request for a ',
+            {
+              kind: 'link',
+              label: 'Private Reporting Channel',
+              href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
+            },
+            ' when no such channel is available. Each category is admitted only as a narrow report-routing surface and does not become an invitation to submit patches, replacement text, exploit detail, feature proposals, design material, or implementation material.',
+          ],
           'These categories are exhaustive for the public surface. A submission that does not fall within one of them is outside the permitted scope of the public issue channel, regardless of how it is labelled.',
         ],
       },
@@ -2116,8 +2136,21 @@ export const legalPages: DocsPageContent[] = [
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'A Public Issue must not contain vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other information unsuitable for public disclosure. It must not contain Contribution Materials, replacement text, patches, design assets, datasets, generated files, shader rewrites, implementation proposals, or feature requests.',
+              content: [
+                'A Public Issue must not contain vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other ',
+                {
+                  kind: 'link',
+                  label: 'unsafe public content',
+                  href: '/docs/support/security-and-safety-support/public-safety-limits/understanding-unsafe-public-content',
+                },
+                '. It must not contain Contribution Materials, replacement text, patches, design assets, datasets, generated files, shader rewrites, implementation proposals, or ',
+                {
+                  kind: 'link',
+                  label: 'feature requests',
+                  href: '/docs/support/scope-and-closure-support/unsupported-requests/avoiding-feature-requests',
+                },
+                '.',
+              ],
             },
           },
         ],
@@ -2261,7 +2294,15 @@ export const legalPages: DocsPageContent[] = [
         title: 'Operative Text',
         body: [
           'The operative sources are the License Text governing Security Reports and the Security Reporting Policy in `.github/SECURITY.md`. The License Text provides that a Security Report is governed by the Security Reporting Policy and must be submitted through a Private Reporting Channel when one is available, and that a Public Issue must not contain vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other information unsuitable for public disclosure.',
-          'The Security Reporting Policy directs the reporter to use GitHub private vulnerability reporting or a GitHub security advisory when available, and otherwise to open only a minimal Public Issue requesting a private contact method that itself contains no vulnerability detail. The supported scope is confined to the Current Repository and an Official Distribution.',
+          [
+            'The Security Reporting Policy directs the reporter to use GitHub private vulnerability reporting or a GitHub security advisory when available, and otherwise to open only a minimal Public Issue ',
+            {
+              kind: 'link',
+              label: 'requesting',
+              href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
+            },
+            ' a private contact method that itself contains no vulnerability detail. The supported scope is confined to the Current Repository and an Official Distribution.',
+          ],
           'These sources control the channel and the content. Where any subordinate statement appears to permit public disclosure of vulnerability detail, the License Text and the Security Reporting Policy control.',
         ],
       },
@@ -2326,7 +2367,15 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'Submit through GitHub private vulnerability reporting or a security advisory when available; otherwise request a private contact method through a minimal public issue that contains no vulnerability detail.',
+                    text: [
+                      'Submit through GitHub private vulnerability reporting or a security advisory when available; otherwise ',
+                      {
+                        kind: 'link',
+                        label: 'request',
+                        href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
+                      },
+                      ' a private contact method through a minimal public issue that contains no vulnerability detail.',
+                    ],
                   },
                 ],
               },
@@ -2415,7 +2464,15 @@ export const legalPages: DocsPageContent[] = [
         title: 'Operative Text',
         body: [
           'The operative sources are the License Text governing External Contributions and the Repository Contribution Policy in `.github/CONTRIBUTING.md`. The License Text states that the Repository is not maintained as an open contribution project, that an External Contribution is not requested and is not accepted through a public pull request, a Public Issue, a discussion, a patch, a website text proposal, or a comparable submission, and that Contribution Materials submitted as an External Contribution are not accepted.',
-          'The Contribution Policy reinforces this by stating that an External Contribution is not accepted and that a pull request, or a public submission that proposes Contribution Materials, may be closed without review. Public GitHub visibility and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the License.',
+          [
+            'The Contribution Policy reinforces this by stating that an External Contribution is not accepted and that a pull request, or a public submission that proposes Contribution Materials, may be ',
+            {
+              kind: 'link',
+              label: 'closed without review',
+              href: '/docs/support/scope-and-closure-support/unsupported-requests/understanding-closure-without-review',
+            },
+            '. Public GitHub visibility and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the License.',
+          ],
           'These sources are controlling. No subordinate statement, platform affordance, or course of conduct converts the refusal into acceptance.',
         ],
       },
