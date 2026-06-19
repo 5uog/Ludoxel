@@ -11,7 +11,7 @@ export const supportPages: DocsPageContent[] = [
     group: 'Issue Report Content',
     title: 'Writing a Problem Report',
     description:
-      'Explains the public problem-report form as a narrow non-security support channel, including required fields, prohibited public content, and the boundary between observable evidence and contribution or security material.',
+      'Defines the public problem-report form as a narrow non-security support channel, including required fields, prohibited public content, and the boundary between observable evidence and contribution or security material.',
     sections: [
       {
         id: 'writing-a-problem-report-channel-authority',
@@ -97,7 +97,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The reporter should not use these fields interchangeably. Reproduction steps are not a diagnosis, expected behavior is not a patch proposal, and actual behavior is not a place for unrelated logs or private files. The issue should remain a public record of observable behavior, not a transfer of material for possible incorporation into Ludoxel.',
+            text: 'The reporter must not use these fields interchangeably. Reproduction steps are not a diagnosis, expected behavior is not a patch proposal, and actual behavior is not a place for unrelated logs or private files. The issue remains a public record of observable behavior, not a transfer of material for possible incorporation into Ludoxel.',
           },
         ],
       },
@@ -157,7 +157,7 @@ body:
     group: 'Issue Report Content',
     title: 'Supplying Reproduction Steps',
     description:
-      'Explains reproduction steps as public, non-sensitive evidence for a non-security problem report, and separates reproducible observation from diagnosis, exploit disclosure, private files, and implementation proposals.',
+      'Defines reproduction steps as public, non-sensitive evidence for a non-security problem report, and separates reproducible observation from diagnosis, exploit disclosure, private files, and implementation proposals.',
     sections: [
       {
         id: 'supplying-reproduction-steps-evidentiary-function',
@@ -195,7 +195,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Use an ordered sequence when the behavior depends on order. Each step should state a public action or an observable state transition. Keep the expected result and actual result out of the step sequence, because the form already gives those claims separate required fields. This separation prevents the reproduction from becoming an argument, a complaint, or a hidden diagnosis.',
+            text: 'Use an ordered sequence when the behavior depends on order. Each step must state a public action or an observable state transition. Keep the expected result and actual result out of the step sequence, because the form already gives those claims separate required fields. This separation prevents the reproduction from becoming an argument, a complaint, or a hidden diagnosis.',
           },
           {
             kind: 'list',
@@ -209,7 +209,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The list should remain procedural. Do not insert implementation theories, replacement code, file diffs, shader rewrites, model changes, translations, or other proposed repository material. Those additions convert a reproduction section into an unsupported contribution channel.',
+            text: 'The list must remain procedural. Do not insert implementation theories, replacement code, file diffs, shader rewrites, model changes, translations, or other proposed repository material. Those additions convert a reproduction section into an unsupported contribution channel.',
           },
         ],
       },
@@ -244,7 +244,7 @@ body:
     group: 'Evidence Handling',
     title: 'Supplying Platform Evidence',
     description:
-      'Explains how platform and environment evidence supports a Ludoxel problem report when operating system, Python, PyQt6, GPU, OpenGL, package state, or build path materially affects reproducibility.',
+      'Defines how platform and environment evidence supports a Ludoxel problem report when operating system, Python, PyQt6, GPU, OpenGL, package state, or build path materially affects reproducibility.',
     sections: [
       {
         id: 'supplying-platform-evidence-purpose',
@@ -279,7 +279,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Supply platform evidence because it can change the technical analysis, not because the form provides space for it. The report should identify the facts that plausibly affect reproduction and omit the facts that merely expose the reporter’s machine without improving evaluation.',
+            text: 'Supply platform evidence because it can change the technical analysis, not because the form provides space for it. The report must identify the facts that plausibly affect reproduction and omit the facts that merely expose the reporter’s machine without improving evaluation.',
           },
           {
             kind: 'list',
@@ -328,7 +328,7 @@ body:
     group: 'Evidence Handling',
     title: 'Supplying Logs Without Secrets',
     description:
-      'Explains how logs and additional context may be used in public Ludoxel support only after secrets, private files, vulnerability details, and non-public reproduction information have been removed.',
+      'Defines how logs and additional context may be used in public Ludoxel support only after secrets, private files, vulnerability details, and non-public reproduction information have been removed.',
     sections: [
       {
         id: 'supplying-logs-without-secrets-context-field',
@@ -336,7 +336,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Logs are not automatically public merely because they explain a non-security problem. The problem-report form permits additional context only when that context is public, non-sensitive, and necessary to understand the report. A log excerpt should therefore be treated as evidence to be filtered, not as raw output to be pasted into GitHub.',
+            text: 'Logs are not automatically public merely because they explain a non-security problem. The problem-report form permits additional context only when that context is public, non-sensitive, and necessary to understand the report. A log excerpt is therefore evidence to be filtered, not raw output to be pasted into GitHub.',
           },
           {
             kind: 'code',
@@ -362,7 +362,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Redaction is not cosmetic. A useful log line may still be disallowed if it discloses credentials, tokens, cookies, local private paths, confidential data, or exploit detail. The public report should contain the minimum log material needed to identify the observable non-security problem after unsafe material has been removed.',
+            text: 'Redaction is not cosmetic. A useful log line may still be disallowed if it discloses credentials, tokens, cookies, local private paths, confidential data, or exploit detail. The public report must contain the minimum log material needed to identify the observable non-security problem after unsafe material has been removed.',
           },
           {
             kind: 'list',
@@ -377,7 +377,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'A redacted log should not be rewritten into a theory of cause. If the log supports the observed behavior, present the relevant public lines and leave implementation analysis to the repository maintainer’s review.',
+            text: 'A redacted log must not be rewritten into a theory of cause. If the log supports the observed behavior, present the relevant public lines and leave implementation analysis to the repository maintainer’s review.',
           },
         ],
       },
@@ -414,7 +414,7 @@ body:
     subcategory: 'Security and Safety Support',
     group: 'Private Security Contact',
     title: 'Requesting a Private Security Channel',
-    description: 'Explains the public security-contact request as a minimal request for private communication, not as a public Security Report or a grant of testing or use permission.',
+    description: 'Defines the public security-contact request as a minimal request for private communication, not as a public Security Report or a grant of testing or use permission.',
     sections: [
       {
         id: 'requesting-a-private-security-channel-public-request-function',
@@ -484,7 +484,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The limited summary should identify only the broad category of concern and the affected supported scope. It should not identify the vulnerable mechanism, affected private URL, exploit payload, proof of concept, secret-bearing log, private file path, or non-public reproduction path.',
+            text: 'The limited summary must identify only the broad category of concern and the affected supported scope. It must not identify the vulnerable mechanism, affected private URL, exploit payload, proof of concept, secret-bearing log, private file path, or non-public reproduction path.',
           },
         ],
       },
@@ -522,7 +522,7 @@ body:
     subcategory: 'Security and Safety Support',
     group: 'Private Security Contact',
     title: 'Separating Security Reports from Problem Reports',
-    description: 'Explains the operational classification between a public non-security problem report and a private Security Report for the Current Repository or an Official Distribution.',
+    description: 'Defines the operational classification between a public non-security problem report and a private Security Report for the Current Repository or an Official Distribution.',
     sections: [
       {
         id: 'separating-security-reports-from-problem-reports-classification',
@@ -581,7 +581,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'A report outside the supported security scope should not be forced into the public problem-report form. If it does not fit a supported private Security Report and does not fit a public non-security problem report, it is an unsupported request.',
+            text: 'A report outside the supported security scope must not be forced into the public problem-report form. If it does not fit a supported private Security Report and does not fit a public non-security problem report, it is an unsupported request.',
           },
         ],
       },
@@ -602,7 +602,7 @@ body:
                 label: 'request',
                 href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
               },
-              ' for a Private Reporting Channel. That request should not attempt to prove the vulnerability in public.',
+              ' for a Private Reporting Channel. That request must not attempt to prove the vulnerability in public.',
             ],
           },
         ],
@@ -616,7 +616,7 @@ body:
     group: 'Public Safety Limits',
     title: 'Avoiding Public Exploit Details',
     description:
-      'Explains why vulnerability mechanisms, exploit procedures, proof-of-concept code, sensitive URLs, secrets, and non-public reproduction information must be excluded from public Ludoxel support channels.',
+      'Defines why vulnerability mechanisms, exploit procedures, proof-of-concept code, sensitive URLs, secrets, and non-public reproduction information must be excluded from public Ludoxel support channels.',
     sections: [
       {
         id: 'avoiding-public-exploit-details-categorical-public-exclusion',
@@ -646,7 +646,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The public-posting rule must be applied by content type rather than by intent. A reporter may act in good faith and still publish material that should have remained private. The decisive question is whether the material enables, demonstrates, targets, or materially narrows a suspected vulnerability.',
+            text: 'The public-posting rule must be applied by content type rather than by intent. A reporter may act in good faith and still publish material that belongs in a private channel. The decisive question is whether the material enables, demonstrates, targets, or materially narrows a suspected vulnerability.',
           },
           {
             kind: 'list',
@@ -694,7 +694,7 @@ body:
     group: 'Public Safety Limits',
     title: 'Understanding Unsafe Public Content',
     description:
-      'Defines content that must not be placed in public Ludoxel support channels and explains why usefulness, good faith, or public GitHub visibility does not make excluded material acceptable.',
+      'Defines content that must not be placed in public Ludoxel support channels and states why usefulness, good faith, or public GitHub visibility does not make excluded material acceptable.',
     sections: [
       {
         id: 'understanding-unsafe-public-content-definition',
@@ -751,7 +751,7 @@ body:
                 label: 'contribution refusal',
                 href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
               },
-              ' and the public issue should not be used as a replacement acceptance route.',
+              ' and the public issue must not be used as a replacement acceptance route.',
             ],
           },
         ],
@@ -765,7 +765,7 @@ body:
     group: 'Limited Question Scope',
     title: 'Asking a Limited Question',
     description:
-      'Explains the limited-question form as a narrow public route for repository-policy, license, third-party-material, ordinary-use, packaging, build-status, and security-reporting questions.',
+      'Defines the limited-question form as a narrow public route for repository-policy, license, third-party-material, ordinary-use, packaging, build-status, and security-reporting questions.',
     sections: [
       {
         id: 'asking-a-limited-question-form-function',
@@ -867,7 +867,7 @@ body:
     group: 'Limited Question Scope',
     title: 'Keeping a Question Within Scope',
     description:
-      'Explains how to keep a limited public question inside the repository-policy subjects accepted by the issue template without turning it into a feature request, contribution, public security disclosure, or unsupported demand.',
+      'Defines how a limited public question remains inside the repository-policy subjects accepted by the issue template without turning it into a feature request, contribution, public security disclosure, or unsupported demand.',
     sections: [
       {
         id: 'keeping-a-question-within-scope-question-standard',
@@ -955,7 +955,7 @@ body:
     group: 'Unsupported Requests',
     title: 'Avoiding Feature Requests',
     description:
-      'Explains why Ludoxel public support forms do not accept feature requests, feature implementations, patches, refactoring proposals, design submissions, or replacement repository content.',
+      'Defines why Ludoxel public support forms do not accept feature requests, feature implementations, patches, refactoring proposals, design submissions, or replacement repository content.',
     sections: [
       {
         id: 'avoiding-feature-requests-contribution-boundary',
@@ -1034,7 +1034,7 @@ body:
     group: 'Unsupported Requests',
     title: 'Understanding Closure Without Review',
     description:
-      'Explains closure without review as an enforcement of repository support and contribution boundaries, not as technical evaluation, legal acceptance, remediation commitment, or permission.',
+      'Defines closure without review as an enforcement of repository support and contribution boundaries, not as technical evaluation, legal acceptance, remediation commitment, or permission.',
     sections: [
       {
         id: 'understanding-closure-without-review-public-submission-boundary',
@@ -1046,7 +1046,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'A closed issue therefore should not be read as a technical rejection after review, an implied acceptance of safe content, or a negotiation over scope. The repository may refuse to evaluate material that the public route is not designed to receive.',
+            text: 'A closed issue therefore must not be read as a technical rejection after review, an implied acceptance of safe content, or a negotiation over scope. The repository may refuse to evaluate material that the public route is not designed to receive.',
           },
         ],
       },
@@ -1101,7 +1101,7 @@ body:
     group: 'Unsupported Requests',
     title: 'Understanding Unsupported Requests',
     description:
-      'Explains request categories outside Ludoxel support scope and why unsupported material cannot be made acceptable by relabeling it as a problem report, limited question, or security contact request.',
+      'Defines request categories outside Ludoxel support scope and why unsupported material cannot be made acceptable by relabeling it as a problem report, limited question, or security contact request.',
     sections: [
       {
         id: 'understanding-unsupported-requests-definition',
@@ -1147,7 +1147,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Unsupported material should not be refiled until it has been reduced to a valid support form. If the remaining content is a public non-security defect, use the problem-report route. If it is a narrow question about existing public policy, use the limited-question route. If it is a suspected vulnerability requiring non-public detail and within supported scope, use a Private Reporting Channel.',
+            text: 'Unsupported material must not be refiled until it has been reduced to a valid support form. If the remaining content is a public non-security defect, use the problem-report route. If it is a narrow question about existing public policy, use the limited-question route. If it is a suspected vulnerability requiring non-public detail and within supported scope, use a Private Reporting Channel.',
           },
           {
             kind: 'paragraph',

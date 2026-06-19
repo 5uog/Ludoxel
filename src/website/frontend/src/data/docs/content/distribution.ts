@@ -346,7 +346,7 @@ function requireBundledResource(appPath, label, relativePaths) {
     group: 'Native and Runtime Materials',
     title: 'Understanding Native Extension Fallbacks',
     description:
-      'Fixes the separation between source availability, compiled acceleration, verification policy, and release permission in build_native_extensions and the foundations Python fallbacks: the configured candidates, compiled-suffix detection, the generated build payload, and the require-built gate — and refuses to read a native success as runtime superiority or distribution permission.',
+      'Separates source availability, compiled acceleration, verification policy, and release permission in build_native_extensions and the foundations Python fallbacks: the configured candidates, compiled-suffix detection, the generated build payload, and the require-built gate — and refuses to read a native success as runtime superiority or distribution permission.',
     sections: [
       {
         id: 'understanding-native-extension-fallbacks-owner-files',
@@ -476,7 +476,7 @@ npm run build:native:check`,
     group: 'Legal Material Inclusion',
     title: 'Including License Text',
     description:
-      'Fixes legal-material inclusion as a retention requirement in build_desktop_app, not a permission: the configured material set, the copy service and its existence-guarded operation that turns omission into a recorded artifact defect, the Windows and macOS publish coordinates, and the repository legal check.',
+      'Defines legal-material inclusion as a retention requirement in build_desktop_app, not as permission: the configured material set, the copy service and its existence-guarded operation that turns omission into a recorded artifact defect, the Windows and macOS publish coordinates, and the repository legal check.',
     sections: [
       {
         id: 'including-license-text-owner-files',
@@ -614,7 +614,7 @@ npm run build:native:check`,
     group: 'Legal Material Inclusion',
     title: 'Including Third Party License Text',
     description:
-      'Fixes the separation between third-party notice retention and redistribution clearance, centered on the Kaisei Opti font: the legal policy constant, the required-terms checker, the macOS font requirements, and the refusal to read one verified notice as blanket provenance clearance.',
+      'Separates third-party notice retention from redistribution clearance, centered on the Kaisei Opti font: the legal policy constant, the required-terms checker, the macOS font requirements, and the refusal to read one verified notice as blanket provenance clearance.',
     sections: [
       {
         id: 'including-third-party-license-text-owner-files',
@@ -726,7 +726,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Because `third-party` is a configured legal-material path, `copyLegalMaterial` writes it into each publish directory, so the notice should travel from the repository root into the artifact.',
+            text: 'Because `third-party` is a configured legal-material path, `copyLegalMaterial` writes it into each publish directory, so the notice travels from the repository root into the artifact.',
           },
           {
             kind: 'list',
@@ -771,7 +771,7 @@ npm run build:native:check`,
     group: 'Local Build Procedure',
     title: 'Running a Desktop Build with Permission',
     description:
-      'Fixes the command surface of build_desktop_app as a containment device for an already-authorized operator: parsing and validation as command-surface containment, task dispatch into platform-specific service execution, host gates, dry-run and check modes, native-build and cache ordering — and the refusal to read command availability as execution authority.',
+      'Defines the command surface of build_desktop_app as a containment device for an already-authorized operator: parsing and validation as command-surface containment, task dispatch into platform-specific service execution, host gates, dry-run and check modes, native-build and cache ordering — and the refusal to read command availability as execution authority.',
     sections: [
       {
         id: 'running-a-desktop-build-with-permission-authority-premise',
@@ -951,7 +951,7 @@ npm run build:macos -- --status`,
     group: 'Local Build Procedure',
     title: 'Reading Build Output',
     description:
-      'Fixes the evidentiary granularity of build and check output and forbids the inference from a favorable line to a release conclusion: the printed PyInstaller command, the report function pass/note/failure hierarchy, native verification lines, and the platform publication results.',
+      'Defines the evidentiary granularity of build and check output and forbids the inference from a favorable line to a release conclusion: the printed PyInstaller command, the report function pass/note/failure hierarchy, native verification lines, and the platform publication results.',
     sections: [
       {
         id: 'reading-build-output-evidentiary-function',
@@ -1085,7 +1085,7 @@ if (source.binaries.length === 0) {
     group: 'Package Inspection',
     title: 'Running Package Checks with Permission',
     description:
-      'Fixes the repository verification surface as the decomposition of policy into named predicates with bounded evidentiary reach: the frozen check dispatch table, the package identity and script-surface contract, the legal and documentation predicates, and the suppression of green-check overreading.',
+      'Defines the repository verification surface as the decomposition of policy into named predicates with bounded evidentiary reach: the frozen check dispatch table, the package identity and script-surface contract, the legal and documentation predicates, and the suppression of green-check overreading.',
     sections: [
       {
         id: 'running-package-checks-with-permission-authority-premise',
@@ -1217,7 +1217,7 @@ for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
     group: 'Package Inspection',
     title: 'Running Resource and Shader Checks with Permission',
     description:
-      'Fixes the resource and shader checks as preconditions of runtime package integrity, defined by what they refuse as much as what they admit: the .gitignore, runtime-path, integrity-manifest, and asset-root invariants, and the shader version floor and ceiling and the vertex-index macro contract — with resource clearance and visual parity outside their reach.',
+      'Defines the resource and shader checks as preconditions of runtime package integrity, controlled by what they refuse as much as what they admit: the .gitignore, runtime-path, integrity-manifest, and asset-root invariants, and the shader version floor and ceiling and the vertex-index macro contract — with resource clearance and visual parity outside their reach.',
     sections: [
       {
         id: 'running-resource-and-shader-checks-with-permission-authority-premise',
@@ -1350,7 +1350,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
     group: 'Public Identification',
     title: 'Avoiding Unofficial Release Claims',
     description:
-      'Fixes release wording as artifact handling and treats false release language as a public-language defect: the build configuration’s artifact-name and publish-directory constants, the renderMacosStatus statement that codesigning and notarization are release work outside the tool, and the separation of artifact label from authority label.',
+      'Controls release wording as artifact handling and treats false release language as a public-language defect: the build configuration’s artifact-name and publish-directory constants, the renderMacosStatus statement that codesigning and notarization are release work outside the tool, and the separation of artifact label from authority label.',
     sections: [
       {
         id: 'avoiding-unofficial-release-claims-identification-boundary',
@@ -1442,7 +1442,7 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
           },
           {
             kind: 'paragraph',
-            text: 'The absence of evidence must not be patched with language such as appears to be official, should be fine, effectively released, probably cleared, or generated by the official repo. Distribution prose remains exact even when the exact answer is inconvenient: a package can be technically generated and still lack release status, and the technical fact does not supply the missing authority.',
+            text: 'The absence of evidence must not be patched with language such as appears to be official, would be acceptable, effectively released, probably cleared, or generated by the official repo. Distribution prose remains exact even when the exact answer is inconvenient: a package can be technically generated and still lack release status, and the technical fact does not supply the missing authority.',
           },
         ],
       },

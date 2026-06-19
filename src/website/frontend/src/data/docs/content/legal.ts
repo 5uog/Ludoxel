@@ -11,7 +11,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Authority Text',
     title: 'Understanding License Authority',
     description:
-      'Explains the juridical source of permission for Ludoxel Original Materials, the non-authoritative character of public surfaces, and the point at which authority analysis must stop before material classification or distribution analysis begins.',
+      'Defines the juridical source of permission for Ludoxel Original Materials, the non-authoritative character of public surfaces, and the point at which authority analysis must stop before material classification or distribution analysis begins.',
     sections: [
       {
         id: 'understanding-license-authority-juridical-function',
@@ -149,7 +149,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Authority Text',
     title: 'Understanding Controlling Text',
     description:
-      'Explains the legal priority of the root License Text over inconsistent repository, documentation, metadata, generated, hosted, interface, issue, release, summary, or translation statements.',
+      'Defines the legal priority of the root License Text over inconsistent repository, documentation, metadata, generated, hosted, interface, issue, release, summary, or translation statements.',
     sections: [
       {
         id: 'understanding-controlling-text-doctrinal-function',
@@ -271,7 +271,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-controlling-text-harmonization-limits',
         title: 'Limits of Harmonization',
         body: [
-          'Non-conflicting statements should be harmonized where harmonization preserves the License Text and the subordinate statement inside their respective functions. A documentation notice saying that material is protected, for example, can be harmonized with the License Text because it points to the controlling source and does not enlarge permission.',
+          'Non-conflicting statements may be harmonized only where harmonization preserves the License Text and the subordinate statement inside their respective functions. A documentation notice saying that material is protected, for example, can be harmonized with the License Text because it points to the controlling source and does not enlarge permission.',
           'Harmonization ends where it would rewrite the License Text or treat subordinate prose as a hidden exception. The reader must not soften an exclusion, dilute a reservation, expand a grant, or relocate a defined term merely to save an inconsistent sentence from legal consequences.',
           'The correct method is strict: read the License Text first, read the subordinate statement only within its assigned responsibility, and reject any meaning that would give the subordinate statement operative force beyond the License Text.',
         ],
@@ -328,7 +328,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Repository Visibility',
     description:
-      'Explains why public repository visibility, platform affordances, browser access, static-site publication, cache state, indexing, and technical obtainability do not grant rights in Ludoxel materials beyond the License Text.',
+      'Defines why public repository visibility, platform affordances, browser access, static-site publication, cache state, indexing, and technical obtainability do not grant rights in Ludoxel materials beyond the License Text.',
     sections: [
       {
         id: 'understanding-repository-visibility-juridical-function',
@@ -477,7 +477,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Original Materials',
     description:
-      'Explains the legal classification of Ludoxel Original Materials, the exclusion of third-party and user-created materials, and the boundary between material classification and permission to use or distribute.',
+      'Defines the legal classification of Ludoxel Original Materials, the exclusion of third-party and user-created materials, and the boundary between material classification and permission to use or distribute.',
     sections: [
       {
         id: 'understanding-original-materials-juridical-function',
@@ -567,7 +567,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'Original Materials may include Ludoxel source code, website source code, documentation content, legal notices, interface text, project-specific shaders, project-specific metadata, project-specific configuration, package files, build scripts, generated documentation output, generated static-site output, branding elements, icons, images, videos, media blocks, application resources, and distribution-preparation materials where they satisfy the License Text definition.',
           'The form of the material is not decisive. Source Form and Object Form are both capable of remaining within the Original Materials perimeter. Compilation, bundling, static-site generation, minification, packaging, deployment preparation, or inclusion in an application bundle changes technical form; it does not itself destroy the protected Ludoxel character of the material.',
-          'The classification should be stated with precision. It is enough to say that the material is treated as Original Materials to the extent it is Ludoxel material created, owned, or controlled by the Licensor and not excluded. It is not proper to turn that classification into a statement that every adjacent asset, dependency, user output, or third-party component has the same legal status.',
+          'The classification must be stated with precision. It is enough to say that the material is treated as Original Materials to the extent it is Ludoxel material created, owned, or controlled by the Licensor and not excluded. It is not proper to turn that classification into a statement that every adjacent asset, dependency, user output, or third-party component has the same legal status.',
         ],
       },
       {
@@ -695,7 +695,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Distribution Materials',
     description:
-      'Explains the legal classification of Ludoxel Distribution Materials, the continued operation of the License Text over packaged or deployed materials, the non-permissive character of legal-text inclusion, and the boundary between distribution form, official status, third-party clearance, and distribution permission.',
+      'Defines the legal classification of Ludoxel Distribution Materials, the continued operation of the License Text over packaged or deployed materials, the non-permissive character of legal-text inclusion, and the boundary between distribution form, official status, third-party clearance, and distribution permission.',
     sections: [
       {
         id: 'understanding-distribution-materials-juridical-function',
@@ -961,7 +961,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Ordinary Use and Output',
     title: 'Understanding Ordinary Application Use',
     description:
-      'Explains the limited permission to use Ludoxel as a desktop application, separates ordinary interactive operation from restricted uses of Ludoxel Original Materials, and states the boundary between local use, user-created materials, application output, distribution, and AI Use.',
+      'Defines the limited permission to use Ludoxel as a desktop application, separates ordinary interactive operation from restricted uses of Ludoxel Original Materials, and states the boundary between local use, user-created materials, application output, distribution, and AI Use.',
     sections: [
       {
         id: 'understanding-ordinary-application-use-juridical-function',
@@ -1281,7 +1281,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Ordinary Use and Output',
     title: 'Understanding Generated Output',
     description:
-      'Explains the legal treatment of output produced through Ordinary Application Use, the composite material character of that output, and the boundary between a permission to use the user’s own output and any asserted right to reuse the underlying Ludoxel Original Materials.',
+      'Defines the legal treatment of output produced through Ordinary Application Use, the composite material character of that output, and the boundary between a permission to use the user’s own output and any asserted right to reuse the underlying Ludoxel Original Materials.',
     sections: [
       {
         id: 'understanding-generated-output-juridical-function',
@@ -1512,7 +1512,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding Redistribution Restrictions',
     description:
-      'Explains why copying, publishing, hosting, mirroring, repackaging, sublicensing, and republishing Ludoxel Original Materials are restricted acts outside the limited grant, and why repository visibility, technical obtainability, package existence, license-text inclusion, and noncommercial or educational purpose do not create redistribution permission.',
+      'Defines why copying, publishing, hosting, mirroring, repackaging, sublicensing, and republishing Ludoxel Original Materials are restricted acts outside the limited grant, and why repository visibility, technical obtainability, package existence, license-text inclusion, and noncommercial or educational purpose do not create redistribution permission.',
     sections: [
       {
         id: 'understanding-redistribution-restrictions-juridical-function',
@@ -1725,7 +1725,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding Derivative Work Restrictions',
     description:
-      'Explains why modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, and website redesign of Ludoxel Original Materials are restricted, and why private technical capability does not create permission to prepare, use, publish, or circulate a derivative work.',
+      'Defines why modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, and website redesign of Ludoxel Original Materials are restricted, and why private technical capability does not create permission to prepare, use, publish, or circulate a derivative work.',
     sections: [
       {
         id: 'understanding-derivative-work-restrictions-juridical-function',
@@ -1893,7 +1893,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding AI Use Restrictions',
     description:
-      'Explains the License Text restriction on AI Use of Ludoxel Original Materials, separates that restriction from Ordinary Application Use, and explains why Ludoxel’s own AI features and learning records do not authorize training, evaluation, dataset creation, indexing, or other computational ingestion of protected material by external systems.',
+      'Defines the License Text restriction on AI Use of Ludoxel Original Materials, separates that restriction from Ordinary Application Use, and states why Ludoxel’s own AI features and learning records do not authorize training, evaluation, dataset creation, indexing, or other computational ingestion of protected material by external systems.',
     sections: [
       {
         id: 'understanding-ai-use-restrictions-juridical-function',
@@ -2062,7 +2062,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Public and Private Reporting',
     title: 'Understanding Public Issue Limits',
     description:
-      'Explains the legal and operational limits of the Ludoxel public issue surface, the narrow categories of submission it admits, the content it must never carry, and why a public form does not create permission, a right of submission, or acceptance of any contribution.',
+      'Defines the legal and operational limits of the Ludoxel public issue surface, the narrow categories of submission it admits, the content it must never carry, and why a public form does not create permission, a right of submission, or acceptance of any contribution.',
     sections: [
       {
         id: 'understanding-public-issue-limits-juridical-function',
@@ -2264,7 +2264,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Public and Private Reporting',
     title: 'Understanding Private Security Reporting',
     description:
-      'Explains why a suspected vulnerability must be reported through a private channel rather than disclosed publicly, the lawful and authorized limits of Security Testing, and why a private reporting channel does not grant unlimited testing permission, exploit-publication permission, a safe harbor, access to third-party systems, or any expansion of permission.',
+      'Defines why a suspected vulnerability must be reported through a private channel rather than disclosed publicly, the lawful and authorized limits of Security Testing, and why a private reporting channel does not grant unlimited testing permission, exploit-publication permission, a safe harbor, access to third-party systems, or any expansion of permission.',
     sections: [
       {
         id: 'understanding-private-security-reporting-juridical-function',
@@ -2440,7 +2440,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Contribution Boundaries',
     title: 'Understanding Contribution Refusal',
     description:
-      'Explains that Ludoxel does not accept External Contribution material of any kind, and that a public issue, a pull request, a discussion, a fork, technical availability, or repository visibility creates no contribution invitation, license grant, review obligation, assignment acceptance, joint authorship, or implied consent.',
+      'Defines that Ludoxel does not accept External Contribution material of any kind, and that a public issue, a pull request, a discussion, a fork, technical availability, or repository visibility creates no contribution invitation, license grant, review obligation, assignment acceptance, joint authorship, or implied consent.',
     sections: [
       {
         id: 'understanding-contribution-refusal-juridical-function',
@@ -2563,7 +2563,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Contribution Boundaries',
     title: 'Understanding Pull Request Boundaries',
     description:
-      'Explains why a pull request is not an accepted contribution path for Ludoxel, why a public pull request may be closed without review, and why the pull-request interface creates no submission permission, review obligation, merge expectation, license amendment, or right to have material considered.',
+      'Defines why a pull request is not an accepted contribution path for Ludoxel, why a public pull request may be closed without review, and why the pull-request interface creates no submission permission, review obligation, merge expectation, license amendment, or right to have material considered.',
     sections: [
       {
         id: 'understanding-pull-request-boundaries-juridical-function',
