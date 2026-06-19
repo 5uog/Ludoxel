@@ -10,8 +10,7 @@ export const dataPages: DocsPageContent[] = [
     subcategory: 'Local and Saved Data',
     group: 'User Data Location',
     title: 'Locating User Data',
-    description:
-      'Defines the runtime data-root resolver, the state/cache split, the application persistence paths, and the evidentiary limit of a resolved local path.',
+    description: 'Defines the runtime data-root resolver, the state/cache split, the application persistence paths, and the evidentiary limit of a resolved local path.',
     sections: [
       {
         id: 'locating-user-data-runtime-root-resolution',
@@ -140,8 +139,7 @@ def _world_store(self) -> JsonFileStore:
     subcategory: 'Local and Saved Data',
     group: 'User Data Location',
     title: 'Separating User Data from Source Files',
-    description:
-      'Separates repository source and packaged resources from mutable runtime data by resolver, marker search, write target, migration fallback, and material-classification consequence.',
+    description: 'Separates repository source and packaged resources from mutable runtime data by resolver, marker search, write target, migration fallback, and material-classification consequence.',
     sections: [
       {
         id: 'separating-user-data-project-root-predicate',
@@ -396,8 +394,7 @@ class PlayerStateFile:
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading Saved Preferences',
-    description:
-      'Defines saved preferences through the player-state envelope, `PersistedSettings`, default construction, coercion, legacy key migration, runtime consumption, and integrity failure.',
+    description: 'Defines saved preferences through the player-state envelope, `PersistedSettings`, default construction, coercion, legacy key migration, runtime consumption, and integrity failure.',
     sections: [
       {
         id: 'reading-saved-preferences-envelope',
@@ -749,8 +746,7 @@ class PersistedAiLearningSettings:
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading Saved Othello State',
-    description:
-      'Defines Othello persistence across match state, standing settings, per-match settings, bundled opening-book resources, user opening-book deltas, and compiled cache.',
+    description: 'Defines Othello persistence across match state, standing settings, per-match settings, bundled opening-book resources, user opening-book deltas, and compiled cache.',
     sections: [
       {
         id: 'reading-saved-othello-state-match-record',
@@ -984,8 +980,7 @@ return (records, int(corrupt))`,
     subcategory: 'Learning and Material Data',
     group: 'Learning Artifacts',
     title: 'Reading Learned Policies',
-    description:
-      'Defines learned policies as versioned utility-modifier artifacts with source families, usability gates, fallback behavior, action-mask limits, and evaluation limits.',
+    description: 'Defines learned policies as versioned utility-modifier artifacts with source families, usability gates, fallback behavior, action-mask limits, and evaluation limits.',
     sections: [
       {
         id: 'reading-learned-policies-policy-record',
@@ -1116,8 +1111,7 @@ class AiActionMask:
     subcategory: 'Learning and Material Data',
     group: 'Learning Artifacts',
     title: 'Handling Corrupt Learning Rows',
-    description:
-      'Defines corrupt learning rows through decode failure, skip/count behavior, JSON Lines isolation, serialization failure handling, training consequences, and absence of repair.',
+    description: 'Defines corrupt learning rows through decode failure, skip/count behavior, JSON Lines isolation, serialization failure handling, training consequences, and absence of repair.',
     sections: [
       {
         id: 'handling-corrupt-learning-rows-decoder',
@@ -1240,8 +1234,7 @@ for row in rows:
     subcategory: 'Learning and Material Data',
     group: 'Output and Material Boundaries',
     title: 'Understanding Application Output',
-    description:
-      'Classifies ordinary application output as generated data and material evidence, separating serialized state, rendered output, logs, screenshots, recordings, and build artifacts.',
+    description: 'Classifies ordinary application output as generated data and material evidence, separating serialized state, rendered output, logs, screenshots, recordings, and build artifacts.',
     sections: [
       {
         id: 'understanding-application-output-generated-records',
@@ -1339,8 +1332,7 @@ for row in rows:
     subcategory: 'Learning and Material Data',
     group: 'Output and Material Boundaries',
     title: 'Understanding User-Created Materials',
-    description:
-      'Defines user-created materials through saved state, imported material, world edits, Othello deltas, preferences, learning records, and embedded-material limits.',
+    description: 'Defines user-created materials through saved state, imported material, world edits, Othello deltas, preferences, learning records, and embedded-material limits.',
     sections: [
       {
         id: 'understanding-user-created-materials-saved-evidence',
@@ -1426,8 +1418,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not infer legal cleanliness from the phrase user-created. Local origin, user arrangement, imported file presence, and rights clearance are separate facts.',
+              content: 'Do not infer legal cleanliness from the phrase user-created. Local origin, user arrangement, imported file presence, and rights clearance are separate facts.',
             },
           },
         ],
