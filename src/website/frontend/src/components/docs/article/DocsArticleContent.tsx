@@ -7,6 +7,7 @@ import {
   type DocsArticleContentBlock,
   type DocsCodeBlock as DocsCodeBlockContent,
   type DocsCodeContentBlock,
+  type DocsInlineText,
   type DocsListBlock,
   type DocsMathBlock,
   type DocsNoteBlock as DocsNoteBlockContent,
@@ -118,7 +119,11 @@ function splitDisplayMath(text: string): DisplayMathTextBlock[] {
   return blocks.length > 0 ? blocks : [{ kind: 'text', text }];
 }
 
-function renderBodyParagraph(section: DocsSection, paragraph: string, paragraphIndex: number, keyPrefix = `${section.id}-body`): React.JSX.Element[] {
+function renderBodyParagraph(section: DocsSection, paragraph: DocsInlineText, paragraphIndex: number, keyPrefix = `${section.id}-body`): React.JSX.Element[] {
+  if (typeof paragraph !== 'string') {
+    return [<p key={`${keyPrefix}-${paragraphIndex}-text-0`}>{renderInlineText(paragraph)}</p>];
+  }
+
   return splitDisplayMath(paragraph).map((block, blockIndex) => {
     if (block.kind === 'math') {
       return <DocsMath displayMode expression={block.expression} key={`${keyPrefix}-${paragraphIndex}-math-${blockIndex}`} />;
@@ -171,7 +176,7 @@ function renderStepsBlock(block: DocsStepsBlock, section: DocsSection, blockInde
           <div className="group/step relative flex items-start pb-6 last:pb-0" id={step.id} key={stepContentKey} role="listitem">
             {hasLine ? <div className="absolute top-11 h-[calc(100%-2.75rem)] w-px bg-border" aria-hidden="true" /> : null}
 
-            <div className="absolute ml-[-13px] py-2" aria-hidden="true">
+            <div className="absolute -ml-3.25 py-2" aria-hidden="true">
               <div className="relative flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground ring-1 ring-border">{stepIndex + 1}</div>
             </div>
 

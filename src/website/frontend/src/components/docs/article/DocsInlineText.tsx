@@ -2,9 +2,14 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { Link } from 'react-router-dom';
+
+import { type DocsInlineText, type DocsInlineTextPart } from '../../../data/docs/types';
 import DocsMath from './DocsMath';
 
 type InlineTextPart = string | React.JSX.Element;
+
+const INLINE_LINK_CLASS_NAME = 'font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground';
 
 function isEscaped(text: string, index: number): boolean {
   let backslashCount = 0;
@@ -14,6 +19,10 @@ function isEscaped(text: string, index: number): boolean {
   }
 
   return backslashCount % 2 === 1;
+}
+
+function isExternalHref(href: string): boolean {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href);
 }
 
 function findUnescapedSequence(text: string, sequence: string, fromIndex: number): number {
@@ -62,7 +71,31 @@ function pushTextPart(parts: InlineTextPart[], text: string): void {
   }
 }
 
-export function renderInlineText(text: string): InlineTextPart[] {
+function renderInlineLink(part: Exclude<DocsInlineTextPart, string>, partIndex: number): React.JSX.Element {
+  if (isExternalHref(part.href)) {
+    return (
+      <a className={INLINE_LINK_CLASS_NAME} href={part.href} key={`inline-link-${partIndex}`} rel="noreferrer" target="_blank">
+        {part.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link className={INLINE_LINK_CLASS_NAME} key={`inline-link-${partIndex}`} to={part.href}>
+      {part.label}
+    </Link>
+  );
+}
+
+function renderInlineTextPart(part: DocsInlineTextPart, partIndex: number): InlineTextPart[] {
+  if (typeof part === 'string') {
+    return renderInlineTextString(part);
+  }
+
+  return [renderInlineLink(part, partIndex)];
+}
+
+function renderInlineTextString(text: string): InlineTextPart[] {
   const parts: InlineTextPart[] = [];
   let cursor = 0;
   let plainStart = 0;
@@ -114,4 +147,12 @@ export function renderInlineText(text: string): InlineTextPart[] {
 
   pushTextPart(parts, text.slice(plainStart));
   return parts;
+}
+
+export function renderInlineText(text: DocsInlineText): InlineTextPart[] {
+  if (typeof text === 'string') {
+    return renderInlineTextString(text);
+  }
+
+  return text.flatMap((part, partIndex) => renderInlineTextPart(part, partIndex));
 }
