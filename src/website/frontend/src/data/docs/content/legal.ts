@@ -95,7 +95,15 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'After the controlling source is identified, this article has done its job. Questions about what counts as original material, what third-party terms require, what repository visibility permits, what license text must accompany materials, or what distribution artifacts contain belong to the neighboring Legal articles.',
+                    text: [
+                      'After the controlling source is identified, this article has done its job. Questions about what counts as original material, what third-party terms require, what ',
+                      {
+                        kind: 'link',
+                        label: 'repository visibility',
+                        href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+                      },
+                      ' permits, what license text must accompany materials, or what distribution artifacts contain belong to the neighboring Legal articles.',
+                    ],
                   },
                 ],
               },
@@ -115,7 +123,13 @@ export const legalPages: DocsPageContent[] = [
               label: 'controlling',
               href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
             },
-            ' license authority, not from public visibility, summaries, notices, metadata, build output, website deployment, platform functions, or nearby policy text.',
+            ' license authority, not from ',
+            {
+              kind: 'link',
+              label: 'public visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            ', summaries, notices, metadata, build output, website deployment, platform functions, or nearby policy text.',
           ],
         ],
       },
@@ -154,7 +168,15 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'A conflict exists when the subordinate statement and the License Text cannot reasonably be read together without changing the legal effect of the License Text. The relevant inquiry is not whether the subordinate statement is shorter, simpler, less precise, less complete, or written for a different audience. Mere incompleteness is not conflict. Conflict arises when the subordinate statement purports, expressly or by necessary implication, to grant, waive, narrow, expand, displace, replace, excuse, or condition something differently from the License Text.',
           'A statement that says less than the License Text is usually subordinate but not contradictory. A statement that directs the reader to the License Text is likewise not contradictory. By contrast, a statement that appears to authorize copying, modification, redistribution, deployment, republication, mirroring, scraping, AI processing, derivative preparation, or third-party relicensing beyond the License Text must be treated as legally ineffective to the extent of that inconsistency.',
-          'The conflict analysis must be made at the level of legal consequence, not at the level of vocabulary. Different words may be consistent if they preserve the same operative effect. Similar words may conflict if they alter the class of covered materials, the scope of use, the identity of the granting authority, the condition of permission, the survival of reservations, the treatment of third-party material, or the legal status of public visibility.',
+          [
+            'The conflict analysis must be made at the level of legal consequence, not at the level of vocabulary. Different words may be consistent if they preserve the same operative effect. Similar words may conflict if they alter the class of covered materials, the scope of use, the identity of the granting authority, the condition of permission, the survival of reservations, the treatment of third-party material, or the legal status of ',
+            {
+              kind: 'link',
+              label: 'public visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            '.',
+          ],
         ],
       },
       {
@@ -215,7 +237,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-controlling-text-boundary',
         title: 'Boundary of This Article',
         body: [
-          'This article does not decide who the Licensor is, what materials are Original Materials, whether a repository is public, what license text must be included in a distribution, whether a user-created output is separate from Original Materials, whether a third-party asset is cleared, whether a specific restricted use is permitted, whether contribution material is accepted, or how security reports must be routed.',
+          [
+            'This article does not decide who the Licensor is, what materials are Original Materials, whether a ',
+            {
+              kind: 'link',
+              label: 'repository is public',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            ', what license text must be included in a distribution, whether a user-created output is separate from Original Materials, whether a third-party asset is cleared, whether a specific restricted use is permitted, whether contribution material is accepted, or how security reports must be routed.',
+          ],
           'Its limited conclusion is this: where a subordinate repository, documentation, metadata, generated, hosted, interface, issue, release, summary, translation, package, or platform statement conflicts with the License Text, the License Text controls for the Original Materials, and the inconsistent subordinate statement has no operative effect as a grant, waiver, exception, amendment, substitution, or enlargement of permission unless it is itself a later written instrument signed by the Licensor and expressly changing the legal position.',
         ],
       },
@@ -228,154 +258,175 @@ export const legalPages: DocsPageContent[] = [
     group: 'Material Scope',
     title: 'Understanding Repository Visibility',
     description:
-      'Explains what public repository access does and does not permit. This page treats license interpretation as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains why public repository visibility, Source Form availability, Documentation Site display, hosting-service functions, public submission surfaces, and technical obtainability do not grant permission beyond the root LICENSE.',
     sections: [
       {
-        id: 'understanding-repository-visibility-authority-scope',
-        title: 'Repository Visibility Authority Scope',
+        id: 'understanding-repository-visibility-juridical-function',
+        title: 'Juridical Function of Repository Visibility',
         body: [
-          'A public repository can make files viewable, but visibility is not the same as permission to reuse, redistribute, train on, or modify original materials. That reading gives Understanding Repository Visibility a public anchor for authority scope without adding behavior that the current category does not own. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Repository Visibility. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'The useful result of Understanding Repository Visibility authority scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          'Repository visibility is a condition of access. It is not a juridical act of licensing, not a waiver of reserved rights, not a public dedication, not an open-source declaration, not an implied covenant, not a course-of-dealing authorization, and not a substitute for an express grant by the Licensor.',
+          [
+            'The legal analysis therefore begins after license ',
+            {
+              kind: 'link',
+              label: 'authority',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority',
+            },
+            ' has been identified. For Ludoxel Original Materials, the relevant public surface is only a place where material may be seen, reached, downloaded, indexed, submitted against, or technically handled. It is not the source that decides whether the proposed act is permitted.',
+          ],
+          'The controlling distinction is between factual exposure and legal authorization. A file may be public without being free for reuse. A repository may be cloneable without granting redistribution. A page may be rendered by a browser without authorizing republication. A platform may provide buttons, archives, previews, issue forms, pull request forms, action logs, or release pages without converting those functions into permission from the Licensor.',
         ],
       },
       {
-        id: 'understanding-repository-visibility-controlling-text',
-        title: 'Repository Visibility Controlling Text',
+        id: 'understanding-repository-visibility-technical-obtainability',
+        title: 'Technical Obtainability Is Not Permission',
         body: [
-          'Authority Scope defines the useful size of Understanding Repository Visibility. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. The point matters in controlling text because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Controlling Text.',
-          'A direct observation for Understanding Repository Visibility should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'The useful result of Understanding Repository Visibility controlling text is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
+          'Technical obtainability is not legal permission. If a person obtains Repository Contents through a browser, source viewer, clone command, fork interface, download archive, cached page, search result, generated static file, package preview, deployment preview, action artifact, diff view, patch view, issue page, pull request page, or other public surface, that route of acquisition does not itself grant any right to Use the acquired material.',
+          'The same rule applies when the access path appears to make a restricted act practically possible. The fact that a file can be copied does not authorize copying for a restricted purpose. The fact that a repository can be cloned does not authorize redistribution, sublicensing, derivative preparation, dataset creation, AI Use, website mirroring, republication, or incorporation into another project. The fact that a public form can receive text does not authorize submission of material that the repository policy refuses to accept.',
+          'Nor may a public access route be used as an evasion mechanism. A user cannot avoid the LICENSE by obtaining the same material through a public clone, fork, archive, cache, preview, static-site output, search index, copied code block, browser cache, or platform-generated representation. If the License Text withholds the act, the access route does not cure the absence of permission.',
+        ],
+        noteBlocks: [
+          {
+            type: 'warning',
+            content:
+              'Visibility may explain how a person acquired material. It does not supply the grant, waiver, exception, estoppel, sublicense, amendment, or defense that the LICENSE does not provide.',
+          },
         ],
       },
       {
-        id: 'understanding-repository-visibility-material-class',
-        title: 'Repository Visibility Material Class',
+        id: 'understanding-repository-visibility-limited-viewing',
+        title: 'Limited Viewing and Verification',
         body: [
-          'The useful result of Understanding Repository Visibility authority scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Material Scope. In Understanding Repository Visibility, material class is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Material Class.',
-          'Understanding Repository Visibility separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'Understanding Repository Visibility should not use material class to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The only visibility-related permission relevant here is narrow inspection. Public repository access may allow human review and verification of Repository Contents within the limits stated by the LICENSE. That permission is not a reservoir from which broader rights may be implied.',
+          'Viewing remains viewing only while it remains within the authorized purpose. Once the asserted act becomes redistribution, modification, derivative preparation, republication, mirrored hosting, training, dataset extraction, automated harvesting, incorporation into another work, sublicensing, or deployment of Ludoxel Original Materials outside the authorized boundary, the act must be justified by an express grant. Repository visibility supplies no such grant.',
+          'Incidental technical copies created by browser display, network transmission, local caching, page rendering, static hosting, or service-side presentation remain legally incidental to the permitted viewing context. They must not be repurposed into copies for an excluded use.',
         ],
       },
       {
-        id: 'understanding-repository-visibility-ordinary-use',
-        title: 'Repository Visibility Ordinary Use',
+        id: 'understanding-repository-visibility-platform-functions',
+        title: 'Platform Functions and Interface Affordances',
         body: [
-          'Understanding Repository Visibility should be read as conceptual boundary for repository visibility within License Authority and Materials and Material Scope. Understanding Repository Visibility uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Ordinary Use.',
-          'Ownership in Understanding Repository Visibility is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'Use ordinary use to keep Understanding Repository Visibility tied to License Authority and Materials; use a related page only when the reader needs a different owner.',
+          'Hosting-service functions are not license provisions. GitHub Platform Terms, repository interface behavior, fork and clone affordances, download controls, archive generation, issue forms, pull request forms, action logs, release pages, deployment previews, package views, and generated site pages may regulate or facilitate interaction with a service. They do not become copyright, patent, trademark, database-right, website republication, distribution, contribution, or AI-use permission from the Licensor.',
+          [
+            'If a platform surface appears to enable an act that the License Text does not authorize, the legal consequence is not enlargement of the License. The consequence is the same as under the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' text rule: technical possibility, service-level function, public display, or interface availability must yield to the written license boundary.',
+          ],
+          'The same analysis applies to the Documentation Site. Code blocks, configuration examples, command examples, images, videos, legal notices, navigation data, search data, and interface text may be publicly displayed. Their display may notify the reader of a boundary. It cannot dissolve the boundary by making the material public.',
         ],
       },
       {
-        id: 'understanding-repository-visibility-restricted-use',
-        title: 'Repository Visibility Restricted Use',
+        id: 'understanding-repository-visibility-public-policy-surfaces',
+        title: 'Public Policy Surfaces',
         body: [
-          'A direct observation for Understanding Repository Visibility should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for restricted use: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Restricted Use.',
-          'Visible feedback for Understanding Repository Visibility should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Material Scope.',
-          'A public report based on the restricted use part of Understanding Repository Visibility should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Public repository policy files confirm that visibility is not consent. Contribution guidance, pull request templates, issue templates, and security-contact templates are public, but their public character does not transform them into permission to Use Ludoxel Original Materials outside the LICENSE.',
+          [
+            'Those files matter here only for the visibility proposition. They show that a public form, visible template, public button, or public page is not a grant. The separate limits on what may be filed in a Public Issue belong to ',
+            {
+              kind: 'link',
+              label: 'public issue limits',
+              href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-public-issue-limits',
+            },
+            ', and the separate legal boundary for pull request submission belongs to ',
+            {
+              kind: 'link',
+              label: 'pull request boundaries',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-pull-request-boundaries',
+            },
+            '.',
+          ],
+          'A person who uses a public policy surface must therefore distinguish access from entitlement. The ability to open a form, paste text, submit an issue, create a branch, propose a patch, or expose repository material in a public thread does not establish that the submitted act is authorized.',
         ],
       },
       {
-        id: 'understanding-repository-visibility-third-party-split',
-        title: 'Repository Visibility Third-Party Split',
-        body: [
-          'The useful result of Understanding Repository Visibility controlling text is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Material Scope. That reading gives Understanding Repository Visibility a public anchor for third-party split without adding behavior that the current category does not own. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Third-Party Split.',
-          'When Understanding Repository Visibility touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for third-party split does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Repository Visibility should be treated as an observation rather than a confirmed cause.',
+        id: 'understanding-repository-visibility-reading-order',
+        title: 'Repository Visibility Reading Order',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A repository-visibility question must be resolved by legal source, not by surface mechanics. The error to avoid is beginning with a public interface and treating its existence as proof of permission.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-repository-visibility-reading-order-surface',
+                title: 'Identify the asserted public surface.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Name the surface being relied on: source view, clone, fork, archive, browser display, cache, generated static file, Documentation Site page, package preview, deployment preview, issue form, pull request form, action log, release page, diff, patch, or another hosting-service function.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-repository-visibility-reading-order-act',
+                title: 'Identify the proposed act, not merely the access route.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The legally material question is not only how the material was reached. It is what the user proposes to do with it after reaching it. Viewing, verification, redistribution, derivative preparation, republication, mirroring, training, dataset creation, automated extraction, contribution submission, and deployment are different legal acts.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-repository-visibility-reading-order-license',
+                title: 'Test that act against the LICENSE.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'If the LICENSE grants the act, the act depends on that grant, not on visibility. If the LICENSE does not grant the act, the public surface does not supply the missing permission. The route by which the material was obtained cannot be used to circumvent the reserved-rights structure.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-repository-visibility-reading-order-result',
+                title: 'State the consequence as non-grant.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The proper conclusion is that repository visibility is legally non-operative as a grant, waiver, exception, amendment, sublicense, estoppel, or enlargement of permission. It may be evidence of access; it is not authority for restricted Use.',
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-repository-visibility-public-summary-limit',
-        title: 'Repository Visibility Public Summary Limit',
+        id: 'understanding-repository-visibility-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'GitHub issue, fork, clone, and pull request features do not override the repository license or public policy boundaries. In Understanding Repository Visibility, material class is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Material Class. The point matters in public summary limit because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Public Summary Limit.',
-          'The surrounding context for Understanding Repository Visibility decides which adjacent topic is relevant. Understanding Repository Visibility should be compared with Understanding License Authority, Understanding Public Issue Limits, Avoiding Unofficial Release Claims only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Repository Visibility should not use public summary limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-reporting-limit',
-        title: 'Repository Visibility Reporting Limit',
-        body: [
-          'Understanding Repository Visibility separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. Understanding Repository Visibility uses the fact as reporting limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Reporting Limit.',
-          'Recovery or follow-up for Understanding Repository Visibility should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Repository Visibility crosses from reporting limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-distribution-limit',
-        title: 'Repository Visibility Distribution Limit',
-        body: [
-          'Understanding Repository Visibility should not use material class to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. That reading gives Understanding Repository Visibility a public anchor for distribution limit without adding behavior that the current category does not own. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Distribution Limit.',
-          'The main confusion risk in Understanding Repository Visibility is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'If the available evidence for distribution limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Repository Visibility should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-ai-use-limit',
-        title: 'Repository Visibility AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding Repository Visibility uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Ordinary Use. For Understanding Repository Visibility, that fact identifies the first concrete boundary for ai use limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / AI Use Limit.',
-          'Reportable evidence for Understanding Repository Visibility should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the ai use limit part of Understanding Repository Visibility should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-evidence',
-        title: 'Repository Visibility Legal Evidence',
-        body: [
-          'Ownership in Understanding Repository Visibility is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. Understanding Repository Visibility uses the fact as legal evidence evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Legal Evidence.',
-          'Adjacent pages matter for Understanding Repository Visibility, but adjacency does not move authority. Understanding Repository Visibility should be compared with Understanding License Authority, Understanding Public Issue Limits, Avoiding Unofficial Release Claims only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'When Understanding Repository Visibility crosses from legal evidence into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-related-legal',
-        title: 'Repository Visibility Related Legal',
-        body: [
-          'Use ordinary use to keep Understanding Repository Visibility tied to License Authority and Materials; use a related page only when the reader needs a different owner. The point matters in related legal because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Related Legal.',
-          'The public boundary for Understanding Repository Visibility is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Understanding Repository Visibility should not use related legal to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-reader-risk',
-        title: 'Repository Visibility Reader Risk',
-        body: [
-          'Treat public repository access as a way to inspect the project under the stated terms, not as an invitation to submit or redistribute project material. For Understanding Repository Visibility, that fact identifies the first concrete boundary for reader risk: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Reader Risk.',
-          'An operator reading Understanding Repository Visibility should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'When Understanding Repository Visibility crosses from reader risk into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-non-advice',
-        title: 'Repository Visibility Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Repository Visibility should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / License Authority and Materials / Material Scope. Understanding Repository Visibility uses the fact as non-advice boundary evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Non-Advice Boundary.',
-          'Implementation limits for Understanding Repository Visibility keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding Repository Visibility crosses from non-advice boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-public-summary',
-        title: 'Repository Visibility Public Summary',
-        body: [
-          'A public repository can make files viewable, but visibility is not the same as permission to reuse, redistribute, train on, or modify original materials. The point matters in public summary because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Public Summary.',
-          'The summary value of Understanding Repository Visibility is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Understanding Repository Visibility public summary is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Material Scope.',
-        ],
-      },
-      {
-        id: 'understanding-repository-visibility-closing-check',
-        title: 'Repository Visibility Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Repository Visibility. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Repository Visibility / License Authority and Materials / Material Scope / Closing Check.',
-          'A final check for Understanding Repository Visibility should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Understanding Repository Visibility should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'This article does not classify every Original Material, decide third-party clearance, state distribution-package requirements, define Ordinary Application Use, determine generated-output ownership, decide whether a particular AI-processing act is permitted, accept contribution material, route private security reports, or determine whether a local artifact is an official release.',
+          [
+            'Its conclusion is narrower and stricter: public repository visibility, Source Form availability, Documentation Site display, hosting-service functions, public forms, technical obtainability, cache behavior, and generated public surfaces do not grant permission to Use Ludoxel Original Materials beyond the LICENSE and cannot be used to evade the LICENSE. Material classification belongs to ',
+            {
+              kind: 'link',
+              label: 'original materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+            },
+            ', and contribution-submission refusal belongs to ',
+            {
+              kind: 'link',
+              label: 'contribution refusal',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+            },
+            '.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Understanding License Authority', 'Understanding Public Issue Limits', 'Avoiding Unofficial Release Claims'],
+    relatedTitles: [
+      'Understanding License Authority',
+      'Understanding Controlling Text',
+      'Understanding Original Materials',
+      'Understanding Public Issue Limits',
+      'Understanding Pull Request Boundaries',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
