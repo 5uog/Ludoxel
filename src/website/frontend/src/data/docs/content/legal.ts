@@ -1281,154 +1281,230 @@ export const legalPages: DocsPageContent[] = [
     group: 'Ordinary Use and Output',
     title: 'Understanding Generated Output',
     description:
-      'Explains generated or rendered output created during normal use. This page treats material classification as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the legal treatment of output produced through Ordinary Application Use, the composite material character of that output, and the boundary between a permission to use the user’s own output and any asserted right to reuse the underlying Ludoxel Original Materials.',
     sections: [
       {
-        id: 'understanding-generated-output-authority-scope',
-        title: 'Generated Output Authority Scope',
+        id: 'understanding-generated-output-juridical-function',
+        title: 'Juridical Function of the Generated-Output Boundary',
         body: [
-          'Generated output can include rendered frames, screenshots, recordings, logs, user world data, learned artifacts, and other files produced while using the application. In Understanding Generated Output, authority scope is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Authority Scope. In Understanding Generated Output, authority scope is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Generated Output. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion.',
-          'If the available evidence for authority scope does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Generated Output should be treated as an observation rather than a confirmed cause.',
+          [
+            'Generated output is the result that Ludoxel produces, displays, records, or saves while it is run as a desktop application. The legal question owned by this article is narrow: to what extent the existence of such output enlarges the permissions a Licensee holds in Ludoxel ',
+            {
+              kind: 'link',
+              label: 'Original Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+            },
+            '. The answer is that it does not enlarge them at all.',
+          ],
+          [
+            'The boundary is distinct from the act of running Ludoxel. Whether a given operation is permitted at all is decided by ',
+            {
+              kind: 'link',
+              label: 'Ordinary Application Use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            '. This article assumes that an operation was permitted and addresses only what legal status the resulting file, frame, recording, or record carries afterward.',
+          ],
+          'This article also does not perform material classification of the saved files themselves. Where the inquiry concerns where output is stored, how it is structured, or how a saved artifact is categorized as data, the question belongs to the Data articles. The Legal boundary here is confined to permission and restriction: what the output does, and does not, authorize a Licensee to do with protected Ludoxel material.',
         ],
       },
       {
-        id: 'understanding-generated-output-controlling-text',
-        title: 'Generated Output Controlling Text',
+        id: 'understanding-generated-output-operative-text',
+        title: 'Operative Text',
         body: [
-          'Authority Scope defines the useful size of Understanding Generated Output. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. In Understanding Generated Output, controlling text is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Controlling Text.',
-          'A direct observation for Understanding Generated Output should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'Understanding Generated Output should not use controlling text to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The operative source is the License Text governing User-Created Materials and Application Output. The License Text provides that, subject to the License and applicable third-party rights, a Licensee may use, reproduce, publish, and share the Licensee’s own User-Created Materials and Application Output created through Ordinary Application Use. That permission is conditional, not absolute, and it does not reach beyond the Licensee’s own output.',
+          'The License Text further provides that User-Created Materials do not become Original Materials merely because they are entered, edited, displayed, saved, imported, exported, recorded, or processed through Ludoxel. The act of generating output through application operation therefore neither transfers ownership of protected Ludoxel material to the Licensee nor strips protection from any protected material that the output happens to contain.',
+          'Because the permission is defined by the License Text, it cannot be enlarged by the interface that produced the output, the file format that stores it, the menu that exported it, or the convenience of possessing it. A generated file is evidence that an operation occurred; it is not a grant.',
         ],
       },
       {
-        id: 'understanding-generated-output-material-class',
-        title: 'Generated Output Material Class',
+        id: 'understanding-generated-output-covered-output',
+        title: 'Output Within the Boundary',
         body: [
-          'If the available evidence for authority scope does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Generated Output should be treated as an observation rather than a confirmed cause. In Understanding Generated Output, material class is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Material Class.',
-          'Understanding Generated Output separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form.',
-          'Understanding Generated Output should not use material class to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The output addressed here includes rendered frames, ordinary screenshots, ordinary screen recordings, log files, configuration files, rendered states, save files, saved world data, and learned artifacts produced through Ordinary Application Use. The form of the output is not decisive; a screenshot, a recording, a save file, and a log raise the same legal question about what the output authorizes.',
+          'The defined permission attaches to the Licensee’s own output. It does not attach to the application that produced it, to the repository from which the application was obtained, or to the website that documents it. The permission to share a screenshot is not a permission to share the source code, assets, shaders, branding, interface text, or documentation visible within that screenshot as separable protected material.',
         ],
       },
       {
-        id: 'understanding-generated-output-ordinary-use',
-        title: 'Generated Output Ordinary Use',
+        id: 'understanding-generated-output-composite-character',
+        title: 'Composite Material Character of Output',
         body: [
-          'Understanding Generated Output should be read as conceptual boundary for generated output within Use Permissions and Restrictions and Ordinary Use and Output. In Understanding Generated Output, controlling text is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Controlling Text. Understanding Generated Output uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Ordinary Use.',
-          'Ownership in Understanding Generated Output is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'Use ordinary use to keep Understanding Generated Output tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
+          [
+            'Generated output is frequently composite. A single screenshot, recording, or save artifact may simultaneously embed User-Created Materials, Application Output, ',
+            {
+              kind: 'link',
+              label: 'Original Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+            },
+            ', Third-Party Materials, and Provenance-Sensitive Materials. The defined permission to share the Licensee’s own output does not dissolve those embedded categories into a single freely usable mass.',
+          ],
+          'The License Text states the consequence directly: where User-Created Materials or Application Output contain any material part of Original Materials, Third-Party Materials, Provenance-Sensitive Materials, user interface text, visual assets, bundled resources, project-specific textures, branding material, application icons, shaders, Documentation Site material, or other protected material, the included protected material remains subject to its applicable legal terms.',
+          'The legal method is therefore decompositional rather than aggregative. The presence of the Licensee’s own contribution in an output file does not relicense the protected portions that the same file carries, and the protected portions do not become the Licensee’s merely because they were captured together.',
         ],
       },
       {
-        id: 'understanding-generated-output-restricted-use',
-        title: 'Generated Output Restricted Use',
-        body: [
-          'A direct observation for Understanding Generated Output should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. For Understanding Generated Output, that fact identifies the first concrete boundary for restricted use: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Restricted Use.',
-          'Visible feedback for Understanding Generated Output should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Ordinary Use and Output.',
-          'When Understanding Generated Output crosses from restricted use into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'understanding-generated-output-classification-sequence',
+        title: 'Generated-Output Reading Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The inquiry proceeds in a fixed order because the common error is to reason from the existence of an output file to a general permission. Each step isolates a separate legal question and refuses to let possession of the file answer it.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-generated-output-classification-sequence-identify',
+                title: 'Identify the output and the proposed downstream act.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Name the concrete output and the act proposed for it: private retention, display, publication, redistribution, commercial exploitation, dataset construction, or model input. The act, not the existence of the file, is what must be tested.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-generated-output-classification-sequence-decompose',
+                title: 'Decompose the output into legal categories.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Separate the Licensee’s own User-Created Materials and Application Output from any embedded Original Materials, Third-Party Materials, and Provenance-Sensitive Materials. A composite file is not treated as a single category merely because it was produced in one operation.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-generated-output-classification-sequence-apply',
+                title: 'Apply the correct terms to each part.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'The Licensee’s own output is subject to the License and applicable third-party rights. Embedded protected material remains subject to its own applicable legal terms. The permission to share one part does not authorize separable reuse of another.',
+                  },
+                  {
+                    kind: 'note',
+                    note: {
+                      type: 'warning',
+                      content:
+                        'Possession of a generated file does not grant permission to reuse the source code, assets, shaders, branding, interface text, documentation material, or package contents that the file may depict or contain.',
+                    },
+                  },
+                ],
+              },
+              {
+                id: 'understanding-generated-output-classification-sequence-stop',
+                title: 'Stop before redistribution and AI analysis.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'Where the proposed act is public circulation of protected material, the analysis moves to ',
+                      {
+                        kind: 'link',
+                        label: 'redistribution',
+                        href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
+                      },
+                      '. Where the proposed act is computational ingestion, the analysis moves to ',
+                      {
+                        kind: 'link',
+                        label: 'AI Use',
+                        href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-ai-use-restrictions',
+                      },
+                      '. This article does not resolve those acts.',
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-generated-output-third-party-split',
-        title: 'Generated Output Third-Party Split',
+        id: 'understanding-generated-output-not-source-grant',
+        title: 'Output Is Not a Source-Reuse Grant',
         body: [
-          'Understanding Generated Output should not use controlling text to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. In Understanding Generated Output, third-party split is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Third-Party Split.',
-          'When Understanding Generated Output touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Generated Output should not use third-party split to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The defined permission concerns output. It does not concern the underlying materials that the application used to produce that output. The fact that Ludoxel rendered a frame from project shaders, drew an interface from project styling, or displayed branding and documentation text does not place those underlying materials at the Licensee’s disposal because a frame was captured.',
+          'A Licensee therefore cannot extract source code, assets, shaders, branding, application icons, interface text, documentation material, or package content from generated output and treat the extracted material as licensed. The output captured the appearance or result of protected material; it did not detach that material from the License Text.',
+          'The same limit applies to learned artifacts and save data. The capacity of Ludoxel to produce these files through ordinary operation is not a license to the project source, the Documentation Site, the assets, or the package contents that the application embodies.',
         ],
       },
       {
-        id: 'understanding-generated-output-public-summary-limit',
-        title: 'Generated Output Public Summary Limit',
+        id: 'understanding-generated-output-third-party-provenance',
+        title: 'Third-Party and Provenance Boundary in Output',
         body: [
-          'Output can include user-created content, original materials, third-party material, or private data. Those components should be separated before public sharing. In Understanding Generated Output, material class is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Material Class. The point matters in public summary limit because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Public Summary Limit.',
-          'The surrounding context for Understanding Generated Output decides which adjacent topic is relevant. Understanding Generated Output should be compared with Understanding Application Output, Understanding User-Created Materials, Separating Original Materials from Output only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Generated Output should not use public summary limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          [
+            'Output may capture Third-Party Materials or Provenance-Sensitive Materials. The defined permission does not clear those materials. Third-Party Materials remain subject to their own license terms, and Provenance-Sensitive Materials must not be treated as cleared for reuse merely because they appeared in a generated file. The broader material split is owned by ',
+            {
+              kind: 'link',
+              label: 'third-party material boundaries',
+              href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries',
+            },
+            '.',
+          ],
+          'The License Text is explicit that nothing in it represents that User-Created Materials or Application Output are free from third-party rights or suitable for publication, distribution, commercial use, competition use, educational use, AI Use, dataset use, benchmark use, or any other specific purpose. The Licensee bears the burden of confirming that a proposed downstream use of composite output is lawful.',
         ],
       },
       {
-        id: 'understanding-generated-output-reporting-limit',
-        title: 'Generated Output Reporting Limit',
-        body: [
-          'Understanding Generated Output separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form. For Understanding Generated Output, that fact identifies the first concrete boundary for reporting limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Reporting Limit.',
-          'Recovery or follow-up for Understanding Generated Output should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the reporting limit part of Understanding Generated Output should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'understanding-generated-output-public-and-ai-boundary',
+        title: 'Public Sharing and AI-Use Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'The permission to publish and share the Licensee’s own output is not a redistribution permission for protected Ludoxel material that the output contains. Where the proposed act is public circulation of a material part of Original Materials, the controlling analysis is the ',
+              {
+                kind: 'link',
+                label: 'redistribution',
+                href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
+              },
+              ' restriction.',
+            ],
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Output that contains protected material must not be treated as clean training material, benchmark material, retrieval material, or dataset material merely because it was produced during ordinary application operation. Computational ingestion of protected material is AI Use and remains prohibited outside the limited grant.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-generated-output-distribution-limit',
-        title: 'Generated Output Distribution Limit',
+        id: 'understanding-generated-output-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Understanding Generated Output should not use material class to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. In Understanding Generated Output, distribution limit is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Distribution Limit.',
-          'The main confusion risk in Understanding Generated Output is inferring permission from visibility. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Understanding Generated Output should not use distribution limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-ai-use-limit',
-        title: 'Generated Output AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding Generated Output uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Ordinary Use. The fact also tells the reader which evidence to preserve for ai use limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / AI Use Limit.',
-          'Reportable evidence for Understanding Generated Output should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use ai use limit to keep Understanding Generated Output tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-evidence',
-        title: 'Generated Output Legal Evidence',
-        body: [
-          'Ownership in Understanding Generated Output is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. Understanding Generated Output uses the fact as legal evidence evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Legal Evidence.',
-          'Adjacent pages matter for Understanding Generated Output, but adjacency does not move authority. Understanding Generated Output should be compared with Understanding Application Output, Understanding User-Created Materials, Separating Original Materials from Output only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'When Understanding Generated Output crosses from legal evidence into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-related-legal',
-        title: 'Generated Output Related Legal',
-        body: [
-          'Use ordinary use to keep Understanding Generated Output tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner. The point matters in related legal because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Related Legal.',
-          'The public boundary for Understanding Generated Output is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Understanding Generated Output should not use related legal to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-reader-risk',
-        title: 'Generated Output Reader Risk',
-        body: [
-          'Use output for ordinary application purposes within the license and applicable third-party rights. Do not treat output as permission to redistribute source or package materials. The fact also tells the reader which evidence to preserve for reader risk: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Reader Risk.',
-          'An operator reading Understanding Generated Output should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the reader risk part of Understanding Generated Output should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-non-advice',
-        title: 'Generated Output Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Generated Output should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Ordinary Use and Output. Understanding Generated Output uses the fact as non-advice boundary evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Non-Advice Boundary.',
-          'Implementation limits for Understanding Generated Output keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding Generated Output crosses from non-advice boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-public-summary',
-        title: 'Generated Output Public Summary',
-        body: [
-          'Generated output can include rendered frames, screenshots, recordings, logs, user world data, learned artifacts, and other files produced while using the application. In Understanding Generated Output, authority scope is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Authority Scope. In Understanding Generated Output, public summary is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Public Summary.',
-          'The summary value of Understanding Generated Output is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Generated Output should not use public summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-generated-output-closing-check',
-        title: 'Generated Output Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Generated Output. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Generated Output / Use Permissions and Restrictions / Ordinary Use and Output / Closing Check.',
-          'A final check for Understanding Generated Output should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Understanding Generated Output should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          [
+            'This article states the legal effect of generated output on the Licensee’s permissions. It does not define ',
+            {
+              kind: 'link',
+              label: 'Ordinary Application Use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', does not classify saved files as data, does not authorize redistribution, does not authorize AI Use, does not clear third-party or provenance-sensitive content, and does not decide whether any particular file may be published.',
+          ],
+          [
+            'Its conclusion is narrow: output created through Ordinary Application Use is the Licensee’s to use subject to the License and applicable third-party rights, but it does not become Original Materials, does not relicense embedded protected material, and does not grant any right to reuse the underlying ',
+            {
+              kind: 'link',
+              label: 'Original Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+            },
+            ', assets, branding, shaders, interface text, documentation material, or package content.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Understanding Application Output', 'Understanding User-Created Materials', 'Separating Original Materials from Output'],
+    relatedTitles: [
+      'Understanding Ordinary Application Use',
+      'Understanding Original Materials',
+      'Understanding Redistribution Restrictions',
+      'Understanding AI Use Restrictions',
+      'Understanding Application Output',
+      'Understanding User-Created Materials',
+      'Separating Original Materials from Output',
+      'Understanding Third Party Material Boundaries',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -1436,154 +1512,212 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding Redistribution Restrictions',
     description:
-      'Explains why copying or releasing Ludoxel materials requires separate authority. This page treats license interpretation as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains why copying, publishing, hosting, mirroring, repackaging, sublicensing, and republishing Ludoxel Original Materials are restricted acts outside the limited grant, and why repository visibility, technical obtainability, package existence, license-text inclusion, and noncommercial or educational purpose do not create redistribution permission.',
     sections: [
       {
-        id: 'understanding-redistribution-restrictions-authority-scope',
-        title: 'Redistribution Restrictions Authority Scope',
+        id: 'understanding-redistribution-restrictions-juridical-function',
+        title: 'Juridical Function of the Redistribution Restriction',
         body: [
-          'Redistribution, sublicensing, publishing package artifacts, hosting copies, or sharing substantial original materials are restricted outside the license grant. The point matters in authority scope because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Redistribution Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'The useful result of Understanding Redistribution Restrictions authority scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
+          'The redistribution restriction governs the act of putting Ludoxel Original Materials into circulation. It treats copying for others, sharing, publishing, hosting, mirroring, reposting, repackaging, sublicensing, release-artifact publication, website redeployment, and static-site republication as acts that require affirmative authority, not as acts that follow automatically from lawful access.',
+          [
+            'This article owns the act of redistribution. It is distinct from the material-scope question of what ',
+            {
+              kind: 'link',
+              label: 'Distribution Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
+            },
+            ' are. A packaged artifact may be correctly classified and still may not be circulated; classification describes the object, while this article describes whether the object may be moved into circulation.',
+          ],
+          'The function of the restriction is to prevent the limited grant from being read as a distribution license. The Licensee may have lawful access to Original Materials and may run Ludoxel, yet remain without any permission to redistribute the protected material to third parties.',
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-controlling-text',
-        title: 'Redistribution Restrictions Controlling Text',
+        id: 'understanding-redistribution-restrictions-operative-text',
+        title: 'Operative Text and the Exhaustive Grant',
         body: [
-          'Authority Scope defines the useful size of Understanding Redistribution Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. That reading gives Understanding Redistribution Restrictions a public anchor for controlling text without adding behavior that the current category does not own. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Controlling Text.',
-          'A direct observation for Understanding Redistribution Restrictions should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'The useful result of Understanding Redistribution Restrictions controlling text is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
+          [
+            'The License Text grants a limited, non-exclusive, non-transferable, non-sublicensable, revocable permission confined to human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and ',
+            {
+              kind: 'link',
+              label: 'Ordinary Application Use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            '. That grant is exhaustive and does not include distribution.',
+          ],
+          'The License Text separately excludes publication, distribution, transmission, sublicensing, hosting, deployment, and incorporation from the permitted scope, and reserves all such rights to the Licensor. The exhaustive character of the grant means that any redistribution not expressly authorized is, by definition, ungranted.',
+          [
+            'Because redistribution is ungranted, authority for it must come from the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text or a later competent written instrument signed by the Licensor. It cannot be assembled from explanatory text, platform behavior, or user expectation.',
+          ],
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-material-class',
-        title: 'Redistribution Restrictions Material Class',
+        id: 'understanding-redistribution-restrictions-covered-acts',
+        title: 'Acts Within the Restriction',
         body: [
-          'The useful result of Understanding Redistribution Restrictions authority scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses. In Understanding Redistribution Restrictions, material class is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Material Class.',
-          'Understanding Redistribution Restrictions separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'If the available evidence for material class does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Redistribution Restrictions should be treated as an observation rather than a confirmed cause.',
+          'The restriction reaches copying Original Materials for distribution to others, sharing protected files, publishing repository or website material, hosting copies for public access, mirroring the repository or Documentation Site, reposting protected content elsewhere, repackaging protected material into another distribution, sublicensing, publishing release artifacts, redeploying the website, and republishing static-site output.',
+          'The technical mechanism is immaterial. Redistribution by upload, by package registry, by file-sharing service, by archive, by re-hosting a generated site, by embedding into another product, or by transmitting copies to a group are the same act for the purpose of the restriction: protected Ludoxel material is moved into circulation beyond the Licensee.',
+          'Partial redistribution is not exempt. Circulating a material part of Original Materials, rather than the whole, remains within the restriction. The restriction is concerned with the circulation of protected expression, not with whether the entire project was copied.',
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-ordinary-use',
-        title: 'Redistribution Restrictions Ordinary Use',
-        body: [
-          'Understanding Redistribution Restrictions should be read as conceptual boundary for redistribution restrictions within Use Permissions and Restrictions and Restricted Uses. For Understanding Redistribution Restrictions, that fact identifies the first concrete boundary for ordinary use: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Ordinary Use.',
-          'Ownership in Understanding Redistribution Restrictions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'A public report based on the ordinary use part of Understanding Redistribution Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'understanding-redistribution-restrictions-analysis-sequence',
+        title: 'Redistribution Analysis Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Redistribution disputes typically begin by asserting that some access route, purpose, or convenience made circulation permissible. The sequence isolates the act and tests it against the License Text rather than against the circumstance of access.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-redistribution-restrictions-analysis-sequence-act',
+                title: 'Identify the circulation act.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'State precisely what is being moved into circulation and to whom: which protected material, in which form, through which channel, to which recipients beyond the Licensee.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-redistribution-restrictions-analysis-sequence-material',
+                title: 'Confirm that protected material is involved.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'Confirm that the circulated material is, in material part, ',
+                      {
+                        kind: 'link',
+                        label: 'Original Materials',
+                        href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+                      },
+                      '. Third-party and provenance-sensitive components are governed by their own terms and are analyzed separately.',
+                    ],
+                  },
+                ],
+              },
+              {
+                id: 'understanding-redistribution-restrictions-analysis-sequence-test',
+                title: 'Test the act against the limited grant.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Redistribution is outside the exhaustive limited grant. Unless the License Text or a later competent written instrument expressly authorizes the circulation, the act is ungranted regardless of the route by which the material was obtained.',
+                  },
+                  {
+                    kind: 'note',
+                    note: {
+                      type: 'warning',
+                      content:
+                        'A noncommercial motive, an educational setting, a private group, or mere personal convenience does not convert an ungranted redistribution into a permitted one. The License Text grants the act, or the act is not granted.',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-restricted-use',
-        title: 'Redistribution Restrictions Restricted Use',
+        id: 'understanding-redistribution-restrictions-non-authorizing-circumstances',
+        title: 'Circumstances That Do Not Authorize Redistribution',
         body: [
-          'A direct observation for Understanding Redistribution Restrictions should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for restricted use: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Restricted Use.',
-          'Visible feedback for Understanding Redistribution Restrictions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Restricted Uses.',
-          'Use restricted use to keep Understanding Redistribution Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
+          [
+            'Public ',
+            {
+              kind: 'link',
+              label: 'repository visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            ' does not authorize redistribution. The fact that material can be viewed, cloned, forked, downloaded, archived, cached, indexed, or rendered in a browser establishes technical obtainability, not permission to circulate.',
+          ],
+          'The existence of a package, build artifact, or generated site directory does not authorize redistribution. An artifact can exist, be reproducible, and contain the correct files while no permission to publish or host it exists.',
+          'Inclusion of the License Text, Third-Party License Text, SPDX identifiers, or other legal materials inside a copy does not authorize redistribution. Retained legal text is a condition that an authorized distribution must satisfy; it is not itself the authorization. A noncommercial purpose, an educational purpose, and private convenience are equally insufficient, because the limited grant does not turn on the Licensee’s purpose.',
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-third-party-split',
-        title: 'Redistribution Restrictions Third-Party Split',
+        id: 'understanding-redistribution-restrictions-official-distribution',
+        title: 'Official Distribution Reservation',
         body: [
-          'The useful result of Understanding Redistribution Restrictions controlling text is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses. That reading gives Understanding Redistribution Restrictions a public anchor for third-party split without adding behavior that the current category does not own. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Third-Party Split.',
-          'When Understanding Redistribution Restrictions touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Understanding Redistribution Restrictions third-party split is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
+          [
+            'Only the Licensor may publish an Official Distribution of Ludoxel or an official deployment of the Documentation Site. A Desktop Distribution, deployment, package, archive, fork build, or mirror published by any other party is not an Official Distribution, even when it is derived from the Current Repository. The presentational dimension of this reservation is addressed by ',
+            {
+              kind: 'link',
+              label: 'unofficial release claims',
+              href: '/docs/distribution/build-and-release-checks/release-checks-and-claims/avoiding-unofficial-release-claims',
+            },
+            '.',
+          ],
+          'The reservation means that a third party cannot cure the absence of redistribution permission by producing an artifact that resembles the official application. Resemblance, inclusion of legal text, use of Ludoxel names, or production through a repository build path does not create authority to circulate.',
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-public-summary-limit',
-        title: 'Redistribution Restrictions Public Summary Limit',
+        id: 'understanding-redistribution-restrictions-documentation-site',
+        title: 'Documentation Site Republication',
         body: [
-          'Creating a local build for verification does not make that build redistributable. Build output should be described as local evidence unless official distribution authority applies. In Understanding Redistribution Restrictions, material class is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Material Class. In Understanding Redistribution Restrictions, public summary limit is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Public Summary Limit.',
-          'The surrounding context for Understanding Redistribution Restrictions decides which adjacent topic is relevant. Understanding Redistribution Restrictions should be compared with Understanding License Authority, Avoiding Unofficial Release Claims, Understanding Distribution Materials only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Redistribution Restrictions should not use public summary limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Republication of the Documentation Site is within the restriction. The License Text provides that public website availability, static-site output, previews, and hosting-service features do not grant rights to copy, mirror, redeploy, or republish the site. A Licensee who can view the documentation in a browser has Ordinary Documentation Site Viewing, not a republication license.',
+          'Static-site output does not change this result. Generated HTML, assets, search data, and metadata produced from the website source remain Original Materials in object form. The ability to retrieve or regenerate that output does not authorize hosting it elsewhere or incorporating it into another documentation set.',
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-reporting-limit',
-        title: 'Redistribution Restrictions Reporting Limit',
+        id: 'understanding-redistribution-restrictions-third-party-provenance',
+        title: 'Third-Party and Provenance Boundary',
         body: [
-          'Understanding Redistribution Restrictions separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for reporting limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Reporting Limit.',
-          'Recovery or follow-up for Understanding Redistribution Restrictions should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the reporting limit part of Understanding Redistribution Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          [
+            'A redistribution may carry Third-Party Materials and Provenance-Sensitive Materials in addition to Original Materials. Compliance with a third-party license governing one component does not grant any right in the Ludoxel Original Materials carried alongside it, and the separate material split is owned by ',
+            {
+              kind: 'link',
+              label: 'third-party material boundaries',
+              href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries',
+            },
+            '.',
+          ],
+          'Conversely, the Ludoxel limited grant does not authorize redistribution of third-party or provenance-sensitive components. A party that proposes to circulate any such component must separately confirm redistribution permission for that component under its own terms.',
         ],
       },
       {
-        id: 'understanding-redistribution-restrictions-distribution-limit',
-        title: 'Redistribution Restrictions Distribution Limit',
+        id: 'understanding-redistribution-restrictions-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'If the available evidence for material class does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Redistribution Restrictions should be treated as an observation rather than a confirmed cause. In Understanding Redistribution Restrictions, distribution limit is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Distribution Limit.',
-          'The main confusion risk in Understanding Redistribution Restrictions is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'If the available evidence for distribution limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Redistribution Restrictions should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-ai-use-limit',
-        title: 'Redistribution Restrictions AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding Redistribution Restrictions uses the fact as ai use limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / AI Use Limit.',
-          'Reportable evidence for Understanding Redistribution Restrictions should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use ai use limit to keep Understanding Redistribution Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-evidence',
-        title: 'Redistribution Restrictions Legal Evidence',
-        body: [
-          'Ownership in Understanding Redistribution Restrictions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. Understanding Redistribution Restrictions uses the fact as legal evidence evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Legal Evidence.',
-          'Adjacent pages matter for Understanding Redistribution Restrictions, but adjacency does not move authority. Understanding Redistribution Restrictions should be compared with Understanding License Authority, Avoiding Unofficial Release Claims, Understanding Distribution Materials only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use legal evidence to keep Understanding Redistribution Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-related-legal',
-        title: 'Redistribution Restrictions Related Legal',
-        body: [
-          'A public report based on the ordinary use part of Understanding Redistribution Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing. In Understanding Redistribution Restrictions, related legal is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Related Legal.',
-          'The public boundary for Understanding Redistribution Restrictions is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Understanding Redistribution Restrictions should not use related legal to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-reader-risk',
-        title: 'Redistribution Restrictions Reader Risk',
-        body: [
-          'Third-party materials may impose their own notice and license requirements. Complying with a third-party license does not grant rights to Ludoxel original materials. For Understanding Redistribution Restrictions, that fact identifies the first concrete boundary for reader risk: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Reader Risk.',
-          'An operator reading Understanding Redistribution Restrictions should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the reader risk part of Understanding Redistribution Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-non-advice',
-        title: 'Redistribution Restrictions Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Redistribution Restrictions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Restricted Uses. For Understanding Redistribution Restrictions, that fact identifies the first concrete boundary for non-advice boundary: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Non-Advice Boundary.',
-          'Implementation limits for Understanding Redistribution Restrictions keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding Redistribution Restrictions crosses from non-advice boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-public-summary',
-        title: 'Redistribution Restrictions Public Summary',
-        body: [
-          'Redistribution, sublicensing, publishing package artifacts, hosting copies, or sharing substantial original materials are restricted outside the license grant. That reading gives Understanding Redistribution Restrictions a public anchor for public summary without adding behavior that the current category does not own. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Public Summary.',
-          'The summary value of Understanding Redistribution Restrictions is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Understanding Redistribution Restrictions public summary is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
-        ],
-      },
-      {
-        id: 'understanding-redistribution-restrictions-closing-check',
-        title: 'Redistribution Restrictions Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Redistribution Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Redistribution Restrictions / Use Permissions and Restrictions / Restricted Uses / Closing Check.',
-          'A final check for Understanding Redistribution Restrictions should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding Redistribution Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
+          [
+            'This article owns the redistribution act. It does not classify ',
+            {
+              kind: 'link',
+              label: 'Distribution Materials',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
+            },
+            ', does not provide build instructions, does not define derivative-work restrictions, does not define AI-use restrictions, does not clear third-party materials, and does not resolve whether a particular release may be described as official.',
+          ],
+          [
+            'Its conclusion is severe and narrow: copying, sharing, publishing, hosting, mirroring, reposting, repackaging, sublicensing, release-artifact publication, website redeployment, and static-site republication of Ludoxel Original Materials are outside the limited grant and require authority in the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text or a later competent written instrument. Repository visibility, technical obtainability, package existence, license-text inclusion, noncommercial purpose, educational purpose, and private convenience do not supply that authority.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Understanding License Authority', 'Avoiding Unofficial Release Claims', 'Understanding Distribution Materials'],
+    relatedTitles: [
+      'Understanding License Authority',
+      'Understanding Controlling Text',
+      'Understanding Repository Visibility',
+      'Understanding Distribution Materials',
+      'Understanding Derivative Work Restrictions',
+      'Understanding AI Use Restrictions',
+      'Avoiding Unofficial Release Claims',
+      'Understanding Third Party Material Boundaries',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -1591,154 +1725,167 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding Derivative Work Restrictions',
     description:
-      'Explains how modified project materials remain constrained by the license. This page treats license interpretation as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains why modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, and website redesign of Ludoxel Original Materials are restricted, and why private technical capability does not create permission to prepare or circulate a public derivative work.',
     sections: [
       {
-        id: 'understanding-derivative-work-restrictions-authority-scope',
-        title: 'Derivative Work Restrictions Authority Scope',
+        id: 'understanding-derivative-work-restrictions-juridical-function',
+        title: 'Juridical Function of the Derivative-Work Restriction',
         body: [
-          'Local tools can technically modify files, but technical ability does not create permission to publish derivative works based on Ludoxel original materials. Understanding Derivative Work Restrictions uses the fact as authority scope evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Authority Scope. Understanding Derivative Work Restrictions uses the fact as authority scope evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Derivative Work Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'When Understanding Derivative Work Restrictions crosses from authority scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The derivative-work restriction governs the preparation and use of works based on Ludoxel Original Materials. It treats modifying, adapting, translating, rewriting, restructuring, refactoring, porting, reimplementing, and otherwise transforming protected material as acts that require affirmative authority rather than as a natural extension of the ability to read or edit a file locally.',
+          [
+            'This article owns the derivative act. It is distinct from the circulation question owned by ',
+            {
+              kind: 'link',
+              label: 'redistribution',
+              href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
+            },
+            ', and from the submission question owned by contribution refusal. A derivative may be prepared without being distributed, and may be proposed without being accepted; this article addresses the legal status of preparing and using the derivative itself.',
+          ],
+          'The function of the restriction is to keep the Licensor’s exclusive right to prepare derivative works intact notwithstanding the limited grant. Lawful access to the source does not carry an implied right to produce and use altered versions of it.',
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-controlling-text',
-        title: 'Derivative Work Restrictions Controlling Text',
+        id: 'understanding-derivative-work-restrictions-operative-text',
+        title: 'Operative Text and the Definition of Derivative Work',
         body: [
-          'Authority Scope defines the useful size of Understanding Derivative Work Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. The fact also tells the reader which evidence to preserve for controlling text: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Controlling Text.',
-          'A direct observation for Understanding Derivative Work Restrictions should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'Use controlling text to keep Understanding Derivative Work Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
+          'The License Text defines a Derivative Work as any work based on, derived from, adapted from, modified from, translated from, transformed from, compiled from, bundled with, incorporated with, rendered from, generated from, extracted from, optimized from, restructured from, refactored from, ported from, or reimplemented from any part of the Original Materials, to the extent recognized under applicable law.',
+          'The License Text excludes the preparation of Derivative Works from the limited grant and reserves the corresponding rights to the Licensor. The exhaustive grant covers human review and verification, Ordinary Documentation Site Viewing, and Ordinary Application Use, none of which includes authority to prepare an altered version of protected material for use beyond that grant.',
+          [
+            'Authority to prepare or use a derivative work must therefore originate in the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text or a later competent written instrument. The breadth of the defined term means that superficial relabeling, partial rewriting, or translation does not escape the restriction.',
+          ],
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-material-class',
-        title: 'Derivative Work Restrictions Material Class',
+        id: 'understanding-derivative-work-restrictions-covered-acts',
+        title: 'Acts of Derivative Preparation',
         body: [
-          'When Understanding Derivative Work Restrictions crosses from authority scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. Understanding Derivative Work Restrictions uses the fact as material class evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Material Class.',
-          'Understanding Derivative Work Restrictions separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'When Understanding Derivative Work Restrictions crosses from material class into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The restriction reaches modification of source code, adaptation of project behavior, translation of documentation or interface text, rewriting of project files, fork-based alteration of the repository, replacement or rewriting of documentation content, shader rewriting, asset substitution, modification of package contents, and redesign of the website.',
+          'It also reaches the production of proposed patches and replacement text, because such material is prepared from the Original Materials and is a Derivative Work within the defined term. The fact that a derivative is framed as an improvement, a fix, or a contribution proposal does not remove it from the restriction.',
+          'The restriction does not depend on the quality, size, or intent of the alteration. A small edit, a faithful translation, and a complete rewrite are each derivative preparation when they are based on protected Ludoxel material.',
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-ordinary-use',
-        title: 'Derivative Work Restrictions Ordinary Use',
-        body: [
-          'Understanding Derivative Work Restrictions should be read as conceptual boundary for derivative work restrictions within Use Permissions and Restrictions and Restricted Uses. The point matters in ordinary use because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Ordinary Use.',
-          'Ownership in Understanding Derivative Work Restrictions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'Understanding Derivative Work Restrictions should not use ordinary use to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'understanding-derivative-work-restrictions-analysis-sequence',
+        title: 'Derivative-Work Analysis Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The recurring error is to reason from the technical ability to edit a file to a legal permission to prepare and use the edited result. The sequence separates capability from authority and isolates the scope of the proposed use.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-derivative-work-restrictions-analysis-sequence-act',
+                title: 'Identify the alteration and its basis.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Identify what is being altered and confirm that the result is based on, derived from, or transformed from a part of the Original Materials. If it is, the result is a Derivative Work within the defined term.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-derivative-work-restrictions-analysis-sequence-scope',
+                title: 'Identify the scope of the intended use.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Distinguish a strictly private, local result from a result intended for use beyond the Licensee, such as publication, distribution, deployment, incorporation, or submission. The intended scope determines which further restrictions also apply.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-derivative-work-restrictions-analysis-sequence-test',
+                title: 'Test preparation and use against the limited grant.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Preparation of a Derivative Work is excluded from the limited grant. Unless the License Text or a later competent written instrument authorizes it, the preparation and use of the derivative are ungranted, and any public circulation additionally engages the redistribution restriction.',
+                  },
+                  {
+                    kind: 'note',
+                    note: {
+                      type: 'warning',
+                      content:
+                        'The technical ability of local tools to modify project files is not permission to prepare or use a public derivative work based on Ludoxel Original Materials. Capability is not authority.',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-restricted-use',
-        title: 'Derivative Work Restrictions Restricted Use',
+        id: 'understanding-derivative-work-restrictions-capability-not-permission',
+        title: 'Technical Capability Is Not Permission',
         body: [
-          'A direct observation for Understanding Derivative Work Restrictions should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. In Understanding Derivative Work Restrictions, restricted use is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Restricted Use.',
-          'Visible feedback for Understanding Derivative Work Restrictions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Restricted Uses.',
-          'If the available evidence for restricted use does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Derivative Work Restrictions should be treated as an observation rather than a confirmed cause.',
+          'A local editor, compiler, translator, or build tool can transform protected files. That technical capability describes what the Licensee’s machine can do; it does not describe what the License Text permits. The restriction is not lifted because a fork can be edited, a file can be rewritten, or a shader can be recompiled.',
+          [
+            'The same separation governs forks. The ability to create a fork through a hosting-service feature does not grant authority to prepare and circulate altered versions of the Original Materials, because no platform affordance enlarges the License Text. The platform-feature analysis is owned by ',
+            {
+              kind: 'link',
+              label: 'repository visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            '.',
+          ],
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-third-party-split',
-        title: 'Derivative Work Restrictions Third-Party Split',
+        id: 'understanding-derivative-work-restrictions-private-versus-public',
+        title: 'Private Experiment and Public Derivative Circulation',
         body: [
-          'Use controlling text to keep Understanding Derivative Work Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner. For Understanding Derivative Work Restrictions, that fact identifies the first concrete boundary for third-party split: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Third-Party Split.',
-          'When Understanding Derivative Work Restrictions touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'When Understanding Derivative Work Restrictions crosses from third-party split into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'A strictly private, local alteration that is never distributed, deployed, published, incorporated, or submitted raises a different practical posture from public derivative circulation, because public circulation additionally engages the redistribution restriction and may engage AI-use and contribution boundaries. This article does not declare private local experimentation to be an affirmative grant; it states that the gravest and clearest prohibitions attach the moment a derivative leaves the Licensee’s private control.',
+          'The decisive point is that the existence of a private capability cannot be advanced as evidence of a public permission. A Licensee cannot reason from the ability to experiment locally to a right to publish, distribute, deploy, or otherwise circulate a derivative work to others.',
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-public-summary-limit',
-        title: 'Derivative Work Restrictions Public Summary Limit',
+        id: 'understanding-derivative-work-restrictions-third-party-provenance',
+        title: 'Third-Party and Provenance Boundary',
         body: [
-          'Submitting patches, replacement text, design assets, generated files, or implementation proposals is outside the contribution policy and can be closed without review. Understanding Derivative Work Restrictions uses the fact as material class evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Material Class. For Understanding Derivative Work Restrictions, that fact identifies the first concrete boundary for public summary limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Public Summary Limit.',
-          'The surrounding context for Understanding Derivative Work Restrictions decides which adjacent topic is relevant. Understanding Derivative Work Restrictions should be compared with Understanding Original Materials, Understanding Redistribution Restrictions, Understanding Contribution Refusal only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding Derivative Work Restrictions crosses from public summary limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'A derivative may incorporate Third-Party Materials or Provenance-Sensitive Materials. The Ludoxel restriction does not relicense those components, and compliance with a third-party license governing one component does not grant any right to prepare a derivative of the Ludoxel Original Materials.',
+          'Where an alteration substitutes, adapts, or incorporates third-party or provenance-sensitive assets, the responsible party must separately confirm the rights governing those assets. The Ludoxel analysis and the third-party analysis remain distinct and must both be satisfied.',
         ],
       },
       {
-        id: 'understanding-derivative-work-restrictions-reporting-limit',
-        title: 'Derivative Work Restrictions Reporting Limit',
+        id: 'understanding-derivative-work-restrictions-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Understanding Derivative Work Restrictions separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. The point matters in reporting limit because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Reporting Limit.',
-          'Recovery or follow-up for Understanding Derivative Work Restrictions should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Understanding Derivative Work Restrictions should not use reporting limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-distribution-limit',
-        title: 'Derivative Work Restrictions Distribution Limit',
-        body: [
-          'When Understanding Derivative Work Restrictions crosses from material class into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. Understanding Derivative Work Restrictions uses the fact as distribution limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Distribution Limit.',
-          'The main confusion risk in Understanding Derivative Work Restrictions is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Understanding Derivative Work Restrictions crosses from distribution limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-ai-use-limit',
-        title: 'Derivative Work Restrictions AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. In Understanding Derivative Work Restrictions, ai use limit is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / AI Use Limit.',
-          'Reportable evidence for Understanding Derivative Work Restrictions should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Understanding Derivative Work Restrictions should not use ai use limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-evidence',
-        title: 'Derivative Work Restrictions Legal Evidence',
-        body: [
-          'Ownership in Understanding Derivative Work Restrictions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. In Understanding Derivative Work Restrictions, legal evidence is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Legal Evidence.',
-          'Adjacent pages matter for Understanding Derivative Work Restrictions, but adjacency does not move authority. Understanding Derivative Work Restrictions should be compared with Understanding Original Materials, Understanding Redistribution Restrictions, Understanding Contribution Refusal only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Understanding Derivative Work Restrictions should not use legal evidence to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-related-legal',
-        title: 'Derivative Work Restrictions Related Legal',
-        body: [
-          'Understanding Derivative Work Restrictions should not use ordinary use to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. For Understanding Derivative Work Restrictions, that fact identifies the first concrete boundary for related legal: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Related Legal.',
-          'The public boundary for Understanding Derivative Work Restrictions is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the related legal part of Understanding Derivative Work Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-reader-risk',
-        title: 'Derivative Work Restrictions Reader Risk',
-        body: [
-          'Distinguish private local experimentation, ordinary use output, and public derivative distribution. Each has different policy and license consequences. In Understanding Derivative Work Restrictions, restricted use is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Restricted Use. That reading gives Understanding Derivative Work Restrictions a public anchor for reader risk without adding behavior that the current category does not own. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Reader Risk.',
-          'An operator reading Understanding Derivative Work Restrictions should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'If the available evidence for reader risk does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Derivative Work Restrictions should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-non-advice',
-        title: 'Derivative Work Restrictions Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Derivative Work Restrictions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Restricted Uses. The point matters in non-advice boundary because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Non-Advice Boundary.',
-          'Implementation limits for Understanding Derivative Work Restrictions keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'The useful result of Understanding Derivative Work Restrictions non-advice boundary is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-public-summary',
-        title: 'Derivative Work Restrictions Public Summary',
-        body: [
-          'Local tools can technically modify files, but technical ability does not create permission to publish derivative works based on Ludoxel original materials. Understanding Derivative Work Restrictions uses the fact as authority scope evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Authority Scope. The fact also tells the reader which evidence to preserve for public summary: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Public Summary.',
-          'The summary value of Understanding Derivative Work Restrictions is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use public summary to keep Understanding Derivative Work Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-derivative-work-restrictions-closing-check',
-        title: 'Derivative Work Restrictions Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Derivative Work Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. In Understanding Derivative Work Restrictions, closing check is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Derivative Work Restrictions / Use Permissions and Restrictions / Restricted Uses / Closing Check.',
-          'A final check for Understanding Derivative Work Restrictions should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Derivative Work Restrictions should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          [
+            'This article owns the derivative act. It does not decide whether a derivative may be circulated, which is governed by ',
+            {
+              kind: 'link',
+              label: 'redistribution',
+              href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
+            },
+            ', and it does not decide whether proposed derivative material is accepted as a contribution, which is governed by ',
+            {
+              kind: 'link',
+              label: 'contribution refusal',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+            },
+            '.',
+          ],
+          'Its conclusion is narrow: modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, website redesign, and proposed patches are derivative preparation outside the limited grant, and the technical ability to perform them locally does not create permission to prepare or use a public derivative work based on Ludoxel Original Materials.',
         ],
       },
     ],
-    relatedTitles: ['Understanding Original Materials', 'Understanding Redistribution Restrictions', 'Understanding Contribution Refusal'],
+    relatedTitles: [
+      'Understanding Original Materials',
+      'Understanding Redistribution Restrictions',
+      'Understanding AI Use Restrictions',
+      'Understanding Contribution Refusal',
+      'Understanding Ordinary Application Use',
+      'Understanding Repository Visibility',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -1746,154 +1893,168 @@ export const legalPages: DocsPageContent[] = [
     group: 'Restricted Uses',
     title: 'Understanding AI Use Restrictions',
     description:
-      'Explains license boundaries for AI-related use of Ludoxel materials. This page treats license interpretation as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the License Text restriction on AI Use of Ludoxel Original Materials, separates that restriction from Ordinary Application Use, and explains why Ludoxel’s own AI features and learning records do not authorize training, evaluation, dataset creation, indexing, or other computational ingestion of protected material by external systems.',
     sections: [
       {
-        id: 'understanding-ai-use-restrictions-authority-scope',
-        title: 'AI Use Restrictions Authority Scope',
+        id: 'understanding-ai-use-restrictions-juridical-function',
+        title: 'Juridical Function of the AI-Use Restriction',
         body: [
-          'The license includes restrictions on using original materials for model training, dataset creation, automated extraction, or similar AI-related processing outside the granted scope. The point matters in authority scope because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding AI Use Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'Understanding AI Use Restrictions should not use authority scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The AI-use restriction governs the computational ingestion of Ludoxel Original Materials into artificial-intelligence and comparable systems. It treats training, fine-tuning, evaluation, benchmarking, indexing, retrieval, embedding, dataset creation, and synthetic-data generation as a distinct restricted category, separate from the question of whether an application operation is permitted at all.',
+          [
+            'This article owns the AI-use restriction as a matter of license interpretation. It is separate from ',
+            {
+              kind: 'link',
+              label: 'Ordinary Application Use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', because launching Ludoxel and obtaining output is permitted operation, while ingesting protected material into a model or dataset is not.',
+          ],
+          'The function of the restriction is to prevent the limited grant, the public availability of the materials, or the presence of machine-learning functionality inside Ludoxel from being read as consent to computational reuse of protected expression.',
         ],
       },
       {
-        id: 'understanding-ai-use-restrictions-controlling-text',
-        title: 'AI Use Restrictions Controlling Text',
+        id: 'understanding-ai-use-restrictions-operative-text',
+        title: 'Operative Text and the Definition of AI Use',
         body: [
-          'Authority Scope defines the useful size of Understanding AI Use Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. In Understanding AI Use Restrictions, controlling text is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Controlling Text.',
-          'A direct observation for Understanding AI Use Restrictions should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'Understanding AI Use Restrictions should not use controlling text to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The License Text defines AI Use as using Original Materials, Repository Contents, Documentation Site materials, Distribution Materials, Derivative Works, Application Output containing protected material, or any substantial part of them to create, train, fine-tune, evaluate, benchmark, validate, test, improve, populate, operate, index, retrieve for, or generate data for any artificial-intelligence system, machine-learning system, generative model, code model, image model, multimodal model, search index, embedding system, vector database, dataset, benchmark, evaluation suite, synthetic-data pipeline, or comparable computational system.',
+          'The License Text excludes AI Use from the limited grant and reserves it. It further states that the exclusion applies regardless of whether the material is used as input data, training data, fine-tuning data, evaluation data, benchmark data, validation data, retrieval material, embedding material, synthetic-data seed material, code-generation reference material, image-generation reference material, website-corpus material, or comparable computational material.',
+          [
+            'Authority for AI Use therefore must come from the ',
+            {
+              kind: 'link',
+              label: 'controlling',
+              href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
+            },
+            ' License Text or a later competent written instrument. The breadth of the defined term forecloses arguments that a particular pipeline stage or model role is exempt.',
+          ],
         ],
       },
       {
-        id: 'understanding-ai-use-restrictions-material-class',
-        title: 'AI Use Restrictions Material Class',
+        id: 'understanding-ai-use-restrictions-covered-acts',
+        title: 'Acts Within AI Use',
         body: [
-          'Understanding AI Use Restrictions should not use authority scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in material class because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Material Class.',
-          'Understanding AI Use Restrictions separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding AI Use Restrictions material class is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
+          'The restriction reaches training and fine-tuning models on protected material; using protected material for evaluation, benchmarking, validation, or testing; indexing or embedding protected material for retrieval; constructing vector databases from it; creating datasets or benchmarks from it; generating synthetic data seeded by it; populating or operating a model with it; and performing automated extraction of it for any of these purposes.',
+          'The category is defined by the computational purpose, not by the tool. Manual reading and machine ingestion are different acts even when they begin from the same visible page. The restriction applies to the ingestion of a substantial part of the protected material, not only to ingestion of the whole.',
         ],
       },
       {
-        id: 'understanding-ai-use-restrictions-ordinary-use',
-        title: 'AI Use Restrictions Ordinary Use',
-        body: [
-          'Understanding AI Use Restrictions should be read as conceptual boundary for ai use restrictions within Use Permissions and Restrictions and Restricted Uses. In Understanding AI Use Restrictions, controlling text is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Controlling Text. The fact also tells the reader which evidence to preserve for ordinary use: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Ordinary Use.',
-          'Ownership in Understanding AI Use Restrictions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'A public report based on the ordinary use part of Understanding AI Use Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'understanding-ai-use-restrictions-analysis-sequence',
+        title: 'AI-Use Analysis Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'AI-use disputes commonly proceed by characterizing protected material as ordinary, public, or user-generated and therefore available for ingestion. The sequence isolates the computational act and tests the material that feeds it.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-ai-use-restrictions-analysis-sequence-act',
+                title: 'Identify the computational act.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Name the act precisely: training, fine-tuning, evaluation, benchmarking, indexing, retrieval, embedding, dataset construction, synthetic-data generation, or automated extraction. The act, not the convenience of access, is what is tested.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-ai-use-restrictions-analysis-sequence-material',
+                title: 'Identify the material that feeds the system.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'Determine whether the input is, in substantial part, ',
+                      {
+                        kind: 'link',
+                        label: 'Original Materials',
+                        href: '/docs/legal/license-authority-and-materials/material-scope/understanding-original-materials',
+                      },
+                      ', Repository Contents, Documentation Site material, Distribution Materials, a Derivative Work, or Application Output containing protected material.',
+                    ],
+                  },
+                ],
+              },
+              {
+                id: 'understanding-ai-use-restrictions-analysis-sequence-test',
+                title: 'Apply the exclusion.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'AI Use is excluded from the limited grant. Unless the License Text or a later competent written instrument authorizes it, the computational ingestion of protected material is prohibited irrespective of the pipeline role assigned to that material.',
+                  },
+                  {
+                    kind: 'note',
+                    note: {
+                      type: 'warning',
+                      content:
+                        'Public visibility, technical obtainability, a noncommercial purpose, a research purpose, or an evaluation-only purpose does not authorize AI Use. The License Text grants the act, or the act is not granted.',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-ai-use-restrictions-restricted-use',
-        title: 'AI Use Restrictions Restricted Use',
+        id: 'understanding-ai-use-restrictions-internal-features',
+        title: 'Internal AI Features Are Not External AI Permission',
         body: [
-          'A direct observation for Understanding AI Use Restrictions should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. For Understanding AI Use Restrictions, that fact identifies the first concrete boundary for restricted use: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Restricted Use.',
-          'Visible feedback for Understanding AI Use Restrictions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Restricted Uses.',
-          'When Understanding AI Use Restrictions crosses from restricted use into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'Ludoxel contains AI-controlled non-player actors and produces AI learning records as part of its ordinary operation. Those features are runtime behavior of the application and the resulting records are user data produced locally. Their existence does not grant permission to train, evaluate, benchmark, or otherwise ingest Ludoxel Original Materials into any external model, dataset, index, or benchmark.',
+          'The internal learning behavior operates on the application’s own runtime data within Ordinary Application Use. It is not a representation that the project source, assets, documentation, or package contents are available as training, evaluation, or dataset material for systems outside Ludoxel. The presence of machine-learning functionality inside the application must not be read as consent to AI Use of the protected materials that compose the application.',
         ],
       },
       {
-        id: 'understanding-ai-use-restrictions-third-party-split',
-        title: 'AI Use Restrictions Third-Party Split',
+        id: 'understanding-ai-use-restrictions-output-not-clean',
+        title: 'Output and User Material Do Not Become Clean AI Material',
         body: [
-          'Understanding AI Use Restrictions should not use controlling text to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. In Understanding AI Use Restrictions, third-party split is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Third-Party Split.',
-          'When Understanding AI Use Restrictions touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding AI Use Restrictions should not use third-party split to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          [
+            'Application Output and User-Created Materials may contain protected material. Where they do, that protected portion remains subject to the applicable legal terms and is not converted into clean AI material by having arisen during ordinary operation. The output-permission boundary is owned by ',
+            {
+              kind: 'link',
+              label: 'generated output',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-generated-output',
+            },
+            '.',
+          ],
+          'A Licensee therefore cannot launder protected material through the output path. Capturing a screenshot, exporting a save file, or recording footage does not strip the embedded Original Materials of protection, and the resulting file does not become a permissible training, benchmark, retrieval, or dataset source merely because it is the Licensee’s own output.',
         ],
       },
       {
-        id: 'understanding-ai-use-restrictions-public-summary-limit',
-        title: 'AI Use Restrictions Public Summary Limit',
+        id: 'understanding-ai-use-restrictions-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Ludoxel AI learning records are user data produced by the application. That feature does not grant permission to train external models on Ludoxel original materials. The point matters in public summary limit because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Public Summary Limit.',
-          'The surrounding context for Understanding AI Use Restrictions decides which adjacent topic is relevant. Understanding AI Use Restrictions should be compared with Understanding Contribution Refusal, Understanding Original Materials, Understanding User-Created Materials only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding AI Use Restrictions should not use public summary limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-reporting-limit',
-        title: 'AI Use Restrictions Reporting Limit',
-        body: [
-          'Understanding AI Use Restrictions separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for reporting limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Reporting Limit.',
-          'Recovery or follow-up for Understanding AI Use Restrictions should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use reporting limit to keep Understanding AI Use Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-distribution-limit',
-        title: 'AI Use Restrictions Distribution Limit',
-        body: [
-          'The useful result of Understanding AI Use Restrictions material class is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses. In Understanding AI Use Restrictions, distribution limit is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Distribution Limit.',
-          'The main confusion risk in Understanding AI Use Restrictions is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Understanding AI Use Restrictions should not use distribution limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-ai-use-limit',
-        title: 'AI Use Restrictions AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding AI Use Restrictions uses the fact as ai use limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / AI Use Limit.',
-          'Reportable evidence for Understanding AI Use Restrictions should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'When Understanding AI Use Restrictions crosses from ai use limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-evidence',
-        title: 'AI Use Restrictions Legal Evidence',
-        body: [
-          'Ownership in Understanding AI Use Restrictions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The fact also tells the reader which evidence to preserve for legal evidence: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Legal Evidence.',
-          'Adjacent pages matter for Understanding AI Use Restrictions, but adjacency does not move authority. Understanding AI Use Restrictions should be compared with Understanding Contribution Refusal, Understanding Original Materials, Understanding User-Created Materials only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use legal evidence to keep Understanding AI Use Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-related-legal',
-        title: 'AI Use Restrictions Related Legal',
-        body: [
-          'A public report based on the ordinary use part of Understanding AI Use Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing. That reading gives Understanding AI Use Restrictions a public anchor for related legal without adding behavior that the current category does not own. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Related Legal.',
-          'The public boundary for Understanding AI Use Restrictions is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Understanding AI Use Restrictions related legal is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Restricted Uses.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-reader-risk',
-        title: 'AI Use Restrictions Reader Risk',
-        body: [
-          'Separate user-created demonstrations and outputs from repository source, documentation, assets, and package resources when evaluating AI-related rights. Understanding AI Use Restrictions uses the fact as reader risk evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Reader Risk.',
-          'An operator reading Understanding AI Use Restrictions should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'Use reader risk to keep Understanding AI Use Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-non-advice',
-        title: 'AI Use Restrictions Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding AI Use Restrictions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Use Permissions and Restrictions / Restricted Uses. The fact also tells the reader which evidence to preserve for non-advice boundary: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Non-Advice Boundary.',
-          'Implementation limits for Understanding AI Use Restrictions keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Use non-advice boundary to keep Understanding AI Use Restrictions tied to Use Permissions and Restrictions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-public-summary',
-        title: 'AI Use Restrictions Public Summary',
-        body: [
-          'The license includes restrictions on using original materials for model training, dataset creation, automated extraction, or similar AI-related processing outside the granted scope. In Understanding AI Use Restrictions, public summary is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Public Summary.',
-          'The summary value of Understanding AI Use Restrictions is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding AI Use Restrictions should not use public summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-use-restrictions-closing-check',
-        title: 'AI Use Restrictions Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding AI Use Restrictions. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding AI Use Restrictions / Use Permissions and Restrictions / Restricted Uses / Closing Check.',
-          'A final check for Understanding AI Use Restrictions should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Understanding AI Use Restrictions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          [
+            'This article owns the AI-use restriction. It does not define ',
+            {
+              kind: 'link',
+              label: 'Ordinary Application Use',
+              href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
+            },
+            ', does not describe the implementation of the AI actors or learning system, does not authorize redistribution, and does not clear third-party or provenance-sensitive material for ingestion.',
+          ],
+          [
+            'Its conclusion is narrow: training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, indexing, retrieval, embedding, vector-database construction, dataset creation, synthetic-data generation, model population, and automated extraction involving Ludoxel Original Materials are AI Use outside the limited grant. Ludoxel’s own AI features and learning records, and the public ',
+            {
+              kind: 'link',
+              label: 'visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            ' of the materials, do not supply that authority.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Understanding Contribution Refusal', 'Understanding Original Materials', 'Understanding User-Created Materials'],
+    relatedTitles: [
+      'Understanding Ordinary Application Use',
+      'Understanding Original Materials',
+      'Understanding Generated Output',
+      'Understanding User-Created Materials',
+      'Understanding Redistribution Restrictions',
+      'Understanding Contribution Refusal',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -1901,154 +2062,168 @@ export const legalPages: DocsPageContent[] = [
     group: 'Public and Private Reporting',
     title: 'Understanding Public Issue Limits',
     description:
-      'Explains what belongs in Ludoxel public issue forms. This page treats public issue limits as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the legal and operational limits of the Ludoxel public issue surface, the narrow categories of submission it admits, the content it must never carry, and why a public form does not create permission, a right of submission, or acceptance of any contribution.',
     sections: [
       {
-        id: 'understanding-public-issue-limits-authority-scope',
-        title: 'Public Issue Limits Authority Scope',
+        id: 'understanding-public-issue-limits-juridical-function',
+        title: 'Juridical Function of the Public-Issue Limit',
         body: [
-          'Public issues are limited to reproducible non-security problem reports, limited questions, and minimal security contact requests when no private channel is available. The point matters in authority scope because reading public issue limits in its documented category can otherwise be mistaken for moving the topic outside its confirmed boundary. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Public Issue Limits. The article should be broad enough to explain public issue limits, but narrow enough that moving the topic outside its confirmed boundary remains outside the conclusion.',
-          'The useful result of Understanding Public Issue Limits authority scope is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting.',
+          'The public-issue limit defines what a publicly visible submission to the Repository is permitted to be and to contain. It treats the public issue surface as a restricted channel with three narrow uses, not as an open forum for discussion, proposal, or disclosure.',
+          'The function of the limit is twofold. It protects the public surface from carrying security-sensitive or otherwise unsuitable content, and it prevents the act of opening a public submission from being read as a grant of permission or as the opening of a contribution relationship.',
+          [
+            'This article owns the legal boundary of the public surface. The procedural detail of how to compose a particular submission belongs to the Support articles, including ',
+            {
+              kind: 'link',
+              label: 'writing a problem report',
+              href: '/docs/support/public-problem-support/issue-report-content/writing-a-problem-report',
+            },
+            ' and ',
+            {
+              kind: 'link',
+              label: 'asking a limited question',
+              href: '/docs/support/scope-and-closure-support/limited-question-scope/asking-a-limited-question',
+            },
+            '.',
+          ],
         ],
       },
       {
-        id: 'understanding-public-issue-limits-controlling-text',
-        title: 'Public Issue Limits Controlling Text',
+        id: 'understanding-public-issue-limits-operative-text',
+        title: 'Operative Text',
         body: [
-          'Authority Scope defines the useful size of Understanding Public Issue Limits. The article should be broad enough to explain public issue limits, but narrow enough that moving the topic outside its confirmed boundary remains outside the conclusion. That reading gives Understanding Public Issue Limits a public anchor for controlling text without adding behavior that the current category does not own. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Controlling Text.',
-          'A direct observation for Understanding Public Issue Limits should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'The useful result of Understanding Public Issue Limits controlling text is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting.',
+          'The operative sources are the License Text governing External Contributions and Security Reports, the Repository Contribution Policy in `.github/CONTRIBUTING.md`, the Security Reporting Policy in `.github/SECURITY.md`, and the configured issue forms. The License Text defines a Public Issue as a publicly visible issue, pull request, discussion, comment, or other public submission made through a hosting-service feature, and confines its proper use accordingly.',
+          'The Contribution Policy states that a Public Issue is limited to a problem report, a limited question, or a request for a Private Reporting Channel for a Security Report, and that it is not a channel for an External Contribution, replacement text, code-review submissions, asset submissions, dataset submissions, or design proposals. The configured forms are confined to the same categories and require explicit acknowledgement of these limits.',
+          'These sources are consistent and controlling. The public surface admits only the enumerated categories, and the License Text controls where any subordinate statement appears to widen them.',
         ],
       },
       {
-        id: 'understanding-public-issue-limits-material-class',
-        title: 'Public Issue Limits Material Class',
+        id: 'understanding-public-issue-limits-permitted-categories',
+        title: 'Permitted Public-Issue Categories',
         body: [
-          'The useful result of Understanding Public Issue Limits authority scope is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting. That reading gives Understanding Public Issue Limits a public anchor for material class without adding behavior that the current category does not own. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Material Class.',
-          'Understanding Public Issue Limits separates the surface that accepts input from the component or document that controls the result. This is especially important when reading public issue limits in its documented category crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding Public Issue Limits material class is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting.',
+          'A public issue is admitted only for a reproducible non-security problem report concerning the Current Repository or an Official Distribution; for a limited question about repository policy, the License, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy; and for a minimal request for a Private Reporting Channel when no such channel is available.',
+          'These categories are exhaustive for the public surface. A submission that does not fall within one of them is outside the permitted scope of the public issue channel, regardless of how it is labelled.',
         ],
       },
       {
-        id: 'understanding-public-issue-limits-ordinary-use',
-        title: 'Public Issue Limits Ordinary Use',
-        body: [
-          'Understanding Public Issue Limits should be read as conceptual boundary for public issue limits within Reporting and Contributions and Public and Private Reporting. The fact also tells the reader which evidence to preserve for ordinary use: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Ordinary Use.',
-          'Ownership in Understanding Public Issue Limits is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'Use ordinary use to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+        id: 'understanding-public-issue-limits-excluded-content',
+        title: 'Content Excluded from a Public Issue',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A public issue must not carry security-sensitive content or contribution material. The exclusion is categorical and is reinforced by the acknowledgements required by the issue forms.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'A Public Issue must not contain vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other information unsuitable for public disclosure. It must not contain Contribution Materials, replacement text, patches, design assets, datasets, generated files, shader rewrites, implementation proposals, or feature requests.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-public-issue-limits-restricted-use',
-        title: 'Public Issue Limits Restricted Use',
-        body: [
-          'A direct observation for Understanding Public Issue Limits should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for restricted use: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Restricted Use.',
-          'Visible feedback for Understanding Public Issue Limits should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Public and Private Reporting.',
-          'Use restricted use to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+        id: 'understanding-public-issue-limits-reading-sequence',
+        title: 'Public-Issue Reading Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A submission is tested by category, content, and legal effect, in that order. The sequence prevents a submitter from inferring permission or contribution acceptance from the mere availability of the form.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-public-issue-limits-reading-sequence-category',
+                title: 'Confirm the submission falls within a permitted category.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Confirm that the submission is a reproducible non-security problem report, a limited question, or a request for a private reporting channel. If it is none of these, the public surface is not the proper channel.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-public-issue-limits-reading-sequence-content',
+                title: 'Confirm the content is suitable for public disclosure.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: [
+                      'Confirm that the submission contains no security-sensitive detail and no contribution material. Security-relevant matters are routed to ',
+                      {
+                        kind: 'link',
+                        label: 'private security reporting',
+                        href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-private-security-reporting',
+                      },
+                      '.',
+                    ],
+                  },
+                ],
+              },
+              {
+                id: 'understanding-public-issue-limits-reading-sequence-effect',
+                title: 'Recognize the absence of legal effect.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Opening a public issue does not grant permission to Use the Original Materials, does not create a right to have the submission acted upon, and does not create or imply acceptance of any contribution. The public surface is a limited reporting channel, not a source of authority.',
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-public-issue-limits-third-party-split',
-        title: 'Public Issue Limits Third-Party Split',
+        id: 'understanding-public-issue-limits-surface-not-grant',
+        title: 'A Public Surface Is Not a Grant',
         body: [
-          'The useful result of Understanding Public Issue Limits controlling text is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting. That reading gives Understanding Public Issue Limits a public anchor for third-party split without adding behavior that the current category does not own. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Third-Party Split.',
-          'When Understanding Public Issue Limits touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Understanding Public Issue Limits third-party split is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting.',
+          [
+            'The availability of the public issue form does not enlarge the License Text. It does not grant permission to Use the Original Materials, does not create a right of submission beyond the permitted categories, and does not obligate the Maintainer to review, accept, preserve, credit, respond to, or incorporate anything submitted. The platform-feature principle is owned by ',
+            {
+              kind: 'link',
+              label: 'repository visibility',
+              href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+            },
+            '.',
+          ],
+          [
+            'A public submission that proposes or carries contribution material is outside the permitted scope and may be closed without review. The refusal of external contribution material is owned by ',
+            {
+              kind: 'link',
+              label: 'contribution refusal',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+            },
+            ', and the public surface does not create an exception to it.',
+          ],
         ],
       },
       {
-        id: 'understanding-public-issue-limits-public-summary-limit',
-        title: 'Public Issue Limits Public Summary Limit',
+        id: 'understanding-public-issue-limits-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Public issues must not include contribution material, replacement text, patches, design assets, datasets, generated files, shader rewrites, implementation proposals, or private security details. That reading gives Understanding Public Issue Limits a public anchor for public summary limit without adding behavior that the current category does not own. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Public Summary Limit.',
-          'The surrounding context for Understanding Public Issue Limits decides which adjacent topic is relevant. Understanding Public Issue Limits should be compared with Writing a Problem Report, Asking a Limited Question, Understanding Private Security Reporting only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for public summary limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Public Issue Limits should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-reporting-limit',
-        title: 'Public Issue Limits Reporting Limit',
-        body: [
-          'Understanding Public Issue Limits separates the surface that accepts input from the component or document that controls the result. This is especially important when reading public issue limits in its documented category crosses a saved value, a renderer output, or a public form. For Understanding Public Issue Limits, that fact identifies the first concrete boundary for reporting limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Reporting Limit.',
-          'Recovery or follow-up for Understanding Public Issue Limits should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Public Issue Limits crosses from reporting limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-distribution-limit',
-        title: 'Public Issue Limits Distribution Limit',
-        body: [
-          'The useful result of Understanding Public Issue Limits material class is a bounded explanation of public issue limits: enough detail to act, and enough restraint to avoid claims outside Public and Private Reporting. In Understanding Public Issue Limits, distribution limit is the difference between reading public issue limits and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Distribution Limit.',
-          'The main confusion risk in Understanding Public Issue Limits is moving the topic outside its confirmed boundary. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'If the available evidence for distribution limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Public Issue Limits should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-ai-use-limit',
-        title: 'Public Issue Limits AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. The fact also tells the reader which evidence to preserve for ai use limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / AI Use Limit.',
-          'Reportable evidence for Understanding Public Issue Limits should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the ai use limit part of Understanding Public Issue Limits should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-evidence',
-        title: 'Public Issue Limits Legal Evidence',
-        body: [
-          'Ownership in Understanding Public Issue Limits is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. Understanding Public Issue Limits uses the fact as legal evidence evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Legal Evidence.',
-          'Adjacent pages matter for Understanding Public Issue Limits, but adjacency does not move authority. Understanding Public Issue Limits should be compared with Writing a Problem Report, Asking a Limited Question, Understanding Private Security Reporting only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use legal evidence to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-related-legal',
-        title: 'Public Issue Limits Related Legal',
-        body: [
-          'Use ordinary use to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner. That reading gives Understanding Public Issue Limits a public anchor for related legal without adding behavior that the current category does not own. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Related Legal.',
-          'The public boundary for Understanding Public Issue Limits is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for related legal does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Public Issue Limits should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-reader-risk',
-        title: 'Public Issue Limits Reader Risk',
-        body: [
-          'Using a public GitHub form does not grant rights beyond the license. Keep issue content factual, limited, and suitable for public disclosure. The fact also tells the reader which evidence to preserve for reader risk: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Reader Risk.',
-          'An operator reading Understanding Public Issue Limits should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'Use reader risk to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-non-advice',
-        title: 'Public Issue Limits Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Public Issue Limits should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Public and Private Reporting. Understanding Public Issue Limits uses the fact as non-advice boundary evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Non-Advice Boundary.',
-          'Implementation limits for Understanding Public Issue Limits keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Use non-advice boundary to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-public-summary',
-        title: 'Public Issue Limits Public Summary',
-        body: [
-          'Public issues are limited to reproducible non-security problem reports, limited questions, and minimal security contact requests when no private channel is available. The point matters in public summary because reading public issue limits in its documented category can otherwise be mistaken for moving the topic outside its confirmed boundary. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Public Summary.',
-          'The summary value of Understanding Public Issue Limits is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Public Issue Limits should not use public summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-public-issue-limits-closing-check',
-        title: 'Public Issue Limits Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Public Issue Limits. The article should be broad enough to explain public issue limits, but narrow enough that moving the topic outside its confirmed boundary remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Public Issue Limits / Reporting and Contributions / Public and Private Reporting / Closing Check.',
-          'A final check for Understanding Public Issue Limits should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding Public Issue Limits tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+          'This article owns the legal boundary of the public issue surface. It does not provide step-by-step instructions for composing a report or question, does not define the private security channel, does not state the full contribution policy, and does not decide enforcement.',
+          [
+            'Its conclusion is narrow: the public issue surface admits only a reproducible non-security problem report, a limited question, and a minimal private-security-contact request, must never carry security-sensitive content or contribution material, and confers no permission, no right of submission beyond those categories, and no acceptance of any contribution. Security matters belong to ',
+            {
+              kind: 'link',
+              label: 'private security reporting',
+              href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-private-security-reporting',
+            },
+            '.',
+          ],
         ],
       },
     ],
-    relatedTitles: ['Writing a Problem Report', 'Asking a Limited Question', 'Understanding Private Security Reporting'],
+    relatedTitles: [
+      'Understanding Private Security Reporting',
+      'Understanding Contribution Refusal',
+      'Understanding Pull Request Boundaries',
+      'Writing a Problem Report',
+      'Asking a Limited Question',
+      'Requesting a Private Security Channel',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -2056,154 +2231,159 @@ export const legalPages: DocsPageContent[] = [
     group: 'Public and Private Reporting',
     title: 'Understanding Private Security Reporting',
     description:
-      'Explains how suspected vulnerabilities should be reported. This page treats support routing as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains why a suspected vulnerability must be reported through a private channel rather than disclosed publicly, the lawful and authorized limits of Security Testing, and why a private reporting channel does not grant unlimited testing permission, exploit-publication permission, a safe harbor, access to third-party systems, or any expansion of permission.',
     sections: [
       {
-        id: 'understanding-private-security-reporting-authority-scope',
-        title: 'Private Security Reporting Authority Scope',
+        id: 'understanding-private-security-reporting-juridical-function',
+        title: 'Juridical Function of Private Security Reporting',
         body: [
-          'Use GitHub private vulnerability reporting, a security advisory, or another private reporting channel when available for suspected vulnerabilities. The fact also tells the reader which evidence to preserve for authority scope: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Private Security Reporting. The article should be broad enough to explain support routing, but narrow enough that posting secrets or security details publicly remains outside the conclusion.',
-          'Use authority scope to keep Understanding Private Security Reporting tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+          'Private security reporting governs how a suspected vulnerability affecting the Current Repository, an Official Distribution, or an official Documentation Site deployment is to be communicated. It treats non-public reporting as the required channel and public disclosure of vulnerability detail as prohibited.',
+          [
+            'This article owns the public-versus-private reporting boundary and the non-expansion principle as a matter of license interpretation. The operational steps for requesting a channel belong to the Support article on ',
+            {
+              kind: 'link',
+              label: 'requesting a private security channel',
+              href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
+            },
+            ', and the public-disclosure prohibition is developed by ',
+            {
+              kind: 'link',
+              label: 'avoiding public exploit details',
+              href: '/docs/support/security-and-safety-support/public-safety-limits/avoiding-public-exploit-details',
+            },
+            '.',
+          ],
+          'The function of the rule is to keep sensitive technical detail out of public surfaces while making clear that submitting a report neither enlarges the reporter’s permissions nor obligates the Maintainer.',
         ],
       },
       {
-        id: 'understanding-private-security-reporting-controlling-text',
-        title: 'Private Security Reporting Controlling Text',
+        id: 'understanding-private-security-reporting-operative-text',
+        title: 'Operative Text',
         body: [
-          'Authority Scope defines the useful size of Understanding Private Security Reporting. The article should be broad enough to explain support routing, but narrow enough that posting secrets or security details publicly remains outside the conclusion. For Understanding Private Security Reporting, that fact identifies the first concrete boundary for controlling text: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Controlling Text.',
-          'A direct observation for Understanding Private Security Reporting should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'A public report based on the controlling text part of Understanding Private Security Reporting should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The operative sources are the License Text governing Security Reports and the Security Reporting Policy in `.github/SECURITY.md`. The License Text provides that a Security Report is governed by the Security Reporting Policy and must be submitted through a Private Reporting Channel when one is available, and that a Public Issue must not contain vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other information unsuitable for public disclosure.',
+          'The Security Reporting Policy directs the reporter to use GitHub private vulnerability reporting or a GitHub security advisory when available, and otherwise to open only a minimal Public Issue requesting a private contact method that itself contains no vulnerability detail. The supported scope is confined to the Current Repository and an Official Distribution.',
+          'These sources control the channel and the content. Where any subordinate statement appears to permit public disclosure of vulnerability detail, the License Text and the Security Reporting Policy control.',
         ],
       },
       {
-        id: 'understanding-private-security-reporting-material-class',
-        title: 'Private Security Reporting Material Class',
+        id: 'understanding-private-security-reporting-channel-selection',
+        title: 'Channel Selection',
         body: [
-          'Use authority scope to keep Understanding Private Security Reporting tied to Reporting and Contributions; use a related page only when the reader needs a different owner. Understanding Private Security Reporting uses the fact as material class evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Material Class.',
-          'Understanding Private Security Reporting separates the surface that accepts input from the component or document that controls the result. This is especially important when preparing public or private support evidence crosses a saved value, a renderer output, or a public form.',
-          'When Understanding Private Security Reporting crosses from material class into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'A suspected vulnerability must be reported privately when a Private Reporting Channel is available. Where GitHub private vulnerability reporting or a security advisory exists for the Repository, that channel must be used.',
+          [
+            'Where no Private Reporting Channel is available, the only permitted public step is a minimal request for a private contact method, which must not include vulnerability detail. That request remains within the narrow categories admitted by ',
+            {
+              kind: 'link',
+              label: 'public issue limits',
+              href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-public-issue-limits',
+            },
+            '.',
+          ],
         ],
       },
       {
-        id: 'understanding-private-security-reporting-ordinary-use',
-        title: 'Private Security Reporting Ordinary Use',
-        body: [
-          'Understanding Private Security Reporting should be read as conceptual boundary for private security reporting within Reporting and Contributions and Public and Private Reporting. In Understanding Private Security Reporting, ordinary use is the difference between reading support routing and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Ordinary Use.',
-          'Ownership in Understanding Private Security Reporting is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'If the available evidence for ordinary use does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Private Security Reporting should be treated as an observation rather than a confirmed cause.',
+        id: 'understanding-private-security-reporting-public-disclosure-prohibition',
+        title: 'Public Disclosure Prohibition',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Public disclosure of vulnerability detail is prohibited through any public channel, including a public issue, a public pull request, a public discussion, and social media.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Do not disclose vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other non-public reproduction information through any public channel.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-private-security-reporting-restricted-use',
-        title: 'Private Security Reporting Restricted Use',
-        body: [
-          'A direct observation for Understanding Private Security Reporting should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. The point matters in restricted use because preparing public or private support evidence can otherwise be mistaken for posting secrets or security details publicly. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Restricted Use.',
-          'Visible feedback for Understanding Private Security Reporting should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Public and Private Reporting.',
-          'Understanding Private Security Reporting should not use restricted use to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'understanding-private-security-reporting-sequence',
+        title: 'Security Reporting Sequence',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The reporter proceeds by confirming scope, selecting the private channel, and withholding sensitive detail from public surfaces. The sequence keeps disclosure private and keeps the reporter’s permissions unchanged.',
+          },
+          {
+            kind: 'steps',
+            steps: [
+              {
+                id: 'understanding-private-security-reporting-sequence-scope',
+                title: 'Confirm the report is within scope.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Confirm that the suspected vulnerability affects the Current Repository, an Official Distribution, or an official Documentation Site deployment. Older commits, forks, mirrors, and unofficial deployments are outside the supported scope.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-private-security-reporting-sequence-channel',
+                title: 'Use the private channel.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Submit through GitHub private vulnerability reporting or a security advisory when available; otherwise request a private contact method through a minimal public issue that contains no vulnerability detail.',
+                  },
+                ],
+              },
+              {
+                id: 'understanding-private-security-reporting-sequence-limits',
+                title: 'Keep testing lawful and permissions unchanged.',
+                content: [
+                  {
+                    kind: 'paragraph',
+                    text: 'Confine any Security Testing to systems, accounts, files, and data the reporter is authorized to test, and recognize that submitting a report does not enlarge any permission and creates no obligation on the Maintainer.',
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-private-security-reporting-third-party-split',
-        title: 'Private Security Reporting Third-Party Split',
+        id: 'understanding-private-security-reporting-testing-limits',
+        title: 'Limits of Security Testing',
         body: [
-          'A public report based on the controlling text part of Understanding Private Security Reporting should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for third-party split: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Third-Party Split.',
-          'When Understanding Private Security Reporting touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the third-party split part of Understanding Private Security Reporting should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The Security Reporting Policy requires that Security Testing remain lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data that the reporter is authorized to test. Testing that exceeds those limits is outside the policy and is not sanctioned by the availability of a reporting channel.',
+          'Out-of-scope conduct is expressly identified, including reports requiring unauthorized access, destructive testing, denial of service, and reports about unofficial forks or deployments. The existence of a private channel does not convert any of these into permitted activity.',
         ],
       },
       {
-        id: 'understanding-private-security-reporting-public-summary-limit',
-        title: 'Private Security Reporting Public Summary Limit',
+        id: 'understanding-private-security-reporting-non-expansion',
+        title: 'Reporting Does Not Expand Permission',
         body: [
-          'If no private channel is available, a public security contact request should include only a category-level request and safe contact method. Understanding Private Security Reporting uses the fact as material class evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Material Class. The fact also tells the reader which evidence to preserve for public summary limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Public Summary Limit.',
-          'The surrounding context for Understanding Private Security Reporting decides which adjacent topic is relevant. Understanding Private Security Reporting should be compared with Requesting a Private Security Channel, Avoiding Public Exploit Details, Reading Security Policy only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'A public report based on the public summary limit part of Understanding Private Security Reporting should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The License Text provides that submission of a Security Report, use of a Private Reporting Channel, and Security Testing do not grant or expand any permission to Use the Original Materials and do not create any obligation on the Maintainer to review, accept, respond to, or remediate the reported matter.',
+          'A Private Reporting Channel is therefore not unlimited testing permission, not exploit-publication permission, not a security-research safe harbor, not authorization to access third-party environments, and not permission to disclose secrets. It is a confidential route for communicating a suspected vulnerability, and nothing more. The reporter remains solely responsible for ensuring that a submission does not contain confidential or unauthorized material.',
         ],
       },
       {
-        id: 'understanding-private-security-reporting-reporting-limit',
-        title: 'Private Security Reporting Reporting Limit',
+        id: 'understanding-private-security-reporting-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Understanding Private Security Reporting separates the surface that accepts input from the component or document that controls the result. This is especially important when preparing public or private support evidence crosses a saved value, a renderer output, or a public form. In Understanding Private Security Reporting, reporting limit is the difference between reading support routing and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Reporting Limit.',
-          'Recovery or follow-up for Understanding Private Security Reporting should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for reporting limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Private Security Reporting should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-distribution-limit',
-        title: 'Private Security Reporting Distribution Limit',
-        body: [
-          'When Understanding Private Security Reporting crosses from material class into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for distribution limit: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Distribution Limit.',
-          'The main confusion risk in Understanding Private Security Reporting is posting secrets or security details publicly. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use distribution limit to keep Understanding Private Security Reporting tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-ai-use-limit',
-        title: 'Private Security Reporting AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. In Understanding Private Security Reporting, ordinary use is the difference between reading support routing and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Ordinary Use. In Understanding Private Security Reporting, ai use limit is the difference between reading support routing and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / AI Use Limit.',
-          'Reportable evidence for Understanding Private Security Reporting should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Understanding Private Security Reporting should not use ai use limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-evidence',
-        title: 'Private Security Reporting Legal Evidence',
-        body: [
-          'Ownership in Understanding Private Security Reporting is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. That reading gives Understanding Private Security Reporting a public anchor for legal evidence without adding behavior that the current category does not own. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Legal Evidence.',
-          'Adjacent pages matter for Understanding Private Security Reporting, but adjacency does not move authority. Understanding Private Security Reporting should be compared with Requesting a Private Security Channel, Avoiding Public Exploit Details, Reading Security Policy only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for legal evidence does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Private Security Reporting should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-related-legal',
-        title: 'Private Security Reporting Related Legal',
-        body: [
-          'If the available evidence for ordinary use does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Private Security Reporting should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for related legal: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Related Legal.',
-          'The public boundary for Understanding Private Security Reporting is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Use related legal to keep Understanding Private Security Reporting tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-reader-risk',
-        title: 'Private Security Reporting Reader Risk',
-        body: [
-          'Security testing must remain lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data the reporter is authorized to test. In Understanding Private Security Reporting, reader risk is the difference between reading support routing and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Reader Risk.',
-          'An operator reading Understanding Private Security Reporting should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'Understanding Private Security Reporting should not use reader risk to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-non-advice',
-        title: 'Private Security Reporting Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Private Security Reporting should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Public and Private Reporting. That reading gives Understanding Private Security Reporting a public anchor for non-advice boundary without adding behavior that the current category does not own. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Non-Advice Boundary.',
-          'Implementation limits for Understanding Private Security Reporting keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for non-advice boundary does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Private Security Reporting should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-public-summary',
-        title: 'Private Security Reporting Public Summary',
-        body: [
-          'Use GitHub private vulnerability reporting, a security advisory, or another private reporting channel when available for suspected vulnerabilities. For Understanding Private Security Reporting, that fact identifies the first concrete boundary for public summary: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Public Summary.',
-          'The summary value of Understanding Private Security Reporting is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'A public report based on the public summary part of Understanding Private Security Reporting should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-private-security-reporting-closing-check',
-        title: 'Private Security Reporting Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Private Security Reporting. The article should be broad enough to explain support routing, but narrow enough that posting secrets or security details publicly remains outside the conclusion. In Understanding Private Security Reporting, closing check is the difference between reading support routing and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Private Security Reporting / Reporting and Contributions / Public and Private Reporting / Closing Check.',
-          'A final check for Understanding Private Security Reporting should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Private Security Reporting should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          [
+            'This article owns the public-versus-private reporting boundary and the non-expansion principle. It does not provide the step-by-step contact procedure, which belongs to ',
+            {
+              kind: 'link',
+              label: 'requesting a private security channel',
+              href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
+            },
+            ', and it does not define the categories of the public surface, which belong to ',
+            {
+              kind: 'link',
+              label: 'public issue limits',
+              href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-public-issue-limits',
+            },
+            '.',
+          ],
+          'Its conclusion is narrow: a suspected vulnerability must be reported through a private channel and must not be publicly disclosed; Security Testing must remain lawful, non-destructive, good-faith, and authorized; and the existence of a private reporting channel grants no testing permission, no exploit-publication permission, no safe harbor, no third-party access, no secret-disclosure permission, and no expansion of permission to Use the Original Materials.',
         ],
       },
     ],
-    relatedTitles: ['Requesting a Private Security Channel', 'Avoiding Public Exploit Details', 'Reading Security Policy'],
+    relatedTitles: ['Understanding Public Issue Limits', 'Requesting a Private Security Channel', 'Avoiding Public Exploit Details', 'Reading Security Policy'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -2211,154 +2391,114 @@ export const legalPages: DocsPageContent[] = [
     group: 'Contribution Boundaries',
     title: 'Understanding Contribution Refusal',
     description:
-      'Explains why Ludoxel public channels do not accept external contribution material. This page treats developer inspection as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains that Ludoxel does not accept External Contribution material of any kind, and that a public issue, a pull request, a discussion, a fork, technical availability, or repository visibility creates no contribution invitation, license grant, review obligation, assignment acceptance, joint authorship, or implied consent.',
     sections: [
       {
-        id: 'understanding-contribution-refusal-authority-scope',
-        title: 'Contribution Refusal Authority Scope',
+        id: 'understanding-contribution-refusal-juridical-function',
+        title: 'Juridical Function of Contribution Refusal',
         body: [
-          'The contribution policy states that external contribution material is not accepted. This includes source code, patches, replacement documentation, assets, datasets, generated files, and implementation proposals. That reading gives Understanding Contribution Refusal a public anchor for authority scope without adding behavior that the current category does not own. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Contribution Refusal. The article should be broad enough to explain developer inspection, but narrow enough that turning local inspection into an invitation for external changes remains outside the conclusion.',
-          'The useful result of Understanding Contribution Refusal authority scope is a bounded explanation of developer inspection: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
+          'Contribution refusal is the general principle that the Repository is not maintained as an open contribution project and does not accept External Contribution material. It governs the legal status of any externally supplied material proposed for inclusion in, modification of, replacement of, or use with Ludoxel.',
+          [
+            'This article owns the general refusal of external contribution. The specific behavior of the pull-request surface is owned by ',
+            {
+              kind: 'link',
+              label: 'pull request boundaries',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-pull-request-boundaries',
+            },
+            '; this article states the principle that applies across every submission route.',
+          ],
+          'The function of the rule is to foreclose the inference that visibility, platform features, or the act of submitting material create a contribution relationship, a license to the project, or any obligation on the Licensor.',
         ],
       },
       {
-        id: 'understanding-contribution-refusal-controlling-text',
-        title: 'Contribution Refusal Controlling Text',
+        id: 'understanding-contribution-refusal-operative-text',
+        title: 'Operative Text',
         body: [
-          'Authority Scope defines the useful size of Understanding Contribution Refusal. The article should be broad enough to explain developer inspection, but narrow enough that turning local inspection into an invitation for external changes remains outside the conclusion. The point matters in controlling text because reading source ownership and authorized commands can otherwise be mistaken for turning local inspection into an invitation for external changes. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Controlling Text.',
-          'A direct observation for Understanding Contribution Refusal should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'The useful result of Understanding Contribution Refusal controlling text is a bounded explanation of developer inspection: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
+          'The operative sources are the License Text governing External Contributions and the Repository Contribution Policy in `.github/CONTRIBUTING.md`. The License Text states that the Repository is not maintained as an open contribution project, that an External Contribution is not requested and is not accepted through a public pull request, a Public Issue, a discussion, a patch, a website text proposal, or a comparable submission, and that Contribution Materials submitted as an External Contribution are not accepted.',
+          'The Contribution Policy reinforces this by stating that an External Contribution is not accepted and that a pull request, or a public submission that proposes Contribution Materials, may be closed without review. Public GitHub visibility and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the License.',
+          'These sources are controlling. No subordinate statement, platform affordance, or course of conduct converts the refusal into acceptance.',
         ],
       },
       {
-        id: 'understanding-contribution-refusal-material-class',
-        title: 'Contribution Refusal Material Class',
+        id: 'understanding-contribution-refusal-materials-not-accepted',
+        title: 'Materials Not Accepted',
         body: [
-          'The useful result of Understanding Contribution Refusal authority scope is a bounded explanation of developer inspection: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries. That reading gives Understanding Contribution Refusal a public anchor for material class without adding behavior that the current category does not own. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Material Class.',
-          'Understanding Contribution Refusal separates the surface that accepts input from the component or document that controls the result. This is especially important when reading source ownership and authorized commands crosses a saved value, a renderer output, or a public form.',
-          'If the available evidence for material class does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Contribution Refusal should be treated as an observation rather than a confirmed cause.',
+          'The refusal reaches all Contribution Materials, including source code, patches, pull requests, documentation text, website text, replacement text, translations, design assets, images, audio, video, textures, generated files, datasets, feature implementations, refactoring proposals, shader rewrites, saved worlds, reports containing proposed implementation material, legal-text replacement, website redesign, and artificial-intelligence-generated material.',
+          'The form of submission does not change the result. Material framed as a fix, an improvement, a translation, or a courtesy is Contribution Materials when it is offered for possible inclusion in, modification of, replacement of, or use with the Original Materials, and it is not accepted.',
         ],
       },
       {
-        id: 'understanding-contribution-refusal-ordinary-use',
-        title: 'Contribution Refusal Ordinary Use',
-        body: [
-          'Understanding Contribution Refusal should be read as conceptual boundary for contribution refusal within Reporting and Contributions and Contribution Boundaries. Understanding Contribution Refusal uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Ordinary Use.',
-          'Ownership in Understanding Contribution Refusal is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'Use ordinary use to keep Understanding Contribution Refusal tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+        id: 'understanding-contribution-refusal-no-invitation',
+        title: 'No Invitation from Public Surfaces',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'No public surface constitutes an invitation to contribute. A public issue, a pull request, a discussion, a fork, technical availability, and ',
+              {
+                kind: 'link',
+                label: 'repository visibility',
+                href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
+              },
+              ' are access and platform conditions, not solicitations of contribution material.',
+            ],
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'The ability to open a pull request, post an issue, start a discussion, or create a fork does not create a contribution invitation, a license grant, a review obligation, acceptance of an assignment, joint authorship, or implied consent.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-contribution-refusal-restricted-use',
-        title: 'Contribution Refusal Restricted Use',
+        id: 'understanding-contribution-refusal-no-obligation',
+        title: 'No Obligation from Submission',
         body: [
-          'A direct observation for Understanding Contribution Refusal should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for restricted use: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Restricted Use.',
-          'Visible feedback for Understanding Contribution Refusal should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Contribution Boundaries.',
-          'A public report based on the restricted use part of Understanding Contribution Refusal should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The License Text provides that submission of an External Contribution does not create any obligation for the Licensor to review, accept, preserve, credit, respond to, incorporate, license, publish, deploy, or return the Contribution Materials. The Licensor’s silence or inaction is not acceptance, and a submission that is left unanswered confers nothing.',
+          'A submission likewise does not expand the submitter’s rights in the Original Materials and does not grant the submitter any right to Use the Original Materials outside the License. The refusal is therefore not merely a statement of preference; it is the legal posture of the Repository.',
         ],
       },
       {
-        id: 'understanding-contribution-refusal-third-party-split',
-        title: 'Contribution Refusal Third-Party Split',
+        id: 'understanding-contribution-refusal-submitter-responsibility',
+        title: 'Submitter Responsibility',
         body: [
-          'The useful result of Understanding Contribution Refusal controlling text is a bounded explanation of developer inspection: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries. In Understanding Contribution Refusal, third-party split is the difference between reading developer inspection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Third-Party Split.',
-          'When Understanding Contribution Refusal touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Contribution Refusal should not use third-party split to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The License Text places responsibility on a person who submits Contribution Materials despite the refusal. That person is solely responsible for ensuring that the submission does not contain confidential information, third-party confidential material, private data, credentials, security-sensitive detail unsuitable for the chosen channel, infringing material, or material that the person lacks authority to submit.',
+          'Because the material is not accepted, the act of submitting it does not transfer responsibility to the Licensor and does not create any review, custody, or remediation duty. The submitter bears the consequences of an improper submission.',
         ],
       },
       {
-        id: 'understanding-contribution-refusal-public-summary-limit',
-        title: 'Contribution Refusal Public Summary Limit',
+        id: 'understanding-contribution-refusal-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'Public issue forms are for limited reports or questions, not for submitting project changes. Material outside the allowed scope may be closed without review. In Understanding Contribution Refusal, public summary limit is the difference between reading developer inspection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Public Summary Limit.',
-          'The surrounding context for Understanding Contribution Refusal decides which adjacent topic is relevant. Understanding Contribution Refusal should be compared with Understanding Pull Request Boundaries, Reading Contribution Policy, Avoiding Feature Requests only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for public summary limit does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Contribution Refusal should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-reporting-limit',
-        title: 'Contribution Refusal Reporting Limit',
-        body: [
-          'Understanding Contribution Refusal separates the surface that accepts input from the component or document that controls the result. This is especially important when reading source ownership and authorized commands crosses a saved value, a renderer output, or a public form. Understanding Contribution Refusal uses the fact as reporting limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Reporting Limit.',
-          'Recovery or follow-up for Understanding Contribution Refusal should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Contribution Refusal crosses from reporting limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-distribution-limit',
-        title: 'Contribution Refusal Distribution Limit',
-        body: [
-          'If the available evidence for material class does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Contribution Refusal should be treated as an observation rather than a confirmed cause. The point matters in distribution limit because reading source ownership and authorized commands can otherwise be mistaken for turning local inspection into an invitation for external changes. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Distribution Limit.',
-          'The main confusion risk in Understanding Contribution Refusal is turning local inspection into an invitation for external changes. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding Contribution Refusal distribution limit is a bounded explanation of developer inspection: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-ai-use-limit',
-        title: 'Contribution Refusal AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding Contribution Refusal uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Ordinary Use. For Understanding Contribution Refusal, that fact identifies the first concrete boundary for ai use limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / AI Use Limit.',
-          'Reportable evidence for Understanding Contribution Refusal should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the ai use limit part of Understanding Contribution Refusal should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-evidence',
-        title: 'Contribution Refusal Legal Evidence',
-        body: [
-          'Ownership in Understanding Contribution Refusal is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The fact also tells the reader which evidence to preserve for legal evidence: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Legal Evidence.',
-          'Adjacent pages matter for Understanding Contribution Refusal, but adjacency does not move authority. Understanding Contribution Refusal should be compared with Understanding Pull Request Boundaries, Reading Contribution Policy, Avoiding Feature Requests only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use legal evidence to keep Understanding Contribution Refusal tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-related-legal',
-        title: 'Contribution Refusal Related Legal',
-        body: [
-          'Use ordinary use to keep Understanding Contribution Refusal tied to Reporting and Contributions; use a related page only when the reader needs a different owner. The point matters in related legal because reading source ownership and authorized commands can otherwise be mistaken for turning local inspection into an invitation for external changes. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Related Legal.',
-          'The public boundary for Understanding Contribution Refusal is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Understanding Contribution Refusal should not use related legal to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-reader-risk',
-        title: 'Contribution Refusal Reader Risk',
-        body: [
-          'The contribution refusal policy does not restrict ordinary application use. It controls repository communication and project material submission boundaries. Understanding Contribution Refusal uses the fact as reader risk evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Reader Risk.',
-          'An operator reading Understanding Contribution Refusal should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'Use reader risk to keep Understanding Contribution Refusal tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-non-advice',
-        title: 'Contribution Refusal Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Contribution Refusal should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Contribution Boundaries. Understanding Contribution Refusal uses the fact as non-advice boundary evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Non-Advice Boundary.',
-          'Implementation limits for Understanding Contribution Refusal keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding Contribution Refusal crosses from non-advice boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-public-summary',
-        title: 'Contribution Refusal Public Summary',
-        body: [
-          'The contribution policy states that external contribution material is not accepted. This includes source code, patches, replacement documentation, assets, datasets, generated files, and implementation proposals. In Understanding Contribution Refusal, public summary is the difference between reading developer inspection and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Public Summary.',
-          'The summary value of Understanding Contribution Refusal is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Contribution Refusal should not use public summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-contribution-refusal-closing-check',
-        title: 'Contribution Refusal Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Contribution Refusal. The article should be broad enough to explain developer inspection, but narrow enough that turning local inspection into an invitation for external changes remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use. The local reading frame is Understanding Contribution Refusal / Reporting and Contributions / Contribution Boundaries / Closing Check.',
-          'A final check for Understanding Contribution Refusal should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Understanding Contribution Refusal should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          [
+            'This article owns the general refusal of external contribution. It does not address the specific mechanics of the pull-request surface, which belong to ',
+            {
+              kind: 'link',
+              label: 'pull request boundaries',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-pull-request-boundaries',
+            },
+            ', and it does not state the categories admitted by the public issue surface, which belong to ',
+            {
+              kind: 'link',
+              label: 'public issue limits',
+              href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-public-issue-limits',
+            },
+            '.',
+          ],
+          'Its conclusion is narrow: Ludoxel does not accept External Contribution material of any kind, and a public issue, a pull request, a discussion, a fork, technical availability, or repository visibility creates no contribution invitation, no license grant, no review obligation, no assignment acceptance, no joint authorship, and no implied consent.',
         ],
       },
     ],
-    relatedTitles: ['Understanding Pull Request Boundaries', 'Reading Contribution Policy', 'Avoiding Feature Requests'],
+    relatedTitles: [
+      'Understanding Pull Request Boundaries',
+      'Understanding Public Issue Limits',
+      'Understanding Derivative Work Restrictions',
+      'Reading Contribution Policy',
+      'Avoiding Feature Requests',
+    ],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -2366,153 +2506,116 @@ export const legalPages: DocsPageContent[] = [
     group: 'Contribution Boundaries',
     title: 'Understanding Pull Request Boundaries',
     description:
-      'Explains the repository policy around pull requests. This page treats pull request boundaries as a public legal-orientation guide that points to controlling text without expanding it, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains why a pull request is not an accepted contribution path for Ludoxel, why a public pull request may be closed without review, and why the pull-request interface creates no submission permission, review obligation, merge expectation, license amendment, or right to have material considered.',
     sections: [
       {
-        id: 'understanding-pull-request-boundaries-authority-scope',
-        title: 'Pull Request Boundaries Authority Scope',
+        id: 'understanding-pull-request-boundaries-juridical-function',
+        title: 'Juridical Function of the Pull-Request Boundary',
         body: [
-          'Pull requests are not an accepted contribution path for Ludoxel. A public pull request can be closed without review under the repository policy. That reading gives Understanding Pull Request Boundaries a public anchor for authority scope without adding behavior that the current category does not own. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Authority Scope.',
-          'Authority Scope defines the useful size of Understanding Pull Request Boundaries. The article should be broad enough to explain pull request boundaries, but narrow enough that moving the topic outside its confirmed boundary remains outside the conclusion.',
-          'The useful result of Understanding Pull Request Boundaries authority scope is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
+          'The pull-request boundary governs the legal status of a pull request opened against the Repository. It treats the pull request as a hosting-service feature that does not create an accepted contribution path and does not bind the Maintainer to any action.',
+          [
+            'This article owns the pull-request surface. The general refusal of external contribution material is owned by ',
+            {
+              kind: 'link',
+              label: 'contribution refusal',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+            },
+            '; this article addresses the specific affordances and expectations attached to the pull-request mechanism.',
+          ],
+          'The function of the rule is to prevent the existence of pull-request functionality, and the act of opening a pull request, from being read as submission permission, review entitlement, or an expectation of merge.',
         ],
       },
       {
-        id: 'understanding-pull-request-boundaries-controlling-text',
-        title: 'Pull Request Boundaries Controlling Text',
+        id: 'understanding-pull-request-boundaries-operative-text',
+        title: 'Operative Text',
         body: [
-          'Authority Scope defines the useful size of Understanding Pull Request Boundaries. The article should be broad enough to explain pull request boundaries, but narrow enough that moving the topic outside its confirmed boundary remains outside the conclusion. That reading gives Understanding Pull Request Boundaries a public anchor for controlling text without adding behavior that the current category does not own. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Controlling Text.',
-          'A direct observation for Understanding Pull Request Boundaries should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state.',
-          'If the available evidence for controlling text does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Pull Request Boundaries should be treated as an observation rather than a confirmed cause.',
+          'The operative sources are the License Text governing External Contributions, the Repository Contribution Policy in `.github/CONTRIBUTING.md`, and the Pull Request Policy in `.github/pull_request_template.md`. The License Text states that an External Contribution is not accepted through a public pull request and that submission of an External Contribution does not expand the Licensee’s rights in the Original Materials.',
+          'The Pull Request Policy states that the Repository is not an open source project and does not accept an External Contribution, that a pull request may be closed without review, and that submission of a pull request does not grant permission to Use the Original Materials beyond the License. The Contribution Policy is to the same effect.',
+          'These sources control the surface. No interface affordance and no subordinate statement converts the ability to open a pull request into an accepted contribution path.',
         ],
       },
       {
-        id: 'understanding-pull-request-boundaries-material-class',
-        title: 'Pull Request Boundaries Material Class',
-        body: [
-          'The useful result of Understanding Pull Request Boundaries authority scope is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries. The point matters in material class because reading pull request boundaries in its documented category can otherwise be mistaken for moving the topic outside its confirmed boundary. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Material Class.',
-          'Understanding Pull Request Boundaries separates the surface that accepts input from the component or document that controls the result. This is especially important when reading pull request boundaries in its documented category crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding Pull Request Boundaries material class is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
+        id: 'understanding-pull-request-boundaries-not-created',
+        title: 'What the Pull-Request Surface Does Not Create',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The pull-request interface is a platform feature. Its availability does not create the legal incidents that an open contribution project would normally imply.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Opening a pull request does not create submission permission, a review obligation, a merge expectation, a license amendment, acceptance of a contribution, or a right to have the submitted material considered.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-pull-request-boundaries-ordinary-use',
-        title: 'Pull Request Boundaries Ordinary Use',
+        id: 'understanding-pull-request-boundaries-contents-are-contribution-materials',
+        title: 'Pull-Request Contents Are Contribution Materials',
         body: [
-          'Understanding Pull Request Boundaries should be read as conceptual boundary for pull request boundaries within Reporting and Contributions and Contribution Boundaries. Understanding Pull Request Boundaries uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Ordinary Use.',
-          'Ownership in Understanding Pull Request Boundaries is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text.',
-          'Use ordinary use to keep Understanding Pull Request Boundaries tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+          [
+            'The contents of a pull request are Contribution Materials. A patch, replacement text, generated file, implementation proposal, asset change, dataset, legal wording, or website source modification carried in a pull request is material offered for possible inclusion in the Original Materials, and is therefore subject to the general ',
+            {
+              kind: 'link',
+              label: 'contribution refusal',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+            },
+            '.',
+          ],
+          [
+            'Because pull-request contents alter or replace protected material, they are also a Derivative Work within the License Text, and their preparation is governed by the ',
+            {
+              kind: 'link',
+              label: 'derivative-work',
+              href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-derivative-work-restrictions',
+            },
+            ' restriction. Framing the material as a pull request does not change its character or create acceptance.',
+          ],
         ],
       },
       {
-        id: 'understanding-pull-request-boundaries-restricted-use',
-        title: 'Pull Request Boundaries Restricted Use',
+        id: 'understanding-pull-request-boundaries-closure-without-review',
+        title: 'Closure Without Review',
         body: [
-          'A direct observation for Understanding Pull Request Boundaries should name what the user or reader actually sees before it assigns cause. That keeps the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use ahead of guesses about hidden state. Understanding Pull Request Boundaries uses the fact as restricted use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Restricted Use.',
-          'Visible feedback for Understanding Pull Request Boundaries should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Contribution Boundaries.',
-          'Use restricted use to keep Understanding Pull Request Boundaries tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+          'A public pull request may be closed without review. The Contribution Policy and the Pull Request Policy state this expressly, and the License Text imposes no obligation on the Licensor to review, accept, preserve, credit, respond to, incorporate, license, publish, deploy, or return the submitted material.',
+          'Closure without review is not a defect in handling and does not indicate that the material was evaluated. It is the ordinary consequence of the refusal: the pull-request path is not an accepted contribution path, and a submission through it carries no entitlement to consideration.',
         ],
       },
       {
-        id: 'understanding-pull-request-boundaries-third-party-split',
-        title: 'Pull Request Boundaries Third-Party Split',
+        id: 'understanding-pull-request-boundaries-platform-affordance',
+        title: 'The Platform Affordance Is Not a Grant',
         body: [
-          'If the available evidence for controlling text does not identify the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text, Understanding Pull Request Boundaries should be treated as an observation rather than a confirmed cause. In Understanding Pull Request Boundaries, third-party split is the difference between reading pull request boundaries and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Third-Party Split.',
-          'When Understanding Pull Request Boundaries touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Pull Request Boundaries should not use third-party split to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The License Text provides that hosting-service features, including a pull request, do not authorize Use of the Original Materials outside the limited grant, and that the GitHub Platform Terms operate only between the hosting service and its users. The capacity of the platform to accept a pull request is a service function, not a grant by the Licensor.',
+          'A submitter therefore cannot infer from the operation of the pull-request feature that submission is permitted, that review is owed, that a merge will follow, or that the License has been amended. The interface makes the action technically possible; it does not make it legally authorized or obligatory.',
         ],
       },
       {
-        id: 'understanding-pull-request-boundaries-public-summary-limit',
-        title: 'Pull Request Boundaries Public Summary Limit',
+        id: 'understanding-pull-request-boundaries-article-boundary',
+        title: 'Article Boundary',
         body: [
-          'A pull request may contain patches, replacement text, generated files, or implementation proposals, all of which fall outside accepted public contribution material. That reading gives Understanding Pull Request Boundaries a public anchor for public summary limit without adding behavior that the current category does not own. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Public Summary Limit.',
-          'The surrounding context for Understanding Pull Request Boundaries decides which adjacent topic is relevant. Understanding Pull Request Boundaries should be compared with Understanding Contribution Refusal, Reading Issue Template Boundaries, Avoiding Unauthorized Repository Operations only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'The useful result of Understanding Pull Request Boundaries public summary limit is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-reporting-limit',
-        title: 'Pull Request Boundaries Reporting Limit',
-        body: [
-          'Understanding Pull Request Boundaries separates the surface that accepts input from the component or document that controls the result. This is especially important when reading pull request boundaries in its documented category crosses a saved value, a renderer output, or a public form. Understanding Pull Request Boundaries uses the fact as reporting limit evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Reporting Limit.',
-          'Recovery or follow-up for Understanding Pull Request Boundaries should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Pull Request Boundaries crosses from reporting limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-distribution-limit',
-        title: 'Pull Request Boundaries Distribution Limit',
-        body: [
-          'The useful result of Understanding Pull Request Boundaries material class is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries. The point matters in distribution limit because reading pull request boundaries in its documented category can otherwise be mistaken for moving the topic outside its confirmed boundary. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Distribution Limit.',
-          'The main confusion risk in Understanding Pull Request Boundaries is moving the topic outside its confirmed boundary. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding Pull Request Boundaries distribution limit is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-ai-use-limit',
-        title: 'Pull Request Boundaries AI Use Limit',
-        body: [
-          'The relevant state is constrained by the article category: Legal treats this topic as license and public-policy orientation. Understanding Pull Request Boundaries uses the fact as ordinary use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Ordinary Use. For Understanding Pull Request Boundaries, that fact identifies the first concrete boundary for ai use limit: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / AI Use Limit.',
-          'Reportable evidence for Understanding Pull Request Boundaries should be small, concrete, and public. the exact public legal text, affected material category, proposed use, restriction, third-party status, and whether the question concerns ordinary use or a restricted use is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the ai use limit part of Understanding Pull Request Boundaries should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-evidence',
-        title: 'Pull Request Boundaries Legal Evidence',
-        body: [
-          'Ownership in Understanding Pull Request Boundaries is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. For Understanding Pull Request Boundaries, that fact identifies the first concrete boundary for legal evidence: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Legal Evidence.',
-          'Adjacent pages matter for Understanding Pull Request Boundaries, but adjacency does not move authority. Understanding Pull Request Boundaries should be compared with Understanding Contribution Refusal, Reading Issue Template Boundaries, Avoiding Unauthorized Repository Operations only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the legal evidence part of Understanding Pull Request Boundaries should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-related-legal',
-        title: 'Pull Request Boundaries Related Legal',
-        body: [
-          'Use ordinary use to keep Understanding Pull Request Boundaries tied to Reporting and Contributions; use a related page only when the reader needs a different owner. That reading gives Understanding Pull Request Boundaries a public anchor for related legal without adding behavior that the current category does not own. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Related Legal.',
-          'The public boundary for Understanding Pull Request Boundaries is part of the article, not an afterthought. It does not grant extra permission, waive restrictions, replace the controlling text, or provide legal advice. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Understanding Pull Request Boundaries related legal is a bounded explanation of pull request boundaries: enough detail to act, and enough restraint to avoid claims outside Contribution Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-reader-risk',
-        title: 'Pull Request Boundaries Reader Risk',
-        body: [
-          'Local authorized work can still create commits or diffs for the user, but that is separate from accepting unsolicited public pull requests. Understanding Pull Request Boundaries uses the fact as restricted use evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Restricted Use. For Understanding Pull Request Boundaries, that fact identifies the first concrete boundary for reader risk: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Reader Risk.',
-          'An operator reading Understanding Pull Request Boundaries should follow legal reading starts with material classification, moves to controlling text, and keeps summaries subordinate to the legal source. That order prevents a visible result from being treated as the first source of truth.',
-          'When Understanding Pull Request Boundaries crosses from reader risk into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-non-advice',
-        title: 'Pull Request Boundaries Non-Advice Boundary',
-        body: [
-          'Visible feedback for Understanding Pull Request Boundaries should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Legal / Reporting and Contributions / Contribution Boundaries. For Understanding Pull Request Boundaries, that fact identifies the first concrete boundary for non-advice boundary: the root LICENSE, third-party license files, public policy files, issue templates, and controlling legal text. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Non-Advice Boundary.',
-          'Implementation limits for Understanding Pull Request Boundaries keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the non-advice boundary part of Understanding Pull Request Boundaries should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-public-summary',
-        title: 'Pull Request Boundaries Public Summary',
-        body: [
-          'Pull requests are not an accepted contribution path for Ludoxel. A public pull request can be closed without review under the repository policy. In Understanding Pull Request Boundaries, public summary is the difference between reading pull request boundaries and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Public Summary.',
-          'The summary value of Understanding Pull Request Boundaries is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Pull Request Boundaries should not use public summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-pull-request-boundaries-closing-check',
-        title: 'Pull Request Boundaries Closing Check',
-        body: [
-          'Authority Scope defines the useful size of Understanding Pull Request Boundaries. The article should be broad enough to explain pull request boundaries, but narrow enough that moving the topic outside its confirmed boundary remains outside the conclusion. Understanding Pull Request Boundaries uses the fact as closing check evidence, then keeps the explanation inside Legal rather than turning it into a project-wide claim. The local reading frame is Understanding Pull Request Boundaries / Reporting and Contributions / Contribution Boundaries / Closing Check.',
-          'A final check for Understanding Pull Request Boundaries should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding Pull Request Boundaries tied to Reporting and Contributions; use a related page only when the reader needs a different owner.',
+          [
+            'This article owns the pull-request surface. It does not restate the general ',
+            {
+              kind: 'link',
+              label: 'contribution refusal',
+              href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
+            },
+            ', does not define the public issue categories, and does not resolve derivative-work or redistribution analysis beyond identifying the boundary.',
+          ],
+          'Its conclusion is narrow: a pull request is not an accepted contribution path, may be closed without review, and its creation interface confers no submission permission, no review obligation, no merge expectation, no license amendment, no contribution acceptance, and no right to have the submitted material considered. Material carried in a pull request is treated as Contribution Materials.',
         ],
       },
     ],
-    relatedTitles: ['Understanding Contribution Refusal', 'Reading Issue Template Boundaries', 'Avoiding Unauthorized Repository Operations'],
+    relatedTitles: [
+      'Understanding Contribution Refusal',
+      'Understanding Public Issue Limits',
+      'Understanding Derivative Work Restrictions',
+      'Reading Contribution Policy',
+      'Reading Issue Template Boundaries',
+      'Avoiding Unauthorized Repository Operations',
+    ],
   }),
 ];
