@@ -1,7 +1,7 @@
 Ludoxel Independent License
 LicenseRef-All-Rights-Reserved
 
-Version: 2.4.0
+Version: 2.5.0
 Original Effective Date: 2026-06-03
 Current Version Effective Date: 2026-06-19
 
@@ -23,6 +23,14 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 * "Licensor" means Kento Konishi, also written in Japanese as
   小西拳斗, who owns or controls the Original Materials and is the
   only person granting the permissions stated in this License.
+
+* "Signed Written Permission" means a later written instrument signed
+  by the Licensor that expressly identifies the permitted act, the
+  permitted materials, the permitted party, the permitted scope, and
+  any applicable conditions. Public availability, platform terms,
+  repository settings, documentation statements, issue responses,
+  metadata, build instructions, silence, or technical access do not
+  constitute Signed Written Permission.
 
 * "Maintainer" means the Licensor acting in the capacity of
   administering the Repository, including triaging a Public Issue
@@ -77,6 +85,14 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   the Repository, whether viewed through a browser, accessed through a
   hosting service, downloaded, cloned, forked, mirrored, archived,
   copied, indexed, or otherwise accessed.
+
+* "Access Path" means any technical, public, repository, website,
+  hosting-service, package, preview, cache, index, or interface route
+  through which Repository Contents, the Documentation Site, the
+  Original Materials, Distribution Materials, or any derived material
+  can be viewed, reached, obtained, rendered, cached, copied, indexed,
+  archived, downloaded, cloned, forked, diffed, packaged, previewed,
+  built, or displayed.
 
 * "Source Form" means the preferred or customary form of a Work for
   human reading, review, editing, maintenance, verification, or
@@ -272,11 +288,17 @@ License, BSD License, GPL, AGPL, LGPL, MPL, Creative Commons license,
 public-domain dedication, or any other standardized open source, free
 software, public-content, permissive, or community license.
 
-No public visibility of the Repository, availability of Source Form,
-existence of Object Form, package metadata, technical accessibility,
-Documentation Site publication, static-site deployment, preview
-deployment, or hosting-service feature grants any right except the
-rights expressly granted in this License.
+No Access Path, public visibility of the Repository, availability of
+Source Form, existence of Object Form, package metadata, technical
+accessibility, Documentation Site publication, static-site deployment,
+preview deployment, browser rendering, cache, search index, action
+artifact, package view, issue form, pull request form, or
+hosting-service feature grants any right except the rights expressly
+granted in this License.
+
+No Access Path creates waiver, amendment, sublicense, estoppel,
+defense, permission by implication, or permission to circumvent this
+License.
 
 3. Limited Grant
 
@@ -301,6 +323,13 @@ repository, product, service, dataset, model, benchmark, index,
 library, template collection, website, documentation site, or
 comparable material.
 
+Code blocks, command examples, configuration examples, article text,
+legal notices, interface text, generated documentation, source files,
+static-site output, and package metadata are included in this limited
+grant only to the extent they are viewed under Section 3. Their public
+display does not permit copying, modification, extraction,
+republication, redistribution, deployment, or AI Use.
+
 An unavoidable temporary technical copy created solely by a browser,
 proxy, cache, network system, static-site host, or hosting-service
 display mechanism as an incidental consequence of viewing Repository
@@ -316,13 +345,14 @@ rights in the Original Materials are reserved by the Licensor.
 
 No right is granted by implication, estoppel, repository visibility,
 technical accessibility, platform functionality, Documentation Site
-availability, website deployment, course of dealing, silence, failure
-to object, availability of Repository Contents, or existence of
+availability, website deployment, browser rendering, cache, search
+indexing, package display, issue-form availability, pull-request-form
+availability, action artifact availability, course of dealing, silence,
+failure to object, availability of Repository Contents, or existence of
 Distribution Materials.
 
 Any Use of the Original Materials outside Section 3 is prohibited
-unless separately authorized in a written instrument signed by the
-Licensor.
+unless separately authorized by Signed Written Permission.
 
 5. Excluded Uses
 
@@ -332,9 +362,10 @@ restructuring, refactoring, optimization, compilation, bundling,
 embedding, publication, distribution, transmission, sublicensing,
 sale, rental, lending, hosting, deployment, incorporation, resource
 extraction, asset extraction, website cloning, website mirroring,
-scraping, crawling, reverse engineering, decompilation, disassembly,
-and preparation of Derivative Works, except to the extent a
-restriction cannot be enforced under applicable law.
+scraping, crawling, search indexing, dataset creation, benchmark
+creation, reverse engineering, decompilation, disassembly, and
+preparation of Derivative Works, except to the extent a restriction
+cannot be enforced under applicable law.
 
 The Licensee must not conduct AI Use. This exclusion applies regardless
 of whether the relevant material is used as input data, training data,
@@ -370,8 +401,16 @@ recorded, or processed through Ludoxel.
 
 Subject to this License and applicable third-party rights, the
 Licensee may use, reproduce, publish, and share the Licensee's own
-User-Created Materials and Application Output created through Ordinary
-Application Use.
+independently created portions of User-Created Materials and
+Application Output created through Ordinary Application Use.
+
+This permission does not convert Application Output into Original
+Materials, does not cleanse embedded protected material, does not
+relicense Third-Party Materials, does not confirm provenance of
+Provenance-Sensitive Materials, and does not grant any right to reuse,
+extract, publish, redistribute, train on, or otherwise Use the
+underlying Original Materials except to the extent Section 3 expressly
+permits.
 
 If User-Created Materials or Application Output contain any material
 part of the Original Materials, Third-Party Materials,
@@ -485,13 +524,24 @@ Materials published by any other party is not an Official Distribution
 and is not endorsed by the Licensor, even when derived from the
 Current Repository.
 
-A party authorized to distribute or deploy Distribution Materials is
-responsible for confirming that the distribution or deployment remains
-authorized, that all required legal materials are included or retained,
-that Third-Party Materials may be redistributed or deployed under
-their applicable Third-Party License Text, and that
-Provenance-Sensitive Materials are not distributed or deployed without
-confirmed permission.
+Build instructions, package scripts, release tooling, continuous
+integration output, static-site generation, dependency metadata,
+license-file inclusion, and technical ability to produce Distribution
+Materials do not grant distribution permission, deployment permission,
+republication permission, or redistribution permission.
+
+A non-Licensor party that has received Signed Written Permission to
+distribute or deploy particular Distribution Materials remains
+responsible for proving that the proposed act stays within the granted
+scope, that all required legal materials are included or retained, that
+Third-Party Materials may lawfully be redistributed or deployed under
+their applicable Third-Party License Text, and that no
+Provenance-Sensitive Materials are distributed or deployed without
+confirmed provenance and confirmed permission.
+
+Signed Written Permission to distribute or deploy particular
+Distribution Materials does not make those materials an Official
+Distribution unless the written instrument expressly states that status.
 
 10. Documentation Site and Hosting
 
@@ -519,9 +569,10 @@ database-right license, trade-secret license, website republication
 license, or any other permission from the Licensor beyond Section 3.
 
 A Documentation Site build, preview deployment, production deployment,
-cache, screenshot, generated static file, indexed excerpt, or browser
-display does not authorize Use of the Original Materials outside
-Section 3.
+cache, screenshot, generated static file, indexed excerpt, browser
+display, route transition, search result, public URL, embedded asset,
+or rendered page does not authorize Use of the Original Materials
+outside Section 3.
 
 11. GitHub Platform Terms
 
@@ -539,6 +590,10 @@ A fork, clone, download, archive, Public Issue, pull request, action
 run, release, package, diff, patch view, website preview, or other
 hosting-service feature does not authorize Use of the Original
 Materials outside Section 3.
+
+Those features do not amend this License, waive a License term, create
+a sublicense, create estoppel, create a defense to breach, or supply a
+permitted route around the restrictions stated in this License.
 
 12. Termination
 
@@ -612,16 +667,21 @@ law.
 
 The License Text is the controlling text for the Original Materials.
 
-If README descriptions, package metadata, SPDX headers,
-generated-file markings, summaries, translations, issue text, pull
-request text, release text, documentation, Documentation Site content,
-generated documentation, application user interface text, website user
-interface text, or other repository statements conflict with the
-License Text, the License Text controls for the Original Materials.
+README descriptions, package metadata, SPDX headers, generated-file
+markings, summaries, translations, issue text, pull request text,
+release text, documentation, Documentation Site content, generated
+documentation, Legal-category articles, application user interface
+text, website user interface text, and other repository statements are
+subordinate to the License Text for the Original Materials.
+
+If a subordinate statement is broader, narrower, softer, incomplete,
+ambiguous, inconsistent, mistranslated, operationally convenient, or
+otherwise in tension with the License Text, the License Text controls
+for the Original Materials.
 
 No statement outside this License grants any permission to Use the
 Original Materials unless that statement expressly amends this License
-through a later written instrument signed by the Licensor.
+through Signed Written Permission.
 
 17. Severability and Non-Waiver
 
@@ -706,3 +766,11 @@ other right, remedy, claim, or protection.
   redistribution, scraping, mirroring, deployment, or AI Use rights;
   and preserved the all-rights-reserved control of the Original
   Materials.
+
+* Version 2.5.0, effective 2026-06-19, aligned the License with the
+  Legal documentation by defining Signed Written Permission and Access
+  Path; strengthening public-access, controlling-text,
+  generated-output, distribution-permission, Documentation Site,
+  hosting-service, GitHub Platform Terms, and anti-circumvention
+  language; and preserving the all-rights-reserved control of the
+  Original Materials.
