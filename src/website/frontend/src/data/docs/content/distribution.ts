@@ -11,154 +11,64 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Platform Packages',
     title: 'Understanding the Windows Executable',
     description:
-      'Explains the Windows desktop package boundary and included runtime materials. This page treats window composition as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the Windows one-file desktop artifact as a PyInstaller output, identifies the concrete files and build stages that constitute the artifact, and separates artifact inspection from any legal conclusion about permission, release status, or endorsement.',
     sections: [
       {
-        id: 'understanding-the-windows-executable-artifact-scope',
-        title: 'Windows Executable Artifact Scope',
+        id: 'understanding-the-windows-executable-artifact-boundary',
+        title: 'Windows Executable Artifact Boundary',
         body: [
-          'The Windows executable path is based on PyInstaller packaging with PyQt6, OpenGL runtime resources, package data, native extension handling, shaders, QSS, and legal material. For Understanding the Windows Executable, that fact identifies the first concrete boundary for artifact scope: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Artifact Scope.',
-          'Artifact Scope defines the useful size of Understanding the Windows Executable. The article should be broad enough to explain window composition, but narrow enough that treating a rendered label as the saved schema remains outside the conclusion.',
-          'When Understanding the Windows Executable crosses from artifact scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The Windows desktop artifact is the one-file PyInstaller executable published as dist/windows/Ludoxel.exe. That file is the operational package produced from the Ludoxel Python entry point, the collected package data, the bundled application resources, the selected Windows icon candidate, and the hidden bootstrap imports required by the application startup path. It is not an installer, not a store package, not a repository archive, and not an official-release declaration by its physical form alone.',
+          'This article treats the executable as a build artifact. The relevant questions are whether the file was produced by the intended Windows build path, whether the expected project inputs were present, whether legal and third-party material was copied beside the published executable, whether stale onedir output was removed, and whether the build log gives a coherent account of the generated file. Those questions are technical and evidentiary; they do not decide whether a party may distribute the file.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run build:desktop -- windows\nnpm run build:windows',
+            caption: 'Windows build entry points exposed by package scripts.',
+          },
         ],
       },
       {
-        id: 'understanding-the-windows-executable-platform-owner',
-        title: 'Windows Executable Platform Owner',
+        id: 'understanding-the-windows-executable-pyinstaller-inputs',
+        title: 'Windows PyInstaller Inputs',
         body: [
-          'Artifact Scope defines the useful size of Understanding the Windows Executable. The article should be broad enough to explain window composition, but narrow enough that treating a rendered label as the saved schema remains outside the conclusion. That reading gives Understanding the Windows Executable a public anchor for platform owner without adding behavior that the current category does not own. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Platform Owner.',
-          'A direct observation for Understanding the Windows Executable should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'The useful result of Understanding the Windows Executable platform owner is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
+          'The Windows command is built around src/ludoxel/__main__.py, adds the project src directory to the Python path, collects Ludoxel package data, and uses PyInstaller one-file mode under the application name Ludoxel. Common optional data arguments include assets, src, LICENSE, and third-party. The Windows icon is selected from the configured .ico candidates when a candidate exists, and the application bootstrap modules are added as hidden imports so the packaged entry point can resolve the startup path consistently.',
+          'The Windows package therefore depends on more than the top-level executable byte stream. A coherent artifact must be traceable back to the configured entry script, the source and package-data collection rules, the resource roots that the runtime expects, and the legal material copy step. A copied executable with no corresponding build log, no retained legal material, or no evidence of the configured PyInstaller path is only a loose binary, not a confirmed Ludoxel Windows distribution artifact.',
+        ],
+        codeBlocks: [
+          {
+            language: 'yaml',
+            code: 'entry: src/ludoxel/__main__.py\npublish directory: dist/windows\npublished executable: dist/windows/Ludoxel.exe\ncommon data roots: assets, src, LICENSE, third-party',
+            caption: 'Material Windows artifact coordinates.',
+          },
         ],
       },
       {
-        id: 'understanding-the-windows-executable-build-command',
-        title: 'Windows Executable Build Command',
+        id: 'understanding-the-windows-executable-publication-step',
+        title: 'Publication Step and Lock Handling',
         body: [
-          'When Understanding the Windows Executable crosses from artifact scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Understanding the Windows Executable a public anchor for build command without adding behavior that the current category does not own. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Build Command.',
-          'Understanding the Windows Executable separates the surface that accepts input from the component or document that controls the result. This is especially important when reading the visible desktop surface crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding the Windows Executable build command is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
+          'The Windows service publishes from a tokenized PyInstaller staging directory into dist/windows. Before publication, obsolete dist/windows/Ludoxel onedir output is removed so an older directory package does not coexist with the one-file executable and mislead a later inspection. The publication step then copies legal material into the staging directory, copies the staged executable to dist/windows/Ludoxel.exe, and copies legal material into the published directory as well.',
+          'A locked published executable is handled as a technical file-system condition, not as a successful replacement. If Windows reports EPERM, EBUSY, or EACCES while replacing the published executable, the staged executable is preserved and the log identifies the locked publish target. The retained staging file may be useful for diagnosis, but the presence of a staged executable does not prove that the intended public-facing artifact was replaced in dist/windows.',
         ],
       },
       {
-        id: 'understanding-the-windows-executable-included-resources',
-        title: 'Windows Executable Included Resources',
+        id: 'understanding-the-windows-executable-inspection-method',
+        title: 'Inspection Method',
         body: [
-          'Understanding the Windows Executable should be read as conceptual boundary for the windows executable within Desktop Artifacts and Platform Packages. The fact also tells the reader which evidence to preserve for included resources: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Included Resources.',
-          'Ownership in Understanding the Windows Executable is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'A public report based on the included resources part of Understanding the Windows Executable should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'A Windows artifact should be inspected from the outside inward. The first layer is the command log: it should show the PyInstaller invocation, the tokenized work, spec, and staging roots, and the final publication line for dist/windows/Ludoxel.exe. The second layer is the file system: dist/windows should contain the executable and the copied legal material. The third layer is the repository-state evidence: package, legal, resource, and shader checks should be read as separate signals, not collapsed into a single release verdict.',
+          'A dry-run command can confirm the intended PyInstaller command without producing or replacing the artifact. That is useful when reviewing path construction, icon selection, and data arguments, but it is not a substitute for a completed build. Conversely, a completed executable without the expected copied legal material remains defective as a distribution artifact even if the binary launches locally.',
         ],
       },
       {
-        id: 'understanding-the-windows-executable-native-or-runtime',
-        title: 'Windows Executable Native or Runtime Path',
+        id: 'understanding-the-windows-executable-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Understanding the Windows Executable should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. The point matters in native or runtime path because reading the visible desktop surface can otherwise be mistaken for treating a rendered label as the saved schema. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Native or Runtime Path.',
-          'Visible feedback for Understanding the Windows Executable should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Platform Packages.',
-          'The useful result of Understanding the Windows Executable native or runtime path is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-legal-materials',
-        title: 'Windows Executable Legal Materials',
-        body: [
-          'The useful result of Understanding the Windows Executable platform owner is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages. The fact also tells the reader which evidence to preserve for legal materials: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Legal Materials.',
-          'When Understanding the Windows Executable touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the legal materials part of Understanding the Windows Executable should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-check-output',
-        title: 'Windows Executable Check Output',
-        body: [
-          'A packaged executable still uses the application runtime data root for user state. It should not write normal saves into the installed executable directory. That reading gives Understanding the Windows Executable a public anchor for check output without adding behavior that the current category does not own. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Check Output.',
-          'The surrounding context for Understanding the Windows Executable decides which adjacent topic is relevant. Understanding the Windows Executable should be compared with Running Package Checks with Permission, Including License Text, Supplying Platform Evidence only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'The useful result of Understanding the Windows Executable check output is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-local-artifact',
-        title: 'Windows Executable Local Artifact',
-        body: [
-          'Understanding the Windows Executable separates the surface that accepts input from the component or document that controls the result. This is especially important when reading the visible desktop surface crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for local artifact: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Local Artifact.',
-          'Recovery or follow-up for Understanding the Windows Executable should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the local artifact part of Understanding the Windows Executable should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-release-language',
-        title: 'Windows Executable Release Language',
-        body: [
-          'The useful result of Understanding the Windows Executable build command is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages. In Understanding the Windows Executable, release language is the difference between reading window composition and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Release Language.',
-          'The main confusion risk in Understanding the Windows Executable is treating a rendered label as the saved schema. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'If the available evidence for release language does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding the Windows Executable should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-failure-reading',
-        title: 'Windows Executable Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. That reading gives Understanding the Windows Executable a public anchor for failure reading without adding behavior that the current category does not own. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Failure Reading.',
-          'Reportable evidence for Understanding the Windows Executable should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Understanding the Windows Executable failure reading is a bounded explanation of window composition: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-privacy',
-        title: 'Windows Executable Build Privacy',
-        body: [
-          'Ownership in Understanding the Windows Executable is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. In Understanding the Windows Executable, build privacy is the difference between reading window composition and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Build Privacy.',
-          'Adjacent pages matter for Understanding the Windows Executable, but adjacency does not move authority. Understanding the Windows Executable should be compared with Running Package Checks with Permission, Including License Text, Supplying Platform Evidence only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for build privacy does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding the Windows Executable should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-related-distribution',
-        title: 'Windows Executable Related Distribution',
-        body: [
-          'A public report based on the included resources part of Understanding the Windows Executable should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for related distribution: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Related Distribution.',
-          'The public boundary for Understanding the Windows Executable is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the related distribution part of Understanding the Windows Executable should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-policy-limit',
-        title: 'Windows Executable Policy Limit',
-        body: [
-          'When diagnosing a Windows package, collect public OS, Python or package context, GPU/OpenGL information, package path, and relevant check output without sharing private local files. In Understanding the Windows Executable, policy limit is the difference between reading window composition and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Policy Limit.',
-          'An operator reading Understanding the Windows Executable should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'Understanding the Windows Executable should not use policy limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-operator-summary',
-        title: 'Windows Executable Operator Summary',
-        body: [
-          'Visible feedback for Understanding the Windows Executable should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Platform Packages. In Understanding the Windows Executable, operator summary is the difference between reading window composition and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Operator Summary.',
-          'Implementation limits for Understanding the Windows Executable keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for operator summary does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding the Windows Executable should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-platform-limit',
-        title: 'Windows Executable Platform Limit',
-        body: [
-          'The Windows executable path is based on PyInstaller packaging with PyQt6, OpenGL runtime resources, package data, native extension handling, shaders, QSS, and legal material. The fact also tells the reader which evidence to preserve for platform limit: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Platform Limit.',
-          'The summary value of Understanding the Windows Executable is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use platform limit to keep Understanding the Windows Executable tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-the-windows-executable-closing-check',
-        title: 'Windows Executable Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Understanding the Windows Executable. The article should be broad enough to explain window composition, but narrow enough that treating a rendered label as the saved schema remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the Windows Executable / Desktop Artifacts / Platform Packages / Closing Check.',
-          'A final check for Understanding the Windows Executable should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Understanding the Windows Executable should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'This article does not grant permission to distribute the executable, does not declare the executable to be an official release, does not clear third-party material, and does not decide whether a recipient may mirror, upload, redistribute, or repackage it. Those conclusions belong to the controlling License Text or to a later competent written instrument. The Distribution function here is narrower: it gives the technical criteria for recognizing and inspecting the Windows executable artifact after authority has already been settled elsewhere.',
+          'The correct use of this article is therefore evidentiary. It tells the reader what a Windows artifact is, how the build path constructs it, which surrounding files matter, and which build-output facts must be read before anyone describes the artifact publicly. It does not turn successful local execution into authorization.',
         ],
       },
     ],
-    relatedTitles: ['Running Package Checks with Permission', 'Including License Text', 'Supplying Platform Evidence'],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Including License Text', 'Understanding Distribution Materials'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -166,1393 +76,589 @@ export const distributionPages: DocsPageContent[] = [
     group: 'Platform Packages',
     title: 'Understanding the macOS Application Bundle',
     description:
-      'Explains the macOS desktop bundle boundary and WGPU-oriented runtime path. This page treats desktop distribution evidence as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the macOS .app bundle as the platform-specific PyInstaller output for Ludoxel, including bundle identity, WGPU and Metal-oriented runtime inclusion, resource verification, ad-hoc signing, and the line between local packaging and release work.',
     sections: [
       {
-        id: 'understanding-the-macos-application-bundle-artifact-scope',
-        title: 'macOS Application Bundle Artifact Scope',
+        id: 'understanding-the-macos-application-bundle-artifact-boundary',
+        title: 'macOS Bundle Artifact Boundary',
         body: [
-          'The macOS bundle uses platform-specific packaging behavior with PyQt6, WGPU, rendercanvas, shader sources, package resources, theme data, and legal material. For Understanding the macOS Application Bundle, that fact identifies the first concrete boundary for artifact scope: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Artifact Scope.',
-          'Artifact Scope defines the useful size of Understanding the macOS Application Bundle. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion.',
-          'A public report based on the artifact scope part of Understanding the macOS Application Bundle should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The macOS desktop artifact is a Ludoxel.app bundle published under dist/macos. It is generated through PyInstaller windowed mode, named Ludoxel, and configured with the bundle identifier com.kentokonishi.ludoxel. The artifact is not a bare executable: its technical identity is distributed across Contents/MacOS, Contents/Resources, Contents/Frameworks, Info.plist, bundled resources, copied legal material, the Python shared-library link, and the final signature state of the bundle.',
+          'That structure gives the macOS article a different subject from the Windows executable article. Windows inspection can focus on a one-file executable and its neighboring legal material. macOS inspection must treat the bundle as a directory-shaped application container whose executable, metadata, icon, Python runtime linkage, renderer dependencies, resource locations, and signature verification all participate in the artifact.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run build:desktop -- macos\nnpm run build:macos\nnpm run build:macos:check',
+            caption: 'macOS build and packaging-check entry points.',
+          },
         ],
       },
       {
-        id: 'understanding-the-macos-application-bundle-platform-owner',
-        title: 'macOS Application Bundle Platform Owner',
+        id: 'understanding-the-macos-application-bundle-renderer-path',
+        title: 'Renderer and Runtime Path',
         body: [
-          'Artifact Scope defines the useful size of Understanding the macOS Application Bundle. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. The point matters in platform owner because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Platform Owner.',
-          'A direct observation for Understanding the macOS Application Bundle should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'The useful result of Understanding the macOS Application Bundle platform owner is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
+          'The macOS build path is specific to the WGPU and Metal-oriented renderer route. The PyInstaller command collects wgpu and rendercanvas, adds hidden imports for wgpu.backends.wgpu_native, rendercanvas.qt, rendercanvas.pyqt6, and the macOS cursor helper, and requires the Darwin-only runtime dependencies to be present in the project configuration. This is not an ornamental packaging detail: without those inputs, the packaged application may exist while the renderer path or gameplay mouse-capture helper is materially incomplete.',
+          'The bundle check also verifies macOS-specific project inputs before build execution. It requires the entry script, package metadata, pyproject metadata, bundled source and assets roots, the default Alex skin, legal material, font assets, and WGPU source paths. The resulting documentable fact is not merely that PyInstaller ran; the fact is that a known macOS runtime envelope was constructed for the renderer path that Ludoxel expects on macOS.',
         ],
       },
       {
-        id: 'understanding-the-macos-application-bundle-build-command',
-        title: 'macOS Application Bundle Build Command',
+        id: 'understanding-the-macos-application-bundle-plist-signature',
+        title: 'Info.plist and Signature Verification',
         body: [
-          'A public report based on the artifact scope part of Understanding the macOS Application Bundle should state the action, expected result, actual result, environment, and any redaction needed before sharing. The point matters in build command because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Build Command.',
-          'Understanding the macOS Application Bundle separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding the macOS Application Bundle build command is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
+          'After PyInstaller produces the staged bundle, the macOS service patches Info.plist so the bundle name, display name, bundle identifier, executable name, short version, bundle version, icon file, and input-monitoring usage description match the Ludoxel package identity. Those fields are not marketing copy. They are part of the bundle identity that macOS, diagnostic tools, users, and release operators read when deciding whether a directory is the intended application bundle.',
+          'The service performs ad-hoc signing, verifies the bundle with codesign, copies the verified staged bundle into dist/macos, signs the published bundle again, and verifies it again. This establishes local bundle integrity for the produced artifact. It does not perform notarization and does not convert a local build into a public release. Notarization, distribution-channel preparation, and final public release authority remain outside this tool path.',
         ],
       },
       {
-        id: 'understanding-the-macos-application-bundle-included-resources',
-        title: 'macOS Application Bundle Included Resources',
+        id: 'understanding-the-macos-application-bundle-resource-verification',
+        title: 'Resource Verification',
         body: [
-          'Understanding the macOS Application Bundle should be read as conceptual boundary for the macos application bundle within Desktop Artifacts and Platform Packages. For Understanding the macOS Application Bundle, that fact identifies the first concrete boundary for included resources: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Included Resources.',
-          'Ownership in Understanding the macOS Application Bundle is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'A public report based on the included resources part of Understanding the macOS Application Bundle should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'A macOS artifact is incomplete if the directory exists but required bundled resources are absent. The service verifies the Python framework link, Info.plist identity fields, at least one bundled .icns icon under Contents/Resources, the default Alex skin at an accepted bundled resource location, and each required Minecraft and Kaisei font asset. It then copies legal material beside the published application bundle in dist/macos.',
+          'The accepted resource locations reflect the practical variation in PyInstaller bundle layout. The check accepts either Contents/Frameworks or Contents/Resources for several bundled assets because PyInstaller may place collected data under different internal bundle roots. That tolerance is not a license to omit the asset; it is a recognition that the same required file may be packaged under more than one valid macOS container location.',
+        ],
+        codeBlocks: [
+          {
+            language: 'yaml',
+            code: 'publish directory: dist/macos\npublished bundle: dist/macos/Ludoxel.app\nbundle identifier: com.kentokonishi.ludoxel\nrequired app executable: Contents/MacOS/Ludoxel',
+            caption: 'Material macOS bundle coordinates.',
+          },
         ],
       },
       {
-        id: 'understanding-the-macos-application-bundle-native-or-runtime',
-        title: 'macOS Application Bundle Native or Runtime Path',
+        id: 'understanding-the-macos-application-bundle-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Understanding the macOS Application Bundle should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. That reading gives Understanding the macOS Application Bundle a public anchor for native or runtime path without adding behavior that the current category does not own. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Native or Runtime Path.',
-          'Visible feedback for Understanding the macOS Application Bundle should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Platform Packages.',
-          'The useful result of Understanding the macOS Application Bundle native or runtime path is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-legal-materials',
-        title: 'macOS Application Bundle Legal Materials',
-        body: [
-          'The useful result of Understanding the macOS Application Bundle platform owner is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages. Understanding the macOS Application Bundle uses the fact as legal materials evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Legal Materials.',
-          'When Understanding the macOS Application Bundle touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'When Understanding the macOS Application Bundle crosses from legal materials into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-check-output',
-        title: 'macOS Application Bundle Check Output',
-        body: [
-          'macOS rendering should be checked against the WGPU backend and compared with OpenGL contract expectations when diagnosing parity issues. That reading gives Understanding the macOS Application Bundle a public anchor for check output without adding behavior that the current category does not own. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Check Output.',
-          'The surrounding context for Understanding the macOS Application Bundle decides which adjacent topic is relevant. Understanding the macOS Application Bundle should be compared with Understanding WGPU Rendering, Running Package Checks with Permission, Supplying Platform Evidence only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for check output does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding the macOS Application Bundle should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-local-artifact',
-        title: 'macOS Application Bundle Local Artifact',
-        body: [
-          'Understanding the macOS Application Bundle separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for local artifact: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Local Artifact.',
-          'Recovery or follow-up for Understanding the macOS Application Bundle should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use local artifact to keep Understanding the macOS Application Bundle tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-release-language',
-        title: 'macOS Application Bundle Release Language',
-        body: [
-          'The useful result of Understanding the macOS Application Bundle build command is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages. The point matters in release language because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Release Language.',
-          'The main confusion risk in Understanding the macOS Application Bundle is describing local output as official release authority. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding the macOS Application Bundle release language is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-failure-reading',
-        title: 'macOS Application Bundle Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. The point matters in failure reading because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Failure Reading.',
-          'Reportable evidence for Understanding the macOS Application Bundle should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Understanding the macOS Application Bundle failure reading is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-privacy',
-        title: 'macOS Application Bundle Build Privacy',
-        body: [
-          'Ownership in Understanding the macOS Application Bundle is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. That reading gives Understanding the macOS Application Bundle a public anchor for build privacy without adding behavior that the current category does not own. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Build Privacy.',
-          'Adjacent pages matter for Understanding the macOS Application Bundle, but adjacency does not move authority. Understanding the macOS Application Bundle should be compared with Understanding WGPU Rendering, Running Package Checks with Permission, Supplying Platform Evidence only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for build privacy does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding the macOS Application Bundle should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-related-distribution',
-        title: 'macOS Application Bundle Related Distribution',
-        body: [
-          'A public report based on the included resources part of Understanding the macOS Application Bundle should state the action, expected result, actual result, environment, and any redaction needed before sharing. Understanding the macOS Application Bundle uses the fact as related distribution evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Related Distribution.',
-          'The public boundary for Understanding the macOS Application Bundle is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Understanding the macOS Application Bundle crosses from related distribution into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-policy-limit',
-        title: 'macOS Application Bundle Policy Limit',
-        body: [
-          'Useful macOS evidence includes bundle path, OS version, renderer information, package output, and visible symptoms. Keep private files and security details out of public reports. That reading gives Understanding the macOS Application Bundle a public anchor for policy limit without adding behavior that the current category does not own. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Policy Limit.',
-          'An operator reading Understanding the macOS Application Bundle should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'The useful result of Understanding the macOS Application Bundle policy limit is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Platform Packages.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-operator-summary',
-        title: 'macOS Application Bundle Operator Summary',
-        body: [
-          'Visible feedback for Understanding the macOS Application Bundle should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Platform Packages. That reading gives Understanding the macOS Application Bundle a public anchor for operator summary without adding behavior that the current category does not own. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Operator Summary.',
-          'Implementation limits for Understanding the macOS Application Bundle keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for operator summary does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding the macOS Application Bundle should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-platform-limit',
-        title: 'macOS Application Bundle Platform Limit',
-        body: [
-          'The macOS bundle uses platform-specific packaging behavior with PyQt6, WGPU, rendercanvas, shader sources, package resources, theme data, and legal material. The fact also tells the reader which evidence to preserve for platform limit: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Platform Limit.',
-          'The summary value of Understanding the macOS Application Bundle is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'A public report based on the platform limit part of Understanding the macOS Application Bundle should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-the-macos-application-bundle-closing-check',
-        title: 'macOS Application Bundle Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Understanding the macOS Application Bundle. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding the macOS Application Bundle / Desktop Artifacts / Platform Packages / Closing Check.',
-          'A final check for Understanding the macOS Application Bundle should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding the macOS Application Bundle tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
+          'This article describes the local .app artifact and its verification path. It does not claim that the bundle is notarized, accepted by Apple, approved for public download, cleared for redistribution, or legally distributable by any party other than one whose authority is established elsewhere. A signed local bundle is still only a locally produced bundle unless the legal and release-status questions are separately answered.',
+          'The narrow conclusion is that a macOS Ludoxel distribution artifact must be a coherent .app bundle with the expected executable, metadata, resources, renderer-runtime inclusions, signature verification, and copied legal material. Anything less should be described as a failed, partial, or unverified build output rather than as a macOS release.',
         ],
       },
     ],
-    relatedTitles: ['Understanding WGPU Rendering', 'Running Package Checks with Permission', 'Supplying Platform Evidence'],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Running Resource and Shader Checks with Permission', 'Understanding Distribution Materials'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Desktop Artifacts',
-    group: 'Packaged Components',
+    subcategory: 'Runtime Inclusions',
+    group: 'Native and Runtime Materials',
     title: 'Understanding Native Extension Fallbacks',
     description:
-      'Explains why native and Python implementations must keep the same contracts. This page treats hazard handling as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains how native extension artifacts and Python fallback sources are treated during Ludoxel packaging, why missing compiled extensions must be read precisely, and why fallback availability is not a reason to conceal runtime or distribution defects.',
     sections: [
       {
-        id: 'understanding-native-extension-fallbacks-artifact-scope',
-        title: 'Native Extension Fallbacks Artifact Scope',
+        id: 'understanding-native-extension-fallbacks-artifact-boundary',
+        title: 'Native Extension Artifact Boundary',
         body: [
-          'Native acceleration and Python fallback paths must return the same low-level meaning for math, voxel traversal, collision, chunk, or renderer-facing helpers. In Understanding Native Extension Fallbacks, artifact scope is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Artifact Scope. In Understanding Native Extension Fallbacks, artifact scope is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Artifact Scope.',
-          'Artifact Scope defines the useful size of Understanding Native Extension Fallbacks. The article should be broad enough to explain hazard handling, but narrow enough that hiding gameplay state behind a generic crash report remains outside the conclusion.',
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding Native Extension Fallbacks should be treated as an observation rather than a confirmed cause.',
+          'Ludoxel recognizes three native-extension candidates in the current tooling: ray_aabb, voxel_dda, and view_angles. Their module names point into the foundations mathematics packages, and their source paths remain ordinary Python source files under src/ludoxel. The compiled artifacts are recognized by platform suffixes such as .pyd, .so, and .dylib, while the Python source remains the fallback implementation and the semantic reference point for the module contract.',
+          'A native extension in this distribution context is therefore not an independent feature package. It is an acceleration or platform-specific execution artifact for a function that remains tied to a named source module. The distribution question is whether the produced desktop artifact and the surrounding build evidence account for the native state accurately, not whether the mere presence or absence of a compiled binary changes the public legal status of the project.',
         ],
       },
       {
-        id: 'understanding-native-extension-fallbacks-platform-owner',
-        title: 'Native Extension Fallbacks Platform Owner',
+        id: 'understanding-native-extension-fallbacks-build-behavior',
+        title: 'Build Behavior',
         body: [
-          'Artifact Scope defines the useful size of Understanding Native Extension Fallbacks. The article should be broad enough to explain hazard handling, but narrow enough that hiding gameplay state behind a generic crash report remains outside the conclusion. Understanding Native Extension Fallbacks uses the fact as platform owner evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Platform Owner.',
-          'A direct observation for Understanding Native Extension Fallbacks should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'Use platform owner to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
+          'The desktop build path invokes native-extension building before the Windows or macOS package step unless the operator explicitly skips that phase. The native build service collects the source modules, writes a generated Python build script and payload under the build-native tooling area, runs the configured Python executable, and then verifies that compiled artifacts exist when verification is required. A nonzero native build exit code stops the desktop build before PyInstaller packaging proceeds.',
+          'This ordering matters because the packaged application should not silently cross from an optimized native path to a fallback path without evidence. If the operator used --skip-native-build, that choice should remain visible in the build context. If the build attempted native compilation and failed, the failure is not cured by later producing a desktop artifact through some unrelated process.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run build:native\nnpm run build:native:check',
+            caption: 'Native extension build and verification entry points.',
+          },
         ],
       },
       {
-        id: 'understanding-native-extension-fallbacks-build-command',
-        title: 'Native Extension Fallbacks Build Command',
+        id: 'understanding-native-extension-fallbacks-verification-reading',
+        title: 'Verification Reading',
         body: [
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding Native Extension Fallbacks should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for build command: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Build Command.',
-          'Understanding Native Extension Fallbacks separates the surface that accepts input from the component or document that controls the result. This is especially important when reading health, fall, and void consequences crosses a saved value, a renderer output, or a public form.',
-          'Use build command to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
+          'Native verification prints each native source, its module name, the source path, and the compiled extension files found for that source. When no compiled extension is present, the verifier explicitly states that no compiled extension exists and that the Python fallback source exists. If --require-built is supplied and any source lacks a compiled binary, verification fails and names the missing compiled extension by source id and module name.',
+          'That distinction is the article’s practical center. No compiled extension is not the same as no implementation. A Python fallback is not the same as a successful native build. A successful native build is not the same as release permission. Each statement belongs to a different evidentiary layer, and a distribution document must not flatten those layers into a single comforting status word.',
         ],
       },
       {
-        id: 'understanding-native-extension-fallbacks-included-resources',
-        title: 'Native Extension Fallbacks Included Resources',
+        id: 'understanding-native-extension-fallbacks-package-effect',
+        title: 'Package Effect',
         body: [
-          'Understanding Native Extension Fallbacks should be read as conceptual boundary for native extension fallbacks within Desktop Artifacts and Packaged Components. Understanding Native Extension Fallbacks uses the fact as platform owner evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Platform Owner. In Understanding Native Extension Fallbacks, included resources is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Included Resources.',
-          'Ownership in Understanding Native Extension Fallbacks is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'If the available evidence for included resources does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding Native Extension Fallbacks should be treated as an observation rather than a confirmed cause.',
+          'A desktop package may launch through fallback code when native binaries are absent, but distribution inspection must still record the native state accurately. The package evidence should identify whether native building was run, whether verification was required, which compiled suffixes were found, and whether the PyInstaller command collected the Ludoxel package data from a source tree that still contains the fallback modules.',
+          'The package effect is therefore not binary. The artifact may be runnable, yet still fail a native-build requirement imposed for a particular distribution candidate. Conversely, the artifact may satisfy native verification while still fail legal-material inclusion, shader validation, resource-root checks, or release-language constraints. Native verification is one axis of distribution evidence, not a universal pass.',
         ],
       },
       {
-        id: 'understanding-native-extension-fallbacks-native-or-runtime',
-        title: 'Native Extension Fallbacks Native or Runtime Path',
+        id: 'understanding-native-extension-fallbacks-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Understanding Native Extension Fallbacks should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for native or runtime path: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Native or Runtime Path.',
-          'Visible feedback for Understanding Native Extension Fallbacks should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Packaged Components.',
-          'A public report based on the native or runtime path part of Understanding Native Extension Fallbacks should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-legal-materials',
-        title: 'Native Extension Fallbacks Legal Materials',
-        body: [
-          'Use platform owner to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner. In Understanding Native Extension Fallbacks, legal materials is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Legal Materials.',
-          'When Understanding Native Extension Fallbacks touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Native Extension Fallbacks should not use legal materials to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-check-output',
-        title: 'Native Extension Fallbacks Check Output',
-        body: [
-          'Desktop builds need the correct native extension or a valid fallback path. A missing native module should not silently change gameplay semantics. Understanding Native Extension Fallbacks uses the fact as check output evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Check Output.',
-          'The surrounding context for Understanding Native Extension Fallbacks decides which adjacent topic is relevant. Understanding Native Extension Fallbacks should be compared with Running Desktop Builds with Permission, Reading Build Output, Running Resource and Shader Checks with Permission only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use check output to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-local-artifact',
-        title: 'Native Extension Fallbacks Local Artifact',
-        body: [
-          'Understanding Native Extension Fallbacks separates the surface that accepts input from the component or document that controls the result. This is especially important when reading health, fall, and void consequences crosses a saved value, a renderer output, or a public form. That reading gives Understanding Native Extension Fallbacks a public anchor for local artifact without adding behavior that the current category does not own. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Local Artifact.',
-          'Recovery or follow-up for Understanding Native Extension Fallbacks should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'The useful result of Understanding Native Extension Fallbacks local artifact is a bounded explanation of hazard handling: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-release-language',
-        title: 'Native Extension Fallbacks Release Language',
-        body: [
-          'Use build command to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner. Understanding Native Extension Fallbacks uses the fact as release language evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Release Language.',
-          'The main confusion risk in Understanding Native Extension Fallbacks is hiding gameplay state behind a generic crash report. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use release language to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-failure-reading',
-        title: 'Native Extension Fallbacks Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. In Understanding Native Extension Fallbacks, included resources is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Included Resources. The fact also tells the reader which evidence to preserve for failure reading: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Failure Reading.',
-          'Reportable evidence for Understanding Native Extension Fallbacks should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use failure reading to keep Understanding Native Extension Fallbacks tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-privacy',
-        title: 'Native Extension Fallbacks Build Privacy',
-        body: [
-          'Ownership in Understanding Native Extension Fallbacks is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. For Understanding Native Extension Fallbacks, that fact identifies the first concrete boundary for build privacy: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Build Privacy.',
-          'Adjacent pages matter for Understanding Native Extension Fallbacks, but adjacency does not move authority. Understanding Native Extension Fallbacks should be compared with Running Desktop Builds with Permission, Reading Build Output, Running Resource and Shader Checks with Permission only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the build privacy part of Understanding Native Extension Fallbacks should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-related-distribution',
-        title: 'Native Extension Fallbacks Related Distribution',
-        body: [
-          'If the available evidence for included resources does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding Native Extension Fallbacks should be treated as an observation rather than a confirmed cause. That reading gives Understanding Native Extension Fallbacks a public anchor for related distribution without adding behavior that the current category does not own. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Related Distribution.',
-          'The public boundary for Understanding Native Extension Fallbacks is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Understanding Native Extension Fallbacks related distribution is a bounded explanation of hazard handling: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-policy-limit',
-        title: 'Native Extension Fallbacks Policy Limit',
-        body: [
-          'Verify fallback behavior with import and runtime checks that exercise the actual path. A successful build alone does not prove the native and fallback contracts match. Understanding Native Extension Fallbacks uses the fact as policy limit evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Policy Limit.',
-          'An operator reading Understanding Native Extension Fallbacks should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'When Understanding Native Extension Fallbacks crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-operator-summary',
-        title: 'Native Extension Fallbacks Operator Summary',
-        body: [
-          'Visible feedback for Understanding Native Extension Fallbacks should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Packaged Components. The fact also tells the reader which evidence to preserve for operator summary: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Operator Summary.',
-          'Implementation limits for Understanding Native Extension Fallbacks keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the operator summary part of Understanding Native Extension Fallbacks should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-platform-limit',
-        title: 'Native Extension Fallbacks Platform Limit',
-        body: [
-          'Native acceleration and Python fallback paths must return the same low-level meaning for math, voxel traversal, collision, chunk, or renderer-facing helpers. In Understanding Native Extension Fallbacks, artifact scope is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Artifact Scope. That reading gives Understanding Native Extension Fallbacks a public anchor for platform limit without adding behavior that the current category does not own. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Platform Limit.',
-          'The summary value of Understanding Native Extension Fallbacks is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for platform limit does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Understanding Native Extension Fallbacks should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-closing-check',
-        title: 'Native Extension Fallbacks Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Understanding Native Extension Fallbacks. The article should be broad enough to explain hazard handling, but narrow enough that hiding gameplay state behind a generic crash report remains outside the conclusion. In Understanding Native Extension Fallbacks, closing check is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Native Extension Fallbacks / Desktop Artifacts / Packaged Components / Closing Check.',
-          'A final check for Understanding Native Extension Fallbacks should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Native Extension Fallbacks should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'This article does not instruct readers to evade native-build failures by relying on fallback behavior. It also does not require every informal local run to contain compiled native extensions. Its narrower function is to preserve the distinction between source availability, compiled acceleration, verification policy, and package evidence.',
+          'When the artifact is described publicly, the description must not imply that native binaries were built unless the build and verification evidence show that they were built. It must also not imply that fallback execution authorizes distribution. The native state is a technical property of the artifact, not a legal grant.',
         ],
       },
     ],
-    relatedTitles: ['Running Desktop Builds with Permission', 'Reading Build Output', 'Running Resource and Shader Checks with Permission'],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Running Package Checks with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Desktop Artifacts',
-    group: 'Packaged Components',
+    subcategory: 'Runtime Inclusions',
+    group: 'Legal Material Inclusion',
     title: 'Including License Text',
     description:
-      'Explains how Ludoxel license text belongs with distribution materials. This page treats license interpretation as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the operational requirement that Ludoxel desktop artifacts retain the root License Text and related legal material, without treating inclusion as permission, endorsement, release approval, or third-party clearance.',
     sections: [
       {
-        id: 'including-license-text-artifact-scope',
-        title: 'License Text Artifact Scope',
+        id: 'including-license-text-inclusion-boundary',
+        title: 'License Text Inclusion Boundary',
         body: [
-          'The repository LICENSE is the controlling text for Ludoxel original materials. Distribution materials must keep that text available where required by the packaging policy. That reading gives Including License Text a public anchor for artifact scope without adding behavior that the current category does not own. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Artifact Scope.',
-          'Artifact Scope defines the useful size of Including License Text. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion.',
-          'The useful result of Including License Text artifact scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
+          'License Text inclusion is a distribution-operations requirement. The build configuration names LICENSE and third-party as legal material paths, and the desktop build service copies those paths into the relevant staging or publish location when they exist. PyInstaller data arguments also include LICENSE and third-party in the common data set, with macOS treating the same legal material as required bundle input. The purpose is physical retention of controlling and attribution material around the artifact.',
+          'That physical retention has a strictly limited meaning. Including LICENSE does not create permission to distribute the package, does not convert a local build into an official release, does not make a recipient an authorized distributor, and does not relax any reservation in the License Text. It prevents the distribution artifact from being severed from the legal text that governs it; it does not itself confer authority.',
+        ],
+        noteBlocks: [
+          {
+            type: 'warning',
+            content:
+              'A package that contains LICENSE may still be unauthorized. A package that lacks LICENSE is defective as a distribution artifact even if some other page or repository surface can be opened in a browser.',
+          },
         ],
       },
       {
-        id: 'including-license-text-platform-owner',
-        title: 'License Text Platform Owner',
+        id: 'including-license-text-build-copy-path',
+        title: 'Build Copy Path',
         body: [
-          'Artifact Scope defines the useful size of Including License Text. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. Including License Text uses the fact as platform owner evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Platform Owner.',
-          'A direct observation for Including License Text should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'Use platform owner to keep Including License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
+          'The operational copy path is explicit. The legal-copy service iterates over the configured legal material paths and copies each existing path from the project root into the target directory. Windows calls this service for the staging directory and for dist/windows. macOS copies legal material into dist/macos after the bundle is published, and the macOS input check also treats each configured legal material path as a required project input before a valid bundle build is accepted.',
+          'The practical consequence is that legal material must be inspected in the same coordinate system as the artifact. For Windows, the inspection target is the directory containing Ludoxel.exe. For macOS, the inspection target is dist/macos around Ludoxel.app, not only the application bundle internals. A review that looks only at the executable or only at the app bundle while ignoring the surrounding publish directory is incomplete.',
+        ],
+        codeBlocks: [
+          {
+            language: 'yaml',
+            code: 'legal material paths: LICENSE, third-party\nWindows publish target: dist/windows\nmacOS publish target: dist/macos',
+            caption: 'Legal material copy coordinates.',
+          },
         ],
       },
       {
-        id: 'including-license-text-build-command',
-        title: 'License Text Build Command',
+        id: 'including-license-text-check-reading',
+        title: 'Check Reading',
         body: [
-          'The useful result of Including License Text artifact scope is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Packaged Components. For Including License Text, that fact identifies the first concrete boundary for build command: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Build Command.',
-          'Including License Text separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the build command part of Including License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The legal check reads the root LICENSE, verifies required terms including Ludoxel Independent License, LicenseRef-All-Rights-Reserved, and third-party/, verifies that third-party/ exists, and checks required third-party license files. It also scans source-like files for the required SPDX license identifier outside excluded asset, config, and third-party paths. Its output is a repository-state check, not a package-by-package forensic audit of every generated directory.',
+          'That distinction should be preserved when writing documentation. A passed legal check supports the proposition that the repository has the required legal text and SPDX discipline at the time of the check. It does not by itself prove that a previously copied artifact contains the legal material, that a modified artifact retained it, or that a third party may circulate it.',
         ],
-      },
-      {
-        id: 'including-license-text-included-resources',
-        title: 'License Text Included Resources',
-        body: [
-          'Including License Text should be read as package inclusion for license text within Desktop Artifacts and Packaged Components. Including License Text uses the fact as platform owner evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Platform Owner. That reading gives Including License Text a public anchor for included resources without adding behavior that the current category does not own. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Included Resources.',
-          'Ownership in Including License Text is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'The useful result of Including License Text included resources is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
-        ],
-      },
-      {
-        id: 'including-license-text-native-or-runtime',
-        title: 'License Text Native or Runtime Path',
-        body: [
-          'A direct observation for Including License Text should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. For Including License Text, that fact identifies the first concrete boundary for native or runtime path: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Native or Runtime Path.',
-          'Visible feedback for Including License Text should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Packaged Components.',
-          'When Including License Text crosses from native or runtime path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'including-license-text-legal-materials',
-        title: 'License Text Legal Materials',
-        body: [
-          'Use platform owner to keep Including License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner. That reading gives Including License Text a public anchor for legal materials without adding behavior that the current category does not own. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Legal Materials.',
-          'When Including License Text touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for legal materials does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Including License Text should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'including-license-text-check-output',
-        title: 'License Text Check Output',
-        body: [
-          'A README paragraph, website page, or package note can orient readers, but it does not replace the license terms or create new permissions. Including License Text uses the fact as check output evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Check Output.',
-          'The surrounding context for Including License Text decides which adjacent topic is relevant. Including License Text should be compared with Understanding License Authority, Including Third Party License Text, Running Package Checks with Permission only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use check output to keep Including License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'including-license-text-local-artifact',
-        title: 'License Text Local Artifact',
-        body: [
-          'Including License Text separates the surface that accepts input from the component or document that controls the result. This is especially important when reading rights from controlling text crosses a saved value, a renderer output, or a public form. In Including License Text, local artifact is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Local Artifact.',
-          'Recovery or follow-up for Including License Text should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for local artifact does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Including License Text should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'including-license-text-release-language',
-        title: 'License Text Release Language',
-        body: [
-          'A public report based on the build command part of Including License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing. For Including License Text, that fact identifies the first concrete boundary for release language: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Release Language.',
-          'The main confusion risk in Including License Text is expanding permissions through explanatory wording. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Including License Text crosses from release language into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run license:check',
+            caption: 'Repository legal-material and SPDX check.',
+          },
         ],
       },
       {
         id: 'including-license-text-failure-reading',
-        title: 'License Text Failure Reading',
+        title: 'Failure Reading',
         body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. For Including License Text, that fact identifies the first concrete boundary for failure reading: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Failure Reading.',
-          'Reportable evidence for Including License Text should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the failure reading part of Including License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'A missing LICENSE file is a hard defect for a distribution artifact. It deprives the artifact of the controlling text that the recipient must be able to inspect. A missing third-party directory is also a defect when the artifact includes materials whose third-party notices are expected to travel with the package. These are not cosmetic omissions and should not be described as documentation polish.',
+          'A failed legal check should be read by its named failure. If the root LICENSE is missing, the defect is not the same as a missing SPDX header in a source file. If the Kaisei license is missing, the defect is not the same as a missing LicenseRef term in package metadata. Distribution writing must name the failed evidence instead of converting every failure into the same vague statement that the package is not ready.',
         ],
       },
       {
-        id: 'including-license-text-privacy',
-        title: 'License Text Build Privacy',
+        id: 'including-license-text-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'Ownership in Including License Text is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The fact also tells the reader which evidence to preserve for build privacy: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Build Privacy.',
-          'Adjacent pages matter for Including License Text, but adjacency does not move authority. Including License Text should be compared with Understanding License Authority, Including Third Party License Text, Running Package Checks with Permission only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use build privacy to keep Including License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'including-license-text-related-distribution',
-        title: 'License Text Related Distribution',
-        body: [
-          'The useful result of Including License Text included resources is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Packaged Components. The point matters in related distribution because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Related Distribution.',
-          'The public boundary for Including License Text is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Including License Text should not use related distribution to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'including-license-text-policy-limit',
-        title: 'License Text Policy Limit',
-        body: [
-          'Package checks should confirm legal material inclusion alongside resources, shaders, and package data. Missing license text is a distribution defect, not a documentation-only issue. The fact also tells the reader which evidence to preserve for policy limit: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Policy Limit.',
-          'An operator reading Including License Text should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'Use policy limit to keep Including License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'including-license-text-operator-summary',
-        title: 'License Text Operator Summary',
-        body: [
-          'Visible feedback for Including License Text should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Packaged Components. The fact also tells the reader which evidence to preserve for operator summary: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Operator Summary.',
-          'Implementation limits for Including License Text keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the operator summary part of Including License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'including-license-text-platform-limit',
-        title: 'License Text Platform Limit',
-        body: [
-          'The repository LICENSE is the controlling text for Ludoxel original materials. Distribution materials must keep that text available where required by the packaging policy. The point matters in platform limit because reading rights from controlling text can otherwise be mistaken for expanding permissions through explanatory wording. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Platform Limit.',
-          'The summary value of Including License Text is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Including License Text platform limit is a bounded explanation of license interpretation: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
-        ],
-      },
-      {
-        id: 'including-license-text-closing-check',
-        title: 'License Text Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Including License Text. The article should be broad enough to explain license interpretation, but narrow enough that expanding permissions through explanatory wording remains outside the conclusion. In Including License Text, closing check is the difference between reading license interpretation and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Including License Text / Desktop Artifacts / Packaged Components / Closing Check.',
-          'A final check for Including License Text should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Including License Text should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'This article does not interpret the license grant, define the scope of Original Materials, decide whether Distribution Materials may be shared, or determine the legal effect of public repository visibility. Those issues belong to Legal. This article remains operational: it identifies the required legal text, the tool path that copies it, the check that reads it, and the artifact defects caused by omission.',
+          'The narrow conclusion is severe but simple: a distribution artifact must not be detached from its controlling legal material; nevertheless, attachment to the controlling legal material is not permission to distribute the artifact.',
         ],
       },
     ],
-    relatedTitles: ['Understanding License Authority', 'Including Third Party License Text', 'Running Package Checks with Permission'],
+    relatedTitles: ['Including Third Party License Text', 'Running Package Checks with Permission', 'Understanding License Authority', 'Understanding Controlling Text'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Desktop Artifacts',
-    group: 'Packaged Components',
+    subcategory: 'Runtime Inclusions',
+    group: 'Legal Material Inclusion',
     title: 'Including Third Party License Text',
     description:
-      'Explains how third-party license files must remain attached to third-party materials. This page treats material classification as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains how third-party license material is retained and checked for Ludoxel distribution artifacts, with particular attention to Kaisei Opti font material and the distinction between notice inclusion and complete third-party provenance analysis.',
     sections: [
       {
-        id: 'including-third-party-license-text-artifact-scope',
-        title: 'Third Party License Text Artifact Scope',
+        id: 'including-third-party-license-text-inclusion-boundary',
+        title: 'Third-Party Inclusion Boundary',
         body: [
-          'Third-party license text is stored under third-party paths, including the Kaisei Opti OFL license file. The text should remain tied to the material it covers. The fact also tells the reader which evidence to preserve for artifact scope: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Artifact Scope.',
-          'Artifact Scope defines the useful size of Including Third Party License Text. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion.',
-          'A public report based on the artifact scope part of Including Third Party License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Third-party license inclusion concerns the physical retention of license texts for third-party material that is carried by the repository or by a desktop artifact. In the current tooling, third-party/ is a configured legal material path, and the legal policy specifically requires third-party/kaisei-opti/LICENSE.txt to contain Kaisei, SIL Open Font License, and Version 1.1. macOS packaging also requires the Kaisei Opti font assets that are used by the application’s visual surface.',
+          'This is not the same inquiry as classifying every material in the repository. The presence of the Kaisei Opti license file supports the statement that the required Kaisei license notice is present. It does not decide the provenance of every Minecraft-derived texture, every local asset, every generated thumbnail, or every material whose history requires separate review. Distribution writing must not inflate one verified third-party notice into universal clearance.',
+        ],
+        noteBlocks: [
+          {
+            type: 'warning',
+            content:
+              'Third-party license inclusion is a package-retention and notice problem. It is not a blanket provenance certificate for every asset that appears in the repository, a build output, or a rendered scene.',
+          },
         ],
       },
       {
-        id: 'including-third-party-license-text-platform-owner',
-        title: 'Third Party License Text Platform Owner',
+        id: 'including-third-party-license-text-kaisei-font-path',
+        title: 'Kaisei Font Path',
         body: [
-          'Artifact Scope defines the useful size of Including Third Party License Text. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. The point matters in platform owner because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Platform Owner.',
-          'A direct observation for Including Third Party License Text should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'Including Third Party License Text should not use platform owner to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The Kaisei Opti license text is stored under third-party/kaisei-opti/LICENSE.txt. The macOS build path separately verifies KaiseiOpti-Regular.ttf, KaiseiOpti-Medium.ttf, and KaiseiOpti-Bold.ttf under assets/fonts, together with the Minecraft font files that the application uses for its interface. The relationship is evidentiary: the font asset path shows that the material may be bundled, while the third-party license path carries the notice text that must not be lost during packaging.',
+          'A bundle that contains the font file but omits the corresponding third-party license text is defective. A repository that contains the license text but omits the font asset may pass one legal-text check while failing a macOS resource prerequisite. The two facts should be kept distinct because they answer different questions: one asks whether notice material exists; the other asks whether runtime resources needed by the platform package are present.',
+        ],
+        codeBlocks: [
+          {
+            language: 'yaml',
+            code: 'third-party/kaisei-opti/LICENSE.txt\nassets/fonts/KaiseiOpti-Regular.ttf\nassets/fonts/KaiseiOpti-Medium.ttf\nassets/fonts/KaiseiOpti-Bold.ttf',
+            caption: 'Kaisei license and font asset coordinates.',
+          },
         ],
       },
       {
-        id: 'including-third-party-license-text-build-command',
-        title: 'Third Party License Text Build Command',
+        id: 'including-third-party-license-text-check-reading',
+        title: 'Check Reading',
         body: [
-          'A public report based on the artifact scope part of Including Third Party License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing. The point matters in build command because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Build Command.',
-          'Including Third Party License Text separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form.',
-          'Including Third Party License Text should not use build command to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The legal check treats the Kaisei Opti license as a required third-party license. If the file is absent, or if the required terms are missing, the check reports the defect by the required license label. This check gives a precise, reproducible signal about a named third-party notice. It should be cited only for that signal and for the broader fact that third-party/ exists as a legal-material root.',
+          'The check does not read the full license obligations into a legal opinion and does not certify redistribution of every artifact that embeds a font. It verifies the presence of selected terms. The distribution article may therefore state that a package process must retain this license text; it must not state that the check alone authorizes public distribution of the resulting desktop package.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run license:check',
+            caption: 'Repository third-party license check.',
+          },
         ],
       },
       {
-        id: 'including-third-party-license-text-included-resources',
-        title: 'Third Party License Text Included Resources',
+        id: 'including-third-party-license-text-artifact-reading',
+        title: 'Artifact Reading',
         body: [
-          'Including Third Party License Text should be read as package inclusion for third party license text within Desktop Artifacts and Packaged Components. For Including Third Party License Text, that fact identifies the first concrete boundary for included resources: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Included Resources.',
-          'Ownership in Including Third Party License Text is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'When Including Third Party License Text crosses from included resources into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'Artifact review should trace third-party notice material from the repository root into the publish target. For Windows, third-party should be present beside the published executable after the legal-copy step. For macOS, third-party should be present in the published dist/macos directory after the bundle is copied and verified. The review should not assume that PyInstaller internal data collection and the surrounding legal-copy step are identical merely because both mention third-party.',
+          'When a distribution package is inspected after copying, compression, upload, or transfer, the third-party notice directory must be checked again in the transferred artifact. The repository may have been correct, and the build output may have been correct, yet a later packaging step may still have stripped the directory. Distribution documentation should therefore describe third-party license inclusion as an end-to-end retention requirement rather than a single build-time event.',
         ],
       },
       {
-        id: 'including-third-party-license-text-native-or-runtime',
-        title: 'Third Party License Text Native or Runtime Path',
+        id: 'including-third-party-license-text-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Including Third Party License Text should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. In Including Third Party License Text, native or runtime path is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Native or Runtime Path.',
-          'Visible feedback for Including Third Party License Text should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Packaged Components.',
-          'Including Third Party License Text should not use native or runtime path to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-legal-materials',
-        title: 'Third Party License Text Legal Materials',
-        body: [
-          'Including Third Party License Text should not use platform owner to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The fact also tells the reader which evidence to preserve for legal materials: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Legal Materials.',
-          'When Including Third Party License Text touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the legal materials part of Including Third Party License Text should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-check-output',
-        title: 'Third Party License Text Check Output',
-        body: [
-          'Packaging must preserve required notices and license files for included third-party materials. Ludoxel license text does not replace those separate terms. In Including Third Party License Text, check output is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Check Output.',
-          'The surrounding context for Including Third Party License Text decides which adjacent topic is relevant. Including Third Party License Text should be compared with Understanding Third Party Material Boundaries, Including License Text, Reading Asset Roots only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'If the available evidence for check output does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Including Third Party License Text should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-local-artifact',
-        title: 'Third Party License Text Local Artifact',
-        body: [
-          'Including Third Party License Text separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form. Including Third Party License Text uses the fact as local artifact evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Local Artifact.',
-          'Recovery or follow-up for Including Third Party License Text should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use local artifact to keep Including Third Party License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-release-language',
-        title: 'Third Party License Text Release Language',
-        body: [
-          'Including Third Party License Text should not use build command to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in release language because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Release Language.',
-          'The main confusion risk in Including Third Party License Text is inferring permission from visibility. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Including Third Party License Text should not use release language to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-failure-reading',
-        title: 'Third Party License Text Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. That reading gives Including Third Party License Text a public anchor for failure reading without adding behavior that the current category does not own. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Failure Reading.',
-          'Reportable evidence for Including Third Party License Text should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Including Third Party License Text failure reading is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-privacy',
-        title: 'Third Party License Text Build Privacy',
-        body: [
-          'Ownership in Including Third Party License Text is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. That reading gives Including Third Party License Text a public anchor for build privacy without adding behavior that the current category does not own. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Build Privacy.',
-          'Adjacent pages matter for Including Third Party License Text, but adjacency does not move authority. Including Third Party License Text should be compared with Understanding Third Party Material Boundaries, Including License Text, Reading Asset Roots only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Including Third Party License Text build privacy is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Packaged Components.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-related-distribution',
-        title: 'Third Party License Text Related Distribution',
-        body: [
-          'When Including Third Party License Text crosses from included resources into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. For Including Third Party License Text, that fact identifies the first concrete boundary for related distribution: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Related Distribution.',
-          'The public boundary for Including Third Party License Text is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Including Third Party License Text crosses from related distribution into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-policy-limit',
-        title: 'Third Party License Text Policy Limit',
-        body: [
-          'When changing assets or package data, review both attribution and license inclusion. Do not infer permission from file visibility alone. In Including Third Party License Text, native or runtime path is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Native or Runtime Path. That reading gives Including Third Party License Text a public anchor for policy limit without adding behavior that the current category does not own. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Policy Limit.',
-          'An operator reading Including Third Party License Text should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'If the available evidence for policy limit does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Including Third Party License Text should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-operator-summary',
-        title: 'Third Party License Text Operator Summary',
-        body: [
-          'Visible feedback for Including Third Party License Text should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Desktop Artifacts / Packaged Components. In Including Third Party License Text, operator summary is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Operator Summary.',
-          'Implementation limits for Including Third Party License Text keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for operator summary does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Including Third Party License Text should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-platform-limit',
-        title: 'Third Party License Text Platform Limit',
-        body: [
-          'Third-party license text is stored under third-party paths, including the Kaisei Opti OFL license file. The text should remain tied to the material it covers. The fact also tells the reader which evidence to preserve for platform limit: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Platform Limit.',
-          'The summary value of Including Third Party License Text is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use platform limit to keep Including Third Party License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'including-third-party-license-text-closing-check',
-        title: 'Third Party License Text Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Including Third Party License Text. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. Including Third Party License Text uses the fact as closing check evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Including Third Party License Text / Desktop Artifacts / Packaged Components / Closing Check.',
-          'A final check for Including Third Party License Text should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Including Third Party License Text tied to Desktop Artifacts; use a related page only when the reader needs a different owner.',
+          'This article does not classify all third-party material, decide whether a specific third-party license permits a particular external redistribution act, resolve provenance-sensitive assets, or replace the Legal category’s material-boundary articles. It concerns the operational retention of named third-party license text and the package defects that follow from omission.',
+          'The resulting rule is narrow: if a distribution artifact carries third-party material, the corresponding third-party license material must remain attached in the artifact’s distribution coordinate system. That attachment is necessary evidence of notice retention, not proof of general legal clearance.',
         ],
       },
     ],
-    relatedTitles: ['Understanding Third Party Material Boundaries', 'Including License Text', 'Reading Asset Roots'],
+    relatedTitles: ['Including License Text', 'Running Resource and Shader Checks with Permission', 'Understanding Third Party Material Boundaries'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Build and Release Checks',
-    group: 'Build Execution',
+    subcategory: 'Build Operation',
+    group: 'Local Build Procedure',
     title: 'Running a Desktop Build with Permission',
     description:
-      'Explains when and how local desktop build output should be treated. This page treats desktop distribution evidence as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the authorized local operation of Ludoxel desktop build commands, the supported target selection model, host constraints, dry-run behavior, native-build ordering, and generated build roots without treating command availability as permission.',
     sections: [
       {
-        id: 'running-a-desktop-build-with-permission-artifact-scope',
-        title: 'Desktop Build with Permission Artifact Scope',
+        id: 'running-a-desktop-build-with-permission-authority-premise',
+        title: 'Authority Premise',
         body: [
-          'Desktop builds can generate broad local artifacts, invoke packaging tools, and read platform-specific resources. Run them only when the local task authorizes that work. That reading gives Running a Desktop Build with Permission a public anchor for artifact scope without adding behavior that the current category does not own. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Artifact Scope.',
-          'Artifact Scope defines the useful size of Running a Desktop Build with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion.',
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running a Desktop Build with Permission should be treated as an observation rather than a confirmed cause.',
+          'This article assumes that the operator already has authority to run the relevant local build command under the controlling License Text or a separate competent written permission. The existence of a package script does not itself grant that authority. The Distribution question begins only after that premise is satisfied: which command is being run, which target is selected, which host is required, which inputs are read, and which artifact paths are created.',
+          'That premise prevents this article from collapsing into Legal. Legal decides whether a person may perform a given act. Distribution records how the build act is performed when authority is not in dispute. The build command is therefore described as an operational entry point, not as a permission surface.',
+        ],
+        noteBlocks: [
+          {
+            type: 'warning',
+            content:
+              'Do not cite this article as permission to build, distribute, publish, mirror, or upload Ludoxel. It describes the technical path for an operator whose authority is already established elsewhere.',
+          },
         ],
       },
       {
-        id: 'running-a-desktop-build-with-permission-platform-owner',
-        title: 'Desktop Build with Permission Platform Owner',
+        id: 'running-a-desktop-build-with-permission-target-selection',
+        title: 'Target Selection',
         body: [
-          'Artifact Scope defines the useful size of Running a Desktop Build with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. For Running a Desktop Build with Permission, that fact identifies the first concrete boundary for platform owner: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Platform Owner.',
-          'A direct observation for Running a Desktop Build with Permission should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'A public report based on the platform owner part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The desktop build CLI accepts windows and macos targets, corresponding wrapper scripts also exist for each platform, and the generic build command defaults to Windows when no command is supplied and the user did not request help. The CLI also accepts --dry-run, --skip-native-build, --keep-build-cache, --status, --check, and language selection for help rendering. Conflicting target declarations and unsupported language values are rejected before task execution.',
+          'Target selection is not a cosmetic argument because the Windows and macOS services impose different host gates and produce different artifact forms. Windows produces a one-file executable under dist/windows. macOS produces a .app bundle under dist/macos and exposes additional status and packaging-check behavior. A distribution document must identify the selected target before discussing any generated artifact.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run build:desktop -- windows\nnpm run build:desktop -- macos\nnpm run build:desktop -- macos --check\nnpm run build:desktop -- macos --status',
+            caption: 'Targeted desktop build invocations.',
+          },
         ],
       },
       {
-        id: 'running-a-desktop-build-with-permission-build-command',
-        title: 'Desktop Build with Permission Build Command',
+        id: 'running-a-desktop-build-with-permission-host-gates',
+        title: 'Host Gates and Dry Runs',
         body: [
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running a Desktop Build with Permission should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for build command: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Build Command.',
-          'Running a Desktop Build with Permission separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the build command part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The Windows service requires a Windows host for a real build and verifies that the Windows entry script exists. A Windows dry run can display the constructed PyInstaller command without enforcing the same host requirement because it does not execute the build. The macOS service requires a macOS host before running its build path and also requires the entry script, default Alex skin, a macOS icon candidate, and required font assets before PyInstaller execution.',
+          'The dry-run distinction must be read precisely. A dry run can show command construction and path choices, but it does not produce dist/windows/Ludoxel.exe or dist/macos/Ludoxel.app. A packaging check can verify prerequisites for the macOS path, but it does not publish a bundle. Treating either diagnostic mode as a completed build is a factual error.',
         ],
       },
       {
-        id: 'running-a-desktop-build-with-permission-included-resources',
-        title: 'Desktop Build with Permission Included Resources',
+        id: 'running-a-desktop-build-with-permission-native-and-cache-ordering',
+        title: 'Native Build and Cache Ordering',
         body: [
-          'Running a Desktop Build with Permission should be read as authorized operation for a desktop build with permission within Build and Release Checks and Build Execution. In Running a Desktop Build with Permission, included resources is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Included Resources.',
-          'Ownership in Running a Desktop Build with Permission is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'Running a Desktop Build with Permission should not use included resources to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Unless explicitly skipped, native extensions are built before desktop packaging. A nonzero native build result stops the desktop build. The desktop build then creates tokenized PyInstaller work, spec, staging, and configuration roots under build/, prints the constructed PyInstaller command, executes it with the resolved Python executable, publishes the resulting artifact, and removes tokenized build roots unless --keep-build-cache is supplied.',
+          'The generated roots are part of the audit trail. They explain where intermediate files were written and why a staged artifact may exist after a publication problem. They should not be mistaken for release locations. The durable platform publish directories are dist/windows and dist/macos; the tokenized build roots are implementation details unless retained for inspection.',
+        ],
+        codeBlocks: [
+          {
+            language: 'yaml',
+            code: 'build/pyinstaller-runs/<token>\nbuild/pyinstaller-spec-runs/<token>\nbuild/pyinstaller-dist-runs/<token>\nbuild/pyinstaller-config',
+            caption: 'PyInstaller build and configuration roots.',
+          },
         ],
       },
       {
-        id: 'running-a-desktop-build-with-permission-native-or-runtime',
-        title: 'Desktop Build with Permission Native or Runtime Path',
+        id: 'running-a-desktop-build-with-permission-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Running a Desktop Build with Permission should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. Running a Desktop Build with Permission uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Native or Runtime Path.',
-          'Visible feedback for Running a Desktop Build with Permission should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Build Execution.',
-          'When Running a Desktop Build with Permission crosses from native or runtime path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-legal-materials',
-        title: 'Desktop Build with Permission Legal Materials',
-        body: [
-          'A public report based on the platform owner part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing. The point matters in legal materials because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Legal Materials.',
-          'When Running a Desktop Build with Permission touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Running a Desktop Build with Permission should not use legal materials to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-check-output',
-        title: 'Desktop Build with Permission Check Output',
-        body: [
-          'Build output can show missing data, dependency issues, packaging defects, or generated artifact paths. It is local evidence, not official release status. For Running a Desktop Build with Permission, that fact identifies the first concrete boundary for check output: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Check Output.',
-          'The surrounding context for Running a Desktop Build with Permission decides which adjacent topic is relevant. Running a Desktop Build with Permission should be compared with Reading Build Output, Avoiding Unofficial Release Claims, Running Package Checks with Permission only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'A public report based on the check output part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-local-artifact',
-        title: 'Desktop Build with Permission Local Artifact',
-        body: [
-          'Running a Desktop Build with Permission separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form. That reading gives Running a Desktop Build with Permission a public anchor for local artifact without adding behavior that the current category does not own. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Local Artifact.',
-          'Recovery or follow-up for Running a Desktop Build with Permission should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for local artifact does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running a Desktop Build with Permission should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-release-language',
-        title: 'Desktop Build with Permission Release Language',
-        body: [
-          'A public report based on the build command part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing. Running a Desktop Build with Permission uses the fact as release language evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Release Language.',
-          'The main confusion risk in Running a Desktop Build with Permission is describing local output as official release authority. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Running a Desktop Build with Permission crosses from release language into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-failure-reading',
-        title: 'Desktop Build with Permission Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. In Running a Desktop Build with Permission, included resources is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Included Resources. The fact also tells the reader which evidence to preserve for failure reading: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Failure Reading.',
-          'Reportable evidence for Running a Desktop Build with Permission should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the failure reading part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-privacy',
-        title: 'Desktop Build with Permission Build Privacy',
-        body: [
-          'Ownership in Running a Desktop Build with Permission is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The fact also tells the reader which evidence to preserve for build privacy: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Build Privacy.',
-          'Adjacent pages matter for Running a Desktop Build with Permission, but adjacency does not move authority. Running a Desktop Build with Permission should be compared with Reading Build Output, Avoiding Unofficial Release Claims, Running Package Checks with Permission only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the build privacy part of Running a Desktop Build with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-related-distribution',
-        title: 'Desktop Build with Permission Related Distribution',
-        body: [
-          'Running a Desktop Build with Permission should not use included resources to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. In Running a Desktop Build with Permission, related distribution is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Related Distribution.',
-          'The public boundary for Running a Desktop Build with Permission is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Running a Desktop Build with Permission should not use related distribution to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-policy-limit',
-        title: 'Desktop Build with Permission Policy Limit',
-        body: [
-          'Inspect generated files before reporting success. Separate source changes from build artifacts and keep license, third-party, resource, and platform notes visible in the result. Running a Desktop Build with Permission uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Native or Runtime Path. For Running a Desktop Build with Permission, that fact identifies the first concrete boundary for policy limit: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Policy Limit.',
-          'An operator reading Running a Desktop Build with Permission should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'When Running a Desktop Build with Permission crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-operator-summary',
-        title: 'Desktop Build with Permission Operator Summary',
-        body: [
-          'Visible feedback for Running a Desktop Build with Permission should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Build Execution. The fact also tells the reader which evidence to preserve for operator summary: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Operator Summary.',
-          'Implementation limits for Running a Desktop Build with Permission keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Use operator summary to keep Running a Desktop Build with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-platform-limit',
-        title: 'Desktop Build with Permission Platform Limit',
-        body: [
-          'Desktop builds can generate broad local artifacts, invoke packaging tools, and read platform-specific resources. Run them only when the local task authorizes that work. That reading gives Running a Desktop Build with Permission a public anchor for platform limit without adding behavior that the current category does not own. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Platform Limit.',
-          'The summary value of Running a Desktop Build with Permission is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Running a Desktop Build with Permission platform limit is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Build Execution.',
-        ],
-      },
-      {
-        id: 'running-a-desktop-build-with-permission-closing-check',
-        title: 'Desktop Build with Permission Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Running a Desktop Build with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. In Running a Desktop Build with Permission, closing check is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running a Desktop Build with Permission / Build and Release Checks / Build Execution / Closing Check.',
-          'A final check for Running a Desktop Build with Permission should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running a Desktop Build with Permission should be treated as an observation rather than a confirmed cause.',
+          'This article does not describe installer creation, update delivery, store submission, notarized public release, website download publication, or external redistribution. It also does not decide whether a given operator has permission to run the command. Those are separate legal and release-management questions.',
+          'The narrow conclusion is operational. An authorized local desktop build is a target-specific task that validates inputs, may build native extensions, constructs a PyInstaller command, writes intermediate roots, publishes a platform artifact, and emits logs that must be read before the artifact is described or transferred.',
         ],
       },
     ],
-    relatedTitles: ['Reading Build Output', 'Avoiding Unofficial Release Claims', 'Running Package Checks with Permission'],
+    relatedTitles: ['Understanding the Windows Executable', 'Understanding the macOS Application Bundle', 'Understanding Native Extension Fallbacks', 'Reading Build Output'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Build and Release Checks',
-    group: 'Build Execution',
+    subcategory: 'Build Operation',
+    group: 'Local Build Procedure',
     title: 'Reading Build Output',
     description:
-      'Explains how to interpret logs and artifacts produced by build commands. This page treats material classification as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains how to read Ludoxel build and check output as structured evidence, distinguishing command display, pass and failure lines, notes, staged artifacts, locked publish targets, and unsupported conclusions.',
     sections: [
       {
-        id: 'reading-build-output-artifact-scope',
-        title: 'Build Output Artifact Scope',
+        id: 'reading-build-output-evidentiary-function',
+        title: 'Evidentiary Function of Build Output',
         body: [
-          'Build logs should be read for actual command names, missing files, dependency errors, package-data warnings, and platform-specific failures. Do not summarize a command as successful unless it exited successfully. The point matters in artifact scope because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Artifact Scope.',
-          'Artifact Scope defines the useful size of Reading Build Output. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion.',
-          'The useful result of Reading Build Output artifact scope is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Build Execution.',
+          'Build output is a record of what a tool attempted, what it verified, what it skipped, and where it wrote artifacts. It is not a substitute for artifact inspection. A log line that prints a PyInstaller command shows command construction; a log line that reports a published artifact shows that the publication function reached its success path; a check line that says passed shows that a named check returned zero. None of those lines alone proves legal permission, official release status, or third-party clearance.',
+          'The correct reading order is concrete. First identify the tool and target. Next identify whether the run was diagnostic or productive. Then read named failures and notes without generalizing them beyond their check. Finally compare the reported output path with the file system. A distribution article should never convert an optimistic build transcript into a completed, authorized, transferable release without these intermediate readings.',
         ],
       },
       {
-        id: 'reading-build-output-platform-owner',
-        title: 'Build Output Platform Owner',
+        id: 'reading-build-output-command-display',
+        title: 'Command Display',
         body: [
-          'Artifact Scope defines the useful size of Reading Build Output. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. For Reading Build Output, that fact identifies the first concrete boundary for platform owner: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Platform Owner.',
-          'A direct observation for Reading Build Output should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'A public report based on the platform owner part of Reading Build Output should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The desktop build service prints the PyInstaller command before execution. The displayed command includes the Python executable, PyInstaller module invocation, clean and confirmation flags, application name, output roots, project source path, collected package data, hidden imports, data arguments, icons, and the entry script. On dry run, that displayed command is the principal output because the tool returns before PyInstaller execution.',
+          'A displayed command should be read as an intended invocation, not as a completed artifact. It is useful for diagnosing whether the selected target, entry script, icon, data roots, hidden imports, and staging paths are correct. It cannot prove that PyInstaller succeeded, that the output file exists, or that legal material was copied after publication.',
         ],
       },
       {
-        id: 'reading-build-output-build-command',
-        title: 'Build Output Build Command',
+        id: 'reading-build-output-pass-failure-and-notes',
+        title: 'Pass, Failure, and Notes',
         body: [
-          'The useful result of Reading Build Output artifact scope is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Build Execution. The fact also tells the reader which evidence to preserve for build command: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Build Command.',
-          'Reading Build Output separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the build command part of Reading Build Output should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'Check output uses a deliberately simple form: a named check prints passed or failed, optional notes are printed as notes, and failures are printed as individual failure lines. A note is not a failure, and a failure line is not a general condemnation of the entire repository. The text after the check name controls the reading because each check has its own evidence set and its own boundaries.',
+          'For example, resources notes may record that assets/ exists and must stay ignored until provenance is reviewed, that previous-format configs/ exists, or that generated export output exists. Those notes are not the same as failure lines. Conversely, a missing runtime path module, a missing legal term, or a missing package script is not a mere warning. Distribution writing must preserve these severities.',
+        ],
+        codeBlocks: [
+          {
+            language: 'yaml',
+            code: '<name>: passed\n  note: <diagnostic note>\n\n<name>: failed\n  - <specific failure>',
+            caption: 'Generic check-output shape.',
+          },
         ],
       },
       {
-        id: 'reading-build-output-included-resources',
-        title: 'Build Output Included Resources',
+        id: 'reading-build-output-publication-results',
+        title: 'Publication Results',
         body: [
-          'Reading Build Output should be read as interpretation for build output within Build and Release Checks and Build Execution. In Reading Build Output, included resources is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Included Resources.',
-          'Ownership in Reading Build Output is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'Reading Build Output should not use included resources to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'Windows and macOS report publication differently because the artifacts differ. Windows reports the published executable path when dist/windows/Ludoxel.exe is replaced successfully, but it may instead report that the published executable is locked and that the staged executable was preserved. macOS reports a published app bundle after Info.plist patching, signing, verification, copying, re-signing, re-verification, and legal-material copying.',
+          'These messages must be read with their platform semantics. A preserved staged Windows executable is not the same as a replaced published executable. A verified macOS bundle is not the same as notarization. A copied legal-material line is not a legal grant. Each message is a fact about a tool step, and the final artifact description must be assembled from those facts rather than inferred from a single favorable line.',
         ],
       },
       {
-        id: 'reading-build-output-native-or-runtime',
-        title: 'Build Output Native or Runtime Path',
+        id: 'reading-build-output-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Reading Build Output should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for native or runtime path: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Native or Runtime Path.',
-          'Visible feedback for Reading Build Output should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Build Execution.',
-          'Use native or runtime path to keep Reading Build Output tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'reading-build-output-legal-materials',
-        title: 'Build Output Legal Materials',
-        body: [
-          'A public report based on the platform owner part of Reading Build Output should state the action, expected result, actual result, environment, and any redaction needed before sharing. The point matters in legal materials because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Legal Materials.',
-          'When Reading Build Output touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Reading Build Output should not use legal materials to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'reading-build-output-check-output',
-        title: 'Build Output Check Output',
-        body: [
-          'Generated artifacts should be inspected as local outputs. Their existence does not prove renderer parity, legal completeness, or official release readiness. Reading Build Output uses the fact as check output evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Check Output.',
-          'The surrounding context for Reading Build Output decides which adjacent topic is relevant. Reading Build Output should be compared with Running a Desktop Build with Permission, Running Resource and Shader Checks with Permission, Avoiding Unofficial Release Claims only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Reading Build Output crosses from check output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'reading-build-output-local-artifact',
-        title: 'Build Output Local Artifact',
-        body: [
-          'Reading Build Output separates the surface that accepts input from the component or document that controls the result. This is especially important when separating output, original materials, and third-party materials crosses a saved value, a renderer output, or a public form. That reading gives Reading Build Output a public anchor for local artifact without adding behavior that the current category does not own. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Local Artifact.',
-          'Recovery or follow-up for Reading Build Output should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for local artifact does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Reading Build Output should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'reading-build-output-release-language',
-        title: 'Build Output Release Language',
-        body: [
-          'A public report based on the build command part of Reading Build Output should state the action, expected result, actual result, environment, and any redaction needed before sharing. For Reading Build Output, that fact identifies the first concrete boundary for release language: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Release Language.',
-          'The main confusion risk in Reading Build Output is inferring permission from visibility. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'A public report based on the release language part of Reading Build Output should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'reading-build-output-failure-reading',
-        title: 'Build Output Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. In Reading Build Output, included resources is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Included Resources. Reading Build Output uses the fact as failure reading evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Failure Reading.',
-          'Reportable evidence for Reading Build Output should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use failure reading to keep Reading Build Output tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'reading-build-output-privacy',
-        title: 'Build Output Build Privacy',
-        body: [
-          'Ownership in Reading Build Output is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. Reading Build Output uses the fact as build privacy evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Build Privacy.',
-          'Adjacent pages matter for Reading Build Output, but adjacency does not move authority. Reading Build Output should be compared with Running a Desktop Build with Permission, Running Resource and Shader Checks with Permission, Avoiding Unofficial Release Claims only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use build privacy to keep Reading Build Output tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'reading-build-output-related-distribution',
-        title: 'Build Output Related Distribution',
-        body: [
-          'Reading Build Output should not use included resources to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in related distribution because separating output, original materials, and third-party materials can otherwise be mistaken for inferring permission from visibility. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Related Distribution.',
-          'The public boundary for Reading Build Output is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Reading Build Output related distribution is a bounded explanation of material classification: enough detail to act, and enough restraint to avoid claims outside Build Execution.',
-        ],
-      },
-      {
-        id: 'reading-build-output-policy-limit',
-        title: 'Build Output Policy Limit',
-        body: [
-          'When sharing build output, include the command, platform, relevant failure lines, and artifact path. Remove private paths, secrets, and unrelated logs before posting publicly. For Reading Build Output, that fact identifies the first concrete boundary for policy limit: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Policy Limit.',
-          'An operator reading Reading Build Output should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'When Reading Build Output crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'reading-build-output-operator-summary',
-        title: 'Build Output Operator Summary',
-        body: [
-          'Visible feedback for Reading Build Output should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Build Execution. Reading Build Output uses the fact as operator summary evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Operator Summary.',
-          'Implementation limits for Reading Build Output keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Reading Build Output crosses from operator summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'reading-build-output-platform-limit',
-        title: 'Build Output Platform Limit',
-        body: [
-          'Build logs should be read for actual command names, missing files, dependency errors, package-data warnings, and platform-specific failures. Do not summarize a command as successful unless it exited successfully. In Reading Build Output, platform limit is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Platform Limit.',
-          'The summary value of Reading Build Output is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for platform limit does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Reading Build Output should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'reading-build-output-closing-check',
-        title: 'Build Output Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Reading Build Output. The article should be broad enough to explain material classification, but narrow enough that inferring permission from visibility remains outside the conclusion. In Reading Build Output, closing check is the difference between reading material classification and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Reading Build Output / Build and Release Checks / Build Execution / Closing Check.',
-          'A final check for Reading Build Output should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Reading Build Output should be treated as an observation rather than a confirmed cause.',
+          'This article does not teach generic PyInstaller debugging, Python packaging theory, operating-system code-signing law, or license interpretation. It explains the Ludoxel-specific reading discipline for the build and check output that the repository tools emit.',
+          'The narrow conclusion is that build output is admissible technical evidence only when it is read at the granularity at which the tool emitted it. A line about a command, a note, a failure, a staged artifact, or a published artifact cannot be promoted into a legal or release-status conclusion.',
         ],
       },
     ],
-    relatedTitles: ['Running a Desktop Build with Permission', 'Running Resource and Shader Checks with Permission', 'Avoiding Unofficial Release Claims'],
+    relatedTitles: ['Running a Desktop Build with Permission', 'Understanding the Windows Executable', 'Understanding the macOS Application Bundle', 'Running Package Checks with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Build and Release Checks',
-    group: 'Release Checks and Claims',
+    subcategory: 'Verification',
+    group: 'Package Inspection',
     title: 'Running Package Checks with Permission',
     description:
-      'Explains the repository package checks used for packaging and legal boundaries. This page treats desktop distribution evidence as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the repository package, documentation, and legal checks that inform distribution readiness, including what they verify, what they deliberately do not verify, and how their output should be read before artifact publication.',
     sections: [
       {
-        id: 'running-package-checks-with-permission-artifact-scope',
-        title: 'Package Checks with Permission Artifact Scope',
+        id: 'running-package-checks-with-permission-authority-premise',
+        title: 'Authority Premise',
         body: [
-          'Package checks inspect expected package data, legal material, resource paths, shader inclusion, native extension relationships, and desktop distribution assumptions. In Running Package Checks with Permission, artifact scope is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Artifact Scope. In Running Package Checks with Permission, artifact scope is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Artifact Scope.',
-          'Artifact Scope defines the useful size of Running Package Checks with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion.',
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause.',
+          'This article assumes that the operator has authority to run repository checks in the local working copy. The checks are executable repository tools, not public grants of permission. Their value is evidentiary: they report whether selected repository invariants are satisfied before a party describes a build as coherent, complete, or ready for a further authorized step.',
+          'A passed check must therefore be used with discipline. It can support a statement about the condition that the check actually verifies. It cannot authorize distribution, waive a license condition, certify external redistribution, approve a release, or replace inspection of a concrete artifact after it has been copied or compressed.',
+        ],
+        noteBlocks: [
+          {
+            type: 'warning',
+            content: 'A green check is a repository signal. It is not a release approval, not legal permission, and not evidence that a later copied artifact still contains every required file.',
+          },
         ],
       },
       {
-        id: 'running-package-checks-with-permission-platform-owner',
-        title: 'Package Checks with Permission Platform Owner',
+        id: 'running-package-checks-with-permission-package-check',
+        title: 'Package Check',
         body: [
-          'Artifact Scope defines the useful size of Running Package Checks with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. Running Package Checks with Permission uses the fact as platform owner evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Platform Owner.',
-          'A direct observation for Running Package Checks with Permission should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'Use platform owner to keep Running Package Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
+          'The package check reads package.json and verifies basic project identity, including the package name and license identifier. It also requires the declared script surface to contain the expected Ludoxel scripts, rejects known obsolete or improper script terms, verifies that node-based script entry files exist, rejects a root scripts/ directory, and rejects the future_ai_workbench tooling directory if it appears as executable tooling rather than as removed design material.',
+          'This is a structural repository check. It does not build the desktop application, inspect dist/windows or dist/macos, execute PyInstaller, validate renderer parity, or decide whether a generated artifact may be distributed. Its proper use in Distribution is to show that the repository script surface and package metadata have not drifted away from the expected tooling contract.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run package:check',
+            caption: 'Package metadata and script-surface check.',
+          },
         ],
       },
       {
-        id: 'running-package-checks-with-permission-build-command',
-        title: 'Package Checks with Permission Build Command',
+        id: 'running-package-checks-with-permission-legal-and-docs-checks',
+        title: 'Legal and Documentation Checks',
         body: [
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause. Running Package Checks with Permission uses the fact as build command evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Build Command.',
-          'Running Package Checks with Permission separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form.',
-          'When Running Package Checks with Permission crosses from build command into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'The legal check verifies the root License Text terms, the third-party root, required third-party license text, and SPDX headers on source-like files outside excluded paths. The documentation check verifies that README.md exists and contains the required Ludoxel legal-information terms. These checks are narrower than the documents they touch. They verify the presence of required terms and markers; they do not interpret the full legal text or certify that every public explanation is complete.',
+          'In Distribution, these checks are useful because package candidates must not be detached from legal and documentation invariants. A package made from a repository that fails these checks should be treated as suspect even before inspecting the platform artifact. But the inverse is not absolute: passing the checks does not prove that a generated archive, installer, upload, or copied directory preserved the relevant material.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run license:check\nnpm run docs:check',
+            caption: 'Legal material and README-term checks.',
+          },
         ],
       },
       {
-        id: 'running-package-checks-with-permission-included-resources',
-        title: 'Package Checks with Permission Included Resources',
+        id: 'running-package-checks-with-permission-composite-reading',
+        title: 'Composite Reading',
         body: [
-          'Running Package Checks with Permission should be read as authorized operation for package checks with permission within Build and Release Checks and Release Checks and Claims. Running Package Checks with Permission uses the fact as platform owner evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Platform Owner. In Running Package Checks with Permission, included resources is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Included Resources.',
-          'Ownership in Running Package Checks with Permission is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'If the available evidence for included resources does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause.',
+          'Package readiness is a composite judgment only in the engineering sense. package:check, license:check, docs:check, resources:check, shader:check, and the platform build checks each inspect a different layer. A failure in any one layer should be named by its layer. A pass in one layer should not be used to excuse missing evidence in another layer.',
+          'This is especially important for generated desktop artifacts. The repository may pass package:check while macOS packaging prerequisites fail. The macOS packaging check may pass while the later PyInstaller run fails. The PyInstaller run may succeed while a copied artifact later loses third-party material. Distribution documentation should therefore speak in terms of layer-specific evidence rather than broad release readiness slogans.',
         ],
       },
       {
-        id: 'running-package-checks-with-permission-native-or-runtime',
-        title: 'Package Checks with Permission Native or Runtime Path',
+        id: 'running-package-checks-with-permission-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Running Package Checks with Permission should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. Running Package Checks with Permission uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Native or Runtime Path.',
-          'Visible feedback for Running Package Checks with Permission should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Release Checks and Claims.',
-          'Use native or runtime path to keep Running Package Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-legal-materials',
-        title: 'Package Checks with Permission Legal Materials',
-        body: [
-          'Use platform owner to keep Running Package Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner. That reading gives Running Package Checks with Permission a public anchor for legal materials without adding behavior that the current category does not own. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Legal Materials.',
-          'When Running Package Checks with Permission touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for legal materials does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-check-output',
-        title: 'Package Checks with Permission Check Output',
-        body: [
-          'A package check is a local repository verification command. It can fail because an expected source file, resource, license file, or package rule is missing. Running Package Checks with Permission uses the fact as build command evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Build Command. For Running Package Checks with Permission, that fact identifies the first concrete boundary for check output: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Check Output.',
-          'The surrounding context for Running Package Checks with Permission decides which adjacent topic is relevant. Running Package Checks with Permission should be compared with Including License Text, Including Third Party License Text, Reading Build Output only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Running Package Checks with Permission crosses from check output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-local-artifact',
-        title: 'Package Checks with Permission Local Artifact',
-        body: [
-          'Running Package Checks with Permission separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form. In Running Package Checks with Permission, local artifact is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Local Artifact.',
-          'Recovery or follow-up for Running Package Checks with Permission should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for local artifact does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-release-language',
-        title: 'Package Checks with Permission Release Language',
-        body: [
-          'When Running Package Checks with Permission crosses from build command into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for release language: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Release Language.',
-          'The main confusion risk in Running Package Checks with Permission is describing local output as official release authority. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'A public report based on the release language part of Running Package Checks with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-failure-reading',
-        title: 'Package Checks with Permission Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. In Running Package Checks with Permission, included resources is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Included Resources. The fact also tells the reader which evidence to preserve for failure reading: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Failure Reading.',
-          'Reportable evidence for Running Package Checks with Permission should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use failure reading to keep Running Package Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-privacy',
-        title: 'Package Checks with Permission Build Privacy',
-        body: [
-          'Ownership in Running Package Checks with Permission is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The fact also tells the reader which evidence to preserve for build privacy: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Build Privacy.',
-          'Adjacent pages matter for Running Package Checks with Permission, but adjacency does not move authority. Running Package Checks with Permission should be compared with Including License Text, Including Third Party License Text, Reading Build Output only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use build privacy to keep Running Package Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-related-distribution',
-        title: 'Package Checks with Permission Related Distribution',
-        body: [
-          'If the available evidence for included resources does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause. In Running Package Checks with Permission, related distribution is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Related Distribution.',
-          'The public boundary for Running Package Checks with Permission is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for related distribution does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Package Checks with Permission should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-policy-limit',
-        title: 'Package Checks with Permission Policy Limit',
-        body: [
-          'Passing package checks does not prove every platform package launches. Use platform-specific build and runtime evidence for executable or bundle claims. Running Package Checks with Permission uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Native or Runtime Path. The fact also tells the reader which evidence to preserve for policy limit: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Policy Limit.',
-          'An operator reading Running Package Checks with Permission should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'Use policy limit to keep Running Package Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-operator-summary',
-        title: 'Package Checks with Permission Operator Summary',
-        body: [
-          'Visible feedback for Running Package Checks with Permission should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Release Checks and Claims. For Running Package Checks with Permission, that fact identifies the first concrete boundary for operator summary: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Operator Summary.',
-          'Implementation limits for Running Package Checks with Permission keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Running Package Checks with Permission crosses from operator summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-platform-limit',
-        title: 'Package Checks with Permission Platform Limit',
-        body: [
-          'Package checks inspect expected package data, legal material, resource paths, shader inclusion, native extension relationships, and desktop distribution assumptions. In Running Package Checks with Permission, artifact scope is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Artifact Scope. In Running Package Checks with Permission, platform limit is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Platform Limit.',
-          'The summary value of Running Package Checks with Permission is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Running Package Checks with Permission should not use platform limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'running-package-checks-with-permission-closing-check',
-        title: 'Package Checks with Permission Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Running Package Checks with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. The point matters in closing check because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Running Package Checks with Permission / Build and Release Checks / Release Checks and Claims / Closing Check.',
-          'A final check for Running Package Checks with Permission should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'The useful result of Running Package Checks with Permission closing check is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Release Checks and Claims.',
+          'This article does not replace continuous integration policy, legal review, release approval, third-party provenance analysis, or manual artifact inspection. It also does not define the contents of the License Text. It explains how package-adjacent checks contribute evidence to the Distribution category.',
+          'The narrow conclusion is that package checks are necessary discipline for repository-to-artifact continuity. They are not sufficient authority for distribution and not sufficient proof that a concrete artifact remains complete after it leaves the publish directory.',
         ],
       },
     ],
-    relatedTitles: ['Including License Text', 'Including Third Party License Text', 'Reading Build Output'],
+    relatedTitles: ['Including License Text', 'Including Third Party License Text', 'Reading Build Output', 'Running Resource and Shader Checks with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Build and Release Checks',
-    group: 'Release Checks and Claims',
+    subcategory: 'Verification',
+    group: 'Package Inspection',
     title: 'Running Resource and Shader Checks with Permission',
     description:
-      'Explains checks for runtime resources and renderer shader material. This page treats desktop distribution evidence as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains the Ludoxel resource and shader checks as distribution evidence for runtime roots, generated-material boundaries, renderer shader contract compliance, and platform-specific packaging risk.',
     sections: [
       {
-        id: 'running-resource-and-shader-checks-with-permission-artifact-scope',
-        title: 'Resource and Shader Checks with Permission Artifact Scope',
+        id: 'running-resource-and-shader-checks-with-permission-authority-premise',
+        title: 'Authority Premise',
         body: [
-          'Resource checks verify expected runtime path handling, asset root resolution, generated-file ignore rules, and required visual asset root terms. That reading gives Running Resource and Shader Checks with Permission a public anchor for artifact scope without adding behavior that the current category does not own. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Artifact Scope.',
-          'Artifact Scope defines the useful size of Running Resource and Shader Checks with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion.',
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Resource and Shader Checks with Permission should be treated as an observation rather than a confirmed cause.',
+          'This article assumes that the operator has authority to run repository checks and inspect the local working copy. The checks are not permission to redistribute resources, shaders, assets, or generated artifacts. Their function is to identify whether the repository state still satisfies selected runtime and renderer invariants that matter before a desktop artifact is described as distribution-ready.',
+          'Resource and shader checks are grouped here because both protect package behavior after code is frozen into a desktop artifact. Resource failures tend to produce missing paths, missing runtime data roots, lost assets, or broken persistence boundaries. Shader failures tend to produce renderer compilation problems or backend contract drift. Neither check decides legal material scope or third-party rights.',
         ],
       },
       {
-        id: 'running-resource-and-shader-checks-with-permission-platform-owner',
-        title: 'Resource and Shader Checks with Permission Platform Owner',
+        id: 'running-resource-and-shader-checks-with-permission-resource-check',
+        title: 'Resource Check',
         body: [
-          'Artifact Scope defines the useful size of Running Resource and Shader Checks with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. The fact also tells the reader which evidence to preserve for platform owner: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Platform Owner.',
-          'A direct observation for Running Resource and Shader Checks with Permission should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'Use platform owner to keep Running Resource and Shader Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
+          'The resource check reads .gitignore for generated and local exclusion terms, verifies the runtime path module, verifies the persistence integrity manifest module, and verifies the shared visual asset root resolver. It specifically expects runtime path handling to mention default_runtime_data_root, state_manifest.json, and integrity_key.bin, and it expects the visual asset resolver to cover the Ludoxel and Minecraft asset roots together with block texture and thumbnail directories.',
+          'The notes emitted by this check are part of its discipline. The existence of assets/ is noted because assets must remain ignored until provenance is reviewed. The existence of previous-format configs/ is noted because runtime writes must use the app-managed data root and may only migrate previous-format input. The existence of generated export output is noted because it must remain generated and ignored. Those notes are evidence of boundary management, not incidental commentary.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run resources:check',
+            caption: 'Runtime path, generated-material, and asset-root check.',
+          },
         ],
       },
       {
-        id: 'running-resource-and-shader-checks-with-permission-build-command',
-        title: 'Resource and Shader Checks with Permission Build Command',
+        id: 'running-resource-and-shader-checks-with-permission-shader-check',
+        title: 'Shader Check',
         body: [
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Resource and Shader Checks with Permission should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for build command: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Build Command.',
-          'Running Resource and Shader Checks with Permission separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the build command part of Running Resource and Shader Checks with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+          'The shader check scans the OpenGL shader root and the WGPU shader source root, filters shader files by accepted suffix, and validates stage-specific shader text. Non-include shader files must declare a GLSL version accepted by the Ludoxel validation contract, and vertex shaders must use the compatibility macro for vertex indexing instead of raw gl_VertexID unless the macro is present. The check also reports the number of shader files inspected.',
+          'This check is significant for Distribution because renderer source can be packaged into a desktop artifact and then fail at runtime on a target platform. The check does not prove visual equivalence between OpenGL and WGPU, does not render frames, and does not validate every driver behavior. It verifies a source-level shader contract that must hold before the artifact is treated as technically coherent.',
+        ],
+        codeBlocks: [
+          {
+            language: 'sh',
+            code: 'npm run shader:check',
+            caption: 'Renderer shader source-contract check.',
+          },
         ],
       },
       {
-        id: 'running-resource-and-shader-checks-with-permission-included-resources',
-        title: 'Resource and Shader Checks with Permission Included Resources',
+        id: 'running-resource-and-shader-checks-with-permission-platform-effect',
+        title: 'Platform Effect',
         body: [
-          'Running Resource and Shader Checks with Permission should be read as authorized operation for resource and shader checks with permission within Build and Release Checks and Release Checks and Claims. In Running Resource and Shader Checks with Permission, included resources is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Included Resources.',
-          'Ownership in Running Resource and Shader Checks with Permission is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'Running Resource and Shader Checks with Permission should not use included resources to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'The platform effect is different for Windows and macOS. Windows retains the OpenGL renderer path and packages common data roots into a one-file executable. macOS uses the WGPU and Metal-oriented path and requires WGPU source, rendercanvas, wgpu-native imports, the cursor helper, fonts, and bundled resource locations to survive the application-bundle process. Resource and shader checks therefore inform, but do not replace, platform-specific packaging checks.',
+          'A resource check can pass while macOS still fails to bundle a font or Alex skin in an accepted bundle location. A shader check can pass while a platform dependency is missing from the macOS build environment. Distribution writing must state the exact level verified: repository resource invariants, shader-source contract, platform packaging prerequisites, or final artifact inspection.',
         ],
       },
       {
-        id: 'running-resource-and-shader-checks-with-permission-native-or-runtime',
-        title: 'Resource and Shader Checks with Permission Native or Runtime Path',
+        id: 'running-resource-and-shader-checks-with-permission-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Running Resource and Shader Checks with Permission should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. Running Resource and Shader Checks with Permission uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Native or Runtime Path.',
-          'Visible feedback for Running Resource and Shader Checks with Permission should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Release Checks and Claims.',
-          'When Running Resource and Shader Checks with Permission crosses from native or runtime path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-legal-materials',
-        title: 'Resource and Shader Checks with Permission Legal Materials',
-        body: [
-          'Use platform owner to keep Running Resource and Shader Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner. That reading gives Running Resource and Shader Checks with Permission a public anchor for legal materials without adding behavior that the current category does not own. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Legal Materials.',
-          'When Running Resource and Shader Checks with Permission touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Running Resource and Shader Checks with Permission legal materials is a bounded explanation of desktop distribution evidence: enough detail to act, and enough restraint to avoid claims outside Release Checks and Claims.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-check-output',
-        title: 'Resource and Shader Checks with Permission Check Output',
-        body: [
-          'Shader checks protect renderer shader resources for OpenGL and WGPU paths. They should be read with backend parity in mind. Running Resource and Shader Checks with Permission uses the fact as check output evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Check Output.',
-          'The surrounding context for Running Resource and Shader Checks with Permission decides which adjacent topic is relevant. Running Resource and Shader Checks with Permission should be compared with Understanding OpenGL Rendering, Understanding WGPU Rendering, Reading Build Output only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Running Resource and Shader Checks with Permission crosses from check output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-local-artifact',
-        title: 'Resource and Shader Checks with Permission Local Artifact',
-        body: [
-          'Running Resource and Shader Checks with Permission separates the surface that accepts input from the component or document that controls the result. This is especially important when reading local build artifacts and package checks crosses a saved value, a renderer output, or a public form. In Running Resource and Shader Checks with Permission, local artifact is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Local Artifact.',
-          'Recovery or follow-up for Running Resource and Shader Checks with Permission should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Running Resource and Shader Checks with Permission should not use local artifact to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-release-language',
-        title: 'Resource and Shader Checks with Permission Release Language',
-        body: [
-          'A public report based on the build command part of Running Resource and Shader Checks with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing. Running Resource and Shader Checks with Permission uses the fact as release language evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Release Language.',
-          'The main confusion risk in Running Resource and Shader Checks with Permission is describing local output as official release authority. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Running Resource and Shader Checks with Permission crosses from release language into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-failure-reading',
-        title: 'Resource and Shader Checks with Permission Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. In Running Resource and Shader Checks with Permission, included resources is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Included Resources. Running Resource and Shader Checks with Permission uses the fact as failure reading evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Failure Reading.',
-          'Reportable evidence for Running Resource and Shader Checks with Permission should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use failure reading to keep Running Resource and Shader Checks with Permission tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-privacy',
-        title: 'Resource and Shader Checks with Permission Build Privacy',
-        body: [
-          'Ownership in Running Resource and Shader Checks with Permission is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The fact also tells the reader which evidence to preserve for build privacy: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Build Privacy.',
-          'Adjacent pages matter for Running Resource and Shader Checks with Permission, but adjacency does not move authority. Running Resource and Shader Checks with Permission should be compared with Understanding OpenGL Rendering, Understanding WGPU Rendering, Reading Build Output only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the build privacy part of Running Resource and Shader Checks with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-related-distribution',
-        title: 'Resource and Shader Checks with Permission Related Distribution',
-        body: [
-          'Running Resource and Shader Checks with Permission should not use included resources to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. In Running Resource and Shader Checks with Permission, related distribution is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Related Distribution.',
-          'The public boundary for Running Resource and Shader Checks with Permission is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Running Resource and Shader Checks with Permission should not use related distribution to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-policy-limit',
-        title: 'Resource and Shader Checks with Permission Policy Limit',
-        body: [
-          'Run these checks only within authorized scope, and report the exact failing resource or shader path instead of generalizing from one backend to the other. Running Resource and Shader Checks with Permission uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Native or Runtime Path. The fact also tells the reader which evidence to preserve for policy limit: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Policy Limit.',
-          'An operator reading Running Resource and Shader Checks with Permission should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the policy limit part of Running Resource and Shader Checks with Permission should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-operator-summary',
-        title: 'Resource and Shader Checks with Permission Operator Summary',
-        body: [
-          'Visible feedback for Running Resource and Shader Checks with Permission should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Release Checks and Claims. Running Resource and Shader Checks with Permission uses the fact as operator summary evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Operator Summary.',
-          'Implementation limits for Running Resource and Shader Checks with Permission keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Running Resource and Shader Checks with Permission crosses from operator summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-platform-limit',
-        title: 'Resource and Shader Checks with Permission Platform Limit',
-        body: [
-          'Resource checks verify expected runtime path handling, asset root resolution, generated-file ignore rules, and required visual asset root terms. In Running Resource and Shader Checks with Permission, platform limit is the difference between reading desktop distribution evidence and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Platform Limit.',
-          'The summary value of Running Resource and Shader Checks with Permission is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for platform limit does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Running Resource and Shader Checks with Permission should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'running-resource-and-shader-checks-with-permission-closing-check',
-        title: 'Resource and Shader Checks with Permission Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Running Resource and Shader Checks with Permission. The article should be broad enough to explain desktop distribution evidence, but narrow enough that describing local output as official release authority remains outside the conclusion. The point matters in closing check because reading local build artifacts and package checks can otherwise be mistaken for describing local output as official release authority. The local reading frame is Running Resource and Shader Checks with Permission / Build and Release Checks / Release Checks and Claims / Closing Check.',
-          'A final check for Running Resource and Shader Checks with Permission should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Running Resource and Shader Checks with Permission should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+          'This article does not classify asset provenance, license third-party textures, authorize generated thumbnails, certify visual parity, or provide general renderer debugging. It describes two repository checks whose outputs are relevant to distribution readiness because desktop packages carry resources and shader source into a frozen runtime context.',
+          'The narrow conclusion is that resource and shader checks are necessary technical evidence for package integrity, but their success must remain attached to what they actually inspect. They cannot be transformed into a legal conclusion, a release approval, or a promise that every runtime path in every transferred artifact remains intact.',
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Reading Build Output'],
+    relatedTitles: ['Understanding the macOS Application Bundle', 'Understanding the Windows Executable', 'Reading Build Output', 'Understanding Third Party Material Boundaries'],
   }),
   defineDocsArticle({
     category: 'Distribution',
-    subcategory: 'Build and Release Checks',
-    group: 'Release Checks and Claims',
+    subcategory: 'Release Language',
+    group: 'Public Identification',
     title: 'Avoiding Unofficial Release Claims',
     description:
-      'Explains why local artifacts should not be described as official Ludoxel releases. This page treats hazard handling as a packaging guide for local desktop artifacts and release-adjacent checks, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Explains how to describe local builds, preview artifacts, copied desktop packages, CI results, and documentation references without implying official release status, legal clearance, or public redistribution permission.',
     sections: [
       {
-        id: 'avoiding-unofficial-release-claims-artifact-scope',
-        title: 'Unofficial Release Claims Artifact Scope',
+        id: 'avoiding-unofficial-release-claims-identification-boundary',
+        title: 'Identification Boundary',
         body: [
-          'A local executable, bundle, ZIP file, screenshot, or build directory is local output. It is not an official release just because a build command produced it. In Avoiding Unofficial Release Claims, artifact scope is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Artifact Scope. In Avoiding Unofficial Release Claims, artifact scope is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Artifact Scope.',
-          'Artifact Scope defines the useful size of Avoiding Unofficial Release Claims. The article should be broad enough to explain hazard handling, but narrow enough that hiding gameplay state behind a generic crash report remains outside the conclusion.',
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Avoiding Unofficial Release Claims should be treated as an observation rather than a confirmed cause.',
+          'Unofficial release claims arise when a technical artifact is described with institutional force it does not possess. A locally built executable, a locally built .app bundle, a preserved staging file, a CI artifact, a Vercel preview, a copied folder, a compressed archive, or a screenshot of a successful check may be real evidence of technical activity. None of those facts, by itself, establishes that the artifact is an official Ludoxel release or that a third party may circulate it.',
+          'The Distribution category controls the public wording used around those artifacts because wording is part of artifact handling. A release label can cause readers to infer approval, authority, support expectations, or redistribution permission. If the evidentiary basis is only local generation or technical accessibility, the label must remain local, diagnostic, or unofficial.',
+        ],
+        noteBlocks: [
+          {
+            type: 'warning',
+            content:
+              'Do not call a local build, preview deployment, copied artifact, preserved staging file, or check result an official release unless the separate release authority and release-status evidence actually exist.',
+          },
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-platform-owner',
-        title: 'Unofficial Release Claims Platform Owner',
+        id: 'avoiding-unofficial-release-claims-safe-description',
+        title: 'Safe Description',
         body: [
-          'Artifact Scope defines the useful size of Avoiding Unofficial Release Claims. The article should be broad enough to explain hazard handling, but narrow enough that hiding gameplay state behind a generic crash report remains outside the conclusion. For Avoiding Unofficial Release Claims, that fact identifies the first concrete boundary for platform owner: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Platform Owner.',
-          'A direct observation for Avoiding Unofficial Release Claims should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state.',
-          'When Avoiding Unofficial Release Claims crosses from platform owner into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+          'A safe description names the technical source and refuses surplus authority. Acceptable wording can say that an artifact is a local Windows build, a local macOS bundle, a PyInstaller output, a package candidate, a test artifact, a preview artifact, a staged executable preserved after a locked publish target, or a repository check result. Those phrases describe evidence without representing approval by the Licensor or readiness for public circulation.',
+          'Unsafe wording says or implies official release, authorized public download, redistribution-ready package, legally cleared build, approved mirror, endorsed upload, or final release artifact when the only evidence is local build output or tool success. The defect is not merely stylistic. It misstates the artifact’s status and invites the reader to infer permission from technical availability.',
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-build-command',
-        title: 'Unofficial Release Claims Build Command',
+        id: 'avoiding-unofficial-release-claims-support-and-documentation-context',
+        title: 'Support and Documentation Context',
         body: [
-          'If the available evidence for artifact scope does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Avoiding Unofficial Release Claims should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for build command: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Build Command.',
-          'Avoiding Unofficial Release Claims separates the surface that accepts input from the component or document that controls the result. This is especially important when reading health, fall, and void consequences crosses a saved value, a renderer output, or a public form.',
-          'Use build command to keep Avoiding Unofficial Release Claims tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
+          'Support and documentation surfaces should preserve the same distinction. A support answer may ask for the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. It should not transform the user’s artifact into an endorsed release by repeating the user’s label without qualification. Documentation should also avoid presenting local build commands as public download instructions.',
+          'A public documentation article may describe how the build tool works because that is a technical fact about the repository. The article must still make clear that command availability, repository visibility, static-site publication, or package output does not itself produce release authority. The safest public text names the artifact’s technical origin and then stops.',
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-included-resources',
-        title: 'Unofficial Release Claims Included Resources',
+        id: 'avoiding-unofficial-release-claims-evidence-required',
+        title: 'Evidence Required for Stronger Claims',
         body: [
-          'Avoiding Unofficial Release Claims should be read as risk avoidance for unofficial release claims within Build and Release Checks and Release Checks and Claims. That reading gives Avoiding Unofficial Release Claims a public anchor for included resources without adding behavior that the current category does not own. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Included Resources.',
-          'Ownership in Avoiding Unofficial Release Claims is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies.',
-          'The useful result of Avoiding Unofficial Release Claims included resources is a bounded explanation of hazard handling: enough detail to act, and enough restraint to avoid claims outside Release Checks and Claims.',
+          'A stronger release claim requires stronger evidence than an artifact path. At minimum, the claim must be tied to the controlling release decision, the exact artifact or build identifier, the platform target, the included legal and third-party material, the relevant check results, and the public surface on which the release is intentionally presented. If any of those elements is absent, the statement should remain a local or candidate description.',
+          'The absence of evidence must not be cured with vague language such as appears to be official, should be fine, effectively released, probably cleared, or generated by the official repo. Distribution prose should be exact even when the answer is inconvenient: a package can be technically generated and still lack release status.',
         ],
       },
       {
-        id: 'avoiding-unofficial-release-claims-native-or-runtime',
-        title: 'Unofficial Release Claims Native or Runtime Path',
+        id: 'avoiding-unofficial-release-claims-boundary',
+        title: 'Boundary of the Article',
         body: [
-          'A direct observation for Avoiding Unofficial Release Claims should name what the user or reader actually sees before it assigns cause. That keeps the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result ahead of guesses about hidden state. Avoiding Unofficial Release Claims uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Native or Runtime Path.',
-          'Visible feedback for Avoiding Unofficial Release Claims should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Release Checks and Claims.',
-          'Use native or runtime path to keep Avoiding Unofficial Release Claims tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-legal-materials',
-        title: 'Unofficial Release Claims Legal Materials',
-        body: [
-          'When Avoiding Unofficial Release Claims crosses from platform owner into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Avoiding Unofficial Release Claims a public anchor for legal materials without adding behavior that the current category does not own. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Legal Materials.',
-          'When Avoiding Unofficial Release Claims touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for legal materials does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Avoiding Unofficial Release Claims should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-check-output',
-        title: 'Unofficial Release Claims Check Output',
-        body: [
-          'Official distribution authority remains with the licensor and the governing license. Public repository visibility and local packaging capability do not create release permission. The fact also tells the reader which evidence to preserve for check output: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Check Output.',
-          'The surrounding context for Avoiding Unofficial Release Claims decides which adjacent topic is relevant. Avoiding Unofficial Release Claims should be compared with Running a Desktop Build with Permission, Understanding Repository Visibility, Understanding Redistribution Restrictions only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'A public report based on the check output part of Avoiding Unofficial Release Claims should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-local-artifact',
-        title: 'Unofficial Release Claims Local Artifact',
-        body: [
-          'Avoiding Unofficial Release Claims separates the surface that accepts input from the component or document that controls the result. This is especially important when reading health, fall, and void consequences crosses a saved value, a renderer output, or a public form. That reading gives Avoiding Unofficial Release Claims a public anchor for local artifact without adding behavior that the current category does not own. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Local Artifact.',
-          'Recovery or follow-up for Avoiding Unofficial Release Claims should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'The useful result of Avoiding Unofficial Release Claims local artifact is a bounded explanation of hazard handling: enough detail to act, and enough restraint to avoid claims outside Release Checks and Claims.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-release-language',
-        title: 'Unofficial Release Claims Release Language',
-        body: [
-          'Use build command to keep Avoiding Unofficial Release Claims tied to Build and Release Checks; use a related page only when the reader needs a different owner. Avoiding Unofficial Release Claims uses the fact as release language evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Release Language.',
-          'The main confusion risk in Avoiding Unofficial Release Claims is hiding gameplay state behind a generic crash report. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use release language to keep Avoiding Unofficial Release Claims tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-failure-reading',
-        title: 'Unofficial Release Claims Failure Reading',
-        body: [
-          'The relevant state is constrained by the article category: Distribution treats this topic as desktop package and release-evidence behavior. For Avoiding Unofficial Release Claims, that fact identifies the first concrete boundary for failure reading: package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Failure Reading.',
-          'Reportable evidence for Avoiding Unofficial Release Claims should be small, concrete, and public. the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the failure reading part of Avoiding Unofficial Release Claims should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-privacy',
-        title: 'Unofficial Release Claims Build Privacy',
-        body: [
-          'Ownership in Avoiding Unofficial Release Claims is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies. The fact also tells the reader which evidence to preserve for build privacy: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Build Privacy.',
-          'Adjacent pages matter for Avoiding Unofficial Release Claims, but adjacency does not move authority. Avoiding Unofficial Release Claims should be compared with Running a Desktop Build with Permission, Understanding Repository Visibility, Understanding Redistribution Restrictions only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use build privacy to keep Avoiding Unofficial Release Claims tied to Build and Release Checks; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-related-distribution',
-        title: 'Unofficial Release Claims Related Distribution',
-        body: [
-          'The useful result of Avoiding Unofficial Release Claims included resources is a bounded explanation of hazard handling: enough detail to act, and enough restraint to avoid claims outside Release Checks and Claims. The point matters in related distribution because reading health, fall, and void consequences can otherwise be mistaken for hiding gameplay state behind a generic crash report. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Related Distribution.',
-          'The public boundary for Avoiding Unofficial Release Claims is part of the article, not an afterthought. It does not convert a local artifact or a local check into official release authority. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Avoiding Unofficial Release Claims should not use related distribution to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-policy-limit',
-        title: 'Unofficial Release Claims Policy Limit',
-        body: [
-          'Describe local artifacts as local build output, local test output, or verification evidence. Avoid language that suggests public release, endorsement, redistribution rights, or official packaging status. Avoiding Unofficial Release Claims uses the fact as native or runtime path evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Native or Runtime Path. Avoiding Unofficial Release Claims uses the fact as policy limit evidence, then keeps the explanation inside Distribution rather than turning it into a project-wide claim. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Policy Limit.',
-          'An operator reading Avoiding Unofficial Release Claims should follow distribution reading starts with the artifact type and build command, then checks included resources, legal materials, platform assumptions, and public claims. That order prevents a visible result from being treated as the first source of truth.',
-          'When Avoiding Unofficial Release Claims crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-operator-summary',
-        title: 'Unofficial Release Claims Operator Summary',
-        body: [
-          'Visible feedback for Avoiding Unofficial Release Claims should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Distribution / Build and Release Checks / Release Checks and Claims. The fact also tells the reader which evidence to preserve for operator summary: the exact command, platform, package type, artifact path, generated output, missing resource, fallback path, legal text inclusion, and check result. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Operator Summary.',
-          'Implementation limits for Avoiding Unofficial Release Claims keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the operator summary part of Avoiding Unofficial Release Claims should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-platform-limit',
-        title: 'Unofficial Release Claims Platform Limit',
-        body: [
-          'A local executable, bundle, ZIP file, screenshot, or build directory is local output. It is not an official release just because a build command produced it. In Avoiding Unofficial Release Claims, artifact scope is the difference between reading hazard handling and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Artifact Scope. The point matters in platform limit because reading health, fall, and void consequences can otherwise be mistaken for hiding gameplay state behind a generic crash report. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Platform Limit.',
-          'The summary value of Avoiding Unofficial Release Claims is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Avoiding Unofficial Release Claims platform limit is a bounded explanation of hazard handling: enough detail to act, and enough restraint to avoid claims outside Release Checks and Claims.',
-        ],
-      },
-      {
-        id: 'avoiding-unofficial-release-claims-closing-check',
-        title: 'Unofficial Release Claims Closing Check',
-        body: [
-          'Artifact Scope defines the useful size of Avoiding Unofficial Release Claims. The article should be broad enough to explain hazard handling, but narrow enough that hiding gameplay state behind a generic crash report remains outside the conclusion. That reading gives Avoiding Unofficial Release Claims a public anchor for closing check without adding behavior that the current category does not own. The local reading frame is Avoiding Unofficial Release Claims / Build and Release Checks / Release Checks and Claims / Closing Check.',
-          'A final check for Avoiding Unofficial Release Claims should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify package metadata, desktop build tooling, resource inclusion rules, native-extension packaging, legal-material copying, and platform-specific runtime dependencies, Avoiding Unofficial Release Claims should be treated as an observation rather than a confirmed cause.',
+          'This article does not decide who may grant official release status, how legal permission is created, whether a particular artifact is licensed for distribution, or how public releases should be announced outside the documentation. It controls the narrower documentation problem of avoiding false release language around technical artifacts.',
+          'The narrow conclusion is that Distribution documentation must speak with evidentiary restraint. A build artifact may be named, inspected, diagnosed, and compared against the expected package structure. It must not be promoted into an official or authorized release by rhetorical force.',
         ],
       },
     ],
-    relatedTitles: ['Running a Desktop Build with Permission', 'Understanding Repository Visibility', 'Understanding Redistribution Restrictions'],
+    relatedTitles: ['Reading Build Output', 'Running Package Checks with Permission', 'Understanding Repository Visibility', 'Understanding Redistribution Restrictions'],
   }),
 ];
