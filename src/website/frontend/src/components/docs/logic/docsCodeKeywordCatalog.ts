@@ -64,26 +64,7 @@ const JAVASCRIPT_CONSTANTS = words(['false', 'Infinity', 'NaN', 'null', 'true', 
 
 const PYTHON_CONTROL = words(['break', 'continue', 'elif', 'else', 'except', 'finally', 'for', 'if', 'raise', 'return', 'try', 'while', 'with', 'yield']);
 
-const PYTHON_KEYWORDS = words([
-  'and',
-  'as',
-  'assert',
-  'async',
-  'await',
-  'class',
-  'def',
-  'del',
-  'from',
-  'global',
-  'import',
-  'in',
-  'is',
-  'lambda',
-  'nonlocal',
-  'not',
-  'or',
-  'pass',
-]);
+const PYTHON_KEYWORDS = words(['and', 'as', 'assert', 'async', 'await', 'class', 'def', 'del', 'from', 'global', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass']);
 
 const PYTHON_CONSTANTS = words(['False', 'None', 'True', 'Ellipsis', 'NotImplemented']);
 
@@ -194,44 +175,35 @@ const RUST_CONSTANTS = words(['false', 'None', 'Ok', 'Some', 'true']);
 
 const SHADER_CONTROL = words(['break', 'case', 'continue', 'default', 'discard', 'do', 'else', 'for', 'if', 'return', 'switch', 'while']);
 
-const SHADER_KEYWORDS = words(['attribute', 'binding', 'buffer', 'const', 'flat', 'in', 'inout', 'layout', 'location', 'out', 'precision', 'readonly', 'restrict', 'shared', 'storage', 'struct', 'uniform', 'varying', 'writeonly']);
-
-const SHADER_TYPES = words([
-  'atomic',
-  'bool',
-  'double',
-  'float',
-  'image2D',
-  'int',
-  'mat2',
-  'mat3',
-  'mat4',
-  'sampler2D',
-  'samplerCube',
-  'uint',
-  'vec2',
-  'vec3',
-  'vec4',
+const SHADER_KEYWORDS = words([
+  'attribute',
+  'binding',
+  'buffer',
+  'const',
+  'flat',
+  'in',
+  'inout',
+  'layout',
+  'location',
+  'out',
+  'precision',
+  'readonly',
+  'restrict',
+  'shared',
+  'storage',
+  'struct',
+  'uniform',
+  'varying',
+  'writeonly',
 ]);
+
+const SHADER_TYPES = words(['atomic', 'bool', 'double', 'float', 'image2D', 'int', 'mat2', 'mat3', 'mat4', 'sampler2D', 'samplerCube', 'uint', 'vec2', 'vec3', 'vec4']);
 
 const SHADER_CONSTANTS = words(['false', 'true']);
 
 const WGSL_CONTROL = words(['break', 'case', 'continuing', 'continue', 'default', 'discard', 'else', 'for', 'if', 'loop', 'return', 'switch', 'while']);
 
-const WGSL_KEYWORDS = words([
-  'alias',
-  'const',
-  'diagnostic',
-  'enable',
-  'fn',
-  'let',
-  'override',
-  'private',
-  'requires',
-  'struct',
-  'var',
-  'workgroup',
-]);
+const WGSL_KEYWORDS = words(['alias', 'const', 'diagnostic', 'enable', 'fn', 'let', 'override', 'private', 'requires', 'struct', 'var', 'workgroup']);
 
 const WGSL_TYPES = words([
   'array',
@@ -346,9 +318,51 @@ const GO_CONTROL = words(['break', 'case', 'continue', 'default', 'defer', 'else
 
 const GO_KEYWORDS = words(['chan', 'const', 'func', 'go', 'import', 'interface', 'map', 'package', 'struct', 'type', 'var']);
 
-const GO_TYPES = words(['any', 'bool', 'byte', 'complex128', 'complex64', 'error', 'float32', 'float64', 'int', 'int16', 'int32', 'int64', 'int8', 'rune', 'string', 'uint', 'uint16', 'uint32', 'uint64', 'uint8', 'uintptr']);
+const GO_TYPES = words([
+  'any',
+  'bool',
+  'byte',
+  'complex128',
+  'complex64',
+  'error',
+  'float32',
+  'float64',
+  'int',
+  'int16',
+  'int32',
+  'int64',
+  'int8',
+  'rune',
+  'string',
+  'uint',
+  'uint16',
+  'uint32',
+  'uint64',
+  'uint8',
+  'uintptr',
+]);
 
-const SWIFT_CONTROL = words(['break', 'case', 'catch', 'continue', 'default', 'defer', 'do', 'else', 'fallthrough', 'for', 'guard', 'if', 'repeat', 'return', 'switch', 'throw', 'try', 'where', 'while']);
+const SWIFT_CONTROL = words([
+  'break',
+  'case',
+  'catch',
+  'continue',
+  'default',
+  'defer',
+  'do',
+  'else',
+  'fallthrough',
+  'for',
+  'guard',
+  'if',
+  'repeat',
+  'return',
+  'switch',
+  'throw',
+  'try',
+  'where',
+  'while',
+]);
 
 const SWIFT_KEYWORDS = words([
   'actor',
@@ -384,11 +398,99 @@ const SWIFT_KEYWORDS = words([
 
 const KOTLIN_CONTROL = words(['break', 'catch', 'continue', 'do', 'else', 'finally', 'for', 'if', 'return', 'throw', 'try', 'when', 'while']);
 
-const KOTLIN_KEYWORDS = words(['as', 'class', 'companion', 'constructor', 'crossinline', 'data', 'dynamic', 'enum', 'expect', 'external', 'fun', 'import', 'in', 'inline', 'interface', 'internal', 'is', 'lateinit', 'object', 'operator', 'out', 'override', 'package', 'private', 'protected', 'public', 'reified', 'sealed', 'suspend', 'this', 'typealias', 'val', 'var']);
+const KOTLIN_KEYWORDS = words([
+  'as',
+  'class',
+  'companion',
+  'constructor',
+  'crossinline',
+  'data',
+  'dynamic',
+  'enum',
+  'expect',
+  'external',
+  'fun',
+  'import',
+  'in',
+  'inline',
+  'interface',
+  'internal',
+  'is',
+  'lateinit',
+  'object',
+  'operator',
+  'out',
+  'override',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'reified',
+  'sealed',
+  'suspend',
+  'this',
+  'typealias',
+  'val',
+  'var',
+]);
 
-const PHP_KEYWORDS = words(['abstract', 'array', 'as', 'callable', 'class', 'clone', 'const', 'declare', 'echo', 'extends', 'final', 'function', 'global', 'implements', 'include', 'include_once', 'instanceof', 'interface', 'namespace', 'new', 'private', 'protected', 'public', 'readonly', 'require', 'require_once', 'static', 'trait', 'use', 'var', 'yield']);
+const PHP_KEYWORDS = words([
+  'abstract',
+  'array',
+  'as',
+  'callable',
+  'class',
+  'clone',
+  'const',
+  'declare',
+  'echo',
+  'extends',
+  'final',
+  'function',
+  'global',
+  'implements',
+  'include',
+  'include_once',
+  'instanceof',
+  'interface',
+  'namespace',
+  'new',
+  'private',
+  'protected',
+  'public',
+  'readonly',
+  'require',
+  'require_once',
+  'static',
+  'trait',
+  'use',
+  'var',
+  'yield',
+]);
 
-const RUBY_CONTROL = words(['begin', 'break', 'case', 'do', 'else', 'elsif', 'end', 'ensure', 'for', 'if', 'next', 'redo', 'rescue', 'retry', 'return', 'then', 'unless', 'until', 'when', 'while', 'yield']);
+const RUBY_CONTROL = words([
+  'begin',
+  'break',
+  'case',
+  'do',
+  'else',
+  'elsif',
+  'end',
+  'ensure',
+  'for',
+  'if',
+  'next',
+  'redo',
+  'rescue',
+  'retry',
+  'return',
+  'then',
+  'unless',
+  'until',
+  'when',
+  'while',
+  'yield',
+]);
 
 const RUBY_KEYWORDS = words(['alias', 'and', 'class', 'def', 'defined?', 'module', 'not', 'or', 'self', 'super', 'undef']);
 
@@ -442,7 +544,29 @@ const SHELL_CONTROL = words(['case', 'do', 'done', 'elif', 'else', 'esac', 'fi',
 
 const SHELL_KEYWORDS = words(['alias', 'cd', 'declare', 'echo', 'eval', 'exec', 'exit', 'export', 'local', 'printf', 'read', 'readonly', 'return', 'set', 'shift', 'source', 'test', 'trap', 'unset']);
 
-const POWERSHELL_CONTROL = words(['begin', 'break', 'catch', 'continue', 'do', 'dynamicparam', 'else', 'elseif', 'end', 'finally', 'for', 'foreach', 'if', 'process', 'return', 'switch', 'throw', 'trap', 'try', 'until', 'while']);
+const POWERSHELL_CONTROL = words([
+  'begin',
+  'break',
+  'catch',
+  'continue',
+  'do',
+  'dynamicparam',
+  'else',
+  'elseif',
+  'end',
+  'finally',
+  'for',
+  'foreach',
+  'if',
+  'process',
+  'return',
+  'switch',
+  'throw',
+  'trap',
+  'try',
+  'until',
+  'while',
+]);
 
 const POWERSHELL_KEYWORDS = words(['class', 'configuration', 'data', 'enum', 'filter', 'from', 'function', 'in', 'param', 'using', 'var', 'workflow']);
 
@@ -450,10 +574,32 @@ const YAML_CONSTANTS = words(['false', 'False', 'FALSE', 'null', 'Null', 'NULL',
 
 const TOML_CONSTANTS = words(['false', 'true']);
 
-const DOCKERFILE_KEYWORDS = words(['add', 'arg', 'cmd', 'copy', 'entrypoint', 'env', 'expose', 'from', 'healthcheck', 'label', 'maintainer', 'onbuild', 'run', 'shell', 'stopsignal', 'user', 'volume', 'workdir']);
+const DOCKERFILE_KEYWORDS = words([
+  'add',
+  'arg',
+  'cmd',
+  'copy',
+  'entrypoint',
+  'env',
+  'expose',
+  'from',
+  'healthcheck',
+  'label',
+  'maintainer',
+  'onbuild',
+  'run',
+  'shell',
+  'stopsignal',
+  'user',
+  'volume',
+  'workdir',
+]);
 
 const KEYWORD_MATCHES_BY_FAMILY: Partial<Record<DocsCodeLanguageFamily, readonly DocsKeywordMatch[]>> = {
-  batch: [{ kind: 'control', words: words(['do', 'else', 'for', 'goto', 'if', 'in']) }, { kind: 'keyword', words: words(['call', 'echo', 'endlocal', 'exit', 'pause', 'rem', 'set', 'setlocal', 'shift']) }],
+  batch: [
+    { kind: 'control', words: words(['do', 'else', 'for', 'goto', 'if', 'in']) },
+    { kind: 'keyword', words: words(['call', 'echo', 'endlocal', 'exit', 'pause', 'rem', 'set', 'setlocal', 'shift']) },
+  ],
   c: [
     { kind: 'control', words: C_LIKE_CONTROL },
     { kind: 'keyword', words: C_LIKE_KEYWORDS },
@@ -558,7 +704,10 @@ const KEYWORD_MATCHES_BY_FAMILY: Partial<Record<DocsCodeLanguageFamily, readonly
   sql: [
     { kind: 'control', words: SQL_CONTROL },
     { kind: 'keyword', words: SQL_KEYWORDS },
-    { kind: 'type', words: words(['bigint', 'binary', 'bit', 'boolean', 'char', 'date', 'datetime', 'decimal', 'float', 'int', 'integer', 'numeric', 'real', 'smallint', 'text', 'time', 'timestamp', 'varchar']) },
+    {
+      kind: 'type',
+      words: words(['bigint', 'binary', 'bit', 'boolean', 'char', 'date', 'datetime', 'decimal', 'float', 'int', 'integer', 'numeric', 'real', 'smallint', 'text', 'time', 'timestamp', 'varchar']),
+    },
   ],
   swift: [
     { kind: 'control', words: SWIFT_CONTROL },
