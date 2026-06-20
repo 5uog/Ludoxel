@@ -49,9 +49,6 @@ class _AboutScrollArea(QScrollArea):
     self.ensure_content_geometry()
 
   def ensure_content_geometry(self) -> None:
-    """
-    widgetResizable を無効にした scroll area で host 幅を viewport 幅へ固定し、height-for-width から必要高さを決定する。
-    """
     host = self.widget()
     if host is None:
       return
@@ -139,13 +136,6 @@ def _add_text_card(parent: QWidget, outer_layout: QVBoxLayout, *, title: str | N
 
 
 def build_about_tab(overlay: "SettingsOverlay", *, parent: QWidget | None = None) -> QWidget:
-  """
-  About content を creator profile、bio、etymology として構築する。
-  Name と handle は profile header に既に存在するため meta row として重複表示しない。
-  Tags は ABOUT_PROFILE_TAGS から描画し、Age / Pronounce より上に配置する。
-  Age / Pronounce は aboutMetaTitle / aboutMetaValue の既存 design を維持し、GitHub button はその下に置く。
-  旧 Project Overview、Work、Academic Direction は復活させない。
-  """
   page_parent = overlay._stack if parent is None else parent
   scroll, host, layout = _make_about_scroll_page(page_parent)
   add_page_header(layout, host, title="About", subtitle="Creator profile, bio, and etymology.")

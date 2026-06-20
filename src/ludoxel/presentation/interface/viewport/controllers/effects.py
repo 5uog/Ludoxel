@@ -11,10 +11,6 @@ if TYPE_CHECKING:
 
 
 def spawn_break_effect(viewport: "RendererViewportWidget", *, block_state: str | None, position: tuple[int, int, int] | None) -> None:
-  """
-  block break event を renderer の world-build contract に基づく particle 列へ変換し、viewport の frame-local effect state へ追加する。
-  block state 又は cell が欠落する場合と renderer が UV/definition lookup を提供しない場合は何も生成せず、simulation world state は変更しない。
-  """
   if block_state is None or position is None:
     return
   tools = viewport._renderer.world_build_tools()

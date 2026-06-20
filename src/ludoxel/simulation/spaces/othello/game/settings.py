@@ -37,10 +37,6 @@ OTHELLO_BOOK_ERROR_MAX: float = 24.0
 
 
 def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MEDIUM) -> str:
-  """
-  Othello engine difficulty token を有限集合へ正規化する。
-  raw token は小文字化・trim され、既知の difficulty だけが採用され、未知値は fallback 又は medium へ収束する。
-  """
   raw = str(value).strip().lower()
   if raw in OTHELLO_DIFFICULTIES:
     return raw
@@ -51,10 +47,6 @@ def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MED
 
 
 def difficulty_display_name(value: object) -> str:
-  """
-  正規化済み difficulty を表示 label へ写す。
-  engine mode の識別子と UI 文言を分けるため、presentation-only の射影として保持する。
-  """
   normalized = normalize_difficulty(value)
   if normalized == OTHELLO_DIFFICULTY_WEAK:
     return "Weak"
@@ -70,53 +62,27 @@ def difficulty_display_name(value: object) -> str:
 
 
 def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THREAD_COUNT) -> int:
-  """
-  worker thread 数を整数へ変換し、許容される最小・最大値へ射影する。
-  engine の process-management envelope を超える並列度を保存値から復元しない。
-  """
   return coerce_clampi(value, default=int(default), lo=int(OTHELLO_AI_THREAD_MIN), hi=int(OTHELLO_AI_THREAD_MAX))
 
 
 def normalize_hash_level(value: object, *, default: int = DEFAULT_OTHELLO_HASH_LEVEL) -> int:
-  """
-  hash level を整数へ変換し、transposition table の calibrated capacity 範囲へ射影する。
-  保存値が過大でも無制限の memory growth へ進まない。
-  """
   return coerce_clampi(value, default=int(default), lo=int(OTHELLO_AI_HASH_LEVEL_MIN), hi=int(OTHELLO_AI_HASH_LEVEL_MAX))
 
 
 def normalize_sacrifice_level(value: object, *, default: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL) -> int:
-  """
-  sacrifice profile selector を calibrated profile family の整数範囲へ射影する。
-  後続の evaluation weight へ直接写されるため、範囲外の値を保持しない。
-  """
   return coerce_clampi(value, default=int(default), lo=int(OTHELLO_AI_SACRIFICE_LEVEL_MIN), hi=int(OTHELLO_AI_SACRIFICE_LEVEL_MAX))
 
 
 def normalize_book_learning_depth(value: object, *, default: int = DEFAULT_OTHELLO_BOOK_LEARNING_DEPTH) -> int:
-  """
-  opening-book learning depth を許容された整数範囲へ射影する。
-  offline line expansion の search horizon を有限かつ明示的に制限するための正規化である。
-  """
   return coerce_clampi(value, default=int(default), lo=int(OTHELLO_BOOK_LEARNING_DEPTH_MIN), hi=int(OTHELLO_BOOK_LEARNING_DEPTH_MAX))
 
 
 def normalize_book_error(value: object, *, default: float) -> float:
-  """
-  book learning の error threshold を `[0, 24]` の実数範囲へ射影する。
-  learning UI と persistence は無制限実数ではなく、調整済みの有限 error domain を共有する。
-  """
   return coerce_clampf(value, default=float(default), lo=float(OTHELLO_BOOK_ERROR_MIN), hi=float(OTHELLO_BOOK_ERROR_MAX))
 
 
 @dataclass(frozen=True)
 class OthelloSettings:
-  """
-  persistent match configuration を保持する record である。
-  difficulty、time control、animation、player side、sacrifice level、thread/hash、
-  book-learning parameters は各許容領域に正規化され、game construction、UI、persistence が同じ値域を参照する。
-  """
-
   difficulty: str = OTHELLO_DIFFICULTY_MEDIUM
   time_control: str = OTHELLO_TIME_CONTROL_PER_SIDE_20M
   animation_mode: str = OTHELLO_ANIMATION_OFF
@@ -130,10 +96,6 @@ class OthelloSettings:
   book_leaf_error: float = DEFAULT_OTHELLO_BOOK_LEAF_ERROR
 
   def normalized(self) -> "OthelloSettings":
-    """
-    settings record の全 field を成分ごとに正規化し、冪等な正規形を返す。
-    `N_S(N_S(S)) = N_S(S)` が成り立つことを persistence と controller が前提にする。
-    """
     return OthelloSettings(
       difficulty=normalize_difficulty(self.difficulty),
       time_control=normalize_time_control(self.time_control),
@@ -149,17 +111,9 @@ class OthelloSettings:
     )
 
   def default_time_limit_s(self) -> float | None:
-    """
-    settings に保存された time-control token から nominal timer limit を取り出す。
-    timer mode の分岐は clocks module に集約され、呼び出し側で重複しない。
-    """
     return time_control_limit_s(self.time_control)
 
   def to_dict(self) -> dict[str, Any]:
-    """
-    正規化済み settings を stable scalar field の JSON map へ変換する。
-    UI label ではなく意味を持つ identifier を保存するため、presentation 変更で state file が変質しない。
-    """
     normalized = self.normalized()
     return {
       "difficulty": str(normalized.difficulty),
@@ -177,10 +131,6 @@ class OthelloSettings:
 
   @staticmethod
   def from_dict(data: dict[str, Any]) -> "OthelloSettings":
-    """
-    信頼できない mapping から settings を復元し、各成分を独立に正規化する。
-    欠落又は不正な payload は有効な既定値へ収束し、未定義の game configuration を作らない。
-    """
     if not isinstance(data, dict):
       return OthelloSettings()
     return OthelloSettings(

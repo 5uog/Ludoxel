@@ -183,14 +183,6 @@ class SidebarDialogBase(QDialog):
     return button
 
   def _make_sidebar_action_button(self, text: str, on_clicked: Callable[[], None], parent: QWidget | None = None) -> QPushButton:
-    """
-    sidebar 上の page 切替 tab とは異なり、page を選択せず単発の動作を起動するための sidebar button を生成する。
-    page 切替用の `_make_tab_button` と同じ `navBtn` objectName と寸法を与えて既存の sidebar 視覚仕様を共有するが、
-    checkable と autoExclusive を無効にすることで、押下しても tab の選択状態に影響しない。
-    `on_clicked` は引数を取らない呼び出し可能体であり、button の clicked から checked 引数を捨てて呼び出す。
-    装飾は `navBtn` selector が theme resource 側で所有するため、
-    ここでは objectName、layout 上の size policy、固定高さ、及び signal 接続のみを設定する。
-    """
     button_parent = self._sidebar if parent is None else parent
     button = QPushButton(str(text), button_parent)
     button.setObjectName("navBtn")

@@ -16,11 +16,6 @@ from ludoxel.simulation.blocks.models.wall import boxes_for_wall
 
 @dataclass(frozen=True)
 class TexturedBox:
-  """
-  local cuboid `B` と、六 voxel face に対応する任意の pixel UV rectangle 群 `U` を組にした record である。
-  held-item rendering はこの record により、block family 実装へ直接結合せず幾何と atlas addressing を受け渡す。
-  """
-
   box: LocalBox
   face_uv_pixels: dict[int, tuple[float, float, float, float]] | None = None
 
@@ -70,18 +65,10 @@ _HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0
 
 
 def _normalize_kind(kind: str | None) -> str:
-  """
-  block kind 文字列を小文字化・strip し、欠落値は空文字列へ正規化する。
-  nullable 又は緩い入力でも held-block geometry catalogue の lookup を全域的に行えるようにする。
-  """
   return "" if kind is None else str(kind).strip().lower()
 
 
 def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple[TexturedBox, ...]:
-  """
-  inventory item identifier から block definition を解決し、その kind に対応する held-block cuboid 群を返す。
-  registry で解決できない identifier は空 tuple となり、renderer は未定義 block を描かない。
-  """
   if block_id is None:
     return ()
 
@@ -93,10 +80,6 @@ def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple
 
 
 def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]:
-  """
-  `cube`、`slab`、`stairs`、`wall`、`fence`、`fence_gate` の有限集合を held-item 用 cuboid decomposition へ写す catalogue である。
-  first-person と third-person はこの同じ幾何源を消費する。
-  """
   normalized = _normalize_kind(kind)
   if normalized == "slab":
     return tuple(TexturedBox(box=b) for b in boxes_for_slab({"type": "bottom"}))
@@ -115,9 +98,5 @@ def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]
 
 
 def held_block_kind_scale_multiplier(kind: str | None) -> float:
-  """
-  block kind ごとの held-item camera transform 補正倍率を返す。
-  細い block や疎な block が同一 composition law の下で過度に小さく又は大きく見えないよう、screen-space mass を調整する。
-  """
   normalized = _normalize_kind(kind)
   return float(_HELD_BLOCK_KIND_SCALE_MULTIPLIERS.get(normalized, 1.0))

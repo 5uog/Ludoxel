@@ -25,22 +25,12 @@ _DIRECTION_OFFSETS: dict[str, tuple[int, int, int]] = {"north": (0, 0, -1), "eas
 
 @dataclass(frozen=True)
 class BlockPreviewNeighbor:
-  """
-  thumbnail model の connectivity 解決に供給する方向と block state の組を保持する。
-  direction は六近傍名、state は block registry で解決可能な state string として validation 済みであることを前提とする。
-  """
-
   direction: str
   state: str
 
 
 @dataclass(frozen=True)
 class BlockPreviewRequest:
-  """
-  Node.js CLI が検証した thumbnail task を Python rendering service へ渡す値 object である。
-  path は project root を基準に解決し、generate と check の file-system side effect を mode と dry_run で分離する。
-  """
-
   mode: str
   texture_root: Path | None
   output_root: Path | None
@@ -61,11 +51,6 @@ class BlockPreviewRequest:
 
 @dataclass(frozen=True)
 class BlockPreviewPlan:
-  """
-  一つの block preview に必要な domain state、neighbor lookup、及び出力先を結合する。
-  rendering geometry は presentation API が所有し、この plan は repository tool の batch 実行順だけを保持する。
-  """
-
   block: BlockDefinition
   state_str: str
   get_state: GetState
@@ -73,10 +58,6 @@ class BlockPreviewPlan:
 
 
 def _resolve_repo_path(project_root: Path, value: str | Path | None) -> Path | None:
-  """
-  CLI path を repository root 基準の絶対 path へ正規化する。
-  値が未指定又は空文字の場合は asset resolver に既定 root の選択を委ねるため None を返す。
-  """
   if value is None:
     return None
   raw = str(value).strip()
@@ -87,19 +68,11 @@ def _resolve_repo_path(project_root: Path, value: str | Path | None) -> Path | N
 
 
 def _normalize_category(value: str) -> str:
-  """
-  CLI の full block alias を block registry が使用する cube category へ正規化する。
-  未指定値及び他の既知 category は小文字化した値をそのまま返す。
-  """
   category = str(value).strip().lower()
   return "cube" if category in ("full", "full_block") else category
 
 
 def _state_overrides(values: Iterable[str]) -> dict[str, str]:
-  """
-  repeatable な key=value option を後勝ちの block-state property 辞書へ変換する。
-  compatibility 名は現行 state codec の facing、type、half へ正規化し、不正形式は task failure として例外を送出する。
-  """
   out: dict[str, str] = {}
   for raw in values:
     text = str(raw).strip()
@@ -120,10 +93,6 @@ def _state_overrides(values: Iterable[str]) -> dict[str, str]:
 
 
 def _default_state_props(block: BlockDefinition) -> dict[str, str]:
-  """
-  preview で model geometry が一義的になる block-kind 固有の既定 state を返す。
-  connectivity は neighbor lookup から導出し、domain model と異なる thumbnail 専用 geometry rule は作らない。
-  """
   kind = str(block.kind_name())
   if kind == "slab":
     return {"type": "bottom"}
@@ -137,10 +106,6 @@ def _default_state_props(block: BlockDefinition) -> dict[str, str]:
 
 
 def _make_state_getter(block: BlockDefinition, state_str: str, neighbors: Sequence[BlockPreviewNeighbor]) -> GetState:
-  """
-  中心 block と明示された六近傍だけを返す model-state lookup を構築する。
-  fence と wall では指定がない場合に代表形状として north-south の同種近傍を補う。
-  """
   explicit = {str(neighbor.direction): str(neighbor.state) for neighbor in neighbors}
   if not explicit and str(block.kind_name()) in ("fence", "wall"):
     explicit = {"north": str(block.block_id), "south": str(block.block_id)}
@@ -151,20 +116,12 @@ def _make_state_getter(block: BlockDefinition, state_str: str, neighbors: Sequen
       states[offset] = str(state)
 
   def get_state(x: int, y: int, z: int) -> str | None:
-    """
-    model contract が照会した局所 cell に対応する state を返す。
-    登録されていない cell の None は空 cell を表し、world state への副作用は持たない。
-    """
     return states.get((int(x), int(y), int(z)))
 
   return get_state
 
 
 def _parse_neighbor(raw: str) -> BlockPreviewNeighbor:
-  """
-  direction=state 形式を六近傍の値 object へ変換する。
-  未対応方向又は空 state は Node.js validation を迂回した直接実行でも拒否する。
-  """
   text = str(raw).strip()
   if "=" not in text:
     raise ValueError(f"--neighbor must use direction=state: {text}")
@@ -179,10 +136,6 @@ def _parse_neighbor(raw: str) -> BlockPreviewNeighbor:
 
 
 def _validate_state_known(state: str, registry: BlockRegistry, *, label: str) -> str | None:
-  """
-  state string の block id、property fragment、及び registry 登録を検査する。
-  正常時は None、異常時は batch report に付加できる label 付き説明を返す。
-  """
   raw = str(state).strip()
   base_id, _props = parse_state(raw)
   if not str(base_id).strip():
@@ -204,19 +157,11 @@ def _validate_state_known(state: str, registry: BlockRegistry, *, label: str) ->
 
 
 def _existing_output_is_valid(path: Path) -> bool:
-  """
-  既存 output が 300x300 alpha PNG として Qt から読めるかを判定する。
-  pixel content は generate 後の renderer API が検証し、check mode では file contract だけを確認する。
-  """
   image = QImage(str(path))
   return not image.isNull() and int(image.width()) == PREVIEW_CANVAS_SIZE and int(image.height()) == PREVIEW_CANVAS_SIZE and bool(image.hasAlphaChannel())
 
 
 def _resolve_roots(registry: BlockRegistry, request: BlockPreviewRequest) -> tuple[Path, Path]:
-  """
-  明示 path 又は shared visual-asset resolver から texture root と thumbnail root を確定する。
-  一方だけが指定された場合も、他方は同じ asset family の解決結果を使用する。
-  """
   texture_root = _resolve_repo_path(request.project_root, request.texture_root)
   output_root = _resolve_repo_path(request.project_root, request.output_root)
   if texture_root is not None and output_root is not None:
@@ -226,10 +171,6 @@ def _resolve_roots(registry: BlockRegistry, request: BlockPreviewRequest) -> tup
 
 
 def _build_plans(registry: BlockRegistry, request: BlockPreviewRequest, texture_root: Path, output_root: Path) -> tuple[list[BlockPreviewPlan], list[str], int]:
-  """
-  block selection、state、texture、model face、既存 output を検査して実行 plan を作る。
-  check mode と generate mode は同じ検査結果を共有し、overwrite policy だけを generate side effect の直前条件として追加する。
-  """
   failures: list[str] = []
   if not (texture_root / "block").is_dir():
     failures.append(f"missing block texture directory: {texture_root / 'block'}")
@@ -281,10 +222,6 @@ def _build_plans(registry: BlockRegistry, request: BlockPreviewRequest, texture_
 
 
 def _parse_arguments(argv: Sequence[str] | None = None) -> BlockPreviewRequest:
-  """
-  Node.js service から渡される subprocess argument schema を Python 値 object へ変換する。
-  user-facing help、command dispatch、及び primary validation は Node.js CLI が所有し、この parser は process boundary の型復元だけを担う。
-  """
   parser = argparse.ArgumentParser(add_help=False)
   parser.add_argument("--mode", choices=("generate", "check"), required=True)
   parser.add_argument("--project-root", default=".")
@@ -325,10 +262,6 @@ def _parse_arguments(argv: Sequence[str] | None = None) -> BlockPreviewRequest:
 
 
 def run(request: BlockPreviewRequest) -> int:
-  """
-  検査済み plan を check 又は generate mode で実行し、process exit code を返す。
-  check と dry-run は file を作成せず、generate は presentation rendering API だけを用いて PNG を書き込む。
-  """
   registry = create_default_registry()
   texture_root, output_root = _resolve_roots(registry, request)
   plans, failures, existing = _build_plans(registry, request, texture_root, output_root)
@@ -361,10 +294,6 @@ def run(request: BlockPreviewRequest) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-  """
-  subprocess argument の復元と task 実行を一つの process exit code へ変換する。
-  validation 又は rendering の例外は command prefix 付きで標準 error に報告し、非零 status を返す。
-  """
   try:
     return run(_parse_arguments(argv))
   except SystemExit as exc:

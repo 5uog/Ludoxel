@@ -11,10 +11,6 @@ _ICON_VISUAL_ANCHORS: dict[str, tuple[float, float]] = {"start": (9.5, 9.5), "se
 
 
 def othello_special_item_icon_visual_anchor(icon_key: str) -> tuple[float, float] | None:
-  """
-  Othello special item の17x17 frame が占める authored bounds の中心を、18x18 source frame の連続座標で返す。
-  frame の左上座標 `(1, 1)` と幅、高さ17から得る中心 `(9.5, 9.5)` を明示し、透明余白の有無で配置基準が変化しないようにする。
-  """
   anchor = _ICON_VISUAL_ANCHORS.get(str(icon_key).strip().lower())
   if anchor is None:
     return None

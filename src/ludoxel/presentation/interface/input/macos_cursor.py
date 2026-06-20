@@ -76,21 +76,11 @@ class MacosCursorWarp:
 
 @dataclass(frozen=True)
 class MacosRelativeMouseDelta:
-  """
-  CoreGraphics event tap が累積した相対 mouse 移動量を表す。
-  `dx` と `dy` は display pixel 単位の符号付き整数であり、visible cursor position には依存しない。
-  """
-
   dx: int
   dy: int
 
 
 class MacosRelativeMouseCapture:
-  """
-  gameplay capture 中の cursor と mouse movement を CoreGraphics の相対入力契約へ切り替える。
-  capture 開始時に cursor position association を解除し、listen-only mouse event tap の delta を frame 側へ累積する。
-  """
-
   def __init__(self) -> None:
     self._loaded = False
     self._load_error = ""
@@ -107,17 +97,9 @@ class MacosRelativeMouseCapture:
     self._discard_next_motion_event = False
 
   def active(self) -> bool:
-    """
-    CoreGraphics の相対 capture が現在有効である場合に真を返す。
-    Qt 側はこの値を用いて position-based delta と warp event の処理を停止する。
-    """
     return bool(self._active)
 
   def begin(self, *, x: int, y: int) -> bool:
-    """
-    cursor を指定 global position へ一度だけ揃えた後、mouse と cursor position の association を解除する。
-    mouse delta は event tap callback で累積し、Qt mouse move event の発生有無には依存させない。
-    """
     if sys.platform != "darwin" or not self._ensure_loaded() or not self._ensure_event_tap():
       return False
     if bool(self._active):
@@ -141,10 +123,6 @@ class MacosRelativeMouseCapture:
       return False
 
   def poll(self) -> MacosRelativeMouseDelta:
-    """
-    前回 poll 以降に event tap callback が累積した相対 displacement を返し、同時に累積値を消費する。
-    capture が無効又は API が利用不能な場合は `(0, 0)` を返し、呼び出し側の input accumulation を変化させない。
-    """
     if not bool(self._active):
       return MacosRelativeMouseDelta(dx=0, dy=0)
     with self._lock:
@@ -155,10 +133,6 @@ class MacosRelativeMouseCapture:
     return MacosRelativeMouseDelta(dx=dx, dy=dy)
 
   def end(self) -> None:
-    """
-    mouse と cursor position の association、および native cursor visibility を通常状態へ戻す。
-    pause、inventory、focus loss、window 又は application deactivation、明示 release、shutdown の全経路から反復して呼べる。
-    """
     cg = self._cg
     if cg is None:
       self._active = False
@@ -184,37 +158,21 @@ class MacosRelativeMouseCapture:
     self.clear_pending_delta()
 
   def close(self) -> None:
-    """
-    shutdown 時に native capture state を解放する。
-    外部 file や application preference を変更せず、process-wide cursor state だけを復元する。
-    """
     self.end()
 
   def clear_pending_delta(self) -> None:
-    """
-    capture lifecycle 又は input reset より前に蓄積した相対 displacement を破棄する。
-    通常の poll と同じ lock で処理し、古い delta が次の gameplay step へ混入しないようにする。
-    """
     with self._lock:
       self._pending_dx = 0
       self._pending_dy = 0
       self._discard_next_motion_event = False
 
   def _prepare_event_tap_resync(self) -> None:
-    """
-    event tap の再有効化境界で累積 delta を破棄し、再開直後の一件を同期用として読み捨てる。
-    timeout 又は user-input disable 中の移動を一括適用して視点を跳ばさない。
-    """
     with self._lock:
       self._pending_dx = 0
       self._pending_dy = 0
       self._discard_next_motion_event = True
 
   def _handle_event(self, _proxy, event_type: int, event, _refcon):
-    """
-    CoreGraphics mouse event の delta field を capture 中だけ累積する。
-    listen-only tap なので event は消費せず、そのまま system と Qt へ流す。
-    """
     if int(event_type) in (_CG_EVENT_TAP_DISABLED_BY_TIMEOUT, _CG_EVENT_TAP_DISABLED_BY_USER_INPUT):
       if not bool(self._active):
         return event
@@ -243,10 +201,6 @@ class MacosRelativeMouseCapture:
     return event
 
   def _ensure_loaded(self) -> bool:
-    """
-    macOS system CoreGraphics/CoreFoundation framework を一度だけ読み込み、使用する C function の型契約を固定する。
-    読み込み失敗は保持され、以後の capture request は Qt fallback を選べるように偽を返す。
-    """
     if bool(self._loaded):
       return self._cg is not None and self._cf is not None
     self._loaded = True

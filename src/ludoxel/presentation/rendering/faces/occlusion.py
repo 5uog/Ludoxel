@@ -11,20 +11,12 @@ from ludoxel.simulation.blocks.states.codec import parse_state
 
 
 def _face_boundary_offset(face_idx: int, box: LocalBox) -> tuple[int, int, int] | None:
-  """
-  face が単位 cell 境界に達する場合だけ、その face normal 方向の隣接 cell offset を返す。
-  内部 face は隣接 voxel による occlusion 対象から外し、不要な neighbor lookup を発生させない。
-  """
   if not face_touches_cell_boundary(int(face_idx), box):
     return None
   return face_neighbor_offset(int(face_idx))
 
 
 def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[float, float, float, float]]:
-  """
-  共有境界面で接触する neighbor box 群を、対象 face の二次元矩形系へ射影して返す。
-  これらの矩形集合が inter-block occlusion の被覆候補になる。
-  """
   fi = int(face_idx)
   out: list[tuple[float, float, float, float]] = []
 
@@ -57,10 +49,6 @@ def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[fl
 
 
 def _local_cover_rects(face_idx: int, box: LocalBox, boxes: list[LocalBox]) -> list[tuple[float, float, float, float]]:
-  """
-  同じ block model 内の sibling box が対象 face と同一平面で接触している部分を矩形集合として返す。
-  隣接 block を見る前に、複数 cuboid から生じる内部 coplanar face を消去するために用いる。
-  """
   fi = int(face_idx)
   out: list[tuple[float, float, float, float]] = []
 
@@ -95,10 +83,6 @@ def _local_cover_rects(face_idx: int, box: LocalBox, boxes: list[LocalBox]) -> l
 
 
 def _sorted_unique(values: list[float]) -> list[float]:
-  """
-  `FACE_EPSILON` の格子で値を量子化し、重複を除いた代表値を昇順に返す。
-  face 平面上の有限 cell 分割を、微小な浮動小数誤差に対して安定に構成する。
-  """
   q: dict[int, float] = {}
   for v in values:
     q[int(round(float(v) / FACE_EPSILON))] = float(v)
@@ -106,10 +90,6 @@ def _sorted_unique(values: list[float]) -> list[float]:
 
 
 def _fully_covered(target_rect: tuple[float, float, float, float], cover_rects: list[tuple[float, float, float, float]]) -> bool:
-  """
-  対象矩形を被覆候補矩形で切ってできる各非退化 cell について、代表点が少なくとも一つの候補矩形に含まれるかを調べる。
-  複数の部分矩形が重なる場合でも、面全体の完全被覆を cell 単位で判定できる。
-  """
   tu0, tu1, tv0, tv1 = target_rect
 
   if (tu1 - tu0) <= FACE_EPSILON or (tv1 - tv0) <= FACE_EPSILON:
@@ -173,10 +153,6 @@ def _fully_covered(target_rect: tuple[float, float, float, float], cover_rects: 
 
 
 def is_local_face_occluded(*, box: LocalBox, face_idx: int, boxes: list[LocalBox]) -> bool:
-  """
-  block 内部の sibling cuboid により対象 face が完全に塞がれるかを判定する。
-  `Covered(R(face, box), C_l(face, box))` が成立する face は、renderer payload へ出さない。
-  """
   target = face_rect(int(face_idx), box)
   rects = _local_cover_rects(int(face_idx), box, boxes)
   if not rects:
@@ -185,10 +161,6 @@ def is_local_face_occluded(*, box: LocalBox, face_idx: int, boxes: list[LocalBox
 
 
 def is_block_face_occluded(*, x: int, y: int, z: int, box: LocalBox, face_idx: int, get_state: GetState, def_lookup: DefLookup) -> bool:
-  """
-  対象 face の境界 offset から隣接 block を解決し、その contact rectangle 群が対象 face rectangle を完全に覆うかを判定する。
-  full cube だけに限定しない geometry-aware な inter-voxel face suppression の本体である。
-  """
   off = _face_boundary_offset(int(face_idx), box)
   if off is None:
     return False

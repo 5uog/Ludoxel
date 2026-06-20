@@ -76,35 +76,15 @@ class SessionManager:
     self.ai_players.shutdown()
 
   def configure_learning(self, *, mode: str, captured_kinds: tuple[str, ...], policy: Policy | None) -> None:
-    """
-    保存済み AI Learning 設定から live 学習調整器を構成する。
-    mode は off / observe_only / use_learned_policy のいずれかで、captured_kinds は記録対象種別、
-    policy は use_learned_policy で適用する選択 policy(評価未通過なら適用時に無視され deterministic fallback する)である。
-    設定反映は軽量であり、Learning tab での設定変更や session 開始時に呼ぶ。
-    """
     self.learning.configure(mode=str(mode), captured_kinds=tuple(captured_kinds), policy=policy)
 
   def flush_learning(self, sink: DatasetSink) -> int:
-    """
-    調整器の buffer 内 demonstration 記録を sink へ書き出し、書き出し件数を返す。
-    sink は application 層が user data root に対して構築する追記器であり、
-    本 method は毎 frame ではなく flush interval 又は shutdown 時に呼ぶ前提である。
-    """
     return self.learning.flush(sink)
 
   def learning_pending(self) -> int:
-    """
-    flush 待ちの demonstration 記録件数を返す。
-    application 層は flush interval 判定と shutdown 前の未完了記録確認に用いる。
-    """
     return self.learning.pending_count()
 
   def _player_observation_dict(self) -> dict:
-    """
-    player demonstration 用の最小観測 mapping を構築して返す。
-    player が知り得る自己状態(位置、接地、体力)のみを含め、
-    AI が見えていない world 真値を入れない。記録の観測欄に用いる。
-    """
     return {
       "self_position": [float(self.player.position.x), float(self.player.position.y), float(self.player.position.z)],
       "on_ground": bool(self.player.on_ground),
@@ -113,12 +93,6 @@ class SessionManager:
     }
 
   def _player_feature_keys(self) -> list[str]:
-    """
-    player demonstration の feature 条件 key を player の自己状態から導く。
-    cooldown 可用と体力 low / critical のみを付与する。
-    これらは feature 符号化器の生成する有効 key であり、trainer が player 実演を feature 条件付きで学習できるようにする。
-    透視的 world 情報に依存する key は付与しない。
-    """
     max_health = max(1.0, float(self.player.max_health))
     health = float(self.player.health)
     features: list[str] = [str(FEATURE_COMBAT_COOLDOWN_READY)]
@@ -129,11 +103,6 @@ class SessionManager:
     return features
 
   def _record_player_action(self, *, kind: str, action_id: str) -> None:
-    """
-    player の操作 1 件を demonstration として記録する。
-    記録は調整器が observe_only かつ当該種別を capture 対象とする場合のみ行われ、それ以外は副作用を持たない。
-    観測には自己状態のみ、detail には自己状態由来の feature key を入れ、行動は与えた action id を用いる。
-    """
     self.learning.record_player_demonstration(
       kind=str(kind), observation=self._player_observation_dict(), action_id=str(action_id), actor_id="player", detail={"feature_keys": self._player_feature_keys()}
     )

@@ -102,11 +102,6 @@ def _spawn_ai_at_hit(viewport: "RendererViewportWidget", *, hit) -> bool:
 
 
 def _import_ai_skin(viewport: "RendererViewportWidget", current_skin_id: str) -> str | None:
-  """
-  file dialog で選択された PNG を 64x64 atlas として検証し、actor 固有 import skin file として保存して新しい skin_id を返す。
-  import と replace のいずれの場合も新規 UUID hex を採番して別 file として保存するため、apply 経路は skin_id の変化として skin resource 更新を確実に検出でき、置換前の旧 skin_id は呼び出し側 apply 経路の orphan 削除で処理される。選択 cancel では None を返し、decode 失敗、寸法不一致、保存失敗では警告を表示して None を返す。
-  current_skin_id は将来の差分判定のための参考値であり、この関数自身は renderer への push を行わない。push は呼び出し側 apply 経路が skin_id の変化を検出した時に一度だけ実行する。
-  """
   del current_skin_id
   selected_path, _selected_filter = QFileDialog.getOpenFileName(viewport, "Select AI Skin", "", "PNG Files (*.png)")
   if not str(selected_path).strip():
@@ -122,18 +117,10 @@ def _import_ai_skin(viewport: "RendererViewportWidget", current_skin_id: str) ->
 
 
 def _ai_skin_is_available(viewport: "RendererViewportWidget", skin_id: str) -> bool:
-  """
-  指定 skin_id の actor 固有 import skin file が存在し、integrity 検証と 64x64 検査を満たして読み込める場合に真を返す。
-  dialog 側の skin status 表示が、参照切れ又は改竄により fallback へ落ちる状態を区別するために用いる。
-  """
   return load_custom_ai_skin_image(viewport._data_root, skin_id) is not None
 
 
 def _skin_id_is_referenced(viewport: "RendererViewportWidget", skin_id: str) -> bool:
-  """
-  指定 skin_id を import skin として参照する生存 AI が、いずれかの play-space に一体でも存在する場合に真を返す。
-  skin 差し替え、skin 削除、AI 削除の際に共有されていない import skin file だけを安全に削除するための参照計数として用いる。無効 id は常に偽を返す。
-  """
   normalized_id = normalize_ai_skin_id(skin_id)
   if not normalized_id:
     return False
@@ -141,10 +128,6 @@ def _skin_id_is_referenced(viewport: "RendererViewportWidget", skin_id: str) -> 
 
 
 def _delete_unreferenced_ai_skin(viewport: "RendererViewportWidget", skin_id: str) -> None:
-  """
-  指定 skin_id の import skin file を、どの生存 AI からも参照されていない場合に限り削除する。
-  skin 差し替え時の旧 skin_id、skin 削除時の旧 skin_id、AI 削除時の旧 skin_id の解放に用い、まだ参照する AI が居る場合は削除しない。
-  """
   normalized_id = normalize_ai_skin_id(skin_id)
   if not normalized_id or _skin_id_is_referenced(viewport, normalized_id):
     return
@@ -174,10 +157,6 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
   settings_controller.sync_cloud_motion_pause(viewport)
 
   def apply_settings(candidate: AiSpawnEggSettings) -> bool:
-    """
-    AI Settings dialog の有効な変更を session 境界へ即時反映し、変更種別に応じた最小限の presentation 側更新だけを行う。
-    session 側 update が失敗した場合は偽を返して反映しない。反映成功時は、直前に反映済みの settings との比較で skin_mode 又は skin_id が実際に変化した場合に限り、孤立した旧 import skin file の解放と AI skin resource の再解決・renderer push を一度だけ行う。name、health indicator、regen、behavior、route の変更では skin resource の reload も renderer push も行わない。navigation cache の破棄は simulation 側 update_actor_settings が nav 影響変更に限定して処理するため、ここでは追加の navigation 操作を行わない。
-    """
     normalized = candidate.normalized()
     previous = viewport._ai_edit_settings
     updated = viewport._session.update_ai_player_settings(actor_id=str(actor_id), settings=normalized)
@@ -221,10 +200,6 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
 
 
 def _on_actor_dialog_finished(viewport: "RendererViewportWidget", *, actor_id: str, was_captured: bool, dialog) -> None:
-  """
-  本体画面へ非 modal で埋め込んだ AI Settings overlay が閉じられた時に、modal exec 時代の `finally` 経路が担っていた後処理を実行する。
-  まず付随する AI Settings Preview dialog を閉じ、overlay が記録した delete 要求と route 編集要求、及び route 編集へ引き継ぐ設定値を、dialog 破棄前に読み出す。次に AI overlay 開放 flag を下ろして入力状態を初期化し、delete 要求があれば actor と孤立 import skin の解放を行い、route 編集要求があれば world 上の route 編集へ遷移する。最後に route 編集中でなければ編集対象 actor 参照を解除し、開始時に mouse capture されていてかつ他の modal overlay が無く loading 中でもなければ gameplay の mouse capture を復帰する。
-  """
   close_ai_settings_preview(viewport)
   try:
     delete_requested = bool(dialog.delete_requested())
@@ -272,10 +247,6 @@ def _on_actor_dialog_finished(viewport: "RendererViewportWidget", *, actor_id: s
 
 
 def open_ai_settings_preview(viewport: "RendererViewportWidget") -> None:
-  """
-  本体画面へ埋め込んだ AI Settings overlay の Preview button から、対象 AI を中央に据えた Debug 用 preview dialog を明示的に開く。
-  preview dialog は埋め込み overlay とは別の detached dialog として生成し、編集対象 actor が無い場合や既に開いている場合は生成しない。dialog の view_changed は次 frame の preview 再描画を要求するために viewport の再描画へ接続し、closed は preview lifecycle を終了させる close_ai_settings_preview へ接続する。preview frame の生成自体は paint 経路の `_update_ai_preview_frame` が担うため、ここでは dialog の生成と表示のみを行う。
-  """
   if getattr(viewport, "_ai_preview", None) is not None:
     return
   if viewport._ai_edit_actor_id is None:
@@ -296,10 +267,6 @@ def open_ai_settings_preview(viewport: "RendererViewportWidget") -> None:
 
 
 def close_ai_settings_preview(viewport: "RendererViewportWidget") -> None:
-  """
-  AI Settings Preview dialog を閉じ、preview frame の供給を止める。
-  二重呼び出しに備えて先に参照を切ってから dialog を破棄するため、これ以降の paint では `_update_ai_preview_frame` が preview を検出せず offscreen render を発行しない。
-  """
   dialog = getattr(viewport, "_ai_preview", None)
   if dialog is None:
     return

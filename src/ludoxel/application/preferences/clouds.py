@@ -22,11 +22,6 @@ DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT: int = 70
 
 
 def normalize_cloud_speed_range(min_speed: object, max_speed: object) -> tuple[float, float]:
-  """
-  雲ごとの水平移動速度範囲を block/second 単位の閉区間へ正規化する。
-  両端は 0 以上 4 以下へ clamp し、入力順が逆の場合は交換するため、
-  persistence、UI、renderer は常に `min_speed <= max_speed` を共有する。
-  """
   lo = clampf(float(min_speed), float(CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND), float(CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND))
   hi = clampf(float(max_speed), float(CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND), float(CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND))
   if float(lo) > float(hi):
@@ -37,11 +32,6 @@ def normalize_cloud_speed_range(min_speed: object, max_speed: object) -> tuple[f
 def normalize_cloud_height_settings(
   fixed_y: object, spawn_y_min: object, spawn_y_max: object, preferred_y_min: object, preferred_y_max: object, preferred_y_probability_percent: object
 ) -> tuple[int, int, int, int, int, int]:
-  """
-  雲の固定高度、生成高度範囲、優先高度区間、優先確率を同一の整数座標契約へ正規化する。
-  高度は 28 以上 250 以下、確率は 0 以上 100 以下へ clamp し、
-  逆転した区間を交換した後で優先区間を生成範囲内へ射影する。
-  """
   fixed = clampi(int(fixed_y), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
   spawn_lo = clampi(int(spawn_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
   spawn_hi = clampi(int(spawn_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))

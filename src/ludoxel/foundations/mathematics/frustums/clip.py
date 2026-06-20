@@ -8,11 +8,6 @@ from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, chunk_bounds
 
 
 def chunk_corners_homogeneous(chunk_key: ChunkKey) -> np.ndarray:
-  """
-  chunk の八頂点を homogeneous coordinate の `np.float32` 配列として生成する。
-  返値 shape は `(8, 4)`、各 row は `(x, y, z, 1)` であり、
-  座標範囲は `chunk_bounds` の半開境界の下端と上端を用いる。
-  """
   x0, x1, y0, y1, z0, z1 = chunk_bounds(chunk_key)
   return np.asarray(
     [
@@ -30,11 +25,6 @@ def chunk_corners_homogeneous(chunk_key: ChunkKey) -> np.ndarray:
 
 
 def chunk_intersects_clip_volume(chunk_key: ChunkKey, matrix: np.ndarray) -> bool:
-  """
-  chunk AABB が与えられた clip matrix の正規化前 clip volume と交差し得るかを保守的に判定する。
-  `matrix @ corners.T` により shape `(8, 4)` の clip 座標を作り、
-  全頂点が同一平面の外側 `x < -w`、`x > w`、`y < -w`、`y > w`、`z < -w`、`z > w` にある場合だけ非交差とする。
-  """
   corners = chunk_corners_homogeneous(chunk_key)
   clip = (matrix.astype(np.float32, copy=False) @ corners.T).T
 

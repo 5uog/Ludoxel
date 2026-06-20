@@ -345,12 +345,6 @@ def _support_path_heuristic(cell: tuple[int, int, int], target: tuple[int, int, 
 
 
 def _world_xz_bounds(ctx: _PlannerContext) -> tuple[int, int, int, int] | None:
-  """
-  bounded snapshot に含まれる全 block の x/z 範囲を求め、探索許容領域として padding 付きで返す。
-  返値は (min_x, max_x, min_z, max_z) であり、snapshot が空の場合は None を返す。
-  この範囲は map 全体を覆うため、planner は従来の start/target 周辺 radius に制限されず、map 上に存在する任意の迂回経路を candidate にできる。
-  padding は placement による既存 block 外周 1 cell への bridge step を探索対象に含めるためのものである。
-  """
   if not ctx.world.blocks:
     return None
   min_x = min(int(key[0]) for key in ctx.world.blocks.keys()) - int(_PLAN_BOUNDS_PAD)

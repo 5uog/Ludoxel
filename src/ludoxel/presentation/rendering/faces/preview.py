@@ -1,10 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
-"""
-block model の visible face を固定 orthographic view へ投影し、300 x 300 RGBA preview として rasterize する。
-face index は正負 X、正負 Y、正負 Z の順であり、上面、下面、Z 面、X 面へそれぞれ 1.00、0.50、0.80、0.60 の固定明度を適用する。
-この明度は sun 又は shadow-map lighting ではなく、同一 texture を使う面の向きを preview 内で識別可能にする表示契約である。
-"""
 
 from __future__ import annotations
 

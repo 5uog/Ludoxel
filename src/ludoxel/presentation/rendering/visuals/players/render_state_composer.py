@@ -12,10 +12,6 @@ from ludoxel.simulation.inventories.special_items.registry import get_special_it
 def compose_player_render_state(
   *, snapshot: RenderSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float
 ) -> PlayerRenderState:
-  """
-  render snapshot 内の player model 情報と first-person motion sample を、player-render state の構成関数へ渡す外側 adapter である。
-  DTO field selection を各 renderer call site へ重複させない。
-  """
   return compose_player_render_state_from_parts(
     player_model=snapshot.player_model,
     motion=motion,
@@ -34,12 +30,6 @@ def compose_player_render_state_from_parts(
   arm_rotation_limit_max_deg: float,
   skin_texture_key: str | None = None,
 ) -> PlayerRenderState:
-  """
-  権威的な player-model snapshot と sampled first-person motion state を合成し、
-  registry と special-item lookup を加えて不変 render-state record を生成する。
-  pose builder はこの record だけから body、hand、item の描画入力を再構成する。
-  skin_texture_key は描画に用いる skin texture の選択子であり、None は player skin、文字列は renderer に登録済みの actor 固有 skin texture key を表す。既定が None であるため player 本体や既存呼び出し側の挙動は変化しない。
-  """
   visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))
   special_descriptor = None if motion.visible_item_id is None else get_special_item_descriptor(motion.visible_item_id)
   first_person = FirstPersonRenderState(

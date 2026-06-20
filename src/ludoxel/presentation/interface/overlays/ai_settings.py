@@ -80,26 +80,13 @@ _LEARNING_CAPTURE_LABELS: tuple[tuple[str, str], ...] = (
 
 
 class _LearningTaskThread(QThread):
-  """
-  Learning タブの重い学習・評価処理を UI thread の外で実行する worker thread を表す。
-  訓練(player data / sandbox)と評価は数秒の計算と file I/O を伴うため、frame loop と UI thread を塞がないよう本 thread の run で実行する。run は与えた callable を呼び、結果(又は例外時の失敗 mapping)を task_finished signal で main thread へ返す。signal の queued 接続により、結果処理(表示更新・通知)は main thread 側で行われる。
-  """
-
   task_finished = pyqtSignal(object)
 
   def __init__(self, task, parent: QWidget | None = None) -> None:
-    """
-    実行する引数なし callable を保持して初期化する。
-    task は controller の学習・評価 method を想定し、戻り値は結果 mapping 又は評価 report である。
-    """
     super().__init__(parent)
     self._task = task
 
   def run(self) -> None:
-    """
-    保持した callable を本 worker thread 上で実行し、結果を task_finished で通知する。
-    callable が例外を送出した場合は status を failed とする mapping を結果として送出し、UI 側の異常終了を防ぐ。
-    """
     try:
       result = self._task()
     except Exception as exc:  # noqa: BLE001
@@ -117,20 +104,6 @@ _REGEN_TIME_TO_CAP_MAX_UI = 3600.0
 
 
 class AiSettingsOverlay(SidebarDialogBase):
-  """
-  選択中の AI actor 一体を、Pause 画面の Settings dialog と同じ sidebar、page header、card、setting row 構造で編集する detached dialog を表す。
-  編集対象は責務別 page(Identity、Display、Skin、Health、Behavior、Block Placement)に分割し、独立した Safety tab と Route tab は持たず、
-  Safety guidance は Block Placement page の section、Route 操作は Behavior page の section として統合する。
-  footer の Save/Cancel button は持たず、有効な各変更は settings_updater を介して session 境界へ即時反映するため、dialog の close 又は reject は既に反映済みの値を取り消さない。
-  入力は AiSpawnEggSettings として受け取り、settings() は現在の control 状態を同型の正規化済み値として返す。
-  名前の重複検査は生存 actor 集合を知る session 側 validator を name_validator として注入する。
-  skin source は player skin 共有、同梱 Alex skin、actor 固有 import PNG の三択であり、
-  actor 固有 import PNG の登録は Skin source combo で Imported PNG を選択した時だけ skin_importer を介して presentation の skin resource 経路へ委譲する。
-  import 済み PNG の実体保存・参照解決・renderer push は dialog の外側が担い、dialog は skin_mode と skin_id の選択だけを所有する。
-  自動回復の interval は UI 上では「上限まで回復し切るのに要する秒数」として編集し、保存時に interval = time_to_cap * amount / cap へ写像する。amount は既存設定値を保持する。
-  本体画面への埋め込みでは as_window を偽として viewport の子 widget として表示し、Debug 用の AI Settings Preview dialog を sidebar の Preview button から開く。
-  """
-
   preview_requested = pyqtSignal()
 
   def __init__(
@@ -384,10 +357,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._stack.addWidget(scroll)
 
   def _build_learning_page(self) -> None:
-    """
-    AI 学習基盤の全体設定を編集する Learning page を構築する。
-    本 page は actor 個別ではなく学習基盤全体の設定であり、注入された learning controller を介して読み書きする。Learning Mode、Data Capture、Skill Categories、Policy Selection、Evaluation、Data Management の card を責務別に並べ、装飾は theme QSS が所有する objectName(settingsCard、settingsRow、primaryBtn、dangerBtn 等)に委ね、Python では widget 生成・objectName・layout・signal 接続・状態反映だけを行う。Clear と Reset は破壊操作として dangerBtn、Restore と Export と Import と評価実行はその意味に応じた button 種別を与え、互いの意味を混同しない。本 page は controller が注入された場合にのみ構築され、未注入時は存在しない。
-    """
     controller = self._learning_controller
     if controller is None:
       return
@@ -491,10 +460,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._refresh_learning_dynamic()
 
   def _load_learning_controls(self, state) -> None:
-    """
-    learning controller の状態を Learning page の各 control へ反映する。
-    combo と checkbox の値設定中は QSignalBlocker で signal を遮断し、初期反映が controller への保存経路を起動しないようにする。Learning Mode、capture flag、skill flag、policy source、bundled policy を状態から設定し、派生表示(mode notice、bundled policy combo の有効状態)を同期する。
-    """
     settings = state.settings
     blockers = [QSignalBlocker(self._learning_mode_combo), QSignalBlocker(self._learning_policy_kind_combo), QSignalBlocker(self._learning_policy_id_combo)]
     self._set_combo_value(self._learning_mode_combo, str(settings.learning_mode))
@@ -513,10 +478,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._sync_learning_policy_id_enabled()
 
   def _connect_learning_updates(self) -> None:
-    """
-    Learning page の各 control を controller への即時反映 handler へ接続する。
-    接続は _load_learning_controls の後に行うため、初期反映中の signal は保存経路を起動しない。capture と skill の checkbox は対象 key を既定引数で束縛した handler へ接続し、押下した行だけを更新する。
-    """
     self._learning_mode_combo.currentIndexChanged.connect(self._on_learning_mode_changed)
     for kind, check in self._learning_capture_checks.items():
       check.toggled.connect(lambda checked, captured_kind=str(kind): self._learning_controller.set_capture_flag(captured_kind, bool(checked)))
@@ -532,10 +493,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_restore_button.clicked.connect(self._on_restore_bundled_policy)
 
   def _sync_learning_mode_notice(self) -> None:
-    """
-    現在の Learning Mode に応じた説明文を mode notice へ反映する。
-    通常 play で有効化しない Train 系 mode では学習が実行されない旨を明示し、Observe Only では AI 挙動を変えずに記録する旨、Use Learned Policy では評価通過 policy のみ使用し fallback する旨、Off では記録しない旨を示す。
-    """
     mode = str(self._learning_mode_combo.currentData())
     if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:
       self._learning_mode_notice.setText("Train From Player Data learns a policy from the recorded demonstrations, evaluates it, then switches to Use Learned Policy.")
@@ -555,10 +512,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_mode_notice.setText("Learning is off. No demonstrations are recorded and the deterministic baseline drives the AI.")
 
   def _populate_learning_policy_id_combo(self) -> None:
-    """
-    選択 policy combo へ、自動選択・同梱 policy・user 学習 policy の選択肢を構築する。
-    再構築中は signal を遮断し、構築自体が保存経路を起動しないようにする。先頭は識別子空の自動選択、続いて controller が提示する同梱 policy と user 学習 policy を、それぞれ表示名と識別子で並べる。訓練で user policy が追加された後の再読込でも最新の選択肢を反映できる。
-    """
     blocker = QSignalBlocker(self._learning_policy_id_combo)
     self._learning_policy_id_combo.clear()
     self._learning_policy_id_combo.addItem("Automatic", userData="")
@@ -569,18 +522,10 @@ class AiSettingsOverlay(SidebarDialogBase):
     del blocker
 
   def _sync_learning_policy_id_enabled(self) -> None:
-    """
-    選択 policy combo の有効状態を policy source に応じて切り替える。
-    source が同梱学習 policy 又は user 学習 policy の場合に選択を有効にし、組み込み deterministic 等では無効化する。
-    """
     kind = str(self._learning_policy_kind_combo.currentData())
     self._learning_policy_id_combo.setEnabled(kind in (POLICY_KIND_BUNDLED, POLICY_KIND_USER))
 
   def _on_learning_mode_changed(self, _index: int = 0) -> None:
-    """
-    Learning Mode の変更を処理する。
-    Train From Player Data 又は Train In Sandbox を選択した場合は、対応する学習を background worker で起動し、UI を塞がない。それ以外の active mode は controller へ即時保存する。学習の起動中は busy 表示で他操作を抑止し、完了後に mode を Use Learned Policy へ切り替える。
-    """
     mode = str(self._learning_mode_combo.currentData())
     self._sync_learning_mode_notice()
     if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:
@@ -592,10 +537,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_controller.set_learning_mode(mode)
 
   def _run_learning_task(self, task, on_done, *, busy_text: str) -> None:
-    """
-    重い学習・評価 callable を background worker で実行し、完了後に on_done を main thread で呼ぶ。
-    既に worker 実行中の場合は新たな起動を抑止する。起動時に busy 表示と操作抑止を有効化し、worker の task_finished を受けて抑止解除・結果処理・worker 破棄を行う。これにより訓練・評価の数秒間も UI thread と frame loop を塞がない。
-    """
     if self._learning_task_thread is not None:
       return
     self._set_learning_busy(True, busy_text)
@@ -605,10 +546,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     thread.start()
 
   def _finish_learning_task(self, result, on_done, thread) -> None:
-    """
-    worker 完了時に操作抑止を解除し、結果処理を行って worker を破棄する。
-    on_done が例外を送出しても busy 解除と worker 破棄は確実に行い、UI が抑止状態のまま残らないようにする。
-    """
     self._set_learning_busy(False, "")
     if self._learning_task_thread is thread:
       self._learning_task_thread = None
@@ -618,10 +555,6 @@ class AiSettingsOverlay(SidebarDialogBase):
       thread.deleteLater()
 
   def _set_learning_busy(self, busy: bool, text: str) -> None:
-    """
-    学習・評価実行中の操作抑止と busy 表示を切り替える。
-    busy が真の間は mode combo、評価、訓練起動、policy 選択、data 管理 button を無効化し、busy text を表示する。これにより実行中の二重起動と設定競合を防ぐ。busy が偽で抑止を解除する。
-    """
     enabled = not bool(busy)
     self._learning_busy_label.setText(str(text))
     for widget in (
@@ -640,10 +573,6 @@ class AiSettingsOverlay(SidebarDialogBase):
       self._sync_learning_policy_id_enabled()
 
   def _on_training_done(self, result) -> None:
-    """
-    訓練 worker の完了結果を処理する。
-    成功時は mode を Use Learned Policy へ切り替えて保存し、policy 選択肢を再構築して新規 user policy を反映する。失敗時は保存済み mode へ戻す。いずれも policy 関連表示と dynamic 表示を更新し、結果と保存先を通知する。
-    """
     status = str(result.get("status", "failed")) if isinstance(result, dict) else "failed"
     message = str(result.get("message", "Training failed.")) if isinstance(result, dict) else "Training failed."
     self._populate_learning_policy_id_combo()
@@ -666,10 +595,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     show_themed_notice(parent=self, title="Training", message=detail, nav_label="Learning")
 
   def _on_evaluation_done(self, report) -> None:
-    """
-    評価 worker の完了結果を処理する。
-    dynamic 表示を更新し、合否と score を通知する。report は EvaluationReport を想定し、属性が無い場合でも安全に表示する。
-    """
     self._reload_learning_policy_controls(self._learning_controller.state())
     self._refresh_learning_dynamic()
     passed = bool(getattr(report, "passed", False))
@@ -678,24 +603,13 @@ class AiSettingsOverlay(SidebarDialogBase):
     show_themed_notice(parent=self, title="Evaluation", message=f"Evaluation {'passed' if passed else 'failed'} (policy score {score:.2f} vs baseline {baseline:.2f}).", nav_label="Learning")
 
   def _on_learning_policy_changed(self, _index: int = 0) -> None:
-    """
-    policy source と bundled policy の選択を controller へ保存し、bundled combo の有効状態を更新する。
-    """
     self._learning_controller.set_policy(str(self._learning_policy_kind_combo.currentData()), str(self._learning_policy_id_combo.currentData()))
     self._sync_learning_policy_id_enabled()
 
   def _on_run_minimal_evaluation(self) -> None:
-    """
-    選択 policy の実評価を background worker で実行する。
-    評価は schema・互換・行動目録・feature 符号化器・mask 準拠・sandbox 行動の実検査であり、完了後に dynamic 表示を更新して合否を通知する。実行中は UI を塞がない。
-    """
     self._run_learning_task(self._learning_controller.run_minimal_evaluation, self._on_evaluation_done, busy_text="Evaluating selected policy...")
 
   def _on_export_learning_data(self) -> None:
-    """
-    保存先 file を選択させ、選択された場合に dataset を書き出して件数を通知する。
-    file 未選択(cancel)では何もしない。書き出し後に dataset 表示を更新する。
-    """
     path, _filter = QFileDialog.getSaveFileName(self, "Export learning data", "ludoxel_demonstrations.jsonl", "JSON Lines (*.jsonl)")
     if not path:
       return
@@ -704,10 +618,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     show_themed_notice(parent=self, title="Learning Data", message=f"Exported {int(count)} demonstration record(s).", nav_label="Learning")
 
   def _on_import_learning_data(self) -> None:
-    """
-    取り込み元 file を選択させ、選択された場合に dataset へ追記して件数を通知する。
-    file 未選択(cancel)では何もしない。取り込み後に dataset 表示を更新する。
-    """
     path, _filter = QFileDialog.getOpenFileName(self, "Import learning data", "", "JSON Lines (*.jsonl)")
     if not path:
       return
@@ -716,34 +626,21 @@ class AiSettingsOverlay(SidebarDialogBase):
     show_themed_notice(parent=self, title="Learning Data", message=f"Imported {int(count)} demonstration record(s).", nav_label="Learning")
 
   def _on_clear_learning_data(self) -> None:
-    """
-    記録済み demonstration data を削除し、dataset 表示を更新する。
-    """
     self._learning_controller.clear_dataset()
     self._refresh_learning_dynamic()
     show_themed_notice(parent=self, title="Learning Data", message="Cleared the recorded demonstration data.", nav_label="Learning")
 
   def _on_reset_learned_policy(self) -> None:
-    """
-    learned policy を組み込み deterministic baseline へ戻し、policy 関連 control と dynamic 表示を再読込する。
-    """
     state = self._learning_controller.reset_learned_policy()
     self._reload_learning_policy_controls(state)
     self._refresh_learning_dynamic()
 
   def _on_restore_bundled_policy(self) -> None:
-    """
-    policy source を同梱学習 policy へ切り替え、policy 関連 control と dynamic 表示を再読込する。
-    """
     state = self._learning_controller.restore_bundled_policy()
     self._reload_learning_policy_controls(state)
     self._refresh_learning_dynamic()
 
   def _reload_learning_policy_controls(self, state) -> None:
-    """
-    policy source と選択 policy の combo を状態から再設定する。
-    選択肢を最新の同梱・user policy で再構築してから、再設定中は signal を遮断して現在の選択値を反映する。設定後に選択 combo の有効状態を同期する。訓練で user policy が追加された後もこの再読込で選択肢と選択値を整合させる。
-    """
     self._populate_learning_policy_id_combo()
     blockers = [QSignalBlocker(self._learning_policy_kind_combo), QSignalBlocker(self._learning_policy_id_combo)]
     self._set_combo_value(self._learning_policy_kind_combo, str(state.settings.selected_policy_kind))
@@ -752,10 +649,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._sync_learning_policy_id_enabled()
 
   def _refresh_learning_dynamic(self) -> None:
-    """
-    dataset 規模、直近の学習結果、policy 版、直近の評価結果、保存先 path という動的表示を controller の状態から更新する。
-    dataset 規模は記録件数と byte 長を、学習結果は直近 training の status とメッセージを、評価結果は last evaluation summary の合否と score を表示し、policy 保存 path を併記する。走査は page 表示時と各操作後にのみ行い、毎 frame では行わない。
-    """
     summary = self._learning_controller.dataset_summary()
     state = self._learning_controller.state()
     self._learning_dataset_label.setText(f"Dataset size: {int(summary.record_count)} record(s), {int(summary.byte_size)} byte(s).")
@@ -778,12 +671,6 @@ class AiSettingsOverlay(SidebarDialogBase):
       self._learning_eval_label.setText("Last evaluation: not run yet.")
 
   def _connect_immediate_updates(self) -> None:
-    """
-    各 control の値変更を、有効な変更を session 境界へ即時反映する handler へ接続する。
-    接続は control 値を初期化する _load_settings の後に行うため、初期 load 中の signal は反映経路を起動しない。
-    skin mode の変更だけは custom 選択時の import 要求を伴うため専用 handler を経由し、
-    その他の control は変更種別に応じた sync と _persist_current_settings を呼ぶ。
-    """
     self._name_edit.textChanged.connect(self._on_name_changed)
     self._health_indicator_combo.currentIndexChanged.connect(self._persist_current_settings)
     self._skin_mode_combo.currentIndexChanged.connect(self._on_skin_mode_changed)
@@ -804,30 +691,17 @@ class AiSettingsOverlay(SidebarDialogBase):
 
   @staticmethod
   def _time_to_cap_from_settings(settings: AiSpawnEggSettings) -> float:
-    """
-    保存値 (interval, amount, cap) から UI 表示用の「上限まで回復し切る秒数」を計算する。
-    回復 tick 数は cap / amount であり、time_to_cap = interval * cap / amount を UI spin の値域へ clamp して返す。
-    """
     amount = max(1e-6, float(settings.regen_amount_hp))
     cap = max(float(_REGEN_CAP_MIN_UI), float(settings.regen_cap_hp))
     time_to_cap = float(settings.regen_interval_s) * float(cap) / float(amount)
     return float(min(float(_REGEN_TIME_TO_CAP_MAX_UI), max(float(_REGEN_TIME_TO_CAP_MIN_UI), float(time_to_cap))))
 
   def _interval_from_ui(self) -> float:
-    """
-    UI の「上限まで回復し切る秒数」と cap、既存設定の amount から保存用の回復間隔秒数を計算する。
-    interval = time_to_cap * amount / cap であり、値域の最終 clamp は AiSpawnEggSettings.normalized() が行う。
-    """
     amount = max(1e-6, float(self._settings.regen_amount_hp))
     cap = max(float(_REGEN_CAP_MIN_UI), float(self._regen_cap_spin.value()))
     return float(self._regen_time_to_cap_spin.value()) * float(amount) / float(cap)
 
   def _load_settings(self, settings: AiSpawnEggSettings) -> None:
-    """
-    与えられた settings の値を各 control へ反映し、派生表示も初期化する。
-    この呼び出しは _connect_immediate_updates より前に行われ、ここで control 値を設定しても即時反映経路は起動しない。
-    skin source の combo 反映後に _sync_skin_controls を呼び、skin status を初期化する。
-    """
     self._settings = settings.normalized()
     self._name_edit.setText(str(self._settings.name))
     self._set_combo_value(self._health_indicator_combo, str(self._settings.health_indicator))
@@ -862,11 +736,6 @@ class AiSettingsOverlay(SidebarDialogBase):
         return
 
   def _current_name_error(self) -> str | None:
-    """
-    名前入力欄の現在値に対する validation error を返す。
-    形式規則は naming module の検査を常に適用し、session 側 validator が注入されている場合は生存 AI との重複検査を加える。
-    有効な場合は None を返す。
-    """
     candidate = str(self._name_edit.text()).strip()
     format_error = ai_display_name_format_error(candidate)
     if format_error is not None:
@@ -907,10 +776,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     return bool(skin_id) and (self._skin_available is None or bool(self._skin_available(skin_id)))
 
   def _sync_skin_controls(self) -> None:
-    """
-    現在の skin_mode と skin_id の状態から、Skin Source card 内の skin status 文言だけを更新する。
-    Imported PNG は独立した section や button を持たず、Skin source combo の三択だけで選択する。
-    """
     skin_id = str(self._settings.skin_id)
     has_import = bool(skin_id)
     available = self._has_available_imported_skin()
@@ -962,11 +827,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._persist_current_settings()
 
   def _on_skin_mode_changed(self, _index: int) -> None:
-    """
-    skin source combo の変更を処理する。
-    Imported PNG を選択し、かつ有効な import 済み PNG が無い場合は import を要求し、import が失敗又は cancel された場合は直前に反映済みの skin source へ戻して反映しない。
-    それ以外は現在の skin source を即時反映し、status 表記を更新する。
-    """
     if str(self._skin_mode_combo.currentData()) == AI_SKIN_MODE_CUSTOM and not self._has_available_imported_skin():
       previous_mode = str(self._settings.skin_mode)
       if not self._import_custom_skin():
@@ -979,11 +839,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._sync_skin_controls()
 
   def _import_custom_skin(self) -> bool:
-    """
-    actor 固有 import PNG の登録を要求し、成功した場合に Imported PNG mode と新 skin_id を即時反映する。
-    skin_importer が未注入の場合は通知して偽を返す。importer が新 skin_id を返した場合は combo を Imported PNG へ揃えてから skin_mode と skin_id を含む候補を反映する。
-    反映に失敗した場合は combo を直前の skin source へ戻す。旧 skin_id file の解放は呼び出し側 apply 経路が skin_id の変化として処理する。
-    """
     if self._skin_importer is None:
       show_themed_notice(parent=self, title="AI Skin", message="AI skin import is not available in this context.", nav_label="AI Skin")
       return False
@@ -1013,11 +868,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._persist_current_settings()
 
   def _persist_candidate(self, candidate: AiSpawnEggSettings, *, show_failure: bool = False) -> bool:
-    """
-    正規化済み候補を session 境界へ反映する。
-    候補が直前に反映済みの settings と同一なら no-op として真を返す。settings_updater が注入され、反映に失敗した場合は必要に応じて通知して偽を返し、反映済み settings は更新しない。
-    反映に成功した場合は反映済み settings を候補へ更新し、route summary を再表示する。
-    """
     normalized = candidate.normalized()
     if normalized == self._settings:
       return True
@@ -1030,11 +880,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     return True
 
   def _persist_current_settings(self, _value=None) -> bool:
-    """
-    現在の control 状態から候補を構築し、即時反映する。
-    名前が無効な間はその名前を反映せず直前の有効名を保持し、route mode かつ route point が 2 点未満の間は route mode を反映せず直前の mode を保持する。
-    これにより無効入力の途中状態が runtime や persistence へ反映されることを防ぐ。
-    """
     candidate = self.settings()
     if self._current_name_error() is not None:
       candidate = replace(candidate, name=str(self._settings.name)).normalized()
@@ -1043,11 +888,6 @@ class AiSettingsOverlay(SidebarDialogBase):
     return self._persist_candidate(candidate)
 
   def _request_route_edit(self) -> None:
-    """
-    名前が有効であることを確認したうえで、現在の非 route 設定を反映してから world 上の route 編集へ遷移する。
-    名前が無効な場合は Identity page へ誘導して遷移しない。route mode は route point が確定するまで反映できないため、
-    反映候補の mode は直前の有効な mode へ固定し、反映に成功した場合だけ route 編集要求を立てて dialog を閉じる。
-    """
     name_error = self._current_name_error()
     if name_error is not None:
       show_themed_notice(parent=self, title="AI Name", message=str(name_error), nav_label="AI Name")

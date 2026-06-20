@@ -71,17 +71,9 @@ class ViewportOverlayMixin:
     overlay.move(int(x), int(y))
 
   def _position_settings_window(self: "RendererViewportWidget") -> None:
-    """
-    本体画面へ埋め込んだ Settings overlay を viewport 全体へ広げて配置する。
-    Settings overlay は detached window ではなく viewport の子 widget として表示されるため、`_layout_viewport_overlays` と同じく原点から viewport の幅・高さへ一致させる。overlay の root layout は余白なしで panel を全面へ伸張し、root 背景も不透明であるため、配置後は不透明な設定画面が viewport 全体を覆い、背後のゲーム描画は見えない。
-    """
     self._settings.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
 
   def _position_othello_settings_window(self: "RendererViewportWidget") -> None:
-    """
-    本体画面へ埋め込んだ Othello Settings overlay を viewport 全体へ広げて配置する。
-    Settings overlay と同様に viewport の子 widget として原点から viewport の幅・高さへ一致させ、余白なしで panel を全面へ伸張する不透明な設定画面として viewport 全体を覆う。
-    """
     self._othello_settings.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
 
   @staticmethod
@@ -140,11 +132,6 @@ class ViewportOverlayMixin:
     self._overlay.set_player_preview_frame(frame)
 
   def _update_ai_preview_frame(self: "RendererViewportWidget", *, fb_w: int, fb_h: int, dpr: float) -> None:
-    """
-    AI Settings Preview dialog が開いている間、編集対象 AI を中央に据えた preview frame を renderer の offscreen player preview 経路で 1 frame 生成し、dialog の preview widget へ供給する。
-    対象 actor は `_ai_edit_actor_id` で特定し、その render snapshot から third-person render state を合成して skin texture 選択子を継承させたうえで、原点中央・正面向き・third-person の preview pose へ写し替える。回転角は dialog の preview widget から取得した body yaw、head yaw、head pitch を用いる。
-    preview が閉じている、対象 actor が存在しない、preview widget が縮退している場合は何もしないか frame を空にする。renderer 呼び出しが例外を送出した場合でも main render path を巻き込まないよう退避し、preview frame を空へ戻して dialog 側の描画を抑止する。
-    """
     preview = getattr(self, "_ai_preview", None)
     if preview is None:
       return
@@ -237,10 +224,6 @@ class ViewportOverlayMixin:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
   def _ambient_audio_active(self: "RendererViewportWidget") -> bool:
-    """
-    ambient audio を gameplay simulation の可聴状態へ同期し、F1 の HUD 表示選択を音源 lifecycle から分離する。
-    loading、death、pause、Othello settings、inventory では停止する一方、HUD のみを非表示にした gameplay 中は同じ再生位置と音源選択を維持する。
-    """
     return bool(
       (not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open())
     )
@@ -294,10 +277,6 @@ class ViewportOverlayMixin:
     self._raise_open_settings_surface()
 
   def _raise_open_settings_surface(self: "RendererViewportWidget") -> None:
-    """
-    本体画面へ埋め込んだ Settings、AI Settings、Othello Settings overlay のいずれかが開いている場合、その overlay を viewport の子 widget 群の最前面へ上げる。
-    Pause、inventory、death と異なり、これらの設定 overlay は HUD やゲーム描画より常に上に来なければならないため、HUD の表示・最前面化を行う `_sync_gameplay_hud_visibility` の末尾で改めて最前面へ上げ、crosshair、F3 HUD、hotbar、route overlay が設定 overlay より前へ出ないことを保証する。設定 overlay が閉じている場合は何もしない。
-    """
     if self._overlays.othello_settings_open() and self._othello_settings.isVisible():
       self._othello_settings.raise_()
       return
@@ -326,10 +305,6 @@ class ViewportOverlayMixin:
     settings_controller.sync_cloud_motion_pause(self)
 
   def _set_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
-    """
-    本体画面へ埋め込んだ Settings overlay の表示・非表示を切り替える。
-    overlay は viewport の子 widget であるため、detached window 時代に必要だった全画面解除の往復は行わず、表示時に viewport 全面へ配置してから overlay state machine へ委譲する。全画面のまま埋め込み Settings を重ねて表示できる。
-    """
     if bool(on):
       self._reset_held_mouse_actions()
       self._position_settings_window()
@@ -338,10 +313,6 @@ class ViewportOverlayMixin:
     settings_controller.sync_cloud_motion_pause(self)
 
   def _set_othello_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
-    """
-    本体画面へ埋め込んだ Othello Settings overlay の表示・非表示を切り替える。
-    Settings overlay と同様に viewport の子 widget として全面へ配置するため、全画面解除の往復は行わずに overlay state machine へ委譲する。
-    """
     if bool(on):
       self._reset_held_mouse_actions()
       self._position_othello_settings_window()
@@ -402,10 +373,6 @@ class ViewportOverlayMixin:
       self._hide_ai_status_tags()
 
   def _ai_status_tag_pool(self: "RendererViewportWidget") -> AiStatusTagPool:
-    """
-    AI nametag と health indicator の widget pool を遅延生成して返す。
-    viewport widget の生成順へ依存しないよう初回参照時に viewport を親として構築し、以後は同一 instance を再利用する。
-    """
     pool = getattr(self, "_ai_status_tags", None)
     if pool is None:
       pool = AiStatusTagPool(self)
@@ -418,10 +385,6 @@ class ViewportOverlayMixin:
       pool.hide_all()
 
   def _ai_status_tags_visible(self: "RendererViewportWidget") -> bool:
-    """
-    AI nametag と health indicator を描画してよい viewport 状態かを判定する。
-    判定条件は world player nametag と同一の HUD/overlay 抑制(loading、HUD 非表示、death、pause、settings、Othello settings、inventory)に従うが、AI tag は他者表示であるため first-person 視点でも表示する。
-    """
     return bool(
       (not bool(self.loading_active()))
       and (not bool(self._state.hide_hud))
@@ -489,12 +452,6 @@ class ViewportOverlayMixin:
     self._set_world_player_name_tag(text=text, center_x=float(center_x), bottom_y=float(bottom_y), opacity=float(opacity))
 
   def _ai_tag_occluded(self: "RendererViewportWidget", *, actor_id: str, eye: Vec3, anchor: Vec3, distance: float) -> bool:
-    """
-    AI nametag の遮蔽判定結果を actor 単位の短時間 cache 付きで返す。
-    遮蔽判定本体は world player nametag と同じ picking ray であり、AI が遠距離にいるほど ray の DDA 走査が長くなるため、
-    actor ごとに直近結果を _AI_TAG_OCCLUSION_CACHE_S 秒間再利用して frame ごとの ray 本数を抑える。
-    cache は monotonic 時刻で失効管理し、表示状態には遮蔽時の減光のみが影響するため短い遅延は視覚上問題にならない。
-    """
     cache = getattr(self, "_ai_tag_occlusion_cache", None)
     if cache is None:
       cache = {}
@@ -510,14 +467,6 @@ class ViewportOverlayMixin:
     return bool(occluded)
 
   def _update_ai_status_tags(self: "RendererViewportWidget", *, snapshot, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
-    """
-    現在 frame の camera から見える AI actor の nametag と health indicator を screen 空間へ投影して更新する。
-    投影は world player nametag と同じ view、roll、perspective、NDC 範囲判定、画面遮蔽による減光を用いるが、AI tag は first-person 視点でも表示する。
-    anchor は各 AI の足元位置に身長と nametag offset を加えた頭上点であり、camera の後方、NDC 範囲外、_AI_TAG_MAX_DISTANCE 超、viewport 縮退時は表示しない。
-    表示寸法は camera から AI までの world 距離に対する _AI_TAG_REFERENCE_DISTANCE / distance を [_AI_TAG_MIN_SCALE, _AI_TAG_MAX_SCALE] へ clamp して縮尺する。
-    縮尺は nametag と health indicator を合成した block 全体へ適用されるため、遠い AI ほど背景、padding、文字、heart、間隔が一体で小さく描画される。
-    snapshot 値は session の ai_render_snapshots() が返す読み取り専用 DTO であり、この更新処理は simulation 状態を変更しない。
-    """
     if not bool(self._ai_status_tags_visible()) or int(self.width()) <= 1 or int(self.height()) <= 1:
       self._hide_ai_status_tags()
       return

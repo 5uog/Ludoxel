@@ -107,12 +107,6 @@ class AiLocalAttackResult:
 
 @dataclass(frozen=True)
 class AiActorObservation:
-  """
-  application session が AI actor の現在状態を読み取るための domain observation を表す。
-  player と motion は simulation 内の mutable object への参照であるため presentation へ直接渡さず、application pipeline が同一 call 内で不変な renderer-facing DTO へ変換する。
-  health_indicator は `"off"`、`"above"`、`"below"` の三値、skin_mode は player skin 共有を表す `"player"`、同梱 Alex skin を表す `"alex"`、actor 固有 import skin を表す `"custom"` の三値へ正規化済みであり、skin_id は import skin file を指す opaque identifier 又は空文字である。
-  """
-
   player: PlayerEntity
   motion: PlayerMotionState
   held_item_id: str | None

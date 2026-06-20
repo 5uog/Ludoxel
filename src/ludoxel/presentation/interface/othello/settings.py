@@ -134,10 +134,6 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     self._stack.addWidget(scroll)
 
   def _build_ai_page(self) -> None:
-    """
-    Othello engine の worker、hash、sacrifice 設定を共通 settings card と二列 row へ配置する。
-    control は既存 signal と `OthelloSettings` persistence contract を維持し、UI grouping だけを AI page として分離する。
-    """
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="AI", subtitle="Worker, hash, and sacrifice parameters used by the Othello engine.")
     _card, body, body_layout = add_settings_card(layout, host, title="Engine", description="These values preserve the existing engine and persistence contracts.")
@@ -148,10 +144,6 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     self._stack.addWidget(scroll)
 
   def _build_book_page(self) -> None:
-    """
-    opening book の summary、import、export 操作を Book page に配置する。
-    button は既存 request signal を送るだけであり、storage path、book schema、import/export 処理本体を presentation 層へ移さない。
-    """
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Book", subtitle="Inspect, import, or export the opening-book storage managed by Ludoxel.")
     _card, body, body_layout = add_settings_card(layout, host, title="Opening Book", description="Import and export are explicit repository-independent user actions.")
@@ -176,10 +168,6 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     self._stack.addWidget(scroll)
 
   def _build_learning_page(self) -> None:
-    """
-    opening-book learning の数値条件、実行、取消、status を Learning page に配置する。
-    learning worker と error semantics は変更せず、primary/danger button の視覚優先度と row alignment を共通 surface に合わせる。
-    """
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Learning", subtitle="Opening-book learning depth, error limits, progress, and cancellation.")
     _card, body, body_layout = add_settings_card(layout, host, title="Learning Parameters", description="Learning uses the current Othello settings without changing the book schema.")

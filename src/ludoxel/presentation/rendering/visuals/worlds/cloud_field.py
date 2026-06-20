@@ -68,10 +68,6 @@ class CloudField:
     self._invalidate_cache()
 
   def set_speed_variation(self, enabled: bool, min_speed: float, max_speed: float) -> bool:
-    """
-    雲ごとの速度 lane を有効化し、絶対速度の最小値と最大値を block/second 単位で更新する。
-    速度倍率は生成済み instance payload に含まれるため、設定値が変化した場合だけ cache を破棄する。
-    """
     speed_min, speed_max = normalize_cloud_speed_range(min_speed, max_speed)
     signature = (bool(enabled), float(speed_min), float(speed_max))
     current = (bool(self._speed_variation_enabled), float(self._speed_min_blocks_per_second), float(self._speed_max_blocks_per_second))
@@ -84,10 +80,6 @@ class CloudField:
     return True
 
   def set_height_variation(self, enabled: bool, fixed_y: int, spawn_y_min: int, spawn_y_max: int, preferred_y_min: int, preferred_y_max: int, preferred_y_probability_percent: int) -> bool:
-    """
-    雲の固定高度又は重み付き生成高度を更新し、seed 固定の box 配置 cache へ反映する。
-    優先区間は全体生成範囲へ clamp 済みで保持するため、逆転値や範囲外値を生成処理へ渡さない。
-    """
     fixed, spawn_min, spawn_max, preferred_min, preferred_max, probability = normalize_cloud_height_settings(
       fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, preferred_y_probability_percent
     )
@@ -152,10 +144,6 @@ class CloudField:
     return Vec3(float(self._flow_base_shift.x) + vx * dt, 0.0, float(self._flow_base_shift.z) + vz * dt)
 
   def _speed_multipliers(self) -> tuple[float, ...]:
-    """
-    absolute cloud speed を既存 flow speed に対する有限個の倍率 lane へ変換する。
-    variation 無効時は倍率 1 の単一 lane を返すため、従来の global shift と同じ移動量になる。
-    """
     if not bool(self._speed_variation_enabled):
       return (1.0,)
 

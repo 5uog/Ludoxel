@@ -65,10 +65,6 @@ class ViewportStateMixin:
       self._push_player_skin_to_renderer(context_current=bool(context_current))
 
   def _push_ai_skins_to_renderer(self: "RendererViewportWidget", *, context_current: bool = False) -> None:
-    """
-    現在解決済みの AI 向け skin image 集合(同梱 Alex skin texture)を renderer backend へ push し、必要なら再描画を要求する。
-    context_current が真の場合は GL/WGPU context が現在 bind されている前提で即時に push し、偽の場合は renderer が初期化済みである時にだけ push して self.update() で再描画を促す。renderer 未初期化時は push を行わず、GL 初期化時の context-current push に委ねる。
-    """
     if bool(context_current):
       self._renderer.set_ai_skin_images(dict(self._ai_skin_images))
       return
@@ -79,10 +75,6 @@ class ViewportStateMixin:
     self.update()
 
   def _sync_ai_skin_designs(self: "RendererViewportWidget", *, push_to_renderer: bool = False, context_current: bool = False) -> None:
-    """
-    AI actor が用いる skin texture 集合を CPU 側 cache(_ai_skin_images)へ解決する。
-    解決対象は、同梱 Alex skin mode 用の静的 `AI_BUNDLED_ALEX_SKIN_KEY` entry と、custom skin mode の actor が参照する有効な skin_id ごとの import skin entry である。同一 skin_id は一度だけ読み込み、integrity 検証又は寸法検査に失敗した参照は cache から除外して player skin fallback を許可する。Alex skin の読み込みに失敗した場合は当該 entry のみを除外する。push_to_renderer が真の場合に限り解決済み集合を renderer へ反映するため、この関数は GL 初期化、context 再生成、及び skin import / delete / mode 切替のように skin resource が実際に変化する契機でだけ呼ばれ、frame 毎の skin reload と GPU upload を避ける。
-    """
     images: dict[str, QImage] = {}
     try:
       images[AI_BUNDLED_ALEX_SKIN_KEY] = load_bundled_ai_alex_skin_image(self._resource_root)

@@ -12,17 +12,6 @@ _PREVIEW_WINDOW_BACKGROUND = QColor("#151515")
 
 
 class AiPreviewDialog(QDialog):
-  """
-  選択中の AI actor を中央に据えた見た目確認用の Debug preview を、
-  本体画面へ埋め込んだ AI Settings とは別の detached dialog として表示する。
-  preview の描画自体は viewport 側が renderer の offscreen player preview 経路で対象 AI の skin と model pose を
-  1 frame ずつ生成して `preview_widget()` の `set_frame_image` へ供給するため、
-  この dialog は描画 frame の受け皿と回転操作の入力面だけを担い、renderer や simulation を直接保持しない。
-  pointer の press・move・release を、mouse 透過に設定された preview widget へ写し替えて body yaw の回転に用いる。
-  view_changed は呼び出し側が次 frame の preview 再描画を要求するために用い、
-  closed は dialog が閉じられたことを呼び出し側へ通知して preview lifecycle を終了させるために用いる。
-  """
-
   closed = pyqtSignal()
   view_changed = pyqtSignal()
 

@@ -22,10 +22,6 @@ if TYPE_CHECKING:
 
 
 def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
-  """
-  本体画面へ埋め込んだ Settings overlay の signal を controller へ束ねる。
-  値変更系 signal は Preview dialog と共有する `bind_settings_overlay_value_signals` で束ね、埋め込み overlay 固有の navigation だけをここで接続する。back_requested は埋め込み Settings を閉じてゲーム画面へ戻し、preview_requested は Debug 用の Settings Preview dialog を開く。
-  """
   import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 
   bind_settings_overlay_value_signals(viewport, viewport._settings)
@@ -34,10 +30,6 @@ def bind_settings_overlay(viewport: "RendererViewportWidget") -> None:
 
 
 def bind_settings_overlay_value_signals(viewport: "RendererViewportWidget", overlay) -> None:
-  """
-  Settings overlay instance の値変更 signal を controller 経路へ接続する。
-  本体画面へ埋め込んだ overlay と Debug 用 Preview dialog の双方が同一の controller を共有するため、対象 overlay を引数で受け取り、いずれの instance でも各変更が runtime preference、session settings、renderer、audio へ即時反映されるようにする。navigation 用の back_requested と preview_requested はここでは接続しない。
-  """
   overlay.fov_changed.connect(lambda value: set_fov(viewport, float(value)))
   overlay.sens_changed.connect(lambda value: set_sens(viewport, float(value)))
   overlay.invert_x_changed.connect(lambda on: set_invert_x(viewport, bool(on)))
@@ -178,10 +170,6 @@ def sync_player_skin(viewport: "RendererViewportWidget", *, push_to_renderer: bo
 
 
 def sync_ai_skins(viewport: "RendererViewportWidget", *, push_to_renderer: bool = False) -> None:
-  """
-  AI actor が用いる skin texture 集合(同梱 Alex skin と custom mode actor の import skin)を CPU 側へ解決し、push_to_renderer が真の場合だけ renderer backend へ反映する。
-  この helper は GL 初期化、context 再生成、及び skin import / delete / mode 切替のように skin resource が実際に変化する契機でだけ呼ばれることを前提とし、AI settings の name、health indicator、regen、behavior、route といった skin と無関係な変更経路からは呼ばない。
-  """
   viewport._sync_ai_skin_designs(push_to_renderer=bool(push_to_renderer))
 
 

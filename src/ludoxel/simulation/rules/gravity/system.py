@@ -22,11 +22,6 @@ _FALLING_BLOCK_GRAVITY_PER_TICK = 0.04
 _FALLING_BLOCK_DRAG = 0.98
 _FALLING_BLOCK_EPS = 1e-6
 FALLING_BLOCK_VOID_CLEANUP_Y = float(VOID_DAMAGE_START_Y)
-"""
-active falling block を奈落で破棄する高度の下限を、player の void damage 開始高度 `VOID_DAMAGE_START_Y` と同一値として共有する。
-重力影響 block は被ダメージ entity ではないため、この高度未満へ落下した active block には damage tick を適用せず、active 集合から取り除いて world、render snapshot、persistence snapshot のいずれにも残さない。
-player damage と falling block cleanup は意味を分けたまま、奈落の境界 y 座標だけを単一の定数から取得する。
-"""
 
 
 def _overlay_state_getter(world: WorldState, *, updates: dict[BlockKey, str], removals: set[BlockKey]):
@@ -47,11 +42,6 @@ class GravityBrokenBlock:
 
 @dataclass(frozen=True)
 class FallingBlockSample:
-  """
-  active falling block の補間済み domain observation を表す。
-  state_str と world 座標だけを保持し、application はこの値を renderer-facing DTO へ変換して presentation へ渡す。
-  """
-
   state_str: str
   x: float
   y: float

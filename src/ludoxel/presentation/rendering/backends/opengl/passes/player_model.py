@@ -74,11 +74,6 @@ class PlayerModelPass:
     self._skin_texture = skin_texture
 
   def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
-    """
-    AI actor 向けの名前付き skin 画像 dict を GPU texture へ転送し、既存の AI skin texture を入れ替える。
-    各 image は skin key(同梱 Alex skin を表す固定 key と、custom mode actor の import skin を表す skin_id key)を key とする 64x64 RGBA atlas であり、いずれかの texture 生成に失敗した場合は途中まで生成した texture をすべて破棄して例外を再送出し、半端な GPU 状態を残さない。生成に成功した場合だけ新 dict へ差し替え、旧 dict の texture を破棄する。
-    この呼び出しは GL 初期化、context 再生成、及び skin import / delete / mode 切替のように skin resource が実際に変化した時にだけ行われ、frame 毎には呼ばれない。
-    """
     next_textures: dict[str, ImageTexture] = {}
     try:
       for skin_key, image in images.items():

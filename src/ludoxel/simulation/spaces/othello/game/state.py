@@ -168,10 +168,6 @@ def _default_initial_board() -> tuple[int, ...]:
 
 
 def normalize_game_status(value: object, *, default: str = OTHELLO_GAME_STATE_IDLE) -> str:
-  """
-  match lifecycle status を有限集合へ正規化する。
-  controller transition、persistence、HUD composition はこの canonical status set を共有する。
-  """
   raw = str(value).strip().lower()
   if raw in OTHELLO_GAME_STATUSES:
     return raw
@@ -182,10 +178,6 @@ def normalize_game_status(value: object, *, default: str = OTHELLO_GAME_STATE_ID
 
 
 def decode_board(raw: object) -> tuple[int, ...]:
-  """
-  board 文字列の先頭 64 glyph を `{'.', 'B', 'W'}` の alphabet で読み取り、各 cell を `{0, 1, 2}` へ変換する。
-  足りない suffix は empty で埋め、board は常に 64 cell tuple となる。
-  """
   text = str(raw or "")
   cells: list[int] = []
   for token in text[:BOARD_CELL_COUNT]:
@@ -196,10 +188,6 @@ def decode_board(raw: object) -> tuple[int, ...]:
 
 
 def coerce_board(board: object) -> tuple[int, ...]:
-  """
-  任意 iterable 又は serialized board token を、64 cell の `{0, 1, 2}` tuple へ射影する。
-  各 cell は side normalizer を通り、欠落 cell は empty で補われる。
-  """
   if isinstance(board, str):
     return decode_board(board)
 
@@ -219,10 +207,6 @@ def coerce_board(board: object) -> tuple[int, ...]:
 
 
 def encode_board(board: tuple[int, ...] | list[int]) -> str:
-  """
-  canonical board を 64 文字の textual encoding へ変換する。
-  正規化済み board domain 上では、decode 後に encode しても cell 意味が保たれる。
-  """
   cells: list[str] = []
   for side in coerce_board(board):
     cells.append(_SIDE_TOKENS[side])
@@ -231,30 +215,16 @@ def encode_board(board: tuple[int, ...] | list[int]) -> str:
 
 @dataclass(frozen=True)
 class OthelloDepthSample:
-  """
-  iterative search の一つの depth sample を表す record である。
-  depth、score、solved flag だけを保持し、HUD が単調な depth trace を再構成する最小単位とする。
-  """
-
   depth: int
   score: float
   solved: bool = False
 
   def normalized(self) -> "OthelloDepthSample":
-    """
-    depth sample を正規化する。
-    depth は非負整数、score は実数、solved は bool へ変換され、保存された search trace が常に解釈可能になる。
-    """
     return OthelloDepthSample(depth=max(0, int(self.depth)), score=float(self.score), solved=bool(self.solved))
 
 
 @dataclass(frozen=True)
 class OthelloAnalysis:
-  """
-  search から HUD と AI explanation へ渡す analysis snapshot である。
-  side、best move、principal variation、score、solved、depth、depth samples を一つの情報面として保持する。
-  """
-
   side_to_move: int = SIDE_BLACK
   best_move_index: int | None = None
   best_line: tuple[int, ...] = ()
@@ -264,10 +234,6 @@ class OthelloAnalysis:
   depth_samples: tuple[OthelloDepthSample, ...] = ()
 
   def normalized(self) -> "OthelloAnalysis":
-    """
-    analysis snapshot の side、best move、principal variation、depth sample を正規化する。
-    best move と line は `0 <= i < 64` の範囲に制限され、返値は不変の analysis record となる。
-    """
     best_move = self.best_move_index
     if best_move is not None:
       best_move = clampi(int(best_move), 0, BOARD_CELL_COUNT - 1)
@@ -292,12 +258,6 @@ class OthelloAnalysis:
 
 @dataclass(frozen=True)
 class OthelloGameState:
-  """
-  永続化される Othello match state 全体を表す不変 record である。
-  status、board、settings、player/AI side、turn、clock、move count、pass count、winner、message、last move、
-  animations、generation、legal moves、thinking を明示的な state-to-state transition の対象として保持する。
-  """
-
   status: str = OTHELLO_GAME_STATE_IDLE
   board: tuple[int, ...] = field(default_factory=_default_initial_board)
   settings: OthelloSettings = field(default_factory=OthelloSettings)
@@ -317,10 +277,6 @@ class OthelloGameState:
   thinking: bool = False
 
   def normalized(self) -> "OthelloGameState":
-    """
-    match state の全 scalar と nested record を正規化し、timer mode と clock field の整合性を回復する。
-    `tau(settings) = None` のとき両 clock は `None`、有限 timer では各 clock を `[0, tau(settings)]` へ収める。
-    """
     status = normalize_game_status(self.status)
     settings = self.settings.normalized()
     player_side = normalize_player_side(self.player_side, default=settings.player_side)
@@ -397,10 +353,6 @@ class OthelloGameState:
     )
 
   def to_dict(self) -> dict[str, Any]:
-    """
-    正規化済み match state を JSON map へ変換する。
-    board、settings、animation、clock を明示的に保存し、再起動後も同等の match snapshot を復元できるようにする。
-    """
     normalized = self.normalized()
     return {
       "status": str(normalized.status),
@@ -423,10 +375,6 @@ class OthelloGameState:
 
   @staticmethod
   def from_dict(data: dict[str, Any]) -> "OthelloGameState":
-    """
-    任意 mapping から match state を復元し、nested record を個別に coercion した後で全体を正規化する。
-    旧形式又は部分破損した payload でも、未定義状態へ進まず有効な game state を得る。
-    """
     if not isinstance(data, dict):
       return OthelloGameState()
 
@@ -471,8 +419,4 @@ class OthelloGameState:
 
 
 def empty_othello_game_state() -> OthelloGameState:
-  """
-  persisted Othello match が存在しない場合に使う canonical empty state を返す。
-  `OthelloGameState()` を正規化したゼロ情報状態である。
-  """
   return OthelloGameState().normalized()

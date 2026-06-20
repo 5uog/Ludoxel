@@ -139,17 +139,6 @@ class WorldUploadTracker:
 
   @staticmethod
   def _needed_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int) -> list[ChunkKey]:
-    """
-    center chunk から chebyshev 半径 `rd` (chunk 単位) の立方体に含まれ、かつ実在する chunk の key を、center への近さ順に並べて返す。
-    `rd` は `clamp_render_distance_chunks` を経た render distance を chunk 半径として解釈した非負整数であり、x, y, z の三軸へ同一の半径を適用する。
-    これにより camera の横移動だけでなく上昇・下降に対しても可視範囲が render distance に比例して広がり、Y 軸だけを固定値で狭く切ることがない。
-    実際に保持される Y 範囲は world の鉛直方向の chunk 実在範囲で頭打ちになるため、`rd` は上限としてのみ作用する。
-    判定は実在 chunk 集合 `existing` を走査し、各 chunk key `(kx, ky, kz)` が `max(abs(kx - cx), abs(ky - cy), abs(kz - cz)) <= rd` を満たすものを採用する。
-    ここで `(cx, cy, cz)` は `center` を正規化した chunk 座標である。
-    返値の並びは `(abs(kx - cx) + abs(kz - cz), abs(ky - cy))` を昇順 key とし、近い chunk から優先的に build するためのものであって、residency 集合そのものは順序に依存しない。
-    world geometry の fog 終端は block 単位で `min(rd * CHUNK_SIZE, z_far)` であり、常に `rd` chunk 以内に収まる。
-    したがってこの立方体は、fog でまだ視認可能な距離にある geometry の chunk を取り落とさない。
-    """
     cx, cy, cz = normalize_chunk_key(center)
     r = int(max(0, rd))
 
@@ -166,12 +155,6 @@ class WorldUploadTracker:
 
   @staticmethod
   def _retained_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, margin: int = 4) -> set[ChunkKey]:
-    """
-    eviction 時に renderer へ残すべき chunk key 集合を、visible 半径 `rd` に `margin` chunk を加えた chebyshev 半径 `rd + margin` の立方体として返す。
-    三軸へ同一半径 `rd + margin` を適用するため、retained 範囲は visible 範囲 (`rd`) 及び prefetch 範囲 (`rd + 2`) を Y 軸を含めて常に包含する。
-    これにより camera が chunk 境界を跨いで上昇・下降しても、fog でまだ完全には消えていない geometry の chunk が突然 evict されることはない。
-    返値は `renderer.evict_chunks` の keep set として用い、この集合へ含まれない resident chunk、want revision、pending build だけを破棄対象とする。
-    """
     keep = WorldUploadTracker._needed_chunks(existing, center, int(max(0, int(rd))) + int(max(0, int(margin))))
     return set(keep)
 

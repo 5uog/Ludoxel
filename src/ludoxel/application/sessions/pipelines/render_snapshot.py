@@ -23,12 +23,6 @@ class CameraDTO:
 
 @dataclass(frozen=True)
 class PlayerModelSnapshotDTO:
-  """
-  application session が renderer へ渡す player model の不変姿勢を表す。
-  座標、角度、歩行位相、視点揺動は simulation entity から切り離した scalar 値であり、
-  presentation はこの DTO を介して domain state を変更できない。
-  """
-
   base_x: float
   base_y: float
   base_z: float
@@ -50,16 +44,6 @@ class PlayerModelSnapshotDTO:
 
 @dataclass(frozen=True)
 class AiPlayerRenderSnapshotDTO:
-  """
-  AI actor 一体分の描画入力を application session 境界で固定する。
-  player_model は body pose、held item と swing 値は手持ち描画、
-  actor metadata と位置・身長は Qt overlay に用いられ、
-  mutable な simulation entity は presentation へ渡さない。
-  skin_mode は actor が player skin を共有するか、同梱 Alex skin を使用するか、
-  actor 固有 import skin(skin_id)を使用するかを表す三値であり、
-  renderer は per-frame の skin 切替には解決済み skin 参照 key だけを用いる。
-  """
-
   player_model: PlayerModelSnapshotDTO
   held_item_id: str | None
   attack_swing_progress: float

@@ -874,7 +874,7 @@ if isinstance(raw, list):
     group: 'Saved Runtime State',
     title: 'Reading Saved AI State',
     description:
-      'Separates persisted AI actors, learning settings, demonstration datasets, learned policies, and evaluation summaries through the schema module that admits values and the store module that owns runtime files.',
+      'Separates persisted AI actors, learning settings, demonstration datasets, learned policies, evaluation summaries, and training histories through the schema module that admits values and the store module that owns runtime files.',
     sections: [
       {
         id: 'reading-saved-ai-state-artifact-families',
@@ -882,12 +882,12 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: 'Saved AI data is governed by two application-persistence files, not by a single undifferentiated “AI state” object. `src/ludoxel/application/persistence/schema/ai_learning.py` owns the admitted value domains, JSON envelope, default state, and restoration coercion. `src/ludoxel/application/persistence/stores/ai_learning.py` owns the runtime files below the data root: `state/ai_learning.json`, demonstration JSON Lines files, user policy JSON files, evaluation reports, and training-run records. A correct reading must therefore name both the schema layer that accepts values and the store layer that places files.',
+            text: 'Saved AI learning data is not one file and not one authority. `src/ludoxel/application/persistence/schema/ai_learning.py` owns the admitted value domains and JSON envelope. `src/ludoxel/application/persistence/stores/ai_learning.py` owns the runtime file family below the user data root: `state/ai_learning.json`, `state/learning/demonstrations/<dataset>.jsonl`, `state/learning/policies/<policy_id>.json`, `state/learning/evaluations/<policy_id>.json`, and `state/learning/training_runs/<run_id>.json`. The schema tells the reader which values are admitted; the store tells the reader where admitted data is retained.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Learning-state envelope separates settings from dataset and policy files.',
+            caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
             code: `@dataclass(frozen=True)
 class PersistedAiLearningState:
   settings: PersistedAiLearningSettings = field(default_factory=PersistedAiLearningSettings)
@@ -899,108 +899,17 @@ class PersistedAiLearningState:
           },
           {
             kind: 'paragraph',
-            text: 'The envelope records configuration and summaries; it is not the dataset and not the policy corpus. `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are mapping-shaped summaries whose internal detail may vary, while `policy_version` is only a version counter for the selected production policy content. The state dataclass is frozen and JSON-serializable, but that immutability does not make the surrounding artifact family immutable: datasets, policies, evaluations, and training runs are separate files owned by the store.',
+            text: 'The learning-state envelope records settings and summaries. It is not the demonstration dataset and not the policy corpus. `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are mapping-shaped reports admitted as shallow copies; their presence does not prove that every underlying dataset row is clean or that the selected policy is usable at runtime.',
           },
         ],
       },
       {
-        id: 'reading-saved-ai-state-store-boundary',
-        title: 'Store Boundary and Default State',
+        id: 'reading-saved-ai-state-settings-schema',
+        title: 'Learning Settings Schema',
         content: [
           {
             kind: 'paragraph',
-            text: 'The store is the only component that decides where the learning-state envelope is read and written. It derives the data root from an injected `data_root` when present, otherwise from `default_runtime_data_root(project_root)`, and then places the settings file under `runtime_state_root(data_root) / "ai_learning.json"`. If that file is absent, the store does not infer a partial state from neighboring datasets or policy files; it returns the schema default.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
-            code: `def load_state(self) -> PersistedAiLearningState:
-  raw = JsonFileStore(path=self._settings_path()).read()
-  if raw is None:
-    return PersistedAiLearningState.default()
-  return PersistedAiLearningState.from_dict(raw)
-
-def save_state(self, state: PersistedAiLearningState) -> None:
-  JsonFileStore(path=self._settings_path()).write(state.to_dict())`,
-          },
-          {
-            kind: 'paragraph',
-            text: 'The default is deliberately inert. It constructs normalized settings with `learning_mode` set to `off`, recording flags absent and then normalized to false, skill flags absent and then normalized to true, a built-in policy kind, empty summaries, and policy version zero. A fresh installation or a missing settings file therefore does not silently enable demonstration recording, learned-policy use, or training execution.',
-          },
-        ],
-      },
-      {
-        id: 'reading-saved-ai-state-actor-schema',
-        title: 'Persisted Actor Schema',
-        content: [
-          {
-            kind: 'paragraph',
-            text: 'A persisted AI actor is a runtime actor record embedded in play-space state. It contains identity, behavior mode, personality, skin mode, skin id, automatic-regeneration settings, held item, pose, velocity, orientation, health, patrol route, and behavior-related flags. It does not contain learned weights, a demonstration dataset, or a selected policy artifact.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Skin-mode normalization prevents a custom-skin mode without a skin id.',
-            code: `skin_id = normalize_ai_skin_id(data.get("skin_id", ""))
-skin_mode = normalize_ai_skin_mode(data.get("skin_mode", AI_SKIN_MODE_PLAYER))
-if skin_mode == AI_SKIN_MODE_CUSTOM and not skin_id:
-  skin_mode = AI_SKIN_MODE_PLAYER`,
-          },
-          {
-            kind: 'paragraph',
-            text: 'The normalization step matters because it proves that saved actor data is not blindly replayed. An invalid custom-skin configuration is reduced to player-skin mode during load. The actor record is interpreted through actor schema code before it becomes a live actor, while learning settings are interpreted through the separate learning schema.',
-          },
-        ],
-      },
-      {
-        id: 'reading-saved-ai-state-mode-domain',
-        title: 'Learning Mode Domain',
-        content: [
-          {
-            kind: 'paragraph',
-            text: 'Learning mode is a closed five-value string domain. The normalizer accepts an arbitrary object, projects it to text, trims surrounding whitespace, lowercases it, and admits the value only when it exactly matches `LEARNING_MODES`. Missing, malformed, renamed, or unknown values collapse to `off`. That fallback is not cosmetic; it is the safety boundary that prevents an unrecognized saved value from accidentally enabling recording or policy use.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Mode normalization and ordinary-play activation are separate predicates.',
-            code: `LEARNING_MODES: tuple[str, ...] = (
-  LEARNING_MODE_OFF,
-  LEARNING_MODE_OBSERVE_ONLY,
-  LEARNING_MODE_USE_LEARNED_POLICY,
-  LEARNING_MODE_TRAIN_FROM_PLAYER_DATA,
-  LEARNING_MODE_TRAIN_IN_SANDBOX,
-)
-
-ACTIVE_LEARNING_MODES: tuple[str, ...] = (
-  LEARNING_MODE_OFF,
-  LEARNING_MODE_OBSERVE_ONLY,
-  LEARNING_MODE_USE_LEARNED_POLICY,
-)
-
-def normalize_learning_mode(value: object) -> str:
-  raw = str(value).strip().lower()
-  if raw in _LEARNING_MODE_SET:
-    return raw
-  return LEARNING_MODE_OFF
-
-def is_active_learning_mode(mode: object) -> bool:
-  return normalize_learning_mode(mode) in ACTIVE_LEARNING_MODES`,
-          },
-          {
-            kind: 'paragraph',
-            text: '`train_from_player_data` and `train_in_sandbox` remain legal persisted values, but they are not active ordinary-play modes. `is_active_learning_mode` returns true only for `off`, `observe_only`, and `use_learned_policy`; train modes may be selected or preserved by UI and persistence, yet they do not authorize heavy training to start during normal play. The runtime side applies that constraint when the saved value is consumed.',
-          },
-        ],
-      },
-      {
-        id: 'reading-saved-ai-state-learning-settings',
-        title: 'Learning Settings',
-        content: [
-          {
-            kind: 'paragraph',
-            text: 'Learning settings are the editable portion of the learning-state envelope. `learning_mode` selects the admitted mode, `capture_flags` records which demonstration kinds may be captured, `skill_flags` selects skill categories for training and evaluation, `selected_policy_kind` and `selected_policy_id` identify the policy candidate for production use, and `dataset_id` selects the logical dataset. None of those fields proves that rows exist, that a policy artifact is usable, or that any training job has run.',
+            text: '`PersistedAiLearningSettings` stores the editable learning contract: five-value learning mode, record-kind capture flags, skill-category flags, selected policy kind, selected policy id, and dataset id. Defaults are restrictive where mutation would be dangerous: capture flags default to false, so a missing settings file does not begin recording demonstrations; skill flags default to true, preserving the full skill domain for learning and evaluation unless explicitly narrowed.',
           },
           {
             kind: 'code',
@@ -1017,130 +926,98 @@ class PersistedAiLearningSettings:
           },
           {
             kind: 'paragraph',
-            text: 'The field defaults encode the inactive baseline. Capture flags default to no recording, skill flags default to all known skill categories enabled after normalization, policy kind defaults to the built-in policy family, and `dataset_id` defaults to `default`. Observe-only status and policy use are derived from `learning_mode`; they are not independent stored authorities that can override the mode.',
-          },
-        ],
-      },
-      {
-        id: 'reading-saved-ai-state-flag-normalization',
-        title: 'Flag and Identifier Normalization',
-        content: [
-          {
-            kind: 'paragraph',
-            text: 'Flag mappings are normalized against known key sets rather than accepted as arbitrary dictionaries. `capture_flags` is projected onto `RECORD_KINDS` with a false default, while `skill_flags` is projected onto `skill_category_ids()` with a true default. Known entries are coerced through `coerce_bool`; missing keys receive the category default; unknown keys are discarded. This is the point where stale UI keys, manual edits, and forward-incompatible entries are barred from the runtime flag set.',
+            text: 'Normalization is a value-domain filter, not a cosmetic cleanup. `learning_mode` is restricted to the five learning constants; selected policy kind is restricted to the known policy families; capture flags are rebuilt against `RECORD_KINDS` with default `False`; skill flags are rebuilt against `skill_category_ids()` with default `True`; and an empty dataset id becomes `default`. Unknown keys do not survive into the normalized object.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Known-key flag normalization removes unknown entries.',
-            code: `def _normalize_flag_map(value: object, *, keys: tuple[str, ...], default: bool) -> dict[str, bool]:
-  source = value if isinstance(value, dict) else {}
-  return {str(key): coerce_bool(source.get(str(key), default), bool(default)) for key in keys}
+            caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
+            code: `return PersistedAiLearningSettings(
+  learning_mode=normalize_learning_mode(self.learning_mode),
+  capture_flags=_normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False),
+  skill_flags=_normalize_flag_map(self.skill_flags, keys=skill_category_ids(), default=True),
+  selected_policy_kind=normalize_policy_kind(self.selected_policy_kind),
+  selected_policy_id=str(self.selected_policy_id).strip(),
+  dataset_id=str(dataset_id),
+)`,
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-mode-derived-values',
+        title: 'Mode-Derived Values',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The saved mapping includes the derived key `observe_only`, but the truth source remains `learning_mode`. `recording_enabled()` returns true only for `observe_only`; `captured_kinds()` returns an empty tuple when recording is disabled and otherwise returns enabled record kinds in `RECORD_KINDS` order. Restoring a stale derived key cannot force recording when the normalized mode is not observe-only.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
+            code: `def to_dict(self) -> dict[str, Any]:
+  normalized = self.normalized()
+  return {
+    "learning_mode": str(normalized.learning_mode),
+    "capture_flags": dict(normalized.capture_flags),
+    "skill_flags": dict(normalized.skill_flags),
+    "selected_policy_kind": str(normalized.selected_policy_kind),
+    "selected_policy_id": str(normalized.selected_policy_id),
+    "dataset_id": str(normalized.dataset_id),
+    "observe_only": bool(normalized.recording_enabled()),
+  }`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This is why a saved file should not be read by inspecting one boolean. The correct data reading is the normalized settings object, the derived recording predicate, and the capture flag map after unknown keys have been discarded. A hand-edited `observe_only` key is at most stale metadata.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-store-paths',
+        title: 'Store Paths and Safe Identifiers',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`AiLearningStore` writes only below the runtime data root. It does not write datasets, policies, evaluations, or training histories into `assets`, `src`, `resources`, `third-party`, or the repository root. Logical identifiers are converted by `_safe_name`, which lowercases the string, retains only ASCII letters, digits, underscore, and hyphen, replaces every other character with underscore, strips edge underscores, and falls back to `default` or the supplied fallback when the result is empty. Path separators and dot segments are therefore not identifier semantics.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
+            code: `def _safe_name(identifier: str, *, fallback: str = "default") -> str:
+  lowered = str(identifier).strip().lower()
+  filtered = "".join(character if character in _SAFE_NAME_CHARS else "_" for character in lowered).strip("_")
+  return filtered or str(fallback)
 
-def normalized(self) -> "PersistedAiLearningSettings":
-  dataset_id = str(self.dataset_id).strip() or "default"
-  return PersistedAiLearningSettings(
-    learning_mode=normalize_learning_mode(self.learning_mode),
-    capture_flags=_normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False),
-    skill_flags=_normalize_flag_map(self.skill_flags, keys=skill_category_ids(), default=True),
-    selected_policy_kind=normalize_policy_kind(self.selected_policy_kind),
-    selected_policy_id=str(self.selected_policy_id).strip(),
-    dataset_id=str(dataset_id),
-  )`,
-          },
-          {
-            kind: 'paragraph',
-            text: 'Identifier normalization has two layers. The schema trims `dataset_id` and falls back to `default` when it is empty. The store later converts dataset, policy, evaluation, and training-run identifiers through `_safe_name`, lowercasing them, replacing characters outside `abcdefghijklmnopqrstuvwxyz0123456789_-` with underscores, and again falling back when the filename component becomes empty. The schema admits a logical identifier; the store bounds it before it becomes a path component.',
-          },
-        ],
-      },
-      {
-        id: 'reading-saved-ai-state-recording-derived-values',
-        title: 'Recording and Derived Values',
-        content: [
-          {
-            kind: 'paragraph',
-            text: 'Recording is not enabled by the existence of capture flags. It is enabled only when normalized `learning_mode` is `observe_only`; `off`, `use_learned_policy`, and the two train modes return false from `recording_enabled`. After that gate, `captured_kinds` returns enabled record kinds in `RECORD_KINDS` definition order. When recording is disabled, it returns an empty tuple even if saved capture flags contain true values.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Recording state is derived from learning_mode before capture flags are read.',
-            code: `def recording_enabled(self) -> bool:
-  return normalize_learning_mode(self.learning_mode) == LEARNING_MODE_OBSERVE_ONLY
+def dataset_path(self, dataset_id: str) -> Path:
+  return self._learning_root() / _DEMONSTRATIONS_DIR_NAME / f"{_safe_name(dataset_id)}.jsonl"
 
-def captured_kinds(self) -> tuple[str, ...]:
-  if not self.recording_enabled():
-    return ()
-  normalized = _normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False)
-  return tuple(kind for kind in RECORD_KINDS if bool(normalized.get(kind, False)))`,
+def policy_path(self, policy_id: str) -> Path:
+  return self._learning_root() / _POLICIES_DIR_NAME / f"{_safe_name(policy_id)}.json"`,
           },
           {
             kind: 'paragraph',
-            text: 'The serialized settings include `observe_only`, but that key is a readability projection, not a truth source on restore. `to_dict` emits normalized fields and derives `observe_only` from `recording_enabled`; `from_dict` ignores derived keys, restores scalar fields through string projection, treats non-mapping flag payloads as empty mappings, and then normalizes again. The load path therefore cannot be made active by editing a derived `observe_only` field while leaving `learning_mode` inactive.',
+            text: 'Legacy demonstration files at `state/learning/<dataset>.jsonl` remain readable only as compatibility input. New writes go to `state/learning/demonstrations/<dataset>.jsonl`. Summary, export, and decode paths choose the new file when it exists, the legacy file when only it exists, and the new path otherwise. Compatibility reading does not make the legacy path a current write target.',
           },
         ],
       },
       {
-        id: 'reading-saved-ai-state-state-restoration',
-        title: 'State Restoration and Summary Admission',
+        id: 'reading-saved-ai-state-default-and-corruption',
+        title: 'Default and Corruption Boundary',
         content: [
           {
             kind: 'paragraph',
-            text: 'The state envelope applies the same defensive rule at the outer level. Non-mapping input returns the default state. `settings` is restored through `PersistedAiLearningSettings.from_dict`; `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are admitted only when they are mappings; otherwise they are reduced to empty mappings. `policy_version` falls back to zero when numeric conversion fails, and `schema_version` falls back to the current schema version when it cannot be parsed.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Outer state restoration keeps malformed summaries out of the envelope.',
-            code: `if not isinstance(data, dict):
-  return PersistedAiLearningState.default()
-dataset_summary = data.get("dataset_summary")
-last_training_summary = data.get("last_training_summary")
-last_evaluation_summary = data.get("last_evaluation_summary")
-policy_version = coerce_int(data.get("policy_version", 0), 0)
-schema_version = coerce_int(data.get("schema_version", AI_LEARNING_SCHEMA_VERSION), AI_LEARNING_SCHEMA_VERSION)`,
+            text: '`PersistedAiLearningState.default()` returns off mode, no recorded kinds, all skill categories admitted, built-in deterministic policy selection, empty summaries, and policy version zero. `load_state()` falls back to that default when the JSON file is absent or unreadable. This prevents a missing or corrupt learning-state file from starting recording, using an unknown policy, or enabling training behavior by accident.',
           },
           {
             kind: 'paragraph',
-            text: 'This restoration rule is narrower than data repair. It does not reconstruct lost summaries, validate a policy artifact, or infer training quality. It only prevents malformed state-envelope fields from entering the typed persisted state and preserves the invariant that UI, persistence, and runtime consume the same known value domains and key sets.',
-          },
-        ],
-      },
-      {
-        id: 'reading-saved-ai-state-behavior-limit',
-        title: 'Behavioral Limit',
-        content: [
-          {
-            kind: 'paragraph',
-            text: [
-              'Saved AI state is not evidence of autonomous intelligence, stable competence, or model quality. Live behavior is produced by simulation code, action masks, baseline scoring, and optional policy modifiers. Demonstration rows are analyzed under ',
-              {
-                kind: 'link',
-                label: 'demonstration data',
-                href: '/docs/data/learning-and-material-data/learning-artifacts/reading-demonstration-data',
-              },
-              '; policy artifacts are constrained by ',
-              {
-                kind: 'link',
-                label: 'learned policy',
-                href: '/docs/data/learning-and-material-data/learning-artifacts/reading-learned-policies',
-              },
-              ' gates.',
-            ],
-          },
-          {
-            kind: 'note',
-            note: {
-              type: 'warning',
-              content:
-                'Do not describe a saved AI actor record, a learning settings file, or a selected policy id as a trained model. Actor state, learning settings, demonstration rows, summaries, and policy artifacts are different records with different readers, gates, defaults, and failure modes.',
-            },
+            text: 'The data consequence is strict. A saved AI-learning state file can be read as local state only after schema admission. It is not a public dataset, not a proof of policy quality, and not a distribution artifact. Demonstration rows, learned policies, evaluations, and training histories each have their own articles because each file family has a different producer, reader, corruption mode, and evidentiary limit.',
           },
         ],
       },
     ],
-    relatedTitles: ['Reading Demonstration Data', 'Reading Learned Policies', 'Handling Corrupt Learning Rows'],
+    relatedTitles: ['Reading Demonstration Data', 'Reading Learned Policies', 'Choosing a Learning Mode'],
   }),
   defineDocsArticle({
     category: 'Data',

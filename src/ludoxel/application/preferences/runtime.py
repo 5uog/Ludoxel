@@ -44,11 +44,6 @@ from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, is_o
 
 
 def _coerce_optional_int(value: object) -> int | None:
-  """
-  window geometry で `None` が意味を持つ欄だけに使う部分的な整数変換である。
-  変換に失敗した値は 0 に潰さず `None` として残し、
-  保存されていない位置情報と不正な位置情報を同じ欠落状態へ正規化する。
-  """
   if value is None:
     return None
   try:
@@ -58,16 +53,10 @@ def _coerce_optional_int(value: object) -> int | None:
 
 
 def _default_hotbar_slots_list() -> list[str]:
-  """
-  通常の My World 用 hotbar 初期値を、実行中に更新可能な list として具体化する。
-  """
   return list(default_hotbar_slots(size=HOTBAR_SIZE))
 
 
 def _default_othello_hotbar_slots_list() -> list[str]:
-  """
-  Othello 空間用 hotbar 初期値を、実行時設定が直接差し替えられる list として具体化する。
-  """
   return list(default_othello_hotbar_slots(size=HOTBAR_SIZE))
 
 
@@ -76,11 +65,6 @@ def _default_route_hotbar_slots_list() -> list[str]:
 
 
 def _normalize_hotbar_state(slots: object, index: object, *, size: int = HOTBAR_SIZE) -> tuple[list[str], int]:
-  """
-  hotbar の slot 列と選択 index を同じ分岐上で正規化する。
-  slot 数は `size` に合わせ、index は hotbar の有効範囲へ射影されるため、
-  壊れた保存値から復元しても選択処理は未定義位置を参照しない。
-  """
   normalized_slots = list(normalize_hotbar_slots(slots, size=int(size)))
   normalized_index = normalize_hotbar_index(index, size=int(size))
   return normalized_slots, int(normalized_index)
@@ -88,12 +72,6 @@ def _normalize_hotbar_state(slots: object, index: object, *, size: int = HOTBAR_
 
 @dataclass
 class RuntimePreferences:
-  """
-  描画、音声、雲、hotbar、skin、play space、Othello 既定値を横断して保持する可変 runtime 設定である。
-  application persistence、Qt controls、renderer state、active session が共有する境界値であるため、
-  保存値や UI 入力を受けた後は必ず正規化された状態で扱う。
-  """
-
   DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S: ClassVar[float] = 0.30
   DEFAULT_BLOCK_PLACE_REPEAT_INITIAL_DELAY_S: ClassVar[float] = 0.20
   DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S: ClassVar[float] = 1.0 / 120.0
@@ -204,11 +182,6 @@ class RuntimePreferences:
   audio: AudioPreferences = field(default_factory=AudioPreferences)
 
   def normalize(self) -> None:
-    """
-    runtime 設定の全成分を、それぞれの許容領域へ射影する。
-    真偽値、有限範囲の実数、hotbar 分岐、play-space 識別子、Othello 設定、
-    keybind、audio を同時に整えることで、persistence と renderer が同一の正規形を受け取る。
-    """
     self.current_space_id = normalize_play_space_id(self.current_space_id)
 
     self.invert_x = bool(self.invert_x)
@@ -286,45 +259,21 @@ class RuntimePreferences:
     self.audio = self.audio.normalized()
 
   def clone(self) -> "RuntimePreferences":
-    """
-    現在の runtime 設定を正規化済みの構造的コピーとして返す。
-    呼び出し側は返値を変更しても元の runtime 状態を破壊しない。
-    """
     return coerce_runtime_preferences(runtime=self)
 
   def is_othello_space(self) -> bool:
-    """
-    現在の play-space 識別子が Othello 空間を指すかを、
-    `normalize_play_space_id` と同じ識別子体系で判定する。
-    """
     return is_othello_space(self.current_space_id)
 
   def is_first_person_view(self) -> bool:
-    """
-    現在の camera perspective が first-person view を指すかを、
-    application.preferences.camera の正規化規則に従って判定する。
-    """
     return is_first_person_camera_perspective(self.camera_perspective)
 
   def view_model_visible(self) -> bool:
-    """
-    first-person view かつ hand 表示が抑止されていない場合だけ view-model を描画対象にする。
-    renderer はこの述語により、腕、保持ブロック、特殊 item の生成を一括で制御する。
-    """
     return bool(self.is_first_person_view()) and (not bool(self.hide_hand))
 
   def cycle_camera_perspective(self, step: int = 1) -> None:
-    """
-    camera perspective を定義済みの有限順序上で循環させる。
-    UI 操作と keybind 操作はこの関数を通るため、保存識別子は常に正規化対象の集合内に保たれる。
-    """
     self.camera_perspective = cycle_camera_perspective(self.camera_perspective, step=int(step))
 
   def _active_hotbar_state_attrs(self) -> tuple[str, str]:
-    """
-    active hotbar 分岐を play-space、route edit、creative mode の順に決定する。
-    呼び出し側は slot 名を直接選ばず、この射影を通じて対象分岐を得る。
-    """
     if self.is_othello_space():
       return ("othello_hotbar_slots", "othello_selected_hotbar_index")
     if bool(self.route_edit_active):
@@ -334,110 +283,60 @@ class RuntimePreferences:
     return ("survival_hotbar_slots", "survival_selected_hotbar_index")
 
   def _active_hotbar_slots(self) -> list[str]:
-    """
-    現在選択されている hotbar 分岐の可変 slot 列を返す。
-    返値は内部 list であり、後続の割当処理はこの branch 選択に依存する。
-    """
     slots_attr, _index_attr = self._active_hotbar_state_attrs()
     return getattr(self, slots_attr)
 
   def _active_hotbar_index(self) -> int:
-    """
-    現在選択されている hotbar 分岐の選択 index を返す。
-    index は normalize 後の値として扱われる。
-    """
     _slots_attr, index_attr = self._active_hotbar_state_attrs()
     return int(getattr(self, index_attr))
 
   def active_hotbar_index(self) -> int:
-    """
-    外部から参照するための active hotbar index を返す。
-    分岐選択の詳細を UI や session 側へ漏らさないための公開射影である。
-    """
     return int(self._active_hotbar_index())
 
   def hotbar_snapshot(self) -> tuple[str, ...]:
-    """
-    active hotbar の現在値を tuple として複製する。
-    renderer や HUD はこの snapshot を読むだけで、runtime の可変 list を直接保持しない。
-    """
     return tuple(str(value).strip() for value in self._active_hotbar_slots())
 
   def current_item_id(self) -> str | None:
-    """
-    active hotbar の選択 slot に格納された item 識別子を返す。
-    空文字列は item が存在しない状態として `None` に正規化される。
-    """
     slots = self._active_hotbar_slots()
     index = self._active_hotbar_index()
     value = str(slots[index]).strip()
     return value if value else None
 
   def current_block_id(self) -> str | None:
-    """
-    現在の item 識別子から special item を除外し、
-    通常 block として配置又は表示できる識別子だけを返す。
-    """
     item_id = self.current_item_id()
     if item_id is None or is_special_item_id(item_id):
       return None
     return item_id
 
   def current_special_item_id(self) -> str | None:
-    """
-    現在の item 識別子が special item registry に属する場合だけ返す。
-    通常 block の識別子はこの経路では `None` となる。
-    """
     item_id = self.current_item_id()
     if item_id is None or not is_special_item_id(item_id):
       return None
     return item_id
 
   def set_hotbar_slot(self, index: int, item_id: str | None) -> None:
-    """
-    現在の active hotbar 分岐へ item 識別子を割り当てる。
-    割当前に runtime 全体を正規化するため、creative、survival、Othello、
-    route のいずれを対象にしても slot 数と index の整合性が保たれる。
-    """
     self.normalize()
     slots_attr, _index_attr = self._active_hotbar_state_attrs()
     active_slots = getattr(self, slots_attr)
     setattr(self, slots_attr, list(with_hotbar_assignment(active_slots, index, item_id, size=HOTBAR_SIZE)))
 
   def select_hotbar_index(self, index: int) -> None:
-    """
-    active hotbar の選択 index を有効範囲内へ射影して更新する。
-    分岐の決定は現在の runtime 状態に従う。
-    """
     self.normalize()
     _slots_attr, index_attr = self._active_hotbar_state_attrs()
     setattr(self, index_attr, normalize_hotbar_index(index, size=HOTBAR_SIZE))
 
   def cycle_hotbar(self, delta_steps: int) -> None:
-    """
-    active hotbar 分岐の index に循環移動を適用する。
-    `delta_steps` は hotbar サイズを法とする移動量として解釈される。
-    """
     self.normalize()
     _slots_attr, index_attr = self._active_hotbar_state_attrs()
     current_index = int(getattr(self, index_attr))
     setattr(self, index_attr, cycle_hotbar_index(current_index, delta_steps, size=HOTBAR_SIZE))
 
   def clear_selected_hotbar_slot(self) -> None:
-    """
-    現在選択されている active hotbar slot を空にする。
-    分岐選択と index 正規化は通常の hotbar 更新処理と同じ経路を通る。
-    """
     self.normalize()
     self.set_hotbar_slot(self._active_hotbar_index(), None)
 
 
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
-  """
-  runtime 設定を複製し、指定された override だけを上書きした正規化済みインスタンスを返す。
-  persistence、settings UI、session application はこの関数を通じて、
-  部分更新が全体の許容領域を破らないことに依存する。
-  """
   if runtime is not None:
     out = RuntimePreferences(
       current_space_id=str(runtime.current_space_id),

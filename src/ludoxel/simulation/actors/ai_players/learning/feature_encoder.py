@@ -77,18 +77,10 @@ _DEEP_DROP_BLOCKS: int = 3
 
 
 def is_feature_key(key: object) -> bool:
-  """
-  与えた値が既知の feature key であるかを判定する。
-  入力は任意 object を許容し、文字列化した値が FEATURE_KEYS に含まれる場合に限り真を返す。trainer と policy は学習・適用時に未知 key を排除するため本述語を共有する。
-  """
   return str(key) in _FEATURE_KEY_SET
 
 
 def _forward_direction_probe(observation: AiObservation) -> DirectionProbe | None:
-  """
-  AI の現在 yaw に最も近い world 水平方向の方向標本を返す。
-  前進入力 (move_f=1, move_s=0) と yaw から world 方向名を解決し、対応する DirectionProbe を返す。方向が縮退する場合は None を返し、前方依存の feature は付与しない。
-  """
   name = _resolve_world_direction(move_f=1.0, move_s=0.0, yaw_deg=float(observation.self_yaw_deg))
   if name is None:
     return None
@@ -96,17 +88,6 @@ def _forward_direction_probe(observation: AiObservation) -> DirectionProbe | Non
 
 
 def encode_features(observation: AiObservation) -> tuple[str, ...]:
-  """
-  observation を、policy が条件付けに用いる安定した feature key の列へ変換する。
-  本符号化は学習と適用の双方で同一でなければならず、FEATURE_ENCODER_VERSION で版を識別する。
-  体力は max_health に対する割合で low(35%以下)と critical(15%以下)を、
-  player は最後に観測した距離で near(3 以下)・mid(7 以下)・far、
-  及び現在視認(visible)か最後の既知位置のみ(last_known_only)かを付与する。
-  combat は cooldown の可否と射程内、route は閉塞・喪失・利用可能、
-  hazard は前方標本に基づく奈落と深い落差、terrain は周囲閉塞・橋掛け必要・跳躍必要・閉じたフェンスゲート、
-  placement は橋と防御の配置可否、breaking は脱出のための破壊可否、stuck は直近の行き詰まりを付与する。
-  前方依存 feature は yaw 最寄り方向の標本から導く。返値は重複の無い feature key の tuple であり、未知 key を含まない。
-  """
   features: list[str] = []
   max_health = max(1e-6, float(observation.max_health))
   health_fraction = float(observation.health) / float(max_health)

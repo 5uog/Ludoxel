@@ -71,10 +71,6 @@ class BackendRendererRuntimeState:
     )
 
   def set_shadow_quality(self, quality: int) -> None:
-    """
-    Shadow map quality 段階を `[1, 5]` の有効値へ正規化して保持する。
-    型不一致、欠落、範囲外値はいずれも `Standard` (3) へ収束させ、renderer backend はこの段階値から `effective_backend_shadow_params` を通じて実効 shadow パラメータを毎 frame 解決する。この段階は render distance とは独立であり、render distance chunks の変更ではこの値は変化しない。
-    """
     self.shadow_quality = normalize_shadow_map_quality(quality)
 
   def set_sun_angles(self, azimuth_deg: float, elevation_deg: float) -> None:

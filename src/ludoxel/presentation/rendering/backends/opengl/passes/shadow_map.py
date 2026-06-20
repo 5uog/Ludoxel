@@ -125,14 +125,6 @@ class ShadowMapPass:
     return ShadowMapInfo(ok=bool(self._ok), size=int(self._size), tex_id=int(self._tex), inst_count=int(self._batch.total_instances() + self._last_extra_instances))
 
   def ensure_size(self, size: int) -> None:
-    """
-    shadow depth texture の一辺画素数を要求値へ合わせ、必要な場合だけ framebuffer と depth texture を再生成する。
-    要求値は `_normalize_shadow_size` で OpenGL context の `GL_MAX_TEXTURE_SIZE` と renderer 側上限の小さい方へ clamp される。
-    clamp 後の値が現在の `self._size` と一致する場合は何もせず、既存 GPU 資源と render 署名 cache を保持する。
-    一致しない場合は古い texture と framebuffer を破棄して新しい解像度で作り直し、次 frame の shadow を新しい texel 密度で描画させる。
-    この再生成は OpenGL context が current な render 経路からのみ呼ばれることを前提とし、shadow map quality の変更によって texel 密度を変えるための唯一の経路である。
-    prog 未設定 (初期化前) の場合は何もしない。
-    """
     if self._prog is None:
       return
     requested = self._normalize_shadow_size(size)

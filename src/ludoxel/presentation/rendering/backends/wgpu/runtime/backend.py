@@ -461,10 +461,6 @@ class WgpuRendererBackend:
       self._chunks[ck] = mesh
 
   def _refresh_selection_buffer(self, vertices: np.ndarray) -> None:
-    """
-    shared selection builder が生成した line vertex 列で WGPU selection buffer を置換する。
-    入力は block model の render boxes、neighbor state、local occlusion を反映済みであり、空配列の場合は draw count と buffer を無効化する。
-    """
     if self._res is None:
       return
     import wgpu
@@ -766,10 +762,6 @@ class WgpuRendererBackend:
 
   @staticmethod
   def _front_facing_world_rows(rows: np.ndarray, *, face_idx: int, eye: Vec3) -> np.ndarray:
-    """
-    axis-aligned face instance の外向き法線と camera 方向の内積が正になる row だけを返す。
-    OpenGL の `GL_BACK` culling 後に polygon line mode が生成する triangle edge と同じ face 集合を WGPU の line list へ渡す。
-    """
     data = np.asarray(rows, dtype=np.float32)
     if data.ndim != 2 or int(data.shape[0]) <= 0:
       return np.zeros((0, 12), dtype=np.float32)
@@ -783,10 +775,6 @@ class WgpuRendererBackend:
 
   @staticmethod
   def _front_facing_cloud_rows(rows: np.ndarray, *, face_idx: int, eye: Vec3, shift: Vec3) -> np.ndarray:
-    """
-    cloud box の中心、寸法、world shift から face plane を求め、camera に向いた face の instance row だけを返す。
-    隣接 quad の外周だけではなく、OpenGL の二 triangle が持つ対角線を含む line list の culling 入力として用いる。
-    """
     data = np.asarray(rows, dtype=np.float32)
     if data.ndim != 2 or int(data.shape[0]) <= 0:
       return np.zeros((0, 8), dtype=np.float32)
@@ -1267,10 +1255,6 @@ class WgpuRendererBackend:
     self._res.skin_bind_group = bind_group
 
   def _destroy_ai_skin_gpu_resources(self) -> None:
-    """
-    現在保持している全 AI skin texture を破壊し、対応する view、sampler、bind group の参照辞書を空にする。
-    GPU 資源破壊は context teardown 又は skin set 差し替えの前段でのみ呼ばれ、CPU 側 image cache(_ai_skin_images)は保持して context 再生成時に再構築できるようにする。
-    """
     for texture in self._ai_skin_textures.values():
       if texture is not None and hasattr(texture, "destroy"):
         texture.destroy()
@@ -1280,10 +1264,6 @@ class WgpuRendererBackend:
     self._ai_skin_bind_groups.clear()
 
   def _replace_ai_skin_gpu_resources(self) -> None:
-    """
-    CPU 側の AI skin image cache から GPU texture、view、sampler、bind group の集合を再構築する。
-    既存 GPU 資源を破壊してから skin key(同梱 Alex skin を表す固定 key と、custom mode actor の import skin を表す skin_id key)ごとに atlas と同一 bind group layout の texture bind group を mirror_y で生成する。途中で生成に失敗した場合はその時点までに生成した texture をすべて破壊して例外を再送出し、半端な GPU 状態を残さない。device 未初期化(_res is None)の場合は CPU cache を保持したまま GPU 構築を行わない。
-    """
     self._destroy_ai_skin_gpu_resources()
     if self._res is None:
       return
@@ -1311,10 +1291,6 @@ class WgpuRendererBackend:
     self._ai_skin_bind_groups = bind_groups
 
   def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
-    """
-    AI actor 向けの名前付き skin 画像の集合を CPU cache へ正規化保存し、GPU 資源を即時に再構築する。
-    各 image は skin key(同梱 Alex skin を表す固定 key と、custom mode actor の import skin を表す skin_id key)を key とする 64x64 RGBA atlas へ正規化され、空 dict を渡すと AI skin texture を全解放して player skin fallback だけが残る。この呼び出しは GL 初期化、context 再生成、及び skin import / delete / mode 切替のように skin resource が実際に変化した時にだけ行われ、frame 毎には呼ばれない。
-    """
     self._ai_skin_images = {str(skin_key): normalize_player_skin_image(QImage(image)) for skin_key, image in images.items()}
     self._replace_ai_skin_gpu_resources()
 

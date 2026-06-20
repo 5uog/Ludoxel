@@ -15,17 +15,6 @@ def _snap(value: float, quantum: float) -> float:
 
 
 def _coverage_scaled_sun_extents(sun: BackendSunParams, coverage_radius: float | None) -> tuple[float, float, float, float]:
-  """
-  shadow の light-space orthographic 範囲を、覆うべき可視半径に合わせて拡縮した `(ortho_radius, light_distance, ortho_near, ortho_far)` を返す。
-  `coverage_radius` が `None` の場合は `BackendSunParams` の既定値をそのまま返す。値が与えられた場合は、orthographic 半径を `ortho_radius = max(sun.ortho_radius, coverage_radius)` とし、
-  基準半径 `sun.ortho_radius` に対する比率 `scale = ortho_radius / sun.ortho_radius (>= 1)` を light distance と far plane へ同じく乗じる。near plane は `sun.ortho_near` を維持する。
-  呼び出し側は `coverage_radius` に Shadow map quality preset が定める shadow 専用の light-space coverage 半径 (block 単位) を渡す。この半径は render distance chunks から導出してはならず、`render_distance_fog_range` の fog 終端のような可視距離由来の値を渡すと、render distance を広げるほど `ortho_radius` が拡大し同一 shadow map size のまま texel 密度が劣化する結合が生じる。coverage 半径を render distance と独立な品質方針として固定することで、この結合を断つ。
-  light box は camera を中心とし、light 方向に直交する平面で半径 `r = ortho_radius` の角柱を成し、light 軸に沿った深度は light_pos からの距離で区間 `[ortho_near, ortho_far]` を占める。
-  camera 中心は light_pos から距離 `light_distance` にあるため、camera を中心とする半径 `r` の球は深度方向で区間 `[light_distance - r, light_distance + r]` を占める。
-  既定 `BackendSunParams` の比率では `light_distance = 2 r` かつ `ortho_far = (140 / 30) r` となるため、near 側余裕は `light_distance - ortho_near = 2 r - ortho_near >= r`、
-  far 側余裕は `ortho_far - light_distance = (80 / 30) r >= r` を満たし、視差方向の半幅も `r` であるから、light box は半径 `r` の球を全方向で内包する。
-  この結果、camera から半径 `coverage_radius` 以内の shadow caster はすべて light box の coverage に入り、その範囲では shadow 実効 texel 寸法 `(2 r) / shadow_size` が render distance に依らず一定に保たれる。coverage 半径を超える遠方の caster は light box 外として shadow を持たないが、この打ち切りは render distance ではなく shadow 専用 policy が支配する固定境界である。
-  """
   base_radius = float(sun.ortho_radius)
   if coverage_radius is None or base_radius <= 1e-6:
     return (base_radius, float(sun.light_distance), float(sun.ortho_near), float(sun.ortho_far))

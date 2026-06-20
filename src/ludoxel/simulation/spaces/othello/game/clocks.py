@@ -39,10 +39,6 @@ DEFAULT_TIME_LIMIT_S: float = 20.0 * 60.0
 
 
 def normalize_time_control(value: object, *, default: str = OTHELLO_TIME_CONTROL_PER_SIDE_20M) -> str:
-  """
-  time-control token を対応 timer mode の有限集合へ正規化する。
-  `none` や `unlimited` などの別名は `off` へ畳み込み、persistence と UI binding は一つの identifier 集合を共有する。
-  """
   raw = str(value).strip().lower()
   if raw in ("no_limit", "unlimited", "none"):
     raw = OTHELLO_TIME_CONTROL_OFF
@@ -55,26 +51,14 @@ def normalize_time_control(value: object, *, default: str = OTHELLO_TIME_CONTROL
 
 
 def time_control_limit_s(value: object) -> float | None:
-  """
-  正規化済み timer mode に対応する基準秒数を返す。
-  timer off の場合だけ `None` を返し、bounded per-move 又は per-side mode では有限正値を返す。
-  """
   return _TIME_CONTROL_LIMITS_S.get(normalize_time_control(value), float(DEFAULT_TIME_LIMIT_S))
 
 
 def time_control_is_per_move(value: object) -> bool:
-  """
-  timer mode が per-move 制約を持つかを判定する。
-  turn transition ではこの述語により、active side clock を reload すべき mode だけを選ぶ。
-  """
   return normalize_time_control(value) in _PER_MOVE_TIME_CONTROLS
 
 
 def time_control_display_name(value: object) -> str:
-  """
-  canonical timer identifier を表示 label へ写す全域的な map である。
-  label は UI 用であり、保存値の意味は identifier によって固定される。
-  """
   normalized = normalize_time_control(value)
   if normalized == OTHELLO_TIME_CONTROL_OFF:
     return "Timer off"

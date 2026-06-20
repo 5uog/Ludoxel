@@ -80,10 +80,6 @@ def _iter_intersections(world: WorldState, probe: AABB, params: CollisionParams,
 
 
 def world_aabb_intersects(world: WorldState, probe: AABB, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
-  """
-  指定した world-space AABB が solid block の collision shape と一つ以上交差するかを判定する。
-  block state 固有の複数 AABB、近傍探索範囲、及び一時的な collision 除外 cell を通常 player collision と同じ規則で評価する。
-  """
   for _bx, _by, _bz, _ba in _iter_intersections(world, probe, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
     return True
   return False

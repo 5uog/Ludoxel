@@ -80,10 +80,6 @@ _GRAVITY_AFFECTED_TAG = "gravity_affected"
 
 
 def _ai_settings_open(viewport: "RendererViewportWidget") -> bool:
-  """
-  本体画面へ埋め込んだ AI Settings overlay が開いているかを返す。
-  AI Settings overlay は viewport の子 widget として覆い被さるが、Pause や Settings と同様に gameplay 入力を抑止する必要があるため、`_ai_settings_overlay_open` flag を gameplay 抑止判定へ取り込む。flag 未初期化時は閉じているものとして扱う。
-  """
   return bool(getattr(viewport, "_ai_settings_overlay_open", False))
 
 

@@ -27,46 +27,22 @@ CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 128.0
 
 
 def render_distance_radius_blocks(render_distance_chunks: int) -> float:
-  """
-  chunk 単位の render distance を、camera 中心の水平 (XZ 平面) 可視半径へ block 単位で変換する。
-  入力は `clamp_render_distance_chunks` で許容区間へ射影した整数 chunk 数であり、返値は `render_distance_chunks * CHUNK_SIZE` の非負実数である。
-  この半径は world geometry の fog fade 終端、chunk upload と culling、雲の表示距離が共有する可視距離の基準であり、可視 geometry の表示範囲だけを支配する。
-  shadow map / shadow shader の実効品質はこの半径から決めてはならず、shadow の light-space coverage と texel 密度は `resolve_shadow_quality_preset` が与える shadow 専用の品質方針が支配する。
-  """
   return float(int(clamp_render_distance_chunks(int(render_distance_chunks))) * int(CHUNK_SIZE))
 
 
 def render_distance_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
-  """
-  world geometry に適用する距離 fog の開始距離と終了距離を、camera からの 3D 距離 (block 単位) の組として返す。
-  終了距離は render distance 半径と camera far plane `z_far` の小さい方であり、far plane による硬い clip より手前で完全に fog 色へ収束させる。
-  開始距離は終了距離に `RENDER_DISTANCE_FADE_START_FRACTION` を乗じた値であり、返値は常に `start <= end` を満たす。
-  この範囲は world block、falling block、break particle、player/AI model、Othello piece が共有し、shader 及び CPU 側ではこの組を camera と対象の 3D 距離 `length(world_pos - camera_world_pos)` と比較するため、横移動だけでなく camera の上昇・下降にも fade が反応する。
-  """
   end = min(float(render_distance_radius_blocks(int(render_distance_chunks))), float(z_far))
   start = float(end) * float(RENDER_DISTANCE_FADE_START_FRACTION)
   return (float(start), float(end))
 
 
 def max_unfogged_render_distance_radius_blocks(z_far: float) -> float:
-  """
-  許容最大 render distance で fog が始まる直前までの world geometry 半径を block 単位で返す。
-  shadow light-space coverage の最低半径として使い、render distance 2〜6 の現在値や Shadow map quality 段階に関わらず、fog がまだ掛かっていない範囲の影を light-space 外へ落とさない。
-  この値は shadow map の size や PCF 半径を変更しない。従って Shadow map quality は texel density と filter 幅を引き続き支配し、この関数は可視範囲との整合だけを担う。
-  """
   radius = float(int(clamp_render_distance_chunks(int(RENDER_DISTANCE_MAX_CHUNKS))) * int(CHUNK_SIZE))
   start = float(radius) * float(RENDER_DISTANCE_FADE_START_FRACTION)
   return float(min(float(start), float(z_far)))
 
 
 def cloud_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
-  """
-  雲専用の距離 fog 範囲を、camera と雲の水平 (XZ 平面) 距離 (block 単位) の組として返す。
-  雲は world block ではなく sky layer として扱うため、終了距離は render distance 半径に `CLOUD_RENDER_DISTANCE_MULTIPLIER` を乗じた値と最低可視半径 `CLOUD_MIN_VISIBLE_RADIUS_BLOCKS` の大きい方を採り、
-  それを camera far plane `z_far` で頭打ちにする。最低可視半径により、render distance が狭い場合でも空が極端に空白にならない。
-  開始距離は終了距離に `RENDER_DISTANCE_FADE_START_FRACTION` を乗じた値であり、返値は常に `start <= end` を満たす。
-  雲は geometry 用の 3D 距離規則を用いず、水平距離のみで fade するため、y=250 付近の高い雲でも camera との高度差だけで消えることはない。
-  """
   end = min(max(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(CLOUD_MIN_VISIBLE_RADIUS_BLOCKS)), float(z_far))
   start = float(end) * float(RENDER_DISTANCE_FADE_START_FRACTION)
   return (float(start), float(end))
@@ -74,13 +50,6 @@ def cloud_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, f
 
 @dataclass(frozen=True)
 class GeometryDistanceFog:
-  """
-  world geometry を camera からの 3D 距離で fog 色へ収束させるための frame 単位の距離 fade 入力を表す。
-  `cam_x`、`cam_y`、`cam_z` は camera eye の world 座標、`start` と `end` は fade 開始・終了距離 (block 単位、`start <= end`)、`color` は不透明 geometry を寄せる fog 色である。
-  fade は `length(world_pos - vec3(cam_x, cam_y, cam_z))` の 3D 距離で判定するため、camera の横移動だけでなく上昇・下降にも反応する。`end <= start` の場合 shader 及び CPU 側は fade を無効として扱う。
-  world block、falling block、break particle、player/AI model、Othello piece に渡し、雲には渡さない。
-  """
-
   cam_x: float
   cam_y: float
   cam_z: float
@@ -90,23 +59,11 @@ class GeometryDistanceFog:
 
   @staticmethod
   def disabled() -> "GeometryDistanceFog":
-    """
-    fade を発生させない無効 geometry fog を返す。`end <= start` を満たすため、この値を受け取った shader は距離 fade を適用しない。
-    first-person hand、held block、special item のように render distance fade の対象外とする描画へ渡す。
-    """
     return GeometryDistanceFog(cam_x=0.0, cam_y=0.0, cam_z=0.0, start=0.0, end=-1.0, color=Vec3(0.0, 0.0, 0.0))
 
 
 @dataclass(frozen=True)
 class CloudDistanceFog:
-  """
-  雲を camera との水平 (XZ 平面) 距離のみで透明度 fade させるための frame 単位の距離 fade 入力を表す。
-  `cam_x` と `cam_z` は camera eye の world 座標 XZ 成分、`start` と `end` は fade 開始・終了距離 (block 単位、`start <= end`)、`color` は将来 fog 色を要する拡張のために保持する基準色である。
-  雲は sky layer として扱うため、camera との Y 差は fade に使わない。これにより y=250 付近の高い雲でも、
-  水平距離が近ければ camera の高度に関わらず維持される。`end <= start` の場合 shader は fade を無効として扱う。
-  geometry 用の 3D 距離規則とは別の contract であり、両者を取り違えないために型として分離する。
-  """
-
   cam_x: float
   cam_z: float
   start: float
@@ -115,9 +72,6 @@ class CloudDistanceFog:
 
   @staticmethod
   def disabled() -> "CloudDistanceFog":
-    """
-    fade を発生させない無効 cloud fog を返す。`end <= start` を満たすため、この値を受け取った shader は水平距離 fade を適用しない。
-    """
     return CloudDistanceFog(cam_x=0.0, cam_z=0.0, start=0.0, end=-1.0, color=Vec3(0.0, 0.0, 0.0))
 
 
@@ -144,15 +98,6 @@ class BackendShadowParams:
 
 @dataclass(frozen=True)
 class ShadowQualityPreset:
-  """
-  Shadow map quality の離散段階を、実際の shadow rendering に効く具体的な数値へ写像した一組である。
-  `quality` は `[1, 5]` の段階、`size` は shadow depth texture の一辺画素数、
-  `coverage_radius` は light-space orthographic が覆う camera 周囲の半径 (block 単位)、`pcf_radius` は PCF kernel のずらし幅を shadow texel 単位で表す係数である。
-  shadow の world-space 実効 texel 寸法は概ね `(2 * coverage_radius) / size` であり、段階が上がるほど `size` の増加が `coverage_radius` の増加を上回るため、
-  この寸法は単調に小さく (鋭く) なる。これらはいずれも render distance に依存しないため、render distance chunks を変えても同一段階の shadow 品質は変化しない。
-  bias、slope bias、polygon offset、shadow darkness といった残りの shadow パラメータは段階間で共通とし、基準 `BackendShadowParams` の値を引き継ぐ。
-  """
-
   quality: int
   size: int
   coverage_radius: float
@@ -169,22 +114,10 @@ _SHADOW_QUALITY_PRESETS: dict[int, ShadowQualityPreset] = {
 
 
 def resolve_shadow_quality_preset(quality: object) -> ShadowQualityPreset:
-  """
-  保存又は runtime の Shadow map quality 段階値を、対応する `ShadowQualityPreset` へ解決する。
-  入力は `normalize_shadow_map_quality` を通して `[1, 5]` の有効段階へ正規化されるため、型不一致、欠落、
-  範囲外値はいずれも `Standard` (3) の preset へ収束する。返値は常に定義済みの段階に対応し、未知段階で `KeyError` を生じない。
-  """
   return _SHADOW_QUALITY_PRESETS[normalize_shadow_map_quality(quality)]
 
 
 def effective_backend_shadow_params(base: BackendShadowParams, quality: object) -> BackendShadowParams:
-  """
-  基準 `BackendShadowParams` に Shadow map quality 段階を適用した、frame 当たりの実効 shadow パラメータを返す。
-  `size`、`coverage_radius`、`pcf_radius` を段階の preset 値で置き換え、
-  `bias_min`、`bias_slope`、`dark_mul`、`poly_offset_factor`、`poly_offset_units`、`stabilize`、`enabled`、`cull_front` は基準値を保持する。
-  返値の `coverage_radius` は render distance ではなく shadow 専用の品質方針に由来するため、これを `compute_light_view_proj(coverage_radius=...)` へ渡すことで、
-  light-space orthographic の半径が render distance chunks に連動して拡大し texel 密度が劣化する結合を断つ。
-  """
   preset = resolve_shadow_quality_preset(quality)
   return replace(base, size=int(preset.size), coverage_radius=float(preset.coverage_radius), pcf_radius=float(preset.pcf_radius))
 

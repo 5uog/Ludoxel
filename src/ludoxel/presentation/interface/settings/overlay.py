@@ -294,10 +294,6 @@ class SettingsOverlay(SidebarDialogBase):
     QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
   def _ensure_about_tab(self) -> None:
-    """
-    About page を最初に選択した時点で一度だけ構築し、同じ overlay instance の再表示では生成済み widget tree を再利用する。
-    About 用 stack index は固定し、その内部で loader view から content view へ切り替える。
-    """
     if bool(self._about_built):
       self._about_page_stack.setCurrentWidget(self._about_content_page)
       return

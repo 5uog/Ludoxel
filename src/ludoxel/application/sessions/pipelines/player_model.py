@@ -11,11 +11,6 @@ from ludoxel.simulation.actors.player.kinematics import PLAYER_WALK_MAX_SWING_SC
 
 
 def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionState, walk_speed: float, is_first_person_view: bool) -> PlayerModelSnapshotDTO:
-  """
-  simulation の player entity と歩行位相を renderer-facing scalar DTO へ射影する。
-  walk_speed は正の基準速度として速度比を `[0, PLAYER_WALK_MAX_SWING_SCALE]` へ制限し、
-  返値は body pose と first-person bob のみを保持して mutable entity への参照を含まない。
-  """
   speed = math.hypot(float(player.velocity.x), float(player.velocity.z))
   crouch_amount = 0.0
   if float(player.crouch_eye_drop) > 1e-9:

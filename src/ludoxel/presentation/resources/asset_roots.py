@@ -16,11 +16,6 @@ _BLOCK_TEXTURE_FILE_ALIASES: dict[str, str] = {
 
 @dataclass(frozen=True)
 class VisualAssetRoots:
-  """
-  renderer texture と item thumbnail が共有する一つの asset family の root 群を表す。
-  `family` は `ludoxel` 又は `minecraft` であり、block texture、item texture、thumbnail を同じ選択結果から導出する。
-  """
-
   family: str
   family_root: Path
   texture_root: Path
@@ -31,10 +26,6 @@ class VisualAssetRoots:
 
 
 def resolve_block_texture_path(block_dir: Path, texture_name: str) -> Path:
-  """
-  registry の logical texture name を、選択済み asset family 内の実在 PNG path へ解決する。
-  exact filename を優先し、歴史的な Minecraft file naming と catalog 名の差だけを共有 alias で吸収する。
-  """
   directory = Path(block_dir)
   logical_name = str(texture_name).strip()
   exact = directory / f"{logical_name}.png"
@@ -49,20 +40,12 @@ def resolve_block_texture_path(block_dir: Path, texture_name: str) -> Path:
 
 
 def _has_required_block_textures(block_dir: Path, names: tuple[str, ...]) -> bool:
-  """
-  block atlas が要求する全 logical texture name に対応する PNG が存在する場合に真を返す。
-  atlas が内部生成する `default` placeholder は file 要件から除外し、不完全な Ludoxel family へ renderer だけが切り替わる状態を防ぐ。
-  """
   if not block_dir.is_dir():
     return False
   return all(resolve_block_texture_path(block_dir, name).is_file() for name in names if str(name) != "default")
 
 
 def resolve_visual_asset_roots(assets_dir: Path, *, required_texture_names: list[str] | tuple[str, ...]) -> VisualAssetRoots:
-  """
-  `assets/ludoxel` が atlas contract を完全に満たす場合は自作 family を選び、それ以外は provenance-sensitive な `assets/minecraft` を選ぶ。
-  OpenGL、WGPU、inventory、hotbar、item selection は同じ required texture list を渡し、片方だけが別 family へ移行しない。
-  """
   assets_root = Path(assets_dir)
   names = tuple(sorted({str(name).strip() for name in required_texture_names if str(name).strip()}))
   ludoxel_root = assets_root / "ludoxel"

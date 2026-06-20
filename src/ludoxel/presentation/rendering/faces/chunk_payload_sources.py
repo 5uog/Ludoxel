@@ -14,10 +14,6 @@ from ludoxel.simulation.blocks.states.codec import parse_state
 
 
 def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
-  """
-  face source 入力を contiguous な `float32` 配列へ整える。
-  shape は `N x 14` であり、bounds、UV、flags、face index、slot という行 schema が後続の bucket split によって参照される。
-  """
   arr = np.asarray(face_sources, dtype=np.float32)
   if arr.ndim != 2 or int(arr.shape[1]) != 14:
     raise ValueError("face_sources must be a float32 Nx14 array")
@@ -27,18 +23,10 @@ def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
 
 
 def empty_face_buckets() -> list[np.ndarray]:
-  """
-  metadata 列を落とした後の split face-source bucket として、六つの `0 x 12` 配列を返す。
-  空 chunk でも renderer upload layout の shape と face 順序を保つ。
-  """
   return empty_face_bucket_arrays(12)
 
 
 def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
-  """
-  flat source row を face index と slot に従って六つの bucket へ散布する。
-  `row[12] = i`、`row[13] = s` のとき `B_i[s, :] = row[:12]` となり、未使用 slot は 0 のまま残る。
-  """
   counts = normalize_bucket_counts(bucket_counts)
   out = [np.zeros((int(c), 12), dtype=np.float32) for c in counts]
 
@@ -62,10 +50,6 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
 
 
 def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
-  """
-  chunk iterator から可視 face を列挙し、`(mn, mx, uv, 1, 0, face_idx, slot)` の source row と六 face count を生成する。
-  visibility walk はここで一度だけ実行され、後段は同じ source row を face bucket へ再配置する。
-  """
   rows: list[list[float]] = []
   bucket_counts = [0 for _ in range(FACE_COUNT)]
 

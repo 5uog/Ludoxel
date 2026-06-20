@@ -81,13 +81,6 @@ SAFETY_PARKOUR_ARC_CLEAR: str = "parkour_arc_clear"
 
 @dataclass(frozen=True)
 class AiAction:
-  """
-  AI が一 simulation step に対して選択し得る単一行動の構造化記述を表す。
-  action_id は learning dataset、policy artifact、action mask、deterministic policy が共有する安定な opaque key であり、同一 id に対し全層が同じ意味を割り当てる。category は ACTION_CATEGORIES の何れかであり、行動を movement、look、combat、block placement、block breaking、route、escape、parkour、trap、fence gate、no-op の責務群へ分類する。
-  parameters は行動の補助引数を表す JSON 直列化可能 mapping であり、方向成分、対象種別、step 数などを保持する空 mapping 既定の不変辞書である。skill_category は SKILL_CATEGORIES の id であり、demonstration 記録と評価でどの技能に紐付くかを示す。expected_duration_tick は当該行動が効果を持つと想定する tick 数の目安(下限 1)であり、micro action の連続性を評価する際の基準値として用いる。safety_requirement は action mask が許可前に満たすべき安全条件 id であり、SAFETY_NONE は無条件許可を意味し、それ以外は observation 由来の安全判定が真であることを要求する。description は UI 又は log で人間が読む短い英文説明である。
-  本 dataclass は frozen であり、ACTION_CATALOG が保持する定義は実行時に変化しない。policy と mask は id を介して本定義を参照し、行動本体の実行(player input への写像)は上位の runtime が担う。
-  """
-
   action_id: str
   category: str
   skill_category: str
@@ -97,18 +90,10 @@ class AiAction:
   description: str = ""
 
   def __post_init__(self) -> None:
-    """
-    parameters 未指定時に共有変更可能 default を生まないよう、空辞書へ正規化して固定する。
-    frozen dataclass であるため object.__setattr__ を介して parameters を必ず独立した dict に確定し、後続の to_dict 直列化と policy 側参照が None ではなく mapping を前提にできるようにする。
-    """
     if self.parameters is None:
       object.__setattr__(self, "parameters", {})
 
   def to_dict(self) -> dict[str, Any]:
-    """
-    action 定義を JSON 直列化可能な mapping へ変換する。
-    返値は action_id、category、skill_category、safety_requirement、expected_duration_tick、parameters の浅い複製、description を含み、dataset 記録と policy artifact の双方が同一形式で行動を参照できるようにする。parameters は呼び出し側が安全に変更できるよう新しい dict として複製する。
-    """
     return {
       "action_id": str(self.action_id),
       "category": str(self.category),
@@ -121,10 +106,6 @@ class AiAction:
 
 
 def _action(action_id: str, category: str, skill_category: str, safety: str, duration: int, description: str, **parameters: Any) -> AiAction:
-  """
-  ACTION_CATALOG の各定義を簡潔に構築するための内部 factory である。
-  与えた action_id、category、skill_category、safety、duration、description を AiAction へ写し、追加 keyword 引数を行動 parameters として束ねる。catalog 構築時のみ使用し、実行時 API としては公開しない。
-  """
   return AiAction(
     action_id=str(action_id),
     category=str(category),
@@ -178,25 +159,13 @@ ACTION_IDS: tuple[str, ...] = tuple(action.action_id for action in _CATALOG)
 
 
 def get_action(action_id: str) -> AiAction | None:
-  """
-  action_id から対応する catalog 定義を取得する。
-  未知 id に対しては None を返し、欠落、誤記、廃止された id を呼び出し側が明示分岐できるようにする。返値は ACTION_CATALOG が保持する共有 frozen 定義への参照であり、複製は行わない。
-  """
   return ACTION_CATALOG.get(str(action_id))
 
 
 def actions_in_category(category: str) -> tuple[AiAction, ...]:
-  """
-  指定 category に属する全 action 定義を catalog 登録順で返す。
-  category は ACTION_CATEGORIES の何れかを想定し、未知 category では空 tuple を返す。返値順序は catalog 定義順に一致するため、候補列挙の決定性を保つ。
-  """
   target = str(category)
   return tuple(action for action in _CATALOG if str(action.category) == target)
 
 
 def skill_category_ids() -> tuple[str, ...]:
-  """
-  SKILL_CATEGORIES が定める技能 id を定義順で返す。
-  persistence の技能 flag、policy artifact の skill_categories、UI の技能一覧はこの順序と id 集合を共有する。
-  """
   return tuple(skill_id for skill_id, _label in SKILL_CATEGORIES)

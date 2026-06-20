@@ -101,11 +101,6 @@ _LEFT_LEG_PANTS_UV_PX = skin_cube_uv_map(
 
 @dataclass(frozen=True)
 class HeldBlockPose:
-  """
-  third-person held block rendering に必要な `block_id`、`block_kind`、親 transform を保持する record である。
-  pose generation と face expansion を分けることで、attachment 計算と row materialization を別々に cache できる。
-  """
-
   block_id: str
   block_kind: str | None
   parent_transform: np.ndarray
@@ -113,12 +108,6 @@ class HeldBlockPose:
 
 @dataclass(frozen=True)
 class PlayerModelPose:
-  """
-  third-person player の pose synthesis 結果を保持する cached record である。
-  skin face rows、held block pose、special item rows、icon、shadow cuboid rows をまとめ、OpenGL pass は高価な kinematics ではなく packing 済み入力だけを読む。
-  skin_texture_key は body 描画に用いる skin texture の選択子であり、None は player skin、文字列は renderer に登録済みの actor 固有 skin texture key を表す。pose を生成した render state の skin_texture_key を引き継ぐため、cache 一貫性は render state 側の hash に従う。
-  """
-
   skin_face_rows: tuple[np.ndarray, ...]
   held_block_pose: HeldBlockPose | None
   special_item_face_rows: tuple[np.ndarray, ...]
@@ -129,27 +118,15 @@ class PlayerModelPose:
 
 
 def _as_rows(matrix: np.ndarray) -> np.ndarray:
-  """
-  4x4 affine matrix を row-major の 16 成分へ平坦化する。
-  shadow pipeline は UV metadata を必要とせず、cuboid instance transform だけをこの compact representation で受け取る。
-  """
   return np.asarray(matrix, dtype=np.float32).reshape(16)
 
 
 def _append_unit_cube_rows(buffers: list[list[list[float]]], model: np.ndarray, uv_map_pixels: dict[int, tuple[float, float, float, float]]) -> None:
-  """
-  一つの unit cube を指定 model matrix と skin UV map で六 face row へ展開する。
-  body part の materialization を呼び出し側で宣言的に記述するための補助関数である。
-  """
   for face_idx in range(6):
     append_face_instance(buffers, int(face_idx), model, skin_uv_rect(uv_map_pixels[int(face_idx)], width=int(_SKIN_WIDTH), height=int(_SKIN_HEIGHT)))
 
 
 def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
-  """
-  clamp 済み swing parameter から、shadow 用右腕 pose に加える attack rotation 成分を求める。
-  可視 first-person model が抑止される場合でも、影の silhouette は attack motion を反映する。
-  """
   swing = clampf(float(swing_progress), 0.0, 1.0)
   if swing <= 1e-6:
     return (0.0, 0.0, 0.0)
@@ -164,10 +141,6 @@ def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
 
 
 def _attack_swing_weight(swing_progress: float) -> float:
-  """
-  `p = clamp(swing_progress, 0, 1)` に対して `w = sin(pi sqrt(p))` を計算する。
-  main-hand attack pose が支配的な間、通常の歩行 cycle を減衰させるための重みである。
-  """
   swing = clampf(float(swing_progress), 0.0, 1.0)
   if swing <= 1e-6:
     return 0.0
@@ -176,11 +149,6 @@ def _attack_swing_weight(swing_progress: float) -> float:
 
 @lru_cache(maxsize=64)
 def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerModelPose:
-  """
-  player render state から third-person player pose を完全に materialize する。
-  関節 body cuboid、任意の held-item attachment、任意の special-item quad、
-  shadow 専用 cuboid stack を含む frame 内不変の重い生成物であるため、cache 対象にする。
-  """
   empty_shadow = np.zeros((0, 16), dtype=np.float32)
   empty_faces = empty_textured_face_rows()
   if state is None:
@@ -361,8 +329,4 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
 
 
 def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
-  """
-  cached player-render pose 空間への公開入口である。
-  呼び出し側はこの関数だけへ依存し、cache policy と具体的な pose synthesis 経路は module 内に閉じる。
-  """
   return _build_player_model_pose_cached(state)

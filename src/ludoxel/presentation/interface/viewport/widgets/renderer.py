@@ -368,17 +368,9 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     return super().eventFilter(watched, e)
 
   def _redirected_game_input_source(self, watched) -> bool:
-    """
-    application-wide event filter からviewportへ転送する対象を、rendercanvasを含む子QWidgetに限定する。
-    同じnative mouse eventに由来するQWindow段階とQWidget段階の双方をinteractionへ配送するとtoggleが二重適用されるため、window objectと無関係なapplication widgetは通常のQt配送へ委譲する。
-    """
     return bool(watched is not self and isinstance(watched, QWidget) and self.isAncestorOf(watched))
 
   def _dispatch_game_mouse_press(self, e: QMouseEvent) -> bool:
-    """
-    一つの物理button-downから生じるpress又はdouble-clickを一度だけgameplay interactionへ配送する。
-    button-upまで同じbuttonをactive集合へ保持し、rendercanvasとviewportの重複配送又はnative double-click変換が同一stateを二回toggleして元へ戻すことを防ぐ。
-    """
     button = e.button()
     if button != Qt.MouseButton.NoButton and button in self._dispatched_mouse_buttons:
       e.accept()
@@ -450,10 +442,6 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     super().mousePressEvent(e)
 
   def mouseDoubleClickEvent(self, e: QMouseEvent) -> None:
-    """
-    Qt が高速な第2押下を `MouseButtonDblClick` へ置換した場合も、単独の物理押下として gameplay interaction へ配送する。
-    macOS WGPU の rendercanvas 子 widget から転送された event と viewport 自身へ届いた event を同一経路で処理し、長押し repeat の interval は変更しない。
-    """
     if bool(self.loading_active()):
       e.accept()
       return

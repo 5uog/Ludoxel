@@ -124,77 +124,33 @@ from ludoxel.simulation.worlds.state.world import WorldState
 
 
 def _ai_decision_debug_enabled() -> bool:
-  """
-  AI 意思決定の一時 debug log を出力してよいかを返す。
-  環境変数 `LUDOXEL_AI_DEBUG` が `1`、`true`、`yes`、`on` の何れかである場合に限り真を返す。
-  既定では偽であり、通常 gameplay で意思決定ごとの冗長な log を出さない。
-  本判定は毎 step 呼ばれ得るため、環境変数の評価のみの軽量処理に留める。
-  """
   return str(os.environ.get("LUDOXEL_AI_DEBUG", "")).strip().lower() in ("1", "true", "yes", "on")
 
 
 class _ManagerNeighborhoodProbe:
-  """
-  AiPlayerManager の形状規則述語へ委譲して learning observation の周辺標本を供給する probe adapter である。
-  本 adapter は NeighborhoodProbe Protocol を満たし、足場・頭上・通行・配置可否・落差を
-  manager の既存述語(_standable_support_cell、_nav_headroom_clear、_nav_cell_empty、
-  _can_place_support_block、_cell_has_full_top_support)へ委譲する。
-  これらは has_full_top_support_for_block と world_aabb_intersects に基づき
-  半 block・階段・フェンス・フェンスゲート・壁の形状を反映するため、observation は full block 仮定に陥らない。
-  actor を保持するのは standable と placement 判定が actor 固有の collision body と placement 許可へ依存するためである。
-  """
-
   def __init__(self, manager: "AiPlayerManager", actor: _AiPlayerRuntime, *, max_drop: int) -> None:
-    """
-    委譲先 manager、対象 actor、安全とみなす最大落差段数を保持して初期化する。
-    max_drop は support_drop_depth が奈落とみなすまでの下方走査段数の上限であり、
-    edge safety の安全段数と一致させる。
-    """
     self._manager = manager
     self._actor = actor
     self._max_drop = int(max_drop)
 
   def standable(self, cell: tuple[int, int, int]) -> bool:
-    """
-    指定 cell が actor の足場として有効かを manager の形状規則で判定する。
-    上面の完全足場と body 頭上空間の双方を要求する _standable_support_cell へ委譲する。
-    """
     return bool(self._manager._standable_support_cell(self._actor, tuple(int(value) for value in cell)))
 
   def headroom_clear(self, cell: tuple[int, int, int]) -> bool:
-    """
-    指定 support cell の直上 body 区間が通過可能かを判定する。
-    支持 y+1 と y+2 の空き判定 _nav_headroom_clear へ委譲する。
-    """
     return bool(self._manager._nav_headroom_clear(tuple(int(value) for value in cell)))
 
   def passable(self, cell: tuple[int, int, int]) -> bool:
-    """
-    指定 cell が body の一部として進入可能(空)かを判定する。
-    cell が空である場合に真を返す _nav_cell_empty へ委譲する。
-    """
     return bool(self._manager._nav_cell_empty(tuple(int(value) for value in cell)))
 
   def block_state(self, cell: tuple[int, int, int]) -> str | None:
-    """
-    指定 cell の block state 文字列を返し、block が無ければ None を返す。
-    """
     return self._manager._state_at(int(cell[0]), int(cell[1]), int(cell[2]))
 
   def can_place_against(self, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int]) -> bool:
-    """
-    anchor へ支持 block を配置して target を足場化できるかを判定する。
-    cooldown を無視した _can_place_support_block へ委譲し、配置許可・在庫・anchor 実在・target 空き・頭上を確認する。
-    """
     return bool(
       self._manager._can_place_support_block(self._actor, anchor_cell=tuple(int(value) for value in anchor_cell), target_cell=tuple(int(value) for value in target_cell), ignore_cooldown=True)
     )
 
   def support_drop_depth(self, column_cell: tuple[int, int, int], max_depth: int) -> int:
-    """
-    指定列について support y から下方 max_depth 段までに最初に現れる足場までの段数を返す。
-    各段で完全上面足場 _cell_has_full_top_support を確認し、最初に成立した段数を返す。max_depth 以内に足場が無ければ奈落として -1 を返す。
-    """
     x, y, z = (int(column_cell[0]), int(column_cell[1]), int(column_cell[2]))
     for depth in range(0, int(max_depth) + 1):
       if bool(self._manager._cell_has_full_top_support((int(x), int(y) - int(depth), int(z)))):
@@ -340,11 +296,6 @@ class AiPlayerManager:
     return actor
 
   def _live_name_keys(self, *, exclude_actor_id: str | None = None) -> set[str]:
-    """
-    名前重複判定の対象となる生存 AI の正規化済み名前 key 集合を返す。
-    対象は現在 manager に登録され、かつ health が正の actor に限られ、dead、despawn 済み、registry から除去済みの AI は名前を占有しない。
-    exclude_actor_id を与えた場合はその actor 自身を除外し、rename 時の自己衝突を防ぐ。
-    """
     excluded = None if exclude_actor_id is None else str(exclude_actor_id)
     keys: set[str] = set()
     for actor in self._actors.values():
@@ -359,12 +310,6 @@ class AiPlayerManager:
     return keys
 
   def ai_name_error(self, *, actor_id: str | None, name: object) -> str | None:
-    """
-    AI の表示名候補を形式規則と生存 AI 間の重複規則で検査し、不正な場合に UI 表示用の英文 error message を返す。
-    形式規則は naming module が判定し、重複規則は actor_id を除いた生存 actor 集合との case-insensitive 比較で判定する。
-    重複時は同一本体名の空き suffix 候補を提示し、`#0001` から `#9999` がすべて使用済みの場合は numbered variant 枯渇を fallback error として報告する。
-    有効な名前の場合は None を返す。
-    """
     candidate = str(name).strip()
     format_error = ai_display_name_format_error(candidate)
     if format_error is not None:
@@ -380,11 +325,6 @@ class AiPlayerManager:
     return f"A live AI already uses this name. Try '{suggestion}'."
 
   def _resolve_loaded_name(self, *, candidate: str, taken_keys: set[str]) -> str | None:
-    """
-    保存 data から復元した名前を、形式規則と既復元 actor との重複規則の下で確定する。
-    形式が有効かつ未使用ならそのまま採用し、重複している場合は同じ本体名の空き suffix 候補へ振り替える。
-    名前が空、形式不正、又は振替先が枯渇している場合は spawn 既定の `AI#NNNN` 形式を割り当て、それも枯渇している場合は None を返す。
-    """
     text = str(candidate).strip()
     if text and ai_display_name_format_error(text) is None:
       key = ai_name_duplicate_key(text)
@@ -492,11 +432,6 @@ class AiPlayerManager:
     ).normalized()
 
   def update_actor_settings(self, *, actor_id: str, settings: AiSpawnEggSettings) -> bool:
-    """
-    既存 actor の編集可能 settings を正規化済み値で差分適用し、変更種別に応じて必要最小限の runtime 側更新だけを行う。
-    route mode で route point が 2 点未満の要求は適用不能として偽を返し、正規化後の値が現行 settings と完全一致する no-op は何も変更せず真を返す。名前は形式規則と生存 AI 間重複規則を満たす場合だけ更新し、満たさない rename 要求は偽を返す。
-    navigation cache(pending/active plan、nav failure、avoid cell、unreachable target、local recovery cache、world revision、replan cooldown)の破棄は mode、can_place_blocks、route point 列、route closed、route run、route style の何れかが実際に変化した場合に限定する。回復 tick の位相 reset(regen_tick_s = 0)は自動回復の有効状態、開始遅延、間隔、回復量、上限の何れかが実際に変化した場合に限定する。これにより name、health_indicator、skin_mode、skin_id の変更だけでは navigation 再計画も回復位相 reset も発生しない。
-    """
     actor = self._actors.get(str(actor_id))
     if actor is None:
       return False
@@ -593,11 +528,6 @@ class AiPlayerManager:
     return True
 
   def _skip_unreachable_route_targets(self, actor: _AiPlayerRuntime) -> bool:
-    """
-    flexible route の現在 target index が到達不能 blacklist に含まれる間、次の route point へ前進させる。
-    blacklist は nav_unreachable_targets が保持する index -> 残余 cooldown 秒の対応であり、route 点数分だけ前進を試みても全点が blacklist 済みの場合は偽を返す。
-    偽を返した場合、呼び出し側はその step の追従を停止(旋回のみ)し、cooldown の減衰によって blacklist が解ける時点まで同一 target への無制限な再探索を行わない。
-    """
     point_count = len(actor.route_points)
     if point_count <= 0 or not actor.nav_unreachable_targets:
       return True
@@ -686,11 +616,6 @@ class AiPlayerManager:
     return bool(has_full_top_support_for_block(str(state_str), self._state_at, self.block_registry.get, int(cell[0]), int(cell[1]), int(cell[2])))
 
   def _intended_move_direction_xz(self, actor: _AiPlayerRuntime, control: PlayerStepInput) -> Vec3 | None:
-    """
-    制御入力 control が表す水平移動方向を world 座標系の単位 vector として返す。
-    yaw は同一 step 内で適用される yaw_delta_deg を加算した後の値を用い、forward = (-sin(yaw), 0, cos(yaw))、right = (cos(yaw), 0, sin(yaw)) に対し dir = forward*move_f + right*move_s で合成する。
-    移動入力が実質 0、又は合成 vector の長さが 0 に縮退する場合は None を返し、呼び出し側はその step の前進安全判定を省略する。
-    """
     move_f = float(control.move_f)
     move_s = float(control.move_s)
     if abs(move_f) <= 1e-6 and abs(move_s) <= 1e-6:
@@ -704,13 +629,6 @@ class AiPlayerManager:
     return direction.normalized()
 
   def _forward_step_safe(self, actor: _AiPlayerRuntime, *, direction: Vec3, max_drop: int) -> bool:
-    """
-    現在の支持 block から direction 方向へ一歩前進した場合に、安全に着地できる足場が存在するかを判定する。
-    前進予定位置は eye ではなく足元位置 + direction * lookahead で求め、その列の支持 cell が現在支持 cell と同一なら同一 cell 内移動として安全とみなす。
-    前方の body 高さ(支持 y + 1)に block がある場合は collision が前進を止めるため落下危険なしとして安全を返す。
-    前方列を支持 y から max_drop 段下まで走査し、full top support を持つ cell が見つかれば安全(意図的 drop を含む)、見つからなければ奈落又は深すぎる落下として不安全を返す。
-    max_drop は Free Roam / PVP では落下 damage が発生しない 3、route 追従では明確な経路上の理由がある drop として 8 を用いる。
-    """
     support = self._current_support_cell(actor)
     if support is None:
       return True
@@ -733,10 +651,6 @@ class AiPlayerManager:
 
   @staticmethod
   def _halted_control(control: PlayerStepInput) -> PlayerStepInput:
-    """
-    前進安全判定で不安全とされた step の制御入力から移動成分と jump 成分を除去し、視線回転だけを残した制御入力を返す。
-    yaw_delta_deg と pitch_delta_deg を保持するため、停止中の AI は対象方向への旋回を継続でき、bridge placement 又は迂回判断の前提となる向きを失わない。
-    """
     return PlayerStepInput(
       move_f=0.0,
       move_s=0.0,
@@ -750,12 +664,6 @@ class AiPlayerManager:
     )
 
   def _apply_edge_safety(self, actor: _AiPlayerRuntime, control: PlayerStepInput, *, max_drop: int) -> tuple[PlayerStepInput, bool]:
-    """
-    地上歩行中の制御入力に対して ledge / void 安全判定を適用し、(適用後 control, 停止したか) の組を返す。
-    飛行中、空中(on_ground が偽)、又は jump 入力を伴う step は判定対象外としてそのまま通す。jump を伴う遷移の安全性は flexible route の planner 側 arc 検査が担う。
-    前進方向に max_drop 段以内の着地足場が無い場合は移動を停止した control を返し、bridge placement(許可時)又は呼び出し側の方向転換に判断を委ねる。
-    この判定により、AI が自発的に奈落へ前進し続ける挙動を Free Roam、PVP 追跡、route 追従の歩行経路で禁止する。
-    """
     if bool(actor.player.flying) or (not bool(actor.player.on_ground)):
       return (control, False)
     if bool(control.jump_pressed):
@@ -828,22 +736,10 @@ class AiPlayerManager:
 
   @staticmethod
   def _note_ai_damage(actor: _AiPlayerRuntime) -> None:
-    """
-    AI が damage を受けた事実を自動回復状態へ反映する。
-    regen_wait_s(最終被弾からの経過秒)と regen_tick_s(次回回復までの蓄積秒)を共に 0 へ戻し、回復待機 timer を被弾の度に reset する契約を一箇所へ固定する。
-    呼び出し箇所は fall damage、void damage、local player からの melee damage であり、damage 量が正の場合に限り呼び出す。
-    """
     actor.regen_wait_s = 0.0
     actor.regen_tick_s = 0.0
 
   def _advance_ai_regeneration(self, actor: _AiPlayerRuntime, *, dt: float) -> None:
-    """
-    AI の自動回復を simulation step 内で進行させる。
-    dead actor は対象外であり、despawn 済み actor は manager の registry に存在しないため呼び出されない。
-    regen_wait_s は生存中常に加算され、auto_regen_enabled が偽、現在体力が有効上限以上、又は regen_wait_s が regen_start_delay_s 未満の間は regen_tick_s を 0 へ保つ。
-    有効上限は min(regen_cap_hp, max_health) であり、条件成立中は regen_interval_s ごとに regen_amount_hp を上限まで加算する。
-    既定値は enabled=false、delay=4.0 秒、interval=4.0 秒、amount=1.0 health point、cap=max_health 相当であり、無効のままなら従来どおり一切回復しない。
-    """
     if not actor.player.alive():
       actor.regen_tick_s = 0.0
       return
@@ -959,12 +855,6 @@ class AiPlayerManager:
     return True
 
   def _full_world_snapshot(self) -> tuple[tuple[int, int, int, str], ...]:
-    """
-    route planner へ渡す world 全体の block snapshot を world revision 単位で cache して返す。
-    snapshot は world.blocks の一括列挙(block 数に比例する一回の走査)で構築し、同一 revision の間は同じ tuple を再利用するため、
-    複数 actor の plan 要求や actor の移動によって main thread 上の snapshot 構築が繰り返されない。
-    以前の bounds 指定 window snapshot は探索領域を狭め、かつ bounds が変わる度に列挙し直していたため、これを map 全体 snapshot へ置き換えている。
-    """
     if int(self._full_snapshot_revision) != int(self.world.revision):
       self._full_snapshot_revision = int(self.world.revision)
       self._full_snapshot_blocks = tuple((int(x), int(y), int(z), str(state_str)) for x, y, z, state_str in self.world.iter_blocks())
@@ -1208,13 +1098,6 @@ class AiPlayerManager:
     return tuple(candidates)
 
   def _local_recovery_target(self, actor: _AiPlayerRuntime, *, current_support: tuple[int, int, int], desired_target: Vec3, desired_target_support: tuple[int, int, int] | None = None) -> Vec3 | None:
-    """
-    行き詰まり中の actor が短距離で目標へ近づける支持 cell を幅優先探索で求め、その cell 中心を返す。
-    探索は visit 数上限に加えて経過時間 deadline(_AI_LOCAL_RECOVERY_TIME_BUDGET_S)で打ち切り、escape 用 parkour 候補の span も縮小されているため、
-    複数 actor が同時に行き詰まっても 1 回の探索が simulation step の時間を専有しない。
-    desired_target_support は呼び出し側(_cached_local_recovery_target)が cache 済みの目標支持 cell を渡すための引数であり、None の場合のみ近傍探索で補完する。
-    改善候補が無い場合は None を返し、呼び出し側は現在支持 cell の中心へ留まる。
-    """
     current = tuple(int(value) for value in current_support)
     current_center = _support_cell_center(current)
     current_score = float(_point_distance_xz(current_center, desired_target))
@@ -1264,12 +1147,6 @@ class AiPlayerManager:
     return _support_cell_center(fallback_cell)
 
   def _cached_local_recovery_target(self, actor: _AiPlayerRuntime, *, current_support: tuple[int, int, int], desired_target: Vec3, target_support: tuple[int, int, int] | None) -> Vec3 | None:
-    """
-    _local_recovery_target() の BFS 探索結果を短時間 cache し、探索回数を step 単位の予算内へ制限した上で局所回復目標を返す。
-    cache key は (現在支持 cell, 目標支持 cell) の組であり、key が一致し cache 経過時間が _AI_LOCAL_RECOVERY_CACHE_S 未満の間は前回結果を再利用する。
-    cache が失効していても、同一 simulation step 内の探索実行回数が _AI_LOCAL_RECOVERY_BUDGET_PER_STEP に達している場合は stale な前回結果(無ければ None)を返し、新たな探索を行わない。
-    この制御は、複数 actor が同時に行き詰まった場合でも局所探索が描画 frame 時間を圧迫しないことを目的とし、探索品質は cache 失効ごとの再計算で維持する。
-    """
     key = (tuple(int(value) for value in current_support), None if target_support is None else tuple(int(value) for value in target_support))
     if actor.local_recovery_cache_key == key and float(actor.local_recovery_cache_age_s) < float(_AI_LOCAL_RECOVERY_CACHE_S):
       return actor.local_recovery_cache_target
@@ -1290,13 +1167,6 @@ class AiPlayerManager:
     return result
 
   def _can_place_support_block(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int], ignore_cooldown: bool = False) -> bool:
-    """
-    anchor cell の側面へ支持 block を一個設置できる状態かを判定する。
-    判定条件は placement 許可、手持ち block の存在、anchor cell の実在、target cell の空き、target 上の headroom であり、
-    ignore_cooldown が偽の場合はこれに加えて place cooldown の経過を要求する。
-    ignore_cooldown は「設置は予定どおり可能だが cooldown 待ちである」状態を、設置不能(経路無効)と区別するために使う。
-    plan step の有効性検査と局所回復の候補列挙は ignore_cooldown=True で呼び、実際の設置実行経路は既定の cooldown 検査を維持する。
-    """
     if actor.held_item_id is None or (not bool(actor.can_place_blocks)):
       return False
     if (not bool(ignore_cooldown)) and float(actor.place_cooldown_s) > 1e-6:
@@ -1321,12 +1191,6 @@ class AiPlayerManager:
     return None
 
   def _route_target_support(self, actor: _AiPlayerRuntime, *, desired_target: Vec3) -> tuple[int, int, int] | None:
-    """
-    route 目標点に対応する到達可能な支持 cell を、(目標 cell, world revision) を key とする actor 単位 cache 付きで返す。
-    _nearest_standable_support_cell() は目標近傍に支持 cell が無い場合に半径 6 の全候補を走査するため、
-    cache が無いと同一目標へ向かう間この走査が simulation step ごとに繰り返され、frame 時間を消費していた。
-    world が変化するか目標 cell が変わった時のみ再計算し、それ以外は前回結果(None を含む)を返す。
-    """
     cell = tuple(int(value) for value in _support_cell_from_point(desired_target))
     key = (cell, int(self.world.revision))
     if actor.target_support_cache_key == key:
@@ -1337,12 +1201,6 @@ class AiPlayerManager:
     return actor.target_support_cache_value
 
   def _revalidate_plan_after_world_change(self, actor: _AiPlayerRuntime) -> None:
-    """
-    world revision の変化後に、cache 済み plan の残り step が現在の world でも成立するかを検査し、不成立なら即時再計画へ移行させる。
-    検査対象は現在 index 以降の step であり、placement を伴わない step は standable 性、placement step は target cell が「既に block で埋まり standable」か「空のまま headroom が確保されている」かを確認する。
-    block の設置・破壊・フェンスゲートの開閉は state 変化として standable 性又は headroom を変えるため、この検査が経路閉塞を検出する。
-    不成立を検出した場合は blocked edge を記録せずに plan と pending 要求を破棄し、replan cooldown を 0 として次の step で全 map snapshot による再計画を要求させる。
-    """
     if len(actor.nav_plan_steps) <= 0:
       return
     start_index = max(0, int(actor.nav_plan_index))
@@ -1658,12 +1516,6 @@ class AiPlayerManager:
     return target
 
   def _placement_ray_clear(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], face: int) -> bool:
-    """
-    AI の eye position から placement の anchor face 上の照準点までの視線 ray が、空気以外の block に遮られていないかを判定する。
-    照準点は _face_hit_point() が返す face 中央であり、ray は picking 実装(block model の pick 形状を含む DDA)で評価する。
-    ray が何にも当たらない場合と、最初の hit が anchor cell 自身又は照準点距離以遠の場合は可視として真を返す。
-    途中に別の block model 又は collision 形状が存在する場合は偽を返し、呼び出し側は placement を中止する。これにより視界の先が block で覆われた状態での貫通設置を禁止する。
-    """
     target = _face_hit_point(tuple(int(value) for value in anchor_cell), int(face))
     eye = actor.player.eye_pos()
     delta = target - eye
@@ -1932,10 +1784,6 @@ class AiPlayerManager:
     return AiLocalAttackResult(success=True, target_position=self._damage_sound_position(actor.player))
 
   def _fence_gate_operable(self, support_cell: tuple[int, int, int]) -> bool:
-    """
-    actor の足元 cell の body 高さ 4 近傍に操作可能なフェンスゲートが存在するかを判定する。
-    支持 y+1 の前後左右 cell の state 文字列に "fence_gate" を含む block があれば操作可能とみなす。これは action mask が toggle_fence_gate を許可する前提値であり、フェンスゲートを通行物としても遮断物としても扱うための観測標本である。該当が無ければ偽を返す。
-    """
     x, y, z = (int(support_cell[0]), int(support_cell[1]), int(support_cell[2]))
     for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
       state = self._state_at(int(x) + int(dx), int(y) + 1, int(z) + int(dz))
@@ -1944,10 +1792,6 @@ class AiPlayerManager:
     return False
 
   def _build_observation(self, actor: _AiPlayerRuntime, *, target_player: PlayerEntity | None, allow_pvp: bool) -> AiObservation:
-    """
-    live actor 状態から learning 用 AiObservation を構築する。
-    周辺標本は _ManagerNeighborhoodProbe を介して manager の形状規則述語から導くため、半 block・階段・フェンス・フェンスゲート・壁を full block 仮定で潰さない。player 情報は視認できる場合のみ位置・速度・体力・距離を与え、視認できない場合はすべて None として透視的利用を防ぐ。攻撃可否は視認・射程・cooldown から、route 状態は mode と nav_path_failed から、低体力と脅威圏は体力割合と射程内滞留から導く。返値は JSON 直列化可能であり、action mask と policy の入力として用いる。
-    """
     support = self._current_support_cell(actor)
     if support is None:
       support = _support_cell_beneath(actor.player)
@@ -2032,10 +1876,6 @@ class AiPlayerManager:
 
   @staticmethod
   def _control_to_action_id(control: PlayerStepInput) -> str:
-    """
-    deterministic AI が生成した制御入力を、記録用の代表 action id へ写像する。
-    水平移動成分 move_f と move_s を閾値 0.3 で前後左右と斜めへ分類し、前進かつ sprint なら sprint、移動が実質 0 で jump 入力があれば jump、いずれも無ければ no_op を返す。本写像は demonstration 記録における deterministic 決定の行動ラベル付けに用い、実行そのものは変更しない。
-    """
     move_f = float(control.move_f)
     move_s = float(control.move_s)
     if abs(move_f) < 0.3 and abs(move_s) < 0.3:
@@ -2063,16 +1903,6 @@ class AiPlayerManager:
     return "no_op"
 
   def _apply_learned_action(self, actor: _AiPlayerRuntime, control: PlayerStepInput, action_id: str) -> PlayerStepInput:
-    """
-    Use Learned Policy 時に、選択された micro action を制御入力(PlayerStepInput)の移動・跳躍成分へ写像する。
-    前進・斜め前進・sprint・後退・斜め後退・横移動・横移動攻撃・後退攻撃・停止は水平移動成分を、
-    jump・parkour_jump・tower_step・escape_stack_block は跳躍成分を設定する。
-    配置・破壊・フェンスゲート・経路再計画など世界状態を変える行動は本写像では制御を変えず、
-    _execute_policy_action が advance 後に既存 helper 経由で実行する。
-    yaw/pitch は既存制御の対象追従値を保持し、後退・横移動では sprint を解除する。
-    調整後は必ず _apply_edge_safety を通すため、policy が選んだ移動が奈落へ踏み出すことはない。
-    本写像は Free Roam / PVP(wander)に限定する。
-    """
     aid = str(action_id)
     strafe_sign = 1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0
     move_f = float(control.move_f)
@@ -2151,13 +1981,6 @@ class AiPlayerManager:
     return guarded_control
 
   def _policy_place_forward(self, actor: _AiPlayerRuntime) -> bool:
-    """
-    AI の正面足元方向へ支持 block を 1 個配置する。
-    facing から水平 step を求め、現在支持 cell を anchor として _place_adjacent_block で配置する。
-    bridge_step・place_block・defensive_block の実行に共用し、橋の足場兼前方遮蔽として働く。
-    配置可否(anchor 実在・target 空き・LOS・cooldown)は helper が検証し、成立時のみ world state を変える。
-    配置できた場合に真を返す。
-    """
     if actor.held_item_id is None or float(actor.place_cooldown_s) > 1e-6:
       return False
     support_cell = self._current_support_cell(actor)
@@ -2169,13 +1992,6 @@ class AiPlayerManager:
     return bool(self._place_adjacent_block(actor, anchor_cell=tuple(int(value) for value in support_cell), step_x=int(step_x), step_z=int(step_z)))
 
   def _policy_break_forward(self, actor: _AiPlayerRuntime) -> bool:
-    """
-    AI の視線方向にある block を破壊する。
-    interact cooldown 経過時に限り、eye 位置から視線方向へ reach 3.0 の picking で当たった block を interaction.break_block で破壊する。
-    破壊対象は前方 body 高さの障害物であり、足元支持 cell は視線が下を向かない限り対象にならない。
-    さらに escape_break / break は observation の visible_target_blocks(前方 body block)が存在する時だけ mask が許可するため、足場破壊は選ばれない。
-    破壊できた場合に真を返し、interact cooldown を設定する。
-    """
     if float(actor.interact_cooldown_s) > 1e-6:
       return False
     forward = actor.player.view_forward()
@@ -2187,12 +2003,6 @@ class AiPlayerManager:
     return True
 
   def _policy_toggle_fence_gate(self, actor: _AiPlayerRuntime) -> bool:
-    """
-    AI の正面にあるフェンスゲートを開閉する。
-    interact cooldown 経過時に限り、reach 2.2 の picking で当たった block を interact_block_at_hit で操作する。
-    フェンスゲートは通行物としても遮断物としても扱われ、開閉により通行可否が変わる。
-    操作が成立した場合に真を返し、interact cooldown を設定する。
-    """
     if float(actor.interact_cooldown_s) > 1e-6:
       return False
     forward = actor.player.view_forward()
@@ -2207,13 +2017,6 @@ class AiPlayerManager:
     return True
 
   def _execute_policy_action(self, actor: _AiPlayerRuntime, action_id: str, *, support_before: tuple[int, int, int] | None) -> bool:
-    """
-    Use Learned Policy が選んだ世界変更 action を advance 後に既存 helper 経由で実行する。
-    配置(bridge_step・place_block・defensive_block)は正面への block 配置、tower_step・escape_stack_block は跳躍後の足元への block 配置(高さ獲得)、
-    break_block・escape_break_block は正面 block の破壊、toggle_fence_gate はフェンスゲート開閉、replan_route は route 計画の破棄による再計画要求へ写像する。
-    いずれも対応 helper が安全条件(配置可否・cooldown・LOS・支持)を検証するため、unsafe な配置・破壊・足場除去は実行されない。
-    世界変更を行った場合に真を返す。move/jump 系や attack はここでは扱わず(_apply_learned_action と既存 attack 経路が担う)偽を返す。
-    """
     aid = str(action_id)
     if aid in ("bridge_step", "place_block", "defensive_block"):
       return bool(self._policy_place_forward(actor))
@@ -2249,14 +2052,6 @@ class AiPlayerManager:
     control: PlayerStepInput,
     world_action: bool,
   ) -> None:
-    """
-    一 actor の意思決定内容を、環境変数で有効化された時のみ一時 debug log として出力する。
-    出力には actor id、mode、選択 policy id と使用可否、observation の feature key、
-    許可・禁止 action 数、deterministic 上位 5 行動、policy 補正後上位 5 行動、選択行動、
-    行動源、最終制御の移動・跳躍成分、世界変更実行有無を含める。
-    これにより Off / Observe Only / Use Learned Policy の各 mode で、policy が決定をどう変えたか、
-    最終的に何が実行されたかを 1 行で確認できる。本 log は既定で無効であり、通常 gameplay を汚さない。
-    """
     features = ",".join(encode_features(observation))
     forbidden = ",".join(sorted(mask.forbidden.keys()))
     det_top = ",".join(f"{action}:{score:.2f}" for action, score in deterministic_ranked[:5])

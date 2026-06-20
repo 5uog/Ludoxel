@@ -35,10 +35,6 @@ def _heart_strip_size(max_health: float) -> QSize:
 
 
 def _paint_pixel_heart(painter: QPainter, *, x: int, y: int, fill_ratio: float) -> None:
-  """
-  一個の pixel heart を外形色で敷いた上に、fill_ratio に応じた横方向の部分塗りを重ねて描画する。
-  ここでは常に基準解像度で描画し、距離による縮尺は完成した tag block 全体へ後段で適用する。
-  """
   scale = int(_HEART_PIXEL_SCALE)
   fill_limit_x = int(round(float(x) + float(len(_HEART_MASK[0]) * scale) * float(fill_ratio)))
   for row_index, row in enumerate(_HEART_MASK):
@@ -66,16 +62,6 @@ def _paint_heart_strip(painter: QPainter, *, x: int, y: int, health: float, max_
 
 
 class _AiStatusTagWidget(QWidget):
-  """
-  AI 一体分の nametag と health indicator を一枚の基準解像度 pixmap へ合成して表示する。
-  距離スケールは完成した pixmap の表示 geometry と描画先矩形へ適用するため、
-  文字だけでなく背景、padding、heart、間隔を含む block 全体が同じ比率で縮小される。
-  透過は QGraphicsOpacityEffect を用いず paintEvent 内の painter opacity として適用し、
-  effect 経由の offscreen 再描画を毎フレーム発生させない。place() は geometry、opacity、
-  内容のいずれも変化しない frame では setGeometry、update、raise を呼ばないため、
-  可視 tag が多数ある場合でも frame ごとの compositing 負荷を最小化する。
-  """
-
   def __init__(self, parent: QWidget) -> None:
     super().__init__(parent)
     self._source_label = QLabel()
@@ -155,13 +141,6 @@ class _AiStatusTagWidget(QWidget):
     self._name_bottom_px = int(name_y + name_h) if name_h > 0 else int(base_h)
 
   def place(self, *, center_x: float, anchor_bottom_y: float, scale: float, opacity: float, viewport_w: int, viewport_h: int) -> None:
-    """
-    一体の AI tag を screen 空間へ配置する。geometry、opacity、合成 pixmap のいずれも、
-    前回 placement から変化しない frame では Qt への再描画要求を出さない。
-    raise は hidden から visible へ遷移した時にだけ行い、毎 frame の z-order 再評価と sibling 再描画を避ける。
-    geometry は前回値と異なる時だけ setGeometry し、再描画(update)は表示開始、geometry 変化、opacity 変化、
-    内容更新のいずれかが生じた時だけ要求する。これにより停止中の可視 tag は frame ごとに実質ゼロの compositing コストとなる。
-    """
     self._display_scale = max(0.05, float(scale))
     display_w = max(1, int(round(float(self._base_pixmap.width()) * float(self._display_scale))))
     display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._display_scale))))
@@ -203,11 +182,6 @@ class _AiStatusTagWidget(QWidget):
 
 
 class AiStatusTagPool:
-  """
-  viewport 上へ投影される AI nametag と health indicator の composite widget を actor_id 単位で管理する pool を表す。
-  呼び出し側は frame ごとに begin_frame()、可視 actor ごとに show_tag()、最後に end_frame() を呼ぶ。
-  """
-
   def __init__(self, parent: QWidget) -> None:
     self._parent = parent
     self._entries: dict[str, _AiStatusTagWidget] = {}
@@ -217,9 +191,6 @@ class AiStatusTagPool:
     self._seen_ids = set()
 
   def show_tag(self, *, actor_id: str, name: str, health: float, max_health: float, indicator: str, center_x: float, anchor_bottom_y: float, opacity: float, scale: float = 1.0) -> None:
-    """
-    一体の AI tag を配置する。scale は camera から AI までの距離に基づく透視縮尺であり、合成済み block 全体へ適用される。
-    """
     key = str(actor_id)
     self._seen_ids.add(key)
     entry = self._entries.get(key)

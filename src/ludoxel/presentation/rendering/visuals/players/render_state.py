@@ -7,12 +7,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FirstPersonRenderState:
-  """
-  first-person の腕、held block、special item renderer が消費する不変 parameter record である。
-  visible/target identifier と時間的 animation channel を一体で保持し、
-  frame 内の view-model transform を一つの sample から再構成できるようにする。
-  """
-
   visible_item_id: str | None
   target_item_id: str | None
   visible_block_id: str | None
@@ -37,12 +31,6 @@ class FirstPersonRenderState:
 
 @dataclass(frozen=True)
 class PlayerRenderState:
-  """
-  third-person player model synthesis の cache key となる不変入力 record である。
-  base pose、locomotion phase、crouch、perspective flag、first-person extension から、可視 body と shadow pose が決定される。
-  skin_texture_key は描画時に用いる skin texture を選択するための解決済み参照であり、None は player skin texture を、文字列は当該 key で renderer に登録済みの actor 固有 skin texture を指す。この field は pose cache key の一部であるため、同一 pose でも異なる skin を要求する actor が別 cache entry として扱われる。
-  """
-
   base_x: float
   base_y: float
   base_z: float

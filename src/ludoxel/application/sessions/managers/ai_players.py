@@ -37,12 +37,6 @@ def update_ai_player_settings_for_session(session, *, actor_id: str, settings: A
 
 
 def ai_player_name_error_for_session(session, *, actor_id: str | None, name: object) -> str | None:
-  """
-  AI Settings overlay が保存前 validation に用いる名前検査を session 境界経由で提供する。
-  形式規則と生存 AI 間の重複規則は AiPlayerManager.ai_name_error() が判定し、
-  actor_id には rename 対象の actor を渡すことで自己名との衝突を除外する。
-  有効な名前では None、無効な名前では UI 表示可能な英文 error message を返す。
-  """
   return session.ai_players.ai_name_error(actor_id=(None if actor_id is None else str(actor_id)), name=name)
 
 

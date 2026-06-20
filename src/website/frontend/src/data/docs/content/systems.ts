@@ -1276,7 +1276,7 @@ else:
     group: 'AI Decision Records',
     title: 'Understanding AI Learning Records',
     description:
-      'Documents how demonstration records are formed and consumed: the record structure and serialization, the action catalog and its categories and safety requirements, the observation feature encoding, the reward weights and transition, the buffered recorder, and the coordinator that records player and AI demonstrations through a layer-crossing sink.',
+      'Documents how demonstration records are formed and consumed: record structure, observation feature encoding, reward transition, buffered recording, learning-mode activation, and the application-layer sink boundary that keeps file paths outside simulation.',
     sections: [
       {
         id: 'ai-learning-records-record',
@@ -1284,7 +1284,7 @@ else:
         content: [
           {
             kind: 'paragraph',
-            text: '`DemonstrationRecord` in `src/ludoxel/simulation/actors/ai_players/learning/dataset.py` captures game state and action, not screen pixels. It is a frozen dataclass holding a record kind drawn from `RECORD_KINDS`, a tick, an actor identifier, a serializable observation, an action identifier, a tri-valued success flag, an optional reward, and a kind-specific detail mapping. `encode_record_line` and `decode_record_line` serialise one record per line as JSON with sorted keys, and a corrupt or truncated line decodes to nothing rather than raising. `DatasetSummary` records the count, byte size, and per-kind tally, and `DatasetSink` is the write protocol the application layer implements.',
+            text: '`DemonstrationRecord` in `src/ludoxel/simulation/actors/ai_players/learning/dataset.py` captures game state and action, not screen pixels. It is a frozen dataclass holding a record kind drawn from `RECORD_KINDS`, a tick, an actor identifier, a serializable observation, an action identifier, a tri-valued success flag, an optional reward, and a kind-specific detail mapping. `encode_record_line` and `decode_record_line` serialize one record per line as JSON with sorted keys, and a corrupt or truncated line decodes to nothing rather than raising. `DatasetSummary` records count, byte size, and per-kind tally, and `DatasetSink` is the write protocol implemented outside the simulation layer.',
           },
           {
             kind: 'code',
@@ -1301,10 +1301,6 @@ class DemonstrationRecord:
   reward: float | None = None
   detail: dict[str, Any] = field(default_factory=dict)`,
           },
-          {
-            kind: 'paragraph',
-            text: 'The action identifier draws from the catalog in `src/ludoxel/simulation/actors/ai_players/learning/actions.py`, a fixed set of `AiAction` definitions spanning the movement, look, combat, placement, breaking, route, escape, parkour, trap, fence-gate, and no-op categories. Each action carries a skill category, an expected duration, a safety requirement, and movement or look parameters. `ACTION_CATALOG`, `ACTION_IDS`, `get_action`, `actions_in_category`, and `skill_category_ids` expose the catalog, which is the shared vocabulary used by records, policies, the action mask, and the deterministic baseline.',
-          },
         ],
       },
       {
@@ -1313,11 +1309,11 @@ class DemonstrationRecord:
         content: [
           {
             kind: 'paragraph',
-            text: 'Records embed a serialized observation, and learning conditions on a derived feature key set rather than raw values. `encode_features` in `src/ludoxel/simulation/actors/ai_players/learning/feature_encoder.py` maps an observation to a deduplicated tuple of stable keys: low and critical health thresholds; player distance bands and visibility or last-known-only; combat cooldown readiness and range; route availability, blockage, or loss; forward hazards such as a void or deep drop, terrain gaps, bridge and jump needs, tower need, enclosure, and a closed fence gate; placement and breaking opportunities; and recent-stuck signals. The encoder is versioned by `FEATURE_ENCODER_VERSION`, and `is_feature_key` validates a key, so records and policies are recognised as compatible only at the same encoder version.',
+            text: 'Records embed a serialized observation, and learning conditions on a derived feature key set rather than raw rendered values. `encode_features` in `src/ludoxel/simulation/actors/ai_players/learning/feature_encoder.py` maps observation state to stable keys for health thresholds, player distance and visibility, combat readiness, route state, hazards, terrain gaps, placement and breaking opportunities, and stuck signals. The encoder is versioned by `FEATURE_ENCODER_VERSION`, so policy compatibility can be checked against the same feature vocabulary used to generate records.',
           },
           {
             kind: 'paragraph',
-            text: 'The reward is computed from a `RewardTransition` in `src/ludoxel/simulation/actors/ai_players/learning/rewards.py`, a per-step summary of survival, progress, damage dealt and taken, falling, death, and void death. `compute_step_reward` weights these terms with `RewardWeights`, adding a survival increment, scaling progress and damage, penalising a fall, and adding a large death penalty with an additional term that makes a void death worse than an ordinary death. These values derive from domain state and the step report, never from rendered output.',
+            text: 'Rewards are computed from `RewardTransition`, not from visual presentation. `compute_step_reward` weights survival, progress, damage, falling, death, and void death. The resulting reward is a state-transition measurement attached to a record; it is not a renderer score and not a UI animation metric.',
           },
         ],
       },
@@ -1327,7 +1323,7 @@ class DemonstrationRecord:
         content: [
           {
             kind: 'paragraph',
-            text: '`DemonstrationRecorder` in `src/ludoxel/simulation/actors/ai_players/learning/recorder.py` accumulates records in a bounded buffer. It records only when enabled and only for the captured kinds, so recording cannot perturb AI behaviour; when disabled the record calls have no effect. `captures` lets a caller skip an expensive observation build when a kind is not recorded, the buffer is capped and drops the oldest record when full, `should_flush` signals the flush threshold, and `flush` and `shutdown_flush` write the buffer to a sink and clear it only on success so no record is lost or duplicated. The recorder belongs to the simulation layer and knows no file path.',
+            text: '`DemonstrationRecorder` accumulates records in a bounded buffer and records only when enabled for the requested kind. `captures` lets a caller avoid constructing an observation for an unrecorded kind. The buffer drops the oldest row when full, `should_flush` exposes the flush threshold, and `flush` clears the buffer only after the sink reports a positive write. The simulation component therefore owns record formation and buffering, but not the storage path.',
           },
           {
             kind: 'code',
@@ -1339,19 +1335,35 @@ class DemonstrationRecord:
         ],
       },
       {
-        id: 'ai-learning-records-coordinator',
-        title: 'The Coordinator and the Sink Boundary',
+        id: 'ai-learning-records-mode-and-sink',
+        title: 'Learning Mode and Sink Boundary',
         content: [
           {
             kind: 'paragraph',
-            text: '`LearningCoordinator` in `src/ludoxel/simulation/actors/ai_players/learning/coordinator.py` binds recording, decision, and flushing, and exposes the three runtime modes: off, observe-only, and use-learned-policy. `configure` enables the recorder only in observe-only mode and stores the candidate policy. `active`, `recording`, and `policy_enabled` report which work the mode requires. `record_decision` computes the reward and success, encodes the feature keys, summarises the action mask, and records an AI decision; `record_player_demonstration` records a player input as a positive example. `flush` writes the buffer to a `DatasetSink`, a protocol the application layer implements, so the simulation never holds the save path.',
+            text: '`LearningCoordinator` exposes only three runtime modes: `off`, `observe_only`, and `use_learned_policy`. The persisted settings layer can store train modes, but `is_active_learning_mode` excludes those train modes from ordinary play. Training is handled by the overlay controller and training services; live session stepping receives only a coordinator configured for recording, policy use, or inactivity.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/coordinator.py',
+            code: `def configure(self, *, mode: str, captured_kinds: Iterable[str], policy: Policy | None) -> None:
+  self._mode = str(mode)
+  self._policy = policy if isinstance(policy, Policy) else None
+  self._recorder.configure(enabled=(str(mode) == LEARNING_RUNTIME_OBSERVE_ONLY), captured_kinds=tuple(captured_kinds))
+
+def policy_enabled(self) -> bool:
+  return self._mode == LEARNING_RUNTIME_USE_LEARNED_POLICY and isinstance(self._policy, Policy) and bool(self._policy.is_usable())`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The sink boundary is the architectural separation created by `DatasetSink`. `LearningCoordinator.flush` writes to a sink supplied by the application layer. `AiLearningStore.dataset_writer` produces that sink with a concrete path under the runtime data root. This keeps simulation independent of repository paths, user-profile directories, JSON Lines filenames, legacy dataset layout, and filesystem mutation policy.',
           },
           {
             kind: 'note',
             note: {
               type: 'note',
               content:
-                'A demonstration record describes one observed state, the chosen action, and its outcome. The on-disk location, file format, and retention of these records are owned by the Data category; this article documents how the record is formed and consumed inside the runtime, not where it is stored.',
+                'This Systems article explains how records are formed, gated, and flushed. The Data category owns the JSON Lines path, export/import behavior, corrupt-line accounting, and retention consequences.',
             },
           },
         ],

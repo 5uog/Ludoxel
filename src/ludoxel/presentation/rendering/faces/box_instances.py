@@ -11,10 +11,6 @@ from ludoxel.simulation.blocks.models.common import LocalBox
 
 
 def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray) -> np.ndarray:
-  """
-  各 local box `j` について `M_j = M_parent T(c_j) S(s_j)` を構成し、4x4 行列を row-major の 16 成分として積み上げる。
-  shadow caster など、UV を必要としない cuboid instance payload はこの `n x 16` 配列を入力契約とする。
-  """
   if not boxes:
     return np.zeros((0, 16), dtype=np.float32)
 

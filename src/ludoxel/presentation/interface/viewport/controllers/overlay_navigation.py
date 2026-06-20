@@ -105,11 +105,6 @@ def open_settings_from_pause(viewport: "RendererViewportWidget") -> None:
 
 
 def open_settings_preview(viewport: "RendererViewportWidget") -> None:
-  """
-  Debug 用途の Settings Preview dialog を、本体画面へ埋め込んだ Settings overlay の Preview button から明示的に開く。
-  Preview dialog は埋め込み overlay とは別の detached dialog として生成し、値変更 signal を本体と同一の controller 経路へ束ねるため、dialog 内の各設定変更は背後のゲーム画面へ即時反映される。
-  生成は Preview button 押下時に限り、既に開いている場合は二重生成しない。開く際は埋め込み Settings panel を一時的に隠して背後のゲーム画面を見せ、player は settings open 中の pause 状態を維持したまま、設定を開く前の場面を基準に preview する。
-  """
   from ludoxel.presentation.interface.settings.overlay import SettingsOverlay
 
   if getattr(viewport, "_settings_preview", None) is not None:
@@ -134,10 +129,6 @@ def open_settings_preview(viewport: "RendererViewportWidget") -> None:
 
 
 def close_settings_preview(viewport: "RendererViewportWidget") -> None:
-  """
-  Settings Preview dialog を閉じ、本体画面へ埋め込んだ Settings overlay の通常表示へ戻す。
-  二重呼び出しに備えて先に参照を切り、dialog を破棄してから、Settings overlay がなお開いていれば埋め込み panel を再表示する。preview 中に適用した値は既にゲーム画面と runtime へ反映済みであるため、埋め込み overlay の control 表示を再同期して整合させる。
-  """
   preview = getattr(viewport, "_settings_preview", None)
   if preview is None:
     return

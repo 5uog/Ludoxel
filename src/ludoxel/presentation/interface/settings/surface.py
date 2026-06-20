@@ -6,10 +6,6 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 
 def add_page_header(layout: QVBoxLayout, parent: QWidget, *, title: str, subtitle: str) -> QWidget:
-  """
-  settings page の意味単位を示す title と subtitle を共通 header widget として追加する。
-  My World と Othello の overlay/window 表示が同じ object name、余白、focus 非依存の見出し構造を共有する。
-  """
   header = QWidget(parent)
   header.setObjectName("settingsPageHeader")
   header_layout = QVBoxLayout(header)
@@ -27,10 +23,6 @@ def add_page_header(layout: QVBoxLayout, parent: QWidget, *, title: str, subtitl
 
 
 def add_settings_card(layout: QVBoxLayout, parent: QWidget, *, title: str, description: str = "") -> tuple[QFrame, QWidget, QVBoxLayout]:
-  """
-  一つの設定 section を title、任意 description、body からなる block-style card として追加する。
-  返される body layout は setting row と action button の配置先であり、保存 semantics や signal 接続を所有しない。
-  """
   card = QFrame(parent)
   card.setObjectName("settingsCard")
   card_layout = QVBoxLayout(card)
@@ -55,10 +47,6 @@ def add_settings_card(layout: QVBoxLayout, parent: QWidget, *, title: str, descr
 
 
 def add_setting_row(layout: QVBoxLayout, parent: QWidget, *, label: str, description: str, control: QWidget, label_widget: QLabel | None = None) -> QWidget:
-  """
-  左側の label/description と右側の control を二列の setting row に配置する。
-  control の型に依存せず、combo、spin、button、status label が同じ基準線と stylesheet hook を共有する。
-  """
   row = QWidget(parent)
   row.setObjectName("settingsRow")
   row_layout = QHBoxLayout(row)
