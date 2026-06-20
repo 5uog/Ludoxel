@@ -12,6 +12,10 @@ export function getSectionKey(entry: SearchIndexEntry): string {
   return entry.section.trim().toLowerCase();
 }
 
+export function getSearchRowDomId(row: SearchRow): string {
+  return `search-result-option-${row.index}`;
+}
+
 export function filterSearchRows(entries: SearchIndexEntry[], normalizedQuery: string): SearchRow[] {
   if (normalizedQuery.length < 2) {
     return [];
@@ -38,4 +42,8 @@ export function groupSearchRows(rows: SearchRow[]): GroupedSearchRows {
     groups[sectionKey] = group;
     return groups;
   }, {});
+}
+
+export function flattenGroupedSearchRows(groups: GroupedSearchRows): SearchRow[] {
+  return Object.values(groups).flat();
 }

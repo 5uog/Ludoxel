@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { searchIndex, type SearchIndexEntry } from '../../../data/docs/search';
 import { SEARCH_DIALOG_ANIMATION_MS } from './searchAnimation';
 import { type SearchCommandState, type SearchRow } from './searchCommand.types';
-import { filterSearchRows, groupSearchRows } from './searchRows';
+import { filterSearchRows, flattenGroupedSearchRows, groupSearchRows } from './searchRows';
 import { normalizeSearchText } from './searchSemantics';
 
 export function useSearchCommand(enableShortcut: boolean, entries?: SearchIndexEntry[]): SearchCommandState {
@@ -25,6 +25,7 @@ export function useSearchCommand(enableShortcut: boolean, entries?: SearchIndexE
 
   const filteredRows = useMemo<SearchRow[]>(() => filterSearchRows(activeEntries, normalizedQuery), [activeEntries, normalizedQuery]);
   const groupedRows = useMemo(() => groupSearchRows(filteredRows), [filteredRows]);
+  const displayRows = useMemo<SearchRow[]>(() => flattenGroupedSearchRows(groupedRows), [groupedRows]);
 
   const clearCloseTimer = useCallback((): void => {
     if (closeTimerRef.current === null) {
@@ -101,10 +102,10 @@ export function useSearchCommand(enableShortcut: boolean, entries?: SearchIndexE
   }, [normalizedQuery]);
 
   useEffect(() => {
-    if (selectedIndex >= filteredRows.length) {
-      setSelectedIndex(Math.max(0, filteredRows.length - 1));
+    if (selectedIndex >= displayRows.length) {
+      setSelectedIndex(Math.max(0, displayRows.length - 1));
     }
-  }, [filteredRows.length, selectedIndex]);
+  }, [displayRows.length, selectedIndex]);
 
   const selectEntry = useCallback(
     (entry: SearchIndexEntry): void => {
@@ -125,25 +126,26 @@ export function useSearchCommand(enableShortcut: boolean, entries?: SearchIndexE
       return;
     }
 
-    if (event.key === 'ArrowDown' && filteredRows.length > 0) {
+    if (event.key === 'ArrowDown' && displayRows.length > 0) {
       event.preventDefault();
-      setSelectedIndex((currentIndex) => (currentIndex + 1) % filteredRows.length);
+      setSelectedIndex((currentIndex) => (currentIndex + 1) % displayRows.length);
       return;
     }
 
-    if (event.key === 'ArrowUp' && filteredRows.length > 0) {
+    if (event.key === 'ArrowUp' && displayRows.length > 0) {
       event.preventDefault();
-      setSelectedIndex((currentIndex) => (currentIndex - 1 + filteredRows.length) % filteredRows.length);
+      setSelectedIndex((currentIndex) => (currentIndex - 1 + displayRows.length) % displayRows.length);
       return;
     }
 
-    if (event.key === 'Enter' && filteredRows[selectedIndex]) {
+    if (event.key === 'Enter' && displayRows[selectedIndex]) {
       event.preventDefault();
-      selectEntry(filteredRows[selectedIndex].entry);
+      selectEntry(displayRows[selectedIndex].entry);
     }
   };
 
   return {
+    displayRows,
     filteredRows,
     groupedRows,
     inputRef,

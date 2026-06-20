@@ -35,6 +35,7 @@ export type SearchRow = {
 export type GroupedSearchRows = Record<string, SearchRow[]>;
 
 export type SearchCommandState = {
+  displayRows: SearchRow[];
   filteredRows: SearchRow[];
   groupedRows: GroupedSearchRows;
   inputRef: RefObject<HTMLInputElement | null>;

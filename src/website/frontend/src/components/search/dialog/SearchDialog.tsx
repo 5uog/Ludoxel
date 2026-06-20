@@ -6,12 +6,16 @@ import { Search } from 'lucide-react';
 
 import { getSearchDialogPanelClassName } from '../logic/searchClassNames';
 import { type SearchCommandState, type SearchRow } from '../logic/searchCommand.types';
+import { getSearchRowDomId } from '../logic/searchRows';
 import SearchResultGroup from '../results/SearchResultGroup';
 import SearchDialogOverlay from './SearchDialogOverlay';
+
+const SEARCH_RESULTS_LISTBOX_ID = 'search-results-listbox';
 
 type SearchDialogProps = Pick<
   SearchCommandState,
   | 'closeSearch'
+  | 'displayRows'
   | 'filteredRows'
   | 'groupedRows'
   | 'handleInputChange'
@@ -27,6 +31,7 @@ type SearchDialogProps = Pick<
 
 export default function SearchDialog({
   closeSearch,
+  displayRows,
   filteredRows,
   groupedRows,
   handleInputChange,
@@ -39,6 +44,9 @@ export default function SearchDialog({
   selectedIndex,
   setSelectedIndex,
 }: SearchDialogProps): React.JSX.Element {
+  const activeRow = displayRows[selectedIndex] ?? null;
+  const activeDescendantId = activeRow === null ? undefined : getSearchRowDomId(activeRow);
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 md:pt-32" role="dialog" aria-modal="true" aria-label="Search documentation">
       <SearchDialogOverlay isClosing={isClosing} onClose={closeSearch} />
@@ -50,8 +58,13 @@ export default function SearchDialog({
 
             <input
               ref={inputRef}
+              aria-activedescendant={activeDescendantId}
+              aria-autocomplete="list"
+              aria-controls={SEARCH_RESULTS_LISTBOX_ID}
+              aria-expanded="true"
               autoFocus
               className="flex h-14 w-full bg-transparent py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              role="combobox"
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
               placeholder="Search documentation..."
@@ -61,7 +74,7 @@ export default function SearchDialog({
             <kbd className="ml-2 hidden h-6 items-center justify-center rounded bg-secondary px-2 text-xs font-medium text-muted-foreground sm:flex">ESC</kbd>
           </div>
 
-          <div className="max-h-100 overflow-y-auto p-2 scrollbar-none">
+          <div id={SEARCH_RESULTS_LISTBOX_ID} className="max-h-100 overflow-y-auto p-2 scrollbar-none" role="listbox" aria-label="Search results">
             {normalizedQuery.length >= 2 && filteredRows.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm text-muted-foreground">No results found for &quot;{normalizedQuery}&quot;</p>
@@ -75,15 +88,7 @@ export default function SearchDialog({
             ) : null}
 
             {(Object.entries(groupedRows) as [string, SearchRow[]][]).map(([sectionKey, rows]) => (
-              <SearchResultGroup
-                filteredRows={filteredRows}
-                key={sectionKey}
-                rows={rows}
-                sectionKey={sectionKey}
-                selectedIndex={selectedIndex}
-                onMouseEnter={setSelectedIndex}
-                onSelect={selectEntry}
-              />
+              <SearchResultGroup displayRows={displayRows} key={sectionKey} rows={rows} sectionKey={sectionKey} selectedIndex={selectedIndex} onMouseEnter={setSelectedIndex} onSelect={selectEntry} />
             ))}
           </div>
 
