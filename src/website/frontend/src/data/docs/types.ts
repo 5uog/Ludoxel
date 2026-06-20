@@ -114,7 +114,20 @@ export type DocsVideoMediaBlock = {
   poster?: string;
 };
 
-export type DocsMediaBlock = DocsImageMediaBlock | DocsVideoMediaBlock;
+export type DocsYouTubeMediaBlock = {
+  kind: 'youtube';
+  videoId: string;
+  title: string;
+  caption?: string;
+  controls?: boolean;
+  loop?: boolean;
+  autoPlay?: boolean;
+  muted?: boolean;
+  playsInline?: boolean;
+  privacyEnhanced?: boolean;
+};
+
+export type DocsMediaBlock = DocsImageMediaBlock | DocsVideoMediaBlock | DocsYouTubeMediaBlock;
 
 export type DocsMathBlock = {
   expression: string;

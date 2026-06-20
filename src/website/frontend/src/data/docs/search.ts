@@ -199,6 +199,10 @@ function readMediaBlock(media: DocsMediaBlock): string {
     return compactText([media.alt, media.caption ?? '', media.src]);
   }
 
+  if (media.kind === 'youtube') {
+    return compactText([media.title, media.videoId, readInlineText(media.caption)]);
+  }
+
   return compactText([media.caption ?? '', media.poster ?? '', ...media.sources.map((source) => compactText([source.type, source.src]))]);
 }
 

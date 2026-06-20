@@ -984,18 +984,15 @@ if idx is not None:
         title: 'Looking Uses Relative Mouse Deltas',
         mediaBlocks: [
           {
-            kind: 'video',
-            sources: [
-              {
-                src: '/assets/videos/looking-around-relative-delta.mp4',
-                type: 'video/mp4',
-              },
-            ],
+            kind: 'youtube',
+            videoId: 'kqt7bfctwzc',
+            title: 'Looking Around Relative Mouse Deltas',
             controls: false,
             loop: true,
             autoPlay: true,
             muted: true,
             playsInline: true,
+            privacyEnhanced: false,
           },
         ],
         body: [

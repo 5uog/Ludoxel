@@ -5,6 +5,7 @@
 import { type DocsMediaBlock as DocsMediaBlockContent } from '../../../data/docs/types';
 import DocsImageBlock from './DocsImageBlock';
 import DocsVideoBlock from './DocsVideoBlock';
+import DocsYouTubeBlock from './DocsYouTubeBlock';
 
 type DocsMediaBlockProps = {
   block: DocsMediaBlockContent;
@@ -17,5 +18,9 @@ export default function DocsMediaBlock({ block, blockIndex, sectionId }: DocsMed
     return <DocsImageBlock block={block} blockIndex={blockIndex} sectionId={sectionId} />;
   }
 
-  return <DocsVideoBlock block={block} blockIndex={blockIndex} sectionId={sectionId} />;
+  if (block.kind === 'video') {
+    return <DocsVideoBlock block={block} blockIndex={blockIndex} sectionId={sectionId} />;
+  }
+
+  return <DocsYouTubeBlock block={block} blockIndex={blockIndex} sectionId={sectionId} />;
 }
