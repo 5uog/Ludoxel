@@ -145,7 +145,171 @@ if self._accum >= step:
         ],
       },
     ],
-    relatedTitles: ['Understanding Render Snapshots', 'Understanding Saved Preferences', 'Switching Play Spaces'],
+    relatedTitles: ['Understanding Application Runtime Assembly', 'Understanding Render Snapshots', 'Understanding Saved Preferences', 'Switching Play Spaces'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Runtime and Render State',
+    group: 'Session Loop',
+    title: 'Understanding Application Runtime Assembly',
+    description:
+      'Traces the application-owned construction of a desktop runtime from bootstrap roots and Othello storage hooks through dual play-space construction, persisted-state rehydration, normalized runtime projection, and the fixed-step and snapshot boundaries that hand work to presentation.',
+    sections: [
+      {
+        id: 'application-runtime-assembly-bootstrap',
+        title: 'Bootstrap Establishes Runtime Roots Before Presentation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/bootstrap/run.py` is the composition root. It resolves the project, resource, and runtime-data roots before importing the desktop window entry point, and it installs the Othello opening-book storage hooks before the presentation shell can create a worker or request a book. The Python 3.14 handoff is deliberately earlier still: in an unfrozen process, a discovered alternate interpreter relaunches the module with the project `src` directory added to `PYTHONPATH`; a frozen application and an already-matching interpreter continue in place. This is process assembly, not a second implementation of a window, renderer, or game rule.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/bootstrap/run.py',
+            code: `def run_app() -> None:
+  project_root = default_project_root(Path(__file__))
+  resource_root = default_resource_root(Path(__file__))
+  data_root = default_runtime_data_root(project_root)
+  _ensure_python_314(project_root)
+
+  from ludoxel.application.persistence.stores.othello_book import install_othello_book_storage_hooks
+  from ludoxel.presentation.interface.windows.main import run_app as _run
+
+  install_othello_book_storage_hooks()
+  _run(project_root=project_root, resource_root=resource_root, data_root=data_root)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The opening-book hook separates a user delta at `state/othello_opening_book.json` from its compiled cache under the runtime cache root. The application writes and integrity-updates the user file, while cache load, save, and removal remain cache operations. A resolved data root therefore locates mutable state; it does not grant any permission over that state or over material that may be imported into it.',
+          },
+        ],
+      },
+      {
+        id: 'application-runtime-assembly-spaces',
+        title: 'One Context Holds Independent Play-Space Sessions',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/sessions/context/builders.py` turns a seed, spawn, world, and block registry into `SessionSettings`, a `PlayerEntity`, and a `SessionManager`. `PlaySpaceContext.create_default` in `src/ludoxel/application/sessions/context/play_space.py` constructs one default block registry and gives that registry to both factories. `src/ludoxel/application/sessions/factories/my_world.py` obtains the My World state from its simulation factory through `MyWorldSessionSeed`; `src/ludoxel/application/sessions/factories/othello.py` instead creates a flat world, lays out the board, and fixes an Othello spawn record. The application layer therefore chooses and retains two stateful sessions; it does not reimplement terrain generation, board legality, player kinematics, or backend rendering.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/sessions/context/play_space.py',
+            code: `@staticmethod
+def create_default(seed: int = 0) -> "PlaySpaceContext":
+  registry = create_default_registry()
+
+  my_world = create_my_world_session(seed=int(seed), block_registry=registry)
+  othello = create_othello_session(seed=int(seed), block_registry=registry)
+
+  return PlaySpaceContext(my_world=my_world, othello=othello, active_space_id=PLAY_SPACE_MY_WORLD)`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              '`session_for` normalizes a requested space identifier and returns either the Othello or My World manager; `set_active_space` changes only that selection. It does not merge players, worlds, AI actors, inventories, or Othello state. `shutdown` delegates to both managers so AI resources are released for the complete context. The user-facing switch procedure is documented under ',
+              {
+                kind: 'link',
+                label: 'play-space switching',
+                href: '/docs/manual/starting-the-application/launch-and-space-selection/switching-play-spaces',
+              },
+              '; this runtime boundary only establishes how the two persistent session objects remain distinct.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'application-runtime-assembly-rehydration',
+        title: 'Rehydration Restores State in a Fixed Order',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`apply_persisted_state_if_present` in `src/ludoxel/application/persistence/schedulers/state.py` first asks `AppStateStore` for the paired player and world envelopes. When state exists, it applies persisted session settings to both managers, projects the saved aggregate into `RuntimePreferences`, restores each player and world, loads each AI-state tuple, and restores collision-related overlap exemptions. The Othello branch additionally ensures its board layout and lifts a restored player that would otherwise be below the board surface. Only after those repairs does the function normalize runtime preferences, select the active space, and push the visual subset into the renderer.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/schedulers/state.py',
+            code: `runtime.normalize()
+sessions.set_active_space(runtime.current_space_id)
+apply_runtime_to_renderer(runtime, renderer)
+return (runtime, othello_game_state)`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'The order is consequential: an active-space label and renderer flags are derived only after their admitting state has been normalized. A missing pair of state files leaves the default runtime intact; a present runtime file that fails integrity verification is withheld by `AppStateStore` rather than decoded. The envelope versions, JSON failure behavior, legacy fallback, and integrity records are the responsibility of ',
+              {
+                kind: 'link',
+                label: 'saved runtime state',
+                href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-saved-preferences',
+              },
+              ', not of the renderer or either simulation space.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'application-runtime-assembly-projection',
+        title: 'Runtime State Is a Projection, Not an Alias for Disk Data',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`AppState` is an immutable aggregate of the current space identifier, persisted settings, inventory, standing Othello settings, My World state, and Othello state. Its two on-disk envelopes split the aggregate: `PlayerStateFile` owns the current space, settings, inventory, and standing Othello settings, while `WorldStateFile` owns both play spaces. `JsonFileStore` serializes each dictionary through a sibling temporary file, flushes and fsyncs it, replaces the target, and removes a remaining temporary path. That write protocol is a durability boundary; it is not a claim that arbitrary edits preserve schema or integrity validity.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`runtime_preferences_from_app_state` deliberately produces mutable runtime state rather than exposing a saved dataclass to the live session. Its inverse, `persisted_settings_from_runtime`, pulls movement values from the active session settings, while `persisted_inventory_from_runtime` copies every hotbar branch. `save_state` serializes both sessions and their AI projections and then delegates to `AppStateStore.save`. The application keeps the file shape, live aggregate, session parameters, and renderer commands separate because they are consumed at different times and with different mutability requirements.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'A cache is not primary state. Removing the Othello opening-book cache does not remove the user opening-book file; deleting or corrupting a primary state envelope changes what the next runtime can restore. Neither classification answers a permission question about data at the resolved path.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'application-runtime-assembly-step-and-snapshot',
+        title: 'The Running Context Emits Bounded Application Values',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`SessionManager` in `src/ludoxel/application/sessions/managers/session.py` keeps a simulation world, player, registry, interaction service, gravity system, AI manager, learning coordinator, and per-session motion and damage state together. Its thin interaction and AI methods delegate into simulation-owned services, recording a player demonstration only after a successful block action or local AI attack. `src/ludoxel/application/sessions/managers/learning.py` owns `AiLearningRuntime`, which separately reads normalized learning settings, resolves a policy only for the learned-policy mode, configures the active session, and flushes buffered records on its two-second cadence or on demand. A setting or file cannot make an unsupported policy format or action path live merely by existing on disk.',
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'At each fixed quantum, the session manager returns `SessionStepResult`; its bounded clocking and damage/audio consequences are covered by the ',
+              {
+                kind: 'link',
+                label: 'fixed-step loop',
+                href: '/docs/systems/runtime-and-render-state/session-loop/understanding-fixed-step-sessions',
+              },
+              '. At paint time, the manager projects mutable player, AI, gravity, and camera state into frozen DTOs. The renderer receives those values, not a mutable `WorldState` or `PlayerEntity`; the exact DTO contract and numerical view effects are documented by ',
+              {
+                kind: 'link',
+                label: 'render snapshots',
+                href: '/docs/systems/runtime-and-render-state/session-loop/understanding-render-snapshots',
+              },
+              '.',
+            ],
+          },
+        ],
+      },
+    ],
+    relatedTitles: [
+      'Understanding Fixed Step Sessions',
+      'Understanding Render Snapshots',
+      'Understanding Saved Preferences',
+      'Reading Saved Preferences',
+      'Reading Saved Othello State',
+      'Switching Play Spaces',
+    ],
   }),
   defineDocsArticle({
     category: 'Systems',

@@ -55,6 +55,28 @@ class InteractionService:
         ],
       },
       {
+        id: 'building-in-my-world-session-delegation',
+        title: 'The Session Boundary Delegates the Action',
+        body: [
+          '`src/ludoxel/application/sessions/managers/interactions.py` does not define the pick ray, placement policy, collision rejection, or world-edit rule. Its functions receive the active session and forward break, pick, direct interaction, placement-from-hit, and ordinary placement to the `InteractionService` already constructed for that session. This gives presentation one application-facing action path without relocating simulation authority into the session manager.',
+          'The distinction is observable in an accepted action. `SessionManager.break_block` and `SessionManager.place_block` record a player demonstration only after the delegated outcome reports success; a rejected interaction leaves that learning side effect absent. The interaction result still comes from the simulation service, while the application layer decides how a session-level caller records and transports that result.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'src/ludoxel/application/sessions/managers/interactions.py',
+            code: `def break_block_for_session(session, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
+  return session.interaction.break_block(reach=float(reach), origin=origin, direction=direction)
+
+def pick_block_for_session(session, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
+  return session.interaction.pick_block(reach=float(reach), origin=origin, direction=direction)
+
+def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None):
+  return session.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)`,
+          },
+        ],
+      },
+      {
         id: 'building-in-my-world-breaking',
         title: 'Breaking Removes the Picked Cell',
         body: [

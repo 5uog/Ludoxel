@@ -350,7 +350,7 @@ class PlayerStateFile:
         content: [
           {
             kind: 'paragraph',
-            text: 'Runtime integrity files are not decorative metadata. `state_manifest.json` and `integrity_key.bin` control whether protected runtime files are accepted. Verification returns true for a missing target file, true when no manifest entries exist, and false when a listed file exists but the key is missing.',
+            text: '`src/ludoxel/application/persistence/integrity/manifest.py` owns the runtime-file verification and manifest-update path. Its `state_manifest.json` and `integrity_key.bin` control whether protected runtime files are accepted: verification returns true for a missing target file, true when no manifest entries exist, and false when a listed file exists but the key is missing.',
           },
           {
             kind: 'code',
@@ -419,7 +419,7 @@ class PlayerStateFile:
         content: [
           {
             kind: 'paragraph',
-            text: 'Saved preferences live inside `player_state.json`. They are not stored as a separate preference-only file. The envelope is `PlayerStateFile`, and the `settings` field is only one member of that envelope beside current play-space id, inventory, and standing Othello settings.',
+            text: '`src/ludoxel/application/persistence/schema/files.py` owns the versioned `PlayerStateFile` envelope for `player_state.json`. Saved preferences are therefore not stored as a separate preference-only file: `settings` is one envelope member beside the current play-space id, inventory, and standing Othello settings.',
           },
           {
             kind: 'code',
@@ -437,6 +437,14 @@ class PlayerStateFile:
             kind: 'paragraph',
             text: 'The schema composition is operationally important. A failure to load `player_state.json` affects more than camera or audio. It can also affect inventory and current space selection because the file envelope groups those records. Data documentation must therefore name the file and field, not just the visible UI preference.',
           },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/schema/app.py` owns `AppState`, the in-memory persistence aggregate that joins the current-space id, settings, inventory, standing Othello settings, My World state, and Othello state. It is intentionally not a universal codec: `PlayerStateFile` and `WorldStateFile` divide that aggregate into separately versioned on-disk envelopes, while the subordinate schema modules retain their own conversion rules.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/schema/inventory.py` owns the persisted hotbar branches rather than treating inventory as an untyped field on `AppState`. Its reader admits the earlier shared hotbar keys, then constructs creative, survival, Othello, and route branches with each branch’s slot normalization and selected-index bounds. A malformed branch falls back through its own default slots and index; it does not replace the rest of the player-state envelope.',
+          },
         ],
       },
       {
@@ -445,7 +453,7 @@ class PlayerStateFile:
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedSettings` is the saved-data admission point for runtime preferences. It imports the specialized preference normalizers rather than duplicating their rules: `AudioPreferences` for category gains, `normalize_cloud_speed_range` and `normalize_cloud_height_settings` for cloud ranges, `KeybindSettings` for portable keyboard bindings, `RuntimePreferences` for default values, and `normalize_shadow_map_quality` for the shadow-specific quality tier.',
+            text: '`src/ludoxel/application/persistence/schema/settings.py` owns `PersistedSettings`, the saved-data admission point for runtime preferences. It imports the specialized preference normalizers rather than duplicating their rules: `AudioPreferences` for category gains, `normalize_cloud_speed_range` and `normalize_cloud_height_settings` for cloud ranges, `KeybindSettings` for portable keyboard bindings, `RuntimePreferences` for default values, and `normalize_shadow_map_quality` for the shadow-specific quality tier.',
           },
           {
             kind: 'code',
@@ -729,6 +737,75 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
             kind: 'paragraph',
             text: '`player_state.json` is also protected by runtime integrity. A manually modified file can fail verification before its JSON is trusted. A missing, unreadable, non-object, or unverifiable file falls back through default construction. The data boundary is therefore stricter than “JSON exists”: the record must be in the active runtime path, pass the store read path, survive integrity admission where applicable, and then survive schema normalization.',
           },
+          {
+            kind: 'paragraph',
+            text: 'The manifest is deliberately conditional rather than a blanket checksum requirement. `verify_runtime_file` accepts an absent protected file, an absent or empty manifest, and a path with no manifest entry; once a manifest entry exists, however, the integrity key must be readable and the path-bound HMAC must compare exactly. The HMAC input includes the relative path, a NUL separator, and file bytes, so a digest for one protected relative path is not merely a content hash that can be moved to another protected name without detection.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/integrity/manifest.py',
+            code: `if not path.exists():
+  return True
+
+files = manifest.get("files", {})
+if not isinstance(files, dict) or not files:
+  return True
+
+if not key_path.is_file():
+  return False
+
+expected_entry = files.get(_display_relative(relative_path))
+if not isinstance(expected_entry, dict):
+  return True`,
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-preferences-paired-store-admission',
+        title: 'Paired Store Admission and Atomic Commit',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/stores/app.py` owns paired player/world state load and save; it does not treat a legacy file as a repair source for an invalid active runtime file. `_read_runtime_or_previous` reads `state/player_state.json` or `state/world_state.json` from the runtime root when that path exists, and returns no record when the corresponding HMAC verification fails. It visits the previous configuration root only when the active runtime path is absent. `load` returns `None` only when both envelopes are unavailable; otherwise it passes each missing half as an empty mapping to the appropriate envelope reader and reconstitutes one `AppState` aggregate from the current-space, settings, inventory, standing Othello settings, My World, and Othello members. The result is a partial state reconstruction with explicit defaults, not a splice of untrusted active data and legacy data.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/app.py',
+            code: `if runtime_path.exists():
+  relative_path = f"state/{name}"
+  if not verify_runtime_file(self._data_root(), relative_path):
+    return None
+  return JsonFileStore(path=runtime_path).read()
+
+previous_path = self._previous_config_path(name)
+if previous_path.exists():
+  return JsonFileStore(path=previous_path).read()
+
+return None`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/stores/json_file.py` owns dictionary-only JSON reads and the temporary-file write protocol. `JsonFileStore.write` gives each accepted dictionary a temporary sibling path, flushes and fsyncs the encoded JSON, replaces the target, and then removes a surviving temporary path. `AppStateStore.save` writes the player and world envelopes before refreshing the protected-file manifest. This sequence reduces a torn JSON write, but it does not make hand-edited data trustworthy: integrity verification and each envelope reader remain separate admission stages on the next load.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/json_file.py',
+            code: `f = None
+try:
+  f = open(tmp, "w", encoding="utf-8", newline="\\n")
+  f.write(data)
+  f.flush()
+  os.fsync(f.fileno())
+finally:
+  if f is not None:
+    try:
+      f.close()
+    except OSError:
+      pass`,
+          },
         ],
       },
     ],
@@ -800,7 +877,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
         content: [
           {
             kind: 'paragraph',
-            text: 'A persisted play space is a composition of player state, world state, and AI actor state. The block list does not contain the player pose or AI configuration. The AI records do not contain the world block map. The player record does not contain the Othello match state. Reading a save requires keeping those subrecords distinct.',
+            text: '`src/ludoxel/application/persistence/schema/play_space.py` owns `PersistedPlaySpace`, the common My World envelope composed from a player record, a world record, and AI actor rows. The block list does not contain the player pose or AI configuration; the AI records do not contain the world block map. The generic play-space envelope deliberately does not carry Othello match state, so loading it cannot be treated as a substitute for the Othello persistence envelope.',
           },
           {
             kind: 'code',
@@ -815,6 +892,18 @@ class PersistedPlaySpace:
           {
             kind: 'paragraph',
             text: 'The composition explains why deleting or corrupting one subrecord does not have the same meaning as deleting a whole world. A valid block map without the prior player pose is not the original play space. A valid Othello match without its surrounding space data is not the complete saved state. A save-file analysis must preserve the envelope, the space key, and the member record that actually failed.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/schema/player.py` owns the persisted player codec: position and velocity triples, yaw and pitch, on-ground and flight flags, movement cooldown and crouch offset, and health. Its triplet coercion falls back to declared defaults for a non-three-element value, and its reader keeps `max_health` at least one. This is a player-state repair boundary, not a world generator or a renderer pose implementation.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/schema/world.py` owns the adapter between the persisted `revision` and explicit block map and simulation `WorldState` serialization. It delegates decoding to the world-state persistence reader and snapshots the blocks back into the application schema; it does not serialize player, AI, inventory, or view state.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/schema/ai_player.py` owns the persisted AI actor row and its conversion to and from normalized `AiPlayerState`. It admits actor identity, behavior and regeneration settings, skin selection, position and velocity, health, and route data; notably, a custom skin mode without a normalized skin id retreats to the shared player-skin mode. An AI row is therefore neither the common play-space envelope nor the learning-artifact store.',
           },
         ],
       },
@@ -862,6 +951,29 @@ if isinstance(raw, list):
               },
               '; the existence of `world_state.json` alone does not authorize publication or redistribution.',
             ],
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-world-state-session-rehydration',
+        title: 'Session Rehydration Is Not World Generation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/schedulers/state.py` owns application-level restore and save sequencing between persisted state, prepared sessions, runtime preferences, and renderer projection. Its `apply_persisted_state_if_present` restores a saved player, block map, and AI tuple into a session that has already been constructed by its factory. Its My World path does not replace a newly generated world when the persisted map is empty and its revision is non-positive; otherwise it replaces the complete block snapshot at a revision of at least one. The Othello path follows the same restore sequence, then ensures the board layout and removes an invalid below-board player position. Loading is therefore a controlled mutation of a prepared session, not a second generator and not an instruction for the renderer to reconstruct world state.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/schedulers/state.py',
+            code: `def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
+  if not persisted_world.blocks and int(persisted_world.revision) <= 0:
+    return
+  session.world.replace_all(blocks={key: str(value) for (key, value) in persisted_world.blocks.items()}, revision=int(max(1, int(persisted_world.revision))))`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, and normalized `PersistedAiPlayer` rows together. The enclosing `WorldStateFile` remains the source that distinguishes the My World and Othello keys, including the older one-space migration path.',
           },
         ],
       },
@@ -1016,6 +1128,43 @@ def policy_path(self, policy_id: str) -> Path:
           },
         ],
       },
+      {
+        id: 'reading-saved-ai-state-actor-rows-and-writers',
+        title: 'Actor Rows and Demonstration Writes Fail Independently',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`PersistedAiPlayer` is not the learning-state envelope. It serializes a session actor’s identity, mode, personality, held item, appearance, regeneration values, pose, health, flight flag, and route state; its conversion to `AiPlayerState` re-applies the simulation normalizers. A custom AI skin mode without a normalized skin identifier is reduced to the player-skin mode, and malformed route points or out-of-range regeneration values are filtered by that conversion. These rows belong to each saved play space, whereas the learning-state file selects recording and policy behavior across the runtime.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The demonstration writer has a different failure boundary. It serializes each candidate mapping independently, skips only rows that cannot become JSON, and does not create or append a dataset file when no rows survive. Valid lines are appended, flushed, and fsynced. A single non-serializable record therefore does not retroactively invalidate the accepted rows in the same flush, but it is not silently transformed into a synthetic example.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
+            code: `lines: list[str] = []
+for row in rows:
+  try:
+    lines.append(json.dumps(dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+  except (TypeError, ValueError):
+    continue
+if not lines:
+  return 0
+
+target = Path(self.path)
+target.parent.mkdir(parents=True, exist_ok=True)
+with open(target, "a", encoding="utf-8", newline="\\n") as handle:
+  for line in lines:
+    handle.write(line)
+    handle.write("\\n")
+  handle.flush()
+  os.fsync(handle.fileno())
+return len(lines)`,
+          },
+        ],
+      },
     ],
     relatedTitles: ['Reading Demonstration Data', 'Reading Learned Policies', 'Choosing a Learning Mode'],
   }),
@@ -1032,7 +1181,7 @@ def policy_path(self, policy_id: str) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: 'Othello match state is stored inside the Othello play space, not in a separate match-only file. The record is `OthelloGameState`. It contains board state, lifecycle status, per-match settings, sides, side to move, clocks, move and pass counts, winner, last move, legal moves, thinking state, and pending animations.',
+            text: '`src/ludoxel/application/persistence/schema/othello.py` owns `PersistedOthelloSpace`, the application persistence envelope for the Othello play space. It combines the player, world, AI actor tuple, and `OthelloGameState`; it is not interchangeable with the common `PersistedPlaySpace` because the latter has no match-state field. Othello match state is therefore stored inside this play-space envelope, not in a separate match-only file. The `OthelloGameState` member contains board state, lifecycle status, per-match settings, sides, side to move, clocks, move and pass counts, winner, last move, legal moves, thinking state, and pending animations.',
           },
           {
             kind: 'code',
@@ -1101,6 +1250,22 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           {
             kind: 'paragraph',
             text: 'This subtraction is the central engineering fact for material classification. `save_user_opening_book_lines` normalizes the effective line corpus, loads bundled lines, builds a bundled set, and writes only lines that are not in that set through the application-provided hook. A user opening-book file is therefore not permitted to become a redundant repository-resource copy merely because the effective in-memory book merges bundled and user lines.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/stores/othello_book.py` supplies that hook. It writes the user-only payload to `state/othello_opening_book.json` and refreshes that file’s manifest entry; its compiled representation is read and written separately below the runtime cache root. A failed user-delta integrity check returns no payload to the opening-book layer, while a missing or deleted compiled cache affects only cache lookup. The two files are not interchangeable copies and must not be deleted, copied, or edited as if they had the same restoration consequence.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/othello_book.py',
+            code: `def _save_user_opening_book_lines(project_root_key: str, lines: tuple[tuple[int, ...], ...]) -> None:
+  data_root = Path(normalize_opening_book_root(project_root_key))
+  _write_json_file(user_opening_book_file_path(data_root), opening_book_lines_payload(tuple(lines)))
+  update_runtime_integrity_manifest(data_root, ("state/othello_opening_book.json",))
+
+def _load_compiled_opening_book_cache(project_root_key: str, _fingerprint: str) -> object:
+  return _read_json_file(compiled_opening_book_cache_file_path(project_root_key))`,
           },
         ],
       },

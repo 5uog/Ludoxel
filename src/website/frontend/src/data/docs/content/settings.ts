@@ -82,6 +82,10 @@ self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
 self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`,
           },
           {
+            kind: 'paragraph',
+            text: 'The same normalization pass clamps both view-bobbing and camera-shake strength to `[0, 1]`, clamps arm rotation limits to `[-180, 180]` degrees and orders them if reversed, and clamps arm swing duration to `[0.05, 1.50]` seconds. Those are admitted runtime values, not claims that every camera mode displays the same motion. `view_model_visible()` separately requires the normalized first-person perspective and `hide_hand == false`; a saved third-person perspective cannot expose the first-person arm merely by retaining hand-motion fields.',
+          },
+          {
             kind: 'note',
             note: {
               type: 'warning',
@@ -129,7 +133,7 @@ overlay._btn_crosshair_reset.clicked.connect(overlay.crosshair_clear_requested.e
         content: [
           {
             kind: 'paragraph',
-            text: 'The custom crosshair is a logical bitmap, not an imported image file. `normalize_crosshair_pixels` accepts only list-like rows, truncates to sixteen rows, truncates each row to sixteen characters, converts only the character `1` to an active pixel, converts every other character to `0`, and pads missing cells or rows with zeroes. This makes the persisted representation compact and deterministic: sixteen strings, each sixteen binary characters wide.',
+            text: '`src/ludoxel/application/preferences/crosshair.py` owns the custom-crosshair value domain. The custom crosshair is a logical bitmap, not an imported image file: `normalize_crosshair_pixels` accepts only list-like rows, truncates to sixteen rows, truncates each row to sixteen characters, converts only the character `1` to an active pixel, converts every other character to `0`, and pads missing cells or rows with zeroes. This makes the persisted representation compact and deterministic: sixteen strings, each sixteen binary characters wide.',
           },
           {
             kind: 'code',
@@ -157,6 +161,19 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
               displayMode: true,
               caption: 'A custom crosshair contains at most 256 binary pixel decisions.',
             },
+          },
+          {
+            kind: 'paragraph',
+            text: '`crosshair_mode` is a separate two-value selector. Only the literal `custom` selects the normalized bitmap; missing, malformed, or other text resolves to `default`. A valid all-zero bitmap therefore remains a custom value, while an invalid mode does not preserve an unrecognized drawing branch.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/preferences/crosshair.py',
+            code: `def normalize_crosshair_mode(value: object) -> str:
+  if str(value or "").strip().lower() == CROSSHAIR_MODE_CUSTOM:
+    return CROSSHAIR_MODE_CUSTOM
+  return CROSSHAIR_MODE_DEFAULT`,
           },
         ],
       },
@@ -285,6 +302,28 @@ overlay._ctl_cloud_speed_min = AdvancedScalarControl(
           },
           {
             kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/cloud_flow.py` owns cloud-flow direction admission. Before range normalization, the runtime aggregate clamps cloud density to `[0, 4]`, cloud seed to `[0, 9999]`, and passes direction through `normalize_backend_cloud_flow_direction`. The admitted directions are `east_to_west`, `west_to_east`, `south_to_north`, and `north_to_south`; any other text becomes `west_to_east`. Direction is therefore neither a free label nor a world-generation seed, and a malformed saved direction cannot reach renderer configuration unchanged.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/preferences/cloud_flow.py',
+            code: `DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION: str = "west_to_east"
+BACKEND_CLOUD_FLOW_DIRECTIONS: tuple[str, str, str, str] = (
+  "east_to_west",
+  DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION,
+  "south_to_north",
+  "north_to_south",
+)
+
+def normalize_backend_cloud_flow_direction(raw: object) -> str:
+  value = str(raw or "").strip().lower()
+  if value in BACKEND_CLOUD_FLOW_DIRECTIONS:
+    return value
+  return DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION`,
+          },
+          {
+            kind: 'paragraph',
             text: 'A diagnostic report about cloud behavior should preserve the visible control values, the saved preference values, and the resulting rendered behavior separately. A mismatch may come from widget synchronization, persistence normalization, runtime projection, or renderer consumption. Collapsing those layers into “the cloud setting failed” destroys the boundary that the implementation deliberately maintains.',
           },
         ],
@@ -372,6 +411,10 @@ def _on_shadow_map_quality(self, _index: int) -> None:
           {
             kind: 'paragraph',
             text: 'A shadow report must distinguish four facts: whether the shadow toggle is enabled, which quality stage is selected, what value is persisted, and what the backend rendered. The setting article does not convert those facts into backend parity, driver correctness, or release-readiness evidence.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`PersistedSettings.__post_init__` normalizes the saved quality at construction, and `RuntimePreferences.normalize` repeats the same admission before `apply_runtime_to_renderer` calls `set_shadow_map_quality`. The repeated normalization is intentional: a typed settings object and a later mutable runtime object have separate mutation boundaries. Neither one accepts an out-of-range tier merely because the other was previously valid.',
           },
         ],
       },
@@ -472,6 +515,10 @@ class AudioPreferences:
           {
             kind: 'paragraph',
             text: 'The diagnostic boundary follows the same decomposition. A silent block-placement sound can involve the master gain, the block gain, the material-sound catalog, the event source, or playback admission. This article controls only the saved and normalized mixer vector; material sound routing is handled by the Systems article on material sounds.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`RuntimePreferences.normalize` retains `audio` as an `AudioPreferences` value object, and the persistence projection writes `runtime.audio.normalized()` into `PersistedSettings`. The setting therefore crosses disk and runtime as the same four-channel model, but its effective gain is still computed at the playback category. Saving a master value does not precompute or store separate ambient, block, and player effective gains.',
           },
         ],
       },
@@ -576,6 +623,10 @@ class AudioPreferences:
           {
             kind: 'paragraph',
             text: 'The consequence is strict: a settings row can change only a known action, to a known single-key portable binding, under one-to-one runtime lookup. Modifier chords, multi-key sequences, platform-native display strings, and arbitrary command text remain outside the implemented setting.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Persistence preserves that fixed action domain. `to_dict()` serializes exactly `KEYBIND_ACTION_ORDER`, including unbound entries, while `from_dict()` begins from the default map and accepts values only for those known actions. An unknown key in a hand-edited mapping cannot create a new command, and a missing known key returns to its declared default rather than becoming an implicit platform binding.',
           },
         ],
       },
@@ -748,7 +799,7 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: 'The Player tab exposes a single name field with a blank-value fallback hint. The controller does not persist raw text verbatim. It passes the entered value through `normalize_player_name`, which collapses internal whitespace, truncates to thirty-two characters, and strips the result. A display name is therefore a normalized runtime preference, not an account credential and not a world-state block value.',
+            text: '`src/ludoxel/application/preferences/player_name.py` owns player-name normalization and the blank-value session fallback. The Player tab exposes a single name field with a blank-value fallback hint, but the controller does not persist raw text verbatim: `normalize_player_name` collapses internal whitespace, truncates to thirty-two characters, and strips the result. A display name is therefore a normalized runtime preference, not an account credential and not a world-state block value.',
           },
           {
             kind: 'code',
@@ -776,6 +827,10 @@ def resolve_session_player_name(explicit_name: object, *, fallback_name: str | N
           {
             kind: 'paragraph',
             text: 'When the explicit player name is blank after normalization, the session name resolver uses a normalized fallback name when one exists; otherwise it generates a name from an adjective, noun, and three-digit number. The randomness belongs to session identity resolution, not to saved preference mutation. The saved blank field remains meaningful because it instructs the application to resolve a display name later.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`has_explicit_player_name` tests the normalized string rather than the original text. Whitespace-only input is therefore not an explicit identity and follows the same fallback path as an empty field. This predicate does not reserve a name, validate an account, or participate in AI actor uniqueness; it only separates a persisted display preference from a launch-time display resolution.',
           },
           {
             kind: 'code',
