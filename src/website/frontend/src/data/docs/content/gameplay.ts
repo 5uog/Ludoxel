@@ -574,8 +574,7 @@ def apply_void_damage(*, player, dt, timer_s):
         ],
         mathBlocks: [
           {
-            expression:
-              'n = \\left\\lfloor \\frac{t + \\Delta t}{T} \\right\\rfloor, \\qquad \\mathrm{damage} = A\\,n, \\qquad t_{\\mathrm{next}} = (t + \\Delta t) - T\\,n',
+            expression: 'n = \\left\\lfloor \\frac{t + \\Delta t}{T} \\right\\rfloor, \\qquad \\mathrm{damage} = A\\,n, \\qquad t_{\\mathrm{next}} = (t + \\Delta t) - T\\,n',
             displayMode: true,
             caption:
               'apply_void_damage in src/ludoxel/simulation/actors/player/damage.py drains the accumulator in whole intervals: VOID_DAMAGE_INTERVAL_S sets the period T = 0.5 s, VOID_DAMAGE_AMOUNT sets A = 4 per tick (bypassing the hurt cooldown), and the sub-interval remainder is carried to the next step.',
@@ -1179,8 +1178,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         ],
         mathBlocks: [
           {
-            expression:
-              'i = S\\,r + c, \\qquad (r, c) = \\bigl(\\lfloor i / S \\rfloor,\\ i \\bmod S\\bigr), \\qquad S = \\sqrt{64} = 8',
+            expression: 'i = S\\,r + c, \\qquad (r, c) = \\bigl(\\lfloor i / S \\rfloor,\\ i \\bmod S\\bigr), \\qquad S = \\sqrt{64} = 8',
             displayMode: true,
             caption:
               'row_col_to_index and index_to_row_col in src/ludoxel/simulation/spaces/othello/game/board.py flatten the 8×8 grid (S = BOARD_SIZE = isqrt(BOARD_CELL_COUNT)); the opening sets indices (3,3) and (4,4) white and (3,4) and (4,3) black.',

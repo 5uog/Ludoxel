@@ -32,7 +32,7 @@ overlay._sld_fov.valueChanged.connect(overlay._on_fov)
 for value in CAMERA_PERSPECTIVE_ORDER:
   overlay._cmb_camera_perspective.addItem(str(CAMERA_PERSPECTIVE_LABELS[str(value)]), userData=str(value))
 overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_perspective)`,
-          }
+          },
         ],
       },
       {
@@ -60,7 +60,7 @@ def cycle_camera_perspective(value: object, step: int = 1) -> str:
   count = len(CAMERA_PERSPECTIVE_ORDER)
   index = CAMERA_PERSPECTIVE_ORDER.index(normalized)
   return str(CAMERA_PERSPECTIVE_ORDER[(index + int(step)) % count])`,
-          }
+          },
         ],
       },
       {
@@ -88,9 +88,9 @@ self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`
               content:
                 'Changing perspective changes camera presentation. It does not by itself establish a change to the player collision body, world state, save-file authority, input-capture policy, or legal permission boundary.',
             },
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Looking Around', 'Using Mouse Capture', 'Understanding Saved Preferences'],
   }),
@@ -99,8 +99,7 @@ self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`
     subcategory: 'Visual and Audio Settings',
     group: 'Camera and Crosshair',
     title: 'Changing Crosshair Preferences',
-    description:
-      'Explains the 16 x 16 crosshair editor as a normalized bitmap preference that feeds HUD rendering without becoming a texture-pack, asset-distribution, or renderer-shader article.',
+    description: 'Explains the 16 x 16 crosshair editor as a normalized bitmap preference that feeds HUD rendering without becoming a texture-pack, asset-distribution, or renderer-shader article.',
     sections: [
       {
         id: 'changing-crosshair-preferences-surface',
@@ -121,7 +120,7 @@ overlay._crosshair_editor.pixels_changed.connect(overlay.crosshair_pixels_change
 
 overlay._btn_crosshair_reset = QPushButton("Reset to Built-in Crosshair", crosshair_body)
 overlay._btn_crosshair_reset.clicked.connect(overlay.crosshair_clear_requested.emit)`,
-          }
+          },
         ],
       },
       {
@@ -158,7 +157,7 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
               displayMode: true,
               caption: 'A custom crosshair contains at most 256 binary pixel decisions.',
             },
-          }
+          },
         ],
       },
       {
@@ -173,12 +172,11 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                'A blank custom bitmap is valid after normalization. It means that every cell is zero, not that the crosshair system has no state.',
+              content: 'A blank custom bitmap is valid after normalization. It means that every cell is zero, not that the crosshair system has no state.',
             },
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Looking Around', 'Understanding Saved Preferences', 'Reading Saved Preferences'],
   }),
@@ -589,8 +587,7 @@ class AudioPreferences:
     subcategory: 'Player and Match Settings',
     group: 'Player Skin',
     title: 'Changing the Player Skin Source',
-    description:
-      'Explains the player skin source as a two-value runtime preference whose custom branch is valid only when the protected runtime skin file can be verified and decoded.',
+    description: 'Explains the player skin source as a two-value runtime preference whose custom branch is valid only when the protected runtime skin file can be verified and decoded.',
     sections: [
       {
         id: 'changing-player-skin-source-domain',
@@ -612,7 +609,7 @@ def normalize_player_skin_kind(value: object) -> str:
   if normalized == PLAYER_SKIN_KIND_CUSTOM:
     return PLAYER_SKIN_KIND_CUSTOM
   return PLAYER_SKIN_KIND_ALEX`,
-          }
+          },
         ],
       },
       {
@@ -640,7 +637,7 @@ def normalize_player_skin_kind(value: object) -> str:
       except ValueError:
         pass
   default_image = QImage(str(default_player_skin_path(bundled_root)))`,
-          }
+          },
         ],
       },
       {
@@ -655,12 +652,11 @@ def normalize_player_skin_kind(value: object) -> str:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not include a private or third-party skin image in a public issue unless the right to share that image is independently clear.',
+              content: 'Do not include a private or third-party skin image in a public issue unless the right to share that image is independently clear.',
             },
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Importing a Player Skin', 'Reading Saved Preferences', 'Understanding Protected Runtime Files'],
   }),
@@ -669,8 +665,7 @@ def normalize_player_skin_kind(value: object) -> str:
     subcategory: 'Player and Match Settings',
     group: 'Player Skin',
     title: 'Importing a Player Skin',
-    description:
-      'Explains player skin import as a local PNG validation and protected runtime-file write, not as an asset ingestion pipeline for package materials.',
+    description: 'Explains player skin import as a local PNG validation and protected runtime-file write, not as an asset ingestion pipeline for package materials.',
     sections: [
       {
         id: 'importing-player-skin-ingress',
@@ -695,7 +690,7 @@ def normalize_player_skin_kind(value: object) -> str:
   viewport._state.player_skin_kind = PLAYER_SKIN_KIND_CUSTOM
   viewport._state.normalize()
   sync_player_skin(viewport, push_to_renderer=True)`,
-          }
+          },
         ],
       },
       {
@@ -724,7 +719,7 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
   target.parent.mkdir(parents=True, exist_ok=True)
   normalized.save(str(target), "PNG")
   update_runtime_integrity_manifest(Path(data_root), ("state/player_skin.png",))`,
-          }
+          },
         ],
       },
       {
@@ -734,9 +729,9 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
           {
             kind: 'paragraph',
             text: 'A failed import should be reported with the file dimensions, decode result, error message, selected skin kind after the attempt, and whether `state/player_skin.png` exists under the runtime data root. A failed import should not be described as an asset-pack problem unless the evidence reaches the asset loader. The public documentation must also keep custom skins legally separate from Ludoxel original materials; importing an image for local use does not determine the right to redistribute it.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Changing the Player Skin Source', 'Understanding Protected Runtime Files', 'Reading Saved Preferences'],
   }),
@@ -745,8 +740,7 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
     subcategory: 'Player and Match Settings',
     group: 'Player and Othello State',
     title: 'Changing the Player Name',
-    description:
-      'Explains the player display name as a normalized runtime preference with a blank-value random fallback rather than as world block state or account identity.',
+    description: 'Explains the player display name as a normalized runtime preference with a blank-value random fallback rather than as world block state or account identity.',
     sections: [
       {
         id: 'changing-player-name-ingress',
@@ -772,7 +766,7 @@ def resolve_session_player_name(explicit_name: object, *, fallback_name: str | N
   if fallback:
     return fallback
   return generate_random_player_name()`,
-          }
+          },
         ],
       },
       {
@@ -792,7 +786,7 @@ overlay._name_edit.setPlaceholderText("Leave blank for a random name each launch
 overlay._name_edit.editingFinished.connect(overlay._on_player_name_edited)
 
 overlay._player_name_hint = QLabel("", identity_body)`,
-          }
+          },
         ],
       },
       {
@@ -802,9 +796,9 @@ overlay._player_name_hint = QLabel("", identity_body)`,
           {
             kind: 'paragraph',
             text: 'The name can appear in HUD or world presentation through runtime state, but it does not define saved world geometry, Othello rules, AI naming uniqueness, or legal attribution. A report should state the entered string, the normalized string, whether the input was blank, the resolved session name, and the surface where the wrong name appeared.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Understanding Saved Preferences', 'Naming an AI NPC', 'Reading Saved Preferences'],
   }),
@@ -834,7 +828,7 @@ othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
 
 self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
 self.othello_settings = self.othello_settings.normalized()`,
-          }
+          },
         ],
       },
       {
@@ -855,7 +849,7 @@ class PersistedOthelloSpace:
   world: PersistedWorldState = field(default_factory=PersistedWorldState)
   othello_game_state: dict[str, Any] = field(default_factory=dict)
   ai_players: PersistedAiPlayerCollection = field(default_factory=PersistedAiPlayerCollection)`,
-          }
+          },
         ],
       },
       {
@@ -865,9 +859,9 @@ class PersistedOthelloSpace:
           {
             kind: 'paragraph',
             text: 'A persistence report should state which object changed: normalized `OthelloSettings`, Othello game state, player state, world state, or AI collection. A wrong AI move after restart may come from difficulty or book settings, but it may also come from saved board state or opening-book data. The report is only useful when it names the persisted branch rather than calling everything an Othello setting.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Reading Saved Othello Space', 'Changing Match Rules', 'Reading Saved Preferences'],
   }),
@@ -876,8 +870,7 @@ class PersistedOthelloSpace:
     subcategory: 'Player and Match Settings',
     group: 'Othello Match Rules',
     title: 'Changing Match Rules',
-    description:
-      'Explains time control, animation mode, player side, and difficulty as normalized Othello rule preferences that are distinct from board legality and opening-book data.',
+    description: 'Explains time control, animation mode, player side, and difficulty as normalized Othello rule preferences that are distinct from board legality and opening-book data.',
     sections: [
       {
         id: 'changing-match-rules-rule-object',
@@ -900,7 +893,7 @@ class OthelloSettings:
   sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL
   thread_count: int = DEFAULT_OTHELLO_THREAD_COUNT
   hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL`,
-          }
+          },
         ],
       },
       {
@@ -925,7 +918,7 @@ def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MED
   if fallback in OTHELLO_DIFFICULTIES:
     return fallback
   return OTHELLO_DIFFICULTY_MEDIUM`,
-          }
+          },
         ],
       },
       {
@@ -935,9 +928,9 @@ def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MED
           {
             kind: 'paragraph',
             text: 'Changing match rules does not rewrite existing board coordinates, opening-book storage, or Othello legal-move generation. It changes the normalized parameters used by the match and engine paths. A report should include the normalized settings object, the active side, time control, difficulty, and board state separately.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Understanding Othello Setting Persistence', 'Changing Othello AI Strength', 'Changing Othello Book Behavior'],
   }),
@@ -946,8 +939,7 @@ def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MED
     subcategory: 'Player and Match Settings',
     group: 'Othello Match Rules',
     title: 'Changing Othello AI Strength',
-    description:
-      'Explains Othello AI strength as normalized engine parameters: difficulty, thread count, hash level, and sacrifice level, with fixed bounds before worker execution.',
+    description: 'Explains Othello AI strength as normalized engine parameters: difficulty, thread count, hash level, and sacrifice level, with fixed bounds before worker execution.',
     sections: [
       {
         id: 'changing-othello-ai-strength-parameters',
@@ -970,7 +962,7 @@ OTHELLO_AI_SACRIFICE_LEVEL_MAX: int = 4
 
 def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THREAD_COUNT) -> int:
   return coerce_clampi(value, default=int(default), lo=int(OTHELLO_AI_THREAD_MIN), hi=int(OTHELLO_AI_THREAD_MAX))`,
-          }
+          },
         ],
       },
       {
@@ -996,7 +988,7 @@ def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THRE
     sacrifice_level=int(sacrifice_level),
     hash_level=int(hash_level),
   )`,
-          }
+          },
         ],
       },
       {
@@ -1006,9 +998,9 @@ def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THRE
           {
             kind: 'paragraph',
             text: 'A report about strength should include the selected difficulty, normalized thread count, hash level, sacrifice level, board position, side to move, and whether the move came from the opening book. Without those facts, settings, engine search, and book lookup become indistinguishable.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Changing Match Rules', 'Changing Othello Book Behavior', 'Playing Othello'],
   }),
@@ -1017,8 +1009,7 @@ def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THRE
     subcategory: 'Player and Match Settings',
     group: 'Othello Match Rules',
     title: 'Changing Othello Book Behavior',
-    description:
-      'Explains opening-book controls as normalized learning and lookup parameters whose storage path is separate from match-rule widgets and saved board state.',
+    description: 'Explains opening-book controls as normalized learning and lookup parameters whose storage path is separate from match-rule widgets and saved board state.',
     sections: [
       {
         id: 'changing-othello-book-behavior-controls',
@@ -1040,7 +1031,7 @@ DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR: float = 19.0
 DEFAULT_OTHELLO_BOOK_LEAF_ERROR: float = 20.0
 OTHELLO_BOOK_ERROR_MIN: float = 0.0
 OTHELLO_BOOK_ERROR_MAX: float = 24.0`,
-          }
+          },
         ],
       },
       {
@@ -1061,7 +1052,7 @@ normalized_cumulative_error = normalize_book_error(cumulative_error, default=flo
 normalized_leaf_error = normalize_book_error(leaf_error, default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR))
 normalized_hash_level = normalize_hash_level(hash_level, default=DEFAULT_OTHELLO_HASH_LEVEL)
 normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=DEFAULT_OTHELLO_SACRIFICE_LEVEL)`,
-          }
+          },
         ],
       },
       {
@@ -1071,9 +1062,9 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
           {
             kind: 'paragraph',
             text: 'If book behavior appears wrong, report the normalized book settings, whether the move was a learned book move, the board state, and the book file status. Do not treat the book-learning tolerance values as proof that the AI searcher or the saved Othello game state is broken.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Changing Othello AI Strength', 'Reading Saved Othello Space', 'Playing Othello'],
   }),
@@ -1082,8 +1073,7 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
     subcategory: 'AI Configuration',
     group: 'AI Identity and Skin',
     title: 'Naming an AI NPC',
-    description:
-      'Explains AI NPC naming as a validated per-actor setting with a constrained body, optional numeric suffix, and live-AI uniqueness check.',
+    description: 'Explains AI NPC naming as a validated per-actor setting with a constrained body, optional numeric suffix, and live-AI uniqueness check.',
     sections: [
       {
         id: 'naming-ai-npc-format',
@@ -1110,7 +1100,7 @@ def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
     if _AI_NAME_BODY_PATTERN.match(text) is None:
       return None
     return (text, None)`,
-          }
+          },
         ],
       },
       {
@@ -1129,7 +1119,7 @@ def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
 self._name_edit.setMaxLength(int(_AI_NAME_INPUT_MAX_LENGTH))
 self._name_edit.setPlaceholderText("Example: Guard or Guard#0001")
 add_setting_row(body_layout, body, label="Name", description="Shown in the world nametag above this AI.", control=self._name_edit)`,
-          }
+          },
         ],
       },
       {
@@ -1139,9 +1129,9 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
           {
             kind: 'paragraph',
             text: 'An AI NPC name belongs to per-actor simulation state and world-space presentation. It does not change the player name preference, Othello participant identity, license attribution, or saved route semantics. A report should include the attempted name, the exact validation error, whether the target actor already existed, and the names of other live AI if a duplicate is suspected.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Changing the Player Name', 'Choosing an AI Skin Source', 'Understanding AI Player State'],
   }),
@@ -1182,7 +1172,7 @@ def normalize_ai_skin_id(value: object) -> str:
   if len(raw) != 32 or any(character not in "0123456789abcdef" for character in raw):
     return ""
   return raw`,
-          }
+          },
         ],
       },
       {
@@ -1208,7 +1198,7 @@ def normalize_ai_skin_id(value: object) -> str:
     return
   self._persist_current_settings()
   self._sync_skin_controls()`,
-          }
+          },
         ],
       },
       {
@@ -1218,9 +1208,9 @@ def normalize_ai_skin_id(value: object) -> str:
           {
             kind: 'paragraph',
             text: 'AI custom skins are actor-specific runtime files under the AI skin storage path, not player skins and not package assets. A public issue should not attach private imported PNGs unless the right to share them is clear; the useful technical evidence is the selected mode, normalized skin id, file availability, and fallback status.',
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Naming an AI NPC', 'Changing the Player Skin Source', 'Understanding AI Player State'],
   }),
@@ -1229,8 +1219,7 @@ def normalize_ai_skin_id(value: object) -> str:
     subcategory: 'AI Configuration',
     group: 'AI Behavior and Mode',
     title: 'Changing AI Behavior Values',
-    description:
-      'Explains AI behavior settings as per-actor normalized state for role, personality, route patrol, block placement, and regeneration rather than as unrestricted autonomous scripting.',
+    description: 'Explains AI behavior settings as per-actor normalized state for role, personality, route patrol, block placement, and regeneration rather than as unrestricted autonomous scripting.',
     sections: [
       {
         id: 'changing-ai-behavior-values-state-object',
@@ -1259,7 +1248,7 @@ class AiSpawnEggSettings:
   route_closed: bool = False
   route_run: bool = False
   route_style: str = AI_ROUTE_STYLE_STRICT`,
-          }
+          },
         ],
       },
       {
@@ -1287,7 +1276,7 @@ def normalize_ai_personality(value: object) -> str:
   if raw == AI_PERSONALITY_PEACEFUL:
     return AI_PERSONALITY_PEACEFUL
   return AI_PERSONALITY_AGGRESSIVE`,
-          }
+          },
         ],
       },
       {
@@ -1314,12 +1303,11 @@ def normalize_ai_personality(value: object) -> str:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Block placement in AI behavior is movement support and safety handling. It should not be described as unrestricted building authority.',
+              content: 'Block placement in AI behavior is movement support and safety handling. It should not be described as unrestricted building authority.',
             },
-          }
+          },
         ],
-      }
+      },
     ],
     relatedTitles: ['Choosing a Learning Mode', 'Naming an AI NPC', 'Understanding AI Player State'],
   }),
@@ -1506,8 +1494,7 @@ result = sandbox_train(policy_id=USER_SANDBOX_POLICY_ID, policy_name="Sandbox Le
     subcategory: 'AI Configuration',
     group: 'AI Policy Workflow',
     title: 'Applying a Learned Policy',
-    description:
-      'Defines learned-policy application as a selected-policy resolution path guarded by source family, policy id, usability evaluation, active learning mode, and deterministic fallback.',
+    description: 'Defines learned-policy application as a selected-policy resolution path guarded by source family, policy id, usability evaluation, active learning mode, and deterministic fallback.',
     sections: [
       {
         id: 'applying-a-learned-policy-setting-scope',
