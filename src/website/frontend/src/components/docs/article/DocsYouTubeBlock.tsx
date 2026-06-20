@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { useEffect, useId, useMemo, useRef } from 'react';
+
 import { type DocsYouTubeMediaBlock } from '../../../data/docs/types';
-import { renderInlineText } from './DocsInlineText';
+import DocsMediaFrame from './DocsMediaFrame';
 
 type DocsYouTubeBlockProps = {
   block: DocsYouTubeMediaBlock;
@@ -109,11 +110,18 @@ function getBrowserOrigin(): string | undefined {
 function createYouTubeEmbedSrc(block: DocsYouTubeMediaBlock, origin: string | undefined): string {
   const host = block.privacyEnhanced === false ? 'https://www.youtube.com' : 'https://www.youtube-nocookie.com';
   const embedUrl = new URL(`/embed/${encodeURIComponent(block.videoId)}`, host);
+  const controlsEnabled = block.controls === true;
 
   setBooleanParameter(embedUrl.searchParams, 'autoplay', block.autoPlay);
-  setBooleanParameter(embedUrl.searchParams, 'controls', block.controls);
   setBooleanParameter(embedUrl.searchParams, 'mute', block.muted);
-  setBooleanParameter(embedUrl.searchParams, 'playsinline', block.playsInline);
+
+  embedUrl.searchParams.set('controls', controlsEnabled ? '1' : '0');
+  embedUrl.searchParams.set('disablekb', controlsEnabled ? '0' : '1');
+  embedUrl.searchParams.set('fs', controlsEnabled ? '1' : '0');
+  embedUrl.searchParams.set('iv_load_policy', '3');
+  embedUrl.searchParams.set('modestbranding', '1');
+  embedUrl.searchParams.set('playsinline', block.playsInline === false ? '0' : '1');
+  embedUrl.searchParams.set('rel', '0');
 
   if (block.loop === true) {
     /*
@@ -136,6 +144,7 @@ export default function DocsYouTubeBlock({ block, blockIndex, sectionId }: DocsY
   const iframeId = `docs-youtube-${sectionId}-${blockIndex}-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const playerRef = useRef<{ destroy: () => void } | null>(null);
   const embedSrc = useMemo(() => createYouTubeEmbedSrc(block, getBrowserOrigin()), [block]);
+  const controlsEnabled = block.controls === true;
 
   useEffect(() => {
     if (block.loop !== true) {
@@ -183,21 +192,18 @@ export default function DocsYouTubeBlock({ block, blockIndex, sectionId }: DocsY
   }, [block.loop, block.muted, iframeId]);
 
   return (
-    <figure className="my-6 overflow-hidden rounded-xl border border-border bg-background shadow-2xl" key={`${sectionId}-youtube-${blockIndex}`}>
-      {block.caption ? <figcaption className="border-b border-border bg-background px-4 py-2.5 text-sm text-muted-foreground">{renderInlineText(block.caption)}</figcaption> : null}
-
-      <div className="bg-secondary/30">
-        <iframe
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          className="block aspect-video max-h-136 w-full"
-          id={iframeId}
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          src={embedSrc}
-          title={block.title}
-        />
-      </div>
-    </figure>
+    <DocsMediaFrame caption={block.caption}>
+      <iframe
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen={controlsEnabled}
+        className={`block aspect-video max-h-136 w-full ${controlsEnabled ? '' : 'pointer-events-none'}`}
+        id={iframeId}
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+        src={embedSrc}
+        tabIndex={controlsEnabled ? undefined : -1}
+        title={block.title}
+      />
+    </DocsMediaFrame>
   );
 }

@@ -6,7 +6,7 @@ import { Pause, Play } from 'lucide-react';
 
 import { type DocsVideoMediaBlock } from '../../../data/docs/types';
 import { useDocsVideoPlayback } from '../logic/useDocsVideoPlayback';
-import { renderInlineText } from './DocsInlineText';
+import DocsMediaFrame from './DocsMediaFrame';
 
 type DocsVideoBlockProps = {
   block: DocsVideoMediaBlock;
@@ -14,30 +14,13 @@ type DocsVideoBlockProps = {
   sectionId: string;
 };
 
-export default function DocsVideoBlock({ block, blockIndex, sectionId }: DocsVideoBlockProps): React.JSX.Element {
+export default function DocsVideoBlock({ block }: DocsVideoBlockProps): React.JSX.Element {
   const playback = useDocsVideoPlayback({ autoPlay: block.autoPlay === true });
+  const hasControls = block.controls === true;
 
   return (
-    <figure className="my-6 overflow-hidden rounded-xl border border-border bg-background shadow-2xl" key={`${sectionId}-video-${blockIndex}`}>
-      {block.caption || block.controls === true ? (
-        <div className="flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-2.5">
-          {block.caption ? <figcaption className="min-w-0 text-sm text-muted-foreground">{renderInlineText(block.caption)}</figcaption> : <span />}
-
-          {block.controls === true ? (
-            <button
-              aria-label={playback.isPlaying ? 'Pause video' : 'Play video'}
-              className="ml-2 inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded bg-secondary px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
-              onClick={playback.togglePlayback}
-              type="button"
-            >
-              {playback.isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              <span>{playback.isPlaying ? 'Pause' : 'Play'}</span>
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="bg-secondary/30">
+    <DocsMediaFrame caption={block.caption}>
+      <div className="w-full bg-secondary/30">
         <video
           ref={playback.videoRef}
           className="block max-h-136 w-full object-contain"
@@ -59,7 +42,7 @@ export default function DocsVideoBlock({ block, blockIndex, sectionId }: DocsVid
           ))}
         </video>
 
-        {block.controls === true ? (
+        {hasControls ? (
           <div className="border-t border-border bg-background px-4 py-3">
             <div className="flex items-center gap-3">
               <button
@@ -82,6 +65,6 @@ export default function DocsVideoBlock({ block, blockIndex, sectionId }: DocsVid
           </div>
         ) : null}
       </div>
-    </figure>
+    </DocsMediaFrame>
   );
 }
