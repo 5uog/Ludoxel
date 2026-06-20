@@ -1065,6 +1065,15 @@ player.clamp_pitch()`,
           'After the pitch delta is applied, the player pitch is clamped so the view cannot roll past straight up or straight down. This keeps the camera from flipping over when you push the mouse to its vertical limit.',
           'Yaw is free to accumulate without a limit, since turning all the way around is expected. The asymmetry between a clamped pitch and an unbounded yaw matches normal first-person look behavior.',
         ],
+        mathBlocks: [
+          {
+            expression:
+              '\\varphi \\leftarrow \\operatorname{clamp}\\bigl(\\varphi + \\Delta\\varphi,\\ -89.5^{\\circ},\\ 89.5^{\\circ}\\bigr), \\qquad \\psi \\leftarrow \\psi + \\Delta\\psi \\;\\; (\\text{unbounded})',
+            displayMode: true,
+            caption:
+              'clamp_pitch in src/ludoxel/simulation/actors/player/entity.py bounds the pitch φ to ±89.5° after each step, while the yaw ψ accumulates without limit, so the view turns fully but never rolls past vertical.',
+          },
+        ],
         codeBlocks: [
           {
             language: 'py',
@@ -1128,6 +1137,14 @@ self._warp_cursor_to_center()`,
         body: [
           'The raw pixel delta is not used directly as a degree value. It is scaled by the mouse-sensitivity preference when forming the yaw and pitch deltas, so the same pointer movement turns the view more or less depending on the setting.',
           'Because sensitivity is applied before the player step, changing it adjusts how far the view turns per unit of mouse movement without affecting movement speed or any other input. Camera feel is therefore a settings concern that builds on the look pipeline described here.',
+        ],
+        mathBlocks: [
+          {
+            expression: '\\Delta\\psi = -\\,\\Delta x \\cdot s, \\qquad \\Delta\\varphi = \\Delta y \\cdot s, \\qquad s = \\texttt{mouse\\_sens\\_deg\\_per\\_px}',
+            displayMode: true,
+            caption:
+              'The look mapping in src/ludoxel/application/sessions/managers/stepping.py multiplies the raw pixel offset by the sensitivity s in degrees per pixel; the yaw delta Δψ is negated so a rightward push turns the view right, and inversion preferences are applied to Δx and Δy upstream.',
+          },
         ],
       },
     ],
@@ -1420,6 +1437,15 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         body: [
           'Crouching does not snap the camera down. The crouch eye offset eases toward its target each step with an exponential approach, and eases back up when crouch is released. A separate step eye offset smooths the small vertical correction when the collision system steps the player up a ledge.',
           'These eased offsets are applied to the eye height the renderer reads, so the view settles instead of jumping. They are visual smoothing on top of the collision result, not changes to the player’s collision box.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              '\\alpha = 1 - e^{-18\\,\\Delta t}, \\qquad o \\leftarrow \\operatorname{clamp}\\bigl(o + (o^{*} - o)\\,\\alpha,\\ 0,\\ o_{\\max}\\bigr), \\qquad o^{*} = \\begin{cases} o_{\\max} & \\text{crouching} \\\\[1pt] 0 & \\text{otherwise} \\end{cases}',
+            displayMode: true,
+            caption:
+              '_update_crouch_eye in src/ludoxel/simulation/actors/player/kinematics.py drives the eye offset o toward its target with a frame-rate-independent decay α; the same form smooths the step-up offset, and o_max = crouch_eye_drop = 0.25 blocks bounds the drop.',
+          },
         ],
         codeBlocks: [
           {

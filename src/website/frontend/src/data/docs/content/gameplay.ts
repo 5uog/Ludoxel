@@ -150,8 +150,19 @@ class InteractionService:
         id: 'building-in-my-world-render-handoff',
         title: 'The Renderer Receives Dirty Chunks',
         body: [
-          'Applying the bulk edit advances the world state and marks the affected chunks dirty. The renderer then receives new chunk data from the session pipeline rather than editing world geometry itself, which keeps the simulation as the source of truth for what was built.',
-          'If a build appears to succeed in the world but not on screen, the question is the chunk upload, not the interaction rule. The accepted edit and the rendered result are separate steps connected by the session pipeline.',
+          'Applying the bulk edit advances the world through `set_blocks_bulk`, which is where the renderer-facing contract is fixed. Each mutated cell increments `WorldState.revision`, marks the neighbour chunk keys of that cell dirty rather than only the chunk that contains it, and records a gravity-dirty column at the cell and at the cell directly above. Neighbour chunks are marked because a block on a chunk boundary changes the visible faces of the adjacent chunk, and the gravity columns are the cells the gravity system re-scans on the next fixed step.',
+          'The session pipeline, not the interaction service, delivers that result to the renderer. It drains the accumulated set through `consume_dirty_chunks` or `consume_dirty_chunks_with_rev`, rebuilds the face payload for those chunk keys, and submits them to the active backend; the per-chunk revision returned by the second form travels with the upload so a stale payload can be rejected. The interaction service itself never touches renderer state.',
+          'If a build appears to succeed in the world but not on screen, the question is therefore the dirty-chunk drain and the upload cadence, not the interaction rule. The accepted edit, the revision increment, and the rendered result are three separate steps connected by the session pipeline.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'src/ludoxel/simulation/worlds/state/world.py',
+            code: `self.revision += 1
+self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
+self._mark_gravity_dirty_cell(int(x), int(y), int(z))
+self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
+          },
         ],
       },
     ],
@@ -292,6 +303,15 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         body: [
           'Whether a block presents a full flat top is computed by sampling its render boxes over a sixteen-by-sixteen grid and checking that every cell is covered at full height. This is what placement, support, and the player ground check use to decide if a surface can be stood on or built upon.',
           'A slab top, a stair, or a partial shape can therefore fail the full-top-support test even though it occupies the cell, which is why not every block makes a valid floor.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              'Q_{16}(v) = \\mathrm{clamp}\\bigl(\\operatorname{round}(16v),\\, 0,\\, 16\\bigr), \\qquad \\text{full top} \\iff \\bigcup_{b\\,:\\,b_y^{\\max} \\ge 1-\\epsilon} \\bigl[Q_{16}(b_{x_0}), Q_{16}(b_{x_1})\\bigr) \\times \\bigl[Q_{16}(b_{z_0}), Q_{16}(b_{z_1})\\bigr) = \\{0,\\dots,15\\}^2',
+            displayMode: true,
+            caption:
+              'The full-top query in src/ludoxel/simulation/blocks/models/api.py snaps each render box to a sixteenth-of-a-block lattice and accepts the surface only when full-height boxes cover every one of the 16×16 cells; the same one-sixteenth grid measures all block-model extents.',
+          },
         ],
         codeBlocks: [
           {
@@ -497,6 +517,15 @@ if bool(landed_now):
           'Fall damage is computed from the distance fallen relative to a safe distance of three blocks. A landing within the safe distance does no damage, and beyond it the damage is the whole number of blocks past the safe distance, rounded up.',
           'So a four-block fall does one point, a five-block fall does two, and short hops do nothing. The damage scales with how far past three blocks the fall was, not with the total height alone.',
         ],
+        mathBlocks: [
+          {
+            expression:
+              '\\mathrm{dmg}(d) = \\begin{cases} 0 & d \\le d_{\\mathrm{safe}} \\\\[2pt] \\lceil\\, d - d_{\\mathrm{safe}} \\,\\rceil & d > d_{\\mathrm{safe}} \\end{cases}, \\qquad d_{\\mathrm{safe}} = 3',
+            displayMode: true,
+            caption:
+              'fall_damage_amount in src/ludoxel/simulation/actors/player/kinematics.py, with FALL_DAMAGE_SAFE_DISTANCE_BLOCKS fixed at three blocks; the ceiling makes every excess block a whole point.',
+          },
+        ],
         codeBlocks: [
           {
             language: 'py',
@@ -542,6 +571,15 @@ def apply_void_damage(*, player, dt, timer_s):
         body: [
           'Below the threshold, a timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so the hits keep coming. The remaining sub-interval time is carried forward so the cadence is steady across frames.',
           'This makes the void a continuous drain rather than a single blow, so survival time depends on current health and how quickly the player can get back up.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              'n = \\left\\lfloor \\frac{t + \\Delta t}{T} \\right\\rfloor, \\qquad \\mathrm{damage} = A\\,n, \\qquad t_{\\mathrm{next}} = (t + \\Delta t) - T\\,n',
+            displayMode: true,
+            caption:
+              'apply_void_damage in src/ludoxel/simulation/actors/player/damage.py drains the accumulator in whole intervals: VOID_DAMAGE_INTERVAL_S sets the period T = 0.5 s, VOID_DAMAGE_AMOUNT sets A = 4 per tick (bypassing the hurt cooldown), and the sub-interval remainder is carried to the next step.',
+          },
         ],
         codeBlocks: [
           {
@@ -773,6 +811,15 @@ elif hearts_visible:
           'The heart strip draws one heart per two points of maximum health, and fills each heart in proportion to current health, so half-heart amounts are visible. Numeric health stays in simulation state; the hearts are a display of it.',
           'This is the same two-points-per-heart convention as the player health strip, so reading an AI’s hearts maps directly to its underlying health value.',
         ],
+        mathBlocks: [
+          {
+            expression:
+              'N = \\max\\!\\bigl(1,\\ \\bigl\\lceil \\tfrac{1}{2}\\max(2, H_{\\max}) \\bigr\\rceil\\bigr), \\qquad F = \\tfrac{1}{2}\\,\\mathrm{clamp}\\bigl(H,\\, 0,\\, \\max(2, H_{\\max})\\bigr)',
+            displayMode: true,
+            caption:
+              '_heart_count and _paint_heart_strip in src/ludoxel/presentation/interface/hud/ai_status_tags.py: the strip draws N hearts at one heart per two maximum-health points, and the fractional fill F lets a heart render half-full.',
+          },
+        ],
         codeBlocks: [
           {
             language: 'py',
@@ -857,6 +904,15 @@ display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._dis
           'The combat controller first turns the AI toward the target, producing yaw and pitch deltas and the remaining yaw error and horizontal distance. How much the AI moves forward depends on how closely it is already facing the target.',
           'A large yaw error reduces or stops forward movement so the AI lines up before committing, while a small error lets it advance at full speed. This keeps the AI from charging in the wrong direction.',
         ],
+        mathBlocks: [
+          {
+            expression:
+              '\\mathrm{move}_f(\\varepsilon) = \\begin{cases} 1.00 & \\varepsilon \\le 12^{\\circ} \\\\[1pt] 0.85 & 12^{\\circ} < \\varepsilon \\le 24^{\\circ} \\\\[1pt] 0.45 & 24^{\\circ} < \\varepsilon \\le 42^{\\circ} \\\\[1pt] 0.00 & \\varepsilon > 42^{\\circ} \\end{cases}',
+            displayMode: true,
+            caption:
+              'The combat controller in src/ludoxel/simulation/actors/ai_players/combat.py gates the forward component on the absolute yaw error ε = |abs_error_deg|, so the actor only commits full speed once it is nearly aligned.',
+          },
+        ],
         codeBlocks: [
           {
             language: 'py',
@@ -878,6 +934,15 @@ else:
         body: [
           'When a strafe timer is active and the AI is within a distance window and roughly facing the target, it adds a sideways component in the current strafe direction. This produces lateral movement during a fight rather than a straight line of approach.',
           'The strafe is bounded by the distance window, so it only happens at engagement range, not while closing from far away or when already on top of the target.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              's = \\begin{cases} \\sigma\\,M & \\tau_s > 0 \\;\\wedge\\; d_{xz} \\in [d_{\\min}, d_{\\max}] \\;\\wedge\\; \\varepsilon \\le 18^{\\circ} \\\\[2pt] 0 & \\text{otherwise} \\end{cases}, \\quad d_{\\min}=1.45,\\ d_{\\max}=2.75,\\ M=0.18',
+            displayMode: true,
+            caption:
+              'src/ludoxel/simulation/actors/ai_players/combat.py with constants from runtime.py: the strafe magnitude M is signed by σ = sign(combat_strafe_sign) and admitted only inside the [d_min, d_max] window while a strafe timer τ_s is active and the yaw error ε stays small.',
+          },
         ],
         codeBlocks: [
           {
@@ -933,6 +998,15 @@ MELEE_HURT_TILT_S = 0.18`,
         body: [
           'A successful hit applies knockback to the target along the attack direction, with a sprint bonus and a vertical component when the target is grounded. A sprinting attacker also keeps part of its own horizontal speed, which is the basis of sprint-hit behavior.',
           'Knockback only follows a hit that dealt damage, so a blocked or cooldown-suppressed contact does not push the target.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              '\\begin{aligned} s_{kb} &= v_h + [\\,\\mathrm{sprint}\\,]\\,v_h^{+} \\\\[2pt] (v_x, v_z) &= \\tfrac{1}{2}\\,(v_x^{t}, v_z^{t}) + s_{kb}\\,\\hat{\\mathbf{h}} \\\\[2pt] v_y &= \\min\\!\\bigl(v_v,\\ \\max(0,\\ \\tfrac{1}{2} v_y^{t}) + v_v\\bigr) \\end{aligned}',
+            displayMode: true,
+            caption:
+              'apply_melee_knockback in src/ludoxel/simulation/actors/player/damage.py: ĥ is the normalized horizontal attack direction, the target keeps half its prior velocity, the horizontal push is v_h = 8.0 with a sprint bonus v_h⁺ = 10.0 (0.40 and 0.50 times the 20 Hz tick base), and the vertical push v_v = 8.0 applies only when the target is grounded.',
+          },
         ],
         codeBlocks: [
           {
@@ -1102,6 +1176,15 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         body: [
           'A new match begins from the standard Othello opening: four discs in the center, two black and two white on opposing diagonals of the four central squares. The board is sixty-four cells, each empty, black, or white.',
           'This fixed opening is the same every match. Everything that follows — legal moves, captures, turn order — is derived from it by the rule functions.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              'i = S\\,r + c, \\qquad (r, c) = \\bigl(\\lfloor i / S \\rfloor,\\ i \\bmod S\\bigr), \\qquad S = \\sqrt{64} = 8',
+            displayMode: true,
+            caption:
+              'row_col_to_index and index_to_row_col in src/ludoxel/simulation/spaces/othello/game/board.py flatten the 8×8 grid (S = BOARD_SIZE = isqrt(BOARD_CELL_COUNT)); the opening sets indices (3,3) and (4,4) white and (3,4) and (4,3) black.',
+          },
         ],
         codeBlocks: [
           {
@@ -1480,6 +1563,15 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         body: [
           'The winner is whichever color has more discs in the final position. The rule counts black and white and returns the side with the higher count, or a draw when they are equal. There is no preference tiebreak; an equal count is a draw.',
           'So a result reflects the final board, and reading it means comparing the two disc counts, which the finished message also reports.',
+        ],
+        mathBlocks: [
+          {
+            expression:
+              'B = \\bigl|\\{\\, i : \\mathrm{board}[i] = \\mathrm{black} \\,\\}\\bigr|, \\quad W = \\bigl|\\{\\, i : \\mathrm{board}[i] = \\mathrm{white} \\,\\}\\bigr|, \\qquad w = \\begin{cases} \\mathrm{black} & B > W \\\\[1pt] \\mathrm{white} & W > B \\\\[1pt] \\mathrm{draw} & B = W \\end{cases}',
+            displayMode: true,
+            caption:
+              'winner_for_board over counts_for_board in src/ludoxel/simulation/spaces/othello/game/board.py decides the result purely by disc tally with no positional tiebreak, so an equal count is a draw.',
+          },
         ],
         codeBlocks: [
           {
