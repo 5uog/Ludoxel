@@ -4,6 +4,9 @@
  */
 import { type SearchIndexEntry } from '../../../data/docs/search';
 import { type GroupedSearchRows, type SearchRow } from './searchCommand.types';
+import { rankSearchEntry } from './searchSemantics';
+
+const MAX_SEARCH_RESULTS = 24;
 
 export function getSectionKey(entry: SearchIndexEntry): string {
   return entry.section.trim().toLowerCase();
@@ -15,11 +18,16 @@ export function filterSearchRows(entries: SearchIndexEntry[], normalizedQuery: s
   }
 
   return entries
-    .map((entry, index) => ({ entry, index }))
-    .filter(({ entry }) => {
-      const searchableText = `${entry.title} ${entry.description} ${entry.section}`.toLowerCase();
-      return searchableText.includes(normalizedQuery);
-    });
+    .map((entry, index) => rankSearchEntry(entry, index, normalizedQuery))
+    .filter((row): row is SearchRow => row !== null)
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      return left.entry.title.localeCompare(right.entry.title);
+    })
+    .slice(0, MAX_SEARCH_RESULTS);
 }
 
 export function groupSearchRows(rows: SearchRow[]): GroupedSearchRows {

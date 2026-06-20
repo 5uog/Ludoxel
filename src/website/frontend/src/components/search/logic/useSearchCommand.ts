@@ -9,6 +9,7 @@ import { searchIndex, type SearchIndexEntry } from '../../../data/docs/search';
 import { SEARCH_DIALOG_ANIMATION_MS } from './searchAnimation';
 import { type SearchCommandState, type SearchRow } from './searchCommand.types';
 import { filterSearchRows, groupSearchRows } from './searchRows';
+import { normalizeSearchText } from './searchSemantics';
 
 export function useSearchCommand(enableShortcut: boolean, entries?: SearchIndexEntry[]): SearchCommandState {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export function useSearchCommand(enableShortcut: boolean, entries?: SearchIndexE
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   const activeEntries = entries ?? searchIndex;
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = normalizeSearchText(query);
 
   const filteredRows = useMemo<SearchRow[]>(() => filterSearchRows(activeEntries, normalizedQuery), [activeEntries, normalizedQuery]);
   const groupedRows = useMemo(() => groupSearchRows(filteredRows), [filteredRows]);

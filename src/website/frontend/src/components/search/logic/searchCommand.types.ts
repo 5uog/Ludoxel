@@ -20,9 +20,16 @@ export type SearchSectionMeta = {
   Icon: ComponentType<{ className?: string }>;
 };
 
+export type SearchMatchQuality = 'direct' | 'semantic' | 'recommended';
+
 export type SearchRow = {
   entry: SearchIndexEntry;
   index: number;
+  score: number;
+  quality: SearchMatchQuality;
+  reason: string;
+  excerpt: string;
+  matchedTerms: string[];
 };
 
 export type GroupedSearchRows = Record<string, SearchRow[]>;

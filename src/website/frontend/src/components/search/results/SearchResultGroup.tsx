@@ -27,16 +27,7 @@ export default function SearchResultGroup({ filteredRows, rows, sectionKey, sele
         const resultIndex = filteredRows.findIndex((candidate) => candidate.index === row.index);
         const isSelected = resultIndex === selectedIndex;
 
-        return (
-          <SearchResultRow
-            entry={row.entry}
-            isSelected={isSelected}
-            key={row.entry.href}
-            sectionMeta={sectionMeta}
-            onMouseEnter={() => onMouseEnter(resultIndex)}
-            onSelect={() => onSelect(row.entry)}
-          />
-        );
+        return <SearchResultRow isSelected={isSelected} key={row.entry.href} row={row} sectionMeta={sectionMeta} onMouseEnter={() => onMouseEnter(resultIndex)} onSelect={() => onSelect(row.entry)} />;
       })}
     </div>
   );
