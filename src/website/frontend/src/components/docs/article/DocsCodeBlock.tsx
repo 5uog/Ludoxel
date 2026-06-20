@@ -5,7 +5,8 @@
 import { Check, Copy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { type DocsCodeBlock as DocsCodeBlockContent, type DocsSingleCodeBlock, type DocsTabbedCodeBlock, type DocsTabbedCodeBlockTab } from '../../../data/docs/types';
+import { type DocsCodeBlock as DocsCodeBlockContent, type DocsCodeBlockLanguage, type DocsSingleCodeBlock, type DocsTabbedCodeBlock } from '../../../data/docs/types';
+import { getDocsCodeLanguageLabel } from '../logic/docsCodeLanguages';
 import { type DocsCodeCopyStatus, useDocsCodeCopy } from '../logic/useDocsCodeCopy';
 import DocsHighlightedCode from './DocsHighlightedCode';
 import { renderInlineText } from './DocsInlineText';
@@ -20,9 +21,14 @@ type DocsCodeCopyButtonProps = {
   code: string;
 };
 
+type DocsCodeHeaderMetaProps = {
+  caption?: DocsSingleCodeBlock['caption'];
+  language: DocsCodeBlockLanguage;
+};
+
 type DocsCodePreProps = {
   code: string;
-  language: DocsTabbedCodeBlockTab['language'];
+  language: DocsCodeBlockLanguage;
 };
 
 function getCodeCopyButtonLabel(copyStatus: DocsCodeCopyStatus): string {
@@ -91,6 +97,19 @@ function DocsCodeCopyButton({ code }: DocsCodeCopyButtonProps): React.JSX.Elemen
   );
 }
 
+function DocsCodeHeaderMeta({ caption, language }: DocsCodeHeaderMetaProps): React.JSX.Element {
+  const languageLabel = getDocsCodeLanguageLabel(language);
+
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      {caption ? <figcaption className="min-w-0 text-sm text-muted-foreground">{renderInlineText(caption)}</figcaption> : null}
+      <span className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-1 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        {languageLabel}
+      </span>
+    </div>
+  );
+}
+
 function DocsCodePre({ code, language }: DocsCodePreProps): React.JSX.Element {
   return (
     <pre className="overflow-x-auto bg-secondary/30 px-4 py-4 font-mono text-sm leading-7">
@@ -105,7 +124,7 @@ function DocsSingleCodeBlock({ block, blockIndex, sectionId }: { block: DocsSing
   return (
     <figure className="my-6 overflow-hidden rounded-xl border border-border bg-background shadow-2xl" key={`${sectionId}-code-${blockIndex}`}>
       <div className="flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-2.5">
-        {block.caption ? <figcaption className="min-w-0 text-sm text-muted-foreground">{renderInlineText(block.caption)}</figcaption> : <span />}
+        <DocsCodeHeaderMeta caption={block.caption} language={block.language} />
         <DocsCodeCopyButton code={block.code} />
       </div>
 
@@ -149,7 +168,8 @@ function DocsTabbedCodeBlock({ block, blockIndex, sectionId }: { block: DocsTabb
                 tabIndex={isActive ? 0 : -1}
                 type="button"
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                <span className="ml-2 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground/80">{getDocsCodeLanguageLabel(tab.language)}</span>
                 {isActive ? <span className="absolute inset-x-2 -bottom-2 h-0.5 rounded-full bg-primary" aria-hidden="true" /> : null}
               </button>
             );

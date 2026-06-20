@@ -12,7 +12,60 @@ export type DocsReference = {
   description: string;
 };
 
-export type DocsCodeBlockLanguage = 'js' | 'py' | 'ts' | 'tsx' | 'json' | 'yaml' | 'sh' | 'toml' | 'qss' | 'css' | 'glsl' | 'vert' | 'frag' | 'comp' | 'wgsl';
+export const docsKnownCodeBlockLanguages = [
+  'bat',
+  'c',
+  'cmd',
+  'conf',
+  'cpp',
+  'cs',
+  'css',
+  'diff',
+  'dockerfile',
+  'env',
+  'frag',
+  'gitignore',
+  'glsl',
+  'go',
+  'graphql',
+  'h',
+  'hpp',
+  'html',
+  'ini',
+  'java',
+  'js',
+  'json',
+  'jsonc',
+  'jsx',
+  'kt',
+  'lua',
+  'makefile',
+  'md',
+  'ps1',
+  'py',
+  'qss',
+  'r',
+  'rb',
+  'rs',
+  'rust',
+  'scss',
+  'sh',
+  'sql',
+  'swift',
+  'toml',
+  'ts',
+  'tsx',
+  'txt',
+  'vert',
+  'wgsl',
+  'xml',
+  'yaml',
+  'yml',
+] as const;
+
+export type DocsKnownCodeBlockLanguage = (typeof docsKnownCodeBlockLanguages)[number];
+
+export type DocsCodeBlockLanguage = DocsKnownCodeBlockLanguage | (string & {});
 
 export type DocsSingleCodeBlock = {
   language: DocsCodeBlockLanguage;

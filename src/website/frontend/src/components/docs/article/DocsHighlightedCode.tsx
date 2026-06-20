@@ -5,19 +5,30 @@
 import { useMemo } from 'react';
 
 import { type DocsCodeBlockLanguage } from '../../../data/docs/types';
-import { highlightDocsCodeLine, type DocsHighlightTokenKind } from '../logic/docsCodeHighlight';
+import { highlightDocsCodeLine } from '../logic/docsCodeHighlight';
+import { type DocsHighlightTokenKind } from '../logic/docsCodeHighlight.types';
 
 const TOKEN_CLASS_NAMES: Record<DocsHighlightTokenKind, string> = {
-  plain: 'text-foreground',
-  comment: 'text-muted-foreground',
-  keyword: 'text-violet-300',
-  string: 'text-amber-300',
-  number: 'text-orange-300',
-  function: 'text-sky-300',
-  type: 'text-emerald-300',
-  property: 'text-lime-300',
-  operator: 'text-cyan-300',
-  punctuation: 'text-cyan-300',
+  plain: 'docs-code-token docs-code-token--plain',
+  comment: 'docs-code-token docs-code-token--comment',
+  keyword: 'docs-code-token docs-code-token--keyword',
+  control: 'docs-code-token docs-code-token--control',
+  modifier: 'docs-code-token docs-code-token--modifier',
+  string: 'docs-code-token docs-code-token--string',
+  number: 'docs-code-token docs-code-token--number',
+  function: 'docs-code-token docs-code-token--function',
+  type: 'docs-code-token docs-code-token--type',
+  property: 'docs-code-token docs-code-token--property',
+  constant: 'docs-code-token docs-code-token--constant',
+  variable: 'docs-code-token docs-code-token--variable',
+  tag: 'docs-code-token docs-code-token--tag',
+  attribute: 'docs-code-token docs-code-token--attribute',
+  operator: 'docs-code-token docs-code-token--operator',
+  punctuation: 'docs-code-token docs-code-token--punctuation',
+  regex: 'docs-code-token docs-code-token--regex',
+  inserted: 'docs-code-token docs-code-token--inserted',
+  deleted: 'docs-code-token docs-code-token--deleted',
+  meta: 'docs-code-token docs-code-token--meta',
 };
 
 type DocsHighlightedCodeProps = {
