@@ -18,7 +18,11 @@ export const dataPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. Its order is exact: an explicit environment override wins; absent that override, the resolver falls through to platform-specific user data locations. The result is a local persistence root whose value is computed at runtime rather than hard-coded in the website documentation.',
+            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. The signature still accepts `project_root`, but the function body does not read that argument. Repository location is therefore not a dormant fallback, not a packaging shortcut, and not a hidden persistence anchor; the resolver is governed by `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories alone.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`LUDOXEL_DATA_ROOT` is the only branch that can displace the platform data directory. When it is present, the returned root is the expanded and resolved override path. When it is absent, the resolver selects `LOCALAPPDATA` or `AppData` on Windows, `~/Library/Application Support/Ludoxel` on macOS, `XDG_DATA_HOME/ludoxel` on XDG systems, and finally `~/.local/share/ludoxel`. The path is fixed by those inputs for the running process; neither the source tree nor the website documentation participates in that decision.',
           },
           {
             kind: 'code',
@@ -45,7 +49,7 @@ export const dataPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
-            text: 'The first branch is legally and operationally significant for Data documentation: `LUDOXEL_DATA_ROOT` does not merely redirect one file; it relocates the entire local data tree. A screenshot of an absolute path cannot prove the platform branch by itself, because the same state files can appear below a custom override. Correct analysis starts from the resolver branch and only then names the file that was read or written.',
+            text: 'The environment-override branch is the first hard boundary: `LUDOXEL_DATA_ROOT` relocates the complete runtime tree before any store computes `state` or `cache`. An observed absolute path therefore proves only the final resolver output. It does not prove the platform branch, it does not prove repository ownership, and it does not certify that the file may be copied. Correct reading names the resolver branch, the relative file below `state` or `cache`, and the store that consumes that relative path.',
           },
         ],
       },
@@ -97,7 +101,7 @@ def _world_store(self) -> JsonFileStore:
           },
           {
             kind: 'paragraph',
-            text: 'The resulting local data tree contains several distinct persistence families: player state, world state, runtime integrity material, AI learning state, demonstration datasets, learned policies, training and evaluation records, Othello user opening-book lines, and rebuildable Othello cache data. A path below the runtime root identifies which store family produced the file; it does not decide whether the contents may be copied, published, or redistributed.',
+            text: 'The resulting local data tree contains several distinct persistence families: player state, world state, runtime integrity material, AI learning state, demonstration datasets, learned policies, training and evaluation records, Othello user opening-book lines, and rebuildable Othello cache data. A path below the runtime root identifies which store family produced the file, which schema admitted it, and whether deletion removes primary state or only a derived cache. It does not decide whether the contents may be copied, published, or redistributed.',
           },
         ],
       },
@@ -108,6 +112,10 @@ def _world_store(self) -> JsonFileStore:
           {
             kind: 'paragraph',
             text: 'A resolved path is evidence of placement, resolver branch, and store ownership. It is not evidence of permission. A file under `<data_root>/state/learning/` is a learning artifact because the learning store writes it there; it is not a public dataset because it is located under that path. A file under `<data_root>/state/world_state.json` is saved local state because the application state store reads it there; it is not a distribution package because it serializes a world.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`AppStateStore._read_runtime_or_previous` makes this sharper than a directory map. Runtime files are read first, protected runtime files are verified before trust, and the old `configs` path is consulted only when the runtime file is absent. Location, integrity admission, and legacy migration are therefore three separate questions. Collapsing them into “where the JSON is” loses the actual control flow.',
           },
           {
             kind: 'paragraph',
@@ -147,7 +155,7 @@ def _world_store(self) -> JsonFileStore:
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel distinguishes a project root from a runtime data root by predicate, not by intuition. A project root is identified by repository markers: `pyproject.toml`, or the joint presence of `assets` and `src`. That predicate identifies source and resource material. It is not a persistence target and does not become one because a user is running from a checkout.',
+            text: 'Ludoxel distinguishes a project root from a runtime data root by predicate, not by intuition. A project root is identified by repository markers: `pyproject.toml`, or the joint presence of `assets` and `src`. That predicate classifies a tree as repository material for source and resources. It is not a persistence target, not a user-data namespace, and not a cleanup root merely because the process was launched from a checkout.',
           },
           {
             kind: 'code',
@@ -218,7 +226,11 @@ def runtime_cache_root(data_root: Path) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'The fallback is migration evidence, not a current write contract. It proves that older records can be imported when no runtime file exists. It does not prove that modern state belongs in the repository or that editing repository-local files is a supported way to repair runtime state.',
+            text: 'The fallback is migration evidence, not a current write contract. It proves that older records can be imported when no runtime file exists. It does not prove that modern state belongs in the repository, that repository-local files should be edited to repair runtime state, or that the project root has become mutable application storage.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The write path is one-way in the current implementation. `AppStateStore.save` constructs `PlayerStateFile` and `WorldStateFile`, writes them through `_player_store` and `_world_store`, and then updates the runtime integrity manifest for `state/player_state.json` and `state/world_state.json`. There is no symmetric save branch back into `configs`; legacy data enters the runtime model only as a read fallback.',
           },
         ],
       },
@@ -257,7 +269,7 @@ def runtime_cache_root(data_root: Path) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: 'Cleanup must target the active resolver result. If `LUDOXEL_DATA_ROOT` is set, the platform default directory is not the active tree. If it is absent, a guessed override path is irrelevant. The runtime data-root function therefore controls cleanup before any file is removed.',
+            text: 'Cleanup must target the active resolver result, not a guessed directory. If `LUDOXEL_DATA_ROOT` is set, the platform default directory is not the active tree. If it is absent, an arbitrary override path is irrelevant. The runtime data-root function therefore controls cleanup before any file is removed, and every later deletion statement must be expressed relative to that resolved root.',
           },
           {
             kind: 'code',
@@ -269,7 +281,7 @@ if env_root:
           },
           {
             kind: 'paragraph',
-            text: 'This distinction prevents two common errors: deleting the wrong local directory and describing source-tree cleanup as saved-data cleanup. Data cleanup is bounded to the resolved data root and its `state` and `cache` children. It does not clean Vite output, PyInstaller output, dependency directories, generated thumbnails in the repository, or package staging directories.',
+            text: 'This distinction prevents two common errors: deleting the wrong local directory and describing source-tree cleanup as saved-data cleanup. Data cleanup is bounded to the resolved data root and its `state` and `cache` children. It does not clean Vite output, PyInstaller output, dependency directories, generated thumbnails in the repository, package staging directories, bundled resources, or license files.',
           },
         ],
       },
@@ -326,6 +338,10 @@ class PlayerStateFile:
             kind: 'paragraph',
             text: 'The method proves that learning cleanup has internal granularity. Clearing one dataset does not imply a reset of learning settings, policy selection, bundled policies, or unrelated training records. A report that says “learning data was cleared” is technically incomplete unless it names the exact dataset id, policy id, or state file that was removed.',
           },
+          {
+            kind: 'paragraph',
+            text: 'The implementation also normalizes the dataset id before any dataset path is formed. `_safe_name` lowercases the identifier, replaces characters outside `abcdefghijklmnopqrstuvwxyz0123456789_-` with underscores, and falls back to `default` when the result is empty. Dataset cleanup is therefore not a raw path operation supplied by the UI; it is a bounded unlink against normalized current and legacy dataset file names.',
+          },
         ],
       },
       {
@@ -356,7 +372,7 @@ class PlayerStateFile:
           },
           {
             kind: 'paragraph',
-            text: 'Partial integrity deletion can therefore produce non-obvious results. Removing the protected file itself makes the store load defaults. Removing only the key leaves protected files present but unverifiable. Removing the manifest suppresses manifest-based verification of remaining files. None of those operations repairs data or certifies correctness; they only change the verification path.',
+            text: 'Partial integrity deletion can therefore produce non-obvious results. Removing the protected file itself makes the store load defaults. Removing only the key leaves protected files present but unverifiable when manifest entries refer to them. Removing the manifest suppresses manifest-based verification of remaining files. None of those operations repairs data, certifies correctness, or authorizes manual edits; they only change the verification path.',
           },
           {
             kind: 'note',
@@ -394,7 +410,8 @@ class PlayerStateFile:
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading Saved Preferences',
-    description: 'Defines saved preferences through the player-state envelope, `PersistedSettings`, default construction, coercion, legacy key migration, runtime consumption, and integrity failure.',
+    description:
+      'Defines saved preferences through the player-state envelope, `PersistedSettings`, audio vectors, cloud ranges, keybind canonicalization, runtime projection, shadow quality normalization, legacy key migration, and integrity failure.',
     sections: [
       {
         id: 'reading-saved-preferences-envelope',
@@ -428,21 +445,245 @@ class PlayerStateFile:
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedSettings` supplies typed defaults and load-time normalization. The loader reads JSON through coercion helpers and clamps values that have runtime bounds. Render distance is passed through the render-distance clamp, window size is floored, and shadow-map quality is normalized to a supported level.',
+            text: '`PersistedSettings` is the saved-data admission point for runtime preferences. It imports the specialized preference normalizers rather than duplicating their rules: `AudioPreferences` for category gains, `normalize_cloud_speed_range` and `normalize_cloud_height_settings` for cloud ranges, `KeybindSettings` for portable keyboard bindings, `RuntimePreferences` for default values, and `normalize_shadow_map_quality` for the shadow-specific quality tier.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Representative preference coercion and normalization.',
-            code: `rd = clamp_render_distance_chunks(mapping_int(d, "render_distance_chunks", 6))
-...
-window_width=max(320, coerce_int(d.get("window_width", 1280), 1280)),
-window_height=max(240, coerce_int(d.get("window_height", 720), 720)),
-shadow_map_quality=normalize_shadow_map_quality(d.get("shadow_map_quality", SHADOW_MAP_QUALITY_DEFAULT)),`,
+            caption: 'src/ludoxel/application/persistence/schema/settings.py',
+            code: `from ludoxel.application.preferences.audio import AudioPreferences
+from ludoxel.application.preferences.clouds import normalize_cloud_height_settings, normalize_cloud_speed_range
+from ludoxel.application.preferences.keybinds import KeybindSettings
+from ludoxel.application.preferences.runtime import RuntimePreferences
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality`,
           },
           {
             kind: 'paragraph',
-            text: 'This is not a loose JSON bag. The schema converts untrusted raw values into a bounded runtime contract. A malformed numeric value does not automatically become a renderer parameter; it first passes through the persisted-settings reader. That reader is the engineering boundary between local JSON and live runtime state.',
+            text: 'The `__post_init__` path is part of the saved-data contract. Even when `PersistedSettings.from_dict` receives numbers from JSON coercion, the dataclass construction still reprojects cloud speeds, cloud heights, and shadow quality into the ranges maintained by the preference modules. Stored JSON is therefore not a direct renderer or input parameter; it is an input to a normalization boundary.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Preference construction reuses the same normalization functions as runtime code.',
+            code: `speed_min, speed_max = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, probability = normalize_cloud_height_settings(
+  self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+)
+object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self.shadow_map_quality))`,
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-preferences-audio-vector',
+        title: 'Audio Preference Vector',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval `[0, 1]` by `_clamp_volume`. A value that cannot be converted to `float` does not reach the mixer as an arbitrary object and does not collapse into an unbounded gain; it falls back to the provided default, whose default is `1.0`, and is then clamped.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Audio gain values are finite category coefficients before playback consumes them.',
+            code: `def _clamp_volume(value: object, *, default: float = 1.0) -> float:
+  try:
+    numeric = float(value)
+  except Exception:
+    numeric = float(default)
+  return float(clampf(float(numeric), 0.0, 1.0))
+
+@dataclass(frozen=True)
+class AudioPreferences:
+  master: float = 1.0
+  ambient: float = 1.0
+  block: float = 1.0
+  player: float = 1.0`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The effective category gain is multiplicative. `volume_for("ambient")` returns `master * ambient`, `volume_for("block")` returns `master * block`, and `volume_for("player")` returns `master * player`. Asking for `master` itself, or for an unknown category, returns only `master`; unknown category text is not admitted as a new mixer bus. `to_dict` serializes the flat four-key vector, while `from_dict` treats a non-dictionary input as default audio preferences.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-preferences-cloud-ranges',
+        title: 'Cloud Speed and Height Ranges',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/clouds.py` gives cloud movement and cloud height data explicit numerical domains. Per-cloud horizontal speed is a block-per-second interval. Both endpoints are clamped to `[0, 4]`, and an inverted interval is swapped so persistence, the Settings UI, and the renderer receive the shared invariant `min_speed <= max_speed`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Cloud speed endpoints are clamped and then ordered.',
+            code: `def normalize_cloud_speed_range(min_speed: object, max_speed: object) -> tuple[float, float]:
+  lo = clampf(float(min_speed), float(CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND), float(CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND))
+  hi = clampf(float(max_speed), float(CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND), float(CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND))
+  if float(lo) > float(hi):
+    lo, hi = float(hi), float(lo)
+  return (float(lo), float(hi))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Cloud altitude settings use the same boundary discipline. Fixed height, spawn range, and preferred height range are integer Y coordinates clamped to `[28, 250]`. Inverted spawn and preferred intervals are exchanged, and the preferred interval is then projected inside the normalized spawn interval. The preferred-Y probability is not a raw percentage string or unbounded integer; it is clamped to `[0, 100]` before the tuple is returned.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'The preferred cloud band is constrained by both global Y limits and the spawn band.',
+            code: `fixed = clampi(int(fixed_y), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+spawn_lo = clampi(int(spawn_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+spawn_hi = clampi(int(spawn_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+if int(spawn_lo) > int(spawn_hi):
+  spawn_lo, spawn_hi = int(spawn_hi), int(spawn_lo)
+
+preferred_lo = clampi(int(preferred_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+preferred_hi = clampi(int(preferred_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+if int(preferred_lo) > int(preferred_hi):
+  preferred_lo, preferred_hi = int(preferred_hi), int(preferred_lo)
+preferred_lo = clampi(int(preferred_lo), int(spawn_lo), int(spawn_hi))
+preferred_hi = clampi(int(preferred_hi), int(spawn_lo), int(spawn_hi))
+
+probability = clampi(int(preferred_y_probability_percent), 0, 100)`,
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-preferences-keybind-canonicalization',
+        title: 'Keybind Canonicalization',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/keybinds.py` treats keybinds as a fixed action-to-portable-text mapping. `keybind_actions()` returns the stable action order used by persistence, the settings surface, and duplicate-binding resolution; hotbar actions appear at the end in slot order from 1 through 9. `default_keybinds_map()` returns a new dictionary so callers cannot mutate the module constant by accident.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The portable binding language is intentionally narrow. It accepts known single-key names, aliases such as `Esc` / `Escape` and `Ctrl` / `Control`, ASCII letters and digits, function keys, navigation keys, and modifier keys as single keys. It rejects modifier sequences, multi-key sequences, comma-separated alternatives, and unknown names by normalizing them to the empty binding. An empty binding is runtime `None` and displays as `Unbound`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Binding text is normalized before it can become a runtime key code.',
+            code: `def _normalize_binding_text_cached(raw: str) -> str:
+  source = str(raw).strip()
+  if not source:
+    return ""
+  if "+" in source or "," in source:
+    return ""
+  compact = " ".join(source.replace("_", " ").replace("-", " ").split()).lower()
+  collapsed = compact.replace(" ", "")
+  return str(_KEY_ALIASES.get(compact, _KEY_ALIASES.get(collapsed, ""))).strip()
+
+def _binding_to_key_cached(normalized_binding: str) -> int | None:
+  if not normalized_binding:
+    return None
+  key = _KEY_CODE_BY_NAME.get(str(normalized_binding))
+  return int(key) if key is not None and int(key) > 0 else None`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Duplicate bindings are resolved by canonicalization rather than by the input adapter. `_normalized_bindings_from_items` starts with every known action, ignores unknown action identifiers, and gives the later action the key when the same normalized binding appears twice. The earlier action is cleared, preserving a one-key-to-one-action runtime lookup. `KeybindSettings.__post_init__` then builds both `action -> key` and `key -> action` maps, so viewport, inventory, HUD, and hotbar input paths share the same comparison rule.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Duplicate binding resolution clears the older action and records the later owner.',
+            code: `if normalized_binding:
+  previous_action = seen_by_binding.get(str(normalized_binding))
+  if previous_action is not None and previous_action in normalized:
+    normalized[str(previous_action)] = ""
+  seen_by_binding[str(normalized_binding)] = str(normalized_action)
+
+normalized[str(normalized_action)] = str(normalized_binding)`,
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-preferences-runtime-projection',
+        title: 'Runtime Projection and Hotbar Branches',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/runtime.py` is the mutable runtime form that consumes persisted settings after schema admission. Its `normalize()` method reprojects booleans, finite numeric ranges, hotbar branches, play-space identifiers, Othello settings, keybinds, and audio preferences into one canonical object before renderer state, session code, or input handling consumes them. `clone()` and `coerce_runtime_preferences()` preserve that boundary by returning a normalized structural copy rather than exposing the original object for partial mutation.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Runtime normalization gathers saved preference families into one mutable contract.',
+            code: `self.current_space_id = normalize_play_space_id(self.current_space_id)
+self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
+self.player_name = normalize_player_name(self.player_name)
+self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
+self.camera_perspective = normalize_camera_perspective(self.camera_perspective)
+self.keybinds = self.keybinds.normalized()
+self.audio = self.audio.normalized()`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Window position fields deliberately use partial integer coercion. `_coerce_optional_int` keeps `None` as `None`, converts valid integers, and returns `None` on failed conversion. Invalid saved window geometry is therefore treated as absent placement information, not as coordinate zero. This matters because coordinate zero is a real desktop position while absence means the runtime may choose another placement.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Hotbar state is not a single list. Runtime selects the active branch in the order Othello, route edit, creative mode, then survival. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, so a malformed saved index or slot sequence does not survive into an undefined hotbar read.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'The active hotbar branch is selected before item identity is interpreted.',
+            code: `def _active_hotbar_state_attrs(self) -> tuple[str, str]:
+  if self.is_othello_space():
+    return ("othello_hotbar_slots", "othello_selected_hotbar_index")
+  if bool(self.route_edit_active):
+    return ("route_hotbar_slots", "route_selected_hotbar_index")
+  if bool(self.creative_mode):
+    return ("creative_hotbar_slots", "creative_selected_hotbar_index")
+  return ("survival_hotbar_slots", "survival_selected_hotbar_index")
+
+def current_block_id(self) -> str | None:
+  item_id = self.current_item_id()
+  if item_id is None or is_special_item_id(item_id):
+    return None
+  return item_id`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`view_model_visible` is also a runtime projection, not a saved Boolean. The renderer draws the first-person arm, held block, and special item only when the normalized perspective is first person and `hide_hand` is false. Cycling the camera perspective goes through the finite order in the camera preference module, so keybind and UI paths cannot invent an unsupported camera identifier.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-preferences-shadow-quality',
+        title: 'Shadow Quality Contract',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/shadow.py` defines shadow-map quality as a discrete five-step value, not as render distance and not as a free numeric multiplier. The allowed values are 1 `Lowest`, 2 `Low`, 3 `Standard`, 4 `High`, and 5 `Ultra`. The tier controls the shadow-map and shadow-shader quality policy, while render distance remains a separate chunk-visibility setting.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Shadow quality admits only the five declared tiers.',
+            code: `SHADOW_MAP_QUALITY_LABELS: dict[int, str] = {
+  SHADOW_MAP_QUALITY_LOWEST: "Lowest",
+  SHADOW_MAP_QUALITY_LOW: "Low",
+  SHADOW_MAP_QUALITY_STANDARD: "Standard",
+  SHADOW_MAP_QUALITY_HIGH: "High",
+  SHADOW_MAP_QUALITY_ULTRA: "Ultra",
+}
+
+def normalize_shadow_map_quality(value: object) -> int:
+  try:
+    quality = int(value)
+  except (TypeError, ValueError):
+    return int(SHADOW_MAP_QUALITY_DEFAULT)
+  if quality < int(SHADOW_MAP_QUALITY_MIN) or quality > int(SHADOW_MAP_QUALITY_MAX):
+    return int(SHADOW_MAP_QUALITY_DEFAULT)
+  return int(quality)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The fallback is deliberately `Standard` rather than the nearest endpoint. Missing, old-format, type-invalid, or out-of-range saved values converge to tier 3. A saved render-distance change does not rewrite this value, and an invalid shadow tier cannot force `Lowest`, `Ultra`, or a non-existent quality level into renderer state.',
           },
         ],
       },
@@ -475,7 +716,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
           {
             kind: 'paragraph',
             text: [
-              'A stored preference changes runtime behavior only when the consumer reads the loaded settings object. Camera, audio, keybind, render-distance, cloud, and shadow systems consume values after schema normalization. Visible adjustment belongs to Settings surfaces such as ',
+              'A stored preference changes runtime behavior only when the consumer reads the loaded settings object. Camera, audio, keybind, render-distance, cloud, and shadow systems consume values after schema normalization and runtime projection. Visible adjustment belongs to Settings surfaces such as ',
               {
                 kind: 'link',
                 label: 'camera preferences',
@@ -486,7 +727,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
           },
           {
             kind: 'paragraph',
-            text: '`player_state.json` is also protected by runtime integrity. A manually modified file can fail verification before its JSON is trusted. A missing, unreadable, non-object, or unverifiable file falls back through default construction. The application does not treat manual JSON editing as an authorized preference-update channel.',
+            text: '`player_state.json` is also protected by runtime integrity. A manually modified file can fail verification before its JSON is trusted. A missing, unreadable, non-object, or unverifiable file falls back through default construction. The data boundary is therefore stricter than “JSON exists”: the record must be in the active runtime path, pass the store read path, survive integrity admission where applicable, and then survive schema normalization.',
           },
         ],
       },
@@ -549,7 +790,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
           },
           {
             kind: 'paragraph',
-            text: 'That representation has two consequences. First, the saved world is exactly the surviving explicit cell map, not an instruction to regenerate the same terrain. Second, the revision number belongs to mutation tracking; it is not a release version, schema version, or proof of content authorship.',
+            text: 'That representation has two consequences. First, the saved world is exactly the surviving explicit cell map, not an instruction to regenerate the same terrain. Second, the revision number belongs to mutation tracking inside `WorldState`; it is not a release version, schema version, proof of content authorship, or substitute for the `WorldStateFile.version` envelope.',
           },
         ],
       },
@@ -573,7 +814,7 @@ class PersistedPlaySpace:
           },
           {
             kind: 'paragraph',
-            text: 'The composition explains why deleting or corrupting one subrecord does not have the same meaning as deleting a whole world. A valid block map without the prior player pose is not the original play space. A valid Othello match without its surrounding space data is not the complete saved state.',
+            text: 'The composition explains why deleting or corrupting one subrecord does not have the same meaning as deleting a whole world. A valid block map without the prior player pose is not the original play space. A valid Othello match without its surrounding space data is not the complete saved state. A save-file analysis must preserve the envelope, the space key, and the member record that actually failed.',
           },
         ],
       },
@@ -602,7 +843,7 @@ if isinstance(raw, list):
           },
           {
             kind: 'paragraph',
-            text: 'This is an engineering compromise. It preserves the valid part of a save while refusing to invent missing coordinates or block states. A world that loads after skipping malformed rows may be usable, but it is not identical to the file that would have loaded if those rows had been valid.',
+            text: 'This is an engineering compromise with evidentiary consequences. It preserves the valid part of a save while refusing to invent missing coordinates or block states. A world that loads after skipping malformed rows may be usable, but it is not identical to the file that would have loaded if those rows had been valid; the skipped rows remain lost data rather than repaired data.',
           },
         ],
       },
@@ -633,7 +874,7 @@ if isinstance(raw, list):
     group: 'Saved Runtime State',
     title: 'Reading Saved AI State',
     description:
-      'Separates persisted AI actors, learning settings, demonstration datasets, learned policies, and evaluation summaries, refusing to treat saved AI data as proof of autonomous intelligence.',
+      'Separates persisted AI actors, learning settings, demonstration datasets, learned policies, and evaluation summaries through the schema module that admits values and the store module that owns runtime files.',
     sections: [
       {
         id: 'reading-saved-ai-state-artifact-families',
@@ -641,22 +882,51 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: 'Saved AI data spans multiple artifact families. Per-actor state is embedded in play spaces inside `world_state.json`. Learning settings and summary records are stored in `state/ai_learning.json`. Demonstration datasets, learned policies, evaluations, and training-run records live under `state/learning/`. The phrase “AI state” is therefore ambiguous unless the file family is named.',
+            text: 'Saved AI data is governed by two application-persistence files, not by a single undifferentiated “AI state” object. `src/ludoxel/application/persistence/schema/ai_learning.py` owns the admitted value domains, JSON envelope, default state, and restoration coercion. `src/ludoxel/application/persistence/stores/ai_learning.py` owns the runtime files below the data root: `state/ai_learning.json`, demonstration JSON Lines files, user policy JSON files, evaluation reports, and training-run records. A correct reading must therefore name both the schema layer that accepts values and the store layer that places files.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Learning-state envelope separates settings from dataset/policy files.',
+            caption: 'Learning-state envelope separates settings from dataset and policy files.',
             code: `@dataclass(frozen=True)
 class PersistedAiLearningState:
   settings: PersistedAiLearningSettings = field(default_factory=PersistedAiLearningSettings)
-  dataset_summary: PersistedAiLearningDatasetSummary = field(default_factory=PersistedAiLearningDatasetSummary)
+  dataset_summary: dict[str, Any] = field(default_factory=dict)
   last_training_summary: dict[str, Any] = field(default_factory=dict)
-  last_evaluation_summary: dict[str, Any] = field(default_factory=dict)`,
+  last_evaluation_summary: dict[str, Any] = field(default_factory=dict)
+  policy_version: int = 0
+  schema_version: int = AI_LEARNING_SCHEMA_VERSION`,
           },
           {
             kind: 'paragraph',
-            text: 'The learning-state envelope records configuration and summaries; it is not the dataset and not the policy corpus. A small `ai_learning.json` file can point at large external rows under `state/learning/demonstrations/`, and a missing policy file can make a selected policy id unusable without deleting the learning settings.',
+            text: 'The envelope records configuration and summaries; it is not the dataset and not the policy corpus. `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are mapping-shaped summaries whose internal detail may vary, while `policy_version` is only a version counter for the selected production policy content. The state dataclass is frozen and JSON-serializable, but that immutability does not make the surrounding artifact family immutable: datasets, policies, evaluations, and training runs are separate files owned by the store.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-store-boundary',
+        title: 'Store Boundary and Default State',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The store is the only component that decides where the learning-state envelope is read and written. It derives the data root from an injected `data_root` when present, otherwise from `default_runtime_data_root(project_root)`, and then places the settings file under `runtime_state_root(data_root) / "ai_learning.json"`. If that file is absent, the store does not infer a partial state from neighboring datasets or policy files; it returns the schema default.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
+            code: `def load_state(self) -> PersistedAiLearningState:
+  raw = JsonFileStore(path=self._settings_path()).read()
+  if raw is None:
+    return PersistedAiLearningState.default()
+  return PersistedAiLearningState.from_dict(raw)
+
+def save_state(self, state: PersistedAiLearningState) -> None:
+  JsonFileStore(path=self._settings_path()).write(state.to_dict())`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The default is deliberately inert. It constructs normalized settings with `learning_mode` set to `off`, recording flags absent and then normalized to false, skill flags absent and then normalized to true, a built-in policy kind, empty summaries, and policy version zero. A fresh installation or a missing settings file therefore does not silently enable demonstration recording, learned-policy use, or training execution.',
           },
         ],
       },
@@ -666,7 +936,7 @@ class PersistedAiLearningState:
         content: [
           {
             kind: 'paragraph',
-            text: 'A persisted AI actor is a runtime actor record. It contains identity, behavior mode, personality, skin mode, skin id, automatic-regeneration settings, held item, pose, velocity, orientation, health, patrol route, and behavior-related flags. It does not contain learned weights.',
+            text: 'A persisted AI actor is a runtime actor record embedded in play-space state. It contains identity, behavior mode, personality, skin mode, skin id, automatic-regeneration settings, held item, pose, velocity, orientation, health, patrol route, and behavior-related flags. It does not contain learned weights, a demonstration dataset, or a selected policy artifact.',
           },
           {
             kind: 'code',
@@ -679,7 +949,48 @@ if skin_mode == AI_SKIN_MODE_CUSTOM and not skin_id:
           },
           {
             kind: 'paragraph',
-            text: 'The normalization step matters because it proves that saved actor data is not blindly replayed. An invalid custom-skin configuration is reduced to player-skin mode during load. The saved file is interpreted through schema code before it becomes a live actor.',
+            text: 'The normalization step matters because it proves that saved actor data is not blindly replayed. An invalid custom-skin configuration is reduced to player-skin mode during load. The actor record is interpreted through actor schema code before it becomes a live actor, while learning settings are interpreted through the separate learning schema.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-mode-domain',
+        title: 'Learning Mode Domain',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Learning mode is a closed five-value string domain. The normalizer accepts an arbitrary object, projects it to text, trims surrounding whitespace, lowercases it, and admits the value only when it exactly matches `LEARNING_MODES`. Missing, malformed, renamed, or unknown values collapse to `off`. That fallback is not cosmetic; it is the safety boundary that prevents an unrecognized saved value from accidentally enabling recording or policy use.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Mode normalization and ordinary-play activation are separate predicates.',
+            code: `LEARNING_MODES: tuple[str, ...] = (
+  LEARNING_MODE_OFF,
+  LEARNING_MODE_OBSERVE_ONLY,
+  LEARNING_MODE_USE_LEARNED_POLICY,
+  LEARNING_MODE_TRAIN_FROM_PLAYER_DATA,
+  LEARNING_MODE_TRAIN_IN_SANDBOX,
+)
+
+ACTIVE_LEARNING_MODES: tuple[str, ...] = (
+  LEARNING_MODE_OFF,
+  LEARNING_MODE_OBSERVE_ONLY,
+  LEARNING_MODE_USE_LEARNED_POLICY,
+)
+
+def normalize_learning_mode(value: object) -> str:
+  raw = str(value).strip().lower()
+  if raw in _LEARNING_MODE_SET:
+    return raw
+  return LEARNING_MODE_OFF
+
+def is_active_learning_mode(mode: object) -> bool:
+  return normalize_learning_mode(mode) in ACTIVE_LEARNING_MODES`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`train_from_player_data` and `train_in_sandbox` remain legal persisted values, but they are not active ordinary-play modes. `is_active_learning_mode` returns true only for `off`, `observe_only`, and `use_learned_policy`; train modes may be selected or preserved by UI and persistence, yet they do not authorize heavy training to start during normal play. The runtime side applies that constraint when the saved value is consumed.',
           },
         ],
       },
@@ -689,26 +1000,110 @@ if skin_mode == AI_SKIN_MODE_CUSTOM and not skin_id:
         content: [
           {
             kind: 'paragraph',
-            text: 'Learning settings control capture and policy selection. They do not create rows by their mere existence. Capture depends on learning mode and capture flags. Policy use depends on selected policy kind and id, plus the availability and usability of the corresponding artifact.',
+            text: 'Learning settings are the editable portion of the learning-state envelope. `learning_mode` selects the admitted mode, `capture_flags` records which demonstration kinds may be captured, `skill_flags` selects skill categories for training and evaluation, `selected_policy_kind` and `selected_policy_id` identify the policy candidate for production use, and `dataset_id` selects the logical dataset. None of those fields proves that rows exist, that a policy artifact is usable, or that any training job has run.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Representative learning settings fields.',
+            caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
             code: `@dataclass(frozen=True)
 class PersistedAiLearningSettings:
-  learning_mode: str = AI_LEARNING_MODE_OFF
-  capture_player_demonstrations: bool = False
-  capture_ai_decisions: bool = False
-  capture_failures: bool = False
-  capture_deaths: bool = False
-  capture_route_failures: bool = False
-  selected_policy_kind: str = AI_POLICY_KIND_BUILTIN
-  selected_policy_id: str = AI_POLICY_ID_BUILTIN`,
+  learning_mode: str = LEARNING_MODE_OFF
+  capture_flags: dict[str, bool] = field(default_factory=dict)
+  skill_flags: dict[str, bool] = field(default_factory=dict)
+  selected_policy_kind: str = POLICY_KIND_BUILTIN
+  selected_policy_id: str = ""
+  dataset_id: str = "default"`,
           },
           {
             kind: 'paragraph',
-            text: 'A saved setting can therefore describe an intent to record or use a policy without proving that rows or policies exist. The data interpretation must follow the chain from learning settings to dataset path to policy registry rather than collapsing all learning-related JSON into a single capability claim.',
+            text: 'The field defaults encode the inactive baseline. Capture flags default to no recording, skill flags default to all known skill categories enabled after normalization, policy kind defaults to the built-in policy family, and `dataset_id` defaults to `default`. Observe-only status and policy use are derived from `learning_mode`; they are not independent stored authorities that can override the mode.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-flag-normalization',
+        title: 'Flag and Identifier Normalization',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Flag mappings are normalized against known key sets rather than accepted as arbitrary dictionaries. `capture_flags` is projected onto `RECORD_KINDS` with a false default, while `skill_flags` is projected onto `skill_category_ids()` with a true default. Known entries are coerced through `coerce_bool`; missing keys receive the category default; unknown keys are discarded. This is the point where stale UI keys, manual edits, and forward-incompatible entries are barred from the runtime flag set.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Known-key flag normalization removes unknown entries.',
+            code: `def _normalize_flag_map(value: object, *, keys: tuple[str, ...], default: bool) -> dict[str, bool]:
+  source = value if isinstance(value, dict) else {}
+  return {str(key): coerce_bool(source.get(str(key), default), bool(default)) for key in keys}
+
+def normalized(self) -> "PersistedAiLearningSettings":
+  dataset_id = str(self.dataset_id).strip() or "default"
+  return PersistedAiLearningSettings(
+    learning_mode=normalize_learning_mode(self.learning_mode),
+    capture_flags=_normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False),
+    skill_flags=_normalize_flag_map(self.skill_flags, keys=skill_category_ids(), default=True),
+    selected_policy_kind=normalize_policy_kind(self.selected_policy_kind),
+    selected_policy_id=str(self.selected_policy_id).strip(),
+    dataset_id=str(dataset_id),
+  )`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Identifier normalization has two layers. The schema trims `dataset_id` and falls back to `default` when it is empty. The store later converts dataset, policy, evaluation, and training-run identifiers through `_safe_name`, lowercasing them, replacing characters outside `abcdefghijklmnopqrstuvwxyz0123456789_-` with underscores, and again falling back when the filename component becomes empty. The schema admits a logical identifier; the store bounds it before it becomes a path component.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-recording-derived-values',
+        title: 'Recording and Derived Values',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Recording is not enabled by the existence of capture flags. It is enabled only when normalized `learning_mode` is `observe_only`; `off`, `use_learned_policy`, and the two train modes return false from `recording_enabled`. After that gate, `captured_kinds` returns enabled record kinds in `RECORD_KINDS` definition order. When recording is disabled, it returns an empty tuple even if saved capture flags contain true values.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Recording state is derived from learning_mode before capture flags are read.',
+            code: `def recording_enabled(self) -> bool:
+  return normalize_learning_mode(self.learning_mode) == LEARNING_MODE_OBSERVE_ONLY
+
+def captured_kinds(self) -> tuple[str, ...]:
+  if not self.recording_enabled():
+    return ()
+  normalized = _normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False)
+  return tuple(kind for kind in RECORD_KINDS if bool(normalized.get(kind, False)))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The serialized settings include `observe_only`, but that key is a readability projection, not a truth source on restore. `to_dict` emits normalized fields and derives `observe_only` from `recording_enabled`; `from_dict` ignores derived keys, restores scalar fields through string projection, treats non-mapping flag payloads as empty mappings, and then normalizes again. The load path therefore cannot be made active by editing a derived `observe_only` field while leaving `learning_mode` inactive.',
+          },
+        ],
+      },
+      {
+        id: 'reading-saved-ai-state-state-restoration',
+        title: 'State Restoration and Summary Admission',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The state envelope applies the same defensive rule at the outer level. Non-mapping input returns the default state. `settings` is restored through `PersistedAiLearningSettings.from_dict`; `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are admitted only when they are mappings; otherwise they are reduced to empty mappings. `policy_version` falls back to zero when numeric conversion fails, and `schema_version` falls back to the current schema version when it cannot be parsed.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Outer state restoration keeps malformed summaries out of the envelope.',
+            code: `if not isinstance(data, dict):
+  return PersistedAiLearningState.default()
+dataset_summary = data.get("dataset_summary")
+last_training_summary = data.get("last_training_summary")
+last_evaluation_summary = data.get("last_evaluation_summary")
+policy_version = coerce_int(data.get("policy_version", 0), 0)
+schema_version = coerce_int(data.get("schema_version", AI_LEARNING_SCHEMA_VERSION), AI_LEARNING_SCHEMA_VERSION)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This restoration rule is narrower than data repair. It does not reconstruct lost summaries, validate a policy artifact, or infer training quality. It only prevents malformed state-envelope fields from entering the typed persisted state and preserves the invariant that UI, persistence, and runtime consume the same known value domains and key sets.',
           },
         ],
       },
@@ -719,13 +1114,19 @@ class PersistedAiLearningSettings:
           {
             kind: 'paragraph',
             text: [
-              'Saved AI state is not evidence of autonomous intelligence, stable competence, or model quality. Live behavior is produced by simulation code, action masks, baseline scoring, and optional policy modifiers. The policy artifact contract is examined in ',
+              'Saved AI state is not evidence of autonomous intelligence, stable competence, or model quality. Live behavior is produced by simulation code, action masks, baseline scoring, and optional policy modifiers. Demonstration rows are analyzed under ',
               {
                 kind: 'link',
-                label: 'reading learned policies',
+                label: 'demonstration data',
+                href: '/docs/data/learning-and-material-data/learning-artifacts/reading-demonstration-data',
+              },
+              '; policy artifacts are constrained by ',
+              {
+                kind: 'link',
+                label: 'learned policy',
                 href: '/docs/data/learning-and-material-data/learning-artifacts/reading-learned-policies',
               },
-              '.',
+              ' gates.',
             ],
           },
           {
@@ -733,7 +1134,7 @@ class PersistedAiLearningSettings:
             note: {
               type: 'warning',
               content:
-                'Do not describe a saved AI actor record as a trained model. Actor state, learning settings, demonstration rows, and policy artifacts are different records with different readers and different failure modes.',
+                'Do not describe a saved AI actor record, a learning settings file, or a selected policy id as a trained model. Actor state, learning settings, demonstration rows, summaries, and policy artifacts are different records with different readers, gates, defaults, and failure modes.',
             },
           },
         ],
@@ -765,7 +1166,7 @@ class PersistedAiLearningSettings:
           },
           {
             kind: 'paragraph',
-            text: 'The normalization shows that saved Othello state is not a passive JSON dump. A finished game cannot persist active thinking or animation state as if the engine were still calculating. The record is coerced into a consistent lifecycle state during load.',
+            text: 'The normalization shows that saved Othello state is not a passive JSON dump. A finished game cannot persist active thinking or animation state as if the engine were still calculating. Load-time coercion clears transient active-state fields and returns a state that the match controller can consume without inheriting stale engine work.',
           },
         ],
       },
@@ -822,7 +1223,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'This subtraction is the central engineering fact for material classification. A user opening-book file is not allowed to become a redundant repository-resource copy simply because the effective book merges bundled and user lines in memory. The saved delta records only what remains after bundled lines are removed.',
+            text: 'This subtraction is the central engineering fact for material classification. `save_user_opening_book_lines` normalizes the effective line corpus, loads bundled lines, builds a bundled set, and writes only lines that are not in that set through the application-provided hook. A user opening-book file is therefore not permitted to become a redundant repository-resource copy merely because the effective in-memory book merges bundled and user lines.',
           },
         ],
       },
@@ -832,7 +1233,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
         content: [
           {
             kind: 'paragraph',
-            text: 'The compiled book cache is a derived index. Removing the cache forces recompilation from surviving source lines. Removing the user delta discards user contribution. Removing the bundled resource damages shipped material. These three operations have different effects despite all being connected to “the opening book.”',
+            text: 'The compiled book cache is a derived index keyed by the effective line fingerprint. Removing the cache forces recompilation from surviving bundled and user lines. Removing the user delta discards user contribution. Removing the bundled resource damages shipped material. These three operations have different effects despite all being connected to “the opening book.”',
           },
           {
             kind: 'code',
@@ -872,7 +1273,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
         content: [
           {
             kind: 'paragraph',
-            text: 'A demonstration row is a `DemonstrationRecord`, not a video frame, replay file, or opaque neural input. The schema pairs an observation mapping with an action id and supplements it with kind, tick, actor id, success, reward, detail, and schema version. The row is therefore a typed learning datum whose meaning depends on both the outer kind and the inner observation/action fields.',
+            text: 'A demonstration row is a `DemonstrationRecord`, not a video frame, replay file, save replay, or opaque neural input. The schema pairs an observation mapping with an action id and supplements it with kind, tick, actor id, success, reward, detail, and schema version. The row is therefore a typed learning datum whose meaning depends on both the outer kind and the inner observation/action fields.',
           },
           {
             kind: 'code',
@@ -944,7 +1345,7 @@ return (records, int(corrupt))`,
           },
           {
             kind: 'paragraph',
-            text: 'A row count derived from the physical file is therefore not the training count. Training receives the decoded records. Corrupt physical lines remain evidence of loss, not usable examples.',
+            text: 'A row count derived from the physical file is therefore not the training count. Training receives decoded records, not physical lines. Corrupt physical lines remain evidence of discarded input, not usable examples and not negative examples.',
           },
         ],
       },
@@ -1000,7 +1401,7 @@ class Policy:
   policy_name: str
   skill_categories: tuple[str, ...] = ()
   action_weight_overrides: dict[str, float] = field(default_factory=dict)
-  negative_modifiers: dict[str, dict[str, float]] = field(default_factory=dict)
+  negative_modifiers: dict[str, float] = field(default_factory=dict)
   utility_score_modifiers: dict[str, float] = field(default_factory=dict)
   evaluation: dict[str, Any] = field(default_factory=dict)
   schema_version: int = POLICY_SCHEMA_VERSION
@@ -1037,7 +1438,7 @@ class Policy:
           },
           {
             kind: 'paragraph',
-            text: 'This method is the hard boundary between readable policy data and a policy permitted to influence runtime. Documentation must not say that a policy “works” because a JSON file exists. The artifact must survive version compatibility and evaluation gates.',
+            text: '`is_usable` is the hard boundary between readable policy data and a policy permitted to influence runtime. A JSON file can be syntactically readable and still be barred from behavior because its schema version, compatibility target, feature encoder version, action catalog version, or evaluation result fails the gate.',
           },
         ],
       },
@@ -1084,12 +1485,16 @@ class Policy:
             caption: 'Action-mask construction remains separate from policy scoring.',
             code: `@dataclass(frozen=True)
 class AiActionMask:
-  allowed_action_ids: tuple[str, ...]
-  blocked_reasons: dict[str, str] = field(default_factory=dict)`,
+  allowed: frozenset[str] = field(default_factory=frozenset)
+  forbidden: dict[str, str] = field(default_factory=dict)`,
           },
           {
             kind: 'paragraph',
-            text: 'The engineering conclusion is narrow: learned data modifies preference within the permitted action set. It is not an authority to bypass collision, route, placement, reach, combat, or survival gates.',
+            text: 'The engineering conclusion is narrow: learned data modifies preference within the permitted action set after `build_action_mask` and the deterministic baseline have constructed the candidate space. It is not an authority to bypass collision, route, placement, reach, combat, survival gates, or the deterministic fallback path.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`DeterministicPolicy.decide` confirms the limit. It builds or receives an action mask, scores only allowed actions, optionally applies policy weights to those scores, and chooses by ranked utility with deterministic tie-breaking. The learned artifact changes numeric preference; it does not insert new executable action code into the simulation.',
           },
         ],
       },
@@ -1119,7 +1524,7 @@ class AiActionMask:
         content: [
           {
             kind: 'paragraph',
-            text: 'A learning row is corrupt when it cannot decode into a `DemonstrationRecord`. The decoder rejects empty text, invalid JSON, and payloads that do not survive record construction. It does not diagnose the cause of corruption. It only determines that the line is not usable as a learning row.',
+            text: 'A learning row is corrupt when it cannot decode into a `DemonstrationRecord`. The decoder rejects empty text, invalid JSON, and payloads that do not survive record construction. It does not diagnose the cause of corruption, infer intent, or repair the value. It only determines that the line is not usable as a learning row.',
           },
           {
             kind: 'code',
@@ -1171,7 +1576,7 @@ records.append(record)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The writer also isolates bad rows. It serializes each row independently and drops rows that cannot be converted to JSON. A serialization failure for one row does not prevent later rows from being written.',
+            text: 'The writer also isolates bad rows. `DemonstrationDatasetWriter.write_records` serializes each row independently and drops rows that cannot be converted to JSON. A serialization failure for one row does not prevent later rows from being written, and the returned count is the number actually appended.',
           },
           {
             kind: 'code',
@@ -1242,7 +1647,7 @@ for row in rows:
         content: [
           {
             kind: 'paragraph',
-            text: 'Application output includes generated local records such as saved JSON state, learning rows, and cache files. The store layer writes those records through explicit serializers. A generated file is therefore evidence of a writer and schema, not an independent grant of permission or a source-file transformation.',
+            text: 'Application output includes generated local records such as saved JSON state, learning rows, and cache files. The store layer writes those records through explicit serializers such as `JsonFileStore.write`, `DemonstrationDatasetWriter.write_records`, and opening-book storage hooks. A generated file is therefore evidence of a writer, schema, relative path, and embedded identifiers, not an independent grant of permission or a source-file transformation.',
           },
           {
             kind: 'code',
@@ -1256,7 +1661,7 @@ for row in rows:
           },
           {
             kind: 'paragraph',
-            text: 'The temporary-write pattern is a persistence mechanism. It reduces partial-write risk for JSON files, but it does not classify the contents as source, authorize redistribution, or strip embedded protected material. The output must still be analyzed by its writer, schema, and embedded material.',
+            text: 'The temporary-write pattern is a persistence mechanism. `JsonFileStore.write` emits sorted compact JSON to a `.tmp` sibling, fsyncs it, and replaces the target path. That reduces partial-write risk for JSON files, but it does not classify the contents as source, authorize redistribution, or strip embedded protected material. The output must still be analyzed by its writer, schema, and embedded material.',
           },
         ],
       },
@@ -1277,6 +1682,10 @@ for row in rows:
           {
             kind: 'paragraph',
             text: 'The asset-family selection is an output precondition. It controls which texture family can appear in rendered output. It does not reclassify provenance-sensitive material as first-party and does not authorize reuse of material visible in the output.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Build artifacts require separate treatment. A packaged application, copied license file, generated thumbnail, compiled native extension, or Vercel deployment output can be an implementation result without becoming ordinary application output. Data classification stops at the writer and material composition; release authority belongs to Distribution and Legal analysis.',
           },
         ],
       },
@@ -1340,7 +1749,7 @@ for row in rows:
         content: [
           {
             kind: 'paragraph',
-            text: 'User-created material is evidenced by local records the user creates, imports, arranges, or records through ordinary use. World edits appear as explicit block rows. Imported skins appear as local skin files. Preferences appear inside the player-state envelope. Demonstration rows appear as JSON Lines records. Othello book contributions appear as user-only opening-book lines after bundled lines are subtracted.',
+            text: 'User-created material is evidenced by local records the user creates, imports, arranges, or records through ordinary use, but the evidence remains file- and schema-specific. World edits appear as explicit block rows. Imported skins appear as local skin files. Preferences appear inside the player-state envelope. Demonstration rows appear as JSON Lines records. Othello book contributions appear as user-only opening-book lines after bundled lines are subtracted.',
           },
           {
             kind: 'code',
@@ -1367,12 +1776,12 @@ for row in rows:
             kind: 'code',
             language: 'py',
             caption: 'Player-state schema stores the skin mode that decides whether a custom skin participates.',
-            code: `player_skin_mode: str = PLAYER_SKIN_MODE_DEFAULT
+            code: `player_skin_kind: str = PLAYER_SKIN_KIND_ALEX
 player_name: str = ""`,
           },
           {
             kind: 'paragraph',
-            text: 'The stored mode and local image path are data facts. They prove configuration and file presence, not external provenance. Documentation must not convert “imported by the user” into “created by the user” without evidence from the actual material.',
+            text: 'The stored `player_skin_kind` and local image file are data facts. They prove configuration and file presence, not external provenance. Documentation must not convert “imported by the user” into “created by the user” without evidence from the actual material.',
           },
         ],
       },
@@ -1394,7 +1803,11 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'This is the strongest example of Data-level classification by implementation. The code itself enforces the separation between shipped resource and user contribution. A later material analysis still remains necessary, but the saved file’s intended content is not ambiguous.',
+            text: 'This is the strongest example of Data-level classification by implementation. The code itself enforces the separation between shipped resource and user contribution. A later material analysis still remains necessary, but the saved file’s intended content is not ambiguous: it is a user delta admitted by the storage hook after bundled lines have been removed.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The same caution applies to imported skins and demonstrations. `player_skin.png` can evidence an imported local image, and a JSON Lines record can evidence a captured observation/action pair, but neither file proves external authorship or clean rights. Data records show what Ludoxel accepted and where it stored it; they do not certify provenance outside the application.',
           },
         ],
       },
@@ -1440,7 +1853,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
         content: [
           {
             kind: 'paragraph',
-            text: 'Repository-controlled material includes project source, website source, documentation data, shaders, QSS, first-party assets, build tooling, and project-authored explanatory text. It can be read, rendered, packaged, or displayed, but those operations do not convert it into user-created material.',
+            text: 'Repository-controlled material includes project source, website source, documentation data, shaders, QSS, first-party assets, build tooling, package resources, and project-authored explanatory text. It can be read, rendered, packaged, displayed, or copied into an artifact, but those operations do not convert it into user-created material.',
           },
           {
             kind: 'code',
@@ -1454,7 +1867,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'The source predicate is not a permission rule, but it is classification evidence. Material found through a project-root or resource-root path is not local user data merely because the running application later emits output that includes or refers to it.',
+            text: 'The source predicate is not a permission rule, but it is classification evidence. Material found through a project-root or resource-root path is not local user data merely because the running application later emits output that includes, renders, copies, or refers to it.',
           },
         ],
       },
@@ -1494,7 +1907,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'The block-state string is an identifier inside the Ludoxel simulation. It is user-arranged when placed in a saved world, but it still depends on application definitions and rendered assets for interpretation and presentation. Data classification must retain both sides of that composite structure.',
+            text: 'The block-state string is an identifier inside the Ludoxel simulation. It is user-arranged when placed in a saved world, but it still depends on application definitions, block registries, model selection, texture names, and rendered assets for interpretation and presentation. Data classification must retain both sides of that composite structure.',
           },
         ],
       },
@@ -1551,7 +1964,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'The directory shape is evidence of retained third-party notice. It is not evidence that every asset or output in the application may be reused under that one license. Each material category retains its own source and authority.',
+            text: 'The directory shape is evidence of retained third-party notice. It is not evidence that every asset, font, texture, sound, screenshot, save file, or output in the application may be reused under that one license. Each material category retains its own source and authority.',
           },
         ],
       },
@@ -1581,7 +1994,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
         content: [
           {
             kind: 'paragraph',
-            text: 'Output can embed third-party or provenance-sensitive material. A screenshot may contain texture-derived visual material. A recording may contain font rendering, sound, UI presentation, and world rendering. A saved file may contain identifiers that cause later rendering through such assets. Output generation does not clean those embedded restrictions.',
+            text: 'Output can embed third-party or provenance-sensitive material. A screenshot may contain texture-derived visual material. A recording may contain font rendering, sound, UI presentation, and world rendering. A saved file may contain identifiers that cause later rendering through such assets. Output generation does not clean those embedded restrictions, and the data file’s user-controlled arrangement does not launder the material used to display it.',
           },
           {
             kind: 'code',
@@ -1591,7 +2004,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'The saved row does not copy the texture file, but it can cause a block state to be rendered through an asset family later. That indirect relation is enough to prevent a simplistic “user save equals user-owned clean material” conclusion.',
+            text: 'The saved row does not copy the texture file, but it can cause a block state to be rendered through an asset family later. That indirect relation is enough to prevent a simplistic “user save equals user-owned clean material” conclusion. The boundary is not physical byte inclusion alone; it is also the later interpretive dependency between saved identifiers and provenance-sensitive resources.',
           },
         ],
       },

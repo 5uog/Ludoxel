@@ -11,150 +11,137 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Session Loop',
     title: 'Understanding Fixed Step Sessions',
     description:
-      'Explains why Ludoxel advances simulation in bounded fixed steps. This page treats session stepping as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the entire fixed-step session loop: the game-loop configuration and timers, the FixedStepRunner accumulator and substep budget, the step_session domain advance and its result record, the creative-flight toggle and movement-action mapping, and the separation between simulation and render cadence.',
     sections: [
       {
-        id: 'understanding-fixed-step-sessions-contract-scope',
-        title: 'Fixed Step Sessions Contract Scope',
-        body: [
-          'The fixed-step runner accumulates frame time and advances the session in fixed simulation increments. Very large frame deltas are clamped to avoid runaway catch-up work. The point matters in contract scope because following deterministic runtime updates can otherwise be mistaken for using render cadence as the source of simulation truth. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Fixed Step Sessions. The article should be broad enough to explain session stepping, but narrow enough that using render cadence as the source of simulation truth remains outside the conclusion.',
-          'The useful result of Understanding Fixed Step Sessions contract scope is a bounded explanation of session stepping: enough detail to act, and enough restraint to avoid claims outside Session Loop.',
+        id: 'fixed-step-sessions-configuration',
+        title: 'Loop Configuration and Timers',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The cadence is configured by `GameLoopParams` in `src/ludoxel/presentation/interface/config/game_loop.py`. Its `sim_hz` field defaults to 120.0 and `step_dt` returns the reciprocal with a small denominator floor, so a zero or negative frequency cannot produce a division error. The optional `sim_timer_interval_ms` and `render_timer_interval_ms` fields are zero by default, which means the interval is derived from the frequency. `DEFAULT_GAME_LOOP_PARAMS` is the shared instance the viewport receives.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\Delta t = \\frac{1}{\\max(\\mathrm{simHz},\\ 10^{-6})}',
+              displayMode: true,
+              caption: 'GameLoopParams.step_dt; at the default 120 hertz the quantum is one one-hundred-twentieth of a second.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The viewport derives two timer intervals in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py`. `_effective_sim_timer_interval_ms` rounds the reciprocal of `sim_hz` to milliseconds, while `_effective_render_timer_interval_ms` rounds the reciprocal of at least 120 hertz. The first timer drives `_tick_sim`, the second requests repaints. Either field, if set above zero, overrides the derived interval. These are nominal scheduling intervals; the runner itself measures real elapsed time and is not bound to them.',
+          },
         ],
       },
       {
-        id: 'understanding-fixed-step-sessions-owning-subsystem',
-        title: 'Fixed Step Sessions Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Fixed Step Sessions. The article should be broad enough to explain session stepping, but narrow enough that using render cadence as the source of simulation truth remains outside the conclusion. In Understanding Fixed Step Sessions, owning subsystem is the difference between reading session stepping and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Owning Subsystem.',
-          'A direct observation for Understanding Fixed Step Sessions should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'If the available evidence for owning subsystem does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Fixed Step Sessions should be treated as an observation rather than a confirmed cause.',
+        id: 'fixed-step-sessions-runner',
+        title: 'The FixedStepRunner Accumulator',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The runner in `src/ludoxel/application/sessions/runners/fixed_step.py` holds `step_dt`, the `on_step` callback, a substep ceiling `max_substeps` defaulting to eight, an accumulator, and the previous timestamp. `start` records the current `time.perf_counter` and clears the accumulator. `update` samples the clock, guards the first frame when the previous timestamp is non-positive, rejects a non-positive quantum, clamps the elapsed frame time, accumulates it, and then drains the accumulator in fixed quanta.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/sessions/runners/fixed_step.py',
+            code: `frame_dt = max(0.0, min(0.25, now - self._last))
+self._last = now
+self._accum += frame_dt
+
+substeps = 0
+limit = int(max(1, int(self.max_substeps)))
+
+while self._accum >= step and substeps < limit:
+  self.on_step(step)
+  self._accum -= step
+  substeps += 1
+
+if self._accum >= step:
+  self._accum = min(float(self._accum), step)`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'f = \\max\\bigl(0,\\ \\min(0.25,\\ t_{now}-t_{last})\\bigr), \\qquad n = \\min\\!\\left(\\left\\lfloor\\frac{a}{\\Delta t}\\right\\rfloor,\\ \\max(1,\\text{maxSubsteps})\\right)',
+              displayMode: true,
+              caption: 'The per-frame elapsed time f is clamped to 0.25 s; n fixed steps are emitted per update from accumulated time a.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'Two clamps bound the loop against a stall. The elapsed-time clamp of 0.25 seconds caps how much real time a single frame may inject, and the trailing reduction discards excess accumulated time once the substep budget is exhausted, reducing the accumulator to at most one quantum. Together they prevent an unbounded catch-up spiral: under sustained overload the simulation slows relative to wall time instead of accumulating an ever-growing backlog. Each call to `on_step` is guaranteed to represent exactly one quantum of simulated time, which is the contract every consumer of session state relies upon.',
+          },
         ],
       },
       {
-        id: 'understanding-fixed-step-sessions-data-shape',
-        title: 'Fixed Step Sessions Data Shape',
-        body: [
-          'The useful result of Understanding Fixed Step Sessions contract scope is a bounded explanation of session stepping: enough detail to act, and enough restraint to avoid claims outside Session Loop. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Data Shape.',
-          'Understanding Fixed Step Sessions separates the surface that accepts input from the component or document that controls the result. This is especially important when following deterministic runtime updates crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the data shape part of Understanding Fixed Step Sessions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'fixed-step-sessions-step',
+        title: 'What One Step Advances',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The runner callback is `_on_step` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py`, which consumes input, calls `SessionManager.step`, ticks the learning runtime, synchronises the heads-up display, and plays the audio events implied by the step result. `SessionManager.step` in `src/ludoxel/application/sessions/managers/session.py` delegates to `step_session` in `src/ludoxel/application/sessions/managers/stepping.py`, which performs the domain advance for one quantum.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Advance the session simulation clock by dt and run the gravity system over the world and player.',
+              'Convert the mouse delta into yaw and pitch deltas scaled by mouse sensitivity.',
+              'Apply the creative-flight double-tap toggle through _update_creative_flight_toggle.',
+              'Advance the runtime player with movement, collision, and the assembled PlayerStepInput.',
+              'Apply fall and void damage outside creative mode; reset the void-damage timer inside it.',
+              'Step every AI actor, optionally excluding paused route-edit actors, and feed the learning coordinator.',
+              'Record a player movement demonstration when the learning coordinator is recording.',
+              'Resolve the death cause from void, fall, or PvP damage and return a SessionStepResult.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The result is the frozen `SessionStepResult`, carrying jump-started, landed, footstep-triggered, the support block state and position, fall distance, damage taken, the death reason and killer name, the gravity-broken blocks, and the flags for damage and AI-damage sound positions. The render loop reads these fields to drive footstep, landing, break, and damage audio and to raise the death overlay. The death reason is `void`, `fall`, `pvp`, or a generic `damage`, distinguishing the cause so the overlay can phrase it correctly.',
+          },
         ],
       },
       {
-        id: 'understanding-fixed-step-sessions-handoff',
-        title: 'Fixed Step Sessions Handoff',
-        body: [
-          'Understanding Fixed Step Sessions should be read as conceptual boundary for fixed step sessions within Runtime and Render State and Session Loop. In Understanding Fixed Step Sessions, owning subsystem is the difference between reading session stepping and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Owning Subsystem. The point matters in handoff because following deterministic runtime updates can otherwise be mistaken for using render cadence as the source of simulation truth. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Handoff.',
-          'Ownership in Understanding Fixed Step Sessions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Understanding Fixed Step Sessions should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'fixed-step-sessions-movement-and-flight',
+        title: 'Movement Mapping and Creative Flight',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Two helpers in the stepping module fix narrow contracts. `_player_movement_action` maps the per-step movement input to a demonstration action identifier: a jump press dominates, a horizontal magnitude below the threshold yields `sneak` only when crouching and otherwise no record, and the cardinal and diagonal directions classify the remainder, with forward plus sprint becoming `sprint`. It returns nothing for a step that should not be recorded as movement. `_update_creative_flight_toggle` on the session manager toggles flight on a double jump press within a fixed window, zeroing vertical velocity on enable and clamping it on disable, and forces flight off outside creative mode.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`SessionManager` also owns `respawn`, which resets the player to spawn, clears motion and timers, and heals to full; `support_block_contact`, which reports the block beneath the player for audio and physics; `current_death_reason`, which returns the stored cause only while the player is dead; and the recording helpers `_player_observation_dict`, `_player_feature_keys`, and `_record_player_action`, which capture only player-knowable self state for learning and never leak world truth the player could not observe.',
+          },
         ],
       },
       {
-        id: 'understanding-fixed-step-sessions-backend-or-service',
-        title: 'Fixed Step Sessions Backend or Service',
-        body: [
-          'A direct observation for Understanding Fixed Step Sessions should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for backend or service: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Backend or Service.',
-          'Visible feedback for Understanding Fixed Step Sessions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Session Loop.',
-          'A public report based on the backend or service part of Understanding Fixed Step Sessions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-runtime-state',
-        title: 'Fixed Step Sessions Runtime State',
-        body: [
-          'If the available evidence for owning subsystem does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Fixed Step Sessions should be treated as an observation rather than a confirmed cause. The point matters in runtime state because following deterministic runtime updates can otherwise be mistaken for using render cadence as the source of simulation truth. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Runtime State.',
-          'When Understanding Fixed Step Sessions touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Understanding Fixed Step Sessions runtime state is a bounded explanation of session stepping: enough detail to act, and enough restraint to avoid claims outside Session Loop.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-fallback-path',
-        title: 'Fixed Step Sessions Fallback Path',
-        body: [
-          'A frame can process only a bounded number of simulation substeps. Remaining accumulated time is reduced so the application can keep rendering and receiving input. Understanding Fixed Step Sessions uses the fact as fallback path evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Fallback Path.',
-          'The surrounding context for Understanding Fixed Step Sessions decides which adjacent topic is relevant. Understanding Fixed Step Sessions should be compared with Understanding Render Snapshots, Understanding Saved Preferences, Switching Play Spaces only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding Fixed Step Sessions crosses from fallback path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-diagnostic-output',
-        title: 'Fixed Step Sessions Diagnostic Output',
-        body: [
-          'Understanding Fixed Step Sessions separates the surface that accepts input from the component or document that controls the result. This is especially important when following deterministic runtime updates crosses a saved value, a renderer output, or a public form. For Understanding Fixed Step Sessions, that fact identifies the first concrete boundary for diagnostic output: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Fixed Step Sessions should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Fixed Step Sessions crosses from diagnostic output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-platform-reading',
-        title: 'Fixed Step Sessions Platform Reading',
-        body: [
-          'A public report based on the data shape part of Understanding Fixed Step Sessions should state the action, expected result, actual result, environment, and any redaction needed before sharing. The fact also tells the reader which evidence to preserve for platform reading: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Platform Reading.',
-          'The main confusion risk in Understanding Fixed Step Sessions is using render cadence as the source of simulation truth. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use platform reading to keep Understanding Fixed Step Sessions tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-consumer-boundary',
-        title: 'Fixed Step Sessions Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. For Understanding Fixed Step Sessions, that fact identifies the first concrete boundary for consumer boundary: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Consumer Boundary.',
-          'Reportable evidence for Understanding Fixed Step Sessions should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the consumer boundary part of Understanding Fixed Step Sessions should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-failure-reading',
-        title: 'Fixed Step Sessions Failure Reading',
-        body: [
-          'Ownership in Understanding Fixed Step Sessions is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. In Understanding Fixed Step Sessions, failure reading is the difference between reading session stepping and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Failure Reading.',
-          'Adjacent pages matter for Understanding Fixed Step Sessions, but adjacency does not move authority. Understanding Fixed Step Sessions should be compared with Understanding Render Snapshots, Understanding Saved Preferences, Switching Play Spaces only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Understanding Fixed Step Sessions should not use failure reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-evidence-quality',
-        title: 'Fixed Step Sessions Evidence Quality',
-        body: [
-          'Understanding Fixed Step Sessions should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. Understanding Fixed Step Sessions uses the fact as evidence quality evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Evidence Quality.',
-          'The public boundary for Understanding Fixed Step Sessions is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Understanding Fixed Step Sessions crosses from evidence quality into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-related-systems',
-        title: 'Fixed Step Sessions Related Systems',
-        body: [
-          'Rendering can happen at a different cadence from simulation. The renderer receives snapshots from the latest session state rather than owning the step loop. For Understanding Fixed Step Sessions, that fact identifies the first concrete boundary for related systems: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Related Systems.',
-          'An operator reading Understanding Fixed Step Sessions should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'When Understanding Fixed Step Sessions crosses from related systems into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-policy-limit',
-        title: 'Fixed Step Sessions Policy Limit',
-        body: [
-          'Visible feedback for Understanding Fixed Step Sessions should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Session Loop. The point matters in policy limit because following deterministic runtime updates can otherwise be mistaken for using render cadence as the source of simulation truth. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Policy Limit.',
-          'Implementation limits for Understanding Fixed Step Sessions keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'The useful result of Understanding Fixed Step Sessions policy limit is a bounded explanation of session stepping: enough detail to act, and enough restraint to avoid claims outside Session Loop.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-technical-summary',
-        title: 'Fixed Step Sessions Technical Summary',
-        body: [
-          'The fixed-step runner accumulates frame time and advances the session in fixed simulation increments. Very large frame deltas are clamped to avoid runaway catch-up work. Understanding Fixed Step Sessions uses the fact as technical summary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Technical Summary.',
-          'The summary value of Understanding Fixed Step Sessions is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'When Understanding Fixed Step Sessions crosses from technical summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-fixed-step-sessions-closing-check',
-        title: 'Fixed Step Sessions Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Fixed Step Sessions. The article should be broad enough to explain session stepping, but narrow enough that using render cadence as the source of simulation truth remains outside the conclusion. The point matters in closing check because following deterministic runtime updates can otherwise be mistaken for using render cadence as the source of simulation truth. The local reading frame is Understanding Fixed Step Sessions / Runtime and Render State / Session Loop / Closing Check.',
-          'A final check for Understanding Fixed Step Sessions should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Fixed Step Sessions should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'fixed-step-sessions-render-cadence',
+        title: 'Render Cadence Is Not the Step Loop',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`_tick_sim` calls `self._runner.update()` and then requests a repaint; the paint event builds a render snapshot from the latest session state independently. A rendered frame therefore corresponds to zero, one, or several substeps depending on accumulated real time. Both `_tick_sim` and `_on_step` early-return while loading, while an overlay or transient modal is active, so stepping is suspended without losing the accumulator contract.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content: [
+                'A fixed step advances simulation and emits a result record. Drawing, chunk upload, audio, and persistence are triggered by that record, not part of the quantum. The conversion of session state to renderer input is owned by ',
+                {
+                  kind: 'link',
+                  label: 'render snapshots',
+                  href: '/docs/systems/runtime-and-render-state/session-loop/understanding-render-snapshots',
+                },
+                '.',
+              ],
+            },
+          },
         ],
       },
     ],
@@ -166,150 +153,90 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Session Loop',
     title: 'Understanding Render Snapshots',
     description:
-      'Describes the immutable data Ludoxel sends from sessions to renderers. This page treats renderer contract behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the render-snapshot contract end to end: the camera, player-model, falling-block, and particle DTOs, the camera-shake and view-bobbing mathematics that build them, the AI snapshot projection, the renderer protocol and wrapper that consume them, and the cache-key render states.',
     sections: [
       {
-        id: 'understanding-render-snapshots-contract-scope',
-        title: 'Render Snapshots Contract Scope',
-        body: [
-          'Render snapshots include camera data, player model data, AI render samples, Othello render state, falling blocks, and block-break particles. They are data transfer objects. The point matters in contract scope because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Render Snapshots. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion.',
-          'Understanding Render Snapshots should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'render-snapshots-dtos',
+        title: 'The Snapshot Data Types',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, body and head angles, limb phase and swing, crouch amount, hurt tint, the six first-person view-model channels, and a first-person flag.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Every field is a scalar, a tuple of scalars, or another frozen DTO. No `PlayerEntity`, `WorldState`, or other mutable simulation object crosses the boundary, so presentation cannot mutate domain state through the snapshot and each snapshot is a stable per-frame value rather than a window onto changing data.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/sessions/pipelines/render_snapshot.py',
+            code: `@dataclass(frozen=True)
+class RenderSnapshotDTO:
+  world_revision: int
+  camera: CameraDTO
+  player_model: PlayerModelSnapshotDTO
+  falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = ()
+  block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = ()`,
+          },
         ],
       },
       {
-        id: 'understanding-render-snapshots-owning-subsystem',
-        title: 'Render Snapshots Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Render Snapshots. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. The point matters in owning subsystem because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Owning Subsystem.',
-          'A direct observation for Understanding Render Snapshots should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'The useful result of Understanding Render Snapshots owning subsystem is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Session Loop.',
+        id: 'render-snapshots-camera',
+        title: 'Camera and View-Bobbing Mathematics',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`make_camera_snapshot_for_session` in `src/ludoxel/application/sessions/managers/snapshots.py` derives the camera. It computes a speed ratio from horizontal velocity over walk speed, clamped to a maximum swing scale, scales the bob down while flying or airborne, and synthesises translation and pitch and roll shake from the walk phase. Hurt camera strength adds a tilt by the hurt sign. When camera shake is disabled the shake channels are zeroed. The shake strength preference scales the whole shake by a clamped factor.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`make_render_snapshot_for_session` composes the camera and the player model and then scales only the first-person view-model channels by the view-bobbing strength, clamped to the unit interval and forced to zero when bobbing is disabled. It also projects the interpolated gravity samples into falling-block DTOs. The player projection itself is `build_player_model_snapshot` in `src/ludoxel/application/sessions/pipelines/player_model.py`, which converts the mutable entity and walk phase into renderer-facing scalars, deriving crouch amount from the eye drop and the first-person bob from the walk phase.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'r = \\mathrm{clamp}\\!\\left(\\frac{\\lVert v_{xz}\\rVert}{\\max(\\text{walk},\\,10^{-6})},\\ 0,\\ r_{\\max}\\right)',
+              displayMode: true,
+              caption: 'The swing-and-bob speed ratio used by both the camera snapshot and the player-model snapshot.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-render-snapshots-data-shape',
-        title: 'Render Snapshots Data Shape',
-        body: [
-          'Understanding Render Snapshots should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Data Shape.',
-          'Understanding Render Snapshots separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form.',
-          'Use data shape to keep Understanding Render Snapshots tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
+        id: 'render-snapshots-actors',
+        title: 'AI Actor Projection',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'AI actors reach the renderer the same way. `ai_render_snapshots_for_session` in `src/ludoxel/application/sessions/managers/ai_players.py` walks the actor observations and builds an `AiPlayerRenderSnapshotDTO` for each, reusing `build_player_model_snapshot` in third-person mode and carrying the held item, attack swing progress and its previous value, the actor identity and name, health and the health indicator, the skin mode and skin identifier, and the position and height for the world-space name tag. The skin mode is a three-valued field selecting the shared player skin, a bundled Alex skin, or an actor-specific imported skin, and the renderer uses only a resolved skin reference per frame.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The same module owns the rest of the session-manager AI surface: `set_ai_players_for_session`, `ai_states_for_session`, `spawn_ai_player_for_session`, the settings accessors, `ai_player_name_error_for_session` for save-time name validation, `remove_ai_player_for_session`, `cancel_ai_navigation_for_session`, `pick_ai_player_for_session`, `attack_ai_player_for_session`, and `ai_route_paths_for_session`. These are session-boundary projections; none expose a mutable simulation entity to presentation.',
+          },
         ],
       },
       {
-        id: 'understanding-render-snapshots-handoff',
-        title: 'Render Snapshots Handoff',
-        body: [
-          'Understanding Render Snapshots should be read as conceptual boundary for render snapshots within Runtime and Render State and Session Loop. That reading gives Understanding Render Snapshots a public anchor for handoff without adding behavior that the current category does not own. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Handoff.',
-          'Ownership in Understanding Render Snapshots is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'If the available evidence for handoff does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Render Snapshots should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-backend-or-service',
-        title: 'Render Snapshots Backend or Service',
-        body: [
-          'A direct observation for Understanding Render Snapshots should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. For Understanding Render Snapshots, that fact identifies the first concrete boundary for backend or service: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Backend or Service.',
-          'Visible feedback for Understanding Render Snapshots should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Session Loop.',
-          'A public report based on the backend or service part of Understanding Render Snapshots should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-runtime-state',
-        title: 'Render Snapshots Runtime State',
-        body: [
-          'The useful result of Understanding Render Snapshots owning subsystem is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Session Loop. The point matters in runtime state because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Runtime State.',
-          'When Understanding Render Snapshots touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Render Snapshots should not use runtime state to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-fallback-path',
-        title: 'Render Snapshots Fallback Path',
-        body: [
-          'The renderer draws from the snapshot but does not mutate the session. World edits, player movement, AI decisions, and Othello moves remain in simulation and application managers. Understanding Render Snapshots uses the fact as fallback path evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Fallback Path.',
-          'The surrounding context for Understanding Render Snapshots decides which adjacent topic is relevant. Understanding Render Snapshots should be compared with Understanding Fixed Step Sessions, Understanding OpenGL Rendering, Understanding WGPU Rendering only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use fallback path to keep Understanding Render Snapshots tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-diagnostic-output',
-        title: 'Render Snapshots Diagnostic Output',
-        body: [
-          'Understanding Render Snapshots separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form. Understanding Render Snapshots uses the fact as diagnostic output evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Render Snapshots should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Render Snapshots crosses from diagnostic output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-platform-reading',
-        title: 'Render Snapshots Platform Reading',
-        body: [
-          'Use data shape to keep Understanding Render Snapshots tied to Runtime and Render State; use a related page only when the reader needs a different owner. The fact also tells the reader which evidence to preserve for platform reading: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Platform Reading.',
-          'The main confusion risk in Understanding Render Snapshots is claiming parity without backend-specific evidence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'A public report based on the platform reading part of Understanding Render Snapshots should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-consumer-boundary',
-        title: 'Render Snapshots Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. Understanding Render Snapshots uses the fact as consumer boundary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Consumer Boundary.',
-          'Reportable evidence for Understanding Render Snapshots should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use consumer boundary to keep Understanding Render Snapshots tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-failure-reading',
-        title: 'Render Snapshots Failure Reading',
-        body: [
-          'Ownership in Understanding Render Snapshots is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The point matters in failure reading because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Failure Reading.',
-          'Adjacent pages matter for Understanding Render Snapshots, but adjacency does not move authority. Understanding Render Snapshots should be compared with Understanding Fixed Step Sessions, Understanding OpenGL Rendering, Understanding WGPU Rendering only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Understanding Render Snapshots should not use failure reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-evidence-quality',
-        title: 'Render Snapshots Evidence Quality',
-        body: [
-          'If the available evidence for handoff does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Render Snapshots should be treated as an observation rather than a confirmed cause. For Understanding Render Snapshots, that fact identifies the first concrete boundary for evidence quality: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Evidence Quality.',
-          'The public boundary for Understanding Render Snapshots is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Understanding Render Snapshots crosses from evidence quality into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-related-systems',
-        title: 'Render Snapshots Related Systems',
-        body: [
-          'Snapshot problems often show up as missing visuals, stale chunks, wrong camera framing, or incorrect AI display. Diagnose those separately from saved-state and input issues. Understanding Render Snapshots uses the fact as related systems evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Related Systems.',
-          'An operator reading Understanding Render Snapshots should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'When Understanding Render Snapshots crosses from related systems into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-policy-limit',
-        title: 'Render Snapshots Policy Limit',
-        body: [
-          'Visible feedback for Understanding Render Snapshots should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Session Loop. That reading gives Understanding Render Snapshots a public anchor for policy limit without adding behavior that the current category does not own. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Policy Limit.',
-          'Implementation limits for Understanding Render Snapshots keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'The useful result of Understanding Render Snapshots policy limit is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Session Loop.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-technical-summary',
-        title: 'Render Snapshots Technical Summary',
-        body: [
-          'Render snapshots include camera data, player model data, AI render samples, Othello render state, falling blocks, and block-break particles. They are data transfer objects. The fact also tells the reader which evidence to preserve for technical summary: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Technical Summary.',
-          'The summary value of Understanding Render Snapshots is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'A public report based on the technical summary part of Understanding Render Snapshots should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-render-snapshots-closing-check',
-        title: 'Render Snapshots Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Render Snapshots. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. The point matters in closing check because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Snapshots / Runtime and Render State / Session Loop / Closing Check.',
-          'A final check for Understanding Render Snapshots should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'The useful result of Understanding Render Snapshots closing check is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Session Loop.',
+        id: 'render-snapshots-contract',
+        title: 'The Renderer Contract and Render States',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The backend protocol `BackendRendererApi` in `src/ludoxel/presentation/rendering/contracts/api.py` declares the surface every backend implements: `initialize`, `render`, `submit_chunk`, `set_selection_target`, `clear_selection`, `evict_chunks`, `atlas_uv_face`, `set_player_skin_image`, `set_ai_skin_images`, `render_player_preview_frame`, and the diagnostic accessors. The concrete `Renderer` wrapper in the same module forwards each call to the active backend and forwards the snapshot fields, the player render state, the extra player states, the Othello state, and the falling-block and particle tuples to `render`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The render-state types in `src/ludoxel/presentation/rendering/visuals/players/render_state.py` are frozen and serve as cache keys. `PlayerRenderState` carries base pose, locomotion phase, crouch, the perspective flag, a resolved `skin_texture_key`, and an optional `FirstPersonRenderState`; two actors with the same pose but different skins are distinct cache entries because the key includes the skin reference. `FirstPersonRenderState` carries the visible and target item identifiers, the held block kind, the special-item icon, equip and swing progress, the arm and view-model flags, the view-bob channels, and the arm rotation limits, so the first-person view model is reconstructed from one sample.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'A render snapshot proves what one frame should depict from the latest session state. It does not carry chunk geometry, the heads-up display, overlay state, or the selection target; those reach the renderer through the upload cadence, the HUD signal, and the selection path described in the OpenGL, WGPU, and selection-outline articles.',
+            },
+          },
         ],
       },
     ],
@@ -321,150 +248,117 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Preferences and Input Boundaries',
     title: 'Understanding Saved Preferences',
     description:
-      'Explains how user preferences are normalized, applied, and persisted. This page treats runtime preferences as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the full preference architecture: the runtime preference aggregate, its normalization and hotbar accessors, the coercion helper, the persisted settings schema and its tolerant reader, the runtime-state conversion pipeline, the application state store with integrity verification, and the lifecycle save points.',
     sections: [
       {
-        id: 'understanding-saved-preferences-contract-scope',
-        title: 'Saved Preferences Contract Scope',
-        body: [
-          'Runtime preferences cover camera, rendering, clouds, shadows, audio, keybinds, player identity, skin source, movement, hotbar branch, Othello, and window state. In Understanding Saved Preferences, contract scope is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Contract Scope. In Understanding Saved Preferences, contract scope is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Saved Preferences. The article should be broad enough to explain runtime preferences, but narrow enough that treating a settings control as unrelated to persistence remains outside the conclusion.',
-          'Understanding Saved Preferences should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'saved-preferences-runtime-object',
+        title: 'The Runtime Preference Aggregate',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`RuntimePreferences` in `src/ludoxel/application/preferences/runtime.py` is the mutable aggregate shared by persistence, the settings surface, the renderer state, and the active session. It holds the play-space identifier, input inversion, selection and cloud and shadow flags, cloud density and seed and flow and speed and height parameters, hotbar slot lists and selected indices for the creative, survival, Othello, and route branches, the Othello settings, reach and block-repeat intervals, particle rates, camera and view-model and arm parameters, render distance, sun angles, window geometry, and the keybind and audio sub-objects. Numerous class-level constants fix the allowed ranges and defaults.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`normalize` projects every component into its allowed domain in one pass: booleans are coerced, shadow quality and render distance and cloud parameters are clamped, the play-space identifier and Othello settings are normalized, the arm rotation limits are clamped and reordered if inverted, the legacy block-place interval is migrated to the current default, sun azimuth is wrapped to a full turn and elevation clamped, all four hotbar branches are normalized to size and index, and the keybind and audio sub-objects are normalized in turn.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/preferences/runtime.py',
+            code: `self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
+self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
+self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
+if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_deg):
+  self.arm_rotation_limit_min_deg, self.arm_rotation_limit_max_deg = float(self.arm_rotation_limit_max_deg), float(self.arm_rotation_limit_min_deg)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The hotbar accessors select the active branch by play space, route-edit, and creative mode through `_active_hotbar_state_attrs`, and `set_hotbar_slot`, `select_hotbar_index`, `cycle_hotbar`, and `clear_selected_hotbar_slot` normalize before mutating so the slot count and index stay coherent. `current_item_id`, `current_block_id`, and `current_special_item_id` resolve the selected slot, excluding special items from block placement and ordinary blocks from the special path. `is_othello_space`, `is_first_person_view`, `view_model_visible`, and `cycle_camera_perspective` answer derived predicates from the same normalized state.',
+          },
         ],
       },
       {
-        id: 'understanding-saved-preferences-owning-subsystem',
-        title: 'Saved Preferences Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Saved Preferences. The article should be broad enough to explain runtime preferences, but narrow enough that treating a settings control as unrelated to persistence remains outside the conclusion. The point matters in owning subsystem because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Owning Subsystem.',
-          'A direct observation for Understanding Saved Preferences should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'Understanding Saved Preferences should not use owning subsystem to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'saved-preferences-coercion',
+        title: 'Partial Updates and Cloning',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`coerce_runtime_preferences` copies the aggregate field by field, applies only the supplied overrides, and normalizes the result. Hotbar slot lists, crosshair pixels, Othello settings, keybinds, and audio receive type-specific coercion, the last two accepting either a typed object or a raw mapping. `clone` is the no-argument form. Because the whole aggregate is re-validated after every override, a caller cannot install an out-of-range value by updating a single field.',
+          },
         ],
       },
       {
-        id: 'understanding-saved-preferences-data-shape',
-        title: 'Saved Preferences Data Shape',
-        body: [
-          'Understanding Saved Preferences should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Data Shape.',
-          'Understanding Saved Preferences separates the surface that accepts input from the component or document that controls the result. This is especially important when changing normalized user values crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the data shape part of Understanding Saved Preferences should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'saved-preferences-schema',
+        title: 'The Persisted Settings Schema',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`PersistedSettings` in `src/ludoxel/application/persistence/schema/settings.py` is the frozen on-disk form. It owns the documented default values, a `__post_init__` that normalizes cloud and shadow fields at construction, a `to_dict` serializer, and a tolerant `from_dict` reader. The reader coerces each scalar through a typed mapping helper with an explicit default, so a missing or malformed key falls back to the default rather than failing the load, and it accepts legacy key names where they existed, reading `cloud_wire` as a fallback for `cloud_wireframe` and `build_mode` as a fallback for `creative_mode`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The runtime-state pipeline in `src/ludoxel/application/sessions/pipelines/runtime_state.py` converts between the two representations. `runtime_preferences_from_app_state` reads a persisted aggregate into a normalized runtime object; `persisted_settings_from_runtime` projects the runtime object and the session movement parameters back into a `PersistedSettings`; `persisted_inventory_from_runtime` extracts the hotbar branches. `apply_runtime_to_renderer` pushes the visual flags and cloud and shadow and sun parameters into the renderer, `sync_runtime_sun_from_renderer` reads the sun angles back, and `apply_persisted_settings_to_session` installs the field-of-view, sensitivity, and movement values into the session settings.',
+          },
         ],
       },
       {
-        id: 'understanding-saved-preferences-handoff',
-        title: 'Saved Preferences Handoff',
-        body: [
-          'Understanding Saved Preferences should be read as conceptual boundary for saved preferences within Runtime and Render State and Preferences and Input Boundaries. In Understanding Saved Preferences, handoff is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Handoff.',
-          'Ownership in Understanding Saved Preferences is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'If the available evidence for handoff does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Saved Preferences should be treated as an observation rather than a confirmed cause.',
+        id: 'saved-preferences-store',
+        title: 'The Store and Integrity Verification',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`AppStateStore` in `src/ludoxel/application/persistence/stores/app.py` writes settings and inventory into `player_state.json` and world data into `world_state.json` beneath the runtime state root and updates an integrity manifest. `_read_runtime_or_previous` reads the runtime file first, verifies a protected runtime file before trusting it, and consults the legacy configuration path only when the runtime file is absent. `load` returns nothing when neither file exists, otherwise it reconstructs an `AppState` from the two file schemas.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/stores/app.py',
+            code: `def save(self, state: AppState) -> None:
+  player_file = PlayerStateFile(version=7, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
+  world_file = WorldStateFile(
+    version=3,
+    my_world=state.my_world if isinstance(state.my_world, PersistedPlaySpace) else PersistedPlaySpace(),
+    othello_space=(state.othello_space if isinstance(state.othello_space, PersistedOthelloSpace) else PersistedOthelloSpace()),
+  )
+  self._player_store().write(player_file.to_dict())
+  self._world_store().write(world_file.to_dict())
+  update_runtime_integrity_manifest(self._data_root(), ("state/player_state.json", "state/world_state.json"))`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              'The aggregating functions are `apply_persisted_state_if_present` and `save_state` in `src/ludoxel/application/persistence/schedulers/state.py`, which build an `AppState` from both play-space sessions, restore players and worlds and AI actors, and resolve overlap exemptions. The on-disk layout and the state-versus-cache split are documented by the Data article on ',
+              {
+                kind: 'link',
+                label: 'reading saved preferences',
+                href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-saved-preferences',
+              },
+              '.',
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-saved-preferences-backend-or-service',
-        title: 'Saved Preferences Backend or Service',
-        body: [
-          'A direct observation for Understanding Saved Preferences should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. Understanding Saved Preferences uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Backend or Service.',
-          'Visible feedback for Understanding Saved Preferences should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Preferences and Input Boundaries.',
-          'Use backend or service to keep Understanding Saved Preferences tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-runtime-state',
-        title: 'Saved Preferences Runtime State',
-        body: [
-          'Understanding Saved Preferences should not use owning subsystem to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. That reading gives Understanding Saved Preferences a public anchor for runtime state without adding behavior that the current category does not own. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Runtime State.',
-          'When Understanding Saved Preferences touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for runtime state does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Saved Preferences should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-fallback-path',
-        title: 'Saved Preferences Fallback Path',
-        body: [
-          'Each preference type normalizes unknown, missing, or out-of-range values before use. This protects the running session and saved schema from invalid local edits. The fact also tells the reader which evidence to preserve for fallback path: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Fallback Path.',
-          'The surrounding context for Understanding Saved Preferences decides which adjacent topic is relevant. Understanding Saved Preferences should be compared with Reading Saved Preferences, Locating User Data, Changing Camera Preferences only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use fallback path to keep Understanding Saved Preferences tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-diagnostic-output',
-        title: 'Saved Preferences Diagnostic Output',
-        body: [
-          'Understanding Saved Preferences separates the surface that accepts input from the component or document that controls the result. This is especially important when changing normalized user values crosses a saved value, a renderer output, or a public form. For Understanding Saved Preferences, that fact identifies the first concrete boundary for diagnostic output: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Saved Preferences should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Saved Preferences crosses from diagnostic output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-platform-reading',
-        title: 'Saved Preferences Platform Reading',
-        body: [
-          'A public report based on the data shape part of Understanding Saved Preferences should state the action, expected result, actual result, environment, and any redaction needed before sharing. For Understanding Saved Preferences, that fact identifies the first concrete boundary for platform reading: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Platform Reading.',
-          'The main confusion risk in Understanding Saved Preferences is treating a settings control as unrelated to persistence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'A public report based on the platform reading part of Understanding Saved Preferences should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-consumer-boundary',
-        title: 'Saved Preferences Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. In Understanding Saved Preferences, handoff is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Handoff. For Understanding Saved Preferences, that fact identifies the first concrete boundary for consumer boundary: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Consumer Boundary.',
-          'Reportable evidence for Understanding Saved Preferences should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the consumer boundary part of Understanding Saved Preferences should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-failure-reading',
-        title: 'Saved Preferences Failure Reading',
-        body: [
-          'Ownership in Understanding Saved Preferences is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The point matters in failure reading because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Failure Reading.',
-          'Adjacent pages matter for Understanding Saved Preferences, but adjacency does not move authority. Understanding Saved Preferences should be compared with Reading Saved Preferences, Locating User Data, Changing Camera Preferences only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Understanding Saved Preferences failure reading is a bounded explanation of runtime preferences: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-evidence-quality',
-        title: 'Saved Preferences Evidence Quality',
-        body: [
-          'If the available evidence for handoff does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Saved Preferences should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for evidence quality: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Evidence Quality.',
-          'The public boundary for Understanding Saved Preferences is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Use evidence quality to keep Understanding Saved Preferences tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-related-systems',
-        title: 'Saved Preferences Related Systems',
-        body: [
-          'Preferences are decoded from saved state, applied to the session and renderer runtime state, and written back through persistence stores. UI widgets do not own the file schema. Understanding Saved Preferences uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Backend or Service. The fact also tells the reader which evidence to preserve for related systems: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Related Systems.',
-          'An operator reading Understanding Saved Preferences should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the related systems part of Understanding Saved Preferences should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-policy-limit',
-        title: 'Saved Preferences Policy Limit',
-        body: [
-          'Visible feedback for Understanding Saved Preferences should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Preferences and Input Boundaries. In Understanding Saved Preferences, policy limit is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Policy Limit.',
-          'Implementation limits for Understanding Saved Preferences keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Understanding Saved Preferences should not use policy limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-technical-summary',
-        title: 'Saved Preferences Technical Summary',
-        body: [
-          'Runtime preferences cover camera, rendering, clouds, shadows, audio, keybinds, player identity, skin source, movement, hotbar branch, Othello, and window state. In Understanding Saved Preferences, contract scope is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Contract Scope. For Understanding Saved Preferences, that fact identifies the first concrete boundary for technical summary: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Technical Summary.',
-          'The summary value of Understanding Saved Preferences is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'A public report based on the technical summary part of Understanding Saved Preferences should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-saved-preferences-closing-check',
-        title: 'Saved Preferences Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Saved Preferences. The article should be broad enough to explain runtime preferences, but narrow enough that treating a settings control as unrelated to persistence remains outside the conclusion. The point matters in closing check because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Saved Preferences / Runtime and Render State / Preferences and Input Boundaries / Closing Check.',
-          'A final check for Understanding Saved Preferences should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Saved Preferences should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'saved-preferences-ui-and-when',
+        title: 'The Settings Surface and Save Points',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The settings surface in `src/ludoxel/presentation/interface/settings/` displays and edits these values. `sync_overlay_values` in `src/ludoxel/presentation/interface/settings/sync.py` is the one-way push from runtime preferences into the visible controls: it clamps and rounds each value, blocks widget signals while setting, and renders the field-of-view, sensitivity, render distance, sun angles, toggles, sliders, hotbar, crosshair, camera, cloud, particle, movement, audio, and keybind controls. The pause-overlay parameter ranges are fixed by `PauseOverlayParams` in `src/ludoxel/presentation/interface/config/pause_overlay.py`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Saving is event-driven. `ViewportStateMixin.save_state` synchronises the sun angles back from the renderer, settles Othello animations, and calls `save_state`. It is invoked during the viewport shutdown sequence and when the pause menu issues save-and-quit. Geometry is captured separately by `record_host_window_geometry`.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'A persisted preferences file records the normalized runtime aggregate at the last save event, not every intermediate adjustment, because the write occurs at defined lifecycle points rather than on every control change.',
+            },
+          },
         ],
       },
     ],
@@ -476,150 +370,105 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Preferences and Input Boundaries',
     title: 'Understanding Keybind Resolution',
     description:
-      'Explains how Ludoxel maps configured keys to gameplay actions. This page treats runtime preferences as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the complete keybind path: the action catalog and default bindings, the portable-text normalization and alias folding, the duplicate resolution, the action-to-key and key-to-action maps, the immutable settings object, the Qt input adapter for continuous movement, the discrete dispatch, and the platform cursor and keyboard boundary.',
     sections: [
       {
-        id: 'understanding-keybind-resolution-contract-scope',
-        title: 'Keybind Resolution Contract Scope',
-        body: [
-          'Each action is bound to a single key. Defaults cover movement, jump, crouch, sprint, inventory, creative mode, camera cycling, HUD/debug toggles, clearing the slot, and hotbar slots. Understanding Keybind Resolution uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Contract Scope. Understanding Keybind Resolution uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Keybind Resolution. The article should be broad enough to explain runtime preferences, but narrow enough that treating a settings control as unrelated to persistence remains outside the conclusion.',
-          'Use contract scope to keep Understanding Keybind Resolution tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
+        id: 'keybind-resolution-actions',
+        title: 'Actions, Defaults, and Display',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/preferences/keybinds.py` defines the bindable actions: movement, jump, crouch, sprint, the inventory, creative-mode, camera-cycle, gameplay-HUD, debug-HUD, debug-shadow, and clear-slot toggles, and nine hotbar-slot actions. `KEYBIND_ACTION_ORDER` fixes the canonical order shared by saving, the settings view, and duplicate resolution, with the hotbar actions last. `DEFAULT_KEYBINDS` assigns the default key for each, `KEYBIND_DISPLAY_NAMES` and `action_display_name` provide human labels, and `keybind_actions`, `default_keybinds_map`, `hotbar_action_for_index`, and `hotbar_index_for_action` expose the catalog without leaking mutable state.',
+          },
         ],
       },
       {
-        id: 'understanding-keybind-resolution-owning-subsystem',
-        title: 'Keybind Resolution Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Keybind Resolution. The article should be broad enough to explain runtime preferences, but narrow enough that treating a settings control as unrelated to persistence remains outside the conclusion. The fact also tells the reader which evidence to preserve for owning subsystem: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Owning Subsystem.',
-          'A direct observation for Understanding Keybind Resolution should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'Use owning subsystem to keep Understanding Keybind Resolution tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
+        id: 'keybind-resolution-normalization',
+        title: 'Portable Text and Alias Folding',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Bindings are stored as portable text rather than platform key codes. `portable_text_for_key` and `normalize_key_code` convert a Qt key code to a stable name without importing PyQt6, accepting only ASCII, function, navigation, and modifier keys. `normalize_binding_text` folds an arbitrary input to a single key: text containing a plus or comma is rejected as a sequence, and the remainder is matched against an alias table so `Ctrl` and `Control`, `Esc` and `Escape`, and similar spellings collapse to one canonical name. `binding_to_key` resolves a normalized binding back to a Qt key code, returning nothing for an unknown or empty binding, and `display_text_for_binding` returns `Unbound` for any binding that does not resolve.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Duplicate resolution is performed by `_normalized_bindings_from_items`, which seeds every action to empty, then assigns each binding so that a key reused on a later action clears it from the earlier one, keeping the runtime one-to-one. `_key_maps_for_bindings` builds the forward action-to-key and reverse key-to-action lookups, omitting from the reverse map any binding that does not resolve to a key code.',
+          },
         ],
       },
       {
-        id: 'understanding-keybind-resolution-data-shape',
-        title: 'Keybind Resolution Data Shape',
-        body: [
-          'Use contract scope to keep Understanding Keybind Resolution tied to Runtime and Render State; use a related page only when the reader needs a different owner. The point matters in data shape because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Data Shape.',
-          'Understanding Keybind Resolution separates the surface that accepts input from the component or document that controls the result. This is especially important when changing normalized user values crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding Keybind Resolution data shape is a bounded explanation of runtime preferences: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries.',
+        id: 'keybind-resolution-settings',
+        title: 'The Immutable Settings Object',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`KeybindSettings` is a frozen dataclass whose constructor seeds the full default action set, normalizes every binding through the duplicate resolver, and precomputes the two lookups. `binding_for_action` returns the stored text, `key_for_action` the Qt key code or nothing, and `action_for_key_code` the reverse. `with_binding` returns a new object with one action changed and the whole map re-normalized, `to_dict` serialises in canonical order, and `from_dict` restores from saved data accepting only known actions. The settings schema persists this map through these two methods, and the free function `action_for_key` is the shared lookup used across the viewport, inventory, and hotbar input paths.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/preferences/keybinds.py',
+            code: `def key_for_action(self, action: str) -> int | None:
+  return self._keys_by_action.get(str(action).strip())
+
+def action_for_key_code(self, key: int) -> str | None:
+  try:
+    normalized_key = int(key)
+  except Exception:
+    return None
+  return self._action_by_key.get(int(normalized_key))`,
+          },
         ],
       },
       {
-        id: 'understanding-keybind-resolution-handoff',
-        title: 'Keybind Resolution Handoff',
-        body: [
-          'Understanding Keybind Resolution should be read as conceptual boundary for keybind resolution within Runtime and Render State and Preferences and Input Boundaries. For Understanding Keybind Resolution, that fact identifies the first concrete boundary for handoff: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Handoff.',
-          'Ownership in Understanding Keybind Resolution is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'When Understanding Keybind Resolution crosses from handoff into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'keybind-resolution-two-paths',
+        title: 'Continuous Movement and Discrete Dispatch',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Continuous and discrete inputs use different mechanisms. The `QtInputAdapter` in `src/ludoxel/presentation/interface/input/qt.py` keeps a set of pressed key codes, refreshes its action-to-key cache on `set_keybinds`, and on `consume` reads the movement, jump, sprint, and crouch actions from the pressed set into an `InputFrame`. Jump is edge-detected: a key press sets a one-shot flag that the next `consume` clears, distinguishing a tapped jump from a held one.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/interface/input/qt.py',
+            code: `if self._action_pressed(ACTION_MOVE_FORWARD):
+  f += 1.0
+if self._action_pressed(ACTION_MOVE_BACKWARD):
+  f -= 1.0
+if self._action_pressed(ACTION_MOVE_RIGHT):
+  s += 1.0
+if self._action_pressed(ACTION_MOVE_LEFT):
+  s -= 1.0
+
+crouch = self._action_pressed(ACTION_CROUCH)
+sprint = self._action_pressed(ACTION_SPRINT)
+
+jump_held = self._action_pressed(ACTION_JUMP)
+jump_pressed = bool(self._jump_pressed_edge)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Discrete actions such as opening the inventory, selecting a hotbar slot, or toggling a HUD do not flow through the pressed set; they are resolved on the key event in `src/ludoxel/presentation/interface/viewport/controllers/interaction.py` through `action_for_key` and dispatched once. `ViewportInput.consume` applies the inversion preferences to the mouse delta before the frame reaches the session step.',
+          },
         ],
       },
       {
-        id: 'understanding-keybind-resolution-backend-or-service',
-        title: 'Keybind Resolution Backend or Service',
-        body: [
-          'A direct observation for Understanding Keybind Resolution should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The point matters in backend or service because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Backend or Service.',
-          'Visible feedback for Understanding Keybind Resolution should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Preferences and Input Boundaries.',
-          'The useful result of Understanding Keybind Resolution backend or service is a bounded explanation of runtime preferences: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-runtime-state',
-        title: 'Keybind Resolution Runtime State',
-        body: [
-          'Use owning subsystem to keep Understanding Keybind Resolution tied to Runtime and Render State; use a related page only when the reader needs a different owner. Understanding Keybind Resolution uses the fact as runtime state evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Runtime State.',
-          'When Understanding Keybind Resolution touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'When Understanding Keybind Resolution crosses from runtime state into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-fallback-path',
-        title: 'Keybind Resolution Fallback Path',
-        body: [
-          'When a key is assigned to a new action, the previous owner is unbound. Unknown or invalid bindings normalize to an unbound state. In Understanding Keybind Resolution, fallback path is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Fallback Path.',
-          'The surrounding context for Understanding Keybind Resolution decides which adjacent topic is relevant. Understanding Keybind Resolution should be compared with Changing Keybind Preferences, Using Mouse Capture, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Keybind Resolution should not use fallback path to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-diagnostic-output',
-        title: 'Keybind Resolution Diagnostic Output',
-        body: [
-          'Understanding Keybind Resolution separates the surface that accepts input from the component or document that controls the result. This is especially important when changing normalized user values crosses a saved value, a renderer output, or a public form. The point matters in diagnostic output because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Keybind Resolution should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Understanding Keybind Resolution should not use diagnostic output to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-platform-reading',
-        title: 'Keybind Resolution Platform Reading',
-        body: [
-          'The useful result of Understanding Keybind Resolution data shape is a bounded explanation of runtime preferences: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries. The point matters in platform reading because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Platform Reading.',
-          'The main confusion risk in Understanding Keybind Resolution is treating a settings control as unrelated to persistence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Understanding Keybind Resolution should not use platform reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-consumer-boundary',
-        title: 'Keybind Resolution Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. That reading gives Understanding Keybind Resolution a public anchor for consumer boundary without adding behavior that the current category does not own. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Consumer Boundary.',
-          'Reportable evidence for Understanding Keybind Resolution should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'If the available evidence for consumer boundary does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Keybind Resolution should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-failure-reading',
-        title: 'Keybind Resolution Failure Reading',
-        body: [
-          'Ownership in Understanding Keybind Resolution is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. For Understanding Keybind Resolution, that fact identifies the first concrete boundary for failure reading: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Failure Reading.',
-          'Adjacent pages matter for Understanding Keybind Resolution, but adjacency does not move authority. Understanding Keybind Resolution should be compared with Changing Keybind Preferences, Using Mouse Capture, Understanding Overlay Input Blocking only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the failure reading part of Understanding Keybind Resolution should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-evidence-quality',
-        title: 'Keybind Resolution Evidence Quality',
-        body: [
-          'When Understanding Keybind Resolution crosses from handoff into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Understanding Keybind Resolution a public anchor for evidence quality without adding behavior that the current category does not own. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Evidence Quality.',
-          'The public boundary for Understanding Keybind Resolution is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'The useful result of Understanding Keybind Resolution evidence quality is a bounded explanation of runtime preferences: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-related-systems',
-        title: 'Keybind Resolution Related Systems',
-        body: [
-          'Keybind resolution depends on focus. Search fields, settings dialogs, inventory, death screens, and pause surfaces can consume keys before gameplay receives them. The point matters in related systems because changing normalized user values can otherwise be mistaken for treating a settings control as unrelated to persistence. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Related Systems.',
-          'An operator reading Understanding Keybind Resolution should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Understanding Keybind Resolution should not use related systems to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-policy-limit',
-        title: 'Keybind Resolution Policy Limit',
-        body: [
-          'Visible feedback for Understanding Keybind Resolution should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Preferences and Input Boundaries. The fact also tells the reader which evidence to preserve for policy limit: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Policy Limit.',
-          'Implementation limits for Understanding Keybind Resolution keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the policy limit part of Understanding Keybind Resolution should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-technical-summary',
-        title: 'Keybind Resolution Technical Summary',
-        body: [
-          'Each action is bound to a single key. Defaults cover movement, jump, crouch, sprint, inventory, creative mode, camera cycling, HUD/debug toggles, clearing the slot, and hotbar slots. Understanding Keybind Resolution uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Contract Scope. In Understanding Keybind Resolution, technical summary is the difference between reading runtime preferences and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Technical Summary.',
-          'The summary value of Understanding Keybind Resolution is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Keybind Resolution should not use technical summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-keybind-resolution-closing-check',
-        title: 'Keybind Resolution Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Keybind Resolution. The article should be broad enough to explain runtime preferences, but narrow enough that treating a settings control as unrelated to persistence remains outside the conclusion. Understanding Keybind Resolution uses the fact as closing check evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Keybind Resolution / Runtime and Render State / Preferences and Input Boundaries / Closing Check.',
-          'A final check for Understanding Keybind Resolution should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding Keybind Resolution tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
+        id: 'keybind-resolution-platform',
+        title: 'The Cursor and Keyboard Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Binding resolution is separate from capture. `ViewportInput` in `src/ludoxel/presentation/interface/input/game_input.py` owns mouse capture, cursor warping, relative-delta polling, and the override-cursor synchronisation. On macOS it installs the keyboard event tap `MacosGameplayInputGuard` in `src/ludoxel/presentation/interface/input/macos_guard.py`, a Core Graphics tap that intercepts hardware key events and re-dispatches them to the native key handler while capture is active, swallowing the operating-system event. On other platforms that guard is absent and Qt key events flow directly through the adapter.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Mouse capture and the keyboard guard are distinct: the macOS cursor capture lives in the cursor helpers, while the keyboard event tap lives in the gameplay input guard, which requires Input Monitoring or Accessibility permission and is unavailable without it. Binding resolution depends on neither, and neither changes which action a key maps to.',
+            },
+          },
         ],
       },
     ],
@@ -631,150 +480,83 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Preferences and Input Boundaries',
     title: 'Understanding Overlay Input Blocking',
     description:
-      'Describes how overlays protect dialogs and gameplay from conflicting input. This page treats block construction as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the overlay state machine and the input gate: every overlay transition and its capture handling, the resume path, the transient-modal counter, the loop predicates that freeze stepping, the precise inventory exception, and the visibility and audio predicates that read the same flags.',
     sections: [
       {
-        id: 'understanding-overlay-input-blocking-contract-scope',
-        title: 'Overlay Input Blocking Contract Scope',
-        body: [
-          'Blocking overlays take focus for dialog controls, search boxes, close buttons, settings rows, or recovery actions. Gameplay capture and hotbar shortcuts should not leak through while they are active. That reading gives Understanding Overlay Input Blocking a public anchor for contract scope without adding behavior that the current category does not own. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Overlay Input Blocking. The article should be broad enough to explain block construction, but narrow enough that treating every block shape as a full-cube collision rule remains outside the conclusion.',
-          'If the available evidence for contract scope does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Overlay Input Blocking should be treated as an observation rather than a confirmed cause.',
+        id: 'overlay-input-blocking-state-machine',
+        title: 'The Overlay State Machine',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ViewportOverlays` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` owns the blocking flags and their transitions. It holds independent flags for paused, dead, inventory-open, settings-open, and Othello-settings-open, with the two settings flags remembering whether to return to the pause menu on close. `set_paused`, `set_dead`, `set_settings_open`, `set_othello_settings_open`, and `set_inventory_open` enforce mutual exclusion: opening the pause menu clears the settings flags and closes the inventory, the death overlay clears pause and settings, and the inventory cannot open while a modal is already up. `any_modal_open` reports whether any of these except a plain inventory is active.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Every transition calls `self._inp.reset` to clear the pressed-key set, and the modal transitions release mouse capture. `_resume_gameplay` and its deferred form re-acquire capture, restart the runner, and re-raise the gameplay HUD only when no overlay remains. The state machine is the single owner of which overlay is active and what happens to input when it becomes active.',
+          },
         ],
       },
       {
-        id: 'understanding-overlay-input-blocking-owning-subsystem',
-        title: 'Overlay Input Blocking Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Overlay Input Blocking. The article should be broad enough to explain block construction, but narrow enough that treating every block shape as a full-cube collision rule remains outside the conclusion. That reading gives Understanding Overlay Input Blocking a public anchor for owning subsystem without adding behavior that the current category does not own. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Owning Subsystem.',
-          'A direct observation for Understanding Overlay Input Blocking should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'The useful result of Understanding Overlay Input Blocking owning subsystem is a bounded explanation of block construction: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries.',
+        id: 'overlay-input-blocking-gate',
+        title: 'The Stepping Gate',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The simulation is gated in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py`. Both `_tick_sim`, which drives the runner, and `_on_step`, the step callback, early-return under the same conditions, so neither the accumulator nor the domain advance proceeds while an overlay holds.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/interface/viewport/render_loop/loop.py',
+            code: `if (
+  bool(self.loading_active())
+  or bool(getattr(self, "_ai_settings_overlay_open", False))
+  or bool(self._transient_modal_active())
+  or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open())
+):
+  return`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'When the predicate holds the runner is not updated and no step runs, so gravity, movement, AI actors, and the simulation clock are frozen. The pause overlay, the death overlay, the settings overlay, the Othello settings overlay, the AI settings dialog flag, a transient modal counted by `_begin_transient_modal` and `_end_transient_modal`, and the loading state each independently halt stepping.',
+          },
         ],
       },
       {
-        id: 'understanding-overlay-input-blocking-data-shape',
-        title: 'Overlay Input Blocking Data Shape',
-        body: [
-          'If the available evidence for contract scope does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Overlay Input Blocking should be treated as an observation rather than a confirmed cause. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Data Shape.',
-          'Understanding Overlay Input Blocking separates the surface that accepts input from the component or document that controls the result. This is especially important when placing or interpreting world blocks crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the data shape part of Understanding Overlay Input Blocking should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'overlay-input-blocking-inventory',
+        title: 'The Inventory Exception',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The inventory overlay is deliberately absent from the stepping gate. `set_inventory_open` releases mouse capture and resets the input adapter, so the player issues no movement and no look, but `inventory_open` is not one of the gate conditions. Simulation therefore continues: gravity, falling blocks, and AI actors keep advancing while the inventory is open, with the player held still by the neutralized input rather than by a frozen clock.',
+          },
+          {
+            kind: 'list',
+            ordered: false,
+            items: [
+              'Pause, death, settings, Othello settings, the AI settings flag, a transient modal, and loading freeze the simulation: the runner is not updated and no step runs.',
+              'The inventory overlay continues the simulation but neutralizes input by releasing capture and clearing the pressed-key set.',
+              'Every modal transition resets input; modal transitions release capture, and resuming gameplay re-acquires capture and restarts the runner.',
+            ],
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'warning',
+              content:
+                'Do not infer that opening any overlay stops the world. Only the overlays named in the stepping gate freeze simulation; the inventory overlay leaves gravity and AI running while it removes input.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-overlay-input-blocking-handoff',
-        title: 'Overlay Input Blocking Handoff',
-        body: [
-          'Understanding Overlay Input Blocking should be read as conceptual boundary for overlay input blocking within Runtime and Render State and Preferences and Input Boundaries. The point matters in handoff because placing or interpreting world blocks can otherwise be mistaken for treating every block shape as a full-cube collision rule. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Handoff.',
-          'Ownership in Understanding Overlay Input Blocking is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Understanding Overlay Input Blocking should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-backend-or-service',
-        title: 'Overlay Input Blocking Backend or Service',
-        body: [
-          'A direct observation for Understanding Overlay Input Blocking should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for backend or service: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Backend or Service.',
-          'Visible feedback for Understanding Overlay Input Blocking should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Preferences and Input Boundaries.',
-          'A public report based on the backend or service part of Understanding Overlay Input Blocking should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-runtime-state',
-        title: 'Overlay Input Blocking Runtime State',
-        body: [
-          'The useful result of Understanding Overlay Input Blocking owning subsystem is a bounded explanation of block construction: enough detail to act, and enough restraint to avoid claims outside Preferences and Input Boundaries. That reading gives Understanding Overlay Input Blocking a public anchor for runtime state without adding behavior that the current category does not own. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Runtime State.',
-          'When Understanding Overlay Input Blocking touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for runtime state does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Overlay Input Blocking should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-fallback-path',
-        title: 'Overlay Input Blocking Fallback Path',
-        body: [
-          'Overlay actions communicate through controllers, signals, or session managers. That keeps UI actions from bypassing simulation validation or saved-state normalization. Understanding Overlay Input Blocking uses the fact as fallback path evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Fallback Path.',
-          'The surrounding context for Understanding Overlay Input Blocking decides which adjacent topic is relevant. Understanding Overlay Input Blocking should be compared with Using the Inventory Overlay, Recovering after Death, Understanding Keybind Resolution only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding Overlay Input Blocking crosses from fallback path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-diagnostic-output',
-        title: 'Overlay Input Blocking Diagnostic Output',
-        body: [
-          'Understanding Overlay Input Blocking separates the surface that accepts input from the component or document that controls the result. This is especially important when placing or interpreting world blocks crosses a saved value, a renderer output, or a public form. Understanding Overlay Input Blocking uses the fact as diagnostic output evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Overlay Input Blocking should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use diagnostic output to keep Understanding Overlay Input Blocking tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-platform-reading',
-        title: 'Overlay Input Blocking Platform Reading',
-        body: [
-          'A public report based on the data shape part of Understanding Overlay Input Blocking should state the action, expected result, actual result, environment, and any redaction needed before sharing. Understanding Overlay Input Blocking uses the fact as platform reading evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Platform Reading.',
-          'The main confusion risk in Understanding Overlay Input Blocking is treating every block shape as a full-cube collision rule. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Understanding Overlay Input Blocking crosses from platform reading into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-consumer-boundary',
-        title: 'Overlay Input Blocking Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. Understanding Overlay Input Blocking uses the fact as consumer boundary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Consumer Boundary.',
-          'Reportable evidence for Understanding Overlay Input Blocking should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'When Understanding Overlay Input Blocking crosses from consumer boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-failure-reading',
-        title: 'Overlay Input Blocking Failure Reading',
-        body: [
-          'Ownership in Understanding Overlay Input Blocking is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. That reading gives Understanding Overlay Input Blocking a public anchor for failure reading without adding behavior that the current category does not own. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Failure Reading.',
-          'Adjacent pages matter for Understanding Overlay Input Blocking, but adjacency does not move authority. Understanding Overlay Input Blocking should be compared with Using the Inventory Overlay, Recovering after Death, Understanding Keybind Resolution only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for failure reading does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Overlay Input Blocking should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-evidence-quality',
-        title: 'Overlay Input Blocking Evidence Quality',
-        body: [
-          'Understanding Overlay Input Blocking should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. For Understanding Overlay Input Blocking, that fact identifies the first concrete boundary for evidence quality: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Evidence Quality.',
-          'The public boundary for Understanding Overlay Input Blocking is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the evidence quality part of Understanding Overlay Input Blocking should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-related-systems',
-        title: 'Overlay Input Blocking Related Systems',
-        body: [
-          'If input seems ignored, check whether an overlay is active, whether the search box has focus, and whether the viewport has recaptured the mouse after closing the surface. The fact also tells the reader which evidence to preserve for related systems: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Related Systems.',
-          'An operator reading Understanding Overlay Input Blocking should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the related systems part of Understanding Overlay Input Blocking should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-policy-limit',
-        title: 'Overlay Input Blocking Policy Limit',
-        body: [
-          'Visible feedback for Understanding Overlay Input Blocking should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Runtime and Render State / Preferences and Input Boundaries. That reading gives Understanding Overlay Input Blocking a public anchor for policy limit without adding behavior that the current category does not own. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Policy Limit.',
-          'Implementation limits for Understanding Overlay Input Blocking keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for policy limit does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Overlay Input Blocking should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-technical-summary',
-        title: 'Overlay Input Blocking Technical Summary',
-        body: [
-          'Blocking overlays take focus for dialog controls, search boxes, close buttons, settings rows, or recovery actions. Gameplay capture and hotbar shortcuts should not leak through while they are active. The fact also tells the reader which evidence to preserve for technical summary: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Technical Summary.',
-          'The summary value of Understanding Overlay Input Blocking is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use technical summary to keep Understanding Overlay Input Blocking tied to Runtime and Render State; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-overlay-input-blocking-closing-check',
-        title: 'Overlay Input Blocking Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Overlay Input Blocking. The article should be broad enough to explain block construction, but narrow enough that treating every block shape as a full-cube collision rule remains outside the conclusion. The point matters in closing check because placing or interpreting world blocks can otherwise be mistaken for treating every block shape as a full-cube collision rule. The local reading frame is Understanding Overlay Input Blocking / Runtime and Render State / Preferences and Input Boundaries / Closing Check.',
-          'A final check for Understanding Overlay Input Blocking should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Overlay Input Blocking should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'overlay-input-blocking-surfaces',
+        title: 'Overlay State, Visibility, and Audio',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The same predicates drive drawing and audio. `_gameplay_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay is active, and `_set_paused_overlay` and its siblings pause cloud motion. `_ambient_audio_active` follows a related but distinct predicate that keeps ambient audio running while only the HUD is hidden, so hiding the HUD alone does not stop the simulation or the ambient source. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
+          },
         ],
       },
     ],
@@ -786,150 +568,100 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Backend Implementations',
     title: 'Understanding OpenGL Rendering',
     description:
-      'Explains the OpenGL backend responsibilities used by the desktop renderer path. This page treats renderer contract behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the Windows OpenGL backend end to end: the OpenGL 4.3 core requirement, resource and pass construction, the compute-backed and CPU chunk payload paths, the ordered frame pipeline and every pass, runtime-state application, and the offscreen preview path.',
     sections: [
       {
-        id: 'understanding-opengl-rendering-contract-scope',
-        title: 'OpenGL Rendering Contract Scope',
-        body: [
-          'The OpenGL backend owns shader programs, texture atlases, chunk payload submission, selection lines, shadows, clouds, first-person geometry, player models, Othello visuals, and frame metrics. That reading gives Understanding OpenGL Rendering a public anchor for contract scope without adding behavior that the current category does not own. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding OpenGL Rendering. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion.',
-          'If the available evidence for contract scope does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding OpenGL Rendering should be treated as an observation rather than a confirmed cause.',
+        id: 'opengl-rendering-context',
+        title: 'Context Requirement and Construction',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`RendererBackend` in `src/ludoxel/presentation/rendering/backends/opengl/runtime/backend.py` requires an OpenGL 4.3 Core Profile context. `_require_gl43_core_context` raises with the context details unless the version, the core profile, and the GLSL version are sufficient, because the chunk face payload is built by a compute shader that needs that floor. `initialize` probes the context, loads shader programs, the texture atlas, and the skin texture into `GLResources`, builds a `BlockVisualResolver`, initializes each pass with its program and resources, assembles the `FramePipeline`, constructs the `TextureAnimationController`, and applies runtime state.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/opengl/runtime/backend.py',
+            code: `def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
+  if not info.is_version_at_least(4, 3):
+    raise RuntimeError(f"The active context does not satisfy the OpenGL 4.3 requirement for the compute-backed chunk face payload path. {_format_context_details(info)}")
+
+  if not info.is_core_profile():
+    raise RuntimeError(f"The active context is not Core Profile, but the renderer requires OpenGL 4.3 Core Profile for the compute-backed chunk face payload path. {_format_context_details(info)}")
+
+  if not info.is_glsl_at_least(4, 30):
+    raise RuntimeError(f"The active GLSL version is insufficient for the compute-backed chunk face payload path. {_format_context_details(info)}")`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The pass objects are constructed once: a shadow-map pass, a world pass, falling-block and block-break-particle passes, a player-model pass, first-person arm and held-block and special-item passes, a sun pass, a cloud pass, an Othello pass, a selection pass, and the compute payload builder. `destroy` releases every pass, the resources, and the preview target. The backend owns resource lifetime and pass construction; the per-frame ordering is the pipeline.',
+          },
         ],
       },
       {
-        id: 'understanding-opengl-rendering-owning-subsystem',
-        title: 'OpenGL Rendering Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding OpenGL Rendering. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. In Understanding OpenGL Rendering, owning subsystem is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Owning Subsystem.',
-          'A direct observation for Understanding OpenGL Rendering should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'If the available evidence for owning subsystem does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding OpenGL Rendering should be treated as an observation rather than a confirmed cause.',
+        id: 'opengl-rendering-chunk-payload',
+        title: 'Chunk Submission and the Compute Payload',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`submit_chunk` accepts either a CPU-built list of face buckets or a GPU face-source array with bucket counts. When the GPU path is supplied, `ChunkFacePayloadBuilder` runs the compute program to build and store the authoritative face buckets, and the same buckets feed both the world pass and the shadow pass; when only CPU faces are supplied, those become authoritative and the shadow faces default to them. `evict_chunks` removes chunks from the world pass, the shadow pass, and the payload builder together. This compute-backed path is specific to the OpenGL 4.3 backend.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/opengl/runtime/backend.py',
+            code: `if gpu_face_sources is not None and gpu_bucket_counts is not None:
+  gpu_payload = self._gpu_payload_builder.build_and_store(chunk_key=chunk_key, world_revision=int(world_revision), face_sources=gpu_face_sources, bucket_counts=gpu_bucket_counts)
+  authoritative_world_faces = gpu_payload.face_buckets
+  authoritative_shadow_faces = authoritative_world_faces
+  self._last_payload_validation = None`,
+          },
         ],
       },
       {
-        id: 'understanding-opengl-rendering-data-shape',
-        title: 'OpenGL Rendering Data Shape',
-        body: [
-          'If the available evidence for contract scope does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding OpenGL Rendering should be treated as an observation rather than a confirmed cause. Understanding OpenGL Rendering uses the fact as data shape evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Data Shape.',
-          'Understanding OpenGL Rendering separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form.',
-          'Use data shape to keep Understanding OpenGL Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner.',
+        id: 'opengl-rendering-pass-order',
+        title: 'The Ordered Frame Pipeline',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`FramePipeline.render` in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` executes the frame in a fixed order. It computes the camera chunk, the world and cloud fog ranges, and the effective shadow parameters, builds the light view-projection, renders the shadow map, builds the camera view and projection with a closer near plane in third person, clears, and draws the scene before composing the first-person view model.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Compute the camera chunk, world and cloud fog ranges, and effective shadow parameters; build the light view-projection from the sun direction and coverage radius.',
+              'Render the shadow map from world geometry plus player and Othello casters.',
+              'Build the camera view and projection; clear color and depth to the sky color.',
+              'Draw the sun billboard, then enable the depth test.',
+              'Draw the world pass with shadow, fog, and selection tint, then falling blocks and block-break particles.',
+              'Draw each player model, then the Othello board and pieces.',
+              'Draw clouds, then the selection outline.',
+              'Clear the depth buffer and draw exactly one first-person view model: a special item, a held block, or the arm, at a reduced field of view.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The first-person view model clears depth before drawing so the hand or held block is never occluded by world geometry, and `_first_person_viewmodel_fov_deg` reduces a wide field of view to keep the model proportionate. The special item, held block, and arm are mutually exclusive, selected by the first-person render state. The pipeline returns frame metrics aggregated across the world, falling-block, particle, player, and Othello draws.',
+          },
         ],
       },
       {
-        id: 'understanding-opengl-rendering-handoff',
-        title: 'OpenGL Rendering Handoff',
-        body: [
-          'Understanding OpenGL Rendering should be read as conceptual boundary for opengl rendering within Rendering Backends and Backend Implementations. In Understanding OpenGL Rendering, owning subsystem is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Owning Subsystem. The point matters in handoff because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Handoff.',
-          'Ownership in Understanding OpenGL Rendering is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Understanding OpenGL Rendering should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-backend-or-service',
-        title: 'OpenGL Rendering Backend or Service',
-        body: [
-          'A direct observation for Understanding OpenGL Rendering should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for backend or service: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Backend or Service.',
-          'Visible feedback for Understanding OpenGL Rendering should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / Backend Implementations.',
-          'A public report based on the backend or service part of Understanding OpenGL Rendering should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-runtime-state',
-        title: 'OpenGL Rendering Runtime State',
-        body: [
-          'If the available evidence for owning subsystem does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding OpenGL Rendering should be treated as an observation rather than a confirmed cause. In Understanding OpenGL Rendering, runtime state is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Runtime State.',
-          'When Understanding OpenGL Rendering touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding OpenGL Rendering should not use runtime state to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-fallback-path',
-        title: 'OpenGL Rendering Fallback Path',
-        body: [
-          'The backend implements the renderer API. It receives assets, block registry data, runtime state, chunk faces, player skins, and render snapshots through that contract. Understanding OpenGL Rendering uses the fact as data shape evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Data Shape. For Understanding OpenGL Rendering, that fact identifies the first concrete boundary for fallback path: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Fallback Path.',
-          'The surrounding context for Understanding OpenGL Rendering decides which adjacent topic is relevant. Understanding OpenGL Rendering should be compared with Understanding WGPU Rendering, Understanding Render Distance Fog and Shadows, Understanding Selection Outlines only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'A public report based on the fallback path part of Understanding OpenGL Rendering should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-diagnostic-output',
-        title: 'OpenGL Rendering Diagnostic Output',
-        body: [
-          'Understanding OpenGL Rendering separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for diagnostic output: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Diagnostic Output.',
-          'Recovery or follow-up for Understanding OpenGL Rendering should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding OpenGL Rendering crosses from diagnostic output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-platform-reading',
-        title: 'OpenGL Rendering Platform Reading',
-        body: [
-          'Use data shape to keep Understanding OpenGL Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner. The fact also tells the reader which evidence to preserve for platform reading: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Platform Reading.',
-          'The main confusion risk in Understanding OpenGL Rendering is claiming parity without backend-specific evidence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use platform reading to keep Understanding OpenGL Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-consumer-boundary',
-        title: 'OpenGL Rendering Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. Understanding OpenGL Rendering uses the fact as consumer boundary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Consumer Boundary.',
-          'Reportable evidence for Understanding OpenGL Rendering should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'When Understanding OpenGL Rendering crosses from consumer boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-failure-reading',
-        title: 'OpenGL Rendering Failure Reading',
-        body: [
-          'Ownership in Understanding OpenGL Rendering is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. In Understanding OpenGL Rendering, failure reading is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Failure Reading.',
-          'Adjacent pages matter for Understanding OpenGL Rendering, but adjacency does not move authority. Understanding OpenGL Rendering should be compared with Understanding WGPU Rendering, Understanding Render Distance Fog and Shadows, Understanding Selection Outlines only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Understanding OpenGL Rendering should not use failure reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-evidence-quality',
-        title: 'OpenGL Rendering Evidence Quality',
-        body: [
-          'Understanding OpenGL Rendering should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. For Understanding OpenGL Rendering, that fact identifies the first concrete boundary for evidence quality: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Evidence Quality.',
-          'The public boundary for Understanding OpenGL Rendering is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the evidence quality part of Understanding OpenGL Rendering should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-related-systems',
-        title: 'OpenGL Rendering Related Systems',
-        body: [
-          'OpenGL behavior should not be generalized to the WGPU backend without checking parity. The two backends share a contract but use different resource and pipeline implementations. Understanding OpenGL Rendering uses the fact as related systems evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Related Systems.',
-          'An operator reading Understanding OpenGL Rendering should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Use related systems to keep Understanding OpenGL Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-policy-limit',
-        title: 'OpenGL Rendering Policy Limit',
-        body: [
-          'Visible feedback for Understanding OpenGL Rendering should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / Backend Implementations. In Understanding OpenGL Rendering, policy limit is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Policy Limit.',
-          'Implementation limits for Understanding OpenGL Rendering keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Understanding OpenGL Rendering should not use policy limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-technical-summary',
-        title: 'OpenGL Rendering Technical Summary',
-        body: [
-          'The OpenGL backend owns shader programs, texture atlases, chunk payload submission, selection lines, shadows, clouds, first-person geometry, player models, Othello visuals, and frame metrics. Understanding OpenGL Rendering uses the fact as technical summary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Technical Summary.',
-          'The summary value of Understanding OpenGL Rendering is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'When Understanding OpenGL Rendering crosses from technical summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-opengl-rendering-closing-check',
-        title: 'OpenGL Rendering Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding OpenGL Rendering. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. That reading gives Understanding OpenGL Rendering a public anchor for closing check without adding behavior that the current category does not own. The local reading frame is Understanding OpenGL Rendering / Rendering Backends / Backend Implementations / Closing Check.',
-          'A final check for Understanding OpenGL Rendering should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'The useful result of Understanding OpenGL Rendering closing check is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations.',
+        id: 'opengl-rendering-runtime-and-preview',
+        title: 'Runtime State and Offscreen Preview',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'This article documents the OpenGL backend only. Differences from the WGPU backend, including the clip-space convention, the chunk-mesh path, and camera roll, are stated in the WGPU rendering article where both implementations are compared.',
+            },
+          },
         ],
       },
     ],
@@ -941,150 +673,83 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Backend Implementations',
     title: 'Understanding WGPU Rendering',
     description:
-      'Explains the WGPU renderer path and how it relates to the OpenGL path. This page treats renderer contract behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the WGPU backend end to end: device, surface, and resource construction, the clip-space conversion, the frame-uniform layout, the CPU per-face instance path and wireframe emulation, the shared fog, shadow, light-space, and selection contracts, the full pass order, and the confirmed differences from OpenGL.',
     sections: [
       {
-        id: 'understanding-wgpu-rendering-contract-scope',
-        title: 'WGPU Rendering Contract Scope',
-        body: [
-          'The WGPU backend owns its surface, resources, meshes, shader sources, textures, and pipeline setup for the macOS-oriented renderer path. That reading gives Understanding WGPU Rendering a public anchor for contract scope without adding behavior that the current category does not own. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding WGPU Rendering. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion.',
-          'The useful result of Understanding WGPU Rendering contract scope is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations.',
+        id: 'wgpu-rendering-device',
+        title: 'Device, Surface, and Resources',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`WgpuRendererBackend` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` requests a high-performance WebGPU adapter and device through wgpu-native, configures the canvas surface, and builds its pipelines from GLSL 450 sources. `initialize` creates the camera bind-group layout and one uniform buffer per face, builds the texture atlas and its bind group, the shadow bind-group layout, the player skin and special-item textures, and the world, shadowed, wireframe, sun, cloud, Othello, shadow-depth, transform-shadow, textured-face, and selection pipelines, all held in `WgpuRendererResources`. The color target uses a `depth24plus` depth texture and the shadow target uses a `depth32float` texture with a comparison sampler.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'WGPU clip space runs depth from zero to one rather than minus one to one, so `_opengl_clip_to_wgpu` corrects every view-projection matrix before upload. `_frame_uniform_bytes` packs the view-projection and light view-projection, the sun direction, the selection tint and mode and block, the fog parameters, and the shadow texel, darkness, bias, and PCF radius into a fixed-width uniform consumed by the shaders.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py',
+            code: `_OPENGL_TO_WGPU_CLIP = np.asarray(((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.5, 0.5), (0.0, 0.0, 0.0, 1.0)), dtype=np.float32)
+
+def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
+  return (_OPENGL_TO_WGPU_CLIP @ np.asarray(view_proj, dtype=np.float32)).astype(np.float32)`,
+          },
         ],
       },
       {
-        id: 'understanding-wgpu-rendering-owning-subsystem',
-        title: 'WGPU Rendering Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding WGPU Rendering. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. The point matters in owning subsystem because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Owning Subsystem.',
-          'A direct observation for Understanding WGPU Rendering should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'The useful result of Understanding WGPU Rendering owning subsystem is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations.',
+        id: 'wgpu-rendering-mesh-path',
+        title: 'The CPU Face-Instance Path',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The WGPU backend does not use the compute payload builder. Its `submit_chunk` discards the GPU face sources and shadow faces and uploads CPU-built face rows through `upload_chunk_mesh` into a `WgpuChunkMesh`. Transient geometry such as falling blocks, particles, player skins, held blocks, and Othello pieces is built into per-face instance rows each frame by the row builders and uploaded into temporary vertex buffers, drawn with per-face camera bind groups. `set_selection_target` builds the outline vertices inline and `_refresh_selection_buffer` uploads them. This per-face CPU instancing is the structural difference from the OpenGL backend, which builds chunk payloads on the GPU.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'World wireframe is emulated rather than rasterized as lines by the driver. `_front_facing_world_rows` and `_front_facing_cloud_rows` filter front-facing rows on the CPU so the WGPU line list matches the edges the OpenGL back-face culling and polygon line mode would produce.',
+          },
         ],
       },
       {
-        id: 'understanding-wgpu-rendering-data-shape',
-        title: 'WGPU Rendering Data Shape',
-        body: [
-          'The useful result of Understanding WGPU Rendering contract scope is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Data Shape.',
-          'Understanding WGPU Rendering separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form.',
-          'Use data shape to keep Understanding WGPU Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner.',
+        id: 'wgpu-rendering-shared',
+        title: 'Shared Contracts and Pass Order',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. Fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The frame is drawn in the same sequence as the OpenGL pipeline.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Render the shadow depth pass from chunk meshes, player transform casters, and Othello pieces.',
+              'Begin the main pass clearing to the fog color; draw the sun.',
+              'Draw the world, shadowed or plain, or the emulated wireframe.',
+              'Draw falling blocks, block-break particles, player skins, and held blocks.',
+              'Draw the Othello board, pieces, and highlight overlay; then clouds; then the selection lines.',
+              'Begin a separate first-person pass with depth cleared and draw the special item, held block, or arm.',
+            ],
+          },
         ],
       },
       {
-        id: 'understanding-wgpu-rendering-handoff',
-        title: 'WGPU Rendering Handoff',
-        body: [
-          'Understanding WGPU Rendering should be read as conceptual boundary for wgpu rendering within Rendering Backends and Backend Implementations. The point matters in handoff because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Handoff.',
-          'Ownership in Understanding WGPU Rendering is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'The useful result of Understanding WGPU Rendering handoff is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-backend-or-service',
-        title: 'WGPU Rendering Backend or Service',
-        body: [
-          'A direct observation for Understanding WGPU Rendering should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. Understanding WGPU Rendering uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Backend or Service.',
-          'Visible feedback for Understanding WGPU Rendering should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / Backend Implementations.',
-          'When Understanding WGPU Rendering crosses from backend or service into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-runtime-state',
-        title: 'WGPU Rendering Runtime State',
-        body: [
-          'The useful result of Understanding WGPU Rendering owning subsystem is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations. That reading gives Understanding WGPU Rendering a public anchor for runtime state without adding behavior that the current category does not own. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Runtime State.',
-          'When Understanding WGPU Rendering touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Understanding WGPU Rendering runtime state is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-fallback-path',
-        title: 'WGPU Rendering Fallback Path',
-        body: [
-          'WGPU uses the same renderer-facing contract as the OpenGL path. Camera data, chunk payloads, runtime state, player skins, and Othello render state should mean the same thing. For Understanding WGPU Rendering, that fact identifies the first concrete boundary for fallback path: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Fallback Path.',
-          'The surrounding context for Understanding WGPU Rendering decides which adjacent topic is relevant. Understanding WGPU Rendering should be compared with Understanding OpenGL Rendering, Understanding Render Distance Fog and Shadows, Understanding Selection Outlines only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding WGPU Rendering crosses from fallback path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-diagnostic-output',
-        title: 'WGPU Rendering Diagnostic Output',
-        body: [
-          'Understanding WGPU Rendering separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form. For Understanding WGPU Rendering, that fact identifies the first concrete boundary for diagnostic output: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Diagnostic Output.',
-          'Recovery or follow-up for Understanding WGPU Rendering should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'A public report based on the diagnostic output part of Understanding WGPU Rendering should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-platform-reading',
-        title: 'WGPU Rendering Platform Reading',
-        body: [
-          'Use data shape to keep Understanding WGPU Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner. Understanding WGPU Rendering uses the fact as platform reading evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Platform Reading.',
-          'The main confusion risk in Understanding WGPU Rendering is claiming parity without backend-specific evidence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use platform reading to keep Understanding WGPU Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-consumer-boundary',
-        title: 'WGPU Rendering Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. Understanding WGPU Rendering uses the fact as consumer boundary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Consumer Boundary.',
-          'Reportable evidence for Understanding WGPU Rendering should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use consumer boundary to keep Understanding WGPU Rendering tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-failure-reading',
-        title: 'WGPU Rendering Failure Reading',
-        body: [
-          'Ownership in Understanding WGPU Rendering is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. In Understanding WGPU Rendering, failure reading is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Failure Reading.',
-          'Adjacent pages matter for Understanding WGPU Rendering, but adjacency does not move authority. Understanding WGPU Rendering should be compared with Understanding OpenGL Rendering, Understanding Render Distance Fog and Shadows, Understanding Selection Outlines only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for failure reading does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding WGPU Rendering should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-evidence-quality',
-        title: 'WGPU Rendering Evidence Quality',
-        body: [
-          'The useful result of Understanding WGPU Rendering handoff is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside Backend Implementations. For Understanding WGPU Rendering, that fact identifies the first concrete boundary for evidence quality: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Evidence Quality.',
-          'The public boundary for Understanding WGPU Rendering is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Understanding WGPU Rendering crosses from evidence quality into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-related-systems',
-        title: 'WGPU Rendering Related Systems',
-        body: [
-          'When diagnosing WGPU rendering, compare world faces, clouds, selection outlines, UVs, shadows, first-person geometry, third-person camera, and pause overlay behavior against OpenGL expectations. Understanding WGPU Rendering uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Backend or Service. For Understanding WGPU Rendering, that fact identifies the first concrete boundary for related systems: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Related Systems.',
-          'An operator reading Understanding WGPU Rendering should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the related systems part of Understanding WGPU Rendering should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-policy-limit',
-        title: 'WGPU Rendering Policy Limit',
-        body: [
-          'Visible feedback for Understanding WGPU Rendering should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / Backend Implementations. In Understanding WGPU Rendering, policy limit is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Policy Limit.',
-          'Implementation limits for Understanding WGPU Rendering keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'If the available evidence for policy limit does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding WGPU Rendering should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-technical-summary',
-        title: 'WGPU Rendering Technical Summary',
-        body: [
-          'The WGPU backend owns its surface, resources, meshes, shader sources, textures, and pipeline setup for the macOS-oriented renderer path. For Understanding WGPU Rendering, that fact identifies the first concrete boundary for technical summary: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Technical Summary.',
-          'The summary value of Understanding WGPU Rendering is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'When Understanding WGPU Rendering crosses from technical summary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-wgpu-rendering-closing-check',
-        title: 'WGPU Rendering Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding WGPU Rendering. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. That reading gives Understanding WGPU Rendering a public anchor for closing check without adding behavior that the current category does not own. The local reading frame is Understanding WGPU Rendering / Rendering Backends / Backend Implementations / Closing Check.',
-          'A final check for Understanding WGPU Rendering should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding WGPU Rendering should be treated as an observation rather than a confirmed cause.',
+        id: 'wgpu-rendering-differences',
+        title: 'Confirmed Differences from OpenGL',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Three differences are visible in the confirmed source. The WGPU render method discards the camera roll argument, so the camera-shake roll the OpenGL pipeline applies is not applied to the WGPU main view. The chunk-geometry path differs: WGPU uploads CPU face rows while OpenGL builds payloads with a compute shader. The shadow depth format differs, with WGPU using `depth32float` and OpenGL a 24-bit depth texture.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'Fog factors, shadow coverage, light-space construction, and selection-outline geometry are shared modules and are equivalent across backends by construction. Camera roll, the chunk-geometry path, and the shadow depth format are confirmed to differ. No claim of pixel-level parity is made for areas not backed by shared source.',
+            },
+          },
         ],
       },
     ],
@@ -1096,150 +761,112 @@ export const systemsPages: DocsPageContent[] = [
     group: 'World Visuals',
     title: 'Understanding Render Distance Fog and Shadows',
     description:
-      'Explains how distance, fog, sun, and shadow settings reach the renderer. This page treats renderer contract behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the distance and shadow mathematics: the render-distance radius and the geometry and cloud fog ranges, the disabled-fog sentinels, the shared fog shader, the shadow quality presets and their decoupling from render distance, and the texel-snapped light-space orthographic.',
     sections: [
       {
-        id: 'understanding-render-distance-fog-and-shadows-contract-scope',
-        title: 'Render Distance Fog and Shadows Contract Scope',
-        body: [
-          'Render distance is stored as a chunk radius and controls the area uploaded around the player. It is normalized separately from shadow quality. That reading gives Understanding Render Distance Fog and Shadows a public anchor for contract scope without adding behavior that the current category does not own. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Render Distance Fog and Shadows. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion.',
-          'The useful result of Understanding Render Distance Fog and Shadows contract scope is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside World Visuals.',
+        id: 'fog-shadows-fog-range',
+        title: 'Render Distance and the Fog Ranges',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_fog_range` derives a separate cloud range whose end is the radius scaled by 1.5, raised to a minimum visible radius so a narrow render distance does not empty the sky, then capped at the far plane.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad s = 0.85\\,e',
+              displayMode: true,
+              caption: 'render_distance_fog_range; the cloud end raises the radius by 1.5 and a minimum visible radius before the same start fraction.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The two fog inputs are distinct types. `GeometryDistanceFog` carries the camera position and is faded by three-dimensional distance, so the world responds to vertical camera motion as well as horizontal; `CloudDistanceFog` carries only the horizontal camera coordinates and is faded by horizontal distance, so high clouds do not vanish purely because the camera changes altitude. Each type exposes a `disabled` sentinel whose end is at or below its start, which the shaders read as no fade; the first-person view model receives the disabled geometry fog.',
+          },
         ],
       },
       {
-        id: 'understanding-render-distance-fog-and-shadows-owning-subsystem',
-        title: 'Render Distance Fog and Shadows Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Render Distance Fog and Shadows. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. In Understanding Render Distance Fog and Shadows, owning subsystem is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Owning Subsystem.',
-          'A direct observation for Understanding Render Distance Fog and Shadows should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'Understanding Render Distance Fog and Shadows should not use owning subsystem to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'fog-shadows-fog-shader',
+        title: 'The Shared Fog Shader',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Both backends consume the same fog factor, defined identically in `src/ludoxel/presentation/rendering/backends/opengl/shaders/common/distance_fog.glsl` and `src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources/common/distance_fog.glsl`. `ldx_geometry_fog_factor` measures three-dimensional distance, `ldx_cloud_fog_factor` measures horizontal distance, and `ldx_apply_geometry_distance_fog` mixes toward the fog color by the factor. A range with end at or below start returns zero, disabling the fade.',
+          },
+          {
+            kind: 'code',
+            language: 'glsl',
+            caption: 'distance_fog.glsl (identical in both backends)',
+            code: `float ldx_geometry_fog_factor(vec3 worldPos, vec3 camPos, float fogStart, float fogEnd) {
+    if (fogEnd <= fogStart) {
+        return 0.0;
+    }
+    float d = length(worldPos - camPos);
+    return clamp((d - fogStart) / max(fogEnd - fogStart, 1e-3), 0.0, 1.0);
+}`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'f = \\mathrm{clamp}\\!\\left(\\frac{d - s}{\\max(e - s,\\ 10^{-3})},\\ 0,\\ 1\\right)',
+              displayMode: true,
+              caption: 'The shared fog factor; geometry uses the 3D distance d, the cloud variant uses the horizontal distance.',
+            },
+          },
         ],
       },
       {
-        id: 'understanding-render-distance-fog-and-shadows-data-shape',
-        title: 'Render Distance Fog and Shadows Data Shape',
-        body: [
-          'The useful result of Understanding Render Distance Fog and Shadows contract scope is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside World Visuals. For Understanding Render Distance Fog and Shadows, that fact identifies the first concrete boundary for data shape: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Data Shape.',
-          'Understanding Render Distance Fog and Shadows separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form.',
-          'A public report based on the data shape part of Understanding Render Distance Fog and Shadows should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'fog-shadows-quality',
+        title: 'Shadow Quality Decoupled from Render Distance',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Shadow quality is a discrete level from one to five. `ShadowQualityPreset` maps each level to a shadow-map size, a light-space coverage radius, and a PCF radius; `resolve_shadow_quality_preset` normalizes an arbitrary level to a valid preset, collapsing a missing or out-of-range value to the standard level. `effective_backend_shadow_params` substitutes the preset size, coverage, and PCF radius while keeping bias, slope bias, polygon offset, darkness, and stabilization from the base parameters. The coverage radius is a shadow-specific policy, not a function of render distance, so changing render distance does not degrade the texel density of a given quality level.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\text{texel}_{\\mathrm{world}} \\approx \\frac{2\\,r}{\\text{size}}',
+              displayMode: true,
+              caption: 'Effective world-space shadow texel size; as quality rises, size grows faster than coverage radius r, so the texel shrinks.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: '`BackendRendererRuntimeState.set_shadow_quality` in `src/ludoxel/presentation/rendering/contracts/state.py` normalizes the stored level so a malformed value converges to standard, independent of render distance. To keep shadows present across the visible scene regardless of quality, the pipeline raises the coverage radius to at least the unfogged radius at maximum render distance, computed by `max_unfogged_render_distance_radius_blocks`, so casters within the fully visible range cast into the light box while texel density remains governed by quality alone.',
+          },
         ],
       },
       {
-        id: 'understanding-render-distance-fog-and-shadows-handoff',
-        title: 'Render Distance Fog and Shadows Handoff',
-        body: [
-          'Understanding Render Distance Fog and Shadows should be read as conceptual boundary for render distance fog and shadows within Rendering Backends and World Visuals. In Understanding Render Distance Fog and Shadows, owning subsystem is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Owning Subsystem. In Understanding Render Distance Fog and Shadows, handoff is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Handoff.',
-          'Ownership in Understanding Render Distance Fog and Shadows is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Understanding Render Distance Fog and Shadows should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-backend-or-service',
-        title: 'Render Distance Fog and Shadows Backend or Service',
-        body: [
-          'A direct observation for Understanding Render Distance Fog and Shadows should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. Understanding Render Distance Fog and Shadows uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Backend or Service.',
-          'Visible feedback for Understanding Render Distance Fog and Shadows should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / World Visuals.',
-          'When Understanding Render Distance Fog and Shadows crosses from backend or service into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-runtime-state',
-        title: 'Render Distance Fog and Shadows Runtime State',
-        body: [
-          'Understanding Render Distance Fog and Shadows should not use owning subsystem to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The point matters in runtime state because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Runtime State.',
-          'When Understanding Render Distance Fog and Shadows touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Render Distance Fog and Shadows should not use runtime state to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-fallback-path',
-        title: 'Render Distance Fog and Shadows Fallback Path',
-        body: [
-          'Sun azimuth, sun elevation, shadow enablement, shadow quality, debug shadow, and wireframe modes are part of renderer runtime state. The renderer reads those values per frame. Understanding Render Distance Fog and Shadows uses the fact as fallback path evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Fallback Path.',
-          'The surrounding context for Understanding Render Distance Fog and Shadows decides which adjacent topic is relevant. Understanding Render Distance Fog and Shadows should be compared with Changing Shadow Preferences, Changing Cloud Preferences, Understanding OpenGL Rendering only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Use fallback path to keep Understanding Render Distance Fog and Shadows tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-diagnostic-output',
-        title: 'Render Distance Fog and Shadows Diagnostic Output',
-        body: [
-          'Understanding Render Distance Fog and Shadows separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for diagnostic output: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Render Distance Fog and Shadows should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use diagnostic output to keep Understanding Render Distance Fog and Shadows tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-platform-reading',
-        title: 'Render Distance Fog and Shadows Platform Reading',
-        body: [
-          'A public report based on the data shape part of Understanding Render Distance Fog and Shadows should state the action, expected result, actual result, environment, and any redaction needed before sharing. For Understanding Render Distance Fog and Shadows, that fact identifies the first concrete boundary for platform reading: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Platform Reading.',
-          'The main confusion risk in Understanding Render Distance Fog and Shadows is claiming parity without backend-specific evidence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'When Understanding Render Distance Fog and Shadows crosses from platform reading into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-consumer-boundary',
-        title: 'Render Distance Fog and Shadows Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. In Understanding Render Distance Fog and Shadows, handoff is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Handoff. The fact also tells the reader which evidence to preserve for consumer boundary: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Consumer Boundary.',
-          'Reportable evidence for Understanding Render Distance Fog and Shadows should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the consumer boundary part of Understanding Render Distance Fog and Shadows should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-failure-reading',
-        title: 'Render Distance Fog and Shadows Failure Reading',
-        body: [
-          'Ownership in Understanding Render Distance Fog and Shadows is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. In Understanding Render Distance Fog and Shadows, failure reading is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Failure Reading.',
-          'Adjacent pages matter for Understanding Render Distance Fog and Shadows, but adjacency does not move authority. Understanding Render Distance Fog and Shadows should be compared with Changing Shadow Preferences, Changing Cloud Preferences, Understanding OpenGL Rendering only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'If the available evidence for failure reading does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Render Distance Fog and Shadows should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-evidence-quality',
-        title: 'Render Distance Fog and Shadows Evidence Quality',
-        body: [
-          'Understanding Render Distance Fog and Shadows should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. Understanding Render Distance Fog and Shadows uses the fact as evidence quality evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Evidence Quality.',
-          'The public boundary for Understanding Render Distance Fog and Shadows is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'Use evidence quality to keep Understanding Render Distance Fog and Shadows tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-related-systems',
-        title: 'Render Distance Fog and Shadows Related Systems',
-        body: [
-          'Distance fog and shadow settings affect visual presentation and workload, but they do not change saved world blocks or Othello rules. Report renderer symptoms with backend and hardware details. Understanding Render Distance Fog and Shadows uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Backend or Service. For Understanding Render Distance Fog and Shadows, that fact identifies the first concrete boundary for related systems: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Related Systems.',
-          'An operator reading Understanding Render Distance Fog and Shadows should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'A public report based on the related systems part of Understanding Render Distance Fog and Shadows should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-policy-limit',
-        title: 'Render Distance Fog and Shadows Policy Limit',
-        body: [
-          'Visible feedback for Understanding Render Distance Fog and Shadows should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / World Visuals. The point matters in policy limit because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Policy Limit.',
-          'Implementation limits for Understanding Render Distance Fog and Shadows keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Understanding Render Distance Fog and Shadows should not use policy limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-technical-summary',
-        title: 'Render Distance Fog and Shadows Technical Summary',
-        body: [
-          'Render distance is stored as a chunk radius and controls the area uploaded around the player. It is normalized separately from shadow quality. Understanding Render Distance Fog and Shadows uses the fact as technical summary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Technical Summary.',
-          'The summary value of Understanding Render Distance Fog and Shadows is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use technical summary to keep Understanding Render Distance Fog and Shadows tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-render-distance-fog-and-shadows-closing-check',
-        title: 'Render Distance Fog and Shadows Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Render Distance Fog and Shadows. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. That reading gives Understanding Render Distance Fog and Shadows a public anchor for closing check without adding behavior that the current category does not own. The local reading frame is Understanding Render Distance Fog and Shadows / Rendering Backends / World Visuals / Closing Check.',
-          'A final check for Understanding Render Distance Fog and Shadows should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Render Distance Fog and Shadows should be treated as an observation rather than a confirmed cause.',
+        id: 'fog-shadows-light-space',
+        title: 'The Stabilized Light Space',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`compute_light_view_proj` in `src/ludoxel/presentation/rendering/visuals/worlds/light_space.py` builds a light-space orthographic projection centered on the camera. `_coverage_scaled_sun_extents` scales the orthographic radius, light distance, and far plane to the coverage radius while keeping the near plane, so the light box always contains the coverage sphere. When stabilization is enabled the center is snapped to the shadow texel grid so the shadow does not crawl as the camera moves: the texel size is two times the radius divided by the shadow size, and the center coordinates in light space are rounded to that quantum. The shadow-map pass in `src/ludoxel/presentation/rendering/backends/opengl/passes/shadow_map.py` recreates the depth texture only when the requested size changes through `ensure_size`, and skips rendering when no instances and no extra casters exist.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/worlds/light_space.py',
+            code: `s = float(max(1, int(shadow_size)))
+texel = (2.0 * r) / s
+
+cx = right.dot(center)
+cy = up.dot(center)
+cz = light_axis.dot(center)
+
+sx = _snap(float(cx), float(texel))
+sy = _snap(float(cy), float(texel))`,
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'This article covers fog ranges, the shared fog factor, shadow quality presets, and light-space construction. It does not extend to cloud-field generation or chunk culling, which are owned by other world-visual modules.',
+            },
+          },
         ],
       },
     ],
@@ -1251,150 +878,81 @@ export const systemsPages: DocsPageContent[] = [
     group: 'World Visuals',
     title: 'Understanding Selection Outlines',
     description:
-      'Explains how selected blocks receive shape-aware outlines. This page treats renderer contract behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the selection pipeline: ray-cast picking through voxel traversal and per-shape AABBs, the placement-cell derivation and fence and wall special case, the shape-aware outline built from block-model render boxes on a sixteenth-voxel lattice, and the line pass and neighbour-signature caching shared by both backends.',
     sections: [
       {
-        id: 'understanding-selection-outlines-contract-scope',
-        title: 'Selection Outlines Contract Scope',
-        body: [
-          'Selection starts with a simulation pick target containing block position and state. If there is no valid target, the renderer clears the selection. The point matters in contract scope because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Selection Outlines. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion.',
-          'Understanding Selection Outlines should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'selection-outlines-picking',
+        title: 'Picking by Ray and Voxel Traversal',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`pick_block` in `src/ludoxel/simulation/rules/picking/block.py` finds the selected cell. A ray is built from the eye offset by a small epsilon, and `dda_grid_traverse` in `src/ludoxel/foundations/mathematics/voxels/dda.py` walks the voxel grid one cell at a time up to the reach. For each occupied cell the picker fetches the shape AABBs through `pick_aabbs_for_block` and tests the ray against each with `ray_aabb_face` from `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py`, keeping the nearest entry parameter and the struck face.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/rules/picking/block.py',
+            code: `for h in dda_grid_traverse(origin=o, direction=d, t_max=r, cell_size=1.0):
+  cx, cy, cz = int(h.cell_x), int(h.cell_y), int(h.cell_z)
+  k = (cx, cy, cz)
+  st = world.blocks.get(k)
+  if st is None:
+    prev_cell = k
+    continue
+
+  aabbs = pick_aabbs_for_block(str(st), get_state, get_def, x=int(cx), y=int(cy), z=int(cz))
+  if not aabbs:
+    prev_cell = k
+    continue
+
+  best_t: float | None = None
+  best_face: int = -1
+  best_point: Vec3 | None = None`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The result `BlockPick` carries the hit cell, the placement cell derived from the face neighbour offset, the entry parameter, the face, and the hit point; the placement cell is cleared when it is already occupied. Because the AABBs come from the block shape rather than a unit cube, picking respects slabs, stairs, fences, and walls; for a fence or wall a downward ray that strikes near the top is reassigned to the top face so placement lands on the post.',
+          },
         ],
       },
       {
-        id: 'understanding-selection-outlines-owning-subsystem',
-        title: 'Selection Outlines Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Selection Outlines. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. That reading gives Understanding Selection Outlines a public anchor for owning subsystem without adding behavior that the current category does not own. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Owning Subsystem.',
-          'A direct observation for Understanding Selection Outlines should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'If the available evidence for owning subsystem does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Selection Outlines should be treated as an observation rather than a confirmed cause.',
+        id: 'selection-outlines-builder',
+        title: 'Shape-Aware Outline Construction',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`SelectionOutlineBuilder` in `src/ludoxel/presentation/rendering/visuals/selections/outline.py` maps one block-state realization to world-space line segments. The geometry source is the block-model render-box decomposition through `_outline_boxes`, the same boxes the renderer uses for faces, so the outline matches the visible shape of slabs, stairs, fences, fence gates, and walls. For each box, `build` iterates the six faces, skips faces occluded by sibling boxes or by neighbouring blocks, computes the face plane and its two intervals with `_plane_rect_for_face`, projects the face onto a sixteenth-voxel lattice, and marks the occupied lattice cells.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'Q_{16}(v) = \\operatorname{round}(16\\,v), \\qquad Q(v) = \\operatorname{round}(v / 10^{-6})',
+              displayMode: true,
+              caption: 'The face lattice quantum used to mark occupied cells, and the edge-key quantum used to de-duplicate segments.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The builder then emits a line segment for every lattice-cell edge whose neighbour is not occupied, producing the boundary of the lit region. `_segment_points` converts each edge to world space and lifts it along the face normal by a small epsilon to avoid z-fighting, and `_edge_key` and `_quant` de-duplicate segments by a symmetric quantized key so the same edge is never emitted twice. The result is an array of segment endpoints.',
+          },
         ],
       },
       {
-        id: 'understanding-selection-outlines-data-shape',
-        title: 'Selection Outlines Data Shape',
-        body: [
-          'Understanding Selection Outlines should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Data Shape.',
-          'Understanding Selection Outlines separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form.',
-          'Use data shape to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-handoff',
-        title: 'Selection Outlines Handoff',
-        body: [
-          'Understanding Selection Outlines should be read as conceptual boundary for selection outlines within Rendering Backends and World Visuals. The point matters in handoff because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Handoff.',
-          'Ownership in Understanding Selection Outlines is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'The useful result of Understanding Selection Outlines handoff is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside World Visuals.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-backend-or-service',
-        title: 'Selection Outlines Backend or Service',
-        body: [
-          'A direct observation for Understanding Selection Outlines should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The fact also tells the reader which evidence to preserve for backend or service: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Backend or Service.',
-          'Visible feedback for Understanding Selection Outlines should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / World Visuals.',
-          'Use backend or service to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-runtime-state',
-        title: 'Selection Outlines Runtime State',
-        body: [
-          'If the available evidence for owning subsystem does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Selection Outlines should be treated as an observation rather than a confirmed cause. That reading gives Understanding Selection Outlines a public anchor for runtime state without adding behavior that the current category does not own. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Runtime State.',
-          'When Understanding Selection Outlines touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'The useful result of Understanding Selection Outlines runtime state is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside World Visuals.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-fallback-path',
-        title: 'Selection Outlines Fallback Path',
-        body: [
-          'The outline uses model-aware block data so slabs, stairs, fences, gates, and walls can draw closer to their effective shape than a simple cube would. The fact also tells the reader which evidence to preserve for fallback path: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Fallback Path.',
-          'The surrounding context for Understanding Selection Outlines decides which adjacent topic is relevant. Understanding Selection Outlines should be compared with Understanding Block Shapes, Reading Placement Rejection, Understanding WGPU Rendering only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'A public report based on the fallback path part of Understanding Selection Outlines should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-diagnostic-output',
-        title: 'Selection Outlines Diagnostic Output',
-        body: [
-          'Understanding Selection Outlines separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form. The fact also tells the reader which evidence to preserve for diagnostic output: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Selection Outlines should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use diagnostic output to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-platform-reading',
-        title: 'Selection Outlines Platform Reading',
-        body: [
-          'Use data shape to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner. Understanding Selection Outlines uses the fact as platform reading evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Platform Reading.',
-          'The main confusion risk in Understanding Selection Outlines is claiming parity without backend-specific evidence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use platform reading to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-consumer-boundary',
-        title: 'Selection Outlines Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. The fact also tells the reader which evidence to preserve for consumer boundary: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Consumer Boundary.',
-          'Reportable evidence for Understanding Selection Outlines should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'A public report based on the consumer boundary part of Understanding Selection Outlines should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-failure-reading',
-        title: 'Selection Outlines Failure Reading',
-        body: [
-          'Ownership in Understanding Selection Outlines is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. That reading gives Understanding Selection Outlines a public anchor for failure reading without adding behavior that the current category does not own. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Failure Reading.',
-          'Adjacent pages matter for Understanding Selection Outlines, but adjacency does not move authority. Understanding Selection Outlines should be compared with Understanding Block Shapes, Reading Placement Rejection, Understanding WGPU Rendering only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'The useful result of Understanding Selection Outlines failure reading is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside World Visuals.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-evidence-quality',
-        title: 'Selection Outlines Evidence Quality',
-        body: [
-          'The useful result of Understanding Selection Outlines handoff is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside World Visuals. For Understanding Selection Outlines, that fact identifies the first concrete boundary for evidence quality: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Evidence Quality.',
-          'The public boundary for Understanding Selection Outlines is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Understanding Selection Outlines crosses from evidence quality into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-related-systems',
-        title: 'Selection Outlines Related Systems',
-        body: [
-          'An incorrect outline can point to picking, model state, renderer upload, or backend drawing. Keep those possibilities separate when reporting selection behavior. The fact also tells the reader which evidence to preserve for related systems: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Related Systems.',
-          'An operator reading Understanding Selection Outlines should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Use related systems to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-policy-limit',
-        title: 'Selection Outlines Policy Limit',
-        body: [
-          'Visible feedback for Understanding Selection Outlines should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Rendering Backends / World Visuals. The point matters in policy limit because reading backend output through snapshots and resources can otherwise be mistaken for claiming parity without backend-specific evidence. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Policy Limit.',
-          'Implementation limits for Understanding Selection Outlines keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Understanding Selection Outlines should not use policy limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-technical-summary',
-        title: 'Selection Outlines Technical Summary',
-        body: [
-          'Selection starts with a simulation pick target containing block position and state. If there is no valid target, the renderer clears the selection. Understanding Selection Outlines uses the fact as technical summary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Technical Summary.',
-          'The summary value of Understanding Selection Outlines is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use technical summary to keep Understanding Selection Outlines tied to Rendering Backends; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-selection-outlines-closing-check',
-        title: 'Selection Outlines Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Selection Outlines. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. In Understanding Selection Outlines, closing check is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Selection Outlines / Rendering Backends / World Visuals / Closing Check.',
-          'A final check for Understanding Selection Outlines should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Understanding Selection Outlines should not use closing check to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'selection-outlines-pass',
+        title: 'The Line Pass and Both Backends',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The OpenGL backend wraps the builder in a `SelectionController` and draws the result through the selection pass in `src/ludoxel/presentation/rendering/backends/opengl/passes/selection.py`; the WGPU backend builds the same line vertices in `set_selection_target` and draws them with its selection pipeline. Both backends key the selection on the picked cell, its state, and a six-neighbour state signature, so the outline is rebuilt only when the picked block or its surroundings change rather than every frame. The render loop refreshes the selection on a cadence in `_refresh_selection_for_frame`, clearing it when nothing is targeted.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'The outline is the silhouette of the block-model render boxes for the picked cell, not a wireframe of a unit cube. The same builder is shared by both backends, so the outline geometry is equivalent across them; only the line-drawing pass that consumes it differs.',
+            },
+          },
         ],
       },
     ],
@@ -1406,150 +964,108 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Audio Feedback',
     title: 'Understanding Material Sounds',
     description:
-      'Describes how block and player material sounds are selected. This page treats audio feedback as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for break, place, interact, footstep, landing, and damage events, the playback admission with polyphony and cooldown, and the volume categories.',
     sections: [
       {
-        id: 'understanding-material-sounds-contract-scope',
-        title: 'Material Sounds Contract Scope',
-        body: [
-          'Placement, breaking, and interaction choose a sound group from the affected block state. Fence gate open and close sounds are selected through interaction state. The point matters in contract scope because reading sound selection and playback state can otherwise be mistaken for changing simulation rules to explain sound output. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Material Sounds. The article should be broad enough to explain audio feedback, but narrow enough that changing simulation rules to explain sound output remains outside the conclusion.',
-          'Understanding Material Sounds should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'material-sounds-groups',
+        title: 'Sound Groups and the Fallback Chain',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Each block definition names a sound group, defined in `src/ludoxel/simulation/blocks/sounds/groups.py`. `AudioManager.sound_group_for_block_state` resolves a block state to its group through the block registry and caches the result. Groups form a fallback chain so a specialised material can borrow a general one: `iter_sound_group_candidates` walks the `SOUND_GROUP_FALLBACKS` map until it terminates, then appends the default stone group, and the playback path tries each candidate in order until a pool resolves.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/blocks/sounds/groups.py',
+            code: `SOUND_GROUP_FALLBACKS: dict[str, str] = {
+  SOUND_GROUP_CHERRY_WOOD: SOUND_GROUP_WOOD,
+  SOUND_GROUP_BAMBOO_WOOD: SOUND_GROUP_WOOD,
+  SOUND_GROUP_NETHER_WOOD: SOUND_GROUP_WOOD,
+  SOUND_GROUP_DEEPSLATE_BRICKS: SOUND_GROUP_DEEPSLATE,
+  SOUND_GROUP_TUFF: SOUND_GROUP_STONE,
+  SOUND_GROUP_CALCITE: SOUND_GROUP_STONE,
+  SOUND_GROUP_BASALT: SOUND_GROUP_STONE,
+  SOUND_GROUP_GILDED_BLACKSTONE: SOUND_GROUP_STONE,
+  SOUND_GROUP_LODESTONE: SOUND_GROUP_STONE,
+  SOUND_GROUP_RESIN: SOUND_GROUP_STONE,
+  SOUND_GROUP_NETHERITE: SOUND_GROUP_METAL,
+  SOUND_GROUP_ROOTED_DIRT: SOUND_GROUP_DIRT,
+  SOUND_GROUP_MUD: SOUND_GROUP_DIRT,
+  SOUND_GROUP_NYLIUM: SOUND_GROUP_GRASS,
+  SOUND_GROUP_SOUL_SAND: SOUND_GROUP_SAND,
+  SOUND_GROUP_SOUL_SOIL: SOUND_GROUP_SAND,
+  SOUND_GROUP_NETHERRACK: SOUND_GROUP_STONE,
+  SOUND_GROUP_NETHER_BRICKS: SOUND_GROUP_STONE,
+  SOUND_GROUP_NETHER_ORE: SOUND_GROUP_STONE,
+  SOUND_GROUP_NETHER_GOLD_ORE: SOUND_GROUP_NETHER_ORE,
+  SOUND_GROUP_ANCIENT_DEBRIS: SOUND_GROUP_STONE,
+  SOUND_GROUP_CORAL_BLOCK: SOUND_GROUP_STONE,
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The catalogs in `src/ludoxel/presentation/audio/catalogs/material.py` map each group to its pools. `BLOCK_SOUND_CATALOG` carries break and place pools, with interactable wood groups also carrying open and close pools; `PLAYER_SURFACE_SOUND_CATALOG` maps each group to a footstep pool; and `PLAYER_EVENT_SOUND_CATALOG` in `src/ludoxel/presentation/audio/catalogs/player.py` holds the landing, damage, attack, and Othello events. `AudioManager._collect_named_pools` flattens every catalog into a keyed pool table at construction.',
+          },
         ],
       },
       {
-        id: 'understanding-material-sounds-owning-subsystem',
-        title: 'Material Sounds Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Material Sounds. The article should be broad enough to explain audio feedback, but narrow enough that changing simulation rules to explain sound output remains outside the conclusion. The point matters in owning subsystem because reading sound selection and playback state can otherwise be mistaken for changing simulation rules to explain sound output. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Owning Subsystem.',
-          'A direct observation for Understanding Material Sounds should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'The useful result of Understanding Material Sounds owning subsystem is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
+        id: 'material-sounds-pool',
+        title: 'The Audio Sample Pool',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`AudioSamplePool` in `src/ludoxel/presentation/audio/types/events.py` is a frozen record naming its sample paths, an audio category, a selection mode, a spatial flag with a distance cutoff and size, a maximum polyphony, and a cooldown. `make_audio_pool` constructs one with a polyphony floor of one and a non-negative cooldown, and `indexed_paths` expands a numbered family such as the four place samples of a material. `prime_effects` pre-creates the effect slots for non-ambient pools so the first play is not delayed.',
+          },
         ],
       },
       {
-        id: 'understanding-material-sounds-data-shape',
-        title: 'Material Sounds Data Shape',
-        body: [
-          'Understanding Material Sounds should not use contract scope to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The fact also tells the reader which evidence to preserve for data shape: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Data Shape.',
-          'Understanding Material Sounds separates the surface that accepts input from the component or document that controls the result. This is especially important when reading sound selection and playback state crosses a saved value, a renderer output, or a public form.',
-          'Use data shape to keep Understanding Material Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
+        id: 'material-sounds-events',
+        title: 'Where Events Originate and Resolve',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Material and player events are emitted during the simulation step and routed at the presentation layer. The step result carries footstep, landing, gravity-break, and damage signals; the render loop in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` calls `play_surface_event` for footsteps and landings, `play_interaction` for gravity-broken blocks, and `play_player_event` for damage hits. Block interactions and placements emit their own break, place, and interact events through `play_interaction`, which splits an interaction into open and close variants by reading the block open property from its state.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`play_block_action` walks the group fallback candidates and plays the first resolved pool; `play_surface_event` routes a footstep to `_play_surface_step` and a landing to `_play_landing_event`. Landing severity is distance-graded: a fall of at least twelve blocks plays the big landing sample, at least six blocks plays the small landing sample, and a shorter landing falls back to an ordinary surface step.',
+          },
         ],
       },
       {
-        id: 'understanding-material-sounds-handoff',
-        title: 'Material Sounds Handoff',
-        body: [
-          'Understanding Material Sounds should be read as conceptual boundary for material sounds within Feedback and Intelligence and Audio Feedback. In Understanding Material Sounds, handoff is the difference between reading audio feedback and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Handoff.',
-          'Ownership in Understanding Material Sounds is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Understanding Material Sounds should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-backend-or-service',
-        title: 'Material Sounds Backend or Service',
-        body: [
-          'A direct observation for Understanding Material Sounds should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. For Understanding Material Sounds, that fact identifies the first concrete boundary for backend or service: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Backend or Service.',
-          'Visible feedback for Understanding Material Sounds should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Audio Feedback.',
-          'A public report based on the backend or service part of Understanding Material Sounds should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-runtime-state',
-        title: 'Material Sounds Runtime State',
-        body: [
-          'The useful result of Understanding Material Sounds owning subsystem is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback. In Understanding Material Sounds, runtime state is the difference between reading audio feedback and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Runtime State.',
-          'When Understanding Material Sounds touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'If the available evidence for runtime state does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Material Sounds should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-fallback-path',
-        title: 'Material Sounds Fallback Path',
-        body: [
-          'Footsteps and landing sounds use the support block beneath the player. Larger falls can select stronger landing sounds before normal movement continues. For Understanding Material Sounds, that fact identifies the first concrete boundary for fallback path: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Fallback Path.',
-          'The surrounding context for Understanding Material Sounds decides which adjacent topic is relevant. Understanding Material Sounds should be compared with Changing Audio Preferences, Supplying Platform Evidence, Supplying Logs Without Secrets only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding Material Sounds crosses from fallback path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-diagnostic-output',
-        title: 'Material Sounds Diagnostic Output',
-        body: [
-          'Understanding Material Sounds separates the surface that accepts input from the component or document that controls the result. This is especially important when reading sound selection and playback state crosses a saved value, a renderer output, or a public form. Understanding Material Sounds uses the fact as diagnostic output evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Material Sounds should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'When Understanding Material Sounds crosses from diagnostic output into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-platform-reading',
-        title: 'Material Sounds Platform Reading',
-        body: [
-          'Use data shape to keep Understanding Material Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner. Understanding Material Sounds uses the fact as platform reading evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Platform Reading.',
-          'The main confusion risk in Understanding Material Sounds is changing simulation rules to explain sound output. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Use platform reading to keep Understanding Material Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-consumer-boundary',
-        title: 'Material Sounds Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. In Understanding Material Sounds, handoff is the difference between reading audio feedback and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Handoff. Understanding Material Sounds uses the fact as consumer boundary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Consumer Boundary.',
-          'Reportable evidence for Understanding Material Sounds should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Use consumer boundary to keep Understanding Material Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-failure-reading',
-        title: 'Material Sounds Failure Reading',
-        body: [
-          'Ownership in Understanding Material Sounds is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The point matters in failure reading because reading sound selection and playback state can otherwise be mistaken for changing simulation rules to explain sound output. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Failure Reading.',
-          'Adjacent pages matter for Understanding Material Sounds, but adjacency does not move authority. Understanding Material Sounds should be compared with Changing Audio Preferences, Supplying Platform Evidence, Supplying Logs Without Secrets only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Understanding Material Sounds should not use failure reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-evidence-quality',
-        title: 'Material Sounds Evidence Quality',
-        body: [
-          'Understanding Material Sounds should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. The fact also tells the reader which evidence to preserve for evidence quality: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Evidence Quality.',
-          'The public boundary for Understanding Material Sounds is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'A public report based on the evidence quality part of Understanding Material Sounds should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-related-systems',
-        title: 'Material Sounds Related Systems',
-        body: [
-          'The presentation audio manager resolves existing sources, applies category volume, spatial cutoff, throttling, and source pools. Simulation reports events but does not play audio devices directly. The fact also tells the reader which evidence to preserve for related systems: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Related Systems.',
-          'An operator reading Understanding Material Sounds should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Use related systems to keep Understanding Material Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-policy-limit',
-        title: 'Material Sounds Policy Limit',
-        body: [
-          'Visible feedback for Understanding Material Sounds should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Audio Feedback. That reading gives Understanding Material Sounds a public anchor for policy limit without adding behavior that the current category does not own. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Policy Limit.',
-          'Implementation limits for Understanding Material Sounds keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'The useful result of Understanding Material Sounds policy limit is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-technical-summary',
-        title: 'Material Sounds Technical Summary',
-        body: [
-          'Placement, breaking, and interaction choose a sound group from the affected block state. Fence gate open and close sounds are selected through interaction state. The fact also tells the reader which evidence to preserve for technical summary: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Technical Summary.',
-          'The summary value of Understanding Material Sounds is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'A public report based on the technical summary part of Understanding Material Sounds should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-material-sounds-closing-check',
-        title: 'Material Sounds Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Material Sounds. The article should be broad enough to explain audio feedback, but narrow enough that changing simulation rules to explain sound output remains outside the conclusion. That reading gives Understanding Material Sounds a public anchor for closing check without adding behavior that the current category does not own. The local reading frame is Understanding Material Sounds / Feedback and Intelligence / Audio Feedback / Closing Check.',
-          'A final check for Understanding Material Sounds should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Material Sounds should be treated as an observation rather than a confirmed cause.',
+        id: 'material-sounds-playback',
+        title: 'Admission, Polyphony, and Volume',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and a free effect slot must be available within the polyphony budget through the effect helpers in `src/ludoxel/presentation/audio/playback/effects.py` and the source helpers in `src/ludoxel/presentation/audio/playback/sources.py`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/playback/manager.py',
+            code: `base_volume = float(self._preferences.volume_for(pool.category))
+if base_volume <= 1e-6:
+  return False
+if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+  return False
+if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
+  if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
+    return False`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Every sound belongs to one of the categories in `src/ludoxel/application/preferences/audio.py`: master, ambient, block, or player. `AudioPreferences.volume_for` returns the product of master and the category factor, each clamped to the unit interval. Block break, place, and interact sounds use the block category; footsteps, landings, and damage hits use the player category. The audio preference object is the boundary between the saved volume values and playback; the playback manager reads it and never alters simulation rules to make a sound.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'g_{\\text{cat}} = \\mathrm{master} \\times \\mathrm{factor}_{\\text{cat}}, \\quad 0 \\le \\mathrm{master},\\ \\mathrm{factor}_{\\text{cat}} \\le 1',
+              displayMode: true,
+              caption: 'AudioPreferences.volume_for; a category at zero, or master at zero, silences the pool before any slot is taken.',
+            },
+          },
         ],
       },
     ],
@@ -1561,150 +1077,85 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Audio Feedback',
     title: 'Understanding Ambient Sounds',
     description:
-      'Explains the ambient audio loop and its preference boundaries. This page treats audio feedback as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the ambient audio loop in full: the ambient catalog and its single play-space key, the preference and play-space gating, the dedicated looping-effect lifecycle and its transition guard, the round-robin source rotation, and the boundary that keeps ambient audio distinct from material sounds.',
     sections: [
       {
-        id: 'understanding-ambient-sounds-contract-scope',
-        title: 'Ambient Sounds Contract Scope',
-        body: [
-          'Ambient playback selects a desired ambient key from the active play space and preference state. If ambient audio is disabled or muted, the loop stops. Understanding Ambient Sounds uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Contract Scope. Understanding Ambient Sounds uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Ambient Sounds. The article should be broad enough to explain audio feedback, but narrow enough that changing simulation rules to explain sound output remains outside the conclusion.',
-          'When Understanding Ambient Sounds crosses from contract scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'ambient-sounds-catalog',
+        title: 'The Ambient Catalog',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Ambient audio is a small catalog in `src/ludoxel/presentation/audio/catalogs/ambient.py`. It defines a single key for the My World play space whose pool names four wind samples beneath the ambient asset directory, with round-robin selection, a non-spatial flag, and a maximum polyphony of one. Ambient audio is therefore a single looping voice, not a spatial event family.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/catalogs/ambient.py',
+            code: `AMBIENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
+  AMBIENT_KEY_MY_WORLD: make_audio_pool(
+    "assets/audio/ambient/my_world/wind1.wav",
+    "assets/audio/ambient/my_world/wind2.wav",
+    "assets/audio/ambient/my_world/wind3.wav",
+    "assets/audio/ambient/my_world/wind4.wav",
+    category=AUDIO_CATEGORY_AMBIENT,
+    selection_mode=SELECTION_ROUND_ROBIN,
+    spatial=False,
+    distance_cutoff=0.0,
+    size=0.0,
+    max_polyphony=1,
+  )
+}`,
+          },
         ],
       },
       {
-        id: 'understanding-ambient-sounds-owning-subsystem',
-        title: 'Ambient Sounds Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Ambient Sounds. The article should be broad enough to explain audio feedback, but narrow enough that changing simulation rules to explain sound output remains outside the conclusion. Understanding Ambient Sounds uses the fact as owning subsystem evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Owning Subsystem.',
-          'A direct observation for Understanding Ambient Sounds should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'Use owning subsystem to keep Understanding Ambient Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
+        id: 'ambient-sounds-gating',
+        title: 'Selection and Gating',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` decides the key: it returns the My World key only when ambient audio is enabled and the current play space is My World, and returns nothing otherwise. The viewport supplies the enabled flag and the current space through `AudioManager.set_ambient_active`, gating ambient audio on the same gameplay-audible predicate that governs whether the simulation is running, so the Othello space and the menu states have no ambient loop. The effective volume is the ambient category gain, the product of master and the ambient factor; when that gain is inaudible or the key is absent, the effect is stopped and its source cleared rather than played at zero volume.',
+          },
         ],
       },
       {
-        id: 'understanding-ambient-sounds-data-shape',
-        title: 'Ambient Sounds Data Shape',
-        body: [
-          'When Understanding Ambient Sounds crosses from contract scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Understanding Ambient Sounds a public anchor for data shape without adding behavior that the current category does not own. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Data Shape.',
-          'Understanding Ambient Sounds separates the surface that accepts input from the component or document that controls the result. This is especially important when reading sound selection and playback state crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding Ambient Sounds data shape is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
+        id: 'ambient-sounds-lifecycle',
+        title: 'The Looping Effect Lifecycle',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Ambient playback uses one dedicated effect, not the pooled slots material sounds use. `_sync_ambient_sound` ensures the effect exists, sets its volume, and either starts the next source when the key changes or restarts it when it has stopped. `_start_next_ambient_source` picks the next source through `_pick_existing_url`, swaps it onto the effect, and defers play until loaded through `_play_ambient_effect_when_ready`. A transitioning flag suppresses the restart that the stop during a deliberate source change would otherwise trigger, so switching sources does not loop incorrectly.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/playback/manager.py',
+            code: `def _on_ambient_playing_changed(self) -> None:
+  if self._ambient_effect is None:
+    return
+  if self._ambient_transitioning or self._ambient_pending_play:
+    return
+  if self._ambient_key is not None and not self._ambient_effect.isPlaying():
+    self._start_next_ambient_source()`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Round-robin selection in `_pick_existing_url` advances through the four samples on each restart, so the loop varies across the wind tracks rather than repeating a single file. The effect is created once by `_ensure_ambient_effect` and reused; only its source is swapped. `set_preferences` re-applies the ambient volume to the effect and the category volume to every pooled slot.',
+          },
         ],
       },
       {
-        id: 'understanding-ambient-sounds-handoff',
-        title: 'Ambient Sounds Handoff',
-        body: [
-          'Understanding Ambient Sounds should be read as conceptual boundary for ambient sounds within Feedback and Intelligence and Audio Feedback. Understanding Ambient Sounds uses the fact as owning subsystem evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Owning Subsystem. The fact also tells the reader which evidence to preserve for handoff: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Handoff.',
-          'Ownership in Understanding Ambient Sounds is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Use handoff to keep Understanding Ambient Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-backend-or-service',
-        title: 'Ambient Sounds Backend or Service',
-        body: [
-          'A direct observation for Understanding Ambient Sounds should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. That reading gives Understanding Ambient Sounds a public anchor for backend or service without adding behavior that the current category does not own. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Backend or Service.',
-          'Visible feedback for Understanding Ambient Sounds should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Audio Feedback.',
-          'The useful result of Understanding Ambient Sounds backend or service is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-runtime-state',
-        title: 'Ambient Sounds Runtime State',
-        body: [
-          'Use owning subsystem to keep Understanding Ambient Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner. For Understanding Ambient Sounds, that fact identifies the first concrete boundary for runtime state: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Runtime State.',
-          'When Understanding Ambient Sounds touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'When Understanding Ambient Sounds crosses from runtime state into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-fallback-path',
-        title: 'Ambient Sounds Fallback Path',
-        body: [
-          'The audio manager resolves available ambient files and rotates through existing sources. Missing sources stop playback cleanly rather than changing simulation state. The point matters in fallback path because reading sound selection and playback state can otherwise be mistaken for changing simulation rules to explain sound output. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Fallback Path.',
-          'The surrounding context for Understanding Ambient Sounds decides which adjacent topic is relevant. Understanding Ambient Sounds should be compared with Changing Audio Preferences, Supplying Platform Evidence, Understanding Material Sounds only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Ambient Sounds should not use fallback path to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-diagnostic-output',
-        title: 'Ambient Sounds Diagnostic Output',
-        body: [
-          'Understanding Ambient Sounds separates the surface that accepts input from the component or document that controls the result. This is especially important when reading sound selection and playback state crosses a saved value, a renderer output, or a public form. That reading gives Understanding Ambient Sounds a public anchor for diagnostic output without adding behavior that the current category does not own. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Ambient Sounds should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for diagnostic output does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Ambient Sounds should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-platform-reading',
-        title: 'Ambient Sounds Platform Reading',
-        body: [
-          'The useful result of Understanding Ambient Sounds data shape is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback. The point matters in platform reading because reading sound selection and playback state can otherwise be mistaken for changing simulation rules to explain sound output. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Platform Reading.',
-          'The main confusion risk in Understanding Ambient Sounds is changing simulation rules to explain sound output. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding Ambient Sounds platform reading is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-consumer-boundary',
-        title: 'Ambient Sounds Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. That reading gives Understanding Ambient Sounds a public anchor for consumer boundary without adding behavior that the current category does not own. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Consumer Boundary.',
-          'Reportable evidence for Understanding Ambient Sounds should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'The useful result of Understanding Ambient Sounds consumer boundary is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-failure-reading',
-        title: 'Ambient Sounds Failure Reading',
-        body: [
-          'Ownership in Understanding Ambient Sounds is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The fact also tells the reader which evidence to preserve for failure reading: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Failure Reading.',
-          'Adjacent pages matter for Understanding Ambient Sounds, but adjacency does not move authority. Understanding Ambient Sounds should be compared with Changing Audio Preferences, Supplying Platform Evidence, Understanding Material Sounds only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the failure reading part of Understanding Ambient Sounds should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-evidence-quality',
-        title: 'Ambient Sounds Evidence Quality',
-        body: [
-          'Use handoff to keep Understanding Ambient Sounds tied to Feedback and Intelligence; use a related page only when the reader needs a different owner. That reading gives Understanding Ambient Sounds a public anchor for evidence quality without adding behavior that the current category does not own. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Evidence Quality.',
-          'The public boundary for Understanding Ambient Sounds is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for evidence quality does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Ambient Sounds should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-related-systems',
-        title: 'Ambient Sounds Related Systems',
-        body: [
-          'Ambient volume is multiplied by master volume. Changing the mixer changes presentation gain only; it does not affect world rules, AI behavior, or Othello clocks. The point matters in related systems because reading sound selection and playback state can otherwise be mistaken for changing simulation rules to explain sound output. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Related Systems.',
-          'An operator reading Understanding Ambient Sounds should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'The useful result of Understanding Ambient Sounds related systems is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-policy-limit',
-        title: 'Ambient Sounds Policy Limit',
-        body: [
-          'Visible feedback for Understanding Ambient Sounds should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Audio Feedback. Understanding Ambient Sounds uses the fact as policy limit evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Policy Limit.',
-          'Implementation limits for Understanding Ambient Sounds keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding Ambient Sounds crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-technical-summary',
-        title: 'Ambient Sounds Technical Summary',
-        body: [
-          'Ambient playback selects a desired ambient key from the active play space and preference state. If ambient audio is disabled or muted, the loop stops. Understanding Ambient Sounds uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Contract Scope. In Understanding Ambient Sounds, technical summary is the difference between reading audio feedback and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Technical Summary.',
-          'The summary value of Understanding Ambient Sounds is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'The useful result of Understanding Ambient Sounds technical summary is a bounded explanation of audio feedback: enough detail to act, and enough restraint to avoid claims outside Audio Feedback.',
-        ],
-      },
-      {
-        id: 'understanding-ambient-sounds-closing-check',
-        title: 'Ambient Sounds Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Ambient Sounds. The article should be broad enough to explain audio feedback, but narrow enough that changing simulation rules to explain sound output remains outside the conclusion. Understanding Ambient Sounds uses the fact as closing check evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Ambient Sounds / Feedback and Intelligence / Audio Feedback / Closing Check.',
-          'A final check for Understanding Ambient Sounds should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'When Understanding Ambient Sounds crosses from closing check into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'ambient-sounds-boundary',
+        title: 'Distinct from Material Sounds',
+        content: [
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'Ambient audio is a single looping voice in the ambient category, gated by the play space and the ambient preference. Material sounds are spatial, pooled, event-driven, and in the block or player category. They share the volume preference object but not the playback path, the effect lifecycle, or the gating predicate.',
+            },
+          },
         ],
       },
     ],
@@ -1716,150 +1167,104 @@ export const systemsPages: DocsPageContent[] = [
     group: 'AI Decision Records',
     title: 'Understanding AI Action Selection',
     description:
-      'Explains how AI decisions combine deterministic behavior, masks, and learned policies. This page treats renderer contract behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents how AI actors choose actions: the manager per-tick step over every actor, the deterministic route, wander, and idle controls and their edge-safety guard, the asynchronous A-star route planner and its worker, regeneration and stuck recovery, and the narrow boundary in which a learned policy overrides movement.',
     sections: [
       {
-        id: 'understanding-ai-action-selection-contract-scope',
-        title: 'AI Action Selection Contract Scope',
-        body: [
-          'AI action selection starts from observations such as player visibility, distance, health, route state, footing, headroom, placement permission, and available block count. The fact also tells the reader which evidence to preserve for contract scope: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding AI Action Selection. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion.',
-          'Use contract scope to keep Understanding AI Action Selection tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
+        id: 'ai-action-selection-step',
+        title: 'The Per-Tick Manager Step',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`AiPlayerManager.step` in `src/ludoxel/simulation/actors/ai_players/manager.py` advances every actor once per simulation quantum. It drains completed route plans from the worker, opens the learning tick, and for each non-paused actor advances the attack swing, decays the attack, place, interact, and combat-strafe cooldowns, and computes a control input from the actor mode. The control is fed to `advance_runtime_player`, after which fall and void damage are applied, `_advance_ai_regeneration` runs, stuck recovery is updated, and discrete interactions, placements, and attacks are issued. Dead actors are removed and their pending plans cancelled, and the step returns an `AiStepReport` summarising player damage, the death reason and killer, and damage sound positions.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The actor runtime is `_AiPlayerRuntime` in `src/ludoxel/simulation/actors/ai_players/runtime.py`, a mutable record of the player entity, mode and personality, route points and target, navigation plan and cursors, cooldowns, regeneration timers, combat phase, and the last learned action; `to_state` projects it back to the persisted `AiPlayerState`. The control input is the deterministic baseline; a learned policy, when it applies at all, only adjusts which action that control represents within wander mode.',
+          },
         ],
       },
       {
-        id: 'understanding-ai-action-selection-owning-subsystem',
-        title: 'AI Action Selection Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding AI Action Selection. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. The fact also tells the reader which evidence to preserve for owning subsystem: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Owning Subsystem.',
-          'A direct observation for Understanding AI Action Selection should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'A public report based on the owning subsystem part of Understanding AI Action Selection should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'ai-action-selection-deterministic',
+        title: 'Deterministic Route, Wander, and Idle',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`_route_control` chases a combat target when one is present, otherwise advances toward the active route point, choosing between pursuit, parkour, and turn-only controls and respecting flexible-route replanning. `_wander_control` issues periodic randomized headings updated by `_update_wander_state`, and `idle_control` issues no movement. Modes and their normalization live in `src/ludoxel/simulation/actors/ai_players/modes.py`, and the focused behaviours live in the navigation, parkour, combat, placement, recovery, stuck, avoidance, and route modules under `src/ludoxel/simulation/actors/ai_players/`; the manager composes them rather than embedding their logic.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The edge-safety guard prevents an actor from walking into the void. `_apply_edge_safety` passes through flying, airborne, or jumping steps, and otherwise checks `_forward_step_safe`, which probes the support column ahead and within a bounded drop; when no footing exists it returns `_halted_control`, which keeps the look rotation but removes movement and jump. Free roam and PvP use a shallow safe drop while route following allows a deeper drop with a clear path. The deterministic path is the authority that keeps an actor functioning even when no learned policy is selected.',
+          },
         ],
       },
       {
-        id: 'understanding-ai-action-selection-data-shape',
-        title: 'AI Action Selection Data Shape',
-        body: [
-          'Use contract scope to keep Understanding AI Action Selection tied to Feedback and Intelligence; use a related page only when the reader needs a different owner. That reading gives Understanding AI Action Selection a public anchor for data shape without adding behavior that the current category does not own. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Data Shape.',
-          'Understanding AI Action Selection separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form.',
-          'The useful result of Understanding AI Action Selection data shape is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside AI Decision Records.',
+        id: 'ai-action-selection-planner',
+        title: 'The Asynchronous Route Planner',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Long-range navigation is planned off the simulation thread. `compute_ai_route_plan` in `src/ludoxel/simulation/actors/ai_players/planner.py` runs an A-star search over support cells whose transitions, generated by `_neighbor_support_transitions`, include walking, stepping, jumping, dropping, parkour leaps, and block placement, each with a travel cost and a heuristic toward the target; `_world_xz_bounds` bounds the search to the populated map with padding. `AiRouteWorker` in `src/ludoxel/simulation/actors/ai_players/worker.py` dispatches the search to a spawn-context process pool, falling back to a thread pool, and `poll_ready` collects results.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/worker.py',
+            code: `def request_plan(self, request: AiRoutePlanRequest) -> None:
+  self.cancel_actor(str(request.actor_id))
+  executor = self._ensure_process_executor()
+  future: Future
+  if executor is not None:
+    try:
+      future = executor.submit(compute_ai_route_plan, request)
+    except Exception:
+      self._process_unavailable = True
+      future = self._ensure_thread_executor().submit(compute_ai_route_plan, request)
+  else:
+    future = self._ensure_thread_executor().submit(compute_ai_route_plan, request)
+  self._pending[str(request.actor_id)] = _PendingRoutePlan(actor_id=str(request.actor_id), generation=int(request.generation), future=future)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Each tick the actor follows the most recent completed plan; planning never blocks the step. `_mark_nav_failure` retries a failed plan with exponential backoff and, after enough retries, blacklists an unreachable route target for a cooldown so the actor turns rather than stalling indefinitely on an impossible goal.',
+          },
         ],
       },
       {
-        id: 'understanding-ai-action-selection-handoff',
-        title: 'AI Action Selection Handoff',
-        body: [
-          'Understanding AI Action Selection should be read as conceptual boundary for ai action selection within Feedback and Intelligence and AI Decision Records. Understanding AI Action Selection uses the fact as handoff evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Handoff.',
-          'Ownership in Understanding AI Action Selection is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'When Understanding AI Action Selection crosses from handoff into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-backend-or-service',
-        title: 'AI Action Selection Backend or Service',
-        body: [
-          'A direct observation for Understanding AI Action Selection should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. In Understanding AI Action Selection, backend or service is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Backend or Service.',
-          'Visible feedback for Understanding AI Action Selection should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / AI Decision Records.',
-          'If the available evidence for backend or service does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Action Selection should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-runtime-state',
-        title: 'AI Action Selection Runtime State',
-        body: [
-          'A public report based on the owning subsystem part of Understanding AI Action Selection should state the action, expected result, actual result, environment, and any redaction needed before sharing. Understanding AI Action Selection uses the fact as runtime state evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Runtime State.',
-          'When Understanding AI Action Selection touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Use runtime state to keep Understanding AI Action Selection tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-fallback-path',
-        title: 'AI Action Selection Fallback Path',
-        body: [
-          'The action mask blocks unsafe or impossible actions such as moving into void, attacking out of range, placing without support, or breaking self-supporting footing. That reading gives Understanding AI Action Selection a public anchor for fallback path without adding behavior that the current category does not own. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Fallback Path.',
-          'The surrounding context for Understanding AI Action Selection decides which adjacent topic is relevant. Understanding AI Action Selection should be compared with Understanding AI Learning Records, Understanding Policy Evaluation, Understanding AI Combat only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'The useful result of Understanding AI Action Selection fallback path is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside AI Decision Records.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-diagnostic-output',
-        title: 'AI Action Selection Diagnostic Output',
-        body: [
-          'Understanding AI Action Selection separates the surface that accepts input from the component or document that controls the result. This is especially important when reading backend output through snapshots and resources crosses a saved value, a renderer output, or a public form. That reading gives Understanding AI Action Selection a public anchor for diagnostic output without adding behavior that the current category does not own. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Diagnostic Output.',
-          'Recovery or follow-up for Understanding AI Action Selection should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'If the available evidence for diagnostic output does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Action Selection should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-platform-reading',
-        title: 'AI Action Selection Platform Reading',
-        body: [
-          'The useful result of Understanding AI Action Selection data shape is a bounded explanation of renderer contract behavior: enough detail to act, and enough restraint to avoid claims outside AI Decision Records. In Understanding AI Action Selection, platform reading is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Platform Reading.',
-          'The main confusion risk in Understanding AI Action Selection is claiming parity without backend-specific evidence. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'Understanding AI Action Selection should not use platform reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-consumer-boundary',
-        title: 'AI Action Selection Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. Understanding AI Action Selection uses the fact as handoff evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Handoff. In Understanding AI Action Selection, consumer boundary is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Consumer Boundary.',
-          'Reportable evidence for Understanding AI Action Selection should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'If the available evidence for consumer boundary does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Action Selection should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-failure-reading',
-        title: 'AI Action Selection Failure Reading',
-        body: [
-          'Ownership in Understanding AI Action Selection is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. For Understanding AI Action Selection, that fact identifies the first concrete boundary for failure reading: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Failure Reading.',
-          'Adjacent pages matter for Understanding AI Action Selection, but adjacency does not move authority. Understanding AI Action Selection should be compared with Understanding AI Learning Records, Understanding Policy Evaluation, Understanding AI Combat only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'When Understanding AI Action Selection crosses from failure reading into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-evidence-quality',
-        title: 'AI Action Selection Evidence Quality',
-        body: [
-          'When Understanding AI Action Selection crosses from handoff into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. That reading gives Understanding AI Action Selection a public anchor for evidence quality without adding behavior that the current category does not own. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Evidence Quality.',
-          'The public boundary for Understanding AI Action Selection is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for evidence quality does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Action Selection should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-related-systems',
-        title: 'AI Action Selection Related Systems',
-        body: [
-          'A learned policy can adjust action scores after it passes evaluation. It does not replace action masks, route recovery rules, or deterministic fallback behavior. In Understanding AI Action Selection, backend or service is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Backend or Service. In Understanding AI Action Selection, related systems is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Related Systems.',
-          'An operator reading Understanding AI Action Selection should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Understanding AI Action Selection should not use related systems to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-policy-limit',
-        title: 'AI Action Selection Policy Limit',
-        body: [
-          'Visible feedback for Understanding AI Action Selection should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / AI Decision Records. For Understanding AI Action Selection, that fact identifies the first concrete boundary for policy limit: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Policy Limit.',
-          'Implementation limits for Understanding AI Action Selection keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'A public report based on the policy limit part of Understanding AI Action Selection should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-technical-summary',
-        title: 'AI Action Selection Technical Summary',
-        body: [
-          'AI action selection starts from observations such as player visibility, distance, health, route state, footing, headroom, placement permission, and available block count. In Understanding AI Action Selection, technical summary is the difference between reading renderer contract behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Technical Summary.',
-          'The summary value of Understanding AI Action Selection is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'If the available evidence for technical summary does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Action Selection should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-action-selection-closing-check',
-        title: 'AI Action Selection Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding AI Action Selection. The article should be broad enough to explain renderer contract behavior, but narrow enough that claiming parity without backend-specific evidence remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Action Selection / Feedback and Intelligence / AI Decision Records / Closing Check.',
-          'A final check for Understanding AI Action Selection should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding AI Action Selection tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
+        id: 'ai-action-selection-policy',
+        title: 'The Learned-Policy Override Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A learned policy may participate only under tight conditions. When learning is active, the actor mode is wander, and the coordinator reports the policy as enabled, the manager builds an observation, builds an action mask, asks the coordinator to decide, and applies the chosen action through `_apply_learned_action`, later executing any world action through `_execute_policy_action`; otherwise the action is derived from the deterministic control through `_control_to_action_id`. Route navigation is always deterministic and planner-driven.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/manager.py',
+            code: `if mode == AI_MODE_WANDER and bool(learning.policy_enabled()):
+  decision = learning.decide(learn_observation, learn_mask)
+  learn_action_id = str(decision.action_id)
+  learn_action_source = ACTION_SOURCE_LEARNED_POLICY
+  control = self._apply_learned_action(actor, control, str(decision.action_id))
+else:
+  learn_action_id = self._control_to_action_id(control)
+  learn_action_source = ACTION_SOURCE_DETERMINISTIC`,
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content: [
+                'Learned-policy selection is confined to wander mode and only when a usable policy is active; the action mask still bounds any selection, so a policy reorders permitted actions without bypassing the safety rules described under ',
+                {
+                  kind: 'link',
+                  label: 'policy evaluation',
+                  href: '/docs/systems/feedback-and-intelligence/policy-and-search/understanding-policy-evaluation',
+                },
+                '.',
+              ],
+            },
+          },
         ],
       },
     ],
@@ -1871,150 +1276,84 @@ export const systemsPages: DocsPageContent[] = [
     group: 'AI Decision Records',
     title: 'Understanding AI Learning Records',
     description:
-      'Describes the demonstration records used by the AI learning workflow. This page treats AI policy and search behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents how demonstration records are formed and consumed: the record structure and serialization, the action catalog and its categories and safety requirements, the observation feature encoding, the reward weights and transition, the buffered recorder, and the coordinator that records player and AI demonstrations through a layer-crossing sink.',
     sections: [
       {
-        id: 'understanding-ai-learning-records-contract-scope',
-        title: 'AI Learning Records Contract Scope',
-        body: [
-          'Learning records can capture player movement, combat, block placement, block breaking, parkour, trap behavior, AI decisions, failures, deaths, route failures, and escape attempts. Understanding AI Learning Records uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Contract Scope. Understanding AI Learning Records uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding AI Learning Records. The article should be broad enough to explain AI policy and search behavior, but narrow enough that treating learning files as general user content remains outside the conclusion.',
-          'When Understanding AI Learning Records crosses from contract scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'ai-learning-records-record',
+        title: 'The Demonstration Record',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`DemonstrationRecord` in `src/ludoxel/simulation/actors/ai_players/learning/dataset.py` captures game state and action, not screen pixels. It is a frozen dataclass holding a record kind drawn from `RECORD_KINDS`, a tick, an actor identifier, a serializable observation, an action identifier, a tri-valued success flag, an optional reward, and a kind-specific detail mapping. `encode_record_line` and `decode_record_line` serialise one record per line as JSON with sorted keys, and a corrupt or truncated line decodes to nothing rather than raising. `DatasetSummary` records the count, byte size, and per-kind tally, and `DatasetSink` is the write protocol the application layer implements.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/dataset.py',
+            code: `@dataclass(frozen=True)
+class DemonstrationRecord:
+  kind: str
+  tick: int = 0
+  actor_id: str = ""
+  observation: dict[str, Any] = field(default_factory=dict)
+  action: str | None = None
+  success: bool | None = None
+  reward: float | None = None
+  detail: dict[str, Any] = field(default_factory=dict)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The action identifier draws from the catalog in `src/ludoxel/simulation/actors/ai_players/learning/actions.py`, a fixed set of `AiAction` definitions spanning the movement, look, combat, placement, breaking, route, escape, parkour, trap, fence-gate, and no-op categories. Each action carries a skill category, an expected duration, a safety requirement, and movement or look parameters. `ACTION_CATALOG`, `ACTION_IDS`, `get_action`, `actions_in_category`, and `skill_category_ids` expose the catalog, which is the shared vocabulary used by records, policies, the action mask, and the deterministic baseline.',
+          },
         ],
       },
       {
-        id: 'understanding-ai-learning-records-owning-subsystem',
-        title: 'AI Learning Records Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding AI Learning Records. The article should be broad enough to explain AI policy and search behavior, but narrow enough that treating learning files as general user content remains outside the conclusion. Understanding AI Learning Records uses the fact as owning subsystem evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Owning Subsystem.',
-          'A direct observation for Understanding AI Learning Records should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'Use owning subsystem to keep Understanding AI Learning Records tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
+        id: 'ai-learning-records-features',
+        title: 'Observation Feature Encoding',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Records embed a serialized observation, and learning conditions on a derived feature key set rather than raw values. `encode_features` in `src/ludoxel/simulation/actors/ai_players/learning/feature_encoder.py` maps an observation to a deduplicated tuple of stable keys: low and critical health thresholds; player distance bands and visibility or last-known-only; combat cooldown readiness and range; route availability, blockage, or loss; forward hazards such as a void or deep drop, terrain gaps, bridge and jump needs, tower need, enclosure, and a closed fence gate; placement and breaking opportunities; and recent-stuck signals. The encoder is versioned by `FEATURE_ENCODER_VERSION`, and `is_feature_key` validates a key, so records and policies are recognised as compatible only at the same encoder version.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The reward is computed from a `RewardTransition` in `src/ludoxel/simulation/actors/ai_players/learning/rewards.py`, a per-step summary of survival, progress, damage dealt and taken, falling, death, and void death. `compute_step_reward` weights these terms with `RewardWeights`, adding a survival increment, scaling progress and damage, penalising a fall, and adding a large death penalty with an additional term that makes a void death worse than an ordinary death. These values derive from domain state and the step report, never from rendered output.',
+          },
         ],
       },
       {
-        id: 'understanding-ai-learning-records-data-shape',
-        title: 'AI Learning Records Data Shape',
-        body: [
-          'When Understanding AI Learning Records crosses from contract scope into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. In Understanding AI Learning Records, data shape is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Data Shape.',
-          'Understanding AI Learning Records separates the surface that accepts input from the component or document that controls the result. This is especially important when reading decision records and generated artifacts crosses a saved value, a renderer output, or a public form.',
-          'If the available evidence for data shape does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Learning Records should be treated as an observation rather than a confirmed cause.',
+        id: 'ai-learning-records-recorder',
+        title: 'The Buffered Recorder',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`DemonstrationRecorder` in `src/ludoxel/simulation/actors/ai_players/learning/recorder.py` accumulates records in a bounded buffer. It records only when enabled and only for the captured kinds, so recording cannot perturb AI behaviour; when disabled the record calls have no effect. `captures` lets a caller skip an expensive observation build when a kind is not recorded, the buffer is capped and drops the oldest record when full, `should_flush` signals the flush threshold, and `flush` and `shutdown_flush` write the buffer to a sink and clear it only on success so no record is lost or duplicated. The recorder belongs to the simulation layer and knows no file path.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/recorder.py',
+            code: `def captures(self, kind: str) -> bool:
+  return bool(self._enabled) and str(kind) in self._captured_kinds`,
+          },
         ],
       },
       {
-        id: 'understanding-ai-learning-records-handoff',
-        title: 'AI Learning Records Handoff',
-        body: [
-          'Understanding AI Learning Records should be read as conceptual boundary for ai learning records within Feedback and Intelligence and AI Decision Records. Understanding AI Learning Records uses the fact as owning subsystem evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Owning Subsystem. The fact also tells the reader which evidence to preserve for handoff: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Handoff.',
-          'Ownership in Understanding AI Learning Records is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Use handoff to keep Understanding AI Learning Records tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-backend-or-service',
-        title: 'AI Learning Records Backend or Service',
-        body: [
-          'A direct observation for Understanding AI Learning Records should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The point matters in backend or service because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Backend or Service.',
-          'Visible feedback for Understanding AI Learning Records should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / AI Decision Records.',
-          'Understanding AI Learning Records should not use backend or service to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-runtime-state',
-        title: 'AI Learning Records Runtime State',
-        body: [
-          'Use owning subsystem to keep Understanding AI Learning Records tied to Feedback and Intelligence; use a related page only when the reader needs a different owner. The fact also tells the reader which evidence to preserve for runtime state: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Runtime State.',
-          'When Understanding AI Learning Records touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'A public report based on the runtime state part of Understanding AI Learning Records should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-fallback-path',
-        title: 'AI Learning Records Fallback Path',
-        body: [
-          'Records are stored as JSONL rows in the configured dataset. Loading skips corrupt rows and reports counts so one bad row does not discard the whole dataset. In Understanding AI Learning Records, data shape is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Data Shape. The point matters in fallback path because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Fallback Path.',
-          'The surrounding context for Understanding AI Learning Records decides which adjacent topic is relevant. Understanding AI Learning Records should be compared with Reading Demonstration Data, Handling Corrupt Learning Rows, Training a Policy only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding AI Learning Records should not use fallback path to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-diagnostic-output',
-        title: 'AI Learning Records Diagnostic Output',
-        body: [
-          'Understanding AI Learning Records separates the surface that accepts input from the component or document that controls the result. This is especially important when reading decision records and generated artifacts crosses a saved value, a renderer output, or a public form. In Understanding AI Learning Records, diagnostic output is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Diagnostic Output.',
-          'Recovery or follow-up for Understanding AI Learning Records should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Understanding AI Learning Records should not use diagnostic output to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-platform-reading',
-        title: 'AI Learning Records Platform Reading',
-        body: [
-          'If the available evidence for data shape does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Learning Records should be treated as an observation rather than a confirmed cause. The point matters in platform reading because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Platform Reading.',
-          'The main confusion risk in Understanding AI Learning Records is treating learning files as general user content. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding AI Learning Records platform reading is a bounded explanation of AI policy and search behavior: enough detail to act, and enough restraint to avoid claims outside AI Decision Records.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-consumer-boundary',
-        title: 'AI Learning Records Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. The point matters in consumer boundary because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Consumer Boundary.',
-          'Reportable evidence for Understanding AI Learning Records should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Understanding AI Learning Records should not use consumer boundary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-failure-reading',
-        title: 'AI Learning Records Failure Reading',
-        body: [
-          'Ownership in Understanding AI Learning Records is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The fact also tells the reader which evidence to preserve for failure reading: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Failure Reading.',
-          'Adjacent pages matter for Understanding AI Learning Records, but adjacency does not move authority. Understanding AI Learning Records should be compared with Reading Demonstration Data, Handling Corrupt Learning Rows, Training a Policy only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'A public report based on the failure reading part of Understanding AI Learning Records should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-evidence-quality',
-        title: 'AI Learning Records Evidence Quality',
-        body: [
-          'Use handoff to keep Understanding AI Learning Records tied to Feedback and Intelligence; use a related page only when the reader needs a different owner. That reading gives Understanding AI Learning Records a public anchor for evidence quality without adding behavior that the current category does not own. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Evidence Quality.',
-          'The public boundary for Understanding AI Learning Records is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for evidence quality does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Learning Records should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-related-systems',
-        title: 'AI Learning Records Related Systems',
-        body: [
-          'Observe-only mode records demonstrations. Training reads the dataset later, while live action selection uses only policies that pass compatibility and evaluation checks. That reading gives Understanding AI Learning Records a public anchor for related systems without adding behavior that the current category does not own. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Related Systems.',
-          'An operator reading Understanding AI Learning Records should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'If the available evidence for related systems does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding AI Learning Records should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-policy-limit',
-        title: 'AI Learning Records Policy Limit',
-        body: [
-          'Visible feedback for Understanding AI Learning Records should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / AI Decision Records. Understanding AI Learning Records uses the fact as policy limit evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Policy Limit.',
-          'Implementation limits for Understanding AI Learning Records keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding AI Learning Records crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-technical-summary',
-        title: 'AI Learning Records Technical Summary',
-        body: [
-          'Learning records can capture player movement, combat, block placement, block breaking, parkour, trap behavior, AI decisions, failures, deaths, route failures, and escape attempts. Understanding AI Learning Records uses the fact as contract scope evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Contract Scope. The point matters in technical summary because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Technical Summary.',
-          'The summary value of Understanding AI Learning Records is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding AI Learning Records should not use technical summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-ai-learning-records-closing-check',
-        title: 'AI Learning Records Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding AI Learning Records. The article should be broad enough to explain AI policy and search behavior, but narrow enough that treating learning files as general user content remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding AI Learning Records / Feedback and Intelligence / AI Decision Records / Closing Check.',
-          'A final check for Understanding AI Learning Records should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'Use closing check to keep Understanding AI Learning Records tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
+        id: 'ai-learning-records-coordinator',
+        title: 'The Coordinator and the Sink Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`LearningCoordinator` in `src/ludoxel/simulation/actors/ai_players/learning/coordinator.py` binds recording, decision, and flushing, and exposes the three runtime modes: off, observe-only, and use-learned-policy. `configure` enables the recorder only in observe-only mode and stores the candidate policy. `active`, `recording`, and `policy_enabled` report which work the mode requires. `record_decision` computes the reward and success, encodes the feature keys, summarises the action mask, and records an AI decision; `record_player_demonstration` records a player input as a positive example. `flush` writes the buffer to a `DatasetSink`, a protocol the application layer implements, so the simulation never holds the save path.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'A demonstration record describes one observed state, the chosen action, and its outcome. The on-disk location, file format, and retention of these records are owned by the Data category; this article documents how the record is formed and consumed inside the runtime, not where it is stored.',
+            },
+          },
         ],
       },
     ],
@@ -2026,150 +1365,106 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Policy and Search',
     title: 'Understanding Policy Evaluation',
     description:
-      'Explains the checks that make a learned policy usable at runtime. This page treats AI policy and search behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the learned-policy mechanism in full: the policy as a feature-conditioned utility overlay, the deterministic baseline and its scoring, the action mask that fixes the safety boundary, the usability gate and registry fallback, and the six-task evaluation a policy must pass before runtime use.',
     sections: [
       {
-        id: 'understanding-policy-evaluation-contract-scope',
-        title: 'Policy Evaluation Contract Scope',
-        body: [
-          'Evaluation verifies policy schema version, compatibility target, action catalog version, feature encoder version, referenced actions, and referenced feature keys. The fact also tells the reader which evidence to preserve for contract scope: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Policy Evaluation. The article should be broad enough to explain AI policy and search behavior, but narrow enough that treating learning files as general user content remains outside the conclusion.',
-          'A public report based on the contract scope part of Understanding Policy Evaluation should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'policy-evaluation-overlay',
+        title: 'A Utility Overlay, Not a Network',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A learned policy in Ludoxel is a lightweight set of feature-conditioned utility adjustments, not a neural network. `Policy` in `src/ludoxel/simulation/actors/ai_players/learning/policy.py` holds, among schema and version fields, a mapping from feature key to per-action weights, per-action negative modifiers, and legacy global modifiers. `load_policy` reconstructs one tolerantly, coercing weight maps and reading either the new or the legacy evaluation field; a structural defect yields nothing while a version or compatibility mismatch is loaded but later rejected by the usability gate.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`DeterministicPolicy` is the baseline that decides actions. `decide` computes a baseline utility for each permitted action with `_baseline_scores` from the observation context, then `_apply_policy` adds the policy adjustments for the encoded feature keys, the negative modifiers, and the legacy category and skill modifiers, and selects the highest-utility action with a deterministic tie-break by catalog order. The policy biases the ranking; it does not replace the baseline, and `PolicyDecision` reports the chosen action, its utility, the ranked candidates, and the decision source.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/policy.py',
+            code: `features = encode_features(observation)
+for feature in features:
+  mapping = policy.action_weights.get(feature)
+  if not mapping:
+    continue
+  for action_id, weight in mapping.items():
+    if action_id in scores:
+      scores[action_id] += float(weight)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A bundled policy artifact is short and human-readable. The movement policy, for example, reweights movement actions through global modifiers and declares in its evaluation summary that it cannot bypass any safety rule.',
+          },
+          {
+            kind: 'code',
+            language: 'json',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/resources/policies/movement_policy.json',
+            code: `{
+  "schema_version": 1,
+  "policy_id": "bundled_movement_v1",
+  "compatibility_target": "ludoxel.ai.v1",
+  "evaluation_summary": { "passed": true },
+  "utility_score_modifiers": { "movement": 0.08, "wasd_control": 0.06, "jumping": 0.04 }
+}`,
+          },
         ],
       },
       {
-        id: 'understanding-policy-evaluation-owning-subsystem',
-        title: 'Policy Evaluation Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Policy Evaluation. The article should be broad enough to explain AI policy and search behavior, but narrow enough that treating learning files as general user content remains outside the conclusion. Understanding Policy Evaluation uses the fact as owning subsystem evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Owning Subsystem.',
-          'A direct observation for Understanding Policy Evaluation should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'When Understanding Policy Evaluation crosses from owning subsystem into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'policy-evaluation-mask',
+        title: 'The Action Mask Fixes the Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The safety boundary is the action mask, not the policy. `build_action_mask` in `src/ludoxel/simulation/actors/ai_players/learning/action_mask.py` derives, from the observation, the set of permitted actions and a reason for each forbidden one: moving into a void, launching while airborne, attacking out of range or on cooldown, placing where no face allows it, breaking the actor own footing, operating an absent fence gate, following a missing or blocked route, replanning without a route, or idling at low health within reach. View rotation and sneak are always permitted so the allowed set is never empty. `AiActionMask.is_allowed` reports membership, and the policy adjusts only the utilities of permitted actions, so a bias can never resurrect a forbidden action.',
+          },
         ],
       },
       {
-        id: 'understanding-policy-evaluation-data-shape',
-        title: 'Policy Evaluation Data Shape',
-        body: [
-          'A public report based on the contract scope part of Understanding Policy Evaluation should state the action, expected result, actual result, environment, and any redaction needed before sharing. In Understanding Policy Evaluation, data shape is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Data Shape.',
-          'Understanding Policy Evaluation separates the surface that accepts input from the component or document that controls the result. This is especially important when reading decision records and generated artifacts crosses a saved value, a renderer output, or a public form.',
-          'Understanding Policy Evaluation should not use data shape to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'policy-evaluation-usability',
+        title: 'The Usability Gate and Registry Fallback',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A policy is used only when usable. `Policy.is_usable` requires the schema version and compatibility target to match the engine, the feature-encoder and action-catalog versions to match or be the legacy zero, and the evaluation to record a passing result. `builtin_deterministic_policy` is the always-usable baseline identity. `PolicyRegistry` in `src/ludoxel/simulation/actors/ai_players/learning/policy_registry.py` loads bundled artifacts once, resolves a requested policy by kind and identifier, and falls back to the built-in baseline whenever the policy is missing, broken, or not usable, swallowing a user-loader exception as a fallback rather than a failure, so a defective artifact never disables the AI.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/policy.py',
+            code: `def is_usable(self) -> bool:
+  if int(self.schema_version) != int(POLICY_SCHEMA_VERSION):
+    return False
+  if str(self.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
+    return False
+  if int(self.feature_encoder_version) not in (0, int(FEATURE_ENCODER_VERSION)):
+    return False
+  if int(self.action_catalog_version) not in (0, int(ACTION_SCHEMA_VERSION)):
+    return False
+  return bool(self.evaluation.get("passed", False))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The `LearningCoordinator.decide` path uses the selected policy only when `policy_enabled` is true, which requires the use-learned-policy mode and a usable policy; otherwise it decides on the deterministic baseline alone. The coordinator can also report the deterministic and policy-adjusted rankings side by side for debugging.',
+          },
         ],
       },
       {
-        id: 'understanding-policy-evaluation-handoff',
-        title: 'Policy Evaluation Handoff',
-        body: [
-          'Understanding Policy Evaluation should be read as conceptual boundary for policy evaluation within Feedback and Intelligence and Policy and Search. Understanding Policy Evaluation uses the fact as owning subsystem evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Owning Subsystem. The fact also tells the reader which evidence to preserve for handoff: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Handoff.',
-          'Ownership in Understanding Policy Evaluation is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'A public report based on the handoff part of Understanding Policy Evaluation should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-backend-or-service',
-        title: 'Policy Evaluation Backend or Service',
-        body: [
-          'A direct observation for Understanding Policy Evaluation should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. The point matters in backend or service because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Backend or Service.',
-          'Visible feedback for Understanding Policy Evaluation should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Policy and Search.',
-          'The useful result of Understanding Policy Evaluation backend or service is a bounded explanation of AI policy and search behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-runtime-state',
-        title: 'Policy Evaluation Runtime State',
-        body: [
-          'When Understanding Policy Evaluation crosses from owning subsystem into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. The fact also tells the reader which evidence to preserve for runtime state: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Runtime State.',
-          'When Understanding Policy Evaluation touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Use runtime state to keep Understanding Policy Evaluation tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-fallback-path',
-        title: 'Policy Evaluation Fallback Path',
-        body: [
-          'The evaluator tests representative observations for action-mask compliance and compares policy sandbox score against the deterministic baseline. Any failed task keeps the policy from live use. In Understanding Policy Evaluation, data shape is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Data Shape. In Understanding Policy Evaluation, fallback path is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Fallback Path.',
-          'The surrounding context for Understanding Policy Evaluation decides which adjacent topic is relevant. Understanding Policy Evaluation should be compared with Applying a Learned Policy, Reading Learned Policies, Understanding AI Action Selection only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'Understanding Policy Evaluation should not use fallback path to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-diagnostic-output',
-        title: 'Policy Evaluation Diagnostic Output',
-        body: [
-          'Understanding Policy Evaluation separates the surface that accepts input from the component or document that controls the result. This is especially important when reading decision records and generated artifacts crosses a saved value, a renderer output, or a public form. That reading gives Understanding Policy Evaluation a public anchor for diagnostic output without adding behavior that the current category does not own. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Policy Evaluation should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'The useful result of Understanding Policy Evaluation diagnostic output is a bounded explanation of AI policy and search behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-platform-reading',
-        title: 'Policy Evaluation Platform Reading',
-        body: [
-          'Understanding Policy Evaluation should not use data shape to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. That reading gives Understanding Policy Evaluation a public anchor for platform reading without adding behavior that the current category does not own. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Platform Reading.',
-          'The main confusion risk in Understanding Policy Evaluation is treating learning files as general user content. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'The useful result of Understanding Policy Evaluation platform reading is a bounded explanation of AI policy and search behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-consumer-boundary',
-        title: 'Policy Evaluation Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. In Understanding Policy Evaluation, consumer boundary is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Consumer Boundary.',
-          'Reportable evidence for Understanding Policy Evaluation should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'Understanding Policy Evaluation should not use consumer boundary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-failure-reading',
-        title: 'Policy Evaluation Failure Reading',
-        body: [
-          'Ownership in Understanding Policy Evaluation is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The fact also tells the reader which evidence to preserve for failure reading: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Failure Reading.',
-          'Adjacent pages matter for Understanding Policy Evaluation, but adjacency does not move authority. Understanding Policy Evaluation should be compared with Applying a Learned Policy, Reading Learned Policies, Understanding AI Action Selection only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Use failure reading to keep Understanding Policy Evaluation tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-evidence-quality',
-        title: 'Policy Evaluation Evidence Quality',
-        body: [
-          'A public report based on the handoff part of Understanding Policy Evaluation should state the action, expected result, actual result, environment, and any redaction needed before sharing. In Understanding Policy Evaluation, evidence quality is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Evidence Quality.',
-          'The public boundary for Understanding Policy Evaluation is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'If the available evidence for evidence quality does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Policy Evaluation should be treated as an observation rather than a confirmed cause.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-related-systems',
-        title: 'Policy Evaluation Related Systems',
-        body: [
-          'Evaluation results are saved with pass status, score, baseline score, mask violations, compatibility errors, and decision differences. User policies become usable only after the saved artifact includes a passing evaluation. The point matters in related systems because reading decision records and generated artifacts can otherwise be mistaken for treating learning files as general user content. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Related Systems.',
-          'An operator reading Understanding Policy Evaluation should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Understanding Policy Evaluation should not use related systems to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-policy-limit',
-        title: 'Policy Evaluation Policy Limit',
-        body: [
-          'Visible feedback for Understanding Policy Evaluation should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Policy and Search. For Understanding Policy Evaluation, that fact identifies the first concrete boundary for policy limit: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Policy Limit.',
-          'Implementation limits for Understanding Policy Evaluation keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'When Understanding Policy Evaluation crosses from policy limit into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-technical-summary',
-        title: 'Policy Evaluation Technical Summary',
-        body: [
-          'Evaluation verifies policy schema version, compatibility target, action catalog version, feature encoder version, referenced actions, and referenced feature keys. In Understanding Policy Evaluation, technical summary is the difference between reading AI policy and search behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Technical Summary.',
-          'The summary value of Understanding Policy Evaluation is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Understanding Policy Evaluation should not use technical summary to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-policy-evaluation-closing-check',
-        title: 'Policy Evaluation Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Policy Evaluation. The article should be broad enough to explain AI policy and search behavior, but narrow enough that treating learning files as general user content remains outside the conclusion. The fact also tells the reader which evidence to preserve for closing check: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Policy Evaluation / Feedback and Intelligence / Policy and Search / Closing Check.',
-          'A final check for Understanding Policy Evaluation should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'A public report based on the closing check part of Understanding Policy Evaluation should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
+        id: 'policy-evaluation-evaluation',
+        title: 'What Evaluation Checks',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`run_evaluation` in `src/ludoxel/simulation/actors/ai_players/learning/evaluator.py` runs six checks: schema validation, compatibility validation, action-catalog validation that every referenced action exists, feature-encoder validation that every referenced feature key is producible, mask compliance that no sampled decision selects a forbidden action, and a headless sandbox behaviour check that the policy scores at least as well as the deterministic baseline across the scenarios from `src/ludoxel/simulation/actors/ai_players/learning/sandbox.py`. The report passes only if all checks pass, and that passing flag is what `is_usable` reads. The report also records a decision diff per sample observation. Evaluation uses no external machine-learning framework; it exercises Ludoxel rules directly.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'Evaluation here is a technical usability gate over an action-bias artifact. It is unrelated to the legal restrictions on AI use, which are defined by the License and the Legal category. A policy passing evaluation says only that the artifact is structurally valid, compatible, and mask-compliant, not that any external use is permitted.',
+            },
+          },
         ],
       },
     ],
@@ -2181,150 +1476,131 @@ export const systemsPages: DocsPageContent[] = [
     group: 'Policy and Search',
     title: 'Understanding Othello Search',
     description:
-      'Explains the Othello AI engine behavior behind difficulty settings. This page treats Othello match behavior as a technical guide to runtime subsystems and their contracts, identifies the owner that controls the result, and separates observable evidence from adjacent topics such as persistence, distribution, support routing, and legal authority.',
+      'Documents the Othello engine in full: the bitboard representation and legal-move generation, the negamax search with alpha-beta pruning, transposition, and an exact endgame solver, the two evaluation implementations and their weights, the difficulty engines and iterative deepening, the off-thread worker, and the opening-book compilation and handoff.',
     sections: [
       {
-        id: 'understanding-othello-search-contract-scope',
-        title: 'Othello Search Contract Scope',
-        body: [
-          'Weak, medium, strong, insane, and insane-plus settings select different search behavior and budget use. Stronger settings can spend more work on evaluation and exact search paths. The point matters in contract scope because reading board turns, move legality, and engine state can otherwise be mistaken for treating Othello state as My World block data. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Contract Scope.',
-          'Contract Scope defines the useful size of Understanding Othello Search. The article should be broad enough to explain Othello match behavior, but narrow enough that treating Othello state as My World block data remains outside the conclusion.',
-          'The useful result of Understanding Othello Search contract scope is a bounded explanation of Othello match behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search.',
+        id: 'othello-search-bitboards',
+        title: 'Bitboards and Legal Moves',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The strong engine represents the board as two 64-bit integers, one per side, in `src/ludoxel/simulation/spaces/othello/engines/bitboards.py`. The eight direction shifts mask the A and H files to prevent horizontal wrap. `legal_moves_bitboard` generates moves by dilating the player discs through opponent runs in each direction and projecting onto empty squares; `apply_move_bits` flips captured runs through `capture_line`; `bitboard_to_moves`, `bit_count`, and `adjacent_bits` support move enumeration and evaluation.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/spaces/othello/engines/bitboards.py',
+            code: `def legal_moves_bitboard(player_bits: int, opponent_bits: int) -> int:
+  player = int(player_bits)
+  opponent = int(opponent_bits)
+  empty = (~(player | opponent)) & FULL_MASK
+  moves = 0
+  for shift in SHIFT_FUNCS:
+    frontier = shift(player) & opponent
+    captured = frontier
+    for _ in range(5):
+      frontier = shift(frontier) & opponent
+      if frontier == 0:
+        break
+      captured |= frontier
+    moves |= shift(captured) & empty
+  return int(moves)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This bitboard model is the basis for the strong and exact search. The weaker difficulties operate on a list-based board through the rules in `src/ludoxel/simulation/spaces/othello/game/rules.py`, which share the legal-move and flip semantics in their own representation.',
+          },
         ],
       },
       {
-        id: 'understanding-othello-search-owning-subsystem',
-        title: 'Othello Search Owning Subsystem',
-        body: [
-          'Contract Scope defines the useful size of Understanding Othello Search. The article should be broad enough to explain Othello match behavior, but narrow enough that treating Othello state as My World block data remains outside the conclusion. That reading gives Understanding Othello Search a public anchor for owning subsystem without adding behavior that the current category does not own. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Owning Subsystem.',
-          'A direct observation for Understanding Othello Search should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state.',
-          'The useful result of Understanding Othello Search owning subsystem is a bounded explanation of Othello match behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search.',
+        id: 'othello-search-negamax',
+        title: 'Negamax, Pruning, and Transposition',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`negamax` in `src/ludoxel/simulation/spaces/othello/engines/search.py` searches in the negamax form with alpha-beta pruning. A side with no legal move passes to the opponent; two consecutive passes resolve to the terminal score. When the empty count falls to the exact threshold the search switches to `solve_exact`; at depth zero it returns the static evaluation. A transposition table keyed by the position stores depth, score, a bound classification, and the best move; `store_transposition` and `store_exact_transposition` in `src/ludoxel/simulation/spaces/othello/engines/transposition.py` apply a soft-limit clear, and `ordered_moves` seeds ordering with the stored best move. `check_deadline` raises on timeout.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'v = \\max_{m \\in M}\\ \\bigl(-\\,\\mathrm{negamax}(\\text{child}(m),\\ d-1,\\ -\\beta,\\ -\\alpha)\\bigr), \\quad \\text{cutoff when } \\alpha \\ge \\beta',
+              displayMode: true,
+              caption: 'Negamax recurrence with alpha-beta window; a stored entry is bounded EXACT, LOWER, or UPPER by best score against the original window.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'Both searches honour a deadline, raising on timeout so the caller keeps the last completed depth, and the exact solver proves the final score once the board is near full.',
+          },
         ],
       },
       {
-        id: 'understanding-othello-search-data-shape',
-        title: 'Othello Search Data Shape',
-        body: [
-          'The useful result of Understanding Othello Search contract scope is a bounded explanation of Othello match behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search. For Understanding Othello Search, that fact identifies the first concrete boundary for data shape: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Data Shape.',
-          'Understanding Othello Search separates the surface that accepts input from the component or document that controls the result. This is especially important when reading board turns, move legality, and engine state crosses a saved value, a renderer output, or a public form.',
-          'When Understanding Othello Search crosses from data shape into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
+        id: 'othello-search-evaluation',
+        title: 'Evaluation Terms',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The bitboard evaluation in `src/ludoxel/simulation/spaces/othello/engines/evaluation.py` combines a positional weight table, corner control, a corner-adjacency penalty, actual and potential mobility, a frontier difference, parity, and a stage-weighted disc difference. The component weights come from `evaluation_weights` in `src/ludoxel/simulation/spaces/othello/engines/evaluation_profile.py`, which derive disc, mobility, corner, and frontier weights from the sacrifice level, and the disc term is additionally scaled by game stage so material matters more as the board fills. A list-based evaluation in `src/ludoxel/simulation/spaces/othello/engines/classic.py` mirrors these terms for the weaker engines.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/spaces/othello/engines/evaluation.py',
+            code: `score += float(position_score(int(player_bits), int(opponent_bits)))
+score += float(corner_score(int(player_bits), int(opponent_bits))) * float(corner_weight)
+score += float(corner_closeness_penalty(int(player_bits), int(opponent_bits)))
+score += float(mobility_score(int(player_bits), int(opponent_bits))) * float(mobility_weight)
+score += float(frontier_score(int(player_bits), int(opponent_bits))) * float(frontier_weight)
+score += float(parity_score(int(player_bits), int(opponent_bits)))
+score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_stage_weight) * float(disc_weight)`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`terminal_score` scores a finished position by disc margin with a large win or loss base, so a proven win always outranks any heuristic value. The shared `POSITION_WEIGHTS` table assigns the largest positive weight to the four corners and a negative weight to the squares adjacent to an empty corner.',
+          },
         ],
       },
       {
-        id: 'understanding-othello-search-handoff',
-        title: 'Othello Search Handoff',
-        body: [
-          'Understanding Othello Search should be read as conceptual boundary for othello search within Feedback and Intelligence and Policy and Search. The point matters in handoff because reading board turns, move legality, and engine state can otherwise be mistaken for treating Othello state as My World block data. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Handoff.',
-          'Ownership in Understanding Othello Search is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article.',
-          'Understanding Othello Search should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
+        id: 'othello-search-difficulty',
+        title: 'Difficulty Engines and Iterative Deepening',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Difficulty selects the search in `analyze_position` and `choose_ai_move` in `src/ludoxel/simulation/spaces/othello/engines/classic.py`. Weak searches the list board to depth one and medium to depth three; the strong setting iteratively deepens to depth five under a time budget. The insane setting runs `analyze_insane_position` in `src/ludoxel/simulation/spaces/othello/engines/insane.py`, which deepens until the time budget expires or the position is solved, switching to the exact solver near the endgame through the shared `InsaneSearchCache`. The insane-plus setting layers opening-book selection on top.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Weak: list-based alpha-beta at depth one, positional move ordering.',
+              'Medium: list-based alpha-beta at depth three.',
+              'Strong: iterative deepening from depth one to five under a time budget.',
+              'Insane: bitboard iterative deepening with transposition and an exact endgame solver under a time budget.',
+              'Insane-plus: insane search with opening-book moves preferred when available.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'Tied best moves are broken by a seeded random choice, so equal-value play varies across matches without becoming non-deterministic for a given seed.',
+          },
         ],
       },
       {
-        id: 'understanding-othello-search-backend-or-service',
-        title: 'Othello Search Backend or Service',
-        body: [
-          'A direct observation for Understanding Othello Search should name what the user or reader actually sees before it assigns cause. That keeps backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status ahead of guesses about hidden state. Understanding Othello Search uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Backend or Service.',
-          'Visible feedback for Understanding Othello Search should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Policy and Search.',
-          'Use backend or service to keep Understanding Othello Search tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-runtime-state',
-        title: 'Othello Search Runtime State',
-        body: [
-          'The useful result of Understanding Othello Search owning subsystem is a bounded explanation of Othello match behavior: enough detail to act, and enough restraint to avoid claims outside Policy and Search. In Understanding Othello Search, runtime state is the difference between reading Othello match behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Runtime State.',
-          'When Understanding Othello Search touches saved data, the article should distinguish saved state, cache state, package resources, and public policy text. Those categories can interact, but they do not become the same authority.',
-          'Understanding Othello Search should not use runtime state to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-fallback-path',
-        title: 'Othello Search Fallback Path',
-        body: [
-          'Insane-plus can use opening-book data, including bundled resources and user-learned book lines. Compiled book cache is separate from persistent user book state. Understanding Othello Search uses the fact as fallback path evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Fallback Path.',
-          'The surrounding context for Understanding Othello Search decides which adjacent topic is relevant. Understanding Othello Search should be compared with Understanding Othello AI Turns, Changing Othello AI Strength, Changing Othello Book Behavior only when the reader has moved to that neighboring subject. The related article should answer the new question instead of rewriting this one.',
-          'When Understanding Othello Search crosses from fallback path into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-diagnostic-output',
-        title: 'Othello Search Diagnostic Output',
-        body: [
-          'Understanding Othello Search separates the surface that accepts input from the component or document that controls the result. This is especially important when reading board turns, move legality, and engine state crosses a saved value, a renderer output, or a public form. Understanding Othello Search uses the fact as diagnostic output evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Diagnostic Output.',
-          'Recovery or follow-up for Understanding Othello Search should stay inside the same boundary as the failure. A settings mistake needs settings evidence, a data mistake needs data evidence, and a support or legal issue needs the matching public route.',
-          'Use diagnostic output to keep Understanding Othello Search tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-platform-reading',
-        title: 'Othello Search Platform Reading',
-        body: [
-          'When Understanding Othello Search crosses from data shape into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories. For Understanding Othello Search, that fact identifies the first concrete boundary for platform reading: the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Platform Reading.',
-          'The main confusion risk in Understanding Othello Search is treating Othello state as My World block data. The article avoids that risk by naming the owner, the evidence, and the public limit before it describes the result.',
-          'A public report based on the platform reading part of Understanding Othello Search should state the action, expected result, actual result, environment, and any redaction needed before sharing.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-consumer-boundary',
-        title: 'Othello Search Consumer Boundary',
-        body: [
-          'The relevant state is constrained by the article category: Systems treats this topic as runtime subsystem behavior. Understanding Othello Search uses the fact as consumer boundary evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Consumer Boundary.',
-          'Reportable evidence for Understanding Othello Search should be small, concrete, and public. backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status is more useful than a broad conclusion because another reader can compare those facts directly.',
-          'When Understanding Othello Search crosses from consumer boundary into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-failure-reading',
-        title: 'Othello Search Failure Reading',
-        body: [
-          'Ownership in Understanding Othello Search is not the same as display. A consumer can show, store, or report a value while the controlling boundary remains the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article. In Understanding Othello Search, failure reading is the difference between reading Othello match behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Failure Reading.',
-          'Adjacent pages matter for Understanding Othello Search, but adjacency does not move authority. Understanding Othello Search should be compared with Understanding Othello AI Turns, Changing Othello AI Strength, Changing Othello Book Behavior only when the reader has moved to that neighboring subject. The reader should switch pages only when the subject has changed.',
-          'Understanding Othello Search should not use failure reading to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-evidence-quality',
-        title: 'Othello Search Evidence Quality',
-        body: [
-          'Understanding Othello Search should not use handoff to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text. Understanding Othello Search uses the fact as evidence quality evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Evidence Quality.',
-          'The public boundary for Understanding Othello Search is part of the article, not an afterthought. It does not claim that one backend, command, policy file, or generated artifact proves every other subsystem. This wording keeps public documentation from expanding permission or asking for unsafe evidence.',
-          'When Understanding Othello Search crosses from evidence quality into saved data, output, packaging, support, or legal interpretation, the reader should name that crossing instead of flattening the categories.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-related-systems',
-        title: 'Othello Search Related Systems',
-        body: [
-          'Search relies on the Othello board rules for legal moves, flips, passes, terminal state, and winner calculation. The renderer only displays the resulting board and animation state. Understanding Othello Search uses the fact as backend or service evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Backend or Service. Understanding Othello Search uses the fact as related systems evidence, then keeps the explanation inside Systems rather than turning it into a project-wide claim. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Related Systems.',
-          'An operator reading Understanding Othello Search should follow system analysis follows the owning contract first, then consumers, fallback behavior, and diagnostic output. That order prevents a visible result from being treated as the first source of truth.',
-          'Use related systems to keep Understanding Othello Search tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-policy-limit',
-        title: 'Othello Search Policy Limit',
-        body: [
-          'Visible feedback for Understanding Othello Search should be read as evidence, not as a complete diagnosis. The next step is to connect the feedback to the owner and to the category path Systems / Feedback and Intelligence / Policy and Search. In Understanding Othello Search, policy limit is the difference between reading Othello match behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Policy Limit.',
-          'Implementation limits for Understanding Othello Search keep the article tied to confirmed behavior. If a command, backend, schema branch, or policy file is not part of this topic, the page should not use it as proof.',
-          'Understanding Othello Search should not use policy limit to infer permission, release status, hidden routes, accepted contributions, or private security handling beyond the controlling public text.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-technical-summary',
-        title: 'Othello Search Technical Summary',
-        body: [
-          'Weak, medium, strong, insane, and insane-plus settings select different search behavior and budget use. Stronger settings can spend more work on evaluation and exact search paths. The fact also tells the reader which evidence to preserve for technical summary: backend identity, runtime preference values, snapshot fields, saved schema branch, command output, engine state, and subsystem-specific status. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Technical Summary.',
-          'The summary value of Understanding Othello Search is precision. It tells the reader what the topic covers, which owner controls it, and which evidence is enough for a public explanation.',
-          'Use technical summary to keep Understanding Othello Search tied to Feedback and Intelligence; use a related page only when the reader needs a different owner.',
-        ],
-      },
-      {
-        id: 'understanding-othello-search-closing-check',
-        title: 'Othello Search Closing Check',
-        body: [
-          'Contract Scope defines the useful size of Understanding Othello Search. The article should be broad enough to explain Othello match behavior, but narrow enough that treating Othello state as My World block data remains outside the conclusion. In Understanding Othello Search, closing check is the difference between reading Othello match behavior and assuming authority from a nearby surface, file, or policy summary. The local reading frame is Understanding Othello Search / Feedback and Intelligence / Policy and Search / Closing Check.',
-          'A final check for Understanding Othello Search should confirm the category, owner, evidence, and boundary. If any one of those is missing, the conclusion should remain narrower than the symptom.',
-          'If the available evidence for closing check does not identify the fixed-step loop, renderer contract, backend implementation, audio manager, persistence pipeline, AI learning service, policy evaluator, or Othello engine named by the article, Understanding Othello Search should be treated as an observation rather than a confirmed cause.',
+        id: 'othello-search-worker-book',
+        title: 'The Worker and Opening-Book Handoff',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Search never runs on the interface thread. `OthelloAiWorker` in `src/ludoxel/presentation/interface/othello/worker.py` submits move, analysis, and book-learning requests to spawn-context process pools, polls for completion on a timer, and emits the result; if a pool cannot be created it falls back to an in-process computation. The opening book is supplied through application-side storage hooks registered in `src/ludoxel/simulation/spaces/othello/books/opening.py`: the engine holds an `OpeningBook` keyed by a dihedral-canonical position computed by `canonical_position_key`, while `_load_opening_book_from_lines` compiles user and bundled lines into that map through a prefix trie, with the user delta and a fingerprinted compiled cache persisted by the application store.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'This article documents the Ludoxel Othello search, not Othello in general. The opening-book and learning-book contents and their on-disk form are owned by the Data category; here the book is the move source the engine consults and the worker is the boundary that keeps search off the interface thread.',
+            },
+          },
         ],
       },
     ],
