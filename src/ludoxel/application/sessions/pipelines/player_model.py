@@ -7,7 +7,7 @@ import math
 from ludoxel.application.sessions.pipelines.render_snapshot import PlayerModelSnapshotDTO
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.actors.player.entity import PlayerEntity
-from ludoxel.simulation.actors.player.kinematics import PLAYER_WALK_MAX_SWING_SCALE, PlayerMotionState
+from ludoxel.simulation.actors.player.kinematics import PLAYER_HEAD_BODY_YAW_MAX_DEG, PLAYER_WALK_MAX_SWING_SCALE, PlayerMotionState
 
 
 def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionState, walk_speed: float, is_first_person_view: bool) -> PlayerModelSnapshotDTO:
@@ -38,16 +38,20 @@ def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionSta
   fp_pitch_deg = float(pitch_wave * bob * 6.5)
   fp_roll_deg = float(sin_phase * bob * 4.0)
 
+  body_visual_yaw_deg = float(player.yaw_deg) if motion.body_visual_yaw_deg is None else float(motion.body_visual_yaw_deg)
+  head_yaw_rel_deg = clampf(float(math.remainder(float(player.yaw_deg) - float(body_visual_yaw_deg), 360.0)), -float(PLAYER_HEAD_BODY_YAW_MAX_DEG), float(PLAYER_HEAD_BODY_YAW_MAX_DEG))
+
   return PlayerModelSnapshotDTO(
     base_x=float(player.position.x),
     base_y=float(player.position.y) + float(step_eye_offset),
     base_z=float(player.position.z),
-    body_yaw_deg=float(player.yaw_deg),
-    head_yaw_deg=0.0,
+    body_yaw_deg=float(body_visual_yaw_deg),
+    head_yaw_deg=float(head_yaw_rel_deg),
     head_pitch_deg=float(player.pitch_deg),
     limb_phase_rad=float(motion.walk_phase_rad),
     limb_swing_amount=float(limb_swing_amount),
     crouch_amount=float(crouch_amount),
+    idle_anim_time_s=float(motion.visual_time_s),
     hurt_tint_strength=float(player.hurt_flash_strength()),
     first_person_tx=float(fp_tx),
     first_person_ty=float(fp_ty),

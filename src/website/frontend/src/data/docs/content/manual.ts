@@ -1261,6 +1261,15 @@ class PlayerStepInput:
         body: [
           'Looking changes the view direction, while the camera perspective changes how the player is framed. The cycle-camera-perspective action, bound to F5 by default, switches between first-person and third-person views without changing movement or look input.',
           'The perspective is a renderer framing choice applied on top of the same yaw and pitch. Switching it does not alter the player’s heading or the collision and picking that depend on it; only the camera placement the renderer uses changes.',
+          [
+            'In the third-person views the body turns to follow your look with a short delay, so a fast turn lets the head lead before the body catches up and settles; how that ',
+            {
+              kind: 'link',
+              label: 'delayed body turn',
+              href: '/docs/systems/rendering-backends/world-visuals/understanding-the-player-model-pose',
+            },
+            ' is produced is a visual effect only. The look direction that camera control, picking, and placement use is the immediate heading, so it is never delayed by the visible body turn.',
+          ],
         ],
         codeBlocks: [
           {

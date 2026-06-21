@@ -361,7 +361,15 @@ return (runtime, othello_game_state)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, body and head angles, limb phase and swing, crouch amount, hurt tint, the six first-person view-model channels, and a first-person flag.',
+            text: [
+              'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, the body and head angles, limb phase and swing, crouch amount, an `idle_anim_time_s` visual-animation clock, hurt tint, the six first-person view-model channels, and a first-person flag. Here `body_yaw_deg` is the lagged visual body yaw and `head_yaw_deg` is the head yaw measured relative to that body, not the raw look yaw; how those two angles are produced and consumed is owned by the ',
+              {
+                kind: 'link',
+                label: 'player-model pose',
+                href: '/docs/systems/rendering-backends/world-visuals/understanding-the-player-model-pose',
+              },
+              '.',
+            ],
           },
           {
             kind: 'paragraph',
@@ -391,7 +399,7 @@ class RenderSnapshotDTO:
           },
           {
             kind: 'paragraph',
-            text: '`make_render_snapshot_for_session` composes the camera and the player model and then scales only the first-person view-model channels by the view-bobbing strength, clamped to the unit interval and forced to zero when bobbing is disabled. It also projects the interpolated gravity samples into falling-block DTOs. The player projection itself is `build_player_model_snapshot` in `src/ludoxel/application/sessions/pipelines/player_model.py`, which converts the mutable entity and walk phase into renderer-facing scalars, deriving crouch amount from the eye drop and the first-person bob from the walk phase.',
+            text: '`make_render_snapshot_for_session` composes the camera and the player model and then scales only the first-person view-model channels by the view-bobbing strength, clamped to the unit interval and forced to zero when bobbing is disabled. It also projects the interpolated gravity samples into falling-block DTOs. The player projection itself is `build_player_model_snapshot` in `src/ludoxel/application/sessions/pipelines/player_model.py`, which converts the mutable entity and motion state into renderer-facing scalars, deriving crouch amount from the eye drop and the first-person bob from the walk phase. It also reads the lagged visual body yaw and the always-advancing visual clock from the motion state, emitting `body_yaw_deg` as the visual body yaw, `head_yaw_deg` as the look yaw taken relative to it and clamped to the maximum head separation, and `idle_anim_time_s` as the clock that drives idle animation.',
           },
           {
             kind: 'math',
@@ -427,7 +435,7 @@ class RenderSnapshotDTO:
           },
           {
             kind: 'paragraph',
-            text: 'The render-state types in `src/ludoxel/presentation/rendering/visuals/players/render_state.py` are frozen and serve as cache keys. `PlayerRenderState` carries base pose, locomotion phase, crouch, the perspective flag, a resolved `skin_texture_key`, and an optional `FirstPersonRenderState`; two actors with the same pose but different skins are distinct cache entries because the key includes the skin reference. `FirstPersonRenderState` carries the visible and target item identifiers, the held block kind, the special-item icon, equip and swing progress, the arm and view-model flags, the view-bob channels, and the arm rotation limits, so the first-person view model is reconstructed from one sample.',
+            text: 'The render-state types in `src/ludoxel/presentation/rendering/visuals/players/render_state.py` are frozen and serve as cache keys. `PlayerRenderState` carries base pose, the visual body and relative head angles, locomotion phase, crouch, the `idle_anim_time_s` clock, the perspective flag, a resolved `skin_texture_key`, and an optional `FirstPersonRenderState`; two actors with the same pose but different skins are distinct cache entries because the key includes the skin reference, and because the idle clock advances every step a standing actor still produces a fresh key each step so its idle motion animates. `FirstPersonRenderState` carries the visible and target item identifiers, the held block kind, the special-item icon, equip and swing progress, the arm and view-model flags, the view-bob channels, and the arm rotation limits, so the first-person view model is reconstructed from one sample.',
           },
           {
             kind: 'note',
@@ -440,7 +448,7 @@ class RenderSnapshotDTO:
         ],
       },
     ],
-    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering'],
+    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding the Player Model Pose', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1160,6 +1168,168 @@ sy = _snap(float(cy), float(texel))`,
   }),
   defineDocsArticle({
     category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'World Visuals',
+    title: 'Understanding the Player Model Pose',
+    description:
+      'Documents how the third-person player and AI bodies are posed: the shared pose builder and its shadow rows consumed by both backends, the visual-side mapping that does not match the variable names, the delayed body yaw with a bounded head separation, the shoulder-pivoted idle arm sway, and the forward attack swing that keeps the arm and held item clear of the torso.',
+    sections: [
+      {
+        id: 'player-model-pose-shared-builder',
+        title: 'One Pose Builder Feeds Both Backends',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`build_player_model_pose` in `src/ludoxel/presentation/rendering/visuals/players/model_pose.py` turns one `PlayerRenderState` into a frozen `PlayerModelPose`. The pose holds the skin face rows, an optional `HeldBlockPose`, the special-item face rows and icon, the hurt-tint strength, a resolved skin key, and the `shadow_rows` instance matrices. The builder is wrapped in an `lru_cache` keyed on the render state, so two actors in the same pose share one computation and a standing actor is recomputed only when its key changes. The OpenGL frame pipeline in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU backend in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` both call this same function, so a change to the row contract reaches both renderers at once rather than in one backend alone.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'A first-person render state returns empty skin and held-item face rows but still builds the full `shadow_rows`, because the local player casts a ground shadow even when the body model itself is hidden behind the camera. The shadow rows are assembled from the same head, body, arm, and leg matrices that produce the visible skin, and the held block and special item append their own cube rows from the hand transform. Because the visible pose and the shadow share those matrices, a corrected arm or held-item pose moves the body and its shadow together rather than letting them diverge.',
+          },
+        ],
+      },
+      {
+        id: 'player-model-pose-visual-sides',
+        title: 'Visual Sides Are Not the Variable Names',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The pose builder names one arm group `right_arm_parent` and the other `left_arm_parent`, but those names describe the model-local position, not the visible side of the body. The group named `right_arm_parent` sits on the model `-X` side and is textured with `VISUAL_LEFT_ARM_BASE_UV_PX`, so it is the visible left arm, the off hand. The group named `left_arm_parent` sits on the model `+X` side, is textured with `VISUAL_RIGHT_ARM_BASE_UV_PX`, and is the visible right arm, the main hand. The held block and special item anchor to that same `+X` group through `THIRD_PERSON_RIGHT_HAND_ANCHOR`, so the held item is carried in the visible right hand.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
+            code: `for model, uv_map in (
+  (head, _HEAD_BASE_UV_PX),
+  (body, _BODY_BASE_UV_PX),
+  (right_arm, VISUAL_LEFT_ARM_BASE_UV_PX),
+  (left_arm, VISUAL_RIGHT_ARM_BASE_UV_PX),
+  (right_leg, _RIGHT_LEG_BASE_UV_PX),
+  (left_leg, _LEFT_LEG_BASE_UV_PX),
+):
+  _append_unit_cube_rows(skin_buffers, model, uv_map)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The mapping is consequential for any change to arm motion. The fingertip of the visible right arm moves outward by a positive roll about its model `+X` shoulder, while the fingertip of the visible left arm moves outward by a negative roll about its `-X` shoulder, so the two arms take mirrored roll and pitch signs to sway away from the body symmetrically. Reasoning from the variable name alone would invert which hand swings, which side an idle sway pushes toward, and which arm carries the held item.',
+          },
+        ],
+      },
+      {
+        id: 'player-model-pose-body-yaw',
+        title: 'The Body Yaw Follows the Look With a Delay',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`PlayerMotionState` in `src/ludoxel/simulation/actors/player/kinematics.py` carries a runtime-only `body_visual_yaw_deg` and a `visual_time_s` clock. Neither is persisted; both are reset with the rest of the motion state on respawn. During each fixed step, after the look yaw is applied to the player, `_update_player_visual_animation` advances the visual clock and eases the visual body yaw toward the immediate look yaw with a frame-rate-independent factor. The AI manager advances its actors through the same `advance_runtime_player`, so every body, player and actor alike, receives the same delayed turn.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/player/kinematics.py',
+            code: `diff = float(math.remainder(target - float(current), 360.0))
+tau = float(PLAYER_BODY_YAW_FOLLOW_TAU_S)
+alpha = 1.0 - math.exp(-float(step) / tau) if tau > 1e-6 else 1.0
+next_yaw = float(current) + float(diff) * float(alpha)
+
+remaining = float(math.remainder(target - float(next_yaw), 360.0))
+max_sep = float(PLAYER_HEAD_BODY_YAW_MAX_DEG)
+if remaining > max_sep:
+  next_yaw = float(target) - float(max_sep)
+elif remaining < -max_sep:
+  next_yaw = float(target) + float(max_sep)`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '\\alpha = 1 - e^{-\\Delta t / \\tau}, \\qquad \\psi_{b} \\leftarrow \\psi_{b} + \\alpha \\cdot \\operatorname{rem}\\!\\left(\\psi_{\\ell} - \\psi_{b},\\ 360^{\\circ}\\right)',
+              displayMode: true,
+              caption: 'The visual body yaw ψ_b eases toward the look yaw ψ_ℓ with time constant τ; the signed remainder takes the shortest path so a turn past ±180° never spins the long way around.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The signed remainder is what fixes wrap-around: turning from `179°` to `-179°` is a two-degree move, not a three-hundred-fifty-eight-degree spin. After easing, the body yaw is forced to stay within `PLAYER_HEAD_BODY_YAW_MAX_DEG` of the look yaw, so a fast flick snaps the body just enough to keep the head ahead by at most that bound and then lets the body settle. `build_player_model_snapshot` reads the eased value as the absolute `body_yaw_deg` and the clamped signed remainder as the relative `head_yaw_deg`; the pose builder applies the body yaw at the model root and the head yaw at the head group, so the head total equals the look yaw while the body trails it. The look yaw the player entity holds is unchanged, so camera placement, picking, placement, and collision keep responding to the turn without any delay.',
+          },
+        ],
+      },
+      {
+        id: 'player-model-pose-idle-sway',
+        title: 'Idle Sway Pivots at the Shoulder',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'When the player is standing still, the walk swing is zero and there is no attack, so the arms would otherwise hang motionless. The pose builder adds a small idle sway driven by `idle_anim_time_s` so the lower arms drift gently. The sway is applied as a rotation about the shoulder, not as a translation of the arm group, so the shoulder stays fixed to the torso and only the fingertip side moves. The roll term carries a constant outward bias so each hand rests slightly away from the body and never crosses inward, and the two arms take mirrored signs so the visible right hand drifts toward `+X` and the visible left hand toward `-X`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
+            code: `idle_weight = (1.0 - walk_fraction) * (1.0 - attack_weight)
+idle_time = float(state.idle_anim_time_s)
+idle_roll = (math.cos(idle_time * _IDLE_SWAY_ROLL_FREQ) * _IDLE_SWAY_ROLL_AMP + _IDLE_SWAY_ROLL_BIAS) * idle_weight
+idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP * idle_weight`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'w_{idle} = (1 - f_{walk})(1 - w_{atk}), \\qquad \\rho = \\bigl(A_{r}\\cos(\\omega_{r} t) + b_{r}\\bigr)\\,w_{idle}, \\qquad \\theta = A_{p}\\sin(\\omega_{p} t)\\,w_{idle}',
+              displayMode: true,
+              caption:
+                'The idle roll ρ and pitch θ scale by the idle weight, which falls to zero as the walk fraction f_walk or the attack weight w_atk rises, so the idle sway never fights the walk cycle or a swing.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The idle weight is the product of the complementary walk fraction and the complementary attack weight, so the sway is at full strength only while standing and idle, and it fades smoothly to nothing as the player begins to walk or starts a swing. Because the idle clock advances every fixed step, the render state changes each step even when the player is otherwise static, which is what allows the cached pose to refresh and the idle motion to animate rather than freeze on one cached frame.',
+          },
+        ],
+      },
+      {
+        id: 'player-model-pose-swing',
+        title: 'The Attack Swing Clears the Torso',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The first-person swing progress is carried into the third-person body through the render state, but it is not applied to the body as the first-person camera-space arm motion. `_third_person_swing_arm_angles` converts the swing progress into a forward shoulder pitch and a small outward roll for the main-hand arm. The pitch raises the arm forward from the shoulder, and the roll is non-negative, so the hand is pushed outward rather than across the chest. There is no inward roll and no yaw, which is what previously drew the hand and held item through the torso.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
+            code: `def _third_person_swing_arm_angles(swing_progress: float) -> tuple[float, float]:
+  swing = clampf(float(swing_progress), 0.0, 1.0)
+  if swing <= 1e-6:
+    return (0.0, 0.0)
+
+  eased = 1.0 - pow(1.0 - swing, 4.0)
+  forward = math.sin(float(eased) * math.pi)
+  pitch_x = -float(_THIRD_PERSON_SWING_FORWARD_RAD) * float(forward)
+  roll_z = float(_THIRD_PERSON_SWING_OUTWARD_RAD) * math.sin(float(swing) * math.pi)
+  return (float(pitch_x), float(roll_z))`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 's_e = 1 - (1 - s)^4, \\qquad \\theta_{x} = -\\,\\Phi\\,\\sin(\\pi s_e) \\le 0, \\qquad \\rho_{z} = R\\,\\sin(\\pi s) \\ge 0',
+              displayMode: true,
+              caption:
+                'The eased swing s_e drives a forward pitch θ_x that is always toward the front, while the roll ρ_z stays outward, so the arm leaves the shoulder forward and to the side rather than turning into the body.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The forward pitch rotates the arm in the plane that holds its model `X`, so the hand stays on the outward side of the torso through the whole swing, and the held block or special item, anchored to that hand, swings forward with it instead of sweeping across the chest in the front view or out through the back in the rear view. Because the held-item parent transform and the shadow rows are built from the same arm matrices, the visible swing, the held item, and the ground shadow all follow one motion. The attack weight, derived separately from the swing progress, damps the walk swing and idle sway on the main hand during the strike so the forward pitch dominates while the swing is active.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding Render Snapshots', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Looking Around'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
     subcategory: 'Feedback and Intelligence',
     group: 'Audio Feedback',
     title: 'Understanding Material Sounds',
@@ -1838,7 +2008,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.2"`,
+            code: `__version__ = "3.6.3"`,
           },
           {
             kind: 'note',

@@ -62,6 +62,22 @@ _CROUCH_ARM_ROT_Z = 0.1
 _CROUCH_LEG_POS_Z = -3.4500310377 * _PX
 _ARM_SWAY_Z = math.pi * 0.02
 
+# Idle arm sway is a small shoulder-pivot rotation that runs on the visual-only
+# animation clock when the player is neither walking nor swinging. The roll term
+# carries a constant outward bias so each hand rests slightly away from the body,
+# and the two arms receive mirrored roll and pitch signs.
+_IDLE_SWAY_ROLL_FREQ = 1.8
+_IDLE_SWAY_PITCH_FREQ = 1.34
+_IDLE_SWAY_ROLL_AMP = 0.05
+_IDLE_SWAY_ROLL_BIAS = 0.05
+_IDLE_SWAY_PITCH_AMP = 0.05
+
+# Third-person attack/place swing for the main-hand arm: a forward shoulder pitch
+# with a small outward roll so the arm and any held item clear the torso volume
+# instead of being pulled across the chest or back.
+_THIRD_PERSON_SWING_FORWARD_RAD = 1.45
+_THIRD_PERSON_SWING_OUTWARD_RAD = 0.12
+
 _WORLD_SPECIAL_ITEM_BOX = LocalBox(1.0 * _PX, 1.0 * _PX, 7.5 * _PX, 15.0 * _PX, 15.0 * _PX, 8.5 * _PX)
 _WORLD_SPECIAL_ITEM_SCALE = 1.75
 _WORLD_SPECIAL_ITEM_UV_RECT = (1.0, 0.0, 0.0, 1.0)
@@ -126,18 +142,16 @@ def _append_unit_cube_rows(buffers: list[list[list[float]]], model: np.ndarray, 
     append_face_instance(buffers, int(face_idx), model, skin_uv_rect(uv_map_pixels[int(face_idx)], width=int(_SKIN_WIDTH), height=int(_SKIN_HEIGHT)))
 
 
-def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
+def _third_person_swing_arm_angles(swing_progress: float) -> tuple[float, float]:
   swing = clampf(float(swing_progress), 0.0, 1.0)
   if swing <= 1e-6:
-    return (0.0, 0.0, 0.0)
+    return (0.0, 0.0)
 
-  root = math.sin(math.sqrt(swing) * math.pi)
-  full = math.sin(swing * math.pi)
   eased = 1.0 - pow(1.0 - swing, 4.0)
-  attack_x = -1.2 * math.sin(eased * math.pi)
-  attack_y = -0.35 * root
-  attack_z = -0.4 * full
-  return (float(attack_x), float(attack_y), float(attack_z))
+  forward = math.sin(float(eased) * math.pi)
+  pitch_x = -float(_THIRD_PERSON_SWING_FORWARD_RAD) * float(forward)
+  roll_z = float(_THIRD_PERSON_SWING_OUTWARD_RAD) * math.sin(float(swing) * math.pi)
+  return (float(pitch_x), float(roll_z))
 
 
 def _attack_swing_weight(swing_progress: float) -> float:
@@ -164,29 +178,40 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   swing = max(0.0, float(state.limb_swing_amount))
   walk_l = math.sin(float(phase))
   walk_r = math.sin(float(phase) + math.pi)
-  arm_sway = float(clampf(float(swing) / 0.5 if float(swing) > 1e-9 else 0.0, 0.0, 1.0)) * float(_ARM_SWAY_Z)
-  right_arm_rot_x = float(swing) * float(walk_l) + float(_CROUCH_ARM_ROT_X) * float(crouch)
-  right_arm_rot_z = -(float(arm_sway) + float(_CROUCH_ARM_ROT_Z) * float(crouch))
-  right_leg_rot_x = float(swing) * float(walk_r)
-  left_leg_rot_x = float(swing) * float(walk_l)
+  walk_fraction = float(clampf(float(swing) / 0.5 if float(swing) > 1e-9 else 0.0, 0.0, 1.0))
+  arm_sway = float(walk_fraction) * float(_ARM_SWAY_Z)
 
-  attack_x = 0.0
-  attack_y = 0.0
-  attack_z = 0.0
-  attack_weight = 0.0
   first_person = state.first_person
+  swing_pitch = 0.0
+  swing_roll = 0.0
+  attack_weight = 0.0
   if first_person is not None:
-    attack_x, attack_y, attack_z = _shadow_attack_angles(float(first_person.swing_progress))
+    swing_pitch, swing_roll = _third_person_swing_arm_angles(float(first_person.swing_progress))
     attack_weight = _attack_swing_weight(float(first_person.swing_progress))
+
+  idle_weight = (1.0 - float(walk_fraction)) * (1.0 - float(attack_weight))
+  idle_time = float(state.idle_anim_time_s)
+  idle_roll = (math.cos(float(idle_time) * float(_IDLE_SWAY_ROLL_FREQ)) * float(_IDLE_SWAY_ROLL_AMP) + float(_IDLE_SWAY_ROLL_BIAS)) * float(idle_weight)
+  idle_pitch = math.sin(float(idle_time) * float(_IDLE_SWAY_PITCH_FREQ)) * float(_IDLE_SWAY_PITCH_AMP) * float(idle_weight)
+
   arm_rotation_limit_min_rad = math.radians(float(-180.0 if first_person is None else first_person.arm_rotation_limit_min_deg))
   arm_rotation_limit_max_rad = math.radians(float(180.0 if first_person is None else first_person.arm_rotation_limit_max_deg))
 
+  # Visual left arm (off-hand, model -X side): outward sway rolls the fingertip toward -X.
+  right_arm_rot_x = float(swing) * float(walk_l) + float(_CROUCH_ARM_ROT_X) * float(crouch) - float(idle_pitch)
+  right_arm_rot_z = -(float(arm_sway) + float(_CROUCH_ARM_ROT_Z) * float(crouch)) - float(idle_roll)
+  right_leg_rot_x = float(swing) * float(walk_r)
+  left_leg_rot_x = float(swing) * float(walk_l)
+
+  # Visual right arm (main hand, model +X side): outward sway rolls the fingertip toward +X,
+  # and the attack/place swing pitches the arm forward from the shoulder.
   main_hand_walk_damping = 1.0 - 0.85 * float(attack_weight)
   main_hand_sway_damping = 1.0 - 0.70 * float(attack_weight)
-  left_arm_rot_x = (float(swing) * float(walk_r) * float(main_hand_walk_damping)) + float(_CROUCH_ARM_ROT_X) * float(crouch) + float(attack_x)
-  left_arm_rot_z = (float(arm_sway) * float(main_hand_sway_damping)) + float(_CROUCH_ARM_ROT_Z) * float(crouch) + float(attack_z)
+  left_arm_rot_x = (float(swing) * float(walk_r) * float(main_hand_walk_damping)) + float(_CROUCH_ARM_ROT_X) * float(crouch) + float(swing_pitch) + float(idle_pitch)
+  left_arm_rot_z = (float(arm_sway) * float(main_hand_sway_damping)) + float(_CROUCH_ARM_ROT_Z) * float(crouch) + float(swing_roll) + float(idle_roll)
   if float(attack_weight) > 1e-6:
-    left_arm_rot_x = min(float(left_arm_rot_x), 0.08 * (1.0 - float(attack_weight)))
+    left_arm_rot_x = min(float(left_arm_rot_x), float(swing_pitch) + 0.08 * (1.0 - float(attack_weight)))
+  attack_y = 0.0
   right_arm_rot_x = clampf(float(right_arm_rot_x), float(arm_rotation_limit_min_rad), float(arm_rotation_limit_max_rad))
   left_arm_rot_x = clampf(float(left_arm_rot_x), float(arm_rotation_limit_min_rad), float(arm_rotation_limit_max_rad))
 

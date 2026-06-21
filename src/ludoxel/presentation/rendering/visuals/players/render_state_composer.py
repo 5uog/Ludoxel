@@ -64,6 +64,7 @@ def compose_player_render_state_from_parts(
     limb_phase_rad=float(player_model.limb_phase_rad),
     limb_swing_amount=float(player_model.limb_swing_amount),
     crouch_amount=float(player_model.crouch_amount),
+    idle_anim_time_s=float(player_model.idle_anim_time_s),
     hurt_tint_strength=float(player_model.hurt_tint_strength),
     is_first_person=bool(player_model.is_first_person),
     skin_texture_key=None if skin_texture_key is None else str(skin_texture_key),
