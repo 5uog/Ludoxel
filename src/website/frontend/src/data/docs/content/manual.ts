@@ -11,24 +11,20 @@ export const manualPages: DocsPageContent[] = [
     group: 'Launch and Space Selection',
     title: 'Starting Ludoxel',
     description:
-      'Defines the implemented startup chain from the Python module entry point to the loaded viewport. Launch is treated as a sequence of executable gates—entry delegation, bootstrap root selection, runtime selection, presentation-shell construction, single-instance activation, player-name admission, host-window creation, and viewport loading—so startup evidence is not confused with play-space restoration or support intake.',
+      'Defines the implemented startup chain from the Python module entry point to the loaded viewport. Launch is treated as a sequence of executable gates—entry delegation, bootstrap root selection, runtime selection, presentation-shell construction, single-instance activation, player-name admission, host-window construction, and viewport loading—so startup evidence is not confused with play-space restoration, persisted data, support intake, or license authority.',
     sections: [
       {
         id: 'starting-ludoxel-entry-delegation',
         title: 'Entry Is Delegation, Not Window Construction',
         body: [
-          'Starting Ludoxel begins at `src/ludoxel/__main__.py`, whose operative act is deliberately narrow. The module prepares multiprocessing support for frozen execution and delegates to the application layer. It does not create `QApplication`, does not select My World or Othello, does not read persisted play-space state, and does not initialize a renderer.',
-          '`ludoxel.application` preserves that boundary by exposing `run_app` through a lazy package export. The name is resolved only when requested, and the actual bootstrap function is imported from `ludoxel.application.bootstrap` at that point. A launch that reaches this boundary proves delegation into the application layer; it proves nothing about the later presentation shell, viewport backend, HUD, saved world, or active play space.',
+          'Starting Ludoxel begins at `src/ludoxel/__main__.py`. That module has one operative startup obligation: prepare multiprocessing support for frozen execution and delegate to `ludoxel.application.run_app`. It does not create `QApplication`, does not select My World or Othello, does not read saved state, does not construct a renderer, and does not open a support or data-classification surface.',
+          '`ludoxel.application` exposes that entry through a lazy package facade. The symbol `run_app` is resolved from `ludoxel.application.bootstrap` only when requested, so the module-level import path does not pull the presentation layer into the application package before the bootstrap gate has fixed project roots, resource roots, runtime data roots, and runtime selection. The first executable evidence is therefore delegation into the application composition root, not a visible desktop surface.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The module entry point delegates startup to the application layer.',
-            code: `# SPDX-FileCopyrightText: 2026 Kento Konishi
-# SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
-from __future__ import annotations
-
-import multiprocessing
+            caption: 'The Python module entry delegates into the application layer after frozen-process preparation.',
+            code: `import multiprocessing
 
 from ludoxel.application import run_app
 
@@ -38,10 +34,8 @@ if __name__ == "__main__":
           },
           {
             language: 'py',
-            caption: 'The application package resolves run_app lazily through the bootstrap module.',
-            code: `from importlib import import_module
-
-__all__ = ["run_app"]
+            caption: 'The application package exposes `run_app` through a lazy facade, not a direct presentation import.',
+            code: `__all__ = ["run_app"]
 
 
 def __getattr__(name: str):
@@ -55,9 +49,9 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-bootstrap-gates',
         title: 'Bootstrap Fixes Roots, Runtime, and Storage Hooks Before Qt',
         body: [
-          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering matters: no visible window can be read as gameplay evidence before the roots and runtime gate have been fixed.',
-          '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state jurisdiction that later persistence code will use. The bootstrap also installs Othello opening-book storage hooks before the presentation shell starts. That hook registration is only storage preparation; it is not proof that the Othello board is active, visible, or selected.',
-          'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In frozen execution the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists therefore belongs to the launch environment or bootstrap path, not to camera movement, hotbar interaction, Othello move legality, or a renderer overlay.',
+          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering is not decorative. No visible window can be treated as gameplay evidence before root resolution, runtime-data selection, optional runtime substitution, and Othello opening-book storage hook installation have completed.',
+          '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state root that later persistence consumers will use. The Othello book-storage hook is installed before presentation entry, but that installation is only storage-path preparation. It does not mean the Othello board is active, visible, restored, or selected.',
+          'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In a frozen executable the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists is therefore a launch-environment or bootstrap-path condition, not camera movement, hotbar interaction, Othello move legality, renderer overlay behavior, or play-space switching.',
         ],
         codeBlocks: [
           {
@@ -94,9 +88,9 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-data-root-boundary',
         title: 'The Runtime Data Root Is Storage Jurisdiction, Not Repository Content',
         body: [
-          'The runtime data root is selected before the user can interact with the window, but its selection does not mean that the expected save, setting, inventory, Othello state, or world fragment has already been accepted. It means only that later persistence consumers have a resolved base location from which runtime state and cache paths may be derived.',
-          '`LUDOXEL_DATA_ROOT` overrides the default location. Without that override, the implementation follows platform-specific storage conventions: `LOCALAPPDATA` or `AppData` on Windows, `~/Library/Application Support/Ludoxel` on macOS, `XDG_DATA_HOME/ludoxel` on compatible systems, and `~/.local/share/ludoxel` as the final fallback. The repository source tree is not the ordinary storage authority for user runtime state.',
-          'Consequently, "the application opened" and "the expected saved state appeared" remain separate propositions. A missing player name, an unexpected world, or absent Othello state after a window exists is no longer a pure launch question; it has crossed into persisted data, play-space restoration, or runtime integrity evidence.',
+          'The runtime data root is selected before any user-facing interaction, but root selection is not state admission. It fixes only the base location from which later state, cache, integrity, and store paths can be derived. A selected `data_root` does not prove that a player name, inventory, My World payload, Othello payload, runtime preference, or saved world fragment has been loaded or accepted.',
+          '`LUDOXEL_DATA_ROOT` overrides the default location. Without that override, the implementation follows platform storage conventions: `LOCALAPPDATA` or `AppData` on Windows, `~/Library/Application Support/Ludoxel` on macOS, `XDG_DATA_HOME/ludoxel` on compatible systems, and `~/.local/share/ludoxel` as the final fallback. The repository source tree is not the ordinary storage authority for user runtime state.',
+          'Consequently, "the process opened" and "the expected saved state appeared" remain separate propositions. A missing player name, an unexpected world, absent Othello state, lost inventory, or a mismatched current-space selector after a window exists is a persistence, play-space restoration, or runtime-integrity condition. It is not proof that the module entry point or bootstrap gate failed.',
         ],
         codeBlocks: [
           {
@@ -127,14 +121,14 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-presentation-admission',
         title: 'The Presentation Shell Admits the Desktop Process',
         body: [
-          'After bootstrap, `src/ludoxel/presentation/interface/windows/main.py` constructs the desktop process. It creates `QApplication`, assigns organization and application identity, loads an application icon when one exists, registers bundled fonts, applies the QSS theme, and only then proceeds toward single-instance coordination and state admission. A font-registration failure at this level is not cosmetic; the shell raises instead of authorizing a partially styled desktop surface.',
-          'Single-instance activation is an execution gate, not a saved-state operation. `SingleInstanceRelay` is bound to the managed data root; if an existing instance accepts activation, the new launch returns without constructing a second independent main window. An apparent second launch may therefore be an activation request delivered to an existing desktop process.',
+          'After bootstrap, `src/ludoxel/presentation/interface/windows/main.py` constructs the desktop process. It creates `QApplication`, assigns organization and application identity, loads an application icon when one exists, registers bundled fonts, applies the QSS theme, and only then proceeds toward single-instance coordination and state admission. Bundled font registration is a startup requirement in this path; failure raises before the final game window can be authorized as a partially styled desktop surface.',
+          'Single-instance activation is an execution gate, not a saved-state operation. `SingleInstanceRelay` is bound to the managed data root. If an existing instance accepts activation, the new launch returns without constructing a second independent `MainWindow`. An apparent second launch may therefore be an activation request delivered to an existing desktop process.',
           'The player-name gate is also part of startup. The shell loads `AppStateStore`, normalizes the persisted player name, and displays `PlayerNameDialog` only when no launch name is available. Cancelling that dialog returns before `MainWindow` exists. That return is an intentional admission failure, not a renderer crash and not a failed play-space switch.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The presentation shell creates the Qt application identity and applies the bundled font and theme before the main window.',
+            caption: 'The presentation shell creates the Qt application identity before the main window.',
             code: `def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None:
   root = Path(project_root)
   bundled_root = Path(resource_root)
@@ -186,9 +180,9 @@ if not launch_player_name:
         id: 'starting-ludoxel-window-and-viewport-gates',
         title: 'The Host Window and the Viewport Are Separate Milestones',
         body: [
-          '`MainWindow` is the host. It stores the resolved roots, constructs `GameScreen`, installs that screen as its central widget, and connects fullscreen behavior to the viewport. The existence of this host window proves that startup has passed the shell admission gates; it does not prove that the viewport has finished loading or that a play-space rule has been executed.',
-          '`GameScreen` then chooses the platform viewport widget, constructs the HUD, and displays a loading overlay whose status begins as `Preparing viewport...`. The overlay is bound to the viewport loading state and loading-status signals. Until `loading_finished` hides that overlay and gives focus to the viewport, the process is still at the boundary between desktop launch and ordinary play-space interaction.',
-          'The startup splash in the presentation shell follows the same status channel. It connects to `viewport.loading_status_changed`, closes on `viewport.loading_finished`, and only then leaves the ordinary window as the visible authority. A visible splash, a host window with `Preparing viewport...`, and a focused viewport are therefore three distinct observations, not three phrasings of the same condition.',
+          '`MainWindow` is the host. It stores the resolved roots, constructs `GameScreen`, installs that screen as its central widget, and connects fullscreen behavior to the viewport. The existence of this host window proves that startup has passed the shell admission gates. It does not prove that the viewport has finished loading, that a play-space rule has executed, or that saved state has been applied without later contradiction.',
+          '`GameScreen` chooses the platform viewport widget, constructs the HUD, and displays a loading overlay whose initial status is `Preparing viewport...`. The overlay is bound to the viewport loading-state and loading-status signals. Until `loading_finished` hides that overlay and gives focus to the viewport, the process remains at the boundary between desktop admission and ordinary play-space interaction.',
+          'The startup splash in the presentation shell follows the same status channel. It connects to `viewport.loading_status_changed`, closes on `viewport.loading_finished`, and only then leaves the ordinary window as the visible surface. A visible splash, a host window with `Preparing viewport...`, and a focused viewport are three distinct observations; collapsing them into a single "opened" condition destroys the implemented startup order.',
         ],
         codeBlocks: [
           {
@@ -216,6 +210,7 @@ if not launch_player_name:
   title_image_path=title_image_path,
   parent=self,
 )
+self._loading_overlay.set_status_text(self.viewport.loading_status_text())
 self._loading_overlay.setVisible(bool(self.viewport.loading_active()))
 self.viewport.loading_state_changed.connect(self._handle_loading_state_changed)
 self.viewport.loading_status_changed.connect(self._loading_overlay.set_status_text)
@@ -239,15 +234,15 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         id: 'starting-ludoxel-startup-evidence-routing',
         title: 'Startup Evidence Must Be Classified Before Any Public Channel',
         body: [
-          'A disciplined startup reading names the latest executed gate and then stops. The relevant observations are: no visible Qt surface; player-name dialog; startup splash; existing-window activation; main window with `Preparing viewport...`; loaded viewport accepting focus; or loaded viewport showing an unexpected play space. Each observation belongs to a different location in the startup chain and must not be inflated into a diagnosis, proposed patch, vulnerability disclosure, support entitlement, or repository-policy request.',
+          'A startup observation has force only at the last gate it can identify. No visible Qt surface, player-name dialog, startup splash, existing-window activation, main window with `Preparing viewport...`, loaded viewport focus, and loaded viewport with an unexpected play space are different execution positions. None of those observations, by itself, becomes a diagnosis, proposed patch, vulnerability disclosure, support entitlement, repository-policy request, or permission to publish private machine material.',
           [
-            'The latest executed startup gate is only the Manual fact. Public submission is governed by the repository support gates, not by the mere existence of an observation. A public ',
+            'Public submission is controlled by the repository support gates, not by the mere existence of a local observation. A public ',
             {
               kind: 'link',
               label: 'problem report',
               href: '/docs/support/public-problem-support/issue-report-content/writing-a-problem-report',
             },
-            ' is available only for a reproducible, non-security problem affecting the Current Repository or an Official Distribution and expressible through public, non-sensitive facts. A narrow question about repository policy, the LICENSE, Third-Party Materials, Ordinary Application Use, packaging status, build status, or the Security Reporting Policy belongs to the ',
+            ' is available only for a reproducible, non-security problem affecting the Current Repository or an Official Distribution and expressible through public, non-sensitive facts. A narrow question about repository policy, the LICENSE, Third-Party Materials, Ordinary Application Use, packaging status, build status, or the Security Reporting Policy follows the ',
             {
               kind: 'link',
               label: 'limited-question',
@@ -262,7 +257,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
             '.',
           ],
           [
-            'The same classification controls startup evidence that looks useful. Operating-system, Python, PyQt6, GPU, OpenGL, package, or build facts are admissible as ',
+            'The same classification controls startup evidence that looks technically useful. Operating-system, Python, PyQt6, GPU, OpenGL, package, or build facts are admissible as ',
             {
               kind: 'link',
               label: 'platform evidence',
@@ -276,34 +271,34 @@ def _handle_loading_state_changed(self, active: bool) -> None:
             },
             '; if the decisive material cannot be made public without disclosing unsafe content, the public report is the wrong surface rather than an incomplete version of the right one.',
           ],
-          'A startup locator has no independent publication authority. It proves only the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. Support documentation and `.github/ISSUE_TEMPLATE/` files supply the controlling public-channel classification. That classification may admit a reproducible non-security problem report, confine the matter to a limited public question, require only a minimal request for a Private Reporting Channel, or exclude public submission altogether. The Manual therefore stops at implemented startup localization. It does not transform local evidence into admissible public evidence, does not authorize publication of secrets or vulnerability detail, does not receive Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals, and does not convert unrelated machine-specific material into reportable Ludoxel evidence.',
+          'A startup locator has no independent publication authority. It proves only the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. `.github/ISSUE_TEMPLATE/` and the Support policy decide whether that locator can become a reproducible non-security problem report, a limited public question, a minimal request for a Private Reporting Channel, or no public submission at all. The locator does not transform local evidence into admissible public evidence, does not authorize publication of secrets or vulnerability detail, does not receive Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals, and does not convert unrelated machine-specific material into reportable Ludoxel evidence.',
         ],
       },
       {
         id: 'starting-ludoxel-play-space-and-state-boundary',
         title: 'Play-Space and Saved-State Questions Begin After Launch',
         body: [
-          'After the viewport is loaded and focused, the active surface rather than the startup chain controls the next reading. My World uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A loaded viewport showing the wrong surface is a play-space or restored-state question, not evidence that the module entry point failed.',
+          'After the viewport is loaded and focused, the active surface rather than the startup chain controls the next interpretation. My World uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A loaded viewport showing the wrong surface is a play-space or restored-state condition, not evidence that the module entry point failed.',
           [
-            'The immediate Manual continuation is ',
+            'The immediate operational continuations are ',
             {
               kind: 'link',
               label: 'Reading the Main Window',
               href: '/docs/manual/starting-the-application/window-and-item-surfaces/reading-the-main-window',
             },
-            ' or ',
+            ' and ',
             {
               kind: 'link',
               label: 'Switching Play Spaces',
               href: '/docs/manual/starting-the-application/launch-and-space-selection/switching-play-spaces',
             },
-            '. Camera behavior after a loaded viewport belongs to ',
+            '. Camera behavior after a loaded viewport is governed by ',
             {
               kind: 'link',
               label: 'Changing Camera Preferences',
               href: '/docs/settings/visual-and-audio-settings/camera-and-crosshair/changing-camera-preferences',
             },
-            ', not to the launch chain.',
+            ', not by the launch chain.',
           ],
           'Saved-state analysis begins only after `data_root` has been chosen and a later consumer has attempted to load the relevant state. A missing player name, absent world, unexpected Othello configuration, or lost inventory after a visible window exists is a persistence or play-space consequence. Starting Ludoxel ends when the desktop process has admitted the viewport; it does not absorb every later state discrepancy into startup.',
         ],
@@ -327,159 +322,317 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Launch and Space Selection',
     title: 'Switching Play Spaces',
     description:
-      'Explains how the pause menu switches the active session between My World and Othello, how each space keeps its own world and controller state, and how the selected space is normalized, loaded, and persisted with player preferences. Switching changes the active session context; it does not merge My World and Othello data.',
+      'Defines the implemented play-space switch between My World and Othello. The switch replaces the active `SessionManager` reference inside an already constructed `PlaySpaceContext`, normalizes runtime state, publishes loading state, invalidates renderer upload and selection state, resynchronizes HUD surfaces, clears Othello transient controller state, and persists only the selected space id plus the two separate space payloads. It is not a data merge, not a world conversion, and not a support classification surface.',
     sections: [
       {
-        id: 'switching-play-spaces-two-sessions',
-        title: 'Two Independent Sessions Exist at Once',
+        id: 'switching-play-spaces-context-authority',
+        title: 'The Play-Space Context Retains Two Session Managers',
         body: [
-          'Ludoxel does not keep one flat runtime object that toggles between modes. The play-space context constructs a separate `SessionManager` for My World and for Othello, both backed by the same default block registry, and remembers which one is active. My World state, Othello state, player state, AI state, and settings meet only at the application aggregate; each session keeps its own domain meaning.',
-          'Because both sessions exist simultaneously, switching is a change of which session is active, not a rebuild of the other. The active space id starts at My World and is normalized so that unknown values fall back to My World rather than producing an undefined state.',
+          'The switch is not a route name, a button label, or a visual mode flag. It is a mutation of `PlaySpaceContext.active_space_id` and a replacement of the active `SessionManager` reference consumed by the viewport. `PlaySpaceContext` constructs two independent session managers at startup: one for My World and one for Othello. Both sessions receive the same default block registry, but each session retains its own world, player entity, AI-player collection, revision sequence, and domain interpretation.',
+          '`session_for` normalizes the requested id and returns the matching manager. `set_active_space` mutates only the active id and then returns the manager for that normalized id. Switching therefore changes which already constructed session is authoritative for the viewport. It does not reconstruct the inactive session merely because it is hidden, does not serialize one space into the other, and does not convert Othello state into My World state or My World state into Othello state.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The play-space context owns both sessions and tracks the active space id.',
+            caption: '`PlaySpaceContext` constructs and retains separate My World and Othello sessions.',
             code: `@dataclass
 class PlaySpaceContext:
   my_world: SessionManager
   othello: SessionManager
   active_space_id: str = PLAY_SPACE_MY_WORLD
 
-  def session_for(self, space_id: object) -> SessionManager:
-    normalized = normalize_play_space_id(space_id)
-    if normalized == PLAY_SPACE_OTHELLO:
-      return self.othello
-    return self.my_world
+  @staticmethod
+  def create_default(seed: int = 0) -> "PlaySpaceContext":
+    registry = create_default_registry()
 
-  def set_active_space(self, space_id: object) -> SessionManager:
-    normalized = normalize_play_space_id(space_id)
-    self.active_space_id = normalized
-    return self.session_for(normalized)`,
+    my_world = create_my_world_session(seed=int(seed), block_registry=registry)
+    othello = create_othello_session(seed=int(seed), block_registry=registry)
+
+    return PlaySpaceContext(my_world=my_world, othello=othello, active_space_id=PLAY_SPACE_MY_WORLD)`,
+          },
+          {
+            language: 'py',
+            caption: 'The active manager is selected by normalized space id; unknown ids fall back before lookup.',
+            code: `def session_for(self, space_id: object) -> SessionManager:
+  normalized = normalize_play_space_id(space_id)
+  if normalized == PLAY_SPACE_OTHELLO:
+    return self.othello
+  return self.my_world
+
+def set_active_space(self, space_id: object) -> SessionManager:
+  normalized = normalize_play_space_id(space_id)
+  self.active_space_id = normalized
+  return self.session_for(normalized)`,
           },
         ],
       },
       {
-        id: 'switching-play-spaces-pause-menu',
-        title: 'The Pause Menu Triggers the Switch',
+        id: 'switching-play-spaces-domain-construction',
+        title: 'My World and Othello Are Constructed from Different Domain Seeds',
         body: [
-          'Switching is initiated from the pause overlay. The overlay emits `play_my_world_requested` and `play_othello_requested`, which the overlay-navigation controller binds to `switch_play_space` with `resume=True` so the game resumes immediately after the new space is loaded.',
-          'Because the request comes from the pause menu, the player is never mid-input when the switch happens. Held mouse actions are reset, any in-progress AI route edit is cancelled, and block-break particles are cleared before the active session changes.',
+          'The two sessions are not equivalent worlds waiting for a label. My World is created from `MyWorldSessionSeed` and `generate_test_map`; Othello is created from `OthelloSessionSeed`, a flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their generated worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
+          'The shared `SessionManager` type is a runtime envelope, not an erasure of domain origin. Treating the switch as a mode toggle over one world misstates the implementation. The code creates two domain sessions first and later selects one active reference. The hidden session remains a session with its own world revision and actor state, not a dormant view over the active world.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'Pause-overlay signals are bound to the play-space switch with immediate resume.',
+            caption: 'My World is produced through the My World seed and test-map generator.',
+            code: `MY_WORLD_SPAWN: tuple[float, float, float] = (0.0, 1.0, -10.0)
+
+@dataclass(frozen=True)
+class MyWorldSessionSeed:
+  seed: int = 0
+  spawn: tuple[float, float, float] = MY_WORLD_SPAWN
+  yaw_deg: float = MY_WORLD_YAW_DEG
+  pitch_deg: float = MY_WORLD_PITCH_DEG
+
+
+def make_my_world_state(seed: int) -> WorldState:
+  return generate_test_map(seed=int(seed))`,
+          },
+          {
+            language: 'py',
+            caption: 'Othello is produced from a flat world and then receives the Othello board layout.',
+            code: `OTHELLO_SPAWN: tuple[float, float, float] = (0.0, 1.0, -12.0)
+
+
+def _make_world() -> WorldState:
+  world = generate_flat_world(half_extent=48, ground_y=0, block_id="minecraft:grass_block")
+  ensure_othello_board_layout(world)
+  return world
+
+
+def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
+  spec = OthelloSessionSeed(seed=int(seed))
+  return make_session_manager(seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=_make_world(), block_registry=block_registry)`,
+          },
+        ],
+      },
+      {
+        id: 'switching-play-spaces-restoration-admission',
+        title: 'Restoration Loads Both Spaces Before the Active Reference Is Chosen',
+        body: [
+          'Startup restoration does not load only the space that will be shown first. `apply_persisted_state_if_present` applies persisted settings to every session, restores My World from `state.my_world`, restores Othello from `state.othello_space`, repairs Othello board placement, lifts the Othello player above the board when required, restores overlap exemptions, normalizes runtime preferences, and then calls `sessions.set_active_space(runtime.current_space_id)`. The selected runtime reference is admitted only after both persisted branches have been projected back into their session managers.',
+          'This order makes the later visible switch non-destructive after startup. The dormant space is not a string in a preference file; it is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. It does not inspect the saved envelopes as proof of their stored content and does not decide whether `state/player_state.json`, `state/world_state.json`, or the Othello payload is semantically correct.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Persistence restores both session branches before selecting the active space id.',
+            code: `if state is not None:
+  persisted_settings = state.settings
+  for session in sessions.all_sessions():
+    apply_persisted_settings_to_session(session, persisted_settings)
+
+  runtime = runtime_preferences_from_app_state(state, runtime=runtime)
+
+  _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
+  _maybe_replace_world(sessions.my_world, state.my_world.world)
+  sessions.my_world.set_ai_players(tuple(player.to_state() for player in state.my_world.ai_players))
+  _restore_player_overlap_exemptions(sessions.my_world)
+
+  _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
+  _maybe_replace_world(sessions.othello, state.othello_space.world)
+  sessions.othello.set_ai_players(tuple(player.to_state() for player in state.othello_space.ai_players))
+  ensure_othello_board_layout(sessions.othello.world)
+  _lift_player_above_othello_board_if_needed(sessions.othello)
+  _restore_player_overlap_exemptions(sessions.othello)
+  othello_game_state = state.othello_space.othello_game_state.normalized()
+
+runtime.normalize()
+sessions.set_active_space(runtime.current_space_id)
+apply_runtime_to_renderer(runtime, renderer)`,
+          },
+        ],
+      },
+      {
+        id: 'switching-play-spaces-pause-surface',
+        title: 'The Pause Overlay Dispatches the Visible Switch Request',
+        body: [
+          'The visible switch command is exposed through the pause overlay. `PauseOverlay` declares separate signals for My World and Othello, wires them to the two menu buttons, and disables the button representing the current normalized space. That disabled state is a presentation guard: the overlay does not offer the active destination as a distinct operation.',
+          'The viewport controller binds those signals to `switch_play_space` with `resume=True`. The command is therefore a pause-menu dispatch path. It exits the overlay when a same-space request is resumed or when a real switch is accepted. The pause origin matters because the controller resets held mouse actions, cancels route editing, and clears transition feedback before the active session reference changes.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The pause overlay exposes one signal per destination and disables the active destination button.',
+            code: `play_my_world_requested = pyqtSignal()
+play_othello_requested = pyqtSignal()
+
+self._btn_my_world = QPushButton("Play My World", panel)
+self._btn_my_world.clicked.connect(self.play_my_world_requested.emit)
+
+self._btn_othello = QPushButton("Play Othello (Reversi)", panel)
+self._btn_othello.clicked.connect(self.play_othello_requested.emit)
+
+
+def set_current_space(self, space_id: str) -> None:
+  normalized = normalize_play_space_id(space_id)
+  self._btn_my_world.setEnabled(not is_my_world_space(normalized))
+  self._btn_othello.setEnabled(not is_othello_space(normalized))`,
+          },
+          {
+            language: 'py',
+            caption: 'Pause-overlay signals are bound to the controller switch with resume enabled.',
             code: `viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
 viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))`,
           },
         ],
       },
       {
-        id: 'switching-play-spaces-same-space-guard',
-        title: 'Requesting the Active Space Only Resumes',
+        id: 'switching-play-spaces-controller-sequence',
+        title: 'The Controller Switch Is an Ordered Mutation, Not a Visual Shortcut',
         body: [
-          'If the requested space equals the currently active space, `switch_play_space` does not tear anything down. It either resumes from the pause overlay (when `resume` is set) or returns. This guard keeps a redundant request from reloading a world that is already live.',
-          'The comparison is made on normalized ids, so a stray or differently cased value resolves to the same canonical space before the equality check, and the same-space path is taken rather than a spurious reload.',
+          'The controller sequence is the operative switch. It first normalizes the requested space and short-circuits if the normalized value already equals `viewport._state.current_space_id`. A same-space request with `resume=True` resumes from the overlay and returns. It does not reload the world, rebind the renderer, rewrite saved state, or reinitialize the Othello controller.',
+          'A real space change follows a fixed mutation order: compute the loading label; reset held mouse actions; cancel route editing; clear block-break particles; clear Othello transition state; write the normalized runtime id; normalize runtime preferences; replace `viewport._session` with `viewport._sessions.set_active_space(normalized)`; run learning-runtime flush and configuration against the post-swap active session reference; begin loading; update the pause-overlay current-space state; reset upload tracking against the new session world; invalidate the selection target; clear renderer selection; resynchronize hotbar, first-person target, Othello HUD, and gameplay-HUD visibility; optionally resume; request an Othello AI move if the destination state requires it; then schedule a widget update.',
+          'The order corrects a common but false inference. The learning runtime is not flushed against the session being left by this code. The `_session` reference is replaced before `_learning_runtime.flush(viewport._session)` is called. The flush and configuration therefore address the new active session reference selected by `set_active_space`, not an invented departing-session hook.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'A request for the already-active space short-circuits to resume.',
-            code: `def switch_play_space(viewport, space_id, *, resume=False):
+            caption: '`switch_play_space` is the ordered mutation path for an accepted destination change.',
+            code: `def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
   normalized = normalize_play_space_id(space_id)
   if normalized == normalize_play_space_id(viewport._state.current_space_id):
     if resume:
       resume_from_overlay(viewport)
-    return`,
-          },
-        ],
-      },
-      {
-        id: 'switching-play-spaces-loading-label',
-        title: 'A Loading Overlay Names the Target Space',
-        body: [
-          'When the space actually changes, the viewport begins a loading phase with a label that names the destination: "Loading My World..." or "Loading Play Othello...". This is the same preparing-overlay machinery used at startup, reused for the transition so the visible feedback is consistent.',
-          'During this phase the active session reference is replaced, the world upload tracker is reset against the new world, the previous selection target is invalidated, and the renderer selection is cleared. The label is the player-visible signal that the switch is in progress rather than stalled.',
-        ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The loading label is chosen from the normalized destination space.',
-            code: `target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
-viewport._state.current_space_id = normalized
-viewport._session = viewport._sessions.set_active_space(normalized)
-viewport._begin_loading(target_label)
-viewport._upload.reset(viewport._renderer, world=viewport._session.world)`,
-          },
-        ],
-      },
-      {
-        id: 'switching-play-spaces-learning-runtime',
-        title: 'The AI Learning Runtime Follows the Active Session',
-        body: [
-          'If an AI learning runtime is attached, switching flushes it against the session that is being left and reconfigures it for the session that is becoming active. This keeps generated learning data tied to the session that produced it instead of bleeding across spaces.',
-          'The flush happens before the new session is configured, so any pending learning state from the previous space is committed first. Only after that does the runtime begin observing the new active session.',
-        ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The learning runtime is flushed and reconfigured around the session swap.',
-            code: `_learning_runtime = getattr(viewport, "_learning_runtime", None)
-if _learning_runtime is not None:
-  _learning_runtime.flush(viewport._session)
-  _learning_runtime.configure_session(viewport._session)`,
-          },
-        ],
-      },
-      {
-        id: 'switching-play-spaces-hud-resync',
-        title: 'HUD and First-Person Targets Resync to the New Space',
-        body: [
-          'After the session changes, the controller resynchronizes the surfaces that depend on the active space: hotbar widgets, the first-person held-item target, the Othello HUD text, and gameplay HUD visibility. Othello hides the block-gameplay HUD that My World shows, so the HUD must follow the destination space rather than carrying over.',
-          'If the destination is Othello, an AI move request may be issued as part of the switch. These resyncs are why a switched-into space looks complete immediately instead of showing leftover widgets from the previous space.',
-        ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Surface resynchronization after the active session changes.',
-            code: `settings_controller.sync_hotbar_widgets(viewport)
-settings_controller.sync_first_person_target(viewport)
-othello_controller.sync_hud_text(viewport)
-viewport._sync_gameplay_hud_visibility()
-othello_controller.maybe_request_ai(viewport)`,
-          },
-        ],
-      },
-      {
-        id: 'switching-play-spaces-persistence',
-        title: 'The Selected Space Is Saved and Restored',
-        body: [
-          'The active space id is part of saved runtime state, so the space a session is left in is the space it returns to. On load, the value is normalized through the same `normalize_play_space_id` rule, which means a missing or invalid stored id resolves to My World instead of failing.',
-          'Persistence stores the selection, not the merged contents of both spaces. Reading a saved world or saved Othello board is a separate concern handled by the corresponding data pages; switching only records which space should be active when the session resumes.',
-        ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Known space ids and the My World default used during normalization.',
-            code: `def known_space_ids(self) -> tuple[str, ...]:
-  return PLAY_SPACE_IDS
+    return
 
-def active_session(self) -> SessionManager:
-  return self.session_for(self.active_space_id)`,
+  target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
+  viewport._reset_held_mouse_actions()
+  ai_controller.cancel_route_edit(viewport)
+  viewport._clear_block_break_particles()
+  othello_controller.clear_state_for_space_switch(viewport)
+  viewport._state.current_space_id = normalized
+  viewport._state.normalize()
+  viewport._session = viewport._sessions.set_active_space(normalized)
+  _learning_runtime = getattr(viewport, "_learning_runtime", None)
+  if _learning_runtime is not None:
+    _learning_runtime.flush(viewport._session)
+    _learning_runtime.configure_session(viewport._session)
+  viewport._begin_loading(target_label)
+  viewport._overlay.set_current_space(normalized)
+  viewport._upload.reset(viewport._renderer, world=viewport._session.world)
+  viewport._invalidate_selection_target()
+  viewport._renderer.clear_selection()
+  settings_controller.sync_hotbar_widgets(viewport)
+  settings_controller.sync_first_person_target(viewport)
+  othello_controller.sync_hud_text(viewport)
+  viewport._sync_gameplay_hud_visibility()
+
+  if resume:
+    resume_from_overlay(viewport)
+
+  othello_controller.maybe_request_ai(viewport)
+  viewport.update()`,
           },
         ],
       },
       {
-        id: 'switching-play-spaces-no-merge',
-        title: 'Switching Never Merges State',
+        id: 'switching-play-spaces-othello-volatile-state',
+        title: 'Othello Volatile Controller State Is Cleared at the Boundary',
         body: [
-          'A frequent misreading is that switching combines the two spaces. It does not. Othello board state is never written into My World, and My World blocks are never flattened into Othello. The two sessions are constructed independently and only the active reference is exchanged.',
-          'If a switch appears to lose or duplicate state, the evidence belongs to the specific session that owns that state, not to the switch itself. The switch changes context; the per-space world, player, and AI state are owned by `SessionManager`, and saved-state questions route to the data pages for that space.',
+          'Switching out of or into Othello requires more than changing a world reference. The Othello viewport controller carries transient analysis, AI request arming, hover-square state, render-state caches, title flashes, passive messages, opening-book learning progress, and animation settlement. `clear_state_for_space_switch` cancels or clears those volatile surfaces before the active session reference is exchanged.',
+          'That cleanup is not deletion of the persisted Othello game. It is a controller reset at the boundary where Othello-specific transient state would otherwise leak into a different visible space or survive as stale HUD evidence. The persisted Othello board state remains governed by `PersistedOthelloSpace` and by the save/load path; the controller cache cleanup only removes transient viewport state.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Othello controller state is cleared before the active session is exchanged.',
+            code: `def clear_state_for_space_switch(viewport: "RendererViewportWidget") -> None:
+  viewport._othello_ai.cancel_book_learning(emit_ready=False)
+  viewport._othello_match.settle_animations()
+  viewport._pending_othello_ai_result = None
+  viewport._othello_ai_request_armed = False
+  viewport._othello_hover_square = None
+  viewport._othello_hud_signature = None
+  viewport._othello_render_state_cache_key = None
+  viewport._othello_render_state_cache = None
+  viewport._othello_analysis = OthelloAnalysis().normalized()
+  viewport._othello_analysis_request_signature = None
+  viewport._othello_book_learning_running = False
+  viewport._othello_book_learning_status_text = ""
+  viewport._othello_book_learning_progress = None
+  clear_title_flash(viewport)
+  viewport._last_othello_message = ""`,
+          },
+        ],
+      },
+      {
+        id: 'switching-play-spaces-loading-renderer-hud',
+        title: 'Loading, Upload, Selection, and HUD State Follow the New Active Session',
+        body: [
+          'The visible transition is not merely the label `Loading My World...` or `Loading Play Othello...`. `_begin_loading` activates frame-sync loading state, resets held mouse actions, clears block-break particles, publishes loading status text, resynchronizes gameplay-HUD visibility, pauses cloud motion through settings synchronization, emits the loading-state signal when the transition becomes active, and requests repaint. The host `GameScreen` displays the status overlay while `loading_active()` is true and hides it when loading finishes.',
+          'After `_session` is replaced, the upload tracker is reset with `world=viewport._session.world`, the previous selection target is invalidated, and renderer selection is cleared. These operations prevent a target, chunk-upload schedule, or selected outline from surviving under the wrong session token or wrong world revision. HUD state is then recomputed from the destination space: Othello can suppress ordinary block-gameplay HUD surfaces, while My World can expose them again.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Beginning a transition publishes loading state and resynchronizes pause-sensitive surfaces.',
+            code: `def _begin_loading(self: "RendererViewportWidget", text: str) -> None:
+  became_active = self._frame_sync.loading.begin()
+  self._reset_held_mouse_actions()
+  self._clear_block_break_particles()
+  self._set_loading_status(text)
+  self._sync_gameplay_hud_visibility()
+  settings_controller.sync_cloud_motion_pause(self)
+  if bool(became_active):
+    self.loading_state_changed.emit(True)
+  self.update()`,
+          },
+          {
+            language: 'py',
+            caption: 'Selection cadence is keyed by current space id and world revision.',
+            code: `def _selection_due(self: "RendererViewportWidget", *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> bool:
+  current_space_id = str(self._state.current_space_id)
+  current_world_revision = int(self._session.world.revision)
+  if self._frame_sync.selection.world_revision_changed(world_revision=int(current_world_revision)):
+    self._arm_world_change_sync()
+  return self._frame_sync.selection.due(
+    eye=eye,
+    yaw_deg=float(yaw_deg),
+    pitch_deg=float(pitch_deg),
+    current_space_id=str(current_space_id),
+    current_world_revision=int(current_world_revision),
+    target_present=(self._selection_state.target() is not None),
+    is_othello_space=bool(self._state.is_othello_space()),
+  )`,
+          },
+        ],
+      },
+      {
+        id: 'switching-play-spaces-persistence-boundary',
+        title: 'Persistence Stores the Selector and the Separate Space Payloads',
+        body: [
+          'Saving records the normalized active selector and the two separate space payloads. `save_state` writes `current_space_id=normalize_play_space_id(state_runtime.current_space_id)`, serializes `sessions.my_world` into `PersistedPlaySpace`, and serializes `sessions.othello` into `PersistedOthelloSpace`. The selector answers which session should be active at the next admission point; it does not collapse the stored payloads into one shared world.',
+          'The switch sequence ends at the runtime boundary between visible space selection and persisted state. It identifies which session is active, which pause-overlay command invoked the change, which upload and selection state was invalidated, and which HUD or Othello transient state was resynchronized. It does not read the persisted envelopes as evidence of their stored content, does not decide whether a saved-preference, saved-world, or saved-Othello payload is correct, and does not convert a switching observation into proof of data loss, data duplication, support admissibility, or license authority.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Save state writes the normalized selector and separate My World/Othello payloads.',
+            code: `state = AppState(
+  current_space_id=normalize_play_space_id(state_runtime.current_space_id),
+  settings=settings,
+  inventory=inventory,
+  othello_settings=state_runtime.othello_settings.normalized(),
+  my_world=PersistedPlaySpace(
+    player=_persisted_player_from_session(sessions.my_world, allow_flying=bool(state_runtime.creative_mode)),
+    world=_persisted_world_from_session(sessions.my_world),
+    ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.my_world.ai_states()),
+  ),
+  othello_space=PersistedOthelloSpace(
+    player=_persisted_player_from_session(sessions.othello, allow_flying=False),
+    world=_persisted_world_from_session(sessions.othello),
+    othello_game_state=persisted_othello_state,
+    ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.othello.ai_states()),
+  ),
+)`,
+          },
         ],
       },
     ],
-    relatedTitles: ['Starting Ludoxel', 'Reading Saved World State', 'Reading Saved Othello State'],
+    relatedTitles: ['Starting Ludoxel', 'Using the Hotbar', 'Reading Saved Preferences', 'Reading Saved World State', 'Reading Saved Othello State'],
   }),
   defineDocsArticle({
     category: 'Manual',
