@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.5',
+    tags: ['Desktop Application', 'Rendering', 'First-Person Rendering', 'Third-Person Rendering', 'Player Animation'],
+    sections: [
+      {
+        title: 'Dynamic Face Upload',
+        items: [
+          'Stopped the shared textured face pass from reusing a previous frame’s GPU instance buffer when falling blocks, first-person held blocks, arms, special items, block-break particles, player skins, or player-held blocks rebuild their per-face transform rows with the same row count, by removing the object-identity and row-count upload-skip condition so every non-empty face uploads the current transform and UV rows before drawing.',
+          'Applied the same per-frame upload to the player-model shadow pass so the ground shadow uploads the current instance rows rather than caching them by object identity.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.5 Beta 2 Hotfix',
     tags: ['Desktop Application', 'Audio', 'Windows'],
     sections: [

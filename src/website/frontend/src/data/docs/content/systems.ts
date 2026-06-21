@@ -855,6 +855,32 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         ],
       },
       {
+        id: 'opengl-rendering-dynamic-instance-upload',
+        title: 'Per-Frame Instance Uploads for Moving Faces',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The falling-block, block-break-particle, player-model, and first-person arm, held-block, and special-item passes all draw through `TexturedFacePass` in `src/ludoxel/presentation/rendering/backends/opengl/passes/textured_face.py`. Each frame the row builders emit six per-face arrays of transform-instanced rows; every row is a row-major model matrix flattened to sixteen floats followed by a four-component atlas UV rect, and the matrix carries the position, orientation, and scale of that instance. These objects change pose every frame, so the builders allocate fresh `numpy` arrays on each call and the array handed to the pass is not a stable identity across frames.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`TexturedFacePass.draw` uploads the current rows for every non-empty face into that face’s stream-draw instance buffer immediately before the instanced draw, and omits a face from drawing only when its row count is zero. The pass retains no record of a previously uploaded array, so the instance buffer a moving object draws from always holds the transform and UV rect built for the frame in flight. `PlayerModelPass.draw_shadow` applies the same rule to the player shadow: it uploads the current `shadow_rows` into the cube transform-instanced buffer before the instanced shadow draw rather than reusing the prior frame’s contents.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/opengl/passes/textured_face.py',
+            code: `for face_idx, rows in enumerate(face_rows):
+  if rows.size <= 0 or int(rows.shape[0]) <= 0:
+    continue
+  mesh = self._meshes[int(face_idx)]
+  mesh.upload_instances(rows)
+  glBindVertexArray(int(mesh.vao))
+  glDrawArraysInstanced(GL_TRIANGLES, 0, int(mesh.vertex_count), int(rows.shape[0]))`,
+          },
+        ],
+      },
+      {
         id: 'opengl-rendering-runtime-and-preview',
         title: 'Runtime State and Offscreen Preview',
         content: [
@@ -912,7 +938,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
         content: [
           {
             kind: 'paragraph',
-            text: 'The WGPU backend does not use the compute payload builder. Its `submit_chunk` discards the GPU face sources and shadow faces and uploads CPU-built face rows through `upload_chunk_mesh` into a `WgpuChunkMesh`. Transient geometry such as falling blocks, particles, player skins, held blocks, and Othello pieces is built into per-face instance rows each frame by the row builders and uploaded into temporary vertex buffers, drawn with per-face camera bind groups. `set_selection_target` builds the outline vertices inline and `_refresh_selection_buffer` uploads them. This per-face CPU instancing is the structural difference from the OpenGL backend, which builds chunk payloads on the GPU.',
+            text: 'The WGPU backend does not use the compute payload builder. Its `submit_chunk` discards the GPU face sources and shadow faces and uploads CPU-built face rows through `upload_chunk_mesh` into a `WgpuChunkMesh`. Transient geometry such as falling blocks, particles, player skins, held blocks, and Othello pieces is built into per-face instance rows each frame by the row builders and uploaded into temporary vertex buffers, drawn with per-face camera bind groups, and destroyed after the frame’s commands are submitted, so a moving object never carries a prior frame’s instance buffer into the next. `set_selection_target` builds the outline vertices inline and `_refresh_selection_buffer` uploads them. This per-face CPU instancing is the structural difference from the OpenGL backend, which builds chunk payloads on the GPU.',
           },
           {
             kind: 'paragraph',
@@ -2074,7 +2100,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.5b2.post1"`,
+            code: `__version__ = "3.6.5"`,
           },
           {
             kind: 'note',

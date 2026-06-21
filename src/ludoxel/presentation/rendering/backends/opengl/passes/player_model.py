@@ -38,7 +38,6 @@ class PlayerModelPass:
   _ai_skin_textures: dict[str, ImageTexture] = field(default_factory=dict)
   _uv_lookup: Callable[[str, int], UVRect] | None = None
   _special_item_textures: dict[str, ImageTexture] = field(default_factory=dict)
-  _shadow_upload_key: tuple[object, ...] | None = None
 
   def initialize(self, *, face_prog: ShaderProgram, shadow_prog: ShaderProgram, atlas: TextureAtlas, skin_texture: ImageTexture, uv_lookup: Callable[[str, int], UVRect]) -> None:
     self._face_pass = TexturedFacePass()
@@ -49,7 +48,6 @@ class PlayerModelPass:
     self._skin_texture = skin_texture
     self._uv_lookup = uv_lookup
     self._special_item_textures = {str(icon_key): ImageTexture.from_image(build_special_item_icon_image(str(icon_key), size=192)) for icon_key in special_item_icon_keys()}
-    self._shadow_upload_key = None
 
   def destroy(self) -> None:
     if self._face_pass is not None:
@@ -62,7 +60,6 @@ class PlayerModelPass:
     self._atlas = None
     self._skin_texture = None
     self._uv_lookup = None
-    self._shadow_upload_key = None
     for texture in self._special_item_textures.values():
       texture.destroy()
     self._special_item_textures.clear()
@@ -160,10 +157,7 @@ class PlayerModelPass:
     if rows.size <= 0 or int(rows.shape[0]) <= 0:
       return (0, 0)
 
-    shadow_upload_key = (id(rows), int(rows.shape[0]))
-    if self._shadow_upload_key != shadow_upload_key:
-      self._shadow_mesh.upload_instances(rows)
-      self._shadow_upload_key = shadow_upload_key
+    self._shadow_mesh.upload_instances(rows)
 
     with GLStateGuard(capture_framebuffer=False, capture_viewport=False, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE), capture_cull_mode=False, capture_polygon_mode=False):
       glDisable(GL_BLEND)
