@@ -18,7 +18,7 @@ export const dataPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. The signature still accepts `project_root`, but the function body does not read that argument. Repository location is therefore not a dormant fallback, not a packaging shortcut, and not a hidden persistence anchor; the resolver is governed by `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories alone.',
+            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. Its signature accepts `project_root` and resolves it in an otherwise unused guarded branch, but never uses that argument to select a result. Repository location is therefore not a dormant fallback, not a packaging shortcut, and not a hidden persistence anchor; the resolver is governed by `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories alone.',
           },
           {
             kind: 'paragraph',
@@ -75,6 +75,31 @@ def runtime_cache_root(data_root: Path) -> Path:
           {
             kind: 'paragraph',
             text: 'That split is the first deletion boundary. Removing `state/world_state.json` discards primary play-space state. Removing `state/othello_opening_book.json` discards user opening-book lines. Removing `cache/othello_opening_book_cache.json` forces recompilation from remaining source lines. The implementation does not treat all JSON files beneath the data root as equivalent simply because they share a root path.',
+          },
+        ],
+      },
+      {
+        id: 'locating-user-data-integrity-leaves',
+        title: 'Integrity Leaves Remain Under State',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The integrity locations are not a third root. `src/ludoxel/foundations/locations/roots.py` derives both `state_manifest.json` and `integrity_key.bin` below `runtime_state_root(data_root)`, while the cache remains a sibling below the same data root. `src/ludoxel/application/persistence/integrity/manifest.py` consumes those two state paths to read, write, and verify integrity material; `src/ludoxel/application/persistence/stores/othello_book.py` independently places its compiled opening-book cache below `runtime_cache_root`. The location helper determines the path composition only. It owns neither manifest bytes nor cache content, schema, cryptographic meaning, or deletion policy.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/locations/roots.py',
+            code: `def runtime_state_manifest_path(data_root: Path) -> Path:
+  return runtime_state_root(data_root) / "state_manifest.json"
+
+
+def runtime_integrity_key_path(data_root: Path) -> Path:
+  return runtime_state_root(data_root) / "integrity_key.bin"`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This distinction prevents a misleading cleanup inference. A resolved path can establish that a file belongs beneath the runtime state or cache tree. It cannot establish that the file is expendable, that its contents are valid, or that a path name authorizes copying it elsewhere.',
           },
         ],
       },

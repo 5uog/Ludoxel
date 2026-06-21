@@ -354,7 +354,7 @@ function requireBundledResource(appPath, label, relativePaths) {
         content: [
           {
             kind: 'paragraph',
-            text: 'Native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature.',
+            text: 'Native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `tools/build_native_extensions/src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature.',
           },
           {
             kind: 'code',

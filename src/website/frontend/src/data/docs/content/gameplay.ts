@@ -42,6 +42,71 @@ class InteractionService:
         body: [
           'Every build action starts from a pick. The service casts from the player eye position along the view forward direction, with a default reach of five blocks, and returns the hit cell, the hit face, the adjacent placement cell, and the hit point.',
           'The hit cell is what breaking removes; the adjacent cell is the default placement target. Because the pick uses shape-aware bounding boxes, the face and placement cell reflect slabs, stairs, fences, and other non-cube shapes rather than assuming a full cube.',
+          '`src/ludoxel/foundations/mathematics/geometry/ray.py` owns an immutable origin-direction pair only. It does not normalize the direction and does not define a target. `pick_block` in `src/ludoxel/simulation/rules/picking/block.py` first normalizes the supplied direction, refuses a vector whose resulting length is at most `1e-12`, clamps reach to a non-negative value, and moves the origin by `1e-4` along that normalized direction before constructing the `Ray`. The parametric point relation is evaluated by `ray_aabb_face`, not by the Ray dataclass itself. That separation prevents the representation from silently becoming an interaction rule.',
+          '`src/ludoxel/foundations/mathematics/geometry/ray_aabb.py` tests one shape box as three slab intervals. For each axis it treats `abs(d_i) < 1e-12` as parallel. A parallel origin outside `[mn_i, mx_i]` rejects the box immediately; a parallel origin inside does not narrow the accumulated interval. Otherwise the source computes and orders the two boundary parameters, raises `tmin` only when a new later entry is found, lowers `tmax` only when an earlier exit is found, and rejects when the intervals cease to overlap. After all axes, `tmax < 0` rejects a box entirely behind the ray origin. A non-negative `tmin` returns the entering face; an origin already inside returns `tmax` and the exiting face. The returned point is the actual `o + d * t_enter` evaluation.',
+          '`src/ludoxel/foundations/mathematics/voxels/dda.py` does not test shape geometry. It enumerates candidate unit-grid cells. It floors the origin divided by `cell_size`, assigns each step sign from the direction component, initializes each next-boundary time with `int_bound`, and advances only one axis per iteration. The x branch requires strict precedence over both other times; otherwise y wins only when it is strictly earlier than z, and z resolves the remaining ties. The generator emits the current `DDAHit` before that recurrence and stops when its accumulated parameter exceeds `t_max`. The picker supplies reach, fetches block-model AABBs, and chooses the nearest accepted shape hit; DDA alone never produces a gameplay outcome.',
+          '`src/ludoxel/foundations/mathematics/voxels/faces.py` provides the signed-axis neighbour relation used after the shape hit. Its six face identifiers map to offsets `(+1,0,0)`, `(-1,0,0)`, `(0,+1,0)`, `(0,-1,0)`, `(0,0,+1)`, and `(0,0,-1)`. The source exposes no separate normal-vector or opposite-face function, so this article does not invent either as a public API. `pick_block` adds the returned offset to the hit cell to derive a placement candidate, then clears that candidate if it is occupied. Item selection, placement approval, and world mutation remain simulation responsibilities.',
+        ],
+        mathBlocks: [
+          {
+            expression: '\\mathbf{p}(t) = \\mathbf{o} + t\\mathbf{d}, \\qquad \\mathbf{o},\\mathbf{d} \\in \\mathbb{R}^{3}',
+            displayMode: true,
+            caption:
+              '`Ray` in `src/ludoxel/foundations/mathematics/geometry/ray.py` supplies o and d; `ray_aabb_face` in `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py` evaluates the returned hit point.',
+          },
+          {
+            expression: '|d_i| < 10^{-12} \\Rightarrow (o_i < mn_i \\lor o_i > mx_i) \\text{ rejects}; \\qquad t_{i1}=\\frac{mn_i-o_i}{d_i},\\quad t_{i2}=\\frac{mx_i-o_i}{d_i}',
+            displayMode: true,
+            caption: 'The parallel-axis branch and raw slab parameters in `ray_aabb_face`; the source orders t_i1 and t_i2 before updating the accumulated interval.',
+          },
+          {
+            expression:
+              't_{\\min}\\leftarrow\\max(t_{\\min},\\min(t_{i1},t_{i2})),\\qquad t_{\\max}\\leftarrow\\min(t_{\\max},\\max(t_{i1},t_{i2})),\\qquad t_{\\min}>t_{\\max}\\Rightarrow\\varnothing',
+            displayMode: true,
+            caption: 'Equivalent to the conditional interval updates in `ray_aabb_face`, initialized by the source to -10^30 and 10^30.',
+          },
+          {
+            expression:
+              't_{\\mathrm{hit}}=\\begin{cases}t_{\\min}&t_{\\min}\\ge0\\\\t_{\\max}&t_{\\min}<0\\le t_{\\max}\\end{cases},\\qquad F_{\\mathrm{hit}}=\\begin{cases}F_{\\mathrm{enter}}&t_{\\min}\\ge0\\\\F_{\\mathrm{exit}}&t_{\\min}<0\\le t_{\\max}\\end{cases},\\qquad \\mathbf{p}=\\mathbf{o}+t_{\\mathrm{hit}}\\mathbf{d}',
+            displayMode: true,
+            caption:
+              '`ray_aabb_face` in `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py`: `tmax < 0` rejects behind-origin boxes, while an inside origin exits through the face recorded by `_exit_face_for_axis`.',
+          },
+          {
+            expression:
+              'c_i^{(0)}=\\left\\lfloor\\frac{o_i}{s}\\right\\rfloor,\\quad \\sigma_i=\\begin{cases}1&d_i>0\\\\-1&d_i\\le0\\end{cases},\\quad \\Delta t_i=\\begin{cases}s/|d_i|&|d_i|>10^{-12}\\\\10^{30}&|d_i|\\le10^{-12}\\end{cases}',
+            displayMode: true,
+            caption: '`dda_grid_traverse` in `src/ludoxel/foundations/mathematics/voxels/dda.py`, with cell size s and its exact zero-component sentinel.',
+          },
+          {
+            expression:
+              'u_i=\\frac{o_i}{s}-\\left\\lfloor\\frac{o_i}{s}\\right\\rfloor,\\qquad t_{\\max i}^{(0)}=\\begin{cases}(1-u_i)/d_i&d_i>10^{-12}\\\\u_i/(-d_i)&d_i<-10^{-12}\\\\10^{30}&|d_i|\\le10^{-12}\\end{cases}',
+            displayMode: true,
+            caption: '`int_bound` and the three `tm?` initializers in `dda_grid_traverse`. The source computes the fractional coordinate before choosing the positive or non-positive branch.',
+          },
+          {
+            expression:
+              'j=\\begin{cases}x&t_{\\max x}<t_{\\max y}\\ \\land\\ t_{\\max x}<t_{\\max z}\\\\y&t_{\\max y}<t_{\\max z}\\\\z&\\text{otherwise}\\end{cases},\\qquad c_j\\leftarrow c_j+\\sigma_j,\\quad t\\leftarrow t_{\\max j},\\quad t_{\\max j}\\leftarrow t_{\\max j}+\\Delta t_j,\\quad t\\le t_{\\max}',
+            displayMode: true,
+            caption: 'The exact branch order, recurrence, and `while t <= t_max` bound in `dda_grid_traverse`. The final z branch resolves ties.',
+          },
+          {
+            expression:
+              'F_x=\\begin{cases}1&\\sigma_x>0\\\\0&\\sigma_x\\le0\\end{cases},\\quad F_y=\\begin{cases}3&\\sigma_y>0\\\\2&\\sigma_y\\le0\\end{cases},\\quad F_z=\\begin{cases}5&\\sigma_z>0\\\\4&\\sigma_z\\le0\\end{cases}',
+            displayMode: true,
+            caption: 'The `enter_face` emitted after each crossed axis in `dda_grid_traverse`; the integer remains a face identifier for the picker, not a block-action decision.',
+          },
+          {
+            expression: '\\delta(0)=(1,0,0),\\ \\delta(1)=(-1,0,0),\\ \\delta(2)=(0,1,0),\\ \\delta(3)=(0,-1,0),\\ \\delta(4)=(0,0,1),\\ \\delta(5)=(0,0,-1)',
+            displayMode: true,
+            caption: '`face_neighbor_offset` in `src/ludoxel/foundations/mathematics/voxels/faces.py`; these are neighbour offsets, not an invented face-normal API.',
+          },
+          {
+            expression: '\\delta(0)=-\\delta(1),\\qquad \\delta(2)=-\\delta(3),\\qquad \\delta(4)=-\\delta(5)',
+            displayMode: true,
+            caption:
+              'The opposite signed-axis pairing follows directly from the six offsets in `src/ludoxel/foundations/mathematics/voxels/faces.py`. The module exposes that mapping, not a separate `opposite_face` function.',
+          },
         ],
         codeBlocks: [
           {
@@ -51,6 +116,83 @@ class InteractionService:
   eye = self.player.eye_pos() if origin is None else origin
   direction = self.player.view_forward() if direction is None else direction
   return pick_block(self.world, origin=eye, direction=direction, reach=float(reach), block_registry=self.block_registry)`,
+          },
+          {
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/geometry/ray_aabb.py',
+            code: `for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
+  if abs(d_comp) < 1e-12:
+    if o_comp < mn or o_comp > mx:
+      return None
+    continue
+
+  inv = 1.0 / d_comp
+  t1 = (mn - o_comp) * inv
+  t2 = (mx - o_comp) * inv
+
+  if t1 > t2:
+    t1, t2 = t2, t1
+
+  if t1 > tmin:
+    tmin = t1
+    enter_face = _enter_face_for_axis(int(axis), float(inv))
+
+  if t2 < tmax:
+    tmax = t2
+    exit_face = _exit_face_for_axis(int(axis), float(inv))
+
+  if tmin > tmax:
+    return None
+
+if tmax < 0.0:
+  return None
+
+if tmin >= 0.0:
+  t_enter = float(tmin)
+  face = int(enter_face)
+else:
+  t_enter = float(tmax)
+  face = int(exit_face)`,
+          },
+          {
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/voxels/dda.py',
+            code: `while t <= t_max:
+  yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))
+
+  if tmx < tmy and tmx < tmz:
+    x += step_x
+    t = tmx
+    tmx += tdx
+    enter_face = 1 if step_x > 0 else 0
+  elif tmy < tmz:
+    y += step_y
+    t = tmy
+    tmy += tdy
+    enter_face = 3 if step_y > 0 else 2
+  else:
+    z += step_z
+    t = tmz
+    tmz += tdz
+    enter_face = 5 if step_z > 0 else 4`,
+          },
+          {
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/voxels/faces.py',
+            code: `def face_neighbor_offset(face_idx: int) -> tuple[int, int, int]:
+  fi = int(face_idx)
+
+  if fi == FACE_POS_X:
+    return (1, 0, 0)
+  if fi == FACE_NEG_X:
+    return (-1, 0, 0)
+  if fi == FACE_POS_Y:
+    return (0, 1, 0)
+  if fi == FACE_NEG_Y:
+    return (0, -1, 0)
+  if fi == FACE_POS_Z:
+    return (0, 0, 1)
+  return (0, 0, -1)`,
           },
         ],
       },
@@ -130,8 +272,29 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         body: [
           'Placement requires a non-empty, registered item. If the hit block can merge a slab with the held item, the merge is applied at the hit cell. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing.',
           'A placement that would intersect the player is rejected before any edit. This is why standing too close to the target can stop a placement that would otherwise be legal.',
+          '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method refuses contact when a maximum equals the other minimum on any axis, so the tested overlap is non-empty in every coordinate dimension rather than mere boundary contact. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then treats an accepted predicate as a placement rejection. The AABB type does not define a block shape, decide whether an item is registered, or commit the edit.',
+        ],
+        mathBlocks: [
+          {
+            expression: 'A\\cap B\\ne\\varnothing\\ \\Longleftrightarrow\\ \\bigwedge_{i\\in\\{x,y,z\\}}\\left(A_{\\max,i}>B_{\\min,i}\\ \\land\\ A_{\\min,i}<B_{\\max,i}\\right)',
+            displayMode: true,
+            caption: '`AABB.intersects` in `src/ludoxel/foundations/mathematics/geometry/aabb.py`; its six negated separation tests use `<=` and `>=`, making equality a non-intersection.',
+          },
         ],
         codeBlocks: [
+          {
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/geometry/aabb.py',
+            code: `def intersects(self, o: "AABB") -> bool:
+  return not (
+    self.mx.x <= o.mn.x
+    or self.mn.x >= o.mx.x
+    or self.mx.y <= o.mn.y
+    or self.mn.y >= o.mx.y
+    or self.mx.z <= o.mn.z
+    or self.mn.z >= o.mx.z
+  )`,
+          },
           {
             language: 'py',
             caption: 'A placement that intersects the player is rejected before committing.',

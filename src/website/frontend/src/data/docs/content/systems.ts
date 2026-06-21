@@ -120,6 +120,42 @@ if self._accum >= step:
         ],
       },
       {
+        id: 'fixed-step-sessions-velocity-smoothing',
+        title: 'Velocity Smoothing Remains a Lower-Level Computation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/scalars/smoothing.py` owns the exponential blend factor used by the movement system. `exp_alpha` clamps its rate and elapsed time to non-negative values, returns zero when either is at most `1e-9`, and otherwise returns the factor consumed by `src/ludoxel/simulation/rules/movement/system.py` to move each velocity component toward its target. The foundation function receives only a rate and a time delta; it does not decide whether the target is walking, sprinting, flying, grounded, or airborne, and it does not own a user setting.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'a=\\begin{cases}0&r\\le10^{-9}\\ \\text{or}\\ t\\le10^{-9}\\\\1-e^{-rt}&r>10^{-9}\\ \\text{and}\\ t>10^{-9}\\end{cases},\\qquad v_{next}=v+(v_{target}-v)a',
+              displayMode: true,
+              caption:
+                '`exp_alpha` in `src/ludoxel/foundations/mathematics/scalars/smoothing.py` clamps its inputs to non-negative values before this guard; `src/ludoxel/simulation/rules/movement/system.py` applies the component-wise update.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/scalars/smoothing.py',
+            code: `def exp_alpha(rate: float, dt: float) -> float:
+  r = float(max(0.0, rate))
+  t = float(max(0.0, dt))
+
+  if r <= 1e-9 or t <= 1e-9:
+    return 0.0
+
+  return 1.0 - math.exp(-r * t)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The rate belongs to the movement parameters and the state transition belongs to the simulation step. For the positive branch, the returned value is strictly between zero and one; the zero branch authorizes no velocity movement at all. The scalar computation therefore provides a bounded blend factor for a supplied rate and delta. It neither sets acceleration policy nor reports a completed player action.',
+          },
+        ],
+      },
+      {
         id: 'fixed-step-sessions-render-cadence',
         title: 'Render Cadence Is Not the Step Loop',
         content: [
@@ -1781,5 +1817,432 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
       },
     ],
     relatedTitles: ['Understanding Othello AI Turns', 'Changing Othello AI Strength', 'Changing Othello Book Behavior'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Runtime and Render State',
+    group: 'Runtime Identity and Diagnostics',
+    title: 'Understanding Runtime Identity and Diagnostic Evidence',
+    description:
+      'Defines the version source, root-resolution boundary, and operating-system diagnostic probes that the desktop runtime consumes, while keeping release authority, file contents, and renderer implementation outside those foundation contracts.',
+    sections: [
+      {
+        id: 'runtime-identity-and-diagnostics-version-source',
+        title: 'One Runtime Version Source Does Not Authorize a Release',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/identity/version.py` owns the runtime version identity as one assigned string. `pyproject.toml` obtains the package version from that attribute, while `src/ludoxel/presentation/interface/windows/main.py` consumes the same value for the Qt application version, display name, and window title. The root README currently displays the same version label, but README text and Website text are descriptions rather than alternate runtime authorities. The source value identifies the running application; it does not issue release approval, establish legal permission, or decide what may be packaged or published.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/identity/version.py',
+            code: `__version__ = "3.6.1"`,
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'A matching version string can identify one runtime and one metadata value. It is not evidence that a local build is an official release or that any distribution action is authorized.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'runtime-identity-and-diagnostics-root-resolution',
+        title: 'Root Resolution Supplies Locations, Not File Semantics',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/locations/roots.py` owns root discovery before the application bootstrap imports the presentation entry point. For an unfrozen process, the project resolver walks upward from the supplied start path and then the working directory, accepting a directory with `pyproject.toml` or both `assets` and `src`. The resource resolver uses the same search. For a frozen process, project resolution returns the executable parent; resource resolution prefers `sys._MEIPASS`, then an `_internal` directory beside the executable, then that executable parent. `src/ludoxel/application/bootstrap/run.py` consumes the resulting project, resource, and runtime-data paths, but the foundation resolver neither reads resource contents nor defines a persistence schema.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`is_frozen_application` is exactly `bool(getattr(sys, "frozen", False))`. A failed executable-path resolution yields no frozen root, after which each default resolver resumes its ordinary module-root, working-root, then start-directory fallback. `default_runtime_data_root` follows a different chain: `LUDOXEL_DATA_ROOT`, Windows `LOCALAPPDATA` or `AppData`, macOS Application Support, `XDG_DATA_HOME`, and finally `~/.local/share/ludoxel`. Its `project_root` parameter is resolved only in an otherwise unused guarded branch; it does not make the project directory a data-root fallback. The same file derives `state`, `cache`, `state_manifest.json`, and `integrity_key.bin` below the data root and exposes `previous_configs_root(project_root)` as `<project_root>/configs`. These functions fix location composition and fallback order, not file contents, migration, integrity validation, or retention rules.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/locations/roots.py',
+            code: `def is_project_root(path: Path) -> bool:
+  root = Path(path).resolve()
+  if (root / "pyproject.toml").is_file():
+    return True
+  return (root / "assets").is_dir() and (root / "src").is_dir()
+
+
+def search_project_root(start: Path) -> Path | None:
+  cursor = _start_directory(start)
+
+  while True:
+    if is_project_root(cursor):
+      return cursor
+
+    parent = cursor.parent
+    if parent == cursor:
+      return None
+    cursor = parent`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Runtime data, cache, and integrity leaves are derived by the same source file, but their data ownership is defined by the persistence articles and stores that consume those paths. A path resolver can establish where a runtime looks. It cannot establish whether a file is valid, what its bytes mean, or whether it may be copied.',
+          },
+        ],
+      },
+      {
+        id: 'runtime-identity-and-diagnostics-probe-limit',
+        title: 'Diagnostic Sampling Is Evidence with Explicit Gaps',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/diagnostics/system.py` gathers CPU thread count, a platform-specific CPU name and nominal speed when obtainable, total memory, current-process RSS, and optional NVIDIA utilization. `read_system_info` returns only `cpu_threads`, `cpu_name`, `cpu_speed_ghz`, and `total_mem_bytes`; `read_process_memory` returns only `rss_bytes` and `total_bytes`. There is no operating-system version field, Python-version field, renderer field, scene metric, or backend result in these dataclasses. Linux reads procfs before a `ps` fallback, macOS uses `sysctl` and `ps`, and Windows uses registry, Win32, PSAPI, and `tasklist` fallbacks. `HudController` consumes those values on a background loop and renders unavailable values as `n/a`. The module does not import a renderer backend or query its API; renderer name, vendor, API, and shader information are separately requested from `BackendRendererApi.gl_info()` by the HUD.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/diagnostics/system.py',
+            code: `def sample(self) -> float | None:
+  now = time.perf_counter()
+  if (now - float(self._last_t)) < float(self.min_interval_s):
+    return self._last
+  self._last_t = now
+  self._last = _nvidia_smi_util_percent()
+  return self._last`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`GpuUtilizationSampler` caches one NVIDIA query result until its `min_interval_s` boundary expires; `_nvidia_smi_util_percent` returns `None` on a failed command and clips a parsed utilization below zero to zero and above 100 to 100. A sampled CPU, memory, or GPU value is bounded runtime evidence at that probe boundary. It is not a feature guarantee, an assertion of backend correctness, or a statement that the application can render a particular scene on that machine.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Starting Ludoxel', 'Locating User Data', 'Understanding Render Snapshots'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'World Visuals',
+    title: 'Understanding View, Transform, and Chunk Visibility Contracts',
+    description:
+      'Documents the lower-level vector, angle, matrix, transform, chunk-key, and clip-volume contracts consumed by camera, renderer, and world-upload code without assigning backend draw work or simulation rules to those contracts.',
+    sections: [
+      {
+        id: 'view-transform-and-chunk-visibility-vectors-and-angles',
+        title: 'Vectors and View Angles Fix the Camera Input Shape',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/linear/vec3.py` owns the immutable three-component value and its component-wise addition, subtraction, scalar multiplication, dot product, cross product, Euclidean length, and normalization. Its zero-length guard returns `(0.0, 0.0, 0.0)` when the length is at most `1e-12`; it does not implement movement, collision, or a camera controller. `src/ludoxel/foundations/mathematics/linear/view_angles.py` builds a normalized forward vector from yaw and pitch, reconstructs yaw and pitch from a normalized forward vector, and separately derives a normalized sun direction from azimuth and elevation. Player view, third-person camera placement, selection input, and both renderer paths consume those vectors, while input event handling and backend draw submission remain elsewhere.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\mathbf{a}\\pm\\mathbf{b}=(a_x\\pm b_x,a_y\\pm b_y,a_z\\pm b_z),\\qquad k\\mathbf{a}=(ka_x,ka_y,ka_z)',
+              displayMode: true,
+              caption: '`Vec3.__add__`, `Vec3.__sub__`, and `Vec3.__mul__` in `src/ludoxel/foundations/mathematics/linear/vec3.py`; scalar multiplication is also exposed by `__rmul__`.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\mathbf{a}\\cdot\\mathbf{b}=a_xb_x+a_yb_y+a_zb_z,\\qquad \\mathbf{a}\\times\\mathbf{b}=(a_yb_z-a_zb_y,\\ a_zb_x-a_xb_z,\\ a_xb_y-a_yb_x)',
+              displayMode: true,
+              caption: '`Vec3.dot` and `Vec3.cross` in `src/ludoxel/foundations/mathematics/linear/vec3.py`; the component arithmetic remains a value contract consumed by geometry and transforms.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '\\|\\mathbf{v}\\|=\\sqrt{x^2+y^2+z^2},\\qquad \\operatorname{normalized}(\\mathbf{v})=\\begin{cases}\\mathbf{v}/\\|\\mathbf{v}\\|&\\|\\mathbf{v}\\|>10^{-12}\\\\(0,0,0)&\\|\\mathbf{v}\\|\\le10^{-12}\\end{cases}',
+              displayMode: true,
+              caption: '`Vec3.length` and `Vec3.normalized` in `src/ludoxel/foundations/mathematics/linear/vec3.py`; callers receive a zero vector rather than a divide-by-zero failure.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/linear/vec3.py',
+            code: `def dot(self, o: "Vec3") -> float:
+  return self.x * o.x + self.y * o.y + self.z * o.z
+
+def cross(self, o: "Vec3") -> "Vec3":
+  return Vec3(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
+
+def normalized(self) -> "Vec3":
+  n = self.length()
+  if n <= 1e-12:
+    return Vec3(0.0, 0.0, 0.0)
+  inv = 1.0 / n
+  return Vec3(self.x * inv, self.y * inv, self.z * inv)`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'y=\\operatorname{radians}(\\mathrm{yaw}_{deg}),\\quad p=\\operatorname{radians}(\\mathrm{pitch}_{deg}),\\qquad \\mathbf{f}=\\operatorname{normalize}(-\\sin(y)\\cos(p),-\\sin(p),\\cos(y)\\cos(p))',
+              displayMode: true,
+              caption: '`forward_from_yaw_pitch_deg` in `src/ludoxel/foundations/mathematics/linear/view_angles.py`, after converting the supplied degree values to radians.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'p=-\\arcsin(\\operatorname{clamp}(d_y,-1,1)),\\qquad y=\\operatorname{atan2}(-d_x,d_z),\\qquad \\mathbf{s}=\\operatorname{normalize}(\\cos(e)\\sin(a),\\sin(e),\\cos(e)\\cos(a))',
+              displayMode: true,
+              caption:
+                '`yaw_pitch_deg_from_forward` and `sun_dir_from_az_el_deg` in `src/ludoxel/foundations/mathematics/linear/view_angles.py`; they normalize their vector input or output and convert degrees at the function boundary.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/linear/view_angles.py',
+            code: `def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> Vec3:
+  yaw = math.radians(float(yaw_deg))
+  pitch = math.radians(float(pitch_deg))
+
+  cy = math.cos(yaw)
+  sy = math.sin(yaw)
+  cp = math.cos(pitch)
+  sp = math.sin(pitch)
+
+  return Vec3(-sy * cp, -sp, cy * cp).normalized()`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The forward relation takes degree-valued inputs through `math.radians(float(...))` before trigonometry. The inverse clamps only the normalized `y` component to `[-1, 1]` before `asin`; yaw then comes from `atan2(-x, z)` and both outputs return through `math.degrees`. The sun function has its own azimuth/elevation relation and normalizes its result. These are concrete conversion and zero-vector boundaries. They authorize a camera, ray, or light consumer to receive a vector or reconstructed angle pair; they do not authorize an input layer to accept an invalid action or a backend to interpret a scene.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`tools/build_native_extensions/src/config/native.config.mjs` registers `src/ludoxel/foundations/mathematics/linear/view_angles.py`, `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py`, and `src/ludoxel/foundations/mathematics/voxels/dda.py` as native-build candidates under their existing module names. The generated build script passes each source path to `Extension` and `cythonize` in place; verification reports that the Python fallback source exists when no `.pyd`, `.so`, or `.dylib` binary is found beside that source. The Python files therefore define the fallback contract from which those candidates are built. Candidate registration does not independently prove native semantic parity, backend correctness, or availability on every target.',
+          },
+        ],
+      },
+      {
+        id: 'view-transform-and-chunk-visibility-matrices',
+        title: 'Matrix Constructors Preserve Float32 Composition',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/linear/mat4.py` returns `numpy` 4-by-4 `float32` arrays for identity, perspective, orthographic, and look-direction matrices. Perspective derives its focal factor from half of the supplied vertical field of view and floors only the aspect denominator at `1e-9`; `look_dir` normalizes the forward and derived basis vectors before placing basis rows and eye translation into the matrix. `mul` computes `a @ b` and casts that product to `float32`. The OpenGL frame pipeline consumes the functions to form view-projection and light view-projection matrices, while the WGPU backend converts the resulting clip representation for its uniform layout. This file constructs arrays; it does not issue a draw pass.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'f = \\frac{1}{\\tan(\\operatorname{radians}(\\mathrm{fovY})/2)}, \\qquad m_{00} = \\frac{f}{\\max(\\mathrm{aspect}, 10^{-9})}',
+              displayMode: true,
+              caption: '`perspective` in `src/ludoxel/foundations/mathematics/linear/mat4.py`; the remaining entries are set directly by that implementation.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'm_{11}=f,\\qquad m_{22}=\\frac{z_f+z_n}{z_n-z_f},\\qquad m_{23}=\\frac{2z_fz_n}{z_n-z_f},\\qquad m_{32}=-1',
+              displayMode: true,
+              caption: 'The remaining nonzero perspective entries written by `perspective` in `src/ludoxel/foundations/mathematics/linear/mat4.py`.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'r_l=\\max(r-l,10^{-9}),\\ t_b=\\max(t-b,10^{-9}),\\ f_n=\\max(z_f-z_n,10^{-9}),\\quad M_{\\mathrm{ortho}}=\\begin{bmatrix}2/r_l&0&0&-(r+l)/r_l\\\\0&2/t_b&0&-(t+b)/t_b\\\\0&0&-2/f_n&-(z_f+z_n)/f_n\\\\0&0&0&1\\end{bmatrix}',
+              displayMode: true,
+              caption: '`ortho` in `src/ludoxel/foundations/mathematics/linear/mat4.py`; each span denominator is floored independently before the `float32` entries are written.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '\\mathbf{f}=\\operatorname{normalize}(\\mathrm{forward}),\\quad \\mathbf{r}=\\operatorname{normalize}(\\mathrm{upHint}\\times\\mathbf{f}),\\quad \\mathbf{u}=\\operatorname{normalize}(\\mathbf{f}\\times\\mathbf{r}),\\quad M_{0:3,0:3}=[\\mathbf{r};\\mathbf{u};-\\mathbf{f}]',
+              displayMode: true,
+              caption: '`look_dir` in `src/ludoxel/foundations/mathematics/linear/mat4.py`; the source writes the basis in rows, then writes the eye terms into column 3.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '(M_{03},M_{13},M_{23})=(-\\mathbf{r}\\cdot\\mathbf{e},-\\mathbf{u}\\cdot\\mathbf{e},\\mathbf{f}\\cdot\\mathbf{e}),\\qquad \\operatorname{mul}(A,B)=\\operatorname{float32}(A@B),\\quad A,B\\in\\mathbb{R}^{4\\times4}',
+              displayMode: true,
+              caption: 'The translation placement and multiplication result of `look_dir` and `mul` in `src/ludoxel/foundations/mathematics/linear/mat4.py`.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The shape and cast are part of the contract: every constructor begins with either an identity or a zero array of shape `(4, 4)` and dtype `numpy.float32`, and `mul` recasts the product. The implementation does not protect a zero forward vector or a parallel up hint beyond the `Vec3.normalized` zero-vector behavior. A caller therefore receives the exact basis construction above, not a hidden camera-recovery policy.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/linear/mat4.py',
+            code: `def look_dir(eye: Vec3, forward: Vec3, up_hint: Vec3 = Vec3(0.0, 1.0, 0.0)) -> np.ndarray:
+  f = forward.normalized()
+  r = up_hint.cross(f).normalized()
+  u = f.cross(r).normalized()
+
+  m = identity()
+  (m[0, 0], m[0, 1], m[0, 2]) = r.x, r.y, r.z
+  (m[1, 0], m[1, 1], m[1, 2]) = u.x, u.y, u.z
+  (m[2, 0], m[2, 1], m[2, 2]) = -f.x, -f.y, -f.z
+
+  m[0, 3] = -r.dot(eye)
+  m[1, 3] = -u.dot(eye)
+  m[2, 3] = f.dot(eye)
+  return m
+
+
+def mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+  return (a @ b).astype(np.float32)`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/linear/transform_matrices.py` supplies identity, translation, scale, and axis-rotation constructors, including degree wrappers, then composes any supplied matrices left-to-right from identity with `out @ matrix`. Player-model poses, first-person geometry, Othello scene transforms, face rows, particles, HUD overlays, and frame roll consume this contract. The function fixes multiplication order for its callers; it does not own a UI camera mode, model policy, or backend implementation.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'I=I_4,\\qquad T(x,y,z)_{0:3,3}=(x,y,z)^\\mathsf{T},\\qquad S(x,y,z)=\\operatorname{diag}(x,y,z,1)',
+              displayMode: true,
+              caption: '`identity_matrix`, `translate_matrix`, and `scale_matrix` in `src/ludoxel/foundations/mathematics/linear/transform_matrices.py`, all constructed as `float32` arrays.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'R_x=\\begin{bmatrix}1&0&0&0\\\\0&c&-s&0\\\\0&s&c&0\\\\0&0&0&1\\end{bmatrix},\\quad R_y=\\begin{bmatrix}c&0&-s&0\\\\0&1&0&0\\\\s&0&c&0\\\\0&0&0&1\\end{bmatrix},\\quad R_z=\\begin{bmatrix}c&-s&0&0\\\\s&c&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix},\\quad c=\\cos(\\theta),\\ s=\\sin(\\theta)',
+              displayMode: true,
+              caption:
+                'The three radian rotation constructors in `src/ludoxel/foundations/mathematics/linear/transform_matrices.py`; the degree wrappers pass `math.radians(float(deg))` to these constructors.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'O_0=I_4,\\qquad O_k=\\operatorname{float32}\\!\\left(O_{k-1}@\\operatorname{float32}(M_k)\\right)',
+              displayMode: true,
+              caption: '`compose_matrices` in `src/ludoxel/foundations/mathematics/linear/transform_matrices.py`; the supplied sequence is multiplied from identity in argument order.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/linear/transform_matrices.py',
+            code: `def compose_matrices(*matrices: np.ndarray) -> np.ndarray:
+  out = identity_matrix()
+  for matrix in matrices:
+    out = (out @ np.asarray(matrix, dtype=np.float32)).astype(np.float32)
+  return out`,
+          },
+        ],
+      },
+      {
+        id: 'view-transform-and-chunk-visibility-chunks-and-clip-space',
+        title: 'Chunk Coordinates and Clip Tests Bound Visibility Work',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/chunks/grid.py` defines `CHUNK_SIZE` as 16 and converts integer cell coordinates to a `ChunkKey` with Python floor division. `chunk_bounds` maps that key back to half-open world bounds, while `neighbor_chunk_keys_for_cell` adds an adjacent key only when the local coordinate lies on the lower or upper chunk boundary. `WorldState` consumes the neighbour set when a cell edit marks dirty chunks, and renderer upload and backend caches consume normalized keys. The grid source neither determines a block rule nor submits a renderer pass.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '(c_x, c_y, c_z) = (\\lfloor x/16 \\rfloor, \\lfloor y/16 \\rfloor, \\lfloor z/16 \\rfloor)',
+              displayMode: true,
+              caption: '`chunk_key` in `src/ludoxel/foundations/mathematics/chunks/grid.py` after each input has been converted to `int`.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'B(c)= [16c_x,16c_x+16)\\times[16c_y,16c_y+16)\\times[16c_z,16c_z+16),\\qquad \\ell_i=q_i-16c_i',
+              displayMode: true,
+              caption: '`chunk_bounds` and `neighbor_chunk_keys_for_cell` in `src/ludoxel/foundations/mathematics/chunks/grid.py`; the local coordinate is derived after floor-division key selection.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\ell_i\\le0\\Rightarrow c-\\mathbf{e}_i\\in N(q),\\qquad \\ell_i\\ge15\\Rightarrow c+\\mathbf{e}_i\\in N(q)',
+              displayMode: true,
+              caption: 'The lower and upper boundary branches in `neighbor_chunk_keys_for_cell`; each condition adds only the adjacent key on that axis.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/chunks/grid.py',
+            code: `def chunk_bounds(k: ChunkKey) -> tuple[int, int, int, int, int, int]:
+  cx, cy, cz = normalize_chunk_key(k)
+  x0 = cx * CHUNK_SIZE
+  y0 = cy * CHUNK_SIZE
+  z0 = cz * CHUNK_SIZE
+  return (x0, x0 + CHUNK_SIZE, y0, y0 + CHUNK_SIZE, z0, z0 + CHUNK_SIZE)
+
+if int(lx) <= 0:
+  keys.add((int(cx) - 1, int(cy), int(cz)))
+if int(lx) >= int(CHUNK_SIZE - 1):
+  keys.add((int(cx) + 1, int(cy), int(cz)))`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/frustums/clip.py` constructs the eight homogeneous corners of those chunk bounds as `float32`, applies the caller matrix, and rejects a chunk only when every transformed corner lies outside the same left, right, bottom, top, near, or far clip inequality. `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` consumes the boolean before adding a normalized key to its result. The test is a visibility predicate over a supplied matrix; it does not select a graphics API, allocate GPU resources, or draw the chunk.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: '\\mathbf{C}_{clip}=\\left(M_{\\mathrm{float32}}\\mathbf{C}_{world}^{\\mathsf{T}}\\right)^{\\mathsf{T}},\\qquad \\mathbf{C}_{world}\\in\\mathbb{R}^{8\\times4},\\quad c_w=1',
+              displayMode: true,
+              caption:
+                '`chunk_corners_homogeneous` and `chunk_intersects_clip_volume` in `src/ludoxel/foundations/mathematics/frustums/clip.py`: eight `float32` homogeneous chunk corners enter the supplied matrix product.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '\\operatorname{reject}\\Longleftrightarrow \\operatorname{all}(x<-w)\\lor\\operatorname{all}(x>w)\\lor\\operatorname{all}(y<-w)\\lor\\operatorname{all}(y>w)\\lor\\operatorname{all}(z<-w)\\lor\\operatorname{all}(z>w)',
+              displayMode: true,
+              caption: 'The six exact all-corners tests in `chunk_intersects_clip_volume`. A chunk is retained unless one complete corner set violates one plane inequality.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/frustums/clip.py',
+            code: `def chunk_intersects_clip_volume(chunk_key: ChunkKey, matrix: np.ndarray) -> bool:
+  corners = chunk_corners_homogeneous(chunk_key)
+  clip = (matrix.astype(np.float32, copy=False) @ corners.T).T
+
+  xs = clip[:, 0]
+  ys = clip[:, 1]
+  zs = clip[:, 2]
+  ws = clip[:, 3]
+
+  if bool(np.all(xs < (-ws))):
+    return False
+  if bool(np.all(xs > ws)):
+    return False
+  if bool(np.all(ys < (-ws))):
+    return False
+  if bool(np.all(ys > ws)):
+    return False
+  if bool(np.all(zs < (-ws))):
+    return False
+  if bool(np.all(zs > ws)):
+    return False
+
+  return True`,
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Building in My World'],
   }),
 ];

@@ -36,6 +36,91 @@ overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_p
         ],
       },
       {
+        id: 'changing-camera-preferences-decode-and-widget-range',
+        title: 'Decode, Range, and Widget Projection',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Persisted camera-related scalars first cross `src/ludoxel/foundations/mathematics/scalars/coercion.py`, not the widget layer. `PersistedSettings.from_dict` in `src/ludoxel/application/persistence/schema/settings.py` calls `mapping_float` and `mapping_bool` for saved FOV, sensitivity, inversion, view-bobbing, and camera-shake fields. The numeric helpers convert with `float` or `int` and use the supplied default only when that conversion raises; the boolean and string helpers have their own direct branches. None of these helpers defines a camera vocabulary, a slider range, semantic validity, or a renderer consequence. In particular, this source does not perform a finite-value test, so finite-value policy cannot be inferred from the coercion helper alone.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '\\operatorname{coerceFloat}(v,d)=\\operatorname{float}(v)\\ \\text{when conversion succeeds};\\qquad \\operatorname{coerceFloat}(v,d)=\\operatorname{float}(d)\\ \\text{when it raises}',
+              displayMode: true,
+              caption: '`coerce_float` in `src/ludoxel/foundations/mathematics/scalars/coercion.py`; this is exception fallback, not a finite-value, range, or camera-mode validator.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/scalars/coercion.py',
+            code: `def coerce_float(value: object, default: float) -> float:
+  try:
+    return float(value)
+  except Exception:
+    return float(default)
+
+
+def mapping_float(d: Mapping[str, Any], key: str, default: float) -> float:
+  return coerce_float(d.get(str(key), default), float(default))`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`coerce_bool` preserves booleans directly, treats numeric values through Python truthiness, and recognizes only the case-folded string sets `1,true,yes,on` and `0,false,no,off`. Other strings return the supplied default. The mapping helpers first convert the lookup key with `str(key)` and use the default when the mapping has no entry. This is an admission mechanism for serialized values, not a declaration that every admitted truthy or non-finite numeric value is semantically supported by a control.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/foundations/mathematics/scalars/numeric.py` supplies the separate range operation. `clampf` and `round_clampi` convert their operands and bound a value against caller-provided limits; they do not decide which setting a value represents. `src/ludoxel/presentation/interface/settings/sync.py` consumes those primitives while projecting admitted runtime values back into sliders: for view bobbing and camera shake it clamps the runtime scalar to `[0, 1]`, multiplies by 100, rounds, and then bounds the integer percent. The visible percent is therefore a UI projection of the runtime value, not a second persisted representation.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                '\\operatorname{clampf}(x,\\ell,h)=\\min(\\max(x,\\ell),h)\\quad(\\ell\\le h),\\qquad \\operatorname{round\\_clampi}(x,\\ell,h)=\\operatorname{clampi}(\\operatorname{int}(\\operatorname{round}(\\operatorname{float}(x))),\\ell,h)',
+              displayMode: true,
+              caption:
+                '`clampf` and `round_clampi` in `src/ludoxel/foundations/mathematics/scalars/numeric.py`. The source compares the caller-provided bounds as given; it does not sort or normalize an inverted interval.',
+            },
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'q = \\operatorname{round}(100\\,\\operatorname{clamp}(s, 0, 1))',
+              displayMode: true,
+              caption: 'The view-bobbing and camera-shake slider projection in `sync_overlay_values`, where s is the runtime strength and q is the widget percent.',
+            },
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/scalars/numeric.py',
+            code: `def clampf(x: float, lo: float, hi: float) -> float:
+  value = float(x)
+  low = float(lo)
+  high = float(hi)
+  if value < low:
+    return low
+  if value > high:
+    return high
+  return value
+
+
+def round_clampi(x: float, lo: int, hi: int) -> int:
+  return clampi(int(round(float(x))), int(lo), int(hi))`,
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'Coercion and clamping preserve a technical admission boundary. They do not make an arbitrary persisted value a supported camera mode, do not implement input capture, and do not select a rendering backend.',
+            },
+          },
+        ],
+      },
+      {
         id: 'changing-camera-preferences-perspective-normalization',
         title: 'Perspective Normalization',
         content: [
