@@ -11,19 +11,19 @@ export const manualPages: DocsPageContent[] = [
     group: 'Launch and Space Selection',
     title: 'Starting Ludoxel',
     description:
-      'Follows the real startup path from the Python module entry point, through application bootstrap and root resolution, into the PyQt presentation shell, so you can tell launch evidence apart from saved-data, rendering, packaging, and support issues. Each visible milestone names a different place where startup can stop.',
+      'Defines the implemented startup chain from the Python module entry point to the loaded viewport. Launch is treated as a sequence of executable gates—entry delegation, bootstrap root selection, runtime selection, presentation-shell construction, single-instance activation, player-name admission, host-window creation, and viewport loading—so startup evidence is not confused with play-space restoration or support intake.',
     sections: [
       {
-        id: 'starting-ludoxel-entry-point',
-        title: 'The Launch Starts at the Desktop Entry Point',
+        id: 'starting-ludoxel-entry-delegation',
+        title: 'Entry Is Delegation, Not Window Construction',
         body: [
-          'Starting Ludoxel begins with the Python module entry point. The file does not build the window itself, does not choose a play space, and does not load renderer resources. Its job is narrow: prepare multiprocessing support for packaged execution and hand control to `ludoxel.application.run_app`.',
-          'If the application never opens a window, the first confirmed fact is that the entry point attempted to enter the application bootstrap. Starting Ludoxel is a desktop application action. The first visible milestone is either an application dialog, a splash or loading surface, the main window, or no visible window at all.',
+          'Starting Ludoxel begins at `src/ludoxel/__main__.py`, whose operative act is deliberately narrow. The module prepares multiprocessing support for frozen execution and delegates to the application layer. It does not create `QApplication`, does not select My World or Othello, does not read persisted play-space state, and does not initialize a renderer.',
+          '`ludoxel.application` preserves that boundary by exposing `run_app` through a lazy package export. The name is resolved only when requested, and the actual bootstrap function is imported from `ludoxel.application.bootstrap` at that point. A launch that reaches this boundary proves delegation into the application layer; it proves nothing about the later presentation shell, viewport backend, HUD, saved world, or active play space.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The desktop module entry point delegates startup to the application layer.',
+            caption: 'The module entry point delegates startup to the application layer.',
             code: `# SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
@@ -36,19 +36,9 @@ if __name__ == "__main__":
   multiprocessing.freeze_support()
   run_app()`,
           },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-application-export',
-        title: 'The Public Application Export Is Lazy',
-        body: [
-          '`ludoxel.application` exposes `run_app` without importing the whole bootstrap path eagerly. The package uses `__getattr__` to import `ludoxel.application.bootstrap` only when `run_app` is requested. The entry point asks the application layer to start, and the application layer resolves the concrete bootstrap function on demand.',
-          'This keeps the startup explanation honest. The entry point is not secretly constructing widgets, loading the theme, or restoring play-space state; those actions happen later. A missing desktop window is therefore not automatically an Othello problem, a hotbar problem, or a camera problem, because those systems only exist after the bootstrap reaches the presentation shell.',
-        ],
-        codeBlocks: [
           {
             language: 'py',
-            caption: 'The application package resolves run_app through the bootstrap module only when requested.',
+            caption: 'The application package resolves run_app lazily through the bootstrap module.',
             code: `from importlib import import_module
 
 __all__ = ["run_app"]
@@ -62,16 +52,17 @@ def __getattr__(name: str):
         ],
       },
       {
-        id: 'starting-ludoxel-root-resolution',
-        title: 'Bootstrap Resolves the Roots Before the Window Exists',
+        id: 'starting-ludoxel-bootstrap-gates',
+        title: 'Bootstrap Fixes Roots, Runtime, and Storage Hooks Before Qt',
         body: [
-          'The application bootstrap determines three roots before the presentation window is started: the project root, the resource root, and the runtime data root. The project root identifies the application context, the resource root identifies bundled assets such as fonts, icons, theme material, shaders, and data files, and the runtime data root identifies where user-specific state should live.',
-          'A data root is needed before the window opens, but that does not mean every saved world or setting has already been displayed. It only means the application has selected the storage location that later persistence code will use. Root resolution supports both source-tree execution and packaged execution, so seeing a local window does not prove that a package is official, complete, or redistributable.',
+          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering matters: no visible window can be read as gameplay evidence before the roots and runtime gate have been fixed.',
+          '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state jurisdiction that later persistence code will use. The bootstrap also installs Othello opening-book storage hooks before the presentation shell starts. That hook registration is only storage preparation; it is not proof that the Othello board is active, visible, or selected.',
+          'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In frozen execution the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists therefore belongs to the launch environment or bootstrap path, not to camera movement, hotbar interaction, Othello move legality, or a renderer overlay.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The bootstrap computes the project, resource, and runtime data roots before entering presentation code.',
+            caption: 'The bootstrap computes roots, checks the runtime, installs storage hooks, and only then enters presentation code.',
             code: `def run_app() -> None:
   project_root = default_project_root(Path(__file__))
   resource_root = default_resource_root(Path(__file__))
@@ -84,19 +75,9 @@ def __getattr__(name: str):
   install_othello_book_storage_hooks()
   _run(project_root=project_root, resource_root=resource_root, data_root=data_root)`,
           },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-python-runtime',
-        title: 'Runtime Selection Happens Before User Interaction',
-        body: [
-          'The bootstrap checks the Python runtime before the PyQt window is created. In source-tree execution it can look for a preferred Python 3.14 executable and re-execute the module with that interpreter. In frozen execution the runtime is already part of the packaged application, so the check returns without replacing the process.',
-          'For a player the visible consequence is simple: a failure before any window appears may belong to the startup environment, not to a play-space rule or UI overlay. The supported-runtime check runs before the window is available, so a missing window can come from the launch environment, and that evidence should be preserved separately from in-game evidence.',
-        ],
-        codeBlocks: [
           {
             language: 'py',
-            caption: 'Runtime selection exits early for frozen builds and for an already supported Python runtime.',
+            caption: 'Runtime substitution is skipped for frozen builds and for an already selected Python 3.14 runtime.',
             code: `def _ensure_python_314(project_root: Path) -> None:
   if is_frozen_application():
     return
@@ -110,16 +91,17 @@ def __getattr__(name: str):
         ],
       },
       {
-        id: 'starting-ludoxel-runtime-data-root',
-        title: 'The Data Root Is User State, Not Source Code',
+        id: 'starting-ludoxel-data-root-boundary',
+        title: 'The Runtime Data Root Is Storage Jurisdiction, Not Repository Content',
         body: [
-          'The runtime data root is where Ludoxel stores user-specific runtime state. It can be overridden with `LUDOXEL_DATA_ROOT`; otherwise it follows platform conventions: LocalAppData on Windows, Application Support on macOS, XDG data home on compatible systems, or a user-local fallback. This keeps normal saved data out of the repository source tree.',
-          'If the window opens but previous state is absent, startup itself has already passed the window milestone. The next questions are whether the expected runtime data root was used, whether the relevant state file exists, and whether persistence accepted it. That separates "Ludoxel did not start" from "Ludoxel started, but did not show the data I expected."',
+          'The runtime data root is selected before the user can interact with the window, but its selection does not mean that the expected save, setting, inventory, Othello state, or world fragment has already been accepted. It means only that later persistence consumers have a resolved base location from which runtime state and cache paths may be derived.',
+          '`LUDOXEL_DATA_ROOT` overrides the default location. Without that override, the implementation follows platform-specific storage conventions: `LOCALAPPDATA` or `AppData` on Windows, `~/Library/Application Support/Ludoxel` on macOS, `XDG_DATA_HOME/ludoxel` on compatible systems, and `~/.local/share/ludoxel` as the final fallback. The repository source tree is not the ordinary storage authority for user runtime state.',
+          'Consequently, "the application opened" and "the expected saved state appeared" remain separate propositions. A missing player name, an unexpected world, or absent Othello state after a window exists is no longer a pure launch question; it has crossed into persisted data, play-space restoration, or runtime integrity evidence.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The runtime data root is resolved outside the repository by default.',
+            caption: 'The data root is resolved from an override or from platform storage conventions.',
             code: `def default_runtime_data_root(project_root: Path | None = None) -> Path:
   env_root = os.environ.get("LUDOXEL_DATA_ROOT", "").strip()
   if env_root:
@@ -131,40 +113,28 @@ def __getattr__(name: str):
       return (Path(base).expanduser() / "Ludoxel").resolve()
 
   if sys.platform == "darwin":
-    return (Path.home() / "Library" / "Application Support" / "Ludoxel").resolve()`,
-          },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-othello-storage-hook',
-        title: 'Othello Storage Hooks Are Installed During Bootstrap',
-        body: [
-          'The bootstrap installs Othello opening-book storage hooks before it enters the presentation shell. This does not mean the player is already in Othello or that the board has been drawn. It means the application-level storage functions are registered early enough that Othello code can use the same root and persistence rules once that play space becomes active.',
-          'The active surface cannot be inferred from the existence of Othello storage preparation alone. It must be read from the desktop window after it appears. If a launch problem reaches application bootstrap or opening-book state, Othello storage is relevant; if the window opens and the board is visible, the next subject is Othello state or settings, not the generic startup path.',
-        ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The bootstrap installs the Othello opening-book storage hooks before starting the presentation shell.',
-            code: `from ludoxel.application.persistence.stores.othello_book import install_othello_book_storage_hooks
-from ludoxel.presentation.interface.windows.main import run_app as _run
+    return (Path.home() / "Library" / "Application Support" / "Ludoxel").resolve()
 
-install_othello_book_storage_hooks()
-_run(project_root=project_root, resource_root=resource_root, data_root=data_root)`,
+  xdg_data_home = os.environ.get("XDG_DATA_HOME", "").strip()
+  if xdg_data_home:
+    return (Path(xdg_data_home).expanduser() / "ludoxel").resolve()
+
+  return (Path.home() / ".local" / "share" / "ludoxel").resolve()`,
           },
         ],
       },
       {
-        id: 'starting-ludoxel-presentation-shell',
-        title: 'The Presentation Shell Creates the Desktop Application',
+        id: 'starting-ludoxel-presentation-admission',
+        title: 'The Presentation Shell Admits the Desktop Process',
         body: [
-          'After bootstrap, control enters the presentation shell. The shell creates the `QApplication`, sets application identity, loads an application icon when available, registers bundled fonts, loads the QSS theme, configures single-instance activation, and then prepares the main window. This is the point where startup begins to become visible.',
-          'A font or theme failure at this phase is different evidence from a failure before root resolution, and a second launch that only activates an existing window belongs to presentation-level activation rather than play-space state. The presentation shell is still not the renderer; it prepares the Qt application and host window. The viewport and renderer-facing session state are reached through the game screen and viewport widget after the main window is created.',
+          'After bootstrap, `src/ludoxel/presentation/interface/windows/main.py` constructs the desktop process. It creates `QApplication`, assigns organization and application identity, loads an application icon when one exists, registers bundled fonts, applies the QSS theme, and only then proceeds toward single-instance coordination and state admission. A font-registration failure at this level is not cosmetic; the shell raises instead of authorizing a partially styled desktop surface.',
+          'Single-instance activation is an execution gate, not a saved-state operation. `SingleInstanceRelay` is bound to the managed data root; if an existing instance accepts activation, the new launch returns without constructing a second independent main window. An apparent second launch may therefore be an activation request delivered to an existing desktop process.',
+          'The player-name gate is also part of startup. The shell loads `AppStateStore`, normalizes the persisted player name, and displays `PlayerNameDialog` only when no launch name is available. Cancelling that dialog returns before `MainWindow` exists. That return is an intentional admission failure, not a renderer crash and not a failed play-space switch.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The presentation shell creates the Qt application and applies application identity before showing the window.',
+            caption: 'The presentation shell creates the Qt application identity and applies the bundled font and theme before the main window.',
             code: `def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None:
   root = Path(project_root)
   bundled_root = Path(resource_root)
@@ -176,19 +146,9 @@ _run(project_root=project_root, resource_root=resource_root, data_root=data_root
   app.setApplicationName("Ludoxel")
   app.setApplicationVersion(str(__version__))`,
           },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-font-and-theme-loading',
-        title: 'Fonts and Theme Are Startup Requirements',
-        body: [
-          'The presentation shell registers bundled UI fonts and applies the theme stylesheet before the final game window. If bundled font registration fails, the shell raises a runtime error rather than continuing with a partially styled application. Font and theme behavior is part of launch troubleshooting, not a cosmetic afterthought.',
-          'The application loads the theme through QSS and font helpers, then applies the resulting stylesheet to the Qt application, so visual problems are not fixed by editing Python widgets. If the startup splash appears but the game surface never arrives, the visible status text, font error, or theme loading error can be relevant. If the game window is fully visible and only a later overlay looks wrong, that belongs to the page for that overlay or surface.',
-        ],
-        codeBlocks: [
           {
             language: 'py',
-            caption: 'The presentation shell installs bundled fonts and applies QSS before the main window is shown.',
+            caption: 'Bundled font registration is a startup requirement and failure raises before the final game window.',
             code: `fonts = install_minecraft_fonts(font_dir=(bundled_root / "assets" / "fonts"))
 if not bool(fonts.ok):
   details = "\\n".join(str(error) for error in tuple(fonts.errors) if str(error))
@@ -199,39 +159,16 @@ theme_qss = load_theme_stylesheet(styles_dir)
 if theme_qss:
   app.setStyleSheet(str(font_qss) + theme_qss)`,
           },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-single-instance-activation',
-        title: 'A Second Launch Can Activate the Existing Window',
-        body: [
-          'Startup checks whether another Ludoxel instance is already listening for activation. If an existing instance accepts the activation request, the new launch returns instead of opening a second independent game window, and the already-running window comes forward.',
-          'This changes what a "launch" looks like: double-clicking the application may activate an existing session rather than open a fresh window. That is not saved-state restoration and not a play-space switch; it is single-instance activation. Reports should distinguish "nothing happened," "an existing window came forward," and "a new window opened," because these are different startup observations.',
-        ],
-        codeBlocks: [
           {
             language: 'py',
-            caption: 'Single-instance activation can end a second startup before a new main window is created.',
+            caption: 'Single-instance activation and the player-name gate can end startup before a new main window exists.',
             code: `relay = SingleInstanceRelay(managed_data_root, app)
 if relay.activate_existing_instance():
   return
 relay.listen()
-app.aboutToQuit.connect(relay.close)`,
-          },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-player-name-gate',
-        title: 'The Player Name Dialog Can Appear Before the Main Window',
-        body: [
-          'Before creating the main window, the presentation shell loads persisted application state and checks whether a normalized player name is already available. If no launch player name is available, it opens the player name dialog. That dialog is part of startup because the game window has not yet been created.',
-          'Seeing the name dialog means startup has already passed the entry point, bootstrap, root resolution, runtime check, storage-hook installation, Qt application setup, font registration, and theme loading. If the dialog is cancelled, the shell returns before the main window is created, which is an intentional exit path rather than a crash or renderer failure.',
-        ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The player name dialog appears only when no launch player name is restored.',
-            code: `persisted_state = AppStateStore(project_root=root, data_root=managed_data_root).load()
+app.aboutToQuit.connect(relay.close)
+
+persisted_state = AppStateStore(project_root=root, data_root=managed_data_root).load()
 explicit_player_name = ""
 if persisted_state is not None:
   explicit_player_name = normalize_player_name(persisted_state.settings.player_name)
@@ -246,16 +183,17 @@ if not launch_player_name:
         ],
       },
       {
-        id: 'starting-ludoxel-main-window',
-        title: 'The Main Window Hosts the Game Screen',
+        id: 'starting-ludoxel-window-and-viewport-gates',
+        title: 'The Host Window and the Viewport Are Separate Milestones',
         body: [
-          'The main window is the desktop host for the game screen. It receives the project root, resource root, data root, and launch player name, creates `GameScreen`, installs it as the central widget, and connects fullscreen behavior to the viewport. This is where the startup path becomes the visible desktop application structure.',
-          'The main window hosts the screen; it does not mean the player has already interacted with My World or Othello. The active play space still has to be read from the viewport and session state after the screen is live. "The main window appeared" is a different milestone from "the viewport finished loading": a visible host window with a preparing overlay can still be in startup, while a loaded viewport with active controls has moved into ordinary session use.',
+          '`MainWindow` is the host. It stores the resolved roots, constructs `GameScreen`, installs that screen as its central widget, and connects fullscreen behavior to the viewport. The existence of this host window proves that startup has passed the shell admission gates; it does not prove that the viewport has finished loading or that a play-space rule has been executed.',
+          '`GameScreen` then chooses the platform viewport widget, constructs the HUD, and displays a loading overlay whose status begins as `Preparing viewport...`. The overlay is bound to the viewport loading state and loading-status signals. Until `loading_finished` hides that overlay and gives focus to the viewport, the process is still at the boundary between desktop launch and ordinary play-space interaction.',
+          'The startup splash in the presentation shell follows the same status channel. It connects to `viewport.loading_status_changed`, closes on `viewport.loading_finished`, and only then leaves the ordinary window as the visible authority. A visible splash, a host window with `Preparing viewport...`, and a focused viewport are therefore three distinct observations, not three phrasings of the same condition.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The main window owns the game screen as its central widget.',
+            caption: 'The main window hosts GameScreen; play-space interaction is still downstream of the viewport.',
             code: `class MainWindow(QMainWindow):
   def __init__(self, project_root: Path, resource_root: Path, data_root: Path, *, launch_player_name: str | None = None) -> None:
     super().__init__()
@@ -266,19 +204,9 @@ if not launch_player_name:
     self.setCentralWidget(self._screen)
     self.setMinimumSize(_MIN_WINDOW_WIDTH, _MIN_WINDOW_HEIGHT)`,
           },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-viewport-preparation',
-        title: 'The Game Screen Shows Viewport Preparation',
-        body: [
-          '`GameScreen` creates the platform-specific viewport widget and the HUD, then shows a loading overlay while the viewport is preparing. The overlay reads "Preparing viewport...", and its visibility is tied to the viewport loading state and loading-status signals. This is the first visible feedback that belongs directly to the game surface rather than the outer bootstrap.',
-          'If the window appears with "Preparing viewport..." and stays there, the application has passed the phases that occur before `GameScreen`, so a useful report includes the overlay text and whether it changes. When the viewport finishes loading, the overlay hides and the viewport receives focus; that is the handoff from launch into ordinary world or play-space interaction.',
-        ],
-        codeBlocks: [
           {
             language: 'py',
-            caption: 'The game screen shows the preparing overlay until the viewport reports that loading has finished.',
+            caption: 'The game screen keeps the preparing overlay visible until the viewport reports completion.',
             code: `self._loading_overlay = StatusOverlayFrame(
   title_text="Ludoxel",
   status_text="Preparing viewport...",
@@ -289,21 +217,13 @@ if not launch_player_name:
   parent=self,
 )
 self._loading_overlay.setVisible(bool(self.viewport.loading_active()))
+self.viewport.loading_state_changed.connect(self._handle_loading_state_changed)
+self.viewport.loading_status_changed.connect(self._loading_overlay.set_status_text)
 self.viewport.loading_finished.connect(self._handle_loading_finished)`,
           },
-        ],
-      },
-      {
-        id: 'starting-ludoxel-visible-milestone',
-        title: 'Name the Latest Visible Milestone',
-        body: [
-          'A precise startup observation names the latest visible milestone: "no window appears," "the player name dialog appears," "the startup splash appears," "the main window appears with Preparing viewport," or "the viewport is loaded and accepts input." Each sentence points to a different part of the startup path and lets another reader decide where the problem belongs.',
-          'The observation should also state whether the visible surface is accepting input. A dialog, splash, loading overlay, active viewport, settings overlay, or Othello board each changes what the next key or mouse action does, so naming the focused surface is more useful than saying "startup is broken."',
-        ],
-        codeBlocks: [
           {
             language: 'py',
-            caption: 'The viewport loading handoff hides the overlay and gives focus to the viewport.',
+            caption: 'Viewport completion hides the overlay and transfers focus to the viewport.',
             code: `def _handle_loading_finished(self) -> None:
   self._loading_overlay.hide()
   self.viewport.setFocus(Qt.FocusReason.OtherFocusReason)
@@ -316,23 +236,90 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         ],
       },
       {
-        id: 'starting-ludoxel-play-space-context',
-        title: 'The Active Play Space Comes After Startup',
+        id: 'starting-ludoxel-startup-evidence-routing',
+        title: 'Startup Evidence Must Be Classified Before Any Public Channel',
         body: [
-          'Startup prepares the application so a play space can become visible, but reaching the viewport is not the same as playing My World or Othello. Once the viewport is loaded, the active play space can be read from the visible surface, after which the matching play-space pages apply.',
-          'My World and Othello have different control expectations: My World uses movement, camera control, hotbar state, inventory, and block interaction, while Othello uses a board surface, legal-move selection, side state, settings, and board animation. If the visible surface after launch is not the one expected, the follow-up is `Switching Play Spaces` or a saved-state page, not a rewrite of the startup path.',
+          'A disciplined startup reading names the latest executed gate and then stops. The relevant observations are: no visible Qt surface; player-name dialog; startup splash; existing-window activation; main window with `Preparing viewport...`; loaded viewport accepting focus; or loaded viewport showing an unexpected play space. Each observation belongs to a different location in the startup chain and must not be inflated into a diagnosis, proposed patch, vulnerability disclosure, support entitlement, or repository-policy request.',
+          [
+            'The latest executed startup gate is only the Manual fact. Public submission is governed by the repository support gates, not by the mere existence of an observation. A public ',
+            {
+              kind: 'link',
+              label: 'problem report',
+              href: '/docs/support/public-problem-support/issue-report-content/writing-a-problem-report',
+            },
+            ' is available only for a reproducible, non-security problem affecting the Current Repository or an Official Distribution and expressible through public, non-sensitive facts. A narrow question about repository policy, the LICENSE, Third-Party Materials, Ordinary Application Use, packaging status, build status, or the Security Reporting Policy belongs to the ',
+            {
+              kind: 'link',
+              label: 'limited-question',
+              href: '/docs/support/scope-and-closure-support/limited-question-scope/asking-a-limited-question',
+            },
+            ' route. A suspected vulnerability, exploit mechanism, proof-of-concept path, secret-bearing reproduction, sensitive URL, private local file, or other non-public reproduction condition must be separated from the public problem route before it is described, through the Support classification between ',
+            {
+              kind: 'link',
+              label: 'Security Reports and problem reports',
+              href: '/docs/support/security-and-safety-support/private-security-contact/separating-security-reports-from-problem-reports',
+            },
+            '.',
+          ],
+          [
+            'The same classification controls startup evidence that looks useful. Operating-system, Python, PyQt6, GPU, OpenGL, package, or build facts are admissible as ',
+            {
+              kind: 'link',
+              label: 'platform evidence',
+              href: '/docs/support/public-problem-support/evidence-handling/supplying-platform-evidence',
+            },
+            ' only when they materially narrow reproduction without exposing unrelated private machine detail. Logs, local paths, crash text, or diagnostic excerpts remain inadmissible public material unless they satisfy ',
+            {
+              kind: 'link',
+              label: 'logs without secrets',
+              href: '/docs/support/public-problem-support/evidence-handling/supplying-logs-without-secrets',
+            },
+            '; if the decisive material cannot be made public without disclosing unsafe content, the public report is the wrong surface rather than an incomplete version of the right one.',
+          ],
+          'A startup locator has no independent publication authority. It proves only the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. Support documentation and `.github/ISSUE_TEMPLATE/` files supply the controlling public-channel classification. That classification may admit a reproducible non-security problem report, confine the matter to a limited public question, require only a minimal request for a Private Reporting Channel, or exclude public submission altogether. The Manual therefore stops at implemented startup localization. It does not transform local evidence into admissible public evidence, does not authorize publication of secrets or vulnerability detail, does not receive Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals, and does not convert unrelated machine-specific material into reportable Ludoxel evidence.',
         ],
       },
       {
-        id: 'starting-ludoxel-saved-state-boundary',
-        title: 'Saved State Begins After the Data Root Is Chosen',
+        id: 'starting-ludoxel-play-space-and-state-boundary',
+        title: 'Play-Space and Saved-State Questions Begin After Launch',
         body: [
-          'The startup path chooses the data root, and later the presentation shell loads persisted application state. Saved state has its own evidence: player state, world state, Othello settings, inventory, and runtime integrity behavior. "The app opened" and "the expected state appeared" are separate facts.',
-          'If the player name dialog appears unexpectedly, the persisted state may not contain a usable player name. If the viewport opens but the expected world is missing, the application has still started and the report has moved to saved-world or play-space restoration. Describing the visible launch result first keeps the manual useful; data pages come into play only once the desktop window is already available and the missing evidence is specifically saved content.',
+          'After the viewport is loaded and focused, the active surface rather than the startup chain controls the next reading. My World uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A loaded viewport showing the wrong surface is a play-space or restored-state question, not evidence that the module entry point failed.',
+          [
+            'The immediate Manual continuation is ',
+            {
+              kind: 'link',
+              label: 'Reading the Main Window',
+              href: '/docs/manual/starting-the-application/window-and-item-surfaces/reading-the-main-window',
+            },
+            ' or ',
+            {
+              kind: 'link',
+              label: 'Switching Play Spaces',
+              href: '/docs/manual/starting-the-application/launch-and-space-selection/switching-play-spaces',
+            },
+            '. Camera behavior after a loaded viewport belongs to ',
+            {
+              kind: 'link',
+              label: 'Changing Camera Preferences',
+              href: '/docs/settings/visual-and-audio-settings/camera-and-crosshair/changing-camera-preferences',
+            },
+            ', not to the launch chain.',
+          ],
+          'Saved-state analysis begins only after `data_root` has been chosen and a later consumer has attempted to load the relevant state. A missing player name, absent world, unexpected Othello configuration, or lost inventory after a visible window exists is a persistence or play-space consequence. Starting Ludoxel ends when the desktop process has admitted the viewport; it does not absorb every later state discrepancy into startup.',
         ],
       },
     ],
-    relatedTitles: ['Reading the Main Window', 'Switching Play Spaces', 'Changing Camera Preferences'],
+    relatedTitles: [
+      'Reading the Main Window',
+      'Switching Play Spaces',
+      'Changing Camera Preferences',
+      'Writing a Problem Report',
+      'Supplying Platform Evidence',
+      'Supplying Logs Without Secrets',
+      'Asking a Limited Question',
+      'Separating Security Reports from Problem Reports',
+      'Understanding Unsafe Public Content',
+    ],
   }),
   defineDocsArticle({
     category: 'Manual',
