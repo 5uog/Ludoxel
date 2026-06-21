@@ -1,6 +1,6 @@
 {
   "name": "ludoxel",
-  "version": "3.6.4",
+  "version": "3.6.5-beta.1",
   "private": true,
   "license": "LicenseRef-All-Rights-Reserved",
   "type": "module",

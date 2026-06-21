@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.5 Beta 1',
+    tags: ['Desktop Application', 'Player Animation', 'First-Person Rendering', 'AI Animation'],
+    sections: [
+      {
+        title: 'Arm Swing Timing',
+        items: [
+          'Changed the default arm swing duration from 0.30 seconds to 0.60 seconds by restoring the 12-tick timing used by runtime preferences, first-person swing playback, and AI attack swing playback.',
+          'Kept the beta scope limited to swing timing so the slower attack, breaking, placing, and AI swing cadence can be verified without introducing a broader animation rewrite.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.4',
     tags: ['Desktop Application', 'Player Animation', 'Third-Person Rendering', 'First-Person Rendering'],
     sections: [
