@@ -51,8 +51,8 @@ src/website/**/*.yml text eol=lf
 src/website/**/*.yaml text eol=lf
 
 # Store large video files through Git LFS instead of normal Git blobs.
-# *.mp4 filter=lfs diff=lfs merge=lfs -text
-# *.webm filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
 
 # Exclude dependency, build, cache, and local-output directories from generated Git archives.
 node_modules/ export-ignore
