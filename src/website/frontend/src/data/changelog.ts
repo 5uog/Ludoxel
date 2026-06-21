@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.5 Beta 2 Hotfix',
+    tags: ['Desktop Application', 'Audio', 'Windows'],
+    sections: [
+      {
+        title: 'Windows Audio Device Recovery',
+        items: [
+          'Rebound pooled sound effects and the ambient effect to the current default audio output when Windows reports an output-device change, preventing stale WASAPI streams from continuing after the endpoint is invalidated.',
+          'Scheduled the rebinding through the Qt event loop and resumed the ambient loop only when ambient audio is still active and audible, leaving material-sound routing, polyphony, cooldown, and mixer semantics unchanged.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.5 Beta 2',
     tags: ['Desktop Application', 'AI Settings', 'Third-Person Rendering', 'HUD', 'Player Animation'],
     sections: [

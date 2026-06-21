@@ -5,8 +5,8 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, QUrl
-from PyQt6.QtMultimedia import QSoundEffect
+from PyQt6.QtCore import QObject, QTimer, QUrl
+from PyQt6.QtMultimedia import QMediaDevices, QSoundEffect
 
 from ludoxel.application.preferences.audio import AUDIO_CATEGORY_AMBIENT, AudioPreferences
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -57,6 +57,8 @@ class AudioManager(QObject):
     self._sound_group_cache: dict[str, str] = {}
     self._pool_throttle_until_s: dict[str, float] = {}
     self._effects_primed: bool = False
+    self._media_devices = QMediaDevices(self)
+    self._audio_output_refresh_pending: bool = False
 
     self._listener_linear_epsilon = 0.05
     self._listener_angular_epsilon_deg = 1.0
@@ -64,6 +66,7 @@ class AudioManager(QObject):
     self._small_landing_threshold_blocks = 6.0
     self._big_landing_threshold_blocks = 12.0
 
+    self._connect_audio_device_change_signals()
     self._build_source_cache()
     self.prime_effects()
 
@@ -88,6 +91,7 @@ class AudioManager(QObject):
     self._listener_pose = None
     self._pool_throttle_until_s.clear()
     self._effects_primed = False
+    self._audio_output_refresh_pending = False
 
   def set_preferences(self, preferences: AudioPreferences) -> None:
     self._preferences = preferences.normalized()
@@ -206,6 +210,63 @@ class AudioManager(QObject):
     self._sound_group_cache[cache_key] = normalized
     return normalized
 
+  def _connect_audio_device_change_signals(self) -> None:
+    self._media_devices.audioOutputsChanged.connect(self._schedule_audio_output_refresh)
+
+  def _schedule_audio_output_refresh(self, *_args: object) -> None:
+    if self._audio_output_refresh_pending:
+      return
+
+    self._audio_output_refresh_pending = True
+    QTimer.singleShot(0, self._refresh_audio_output_bindings)
+
+  def _refresh_audio_output_bindings(self) -> None:
+    self._audio_output_refresh_pending = False
+
+    for prepared_group in tuple(self._prepared_sources.values()):
+      for prepared in tuple(prepared_group):
+        for slot in tuple(prepared.slots):
+          self._retarget_effect_to_default_audio_output(slot.effect)
+
+    if self._ambient_effect is None:
+      return
+
+    should_resume = self._ambient_key is not None and float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)) > 1e-6
+    self._ambient_transitioning = True
+    self._ambient_effect.stop()
+    self._retarget_effect_to_default_audio_output(self._ambient_effect)
+    self._ambient_transitioning = False
+
+    if should_resume:
+      self._ambient_pending_play = True
+      self._play_ambient_effect_when_ready()
+
+  def _retarget_effect_to_default_audio_output(self, effect: QSoundEffect) -> None:
+    device = self._default_audio_output_device()
+    if device is None:
+      return
+
+    effect.stop()
+    effect.setAudioDevice(device)
+
+  def _default_audio_output_device(self):
+    device = self._media_devices.defaultAudioOutput()
+    is_null = getattr(device, "isNull", None)
+    if callable(is_null) and bool(is_null()):
+      return None
+    return device
+
+  def _configure_effect_for_audio_output(self, effect: QSoundEffect) -> None:
+    self._retarget_effect_to_default_audio_output(effect)
+    if bool(effect.property("_ludoxel_audio_output_watch")):
+      return
+    effect.statusChanged.connect(lambda *_args, watched_effect=effect: self._on_effect_status_changed(watched_effect))
+    effect.setProperty("_ludoxel_audio_output_watch", True)
+
+  def _on_effect_status_changed(self, effect: QSoundEffect) -> None:
+    if effect.status() == QSoundEffect.Status.Error:
+      self._schedule_audio_output_refresh()
+
   def _collect_named_pools(self) -> dict[str, AudioSamplePool]:
     entries: dict[str, AudioSamplePool] = {}
 
@@ -307,10 +368,10 @@ class AudioManager(QObject):
     return slot_budget_per_source(pool, source_count=int(source_count))
 
   def _ensure_effect_slots(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float) -> None:
-    ensure_effect_slots(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
+    ensure_effect_slots(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output)
 
   def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float):
-    return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
+    return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output)
 
   def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3) -> bool:
     base_volume = float(self._preferences.volume_for(pool.category))
@@ -350,6 +411,7 @@ class AudioManager(QObject):
     effect = QSoundEffect(self)
     effect.setLoopCount(1)
     effect.setVolume(float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)))
+    self._configure_effect_for_audio_output(effect)
     effect.playingChanged.connect(self._on_ambient_playing_changed)
     effect.statusChanged.connect(self._on_ambient_status_changed)
 
@@ -455,6 +517,10 @@ class AudioManager(QObject):
     self._ambient_effect.play()
 
   def _on_ambient_status_changed(self) -> None:
+    if self._ambient_effect is not None and self._ambient_effect.status() == QSoundEffect.Status.Error:
+      self._schedule_audio_output_refresh()
+      return
+
     if self._ambient_pending_play:
       self._play_ambient_effect_when_ready()
 

@@ -1373,7 +1373,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
     group: 'Audio Feedback',
     title: 'Understanding Material Sounds',
     description:
-      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for break, place, interact, footstep, landing, and damage events, the playback admission with polyphony and cooldown, and the volume categories.',
+      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for break, place, interact, footstep, landing, and damage events, the playback admission with polyphony and cooldown, the volume categories, and the audio-output rebinding path that keeps pooled effects attached to the current platform output.',
     sections: [
       {
         id: 'material-sounds-groups',
@@ -1468,6 +1468,19 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
             text: 'Every sound belongs to one of the categories in `src/ludoxel/application/preferences/audio.py`: master, ambient, block, or player. `AudioPreferences.volume_for` returns the product of master and the category factor, each clamped to the unit interval. Block break, place, and interact sounds use the block category; footsteps, landings, and damage hits use the player category. The audio preference object is the boundary between the saved volume values and playback; the playback manager reads it and never alters simulation rules to make a sound.',
           },
           {
+            kind: 'paragraph',
+            text: 'The pooled-effect lifecycle also owns platform output recovery. `AudioManager` constructs `QMediaDevices`, listens for `audioOutputsChanged`, and schedules `_refresh_audio_output_bindings` through the Qt event loop. That refresh walks every prepared material and player slot and retargets each `QSoundEffect` to the current default output. A Windows WASAPI endpoint invalidation therefore changes the output binding of existing effect slots; it does not change the sound-group fallback chain, the event routing contract, the category gain formula, or the simulation state that emitted the sound.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/playback/manager.py',
+            code: `for prepared_group in tuple(self._prepared_sources.values()):
+  for prepared in tuple(prepared_group):
+    for slot in tuple(prepared.slots):
+      self._retarget_effect_to_default_audio_output(slot.effect)`,
+          },
+          {
             kind: 'math',
             math: {
               expression: 'g_{\\text{cat}} = \\mathrm{master} \\times \\mathrm{factor}_{\\text{cat}}, \\quad 0 \\le \\mathrm{master},\\ \\mathrm{factor}_{\\text{cat}} \\le 1',
@@ -1486,7 +1499,7 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
     group: 'Audio Feedback',
     title: 'Understanding Ambient Sounds',
     description:
-      'Documents the ambient audio loop in full: the ambient catalog and its single play-space key, the preference and play-space gating, the dedicated looping-effect lifecycle and its transition guard, the round-robin source rotation, and the boundary that keeps ambient audio distinct from material sounds.',
+      'Documents the ambient audio loop in full: the ambient catalog and its single play-space key, the preference and play-space gating, the dedicated looping-effect lifecycle and its transition guard, the round-robin source rotation, the current-output rebinding path used after platform audio-device changes, and the boundary that keeps ambient audio distinct from material sounds.',
     sections: [
       {
         id: 'ambient-sounds-catalog',
@@ -1550,6 +1563,20 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
           {
             kind: 'paragraph',
             text: 'Round-robin selection in `_pick_existing_url` advances through the four samples on each restart, so the loop varies across the wind tracks rather than repeating a single file. The effect is created once by `_ensure_ambient_effect` and reused; only its source is swapped. `set_preferences` re-applies the ambient volume to the effect and the category volume to every pooled slot.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The same manager also treats the ambient effect as an output-bound object. When Qt reports an output-device list change, `_refresh_audio_output_bindings` stops the ambient effect, assigns the current default audio output, and resumes only if an ambient key is still active and the ambient category remains audible. A device recovery therefore cannot resurrect muted ambient audio or start a loop in Othello; it only reattaches the already-authorized My World loop to the current desktop output.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/playback/manager.py',
+            code: `should_resume = self._ambient_key is not None and float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)) > 1e-6
+self._ambient_transitioning = True
+self._ambient_effect.stop()
+self._retarget_effect_to_default_audio_output(self._ambient_effect)
+self._ambient_transitioning = False`,
           },
         ],
       },
@@ -2047,7 +2074,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.5b2"`,
+            code: `__version__ = "3.6.5b2.post1"`,
           },
           {
             kind: 'note',
