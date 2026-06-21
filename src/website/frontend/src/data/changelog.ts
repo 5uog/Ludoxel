@@ -15,6 +15,34 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.4',
+    tags: ['Desktop Application', 'Player Animation', 'Third-Person Rendering', 'First-Person Rendering'],
+    sections: [
+      {
+        title: 'Head and Body Turning',
+        items: [
+          'Sped up the third-person body turn so it catches up to the look direction sooner while still trailing a fast turn instead of snapping instantly.',
+          'Gave the visible head its own slight yaw and pitch lag so it trails the camera by a few degrees, while keeping camera control, picking, placement, and the first-person view responding to the look direction with no delay.',
+        ],
+      },
+      {
+        title: 'First-Person Idle',
+        items: [
+          'Added a faint idle sway to the first-person held item, bare arm, and special item so the hands are not perfectly frozen while standing still.',
+          'Faded the first-person idle out while walking, swinging, or switching items so it never stacks onto the view bob or a swing.',
+        ],
+      },
+      {
+        title: 'Movement Swing',
+        items: [
+          'Reduced the third-person arm and leg swing when moving backward so a reverse step reads as a shorter stride than walking forward.',
+          'Added a sidestep to the third-person legs when strafing, rolling the legs laterally toward the step direction instead of only swinging them forward and back, and reflected the same motion in the ground shadow.',
+          'Balanced forward, backward, and strafe weighting so a diagonal move does not swing the arms and legs more than a straight forward stride at the same speed.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.3',
     tags: ['Desktop Application', 'Player Animation', 'Third-Person Rendering'],
     sections: [

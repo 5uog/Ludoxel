@@ -2,7 +2,7 @@
   <img src="assets/branding/ludoxel_banner.png" alt="Ludoxel" width="100%">
 </p>
 
-# Ludoxel v3.6.3 法務情報
+# Ludoxel v3.6.4 法務情報
 
 ## プロジェクト概要
 

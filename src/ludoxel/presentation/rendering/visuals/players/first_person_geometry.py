@@ -58,6 +58,13 @@ _ARM_ROT_Y_DEG = -60.0
 _ARM_POSTROTATION_X_OFFSET_PX = 5.6
 _ARM_FIRSTPERSON_SCALE = 1.18
 
+# First-person idle: a minute camera-space breathing applied to the neutral hand pose
+# so the held item, arm, and special item are not perfectly frozen while standing.
+_FP_IDLE_FREQ_A = 1.1
+_FP_IDLE_FREQ_B = 0.8
+_FP_IDLE_TRANS_AMP = 0.012
+_FP_IDLE_ROT_AMP_DEG = 1.2
+
 _BLOCK_FIRSTPERSON_TRANSLATE_PX = (0.0, 2.5, 0.0)
 _BLOCK_FIRSTPERSON_ROTATE_DEG = (5.0, -45.0, 10.0)
 _BLOCK_FIRSTPERSON_SCALE = (0.5, 0.5, 0.5)
@@ -103,6 +110,18 @@ def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
   )
 
 
+def _idle_sway_transform(first_person: FirstPersonRenderState) -> np.ndarray:
+  weight = clampf(float(first_person.idle_sway_weight), 0.0, 1.0)
+  if weight <= 1e-6:
+    return identity_matrix()
+  t = float(first_person.idle_time_s)
+  tx = math.sin(t * _FP_IDLE_FREQ_A) * _FP_IDLE_TRANS_AMP * weight
+  ty = math.cos(t * _FP_IDLE_FREQ_B) * _FP_IDLE_TRANS_AMP * weight
+  rot_x = math.cos(t * _FP_IDLE_FREQ_A) * _FP_IDLE_ROT_AMP_DEG * weight
+  rot_z = math.sin(t * _FP_IDLE_FREQ_B) * _FP_IDLE_ROT_AMP_DEG * weight
+  return compose_matrices(translate_matrix(float(tx), float(ty), 0.0), rotate_x_deg_matrix(float(rot_x)), rotate_z_deg_matrix(float(rot_z)))
+
+
 def build_main_hand_common_transform(first_person: FirstPersonRenderState) -> np.ndarray:
   root, squared, full, twice = _arm_swing_terms(first_person)
   return compose_matrices(
@@ -119,6 +138,7 @@ def build_first_person_item_camera_transform(first_person: FirstPersonRenderStat
   uniform_scale = float(render_scale_multiplier)
   return compose_matrices(
     _view_bob_transform(first_person),
+    _idle_sway_transform(first_person),
     build_main_hand_common_transform(first_person),
     translate_matrix(float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[0]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[1]) * _PX, float(_BLOCK_FIRSTPERSON_TRANSLATE_PX[2]) * _PX),
     rotate_x_deg_matrix(float(_BLOCK_FIRSTPERSON_ROTATE_DEG[0])),
@@ -146,6 +166,7 @@ def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState
   arm_rot_x_deg = clampf(float(_ARM_ROT_X_DEG), float(first_person.arm_rotation_limit_min_deg), float(first_person.arm_rotation_limit_max_deg))
   return compose_matrices(
     _view_bob_transform(first_person),
+    _idle_sway_transform(first_person),
     translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)),
     translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)),
     rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)),

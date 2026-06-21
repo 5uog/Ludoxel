@@ -18,11 +18,16 @@ PLAYER_WALK_MAX_SWING_SCALE = 1.35
 PLAYER_FOOTSTEP_MIN_SPEED = 0.15
 FALL_DAMAGE_SAFE_DISTANCE_BLOCKS = 3.0
 
-# Visual-only body/head yaw separation: the rendered body yaw lags the immediate
-# look yaw with a frame-rate-independent time constant, while the head keeps a
-# bounded relative yaw so the head leads and the body follows a fast turn.
-PLAYER_BODY_YAW_FOLLOW_TAU_S = 0.42
-PLAYER_HEAD_BODY_YAW_MAX_DEG = 68.0
+# Visual-only body/head yaw separation. The rendered body yaw follows the immediate
+# look yaw with a frame-rate-independent time constant and stays within a bounded
+# relative angle, so the body trails a turn but catches up quickly. The visible head
+# carries its own short yaw/pitch lag, bounded by small maximum angles, so the head
+# trails the camera by a few degrees without delaying input, picking, or the camera.
+PLAYER_BODY_YAW_FOLLOW_TAU_S = 0.24
+PLAYER_HEAD_BODY_YAW_MAX_DEG = 58.0
+PLAYER_HEAD_VISUAL_LAG_TAU_S = 0.09
+PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG = 12.0
+PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG = 6.0
 
 
 @dataclass
@@ -32,6 +37,8 @@ class PlayerMotionState:
   airborne_start_y: float | None = None
   visual_time_s: float = 0.0
   body_visual_yaw_deg: float | None = None
+  head_visual_yaw_deg: float | None = None
+  head_visual_pitch_deg: float | None = None
 
 
 @dataclass(frozen=True)
@@ -87,29 +94,32 @@ def _update_step_eye(player: PlayerEntity, *, dt: float) -> None:
   player.step_eye_offset = float(next_value)
 
 
+def _ease_angle_toward(current: float | None, target: float, *, tau: float, dt: float, max_lag_deg: float) -> float:
+  if current is None:
+    return float(math.remainder(float(target), 360.0))
+  diff = float(math.remainder(float(target) - float(current), 360.0))
+  alpha = 1.0 - math.exp(-float(dt) / float(tau)) if float(tau) > 1e-6 else 1.0
+  next_value = float(current) + float(diff) * float(alpha)
+  remaining = float(math.remainder(float(target) - float(next_value), 360.0))
+  if remaining > float(max_lag_deg):
+    next_value = float(target) - float(max_lag_deg)
+  elif remaining < -float(max_lag_deg):
+    next_value = float(target) + float(max_lag_deg)
+  return float(math.remainder(float(next_value), 360.0))
+
+
 def _update_player_visual_animation(player: PlayerEntity, *, motion: PlayerMotionState, dt: float) -> None:
   step = max(0.0, float(dt))
   motion.visual_time_s = float(motion.visual_time_s) + float(step)
-
-  target = float(player.yaw_deg)
-  current = motion.body_visual_yaw_deg
-  if current is None:
-    motion.body_visual_yaw_deg = float(math.remainder(target, 360.0))
-    return
-
-  diff = float(math.remainder(target - float(current), 360.0))
-  tau = float(PLAYER_BODY_YAW_FOLLOW_TAU_S)
-  alpha = 1.0 - math.exp(-float(step) / tau) if tau > 1e-6 else 1.0
-  next_yaw = float(current) + float(diff) * float(alpha)
-
-  remaining = float(math.remainder(target - float(next_yaw), 360.0))
-  max_sep = float(PLAYER_HEAD_BODY_YAW_MAX_DEG)
-  if remaining > max_sep:
-    next_yaw = float(target) - float(max_sep)
-  elif remaining < -max_sep:
-    next_yaw = float(target) + float(max_sep)
-
-  motion.body_visual_yaw_deg = float(math.remainder(float(next_yaw), 360.0))
+  motion.body_visual_yaw_deg = _ease_angle_toward(
+    motion.body_visual_yaw_deg, float(player.yaw_deg), tau=float(PLAYER_BODY_YAW_FOLLOW_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_BODY_YAW_MAX_DEG)
+  )
+  motion.head_visual_yaw_deg = _ease_angle_toward(
+    motion.head_visual_yaw_deg, float(player.yaw_deg), tau=float(PLAYER_HEAD_VISUAL_LAG_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG)
+  )
+  motion.head_visual_pitch_deg = _ease_angle_toward(
+    motion.head_visual_pitch_deg, float(player.pitch_deg), tau=float(PLAYER_HEAD_VISUAL_LAG_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG)
+  )
 
 
 def _update_player_walk_phase(player: PlayerEntity, *, motion: PlayerMotionState, dt: float, walk_speed: float) -> bool:

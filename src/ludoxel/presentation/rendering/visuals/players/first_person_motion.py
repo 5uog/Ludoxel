@@ -27,6 +27,7 @@ class FirstPersonMotionSample:
   show_arm: bool
   show_view_model: bool
   slim_arm: bool
+  idle_time_s: float = 0.0
 
 
 class FirstPersonMotionController:
@@ -44,6 +45,7 @@ class FirstPersonMotionController:
     self.show_view_model: bool = True
     self.slim_arm: bool = bool(slim_arm)
     self.swing_duration_s: float = float(_SWING_DURATION_S)
+    self._visual_time_s: float = 0.0
 
     self._equip_lowering: bool = False
     self._equip_raising: bool = False
@@ -92,6 +94,7 @@ class FirstPersonMotionController:
 
   def update(self, dt: float) -> None:
     step = max(0.0, float(dt))
+    self._visual_time_s = float(self._visual_time_s) + float(step)
 
     self.prev_equip_progress = float(self.equip_progress)
     self.prev_swing_progress = float(self.swing_progress)
@@ -138,4 +141,5 @@ class FirstPersonMotionController:
       show_arm=bool(self.show_arm),
       show_view_model=bool(self.show_view_model),
       slim_arm=bool(self.slim_arm),
+      idle_time_s=float(self._visual_time_s),
     )

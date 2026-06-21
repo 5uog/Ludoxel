@@ -9,6 +9,10 @@ from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.actors.player.kinematics import PLAYER_HEAD_BODY_YAW_MAX_DEG, PLAYER_WALK_MAX_SWING_SCALE, PlayerMotionState
 
+# First-person view bob is reduced while moving backward so a reverse step does not
+# read as a full forward stride.
+_BACKWARD_VIEW_BOB_SCALE = 0.7
+
 
 def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionState, walk_speed: float, is_first_person_view: bool) -> PlayerModelSnapshotDTO:
   speed = math.hypot(float(player.velocity.x), float(player.velocity.z))
@@ -19,7 +23,17 @@ def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionSta
   walk_speed_safe = max(1e-6, float(walk_speed))
   speed_ratio = clampf(float(speed) / float(walk_speed_safe), 0.0, float(PLAYER_WALK_MAX_SWING_SCALE))
   limb_swing_amount = 0.5 * float(speed_ratio)
+
+  yaw_rad = math.radians(float(player.yaw_deg))
+  forward_speed = float(player.velocity.x) * (-math.sin(yaw_rad)) + float(player.velocity.z) * math.cos(yaw_rad)
+  strafe_speed = float(player.velocity.x) * math.cos(yaw_rad) + float(player.velocity.z) * math.sin(yaw_rad)
+  max_ratio = float(PLAYER_WALK_MAX_SWING_SCALE)
+  limb_forward_ratio = clampf(float(forward_speed) / float(walk_speed_safe), -max_ratio, max_ratio)
+  limb_strafe_ratio = clampf(float(strafe_speed) / float(walk_speed_safe), -max_ratio, max_ratio)
+
   bob = 0.5 * float(speed_ratio)
+  if float(forward_speed) < -1e-6:
+    bob *= float(_BACKWARD_VIEW_BOB_SCALE)
   if bool(player.flying):
     bob *= 0.40
   elif not bool(player.on_ground):
@@ -39,7 +53,9 @@ def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionSta
   fp_roll_deg = float(sin_phase * bob * 4.0)
 
   body_visual_yaw_deg = float(player.yaw_deg) if motion.body_visual_yaw_deg is None else float(motion.body_visual_yaw_deg)
-  head_yaw_rel_deg = clampf(float(math.remainder(float(player.yaw_deg) - float(body_visual_yaw_deg), 360.0)), -float(PLAYER_HEAD_BODY_YAW_MAX_DEG), float(PLAYER_HEAD_BODY_YAW_MAX_DEG))
+  head_visual_yaw_deg = float(player.yaw_deg) if motion.head_visual_yaw_deg is None else float(motion.head_visual_yaw_deg)
+  head_visual_pitch_deg = float(player.pitch_deg) if motion.head_visual_pitch_deg is None else float(motion.head_visual_pitch_deg)
+  head_yaw_rel_deg = clampf(float(math.remainder(float(head_visual_yaw_deg) - float(body_visual_yaw_deg), 360.0)), -float(PLAYER_HEAD_BODY_YAW_MAX_DEG), float(PLAYER_HEAD_BODY_YAW_MAX_DEG))
 
   return PlayerModelSnapshotDTO(
     base_x=float(player.position.x),
@@ -47,9 +63,11 @@ def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionSta
     base_z=float(player.position.z),
     body_yaw_deg=float(body_visual_yaw_deg),
     head_yaw_deg=float(head_yaw_rel_deg),
-    head_pitch_deg=float(player.pitch_deg),
+    head_pitch_deg=float(head_visual_pitch_deg),
     limb_phase_rad=float(motion.walk_phase_rad),
     limb_swing_amount=float(limb_swing_amount),
+    limb_forward_ratio=float(limb_forward_ratio),
+    limb_strafe_ratio=float(limb_strafe_ratio),
     crouch_amount=float(crouch_amount),
     idle_anim_time_s=float(motion.visual_time_s),
     hurt_tint_strength=float(player.hurt_flash_strength()),

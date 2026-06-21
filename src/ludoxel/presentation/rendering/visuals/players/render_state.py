@@ -27,6 +27,8 @@ class FirstPersonRenderState:
   view_bob_roll_deg: float = 0.0
   arm_rotation_limit_min_deg: float = -180.0
   arm_rotation_limit_max_deg: float = 180.0
+  idle_time_s: float = 0.0
+  idle_sway_weight: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,8 @@ class PlayerRenderState:
   limb_phase_rad: float
   limb_swing_amount: float
   crouch_amount: float
+  limb_forward_ratio: float = 0.0
+  limb_strafe_ratio: float = 0.0
   idle_anim_time_s: float = 0.0
   hurt_tint_strength: float = 0.0
   is_first_person: bool = True

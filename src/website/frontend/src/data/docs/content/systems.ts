@@ -362,7 +362,7 @@ return (runtime, othello_game_state)`,
           {
             kind: 'paragraph',
             text: [
-              'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, the body and head angles, limb phase and swing, crouch amount, an `idle_anim_time_s` visual-animation clock, hurt tint, the six first-person view-model channels, and a first-person flag. Here `body_yaw_deg` is the lagged visual body yaw and `head_yaw_deg` is the head yaw measured relative to that body, not the raw look yaw; how those two angles are produced and consumed is owned by the ',
+              'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, the body and head angles, limb phase and swing, the signed `limb_forward_ratio` and `limb_strafe_ratio` that report the local movement direction, crouch amount, an `idle_anim_time_s` visual-animation clock, hurt tint, the six first-person view-model channels, and a first-person flag. Here `body_yaw_deg` is the lagged visual body yaw, `head_yaw_deg` is the lagged visual head yaw measured relative to that body rather than the raw look yaw, and `head_pitch_deg` is the lagged visual head pitch; how those angles and the movement ratios are produced and consumed is owned by the ',
               {
                 kind: 'link',
                 label: 'player-model pose',
@@ -399,7 +399,7 @@ class RenderSnapshotDTO:
           },
           {
             kind: 'paragraph',
-            text: '`make_render_snapshot_for_session` composes the camera and the player model and then scales only the first-person view-model channels by the view-bobbing strength, clamped to the unit interval and forced to zero when bobbing is disabled. It also projects the interpolated gravity samples into falling-block DTOs. The player projection itself is `build_player_model_snapshot` in `src/ludoxel/application/sessions/pipelines/player_model.py`, which converts the mutable entity and motion state into renderer-facing scalars, deriving crouch amount from the eye drop and the first-person bob from the walk phase. It also reads the lagged visual body yaw and the always-advancing visual clock from the motion state, emitting `body_yaw_deg` as the visual body yaw, `head_yaw_deg` as the look yaw taken relative to it and clamped to the maximum head separation, and `idle_anim_time_s` as the clock that drives idle animation.',
+            text: '`make_render_snapshot_for_session` composes the camera and the player model and then scales only the first-person view-model channels by the view-bobbing strength, clamped to the unit interval and forced to zero when bobbing is disabled. It also projects the interpolated gravity samples into falling-block DTOs. The player projection itself is `build_player_model_snapshot` in `src/ludoxel/application/sessions/pipelines/player_model.py`, which converts the mutable entity and motion state into renderer-facing scalars, deriving crouch amount from the eye drop and the first-person bob from the walk phase. It also decomposes the horizontal velocity in the look frame into signed forward and strafe ratios, and reads the lagged visual body yaw, the lagged visual head yaw and pitch, and the always-advancing visual clock from the motion state. It emits `body_yaw_deg` as the visual body yaw, `head_yaw_deg` as the lagged visual head yaw taken relative to the body and clamped to the maximum head separation, `head_pitch_deg` as the lagged visual head pitch, the two movement ratios, and `idle_anim_time_s` as the clock that drives idle animation. The first-person bob is additionally reduced while the forward ratio is negative so a backward step does not bob like a forward stride.',
           },
           {
             kind: 'math',
@@ -435,7 +435,7 @@ class RenderSnapshotDTO:
           },
           {
             kind: 'paragraph',
-            text: 'The render-state types in `src/ludoxel/presentation/rendering/visuals/players/render_state.py` are frozen and serve as cache keys. `PlayerRenderState` carries base pose, the visual body and relative head angles, locomotion phase, crouch, the `idle_anim_time_s` clock, the perspective flag, a resolved `skin_texture_key`, and an optional `FirstPersonRenderState`; two actors with the same pose but different skins are distinct cache entries because the key includes the skin reference, and because the idle clock advances every step a standing actor still produces a fresh key each step so its idle motion animates. `FirstPersonRenderState` carries the visible and target item identifiers, the held block kind, the special-item icon, equip and swing progress, the arm and view-model flags, the view-bob channels, and the arm rotation limits, so the first-person view model is reconstructed from one sample.',
+            text: 'The render-state types in `src/ludoxel/presentation/rendering/visuals/players/render_state.py` are frozen and serve as cache keys. `PlayerRenderState` carries base pose, the visual body and relative head angles, locomotion phase, crouch, the signed `limb_forward_ratio` and `limb_strafe_ratio`, the `idle_anim_time_s` clock, the perspective flag, a resolved `skin_texture_key`, and an optional `FirstPersonRenderState`; two actors with the same pose but different skins are distinct cache entries because the key includes the skin reference, and because the idle clock advances every step a standing actor still produces a fresh key each step so its idle motion animates. `FirstPersonRenderState` carries the visible and target item identifiers, the held block kind, the special-item icon, equip and swing progress, the arm and view-model flags, the view-bob channels, the arm rotation limits, and an `idle_time_s` clock with an `idle_sway_weight`, so the first-person view model is reconstructed from one sample. The idle weight is computed by the composer from the walk amount, swing, and equip progress, and `src/ludoxel/presentation/rendering/visuals/players/first_person_geometry.py` applies a faint camera-space breathing to the held item, arm, and special item that fades to nothing while walking, swinging, or switching items.',
           },
           {
             kind: 'note',
@@ -1218,40 +1218,42 @@ sy = _snap(float(cy), float(texel))`,
       },
       {
         id: 'player-model-pose-body-yaw',
-        title: 'The Body Yaw Follows the Look With a Delay',
+        title: 'The Body and Head Trail the Look',
         content: [
           {
             kind: 'paragraph',
-            text: '`PlayerMotionState` in `src/ludoxel/simulation/actors/player/kinematics.py` carries a runtime-only `body_visual_yaw_deg` and a `visual_time_s` clock. Neither is persisted; both are reset with the rest of the motion state on respawn. During each fixed step, after the look yaw is applied to the player, `_update_player_visual_animation` advances the visual clock and eases the visual body yaw toward the immediate look yaw with a frame-rate-independent factor. The AI manager advances its actors through the same `advance_runtime_player`, so every body, player and actor alike, receives the same delayed turn.',
+            text: '`PlayerMotionState` in `src/ludoxel/simulation/actors/player/kinematics.py` carries a runtime-only `visual_time_s` clock together with a `body_visual_yaw_deg`, a `head_visual_yaw_deg`, and a `head_visual_pitch_deg`. None are persisted; all are reset with the rest of the motion state on respawn. During each fixed step, after the look yaw and pitch are applied to the player, `_update_player_visual_animation` advances the clock and eases each visual angle toward the immediate look angle through the shared `_ease_angle_toward` helper. The AI manager advances its actors through the same `advance_runtime_player`, so every body, player and actor alike, trails its look the same way.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/player/kinematics.py',
-            code: `diff = float(math.remainder(target - float(current), 360.0))
-tau = float(PLAYER_BODY_YAW_FOLLOW_TAU_S)
-alpha = 1.0 - math.exp(-float(step) / tau) if tau > 1e-6 else 1.0
-next_yaw = float(current) + float(diff) * float(alpha)
-
-remaining = float(math.remainder(target - float(next_yaw), 360.0))
-max_sep = float(PLAYER_HEAD_BODY_YAW_MAX_DEG)
-if remaining > max_sep:
-  next_yaw = float(target) - float(max_sep)
-elif remaining < -max_sep:
-  next_yaw = float(target) + float(max_sep)`,
+            code: `def _ease_angle_toward(current, target, *, tau, dt, max_lag_deg):
+  if current is None:
+    return float(math.remainder(float(target), 360.0))
+  diff = float(math.remainder(float(target) - float(current), 360.0))
+  alpha = 1.0 - math.exp(-float(dt) / float(tau)) if float(tau) > 1e-6 else 1.0
+  next_value = float(current) + float(diff) * float(alpha)
+  remaining = float(math.remainder(float(target) - float(next_value), 360.0))
+  if remaining > float(max_lag_deg):
+    next_value = float(target) - float(max_lag_deg)
+  elif remaining < -float(max_lag_deg):
+    next_value = float(target) + float(max_lag_deg)
+  return float(math.remainder(float(next_value), 360.0))`,
           },
           {
             kind: 'math',
             math: {
               expression:
-                '\\alpha = 1 - e^{-\\Delta t / \\tau}, \\qquad \\psi_{b} \\leftarrow \\psi_{b} + \\alpha \\cdot \\operatorname{rem}\\!\\left(\\psi_{\\ell} - \\psi_{b},\\ 360^{\\circ}\\right)',
+                '\\alpha = 1 - e^{-\\Delta t / \\tau}, \\qquad \\psi \\leftarrow \\psi + \\alpha \\cdot \\operatorname{rem}\\!\\left(\\psi_{\\ell} - \\psi,\\ 360^{\\circ}\\right), \\qquad \\lvert \\psi_{\\ell} - \\psi \\rvert \\le \\Lambda',
               displayMode: true,
-              caption: 'The visual body yaw ψ_b eases toward the look yaw ψ_ℓ with time constant τ; the signed remainder takes the shortest path so a turn past ±180° never spins the long way around.',
+              caption:
+                'Each visual angle ψ eases toward its look target ψ_ℓ with a time constant τ and is held within a maximum lag Λ. The body uses a longer τ and a large Λ; the head uses a short τ and a small Λ. The signed remainder takes the shortest path, so a turn past ±180° never spins the long way around.',
             },
           },
           {
             kind: 'paragraph',
-            text: 'The signed remainder is what fixes wrap-around: turning from `179°` to `-179°` is a two-degree move, not a three-hundred-fifty-eight-degree spin. After easing, the body yaw is forced to stay within `PLAYER_HEAD_BODY_YAW_MAX_DEG` of the look yaw, so a fast flick snaps the body just enough to keep the head ahead by at most that bound and then lets the body settle. `build_player_model_snapshot` reads the eased value as the absolute `body_yaw_deg` and the clamped signed remainder as the relative `head_yaw_deg`; the pose builder applies the body yaw at the model root and the head yaw at the head group, so the head total equals the look yaw while the body trails it. The look yaw the player entity holds is unchanged, so camera placement, picking, placement, and collision keep responding to the turn without any delay.',
+            text: 'The body follows with `PLAYER_BODY_YAW_FOLLOW_TAU_S` and is held within `PLAYER_HEAD_BODY_YAW_MAX_DEG` of the look, so it trails a turn and then catches up quickly. The head follows the look with the much shorter `PLAYER_HEAD_VISUAL_LAG_TAU_S` but is held within only `PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG` of yaw and `PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG` of pitch, so during a fast turn the head trails the camera by at most a few degrees while the body trails further behind. `build_player_model_snapshot` emits `body_yaw_deg` as the absolute visual body yaw, `head_yaw_deg` as the lagged visual head yaw taken relative to the body and clamped to the body separation, and `head_pitch_deg` as the lagged visual head pitch; the pose builder applies the body yaw at the model root, the head yaw at the head group, and the head pitch at the head only, so the body never tilts with the look. The look yaw and pitch the player entity holds are unchanged, so camera placement, picking, placement, collision, the crosshair, and the first-person view keep responding to the turn with no delay.',
           },
         ],
       },
@@ -1322,6 +1324,43 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
           {
             kind: 'paragraph',
             text: 'The forward pitch rotates the arm in the plane that holds its model `X`, so the hand stays on the outward side of the torso through the whole swing, and the held block or special item, anchored to that hand, swings forward with it instead of sweeping across the chest in the front view or out through the back in the rear view. Because the held-item parent transform and the shadow rows are built from the same arm matrices, the visible swing, the held item, and the ground shadow all follow one motion. The attack weight, derived separately from the swing progress, damps the walk swing and idle sway on the main hand during the strike so the forward pitch dominates while the swing is active.',
+          },
+        ],
+      },
+      {
+        id: 'player-model-pose-movement-direction',
+        title: 'Movement Direction Shapes the Limb Swing',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`build_player_model_snapshot` decomposes the horizontal velocity in the look frame into a signed `limb_forward_ratio` and a signed `limb_strafe_ratio`, each the dot product of the velocity with the look forward or right basis over the walk speed. The pose builder reads those ratios so the limbs are shaped by direction, not only by raw speed: the forward component drives the fore and aft stride, a negative forward component damps it, and the strafe component adds a sidestep. The walk phase still advances from the overall speed, so the legs and arms keep their alternating cadence in every direction.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
+            code: `backward_scale = 1.0 if forward_ratio >= -1e-6 else _BACKWARD_SWING_SCALE
+fore_aft_amp = 0.5 * abs(forward_ratio) * backward_scale
+strafe_lean = clampf(strafe_ratio, -1.0, 1.0)
+pitch_amp = clampf(fore_aft_amp + abs(strafe_lean) * _STRAFE_FOREAFT_SCALE, 0.0, swing)
+leg_side_base = strafe_lean * _LEG_STRAFE_ROLL_BASE
+leg_side_swing = strafe_lean * _LEG_STRAFE_ROLL_SCISSOR
+right_leg_rot_z = leg_side_base + leg_side_swing * walk_r
+left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'A_{fa} = \\tfrac{1}{2}\\,\\lvert f \\rvert\\,k_{back}, \\qquad A_{pitch} = \\operatorname{clamp}\\bigl(A_{fa} + \\lvert s \\rvert\\,c_{fa},\\ 0,\\ A_{swing}\\bigr), \\qquad \\rho_{leg} = s\\,b \\pm s\\,c\\,\\sin\\varphi',
+              displayMode: true,
+              caption:
+                'The fore/aft pitch amplitude A_pitch follows the forward ratio f, is damped by k_back while moving backward, adds a small strafe term, and is capped at the total-speed swing A_swing. The leg side roll ρ_leg carries a strafe lean s with a per-leg scissor of opposite phase.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: 'The fore and aft amplitude follows the magnitude of the forward ratio and is multiplied by `_BACKWARD_SWING_SCALE` when that ratio is negative, so a backward step takes a visibly shorter stride than a forward one. A strafe adds a small fore and aft step and a lateral leg roll about the hip; capping the combined fore and aft at the total-speed swing keeps a diagonal from swinging more than a straight forward stride at the same speed. The legs roll with `rot_z` at the hip rather than translating, so the foot moves laterally while the leg root stays joined to the body, and because the leg matrices also build the shadow rows, the sidestep appears in the ground shadow. Side direction is read from the model `+X` and `-X` positions, not the leg variable names, so a strafe toward the player right rolls both feet toward `+X` whichever variable holds that side.',
           },
         ],
       },
@@ -2008,7 +2047,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.3"`,
+            code: `__version__ = "3.6.4"`,
           },
           {
             kind: 'note',

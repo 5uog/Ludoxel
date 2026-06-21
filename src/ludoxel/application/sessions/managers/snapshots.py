@@ -81,6 +81,8 @@ def make_render_snapshot_for_session(
     limb_phase_rad=float(player_model.limb_phase_rad),
     limb_swing_amount=float(player_model.limb_swing_amount),
     crouch_amount=float(player_model.crouch_amount),
+    limb_forward_ratio=float(player_model.limb_forward_ratio),
+    limb_strafe_ratio=float(player_model.limb_strafe_ratio),
     idle_anim_time_s=float(player_model.idle_anim_time_s),
     hurt_tint_strength=float(player_model.hurt_tint_strength),
     first_person_tx=float(player_model.first_person_tx) * float(scale),
