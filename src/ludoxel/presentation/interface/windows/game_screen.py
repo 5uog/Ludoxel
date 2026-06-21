@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from ludoxel.presentation.interface.common.status_overlay import StatusOverlayFrame, status_overlay_title_image_path
@@ -61,6 +61,11 @@ class GameScreen(QWidget):
 
   def _handle_loading_finished(self) -> None:
     self._loading_overlay.hide()
+    QTimer.singleShot(0, self._focus_viewport_after_loading)
+
+  def _focus_viewport_after_loading(self) -> None:
+    if bool(self.viewport.loading_active()):
+      return
     self.viewport.setFocus(Qt.FocusReason.OtherFocusReason)
 
   def _handle_loading_state_changed(self, active: bool) -> None:

@@ -53,7 +53,7 @@ class ViewportLifecycleMixin:
     overlay_controller.open_pause_menu(self)
 
   def _sync_runtime_activity(self: "GLViewportWidget") -> None:
-    self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and bool(self._application_active) and (not bool(self._shutdown_done)))
+    self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and (bool(self._application_active) or bool(self.loading_active())) and (not bool(self._shutdown_done)))
 
   def _on_frame_swapped(self: "GLViewportWidget") -> None:
     self._hud_ctl.on_present_frame()

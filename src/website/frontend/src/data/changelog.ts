@@ -15,16 +15,14 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
-    date: 'Unreleased',
-    tags: ['Website', 'Documentation'],
+    date: 'v3.6.2',
+    tags: ['Desktop Application', 'Startup'],
     sections: [
       {
-        title: 'Public website updates',
+        title: 'Viewport Loading',
         items: [
-          'Removed the standalone Download page from routing, navigation, and search.',
-          'Changed the Get started action to open the Ludoxel GitHub repository.',
-          'Removed the home category, support, assistant preview, application image, and custom visual sections.',
-          'Restored the documentation navigation layout, active section indicators, mobile navigation access, and search dialog behavior.',
+          'Continued viewport preparation when Ludoxel loses desktop focus during startup, so loading status can advance while visible chunks are prepared.',
+          'Completed startup loading by closing the splash, restoring the active main window when appropriate, and then returning focus to the loaded viewport.',
         ],
       },
     ],

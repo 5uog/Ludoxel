@@ -302,9 +302,20 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   app.processEvents()
 
   viewport = w._screen.viewport
+  startup_loading_finished = False
+
+  def _finish_startup_loading() -> None:
+    nonlocal startup_loading_finished
+    if bool(startup_loading_finished):
+      return
+    startup_loading_finished = True
+    splash.close()
+    _set_activation_callback(w.request_activation)
+    if app.applicationState() == Qt.ApplicationState.ApplicationActive:
+      w.request_activation()
+
   viewport.loading_status_changed.connect(splash.set_status_text)
-  viewport.loading_finished.connect(splash.close)
-  viewport.loading_finished.connect(lambda: _set_activation_callback(w.request_activation))
+  viewport.loading_finished.connect(_finish_startup_loading)
   splash.set_status_text(viewport.loading_status_text())
   if bool(w.wants_fullscreen()):
     w.showFullScreen()

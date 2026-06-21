@@ -181,8 +181,8 @@ if not launch_player_name:
         title: 'The Host Window and the Viewport Are Separate Milestones',
         body: [
           '`MainWindow` is the host. It stores the resolved roots, constructs `GameScreen`, installs that screen as its central widget, and connects fullscreen behavior to the viewport. The existence of this host window proves that startup has passed the shell admission gates. It does not prove that the viewport has finished loading, that a play-space rule has executed, or that saved state has been applied without later contradiction.',
-          '`GameScreen` chooses the platform viewport widget, constructs the HUD, and displays a loading overlay whose initial status is `Preparing viewport...`. The overlay is bound to the viewport loading-state and loading-status signals. Until `loading_finished` hides that overlay and gives focus to the viewport, the process remains at the boundary between desktop admission and ordinary play-space interaction.',
-          'The startup splash in the presentation shell follows the same status channel. It connects to `viewport.loading_status_changed`, closes on `viewport.loading_finished`, and only then leaves the ordinary window as the visible surface. A visible splash, a host window with `Preparing viewport...`, and a focused viewport are three distinct observations; collapsing them into a single "opened" condition destroys the implemented startup order.',
+          '`GameScreen` chooses the platform viewport widget, constructs the HUD, and displays a loading overlay whose initial status is `Preparing viewport...`. The overlay is bound to the viewport loading-state and loading-status signals. `loading_finished` hides the overlay and queues the viewport focus transfer so the startup shell can finish its own completion work first.',
+          'The startup splash in `src/ludoxel/presentation/interface/windows/main.py` follows the same status channel. On the first `loading_finished`, the shell closes `startupSplash`, restores the main window only when `QApplication` is active, and leaves the deferred viewport focus transfer to `GameScreen`. A visible splash, a host window with `Preparing viewport...`, and a focused viewport are distinct execution positions; they are not interchangeable evidence that ordinary play-space interaction has started.',
         ],
         codeBlocks: [
           {
@@ -218,15 +218,38 @@ self.viewport.loading_finished.connect(self._handle_loading_finished)`,
           },
           {
             language: 'py',
-            caption: 'Viewport completion hides the overlay and transfers focus to the viewport.',
+            caption: 'Viewport completion hides the overlay, then defers the focus transfer until the current signal delivery completes.',
             code: `def _handle_loading_finished(self) -> None:
   self._loading_overlay.hide()
+  QTimer.singleShot(0, self._focus_viewport_after_loading)
+
+def _focus_viewport_after_loading(self) -> None:
+  if bool(self.viewport.loading_active()):
+    return
   self.viewport.setFocus(Qt.FocusReason.OtherFocusReason)
 
 def _handle_loading_state_changed(self, active: bool) -> None:
   self._loading_overlay.setVisible(bool(active))
   if bool(active):
     self._loading_overlay.raise_()`,
+          },
+        ],
+      },
+      {
+        id: 'starting-ludoxel-viewport-preparation-when-inactive',
+        title: 'Viewport Preparation Continues Without Gameplay Focus',
+        body: [
+          '`LoadingState` in `src/ludoxel/presentation/interface/viewport/render_loop/frame_sync.py` owns the active flag, text, and chunk-progress pair. Renderer initialization enters that state through `_begin_loading`; `paintGL` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` drains and schedules `WorldUploadTracker` work, updates `Loading world... ready/total chunks`, and calls `_finish_loading` only after the visible chunk set is resident. The status is therefore produced by viewport preparation, not by a splash timer or a fixed message.',
+          '`ViewportLifecycleMixin._on_application_state_changed` still clears held input, releases mouse capture, and suppresses the delayed pause while loading. Its runtime-activity gate now keeps the render timer alive when the initialized viewport remains visible and loading is active, even if `_application_active` is false. `_tick_sim` and `_on_step` continue to return during loading, so inactive startup does not advance player simulation, gameplay input, pause state, HUD interaction, or ordinary capture.',
+          'When visible chunks become ready, `_finish_loading` clears loading state, updates HUD and cloud-motion state, re-evaluates runtime activity, emits `loading_state_changed(False)`, and emits `loading_finished`. The initial completion handler closes the splash before activating the main window when the application is already active; the queued `GameScreen` callback then focuses the viewport. This keeps preparation independent of foreground focus without making Ludoxel request foreground activation from an inactive desktop application.',
+          'The implementation keeps Ludoxel-owned Qt timers and the render/upload path eligible to run during this specific inactive loading state. It does not establish that an operating system will display frames while the process is hidden, suspended, or denied rendering by the window manager, and it does not claim identical OpenGL and WGPU presentation timing on Windows and macOS.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'Runtime activity retains the initialized visible render path while loading is active, but not ordinary inactive gameplay.',
+            code: `def _sync_runtime_activity(self: "GLViewportWidget") -> None:
+  self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and (bool(self._application_active) or bool(self.loading_active())) and (not bool(self._shutdown_done)))`,
           },
         ],
       },

@@ -31,7 +31,7 @@ export const systemsPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
-            text: 'The viewport derives two timer intervals in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py`. `_effective_sim_timer_interval_ms` rounds the reciprocal of `sim_hz` to milliseconds, while `_effective_render_timer_interval_ms` rounds the reciprocal of at least 120 hertz. The first timer drives `_tick_sim`, the second requests repaints. Either field, if set above zero, overrides the derived interval. These are nominal scheduling intervals; the runner itself measures real elapsed time and is not bound to them.',
+            text: 'The viewport derives two timer intervals in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py`. `_effective_sim_timer_interval_ms` rounds the reciprocal of `sim_hz` to milliseconds, while `_effective_render_timer_interval_ms` rounds the reciprocal of at least 120 hertz. The first timer drives `_tick_sim`, the second requests repaints. Either field, if set above zero, overrides the derived interval. These are nominal scheduling intervals; the runner itself measures real elapsed time and is not bound to them. `_sync_runtime_activity` keeps both timers running for an initialized, visible viewport while loading remains active even after desktop deactivation; after loading ends, an inactive application again stops the runtime timers.',
           },
         ],
       },
@@ -161,7 +161,7 @@ if self._accum >= step:
         content: [
           {
             kind: 'paragraph',
-            text: '`_tick_sim` calls `self._runner.update()` and then requests a repaint; the paint event builds a render snapshot from the latest session state independently. A rendered frame therefore corresponds to zero, one, or several substeps depending on accumulated real time. Both `_tick_sim` and `_on_step` early-return while loading, while an overlay or transient modal is active, so stepping is suspended without losing the accumulator contract.',
+            text: '`_tick_sim` calls `self._runner.update()` and then requests a repaint; the paint event builds a render snapshot from the latest session state independently. A rendered frame therefore corresponds to zero, one, or several substeps depending on accumulated real time. Both `_tick_sim` and `_on_step` early-return while loading, while an overlay or transient modal is active, so stepping is suspended without losing the accumulator contract. The paint path remains separately available during inactive loading because `paintGL` owns the chunk upload, loading-status update, and visible-chunk completion check; it is not a simulation-step side effect.',
           },
           {
             kind: 'note',
@@ -1838,7 +1838,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.1"`,
+            code: `__version__ = "3.6.2"`,
           },
           {
             kind: 'note',

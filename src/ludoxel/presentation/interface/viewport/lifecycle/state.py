@@ -128,6 +128,7 @@ class ViewportStateMixin:
     settings_controller.sync_cloud_motion_pause(self)
     self._inp.ensure_mouse_capture_applied()
     self.loading_state_changed.emit(False)
+    self._sync_runtime_activity()
     self.loading_finished.emit()
 
   def arm_resume_refresh(self: "RendererViewportWidget") -> None:

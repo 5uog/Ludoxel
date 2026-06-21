@@ -21,10 +21,10 @@ export default function ChangelogPage(): React.JSX.Element {
               </h1>
             </div>
 
-            <p className="page-reveal page-reveal-delay-2 text-xl text-primary font-medium mb-4">Public website notes</p>
+            <p className="page-reveal page-reveal-delay-2 text-xl text-primary font-medium mb-4">Ludoxel desktop application release notes</p>
 
             <p className="page-reveal page-reveal-delay-3 text-muted-foreground max-w-2xl">
-              Stay up to date with public Ludoxel website changes without invented release artifacts or placeholder installer claims.
+              Track user-visible changes to the Ludoxel desktop application without treating local build artifacts as release authority.
             </p>
           </div>
 
