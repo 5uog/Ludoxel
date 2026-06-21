@@ -360,6 +360,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
       and (not self._overlays.inventory_open())
+      and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
       and (not bool(self._state.is_first_person_view()))
     )
 
@@ -393,6 +394,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
       and (not self._overlays.inventory_open())
+      and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
     )
 
   def _player_name_anchor_world_pos(self: "RendererViewportWidget", *, snapshot) -> Vec3:

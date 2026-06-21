@@ -15,6 +15,26 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.5 Beta 2',
+    tags: ['Desktop Application', 'AI Settings', 'Third-Person Rendering', 'HUD', 'Player Animation'],
+    sections: [
+      {
+        title: 'AI Settings Overlay Layering',
+        items: [
+          'Hid the third-person player name tag while the AI settings overlay is open, preventing the world-projected player label from rendering above the AI settings surface.',
+          'Applied the same overlay-open gate to AI status tags so renderer-projected AI nametags and health indicators cannot remain above the AI settings surface.',
+        ],
+      },
+      {
+        title: 'Arm Swing Timing',
+        items: [
+          'Reverted the Beta 1 arm swing timing change by restoring the default runtime arm swing, first-person swing playback, and AI attack swing playback from 0.60 seconds back to 0.30 seconds.',
+          'Kept the revert limited to the three Beta 1 timing constants so attack, breaking, placing, first-person swing, and AI attack cadence return to the previous 6-tick feel without changing the surrounding animation pipeline.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.5 Beta 1',
     tags: ['Desktop Application', 'Player Animation', 'First-Person Rendering', 'AI Animation'],
     sections: [

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 _EQUIP_RATE_PER_SECOND = 8.0
 _SWAP_THRESHOLD = 0.05
-_SWING_DURATION_S = 12.0 / 20.0
+_SWING_DURATION_S = 6.0 / 20.0
 
 
 def _normalize_item_id(item_id: str | None) -> str | None:
