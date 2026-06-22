@@ -253,6 +253,7 @@ class ViewportOverlayMixin:
     )
 
     self._crosshair.setVisible(bool(show_crosshair))
+    self._crosshair.set_axis_crosshair_enabled(bool(self._debug_hud_active()))
     self._hotbar.setVisible(bool(show_gameplay_hud))
     self._route_overlay.setVisible(bool(show_route_overlay))
     self._othello_hud.setVisible(bool(show_othello_hud))
@@ -275,6 +276,9 @@ class ViewportOverlayMixin:
     self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(self._ambient_audio_active()))
     self._sync_player_name_overlays()
     self._raise_open_settings_surface()
+
+  def _update_axis_crosshair_camera(self: "RendererViewportWidget", *, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
+    self._crosshair.set_axis_camera(yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg))
 
   def _raise_open_settings_surface(self: "RendererViewportWidget") -> None:
     if self._overlays.othello_settings_open() and self._othello_settings.isVisible():

@@ -15,6 +15,20 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.7',
+    tags: ['Desktop Application', 'Debug HUD', 'Crosshair'],
+    sections: [
+      {
+        title: 'Debug HUD Axis Crosshair',
+        items: [
+          'Made the Debug HUD toggle swap the center crosshair for a world-axis crosshair: `_sync_gameplay_hud_visibility` calls `set_axis_crosshair_enabled(self._debug_hud_active())` on `CrosshairWidget`, so while the Debug HUD is active the widget paints three short arms for world `+X` in red, world `+Y` in green, and world `+Z` in blue, and the built-in or custom bitmap returns through the existing `set_pattern` path when the Debug HUD closes.',
+          'Projected the axis arms from the renderer effective camera every frame: the shared `paintGL` forwards `render_yaw_deg`, `render_pitch_deg`, and `render_roll_deg` to `set_axis_camera` for both the OpenGL and WGPU viewport widgets, and `axis_screen_offsets` resolves each world axis through the same look-direction basis and roll the world overlays use, so the arms turn with the camera and shorten as an axis rotates toward the view direction; a degenerate or non-finite axis is skipped to keep the drawn frame finite.',
+          'Kept the axis crosshair a transient diagnostic of the first-person gameplay HUD: it obeys the same visibility gate as the bitmap crosshair, draws its colors through `QPainter` pens instead of theme stylesheets, and leaves the saved `crosshair_mode` and `crosshair_pixels` and the Settings crosshair editor untouched.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.6',
     tags: ['Desktop Application', 'Audio'],
     sections: [

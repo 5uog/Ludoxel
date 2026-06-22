@@ -270,12 +270,65 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
         ],
       },
       {
+        id: 'changing-crosshair-preferences-debug-hud-axis',
+        title: 'Debug HUD Axis Crosshair',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'While the Debug HUD is shown, the center crosshair becomes a world-axis crosshair: three short arms drawn for world `+X` in red, world `+Y` in green, and world `+Z` in blue. `ACTION_TOGGLE_DEBUG_HUD`, bound to `F3` by default, flips `hud_visible`, and `_sync_gameplay_hud_visibility` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` calls `set_axis_crosshair_enabled(self._debug_hud_active())` on the `CrosshairWidget`. The shared render loop forwards the ',
+              {
+                kind: 'link',
+                label: 'renderer effective camera',
+                href: '/docs/systems/runtime-and-render-state/session-loop/understanding-render-snapshots',
+              },
+              ' orientation to `set_axis_camera` every frame for both the OpenGL and WGPU viewport widgets, so the arms follow the live `render_yaw_deg`, `render_pitch_deg`, and `render_roll_deg`.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: '`axis_screen_offsets` in `src/ludoxel/presentation/interface/hud/crosshair_axis.py` owns the direction math and reuses the camera convention of the world-projected overlays. It builds the camera basis from `forward_from_yaw_pitch_deg`, takes the view-plane components of each world axis through `right.dot(axis)` and `up.dot(axis)`, applies the roll rotation, and inverts the screen `y`. The arm direction is therefore the same direction the renderer would project that axis at the screen center.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/interface/hud/crosshair_axis.py',
+            code: `right = _UP_HINT.cross(forward).normalized()
+up = forward.cross(right).normalized()
+
+view_x = float(right.dot(axis))
+view_y = float(up.dot(axis))
+rolled_x = float(cos_roll) * float(view_x) - float(sin_roll) * float(view_y)
+rolled_y = float(sin_roll) * float(view_x) + float(cos_roll) * float(view_y)
+screen_dx = float(rolled_x)
+screen_dy = -float(rolled_y)`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'm = \\sqrt{(\\hat{r}\\cdot a)^2 + (\\hat{u}\\cdot a)^2} = \\sqrt{1 - (\\hat{f}\\cdot a)^2}',
+              displayMode: true,
+              caption:
+                'The arm length scales by the in-view-plane projection of the unit world axis a; an axis turned toward the view direction f-hat draws shorter, and an axis aligned with it collapses to no arm.',
+            },
+          },
+          {
+            kind: 'paragraph',
+            text: '`CrosshairWidget._paint_axis_crosshair` multiplies a small fixed pixel arm length by that projected magnitude, keeps a gap around the exact center point, and sets each arm color directly on the `QPainter` pen so crosshair color stays out of the theme stylesheets. When the projection of an axis is degenerate or non-finite, the widget skips that one arm for the frame, so a near-vertical look or a zero-length projection shortens or drops a single arm and never breaks the paint path.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The axis crosshair is a transient diagnostic of the gameplay HUD, not a stored value. The axis path neither reads nor writes `crosshair_mode` or `crosshair_pixels`, and `set_pattern` keeps ownership of the default and custom bitmap, which the widget paints again the moment the Debug HUD closes. The axis crosshair also obeys the same visibility gate as the bitmap crosshair: it is drawn only in the first-person gameplay HUD, so a hidden HUD, an open overlay, the pause or death surface, or a non-first-person perspective shows no crosshair at all while the Debug HUD remains toggled.',
+          },
+        ],
+      },
+      {
         id: 'changing-crosshair-preferences-boundaries',
         title: 'Boundaries',
         content: [
           {
             kind: 'paragraph',
-            text: 'Crosshair preferences are saved as application settings and normalized through the runtime aggregate. They do not authorize asset replacement, shader mutation, package redistribution, or a general UI-theme override. When diagnosing a crosshair problem, preserve the selected mode, the normalized sixteen-row bitmap, the reset state, and whether HUD visibility is disabled; otherwise a hidden HUD or a malformed saved bitmap can be mistaken for a renderer defect.',
+            text: 'Crosshair preferences are saved as application settings and normalized through the runtime aggregate. They do not authorize asset replacement, shader mutation, package redistribution, or a general UI-theme override. When diagnosing a crosshair problem, preserve the selected mode, the normalized sixteen-row bitmap, the reset state, whether HUD visibility is disabled, and whether the Debug HUD is active and showing the axis crosshair; otherwise a hidden HUD, a malformed saved bitmap, or an expected axis crosshair can be mistaken for a renderer defect.',
           },
           {
             kind: 'note',
