@@ -10,8 +10,7 @@ export const settingsPages: DocsPageContent[] = [
     subcategory: 'Visual and Audio Settings',
     group: 'Camera and Crosshair',
     title: 'Changing Camera Preferences',
-    description:
-      'Explains camera preferences as a bounded runtime contract for projection, perspective, mouse response, and first-person presentation rather than as an input-capture or renderer-authority article.',
+    description: 'Defines camera preferences as a bounded runtime contract for projection, perspective, mouse response, and first-person presentation.',
     sections: [
       {
         id: 'changing-camera-preferences-owner-chain',
@@ -19,7 +18,11 @@ export const settingsPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Camera preferences are displayed in the Display tab, but the settings surface is only the ingress point. `src/ludoxel/presentation/interface/settings/pages.py` creates the FOV slider, perspective combo, sensitivity slider, and inversion toggles; `src/ludoxel/presentation/interface/settings/overlay.py` turns those widgets into typed change signals; `src/ludoxel/application/preferences/runtime.py` stores the active values; and `src/ludoxel/application/preferences/camera.py` defines the finite perspective vocabulary. This page therefore treats the camera controls as Settings-owned preference inputs, not as proof about mouse capture, collision, frustum construction, or renderer internals.',
+            text: '`src/ludoxel/presentation/interface/settings/pages.py` creates the FOV slider, perspective combo, sensitivity slider, and inversion toggles; `src/ludoxel/presentation/interface/settings/overlay.py` turns those widgets into typed change signals; `src/ludoxel/application/preferences/runtime.py` stores the active values; and `src/ludoxel/application/preferences/camera.py` defines the finite perspective vocabulary. The settings surface supplies preference ingress, while input capture, collision, frustum construction, and renderer internals retain their own runtime owners.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/presentation/interface/viewport/controllers/settings.py` writes each accepted control value into `viewport._state` and calls `RuntimePreferences.normalize()` before synchronizing consumers. Camera-perspective changes pass through `normalize_camera_perspective`; view-bobbing and camera-shake values are clamped in the runtime aggregate; settings synchronization then projects the normalized values back into the overlay. The renderer and first-person motion read that normalized state, making the displayed control, stored preference, and visible camera behavior one explicit propagation path.',
           },
           {
             kind: 'code',
@@ -541,7 +544,7 @@ overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`AudioPreferences` is a frozen value object. Construction immediately passes every component through `_clamp_volume`, which converts the input to `float`, falls back to the default when conversion fails, and clamps the result to the closed interval `[0, 1]`. The object is already normalized after construction; `normalized()` returns the same instance rather than producing a second representation.',
+            text: '`AudioPreferences` is a frozen value object. Construction immediately passes every component through `_clamp_volume`, which converts the input to `float`, falls back to the default when conversion fails, and clamps the result to the closed interval `[0, 1]`. The object is normalized after construction; `normalized()` returns that instance.',
           },
           {
             kind: 'code',
@@ -599,7 +602,7 @@ class AudioPreferences:
           },
           {
             kind: 'paragraph',
-            text: 'The diagnostic boundary follows the same decomposition. A silent block-placement sound can involve the master gain, the block gain, the material-sound catalog, the event source, or playback admission. This article controls only the saved and normalized mixer vector; material sound routing is handled by the Systems article on material sounds.',
+            text: 'The diagnostic path separates the saved mixer vector from material-sound routing. A silent block-placement sound can involve the master gain, block gain, material-sound catalog, event source, or playback admission. `AudioPreferences` and `PersistedSettings` supply the normalized gains, while `src/ludoxel/presentation/audio` resolves catalog entries and playback effects.',
           },
           {
             kind: 'paragraph',
@@ -707,11 +710,11 @@ class AudioPreferences:
           },
           {
             kind: 'paragraph',
-            text: 'The consequence is strict: a settings row can change only a known action, to a known single-key portable binding, under one-to-one runtime lookup. Modifier chords, multi-key sequences, platform-native display strings, and arbitrary command text remain outside the implemented setting.',
+            text: 'A settings row changes a known action to a known single-key portable binding under one-to-one runtime lookup. Modifier chords, multi-key sequences, platform-native display strings, and arbitrary command text remain outside the implemented setting.',
           },
           {
             kind: 'paragraph',
-            text: 'Persistence preserves that fixed action domain. `to_dict()` serializes exactly `KEYBIND_ACTION_ORDER`, including unbound entries, while `from_dict()` begins from the default map and accepts values only for those known actions. An unknown key in a hand-edited mapping cannot create a new command, and a missing known key returns to its declared default rather than becoming an implicit platform binding.',
+            text: 'Persistence preserves that fixed action domain. `to_dict()` serializes exactly `KEYBIND_ACTION_ORDER`, including unbound entries, while `from_dict()` begins from the default map and accepts values for those known actions. A hand-edited unknown key has no command owner, and a missing known key returns to its declared default.',
           },
         ],
       },
@@ -754,7 +757,7 @@ def normalize_player_skin_kind(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'A custom player skin is stored as `state/player_skin.png` under the runtime state root, not in `assets`, `src`, or a website distribution directory. The loader verifies that protected runtime file before attempting to use it, then normalizes the image to the accepted 64 x 64 RGBA form. If verification or decoding fails, the loader falls back to the bundled Alex texture rather than preserving a broken custom branch.',
+            text: 'A custom player skin is stored as `state/player_skin.png` under the runtime state root. The loader verifies that protected runtime file before use, then normalizes the image to the accepted 64 x 64 RGBA form. Verification or decoding failure selects the bundled Alex texture and closes the custom-skin branch.',
           },
           {
             kind: 'code',
@@ -876,7 +879,7 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
     subcategory: 'Player and Match Settings',
     group: 'Player and Othello State',
     title: 'Changing the Player Name',
-    description: 'Explains the player display name as a normalized runtime preference with a blank-value random fallback rather than as world block state or account identity.',
+    description: 'Defines the player display name as a normalized runtime preference with a blank-value random fallback.',
     sections: [
       {
         id: 'changing-player-name-ingress',
@@ -915,7 +918,7 @@ def resolve_session_player_name(explicit_name: object, *, fallback_name: str | N
           },
           {
             kind: 'paragraph',
-            text: '`has_explicit_player_name` tests the normalized string rather than the original text. Whitespace-only input is therefore not an explicit identity and follows the same fallback path as an empty field. This predicate does not reserve a name, validate an account, or participate in AI actor uniqueness; it only separates a persisted display preference from a launch-time display resolution.',
+            text: '`has_explicit_player_name` tests the normalized string. Whitespace-only input follows the empty-field fallback path. The predicate separates a persisted display preference from launch-time display resolution; name reservation, account validation, and AI-actor uniqueness belong to separate systems.',
           },
           {
             kind: 'code',
@@ -998,7 +1001,7 @@ class PersistedOthelloSpace:
         content: [
           {
             kind: 'paragraph',
-            text: 'A persistence report should state which object changed: normalized `OthelloSettings`, Othello game state, player state, world state, or AI collection. A wrong AI move after restart may come from difficulty or book settings, but it may also come from saved board state or opening-book data. The report is only useful when it names the persisted branch rather than calling everything an Othello setting.',
+            text: 'A persistence report should state which object changed: normalized `OthelloSettings`, Othello game state, player state, world state, or AI collection. A wrong AI move after restart may come from difficulty or book settings, saved board state, or opening-book data. Naming the persisted branch preserves that diagnostic distinction.',
           },
         ],
       },
@@ -1087,7 +1090,7 @@ def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MED
         content: [
           {
             kind: 'paragraph',
-            text: 'Othello AI strength resolves into several independent parameters rather than one scalar. The implementation separates the difficulty identifier from thread count, hash level, and sacrifice level. Difficulty chooses the qualitative search profile, thread count bounds CPU parallelism, hash level bounds transposition or cache capacity, and sacrifice level adjusts evaluation behavior. Those fields are settings because they configure the engine; the move result is produced separately by the search.',
+            text: 'Othello AI strength resolves into independent difficulty, thread-count, hash-level, and sacrifice-level parameters. Difficulty chooses the qualitative search profile, thread count bounds CPU parallelism, hash level bounds transposition or cache capacity, and sacrifice level adjusts evaluation behavior. Those fields configure the engine; the search produces the move result.',
           },
           {
             kind: 'code',
@@ -1321,7 +1324,7 @@ def normalize_ai_skin_id(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'The AI Settings overlay uses one combo box for the source. Selecting Imported PNG triggers the importer if no available imported skin exists. If import fails, the combo box is returned to the previous mode rather than leaving the actor in a dangling custom state. Status text distinguishes three facts: an imported file exists, an imported id is present but unavailable, or no imported PNG has been stored.',
+            text: 'The AI Settings overlay uses one combo box for the source. Selecting Imported PNG triggers the importer if no available imported skin exists. An import failure restores the previous mode and leaves the actor on a resolved skin source. Status text distinguishes three facts: an imported file exists, an imported id is present but unavailable, or no imported PNG has been stored.',
           },
           {
             kind: 'code',
@@ -1359,7 +1362,7 @@ def normalize_ai_skin_id(value: object) -> str:
     subcategory: 'AI Configuration',
     group: 'AI Behavior and Mode',
     title: 'Changing AI Behavior Values',
-    description: 'Explains AI behavior settings as per-actor normalized state for role, personality, route patrol, block placement, and regeneration rather than as unrestricted autonomous scripting.',
+    description: 'Defines AI behavior settings as per-actor normalized state for role, personality, route patrol, block placement, and regeneration.',
     sections: [
       {
         id: 'changing-ai-behavior-values-state-object',
@@ -1505,7 +1508,7 @@ def is_active_learning_mode(mode: object) -> bool:
           },
           {
             kind: 'paragraph',
-            text: 'This split governs how a learning report is read. Seeing `Train From Player Data` in the combo box leaves the runtime untouched until a task runs: the overlay starts a learning task, and on completion it switches the saved mode to `Use Learned Policy` only when training completes, otherwise restoring the mode to `Off`. The runtime branch remains bounded by `is_active_learning_mode`, so a train label in the UI never enrolls the step loop in continuous training on its own.',
+            text: '`AiSettingsOverlay` and the learning-task completion path govern how a learning report is read. Selecting `Train From Player Data` starts a task; completion assigns `Use Learned Policy` for a completed training result and restores `Off` for every other result. `is_active_learning_mode` remains the runtime gate, so the combo-box label records a requested operation while the session step loop receives a learning mode only after the completion path writes it.',
           },
         ],
       },
@@ -1712,7 +1715,7 @@ def decide(self, observation: AiObservation, mask: AiActionMask) -> PolicyDecisi
             note: {
               type: 'warning',
               content:
-                'Do not treat a learned-policy setting as authorization to use arbitrary user files or as evidence of policy quality. The Data article owns the policy artifact and evaluation record; this Settings article owns the control value and runtime selection boundary.',
+                '`Use Learned Policy` selects a stored policy identifier through the AI settings surface and runtime preference path. `PolicyRegistry` admits that identifier only after schema, compatibility, feature-encoder, action-catalog, and evaluation checks; dataset content and evaluation records remain in the learning store and determine artifact evidence independently of the control value.',
             },
           },
         ],

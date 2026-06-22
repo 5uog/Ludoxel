@@ -49,8 +49,9 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-bootstrap-gates',
         title: 'Bootstrap Fixes Roots, Runtime, and Storage Hooks Before Qt',
         body: [
-          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering is load-bearing. No visible window can be treated as gameplay evidence before root resolution, runtime-data selection, optional runtime substitution, and Othello opening-book storage hook installation have completed.',
-          '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state root that later persistence consumers will use. The Othello book-storage hook is installed before presentation entry, but that installation is only storage-path preparation. It does not mean the Othello board is active, visible, restored, or selected.',
+          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering is load-bearing. Gameplay evidence begins after root resolution, runtime-data selection, optional runtime substitution, and Othello opening-book storage-hook installation complete.',
+          '`run_app` imports `install_othello_book_storage_hooks` only after root resolution and invokes it before `ludoxel.presentation.interface.windows.main.run_app`. `MainWindow` then constructs `GameScreen` with the same project, resource, and data roots; `GameScreen` constructs the viewport that owns loading state and session presentation. The startup chain preserves those roots across the bootstrap-to-window transition, so a visible screen can be tied to the runtime roots supplied at launch.',
+          '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state root that later persistence consumers will use. The pre-presentation Othello book-storage hook prepares its storage path. Board activation, visibility, restoration, and selection occur through the Othello session and interface paths.',
           'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In a frozen executable the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists is therefore a launch-environment or bootstrap-path condition, not camera movement, hotbar interaction, Othello move legality, renderer overlay behavior, or play-space switching.',
         ],
         codeBlocks: [
@@ -292,16 +293,16 @@ def _handle_loading_state_changed(self, active: bool) -> None:
               label: 'logs without secrets',
               href: '/docs/support/public-problem-support/evidence-handling/supplying-logs-without-secrets',
             },
-            '; if the decisive material cannot be made public without disclosing unsafe content, the public report is the wrong surface rather than an incomplete version of the right one.',
+            '; decisive material that cannot be made public without unsafe disclosure belongs outside the public report.',
           ],
-          'A startup locator has no independent publication authority. It proves only the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. `.github/ISSUE_TEMPLATE/` and the Support policy decide whether that locator can become a reproducible non-security problem report, a limited public question, a minimal request for a Private Reporting Channel, or no public submission at all. Admissibility is therefore the policy’s decision rather than the observation’s, and the same forms hold back secrets, vulnerability detail, and Contribution Materials — replacement text, design assets, datasets, generated files, shader rewrites, implementation proposals — while leaving unrelated machine-specific material outside reportable Ludoxel evidence.',
+          'A startup locator has no independent publication authority. It proves the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. `.github/ISSUE_TEMPLATE/` and the Support policy determine whether that locator supports a reproducible non-security problem report, a limited public question, a minimal request for a Private Reporting Channel, or no public submission. The policy governs admissibility. The forms exclude secrets, vulnerability detail, and Contribution Materials — replacement text, design assets, datasets, generated files, shader rewrites, and implementation proposals — while unrelated machine-specific material remains outside reportable Ludoxel evidence.',
         ],
       },
       {
         id: 'starting-ludoxel-play-space-and-state-boundary',
         title: 'Play-Space and Saved-State Questions Begin After Launch',
         body: [
-          'After the viewport is loaded and focused, the active surface rather than the startup chain controls the next interpretation. My World uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A loaded viewport showing the wrong surface is a play-space or restored-state condition, not evidence that the module entry point failed.',
+          'After the viewport is loaded and focused, the active surface controls the next interpretation. My World uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A loaded viewport showing the wrong surface identifies a play-space or restored-state condition; module-entry evidence remains in the launch chain.',
           [
             'The immediate operational continuations are ',
             {
@@ -352,7 +353,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         title: 'The Play-Space Context Retains Two Session Managers',
         body: [
           'The switch is a mutation of `PlaySpaceContext.active_space_id` and a replacement of the active `SessionManager` reference consumed by the viewport, beneath the route name, button label, or visual mode flag a reader might take it for. `PlaySpaceContext` constructs two independent session managers at startup: one for My World and one for Othello. Both sessions receive the same default block registry, but each session retains its own world, player entity, AI-player collection, revision sequence, and domain interpretation.',
-          '`session_for` normalizes the requested id and returns the matching manager. `set_active_space` mutates only the active id and then returns the manager for that normalized id. Switching therefore changes which already constructed session is authoritative for the viewport. The hidden session stays intact in memory rather than being rebuilt, and neither space is serialized into the other, so Othello state and My World state never convert between forms across a switch.',
+          '`session_for` normalizes the requested id and returns the matching manager. `set_active_space` mutates the active id and returns the manager for that normalized id. A switch changes the already constructed session authoritative for the viewport. The inactive session remains intact in memory; each play-space persistence path retains its own state form across the switch.',
         ],
         codeBlocks: [
           {
@@ -436,7 +437,7 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
         title: 'Restoration Loads Both Spaces Before the Active Reference Is Chosen',
         body: [
           'Startup restoration does not load only the space that will be shown first. `apply_persisted_state_if_present` applies persisted settings to every session, restores My World from `state.my_world`, restores Othello from `state.othello_space`, repairs Othello board placement, lifts the Othello player above the board when required, restores overlap exemptions, normalizes runtime preferences, and then calls `sessions.set_active_space(runtime.current_space_id)`. The selected runtime reference is admitted only after both persisted branches have been projected back into their session managers.',
-          'This order makes the later visible switch non-destructive after startup. The dormant space is not a string in a preference file; it is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. It does not inspect the saved envelopes as proof of their stored content and does not decide whether `state/player_state.json`, `state/world_state.json`, or the Othello payload is semantically correct.',
+          '`SessionManager.set_active_space` makes the later visible switch non-destructive after startup. The dormant space is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. Envelope validation and semantic correctness remain with the persistence paths for `state/player_state.json`, `state/world_state.json`, and the Othello payload.',
         ],
         codeBlocks: [
           {
@@ -585,7 +586,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
         id: 'switching-play-spaces-loading-renderer-hud',
         title: 'Loading, Upload, Selection, and HUD State Follow the New Active Session',
         body: [
-          'The visible transition is not merely the label `Loading My World...` or `Loading Play Othello...`. `_begin_loading` activates frame-sync loading state, resets held mouse actions, clears block-break particles, publishes loading status text, resynchronizes gameplay-HUD visibility, pauses cloud motion through settings synchronization, emits the loading-state signal when the transition becomes active, and requests repaint. The host `GameScreen` displays the status overlay while `loading_active()` is true and hides it when loading finishes.',
+          'The visible transition includes the labels `Loading My World...` and `Loading Play Othello...` with frame-sync loading state. `_begin_loading` resets held mouse actions, clears block-break particles, publishes loading status text, resynchronizes gameplay-HUD visibility, pauses cloud motion through settings synchronization, emits the loading-state signal when the transition becomes active, and requests repaint. The host `GameScreen` displays the status overlay while `loading_active()` is true and hides it when loading finishes.',
           'After `_session` is replaced, the upload tracker is reset with `world=viewport._session.world`, the previous selection target is invalidated, and renderer selection is cleared. These operations prevent a target, chunk-upload schedule, or selected outline from surviving under the wrong session token or wrong world revision. HUD state is then recomputed from the destination space: Othello can suppress ordinary block-gameplay HUD surfaces, while My World can expose them again.',
         ],
         codeBlocks: [
@@ -663,7 +664,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
     group: 'Window and Item Surfaces',
     title: 'Reading the Main Window',
     description:
-      'Identifies the visible regions of the Ludoxel game window and the components behind them: the renderer-drawn central viewport, the HUD layered above it, the preparing overlay, and the modal surfaces that take focus. Rendered labels are not the saved schema, and overlays read and write through controllers rather than renderer buffers.',
+      'Identifies the visible regions of the Ludoxel game window and the components behind them: the renderer-drawn central viewport, the HUD layered above it, the preparing overlay, and the modal surfaces that take focus. Rendered labels serve the presentation layer; overlays read and write through controllers connected to saved state.',
     sections: [
       {
         id: 'reading-the-main-window-composition',
@@ -760,7 +761,7 @@ class HudPayload:
         id: 'reading-the-main-window-modal-overlays',
         title: 'Modal Surfaces Temporarily Take Focus',
         body: [
-          'Inventory, pause, settings, death, AI settings, and Othello settings are overlay widgets that temporarily take input focus over the viewport. While one is open, gameplay input is blocked, and the overlay reads and writes through controllers rather than mutating renderer buffers directly.',
+          'Inventory, pause, settings, death, AI settings, and Othello settings are overlay widgets that temporarily take input focus over the viewport. While one is open, gameplay input is blocked, and the overlay reads and writes through controllers connected to application state.',
           'These surfaces sit above the viewport in the same window. Which overlay is open determines what a key press or click does next, so when describing the window state it matters whether the central viewport is live or whether an overlay such as the inventory or pause menu currently owns input.',
         ],
         codeBlocks: [
@@ -784,7 +785,7 @@ class HudPayload:
         title: 'The Death Overlay Replaces Interaction With a Respawn Prompt',
         body: [
           'When the player dies, the death overlay shows a "YOU DIED" panel with a message line and a Respawn button. While it is visible the pause menu cannot be opened, so this surface takes priority over the other overlays.',
-          'The message text is set from the cause of death and defaults to "Player died." The Respawn button emits a single request that the controller turns into a respawn. Recognizing this surface in the window tells you the session is in the dead state rather than active play.',
+          'The message text is set from the cause of death and defaults to "Player died." The Respawn button emits a single request that the controller turns into a respawn. Its presence identifies the session’s dead state.',
         ],
         codeBlocks: [
           {
@@ -805,7 +806,7 @@ class HudPayload:
         id: 'reading-the-main-window-background',
         title: 'The Game Screen Has a Solid Background',
         body: [
-          'The game screen sets a styled dark background so that, before or around viewport content, the window is a solid surface rather than transparent. The background color is applied with a narrow object-name selector on the game screen widget itself.',
+          'The game screen sets a styled dark background before and around viewport content. A narrow object-name selector applies the background color to the game-screen widget itself.',
           'Because the central widget paints its own `#121212` background under the viewport, the window never shows desktop bleed-through: the viewport renders over the solid background, and the HUD and overlays stack above it. The visible window is therefore a deliberate stack of solid background, renderer output, HUD, and any active overlay.',
         ],
         codeBlocks: [
@@ -834,7 +835,7 @@ self.setStyleSheet("QWidget#gameScreen { background: #121212; }")`,
         title: 'The Hotbar Has Exactly Nine Slots',
         body: [
           'The hotbar size is fixed at nine. Slot contents are normalized to a tuple of nine item-id strings, padding with empty strings and truncating extras, so the hotbar always has a well-defined width regardless of what was loaded or assigned.',
-          'Each slot holds an item id or the empty string for an empty hand. The selected index is also normalized into the valid range, clamping out-of-range values to the nearest endpoint rather than wrapping unexpectedly.',
+          'Each slot holds an item id or the empty string for an empty hand. The selected index is normalized into the valid range, with out-of-range values clamped to the nearest endpoint.',
         ],
         codeBlocks: [
           {
@@ -897,7 +898,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         title: 'The Held Item Comes From the Selected Slot',
         body: [
           'The currently held item is the content of the selected slot. The resolver normalizes the slots and index, reads the item id at the selected slot, and returns it, or returns nothing when that slot is empty.',
-          'This single source of truth is what the first-person held-item visual and placement logic read. `current_hotbar_block_id` resolves an empty selected slot to an empty hand, so selecting an empty slot stops showing a held block.',
+          '`current_hotbar_block_id` supplies the single hotbar read used by the first-person held-item visual and placement logic. An empty selected slot resolves to an empty hand, which removes the held-block visual and provides no block to placement.',
         ],
         codeBlocks: [
           {
@@ -1033,7 +1034,7 @@ self._catalog_scroll.setVisible(False)`,
         title: 'The Item Grid Is Built From Blocks and Special Items',
         body: [
           'The catalog is assembled from every block in the block registry plus every special item in the special-item catalog. Each entry becomes a draggable button with an icon and a search key built from its display name and id, and special items add their description to the search key.',
-          'The grid is laid out twelve columns wide. Because the entries come straight from the registry and catalog, the inventory always reflects the items the simulation actually knows about rather than a hard-coded list.',
+          'The grid is laid out twelve columns wide. Registry and catalog entries determine the inventory’s item set at runtime.',
         ],
         codeBlocks: [
           {
@@ -1097,7 +1098,7 @@ if idx is not None:
         title: 'The Overlay Edits Hotbar State Through Signals',
         body: [
           'The overlay does not write hotbar state directly. It emits item-selected, hotbar-slot-selected, and hotbar-slot-assigned signals, which the overlay-navigation controller connects to the settings controller. A creative selection sets the active slot to the chosen item and re-syncs the hotbar and first-person target.',
-          'Because the overlay only emits these signals, the inventory requests hotbar changes through the controller instead of mutating simulation state directly. The controller decides whether the change is allowed (for example, only in creative mode) before applying it.',
+          'The emitted signals route inventory hotbar changes through the controller. The controller evaluates permission, including the creative-mode condition, before applying the change.',
         ],
         codeBlocks: [
           {
@@ -1514,7 +1515,7 @@ if self._action_pressed(ACTION_MOVE_LEFT):
         title: 'Input Becomes a Per-Step Control Object',
         body: [
           'Each fixed step, the consumed input frame and the look deltas are packed into a player step input. It carries the clamped forward and strafe values, the jump held and pressed flags, sprint and crouch, the yaw and pitch deltas, and whether auto-jump is enabled.',
-          'This single control object is the only movement input the player advance reads. Packing everything for the step keeps movement deterministic with respect to the fixed timestep rather than depending on event timing.',
+          'The player advance reads this control object for movement input. Packing the complete step state preserves fixed-timestep determinism across event timing.',
         ],
         codeBlocks: [
           {
@@ -1589,7 +1590,7 @@ if can_auto_jump_one_block(player, world, dx=float(wish.x) * probe, dz=float(wis
         title: 'Walking Advances a Phase for Footsteps and View Bob',
         body: [
           'Each grounded step advances a walk phase proportional to horizontal speed relative to the configured walk speed. Crossing a half-cycle of that phase while grounded and moving above a minimum speed triggers a footstep event, which the audio and view systems read.',
-          'The phase is also what drives view bobbing and the held-item swing. Because it scales with speed, footsteps and bob keep pace with how fast the player is actually moving rather than ticking at a fixed rate.',
+          'The phase also drives view bobbing and held-item swing. Its speed scaling keeps footsteps and bob aligned with player movement.',
         ],
         codeBlocks: [
           {
@@ -1608,7 +1609,7 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         title: 'Crouch Lowers the Eye Smoothly',
         body: [
           'Crouching does not snap the camera down. The crouch eye offset eases toward its target each step with an exponential approach, and eases back up when crouch is released. A separate step eye offset smooths the small vertical correction when the collision system steps the player up a ledge.',
-          'These eased offsets are applied to the eye height the renderer reads, so the view settles instead of jumping. They are visual smoothing on top of the collision result, not changes to the player’s collision box.',
+          'These eased offsets are applied to the eye height the renderer reads, settling the view. They provide visual smoothing above the collision result and leave the player collision box unchanged.',
         ],
         mathBlocks: [
           {
@@ -1691,7 +1692,7 @@ def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
         title: 'The Void Applies Repeating Damage Below a Threshold',
         body: [
           'Below the void threshold depth, the player takes repeating damage. While the player is alive and below the threshold, the void timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so it keeps ticking.',
-          'Applying a fixed amount each interval makes void damage a steady drain rather than a single hit, so falling into the void leads to death over a short time unless the player gets back above the threshold. The remaining sub-interval time is carried over so the cadence stays consistent across frames.',
+          'The fixed damage amount and interval form a steady void drain. A player below the threshold loses health over time until reaching the safe depth. The remaining sub-interval time carries across frames to preserve cadence.',
         ],
         codeBlocks: [
           {
@@ -1763,15 +1764,15 @@ def apply_void_damage(*, player, dt, timer_s):
         title: 'Respawn Restores the Player, Not the World',
         body: [
           'Respawn returns the player to the active space’s spawn state with restored health. It does not erase the saved world, the Othello board, hotbar contents, preferences, or AI learning artifacts. Those belong to persistence and the other play space, not to the death-and-respawn cycle.',
-          'Because respawn resets only the player’s position and condition while the saved world, Othello board, hotbar, preferences, and learning artifacts persist, dying is recoverable. If something other than the player appears to have been lost after a death, that points to a saved-state question rather than the respawn itself.',
+          'Respawn resets the player’s position and condition while the saved world, Othello board, hotbar, preferences, and learning artifacts persist. Dying is recoverable. Loss of another state after death points to the relevant saved-state path.',
         ],
       },
       {
         id: 'recovering-after-death-hurt-feedback',
         title: 'Taking Damage Produces Hurt Feedback',
         body: [
-          'Non-fatal damage advances a hurt state on the player each step, which drives a short hurt flash and a brief view tilt. These are timed effects that decay on their own, so they fade after a hit rather than persisting.',
-          'This feedback is what signals that damage occurred before death. If health is dropping without an obvious cause, the hurt feedback and the death message together identify whether the damage came from a fall, the void, or melee.',
+          'Non-fatal damage advances a hurt state on the player each step, which drives a short hurt flash and a brief view tilt. Timed decay clears both effects after the hit.',
+          'The HUD hurt-feedback and death-message paths expose damage before and at terminal state. A health-loss report can correlate those surfaces with fall, void, or melee simulation causes.',
         ],
         codeBlocks: [
           {

@@ -19,6 +19,7 @@ export const gameplayPages: DocsPageContent[] = [
         body: [
           'Building goes through an `InteractionService` constructed for the active world, player, and block registry. It exposes pick, break, and place operations, and it builds a placement policy from the registry so shape-specific rules are available for every action.',
           'The service is the single owner of build edits. The renderer and HUD read world state and draw it; they commit no edit of their own. A placement that looks blocked on screen is therefore resolved by the service pick, placement policy, and intersection checks, and the drawing layer reports only whatever the service committed.',
+          '`src/ludoxel/application/sessions/managers/interactions.py` receives the active session and forwards break, pick, direct interaction, placement-from-hit, and ordinary placement into that session’s `InteractionService`. A successful bulk edit advances `WorldState.revision` and dirty-chunk state; the session pipeline later consumes those updates to rebuild face payloads for the active renderer. Input routing, simulation mutation, and visual feedback therefore meet at the session-managed interaction path.',
         ],
         codeBlocks: [
           {
@@ -41,11 +42,11 @@ class InteractionService:
         title: 'A Pick Selects the Target Along the View Ray',
         body: [
           'Every build action starts from a pick. The service casts from the player eye position along the view forward direction, with a default reach of five blocks, and returns the hit cell, the hit face, the adjacent placement cell, and the hit point.',
-          'The hit cell is what breaking removes; the adjacent cell is the default placement target. Because the pick uses shape-aware bounding boxes, the face and placement cell reflect slabs, stairs, fences, and other non-cube shapes rather than assuming a full cube.',
-          '`src/ludoxel/foundations/mathematics/geometry/ray.py` owns an immutable origin-direction pair only. It does not normalize the direction and does not define a target. `pick_block` in `src/ludoxel/simulation/rules/picking/block.py` first normalizes the supplied direction, refuses a vector whose resulting length is at most `1e-12`, clamps reach to a non-negative value, and moves the origin by `1e-4` along that normalized direction before constructing the `Ray`. The parametric point relation is evaluated by `ray_aabb_face`, not by the Ray dataclass itself. That separation prevents the representation from silently becoming an interaction rule.',
+          'The hit cell is what breaking removes; the adjacent cell is the default placement target. Shape-aware bounding boxes determine the face and placement cell for slabs, stairs, fences, and other non-cube shapes.',
+          '`src/ludoxel/foundations/mathematics/geometry/ray.py` owns an immutable origin-direction pair. `pick_block` in `src/ludoxel/simulation/rules/picking/block.py` normalizes the supplied direction, refuses a vector whose resulting length is at most `1e-12`, clamps reach to a non-negative value, and moves the origin by `1e-4` along that normalized direction before constructing the `Ray`. `ray_aabb_face` evaluates the parametric point relation. The Ray representation remains separate from interaction rules.',
           '`src/ludoxel/foundations/mathematics/geometry/ray_aabb.py` tests one shape box as three slab intervals. For each axis it treats `abs(d_i) < 1e-12` as parallel. A parallel origin outside `[mn_i, mx_i]` rejects the box immediately; a parallel origin inside does not narrow the accumulated interval. Otherwise the source computes and orders the two boundary parameters, raises `tmin` only when a new later entry is found, lowers `tmax` only when an earlier exit is found, and rejects when the intervals cease to overlap. After all axes, `tmax < 0` rejects a box entirely behind the ray origin. A non-negative `tmin` returns the entering face; an origin already inside returns `tmax` and the exiting face. The returned point is the actual `o + d * t_enter` evaluation.',
           '`src/ludoxel/foundations/mathematics/voxels/dda.py` does not test shape geometry. It enumerates candidate unit-grid cells. It floors the origin divided by `cell_size`, assigns each step sign from the direction component, initializes each next-boundary time with `int_bound`, and advances only one axis per iteration. The x branch requires strict precedence over both other times; otherwise y wins only when it is strictly earlier than z, and z resolves the remaining ties. The generator emits the current `DDAHit` before that recurrence and stops when its accumulated parameter exceeds `t_max`. The picker supplies reach, fetches block-model AABBs, and chooses the nearest accepted shape hit; DDA alone never produces a gameplay outcome.',
-          '`src/ludoxel/foundations/mathematics/voxels/faces.py` provides the signed-axis neighbour relation used after the shape hit. Its six face identifiers map to offsets `(+1,0,0)`, `(-1,0,0)`, `(0,+1,0)`, `(0,-1,0)`, `(0,0,+1)`, and `(0,0,-1)`. The source exposes no separate normal-vector or opposite-face function, so this article does not invent either as a public API. `pick_block` adds the returned offset to the hit cell to derive a placement candidate, then clears that candidate if it is occupied. Item selection, placement approval, and world mutation remain simulation responsibilities.',
+          '`src/ludoxel/foundations/mathematics/voxels/faces.py` provides the signed-axis neighbour relation used after the shape hit. Its six face identifiers map to offsets `(+1,0,0)`, `(-1,0,0)`, `(0,+1,0)`, `(0,-1,0)`, `(0,0,+1)`, and `(0,0,-1)`. `pick_block` adds the returned offset to the hit cell to derive a placement candidate, then clears that candidate if it is occupied. Item selection, placement approval, and world mutation remain simulation responsibilities.',
         ],
         mathBlocks: [
           {
@@ -247,7 +248,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         title: 'Place Tries Interaction First Unless Crouching',
         body: [
           'A normal place action first tries to interact with the targeted block, for example toggling a fence gate. If interaction succeeds, that is the result and no block is placed. Only when interaction does not apply does the service fall through to placement.',
-          'Crouching changes this order: a crouching place skips interaction and goes straight to placement. This is how you place a block against a gate instead of toggling it.',
+          'Crouching changes this order: a crouching place skips interaction and goes straight to placement. The crouching route places a block against a gate.',
         ],
         codeBlocks: [
           {
@@ -272,7 +273,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         body: [
           'Placement requires a non-empty, registered item. If the hit block can merge a slab with the held item, the merge is applied at the hit cell. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing.',
           'A placement that would intersect the player is rejected before any edit. `placement_intersects_player` builds the candidate block collision boxes at the target cell and tests them against the player box, so standing too close to the target stops a placement that would otherwise be legal.',
-          '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method refuses contact when a maximum equals the other minimum on any axis, so the tested overlap is non-empty in every coordinate dimension rather than mere boundary contact. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then treats an accepted predicate as a placement rejection. The AABB type does not define a block shape, decide whether an item is registered, or commit the edit.',
+          '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method requires non-empty overlap in every coordinate dimension; faces that meet at a maximum/minimum boundary remain separate. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then converts an accepted predicate into a placement rejection. Block shapes, item registration, and world edits remain under their respective simulation owners.',
         ],
         mathBlocks: [
           {
@@ -311,8 +312,8 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         id: 'building-in-my-world-commit',
         title: 'Commits Update Structural Neighbors',
         body: [
-          'A committed edit does not only write the touched cells. The service collects structural neighbor updates so that fences, walls, and other connected blocks adjacent to the change recompute their state, then applies the combined updates and removals in one bulk write to the world.',
-          'Because the edit is bulk and structural, a single place or break can change the visible shape of nearby blocks. `collect_structural_neighbor_updates` recomputes those connected fences and walls inside the same commit, so the neighbor reshaping is part of the accepted edit rather than a later rendering artifact.',
+          'A committed edit writes the touched cells with its structural neighbor updates. The service collects updates for adjacent fences, walls, and other connected blocks, then applies the combined updates and removals in one bulk write to the world.',
+          'A single place or break can change the visible shape of nearby blocks. `collect_structural_neighbor_updates` recomputes connected fences and walls during the same commit, placing neighbor reshaping inside the accepted world edit.',
         ],
         codeBlocks: [
           {
@@ -335,7 +336,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         id: 'building-in-my-world-render-handoff',
         title: 'The Renderer Receives Dirty Chunks',
         body: [
-          'Applying the bulk edit advances the world through `set_blocks_bulk`, which is where the renderer-facing contract is fixed. Each mutated cell increments `WorldState.revision`, marks the neighbour chunk keys of that cell dirty rather than only the chunk that contains it, and records a gravity-dirty column at the cell and at the cell directly above. Neighbour chunks are marked because a block on a chunk boundary changes the visible faces of the adjacent chunk, and the gravity columns are the cells the gravity system re-scans on the next fixed step.',
+          'Applying the bulk edit advances the world through `set_blocks_bulk`, which fixes the renderer-facing contract. Each mutated cell increments `WorldState.revision`, marks its containing and neighbouring chunk keys dirty, and records a gravity-dirty column at the cell and the cell directly above. A block on a chunk boundary changes adjacent-chunk visible faces, and the gravity system re-scans the recorded columns on the next fixed step.',
           'The session pipeline, not the interaction service, delivers that result to the renderer. It drains the accumulated set through `consume_dirty_chunks` or `consume_dirty_chunks_with_rev`, rebuilds the face payload for those chunk keys, and submits them to the active backend; the per-chunk revision returned by the second form travels with the upload so a stale payload can be rejected. The interaction service itself never touches renderer state.',
           'If a build appears to succeed in the world but not on screen, the question is therefore the dirty-chunk drain and the upload cadence, not the interaction rule. The accepted edit, the revision increment, and the rendered result are three separate steps connected by the session pipeline.',
         ],
@@ -527,7 +528,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         title: 'An Empty or Unregistered Item Fails Early',
         body: [
           'Placement requires a non-empty item id that the block registry knows. An empty hand or an unknown id is rejected before any pick or world check, returning a failed outcome with no edit.',
-          'This is the first reason a place can do nothing: the selected hotbar slot is empty or holds something the registry does not treat as a placeable block.',
+          'The placement path begins with the selected hotbar slot. An empty slot or an item absent from the placeable-block registry supplies no block identifier to the interaction service, leaving the world state unchanged.',
         ],
         codeBlocks: [
           {
@@ -546,7 +547,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         title: 'No Pick Means No Placement',
         body: [
           'If the view ray does not hit a block within reach, there is no hit cell and no adjacent placement cell, so placement fails. The same is true if the hit cell turns out to be empty when the placement is resolved.',
-          'Aiming at the sky, past the reach distance, or at a gap therefore produces a silent failure rather than placing a floating block.',
+          'Aiming at the sky, beyond the reach distance, or at a gap leaves placement without a target cell and ends the action silently.',
         ],
       },
       {
@@ -677,7 +678,7 @@ if place is not None and place in world.blocks:
         title: 'The Fall Start Height Is Tracked While Airborne',
         body: [
           'Grounded movement records where the player became airborne. On each step that the player is unsupported, the airborne start height is set if it was not already, and it is cleared once the player is supported again.',
-          'This recorded start height is what makes fall distance measurable on landing. Flying clears the airborne tracking entirely, which is one reason creative flight avoids fall damage.',
+          'The movement rule records airborne start height for the later landing calculation. Flight clears that tracking state, leaving creative movement outside the grounded fall-distance path.',
         ],
         codeBlocks: [
           {
@@ -733,7 +734,7 @@ def fall_damage_amount(*, fall_distance_blocks):
         title: 'The Void Begins Below a Fixed Depth',
         body: [
           'The void hazard activates below a fixed Y threshold. While the player is alive and below that depth, void damage applies; at or above it, no void damage is taken. The threshold is a hard depth, not a function of the surrounding world.',
-          'Falling off the bottom of the world is therefore a steady hazard rather than an instant death, and climbing back above the threshold stops it.',
+          'Falling below the world threshold starts a steady hazard. Climbing back above the threshold ends the damage path.',
         ],
         codeBlocks: [
           {
@@ -755,7 +756,7 @@ def apply_void_damage(*, player, dt, timer_s):
         title: 'Void Damage Ticks on a Fixed Interval',
         body: [
           'Below the threshold, a timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so the hits keep coming. The remaining sub-interval time is carried forward so the cadence is steady across frames.',
-          'Applying a fixed amount each interval makes the void a continuous drain instead of a single blow, so survival time depends on current health and how quickly the player climbs back above the threshold.',
+          'The fixed interval and damage amount create a continuous void drain. Survival time follows current health and the time required to climb above the threshold.',
         ],
         mathBlocks: [
           {
@@ -853,7 +854,7 @@ class AiPlayerState:
         title: 'The Spawn Position Must Be Clear',
         body: [
           'A spawn only succeeds if the AI body fits. The manager builds the actor at the spawn cell center, then tests the body against nearby block collision shapes; if it would intersect a block, the spawn is refused and no actor is registered.',
-          'Spawning inside a wall or a tight space therefore fails because the clearance check uses the same shape-aware collision as the player, evaluating partial shapes rather than assuming a full cube.',
+          'The clearance check evaluates the same shape-aware collision used for the player, including partial shapes. A wall or tight space that intersects the body rejects the spawn.',
         ],
         codeBlocks: [
           {
@@ -993,7 +994,7 @@ elif hearts_visible:
         title: 'One Heart Is Two Health Points',
         body: [
           'The heart strip draws one heart per two points of maximum health, and fills each heart in proportion to current health, so half-heart amounts are visible. Numeric health stays in simulation state; the hearts are a display of it.',
-          'This is the same two-points-per-heart convention as the player health strip, so reading an AI’s hearts maps directly to its underlying health value.',
+          'The AI tag renderer uses the player HUD convention of two health points per heart, allowing the displayed heart count to map directly to actor health.',
         ],
         mathBlocks: [
           {
@@ -1022,7 +1023,7 @@ def _paint_heart_strip(painter, *, x, y, health, max_health):
         id: 'reading-ai-nametags-and-health-composite',
         title: 'The Tag Is One Composite Image',
         body: [
-          'The name and hearts are rendered into a single base pixmap rather than separate widgets. The composite is rebuilt only when the content key — name, health, max health, and indicator — changes, so a tag that has not changed is not redrawn.',
+          'The name and hearts form one base pixmap. The composite is rebuilt only when the content key — name, health, max health, and indicator — changes, leaving an unchanged tag outside the redraw path.',
           'A stationary AI’s tag therefore costs almost nothing per frame: the composite image is cached, and only geometry or opacity changes trigger an update.',
         ],
         codeBlocks: [
@@ -1078,7 +1079,7 @@ display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._dis
         title: 'Only Aggressive AI Fights',
         body: [
           'Combat is a personality role. Aggressive AI pursues and attacks when conditions allow; peaceful AI does not take on the combat role at all. This gate is independent of behavior mode, so a peaceful wandering or routing AI will not engage.',
-          'The decision to fight uses simulation inputs — visibility, distance, cooldown, health, route state, and movement — rather than anything the renderer shows.',
+          'Visibility, distance, cooldown, health, route state, and movement drive the decision to fight through simulation state.',
         ],
       },
       {
@@ -1116,7 +1117,7 @@ else:
         id: 'understanding-ai-combat-strafe',
         title: 'It Strafes Within a Distance Window',
         body: [
-          'When a strafe timer is active and the AI is within a distance window and roughly facing the target, it adds a sideways component in the current strafe direction. This produces lateral movement during a fight rather than a straight line of approach.',
+          'When a strafe timer is active and the AI is within a distance window and roughly facing the target, it adds a sideways component in the current strafe direction. The control vector yields lateral combat movement.',
           'The strafe is bounded by the distance window, so it only happens at engagement range, not while closing from far away or when already on top of the target.',
         ],
         mathBlocks: [
@@ -1145,7 +1146,7 @@ if (float(actor.combat_strafe_timer_s) > 1e-6
         id: 'understanding-ai-combat-w-tap',
         title: 'Close Range Uses Engagement Taps',
         body: [
-          'At very close range and roughly facing the target, the AI uses a short forward-tap pattern, alternating between engaging and easing off based on a tap timer. This is the close-combat behavior that produces hit-and-reposition movement instead of constant forward pressure.',
+          'At very close range and roughly facing the target, the AI uses a short forward-tap pattern, alternating between engaging and easing off based on a tap timer. That control cycle produces hit-and-reposition movement.',
           'The tap phase decides whether the AI sprints in or holds, which shapes the rhythm of a melee exchange.',
         ],
         codeBlocks: [
@@ -1163,7 +1164,7 @@ if (float(actor.combat_strafe_timer_s) > 1e-6
         title: 'Melee Damage Has a Cooldown',
         body: [
           'A landed melee hit applies damage through the target’s health with a damage cooldown, so repeated contact does not deal damage every frame. The same path is shared by player and AI, so an AI hitting the player and the player hitting an AI use one rule.',
-          'Because each landed hit starts the half-second `MELEE_DAMAGE_COOLDOWN_S`, damage arrives at a steady rate during a fight instead of draining continuously while bodies overlap.',
+          'Each landed hit starts the half-second `MELEE_DAMAGE_COOLDOWN_S`. The cooldown fixes the damage cadence during overlapping combat bodies.',
         ],
         codeBlocks: [
           {
@@ -1236,7 +1237,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
     group: 'NPC Actions',
     title: 'Understanding AI Placement Behavior',
     description:
-      'Explains why AI block placement is a constrained movement aid rather than free building. Placement supports bridging and footing during navigation, requires line of sight, item state, support, clear collision, and an action mask, and is gated by a per-AI placement permission.',
+      'Defines AI block placement as a constrained movement aid. Placement supports bridging and footing during navigation, requires line of sight, item state, support, clear collision, and an action mask, and is gated by a per-AI placement permission.',
     sections: [
       {
         id: 'understanding-ai-placement-behavior-movement-aid',
@@ -1251,7 +1252,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         title: 'A Per-AI Toggle Enables the Aid',
         body: [
           'Each AI has a can-place-blocks setting. When it is off, the placement aids are unavailable; when it is on, the AI may use them during navigation. Toggling it on or off changes the held item the AI carries for placement.',
-          'This toggle only controls whether the aids are available. It does not grant route mode, combat mode, or a learned policy any way to skip the world placement rules.',
+          'The placement-aid toggle controls aid availability. Route selection, combat selection, and learned-policy evaluation continue through their respective manager paths, while `InteractionService` applies the shared world-placement predicates to every accepted action.',
         ],
         codeBlocks: [
           {
@@ -1284,7 +1285,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         id: 'understanding-ai-placement-behavior-face-targeting',
         title: 'Bridge Placement Targets a Face',
         body: [
-          'When the AI bridges, it derives the face to build against from its horizontal step direction and computes a hit point on that face. This gives placement a concrete target cell and face in the direction of travel rather than an arbitrary cell.',
+          'When the AI bridges, it derives the face to build against from its horizontal step direction and computes a hit point on that face. The mapping supplies a target cell and face along the direction of travel.',
           'The face-from-step mapping is deterministic, so the AI consistently places footing ahead of itself along its movement direction.',
         ],
         codeBlocks: [
@@ -1359,7 +1360,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         title: 'The Board Starts With Four Discs',
         body: [
           'A new match begins from the standard Othello opening: four discs in the center, two black and two white on opposing diagonals of the four central squares. The board is sixty-four cells, each empty, black, or white.',
-          'This fixed opening is the same every match. Everything that follows — legal moves, captures, turn order — is derived from it by the rule functions.',
+          'The Othello initializer seeds every match with the same fixed opening. Rule functions derive legal moves, captures, and turn order from that board state.',
         ],
         mathBlocks: [
           {
@@ -1486,7 +1487,7 @@ if legal_moves:
         title: 'A Move Is Accepted Only on a Legal Square',
         body: [
           'A player move is accepted only while the status is player-turn and the chosen square is in the published legal-move set. The same predicate that authorizes a click is the one the submit path checks, so an illegal or out-of-turn click changes nothing.',
-          'A click on an empty but non-flipping square therefore changes nothing, because `can_player_move` decides legality from the published legal-move set rather than from the square being empty.',
+          '`can_player_move` decides legality from the published legal-move set. An empty square without a flipping move leaves the board unchanged.',
         ],
         codeBlocks: [
           {
@@ -1512,7 +1513,7 @@ def submit_player_move(self, square_index: int) -> bool:
         title: 'Legal Moves Are Squares That Capture',
         body: [
           'A square is legal only if placing there captures at least one opposing line. The rule engine scans the eight directions from an empty square, collecting opposing discs until it meets one of its own, and a move with no captures is illegal.',
-          'This is the core Othello rule: every legal move flips something. Empty squares that flank nothing are not in the legal set.',
+          '`legal_moves` in the Othello rule path admits a square only when its directional scan yields at least one flanked opposing disc. Empty squares without a capture line remain outside the published legal-move set.',
         ],
         codeBlocks: [
           {
@@ -1601,7 +1602,7 @@ if not animations:
         title: 'A Square Highlight Is Not Permission',
         body: [
           'The renderer and viewport help locate the selected board square, but the controller decides legality. A visible highlight on a square does not by itself grant a move; the submit path still checks the turn and the legal-move set.',
-          'So a move that does not apply despite a highlight is a controller decision about turn or legality, which routes to the match state rather than the display.',
+          'A highlighted square whose move is rejected reflects the controller’s turn or legality decision. The match state supplies that decision.',
         ],
       },
     ],
@@ -1664,7 +1665,7 @@ if not animations:
         title: 'A Missing or Illegal Move Falls Back',
         body: [
           'If the engine returns nothing or an illegal square, the controller uses the first legal move instead. This keeps an asynchronous or failed engine result from leaving the state machine undefined or corrupting the board.',
-          'So an engine problem degrades to a legal move or a pass rather than an invalid board. The match always advances to a valid state.',
+          'An engine problem routes to the first legal move or a pass. The match advances with a valid board state.',
         ],
       },
       {
@@ -1775,14 +1776,14 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         title: 'A Clock Timeout Ends the Match Too',
         body: [
           'A finite time control gives another terminal path: if the active side’s clock reaches zero during its turn, the match finishes with the other side as the winner, regardless of disc counts. The message states which side ran out of time.',
-          'A result can therefore be a timeout rather than a disc count, so the winner field and the message together describe how a match ended; the final board alone does not separate a timeout from a played-out finish.',
+          'A timeout is a terminal result separate from a disc-count finish. The winner field and message record the terminal cause; the final board alone cannot identify it.',
         ],
       },
       {
         id: 'reading-match-results-recorded-fields',
         title: 'The Result Is Recorded in State',
         body: [
-          'A finished match records its status as finished, the winner, a descriptive message, and the move count, while clearing legal moves and animations. These fields are part of the normalized game state, so the outcome is a concrete, readable value rather than something inferred from the board.',
+          'A finished match records its status, winner, descriptive message, and move count while clearing legal moves and animations. The normalized game state carries the outcome as explicit data.',
           'Reading a result therefore means reading these fields, not re-deriving the winner from a screenshot of the board.',
         ],
         codeBlocks: [
@@ -1823,7 +1824,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         title: 'A Saved Result Goes Through the Othello Schema',
         body: [
           'Saved Othello state includes the board, settings, clocks, legal-move state, animations, and message, and a finished match restores as finished with its result intact. Reading a result from a save should go through the Othello state schema, which coerces partial or old payloads back to a valid finished state.',
-          'So an Othello result persists as part of the Othello space, separate from My World data, and is restored by the controller’s coercion path rather than reconstructed by hand.',
+          'The Othello-space schema persists the result separately from My World data, and the controller restores it through its coercion path.',
         ],
         codeBlocks: [
           {

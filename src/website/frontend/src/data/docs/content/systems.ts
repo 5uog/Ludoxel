@@ -73,7 +73,11 @@ if self._accum >= step:
           },
           {
             kind: 'paragraph',
-            text: 'Two clamps bound the loop against a stall. The elapsed-time clamp of 0.25 seconds caps how much real time a single frame may inject, and the trailing reduction discards excess accumulated time once the substep budget is exhausted, reducing the accumulator to at most one quantum. Together they prevent an unbounded catch-up spiral: under sustained overload the simulation slows relative to wall time instead of accumulating an ever-growing backlog. Each call to `on_step` is guaranteed to represent exactly one quantum of simulated time, which is the contract every consumer of session state relies upon.',
+            text: 'Two clamps bound the loop against a stall. The elapsed-time clamp of 0.25 seconds caps how much real time a single frame may inject, and the trailing reduction discards excess accumulated time once the substep budget is exhausted, reducing the accumulator to at most one quantum. Under sustained overload the simulation slows relative to wall time while the bounded accumulator prevents a catch-up backlog. Each call to `on_step` represents exactly one quantum of simulated time, the contract consumed by session state.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`FixedStepRunner.update` is consumed by the viewport lifecycle after `_tick_sim` admits runtime activity. Its `on_step` callback reaches `_on_step` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py`, where input is consumed before `SessionManager.step`, learning runtime updates, HUD synchronization, and audio-event playback. The accumulator therefore converts irregular wall-clock frames into ordered simulation quanta whose result records feed presentation consumers without giving the render timer authority to mutate simulation state independently.',
           },
         ],
       },
@@ -276,7 +280,7 @@ return (runtime, othello_game_state)`,
           {
             kind: 'paragraph',
             text: [
-              'The order is consequential: an active-space label and renderer flags are derived only after their admitting state has been normalized. A missing pair of state files leaves the default runtime intact; a present runtime file that fails integrity verification is withheld by `AppStateStore` rather than decoded. The envelope versions, JSON failure behavior, legacy fallback, and integrity records are the responsibility of ',
+              'The order is consequential: an active-space label and renderer flags are derived after their admitting state has been normalized. A missing pair of state files leaves the default runtime intact; `AppStateStore` withholds a present runtime file that fails integrity verification. The envelope versions, JSON failure behavior, legacy fallback, and integrity records are the responsibility of ',
               {
                 kind: 'link',
                 label: 'saved runtime state',
@@ -297,7 +301,7 @@ return (runtime, othello_game_state)`,
           },
           {
             kind: 'paragraph',
-            text: '`runtime_preferences_from_app_state` deliberately produces mutable runtime state rather than exposing a saved dataclass to the live session. Its inverse, `persisted_settings_from_runtime`, pulls movement values from the active session settings, while `persisted_inventory_from_runtime` copies every hotbar branch. `save_state` serializes both sessions and their AI projections and then delegates to `AppStateStore.save`. The application keeps the file shape, live aggregate, session parameters, and renderer commands separate because they are consumed at different times and with different mutability requirements.',
+            text: '`runtime_preferences_from_app_state` produces mutable runtime state for the live session. Its inverse, `persisted_settings_from_runtime`, pulls movement values from the active session settings, while `persisted_inventory_from_runtime` copies every hotbar branch. `save_state` serializes both sessions and their AI projections and then delegates to `AppStateStore.save`. The application keeps the file shape, live aggregate, session parameters, and renderer commands separate because their consumers require different times and mutability.',
           },
           {
             kind: 'note',
@@ -362,7 +366,7 @@ return (runtime, othello_game_state)`,
           {
             kind: 'paragraph',
             text: [
-              'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, the body and head angles, limb phase and swing, the signed `limb_forward_ratio` and `limb_strafe_ratio` that report the local movement direction, crouch amount, an `idle_anim_time_s` visual-animation clock, hurt tint, the six first-person view-model channels, and a first-person flag. Here `body_yaw_deg` is the lagged visual body yaw, `head_yaw_deg` is the lagged visual head yaw measured relative to that body rather than the raw look yaw, and `head_pitch_deg` is the lagged visual head pitch; how those angles and the movement ratios are produced and consumed is owned by the ',
+              'The snapshot types in `src/ludoxel/application/sessions/pipelines/render_snapshot.py` are all frozen dataclasses. `RenderSnapshotDTO` aggregates a world revision, a `CameraDTO`, a `PlayerModelSnapshotDTO`, and tuples of `FallingBlockRenderSampleDTO` and `BlockBreakParticleRenderSampleDTO`. `CameraDTO` carries eye position, yaw, pitch, field of view, and six separable camera-shake channels for translation and rotation. `PlayerModelSnapshotDTO` carries base position, the body and head angles, limb phase and swing, the signed `limb_forward_ratio` and `limb_strafe_ratio` that report the local movement direction, crouch amount, an `idle_anim_time_s` visual-animation clock, hurt tint, the six first-person view-model channels, and a first-person flag. Here `body_yaw_deg` is the lagged visual body yaw, `head_yaw_deg` is the lagged visual head yaw measured from that body, and `head_pitch_deg` is the lagged visual head pitch; how those angles and the movement ratios are produced and consumed is owned by the ',
               {
                 kind: 'link',
                 label: 'player-model pose',
@@ -373,7 +377,7 @@ return (runtime, othello_game_state)`,
           },
           {
             kind: 'paragraph',
-            text: 'Every field is a scalar, a tuple of scalars, or another frozen DTO. No `PlayerEntity`, `WorldState`, or other mutable simulation object crosses the boundary, so presentation cannot mutate domain state through the snapshot and each snapshot is a stable per-frame value rather than a window onto changing data.',
+            text: 'Every field is a scalar, a tuple of scalars, or another frozen DTO. Presentation receives a stable per-frame value composed without `PlayerEntity`, `WorldState`, or another mutable simulation object, preserving domain-state ownership within the simulation.',
           },
           {
             kind: 'code',
@@ -502,7 +506,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedSettings` in `src/ludoxel/application/persistence/schema/settings.py` is the frozen on-disk form. It owns the documented default values, a `__post_init__` that normalizes cloud and shadow fields at construction, a `to_dict` serializer, and a tolerant `from_dict` reader. The reader coerces each scalar through a typed mapping helper with an explicit default, so a missing or malformed key falls back to the default rather than failing the load, and it accepts legacy key names where they existed, reading `cloud_wire` as a fallback for `cloud_wireframe` and `build_mode` as a fallback for `creative_mode`.',
+            text: '`PersistedSettings` in `src/ludoxel/application/persistence/schema/settings.py` is the frozen on-disk form. It owns the documented default values, a `__post_init__` that normalizes cloud and shadow fields at construction, a `to_dict` serializer, and a tolerant `from_dict` reader. The reader coerces each scalar through a typed mapping helper with an explicit default. Missing or malformed keys select that default, while legacy `cloud_wire` and `build_mode` keys map to `cloud_wireframe` and `creative_mode`.',
           },
           {
             kind: 'paragraph',
@@ -564,7 +568,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
             note: {
               type: 'note',
               content:
-                'A persisted preferences file records the normalized runtime aggregate at the last save event, not every intermediate adjustment, because the write occurs at defined lifecycle points rather than on every control change.',
+                'A persisted preferences file records the normalized runtime aggregate at the last save event. Defined lifecycle points issue the write; intermediate control adjustments remain live runtime state until then.',
             },
           },
         ],
@@ -596,7 +600,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
         content: [
           {
             kind: 'paragraph',
-            text: 'Bindings are stored as portable text rather than platform key codes. `portable_text_for_key` and `normalize_key_code` convert a Qt key code to a stable name without importing PyQt6, accepting only ASCII, function, navigation, and modifier keys. `normalize_binding_text` folds an arbitrary input to a single key: text containing a plus or comma is rejected as a sequence, and the remainder is matched against an alias table so `Ctrl` and `Control`, `Esc` and `Escape`, and similar spellings collapse to one canonical name. `binding_to_key` resolves a normalized binding back to a Qt key code, returning nothing for an unknown or empty binding, and `display_text_for_binding` returns `Unbound` for any binding that does not resolve.',
+            text: 'Bindings use portable text names. `portable_text_for_key` and `normalize_key_code` convert a Qt key code to a stable name without importing PyQt6, admitting ASCII, function, navigation, and modifier keys. `normalize_binding_text` folds arbitrary input to a single key: a plus or comma marks a rejected sequence, and an alias table maps `Ctrl` and `Control`, `Esc` and `Escape`, and related spellings to one canonical name. `binding_to_key` resolves a normalized binding to a Qt key code; unknown or empty bindings resolve to no key, and `display_text_for_binding` emits `Unbound` for that state.',
           },
           {
             kind: 'paragraph',
@@ -726,7 +730,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
-            text: 'When the predicate holds the runner is not updated and no step runs, so gravity, movement, AI actors, and the simulation clock are frozen. The pause overlay, the death overlay, the settings overlay, the Othello settings overlay, the AI settings dialog flag, a transient modal counted by `_begin_transient_modal` and `_end_transient_modal`, and the loading state each independently halt stepping.',
+            text: 'When the predicate holds, the runner receives no update and stepping halts, freezing gravity, movement, AI actors, and the simulation clock. The pause overlay, death overlay, settings overlay, Othello settings overlay, AI settings dialog flag, a transient modal counted by `_begin_transient_modal` and `_end_transient_modal`, and loading state each independently halt stepping.',
           },
         ],
       },
@@ -736,7 +740,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The inventory overlay is deliberately absent from the stepping gate. `set_inventory_open` releases mouse capture and resets the input adapter, so the player issues no movement and no look, but `inventory_open` is not one of the gate conditions. Simulation therefore continues: gravity, falling blocks, and AI actors keep advancing while the inventory is open, with the player held still by the neutralized input rather than by a frozen clock.',
+            text: 'The inventory overlay is absent from the stepping gate. `set_inventory_open` releases mouse capture and resets the input adapter, leaving the player with no movement or look input; `inventory_open` is outside the gate conditions. Gravity, falling blocks, and AI actors continue advancing while the inventory is open, with neutralized input holding the player still.',
           },
           {
             kind: 'list',
@@ -751,8 +755,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not infer that opening any overlay stops the world. Only the overlays named in the stepping gate freeze simulation; the inventory overlay leaves gravity and AI running while it removes input.',
+              content: 'The stepping gate names the overlays that freeze simulation. The inventory overlay removes player input while gravity and AI continue running.',
             },
           },
         ],
@@ -864,7 +867,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
-            text: '`TexturedFacePass.draw` uploads the current rows for every non-empty face into that face’s stream-draw instance buffer immediately before the instanced draw, and omits a face from drawing only when its row count is zero. The pass retains no record of a previously uploaded array, so the instance buffer a moving object draws from always holds the transform and UV rect built for the frame in flight. `PlayerModelPass.draw_shadow` applies the same rule to the player shadow: it uploads the current `shadow_rows` into the cube transform-instanced buffer before the instanced shadow draw rather than reusing the prior frame’s contents.',
+            text: '`TexturedFacePass.draw` uploads the current rows for every non-empty face into that face’s stream-draw instance buffer immediately before the instanced draw, and skips a face whose row count is zero. The pass retains no previously uploaded array, so a moving object draws from a buffer holding the transform and UV rect built for the frame in flight. `PlayerModelPass.draw_shadow` applies the same rule to the player shadow and uploads current `shadow_rows` before the instanced shadow draw.',
           },
           {
             kind: 'code',
@@ -893,7 +896,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
             note: {
               type: 'note',
               content:
-                'This article documents the OpenGL backend only. Differences from the WGPU backend, including the clip-space convention, the chunk-mesh path, and camera roll, are stated in the WGPU rendering article where both implementations are compared.',
+                '`src/ludoxel/presentation/rendering/backends/opengl/` supplies this backend path. WGPU uses its own clip-space conversion, chunk-mesh path, and camera-roll handling under `src/ludoxel/presentation/rendering/backends/wgpu/`; parity requires evidence from both implementations.',
             },
           },
         ],
@@ -919,7 +922,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
-            text: 'WGPU clip space runs depth from zero to one rather than minus one to one, so `_opengl_clip_to_wgpu` corrects every view-projection matrix before upload. `_frame_uniform_bytes` packs the view-projection and light view-projection, the sun direction, the selection tint and mode and block, the fog parameters, and the shadow texel, darkness, bias, and PCF radius into a fixed-width uniform consumed by the shaders.',
+            text: 'WGPU clip space uses a zero-to-one depth interval. `_opengl_clip_to_wgpu` corrects every view-projection matrix before upload. `_frame_uniform_bytes` packs the view-projection and light view-projection, the sun direction, the selection tint and mode and block, the fog parameters, and the shadow texel, darkness, bias, and PCF radius into a fixed-width uniform consumed by the shaders.',
           },
           {
             kind: 'code',
@@ -942,7 +945,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
           },
           {
             kind: 'paragraph',
-            text: 'World wireframe is emulated rather than rasterized as lines by the driver. `_front_facing_world_rows` and `_front_facing_cloud_rows` filter front-facing rows on the CPU so the WGPU line list matches the edges the OpenGL back-face culling and polygon line mode would produce.',
+            text: 'World wireframe uses CPU-side emulation. `_front_facing_world_rows` and `_front_facing_cloud_rows` filter front-facing rows so the WGPU line list matches the edges produced by OpenGL back-face culling and polygon-line mode.',
           },
         ],
       },
@@ -1098,7 +1101,7 @@ sy = _snap(float(cy), float(texel))`,
             note: {
               type: 'note',
               content:
-                'This article covers fog ranges, the shared fog factor, shadow quality presets, and light-space construction. It does not extend to cloud-field generation or chunk culling, which are owned by other world-visual modules.',
+                '`src/ludoxel/presentation/rendering` computes fog ranges, the shared fog factor, shadow quality presets, and light-space transforms from the corresponding preference values. Cloud-field generation and chunk culling follow their separate world-visual data and selection paths.',
             },
           },
         ],
@@ -1145,7 +1148,7 @@ sy = _snap(float(cy), float(texel))`,
           },
           {
             kind: 'paragraph',
-            text: 'The result `BlockPick` carries the hit cell, the placement cell derived from the face neighbour offset, the entry parameter, the face, and the hit point; the placement cell is cleared when it is already occupied. Because the AABBs come from the block shape rather than a unit cube, picking respects slabs, stairs, fences, and walls; for a fence or wall a downward ray that strikes near the top is reassigned to the top face so placement lands on the post.',
+            text: 'The result `BlockPick` carries the hit cell, the placement cell derived from the face neighbour offset, the entry parameter, the face, and the hit point; the placement cell is cleared when it is already occupied. Block-shape AABBs make picking respect slabs, stairs, fences, and walls. For a fence or wall, a downward ray that strikes near the top is reassigned to the top face so placement lands on the post.',
           },
         ],
       },
@@ -1177,7 +1180,7 @@ sy = _snap(float(cy), float(texel))`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The OpenGL backend wraps the builder in a `SelectionController` and draws the result through the selection pass in `src/ludoxel/presentation/rendering/backends/opengl/passes/selection.py`; the WGPU backend builds the same line vertices in `set_selection_target` and draws them with its selection pipeline. Both backends key the selection on the picked cell, its state, and a six-neighbour state signature, so the outline is rebuilt only when the picked block or its surroundings change rather than every frame. The render loop refreshes the selection on a cadence in `_refresh_selection_for_frame`, clearing it when nothing is targeted.',
+            text: 'The OpenGL backend wraps the builder in a `SelectionController` and draws the result through the selection pass in `src/ludoxel/presentation/rendering/backends/opengl/passes/selection.py`; the WGPU backend builds the same line vertices in `set_selection_target` and draws them with its selection pipeline. Both backends key selection on the picked cell, its state, and a six-neighbour state signature. A changed block or surrounding state rebuilds the outline; `_refresh_selection_for_frame` refreshes the selection on its cadence and clears it when nothing is targeted.',
           },
           {
             kind: 'note',
@@ -1206,11 +1209,11 @@ sy = _snap(float(cy), float(texel))`,
         content: [
           {
             kind: 'paragraph',
-            text: '`build_player_model_pose` in `src/ludoxel/presentation/rendering/visuals/players/model_pose.py` turns one `PlayerRenderState` into a frozen `PlayerModelPose`. The pose holds the skin face rows, an optional `HeldBlockPose`, the special-item face rows and icon, the hurt-tint strength, a resolved skin key, and the `shadow_rows` instance matrices. The builder is wrapped in an `lru_cache` keyed on the render state, so two actors in the same pose share one computation and a standing actor is recomputed only when its key changes. The OpenGL frame pipeline in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU backend in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` both call this same function, so a change to the row contract reaches both renderers at once rather than in one backend alone.',
+            text: '`build_player_model_pose` in `src/ludoxel/presentation/rendering/visuals/players/model_pose.py` turns one `PlayerRenderState` into a frozen `PlayerModelPose`. The pose holds the skin face rows, an optional `HeldBlockPose`, the special-item face rows and icon, the hurt-tint strength, a resolved skin key, and the `shadow_rows` instance matrices. The builder is wrapped in an `lru_cache` keyed on render state, so two actors in the same pose share one computation and a standing actor recomputes when its key changes. The OpenGL frame pipeline in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU backend in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` call that function, propagating a row-contract change to both renderers.',
           },
           {
             kind: 'paragraph',
-            text: 'A first-person render state returns empty skin and held-item face rows but still builds the full `shadow_rows`, because the local player casts a ground shadow even when the body model itself is hidden behind the camera. The shadow rows are assembled from the same head, body, arm, and leg matrices that produce the visible skin, and the held block and special item append their own cube rows from the hand transform. Because the visible pose and the shadow share those matrices, a corrected arm or held-item pose moves the body and its shadow together rather than letting them diverge.',
+            text: 'A first-person render state returns empty skin and held-item face rows while building full `shadow_rows`, because the local player casts a ground shadow when the body model is behind the camera. The shadow rows use the same head, body, arm, and leg matrices that produce visible skin, and the held block and special item append cube rows from the hand transform. Shared matrices keep corrected arm and held-item poses aligned with the body and ground shadow.',
           },
         ],
       },
@@ -1311,7 +1314,7 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
           },
           {
             kind: 'paragraph',
-            text: 'The idle weight is the product of the complementary walk fraction and the complementary attack weight, so the sway is at full strength only while standing and idle, and it fades smoothly to nothing as the player begins to walk or starts a swing. Because the idle clock advances every fixed step, the render state changes each step even when the player is otherwise static, which is what allows the cached pose to refresh and the idle motion to animate rather than freeze on one cached frame.',
+            text: 'The idle weight is the product of the complementary walk fraction and the complementary attack weight, reaching full strength while standing and idle before fading as the player walks or starts a swing. The idle clock advances every fixed step, changing render state for a static player and refreshing the cached pose for idle motion.',
           },
         ],
       },
@@ -1321,7 +1324,7 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
         content: [
           {
             kind: 'paragraph',
-            text: 'The first-person swing progress is carried into the third-person body through the render state, but it is not applied to the body as the first-person camera-space arm motion. `_third_person_swing_arm_angles` converts the swing progress into a forward shoulder pitch and a small outward roll for the main-hand arm. The pitch raises the arm forward from the shoulder, and the roll is non-negative, so the hand is pushed outward rather than across the chest. There is no inward roll and no yaw, which is what previously drew the hand and held item through the torso.',
+            text: 'The render state carries first-person swing progress into the third-person body. `_third_person_swing_arm_angles` converts the progress into a forward shoulder pitch and a small outward roll for the main-hand arm. The pitch raises the arm forward from the shoulder, and the non-negative roll pushes the hand outward. The third-person transform uses no inward roll or yaw, keeping the hand and held item clear of the torso.',
           },
           {
             kind: 'code',
@@ -1343,13 +1346,12 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
             math: {
               expression: 's_e = 1 - (1 - s)^4, \\qquad \\theta_{x} = -\\,\\Phi\\,\\sin(\\pi s_e) \\le 0, \\qquad \\rho_{z} = R\\,\\sin(\\pi s) \\ge 0',
               displayMode: true,
-              caption:
-                'The eased swing s_e drives a forward pitch θ_x that is always toward the front, while the roll ρ_z stays outward, so the arm leaves the shoulder forward and to the side rather than turning into the body.',
+              caption: 'The eased swing s_e drives forward pitch θ_x and outward roll ρ_z, sending the arm forward and to the side from the shoulder.',
             },
           },
           {
             kind: 'paragraph',
-            text: 'The forward pitch rotates the arm in the plane that holds its model `X`, so the hand stays on the outward side of the torso through the whole swing, and the held block or special item, anchored to that hand, swings forward with it instead of sweeping across the chest in the front view or out through the back in the rear view. Because the held-item parent transform and the shadow rows are built from the same arm matrices, the visible swing, the held item, and the ground shadow all follow one motion. The attack weight, derived separately from the swing progress, damps the walk swing and idle sway on the main hand during the strike so the forward pitch dominates while the swing is active.',
+            text: 'The forward pitch rotates the arm in the plane that holds its model `X`, keeping the hand on the outward side of the torso through the swing. A held block or special item anchored to that hand follows the forward motion. The held-item parent transform and shadow rows use the same arm matrices, so the visible swing, held item, and ground shadow follow one motion. Attack weight, derived separately from swing progress, damps walk swing and idle sway on the main hand during the strike.',
           },
         ],
       },
@@ -1359,7 +1361,7 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
         content: [
           {
             kind: 'paragraph',
-            text: '`build_player_model_snapshot` decomposes the horizontal velocity in the look frame into a signed `limb_forward_ratio` and a signed `limb_strafe_ratio`, each the dot product of the velocity with the look forward or right basis over the walk speed. The pose builder reads those ratios so the limbs are shaped by direction, not only by raw speed: the forward component drives the fore and aft stride, a negative forward component damps it, and the strafe component adds a sidestep. The walk phase still advances from the overall speed, so the legs and arms keep their alternating cadence in every direction.',
+            text: '`build_player_model_snapshot` decomposes horizontal velocity in the look frame into signed `limb_forward_ratio` and `limb_strafe_ratio` values, each the dot product of velocity with the look forward or right basis over walk speed. The pose builder uses direction and raw speed: the forward component drives the fore-and-aft stride, a negative forward component damps it, and the strafe component adds a sidestep. Overall speed still advances walk phase, keeping the alternating limb cadence in every direction.',
           },
           {
             kind: 'code',
@@ -1386,7 +1388,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
           },
           {
             kind: 'paragraph',
-            text: 'The fore and aft amplitude follows the magnitude of the forward ratio and is multiplied by `_BACKWARD_SWING_SCALE` when that ratio is negative, so a backward step takes a visibly shorter stride than a forward one. A strafe adds a small fore and aft step and a lateral leg roll about the hip; capping the combined fore and aft at the total-speed swing keeps a diagonal from swinging more than a straight forward stride at the same speed. The legs roll with `rot_z` at the hip rather than translating, so the foot moves laterally while the leg root stays joined to the body, and because the leg matrices also build the shadow rows, the sidestep appears in the ground shadow. Side direction is read from the model `+X` and `-X` positions, not the leg variable names, so a strafe toward the player right rolls both feet toward `+X` whichever variable holds that side.',
+            text: 'The fore-and-aft amplitude follows the magnitude of the forward ratio and is multiplied by `_BACKWARD_SWING_SCALE` when that ratio is negative, giving a backward step a shorter stride. A strafe adds a small fore-and-aft step and lateral hip roll; capping their combination at total-speed swing keeps a diagonal within the straight-forward stride at the same speed. The legs use `rot_z` at the hip, moving each foot laterally while its root remains joined to the body, and the same matrices carry the sidestep into ground-shadow rows. Side direction comes from model `+X` and `-X` positions, so a player-right strafe rolls both feet toward `+X` regardless of variable names.',
           },
         ],
       },
@@ -1562,7 +1564,7 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
         content: [
           {
             kind: 'paragraph',
-            text: '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` decides the key: it returns the My World key only when ambient audio is enabled and the current play space is My World, and returns nothing otherwise. The viewport supplies the enabled flag and the current space through `AudioManager.set_ambient_active`, gating ambient audio on the same gameplay-audible predicate that governs whether the simulation is running, so the Othello space and the menu states have no ambient loop. The effective volume is the ambient category gain, the product of master and the ambient factor; when that gain is inaudible or the key is absent, the effect is stopped and its source cleared rather than played at zero volume.',
+            text: '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` returns the My World key when ambient audio is enabled and the current play space is My World; every other state resolves to no ambient key. The viewport supplies the enabled flag and current space through `AudioManager.set_ambient_active`, using the same gameplay-audible predicate that governs simulation. Othello and menu states therefore have no ambient loop. Effective volume is the product of master and ambient-category gain; an inaudible gain or absent key stops the effect and clears its source.',
           },
         ],
       },
@@ -1588,7 +1590,7 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
           },
           {
             kind: 'paragraph',
-            text: 'Round-robin selection in `_pick_existing_url` advances through the four samples on each restart, so the loop varies across the wind tracks rather than repeating a single file. The effect is created once by `_ensure_ambient_effect` and reused; only its source is swapped. `set_preferences` re-applies the ambient volume to the effect and the category volume to every pooled slot.',
+            text: 'Round-robin selection in `_pick_existing_url` advances through the four samples on each restart, varying the loop across wind tracks. `_ensure_ambient_effect` creates one reusable effect and swaps its source. `set_preferences` re-applies ambient volume to that effect and category volume to every pooled slot.',
           },
           {
             kind: 'paragraph',
@@ -1651,7 +1653,7 @@ self._ambient_transitioning = False`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_route_control` chases a combat target when one is present, otherwise advances toward the active route point, choosing between pursuit, parkour, and turn-only controls and respecting flexible-route replanning. `_wander_control` issues periodic randomized headings updated by `_update_wander_state`, and `idle_control` issues no movement. Modes and their normalization live in `src/ludoxel/simulation/actors/ai_players/modes.py`, and the focused behaviours live in the navigation, parkour, combat, placement, recovery, stuck, avoidance, and route modules under `src/ludoxel/simulation/actors/ai_players/`; the manager composes them rather than embedding their logic.',
+            text: '`_route_control` chases a combat target when one is present and otherwise advances toward the active route point, choosing pursuit, parkour, or turn-only controls while respecting flexible-route replanning. `_wander_control` issues periodic randomized headings updated by `_update_wander_state`, and `idle_control` issues no movement. Modes and their normalization live in `src/ludoxel/simulation/actors/ai_players/modes.py`; navigation, parkour, combat, placement, recovery, stuck, avoidance, and route modules provide the focused behaviours that the manager composes.',
           },
           {
             kind: 'paragraph',
@@ -1687,7 +1689,7 @@ self._ambient_transitioning = False`,
           },
           {
             kind: 'paragraph',
-            text: 'Each tick the actor follows the most recent completed plan; planning never blocks the step. `_mark_nav_failure` retries a failed plan with exponential backoff and, after enough retries, blacklists an unreachable route target for a cooldown so the actor turns rather than stalling indefinitely on an impossible goal.',
+            text: 'Each tick the actor follows the most recent completed plan; planning never blocks the step. `_mark_nav_failure` retries a failed plan with exponential backoff and, after enough retries, blacklists an unreachable route target for a cooldown. The actor turns during that cooldown.',
           },
         ],
       },
@@ -1746,7 +1748,7 @@ else:
         content: [
           {
             kind: 'paragraph',
-            text: '`DemonstrationRecord` in `src/ludoxel/simulation/actors/ai_players/learning/dataset.py` captures game state and action, not screen pixels. It is a frozen dataclass holding a record kind drawn from `RECORD_KINDS`, a tick, an actor identifier, a serializable observation, an action identifier, a tri-valued success flag, an optional reward, and a kind-specific detail mapping. `encode_record_line` and `decode_record_line` serialize one record per line as JSON with sorted keys, and a corrupt or truncated line decodes to nothing rather than raising. `DatasetSummary` records count, byte size, and per-kind tally, and `DatasetSink` is the write protocol implemented outside the simulation layer.',
+            text: '`DemonstrationRecord` in `src/ludoxel/simulation/actors/ai_players/learning/dataset.py` captures game state and action. It is a frozen dataclass holding a record kind drawn from `RECORD_KINDS`, a tick, an actor identifier, a serializable observation, an action identifier, a tri-valued success flag, an optional reward, and a kind-specific detail mapping. `encode_record_line` and `decode_record_line` serialize one record per line as JSON with sorted keys; a corrupt or truncated line decodes to no record. `DatasetSummary` records count, byte size, and per-kind tally, and `DatasetSink` is the write protocol implemented outside the simulation layer.',
           },
           {
             kind: 'code',
@@ -1771,7 +1773,7 @@ class DemonstrationRecord:
         content: [
           {
             kind: 'paragraph',
-            text: 'Records embed a serialized observation, and learning conditions on a derived feature key set rather than raw rendered values. `encode_features` in `src/ludoxel/simulation/actors/ai_players/learning/feature_encoder.py` maps observation state to stable keys for health thresholds, player distance and visibility, combat readiness, route state, hazards, terrain gaps, placement and breaking opportunities, and stuck signals. The encoder is versioned by `FEATURE_ENCODER_VERSION`, so policy compatibility can be checked against the same feature vocabulary used to generate records.',
+            text: 'Records embed a serialized observation, and learning conditions on a derived feature-key set. `encode_features` in `src/ludoxel/simulation/actors/ai_players/learning/feature_encoder.py` maps observation state to stable keys for health thresholds, player distance and visibility, combat readiness, route state, hazards, terrain gaps, placement and breaking opportunities, and stuck signals. The encoder is versioned by `FEATURE_ENCODER_VERSION`, so policy compatibility can be checked against the feature vocabulary used to generate records.',
           },
           {
             kind: 'paragraph',
@@ -1825,7 +1827,7 @@ def policy_enabled(self) -> bool:
             note: {
               type: 'note',
               content:
-                'This Systems article explains how records are formed, gated, and flushed. The Data category owns the JSON Lines path, export/import behavior, corrupt-line accounting, and retention consequences.',
+                '`DatasetSink` carries records across the simulation/application boundary. `AiLearningStore.dataset_writer` selects the JSON Lines path and writer beneath the runtime data root; decode, export, corrupt-line accounting, and retention follow that store path.',
             },
           },
         ],
@@ -1890,7 +1892,7 @@ for feature in features:
         content: [
           {
             kind: 'paragraph',
-            text: 'The safety boundary is the action mask, not the policy. `build_action_mask` in `src/ludoxel/simulation/actors/ai_players/learning/action_mask.py` derives, from the observation, the set of permitted actions and a reason for each forbidden one: moving into a void, launching while airborne, attacking out of range or on cooldown, placing where no face allows it, breaking the actor own footing, operating an absent fence gate, following a missing or blocked route, replanning without a route, or idling at low health within reach. View rotation and sneak are always permitted so the allowed set is never empty. `AiActionMask.is_allowed` reports membership, and the policy adjusts only the utilities of permitted actions, so a bias can never resurrect a forbidden action.',
+            text: 'The action mask forms the safety boundary. `build_action_mask` in `src/ludoxel/simulation/actors/ai_players/learning/action_mask.py` derives, from the observation, the set of permitted actions and a reason for each forbidden one: moving into a void, launching while airborne, attacking out of range or on cooldown, placing where no face allows it, breaking the actor own footing, operating an absent fence gate, following a missing or blocked route, replanning without a route, or idling at low health within reach. View rotation and sneak remain permitted, keeping the allowed set non-empty. `AiActionMask.is_allowed` reports membership, and the policy adjusts utilities for permitted actions only.',
           },
         ],
       },
@@ -1900,7 +1902,7 @@ for feature in features:
         content: [
           {
             kind: 'paragraph',
-            text: 'A policy is used only when usable. `Policy.is_usable` requires the schema version and compatibility target to match the engine, the feature-encoder and action-catalog versions to match or be the legacy zero, and the evaluation to record a passing result. `builtin_deterministic_policy` is the always-usable baseline identity. `PolicyRegistry` in `src/ludoxel/simulation/actors/ai_players/learning/policy_registry.py` loads bundled artifacts once, resolves a requested policy by kind and identifier, and falls back to the built-in baseline whenever the policy is missing, broken, or not usable, swallowing a user-loader exception as a fallback rather than a failure, so a defective artifact never disables the AI.',
+            text: '`Policy.is_usable` admits a policy when its schema version and compatibility target match the engine, its feature-encoder and action-catalog versions match or use legacy zero, and its evaluation records a pass. `builtin_deterministic_policy` is the always-usable baseline identity. `PolicyRegistry` in `src/ludoxel/simulation/actors/ai_players/learning/policy_registry.py` loads bundled artifacts once, resolves a requested policy by kind and identifier, and selects the built-in baseline for missing, broken, or unusable policies and user-loader exceptions. A defective artifact leaves AI operation available.',
           },
           {
             kind: 'code',
@@ -1982,7 +1984,7 @@ for feature in features:
           },
           {
             kind: 'paragraph',
-            text: 'This bitboard model is the basis for the strong and exact search. The weaker difficulties operate on a list-based board through the rules in `src/ludoxel/simulation/spaces/othello/game/rules.py`, which share the legal-move and flip semantics in their own representation.',
+            text: '`src/ludoxel/simulation/spaces/othello/engines/bitboards.py` supplies the bitboard representation used by the strong and exact search. Weaker difficulties operate on a list-based board through `src/ludoxel/simulation/spaces/othello/game/rules.py`; that representation carries the corresponding legal-move and flip semantics for its engine path.',
           },
         ],
       },
@@ -2072,7 +2074,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             note: {
               type: 'note',
               content:
-                'This article documents the Ludoxel Othello search, not Othello in general. The opening-book and learning-book contents and their on-disk form are owned by the Data category; here the book is the move source the engine consults and the worker is the boundary that keeps search off the interface thread.',
+                '`src/ludoxel/simulation/spaces/othello/` implements the Ludoxel Othello search. Its engine consults opening and learning books as move sources, while the persistence store determines their on-disk form and the worker keeps search off the interface thread.',
             },
           },
         ],
@@ -2094,7 +2096,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/foundations/identity/version.py` owns the runtime version identity as one assigned string. `pyproject.toml` obtains the package version from that attribute, while `src/ludoxel/presentation/interface/windows/main.py` consumes the same value for the Qt application version, display name, and window title. The root README currently displays the same version label, but README text and Website text are descriptions rather than alternate runtime authorities. The source value identifies the running application; it does not issue release approval, establish legal permission, or decide what may be packaged or published.',
+            text: '`src/ludoxel/foundations/identity/version.py` owns the runtime version identity as one assigned string. `pyproject.toml` obtains the package version from that attribute, while `src/ludoxel/presentation/interface/windows/main.py` consumes the same value for the Qt application version, display name, and window title. The root README and Website display the same label as descriptions. Release approval, legal permission, packaging, and publication remain under their governing sources.',
           },
           {
             kind: 'code',
@@ -2159,7 +2161,7 @@ def search_project_root(start: Path) -> Path | None:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/foundations/diagnostics/system.py` gathers CPU thread count, a platform-specific CPU name and nominal speed when obtainable, total memory, current-process RSS, and optional NVIDIA utilization. `read_system_info` returns only `cpu_threads`, `cpu_name`, `cpu_speed_ghz`, and `total_mem_bytes`; `read_process_memory` returns only `rss_bytes` and `total_bytes`. There is no operating-system version field, Python-version field, renderer field, scene metric, or backend result in these dataclasses. Linux reads procfs before a `ps` fallback, macOS uses `sysctl` and `ps`, and Windows uses registry, Win32, PSAPI, and `tasklist` fallbacks. `HudController` consumes those values on a background loop and renders unavailable values as `n/a`. The module does not import a renderer backend or query its API; renderer name, vendor, API, and shader information are separately requested from `BackendRendererApi.gl_info()` by the HUD.',
+            text: '`src/ludoxel/foundations/diagnostics/system.py` gathers CPU thread count, a platform-specific CPU name and nominal speed when obtainable, total memory, current-process RSS, and optional NVIDIA utilization. `read_system_info` returns `cpu_threads`, `cpu_name`, `cpu_speed_ghz`, and `total_mem_bytes`; `read_process_memory` returns `rss_bytes` and `total_bytes`. The dataclasses omit operating-system version, Python version, renderer, scene metric, and backend result fields. Linux reads procfs before a `ps` fallback, macOS uses `sysctl` and `ps`, and Windows uses registry, Win32, PSAPI, and `tasklist` fallbacks. `HudController` consumes those values on a background loop and renders unavailable values as `n/a`. `BackendRendererApi.gl_info()` separately provides renderer name, vendor, API, and shader information to the HUD.',
           },
           {
             kind: 'code',
@@ -2220,7 +2222,7 @@ def search_project_root(start: Path) -> Path | None:
               expression:
                 '\\|\\mathbf{v}\\|=\\sqrt{x^2+y^2+z^2},\\qquad \\operatorname{normalized}(\\mathbf{v})=\\begin{cases}\\mathbf{v}/\\|\\mathbf{v}\\|&\\|\\mathbf{v}\\|>10^{-12}\\\\(0,0,0)&\\|\\mathbf{v}\\|\\le10^{-12}\\end{cases}',
               displayMode: true,
-              caption: '`Vec3.length` and `Vec3.normalized` in `src/ludoxel/foundations/mathematics/linear/vec3.py`; callers receive a zero vector rather than a divide-by-zero failure.',
+              caption: '`Vec3.length` and `Vec3.normalized` in `src/ludoxel/foundations/mathematics/linear/vec3.py`; zero-length input resolves to the zero vector.',
             },
           },
           {

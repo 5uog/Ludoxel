@@ -18,7 +18,7 @@ export const dataPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. Its signature accepts `project_root` and resolves it in an otherwise unused guarded branch, but never uses that argument to select a result. The resolver consults `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories alone, so the repository location it ignores serves as no dormant fallback, packaging shortcut, or persistence anchor.',
+            text: 'Ludoxel derives user data from a runtime data root selected by `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. Its signature accepts `project_root` and resolves it in an otherwise unused guarded branch, while `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories select the result. Repository checkout and executable-container locations have no role in that selection.',
           },
           {
             kind: 'paragraph',
@@ -50,6 +50,10 @@ export const dataPages: DocsPageContent[] = [
           {
             kind: 'paragraph',
             text: 'The environment-override branch is the first hard boundary: `LUDOXEL_DATA_ROOT` relocates the complete runtime tree before any store computes `state` or `cache`. An observed absolute path therefore proves only the final resolver output. It fixes neither the platform branch that produced it nor repository ownership, and it carries no permission to copy the file. Correct reading names the resolver branch, the relative file below `state` or `cache`, and the store that consumes that relative path.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`AppStateStore._data_root` in `src/ludoxel/application/persistence/stores/app.py` consumes the selected root and derives `state/player_state.json` and `state/world_state.json` through `_state_path`. `load()` reads each envelope through `_read_runtime_or_previous`, then feeds `PlayerStateFile.from_dict` and `WorldStateFile.from_dict` into one `AppState`; `save()` writes both JSON envelopes before `update_runtime_integrity_manifest` refreshes their protected entries. The resolver output reaches a concrete store, schema admission path, and integrity update sequence.',
           },
         ],
       },
@@ -84,7 +88,7 @@ def runtime_cache_root(data_root: Path) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: 'The integrity locations live below the state root rather than in a third tree. `src/ludoxel/foundations/locations/roots.py` derives both `state_manifest.json` and `integrity_key.bin` below `runtime_state_root(data_root)`, while the cache remains a sibling below the same data root. `src/ludoxel/application/persistence/integrity/manifest.py` consumes those two state paths to read, write, and verify integrity material; `src/ludoxel/application/persistence/stores/othello_book.py` independently places its compiled opening-book cache below `runtime_cache_root`. The location helper determines the path composition only. It owns neither manifest bytes nor cache content, schema, cryptographic meaning, or deletion policy.',
+            text: '`src/ludoxel/foundations/locations/roots.py` derives `state_manifest.json` and `integrity_key.bin` below `runtime_state_root(data_root)`; the cache remains a sibling below the same data root. `src/ludoxel/application/persistence/integrity/manifest.py` consumes the state paths to read, write, and verify integrity material, while `src/ludoxel/application/persistence/stores/othello_book.py` places its compiled opening-book cache below `runtime_cache_root`. The location helper composes paths. Manifest bytes, cache contents, schema interpretation, cryptographic semantics, and deletion policy remain with their respective owners.',
           },
           {
             kind: 'code',
@@ -159,7 +163,7 @@ def _world_store(self) -> JsonFileStore:
             note: {
               type: 'warning',
               content:
-                'Do not infer legal permission, official release status, public support suitability, or safe disclosure from the existence of a resolved data path. The path identifies where the runtime placed data; it does not authorize what may be done with that data.',
+                'A resolved data path establishes runtime placement. Legal permission, release status, support eligibility, and disclosure treatment remain governed by their respective legal and policy sources.',
             },
           },
         ],
@@ -468,7 +472,7 @@ class PlayerStateFile:
           },
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/inventory.py` owns the persisted hotbar branches rather than treating inventory as an untyped field on `AppState`. Its reader admits the earlier shared hotbar keys, then constructs creative, survival, Othello, and route branches with each branch’s slot normalization and selected-index bounds. A malformed branch falls back through its own default slots and index; it does not replace the rest of the player-state envelope.',
+            text: '`src/ludoxel/application/persistence/schema/inventory.py` owns the persisted hotbar branches as explicit schema. Its reader admits the earlier shared hotbar keys, then constructs creative, survival, Othello, and route branches with each branch’s slot normalization and selected-index bounds. A malformed branch falls back through its own default slots and index while the remaining player-state envelope remains available.',
           },
         ],
       },
@@ -478,7 +482,7 @@ class PlayerStateFile:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/settings.py` owns `PersistedSettings`, the saved-data admission point for runtime preferences. It imports the specialized preference normalizers rather than duplicating their rules: `AudioPreferences` for category gains, `normalize_cloud_speed_range` and `normalize_cloud_height_settings` for cloud ranges, `KeybindSettings` for portable keyboard bindings, `RuntimePreferences` for default values, and `normalize_shadow_map_quality` for the shadow-specific quality tier.',
+            text: '`src/ludoxel/application/persistence/schema/settings.py` owns `PersistedSettings`, the saved-data admission point for runtime preferences. It applies the specialized preference normalizers: `AudioPreferences` for category gains, `normalize_cloud_speed_range` and `normalize_cloud_height_settings` for cloud ranges, `KeybindSettings` for portable keyboard bindings, `RuntimePreferences` for default values, and `normalize_shadow_map_quality` for the shadow-specific quality tier.',
           },
           {
             kind: 'code',
@@ -512,7 +516,7 @@ object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval `[0, 1]` by `_clamp_volume`. A value that cannot be converted to `float` does not reach the mixer as an arbitrary object and does not collapse into an unbounded gain; it falls back to the provided default, whose default is `1.0`, and is then clamped.',
+            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval `[0, 1]` by `_clamp_volume`. Failed `float` conversion selects the provided default, itself `1.0` by default, before clamping supplies the mixer gain.',
           },
           {
             kind: 'code',
@@ -616,7 +620,7 @@ def _binding_to_key_cached(normalized_binding: str) -> int | None:
           },
           {
             kind: 'paragraph',
-            text: 'Duplicate bindings are resolved by canonicalization rather than by the input adapter. `_normalized_bindings_from_items` starts with every known action, ignores unknown action identifiers, and gives the later action the key when the same normalized binding appears twice. The earlier action is cleared, preserving a one-key-to-one-action runtime lookup. `KeybindSettings.__post_init__` then builds both `action -> key` and `key -> action` maps, so viewport, inventory, HUD, and hotbar input paths share the same comparison rule.',
+            text: '`_normalized_bindings_from_items` resolves duplicate bindings during canonicalization. It starts with every known action, ignores unknown action identifiers, and gives the later action the key when the same normalized binding appears twice. The earlier action is cleared, preserving a one-key-to-one-action runtime lookup. `KeybindSettings.__post_init__` then builds both `action -> key` and `key -> action` maps, so viewport, inventory, HUD, and hotbar input paths share the same comparison rule.',
           },
           {
             kind: 'code',
@@ -638,7 +642,7 @@ normalized[str(normalized_action)] = str(normalized_binding)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/runtime.py` is the mutable runtime form that consumes persisted settings after schema admission. Its `normalize()` method reprojects booleans, finite numeric ranges, hotbar branches, play-space identifiers, Othello settings, keybinds, and audio preferences into one canonical object before renderer state, session code, or input handling consumes them. `clone()` and `coerce_runtime_preferences()` preserve that boundary by returning a normalized structural copy rather than exposing the original object for partial mutation.',
+            text: '`src/ludoxel/application/preferences/runtime.py` is the mutable runtime form that consumes persisted settings after schema admission. Its `normalize()` method reprojects booleans, finite numeric ranges, hotbar branches, play-space identifiers, Othello settings, keybinds, and audio preferences into one canonical object before renderer state, session code, or input handling consumes them. `clone()` and `coerce_runtime_preferences()` return a normalized structural copy, isolating the source object from partial mutation.',
           },
           {
             kind: 'code',
@@ -658,7 +662,7 @@ self.audio = self.audio.normalized()`,
           },
           {
             kind: 'paragraph',
-            text: 'Hotbar state spans several branches rather than one list. Runtime selects the active branch in the order Othello, route edit, creative mode, then survival. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, so a malformed saved index or slot sequence does not survive into an undefined hotbar read.',
+            text: 'Hotbar state contains dedicated Othello, route-edit, creative, and survival branches. Runtime selects the active branch in that order. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, keeping malformed saved indices and slot sequences outside runtime lookup.',
           },
           {
             kind: 'code',
@@ -716,7 +720,7 @@ def normalize_shadow_map_quality(value: object) -> int:
           },
           {
             kind: 'paragraph',
-            text: 'The fallback is deliberately `Standard` rather than the nearest endpoint. Missing, old-format, type-invalid, or out-of-range saved values converge to tier 3. A saved render-distance change does not rewrite this value, and an invalid shadow tier cannot force `Lowest`, `Ultra`, or a non-existent quality level into renderer state.',
+            text: 'Missing, old-format, type-invalid, and out-of-range saved values converge to the `Standard` tier, tier 3. Render-distance changes leave that value intact. Renderer state admits the normalized tier and excludes `Lowest`, `Ultra`, and every unassigned quality level when saved input falls outside the domain.',
           },
         ],
       },
@@ -764,7 +768,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
           },
           {
             kind: 'paragraph',
-            text: 'The manifest is deliberately conditional rather than a blanket checksum requirement. `verify_runtime_file` accepts an absent protected file, an absent or empty manifest, and a path with no manifest entry; once a manifest entry exists, however, the integrity key must be readable and the path-bound HMAC must compare exactly. The HMAC input includes the relative path, a NUL separator, and file bytes, so a digest binds to its protected relative path, and a digest computed for one protected name cannot be moved to another without detection.',
+            text: '`verify_runtime_file` applies HMAC verification when a manifest entry exists. An absent protected file, an absent or empty manifest, and a path without a manifest entry remain accepted states; an existing entry requires a readable integrity key and an exact path-bound HMAC match. The HMAC input contains the relative path, a NUL separator, and file bytes, binding each digest to its protected relative path.',
           },
           {
             kind: 'code',
@@ -877,7 +881,7 @@ finally:
         content: [
           {
             kind: 'paragraph',
-            text: '`WorldState` persists blocks as explicit coordinate/state rows. The saved representation is a list of user-visible block states keyed by integer coordinates, plus a revision counter that records world mutation, rather than a procedural seed, a chunk cache, or a renderer mesh.',
+            text: '`WorldState` persists blocks as explicit coordinate/state rows. The saved representation contains user-visible block states keyed by integer coordinates and a revision counter that records world mutation. Procedural seeds, chunk caches, and renderer meshes remain runtime representations outside that saved shape.',
           },
           {
             kind: 'code',
@@ -957,7 +961,7 @@ if isinstance(raw, list):
           },
           {
             kind: 'paragraph',
-            text: 'This is an engineering compromise with evidentiary consequences. It preserves the valid part of a save while refusing to invent missing coordinates or block states. A world that loads after skipping malformed rows may be usable, but it is not identical to the file that would have loaded if those rows had been valid; the skipped rows remain lost data rather than repaired data.',
+            text: 'The row decoder preserves valid saved state and discards malformed coordinates or block states. A world loaded after row removal may remain usable, yet its accepted rows define a different state from the file that valid rows would have produced; skipped rows remain lost data.',
           },
         ],
       },
@@ -1145,7 +1149,7 @@ def policy_path(self, policy_id: str) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedAiLearningState.default()` returns off mode, no recorded kinds, all skill categories admitted, built-in deterministic policy selection, empty summaries, and policy version zero. `load_state()` falls back to that default when the JSON file is absent or unreadable. Falling back to that default keeps a missing or corrupt learning-state file from starting recording, using an unknown policy, or enabling training behavior by accident.',
+            text: '`PersistedAiLearningState.default()` returns off mode, an empty recorded-kind set, all skill categories admitted, built-in deterministic policy selection, empty summaries, and policy version zero. `load_state()` selects that default when the JSON file is absent or unreadable. The default keeps recording off, selects the known baseline policy, and leaves training behavior disabled.',
           },
           {
             kind: 'paragraph',
@@ -1163,7 +1167,7 @@ def policy_path(self, policy_id: str) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'The demonstration writer has a different failure boundary. It serializes each candidate mapping independently, skips only rows that cannot become JSON, and does not create or append a dataset file when no rows survive. Valid lines are appended, flushed, and fsynced. A single non-serializable record therefore does not retroactively invalidate the accepted rows in the same flush, but it is not silently transformed into a synthetic example.',
+            text: 'The demonstration writer has a different failure boundary. It serializes each candidate mapping independently, skips rows that cannot become JSON, and emits no dataset write when no rows survive. Valid lines are appended, flushed, and fsynced. One non-serializable record leaves accepted rows intact and remains excluded from the dataset.',
           },
           {
             kind: 'code',
@@ -1274,7 +1278,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'This subtraction is the central engineering fact for material classification. `save_user_opening_book_lines` normalizes the effective line corpus, loads bundled lines, builds a bundled set, and writes only lines that are not in that set through the application-provided hook. A user opening-book file is therefore not permitted to become a redundant repository-resource copy merely because the effective in-memory book merges bundled and user lines.',
+            text: '`save_user_opening_book_lines` establishes the relevant material-classification operation. It normalizes the effective line corpus, loads bundled lines, builds a bundled set, and writes the user delta through the application-provided hook. The resulting opening-book file records lines absent from the bundled set even when the effective in-memory book merges both sources; repository-resource duplication remains outside this storage path.',
           },
           {
             kind: 'paragraph',
@@ -1423,7 +1427,7 @@ return (records, int(corrupt))`,
           {
             kind: 'paragraph',
             text: [
-              'A demonstration dataset proves that examples were recorded and decoded, and no more: training success, model quality, and any permission to repurpose the data outside the application are settled elsewhere, none of them established by the dataset’s presence. Rows that fail decoding are handled in ',
+              'A demonstration dataset establishes that examples were recorded and decoded. Training success, model quality, and permission to repurpose data outside the application require their respective governing evidence. Rows that fail decoding are handled in ',
               {
                 kind: 'link',
                 label: 'corrupt learning rows',
@@ -1476,7 +1480,7 @@ class Policy:
           },
           {
             kind: 'paragraph',
-            text: 'The record shape rejects inflated descriptions of learning. A policy can modify scores and weights. It does not contain executable behavior code and does not replace the planner, physics, placement policy, collision system, or combat eligibility checks.',
+            text: 'The record shape rejects inflated descriptions of learning. A policy modifies scores and weights. Executable behavior remains in the planner, physics, placement policy, collision system, and combat-eligibility checks.',
           },
         ],
       },
@@ -1738,7 +1742,7 @@ for row in rows:
         content: [
           {
             kind: 'paragraph',
-            text: 'Rendered output includes screenshots, recordings, and visible display state. It can combine user arrangement, runtime state, UI presentation, first-party assets, third-party material, and provenance-sensitive material. The fact that pixels were generated by the renderer does not mean that all embedded material became user-created or legally clean.',
+            text: 'Rendered output includes screenshots, recordings, and visible display state. It can combine user arrangement, runtime state, UI presentation, first-party assets, third-party material, and provenance-sensitive material. Rendering preserves the origin and legal status of each embedded material.',
           },
           {
             kind: 'code',
@@ -1748,7 +1752,7 @@ for row in rows:
           },
           {
             kind: 'paragraph',
-            text: 'The asset-family selection is an output precondition. It controls which texture family can appear in rendered output. It does not reclassify provenance-sensitive material as first-party and does not authorize reuse of material visible in the output.',
+            text: 'The asset-family selection is an output precondition. It controls which texture family can appear in rendered output. Provenance-sensitive material retains its classification, and reuse authority follows its governing legal source.',
           },
           {
             kind: 'paragraph',
@@ -1870,7 +1874,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'This is the strongest example of Data-level classification by implementation. The code itself enforces the separation between shipped resource and user contribution. A later material analysis still remains necessary, but the saved file’s intended content is not ambiguous: it is a user delta admitted by the storage hook after bundled lines have been removed.',
+            text: '`save_user_opening_book_lines` enforces the implementation-level separation between shipped resource and user contribution. Its stored file contains the user delta admitted by the storage hook after bundled lines have been removed. Subsequent material analysis still evaluates permission and provenance through their governing sources, while the storage operation identifies the file’s intended content.',
           },
           {
             kind: 'paragraph',
@@ -1898,7 +1902,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
             kind: 'note',
             note: {
               type: 'warning',
-              content: 'Do not infer legal cleanliness from the phrase user-created. Local origin, user arrangement, imported file presence, and rights clearance are separate facts.',
+              content: 'The phrase user-created identifies local origin. User arrangement, imported-file presence, and rights clearance remain separate facts.',
             },
           },
         ],
@@ -1934,7 +1938,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'The source predicate is not a permission rule, but it is classification evidence. Material found through a project-root or resource-root path is not local user data merely because the running application later emits output that includes, renders, copies, or refers to it.',
+            text: 'The source predicate supplies classification evidence. Material found through a project-root or resource-root path retains repository/resource status when later output includes, renders, copies, or refers to it; permission remains a separate legal question.',
           },
         ],
       },
@@ -1985,7 +1989,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           {
             kind: 'paragraph',
             text: [
-              'This Data separation identifies what material is present and where it came from. It does not authorize copying, redistribution, mirroring, packaging, or deployment. Permission remains tied to controlling legal text, including ',
+              'The producer/store separation identifies what material is present and where it came from. Controlling legal text determines copying, redistribution, mirroring, packaging, and deployment authority, including ',
               {
                 kind: 'link',
                 label: 'original materials',
@@ -2019,7 +2023,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
         content: [
           {
             kind: 'paragraph',
-            text: 'Third-party material is material whose rights holder is not the Ludoxel licensor. The repository includes third-party license text, including the Kaisei Opti font license under `third-party/kaisei-opti/LICENSE.txt`. Retaining that text preserves upstream notice and licensing context for the upstream material; it does not transform the upstream text into the Ludoxel license and does not place Ludoxel originals under the upstream font license.',
+            text: 'Third-party material has a rights holder distinct from the Ludoxel licensor. The repository includes third-party license text, including the Kaisei Opti font license under `third-party/kaisei-opti/LICENSE.txt`. Retained text preserves upstream notice and licensing context; the Ludoxel license continues to govern Ludoxel Original Materials.',
           },
           {
             kind: 'code',
@@ -2071,7 +2075,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'The saved row does not copy the texture file, but it can cause a block state to be rendered through an asset family later. That indirect relation is enough to prevent a simplistic “user save equals user-owned clean material” conclusion. The boundary is not physical byte inclusion alone; it is also the later interpretive dependency between saved identifiers and provenance-sensitive resources.',
+            text: 'The saved row carries block-state identifiers that can later select an asset family for rendering. The resulting dependency between saved identifiers and provenance-sensitive resources prevents a user-save classification from resolving asset ownership or legal clearance.',
           },
         ],
       },
@@ -2082,7 +2086,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           {
             kind: 'paragraph',
             text: [
-              'Including retained third-party license text in a build or package is a notice-retention operation. It does not relicense third-party material and does not relicense Ludoxel material. Distribution handling of retained text belongs to ',
+              'Including retained third-party license text in a build or package is a notice-retention operation. Third-party terms continue to govern third-party material, and the Ludoxel license continues to govern Ludoxel material. Distribution handling of retained text belongs to ',
               {
                 kind: 'link',
                 label: 'third-party license inclusion',

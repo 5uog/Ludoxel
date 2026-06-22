@@ -19,7 +19,7 @@ export const supportPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'The public problem-report form scopes a single intake route. Its `problem-report.yml` preamble limits the form to a reproducible, non-security problem in the Current Repository or an Official Distribution of Ludoxel, and its required acknowledgement checkboxes make the reporter confirm, before submission, that the issue carries no security-sensitive detail, no non-public reproduction information, and no Contribution Materials. Repository direction, legal objections, design suggestions, implementation proposals, and suspected vulnerabilities each fall to a different governing surface — the LICENSE, the Repository Contribution Policy, or the Security Reporting Policy — so the form turns a GitHub issue into a constrained public record of an observable defect instead of an open request for work.',
+            text: 'The public problem-report form scopes a single intake route. Its `problem-report.yml` preamble limits the form to a reproducible, non-security problem in the Current Repository or an Official Distribution of Ludoxel, and its required acknowledgement checkboxes make the reporter confirm, before submission, that the issue carries no security-sensitive detail, no non-public reproduction information, and no Contribution Materials. Repository direction, legal objections, design suggestions, implementation proposals, and suspected vulnerabilities each fall to a different governing surface — the LICENSE, the Repository Contribution Policy, or the Security Reporting Policy. The form records an observable defect through a constrained public route.',
           },
           {
             kind: 'paragraph',
@@ -30,7 +30,7 @@ export const supportPages: DocsPageContent[] = [
                 label: 'public issue limits',
                 href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-public-issue-limits',
               },
-              '. The legal article states why the public surface does not create permission or acceptance; this Support article states how the reporter must structure the public facts when the non-security channel is the correct one.',
+              '. The `LICENSE` and Repository Contribution Policy fix permission and acceptance, while `problem-report.yml` supplies the public field structure for a reproducible non-security observation.',
             ],
           },
           {
@@ -50,7 +50,11 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'A rendered GitHub form is only an intake surface. Under the Repository Contribution Policy a Public Issue that proposes or submits Contribution Materials may be closed without review, and the Security Reporting Policy routes vulnerability material to a private channel, so a patch, a project redesign, replacement documentation, or vulnerability material entered here reaches no acceptance path. The reporter settles the classification at the outset — public, reproducible, non-security problem — because once that classification is wrong the summary, reproduction, expected, and actual fields only record an out-of-route submission rather than repair it.',
+            text: 'A rendered GitHub form is an intake surface. Under the Repository Contribution Policy a Public Issue that proposes or submits Contribution Materials may be closed without review, and the Security Reporting Policy routes vulnerability material to a private channel. A patch, project redesign, replacement documentation, or vulnerability material entered here reaches no acceptance path. The reporter settles the classification at the outset — public, reproducible, non-security problem — because an incorrect classification leaves the summary, reproduction, expected, and actual fields recording an out-of-route submission.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`problem-report.yml` marks the `acknowledgement` checkbox group and the `summary`, `reproduction`, `expected`, and `actual` textareas as required. GitHub blocks submission until those validations pass; the optional `environment` and `additional-context` fields remain available for public, non-sensitive facts that materially affect reproduction. `.github/SECURITY.md` moves vulnerability detail, proof material, credentials, private files, and non-public reproduction information into a Private Reporting Channel, preserving a separate private evaluation route from the public issue record.',
           },
         ],
       },
@@ -60,7 +64,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The required fields separate the report into distinct evidentiary functions. The summary identifies the observed problem. The reproduction field states the public sequence that produces it. The expected and actual fields force the reporter to distinguish normative expectation from observation. Without that separation, the submission becomes a complaint or proposal rather than a report that can be evaluated as a reproducible non-security defect.',
+            text: 'The required fields separate the report into distinct evidentiary functions. The summary identifies the observed problem. The reproduction field states the public sequence that produces it. The expected and actual fields force the reporter to distinguish normative expectation from observation. That separation produces a report evaluable as a reproducible non-security defect.',
           },
           {
             kind: 'code',
@@ -97,7 +101,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'Each field carries a distinct evidentiary load, and collapsing them defeats the separation the template enforces. The `reproduction` field records the public action sequence that produces the behavior; the `expected` field records the normative result the reporter relied on; the `actual` field records what the build did instead. A diagnosis belongs to the Maintainer’s review rather than to any of these fields, a patch is Contribution Material the Repository Contribution Policy excludes from a Public Issue, and unrelated logs or private files fail the additional-context field’s public, non-sensitive limit. The issue closes as a public record of observable behavior, while any incorporation of supplied material into Ludoxel stays governed by the LICENSE.',
+            text: 'Each field carries a distinct evidentiary load, and collapsing them defeats the separation the template enforces. The `reproduction` field records the public action sequence that produces the behavior; the `expected` field records the normative result the reporter relied on; the `actual` field records the build result. Maintainer review owns diagnosis, the Repository Contribution Policy classifies a patch as excluded Contribution Material, and the additional-context field admits public, non-sensitive evidence. The issue closes as a public record of observable behavior; the LICENSE governs any incorporation of supplied material into Ludoxel.',
           },
         ],
       },
@@ -279,7 +283,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Supply platform evidence when it can change the technical analysis. The `environment` field carries `required: false`, so its value is governed by relevance rather than by the presence of an input box: the report names the facts that plausibly affect reproduction and omits inventory that exposes the reporter’s machine without improving evaluation.',
+            text: 'Supply platform evidence when it can change the technical analysis. The `environment` field carries `required: false`; relevance governs its value. The report names facts that plausibly affect reproduction and omits machine inventory that adds no evaluative value.',
           },
           {
             kind: 'list',
@@ -314,7 +318,7 @@ body:
                 label: 'logs without secrets',
                 href: '/docs/support/public-problem-support/evidence-handling/supplying-logs-without-secrets',
               },
-              '. When the evidence is necessary to evaluate a suspected vulnerability, use the private-security route instead of publishing it as platform context.',
+              '. Evidence necessary to evaluate a suspected vulnerability belongs on the private-security route.',
             ],
           },
         ],
@@ -448,7 +452,7 @@ body:
                 label: 'private security reporting',
                 href: '/docs/legal/reporting-and-contributions/public-and-private-reporting/understanding-private-security-reporting',
               },
-              '. This Support page states the operational consequence: the public issue may ask for contact, but it must not reveal the vulnerability.',
+              '. The `security-contact.yml` public route admits a minimal contact request; `.github/SECURITY.md` places vulnerability detail in the Private Reporting Channel.',
             ],
           },
         ],
@@ -581,7 +585,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'A report outside the supported security scope must not be forced into the public problem-report form. If it does not fit a supported private Security Report and does not fit a public non-security problem report, it is an unsupported request.',
+            text: '`.github/SECURITY.md` supports Security Reports for the Current Repository and Official Distributions, while `problem-report.yml` admits reproducible non-security problems. A report outside both routes is an unsupported request and receives no public-form classification.',
           },
         ],
       },
@@ -646,7 +650,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The public-posting rule must be applied by content type rather than by intent. A reporter may act in good faith and still publish material that belongs in a private channel. The decisive question is whether the material enables, demonstrates, targets, or materially narrows a suspected vulnerability.',
+            text: 'The public-posting rule follows content type. A reporter may act in good faith and still publish material assigned to a private channel. The decisive question is whether the material enables, demonstrates, targets, or materially narrows a suspected vulnerability.',
           },
           {
             kind: 'list',
@@ -745,7 +749,7 @@ body:
           {
             kind: 'paragraph',
             text: [
-              'When the unsafe content is Contribution Material rather than security material, the consequence is governed by ',
+              'Contribution Material follows the governing rule in ',
               {
                 kind: 'link',
                 label: 'contribution refusal',
@@ -941,7 +945,7 @@ body:
                 label: 'controlling',
                 href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
               },
-              ' legal text rather than to a support-form workaround.',
+              ' legal text; a support form cannot alter that rule.',
             ],
           },
         ],
@@ -974,7 +978,7 @@ body:
                 label: 'contribution refusal',
                 href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
               },
-              '. This Support article states the practical rule: do not put feature material into a public issue and do not disguise it as a problem report or limited question.',
+              '. Public issue forms admit reproducible non-security problems, limited questions, and minimal private-contact requests. Feature material remains Contribution Material under `.github/CONTRIBUTING.md` and falls outside those public intake routes.',
             ],
           },
         ],
@@ -1087,7 +1091,7 @@ body:
                 label: 'repository visibility',
                 href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
               },
-              '. This Support page identifies the procedural result.',
+              '. The issue form and Repository Contribution Policy define the resulting public closure route.',
             ],
           },
         ],
@@ -1158,7 +1162,7 @@ body:
                 label: 'controlling',
                 href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
               },
-              ' legal text rather than against the existence of a public support surface.',
+              ' legal text. The presence of a public support surface carries no separate legal effect.',
             ],
           },
         ],

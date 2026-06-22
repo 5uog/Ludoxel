@@ -18,7 +18,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Juridical Function of License Authority',
         body: [
           'License authority is the legal capacity of a text or later written instrument to grant, withhold, limit, condition, reserve, or terminate permission in relation to Ludoxel Original Materials. It is not the same thing as public availability, technical retrievability, documentation display, repository visibility, platform affordance, package presence, static-site generation, or operational convenience.',
-          'The question answered by this article is deliberately anterior to material scope and distribution permission. Before the reader asks whether a proposed act is permitted, the reader must first identify the source from which the asserted permission is alleged to arise. A claim that begins from a repository page, browser-rendered documentation page, clone button, fork button, download archive, preview deployment, generated website output, issue form, release page, package manifest, metadata field, build log, search index, or public cache begins from an access condition, not from license authority.',
+          'Authority analysis begins with the source asserted to grant the proposed act. A repository page, browser-rendered documentation page, clone button, fork button, download archive, preview deployment, generated website output, issue form, release page, package manifest, metadata field, build log, search index, and public cache are Access Paths under `LICENSE`; the License Text supplies the operative permission analysis.',
           'For Ludoxel Original Materials, license authority is not diffused across every public surface on which Ludoxel material appears. It is centralized in the controlling License Text, subject only to a later written instrument that is competent to alter that legal position. Everything else is subordinate evidence, explanation, notice, routing, or platform behavior unless the controlling source itself gives it operative legal force.',
         ],
       },
@@ -26,7 +26,8 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-license-authority-controlling-source',
         title: 'Controlling Source of Permission',
         body: [
-          'The root `LICENSE` is the controlling License Text for Ludoxel Original Materials. It is the place where the permission grant, the reservation of rights, the exclusions from permission, the definitions, the governing-law terms, and the legal limits must be read as legal text rather than as descriptive website copy.',
+          'The root `LICENSE` is the controlling License Text for Ludoxel Original Materials. Its legal text contains the permission grant, reservation of rights, exclusions from permission, definitions, governing-law terms, and legal limits.',
+          'Section 1 defines the Licensor, Signed Written Permission, Original Materials, Third-Party Materials, Distribution Materials, Ordinary Application Use, AI Use, Public Issue, Private Reporting Channel, and Security Report. Sections 3 through 5 then connect those definitions to the limited grant, reservations, and excluded uses. The operative legal relation follows that text: an Access Path can make a repository object reachable, while a License Text provision or later signed instrument supplies authority for an identified act and material.',
           '`README.md`, documentation notices, code-block captions, SPDX headers, package metadata, release notes, issue templates, pull-request templates, website metadata, generated documentation text, build output, public summaries, translation fragments, and platform interface text can assist the reader in finding or understanding the License Text. They do not become independent grants, waivers, amendments, exceptions, sublicenses, estoppel instruments, or public-domain dedications merely because they are visible, helpful, or adjacent to protected material.',
           'A public page can point to the controlling source, but it cannot stand in for that source. A protective notice can warn the reader that material remains protected, yet it creates no additional permission class. A platform button can make copying technically possible without converting that technical capability into legal authorization.',
         ],
@@ -95,7 +96,7 @@ export const legalPages: DocsPageContent[] = [
                   {
                     kind: 'paragraph',
                     text: [
-                      'After the controlling source has been identified, this article has reached its endpoint. Questions about what counts as Original Materials, what third-party terms require, what ',
+                      'After the controlling source has been identified, Original Materials, third-party terms, and ',
                       {
                         kind: 'link',
                         label: 'repository visibility',
@@ -112,10 +113,10 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-license-authority-boundary',
-        title: 'Article Boundary',
+        title: 'Permission Source and Access Conditions',
         body: [
           [
-            'This article must not be expanded into a general legal index. It does not restate the full definition of Original Materials, third-party materials, provenance-sensitive materials, user-created materials, application output, distribution materials, ',
+            'The root `LICENSE` defines the source of permission for Original Materials. Material classification, third-party terms, provenance review, user-created data, Application Output, Distribution Materials, ',
             {
               kind: 'link',
               label: 'ordinary application use',
@@ -124,7 +125,7 @@ export const legalPages: DocsPageContent[] = [
             ', AI-use restrictions, contribution refusal, security reporting, governing law, forum, or enforcement posture.',
           ],
           [
-            'Its conclusion is narrow and severe: permission for Ludoxel Original Materials must come from the ',
+            'Permission for Ludoxel Original Materials comes from the ',
             {
               kind: 'link',
               label: 'controlling',
@@ -173,7 +174,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Objects of Subordination',
         body: [
           'Subordinate statements include repository prose, README summaries, documentation paragraphs, documentation banners, code-block captions, comment explanations, SPDX notices, package metadata, generated documentation, search data, sitemap data, robots text, release descriptions, changelog entries, issue templates, pull-request templates, security-contact pages, contribution text, build output, deployment metadata, public previews, and platform interface copy.',
-          'Subordination does not mean that such statements are irrelevant. They may evidence notice, routing, project organization, public presentation, or factual context. It means that they are legally incapable of overriding the License Text when the question is whether permission has been granted, restricted, withheld, reserved, conditioned, or enlarged for Original Materials.',
+          'Subordinate statements can evidence notice, routing, project organization, public presentation, and factual context. Their legal force ends at the License Text when the question concerns permission for Original Materials.',
           'A subordinate statement can be accurate only within its assigned responsibility. When it speaks outside that responsibility, it must not be used to displace the controlling legal text or to import conclusions from a neighboring article.',
         ],
       },
@@ -227,7 +228,7 @@ export const legalPages: DocsPageContent[] = [
               },
               {
                 id: 'understanding-controlling-text-conflict-reading-sequence-effect',
-                title: 'Compare legal effect rather than vocabulary.',
+                title: 'Read the legal effect of the controlling text.',
                 content: [
                   {
                     kind: 'paragraph',
@@ -254,7 +255,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Priority and Exclusion',
         body: [
           'Priority means that the License Text governs the legal result. Exclusion means that the inconsistent subordinate statement is excluded from operative effect to the extent it conflicts. The subordinate statement may remain visible, readable, historically explainable, or factually relevant, but it cannot serve as the missing permission.',
-          'This priority applies to both grants and reservations. If the License Text does not grant an act, a subordinate statement cannot supply the grant. If the License Text reserves a right, a subordinate statement cannot waive that reservation. If the License Text imposes a condition, a subordinate statement cannot dispense with the condition. If the License Text excludes a use, a subordinate statement cannot recharacterize the excluded use as permitted.',
+          'The License Text priority clause governs both grants and reservations. A subordinate statement has no grant-making or waiver operation against an act, reservation, condition, or exclusion controlled by the License Text.',
           'The result is categorical for restricted acts: modification, redistribution, republication, mirroring, public hosting, static-site copying, deployment, scraping, crawling, extraction, dataset creation, AI Use, benchmark construction, derivative preparation, incorporation, sublicensing, removal of notices, and commercial exploitation require affirmative authority in the License Text or a later competent written instrument. They cannot be generated from subordinate text.',
         ],
       },
@@ -282,7 +283,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'The controlling-text rule for Ludoxel Original Materials does not absorb third-party materials into Ludoxel terms. A third-party license, attribution file, asset license, font license, texture license, platform term, or dependency license retains its own legal character where applicable.',
           'Conversely, the presence of third-party material does not reduce the License Text for Ludoxel Original Materials. The categories do not merge merely because they appear in the same repository, package, documentation page, build output, or application bundle.',
-          'When the problem is third-party clearance, the answer belongs to the third-party boundary article. When the problem is conflict between a subordinate Ludoxel statement and the Ludoxel License Text, this article controls the priority question and nothing more.',
+          'Third-party clearance follows the applicable third-party terms. A conflict between a subordinate Ludoxel statement and the Ludoxel License Text is resolved by the controlling-text provision in `LICENSE`.',
         ],
       },
       {
@@ -300,15 +301,15 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'Reliance on an inconsistent subordinate statement does not create permission where the License Text withholds it. The user who relies on the subordinate statement bears the risk that the statement is non-operative to the extent of conflict. The statement may explain how a misunderstanding occurred, but it does not become a defense written into the License Text.',
           'The legally material consequence is that the proposed act must still be tested against the License Text. If the License Text does not grant the act, a conflicting subordinate statement does not supply the missing grant. If the License Text reserves a right, a conflicting subordinate statement does not waive the reservation. If the License Text imposes a condition, a conflicting subordinate statement does not dispense with performance of that condition.',
-          'This rule is especially strict for acts affecting copyright, patent, trademark, database rights, trade secrets, website republication, redistribution, deployment, AI processing, derivative preparation, sublicensing, and removal of legal markings. A subordinate statement cannot convert a restricted act into an authorized act when the License Text does not do so.',
+          'The License Text reservation governs acts affecting copyright, patent, trademark, database rights, trade secrets, website republication, redistribution, deployment, AI processing, derivative preparation, sublicensing, and removal of legal markings. A subordinate statement carries no authority to convert a reserved act into an authorized one.',
         ],
       },
       {
         id: 'understanding-controlling-text-boundary',
-        title: 'Boundary of This Article',
+        title: 'Controlling Text and Subordinate Statements',
         body: [
           [
-            'This article does not decide who the Licensor is, what materials are Original Materials, whether a ',
+            'The License Text identifies the Licensor and controls any conflict with a ',
             {
               kind: 'link',
               label: 'repository is public',
@@ -316,7 +317,7 @@ export const legalPages: DocsPageContent[] = [
             },
             ', what license text must be included in a distribution, whether user-created output is separate from Original Materials, whether a third-party asset is cleared, whether a specific restricted use is permitted, whether contribution material is accepted, or how security reports must be routed.',
           ],
-          'Its conclusion is confined to priority. Where a subordinate repository, documentation, metadata, generated, hosted, interface, issue, release, summary, translation, package, or platform statement conflicts with the License Text, the License Text controls for Ludoxel Original Materials, and the inconsistent subordinate statement has no operative effect as a grant, waiver, exception, amendment, substitution, release, estoppel theory, implied license, sublicense, or enlargement of permission unless it is itself a later competent written instrument expressly changing the legal position.',
+          'Where a repository, documentation, metadata, generated, hosted, interface, issue, release, summary, translation, package, or platform statement conflicts with the License Text, the License Text controls for Ludoxel Original Materials. A later competent written instrument must expressly change the legal position before it can operate as a grant, waiver, exception, amendment, substitution, release, estoppel theory, implied license, sublicense, or enlargement of permission.',
         ],
       },
     ],
@@ -371,7 +372,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Public Policy Surfaces',
         body: [
           'Public legal files, documentation banners, README notices, issue templates, pull-request templates, security-contact documents, contribution documents, changelog pages, and support articles may be visible in the same repository or Documentation Site. Their visibility does not merge their responsibilities.',
-          'Each surface keeps its own assigned function. A public issue form takes limited reports rather than unrestricted exploit details; a pull-request page exposes a submission channel without proving that contributions are accepted; a changelog records project history without authorizing an unofficial build; a legal banner routes to the License Text rather than becoming a second license; and a documentation page rendered on the web remains governed documentation rather than open documentation.',
+          'Each surface keeps its own assigned function. A public issue form accepts limited reports. A pull-request page exposes a submission channel, a changelog records project history, a legal banner routes to the License Text, and a documentation page rendered on the web remains governed documentation. None of those surfaces changes the authority held by the License Text.',
           'Those public surfaces must be read according to the controlling text and the article that owns their legal topic. Repository visibility is the wrong tool for creating permissions that the License Text withholds.',
         ],
       },
@@ -398,7 +399,7 @@ export const legalPages: DocsPageContent[] = [
               },
               {
                 id: 'understanding-repository-visibility-reading-order-act',
-                title: 'Identify the proposed act, not merely the access route.',
+                title: 'Identify the proposed act and its access route.',
                 content: [
                   {
                     kind: 'paragraph',
@@ -440,10 +441,10 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-repository-visibility-article-boundary',
-        title: 'Article Boundary',
+        title: 'Access Conditions and License Text',
         body: [
           [
-            'This article addresses visibility and access only. It does not classify all materials, decide the full scope of Original Materials, determine third-party clearance, authorize distribution, decide generated-output permissions, define ',
+            'Repository and Documentation Site visibility make a ',
             {
               kind: 'link',
               label: 'ordinary application use',
@@ -452,13 +453,13 @@ export const legalPages: DocsPageContent[] = [
             ', accept contributions, route security reports, or determine whether a release is official.',
           ],
           [
-            'Its conclusion is narrow: a public repository, public Documentation Site, public deployment surface, public cache, public index, or public platform interface does not grant permission beyond the ',
+            'A public repository, Documentation Site, deployment surface, cache, index, or platform interface remains subject to the ',
             {
               kind: 'link',
               label: 'controlling',
               href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text',
             },
-            ' License Text, does not amend that text, does not create waiver, sublicense, estoppel, defense, or implied permission, and does not change what counts as ',
+            ' License Text. The License Text fixes amendments, waiver, sublicense, estoppel, defense, implied permission, and the material classification of ',
             {
               kind: 'link',
               label: 'Original Materials',
@@ -485,7 +486,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'Original Materials is a material-scope classification. It identifies the Ludoxel materials to which the License Text applies as Ludoxel materials created, owned, or controlled by the Licensor. As a classification it carries no permission of its own: a grant, a distribution authorization, an AI-use authorization, an open-content declaration, or a waiver of rights would each have to come from the License Text, not from placing material inside this perimeter.',
           'The classification matters because the License Text cannot be applied accurately until the material being discussed has been placed in the correct legal category. A source file, shader, website component, documentation paragraph, legal banner, generated static-site output, package configuration, metadata file, icon, branding element, asset, video, image, or distribution-preparation file may require different evidence, but the question remains whether it falls within the protected Ludoxel material perimeter.',
-          'This article is therefore about what the material is. It does not decide whether the reader may copy, modify, redistribute, mirror, deploy, scrape, crawl, train on, benchmark with, incorporate, sublicense, or republish it. Those acts require separate permission analysis under the License Text and the neighboring legal articles.',
+          'The Original Materials definition establishes material classification. Copying, modification, redistribution, mirroring, deployment, scraping, crawling, AI Use, benchmarking, incorporation, sublicensing, and republication require the applicable permission analysis under the License Text.',
         ],
       },
       {
@@ -503,7 +504,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'The classification inquiry begins with the material itself, not with the access route. The reader must identify the concrete material at issue: source code, documentation text, website source, static output, shader, package configuration, build metadata, icon, branding, media block, image, video, search data, legal notice, application resource, or distribution-preparation artifact.',
           'The reader then asks whether that material is created, owned, or controlled by the Licensor as Ludoxel material. If the answer is yes, the material falls within the Original Materials perimeter to the extent the License Text includes it and to the extent it is not excluded by third-party status, user-created status, application-output status, or provenance-sensitive status.',
-          'The reader must not replace this classification test with a visibility test. Public repository presence, browser rendering, static-site generation, deployment preview, cache state, indexing, package inclusion, or source-form availability does not decide whether the material is Original Materials and does not grant permission to use it.',
+          'The `LICENSE` classifies Original Materials by creation, ownership, or control by the Licensor. Public repository presence, browser rendering, static-site generation, deployment preview, cache state, indexing, package inclusion, and source-form availability are Access Path facts; permission follows the License Text.',
         ],
       },
       {
@@ -575,7 +576,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Excluded Materials',
         body: [
           [
-            'Third-Party Materials are outside Original Materials. Their presence in the repository, Ludoxel, the Documentation Site, Distribution Materials, package metadata, user interface displays, website displays, or build output does not make them Ludoxel Original Materials and does not place Original Materials under third-party terms. The separate boundary for third-party material handling belongs to ',
+            'Third-Party Materials remain outside Original Materials when present in the repository, Ludoxel, the Documentation Site, Distribution Materials, package metadata, interface displays, website displays, or build output. Their own license terms govern them, while the License Text continues to govern Original Materials. The separate boundary for third-party material handling belongs to ',
             {
               kind: 'link',
               label: 'third-party material boundaries',
@@ -590,9 +591,9 @@ export const legalPages: DocsPageContent[] = [
               label: 'output',
               href: '/docs/data/learning-and-material-data/output-and-material-boundaries/separating-original-materials-from-output',
             },
-            ' and to the generated-output legal article when the question concerns output permission rather than material classification.',
+            ' and to the generated-output legal article when the question concerns output permission.',
           ],
-          'Provenance-Sensitive Materials must not be treated as Original Materials, public-domain materials, open-source materials, free-to-use materials, redistributable materials, web-deployable materials, or materials cleared for modification merely because they are present, loaded, displayed, referenced, bundled, rendered, indexed, or technically capable of deployment.',
+          'Provenance-Sensitive Materials retain their own legal classification when present, loaded, displayed, referenced, bundled, rendered, indexed, or technically capable of deployment. Clearance for origin, license, reuse, redistribution, web deployment, and modification requires the governing legal source for the material.',
         ],
       },
       {
@@ -618,7 +619,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'Distribution Materials that contain Original Materials remain subject to the License Text. Packaging, bundling, compilation, copying into a distribution directory, embedding in an application bundle, inclusion in an installer, inclusion in an archive, static-site generation, or deployment preparation does not create a new license category that displaces Original Materials classification.',
           [
-            'The consequence addressed here is confined to material scope. Distribution form is not a juridical solvent. Packaging, bundling, compilation, static generation, deployment preparation, or inclusion in a website build does not dissolve Original Materials into freely circulable matter and does not generate entitlement to distribute, deploy, publish, mirror, host, redistribute, sublicense, or otherwise circulate Ludoxel materials. The distribution-form boundary belongs to ',
+            'Distribution form classifies an artifact prepared for circulation. Packaging, bundling, compilation, static generation, deployment preparation, and website-build inclusion retain the License Text’s treatment of Original Materials; distribution, deployment, publication, mirroring, hosting, sublicensing, and circulation require affirmative authority. The distribution-form boundary belongs to ',
             {
               kind: 'link',
               label: 'distribution materials',
@@ -641,17 +642,17 @@ export const legalPages: DocsPageContent[] = [
               label: 'Ordinary Application Use',
               href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
             },
-            ', and separately reserves rights and excludes uses outside that grant. This article does not restate every exclusion; it states why classification must be settled before those exclusions are applied.',
+            ', and separately reserves rights and excludes uses outside that grant. Material classification determines which protected components enter the grant and reservation analysis.',
           ],
           'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later competent written instrument. It must not be inferred from material classification, public availability, technical accessibility, package form, hosting-service behavior, documentation examples, or ordinary user expectation.',
         ],
       },
       {
         id: 'understanding-original-materials-article-boundary',
-        title: 'Article Boundary',
+        title: 'Original Materials and Separate Material Terms',
         body: [
           [
-            'This article classifies Ludoxel materials that fall within the Original Materials perimeter under the License Text. It does not classify every third-party asset, prove provenance for every local file, determine whether a specific output may be shared, authorize distribution, decide ',
+            'The `LICENSE` defines Original Materials as Ludoxel materials created, owned, or controlled by the Licensor. Third-party assets, local-file provenance, output sharing, distribution, and ',
             {
               kind: 'link',
               label: 'ordinary application use',
@@ -660,7 +661,7 @@ export const legalPages: DocsPageContent[] = [
             ', resolve AI-use restrictions, accept contributions, route security reports, or determine official release status.',
           ],
           [
-            'Its conclusion is narrow: Ludoxel Original Materials are the project materials created, owned, or controlled by the Licensor for purposes of the License Text, including the specified source, object, documentation, website, metadata, package, shader, asset, branding, icon, distribution-preparation, and static-site materials to the extent they are not Third-Party Materials. The legal force of that conclusion remains subject to the ',
+            'Original Materials include the source, object, documentation, website, metadata, package, shader, asset, branding, icon, distribution-preparation, and static-site materials created, owned, or controlled by the Licensor, subject to the License Text and the separate definition of Third-Party Materials. The ',
             {
               kind: 'link',
               label: 'controlling',
@@ -711,7 +712,7 @@ export const legalPages: DocsPageContent[] = [
             },
             ' License Text.',
           ],
-          'This article therefore answers what Distribution Materials are and what legal consequences follow from that classification. It does not answer how to run a build command, how to inspect a package check, whether a local artifact is fit for release, whether a third-party dependency is cleared, or whether a particular party has permission to distribute.',
+          'The Distribution Materials definition classifies artifacts prepared for circulation. `tools/build_desktop_app` and `tools/check_project` provide build and inspection paths; release fitness, third-party clearance, and distribution permission remain subject to their controlling technical and legal evidence.',
         ],
       },
       {
@@ -719,7 +720,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Operative Definition',
         body: [
           'The operative definition is supplied by the License Text. Distribution Materials include application bundles, executable files, installers, archives, wheels, source distributions, generated distribution directories, packages, release artifacts, static-site build output, website deployment materials, embedded resources, copied legal materials, metadata, and other materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents.',
-          'The definition is functional rather than cosmetic. A material does not become Distribution Materials merely because it is visible, downloadable, generated, cached, logged, compressed, or placed near packaging metadata. The relevant question is whether the material has been prepared as part of a distribution, deployment, package, release artifact, static-site output, or comparable circulation form for Ludoxel, the Documentation Site, or Repository Contents.',
+          'The definition turns on function. Distribution Materials comprise material prepared as part of a distribution, deployment, package, release artifact, static-site output, or comparable circulation form for Ludoxel, the Documentation Site, or Repository Contents. Visibility, downloadability, generation, caching, logging, compression, and proximity to packaging metadata leave that classification unchanged.',
           'The definition also does not erase the classification of the materials carried inside the distribution form. Distribution Materials may contain Original Materials, Third-Party Materials, Provenance-Sensitive Materials, copied legal materials, generated metadata, package data, website deployment files, or other contents with separate legal consequences.',
         ],
       },
@@ -851,7 +852,7 @@ export const legalPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Distribution Materials can carry materials that are not Ludoxel Original Materials. Third-Party Materials remain subject to their respective license terms, copyright statements, attribution requirements, warranty disclaimers, source-offer obligations, redistribution conditions, reserved names, trademark restrictions, and other applicable terms. Their presence in Distribution Materials does not place Ludoxel Original Materials under third-party terms and does not grant additional permission to use Ludoxel Original Materials.',
+            text: 'Distribution Materials can carry materials outside Ludoxel Original Materials. Third-Party Materials remain subject to their respective license terms, copyright statements, attribution requirements, warranty disclaimers, source-offer obligations, redistribution conditions, reserved names, trademark restrictions, and other applicable terms. The License Text continues to govern Ludoxel Original Materials and fixes permission for their Use.',
           },
           {
             kind: 'paragraph',
@@ -917,11 +918,11 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-distribution-materials-article-boundary',
-        title: 'Article Boundary',
+        title: 'Distribution Classification and Release Authority',
         body: [
-          'This article classifies Distribution Materials and states the legal consequences of that classification under the License Text. It does not provide build instructions, certify artifact completeness, approve release status, clear third-party materials, clear provenance-sensitive assets, decide ordinary application output, authorize redistribution, authorize deployment, accept contributions, route security reports, or determine whether a specific third-party package may be circulated.',
+          'The `LICENSE` defines Distribution Materials as packages, bundles, executables, static-site output, copied legal material, and related artifacts prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents. Build services create those technical artifacts; release status, redistribution, deployment, third-party clearance, provenance review, contribution handling, and security reporting remain governed by their controlling legal and policy text.',
           [
-            'Its conclusion is narrow: Distribution Materials are materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents, but distribution form does not create permission, legal-text inclusion does not create permission, third-party inclusion does not relicense Original Materials, and official distribution status exists only where the Licensor publishes the material as official. The legal force of that conclusion remains subject to the ',
+            'Distribution Materials are materials prepared for circulation of Ludoxel, the Documentation Site, or Repository Contents. The License Text controls permission; retained legal text preserves notice; third-party terms continue to govern third-party components; and Official Distribution status arises from publication by the Licensor. The ',
             {
               kind: 'link',
               label: 'controlling',
@@ -984,7 +985,7 @@ export const legalPages: DocsPageContent[] = [
           ],
           'The legal function of the term is restrictive. It marks the ordinary local operation of Ludoxel that the License Text permits, while excluding uses that transform application operation into reuse of protected project materials, circulation of project artifacts, extraction of resources, derivative preparation, AI processing, website mirroring, or public deployment.',
           [
-            'This article therefore answers a narrow question: whether a proposed act remains within ordinary local application use, or whether it has moved into ',
+            'The License Text tests whether a proposed act remains within ordinary local application use or enters ',
             {
               kind: 'link',
               label: 'generated output',
@@ -1051,7 +1052,7 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'The act remains inside this article only if it is use of Ludoxel as a desktop application for ordinary interactive functions or a directly related local action. The inquiry is functional and legal, not merely technical.',
+                    text: 'The scope covers use of Ludoxel as a desktop application for ordinary interactive functions and directly related local action. The inquiry follows the operative legal function of the act.',
                   },
                 ],
               },
@@ -1104,7 +1105,7 @@ export const legalPages: DocsPageContent[] = [
                         label: 'AI Use',
                         href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-ai-use-restrictions',
                       },
-                      ', the act has left Ordinary Application Use. The restricted-use article, not this article, controls the next analysis.',
+                      ', the act has left Ordinary Application Use. The restricted-use provisions in `LICENSE` control the next analysis.',
                     ],
                   },
                 ],
@@ -1118,8 +1119,8 @@ export const legalPages: DocsPageContent[] = [
         title: 'Permitted Local Operation',
         body: [
           'Launching Ludoxel, using the interface, changing settings, saving and loading user-specific data, taking ordinary screenshots, recording ordinary screen footage, and performing directly related local actions are the core acts identified by the License Text as ordinary application use.',
-          'This permission is local and operational. It permits the Licensee to run and interact with the desktop application within the narrow category stated in the License Text, and it stops there: ownership stays with the Licensor, no sublicensing authority arises, project material is not opened for reuse, and repository or website materials are not made available for separate exploitation.',
-          'The fact that a local action is permitted does not mean that every later use of the resulting file, image, recording, save state, or data record is automatically permitted. Later publication, sharing, redistribution, commercial use, competition use, dataset use, benchmark use, or AI Use requires its own boundary analysis under the License Text and applicable third-party rights.',
+          'The ordinary-application-use grant is local and operational. It permits the Licensee to run and interact with the desktop application within the category stated in the License Text. Licensor ownership, sublicensing authority, reuse rights, and separate exploitation of repository or website materials remain governed by the surrounding reservations.',
+          'A permitted local action supplies authority for that local act. Later publication, sharing, redistribution, commercial use, competition use, dataset use, benchmark use, and AI Use require their own authority under the License Text and applicable third-party rights.',
         ],
       },
       {
@@ -1220,7 +1221,7 @@ export const legalPages: DocsPageContent[] = [
             'AI Use is outside Ordinary Application Use. The License Text separately defines AI Use and excludes it from the limited grant. Running Ludoxel, viewing its interface, recording ordinary footage, or obtaining output does not authorize creation, training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, population, operation, indexing, retrieval, embedding, vector-database use, dataset creation, synthetic-data generation, or comparable computational use involving protected material.',
           ],
           [
-            'If Application Output contains protected material, that protected portion remains subject to the applicable legal terms. It must not be treated as clean training material, benchmark material, retrieval material, or dataset material merely because it arose during ordinary application operation. The detailed restriction belongs to ',
+            'If Application Output contains protected material, that protected portion remains subject to the applicable legal terms. Training, benchmarking, retrieval, and dataset use require authority for the protected portion even when ordinary application operation produced the output. The detailed restriction belongs to ',
             {
               kind: 'link',
               label: 'AI Use',
@@ -1249,13 +1250,13 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-ordinary-application-use-article-boundary',
-        title: 'Article Boundary',
+        title: 'Ordinary Use and Reserved Acts',
         body: [
           [
-            'This article defines the limited ordinary-use scope for running Ludoxel as a desktop application. It does not classify every output file, decide whether a specific screenshot or recording may be published, authorize redistribution, authorize deployment, resolve derivative-work status, clear third-party materials, clear provenance-sensitive materials, decide AI-use restrictions beyond identifying the boundary, accept contributions, route security reports, or determine official distribution status.',
+            'Section 3 of `LICENSE` limits Ordinary Application Use to the listed desktop interaction, settings, user-data, screenshot, recording, and directly related local actions. Application Output, redistribution, deployment, derivative preparation, AI Use, third-party material, provenance-sensitive material, contributions, security reports, and Official Distribution each follow their own operative source and legal condition.',
           ],
           [
-            'Its conclusion is narrow: Ordinary Application Use permits only the ordinary local operation of Ludoxel identified by the License Text. Rights in Original Materials beyond that operation, universal publishability of output, distribution permission, and AI-use permission all lie outside it, and public visibility, technical possibility, interface affordance, and ordinary user expectation enlarge the License Text no further.',
+            'Ordinary Application Use permits the local desktop operation identified by the License Text. Rights in Original Materials beyond that operation, output publication, distribution, and AI Use require authority under the License Text or a later competent written instrument; public visibility, technical possibility, interface affordance, and user expectation carry no authority to enlarge the grant.',
           ],
         ],
       },
@@ -1288,7 +1289,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Juridical Function of the Generated-Output Boundary',
         body: [
           [
-            'Generated output is the result that Ludoxel produces, displays, records, or saves while it is run as a desktop application. The legal question owned by this article is narrow: to what extent the existence of such output enlarges the permissions a Licensee holds in Ludoxel ',
+            'Generated output is the result that Ludoxel produces, displays, records, or saves while it runs as a desktop application. Section 6 of `LICENSE` fixes the legal effect of such output on permissions concerning Ludoxel ',
             {
               kind: 'link',
               label: 'Original Materials',
@@ -1303,9 +1304,9 @@ export const legalPages: DocsPageContent[] = [
               label: 'Ordinary Application Use',
               href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
             },
-            '. This article assumes that an operation was permitted and addresses only what legal status the resulting file, frame, recording, or record carries afterward.',
+            '. The resulting file, frame, recording, or record retains the legal status determined by the License Text and its embedded material.',
           ],
-          'This article also does not perform material classification of the saved files themselves. Where the inquiry concerns where output is stored, how it is structured, or how a saved artifact is categorized as data, the question belongs to the Data articles. The Legal boundary here is confined to permission and restriction: what the output does, and does not, authorize a Licensee to do with protected Ludoxel material.',
+          'Runtime stores and schemas determine where output is stored, its structure, and its data classification. Section 6 of `LICENSE` governs permission and restriction for protected Ludoxel material carried in that output.',
         ],
       },
       {
@@ -1339,7 +1340,7 @@ export const legalPages: DocsPageContent[] = [
             ', Third-Party Materials, and Provenance-Sensitive Materials. The defined permission to share the Licensee’s own output does not dissolve those embedded categories into a single freely usable mass.',
           ],
           'The License Text states the consequence directly: where User-Created Materials or Application Output contain any material part of Original Materials, Third-Party Materials, Provenance-Sensitive Materials, user interface text, visual assets, bundled resources, project-specific textures, branding material, application icons, shaders, Documentation Site material, or other protected material, the included protected material remains subject to its applicable legal terms.',
-          'The legal method is therefore decompositional rather than aggregative. The presence of the Licensee’s own contribution in an output file does not relicense the protected portions that the same file carries, and the protected portions do not become the Licensee’s merely because they were captured together.',
+          'The legal method evaluates each material component separately. Applicable legal terms continue to govern protected portions carried with a Licensee contribution, including portions captured in the same output file.',
         ],
       },
       {
@@ -1410,7 +1411,7 @@ export const legalPages: DocsPageContent[] = [
                         label: 'AI Use',
                         href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-ai-use-restrictions',
                       },
-                      '. This article does not resolve those acts.',
+                      '. Their authority is determined by the applicable License Text provision.',
                     ],
                   },
                 ],
@@ -1433,7 +1434,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Third-Party and Provenance Boundary in Output',
         body: [
           [
-            'Output may capture Third-Party Materials or Provenance-Sensitive Materials. The defined permission does not clear those materials. Third-Party Materials remain subject to their own license terms, and Provenance-Sensitive Materials must not be treated as cleared for reuse merely because they appeared in a generated file. The broader material split is owned by ',
+            'Output may capture Third-Party Materials or Provenance-Sensitive Materials. Third-Party Materials remain subject to their own license terms, and reuse of Provenance-Sensitive Materials requires the governing source for those materials even when a generated file carries them. The broader material split is owned by ',
             {
               kind: 'link',
               label: 'third-party material boundaries',
@@ -1465,26 +1466,26 @@ export const legalPages: DocsPageContent[] = [
             note: {
               type: 'warning',
               content:
-                'Output that contains protected material must not be treated as clean training material, benchmark material, retrieval material, or dataset material merely because it was produced during ordinary application operation. Computational ingestion of protected material is AI Use, and the limited grant supplies no authority for it.',
+                'Output containing protected material requires authority for training, benchmarking, retrieval, and dataset use even when ordinary application operation produced it. Computational ingestion of protected material is AI Use; the limited grant covers the stated local operation.',
             },
           },
         ],
       },
       {
         id: 'understanding-generated-output-article-boundary',
-        title: 'Article Boundary',
+        title: 'Application Output and Protected Components',
         body: [
           [
-            'This article states the legal effect of generated output on the Licensee’s permissions. It does not define ',
+            'Application Output is produced through ',
             {
               kind: 'link',
               label: 'Ordinary Application Use',
               href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
             },
-            ', does not classify saved files as data, does not authorize redistribution, does not authorize AI Use, does not clear third-party or provenance-sensitive content, and does not decide whether any particular file may be published.',
+            '. Its persistence shape, distribution treatment, AI Use, third-party components, provenance-sensitive components, and publication authority each remain subject to their governing source.',
           ],
           [
-            'Its conclusion is narrow: output created through Ordinary Application Use may be used only as output, and only subject to the License Text and applicable third-party rights. It is not a laundering rule for embedded protected material, does not become Original Materials, does not relicense embedded protected material, and does not grant any right to extract, redistribute, train on, or reuse the underlying ',
+            'Output created through Ordinary Application Use remains subject to the License Text and applicable third-party rights. Embedded protected components retain their legal status, and extraction, redistribution, training, and reuse of the underlying ',
             {
               kind: 'link',
               label: 'Original Materials',
@@ -1520,13 +1521,13 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'The redistribution restriction governs the act of putting Ludoxel Original Materials into circulation. It treats copying for others, sharing, publishing, hosting, mirroring, reposting, repackaging, sublicensing, release-artifact publication, website redeployment, and static-site republication as acts that require affirmative authority, not as acts that follow automatically from lawful access.',
           [
-            'This article owns the act of redistribution. It is distinct from the material-scope question of what ',
+            'Redistribution is a Use defined by `LICENSE`; material scope determines what ',
             {
               kind: 'link',
               label: 'Distribution Materials',
               href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
             },
-            ' are. A packaged artifact may be correctly classified and still may not be circulated; classification describes the object, while this article describes whether the object may be moved into circulation.',
+            ' are. A packaged artifact can be correctly classified while circulation remains outside the limited grant; classification identifies the object and the License Text governs movement into circulation.',
           ],
           'The function of the restriction is to prevent the limited grant from being read as a distribution license. The Licensee may have lawful access to Original Materials and may run Ludoxel, yet remain without any permission to redistribute the protected material to third parties.',
         ],
@@ -1562,7 +1563,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'The restriction reaches copying Original Materials for distribution to others, sharing protected files, publishing repository or website material, hosting copies for public access, mirroring the repository or Documentation Site, reposting protected content elsewhere, repackaging protected material into another distribution, sublicensing, publishing release artifacts, redeploying the website, and republishing static-site output.',
           'The technical mechanism is immaterial. Redistribution by upload, by package registry, by file-sharing service, by archive, by re-hosting a generated site, by embedding into another product, or by transmitting copies to a group are the same act for the purpose of the restriction: protected Ludoxel material is moved into circulation beyond the Licensee.',
-          'Partial redistribution is not exempt. Circulating a material part of Original Materials, rather than the whole, remains within the restriction. The restriction is concerned with the circulation of protected expression, not with whether the entire project was copied.',
+          'Partial redistribution remains within the restriction. Circulation of a material part of Original Materials carries protected expression beyond the Licensee, irrespective of whether a complete project copy is involved.',
         ],
       },
       {
@@ -1571,7 +1572,7 @@ export const legalPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Redistribution disputes typically begin by asserting that some access route, purpose, or convenience made circulation permissible. The sequence isolates the act and tests it against the License Text rather than against the circumstance of access.',
+            text: 'Redistribution disputes often assert that an access route, purpose, or convenience made circulation permissible. The sequence isolates the act and applies the License Text to that act.',
           },
           {
             kind: 'steps',
@@ -1685,19 +1686,19 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-redistribution-restrictions-article-boundary',
-        title: 'Article Boundary',
+        title: 'Redistribution Authority and Artifact Classification',
         body: [
           [
-            'This article owns the redistribution act. It does not classify ',
+            'Section 3 of `LICENSE` requires affirmative authority for copying, sharing, publishing, hosting, mirroring, reposting, repackaging, sublicensing, release-artifact publication, website redeployment, and static-site republication of Original Materials. ',
             {
               kind: 'link',
               label: 'Distribution Materials',
               href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
             },
-            ', does not provide build instructions, does not define derivative-work restrictions, does not define AI-use restrictions, does not clear third-party materials, and does not resolve whether a particular release may be described as official.',
+            ' describes the artifact category used by build and packaging paths; derivative preparation, AI Use, third-party material, and Official Distribution remain distinct legal conditions.',
           ],
           [
-            'Its conclusion is severe and narrow: copying, sharing, publishing, hosting, mirroring, reposting, repackaging, sublicensing, release-artifact publication, website redeployment, and static-site republication of Ludoxel Original Materials are outside the limited grant and require authority in the ',
+            'The limited grant excludes redistribution acts involving Ludoxel Original Materials. Authority for those acts must arise in the ',
             {
               kind: 'link',
               label: 'controlling',
@@ -1731,15 +1732,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-derivative-work-restrictions-juridical-function',
         title: 'Juridical Function of the Derivative-Work Restriction',
         body: [
-          'The derivative-work restriction governs the preparation and use of works based on Ludoxel Original Materials. It treats modifying, adapting, translating, rewriting, restructuring, refactoring, porting, reimplementing, and otherwise transforming protected material as acts that require affirmative authority rather than as a natural extension of the ability to read or edit a file locally.',
+          'The derivative-work restriction governs the preparation and use of works based on Ludoxel Original Materials. Modifying, adapting, translating, rewriting, restructuring, refactoring, porting, reimplementing, and otherwise transforming protected material each require affirmative authority.',
           [
-            'This article owns the derivative act. It is distinct from the circulation question owned by ',
+            'The derivative-work restriction governs preparation and use of works based on Original Materials. Circulation engages ',
             {
               kind: 'link',
               label: 'redistribution',
               href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
             },
-            ', and from the submission question owned by contribution refusal. A derivative may be prepared without being distributed, and may be proposed without being accepted; this article addresses the legal status of preparing and using the derivative itself.',
+            ', while submission of derivative material follows the contribution-refusal policy. Preparation, circulation, and submission are separate acts under their respective License Text and policy provisions.',
           ],
           'The function of the restriction is to keep the Licensor’s exclusive right to prepare derivative works intact notwithstanding the limited grant. Lawful access to the source does not carry an implied right to produce and use altered versions of it.',
         ],
@@ -1843,7 +1844,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-derivative-work-restrictions-private-versus-public',
         title: 'Private Experiment and Public Derivative Circulation',
         body: [
-          'A strictly private, local alteration that is never distributed, deployed, published, incorporated, or submitted may present a different evidentiary posture from public derivative circulation, because public circulation additionally engages redistribution, AI-use, and contribution boundaries. This article does not declare private local experimentation to be an affirmative grant. The License Text, not practical privacy, determines whether preparation or use of the derivative is authorized.',
+          'A strictly private local alteration and public derivative circulation produce different technical evidence, while public circulation also engages redistribution, AI Use, and contribution rules. The License Text determines authority for preparation and use of the derivative; practical privacy supplies no additional grant.',
           'The decisive point is that the existence of a private capability cannot be advanced as evidence of any broader permission. A Licensee cannot reason from the ability to experiment locally to a right to publish, distribute, deploy, submit, incorporate, or otherwise circulate a derivative work to others.',
         ],
       },
@@ -1857,16 +1858,16 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-derivative-work-restrictions-article-boundary',
-        title: 'Article Boundary',
+        title: 'Derivative Preparation, Circulation, and Submission',
         body: [
           [
-            'This article owns the derivative act. It does not decide whether a derivative may be circulated, which is governed by ',
+            'The License Text treats modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, and website redesign as derivative preparation. Circulation of a derivative engages ',
             {
               kind: 'link',
               label: 'redistribution',
               href: '/docs/legal/use-permissions-and-restrictions/restricted-uses/understanding-redistribution-restrictions',
             },
-            ', and it does not decide whether proposed derivative material is accepted as a contribution, which is governed by ',
+            ', while proposed derivative material enters the Repository only under ',
             {
               kind: 'link',
               label: 'contribution refusal',
@@ -1874,7 +1875,7 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'Its conclusion is narrow: modification, adaptation, translation, rewriting, fork-based alteration, documentation replacement, shader rewriting, asset substitution, package modification, website redesign, and proposed patches are derivative preparation outside the limited grant, and the technical ability to perform them locally does not create permission to prepare or use a public derivative work based on Ludoxel Original Materials.',
+          'The limited grant excludes derivative preparation involving Original Materials. Local technical capability leaves the License Text, redistribution rule, and contribution policy as the controlling sources for preparation, circulation, and submission.',
         ],
       },
     ],
@@ -1901,7 +1902,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'The AI-use restriction governs the computational ingestion of Ludoxel Original Materials into artificial-intelligence and comparable systems. It treats training, fine-tuning, evaluation, benchmarking, indexing, retrieval, embedding, dataset creation, and synthetic-data generation as a distinct restricted category, separate from the question of whether an application operation is permitted at all.',
           [
-            'This article owns the AI-use restriction as a matter of license interpretation. It is separate from ',
+            'The AI Use definition and exclusion in `LICENSE` govern computational ingestion of Original Materials. Ordinary local operation follows ',
             {
               kind: 'link',
               label: 'Ordinary Application Use',
@@ -1934,7 +1935,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Acts Within AI Use',
         body: [
           'The restriction reaches training and fine-tuning models on protected material; using protected material for evaluation, benchmarking, validation, or testing; indexing or embedding protected material for retrieval; constructing vector databases from it; creating datasets or benchmarks from it; generating synthetic data seeded by it; populating or operating a model with it; and performing automated extraction of it for any of these purposes.',
-          'The category is defined by the computational purpose, not by the tool. Manual reading and machine ingestion are different acts even when they begin from the same visible page. The restriction applies to the ingestion of a substantial part of the protected material, not only to ingestion of the whole.',
+          'The category follows computational purpose. Manual reading and machine ingestion are distinct acts even when they begin from the same visible page. The restriction reaches ingestion of a substantial part of protected material.',
         ],
       },
       {
@@ -2024,19 +2025,19 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-ai-use-restrictions-article-boundary',
-        title: 'Article Boundary',
+        title: 'AI Use, Application Features, and Material Authority',
         body: [
           [
-            'This article owns the AI-use restriction. It does not define ',
+            'The `LICENSE` defines AI Use as training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, indexing, retrieval, embedding, vector-database construction, dataset creation, synthetic-data generation, model population, and automated extraction involving Original Materials. ',
             {
               kind: 'link',
               label: 'Ordinary Application Use',
               href: '/docs/legal/use-permissions-and-restrictions/ordinary-use-and-output/understanding-ordinary-application-use',
             },
-            ', does not describe the implementation of the AI actors or learning system, does not authorize redistribution, and does not clear third-party or provenance-sensitive material for ingestion.',
+            ' supplies the separate local-use term. AI actor implementation, learning records, redistribution, and third-party or provenance-sensitive material remain governed by their respective implementation and legal sources.',
           ],
           [
-            'Its conclusion is narrow: training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, indexing, retrieval, embedding, vector-database construction, dataset creation, synthetic-data generation, model population, and automated extraction involving Ludoxel Original Materials are AI Use outside the limited grant. Ludoxel’s own AI features and learning records, and the public ',
+            'The listed computational acts are AI Use outside the limited grant. Ludoxel AI features, learning records, and the public ',
             {
               kind: 'link',
               label: 'visibility',
@@ -2071,7 +2072,7 @@ export const legalPages: DocsPageContent[] = [
           'The public-issue limit defines what a publicly visible submission to the Repository is permitted to be and to contain. It treats the public issue surface as a restricted channel with three narrow uses, not as an open forum for discussion, proposal, or disclosure.',
           'The function of the limit is twofold. It protects the public surface from carrying security-sensitive or otherwise unsuitable content, and it prevents the act of opening a public submission from being read as a grant of permission or as the opening of a contribution relationship.',
           [
-            'This article owns the legal boundary of the public surface. The procedural detail of how to compose a particular submission belongs to the Support articles, including ',
+            '`LICENSE`, `.github/CONTRIBUTING.md`, and the issue-form acknowledgements govern the legal status of the public surface. The operational composition of a submission follows ',
             {
               kind: 'link',
               label: 'writing a problem report',
@@ -2200,7 +2201,7 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'Opening a public issue does not grant permission to Use the Original Materials, does not create a right to have the submission acted upon, and does not create or imply acceptance of any contribution. The public surface is a limited reporting channel, not a source of authority.',
+                    text: 'A Public Issue is a limited reporting channel under `.github/CONTRIBUTING.md`. Permission to Use Original Materials remains in the License Text, while the contribution policy governs Maintainer review and contribution acceptance.',
                   },
                 ],
               },
@@ -2213,7 +2214,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'A Public Surface Is Not a Grant',
         body: [
           [
-            'The availability of the public issue form does not enlarge the License Text. It does not grant permission to Use the Original Materials, does not create a right of submission beyond the permitted categories, and does not obligate the Maintainer to review, accept, preserve, credit, respond to, or incorporate anything submitted. The platform-feature principle is owned by ',
+            'The public issue form operates within the License Text and Repository Contribution Policy. Those sources fix the permitted submission categories and the Maintainer’s discretion over review, acceptance, preservation, credit, response, and incorporation. The platform-feature principle is stated in ',
             {
               kind: 'link',
               label: 'repository visibility',
@@ -2234,11 +2235,11 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-public-issue-limits-article-boundary',
-        title: 'Article Boundary',
+        title: 'Public Issue Intake and Legal Effect',
         body: [
-          'This article owns the legal boundary of the public issue surface. It does not provide step-by-step instructions for composing a report or question, does not define the private security channel, does not state the full contribution policy, and does not decide enforcement.',
+          'The Repository Contribution Policy limits a Public Issue to a problem report, limited question, or request for a Private Reporting Channel. `problem-report.yml`, `limited-question.yml`, and `security-contact.yml` provide the operational fields; `.github/SECURITY.md` supplies the private security procedure; and `LICENSE` controls permission and enforcement effects.',
           [
-            'Its conclusion is narrow: the public issue surface admits only a reproducible non-security problem report, a limited question, and a minimal private-security-contact request, must never carry security-sensitive content or contribution material, and confers no permission, no right of submission beyond those categories, and no acceptance of any contribution. Security matters belong to ',
+            'The public surface receives the three stated report classes and records them in a public repository. Its acknowledgement fields exclude security-sensitive detail and Contribution Materials; Security Reports proceed through ',
             {
               kind: 'link',
               label: 'private security reporting',
@@ -2264,7 +2265,7 @@ export const legalPages: DocsPageContent[] = [
     group: 'Public and Private Reporting',
     title: 'Understanding Private Security Reporting',
     description:
-      'Defines why a suspected vulnerability must be reported through a private channel rather than disclosed publicly, the lawful and authorized limits of Security Testing, and why a private reporting channel does not grant unlimited testing permission, exploit-publication permission, a safe harbor, access to third-party systems, or any expansion of permission.',
+      'Defines the private reporting route for suspected vulnerabilities, the lawful and authorized limits of Security Testing, and the fixed scope of a private reporting channel. The channel supplies a reporting route; testing authority, exploit publication, safe-harbor status, third-party-system access, and other permission require their governing source.',
     sections: [
       {
         id: 'understanding-private-security-reporting-juridical-function',
@@ -2272,7 +2273,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'Private security reporting governs how a suspected vulnerability affecting the Current Repository, an Official Distribution, or an official Documentation Site deployment is to be communicated. It treats non-public reporting as the required channel and public disclosure of vulnerability detail as prohibited.',
           [
-            'This article owns the public-versus-private reporting boundary and the non-expansion principle as a matter of license interpretation. The operational steps for requesting a channel belong to the Support article on ',
+            'The Security Reporting Policy separates Public Issues from a Private Reporting Channel and retains the License Text’s non-expansion of permission. The operational request path follows ',
             {
               kind: 'link',
               label: 'requesting a private security channel',
@@ -2405,22 +2406,22 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-private-security-reporting-non-expansion',
         title: 'Reporting Does Not Expand Permission',
         body: [
-          'The License Text provides that submission of a Security Report, use of a Private Reporting Channel, and Security Testing do not grant or expand any permission to Use the Original Materials and do not create any obligation on the Maintainer to review, accept, respond to, or remediate the reported matter.',
+          'The License Text and `.github/SECURITY.md` establish a Private Reporting Channel for Security Reports and define lawful, authorized Security Testing. Permission to Use Original Materials remains under the License Text, while report review, acceptance, response, and remediation remain within Maintainer discretion.',
           'A Private Reporting Channel is a confidential route for communicating a suspected vulnerability, and nothing more. It does not become unlimited testing permission, exploit-publication permission, a security-research safe harbor, authorization to access third-party environments, or permission to disclose secrets. The reporter remains solely responsible for ensuring that a submission does not contain confidential or unauthorized material.',
         ],
       },
       {
         id: 'understanding-private-security-reporting-article-boundary',
-        title: 'Article Boundary',
+        title: 'Private Reporting Channel and Security Testing',
         body: [
           [
-            'This article owns the public-versus-private reporting boundary and the non-expansion principle. It does not provide the step-by-step contact procedure, which belongs to ',
+            '`.github/SECURITY.md` directs a suspected vulnerability to a Private Reporting Channel. The public contact request described by ',
             {
               kind: 'link',
               label: 'requesting a private security channel',
               href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
             },
-            ', and it does not define the categories of the public surface, which belong to ',
+            ' carries a minimal category-level request; public issue categories remain fixed by ',
             {
               kind: 'link',
               label: 'public issue limits',
@@ -2428,7 +2429,7 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'Its conclusion is narrow: a suspected vulnerability must be reported through a private channel and must not be publicly disclosed; Security Testing must remain lawful, non-destructive, good-faith, and authorized; and the existence of a private reporting channel grants no testing permission, no exploit-publication permission, no safe harbor, no third-party access, no secret-disclosure permission, and no expansion of permission to Use the Original Materials.',
+          'The Security Reporting Policy requires lawful, non-destructive, good-faith testing limited to systems, accounts, files, and data the reporter is authorized to test. A Private Reporting Channel carries a Security Report; testing scope, exploit publication, safe-harbor treatment, third-party access, secret disclosure, and Use of Original Materials remain subject to the License Text and the policy.',
         ],
       },
     ],
@@ -2448,13 +2449,13 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'Contribution refusal is the general principle that the Repository is not maintained as an open contribution project and does not accept External Contribution material. It governs the legal status of any externally supplied material proposed for inclusion in, modification of, replacement of, or use with Ludoxel.',
           [
-            'This article owns the general refusal of external contribution. The specific behavior of the pull-request surface is owned by ',
+            'The Repository Contribution Policy rejects External Contribution material across public submission routes. Pull-request behavior follows ',
             {
               kind: 'link',
               label: 'pull request boundaries',
               href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-pull-request-boundaries',
             },
-            '; this article states the principle that applies across every submission route.',
+            '; the same contribution policy governs every submission route.',
           ],
           'The function of the rule is to foreclose the inference that visibility, platform features, or the act of submitting material create a contribution relationship, a license to the project, or any obligation on the Licensor.',
         ],
@@ -2515,7 +2516,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'No Obligation from Submission',
         body: [
           'The License Text provides that submission of an External Contribution does not create any obligation for the Licensor to review, accept, preserve, credit, respond to, incorporate, license, publish, deploy, or return the Contribution Materials. The Licensor’s silence or inaction is not acceptance, and a submission that is left unanswered confers nothing.',
-          'A submission likewise does not expand the submitter’s rights in the Original Materials and does not grant the submitter any right to Use the Original Materials outside the License. The refusal is therefore the legal posture of the Repository, binding in effect beyond any statement of preference.',
+          'A submission leaves the submitter’s rights in Original Materials governed by the License. The Repository Contribution Policy expresses that refusal as a governing repository posture, extending beyond a statement of preference.',
         ],
       },
       {
@@ -2523,21 +2524,21 @@ export const legalPages: DocsPageContent[] = [
         title: 'Submitter Responsibility',
         body: [
           'The License Text places responsibility on a person who submits Contribution Materials despite the refusal. That person is solely responsible for ensuring that the submission does not contain confidential information, third-party confidential material, private data, credentials, security-sensitive detail unsuitable for the chosen channel, infringing material, or material that the person lacks authority to submit.',
-          'Because the material is not accepted, the act of submitting it does not transfer responsibility to the Licensor and does not create any review, custody, or remediation duty. The submitter bears the consequences of an improper submission.',
+          'The Repository Contribution Policy leaves responsibility for an improper Contribution Material with its submitter. Licensor review, custody, and remediation duties arise only from an applicable governing source.',
         ],
       },
       {
         id: 'understanding-contribution-refusal-article-boundary',
-        title: 'Article Boundary',
+        title: 'Contribution Refusal and Platform Submission',
         body: [
           [
-            'This article owns the general refusal of external contribution. It does not address the specific mechanics of the pull-request surface, which belong to ',
+            '`.github/CONTRIBUTING.md` states that Ludoxel is not maintained as an open contribution project and rejects External Contribution material. The pull-request mechanism follows ',
             {
               kind: 'link',
               label: 'pull request boundaries',
               href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-pull-request-boundaries',
             },
-            ', and it does not state the categories admitted by the public issue surface, which belong to ',
+            ', while public issue intake follows ',
             {
               kind: 'link',
               label: 'public issue limits',
@@ -2545,7 +2546,7 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'Its conclusion is narrow: Ludoxel does not accept External Contribution material of any kind, and a public issue, a pull request, a discussion, a fork, technical availability, or repository visibility creates no contribution invitation, no license grant, no review obligation, no assignment acceptance, no joint authorship, and no implied consent.',
+          'The Repository Contribution Policy treats source code, patches, documentation, translations, design assets, generated files, datasets, feature implementations, refactoring proposals, shader rewrites, saved worlds, and artificial-intelligence-generated material as Contribution Materials. Public GitHub affordances remain platform functions; the License Text and contribution policy control invitation, licensing, review, assignment, authorship, and consent.',
         ],
       },
     ],
@@ -2569,15 +2570,15 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-pull-request-boundaries-juridical-function',
         title: 'Juridical Function of the Pull-Request Boundary',
         body: [
-          'The pull-request boundary governs the legal status of a pull request opened against the Repository. It treats the pull request as a hosting-service feature that does not create an accepted contribution path and does not bind the Maintainer to any action.',
+          'A pull request is a hosting-service submission mechanism. `.github/pull_request_template.md` and `.github/CONTRIBUTING.md` classify its material as an External Contribution, and the License Text preserves Maintainer discretion over every response.',
           [
-            'This article owns the pull-request surface. The general refusal of external contribution material is owned by ',
+            '`.github/pull_request_template.md` identifies the pull-request submission surface, while the general refusal of External Contribution material appears in ',
             {
               kind: 'link',
               label: 'contribution refusal',
               href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
             },
-            '; this article addresses the specific affordances and expectations attached to the pull-request mechanism.',
+            '. The GitHub mechanism supplies a technical submission affordance; the License Text and policy determine its legal effect.',
           ],
           'The function of the rule is to prevent the existence of pull-request functionality, and the act of opening a pull request, from being read as submission permission, review entitlement, or an expectation of merge.',
         ],
@@ -2651,18 +2652,18 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-pull-request-boundaries-article-boundary',
-        title: 'Article Boundary',
+        title: 'Pull Request Policy and Submission Status',
         body: [
           [
-            'This article owns the pull-request surface. It does not restate the general ',
+            '`.github/pull_request_template.md` and `.github/CONTRIBUTING.md` classify a pull request as an External Contribution submission. The general ',
             {
               kind: 'link',
               label: 'contribution refusal',
               href: '/docs/legal/reporting-and-contributions/contribution-boundaries/understanding-contribution-refusal',
             },
-            ', does not define the public issue categories, and does not resolve derivative-work or redistribution analysis beyond identifying the boundary.',
+            ' supplies the governing refusal, while public issue categories, derivative preparation, and redistribution follow their respective policy and License Text provisions.',
           ],
-          'Its conclusion is narrow: a pull request is not an accepted contribution path, may be closed without review, and its creation interface confers no submission permission, no review obligation, no merge expectation, no license amendment, no contribution acceptance, and no right to have the submitted material considered. Material carried in a pull request is treated as Contribution Materials.',
+          'A pull request may be closed without review under the Contribution Policy and Pull Request Policy. The GitHub interface provides a technical submission mechanism; the License Text and contribution policy retain authority over permission, review, merge, amendment, and acceptance. Material carried through that mechanism is Contribution Material.',
         ],
       },
     ],

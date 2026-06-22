@@ -19,7 +19,11 @@ export const distributionPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'This article delimits the evidentiary conditions under which a Windows binary may be treated as the repository-produced Ludoxel Windows artifact. The published coordinate `dist/windows/Ludoxel.exe` is a location, not a credential: a file that occupies it is the artifact only insofar as it is the output of the Windows path of `tools/build_desktop_app` — the constants in `src/config/build.config.mjs`, the command builder `buildWindowsPyinstallerCommand` in `src/command/pyinstaller/build-command.pyinstaller.mjs`, the publication logic in `src/service/windows-build.service.mjs`, and the legal-material copy in `src/service/legal-copy.service.mjs`. A binary that cannot be reduced to those four owners is an unaccredited executable that happens to share a name, not the Ludoxel Windows artifact.',
+            text: '`dist/windows/Ludoxel.exe` is the publication coordinate written by the Windows path of `tools/build_desktop_app`. `src/config/build.config.mjs` fixes the path constants, `buildWindowsPyinstallerCommand` builds the PyInstaller invocation, `windows-build.service.mjs` stages and publishes the executable, and `legal-copy.service.mjs` copies the configured notice paths beside it. A file occupying that path gains repository build provenance only through that service sequence.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`runWindowsBuild` enforces the sequence in `tools/build_desktop_app/src/service/windows-build.service.mjs`: host and entry-script gates run before optional native compilation, a random token separates the PyInstaller work, spec, and staging roots, `runProcess` executes the constructed command, and `publishWindowsExecutable` copies the staged executable only after a zero exit code. `EPERM`, `EBUSY`, and `EACCES` retain the staged executable when the published target is locked. That branch records a local publication failure without rewriting the staged build result.',
           },
           {
             kind: 'paragraph',
@@ -76,7 +80,7 @@ function addApplicationBootstrapHiddenImports(args) {
           },
           {
             kind: 'paragraph',
-            text: 'Because the vector is assembled from named constants and an explicit data list, the executable is reconstructible and its declared inputs are auditable from the printed command. That is the function of constructing the command rather than maintaining a hand-written spec: a reviewer can read the invocation and determine whether the binary is the OpenGL-configured Ludoxel build with its declared package data, instead of inferring identity from a file that merely carries the name.',
+            text: 'Named constants and an explicit data list assemble the vector, making the executable reconstructible and its declared inputs auditable from the printed command. The invocation itself supplies the reviewable build specification: a reviewer can determine whether the binary is the OpenGL-configured Ludoxel build with its declared package data from the command that constructs it.',
           },
         ],
       },
@@ -138,7 +142,7 @@ function addApplicationBootstrapHiddenImports(args) {
         content: [
           {
             kind: 'paragraph',
-            text: 'A Windows artifact is adjudicated from the command surface inward, so that each fact is taken from the layer that produced it rather than inferred from the file.',
+            text: 'A Windows artifact is adjudicated from the command surface inward. Each fact comes from the layer that produced it.',
           },
           {
             kind: 'list',
@@ -173,7 +177,7 @@ function addApplicationBootstrapHiddenImports(args) {
           {
             kind: 'paragraph',
             text: [
-              'This article delimits the evidentiary conditions for recognizing the Windows executable and the inspection that establishes them. It does not grant permission to distribute the executable, does not declare it an official release, and does not clear the third-party material inside it. Whether the executable may be published as an official build is fixed by the controlling ',
+              '`windows-build.service.mjs` creates a staged executable, checks its presence, copies the configured legal material, and then publishes `Ludoxel.exe` into `dist/windows`. Distribution permission, Official Distribution status, and third-party clearance remain fixed by their controlling legal sources. Whether the executable may be published as an official build is fixed by the controlling ',
               { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
               ', not by the build tool, whose competence ends at what is constructed and where it is written.',
             ],
@@ -226,11 +230,11 @@ npm run build:macos:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS command targets the WGPU and Metal-oriented route, not the OpenGL path. `addMacosRendererBackendArgs` collects `wgpu` and `rendercanvas` and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`; `addMacosRequiredDataArgs` adds `assets`, `src`, `LICENSE`, and `third-party` as required data and asserts the default Alex skin. On macOS these are required inputs, and their absence aborts the command rather than yielding a quietly incomplete bundle.',
+            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects `wgpu` and `rendercanvas` and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`; `addMacosRequiredDataArgs` adds `assets`, `src`, `LICENSE`, and `third-party` as required data and asserts the default Alex skin. macOS packaging requires those inputs; their absence aborts the command.',
           },
           {
             kind: 'paragraph',
-            text: '`checkMacosPackagingInputs` enforces the same envelope before a build runs, requiring the entry script, `package.json`, `pyproject.toml`, the bundled `assets` and `src` roots, the Alex skin, every legal-material path, every required font, and a fixed set of WGPU renderer sources, and confirming that `pyproject.toml` declares the Darwin-only `wgpu` and `rendercanvas` dependencies and a PyInstaller development dependency and that the command source still carries the `wgpu.backends.wgpu_native`, `rendercanvas.pyqt6`, and `macos_cursor` terms. What this establishes is not that PyInstaller executed but that the repository-defined renderer envelope for the macOS path was assembled; a build that proceeds without it is producing a different object than the one the repository specifies.',
+            text: '`checkMacosPackagingInputs` enforces the same envelope before a build runs, requiring the entry script, `package.json`, `pyproject.toml`, the bundled `assets` and `src` roots, the Alex skin, every legal-material path, every required font, and a fixed set of WGPU renderer sources, and confirming that `pyproject.toml` declares the Darwin-only `wgpu` and `rendercanvas` dependencies and a PyInstaller development dependency and that the command source still carries the `wgpu.backends.wgpu_native`, `rendercanvas.pyqt6`, and `macos_cursor` terms. The check establishes assembly of the repository-defined macOS renderer envelope. A build that omits it produces a different object from the repository specification.',
           },
           {
             kind: 'note',
@@ -319,7 +323,7 @@ function requireBundledResource(appPath, label, relativePaths) {
           },
           {
             kind: 'paragraph',
-            text: '`publishMacosApp` is the final writer of `dist/macos`. It patches the plist, signs and verifies the staged bundle, removes any existing published bundle, copies the staged bundle in with symlinks preserved, then signs and verifies the published copy before copying legal material beside it. The duplicated sign-and-verify across the staged and published copies is not redundancy: copying a signed bundle can disturb its signature, so the published artifact is re-established and re-verified rather than presumed equal to the staged one.',
+            text: '`publishMacosApp` is the final writer of `dist/macos`. It patches the plist, signs and verifies the staged bundle, removes any existing published bundle, copies the staged bundle in with symlinks preserved, then signs and verifies the published copy before copying legal material beside it. Copying a signed bundle can disturb its signature. The published artifact therefore receives a fresh signature and verification pass.',
           },
         ],
       },
@@ -329,7 +333,7 @@ function requireBundledResource(appPath, label, relativePaths) {
         content: [
           {
             kind: 'paragraph',
-            text: 'This article describes the local `.app` artifact and its verification path. It does not assert that the bundle is notarized, accepted by Apple, approved for public download, or distributable by any party whose authority is not established elsewhere; a locally signed bundle remains a locally produced bundle. Notarization, distribution-channel preparation, and public release authority lie outside this tool path and outside this article.',
+            text: '`publishMacosApp` in `tools/build_desktop_app/src/service/macos-build.service.mjs` patches `Info.plist`, signs and verifies the staged `.app`, copies it to the configured publish directory, signs and verifies the published copy, and copies legal material beside the bundle. The resulting local bundle has evidence of that service path. Notarization, distribution-channel preparation, and public release authority require their separate platform and legal sources.',
           },
           {
             kind: 'paragraph',
@@ -410,7 +414,7 @@ export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib
           },
           {
             kind: 'paragraph',
-            text: 'A source is fallback-only exactly when this function returns an empty list — when no file in the module directory both carries a recognized suffix and shares the stem. Computing the classification from directory contents rather than a build flag is what makes it portable: it reports the same state irrespective of whether a build ran in the current session and irrespective of platform. The cost of bypassing this classifier and presuming a compiled module is that a packaged artifact may run on the Python fallback while its description claims native acceleration — a runtime-completeness claim the evidence does not support.',
+            text: 'A source is fallback-only exactly when this function returns an empty list: no file in the module directory carries both a recognized suffix and the shared stem. Directory contents supply the classification, giving every platform and session the same evidence source. A packaged artifact can execute the Python fallback when a description presumes a compiled module; the classifier prevents that unsupported native-acceleration claim.',
           },
         ],
       },
@@ -449,7 +453,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only source and still returns success, because a fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. This is the separation the article fixes, and the four conditions it separates move independently. Source availability is a property of the `.py` reference implementation, present for every candidate. Compiled acceleration is a property of the module directory, asserted only when `compiledBinariesForSource` returns a suffix-matched binary. Verification policy is a property of the run, set by whether `--require-built` was passed. Release permission is a property of the controlling License Text and is settled nowhere in this tool. A directory carrying no compiled extension therefore still carries a working implementation, a fallback-only run still passes when `--require-built` is absent, and a passing native build still leaves runtime superiority and distribution permission unproven. Collapsing the four into one reassuring word is the precise failure the verifier exists to prevent.',
+            text: 'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only source and returns success because a fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. Four conditions move independently. Source availability belongs to the `.py` reference implementation. Compiled acceleration belongs to the module directory and requires `compiledBinariesForSource` to find a suffix-matched binary. Verification policy belongs to the run and is selected by `--require-built`. Release permission belongs to the controlling License Text. A fallback-only directory retains a working implementation, and a passing native build establishes neither runtime superiority nor distribution permission.',
           },
         ],
       },
@@ -463,7 +467,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'This article does not license evasion of native-build failures through the fallback, nor does it require every informal local run to carry compiled extensions; it keeps the four conditions apart. A public description must not assert that native binaries were built unless the build and verification output show it, and must not assert that fallback execution authorizes distribution. The native state is a technical property of the artifact and never a grant.',
+            text: '`compiledBinariesForSource` in `tools/build_native_extensions/src/collect/binary.collect.mjs` classifies compiled state from suffix-matched files beside each Python source, while `verifyNativeExtensions` reports the Python fallback and applies `--require-built` only when requested. Build output establishes the selected technical state of that source. Distribution authority continues to arise from the controlling License Text.',
           },
         ],
       },
@@ -506,7 +510,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: '`copyLegalMaterial` writes the configured material into a single target directory. It iterates the fixed `LEGAL_MATERIAL_PATHS` list, mutates only that directory, and logs each path as copied or skipped, so the build record states which material reached the target rather than leaving it to inference.',
+            text: '`copyLegalMaterial` writes the configured material into a single target directory. It iterates the fixed `LEGAL_MATERIAL_PATHS` list, mutates that directory, and logs each path as copied or skipped. The build record therefore identifies the material that reached the target.',
           },
           {
             kind: 'code',
@@ -525,7 +529,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'It delegates the move to `copyIfExists`, which refuses to fabricate material it cannot find and signals absence by returning false instead of throwing.',
+            text: 'It delegates the move to `copyIfExists`, which signals an absent source with `false` and leaves no fabricated target material.',
           },
           {
             kind: 'code',
@@ -557,7 +561,7 @@ npm run build:native:check`,
             ordered: true,
             items: [
               'For a Windows artifact, examine `dist/windows` for `LICENSE` and `third-party` beside `Ludoxel.exe`.',
-              'For a macOS artifact, examine `dist/macos` around `Ludoxel.app`, not only inside the bundle, because the copy writes beside the bundle.',
+              'For a macOS artifact, examine the `dist/macos` directory that contains `Ludoxel.app`, because the copy writes beside the bundle.',
               'After any later copy, compression, upload, or transfer, examine the transferred artifact again, because a downstream step can strip what the build correctly produced.',
             ],
           },
@@ -594,7 +598,7 @@ npm run build:native:check`,
           {
             kind: 'paragraph',
             text: [
-              'This article does not interpret the license grant, define the scope of Original Materials, decide whether Distribution Materials may be shared, or determine the effect of public repository visibility; those are fixed by the controlling ',
+              '`copyLegalMaterial` iterates `LEGAL_MATERIAL_PATHS` and calls `copyIfExists` for each target path, recording copied and skipped material. License grants, Original Materials, Distribution Materials, and repository visibility remain fixed by the controlling ',
               { kind: 'link', label: 'License Text', href: '/docs/legal/license-authority-and-materials/authority-text/understanding-controlling-text' },
               ' and the Legal category. Its scope is operational: the required material, the service that copies it, the publish coordinates, the check that reads the repository, and the defects produced by omission.',
             ],
@@ -688,7 +692,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Its reach is exact. If `third-party/kaisei-opti/LICENSE.txt` is absent or lacks `Kaisei`, `SIL Open Font License`, or `Version 1.1`, the check reports the defect by the license label. It does not read the obligations of the SIL Open Font License into a legal opinion and does not certify redistribution of any artifact that embeds the font; it confirms the presence of selected terms in a named notice. A package process must retain this notice — and the check does not, and cannot, authorize public distribution of the package.',
+            text: 'Its reach is exact. If `third-party/kaisei-opti/LICENSE.txt` is absent or lacks `Kaisei`, `SIL Open Font License`, or `Version 1.1`, the check reports the defect by the license label. The predicate confirms selected terms in a named notice. License interpretation and distribution authority remain with the controlling legal texts; a package process must retain this notice.',
           },
         ],
       },
@@ -751,7 +755,7 @@ npm run build:native:check`,
           {
             kind: 'paragraph',
             text: [
-              'This article does not classify all third-party material, decide whether a specific third-party license permits a particular external redistribution act, or resolve provenance-sensitive assets; the full analysis of ',
+              '`third-party/kaisei-opti/LICENSE.txt` retains the SIL Open Font License text for Kaisei Opti. The artifact copy path preserves that notice; third-party redistribution terms and provenance-sensitive assets remain governed by their applicable legal sources. The full analysis of ',
               { kind: 'link', label: 'third-party material boundaries', href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries' },
               ' is fixed by the Data and Legal categories. Its scope is the operational retention of a named notice and the defects produced by omission.',
             ],
@@ -783,14 +787,14 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'The premise is what separates this article from Legal. Legal fixes whether a person may perform an act; this article fixes how the act is carried out once the authority is not in dispute. The build command is a containment device for that act, not a permission surface.',
+            text: 'The build command is a containment device. `parse.args.mjs`, `validate.args.mjs`, `dispatch.run.mjs`, and `task.service.mjs` narrow a terminal request into a configured platform task, service call, and subprocess payload. The License Text separately determines whether an operator holds authority for the resulting act.',
           },
           {
             kind: 'note',
             note: {
               type: 'warning',
               content:
-                'Do not cite this article as permission to build, distribute, publish, mirror, or upload Ludoxel. It describes the technical path for an operator whose authority is established elsewhere.',
+                'The build path records validation, dispatch, subprocess construction, staging, publication, and status. Permission to build, distribute, publish, mirror, or upload Ludoxel remains with the License Text and any later competent written instrument.',
             },
           },
         ],
@@ -842,7 +846,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'Two of its decisions govern downstream behavior. With no target and no help request, the command resolves to `windows`, so a bare invocation is contained on the Windows path rather than failing open. And `--status` with `--check` is refused, because the macOS status report and the macOS prerequisite check are distinct modes that cannot be requested together. Validation precedes any task: a non-empty error list causes the dispatcher to print the errors and return exit code 2, so a malformed command surface is contained before it can reach a platform service.',
+            text: 'Two decisions govern downstream behavior. A command with no target and no help request resolves to `windows`. `--status` with `--check` is refused because the macOS status report and the macOS prerequisite check are separate modes. Validation precedes every task: a non-empty error list causes the dispatcher to print the errors and return exit code 2 before a platform service receives the request.',
           },
         ],
       },
@@ -934,7 +938,7 @@ npm run build:macos -- --status`,
         content: [
           {
             kind: 'paragraph',
-            text: 'This article does not describe installer creation, update delivery, store submission, notarized public release, website download publication, or external redistribution, and it does not decide whether a given operator may run the command; those are separate legal and release-management questions.',
+            text: '`renderMacosStatus` and `checkMacosPackagingInputs` inspect the configured macOS input set: WGPU sources, cursor helper, fonts, icon candidates, legal material, PyInstaller command terms, and Darwin dependencies. Installer creation, update delivery, store submission, notarized public release, website download publication, external redistribution, and operator authority require separate service or legal sources.',
           },
           {
             kind: 'paragraph',
@@ -959,7 +963,7 @@ npm run build:macos -- --status`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Build output records what a tool attempted, verified, skipped, and wrote. It is not a substitute for inspecting the artifact and it is not a release verdict. A printed PyInstaller command establishes command construction; a published-artifact line establishes that a publication function reached its success path; a `passed` line establishes that a named check returned zero. No one of those lines establishes permission, official-release status, or third-party clearance.',
+            text: 'Build output records what a tool attempted, verified, skipped, and wrote. Artifact inspection supplies artifact evidence, while release authority comes from its controlling source. A printed PyInstaller command establishes command construction; a published-artifact line establishes that a publication function reached its success path; a `passed` line establishes that a named check returned zero. Permission, official-release status, and third-party clearance require their governing evidence.',
           },
           {
             kind: 'paragraph',
@@ -977,7 +981,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'Skipping these steps is the mechanism by which an optimistic transcript is converted into a claim of a completed, authorized, transferable release. The inference from a favorable line to a release conclusion is not a permitted shortcut; it is the specific error this article forbids.',
+            text: '`printCheckResult` records pass or failure for one named policy, while `CHECKS` in `tools/check_project/src/service/check.service.mjs` selects that policy by name. A favorable line therefore establishes the evaluated predicate. Artifact transferability, release status, and distribution authority require their independent evidence and controlling legal source.',
           },
         ],
       },
@@ -1068,7 +1072,7 @@ if (source.binaries.length === 0) {
         content: [
           {
             kind: 'paragraph',
-            text: 'This article does not teach generic PyInstaller debugging, Python packaging theory, operating-system code-signing law, or license interpretation; it fixes the Ludoxel-specific reading discipline for the output the repository tools emit.',
+            text: '`runWindowsBuild` and `runMacosBuild` construct Ludoxel-specific PyInstaller commands, require configured entry scripts and assets, call platform services, and clean tokenized work, spec, and staging paths. The emitted status lines describe those repository operations; code-signing law and license interpretation remain under their external or controlling legal texts.',
           },
           {
             kind: 'paragraph',
@@ -1093,7 +1097,7 @@ if (source.binaries.length === 0) {
         content: [
           {
             kind: 'paragraph',
-            text: 'Running a repository check presupposes local authority to inspect the working copy; it does not presuppose, and does not produce, a public grant. The harness exists to decompose repository policy into named predicates and to fix the evidentiary reach of each, so that a passing result cannot be read past the condition it inspected.',
+            text: 'Running a repository check exercises local authority to inspect the working copy. Public permission remains with the governing legal source. The harness decomposes repository policy into named predicates and fixes the evidentiary reach of each passing result.',
           },
           {
             kind: 'code',
@@ -1120,7 +1124,7 @@ npm run check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The harness is a closed dispatch table in `tools/check_project/src/service/check.service.mjs`. A check name supplied by a run script selects exactly one policy from the frozen `CHECKS` map, and an unrecognized name is refused with exit code 2 rather than resolved to an arbitrary function.',
+            text: 'The harness is a closed dispatch table in `tools/check_project/src/service/check.service.mjs`. A check name supplied by a run script selects exactly one policy from the frozen `CHECKS` map. An unrecognized name terminates with exit code 2.',
           },
           {
             kind: 'code',
@@ -1147,7 +1151,7 @@ export async function runProjectCheck(checkName, options = {}) {
           },
           {
             kind: 'paragraph',
-            text: 'Freezing the table is what converts the instruction to verify the repository into a finite set of named predicates, each owning a fixed evidentiary reach. `npm run check` is not a single composite verdict but the sequential evaluation of those predicates, and a passing run is therefore never one global guarantee. The evidence attaches to the individual dispatch entry, and a claim that exceeds the predicate that produced it has no support in the harness.',
+            text: 'Freezing the table converts repository verification into a finite set of named predicates, each with a fixed evidentiary reach. `npm run check` sequentially evaluates those predicates. Evidence attaches to the individual dispatch entry, and every broader claim requires evidence outside the harness.',
           },
         ],
       },
@@ -1204,7 +1208,7 @@ for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
           },
           {
             kind: 'paragraph',
-            text: 'This article does not replace continuous-integration policy, legal review, release approval, third-party provenance analysis, or manual artifact inspection, and it does not define the contents of the License Text. The checks are necessary discipline for repository-to-artifact continuity; they are neither sufficient authority for distribution nor proof that a concrete artifact stays complete after it leaves the publish directory.',
+            text: '`CHECKS` dispatches package, docs, legal, resources, and shader policies through `runProjectCheck`. Those predicates establish repository-to-artifact continuity for their named inputs. Continuous integration, legal review, release approval, third-party provenance, manual artifact inspection, and post-publication integrity retain their own evidence paths.',
           },
         ],
       },
@@ -1257,7 +1261,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: 'What the predicate refuses is as load-bearing as what it admits. A `.gitignore` missing `dist/`, `build/`, or the export-output path fails, because an un-ignored generated tree corrupts the boundary between source and output that a frozen package depends on. The runtime path module must name `default_runtime_data_root`, `state_manifest.json`, and `integrity_key.bin`, and the asset resolver must cover the `assets/ludoxel` and `assets/minecraft` roots with the block texture and thumbnail directories. The notes mark exactly the materials the check declines to clear: `assets/` is noted as ignored-until-provenance-reviewed rather than cleared, the previous-format `configs/` is noted as not the runtime write target, and the export-tool output is noted as generated-and-ignored.',
+            text: 'The predicate’s refusals are as load-bearing as its admissions. A `.gitignore` missing `dist/`, `build/`, or the export-output path fails because an un-ignored generated tree corrupts the source/output boundary required by a frozen package. The runtime path module must name `default_runtime_data_root`, `state_manifest.json`, and `integrity_key.bin`, and the asset resolver must cover the `assets/ludoxel` and `assets/minecraft` roots with the block texture and thumbnail directories. The notes classify `assets/` as ignored pending provenance review, identify the previous-format `configs/` as outside the runtime write target, and record the export-tool output as generated and ignored.',
           },
           {
             kind: 'paragraph',
@@ -1309,7 +1313,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: '`checkShader` is a source-text predicate, and its evidentiary reach ends at the source text. A non-include shader is admitted only when it declares a `#version` whose value is at least 140 and at most 430; a declaration below the floor or above the ceiling is refused with the file and the offending version named. A vertex shader that reaches for raw `gl_VertexID` without the `LUDOXEL_VERTEX_INDEX` macro is refused. What the predicate does not touch is the runtime: it renders no frame, establishes no visual equivalence between the OpenGL and WGPU backends, and certifies no driver behavior on any target. A passing shader check is evidence that the source obeys the floor, the ceiling, and the macro contract, and is not evidence that the packaged renderer behaves identically across backends or drivers.',
+            text: '`checkShader` is a source-text predicate, and its evidentiary reach ends at the source text. A non-include shader is admitted when it declares a `#version` from 140 through 430; a declaration below the floor or above the ceiling is refused with the file and offending version named. A vertex shader that reaches for raw `gl_VertexID` without the `LUDOXEL_VERTEX_INDEX` macro is refused. Frame rendering, OpenGL/WGPU visual equivalence, and target-driver behavior require runtime evidence. A passing shader check establishes compliance with the version and macro contract.',
           },
         ],
       },
@@ -1333,7 +1337,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
         content: [
           {
             kind: 'paragraph',
-            text: 'This article does not classify asset provenance, license third-party textures, authorize generated thumbnails, certify visual parity, or provide general renderer debugging; it fixes two repository checks whose output bears on distribution readiness because desktop packages carry resources and shader source into a frozen runtime context.',
+            text: '`checkResources` and `checkShaders` inspect configured runtime paths, ignored generated trees, shader version declarations, and the `LUDOXEL_VERTEX_INDEX` macro rule. Desktop packages carry those inputs into a frozen runtime context. Asset provenance, third-party texture licensing, thumbnail authority, visual parity, and renderer debugging remain separate technical or legal analyses.',
           },
           {
             kind: 'paragraph',
@@ -1399,7 +1403,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: 'This is the tool’s own boundary statement, not an external gloss. The macOS path performs ad-hoc signing and verification to establish local bundle integrity, and it names Developer ID codesigning and notarization as release work outside the tool. The most complete local macOS build, with a verified ad-hoc signature, has therefore not crossed into Apple-distributable status, and a description that treats the ad-hoc verification as notarization asserts precisely the authority the tool disclaims.',
+            text: '`renderMacosStatus` supplies the tool’s boundary statement. The macOS path performs ad-hoc signing and verification to establish local bundle integrity, then names Developer ID codesigning and notarization as release work outside the tool. The most complete local macOS build, with a verified ad-hoc signature, remains short of Apple-distributable status; ad-hoc verification and notarization arise from different service paths and authorities.',
           },
         ],
       },
@@ -1453,7 +1457,7 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
           {
             kind: 'paragraph',
             text: [
-              'This article does not decide who may grant official release status, how legal permission is created, whether a particular artifact is licensed for distribution, or how official releases are announced; under the controlling License Text, only the Licensor publishes an ',
+              '`APP_NAME`, `WINDOWS_PUBLISH_DIR`, `MACOS_PUBLISH_DIR`, and the platform status renderers name local artifact outputs. Official release status, distribution licensing, and publication authority remain with the Licensor under the controlling License Text, which defines an ',
               { kind: 'link', label: 'Official Distribution', href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials' },
               '. Its scope is the narrower problem of not attaching false release language to a technical artifact.',
             ],
