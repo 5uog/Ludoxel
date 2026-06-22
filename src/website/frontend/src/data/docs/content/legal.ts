@@ -20,6 +20,7 @@ export const legalPages: DocsPageContent[] = [
           'License authority is the legal capacity of a text or later written instrument to grant, withhold, limit, condition, reserve, or terminate permission in relation to Ludoxel Original Materials. It is not the same thing as public availability, technical retrievability, documentation display, repository visibility, platform affordance, package presence, static-site generation, or operational convenience.',
           'Authority analysis begins with the source asserted to grant the proposed act. A repository page, browser-rendered documentation page, clone button, fork button, download archive, preview deployment, generated website output, issue form, release page, package manifest, metadata field, build log, search index, and public cache are Access Paths under `LICENSE`; the License Text supplies the operative permission analysis.',
           'For Ludoxel Original Materials, license authority is not diffused across every public surface on which Ludoxel material appears. It is centralized in the controlling License Text, subject only to a later written instrument that is competent to alter that legal position. Everything else is subordinate evidence, explanation, notice, routing, or platform behavior unless the controlling source itself gives it operative legal force.',
+          'The authority inquiry proceeds from an identified act and material to the root `LICENSE`, then to the grant, reservation, condition, or exclusion applicable to that pair. A build service can construct an executable, a website renderer can publish HTML, a GitHub form can receive a public submission, and a repository host can expose a file; each mechanism supplies a technical event or access condition. The License Text and any competent later written instrument determine whether that event carries a permission consequence. The distinction preserves the legal sequence: technical production first establishes a fact of production, while authorization remains a question of operative text and material scope.',
         ],
       },
       {
@@ -91,7 +92,7 @@ export const legalPages: DocsPageContent[] = [
               },
               {
                 id: 'understanding-license-authority-reading-order-stop',
-                title: 'Stop before taking over neighboring articles.',
+                title: 'Separate Authority from Material and Distribution Analysis.',
                 content: [
                   {
                     kind: 'paragraph',
@@ -102,7 +103,7 @@ export const legalPages: DocsPageContent[] = [
                         label: 'repository visibility',
                         href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
                       },
-                      ' means, what license text must accompany distribution, or what an output contains belong to the neighboring Legal and Data articles.',
+                      ' means, the legal text retained with a distribution, and the composition of an output depend on separate material, artifact, and data facts. The authority inquiry ends after the controlling permission source has been identified.',
                     ],
                   },
                 ],
@@ -1176,7 +1177,7 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'That permission is not unconditional. If User-Created Materials or Application Output contain material parts of Original Materials, Third-Party Materials, Provenance-Sensitive Materials, user interface text, visual assets, bundled resources, project-specific textures, branding material, application icons, shaders, Documentation Site material, or other protected material, the included protected material remains governed by its applicable legal terms.',
+          'The License Text permission for User-Created Materials and Application Output remains conditional. When an output contains material parts of Original Materials, Third-Party Materials, Provenance-Sensitive Materials, user interface text, visual assets, bundled resources, project-specific textures, branding material, application icons, shaders, Documentation Site material, or other protected material, the included protected material remains governed by its applicable legal terms.',
         ],
       },
       {

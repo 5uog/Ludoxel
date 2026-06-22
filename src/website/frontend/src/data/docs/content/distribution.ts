@@ -27,6 +27,10 @@ export const distributionPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
+            text: 'The Windows artifact path begins outside the service at the package-script command surface, narrows through the desktop-build parser and dispatch path, and enters `runWindowsBuild` only after the platform task and validated options have been selected. `buildWindowsPyinstallerCommand` materializes the subprocess argument vector; the service assigns tokenized work, spec, and staging directories; `runProcess` returns the subprocess outcome; `publishWindowsExecutable` mutates `dist/windows` after successful staging; and `copyLegalMaterial` repeats the notice copy beside each retained artifact. Tool output can establish which local branch completed and which file path was written. The root `LICENSE` remains the independent source for circulation authority after the tool has finished its own construction work.',
+          },
+          {
+            kind: 'paragraph',
             text: 'Two entry points feed the same Windows service.',
           },
           {

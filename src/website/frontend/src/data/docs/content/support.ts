@@ -24,7 +24,7 @@ export const supportPages: DocsPageContent[] = [
           {
             kind: 'paragraph',
             text: [
-              'That support route must be read together with ',
+              'The `problem-report.yml` public intake route must be read together with ',
               {
                 kind: 'link',
                 label: 'public issue limits',
@@ -55,6 +55,10 @@ body:
           {
             kind: 'paragraph',
             text: '`problem-report.yml` marks the `acknowledgement` checkbox group and the `summary`, `reproduction`, `expected`, and `actual` textareas as required. GitHub blocks submission until those validations pass; the optional `environment` and `additional-context` fields remain available for public, non-sensitive facts that materially affect reproduction. `.github/SECURITY.md` moves vulnerability detail, proof material, credentials, private files, and non-public reproduction information into a Private Reporting Channel, preserving a separate private evaluation route from the public issue record.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The form and policy files divide support evidence by repository surface. `problem-report.yml` admits a required public record of observable non-security behavior; `security-contact.yml` supplies a public request for a private reporting route; `.github/SECURITY.md` governs the security-report channel; and `.github/CONTRIBUTING.md` with `pull_request_template.md` governs the repository response to proposed contribution material. GitHub validation applies the form fields before issue creation, while policy text controls the legal and procedural consequence of the submitted class. A populated public issue records intake through the public form; it supplies neither acceptance, review, incorporation, waiver, nor a private-channel substitute.',
           },
         ],
       },
@@ -684,7 +688,7 @@ body:
                 label: 'requesting',
                 href: '/docs/support/security-and-safety-support/private-security-contact/requesting-a-private-security-channel',
               },
-              ' a Private Reporting Channel. The legal effect of that route remains controlled by the Legal documentation and the LICENSE; the support route does not itself create permission.',
+              ' a Private Reporting Channel. The root `LICENSE` controls permission, while `.github/SECURITY.md` controls the reporting procedure; opening a route request records channel selection and carries no independent permission effect.',
             ],
           },
         ],

@@ -33,6 +33,10 @@ export const systemsPages: DocsPageContent[] = [
             kind: 'paragraph',
             text: 'The viewport derives two timer intervals in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py`. `_effective_sim_timer_interval_ms` rounds the reciprocal of `sim_hz` to milliseconds, while `_effective_render_timer_interval_ms` rounds the reciprocal of at least 120 hertz. The first timer drives `_tick_sim`, the second requests repaints. Either field, if set above zero, overrides the derived interval. These are nominal scheduling intervals; the runner itself measures real elapsed time and is not bound to them. `_sync_runtime_activity` keeps both timers running for an initialized, visible viewport while loading remains active even after desktop deactivation; after loading ends, an inactive application again stops the runtime timers.',
           },
+          {
+            kind: 'paragraph',
+            text: '`GameLoopParams` supplies the configured frequency and timer overrides, viewport lifecycle derives the Qt timer requests, and `FixedStepRunner` converts elapsed wall time into bounded simulation quanta. `_on_step` then passes each quantum through `SessionManager.step`, learning updates, HUD synchronization, and audio-event playback before the render loop consumes the session-facing result. The OpenGL and WGPU backends receive render state through their renderer contracts after simulation mutation has occurred. Timer activity, fixed-step advancement, snapshot preparation, and draw submission therefore remain consecutive subsystem boundaries with distinct owners and observable outputs.',
+          },
         ],
       },
       {
@@ -1209,7 +1213,7 @@ sy = _snap(float(cy), float(texel))`,
         content: [
           {
             kind: 'paragraph',
-            text: '`build_player_model_pose` in `src/ludoxel/presentation/rendering/visuals/players/model_pose.py` turns one `PlayerRenderState` into a frozen `PlayerModelPose`. The pose holds the skin face rows, an optional `HeldBlockPose`, the special-item face rows and icon, the hurt-tint strength, a resolved skin key, and the `shadow_rows` instance matrices. The builder is wrapped in an `lru_cache` keyed on render state, so two actors in the same pose share one computation and a standing actor recomputes when its key changes. The OpenGL frame pipeline in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU backend in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` call that function, propagating a row-contract change to both renderers.',
+            text: '`build_player_model_pose` in `src/ludoxel/presentation/rendering/visuals/players/model_pose.py` turns one `PlayerRenderState` into a frozen `PlayerModelPose`. The pose holds the skin face rows, an optional `HeldBlockPose`, the special-item face rows and icon, the hurt-tint strength, a resolved skin key, and the `shadow_rows` instance matrices. The builder is wrapped in an `lru_cache` keyed on render state, so two actors in the same pose share one computation and a standing actor recomputes when its key changes. The OpenGL frame pipeline in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU backend in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` call `build_player_model_pose`, propagating a row-contract change to both renderers.',
           },
           {
             kind: 'paragraph',
@@ -1827,7 +1831,7 @@ def policy_enabled(self) -> bool:
             note: {
               type: 'note',
               content:
-                '`DatasetSink` carries records across the simulation/application boundary. `AiLearningStore.dataset_writer` selects the JSON Lines path and writer beneath the runtime data root; decode, export, corrupt-line accounting, and retention follow that store path.',
+                '`DatasetSink` carries records across the simulation/application boundary. `AiLearningStore.dataset_writer` selects the JSON Lines path and writer beneath the runtime data root; decode, export, corrupt-line accounting, and retention follow `AiLearningStore` storage paths.',
             },
           },
         ],

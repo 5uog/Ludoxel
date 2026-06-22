@@ -55,6 +55,10 @@ export const dataPages: DocsPageContent[] = [
             kind: 'paragraph',
             text: '`AppStateStore._data_root` in `src/ludoxel/application/persistence/stores/app.py` consumes the selected root and derives `state/player_state.json` and `state/world_state.json` through `_state_path`. `load()` reads each envelope through `_read_runtime_or_previous`, then feeds `PlayerStateFile.from_dict` and `WorldStateFile.from_dict` into one `AppState`; `save()` writes both JSON envelopes before `update_runtime_integrity_manifest` refreshes their protected entries. The resolver output reaches a concrete store, schema admission path, and integrity update sequence.',
           },
+          {
+            kind: 'paragraph',
+            text: '`default_runtime_data_root`, `AppStateStore`, the envelope readers, and the integrity manifest form a consecutive persistence chain. The root resolver admits an override or platform location; `_state_path` turns that root into named state files; `JsonFileStore` supplies the write boundary; schema readers reconstruct typed player and world members; and `update_runtime_integrity_manifest` records the protected-file state after the write. Session construction consumes the resulting `AppState`, while render and simulation code consume the reconstituted runtime objects. A directory listing proves none of the intermediate admissions, schema branches, or later session state without the corresponding resolver, store, and reader evidence.',
+          },
         ],
       },
       {
@@ -464,7 +468,7 @@ class PlayerStateFile:
           },
           {
             kind: 'paragraph',
-            text: 'The schema composition is operationally important. A failure to load `player_state.json` affects more than camera or audio. It can also affect inventory and current space selection because the file envelope groups those records. Data documentation must therefore name the file and field, not just the visible UI preference.',
+            text: 'The schema composition is operationally important. A failure to load `player_state.json` affects more than camera or audio. It can also affect inventory and current-space selection because the file envelope groups those records. `PlayerStateFile` and its persisted fields identify the relevant evidence; a visible UI preference cannot establish which serialized member, coercion path, or fallback branch supplied the runtime value.',
           },
           {
             kind: 'paragraph',

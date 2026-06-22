@@ -25,6 +25,10 @@ export const settingsPages: DocsPageContent[] = [
             text: '`src/ludoxel/presentation/interface/viewport/controllers/settings.py` writes each accepted control value into `viewport._state` and calls `RuntimePreferences.normalize()` before synchronizing consumers. Camera-perspective changes pass through `normalize_camera_perspective`; view-bobbing and camera-shake values are clamped in the runtime aggregate; settings synchronization then projects the normalized values back into the overlay. The renderer and first-person motion read that normalized state, making the displayed control, stored preference, and visible camera behavior one explicit propagation path.',
           },
           {
+            kind: 'paragraph',
+            text: 'Camera preference handling has four distinct write and read stages. `SettingsOverlay` emits a control value, the viewport settings controller applies it to runtime state, `RuntimePreferences.normalize()` admits the canonical representation, and the synchronization/runtime-application path distributes that value to widgets and presentation consumers. `PersistedSettings` later serializes the normalized preference set for the application store. Projection, mouse response, first-person geometry, and the camera-facing renderer state consume the admitted fields; the widget label supplies neither a second value domain nor a rendering instruction outside that pipeline.',
+          },
+          {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
