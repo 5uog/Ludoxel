@@ -2106,7 +2106,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.6b3"`,
+            code: `__version__ = "3.6.6"`,
           },
           {
             kind: 'note',

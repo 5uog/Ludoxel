@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.6',
+    tags: ['Desktop Application', 'Audio'],
+    sections: [
+      {
+        title: 'Player Attack Audio Mixer',
+        items: [
+          'Moved weak and strong attack one-shot playback off the `QSoundEffect` pool and into a bounded PCM mixer backed by `QAudioSink`, so rapid air-punch and attack samples overlap inside one continuous output stream instead of relying on multiple backend effect voices.',
+          'Kept material, landing, damage, Othello, and ambient audio on the existing playback paths; the mixer is limited to rapid player attack events and still obeys player volume, pool cooldown, sample selection, output-device refresh, and bounded voice count.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.6 Beta 3',
     tags: ['Desktop Application', 'Audio'],
     sections: [

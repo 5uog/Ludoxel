@@ -20,10 +20,18 @@ from ludoxel.presentation.audio.catalogs.material import (
   PLAYER_EVENT_STEP,
   PLAYER_SURFACE_SOUND_CATALOG,
 )
-from ludoxel.presentation.audio.catalogs.player import PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
+from ludoxel.presentation.audio.catalogs.player import (
+  PLAYER_EVENT_ATTACK_STRONG,
+  PLAYER_EVENT_ATTACK_WEAK,
+  PLAYER_EVENT_LAND,
+  PLAYER_EVENT_LAND_BIG,
+  PLAYER_EVENT_LAND_SMALL,
+  PLAYER_EVENT_SOUND_CATALOG,
+)
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
 from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
 from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal
+from ludoxel.presentation.audio.playback.mixer import PcmOneShotMixer
 from ludoxel.presentation.audio.playback.sources import PreparedSource, effect_voice_hold_s_for_url, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
 from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
@@ -58,6 +66,7 @@ class AudioManager(QObject):
     self._pool_throttle_until_s: dict[str, float] = {}
     self._effects_primed: bool = False
     self._media_devices = QMediaDevices(self)
+    self._player_attack_mixer = PcmOneShotMixer(media_devices=self._media_devices, parent=self)
     self._audio_output_refresh_pending: bool = False
 
     self._listener_linear_epsilon = 0.05
@@ -71,6 +80,8 @@ class AudioManager(QObject):
     self.prime_effects()
 
   def shutdown(self) -> None:
+    self._player_attack_mixer.shutdown()
+
     if self._ambient_effect is not None:
       self._ambient_transitioning = True
       self._ambient_effect.stop()
@@ -192,10 +203,41 @@ class AudioManager(QObject):
     self.play_player_event(event_name=str(event_name), position=tuple(position))
 
   def play_player_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
+    normalized_event = str(event_name)
+    if normalized_event in {PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_ATTACK_STRONG}:
+      self._play_player_attack_event(event_name=normalized_event, position=position)
+      return
+
+    pool = PLAYER_EVENT_SOUND_CATALOG.get(normalized_event)
+    if pool is None:
+      return
+    self._play_pool(pool_key=f"player_event:{normalized_event}", pool=pool, position=self._normalize_world_position(position))
+
+  def _play_player_attack_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
     pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
     if pool is None:
       return
-    self._play_pool(pool_key=f"player_event:{event_name}", pool=pool, position=self._normalize_world_position(position))
+
+    base_volume = float(self._preferences.volume_for(pool.category))
+    if base_volume <= 1e-6:
+      return
+
+    pool_key = f"player_event:{event_name}"
+    if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+      return
+
+    if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
+      if not self._listener_within_cutoff(position=self._normalize_world_position(position), cutoff=float(pool.distance_cutoff)):
+        return
+
+    urls = self._resolved_urls.get(str(pool_key))
+    if urls is None:
+      urls = self._resolve_existing_urls(pool)
+      self._resolved_urls[str(pool_key)] = urls
+
+    self._player_attack_mixer.play(
+      urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random
+    )
 
   def sound_group_for_block_state(self, block_state_or_id: str) -> str:
     base_id, _props = parse_state(str(block_state_or_id))
@@ -222,6 +264,8 @@ class AudioManager(QObject):
 
   def _refresh_audio_output_bindings(self) -> None:
     self._audio_output_refresh_pending = False
+
+    self._player_attack_mixer.retarget_default_audio_output()
 
     for prepared_group in tuple(self._prepared_sources.values()):
       for prepared in tuple(prepared_group):
