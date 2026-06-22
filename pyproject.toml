@@ -45,6 +45,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["build>=1.2,<2", "Cython>=3.0,<4", "PyInstaller>=6,<7", "setuptools>=82", "wheel>=0.45", "ruff>=0.14,<1"]
+figures = ["manim>=0.19,<1"]
 
 [project.scripts]
 ludoxel = "ludoxel.application.bootstrap:run_app"
