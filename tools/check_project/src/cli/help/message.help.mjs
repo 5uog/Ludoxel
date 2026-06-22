@@ -12,8 +12,8 @@ export const CHECK_HELP_MESSAGES = Object.freeze({
     }),
     descriptions: Object.freeze({
       package: 'package.json と主要設定の整合性を検査する。',
-      docs: 'README / .github の旧経路・不適切な future tool 化を検査する。',
-      legal: 'LICENSE / third-party / SPDX を検査する。',
+      docs: 'README の固定文言を解釈せず、root LICENSE の同梱だけを検査する。',
+      legal: 'LICENSE 本文の解釈、third-party、SPDX 検査を行わず、root LICENSE の同梱だけを検査する。',
       resources: 'assets / configs / generated output の扱いを検査する。',
       shaders: 'Ludoxel の renderer shader 契約を静的検査する。',
     }),
@@ -28,8 +28,8 @@ export const CHECK_HELP_MESSAGES = Object.freeze({
     }),
     descriptions: Object.freeze({
       package: 'Check package.json and core configuration consistency.',
-      docs: 'Check README/.github for stale paths and invalid future tool surfaces.',
-      legal: 'Check LICENSE, third-party, and SPDX headers.',
+      docs: 'Check only bundled root LICENSE presence without interpreting README fixed wording.',
+      legal: 'Check only bundled root LICENSE presence without interpreting LICENSE text, third-party files, or SPDX headers.',
       resources: 'Check assets, configs, and generated output policy.',
       shaders: 'Statically check Ludoxel renderer shader sources.',
     }),
