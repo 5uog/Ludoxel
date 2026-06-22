@@ -22,7 +22,6 @@ from manim import (
   RED_C,
   RED_E,
   RIGHT,
-  UP,
   WHITE,
   YELLOW_C,
   Arrow,
