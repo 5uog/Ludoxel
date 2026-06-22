@@ -287,6 +287,10 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
             ],
           },
           {
+            kind: 'paragraph',
+            text: 'The demonstration video records that branch during the periodic camera phase. Its left panel keeps the projection equations visible; its right panel reports `p`, `q`, `pi`, and `m` for `+X`, `+Y`, and `+Z` on separate rows; the center crosshair draws the colored world axes; the ground plane resolves into one-block wire segments; and the `5uog` label rotates and scales with its world-space sign plane.',
+          },
+          {
             kind: 'media',
             media: {
               kind: 'video',
@@ -296,8 +300,6 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
                   type: 'video/mp4',
                 },
               ],
-              caption:
-                'During the periodic camera phase, the left panel keeps the projection equations visible, the right panel reports p, q, pi, and m for +X, +Y, and +Z on separate rows, the center crosshair draws the colored world axes, the ground plane resolves into one-block wire segments, and the 5uog label rotates and scales with its world-space sign plane.',
               controls: false,
               loop: true,
               autoPlay: true,
