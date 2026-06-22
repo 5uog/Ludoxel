@@ -9,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 import { getOnThisPage } from '../../data/docs/collections';
 import AnimatedText from '../animation/AnimatedText';
 import DocsArticleContent from './article/DocsArticleContent';
+import { renderInlineText } from './article/DocsInlineText';
 import DocsBreadcrumbs from './breadcrumbs/DocsBreadcrumbs';
 import DocsCollectionContent from './collection/DocsCollectionContent';
 import { type DocsLayoutProps } from './logic/docsLayout.types';
@@ -84,7 +85,7 @@ export default function DocsLayout(props: DocsLayoutProps): React.JSX.Element {
 
             {view.kind === 'article' ? (
               <p className="page-reveal page-reveal-delay-1 mb-8 text-lg text-muted-foreground" key={`${currentPathname}-article-description`}>
-                {view.description}
+                {renderInlineText(view.description)}
               </p>
             ) : (
               <p className="mb-8 text-lg text-muted-foreground">
