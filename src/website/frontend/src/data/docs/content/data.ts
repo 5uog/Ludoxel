@@ -18,7 +18,7 @@ export const dataPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. Its signature accepts `project_root` and resolves it in an otherwise unused guarded branch, but never uses that argument to select a result. Repository location is therefore not a dormant fallback, not a packaging shortcut, and not a hidden persistence anchor; the resolver is governed by `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories alone.',
+            text: 'Ludoxel derives user data from a runtime data root, not from the repository checkout and not from the directory that happens to contain the executable. The controlling function is `default_runtime_data_root` in `src/ludoxel/foundations/locations/roots.py`. Its signature accepts `project_root` and resolves it in an otherwise unused guarded branch, but never uses that argument to select a result. The resolver consults `LUDOXEL_DATA_ROOT`, platform environment variables, and user-profile data directories alone, so the repository location it ignores serves as no dormant fallback, packaging shortcut, or persistence anchor.',
           },
           {
             kind: 'paragraph',
@@ -49,7 +49,7 @@ export const dataPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
-            text: 'The environment-override branch is the first hard boundary: `LUDOXEL_DATA_ROOT` relocates the complete runtime tree before any store computes `state` or `cache`. An observed absolute path therefore proves only the final resolver output. It does not prove the platform branch, it does not prove repository ownership, and it does not certify that the file may be copied. Correct reading names the resolver branch, the relative file below `state` or `cache`, and the store that consumes that relative path.',
+            text: 'The environment-override branch is the first hard boundary: `LUDOXEL_DATA_ROOT` relocates the complete runtime tree before any store computes `state` or `cache`. An observed absolute path therefore proves only the final resolver output. It fixes neither the platform branch that produced it nor repository ownership, and it carries no permission to copy the file. Correct reading names the resolver branch, the relative file below `state` or `cache`, and the store that consumes that relative path.',
           },
         ],
       },
@@ -84,7 +84,7 @@ def runtime_cache_root(data_root: Path) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: 'The integrity locations are not a third root. `src/ludoxel/foundations/locations/roots.py` derives both `state_manifest.json` and `integrity_key.bin` below `runtime_state_root(data_root)`, while the cache remains a sibling below the same data root. `src/ludoxel/application/persistence/integrity/manifest.py` consumes those two state paths to read, write, and verify integrity material; `src/ludoxel/application/persistence/stores/othello_book.py` independently places its compiled opening-book cache below `runtime_cache_root`. The location helper determines the path composition only. It owns neither manifest bytes nor cache content, schema, cryptographic meaning, or deletion policy.',
+            text: 'The integrity locations live below the state root rather than in a third tree. `src/ludoxel/foundations/locations/roots.py` derives both `state_manifest.json` and `integrity_key.bin` below `runtime_state_root(data_root)`, while the cache remains a sibling below the same data root. `src/ludoxel/application/persistence/integrity/manifest.py` consumes those two state paths to read, write, and verify integrity material; `src/ludoxel/application/persistence/stores/othello_book.py` independently places its compiled opening-book cache below `runtime_cache_root`. The location helper determines the path composition only. It owns neither manifest bytes nor cache content, schema, cryptographic meaning, or deletion policy.',
           },
           {
             kind: 'code',
@@ -99,7 +99,7 @@ def runtime_integrity_key_path(data_root: Path) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'This distinction prevents a misleading cleanup inference. A resolved path can establish that a file belongs beneath the runtime state or cache tree. It cannot establish that the file is expendable, that its contents are valid, or that a path name authorizes copying it elsewhere.',
+            text: 'The path composition settles location, not disposition. A resolved path can establish that a file belongs beneath the runtime state or cache tree; it cannot establish that the file is expendable, that its contents are valid, or that a path name authorizes copying it elsewhere.',
           },
         ],
       },
@@ -180,7 +180,7 @@ def _world_store(self) -> JsonFileStore:
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel distinguishes a project root from a runtime data root by predicate, not by intuition. A project root is identified by repository markers: `pyproject.toml`, or the joint presence of `assets` and `src`. That predicate classifies a tree as repository material for source and resources. It is not a persistence target, not a user-data namespace, and not a cleanup root merely because the process was launched from a checkout.',
+            text: 'Ludoxel distinguishes a project root from a runtime data root by predicate, not by intuition. A project root is identified by repository markers: `pyproject.toml`, or the joint presence of `assets` and `src`. That predicate classifies a tree as repository material for source and resources, so a checkout it identifies stays out of the persistence target, the user-data namespace, and the cleanup root even when the process was launched from inside it.',
           },
           {
             kind: 'code',
@@ -306,7 +306,7 @@ if env_root:
           },
           {
             kind: 'paragraph',
-            text: 'This distinction prevents two common errors: deleting the wrong local directory and describing source-tree cleanup as saved-data cleanup. Data cleanup is bounded to the resolved data root and its `state` and `cache` children. It does not clean Vite output, PyInstaller output, dependency directories, generated thumbnails in the repository, package staging directories, bundled resources, or license files.',
+            text: 'Bounding cleanup to the resolved data root heads off two common errors: deleting the wrong local directory, and describing source-tree cleanup as saved-data cleanup. Data cleanup reaches the resolved data root and its `state` and `cache` children only; it does not clean Vite output, PyInstaller output, dependency directories, generated thumbnails in the repository, package staging directories, bundled resources, or license files.',
           },
         ],
       },
@@ -332,7 +332,7 @@ class PlayerStateFile:
           },
           {
             kind: 'paragraph',
-            text: 'The dataclass composition makes the deletion consequence explicit. Removing `player_state.json` is not only a visual-preference reset. It removes all fields in the envelope. The application can construct defaults, but it cannot reconstruct the discarded local values from those defaults.',
+            text: 'The dataclass composition makes the deletion consequence explicit. Removing `player_state.json` removes every field in the envelope, reaching past the visual preferences into the current play-space id, inventory, and standing Othello settings. The application can construct defaults, but it cannot reconstruct the discarded local values from those defaults.',
           },
         ],
       },
@@ -365,7 +365,7 @@ class PlayerStateFile:
           },
           {
             kind: 'paragraph',
-            text: 'The implementation also normalizes the dataset id before any dataset path is formed. `_safe_name` lowercases the identifier, replaces characters outside `abcdefghijklmnopqrstuvwxyz0123456789_-` with underscores, and falls back to `default` when the result is empty. Dataset cleanup is therefore not a raw path operation supplied by the UI; it is a bounded unlink against normalized current and legacy dataset file names.',
+            text: 'The implementation also normalizes the dataset id before any dataset path is formed. `_safe_name` lowercases the identifier, replaces characters outside `abcdefghijklmnopqrstuvwxyz0123456789_-` with underscores, and falls back to `default` when the result is empty. Dataset cleanup is therefore a bounded unlink against normalized current and legacy dataset file names, with the raw UI-supplied path never reaching the file system directly.',
           },
         ],
       },
@@ -658,7 +658,7 @@ self.audio = self.audio.normalized()`,
           },
           {
             kind: 'paragraph',
-            text: 'Hotbar state is not a single list. Runtime selects the active branch in the order Othello, route edit, creative mode, then survival. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, so a malformed saved index or slot sequence does not survive into an undefined hotbar read.',
+            text: 'Hotbar state spans several branches rather than one list. Runtime selects the active branch in the order Othello, route edit, creative mode, then survival. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, so a malformed saved index or slot sequence does not survive into an undefined hotbar read.',
           },
           {
             kind: 'code',
@@ -764,7 +764,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
           },
           {
             kind: 'paragraph',
-            text: 'The manifest is deliberately conditional rather than a blanket checksum requirement. `verify_runtime_file` accepts an absent protected file, an absent or empty manifest, and a path with no manifest entry; once a manifest entry exists, however, the integrity key must be readable and the path-bound HMAC must compare exactly. The HMAC input includes the relative path, a NUL separator, and file bytes, so a digest for one protected relative path is not merely a content hash that can be moved to another protected name without detection.',
+            text: 'The manifest is deliberately conditional rather than a blanket checksum requirement. `verify_runtime_file` accepts an absent protected file, an absent or empty manifest, and a path with no manifest entry; once a manifest entry exists, however, the integrity key must be readable and the path-bound HMAC must compare exactly. The HMAC input includes the relative path, a NUL separator, and file bytes, so a digest binds to its protected relative path, and a digest computed for one protected name cannot be moved to another without detection.',
           },
           {
             kind: 'code',
@@ -877,7 +877,7 @@ finally:
         content: [
           {
             kind: 'paragraph',
-            text: '`WorldState` persists blocks as explicit coordinate/state rows. The saved representation is not a procedural seed, not a chunk cache, and not a renderer mesh. It is a list of user-visible block states keyed by integer coordinates, plus a revision counter that records world mutation.',
+            text: '`WorldState` persists blocks as explicit coordinate/state rows. The saved representation is a list of user-visible block states keyed by integer coordinates, plus a revision counter that records world mutation, rather than a procedural seed, a chunk cache, or a renderer mesh.',
           },
           {
             kind: 'code',
@@ -1019,7 +1019,7 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: 'Saved AI learning data is not one file and not one authority. `src/ludoxel/application/persistence/schema/ai_learning.py` owns the admitted value domains and JSON envelope. `src/ludoxel/application/persistence/stores/ai_learning.py` owns the runtime file family below the user data root: `state/ai_learning.json`, `state/learning/demonstrations/<dataset>.jsonl`, `state/learning/policies/<policy_id>.json`, `state/learning/evaluations/<policy_id>.json`, and `state/learning/training_runs/<run_id>.json`. The schema tells the reader which values are admitted; the store tells the reader where admitted data is retained.',
+            text: 'Saved AI learning data spans several files under two authorities. `src/ludoxel/application/persistence/schema/ai_learning.py` owns the admitted value domains and JSON envelope. `src/ludoxel/application/persistence/stores/ai_learning.py` owns the runtime file family below the user data root: `state/ai_learning.json`, `state/learning/demonstrations/<dataset>.jsonl`, `state/learning/policies/<policy_id>.json`, `state/learning/evaluations/<policy_id>.json`, and `state/learning/training_runs/<run_id>.json`. The schema tells the reader which values are admitted; the store tells the reader where admitted data is retained.',
           },
           {
             kind: 'code',
@@ -1106,7 +1106,7 @@ class PersistedAiLearningSettings:
           },
           {
             kind: 'paragraph',
-            text: 'This is why a saved file should not be read by inspecting one boolean. The correct data reading is the normalized settings object, the derived recording predicate, and the capture flag map after unknown keys have been discarded. A hand-edited `observe_only` key is at most stale metadata.',
+            text: 'Reading a saved file by inspecting one boolean therefore misstates it. The correct data reading is the normalized settings object, the derived recording predicate, and the capture flag map after unknown keys have been discarded. A hand-edited `observe_only` key is at most stale metadata.',
           },
         ],
       },
@@ -1145,11 +1145,11 @@ def policy_path(self, policy_id: str) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedAiLearningState.default()` returns off mode, no recorded kinds, all skill categories admitted, built-in deterministic policy selection, empty summaries, and policy version zero. `load_state()` falls back to that default when the JSON file is absent or unreadable. This prevents a missing or corrupt learning-state file from starting recording, using an unknown policy, or enabling training behavior by accident.',
+            text: '`PersistedAiLearningState.default()` returns off mode, no recorded kinds, all skill categories admitted, built-in deterministic policy selection, empty summaries, and policy version zero. `load_state()` falls back to that default when the JSON file is absent or unreadable. Falling back to that default keeps a missing or corrupt learning-state file from starting recording, using an unknown policy, or enabling training behavior by accident.',
           },
           {
             kind: 'paragraph',
-            text: 'The data consequence is strict. A saved AI-learning state file can be read as local state only after schema admission. It is not a public dataset, not a proof of policy quality, and not a distribution artifact. Demonstration rows, learned policies, evaluations, and training histories each have their own articles because each file family has a different producer, reader, corruption mode, and evidentiary limit.',
+            text: 'The data consequence is strict. A saved AI-learning state file can be read as local state only after schema admission, and that local-state reading is all it supports; public-dataset status, proof of policy quality, and distribution authority come from none of it. Demonstration rows, learned policies, evaluations, and training histories each have their own articles because each file family has a different producer, reader, corruption mode, and evidentiary limit.',
           },
         ],
       },
@@ -1159,7 +1159,7 @@ def policy_path(self, policy_id: str) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedAiPlayer` is not the learning-state envelope. It serializes a session actor’s identity, mode, personality, held item, appearance, regeneration values, pose, health, flight flag, and route state; its conversion to `AiPlayerState` re-applies the simulation normalizers. A custom AI skin mode without a normalized skin identifier is reduced to the player-skin mode, and malformed route points or out-of-range regeneration values are filtered by that conversion. These rows belong to each saved play space, whereas the learning-state file selects recording and policy behavior across the runtime.',
+            text: '`PersistedAiPlayer` serializes a session actor’s identity, mode, personality, held item, appearance, regeneration values, pose, health, flight flag, and route state, separate from the learning-state envelope; its conversion to `AiPlayerState` re-applies the simulation normalizers. A custom AI skin mode without a normalized skin identifier is reduced to the player-skin mode, and malformed route points or out-of-range regeneration values are filtered by that conversion. These rows belong to each saved play space, whereas the learning-state file selects recording and policy behavior across the runtime.',
           },
           {
             kind: 'paragraph',
@@ -1423,7 +1423,7 @@ return (records, int(corrupt))`,
           {
             kind: 'paragraph',
             text: [
-              'A demonstration dataset proves that examples were recorded and decoded. It does not prove that training produced a usable policy. It does not prove model quality. It does not grant permission to repurpose the data outside the application. Rows that fail decoding are handled in ',
+              'A demonstration dataset proves that examples were recorded and decoded, and no more: training success, model quality, and any permission to repurpose the data outside the application are settled elsewhere, none of them established by the dataset’s presence. Rows that fail decoding are handled in ',
               {
                 kind: 'link',
                 label: 'corrupt learning rows',
@@ -1544,7 +1544,7 @@ class Policy:
         content: [
           {
             kind: 'paragraph',
-            text: 'Policy modifiers cannot make forbidden actions legal. The planner and action mask decide which actions are candidates. Policy weights can bias candidate scoring, but they do not revive actions that the action mask has excluded. This preserves simulation constraints even when a learned artifact is active.',
+            text: 'Policy modifiers cannot make forbidden actions legal. The planner and action mask decide which actions are candidates. Policy weights can bias candidate scoring, but they do not revive actions that the action mask has excluded, so simulation constraints hold even when a learned artifact is active.',
           },
           {
             kind: 'code',
@@ -1633,7 +1633,7 @@ records.append(record)`,
           },
           {
             kind: 'paragraph',
-            text: 'That behavior means training and summaries must use decoded-record counts. A file with one thousand physical lines and one hundred corrupt lines is not a one-thousand-record dataset. It is a nine-hundred-record dataset plus one hundred rejected lines.',
+            text: 'That behavior means training and summaries must use decoded-record counts. A file with one thousand physical lines and one hundred corrupt lines loads as a nine-hundred-record dataset plus one hundred rejected lines, short of the one thousand records a line tally would suggest.',
           },
         ],
       },
@@ -1827,7 +1827,7 @@ for row in rows:
           },
           {
             kind: 'paragraph',
-            text: 'The block-row form is precise: the user-created contribution in a world is an arrangement over coordinates and block-state strings. It is not a new source file, not a renderer mesh, and not a clean-room replacement for the block definitions or textures the application uses to interpret and display those states.',
+            text: 'The block-row form is precise: the user-created contribution in a world is an arrangement over coordinates and block-state strings, which leaves it short of a new source file, a renderer mesh, or a clean-room replacement for the block definitions or textures the application uses to interpret and display those states.',
           },
         ],
       },

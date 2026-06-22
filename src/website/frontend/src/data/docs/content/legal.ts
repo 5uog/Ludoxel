@@ -28,14 +28,14 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'The root `LICENSE` is the controlling License Text for Ludoxel Original Materials. It is the place where the permission grant, the reservation of rights, the exclusions from permission, the definitions, the governing-law terms, and the legal limits must be read as legal text rather than as descriptive website copy.',
           '`README.md`, documentation notices, code-block captions, SPDX headers, package metadata, release notes, issue templates, pull-request templates, website metadata, generated documentation text, build output, public summaries, translation fragments, and platform interface text can assist the reader in finding or understanding the License Text. They do not become independent grants, waivers, amendments, exceptions, sublicenses, estoppel instruments, or public-domain dedications merely because they are visible, helpful, or adjacent to protected material.',
-          'A public page can point to authority. It cannot substitute itself for authority. A notice can warn the reader that material remains protected. It cannot create an additional permission class. A platform button can make copying technically possible. It cannot transform technical capability into legal authorization.',
+          'A public page can point to the controlling source, but it cannot stand in for that source. A protective notice can warn the reader that material remains protected, yet it creates no additional permission class. A platform button can make copying technically possible without converting that technical capability into legal authorization.',
         ],
       },
       {
         id: 'understanding-license-authority-non-authority-surfaces',
         title: 'Surfaces That Do Not Confer Authority',
         body: [
-          'Repository visibility is not license authority. Documentation-site publication is not license authority. Browser rendering is not license authority. Static-site output is not license authority. Deployment preview is not license authority. Source browsing, search indexing, cached display, copied excerpt display, package inspection, archived download, generated artifact availability, and hosting-service operation are not license authority.',
+          'License authority for Ludoxel Original Materials sits in the controlling License Text. Repository visibility, Documentation-Site publication, browser rendering, static-site output, deployment preview, source browsing, search indexing, cached display, copied-excerpt display, package inspection, archived download, generated-artifact availability, and hosting-service operation are access conditions: each can make material reachable, and none of them carries the capacity to grant, withhold, or enlarge permission.',
           'Those surfaces may establish that material was public, visible, indexed, rendered, obtainable, downloadable, previewed, archived, cached, or technically reproducible. That is an evidentiary proposition about access. It is not a juridical proposition about permission.',
           'The same rule governs explanatory summaries. A summary may accurately say that a reader may inspect repository contents under the License Text. It may not be inflated into a broader right to modify, redistribute, mirror, scrape, crawl, train models on, benchmark with, incorporate, deploy, sublicense, or republish Ludoxel Original Materials unless the controlling License Text grants that act.',
         ],
@@ -165,7 +165,7 @@ export const legalPages: DocsPageContent[] = [
             ', resolve third-party clearance, accept contributions, or route security reports. Its function is narrower: when a Ludoxel-related statement has been identified and that statement is alleged to alter the legal position, the rule determines whether the statement can operate against the License Text.',
           ],
           'For Original Materials, the operative source is the English License Text in the root `LICENSE`. Subordinate statements may describe, summarize, warn, label, expose, render, index, package, deploy, route, or explain the project. They do not obtain equal legal rank by appearing in the repository, in the Documentation Site, in build output, in metadata, in a generated file, in a hosted preview, in a public issue surface, or in an interface element.',
-          'The consequence is not merely interpretive preference. A subordinate statement that conflicts with the License Text has no operative effect to the extent of the conflict unless it is itself a later competent written instrument that expressly changes the legal position. The conflict is not solved by popularity, convenience, visibility, reliance, technical availability, platform design, or ordinary user expectation.',
+          'The consequence reaches past interpretive preference into operative effect. A subordinate statement that conflicts with the License Text has no operative effect to the extent of the conflict unless it is itself a later competent written instrument that expressly changes the legal position. The conflict is not solved by popularity, convenience, visibility, reliance, technical availability, platform design, or ordinary user expectation.',
         ],
       },
       {
@@ -334,7 +334,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-repository-visibility-juridical-function',
         title: 'Juridical Function of Repository Visibility',
         body: [
-          'Repository visibility is an access condition. It is not a license grant, not a waiver, not a public-domain dedication, not an open-source declaration, not a redistribution authorization, not a deployment authorization, not a derivative-work authorization, not an AI-use authorization, and not a permission to remove legal markings.',
+          'Repository visibility is an access condition. The License Text alone holds the capacity to grant permission, waive a right, dedicate material to the public domain, declare it open source, or authorize redistribution, deployment, derivative work, AI Use, or removal of legal markings; visibility supplies none of those and only makes the controlling text reachable.',
           'The legal significance of visibility is therefore negative and limiting. It may explain why a reader can see repository contents, Documentation Site source, generated website output, public legal text, issue templates, metadata, package configuration, or deployment-adjacent files. It does not explain why the reader may reuse them.',
           'A repository can be public while the relevant legal permissions remain narrow. Public visibility makes the License Text discoverable; it does not enlarge the License Text. The reader who treats visibility as permission has confused access with authority.',
         ],
@@ -371,7 +371,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Public Policy Surfaces',
         body: [
           'Public legal files, documentation banners, README notices, issue templates, pull-request templates, security-contact documents, contribution documents, changelog pages, and support articles may be visible in the same repository or Documentation Site. Their visibility does not merge their responsibilities.',
-          'A public issue form does not invite unrestricted publication of exploit details. A pull-request page does not prove that contributions are accepted. A changelog page does not prove that an unofficial build is authorized. A legal banner does not become a second license. A documentation page does not become open documentation because it is rendered on the web.',
+          'Each surface keeps its own assigned function. A public issue form takes limited reports rather than unrestricted exploit details; a pull-request page exposes a submission channel without proving that contributions are accepted; a changelog records project history without authorizing an unofficial build; a legal banner routes to the License Text rather than becoming a second license; and a documentation page rendered on the web remains governed documentation rather than open documentation.',
           'Those public surfaces must be read according to the controlling text and the article that owns their legal topic. Repository visibility is the wrong tool for creating permissions that the License Text withholds.',
         ],
       },
@@ -483,7 +483,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-original-materials-juridical-function',
         title: 'Juridical Function of Original Materials',
         body: [
-          'Original Materials is a material-scope classification. It identifies the Ludoxel materials to which the License Text applies as Ludoxel materials created, owned, or controlled by the Licensor. It is not itself a permission grant, not a distribution authorization, not an AI-use authorization, not an open-content declaration, and not a waiver of rights.',
+          'Original Materials is a material-scope classification. It identifies the Ludoxel materials to which the License Text applies as Ludoxel materials created, owned, or controlled by the Licensor. As a classification it carries no permission of its own: a grant, a distribution authorization, an AI-use authorization, an open-content declaration, or a waiver of rights would each have to come from the License Text, not from placing material inside this perimeter.',
           'The classification matters because the License Text cannot be applied accurately until the material being discussed has been placed in the correct legal category. A source file, shader, website component, documentation paragraph, legal banner, generated static-site output, package configuration, metadata file, icon, branding element, asset, video, image, or distribution-preparation file may require different evidence, but the question remains whether it falls within the protected Ludoxel material perimeter.',
           'This article is therefore about what the material is. It does not decide whether the reader may copy, modify, redistribute, mirror, deploy, scrape, crawl, train on, benchmark with, incorporate, sublicense, or republish it. Those acts require separate permission analysis under the License Text and the neighboring legal articles.',
         ],
@@ -493,7 +493,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Operative Text and Owner',
         body: [
           'The operative definition is supplied by the License Text. The relevant owner for Ludoxel Original Materials is Kento Konishi as the Licensor where the material is created, owned, or controlled by that Licensor for Ludoxel.',
-          'Ownership or control is not inferred from public display alone. A file may be visible without being free to use. A page may be rendered without becoming public-domain material. A build artifact may be generated without becoming redistributable. A documentation example may be readable without becoming reusable template material.',
+          'Ownership or control is not inferred from public display alone. A file can be visible yet remain unfree to use; a rendered page does not pass into the public domain; a generated build artifact does not turn redistributable; and a readable documentation example does not become reusable template material.',
           'The inverse is also true. The fact that a material appears in object form, generated form, bundled form, website-build form, or package form does not remove it from Original Materials when the underlying protected expression is Ludoxel material created, owned, or controlled by the Licensor.',
         ],
       },
@@ -701,7 +701,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-distribution-materials-juridical-function',
         title: 'Juridical Function of Distribution Materials',
         body: [
-          'Distribution Materials is a material-scope classification for materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents. It identifies a technical and legal state in which repository or website materials have been packaged, bundled, copied, generated, deployed, archived, or otherwise prepared for circulation. It is not itself a grant of permission, not an official-release declaration, not an endorsement statement, not a third-party clearance decision, and not a waiver of the Licensor’s reserved rights.',
+          'Distribution Materials is a material-scope classification for materials prepared for distribution of Ludoxel, the Documentation Site, or Repository Contents. It identifies a technical and legal state in which repository or website materials have been packaged, bundled, copied, generated, deployed, archived, or otherwise prepared for circulation. The classification confers nothing on its own: distribution permission, official-release status, endorsement, third-party clearance, and any waiver of the Licensor’s reserved rights all remain with the License Text and a later competent written instrument.',
           [
             'The classification matters because distribution form is a common source of false authority arguments. A file may appear inside an executable, application bundle, installer, archive, wheel, source distribution, generated distribution directory, package, release artifact, static-site build output, website deployment material, embedded resource set, copied legal-material set, or metadata output without ceasing to be governed by the ',
             {
@@ -780,7 +780,7 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'After the material is classified, any proposed act must still be tested against the License Text or a later competent written instrument. Distribution form does not authorize distribution. Package existence does not authorize republication. Deployment output does not authorize redeployment. Legal-material inclusion does not authorize circulation.',
+                    text: 'After the material is classified, any proposed act must still be tested against the License Text or a later competent written instrument. The act draws no authority from the artifact’s state: its distribution form, the existence of a package, deployment output, and the inclusion of legal material are all conditions of production, while distribution, republication, redeployment, and circulation each require an affirmative grant in the License Text.',
                   },
                 ],
               },
@@ -824,7 +824,7 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'That inclusion is not a permission source. A copy of `LICENSE` inside a package does not authorize that package. A third-party notice inside a package does not relicense Ludoxel Original Materials. A package manifest, SPDX header, website metadata field, generated file marker, or artifact name does not create distribution permission, deployment permission, republication permission, or redistribution permission.',
+          'That inclusion is not a permission source. A copy of `LICENSE` inside a package leaves that package unauthorized; a third-party notice inside it relicenses no Ludoxel Original Materials; and a package manifest, SPDX header, website metadata field, generated-file marker, or artifact name creates no distribution, deployment, republication, or redistribution permission.',
           'Legal materials must therefore be read as legal evidence and required retained text, not as a self-executing grant. Where permission is disputed, the reader returns to the License Text and to any later competent written instrument. The package surface does not supply the missing authority.',
         ],
       },
@@ -911,7 +911,7 @@ export const legalPages: DocsPageContent[] = [
             },
             ', derivative-work, and AI-use articles when those acts are proposed.',
           ],
-          'The limited grant in the License Text covers only the expressly stated permissions. It does not include permission to distribute Distribution Materials. It does not include permission to deploy the Documentation Site. It does not include permission to republish a package or release artifact. It does not include permission to use distribution form as a substitute for written authorization.',
+          'The limited grant in the License Text covers only the expressly stated permissions. Distributing Distribution Materials, deploying the Documentation Site, republishing a package or release artifact, and treating distribution form as a substitute for written authorization all fall outside it, each demanding an affirmative grant that the limited permission does not contain.',
           'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later competent written instrument. It must not be inferred from package form, official-looking structure, legal-text inclusion, build success, repository visibility, static-site deployment, preview availability, metadata, or ordinary user expectation.',
         ],
       },
@@ -1118,7 +1118,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Permitted Local Operation',
         body: [
           'Launching Ludoxel, using the interface, changing settings, saving and loading user-specific data, taking ordinary screenshots, recording ordinary screen footage, and performing directly related local actions are the core acts identified by the License Text as ordinary application use.',
-          'This permission is local and operational. It permits the Licensee to run and interact with the desktop application within the narrow category stated in the License Text. It does not transfer ownership, does not create sublicensing authority, does not authorize project-material reuse, and does not make repository or website materials available for separate exploitation.',
+          'This permission is local and operational. It permits the Licensee to run and interact with the desktop application within the narrow category stated in the License Text, and it stops there: ownership stays with the Licensor, no sublicensing authority arises, project material is not opened for reuse, and repository or website materials are not made available for separate exploitation.',
           'The fact that a local action is permitted does not mean that every later use of the resulting file, image, recording, save state, or data record is automatically permitted. Later publication, sharing, redistribution, commercial use, competition use, dataset use, benchmark use, or AI Use requires its own boundary analysis under the License Text and applicable third-party rights.',
         ],
       },
@@ -1255,7 +1255,7 @@ export const legalPages: DocsPageContent[] = [
             'This article defines the limited ordinary-use scope for running Ludoxel as a desktop application. It does not classify every output file, decide whether a specific screenshot or recording may be published, authorize redistribution, authorize deployment, resolve derivative-work status, clear third-party materials, clear provenance-sensitive materials, decide AI-use restrictions beyond identifying the boundary, accept contributions, route security reports, or determine official distribution status.',
           ],
           [
-            'Its conclusion is narrow: Ordinary Application Use permits only the ordinary local operation of Ludoxel identified by the License Text. It does not grant rights in Original Materials beyond that operation, does not make output universally publishable, does not create distribution permission, does not create AI-use permission, and does not enlarge the License Text through public visibility, technical possibility, interface affordance, or ordinary user expectation.',
+            'Its conclusion is narrow: Ordinary Application Use permits only the ordinary local operation of Ludoxel identified by the License Text. Rights in Original Materials beyond that operation, universal publishability of output, distribution permission, and AI-use permission all lie outside it, and public visibility, technical possibility, interface affordance, and ordinary user expectation enlarge the License Text no further.',
           ],
         ],
       },
@@ -2406,7 +2406,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Reporting Does Not Expand Permission',
         body: [
           'The License Text provides that submission of a Security Report, use of a Private Reporting Channel, and Security Testing do not grant or expand any permission to Use the Original Materials and do not create any obligation on the Maintainer to review, accept, respond to, or remediate the reported matter.',
-          'A Private Reporting Channel is therefore not unlimited testing permission, not exploit-publication permission, not a security-research safe harbor, not authorization to access third-party environments, and not permission to disclose secrets. It is a confidential route for communicating a suspected vulnerability, and nothing more. The reporter remains solely responsible for ensuring that a submission does not contain confidential or unauthorized material.',
+          'A Private Reporting Channel is a confidential route for communicating a suspected vulnerability, and nothing more. It does not become unlimited testing permission, exploit-publication permission, a security-research safe harbor, authorization to access third-party environments, or permission to disclose secrets. The reporter remains solely responsible for ensuring that a submission does not contain confidential or unauthorized material.',
         ],
       },
       {
@@ -2515,7 +2515,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'No Obligation from Submission',
         body: [
           'The License Text provides that submission of an External Contribution does not create any obligation for the Licensor to review, accept, preserve, credit, respond to, incorporate, license, publish, deploy, or return the Contribution Materials. The Licensor’s silence or inaction is not acceptance, and a submission that is left unanswered confers nothing.',
-          'A submission likewise does not expand the submitter’s rights in the Original Materials and does not grant the submitter any right to Use the Original Materials outside the License. The refusal is therefore not merely a statement of preference; it is the legal posture of the Repository.',
+          'A submission likewise does not expand the submitter’s rights in the Original Materials and does not grant the submitter any right to Use the Original Materials outside the License. The refusal is therefore the legal posture of the Repository, binding in effect beyond any statement of preference.',
         ],
       },
       {

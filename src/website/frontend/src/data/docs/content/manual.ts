@@ -17,7 +17,7 @@ export const manualPages: DocsPageContent[] = [
         id: 'starting-ludoxel-entry-delegation',
         title: 'Entry Is Delegation, Not Window Construction',
         body: [
-          'Starting Ludoxel begins at `src/ludoxel/__main__.py`. That module has one operative startup obligation: prepare multiprocessing support for frozen execution and delegate to `ludoxel.application.run_app`. It does not create `QApplication`, does not select My World or Othello, does not read saved state, does not construct a renderer, and does not open a support or data-classification surface.',
+          'Starting Ludoxel begins at `src/ludoxel/__main__.py`. That module has one operative startup obligation: prepare multiprocessing support for frozen execution and delegate to `ludoxel.application.run_app`. `QApplication` creation, My World or Othello selection, saved-state reads, renderer construction, and any support or data-classification surface all belong to gates further down the chain, so the entry module reaches none of them.',
           '`ludoxel.application` exposes that entry through a lazy package facade. The symbol `run_app` is resolved from `ludoxel.application.bootstrap` only when requested, so the module-level import path does not pull the presentation layer into the application package before the bootstrap gate has fixed project roots, resource roots, runtime data roots, and runtime selection. The first executable evidence is therefore delegation into the application composition root, not a visible desktop surface.',
         ],
         codeBlocks: [
@@ -49,7 +49,7 @@ def __getattr__(name: str):
         id: 'starting-ludoxel-bootstrap-gates',
         title: 'Bootstrap Fixes Roots, Runtime, and Storage Hooks Before Qt',
         body: [
-          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering is not decorative. No visible window can be treated as gameplay evidence before root resolution, runtime-data selection, optional runtime substitution, and Othello opening-book storage hook installation have completed.',
+          'The application bootstrap is the first substantive execution gate. `src/ludoxel/application/bootstrap/run.py` determines `project_root`, `resource_root`, and `data_root`, then enforces the source-runtime preference before importing the presentation shell. The ordering is load-bearing. No visible window can be treated as gameplay evidence before root resolution, runtime-data selection, optional runtime substitution, and Othello opening-book storage hook installation have completed.',
           '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state root that later persistence consumers will use. The Othello book-storage hook is installed before presentation entry, but that installation is only storage-path preparation. It does not mean the Othello board is active, visible, restored, or selected.',
           'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In a frozen executable the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists is therefore a launch-environment or bootstrap-path condition, not camera movement, hotbar interaction, Othello move legality, renderer overlay behavior, or play-space switching.',
         ],
@@ -294,7 +294,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
             },
             '; if the decisive material cannot be made public without disclosing unsafe content, the public report is the wrong surface rather than an incomplete version of the right one.',
           ],
-          'A startup locator has no independent publication authority. It proves only the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. `.github/ISSUE_TEMPLATE/` and the Support policy decide whether that locator can become a reproducible non-security problem report, a limited public question, a minimal request for a Private Reporting Channel, or no public submission at all. The locator does not transform local evidence into admissible public evidence, does not authorize publication of secrets or vulnerability detail, does not receive Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals, and does not convert unrelated machine-specific material into reportable Ludoxel evidence.',
+          'A startup locator has no independent publication authority. It proves only the implemented point reached by the launch chain: which gate executed, which surface appeared, which surface accepted focus, and where execution stopped or diverged. `.github/ISSUE_TEMPLATE/` and the Support policy decide whether that locator can become a reproducible non-security problem report, a limited public question, a minimal request for a Private Reporting Channel, or no public submission at all. Admissibility is therefore the policy’s decision rather than the observation’s, and the same forms hold back secrets, vulnerability detail, and Contribution Materials — replacement text, design assets, datasets, generated files, shader rewrites, implementation proposals — while leaving unrelated machine-specific material outside reportable Ludoxel evidence.',
         ],
       },
       {
@@ -345,14 +345,14 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Launch and Space Selection',
     title: 'Switching Play Spaces',
     description:
-      'Defines the implemented play-space switch between My World and Othello. The switch replaces the active `SessionManager` reference inside an already constructed `PlaySpaceContext`, normalizes runtime state, publishes loading state, invalidates renderer upload and selection state, resynchronizes HUD surfaces, clears Othello transient controller state, and persists only the selected space id plus the two separate space payloads. It is not a data merge, not a world conversion, and not a support classification surface.',
+      'Defines the implemented play-space switch between My World and Othello. The switch replaces the active `SessionManager` reference inside an already constructed `PlaySpaceContext`, normalizes runtime state, publishes loading state, invalidates renderer upload and selection state, resynchronizes HUD surfaces, clears Othello transient controller state, and persists only the selected space id plus the two separate space payloads. The reference selection leaves the two play-space payloads unmerged, unconverted, and outside any support classification surface.',
     sections: [
       {
         id: 'switching-play-spaces-context-authority',
         title: 'The Play-Space Context Retains Two Session Managers',
         body: [
-          'The switch is not a route name, a button label, or a visual mode flag. It is a mutation of `PlaySpaceContext.active_space_id` and a replacement of the active `SessionManager` reference consumed by the viewport. `PlaySpaceContext` constructs two independent session managers at startup: one for My World and one for Othello. Both sessions receive the same default block registry, but each session retains its own world, player entity, AI-player collection, revision sequence, and domain interpretation.',
-          '`session_for` normalizes the requested id and returns the matching manager. `set_active_space` mutates only the active id and then returns the manager for that normalized id. Switching therefore changes which already constructed session is authoritative for the viewport. It does not reconstruct the inactive session merely because it is hidden, does not serialize one space into the other, and does not convert Othello state into My World state or My World state into Othello state.',
+          'The switch is a mutation of `PlaySpaceContext.active_space_id` and a replacement of the active `SessionManager` reference consumed by the viewport, beneath the route name, button label, or visual mode flag a reader might take it for. `PlaySpaceContext` constructs two independent session managers at startup: one for My World and one for Othello. Both sessions receive the same default block registry, but each session retains its own world, player entity, AI-player collection, revision sequence, and domain interpretation.',
+          '`session_for` normalizes the requested id and returns the matching manager. `set_active_space` mutates only the active id and then returns the manager for that normalized id. Switching therefore changes which already constructed session is authoritative for the viewport. The hidden session stays intact in memory rather than being rebuilt, and neither space is serialized into the other, so Othello state and My World state never convert between forms across a switch.',
         ],
         codeBlocks: [
           {
@@ -393,7 +393,7 @@ def set_active_space(self, space_id: object) -> SessionManager:
         id: 'switching-play-spaces-domain-construction',
         title: 'My World and Othello Are Constructed from Different Domain Seeds',
         body: [
-          'The two sessions are not equivalent worlds waiting for a label. My World is created from `MyWorldSessionSeed` and `generate_test_map`; Othello is created from `OthelloSessionSeed`, a flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their generated worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
+          'The two sessions are built from different domain seeds. My World is created from `MyWorldSessionSeed` and `generate_test_map`; Othello is created from `OthelloSessionSeed`, a flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their generated worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
           'The shared `SessionManager` type is a runtime envelope, not an erasure of domain origin. Treating the switch as a mode toggle over one world misstates the implementation. The code creates two domain sessions first and later selects one active reference. The hidden session remains a session with its own world revision and actor state, not a dormant view over the active world.',
         ],
         codeBlocks: [
@@ -556,7 +556,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
         title: 'Othello Volatile Controller State Is Cleared at the Boundary',
         body: [
           'Switching out of or into Othello requires more than changing a world reference. The Othello viewport controller carries transient analysis, AI request arming, hover-square state, render-state caches, title flashes, passive messages, opening-book learning progress, and animation settlement. `clear_state_for_space_switch` cancels or clears those volatile surfaces before the active session reference is exchanged.',
-          'That cleanup is not deletion of the persisted Othello game. It is a controller reset at the boundary where Othello-specific transient state would otherwise leak into a different visible space or survive as stale HUD evidence. The persisted Othello board state remains governed by `PersistedOthelloSpace` and by the save/load path; the controller cache cleanup only removes transient viewport state.',
+          'That cleanup resets the controller at the boundary where Othello-specific transient state would otherwise leak into a different visible space or survive as stale HUD evidence. The persisted Othello game is untouched: its board state remains governed by `PersistedOthelloSpace` and by the save/load path, while the cleanup removes only transient viewport state.',
         ],
         codeBlocks: [
           {
@@ -628,7 +628,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
         title: 'Persistence Stores the Selector and the Separate Space Payloads',
         body: [
           'Saving records the normalized active selector and the two separate space payloads. `save_state` writes `current_space_id=normalize_play_space_id(state_runtime.current_space_id)`, serializes `sessions.my_world` into `PersistedPlaySpace`, and serializes `sessions.othello` into `PersistedOthelloSpace`. The selector answers which session should be active at the next admission point; it does not collapse the stored payloads into one shared world.',
-          'The switch sequence ends at the runtime boundary between visible space selection and persisted state. It identifies which session is active, which pause-overlay command invoked the change, which upload and selection state was invalidated, and which HUD or Othello transient state was resynchronized. It does not read the persisted envelopes as evidence of their stored content, does not decide whether a saved-preference, saved-world, or saved-Othello payload is correct, and does not convert a switching observation into proof of data loss, data duplication, support admissibility, or license authority.',
+          'The switch sequence ends at the runtime boundary between visible space selection and persisted state. It identifies which session is active, which pause-overlay command invoked the change, which upload and selection state was invalidated, and which HUD or Othello transient state was resynchronized. The persisted envelopes stay unread as evidence here: their stored content, the correctness of a saved-preference, saved-world, or saved-Othello payload, and any claim of data loss, data duplication, support admissibility, or license authority are settled by the save/load path and the governing policy, not by a switching observation.',
         ],
         codeBlocks: [
           {
@@ -806,7 +806,7 @@ class HudPayload:
         title: 'The Game Screen Has a Solid Background',
         body: [
           'The game screen sets a styled dark background so that, before or around viewport content, the window is a solid surface rather than transparent. The background color is applied with a narrow object-name selector on the game screen widget itself.',
-          'This is why the window never shows desktop bleed-through behind the viewport: the central widget paints its own background, the viewport renders over it, and the HUD and overlays stack above. The visible window is therefore a deliberate stack of solid background, renderer output, HUD, and any active overlay.',
+          'Because the central widget paints its own `#121212` background under the viewport, the window never shows desktop bleed-through: the viewport renders over the solid background, and the HUD and overlays stack above it. The visible window is therefore a deliberate stack of solid background, renderer output, HUD, and any active overlay.',
         ],
         codeBlocks: [
           {
@@ -897,7 +897,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         title: 'The Held Item Comes From the Selected Slot',
         body: [
           'The currently held item is the content of the selected slot. The resolver normalizes the slots and index, reads the item id at the selected slot, and returns it, or returns nothing when that slot is empty.',
-          'This single source of truth is what the first-person held-item visual and placement logic read. An empty selected slot means an empty hand, which is why selecting an empty slot stops showing a held block.',
+          'This single source of truth is what the first-person held-item visual and placement logic read. `current_hotbar_block_id` resolves an empty selected slot to an empty hand, so selecting an empty slot stops showing a held block.',
         ],
         codeBlocks: [
           {
@@ -989,7 +989,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         title: 'The Inventory Opens With E and Closes With E or Escape',
         body: [
           'The inventory is bound to the toggle-inventory action, which defaults to E. Inside the overlay, the same bound action or the Escape key closes it. Closing emits a closed signal so the controller can hide the overlay and re-arm the viewport.',
-          'While the overlay is open it holds input focus, so the keys that would otherwise move the player are interpreted by the overlay. This is why opening the inventory is a deliberate state change rather than a transient popup.',
+          'While the overlay is open it holds input focus, so the keys that would otherwise move the player are interpreted by the overlay. Opening the inventory therefore enters a held-focus state that routes the movement keys to the overlay until E or Escape closes it, a deliberate state change beyond a transient popup.',
         ],
         codeBlocks: [
           {
@@ -1097,7 +1097,7 @@ if idx is not None:
         title: 'The Overlay Edits Hotbar State Through Signals',
         body: [
           'The overlay does not write hotbar state directly. It emits item-selected, hotbar-slot-selected, and hotbar-slot-assigned signals, which the overlay-navigation controller connects to the settings controller. A creative selection sets the active slot to the chosen item and re-syncs the hotbar and first-person target.',
-          'This signal boundary is why the inventory is a presentation surface that requests changes rather than a direct mutator of simulation state. The controller decides whether the change is allowed (for example, only in creative mode) before applying it.',
+          'Because the overlay only emits these signals, the inventory requests hotbar changes through the controller instead of mutating simulation state directly. The controller decides whether the change is allowed (for example, only in creative mode) before applying it.',
         ],
         codeBlocks: [
           {
@@ -1163,7 +1163,7 @@ if idx is not None:
         ],
         body: [
           'Camera rotation is driven by relative mouse movement, not the absolute cursor position. The input adapter accumulates a mouse delta as the pointer moves, and the consume step reads that delta and resets it for the next frame.',
-          'Accumulating deltas means rotation is continuous and unbounded by the screen edges: the pointer is held at the center of the viewport while only its movement is reported. This is what allows you to keep turning in one direction without the cursor leaving the window.',
+          'Accumulating deltas means rotation is continuous and unbounded by the screen edges: the pointer is held at the center of the viewport while only its movement is reported. Holding the pointer at the center and reporting only its movement is what lets you keep turning in one direction without the cursor leaving the window.',
         ],
         codeBlocks: [
           {
@@ -1285,7 +1285,7 @@ DEFAULT_KEYBINDS[ACTION_CYCLE_CAMERA_PERSPECTIVE] = "F5"`,
         id: 'looking-around-requires-capture',
         title: 'Looking Requires Mouse Capture',
         body: [
-          'Relative look deltas are only produced while the mouse is captured. When capture is off, the pointer is a normal cursor and no look delta is generated, which is why menus and overlays do not rotate the camera.',
+          'Relative look deltas are only produced while the mouse is captured. When capture is off, the pointer is a normal cursor and no look delta is generated, so menus and overlays leave the camera still.',
           'On the polling path, the captured cursor is repeatedly compared against the viewport center and warped back, turning each frame’s offset into a delta. If you cannot look around, the first thing to confirm is whether the viewport is captured.',
         ],
         codeBlocks: [
@@ -1399,7 +1399,7 @@ self._capture_sync_pending = not bool(native_relative)`,
         title: 'A macOS Keyboard Guard Is Separate From Cursor Capture',
         body: [
           'On macOS, gameplay also installs a keyboard input guard that is distinct from mouse capture. The guard is activated and deactivated alongside capture but handles native key events; it is not the cursor-warp or relative-mouse mechanism.',
-          'Keeping the keyboard guard separate from cursor handling means a problem with one does not imply a problem with the other. Cursor capture concerns pointer hiding and look deltas, while the guard concerns native key delivery during play.',
+          'Because the keyboard guard and cursor handling are separate components, a fault in one does not imply a fault in the other. Cursor capture concerns pointer hiding and look deltas, while the guard concerns native key delivery during play.',
         ],
         codeBlocks: [
           {
@@ -1420,7 +1420,7 @@ if self._macos_input_guard is not None:
         title: 'Relative Movement Is Polled Each Frame',
         body: [
           'While captured, the relative delta is polled each frame. On the native path it reads accumulated relative movement; on the warp path it measures the cursor offset from center, adds it to the input adapter, and warps back. The captured-move event handler feeds the same adapter when Qt delivers move events.',
-          'The poll re-applies the capture state every frame, which keeps focus, the hidden cursor, and the grabs in place even if the window manager tried to change them. This is why capture stays stable during continuous play.',
+          'The poll re-applies the capture state every frame, which keeps focus, the hidden cursor, and the grabs in place even if the window manager tried to change them, so capture stays stable during continuous play.',
         ],
         codeBlocks: [
           {
@@ -1533,7 +1533,7 @@ if self._action_pressed(ACTION_MOVE_LEFT):
         title: 'Walking and Flying Use Different Movement Models',
         body: [
           'If the player is flying, movement uses the flying model and collision integration with flying enabled, and ground-related state such as airborne tracking is cleared. Otherwise movement uses the grounded model, where gravity, jumping, and support contact apply.',
-          'Both paths end by integrating against the world with collisions, but the velocity model that feeds the integration differs. This is why flying ignores fall state while grounded movement tracks the fall start height.',
+          'Both paths end by integrating against the world with collisions, but the velocity model that feeds the integration differs, so flying clears and ignores fall state while grounded movement tracks the fall start height.',
         ],
         codeBlocks: [
           {
@@ -1667,7 +1667,7 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         title: 'Fall Damage Starts Beyond a Safe Distance',
         body: [
           'Fall damage is computed from the distance fallen, measured from the height where the player became airborne to where they land. Falls up to the safe distance of three blocks do no damage; beyond that, damage is the whole number of blocks past the safe distance.',
-          'The fall distance is captured on landing, using the recorded airborne start height. This is why a long drop hurts while stepping off a small ledge does not, and why the damage scales with how far past three blocks you fell.',
+          'The fall distance is captured on landing from the recorded airborne start height, so a drop past the three-block safe distance hurts while stepping off a small ledge does not, and the damage scales with how far past three blocks you fell.',
         ],
         codeBlocks: [
           {
@@ -1691,7 +1691,7 @@ def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
         title: 'The Void Applies Repeating Damage Below a Threshold',
         body: [
           'Below the void threshold depth, the player takes repeating damage. While the player is alive and below the threshold, the void timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so it keeps ticking.',
-          'This is a steady drain rather than a single hit, so falling into the void leads to death over a short time unless the player gets back above the threshold. The remaining sub-interval time is carried over so the cadence stays consistent across frames.',
+          'Applying a fixed amount each interval makes void damage a steady drain rather than a single hit, so falling into the void leads to death over a short time unless the player gets back above the threshold. The remaining sub-interval time is carried over so the cadence stays consistent across frames.',
         ],
         codeBlocks: [
           {
@@ -1763,7 +1763,7 @@ def apply_void_damage(*, player, dt, timer_s):
         title: 'Respawn Restores the Player, Not the World',
         body: [
           'Respawn returns the player to the active space’s spawn state with restored health. It does not erase the saved world, the Othello board, hotbar contents, preferences, or AI learning artifacts. Those belong to persistence and the other play space, not to the death-and-respawn cycle.',
-          'This separation is why dying is recoverable: only the player’s position and condition are reset, while everything you built or configured remains. If something other than the player appears to have been lost after a death, that points to a saved-state question rather than the respawn itself.',
+          'Because respawn resets only the player’s position and condition while the saved world, Othello board, hotbar, preferences, and learning artifacts persist, dying is recoverable. If something other than the player appears to have been lost after a death, that points to a saved-state question rather than the respawn itself.',
         ],
       },
       {

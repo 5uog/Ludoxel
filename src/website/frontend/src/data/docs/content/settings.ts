@@ -115,7 +115,7 @@ def round_clampi(x: float, lo: int, hi: int) -> int:
             note: {
               type: 'note',
               content:
-                'Coercion and clamping preserve a technical admission boundary. They do not make an arbitrary persisted value a supported camera mode, do not implement input capture, and do not select a rendering backend.',
+                'Coercion and clamping preserve a technical admission boundary: they convert a serialized scalar and bound it. Supported camera modes are fixed by `normalize_camera_perspective`, input capture by the input adapter, and renderer-backend selection by the rendering layer — none of which this admission step reaches.',
             },
           },
         ],
@@ -126,7 +126,7 @@ def round_clampi(x: float, lo: int, hi: int) -> int:
         content: [
           {
             kind: 'paragraph',
-            text: 'Perspective is not stored as an arbitrary label. `normalize_camera_perspective` admits only `first_person`, `third_person_back`, and `third_person_front`, and it falls back to first person for missing or malformed values. The cycling helper applies modular movement across that same order. A saved value outside the vocabulary does not create a hidden perspective mode; it is projected back to the canonical first-person identifier before runtime use.',
+            text: 'Perspective is stored as one identifier drawn from a closed vocabulary. `normalize_camera_perspective` admits only `first_person`, `third_person_back`, and `third_person_front`, and it falls back to first person for missing or malformed values. The cycling helper applies modular movement across that same order. A saved value outside the vocabulary does not create a hidden perspective mode; it is projected back to the canonical first-person identifier before runtime use.',
           },
           {
             kind: 'code',
@@ -430,7 +430,7 @@ def normalize_backend_cloud_flow_direction(raw: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'Shadow preferences have two surfaces: a boolean `Shadow map` toggle and a `Shadow map quality` combo box on the World tab. The combo box is populated from `SHADOW_MAP_QUALITY_ORDER`; the labels come from `SHADOW_MAP_QUALITY_LABELS`; and the selection is emitted as an integer. The setting is not derived from render distance and is not a promise about every backend producing identical shadow quality on every driver. It is an admitted quality stage that later renderer code may consume.',
+            text: 'Shadow preferences have two surfaces: a boolean `Shadow map` toggle and a `Shadow map quality` combo box on the World tab. The combo box is populated from `SHADOW_MAP_QUALITY_ORDER`; the labels come from `SHADOW_MAP_QUALITY_LABELS`; and the selection is emitted as an integer. The setting is an admitted quality stage that later renderer code may consume, derived independently of render distance and carrying no promise that every backend produces identical shadow quality on every driver.',
           },
           {
             kind: 'code',
@@ -1087,7 +1087,7 @@ def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MED
         content: [
           {
             kind: 'paragraph',
-            text: 'Othello AI strength is not a single scalar. The implementation separates the difficulty identifier from thread count, hash level, and sacrifice level. Difficulty chooses the qualitative search profile, thread count bounds CPU parallelism, hash level bounds transposition or cache capacity, and sacrifice level adjusts evaluation behavior. Those fields are settings because they configure the engine; they are not the move result itself.',
+            text: 'Othello AI strength resolves into several independent parameters rather than one scalar. The implementation separates the difficulty identifier from thread count, hash level, and sacrifice level. Difficulty chooses the qualitative search profile, thread count bounds CPU parallelism, hash level bounds transposition or cache capacity, and sacrifice level adjusts evaluation behavior. Those fields are settings because they configure the engine; the move result is produced separately by the search.',
           },
           {
             kind: 'code',
@@ -1221,7 +1221,7 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
         content: [
           {
             kind: 'paragraph',
-            text: 'AI NPC names use a stricter format than the player display name. The body must begin with a letter, may contain only letters and digits, and may have at most sixteen characters. An optional suffix uses exactly four digits after `#`, from `#0001` to `#9999`. This is not a cosmetic suggestion; invalid input is rejected by the overlay before the per-actor settings update is accepted.',
+            text: 'AI NPC names use a stricter format than the player display name. The body must begin with a letter, may contain only letters and digits, and may have at most sixteen characters. An optional suffix uses exactly four digits after `#`, from `#0001` to `#9999`. The overlay enforces this format as a hard gate: `split_ai_display_name` returns `None` for input that fails the body or suffix pattern, and the per-actor settings update is refused before it is accepted.',
           },
           {
             kind: 'code',
@@ -1505,7 +1505,7 @@ def is_active_learning_mode(mode: object) -> bool:
           },
           {
             kind: 'paragraph',
-            text: 'The distinction matters for diagnostics. Seeing `Train From Player Data` in the combo box does not mean that every subsequent frame performs training. The overlay starts a task, and on completion it switches the saved mode to `Use Learned Policy` only when training completes. Otherwise the mode is restored to `Off`. The runtime branch remains bounded by the active-mode predicate.',
+            text: 'This split governs how a learning report is read. Seeing `Train From Player Data` in the combo box leaves the runtime untouched until a task runs: the overlay starts a learning task, and on completion it switches the saved mode to `Use Learned Policy` only when training completes, otherwise restoring the mode to `Off`. The runtime branch remains bounded by `is_active_learning_mode`, so a train label in the UI never enrolls the step loop in continuous training on its own.',
           },
         ],
       },

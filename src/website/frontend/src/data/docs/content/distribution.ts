@@ -449,7 +449,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only source and still returns success, because a fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. This is the separation the article fixes. Source availability, compiled acceleration, verification policy, and release permission are four distinct conditions: no compiled extension is not no implementation, a Python fallback is not a successful native build, and a successful native build is neither runtime superiority nor release permission. Collapsing them into one reassuring word is the precise failure the verifier exists to prevent.',
+            text: 'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only source and still returns success, because a fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. This is the separation the article fixes, and the four conditions it separates move independently. Source availability is a property of the `.py` reference implementation, present for every candidate. Compiled acceleration is a property of the module directory, asserted only when `compiledBinariesForSource` returns a suffix-matched binary. Verification policy is a property of the run, set by whether `--require-built` was passed. Release permission is a property of the controlling License Text and is settled nowhere in this tool. A directory carrying no compiled extension therefore still carries a working implementation, a fallback-only run still passes when `--require-built` is absent, and a passing native build still leaves runtime superiority and distribution permission unproven. Collapsing the four into one reassuring word is the precise failure the verifier exists to prevent.',
           },
         ],
       },
@@ -488,7 +488,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'The reach of that retention is exactly one proposition: the controlling text is not severed from the artifact it governs. Including `LICENSE` does not create distribution permission, does not elevate a local build into an official release, does not make a recipient an authorized distributor, and does not relax any reservation in the controlling text. Severance is a defect; adjacency is not authority.',
+            text: 'The reach of that retention is exactly one proposition: the controlling text travels physically with the artifact it governs. Distribution permission, official-release status, a recipient’s standing as an authorized distributor, and every reservation in the controlling text are fixed by the License Text, and the copy step reaches none of them — it places `LICENSE` and `third-party` beside the artifact and stops there. Severance of that material is an artifact defect, while its adjacency is retention, and retention is not authority.',
           },
           {
             kind: 'note',
@@ -638,7 +638,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'This is not the classification of every material in the repository. The policy establishes that the Kaisei notice carries the expected identifying terms and nothing more; it does not settle the provenance of any Minecraft-derived texture, local asset, generated thumbnail, or provenance-sensitive material. One verified notice must not be inflated into a blanket clearance.',
+            text: 'The policy’s reach stops at this one notice. It establishes that the Kaisei notice carries the expected identifying terms and nothing more, and it leaves the provenance of any Minecraft-derived texture, local asset, generated thumbnail, or provenance-sensitive material unsettled. One verified notice must not be inflated into a blanket clearance.',
           },
           {
             kind: 'note',
@@ -1058,7 +1058,7 @@ if (source.binaries.length === 0) {
           },
           {
             kind: 'paragraph',
-            text: 'Each message carries its own meaning and no more. A preserved staged Windows executable is not a replaced published executable. A `compiled extension: none` line is a fallback fact, not a build failure. An ad-hoc verified macOS bundle is not a notarized bundle. A copied-legal-material line is not a legal grant. The description of the artifact must be assembled from these specific facts; assembling it from a single favorable line is the inference the granularity of the output is designed to refuse.',
+            text: 'Each message carries its own meaning and no more. A preserved staged Windows executable is diagnostic residue from a locked publish target, and only the `published Windows executable` line marks the replaced `dist/windows/Ludoxel.exe`. A `compiled extension: none` line records a valid fallback runtime state, which `verifyNativeExtensions` passes when `--require-built` is absent. An ad-hoc verified macOS bundle records local signature integrity, while Developer ID signing and notarization stay outside the tool by its own status text. A copied-legal-material line records retention in the publish coordinate. The description of the artifact is assembled from these specific facts, and drawing it from a single favorable line is the inference the granularity of the output exists to refuse.',
           },
         ],
       },
@@ -1190,7 +1190,7 @@ for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
           },
           {
             kind: 'paragraph',
-            text: 'These two predicates are the most frequently over-read signals in the surface. A green legal or documentation check certifies the inspected terms and markers and no further proposition: not the meaning of the License Text, not the completeness of any explanation, and not redistribution authority. The implication runs one direction only. A repository that fails these predicates yields a package that must be treated as suspect before the platform artifact is examined; a repository that passes them has established nothing about whether a later archive, installer, upload, or copied directory retained the material.',
+            text: 'These two predicates are the most frequently over-read signals in the surface. A green legal or documentation check certifies the inspected terms and markers and no further proposition. It leaves the meaning of the License Text to the Legal category, the completeness of any public explanation unjudged, and redistribution authority to the controlling text. The implication runs one direction only. A repository that fails these predicates yields a package that must be treated as suspect before the platform artifact is examined; a repository that passes them has established nothing about whether a later archive, installer, upload, or copied directory retained the material.',
           },
         ],
       },
@@ -1362,7 +1362,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: 'A description that attaches release status to a locally generated artifact without separate release authority is not merely imprecise; it is a false authority claim imposed on a technical output that the repository has not elevated into an official distribution. When the available evidence is local generation or technical access, the admissible label is local, diagnostic, or unofficial, and the Distribution category governs that wording for that reason.',
+            text: 'A description that attaches release status to a locally generated artifact without separate release authority imposes a false authority claim on a technical output that the repository has not elevated into an official distribution; the defect lives in the public language, past any question of mere imprecision. When the available evidence is local generation or technical access, the admissible label is local, diagnostic, or unofficial, and the Distribution category governs that wording for that reason.',
           },
           {
             kind: 'note',

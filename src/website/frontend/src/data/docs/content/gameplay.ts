@@ -18,7 +18,7 @@ export const gameplayPages: DocsPageContent[] = [
         title: 'One Interaction Service Owns Build Actions',
         body: [
           'Building goes through an `InteractionService` constructed for the active world, player, and block registry. It exposes pick, break, and place operations, and it builds a placement policy from the registry so shape-specific rules are available for every action.',
-          'The service is the single owner of build edits. The renderer and HUD do not change the world; they show the result after the service commits an edit. This is why a placement that looks blocked on screen is a service decision, not a drawing problem.',
+          'The service is the single owner of build edits. The renderer and HUD read world state and draw it; they commit no edit of their own. A placement that looks blocked on screen is therefore resolved by the service pick, placement policy, and intersection checks, and the drawing layer reports only whatever the service committed.',
         ],
         codeBlocks: [
           {
@@ -201,7 +201,7 @@ else:
         title: 'The Session Boundary Delegates the Action',
         body: [
           '`src/ludoxel/application/sessions/managers/interactions.py` does not define the pick ray, placement policy, collision rejection, or world-edit rule. Its functions receive the active session and forward break, pick, direct interaction, placement-from-hit, and ordinary placement to the `InteractionService` already constructed for that session. This gives presentation one application-facing action path without relocating simulation authority into the session manager.',
-          'The distinction is observable in an accepted action. `SessionManager.break_block` and `SessionManager.place_block` record a player demonstration only after the delegated outcome reports success; a rejected interaction leaves that learning side effect absent. The interaction result still comes from the simulation service, while the application layer decides how a session-level caller records and transports that result.',
+          'An accepted action makes that boundary observable. `SessionManager.break_block` and `SessionManager.place_block` record a player demonstration only after the delegated outcome reports success; a rejected interaction leaves that learning side effect absent. The interaction result still comes from the simulation service, while the application layer decides how a session-level caller records and transports that result.',
         ],
         codeBlocks: [
           {
@@ -271,7 +271,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         title: 'Placement Resolves the Cell and State Shape',
         body: [
           'Placement requires a non-empty, registered item. If the hit block can merge a slab with the held item, the merge is applied at the hit cell. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing.',
-          'A placement that would intersect the player is rejected before any edit. This is why standing too close to the target can stop a placement that would otherwise be legal.',
+          'A placement that would intersect the player is rejected before any edit. `placement_intersects_player` builds the candidate block collision boxes at the target cell and tests them against the player box, so standing too close to the target stops a placement that would otherwise be legal.',
           '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method refuses contact when a maximum equals the other minimum on any axis, so the tested overlap is non-empty in every coordinate dimension rather than mere boundary contact. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then treats an accepted predicate as a placement rejection. The AABB type does not define a block shape, decide whether an item is registered, or commit the edit.',
         ],
         mathBlocks: [
@@ -312,7 +312,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         title: 'Commits Update Structural Neighbors',
         body: [
           'A committed edit does not only write the touched cells. The service collects structural neighbor updates so that fences, walls, and other connected blocks adjacent to the change recompute their state, then applies the combined updates and removals in one bulk write to the world.',
-          'Because the edit is bulk and structural, a single place or break can change the visible shape of nearby blocks. That is expected behavior, not a glitch.',
+          'Because the edit is bulk and structural, a single place or break can change the visible shape of nearby blocks. `collect_structural_neighbor_updates` recomputes those connected fences and walls inside the same commit, so the neighbor reshaping is part of the accepted edit rather than a later rendering artifact.',
         ],
         codeBlocks: [
           {
@@ -442,7 +442,7 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
         title: 'Fences and Walls Use a Tall Collision Hull',
         body: [
           'For collision and picking, fences and walls are raised to a tall hull whose height is at least one and a half blocks. This makes them block movement and accept hits as if they were taller than their visible posts, matching how they behave when you try to walk through or jump over them.',
-          'Rendering still uses the shorter visible boxes. The difference between the tall collision hull and the visible model is intentional, not a mismatch.',
+          'Rendering still uses the shorter visible boxes, while collision and picking use the raised hull. The two box sets are produced by separate model queries, so the taller collision reach is a deliberate property of structural blocks that the renderer does not share.',
         ],
         codeBlocks: [
           {
@@ -461,7 +461,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         title: 'An Open Fence Gate Has No Collision',
         body: [
           'A fence gate changes its solid shape when open. A closed gate uses the tall structural hull for collision, while an open gate has no collision boxes at all, so the player can pass through. Picking keeps an interaction hull so the gate can still be toggled.',
-          'This is why an open gate stops blocking movement but is still targetable: the collision set is empty while the pick set keeps a hull for interaction.',
+          'An open gate therefore stops blocking movement while remaining targetable: its collision set is empty, and its pick set keeps a hull for interaction.',
         ],
         codeBlocks: [
           {
@@ -479,7 +479,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         title: 'Stairs, Fences, and Walls Read Neighbors',
         body: [
           'Some shapes depend on surrounding blocks. Stairs read their facing and half, and fences and walls connect to neighboring blocks, so their boxes are computed with access to neighbor state. The shape cache key includes a neighbor signature so a neighbor change rebuilds the shape.',
-          'This neighbor awareness is why placing or breaking one block can change the shape of an adjacent fence or wall, as covered by structural neighbor updates during a commit.',
+          'Because the shape cache key includes a neighbor signature, placing or breaking one block rebuilds the shape of an adjacent fence or wall, which the structural neighbor updates apply during a commit.',
         ],
       },
       {
@@ -487,7 +487,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         title: 'Full Top Support Is a Separate Query',
         body: [
           'Whether a block presents a full flat top is computed by sampling its render boxes over a sixteen-by-sixteen grid and checking that every cell is covered at full height. This is what placement, support, and the player ground check use to decide if a surface can be stood on or built upon.',
-          'A slab top, a stair, or a partial shape can therefore fail the full-top-support test even though it occupies the cell, which is why not every block makes a valid floor.',
+          'A slab top, a stair, or a partial shape can therefore fail the full-top-support test even though it occupies the cell, so a block can fill a cell without presenting a surface that placement, support, and the ground check accept as a floor.',
         ],
         mathBlocks: [
           {
@@ -582,7 +582,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         title: 'An Occupied Cell Blocks Non-Merge Placement',
         body: [
           'The adjacent placement cell must be empty unless a slab merge applies. If the pick reports a placement cell that already contains a block, the pick itself clears the placement target, and a non-merge placement into an occupied cell is rejected.',
-          'This is why you cannot place a block into a space that already has one: only a valid slab merge can change an occupied cell.',
+          'A non-merge placement into an occupied cell is therefore refused, and only a valid slab merge can change a cell that already holds a block.',
         ],
         codeBlocks: [
           {
@@ -627,7 +627,7 @@ if place is not None and place in world.blocks:
         title: 'Interaction Can Consume the Click',
         body: [
           'A place action without crouch first tries to interact with the target. If the block is a fence gate, the click toggles it open or closed and reports success, so no block is placed. The placement rules only run when interaction does not apply.',
-          'A click that toggles a gate instead of placing a block is not a rejection; it is interaction taking priority. Crouching skips interaction so the same click places a block.',
+          'When a click toggles a gate, interaction has taken priority over placement and reported success, so the placement path never runs. Crouching skips interaction so the same click places a block.',
         ],
         codeBlocks: [
           {
@@ -755,7 +755,7 @@ def apply_void_damage(*, player, dt, timer_s):
         title: 'Void Damage Ticks on a Fixed Interval',
         body: [
           'Below the threshold, a timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so the hits keep coming. The remaining sub-interval time is carried forward so the cadence is steady across frames.',
-          'This makes the void a continuous drain rather than a single blow, so survival time depends on current health and how quickly the player can get back up.',
+          'Applying a fixed amount each interval makes the void a continuous drain instead of a single blow, so survival time depends on current health and how quickly the player climbs back above the threshold.',
         ],
         mathBlocks: [
           {
@@ -853,7 +853,7 @@ class AiPlayerState:
         title: 'The Spawn Position Must Be Clear',
         body: [
           'A spawn only succeeds if the AI body fits. The manager builds the actor at the spawn cell center, then tests the body against nearby block collision shapes; if it would intersect a block, the spawn is refused and no actor is registered.',
-          'This is why spawning inside a wall or a tight space can fail: the clearance check uses the same shape-aware collision as the player, so partial shapes are evaluated correctly.',
+          'Spawning inside a wall or a tight space therefore fails because the clearance check uses the same shape-aware collision as the player, evaluating partial shapes rather than assuming a full cube.',
         ],
         codeBlocks: [
           {
@@ -1023,7 +1023,7 @@ def _paint_heart_strip(painter, *, x, y, health, max_health):
         title: 'The Tag Is One Composite Image',
         body: [
           'The name and hearts are rendered into a single base pixmap rather than separate widgets. The composite is rebuilt only when the content key — name, health, max health, and indicator — changes, so a tag that has not changed is not redrawn.',
-          'This is why a stationary AI’s tag costs almost nothing per frame: the image is cached, and only geometry or opacity changes trigger an update.',
+          'A stationary AI’s tag therefore costs almost nothing per frame: the composite image is cached, and only geometry or opacity changes trigger an update.',
         ],
         codeBlocks: [
           {
@@ -1163,7 +1163,7 @@ if (float(actor.combat_strafe_timer_s) > 1e-6
         title: 'Melee Damage Has a Cooldown',
         body: [
           'A landed melee hit applies damage through the target’s health with a damage cooldown, so repeated contact does not deal damage every frame. The same path is shared by player and AI, so an AI hitting the player and the player hitting an AI use one rule.',
-          'The cooldown is why damage arrives at a steady rate during a fight rather than as a continuous drain while bodies overlap.',
+          'Because each landed hit starts the half-second `MELEE_DAMAGE_COOLDOWN_S`, damage arrives at a steady rate during a fight instead of draining continuously while bodies overlap.',
         ],
         codeBlocks: [
           {
@@ -1270,7 +1270,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         title: 'AI Placement Uses the Same World Rules',
         body: [
           'An AI places through its own interaction service, the same machinery the player uses. So an AI placement is subject to the same checks: a registered item, an empty or mergeable cell, sufficient support, and no intersection with a body. There is no AI-only placement path that bypasses these.',
-          'This shared path is why AI placement behaves consistently with player placement and why it cannot create blocks the player rules would reject.',
+          'Because the AI shares the player’s interaction service, its placement behaves consistently with player placement and cannot create blocks the player rules would reject.',
         ],
         codeBlocks: [
           {
@@ -1307,14 +1307,14 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         title: 'Placement Has Preconditions',
         body: [
           'A bridge placement is only attempted when the preconditions hold: line of sight to the target cell, an available item, support, clear collision, and an action mask that permits the placement. Forward movement can wait until a footing exists before continuing.',
-          'These preconditions are why an AI sometimes pauses at an edge: it is waiting for a placement to become valid before stepping forward.',
+          'When those preconditions are unmet, the AI pauses at an edge until a placement becomes valid, then steps forward.',
         ],
       },
       {
         id: 'understanding-ai-placement-behavior-edge-safety',
         title: 'Edge Safety Stops Self-Destructive Steps',
         body: [
-          'Grounded AI movement runs an edge-safety check that halts a forward step if there is no landing within a safe drop depth, leaving only turning. This prevents the AI from walking itself into the void and is also what creates the opportunity for bridge placement.',
+          'Grounded AI movement runs an edge-safety check that halts a forward step if there is no landing within a safe drop depth, leaving only turning. The check stops the AI from walking itself into the void, and the halted step is what opens the opportunity for bridge placement.',
           'When the AI is stopped by edge safety, building a bridge footing is one way for it to make the next step safe.',
         ],
         codeBlocks: [
@@ -1340,7 +1340,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         title: 'Learned Policies Do Not Bypass Placement Rules',
         body: [
           'A learned policy can change how the AI ranks actions, but it cannot make a placement that the world rules reject. Action masks and placement preconditions still apply after policy evaluation, so the final placed block always satisfies the same checks.',
-          'This keeps AI building bounded regardless of behavior mode or learning: the placement rules are the floor that every AI action path stands on.',
+          'Because action masks and placement preconditions apply after policy evaluation, AI building stays bounded regardless of behavior mode or learning: the placement rules are the floor that every AI action path stands on.',
         ],
       },
     ],
@@ -1486,7 +1486,7 @@ if legal_moves:
         title: 'A Move Is Accepted Only on a Legal Square',
         body: [
           'A player move is accepted only while the status is player-turn and the chosen square is in the published legal-move set. The same predicate that authorizes a click is the one the submit path checks, so an illegal or out-of-turn click changes nothing.',
-          'This gate is why clicking an empty but non-flipping square does nothing: legality is decided by the rule engine, not by the square being empty.',
+          'A click on an empty but non-flipping square therefore changes nothing, because `can_player_move` decides legality from the published legal-move set rather than from the square being empty.',
         ],
         codeBlocks: [
           {
@@ -1583,7 +1583,7 @@ def submit_player_move(self, square_index: int) -> bool:
         title: 'The Turn Advances After the Move Settles',
         body: [
           'After a move (and any animation), the controller inverts the turn and resolves the next transition: it publishes the next side’s legal moves, handles a pass when a side cannot move, or finishes the match when neither side can. The move count increments and the consecutive-pass count resets on a real move.',
-          'So placing a move is not just changing the board; it drives the whole turn machine forward to the next playable state.',
+          'Placing a move therefore drives the whole turn machine forward to the next playable state, reaching past the board change into turn inversion, legal-move publication, pass handling, and match settlement.',
         ],
         codeBlocks: [
           {
@@ -1636,7 +1636,7 @@ if not animations:
         title: 'The AI Move Is Applied Like a Player Move',
         body: [
           'When the engine returns, the controller applies the AI move only while the status is AI-turn, using the same board apply rule as a player move. So an AI move flips captured lines and advances the turn exactly as a player move does.',
-          'This shared apply path means the AI cannot make a move the rules would reject; it is bound by the same legality as the player.',
+          'Because the AI move runs through the same board apply rule as a player move, the AI cannot make a move the rules would reject; it is bound by the same legality as the player.',
         ],
         codeBlocks: [
           {
@@ -1672,7 +1672,7 @@ if not animations:
         title: 'No Legal Move Triggers a Pass',
         body: [
           'If the AI has no legal move, the controller resolves the transition, which passes to the other side. The pass logic is shared with player turns: a side that cannot move passes, the consecutive-pass count increases, and the other side plays.',
-          'A pass is not a lost turn for the match; it is the rules handling a side that cannot move, and it is the path toward a finished state when both sides are stuck.',
+          'A pass keeps the match moving: the rules hand the turn to a side that can still move, and a second consecutive pass becomes the path toward a finished state when both sides are stuck.',
         ],
         codeBlocks: [
           {
@@ -1775,7 +1775,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         title: 'A Clock Timeout Ends the Match Too',
         body: [
           'A finite time control gives another terminal path: if the active side’s clock reaches zero during its turn, the match finishes with the other side as the winner, regardless of disc counts. The message states which side ran out of time.',
-          'So a result can be a timeout rather than a count, which is why the winner and the message together, not the board alone, describe how a match ended.',
+          'A result can therefore be a timeout rather than a disc count, so the winner field and the message together describe how a match ended; the final board alone does not separate a timeout from a played-out finish.',
         ],
       },
       {

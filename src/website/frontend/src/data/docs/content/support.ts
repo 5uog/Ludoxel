@@ -19,7 +19,7 @@ export const supportPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: 'The public problem-report form exists for one narrow purpose: a reproducible, non-security problem affecting the Current Repository or an Official Distribution of Ludoxel. It is not a residual discussion channel for repository direction, legal objections, design suggestions, implementation proposals, or suspected vulnerabilities. The form language matters because it converts a GitHub issue surface into a controlled public intake route rather than an unrestricted request for work.',
+            text: 'The public problem-report form scopes a single intake route. Its `problem-report.yml` preamble limits the form to a reproducible, non-security problem in the Current Repository or an Official Distribution of Ludoxel, and its required acknowledgement checkboxes make the reporter confirm, before submission, that the issue carries no security-sensitive detail, no non-public reproduction information, and no Contribution Materials. Repository direction, legal objections, design suggestions, implementation proposals, and suspected vulnerabilities each fall to a different governing surface — the LICENSE, the Repository Contribution Policy, or the Security Reporting Policy — so the form turns a GitHub issue into a constrained public record of an observable defect instead of an open request for work.',
           },
           {
             kind: 'paragraph',
@@ -50,7 +50,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The existence of the form is therefore not an invitation to submit a patch, redesign the project, supply replacement documentation, or disclose vulnerability material. The reporter must decide at the beginning whether the matter is a public, reproducible, non-security problem. If that classification is wrong, the remaining fields do not cure the submission.',
+            text: 'A rendered GitHub form is only an intake surface. Under the Repository Contribution Policy a Public Issue that proposes or submits Contribution Materials may be closed without review, and the Security Reporting Policy routes vulnerability material to a private channel, so a patch, a project redesign, replacement documentation, or vulnerability material entered here reaches no acceptance path. The reporter settles the classification at the outset — public, reproducible, non-security problem — because once that classification is wrong the summary, reproduction, expected, and actual fields only record an out-of-route submission rather than repair it.',
           },
         ],
       },
@@ -97,7 +97,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The reporter must not use these fields interchangeably. Reproduction steps are not a diagnosis, expected behavior is not a patch proposal, and actual behavior is not a place for unrelated logs or private files. The issue remains a public record of observable behavior, not a transfer of material for possible incorporation into Ludoxel.',
+            text: 'Each field carries a distinct evidentiary load, and collapsing them defeats the separation the template enforces. The `reproduction` field records the public action sequence that produces the behavior; the `expected` field records the normative result the reporter relied on; the `actual` field records what the build did instead. A diagnosis belongs to the Maintainer’s review rather than to any of these fields, a patch is Contribution Material the Repository Contribution Policy excludes from a Public Issue, and unrelated logs or private files fail the additional-context field’s public, non-sensitive limit. The issue closes as a public record of observable behavior, while any incorporation of supplied material into Ludoxel stays governed by the LICENSE.',
           },
         ],
       },
@@ -107,7 +107,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The acknowledgement section is not decorative. It is a public-content gate that excludes security-sensitive disclosure and Contribution Materials before the report is submitted. A report that contains prohibited content is not merely poorly formatted; it is outside the permitted public problem-report route.',
+            text: 'The acknowledgement section operates as a required public-content gate. Each `checkboxes` option in `problem-report.yml` carries `required: true`, so GitHub withholds submission until the reporter affirms that the issue holds no security-sensitive detail, no non-public reproduction information, and no Contribution Materials, and acknowledges that public GitHub features and the GitHub Platform Terms grant no permission to Use the Original Materials beyond the LICENSE. A submission that still carries prohibited content has crossed out of the permitted problem-report route at that gate, and its defect is one of channel that the remaining fields cannot reclassify.',
           },
           {
             kind: 'code',
@@ -165,7 +165,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Reproduction steps are the part of the public report that lets another reader reach the same observed behavior without relying on the reporter’s private machine, private data, or unposted inference. The field is deliberately narrow: it asks for public, non-sensitive steps, not for cause analysis, not for a suggested fix, and not for a private artifact that would make the report unsafe to publish.',
+            text: 'Reproduction steps are the part of the public report that lets another reader reach the same observed behavior from public facts alone, without the reporter’s private machine, private data, or unposted inference. The `reproduction` field description in `problem-report.yml` narrows the input to public, non-sensitive steps that reproduce the problem. Cause analysis is the Maintainer’s work on review, a suggested fix is Contribution Material the Repository Contribution Policy excludes, and a private artifact that would make the report unsafe to publish belongs to the private security route — each held back by a different governing surface, not by a single stylistic preference.',
           },
           {
             kind: 'code',
@@ -185,7 +185,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The distinction is substantive. A public reproduction may identify the screen, route, mode, command, setting, or visible action involved. It must not depend on undisclosed local files, account state, credentials, exploit materials, or a patch. If those materials are necessary, the issue is no longer a clean public problem report.',
+            text: 'A public reproduction draws only on what any reader can see and repeat: the screen, route, mode, command, setting, or visible action involved. The moment it depends on undisclosed local files, account state, credentials, exploit materials, or a patch, it leaves the public, non-sensitive boundary the `reproduction` field sets, and the issue is no longer a clean public problem report.',
           },
         ],
       },
@@ -195,7 +195,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Use an ordered sequence when the behavior depends on order. Each step must state a public action or an observable state transition. Keep the expected result and actual result out of the step sequence, because the form already gives those claims separate required fields. This separation prevents the reproduction from becoming an argument, a complaint, or a hidden diagnosis.',
+            text: 'Use an ordered sequence when the behavior depends on order. Each step states a public action or an observable state transition. The expected result and actual result stay out of the step sequence because `problem-report.yml` already binds those claims to the separate required `expected` and `actual` fields; holding the sequence to repeatable observation lets the reproduction read as a path another reader can walk, where mixing in the comparison would turn it into an argument, a complaint, or a hidden diagnosis.',
           },
           {
             kind: 'list',
@@ -219,7 +219,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'A reproduction step must not teach a public reader how to exploit a suspected vulnerability. The fact that a step sequence is useful does not make it suitable for a public issue. If the sequence contains a vulnerability mechanism, sensitive URL, proof-of-concept payload, secret-bearing log, private save file, or non-public reproduction condition, it belongs outside the public problem-report form.',
+            text: 'A reproduction step must not teach a public reader how to exploit a suspected vulnerability. The Security Reporting Policy in `.github/SECURITY.md` keeps vulnerability detail off the Public Issue surface regardless of how cleanly the sequence reproduces, so a sequence that carries a vulnerability mechanism, sensitive URL, proof-of-concept payload, secret-bearing log, private save file, or non-public reproduction condition belongs outside the public problem-report form even when it is the most direct demonstration available.',
           },
           {
             kind: 'paragraph',
@@ -279,7 +279,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Supply platform evidence because it can change the technical analysis, not because the form provides space for it. The report must identify the facts that plausibly affect reproduction and omit the facts that merely expose the reporter’s machine without improving evaluation.',
+            text: 'Supply platform evidence when it can change the technical analysis. The `environment` field carries `required: false`, so its value is governed by relevance rather than by the presence of an input box: the report names the facts that plausibly affect reproduction and omits inventory that exposes the reporter’s machine without improving evaluation.',
           },
           {
             kind: 'list',
@@ -293,7 +293,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'This is not a request for a full local-machine dossier. Private directory names, local user names, proprietary project paths, access tokens, account identifiers, or unrelated logs must be removed before the public report is submitted.',
+            text: 'The field collects targeted environment facts, not a local-machine dossier. Private directory names, local user names, proprietary project paths, access tokens, account identifiers, and unrelated logs are removed before the public report is submitted, under the same public, non-sensitive limit that governs the additional-context field.',
           },
         ],
       },
@@ -336,7 +336,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Logs are not automatically public merely because they explain a non-security problem. The problem-report form permits additional context only when that context is public, non-sensitive, and necessary to understand the report. A log excerpt is therefore evidence to be filtered, not raw output to be pasted into GitHub.',
+            text: 'A log enters the public report only after it passes the additional-context limit, which the `additional-context` field states as public, non-sensitive context necessary to understand the problem. Explaining a non-security defect does not by itself clear a log for publication; the reporter filters the excerpt down to the public lines that carry the observable behavior before any of it reaches GitHub.',
           },
           {
             kind: 'code',
@@ -352,7 +352,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The field’s title is controlling for support practice: additional context must remain public. It is not a repository intake channel for private files, unredacted trace output, crash dumps containing secrets, vulnerability payloads, or implementation proposals.',
+            text: 'The field label — Additional public context — is controlling, and the word public binds the input. The same field that accepts a short explanatory excerpt turns away private files, unredacted trace output, crash dumps containing secrets, vulnerability payloads, and implementation proposals, the last of which the Repository Contribution Policy excludes from any Public Issue.',
           },
         ],
       },
@@ -362,7 +362,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Redaction is not cosmetic. A useful log line may still be disallowed if it discloses credentials, tokens, cookies, local private paths, confidential data, or exploit detail. The public report must contain the minimum log material needed to identify the observable non-security problem after unsafe material has been removed.',
+            text: 'Redaction is a content test applied line by line. A log line that materially helps is still disallowed when it discloses credentials, tokens, cookies, local private paths, confidential data, or exploit detail, and the public report retains only the minimum log material that identifies the observable non-security problem once unsafe material is gone.',
           },
           {
             kind: 'list',
@@ -422,7 +422,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The security-contact form is not the Security Report. It is a narrow public mechanism for requesting a Private Reporting Channel when no private reporting route is available. If GitHub private vulnerability reporting or a GitHub security advisory exists for the repository, the public request form is bypassed and the private route must be used.',
+            text: 'The security-contact form requests a Private Reporting Channel, while the Security Report itself travels through that private channel once it exists. The `security-contact.yml` preamble limits the form to requesting a private contact method when no Private Reporting Channel is available, and directs the reporter to GitHub private vulnerability reporting or a GitHub security advisory whenever either exists for the repository. Where such a private route exists, the public request form is bypassed and the Security Report goes straight to the private channel.',
           },
           {
             kind: 'code',
@@ -494,7 +494,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The acknowledgement section prevents the public contact request from being misused as a public disclosure or as a testing authorization. The request does not expand the LICENSE, does not grant permission to Use Original Materials beyond the LICENSE, and does not authorize destructive, unauthorized, or overbroad Security Testing.',
+            text: 'The acknowledgement checkboxes fix what the request is. All three carry `required: true`, so before submission the reporter affirms that the issue contains no vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, secret-bearing logs, private local files, or other non-public reproduction information; that the request grants no permission to Use the Original Materials beyond the LICENSE; and that any Security Testing stays lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data the reporter is authorized to test. The Security Reporting Policy states the same boundary at its source: Security Testing and the submission of a Security Report do not grant or expand any permission to Use the Original Materials.',
           },
           {
             kind: 'code',
@@ -636,7 +636,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'The exclusion is not limited to complete exploit code. A partial mechanism, a sensitive URL, a targeted payload shape, a secret-bearing stack trace, or a reproduction path involving private files may be enough to make the public issue unsafe.',
+            text: 'The exclusion reaches well past complete exploit code. A partial mechanism, a sensitive URL, a targeted payload shape, a secret-bearing stack trace, or a reproduction path involving private files can each be enough on its own to make the public issue unsafe.',
           },
         ],
       },
@@ -659,7 +659,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'Removing only the most obvious secret is not enough when the remaining text still points public readers to the exploit. The public content must be safe as a whole, not merely scrubbed of passwords.',
+            text: 'Removing the most obvious secret leaves the post unsafe when the remaining text still points public readers to the exploit. The test runs over the public content as a whole: the surrounding mechanism — the payload shape, the targeted path, the secret-bearing trace — must be gone, so a post scrubbed of passwords while still narrowing the vulnerability fails it.',
           },
         ],
       },
@@ -702,11 +702,11 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Unsafe public content is material that the repository issue templates, Security Reporting Policy, or Contribution Policy exclude from public support surfaces. The concept is procedural, not aesthetic. It applies when a public post would disclose security-sensitive information, private data, contribution material, or unsupported testing material, even if the post is otherwise relevant to Ludoxel.',
+            text: 'Unsafe public content is material that the repository issue templates, the Security Reporting Policy in `.github/SECURITY.md`, or the Repository Contribution Policy in `.github/CONTRIBUTING.md` exclude from public support surfaces. The classification turns on what a post would disclose: it applies whenever a public post would carry security-sensitive information, private data, Contribution Materials, or unsupported testing material, even when the post is otherwise relevant to Ludoxel.',
           },
           {
             kind: 'paragraph',
-            text: 'The public issue tracker is designed for limited public reporting and limited public questions. It is not designed to receive secrets, private local files, vulnerability mechanisms, proof-of-concept payloads, contribution material, or data obtained from systems the reporter is not authorized to test or disclose.',
+            text: 'The public issue tracker is built for the three forms the Repository Contribution Policy admits: a problem report, a limited question, or a request for a Private Reporting Channel for a Security Report. Secrets, private local files, vulnerability mechanisms, proof-of-concept payloads, Contribution Materials, and data obtained from systems the reporter is not authorized to test or disclose fall outside all three and reach no intake path through it.',
           },
         ],
       },
@@ -716,7 +716,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The following classes are unsafe because they either expose security risk, disclose private or confidential material, or attempt to use support as an unauthorized intake route. They must be removed from public submissions rather than normalized as supporting detail.',
+            text: 'The following classes are unsafe because they either expose security risk, disclose private or confidential material, or attempt to use support as an unauthorized intake route. Each is removed from a public submission; presenting it as supporting detail does not change the classification.',
           },
           {
             kind: 'list',
@@ -773,7 +773,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'The limited-question form is a public route for narrow questions about existing repository policy and documented boundaries. It is not a general discussion forum. It does not accept proposed repository content, implementation proposals, code review submissions, security disclosures, or requests to change the project’s legal or contribution posture.',
+            text: 'The limited-question form is a public route for narrow questions about existing repository policy and documented boundaries. Its `limited-question.yml` preamble limits the form to questions about repository policy, the LICENSE, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy, and its required acknowledgement makes the asker confirm that the issue carries no Contribution Materials, replacement repository content, or implementation proposals. Proposed repository content, code-review submissions, security disclosures, and demands to change the project’s legal or contribution posture each map to a different governing surface and reach no acceptance path through this question channel.',
           },
           {
             kind: 'code',
@@ -879,7 +879,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'Scope is not determined by tone. A polite feature request, a careful patch proposal, a detailed vulnerability proof, or a legal objection framed as a question still falls outside the limited-question route when it demands action or accepts material the public form excludes.',
+            text: 'Scope follows the content a question demands, and tone leaves that content unchanged. A polite feature request, a careful patch proposal, a detailed vulnerability proof, or a legal objection framed as a question still falls outside the limited-question route when it demands action or carries material the `limited-question.yml` acknowledgement excludes.',
           },
         ],
       },
@@ -1060,7 +1060,7 @@ body:
           },
           {
             kind: 'paragraph',
-            text: 'Posting vulnerability material publicly to force a response violates the public-content boundary. Public disclosure does not create a remediation duty, does not accelerate review, and does not turn excluded material into acceptable support content.',
+            text: 'Posting vulnerability material publicly to force a response violates the public-content boundary in `.github/SECURITY.md`. The Security Reporting Policy promises no fixed response or remediation time, so public disclosure leaves the Maintainer’s discretion intact, exposes the vulnerability to readers outside the private evaluation process, and keeps the excluded material outside any supported route — the pressure shifts the risk, not the obligation.',
           },
         ],
       },
@@ -1070,7 +1070,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Closure without review, lack of response, delayed response, or form availability does not grant permission to Use Original Materials, does not accept externally supplied material, does not amend the LICENSE, and does not waive repository policy. Public GitHub mechanics remain subordinate to the controlling legal and policy text.',
+            text: 'The controlling legal and policy text fixes what these procedural events mean. Under the Repository Contribution Policy and the LICENSE, closure without review, silence, a delayed response, and the mere availability of a GitHub form are repository mechanics: each leaves the permission to Use the Original Materials where the LICENSE sets it, accepts no externally supplied material, amends no License Text, and waives no repository policy. Public GitHub features sit beneath that controlling text, and the GitHub Platform Terms do not expand the Licensor’s permissions for the Original Materials.',
           },
           {
             kind: 'paragraph',
@@ -1109,11 +1109,11 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'An unsupported request is a public or private submission that does not fit the problem-report form, the limited-question form, the minimal security-contact request, the Repository Contribution Policy, or the Security Reporting Policy. The support system is not a catch-all intake path for material excluded by those sources.',
+            text: 'An unsupported request is a public or private submission that fits none of the admitted routes: the problem-report form, the limited-question form, the minimal security-contact request, the Public Issue types the Repository Contribution Policy accepts, or the supported scope of the Security Reporting Policy. Each of those sources enumerates what it receives, so a submission outside all of them reaches the support system with no route to land on.',
           },
           {
             kind: 'paragraph',
-            text: 'The question is not whether the request concerns Ludoxel in some broad sense. The question is whether the request fits an authorized support route without prohibited content. If it does not, the proper result is exclusion, not expansion of the public issue tracker.',
+            text: 'Admissibility turns on whether the request fits an authorized support route without carrying prohibited content, and a broad connection to Ludoxel does not satisfy that test on its own. A submission that fits no route resolves by exclusion, and the public issue tracker does not widen to absorb it.',
           },
         ],
       },
