@@ -22,9 +22,9 @@ from ludoxel.presentation.audio.catalogs.material import (
 )
 from ludoxel.presentation.audio.catalogs.player import PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
-from ludoxel.presentation.audio.playback.effects import admit_pool_play, ensure_effect_slots, has_idle_voice, next_effect_slot
+from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
 from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal
-from ludoxel.presentation.audio.playback.sources import PreparedSource, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
+from ludoxel.presentation.audio.playback.sources import PreparedSource, effect_voice_hold_s_for_url, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
 from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.sounds.groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
@@ -350,7 +350,7 @@ class AudioManager(QObject):
       self._resolved_urls[str(pool_key)] = urls
 
     desired_slots = self._slot_budget_per_source(pool, source_count=len(urls))
-    prepared = [PreparedSource(url=url, source_key=self._source_key_for_url(url), desired_slots=int(desired_slots)) for url in tuple(urls)]
+    prepared = [PreparedSource(url=url, source_key=self._source_key_for_url(url), desired_slots=int(desired_slots), voice_hold_s=effect_voice_hold_s_for_url(url)) for url in tuple(urls)]
     self._prepared_sources[str(pool_key)] = prepared
     return prepared
 
@@ -370,8 +370,8 @@ class AudioManager(QObject):
   def _ensure_effect_slots(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float) -> None:
     ensure_effect_slots(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output)
 
-  def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float):
-    return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output)
+  def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float, now_s: float | None = None):
+    return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output, now_s=now_s)
 
   def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3) -> bool:
     base_volume = float(self._preferences.volume_for(pool.category))
@@ -393,7 +393,8 @@ class AudioManager(QObject):
     for prepared in tuple(prepared_sources):
       self._ensure_effect_slots(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
 
-    idle_sources = [prepared for prepared in prepared_sources if has_idle_voice(prepared)]
+    now_s = effect_clock_s()
+    idle_sources = [prepared for prepared in prepared_sources if has_idle_voice(prepared, now_s=now_s)]
     if not idle_sources:
       return False
 
@@ -401,12 +402,13 @@ class AudioManager(QObject):
     if prepared is None:
       return False
 
-    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
+    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), now_s=now_s)
     if slot is None:
       return False
 
     slot.effect.setVolume(float(base_volume))
     slot.effect.play()
+    mark_slot_started(slot, prepared=prepared, now_s=now_s)
     return True
 
   def _ensure_ambient_effect(self) -> QSoundEffect:

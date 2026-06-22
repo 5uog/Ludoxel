@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.6 Beta 3',
+    tags: ['Desktop Application', 'Audio'],
+    sections: [
+      {
+        title: 'Player Audio Overlap',
+        items: [
+          'Kept rapid player voices reserved for the measured WAV duration plus a small release pad, so a `QSoundEffect` slot is not considered reusable merely because Qt reports the queued effect as no longer playing before the audible tail has cleared.',
+          'Raised weak and strong attack swings to a twelve-voice bounded pool with no attack-event cooldown, preserving overlap for repeated air-punch and attack input while still dropping only when every reserved voice is busy.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.6 Beta 2',
     tags: ['Desktop Application', 'Audio', 'Block Placement'],
     sections: [

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import random
+import wave
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -12,11 +13,16 @@ from PyQt6.QtMultimedia import QSoundEffect
 
 from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool
 
+DEFAULT_EFFECT_VOICE_HOLD_S = 0.18
+EFFECT_VOICE_HOLD_PAD_S = 0.035
+
 
 @dataclass
 class EffectVoiceSlot:
   effect: QSoundEffect
   source_key: str
+  started_at_s: float = 0.0
+  busy_until_s: float = 0.0
 
 
 @dataclass
@@ -24,6 +30,7 @@ class PreparedSource:
   url: QUrl
   source_key: str
   desired_slots: int = 1
+  voice_hold_s: float = DEFAULT_EFFECT_VOICE_HOLD_S
   slots: list[EffectVoiceSlot] = field(default_factory=list)
   cursor: int = 0
 
@@ -39,6 +46,32 @@ def resolve_existing_urls(*, resource_root: Path, pool: AudioSamplePool) -> tupl
     if candidate.is_file():
       urls.append(QUrl.fromLocalFile(str(candidate)))
   return tuple(urls)
+
+
+def wav_duration_s_for_url(url: QUrl) -> float | None:
+  local_path = str(url.toLocalFile()).strip()
+  if not local_path:
+    return None
+
+  try:
+    with wave.open(local_path, "rb") as reader:
+      frame_rate = int(reader.getframerate())
+      frame_count = int(reader.getnframes())
+  except (EOFError, OSError, wave.Error):
+    return None
+
+  if frame_rate <= 0 or frame_count <= 0:
+    return None
+
+  return float(frame_count) / float(frame_rate)
+
+
+def effect_voice_hold_s_for_url(url: QUrl) -> float:
+  duration_s = wav_duration_s_for_url(url)
+  if duration_s is None:
+    return float(DEFAULT_EFFECT_VOICE_HOLD_S)
+
+  return max(float(DEFAULT_EFFECT_VOICE_HOLD_S), float(duration_s) + float(EFFECT_VOICE_HOLD_PAD_S))
 
 
 def slot_budget_per_source(pool: AudioSamplePool, *, source_count: int) -> int:

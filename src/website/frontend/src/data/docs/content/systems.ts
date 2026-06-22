@@ -1480,7 +1480,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. The voice search is pool-wide. `_play_pool` ensures the slots of every prepared source, collects the sources that still hold a loaded, non-playing slot through `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs the random or round-robin selection in `src/ludoxel/presentation/audio/playback/sources.py` over only those idle-capable sources; `next_effect_slot` then returns that source idle slot, sets its volume, and starts it. A busy sample source therefore no longer loses a request while another voice in the pool is free. When every voice in the pool is already playing, `_play_pool` drops the request and leaves the active voices running, so repeated short samples such as attack swings overlap across the pool until its voices are exhausted.',
+            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. The voice search is pool-wide. `_play_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice is idle only when its `QSoundEffect` is loaded, is not playing, and has passed the source hold interval recorded on `EffectVoiceSlot.busy_until_s`. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a rapid attack request cannot reclaim a voice merely because the Qt playback state has cleared before the audible tail has ended. When every reserved voice is still busy, `_play_pool` drops the request and leaves active voices running.',
           },
           {
             kind: 'code',
@@ -2106,7 +2106,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.6b2"`,
+            code: `__version__ = "3.6.6b3"`,
           },
           {
             kind: 'note',
