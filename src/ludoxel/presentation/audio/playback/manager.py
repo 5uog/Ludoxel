@@ -22,7 +22,7 @@ from ludoxel.presentation.audio.catalogs.material import (
 )
 from ludoxel.presentation.audio.catalogs.player import PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
-from ludoxel.presentation.audio.playback.effects import admit_pool_play, ensure_effect_slots, next_effect_slot
+from ludoxel.presentation.audio.playback.effects import admit_pool_play, ensure_effect_slots, has_idle_voice, next_effect_slot
 from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal
 from ludoxel.presentation.audio.playback.sources import PreparedSource, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
 from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool
@@ -389,11 +389,18 @@ class AudioManager(QObject):
     if not prepared_sources:
       return False
 
-    prepared = self._pick_prepared_source(str(pool_key), pool, prepared_sources)
+    desired_slots = self._slot_budget_per_source(pool, source_count=len(prepared_sources))
+    for prepared in tuple(prepared_sources):
+      self._ensure_effect_slots(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
+
+    idle_sources = [prepared for prepared in prepared_sources if has_idle_voice(prepared)]
+    if not idle_sources:
+      return False
+
+    prepared = self._pick_prepared_source(str(pool_key), pool, idle_sources)
     if prepared is None:
       return False
 
-    desired_slots = self._slot_budget_per_source(pool, source_count=len(prepared_sources))
     slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
     if slot is None:
       return False

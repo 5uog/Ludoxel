@@ -69,11 +69,11 @@ class InteractionService:
   def _has_selected_placeable_block(self, block_id: str) -> bool:
     return has_selected_placeable_block_for_service(self, str(block_id))
 
-  def _place_from_hit(self, *, hit: BlockPick, block_id: str | None, forced_place_state: str | None = None) -> InteractionOutcome:
-    return place_from_hit_for_service(self, hit=hit, block_id=block_id, forced_place_state=forced_place_state)
+  def _place_from_hit(self, *, hit: BlockPick, block_id: str | None, forced_place_state: str | None = None, inherit_state: str | None = None) -> InteractionOutcome:
+    return place_from_hit_for_service(self, hit=hit, block_id=block_id, forced_place_state=forced_place_state, inherit_state=inherit_state)
 
-  def place_block_from_hit(self, hit: BlockPick, block_id: str | None, *, forced_place_state: str | None = None) -> InteractionOutcome:
-    return self._place_from_hit(hit=hit, block_id=block_id, forced_place_state=forced_place_state)
+  def place_block_from_hit(self, hit: BlockPick, block_id: str | None, *, forced_place_state: str | None = None, inherit_state: str | None = None) -> InteractionOutcome:
+    return self._place_from_hit(hit=hit, block_id=block_id, forced_place_state=forced_place_state, inherit_state=inherit_state)
 
   def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None) -> InteractionOutcome:
     return place_block_for_service(self, block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)

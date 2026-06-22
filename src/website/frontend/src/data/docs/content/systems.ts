@@ -1480,7 +1480,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and a loaded effect slot that is not already playing must be available within the polyphony budget through the effect helpers in `src/ludoxel/presentation/audio/playback/effects.py` and the source helpers in `src/ludoxel/presentation/audio/playback/sources.py`. `next_effect_slot` advances the per-source cursor over the loaded slots and returns the first one that is idle; when every slot in the chosen source budget is still playing, `_play_pool` drops the request instead of stopping an active voice, so a new sample overlaps an earlier one only while a free voice remains.',
+            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. The voice search is pool-wide. `_play_pool` ensures the slots of every prepared source, collects the sources that still hold a loaded, non-playing slot through `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs the random or round-robin selection in `src/ludoxel/presentation/audio/playback/sources.py` over only those idle-capable sources; `next_effect_slot` then returns that source idle slot, sets its volume, and starts it. A busy sample source therefore no longer loses a request while another voice in the pool is free. When every voice in the pool is already playing, `_play_pool` drops the request and leaves the active voices running, so repeated short samples such as attack swings overlap across the pool until its voices are exhausted.',
           },
           {
             kind: 'code',
@@ -2106,7 +2106,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.6b1"`,
+            code: `__version__ = "3.6.6b2"`,
           },
           {
             kind: 'note',

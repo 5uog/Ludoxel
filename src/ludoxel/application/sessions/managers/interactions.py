@@ -17,8 +17,8 @@ def interact_block_at_hit_for_session(session, hit_cell: tuple[int, int, int]):
   return session.interaction.interact_block_at_hit(hit_cell)
 
 
-def place_block_from_hit_for_session(session, hit, block_id: str | None, *, forced_place_state: str | None = None):
-  return session.interaction.place_block_from_hit(hit, block_id, forced_place_state=forced_place_state)
+def place_block_from_hit_for_session(session, hit, block_id: str | None, *, forced_place_state: str | None = None, inherit_state: str | None = None):
+  return session.interaction.place_block_from_hit(hit, block_id, forced_place_state=forced_place_state, inherit_state=inherit_state)
 
 
 def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None):

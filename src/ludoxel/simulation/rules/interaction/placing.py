@@ -39,7 +39,7 @@ def has_selected_placeable_block_for_service(service, block_id: str) -> bool:
   return service.block_registry.get(str(bid)) is not None
 
 
-def place_from_hit_for_service(service, *, hit: BlockPick, block_id: str | None, forced_place_state: str | None = None) -> InteractionOutcome:
+def place_from_hit_for_service(service, *, hit: BlockPick, block_id: str | None, forced_place_state: str | None = None, inherit_state: str | None = None) -> InteractionOutcome:
   bid = "" if block_id is None else str(block_id).strip()
   if not has_selected_placeable_block_for_service(service, str(bid)):
     return InteractionOutcome(success=False)
@@ -82,7 +82,9 @@ def place_from_hit_for_service(service, *, hit: BlockPick, block_id: str | None,
   if forced is not None:
     place_state: str | None = str(forced)
   else:
-    place_state = service.placement_policy.resolve_place_state(player=service.player, block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point)
+    place_state = service.placement_policy.resolve_place_state(
+      player=service.player, block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point, inherit_state=(None if inherit_state is None else str(inherit_state))
+    )
   if place_state is None:
     return InteractionOutcome(success=False)
 

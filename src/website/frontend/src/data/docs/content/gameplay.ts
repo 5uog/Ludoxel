@@ -272,7 +272,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         id: 'building-in-my-world-placement-cell',
         title: 'Placement Resolves the Cell and State Shape',
         body: [
-          'Placement requires a non-empty, registered item. If the hit block can merge a slab with the held item, the merge is applied at the hit cell. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing.',
+          'Placement requires a non-empty, registered item. If the hit block can merge a slab with the held item, the merge is applied at the hit cell. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing, while a held bridge that extends from a slab or stair source inherits that source half or facing instead.',
           'A placement that would intersect the player is rejected before any edit. `placement_intersects_player` builds the candidate block collision boxes at the target cell and tests them against the player box, so standing too close to the target stops a placement that would otherwise be legal.',
           '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method requires non-empty overlap in every coordinate dimension; faces that meet at a maximum/minimum boundary remain separate. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then converts an accepted predicate into a placement rejection. Block shapes, item registration, and world edits remain under their respective simulation owners.',
         ],
@@ -630,28 +630,44 @@ if place is not None and place in world.blocks:
         body: [
           'A place action without crouch first tries to interact with the target. If the block is a fence gate, the click toggles it open or closed and reports success, so no block is placed. The placement rules only run when interaction does not apply.',
           'When a click toggles a gate, interaction has taken priority over placement and reported success, so the placement path never runs. Crouching skips interaction so the same click places a block.',
+          'When placement runs, `resolve_place_state` derives a slab `type`, or a stair `facing` and `half`, from the hit face, the hit point, and the player facing. A bridge that extends from a slab or stair source into an adjacent empty cell instead receives that source state through `inherit_state` and copies its half or facing, so a held lower-slab bridge stays lower and an upper-slab bridge stays upper even where the synthesized support-face hit point would read the opposite half. Ordinary single-click placement passes no `inherit_state` and keeps the hit-geometry result.',
         ],
         codeBlocks: [
           {
             language: 'py',
             caption: 'The placement policy resolves shape state when placement does run.',
-            code: `def resolve_place_state(self, *, player, block_id, hit_face, hit_point):
-  defn = self.block_registry.get(str(block_id))
+            code: `def resolve_place_state(self, *, player, block_id, hit_face, hit_point, inherit_state=None):
+  base_sel = str(block_id)
+  defn = self.block_registry.get(base_sel)
   if defn is None:
     return None
+  inherit_base, inherit_props = (None, {})
+  if inherit_state is not None:
+    inherit_base, inherit_props = parse_state(str(inherit_state))
   props = {}
   if is_slab(defn):
-    props["type"] = self._choose_half_type(int(hit_face), hit_point)
-    return format_state(str(block_id), props)
+    inherited_type = None
+    if str(inherit_base) == base_sel:
+      candidate = slab_type_value(inherit_props)
+      if candidate in ("bottom", "top"):
+        inherited_type = candidate
+    props["type"] = inherited_type if inherited_type is not None else self._choose_half_type(int(hit_face), hit_point)
+    return format_state(base_sel, props)
   if is_stairs(defn):
-    props["facing"] = self._player_cardinal(player)
-    props["half"] = self._choose_half_type(int(hit_face), hit_point)
-    return format_state(str(block_id), props)
+    if str(inherit_base) == base_sel:
+      inherited_facing = str(inherit_props.get("facing", "")).strip()
+      inherited_half = str(inherit_props.get("half", "")).strip()
+      props["facing"] = inherited_facing if inherited_facing in ("north", "east", "south", "west") else self._player_cardinal(player)
+      props["half"] = inherited_half if inherited_half in ("bottom", "top") else self._choose_half_type(int(hit_face), hit_point)
+    else:
+      props["facing"] = self._player_cardinal(player)
+      props["half"] = self._choose_half_type(int(hit_face), hit_point)
+    return format_state(base_sel, props)
   if is_fence_gate(defn):
-    return make_fence_gate_state(str(block_id), self._player_cardinal(player), open_state=False)
+    return make_fence_gate_state(base_sel, self._player_cardinal(player), open_state=False)
   if is_wall(defn):
-    return make_wall_state(str(block_id), waterlogged=False)
-  return format_state(str(block_id), props)`,
+    return make_wall_state(base_sel, waterlogged=False)
+  return format_state(base_sel, props)`,
           },
         ],
       },

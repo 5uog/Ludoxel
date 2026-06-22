@@ -15,6 +15,26 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.6 Beta 2',
+    tags: ['Desktop Application', 'Audio', 'Block Placement'],
+    sections: [
+      {
+        title: 'Audio Sample Voices',
+        items: [
+          'Allocated rapid one-shot player sounds across the whole event pool instead of a single randomly selected sample source: `_play_pool` now ensures the voice slots of every prepared source, gathers the sources that still hold an idle voice through `has_idle_voice`, and selects among only those, so a busy sample source no longer drops a request while other voices in the pool are idle.',
+          'Kept the pool bounded and overlap-only: when every voice in the pool is already playing, `_play_pool` drops the request rather than stopping an active voice, which lets repeated weak and strong attack swings overlap across their samples within the existing per-pool polyphony.',
+        ],
+      },
+      {
+        title: 'Held Slab and Stair Placement',
+        items: [
+          'Fixed the first state of a held slab or stair bridge: when a placement extends from a slab or stair source into an adjacent empty cell through the support-face path, `resolve_place_state` now inherits the source slab `type`, or the source stair `facing` and `half`, through a new inherit-state context, so a lower-slab bridge starts as a lower slab and an upper-slab bridge starts as an upper slab even though the synthesized support-face hit point would otherwise read the opposite half.',
+          'Left ordinary single-click placement on hit geometry and same-cell opposite-half slab merging unchanged, and continued to lock the first committed state for the rest of the hold so the bridge keeps its slab type, or its stair facing and half, as the target cell advances and the camera turns.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.6 Beta 1',
     tags: ['Desktop Application', 'Audio', 'Gameplay', 'Collision', 'Block Placement'],
     sections: [

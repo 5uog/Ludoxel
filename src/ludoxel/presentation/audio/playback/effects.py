@@ -35,6 +35,14 @@ def ensure_effect_slots(*, parent, prepared: PreparedSource, desired_slots: int,
     prepared.slots.append(EffectVoiceSlot(effect=effect, source_key=str(prepared.source_key)))
 
 
+def slot_is_idle(slot: EffectVoiceSlot) -> bool:
+  return bool(slot.effect.isLoaded()) and (not bool(slot.effect.isPlaying()))
+
+
+def has_idle_voice(prepared: PreparedSource) -> bool:
+  return any(slot_is_idle(slot) for slot in prepared.slots)
+
+
 def next_effect_slot(*, parent, prepared: PreparedSource, desired_slots: int, base_volume: float, configure_effect: Callable[[QSoundEffect], None] | None = None) -> EffectVoiceSlot | None:
   ensure_effect_slots(parent=parent, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=configure_effect)
   if not prepared.slots:
@@ -46,7 +54,7 @@ def next_effect_slot(*, parent, prepared: PreparedSource, desired_slots: int, ba
   for offset in range(total_slots):
     idx = int((start_index + offset) % total_slots)
     slot = prepared.slots[idx]
-    if slot.effect.isLoaded() and (not slot.effect.isPlaying()):
+    if slot_is_idle(slot):
       prepared.cursor = int((idx + 1) % total_slots)
       return slot
 
