@@ -331,12 +331,12 @@ screen_dy = -float(rolled_y)`,
                 '\\begin{aligned}p_a&=(\\hat r\\cdot a,\\ \\hat u\\cdot a)\\\\q_a&=R_\\rho p_a\\\\\\pi(q_x,q_y)&=(q_x,-q_y)\\\\m_a&=\\lVert p_a\\rVert_2=\\sqrt{1-(\\hat f\\cdot a)^2}\\end{aligned}',
               displayMode: true,
               caption:
-                'The runtime function stores p as view-plane axis components, q as the roll-adjusted pair, pi as the screen-space y inversion, and m as the arm-length magnitude consumed by the painter.',
+                'The notation exposes the implementation quantities: view-plane components enter the roll transform, the vertical component is inverted for screen coordinates, and the painter derives m from the resulting pair before arm scaling.',
             },
           },
           {
             kind: 'paragraph',
-            text: '`CrosshairWidget._paint_axis_crosshair` consumes those offsets as immediate HUD geometry. It multiplies `_AXIS_ARM_LENGTH` by `m`, leaves `_AXIS_CENTER_GAP` around the exact center point, and draws each admitted arm with its axis color through `QPainter`. Degenerate or non-finite offsets are rejected for the affected arm in that frame, which confines a singular camera orientation to one missing or shortened axis instead of contaminating the surrounding HUD paint path.',
+            text: '`CrosshairWidget._paint_axis_crosshair` consumes those offsets as immediate HUD geometry. It multiplies `_AXIS_ARM_LENGTH` by `m`, leaves `_AXIS_CENTER_GAP` around the exact center point, and draws each admitted arm with its axis color through `QPainter`. Degenerate or non-finite offsets are rejected for the affected arm in that frame; the singular camera orientation is confined to one missing or shortened axis while the surrounding HUD paint path continues with the remaining admitted geometry.',
           },
           {
             kind: 'paragraph',
@@ -354,7 +354,7 @@ screen_dy = -float(rolled_y)`,
           },
           {
             kind: 'paragraph',
-            text: 'Visibility remains controlled by the gameplay HUD gate. The crosshair is drawn in the first-person gameplay HUD, then suppressed by the same conditions that suppress the ordinary bitmap crosshair: a hidden HUD, an open overlay, the pause surface, the death surface, or a non-first-person perspective. Crosshair diagnostics should therefore preserve the selected mode, the normalized sixteen-row bitmap, the reset state, the HUD visibility state, and the Debug HUD state before treating the visible crosshair as a renderer defect.',
+            text: 'Visibility remains controlled by the gameplay HUD gate. The crosshair is drawn in the first-person gameplay HUD, then suppressed by the same conditions that suppress the ordinary bitmap crosshair: a hidden HUD, an open overlay, the pause surface, the death surface, or a non-first-person perspective. A diagnostic record for this surface must preserve the selected mode, the normalized sixteen-row bitmap, the reset state, the HUD visibility state, and the Debug HUD state before the visible crosshair can be classified as a renderer defect.',
           },
           {
             kind: 'note',
