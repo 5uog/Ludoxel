@@ -11,7 +11,7 @@ export const manualPages: DocsPageContent[] = [
     group: 'Launch and Space Selection',
     title: 'Starting Ludoxel',
     description:
-      'Defines the implemented startup chain from the Python module entry point to the loaded viewport. Launch is treated as a sequence of executable gates—entry delegation, bootstrap root selection, runtime selection, presentation-shell construction, single-instance activation, player-name admission, host-window construction, and viewport loading—so startup evidence is not confused with play-space restoration, persisted data, support intake, or license authority.',
+      'Traces the launch path from the Python module entry to a focused, loaded viewport. `src/ludoxel/__main__.py`, `application/bootstrap/run.py`, root resolution, the Qt shell, single-instance relay, player-name admission, `MainWindow`, `GameScreen`, and the viewport each own a distinct transition; the visible surface identifies the latest completed transition and supplies no evidence for later persistence, play-space, or simulation outcomes.',
     sections: [
       {
         id: 'starting-ludoxel-entry-delegation',
@@ -20,6 +20,8 @@ export const manualPages: DocsPageContent[] = [
           'Starting Ludoxel begins at `src/ludoxel/__main__.py`. The entry module prepares multiprocessing support for frozen execution and delegates to `ludoxel.application.run_app`. `QApplication` creation, My World or Othello selection, saved-state reads, and renderer construction occur through later owners in the launch chain; the entry module contributes process setup and application delegation.',
           '`ludoxel.application` exposes that entry through a lazy package facade. The symbol `run_app` is resolved from `ludoxel.application.bootstrap` only when requested, so the module-level import path does not pull the presentation layer into the application package before the bootstrap gate has fixed project roots, resource roots, runtime data roots, and runtime selection. The first executable evidence is therefore delegation into the application composition root, not a visible desktop surface.',
           '`src/ludoxel/__main__.py` supplies process ingress, while `bootstrap/run.py` supplies the composition decision and `windows/main.py` supplies the Qt shell. The bootstrap passes resolved project, resource, and runtime-data roots across that handoff; `MainWindow` and `GameScreen` use those values when the viewport begins loading its session and renderer state. The window becoming visible records successful arrival at the presentation shell. Persistence restoration, active-space selection, and frame-by-frame simulation remain later gates with their own state owners and failure paths.',
+          '`multiprocessing.freeze_support()` executes before `run_app()`. That ordering belongs to the module entry and has no player, session, renderer, or saved-state payload. `run_app()` is the sole handoff exposed by the module; a stack trace or process exit before that call terminates execution upstream of every Qt surface described later on this page.',
+          '`MainWindow` persists host geometry through the viewport on move, resize, and close events. During construction, `main.run_app` chooses a screen from persisted name or position, clamps geometry against available screen bounds, and establishes fullscreen separately. Window placement belongs to the presentation shell and runtime preferences; completion of that restoration does not imply that the viewport has initialized its renderer or loaded world chunks.',
         ],
         codeBlocks: [
           {
@@ -54,6 +56,7 @@ def __getattr__(name: str):
           '`run_app` imports `install_othello_book_storage_hooks` only after root resolution and invokes it before `ludoxel.presentation.interface.windows.main.run_app`. `MainWindow` then constructs `GameScreen` with the same project, resource, and data roots; `GameScreen` constructs the viewport that owns loading state and session presentation. The startup chain preserves those roots across the bootstrap-to-window transition, so a visible screen can be tied to the runtime roots supplied at launch.',
           '`project_root` identifies the application context, `resource_root` identifies bundled runtime material, and `data_root` identifies the user-state root that later persistence consumers will use. The pre-presentation Othello book-storage hook prepares its storage path. Board activation, visibility, restoration, and selection occur through the Othello session and interface paths.',
           'In source-tree execution, `_ensure_python_314` may re-execute the module through a preferred Python 3.14 interpreter. In a frozen executable the function returns immediately because the runtime is already part of the packaged process. A failure before any Qt surface exists is therefore a launch-environment or bootstrap-path condition, not camera movement, hotbar interaction, Othello move legality, renderer overlay behavior, or play-space switching.',
+          '`default_project_root` and `default_resource_root` first honor a frozen application root, then search upward from the module location and working directory for `pyproject.toml` or the `assets`/`src` pair. The fallback is the supplied start directory. Those functions establish locations only; `run_app` has not admitted an `AppState`, instantiated a `SessionManager`, or asked a renderer to allocate resources at that point.',
         ],
         codeBlocks: [
           {
@@ -93,6 +96,7 @@ def __getattr__(name: str):
           'The runtime data root is selected before any user-facing interaction, but root selection is not state admission. It fixes only the base location from which later state, cache, integrity, and store paths can be derived. A selected `data_root` does not prove that a player name, inventory, My World payload, Othello payload, runtime preference, or saved world fragment has been loaded or accepted.',
           '`LUDOXEL_DATA_ROOT` overrides the default location. Without that override, the implementation follows platform storage conventions: `LOCALAPPDATA` or `AppData` on Windows, `~/Library/Application Support/Ludoxel` on macOS, `XDG_DATA_HOME/ludoxel` on compatible systems, and `~/.local/share/ludoxel` as the final fallback. The repository source tree is not the ordinary storage authority for user runtime state.',
           'Consequently, "the process opened" and "the expected saved state appeared" remain separate propositions. A missing player name, an unexpected world, absent Othello state, lost inventory, or a mismatched current-space selector after a window exists is a persistence, play-space restoration, or runtime-integrity condition. It is not proof that the module entry point or bootstrap gate failed.',
+          '`runtime_state_root`, `runtime_cache_root`, `runtime_state_manifest_path`, and `runtime_integrity_key_path` derive later locations from `data_root`. They do not create files during root resolution. A chosen path therefore establishes where later owners look; it supplies no confirmation that a state envelope exists, passes integrity handling, or was applied to a session.',
         ],
         codeBlocks: [
           {
@@ -126,6 +130,7 @@ def __getattr__(name: str):
           'After bootstrap, `src/ludoxel/presentation/interface/windows/main.py` constructs the desktop process. It creates `QApplication`, assigns organization and application identity, loads an application icon when one exists, registers bundled fonts, applies the QSS theme, and only then proceeds toward single-instance coordination and state admission. Bundled font registration is a startup requirement in this path; failure raises before the final game window can be authorized as a partially styled desktop surface.',
           'Single-instance activation is an execution gate, not a saved-state operation. `SingleInstanceRelay` is bound to the managed data root. If an existing instance accepts activation, the new launch returns without constructing a second independent `MainWindow`. An apparent second launch may therefore be an activation request delivered to an existing desktop process.',
           'The player-name gate is also part of startup. The shell loads `AppStateStore`, normalizes the persisted player name, and displays `PlayerNameDialog` only when no launch name is available. Cancelling that dialog returns before `MainWindow` exists. That return is an intentional admission failure, not a renderer crash and not a failed play-space switch.',
+          '`MainWindow` receives the selected name as `launch_player_name` and passes it to `GameScreen`, which passes it to the backend-selected viewport. The name crosses this construction chain as an explicit argument. Its presence on the active viewport remains separate from later profile editing, persisted preference writes, and any label rendered over the game surface.',
         ],
         codeBlocks: [
           {
@@ -185,6 +190,7 @@ if not launch_player_name:
           '`MainWindow` is the host. It stores the resolved roots, constructs `GameScreen`, installs that screen as its central widget, and connects fullscreen behavior to the viewport. The existence of this host window proves that startup has passed the shell admission gates. It does not prove that the viewport has finished loading, that a play-space rule has executed, or that saved state has been applied without later contradiction.',
           '`GameScreen` chooses the platform viewport widget, constructs the HUD, and displays a loading overlay whose initial status is `Preparing viewport...`. The overlay is bound to the viewport loading-state and loading-status signals. `loading_finished` hides the overlay and queues the viewport focus transfer so the startup shell can finish its own completion work first.',
           'The startup splash in `src/ludoxel/presentation/interface/windows/main.py` follows the same status channel. On the first `loading_finished`, the shell closes `startupSplash`, restores the main window only when `QApplication` is active, and leaves the deferred viewport focus transfer to `GameScreen`. A visible splash, a host window with `Preparing viewport...`, and a focused viewport are distinct execution positions; they are not interchangeable evidence that ordinary play-space interaction has started.',
+          '`GameScreen` binds the overlay geometry to both `resizeEvent` and `showEvent`; an active overlay is raised after either update. The overlay therefore follows the host widget’s dimensions while loading. Its text is supplied from `loading_status_text()` and `loading_status_changed`, so a static screenshot identifies a presentation state and the latest reported status string, with no direct access to renderer internals or session persistence.',
         ],
         codeBlocks: [
           {
@@ -245,6 +251,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
           '`ViewportLifecycleMixin._on_application_state_changed` still clears held input, releases mouse capture, and suppresses the delayed pause while loading. Its runtime-activity gate now keeps the render timer alive when the initialized viewport remains visible and loading is active, even if `_application_active` is false. `_tick_sim` and `_on_step` continue to return during loading, so inactive startup does not advance player simulation, gameplay input, pause state, HUD interaction, or ordinary capture.',
           'When visible chunks become ready, `_finish_loading` clears loading state, updates HUD and cloud-motion state, re-evaluates runtime activity, emits `loading_state_changed(False)`, and emits `loading_finished`. The initial completion handler closes the splash before activating the main window when the application is already active; the queued `GameScreen` callback then focuses the viewport. This keeps preparation independent of foreground focus without making Ludoxel request foreground activation from an inactive desktop application.',
           'The implementation keeps Ludoxel-owned Qt timers and the render/upload path eligible to run during this specific inactive loading state. It does not establish that an operating system will display frames while the process is hidden, suspended, or denied rendering by the window manager, and it does not claim identical OpenGL and WGPU presentation timing on Windows and macOS.',
+          '`GLViewportWidget` accepts key, wheel, mouse-press, mouse-release, and mouse-move events during ordinary operation, then accepts and returns for each of those paths while `loading_active()` is true. Loading retains the preparation path while excluding gameplay mutation from these event handlers. The source fixes the in-application gate; compositor scheduling, driver behavior, and platform suspension remain outside this code path.',
         ],
         codeBlocks: [
           {
@@ -347,7 +354,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
     group: 'Launch and Space Selection',
     title: 'Switching Play Spaces',
     description:
-      'Defines the implemented play-space switch between My World and Othello. The switch replaces the active `SessionManager` reference inside an already constructed `PlaySpaceContext`, normalizes runtime state, publishes loading state, invalidates renderer upload and selection state, resynchronizes HUD surfaces, clears Othello transient controller state, and persists only the selected space id plus the two separate space payloads. The reference selection leaves the two play-space payloads unmerged, unconverted, and outside any support classification surface.',
+      'Traces the My World/Othello transition through `PlaySpaceContext`, `SessionManager`, pause-overlay signals, and the viewport controller. The accepted request replaces the active session reference, establishes a new loading cycle, resets upload and selection consumers, clears Othello controller transients, and preserves the two persisted payloads as separate schema branches under one normalized active-space selector.',
     sections: [
       {
         id: 'switching-play-spaces-context-authority',
@@ -355,6 +362,8 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         body: [
           'The switch is a mutation of `PlaySpaceContext.active_space_id` and a replacement of the active `SessionManager` reference consumed by the viewport, beneath the route name, button label, or visual mode flag a reader might take it for. `PlaySpaceContext` constructs two independent session managers at startup: one for My World and one for Othello. Both sessions receive the same default block registry, but each session retains its own world, player entity, AI-player collection, revision sequence, and domain interpretation.',
           '`session_for` normalizes the requested id and returns the matching manager. `set_active_space` mutates the active id and returns the manager for that normalized id. A switch changes the already constructed session authoritative for the viewport. The inactive session remains intact in memory; each play-space persistence path retains its own state form across the switch.',
+          '`all_sessions()` exposes the pair in a fixed My World/Othello order and `shutdown()` delegates shutdown to both managers. The active selector therefore controls viewport consumption, not the lifetime of a single global world object. A request containing an unknown value is first sent through `normalize_play_space_id`; only the normalized result reaches the manager lookup.',
+          'A request for the already active normalized id takes the early return in `switch_play_space`; `resume=True` closes the pause overlay and refreshes runtime cadence, while the world, upload tracker, selection state, and Othello controller state remain in their current form. The no-op path establishes that a destination label alone does not trigger a session reload.',
         ],
         codeBlocks: [
           {
@@ -397,6 +406,7 @@ def set_active_space(self, space_id: object) -> SessionManager:
         body: [
           'The two sessions are built from different domain seeds. My World is created from `MyWorldSessionSeed` and `generate_test_map`; Othello is created from `OthelloSessionSeed`, a flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their generated worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
           'The shared `SessionManager` type is a runtime envelope, not an erasure of domain origin. Treating the switch as a mode toggle over one world misstates the implementation. The code creates two domain sessions first and later selects one active reference. The hidden session remains a session with its own world revision and actor state, not a dormant view over the active world.',
+          '`make_session_manager` constructs each manager from a `SessionSettings` value, a `WorldState`, a `PlayerEntity`, and the registry. `SessionManager.__post_init__` then constructs its `InteractionService`, `GravitySystem`, and AI manager around that world and player. My World and Othello consequently begin with separate simulation envelopes even though `PlaySpaceContext.create_default` passes one default registry into both factories.',
         ],
         codeBlocks: [
           {
@@ -439,6 +449,7 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
         body: [
           'Startup restoration does not load only the space that will be shown first. `apply_persisted_state_if_present` applies persisted settings to every session, restores My World from `state.my_world`, restores Othello from `state.othello_space`, repairs Othello board placement, lifts the Othello player above the board when required, restores overlap exemptions, normalizes runtime preferences, and then calls `sessions.set_active_space(runtime.current_space_id)`. The selected runtime reference is admitted only after both persisted branches have been projected back into their session managers.',
           '`SessionManager.set_active_space` makes the later visible switch non-destructive after startup. The dormant space is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. Envelope validation and semantic correctness remain with the persistence paths for `state/player_state.json`, `state/world_state.json`, and the Othello payload.',
+          '`AppState` carries `current_space_id`, `my_world`, and `othello_space` as separate fields alongside shared settings, inventory, and Othello settings. That schema shape preserves the split introduced by the session factories. A current-space value selects one branch for presentation after restoration; it does not serialize a conversion between `PersistedPlaySpace` and `PersistedOthelloSpace`.',
         ],
         codeBlocks: [
           {
@@ -476,6 +487,7 @@ apply_runtime_to_renderer(runtime, renderer)`,
         body: [
           'The visible switch command is exposed through the pause overlay. `PauseOverlay` declares separate signals for My World and Othello, wires them to the two menu buttons, and disables the button representing the current normalized space. That disabled state is a presentation guard: the overlay does not offer the active destination as a distinct operation.',
           'The viewport controller binds those signals to `switch_play_space` with `resume=True`. The command is therefore a pause-menu dispatch path. It exits the overlay when a same-space request is resumed or when a real switch is accepted. The pause origin matters because the controller resets held mouse actions, cancels route editing, and clears transition feedback before the active session reference changes.',
+          '`PauseOverlay.keyPressEvent` maps Escape to `resume_requested`; destination buttons emit their own signals without embedding a session mutation. The widget records the enabled state for the two controls, while `bind_overlay_actions` supplies the controller callbacks. A displayed button therefore reports an available request path; `switch_play_space` remains the owner of the accepted transition.',
         ],
         codeBlocks: [
           {
@@ -511,6 +523,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
           'The controller sequence is the operative switch. It first normalizes the requested space and short-circuits if the normalized value already equals `viewport._state.current_space_id`. A same-space request with `resume=True` resumes from the overlay and returns. It does not reload the world, rebind the renderer, rewrite saved state, or reinitialize the Othello controller.',
           'A real space change follows a fixed mutation order: compute the loading label; reset held mouse actions; cancel route editing; clear block-break particles; clear Othello transition state; write the normalized runtime id; normalize runtime preferences; replace `viewport._session` with `viewport._sessions.set_active_space(normalized)`; run learning-runtime flush and configuration against the post-swap active session reference; begin loading; update the pause-overlay current-space state; reset upload tracking against the new session world; invalidate the selection target; clear renderer selection; resynchronize hotbar, first-person target, Othello HUD, and gameplay-HUD visibility; optionally resume; request an Othello AI move if the destination state requires it; then schedule a widget update.',
           'The order corrects a common but false inference. The learning runtime is not flushed against the session being left by this code. The `_session` reference is replaced before `_learning_runtime.flush(viewport._session)` is called. The flush and configuration therefore address the new active session reference selected by `set_active_space`, not an invented departing-session hook.',
+          'The controller writes the normalized id into `viewport._state`, calls `normalize()`, then replaces `viewport._session` before beginning loading. `WorldUploadTracker.reset` receives `viewport._session.world` after that replacement, and `settings_controller.sync_hotbar_widgets` plus `sync_first_person_target` read from the same active reference. Upload cadence, selected target, visible hotbar, and held-item projection therefore converge on one destination session before the next repaint request.',
         ],
         codeBlocks: [
           {
@@ -559,6 +572,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
         body: [
           'Switching out of or into Othello requires more than changing a world reference. The Othello viewport controller carries transient analysis, AI request arming, hover-square state, render-state caches, title flashes, passive messages, opening-book learning progress, and animation settlement. `clear_state_for_space_switch` cancels or clears those volatile surfaces before the active session reference is exchanged.',
           'That cleanup resets the controller at the boundary where Othello-specific transient state would otherwise leak into a different visible space or survive as stale HUD evidence. The persisted Othello game is untouched: its board state remains governed by `PersistedOthelloSpace` and by the save/load path, while the cleanup removes only transient viewport state.',
+          '`clear_state_for_space_switch` clears pending results, request arming, hover coordinates, HUD signatures, render cache keys, analysis values, book-learning progress, title flash, and passive message text. Those fields reside on the viewport controller; `AppState` carries the persisted Othello payload separately. The cleanup changes immediate controller memory and presentation eligibility while the schema field remains intact.',
         ],
         codeBlocks: [
           {
@@ -631,6 +645,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
         body: [
           'Saving records the normalized active selector and the two separate space payloads. `save_state` writes `current_space_id=normalize_play_space_id(state_runtime.current_space_id)`, serializes `sessions.my_world` into `PersistedPlaySpace`, and serializes `sessions.othello` into `PersistedOthelloSpace`. The selector answers which session should be active at the next admission point; it does not collapse the stored payloads into one shared world.',
           'The switch sequence ends at the runtime boundary between visible space selection and persisted state. It identifies which session is active, which pause-overlay command invoked the change, which upload and selection state was invalidated, and which HUD or Othello transient state was resynchronized. The persisted envelopes stay unread as evidence here: their stored content, the correctness of a saved-preference, saved-world, or saved-Othello payload, and any claim of data loss, data duplication, support admissibility, or license authority are settled by the save/load path and the governing policy, not by a switching observation.',
+          'A pause-menu selection reports the controller path, normalized destination, loading state, and post-switch presentation reset. It cannot establish that a subsequent save reached disk or that a previous payload was semantically correct. `AppState` and its nested persisted branches are the data model; controller-side selection supplies the runtime choice that a later save operation may record.',
         ],
         codeBlocks: [
           {
@@ -665,7 +680,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
     group: 'Window and Item Surfaces',
     title: 'Reading the Main Window',
     description:
-      'Identifies the visible regions of the Ludoxel game window and the components behind them: the renderer-drawn central viewport, the HUD layered above it, the preparing overlay, and the modal surfaces that take focus. Rendered labels serve the presentation layer; overlays read and write through controllers connected to saved state.',
+      'Maps the Ludoxel window to its concrete presentation owners: the backend-selected viewport, `HUDWidget`, loading `StatusOverlayFrame`, hotbar and health surfaces, and modal overlays. Each region receives or blocks input through a defined Qt surface; controller signals and synchronization paths deliver renderer and session data into the window, while visible labels consume their presentation values.',
     sections: [
       {
         id: 'reading-the-main-window-composition',
@@ -673,6 +688,8 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewp
         body: [
           '`GameScreen` is the central widget of the main window. It places a platform-specific viewport widget in a zero-margin vertical layout and creates a HUD widget that is driven from the viewport. The viewport renders the world; the HUD is layered above it and receives payloads through a signal connection.',
           'On macOS the viewport is the wgpu-backed renderer widget; on every other platform it is the OpenGL widget. Both present the same game surface to the player, so what you see in the central region is renderer output, and the labels drawn over it are HUD elements, not the underlying simulation or save data.',
+          '`GameScreen` constructs the selected viewport with `project_root`, `resource_root`, `data_root`, and the launch player name, then passes `HudPayload` values through `hud_updated.connect(self.hud.set_payload)`. The platform branch selects a widget class; it does not prove backend equivalence beyond this shared host wiring. The displayed scene and the text labels arrive through different consumers inside the same central widget stack.',
+          '`HUDWidget` itself is transparent to mouse events, has no system background, and creates two plain-text labels. It calculates their available panel width from the window width, then places a left label and optional right label. This root HUD surface provides an overlay for payload text; it receives no keyboard focus and carries no direct overlay-navigation actions.',
         ],
         codeBlocks: [
           {
@@ -696,6 +713,7 @@ self.viewport.hud_updated.connect(self.hud.set_payload)`,
         body: [
           'A `StatusOverlayFrame` is created over the game screen with the title "Ludoxel" and status text "Preparing viewport...". It is sized to the full screen, raised above the viewport, and shown whenever the viewport reports active loading. When loading finishes it hides and hands focus to the viewport.',
           'If this overlay is visible, the central region is not yet interactive. The overlay tracks the viewport loading state and status text through signals, so the status line can change while the surface is still preparing. A visible preparing overlay is a load-in-progress state, distinct from a finished, input-accepting viewport.',
+          'The viewport event handlers accept and return while `loading_active()` holds, covering keyboard, wheel, button, and mouse-move entry points. `GameScreen` then hides the overlay on `loading_finished` and queues focus with `QTimer.singleShot(0, ...)`. Overlay visibility, event admission, and focus transfer form one load-state transition; the status frame itself contains neither a session manager nor renderer command path.',
         ],
         codeBlocks: [
           {
@@ -718,6 +736,7 @@ def resizeEvent(self, e) -> None:
         body: [
           'The HUD draws on top of renderer output: the hotbar and its health strip near the bottom, the crosshair at the center, and text payloads supplied by the viewport. AI status tags and debug metrics are also HUD layers. None of these own simulation rules; they display values produced elsewhere.',
           'The HUD payload is a small frozen dataclass with left and right text fields, pushed from the viewport via `hud_updated`. Reading a number off the HUD is reading a presentation label, so a wrong HUD value is a display question, while a wrong saved value is a persistence question handled by the data pages.',
+          '`HUDWidget.set_payload` coerces an incoming payload into left and right strings and returns early when both strings match the prior values. Its relayout code sizes labels from their text and current widget bounds. The HUD owns text placement and truncation behavior; it does not mutate the `SessionManager`, `RuntimePreferences`, block registry, or persisted envelopes that produced values upstream.',
         ],
         codeBlocks: [
           {
@@ -740,6 +759,7 @@ class HudPayload:
         body: [
           'The hotbar widget centers a fixed row of nine slots near the bottom of the screen, with a pixel-art health strip positioned just above it. The hotbar is transparent to mouse events; it reflects the selected slot and item icons but does not capture clicks, so pointer input passes through to the captured viewport.',
           'The health strip is only visible when the active mode shows health. It draws hearts from a fixed bitmap mask scaled to the strip width, filling proportionally to the current health relative to the maximum. Both surfaces are positioned in code, while their colors and styling come from the theme.',
+          '`HotbarWidget.set_status` forwards `show_health`, `health`, and `max_health` into `_HealthStrip`; `_HealthStrip.set_state` clamps displayed health into the supplied maximum and requests repaint. The input-transparent attributes on both `HotbarWidget` and its display slots preserve pointer delivery to the viewport. A highlighted slot or heart fill therefore supplies presentation feedback without becoming a clickable inventory editor.',
         ],
         codeBlocks: [
           {
@@ -764,6 +784,7 @@ class HudPayload:
         body: [
           'Inventory, pause, settings, death, AI settings, and Othello settings are overlay widgets that temporarily take input focus over the viewport. While one is open, gameplay input is blocked, and the overlay reads and writes through controllers connected to application state.',
           'These surfaces sit above the viewport in the same window. Which overlay is open determines what a key press or click does next, so when describing the window state it matters whether the central viewport is live or whether an overlay such as the inventory or pause menu currently owns input.',
+          '`RendererViewportWidget` creates `PauseOverlay`, `SettingsOverlay`, `OthelloSettingsOverlay`, `DeathOverlay`, and `InventoryOverlay`, then places their references in `ViewportOverlays`. The event path checks modal and capture state before treating mouse motion as gameplay input. A window screenshot can identify an overlay surface; it cannot show the controller mutation that led there unless the corresponding runtime state and signal path are also observed.',
         ],
         codeBlocks: [
           {
@@ -787,6 +808,7 @@ class HudPayload:
         body: [
           'When the player dies, the death overlay shows a "YOU DIED" panel with a message line and a Respawn button. While it is visible the pause menu cannot be opened, so this surface takes priority over the other overlays.',
           'The message text is set from the cause of death and defaults to "Player died." The Respawn button emits a single request that the controller turns into a respawn. Its presence identifies the session’s dead state.',
+          '`DeathOverlay` owns the title label, message label, and `respawn_requested` signal. `bind_overlay_actions` connects that signal to `respawn(viewport)`, where the active `SessionManager` resets the player and the controller clears selection plus held mouse actions. The button identifies a recovery entry point; its label does not describe the world, inventory, or save operation performed elsewhere.',
         ],
         codeBlocks: [
           {
@@ -809,6 +831,7 @@ class HudPayload:
         body: [
           'The game screen sets a styled dark background before and around viewport content. A narrow object-name selector applies the background color to the game-screen widget itself.',
           'Because the central widget paints its own `#121212` background under the viewport, the window never shows desktop bleed-through: the viewport renders over the solid background, and the HUD and overlays stack above it. The visible window is therefore a deliberate stack of solid background, renderer output, HUD, and any active overlay.',
+          'The background declaration belongs to `GameScreen` and executes before the backend viewport is inserted into its zero-margin layout. It supplies a host-widget paint surface around renderer content. The declaration provides no information about world geometry, scene clear color, backend shader state, or the composition timing of HUD and overlays beyond their shared parent widget.',
         ],
         codeBlocks: [
           {
@@ -829,7 +852,7 @@ self.setStyleSheet("QWidget#gameScreen { background: #121212; }")`,
     group: 'Window and Item Surfaces',
     title: 'Using the Hotbar',
     description:
-      'Describes the nine-slot hotbar: how the selected slot is chosen with the number keys and the mouse wheel, how the currently held item is resolved, how slots are cleared, and how the display widget mirrors the simulation hotbar without owning it. The HUD hotbar is a transparent display layer over the viewport.',
+      'Defines the nine-slot hotbar as normalized simulation state consumed by keybind dispatch, interaction resolution, first-person targeting, and a transparent HUD projection. Direct index selection, wrapped wheel cycling, assignment, clearing, item-id resolution, tooltip derivation, and photo refresh each pass through explicit owners before the visible slot row changes.',
     sections: [
       {
         id: 'using-the-hotbar-nine-slots',
@@ -837,6 +860,8 @@ self.setStyleSheet("QWidget#gameScreen { background: #121212; }")`,
         body: [
           'The hotbar size is fixed at nine. Slot contents are normalized to a tuple of nine item-id strings, padding with empty strings and truncating extras, so the hotbar always has a well-defined width regardless of what was loaded or assigned.',
           'Each slot holds an item id or the empty string for an empty hand. The selected index is normalized into the valid range, with out-of-range values clamped to the nearest endpoint.',
+          '`normalize_hotbar_slots` accepts a `Sequence[object] | None`, converts non-null entries to stripped strings, pads short input, and truncates excess entries. `default_hotbar_slots` calls that function with `None`. The fixed tuple shape is the hotbar contract consumed by settings synchronization and visible slot widgets; raw list length carries no independent gameplay meaning after normalization.',
+          '`hotbar_panel_width` derives a panel width from slot count, 46-pixel slot sides, and 6-pixel gaps; `centered_hotbar_panel_geometry` applies the 18-pixel bottom margin. `HotbarWidget._layout_children` follows the same dimensions while placing the health strip eight pixels above the panel. These layout constants determine screen placement alone and never index or mutate a hotbar item tuple.',
         ],
         codeBlocks: [
           {
@@ -861,6 +886,7 @@ def normalize_hotbar_index(index: int, *, size: int = HOTBAR_SIZE) -> int:
         body: [
           'Each hotbar slot has its own bound action, named for its one-based slot number. The default bindings map the digit keys 1 through 9 directly onto the nine slots, so pressing a number selects the matching slot.',
           'These are real keybinds, resolved through the same keybind settings as movement and other actions. Because hotbar actions are distinguished from ordinary actions, the input path never confuses a slot selection with another bound key.',
+          '`KeybindSettings` stores an action-to-binding map and builds the inverse key-to-action map after normalizing names and duplicate bindings. `hotbar_index_for_action` maps only the `HOTBAR_ACTIONS` sequence back to a zero-based slot index. A changed keybind therefore changes action resolution first; the hotbar receives an index only after that action-level admission.',
         ],
         codeBlocks: [
           {
@@ -879,6 +905,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         body: [
           'The selection can also be moved by a number of steps, which is how the mouse wheel changes slots. Cycling wraps around the nine slots using modular arithmetic, so scrolling past the last slot returns to the first and scrolling before the first moves to the last.',
           'A step of zero leaves the selection unchanged. This wrap-around behavior is intentionally different from the clamping used for direct index selection, because cycling is meant to be continuous.',
+          '`cycle_hotbar_index` first clamps the existing selected index through `normalize_hotbar_index`, then applies `delta_steps` with `% width`. The source distinguishes the two operations by their inputs: direct selection admits a destination index, while wheel movement applies a signed displacement to an existing valid selection. The function changes an index value only; item contents remain untouched.',
         ],
         codeBlocks: [
           {
@@ -900,6 +927,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         body: [
           'The currently held item is the content of the selected slot. The resolver normalizes the slots and index, reads the item id at the selected slot, and returns it, or returns nothing when that slot is empty.',
           '`current_hotbar_block_id` supplies the single hotbar read used by the first-person held-item visual and placement logic. An empty selected slot resolves to an empty hand, which removes the held-block visual and provides no block to placement.',
+          '`SessionManager.place_block` delegates placement through `application/sessions/managers/interactions.py` into its session interaction service, accepting a `block_id` argument supplied by the active hotbar path. The resolver returns `None` for an empty value before that call. A selected icon alone carries no placement authority; the downstream interaction service receives the resolved id and applies its own target and rule checks.',
         ],
         codeBlocks: [
           {
@@ -919,6 +947,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         body: [
           'A slot can be set to a specific item id, or cleared by assigning nothing. Assignment normalizes the existing slots first, replaces the chosen index, and returns a new tuple, leaving the other slots untouched. Passing nothing as the item produces an empty slot.',
           'The default "Clear Selected Slot" action is bound to Q. It empties the selected slot, which is the quick way to return a slot to an empty hand without opening the inventory.',
+          '`with_hotbar_assignment` is a pure tuple transformation. It neither writes a persistence store nor updates a Qt widget. Controller code must install the returned value into runtime state, then call hotbar and first-person synchronization consumers before the window reflects the assignment. The clear action uses the same state path with an empty item value.',
         ],
         codeBlocks: [
           {
@@ -936,8 +965,9 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         id: 'using-the-hotbar-display-widget',
         title: 'The HUD Hotbar Is a Display Mirror',
         body: [
-          'The on-screen hotbar widget is a display of the simulation hotbar, not its owner. It builds nine fixed-size display slots, marks itself transparent to mouse events, and is synchronized by being told the slot contents and the selected index. It renders icons and tooltips but never captures input.',
+          '`HotbarWidget` projects simulation hotbar state into nine fixed-size display slots. It marks the root and child slots transparent to mouse events, receives normalized contents plus selected index through `sync_hotbar`, and renders icons and tooltips without accepting an assignment request.',
           'When synchronized, the widget normalizes the incoming slots and index exactly as the simulation does, then sets each slot button to the matching item, tooltip, and selected state. Item icons are supplied asynchronously by a photo provider and updated as they become available.',
+          '`apply_item_slot_state` writes the Qt properties `itemId` and `selected`, tooltip text, and the current pixmap before refreshing widget style. `_DisplaySlot` has `Qt.NoFocus` and the arrow cursor, while the hotbar root is also input-transparent. The visual selected border thus follows a synchronized index and remains outside keyboard focus and mouse dispatch.',
         ],
         codeBlocks: [
           {
@@ -959,6 +989,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         body: [
           'Each display slot carries a tooltip generated from the block registry for the slot index and item id. An empty slot reports an empty hand; a filled slot reports the item it holds. The tooltip text is derived, not stored, so it always reflects the current slot content.',
           'Because the tooltip is computed from the registry, it stays consistent with the item icons. When the photo provider reports a new icon for an item, the matching slots are re-synced so icon and tooltip update together.',
+          '`ItemPhotoProvider.pixmap_for_item` first parses a state string to its base id, then checks the cache, special-item descriptors, registered block definition, animated thumbnail, static thumbnail, and item texture paths in that order. Missing descriptors or files produce `None`. The hotbar can therefore present an empty icon surface while retaining the normalized item id and registry-derived tooltip; source availability controls the image result.',
         ],
         codeBlocks: [
           {
@@ -984,7 +1015,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
     group: 'Window and Item Surfaces',
     title: 'Using the Inventory Overlay',
     description:
-      'Explains the inventory overlay: how it opens and closes, how creative and survival modes differ, how the searchable item grid is built from the block registry and special-item catalog, and how clicking, dragging, or pressing a number key assigns an item to a hotbar slot. The overlay edits hotbar state through signals.',
+      'Defines the inventory as a focus-taking overlay whose creative catalog is assembled from `BlockRegistry` and catalog-visible special-item descriptors. Search, click, drag, and numeric assignment emit requests through overlay-navigation and settings controllers; the active hotbar state mutates only after that controller path admits the request.',
     sections: [
       {
         id: 'using-the-inventory-overlay-toggle',
@@ -992,6 +1023,8 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         body: [
           'The inventory is bound to the toggle-inventory action, which defaults to E. Inside the overlay, the same bound action or the Escape key closes it. Closing emits a closed signal so the controller can hide the overlay and re-arm the viewport.',
           'While the overlay is open it holds input focus, so the keys that would otherwise move the player are interpreted by the overlay. Opening the inventory therefore enters a held-focus state that routes the movement keys to the overlay until E or Escape closes it, a deliberate state change beyond a transient popup.',
+          '`InventoryOverlay.setVisible` clears the hover id and search text when the surface hides. When a visible creative inventory opens, it focuses and selects the search box with `PopupFocusReason`. The controller receives the `closed` signal and calls `_set_inventory_overlay(False)` followed by `arm_resume_refresh`, so visibility, input focus, capture recovery, and repaint eligibility are coordinated through the overlay path.',
+          '`BlockRegistry.register` rejects mutation after sealing, empty ids, and duplicate ids; `create_default_registry` builds its default catalog once behind a lock and seals it before reuse. Inventory construction reads `all_blocks()` from that registry. The overlay can order and display registered definitions, yet it holds no path that extends the registry from a catalog search or drag operation.',
         ],
         codeBlocks: [
           {
@@ -1011,6 +1044,7 @@ if bound_action == ACTION_TOGGLE_INVENTORY or key == int(Qt.Key.Key_Escape):
         body: [
           'In creative mode the overlay is titled "CREATIVE INVENTORY" and shows the searchable item catalog and search box. In survival mode it is titled "SURVIVAL INVENTORY", hides the catalog and search, and states that creative item selection is unavailable.',
           'The creative-mode toggle defaults to B. Switching modes changes the title, the subtitle instructions, and whether the catalog grid and search box are visible, while the hotbar row at the bottom remains in both modes.',
+          '`set_creative_mode` clears the hovered catalog item and search query on the survival branch, hides both catalog surfaces, and keeps the overlay’s normalized hotbar slots intact. The mode changes a presentation and controller admission condition; it does not manufacture a new item catalog, alter the block registry, or write a saved hotbar branch by itself.',
         ],
         codeBlocks: [
           {
@@ -1036,6 +1070,7 @@ self._catalog_scroll.setVisible(False)`,
         body: [
           'The catalog is assembled from every block in the block registry plus every special item in the special-item catalog. Each entry becomes a draggable button with an icon and a search key built from its display name and id, and special items add their description to the search key.',
           'The grid is laid out twelve columns wide. Registry and catalog entries determine the inventory’s item set at runtime.',
+          '`BlockRegistry.all_blocks` returns definitions sorted by block id. `iter_catalog_special_items` filters descriptors by `catalog_visible`, while the special-item registry joins core and Othello descriptor sources under normalized ids. The inventory’s item list is therefore a projection of the active registry and catalog-visible descriptors. A raw item-id string absent from those owners has no catalog button generated here.',
         ],
         codeBlocks: [
           {
@@ -1062,6 +1097,7 @@ for descriptor in iter_catalog_special_items():
         body: [
           'The search box filters the catalog by splitting the query into tokens and keeping only entries whose search key contains every token. The search key is case-folded name, id, and (for special items) description, so a partial name or id narrows the grid.',
           'While the search box has focus it takes priority: typing edits the query, and only Escape is treated specially to close the overlay. This keeps number keys and other shortcuts from firing while you are typing a search.',
+          '`_apply_filter` removes the current grid layout entries, hides their widgets, then re-adds matching buttons across twelve columns. It also clears `_hovered_item_id` when its item falls outside the filtered id set. Search reshapes the visible catalog and hover candidate; it never assigns an item until a click, drop, or numeric branch emits a controller-facing signal.',
         ],
         codeBlocks: [
           {
@@ -1079,6 +1115,7 @@ matching_entries = [entry for entry in self._slot_entries if all(token in entry[
         body: [
           'There are three ways to put an item into the hotbar. Clicking an item assigns it to the currently selected hotbar slot. Dragging an item onto a specific hotbar slot assigns it there. Hovering an item and pressing 1-9 assigns it to that numbered slot. Each path emits a hotbar-assignment signal that the controller applies.',
           'The hotbar row inside the overlay is itself made of slots that accept drops and report selection. Dropping an item both assigns the slot and selects it, so a drag leaves that slot active.',
+          '`DraggableItemButton` creates `application/x-ludoxel-block-id` MIME data and executes a copy drag. `_HotbarSlotButton.dropEvent` decodes that MIME payload, emits `item_dropped`, emits `slot_selected`, and accepts the proposed action. The widget transfers an item id and target slot index; overlay-navigation and settings controllers remain responsible for installing the resulting runtime hotbar value.',
         ],
         codeBlocks: [
           {
@@ -1100,6 +1137,7 @@ if idx is not None:
         body: [
           'The overlay does not write hotbar state directly. It emits item-selected, hotbar-slot-selected, and hotbar-slot-assigned signals, which the overlay-navigation controller connects to the settings controller. A creative selection sets the active slot to the chosen item and re-syncs the hotbar and first-person target.',
           'The emitted signals route inventory hotbar changes through the controller. The controller evaluates permission, including the creative-mode condition, before applying the change.',
+          '`bind_overlay_actions` connects `item_selected`, `hotbar_slot_selected`, and `hotbar_slot_assigned` separately. `on_inventory_selected` checks both `viewport._state.creative_mode` and `settings_controller.inventory_available(viewport)` before mutating the active slot; assignment and selection use their dedicated settings-controller functions. The signal graph gives click, hover-plus-number, and drag operations a common runtime consumer without giving the overlay direct access to the session state object.',
         ],
         codeBlocks: [
           {
@@ -1121,6 +1159,7 @@ if idx is not None:
         body: [
           'Item icons are provided by a photo provider that becomes active only while the overlay is visible in creative mode. As icons become available the overlay updates the matching catalog buttons and re-syncs the hotbar row, so icons can appear shortly after the grid is shown.',
           'Because the provider is deactivated when the overlay is hidden, the inventory does not keep generating icons in the background. This keeps icon work tied to the time the catalog is actually on screen.',
+          '`ItemPhotoProvider` owns caches for static pixmaps, animated pixmaps, and `QMovie` instances. `set_active` and `set_animations_enabled` synchronize each movie’s playback state; an inactive provider stops a movie, jumps to frame zero, updates its cache, and emits the item id. The visible grid and hotbar row consume those emissions through `_on_item_pixmap_changed`, while registry membership and hotbar assignment remain unchanged.',
         ],
         codeBlocks: [
           {
@@ -1142,7 +1181,7 @@ if idx is not None:
     group: 'Camera and Capture',
     title: 'Looking Around',
     description:
-      'Explains how mouse movement turns into camera rotation: relative mouse deltas become yaw and pitch changes applied to the player each fixed step, pitch is clamped to avoid flipping, and the look axes can be inverted. Camera rotation is applied through the player step, not directly to the renderer camera.',
+      'Traces relative pointer movement through `ViewportInput`, `QtInputAdapter`, session stepping, `PlayerEntity`, and third-person camera resolution. Mouse deltas become sensitivity-scaled yaw and pitch deltas in the fixed-step input; the player owns the resulting orientation, the pitch clamp bounds it, and renderer cameras consume the established pose.',
     sections: [
       {
         id: 'looking-around-relative-delta',
@@ -1166,6 +1205,8 @@ if idx is not None:
         body: [
           'Camera rotation is driven by relative mouse movement, not the absolute cursor position. The input adapter accumulates a mouse delta as the pointer moves, and the consume step reads that delta and resets it for the next frame.',
           'Accumulating deltas means rotation is continuous and unbounded by the screen edges: the pointer is held at the center of the viewport while only its movement is reported. Holding the pointer at the center and reporting only its movement is what lets you keep turning in one direction without the cursor leaving the window.',
+          '`QtInputAdapter` stores `_mdx` and `_mdy` until `consume()` creates one `InputFrame` and resets both accumulators to zero. `ViewportInput.consume` then returns that frame with a `MouseDelta` after inversion handling. Relative motion therefore has a bounded collection interval: one consumed step observes the accumulated pointer displacement since the previous consume, then clears that raw accumulator for the next input interval.',
+          '`PlayerMotionState` separately tracks visual body and head angles. `_update_player_visual_animation` eases those display angles toward the immediate player yaw and pitch with bounded lag values, while `PlayerEntity.yaw_deg` and `pitch_deg` retain the step result. The visible model can trail a turn; the input, collision, and camera-anchor orientation stay on the player entity.',
         ],
         codeBlocks: [
           {
@@ -1189,6 +1230,7 @@ def consume(self) -> InputFrame:
         body: [
           'When the input frame is consumed, the horizontal and vertical mouse deltas can each be negated according to the invert-x and invert-y preferences. This is applied at the boundary between raw input and camera control, so a single setting flips the corresponding look direction.',
           'Because inversion happens at consume time, the rest of the pipeline always receives a delta in the player’s preferred orientation. Nothing downstream needs to know whether the axes were inverted.',
+          'The preferences enter the input path as `invert_x` and `invert_y` arguments to `ViewportInput.consume`. The adapter keeps raw deltas independent of those flags; inversion mutates the values passed onward from the consume boundary. Session stepping receives the resulting `mdx` and `mdy`, not the preference object itself, so the simulation path operates on already-oriented deltas.',
         ],
         codeBlocks: [
           {
@@ -1212,6 +1254,7 @@ def consume(self) -> InputFrame:
         body: [
           'The mouse delta is converted into yaw and pitch deltas that are passed into the player step input. Each fixed step adds the yaw delta and pitch delta to the player’s heading and elevation before movement and collision are resolved.',
           'Rotation is therefore part of the same fixed-step simulation as movement, not a separate camera-only update. The yaw and pitch the renderer reads come from the player entity after the step, so the view direction stays consistent with what collision and picking use.',
+          '`step_session` computes `yaw_delta = -mdx * mouse_sens_deg_per_px` and `pitch_delta = mdy * mouse_sens_deg_per_px`, then constructs `PlayerStepInput` alongside movement flags. `advance_runtime_player` applies those angles before it builds movement input, resolves flying or grounded motion, and asks collision code for integration. The resulting player orientation supplies a shared input to view direction, camera snapshots, and target selection consumers.',
         ],
         codeBlocks: [
           {
@@ -1229,6 +1272,7 @@ player.clamp_pitch()`,
         body: [
           'After the pitch delta is applied, the player pitch is clamped so the view cannot roll past straight up or straight down. This keeps the camera from flipping over when you push the mouse to its vertical limit.',
           'Yaw is free to accumulate without a limit, since turning all the way around is expected. The asymmetry between a clamped pitch and an unbounded yaw matches normal first-person look behavior.',
+          '`PlayerEntity.clamp_pitch` calls the scalar clamp with `-89.5` and `89.5`; `yaw_deg` receives additive updates without a normalization operation in `advance_runtime_player`. This source establishes the angular range of player pitch. It supplies no independent guarantee about controller sensitivity values, operating-system pointer acceleration, or platform capture availability.',
         ],
         mathBlocks: [
           {
@@ -1272,6 +1316,7 @@ class PlayerStepInput:
             },
             ' is produced is a visual effect only. The look direction that camera control, picking, placement, and the first-person view use is the immediate heading, so it is never delayed by the visible body or head turn.',
           ],
+          '`cycle_camera_perspective` normalizes the stored value, advances within `CAMERA_PERSPECTIVE_ORDER`, updates HUD and view-model visibility, synchronizes the settings surface, and invalidates the selection target. `resolve_camera` consumes the normalized perspective with the player eye and angles: first person returns the anchor eye, back view places a desired eye behind it, and front view derives its look angles from the resolved eye-to-anchor direction. The player entity remains the orientation owner throughout that renderer-facing selection.',
         ],
         codeBlocks: [
           {
@@ -1289,6 +1334,7 @@ DEFAULT_KEYBINDS[ACTION_CYCLE_CAMERA_PERSPECTIVE] = "F5"`,
         body: [
           'Relative look deltas are only produced while the mouse is captured. When capture is off, the pointer is a normal cursor and no look delta is generated, so menus and overlays leave the camera still.',
           'On the polling path, the captured cursor is repeatedly compared against the viewport center and warped back, turning each frame’s offset into a delta. If you cannot look around, the first thing to confirm is whether the viewport is captured.',
+          '`poll_relative_mouse_delta` exits before any cursor read when `_captured` is false. During capture synchronization it clears accumulated delta, recenters the cursor, and waits for two near-center polls; ordinary polling then adds only non-zero offsets. Capture state therefore gates delta production before the session sees mouse sensitivity or player-angle computation.',
         ],
         codeBlocks: [
           {
@@ -1311,6 +1357,7 @@ self._warp_cursor_to_center()`,
         body: [
           'The raw pixel delta is not used directly as a degree value. It is scaled by the mouse-sensitivity preference when forming the yaw and pitch deltas, so the same pointer movement turns the view more or less depending on the setting.',
           'Because sensitivity is applied before the player step, changing it adjusts how far the view turns per unit of mouse movement without affecting movement speed or any other input. Camera feel is therefore a settings concern that builds on the look pipeline described here.',
+          '`SessionSettings` supplies `mouse_sens_deg_per_px` to `step_session`; settings controller code applies sensitivity across session settings, while movement parameters such as walk speed live in separate fields. The multiplication has no branch that modifies `move_f`, `move_s`, collision bounds, or camera perspective. A look-speed observation therefore concerns the session setting and consumed pointer deltas, not the hotbar or world save payload.',
         ],
         mathBlocks: [
           {
@@ -1330,7 +1377,7 @@ self._warp_cursor_to_center()`,
     group: 'Camera and Capture',
     title: 'Using Mouse Capture',
     description:
-      'Explains pointer capture during gameplay: how the viewport grabs the mouse and keyboard, hides the cursor, and recenters it so movement becomes a relative look delta, including the macOS native relative-capture and keyboard-guard paths. Capture is released when an overlay opens or the viewport loses focus.',
+      'Defines gameplay pointer capture as a viewport input state: focus, blank cursor, mouse and keyboard grabs, relative-delta production, and release each have separate operations in `ViewportInput`. macOS adds CoreGraphics relative capture and a distinct native keyboard guard; overlay, focus, loading, and shutdown transitions remove capture before their own surfaces accept input.',
     sections: [
       {
         id: 'using-mouse-capture-grab',
@@ -1338,6 +1385,8 @@ self._warp_cursor_to_center()`,
         body: [
           'Turning capture on activates the window, focuses the viewport, hides the cursor with a blank cursor override, and grabs both the mouse and keyboard. Grabbing routes pointer and key events to the viewport so gameplay input is not stolen by other widgets.',
           'The cursor is hidden both through a Qt override cursor and by setting the blank cursor on the viewport and its host window, so the pointer does not reappear over the window chrome while you play.',
+          '`set_mouse_capture(True)` records `_captured` before it activates the host, focuses the viewport, applies the override, sets both cursors, and requests Qt grabs. `ensure_mouse_capture_applied` repeats the focus and cursor application while capture stays active. The capture state therefore controls the input adapter’s own actions; Qt and the operating system still retain their separate focus and permission rules.',
+          '`MacosCursorWarp.available()` and `warp()` reject non-macOS execution and report CoreGraphics load or call failures through `MacosCursorWarpResult`. `ViewportInput` falls through to `QCursor.setPos` when that native warp does not succeed. The result identifies the branch selected by Ludoxel; it cannot certify the host desktop’s pointer confinement, Input Monitoring grant, or all device-specific event behavior.',
         ],
         codeBlocks: [
           {
@@ -1359,6 +1408,7 @@ self._w.grabKeyboard()`,
         body: [
           'On the non-native path, capture works by warping the cursor back to the viewport center and measuring how far it moved before each warp. The offset from center becomes the look delta, and recentering keeps the pointer from reaching a screen edge.',
           'Right after enabling capture, a short settling window ignores the first cursor moves so the initial warp does not register as a large jump. This is the capture-sync-pending state, which clears once the cursor reports stable, near-center positions.',
+          '`_warp_cursor_to_center` marks a 25 ms ignore window and reserves two mouse-move events before using `MacosCursorWarp` or `QCursor.setPos`. `poll_relative_mouse_delta` clears accumulated delta while synchronization is pending, counts near-center polls, and enables regular offset collection after two stable polls. The settling gate removes synthetic recentering movement from the gameplay delta stream.',
         ],
         codeBlocks: [
           {
@@ -1382,6 +1432,7 @@ self._w.grabKeyboard()`,
         body: [
           'On macOS, capture prefers a native relative-mouse path. When it begins successfully, the system reports relative deltas directly and no cursor warping is needed, so the capture-sync-pending settling step is skipped.',
           'If the native relative capture cannot start, the code falls back to the warp-and-recenter method. Either way the viewport receives a relative delta; only the mechanism that produces it differs by platform.',
+          '`MacosRelativeMouseCapture.begin` loads CoreGraphics and CoreFoundation, creates an event tap over mouse movement and drag events, warps to the supplied center, disassociates cursor movement, hides the display cursor, enables the tap, and marks itself active. `poll()` drains accumulated integer deltas under a lock. An unavailable framework, a null tap, or an unsuccessful begin returns control to the Qt warp path; the source supplies no claim that macOS has granted the required system permissions.',
         ],
         codeBlocks: [
           {
@@ -1402,6 +1453,7 @@ self._capture_sync_pending = not bool(native_relative)`,
         body: [
           'On macOS, gameplay also installs a keyboard input guard that is distinct from mouse capture. The guard is activated and deactivated alongside capture but handles native key events; it is not the cursor-warp or relative-mouse mechanism.',
           'Because the keyboard guard and cursor handling are separate components, a fault in one does not imply a fault in the other. Cursor capture concerns pointer hiding and look deltas, while the guard concerns native key delivery during play.',
+          '`MacosGameplayInputGuard` creates a second CoreGraphics event tap for key-down, key-up, and modifier events, maps macOS keycodes to Qt keys, and calls its injected handler only while active. It reports installation failure through its status and stderr path. `ViewportInput` constructs that guard only when a native key handler is supplied, whereas the relative cursor capture has its own lifecycle and pending delta buffer.',
         ],
         codeBlocks: [
           {
@@ -1423,6 +1475,7 @@ if self._macos_input_guard is not None:
         body: [
           'While captured, the relative delta is polled each frame. On the native path it reads accumulated relative movement; on the warp path it measures the cursor offset from center, adds it to the input adapter, and warps back. The captured-move event handler feeds the same adapter when Qt delivers move events.',
           'The poll re-applies the capture state every frame, which keeps focus, the hidden cursor, and the grabs in place even if the window manager tried to change them, so capture stays stable during continuous play.',
+          '`poll_relative_mouse_delta` chooses one producer per call: an active native capture drains `MacosRelativeMouseCapture`, pending synchronization discards movement and recenters, and the normal path measures `QCursor.pos()` against `_center_global()`. `on_captured_mouse_move` feeds the same adapter for accepted Qt move events after ignore gates expire. Both producers converge at `QtInputAdapter.add_mouse_delta`; neither producer changes player yaw directly.',
         ],
         codeBlocks: [
           {
@@ -1442,6 +1495,7 @@ if self._macos_input_guard is not None:
         body: [
           'Turning capture off ends native relative capture, deactivates the keyboard guard, releases the keyboard and mouse grabs, restores the override cursor, and unsets the blank cursor on both the viewport and its host window. The pointer becomes a normal cursor again.',
           'Capture is released when an overlay takes focus, when the viewport loses focus, and on shutdown. Because release also resets the pending mouse delta, no leftover movement is applied after the cursor returns.',
+          '`ViewportLifecycleMixin._on_application_state_changed` clears held actions, resets input, and calls `set_mouse_capture(False)` on deactivation. The viewport mouse-move handler also routes ordinary Qt motion whenever pause, inventory, death, settings, Othello settings, loading, or uncaptured state applies. Capture release changes cursor and input routing; it leaves player position, world blocks, inventory slots, and persisted settings unchanged.',
         ],
         codeBlocks: [
           {
@@ -1466,7 +1520,7 @@ if host_window is not None:
     group: 'Movement and Recovery',
     title: 'Moving the Player',
     description:
-      'Describes movement: how WASD, jump, crouch, and sprint are read from keybinds into a per-frame input frame, how the fixed-step player advance applies walking, flying, jumping, and auto-jump, and how collision integration resolves the result. Movement is part of the same fixed step as camera rotation and collision.',
+      'Traces movement from normalized keybinds through `QtInputAdapter`, `FixedStepRunner`, `step_session`, `PlayerStepInput`, movement rules, collision integration, and audio feedback. The fixed-step path resolves orientation, movement axes, jump edges, flight state, support contact, fall distance, and footstep events before HUD, renderer, and audio consumers receive the resulting state.',
     sections: [
       {
         id: 'moving-the-player-wasd',
@@ -1474,6 +1528,8 @@ if host_window is not None:
         body: [
           'Forward, backward, left, and right are bound actions resolved through the keybind settings. The defaults are W, S, A, and D. The input adapter checks which movement actions are currently pressed and combines them into a forward and a strafe value for the frame.',
           'Forward minus backward gives the forward axis, and right minus left gives the strafe axis, so opposing keys cancel out. The result is a small movement vector that the player step turns into velocity.',
+          '`QtInputAdapter` resolves physical keys through its normalized `KeybindSettings` map, then emits one `InputFrame` with `move_f` and `move_s`. The mapping stores axes independently of camera yaw. `step_bedrock` later combines the axes with `_basis_from_yaw_deg(player.yaw_deg)` and normalizes the resulting wish direction, so key state alone carries no world-space direction until the active player orientation is read.',
+          '`KeybindSettings.__post_init__` seeds default actions, normalizes binding text, and removes an earlier action when the same normalized binding appears again. The resulting map can leave a prior action unbound. Movement behavior therefore begins with the current normalized action map, not with an assumption that every default key remains available after preference changes.',
         ],
         codeBlocks: [
           {
@@ -1496,6 +1552,7 @@ if self._action_pressed(ACTION_MOVE_LEFT):
         body: [
           'Jump defaults to Space, crouch to Shift, and sprint to Control. The adapter tracks both the held state of jump and a one-shot pressed edge, so a single press can trigger a jump while holding can queue further jumps. Crouch and sprint are read as held states.',
           'Auto-repeat key events are ignored, so holding a key does not produce a stream of fresh presses. The jump pressed edge is consumed when the frame is read, which is what distinguishes a tap from a hold in the movement logic.',
+          '`QtInputAdapter.on_key_press` adds the key to its held-key set and marks `_jump_pressed_edge` only for the action currently bound to jump. `consume()` copies that flag into `InputFrame.jump_pressed` and clears it. Held state, edge state, and auto-repeat admission therefore reach `PlayerStepInput` as separate fields, allowing `advance_runtime_player` to distinguish a first press from continuous key presence.',
         ],
         codeBlocks: [
           {
@@ -1517,6 +1574,7 @@ if self._action_pressed(ACTION_MOVE_LEFT):
         body: [
           'Each fixed step, the consumed input frame and the look deltas are packed into a player step input. It carries the clamped forward and strafe values, the jump held and pressed flags, sprint and crouch, the yaw and pitch deltas, and whether auto-jump is enabled.',
           'The player advance reads this control object for movement input. Packing the complete step state preserves fixed-timestep determinism across event timing.',
+          '`FixedStepRunner.update` accumulates elapsed time, clamps a frame contribution to 0.25 seconds, invokes `on_step(step_dt)` while enough time remains, and caps a cycle at `max_substeps`. The runner supplies a fixed `dt` to the viewport step callback; it does not store keys, world state, or collision geometry. Input collection and simulation stepping meet only at the control object assembled for each executed substep.',
         ],
         codeBlocks: [
           {
@@ -1536,6 +1594,7 @@ if self._action_pressed(ACTION_MOVE_LEFT):
         body: [
           'If the player is flying, movement uses the flying model and collision integration with flying enabled, and ground-related state such as airborne tracking is cleared. Otherwise movement uses the grounded model, where gravity, jumping, and support contact apply.',
           'Both paths end by integrating against the world with collisions, but the velocity model that feeds the integration differs, so flying clears and ignores fall state while grounded movement tracks the fall start height.',
+          '`step_flying` computes horizontal target velocity from the same yaw-relative wish direction and can use jump-held or crouch-held for vertical target velocity. `step_bedrock` computes a grounded or airborne velocity, applies a jump impulse when admitted, and applies gravity plus fall-speed clamping while airborne. `integrate_with_collisions` receives the selected velocity model, current world, registry, collision parameters, crouch flag, jump pulse, and flight flag before it reports support and positional correction.',
         ],
         codeBlocks: [
           {
@@ -1552,6 +1611,7 @@ report = integrate_with_collisions(player, world, float(dt), block_registry=bloc
         body: [
           'A jump only fires when the player is on the ground. A fresh jump press produces a pulse, and a queued hold-jump can also produce one while the jump key stays held. The pulse is then passed into the movement model so the upward impulse is applied that step.',
           'Landing while still holding jump queues the next jump, which is how holding the jump key produces repeated hops. The queue is cleared as soon as the jump key is released.',
+          'The runtime records `prev_on_ground`, `prev_vy`, and prior Y before integration, then recognizes a landing only when support appears after an airborne, downward state. A held jump at that landing sets `hold_jump_queued`; the next grounded step may consume it. The queue resides in `PlayerEntity` runtime state and resets during respawn, flight, or key release; the keybind map retains only action bindings.',
         ],
         codeBlocks: [
           {
@@ -1572,6 +1632,7 @@ elif bool(player.on_ground) and bool(player.hold_jump_queued) and bool(control.j
         body: [
           'When auto-jump is enabled and the jump key is not held, the step probes ahead in the wished direction. If a one-block step up is possible there, a jump pulse is generated automatically and an auto-jump is marked pending so the result can be checked on landing.',
           'Auto-jump has a cooldown that is set only after a successful step up, which prevents it from firing every frame while walking into a wall it cannot climb. This is the behavior that lets the player walk up single-block ledges without pressing jump.',
+          '`can_auto_jump_one_block` receives a horizontal probe from `wish_dir_from_input` and collision parameters. The runtime sets `auto_jump_pending` plus a start height when the probe admits a pulse; after landing, it compares vertical gain with `auto_jump_success_dy` before installing `auto_jump_cooldown_s`. A failed probe or failed gain leaves the cooldown branch unarmed. The source constrains this behavior to the current session world and collision model.',
         ],
         codeBlocks: [
           {
@@ -1592,6 +1653,7 @@ if can_auto_jump_one_block(player, world, dx=float(wish.x) * probe, dz=float(wis
         body: [
           'Each grounded step advances a walk phase proportional to horizontal speed relative to the configured walk speed. Crossing a half-cycle of that phase while grounded and moving above a minimum speed triggers a footstep event, which the audio and view systems read.',
           'The phase also drives view bobbing and held-item swing. Its speed scaling keeps footsteps and bob aligned with player movement.',
+          '`_update_player_walk_phase` advances `walk_phase_total_rad` by speed divided by configured walk speed and detects a footstep at a π-boundary crossing while grounded above the minimum speed. `SessionStepResult.footstep_triggered`, support block state, and support cell move into presentation consumers after stepping. `AudioManager.play_surface_event` resolves a sound group from the support block and may select step or landing playback; the audio manager consumes the event and does not determine movement physics.',
         ],
         codeBlocks: [
           {
@@ -1611,6 +1673,7 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         body: [
           'Crouching does not snap the camera down. The crouch eye offset eases toward its target each step with an exponential approach, and eases back up when crouch is released. A separate step eye offset smooths the small vertical correction when the collision system steps the player up a ledge.',
           'These eased offsets are applied to the eye height the renderer reads, settling the view. They provide visual smoothing above the collision result and leave the player collision box unchanged.',
+          '`PlayerEntity.eye_pos()` applies `eye_height - crouch_eye_offset + step_eye_offset` to player position, while `aabb_at()` derives the collision box from width and height. `_update_crouch_eye` and `_update_step_eye` mutate the former visual offsets after collision integration. Crouch can affect collision integration through its explicit flag, yet the eye smoothing fields themselves operate on the camera anchor and carry no block-placement or persistence write path.',
         ],
         mathBlocks: [
           {
@@ -1643,7 +1706,7 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
     group: 'Movement and Recovery',
     title: 'Recovering after Death',
     description:
-      'Explains the death and respawn flow: how fall distance and the void produce damage, what the death overlay shows, and what respawn resets and preserves. Fall damage starts beyond a safe distance, void damage applies in intervals below a threshold depth, and respawn restores the player without erasing saved content.',
+      'Traces damage and recovery through `PlayerEntity`, fall and void rules, `SessionManager`, session stepping, the death overlay, and overlay-navigation respawn. The death surface exposes an accepted respawn request only after session state reaches zero health; respawn resets the active player and transient interaction consumers while world and persistence branches remain outside that mutation.',
     sections: [
       {
         id: 'recovering-after-death-health',
@@ -1651,6 +1714,8 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         body: [
           'The player starts with twenty health points, shown by the hotbar health strip as ten hearts. Damage reduces this value, and reaching zero is what puts the session into the dead state. The health strip fills each heart proportionally, so half-heart amounts are visible.',
           'Health is simulation state, while the heart strip is a HUD display of it. Recovering after death is about how that value reaches zero and how respawn restores it, not about the way the hearts are drawn.',
+          '`PlayerEntity` initializes `health` and `max_health` to `20.0`, clamps health through `clamp_health`, and defines `alive()` as health greater than a small positive threshold. `_HealthStrip.set_state` receives presentation values, clamps them again for drawing, and requests repaint. The strip can expose a rendered ratio; session stepping and `PlayerEntity.apply_damage` own the authoritative health mutation.',
+          '`apply_melee_damage` calls `target.apply_damage` with a half-second cooldown, hurt flash, tilt, and source position, then applies knockback only when positive damage was accepted. `attack_sprinting` derives its condition from attacker horizontal speed relative to walk speed. Melee input and AI combat can therefore feed the same health and hurt-state owner, while death reason classification remains in `step_session` after its fall, void, and AI reports are assembled.',
         ],
         codeBlocks: [
           {
@@ -1670,6 +1735,7 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         body: [
           'Fall damage is computed from the distance fallen, measured from the height where the player became airborne to where they land. Falls up to the safe distance of three blocks do no damage; beyond that, damage is the whole number of blocks past the safe distance.',
           'The fall distance is captured on landing from the recorded airborne start height, so a drop past the three-block safe distance hurts while stepping off a small ledge does not, and the damage scales with how far past three blocks you fell.',
+          '`advance_runtime_player` stores an airborne start height after support disappears, detects landing from pre-step and post-step support conditions, and computes non-negative fall distance from that stored height to the resolved player Y. `step_session` passes the resulting value to `fall_damage_amount` and immediately calls `player.apply_damage(..., bypass_cooldown=True)` outside creative mode. The formula therefore applies after collision has established the landing outcome, not from a raw vertical key input or HUD reading.',
         ],
         codeBlocks: [
           {
@@ -1694,6 +1760,7 @@ def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
         body: [
           'Below the void threshold depth, the player takes repeating damage. While the player is alive and below the threshold, the void timer accumulates and applies a fixed damage amount each interval, bypassing the normal damage cooldown so it keeps ticking.',
           'The fixed damage amount and interval form a steady void drain. A player below the threshold loses health over time until reaching the safe depth. The remaining sub-interval time carries across frames to preserve cadence.',
+          '`apply_void_damage` carries `timer_s` forward, adds the fixed-step `dt`, subtracts one half-second interval for each eligible tick, and returns the residual timer with total damage. `SessionManager` stores that residual in `_void_damage_timer_s`; creative mode resets it to zero in `step_session`. The void branch is evaluated after player movement for that simulation step, so the current resolved Y determines whether the accumulator advances.',
         ],
         codeBlocks: [
           {
@@ -1722,6 +1789,7 @@ def apply_void_damage(*, player, dt, timer_s):
         body: [
           'When health reaches zero, the death overlay appears with a "YOU DIED" title, a message line, and a Respawn button. The message is set from the cause of death and falls back to "Player died." when no specific text is supplied.',
           'While the death overlay is visible, the pause menu cannot be opened, so the only forward action from this state is to respawn. The overlay itself only emits a respawn request; the controller decides what that does.',
+          '`open_pause_menu` begins with a dead-overlay check and returns when `viewport._overlays.dead()` is true. `DeathOverlay` has no direct session reference: its button emits `respawn_requested`, and `bind_overlay_actions` connects that signal to the controller. The visible panel therefore blocks the pause route and exposes one recovery request without granting the widget authority over world persistence or damage calculations.',
         ],
         codeBlocks: [
           {
@@ -1744,6 +1812,7 @@ def apply_void_damage(*, player, dt, timer_s):
         body: [
           'Pressing Respawn resets held mouse actions, cancels any pending AI route edit, respawns the session player, invalidates the current selection target, clears the renderer selection, hides the dead overlay, and re-syncs the hotbar widgets. After this, the viewport is back to ordinary play.',
           'Respawn is handled by the overlay-navigation controller, not by the overlay itself. Because it clears selection and held actions, you do not resume mid-interaction; you start fresh from the respawn position with the hotbar restored.',
+          '`SessionManager.respawn` restores position from `SessionSettings.spawn_x`, `spawn_y`, and `spawn_z`, clears velocity, pitch, flight, eye offsets, queued jump and auto-jump state, overlap exemptions, health, death reason, and void timer. `overlay_navigation.respawn` then hides the dead overlay and synchronizes hotbar widgets after it clears renderer selection. The active session player changes immediately; a later save remains a separate persistence operation.',
         ],
         codeBlocks: [
           {
@@ -1766,6 +1835,7 @@ def apply_void_damage(*, player, dt, timer_s):
         body: [
           'Respawn returns the player to the active space’s spawn state with restored health. It does not erase the saved world, the Othello board, hotbar contents, preferences, or AI learning artifacts. Those belong to persistence and the other play space, not to the death-and-respawn cycle.',
           'Respawn resets the player’s position and condition while the saved world, Othello board, hotbar, preferences, and learning artifacts persist. Dying is recoverable. Loss of another state after death points to the relevant saved-state path.',
+          '`AppState` keeps `my_world`, `othello_space`, inventory, settings, and Othello settings in separate persistence fields. `SessionManager.respawn` mutates none of those schema values and has no store call. A recovery observation establishes that the active player was reset through the session manager; it cannot establish the condition of an on-disk world, another play-space payload, or a later synchronization failure.',
         ],
       },
       {
@@ -1774,6 +1844,7 @@ def apply_void_damage(*, player, dt, timer_s):
         body: [
           'Non-fatal damage advances a hurt state on the player each step, which drives a short hurt flash and a brief view tilt. Timed decay clears both effects after the hit.',
           'The HUD hurt-feedback and death-message paths expose damage before and at terminal state. A health-loss report can correlate those surfaces with fall, void, or melee simulation causes.',
+          '`apply_damage` clamps health, honors its cooldown unless bypassed, subtracts positive damage from a living player, and calls `trigger_hurt_feedback`. That feedback updates flash duration, tilt duration, jump-reset window, and a tilt sign derived from source direction where available. `SessionStepResult` carries damage total and selected death reason forward; `HUDWidget` and the death overlay consume presentation values without changing the cause-selection order in session stepping.',
         ],
         codeBlocks: [
           {
