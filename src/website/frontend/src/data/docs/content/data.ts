@@ -520,7 +520,7 @@ object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval `[0, 1]` by `_clamp_volume`. Failed `float` conversion selects the provided default, itself `1.0` by default, before clamping supplies the mixer gain.',
+            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval `[0, 1]` by `_clamp_volume`. Failed `float` conversion selects the provided default, itself `1.0` by default, before clamping supplies the persisted category gain.',
           },
           {
             kind: 'code',
@@ -542,7 +542,7 @@ class AudioPreferences:
           },
           {
             kind: 'paragraph',
-            text: 'The effective category gain is multiplicative. `volume_for("ambient")` returns `master * ambient`, `volume_for("block")` returns `master * block`, and `volume_for("player")` returns `master * player`. Asking for `master` itself, or for an unknown category, returns only `master`; unknown category text is not admitted as a new mixer bus. `to_dict` serializes the flat four-key vector, while `from_dict` treats a non-dictionary input as default audio preferences.',
+            text: 'The effective category gain is multiplicative. `volume_for("ambient")` returns `master * ambient`, `volume_for("block")` returns `master * block`, and `volume_for("player")` returns `master * player`. Asking for `master` itself, or for an unknown category, returns only `master`; unknown category text remains outside the saved category set. `to_dict` serializes the flat four-key vector, while `from_dict` treats a non-dictionary input as default audio preferences.',
           },
         ],
       },

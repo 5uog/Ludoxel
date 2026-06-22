@@ -519,7 +519,7 @@ def _on_shadow_map_quality(self, _index: int) -> None:
     group: 'Audio and Keybinds',
     title: 'Changing Audio Preferences',
     description:
-      'Defines audio settings as a four-component normalized mixer vector: master, ambient, block, and player gains, the closed [0, 1] admission rule, persistence shape, and multiplicative category consumption.',
+      'Defines audio settings as a four-component normalized gain vector: master, ambient, block, and player gains, the closed [0, 1] admission rule, persistence shape, and multiplicative category consumption.',
     sections: [
       {
         id: 'changing-audio-preferences-setting-scope',
@@ -570,17 +570,17 @@ class AudioPreferences:
           },
           {
             kind: 'paragraph',
-            text: '`to_dict` writes the normalized vector as a flat mapping. `from_dict` reads only dictionaries and treats non-dictionary input as the default vector. A malformed saved value therefore cannot inject a non-finite or out-of-range gain into playback; it is converted, defaulted, or clamped before the mixer receives it.',
+            text: '`to_dict` writes the normalized vector as a flat mapping. `from_dict` reads only dictionaries and treats non-dictionary input as the default vector. A malformed saved value reaches playback only after conversion, default selection, or clamping has reduced it to the admitted gain interval.',
           },
         ],
       },
       {
         id: 'changing-audio-preferences-runtime-consumer',
-        title: 'Mixer Consumption',
+        title: 'Category Gain Consumption',
         content: [
           {
             kind: 'paragraph',
-            text: 'Category volume is multiplicative. Ambient playback receives `master * ambient`, block sounds receive `master * block`, and player or actor sounds receive `master * player`. Unknown category text is deliberately not promoted to a separate gain channel; the method returns the master gain for `master` itself and for unrecognized categories.',
+            text: 'Category volume is multiplicative. Ambient playback receives `master * ambient`, block sounds receive `master * block`, and player or actor sounds receive `master * player`. Unknown category text remains outside the category set; the method returns the master gain for `master` itself and for unrecognized categories.',
           },
           {
             kind: 'code',
@@ -606,7 +606,7 @@ class AudioPreferences:
           },
           {
             kind: 'paragraph',
-            text: 'The diagnostic path separates the saved mixer vector from material-sound routing. A silent block-placement sound can involve the master gain, block gain, material-sound catalog, event source, or playback admission. `AudioPreferences` and `PersistedSettings` supply the normalized gains, while `src/ludoxel/presentation/audio` resolves catalog entries and playback effects.',
+            text: 'The diagnostic path separates the saved gain vector from material-sound routing. A silent block-placement sound can involve the master gain, block gain, material-sound catalog, event source, or playback admission. `AudioPreferences` and `PersistedSettings` supply the normalized gains, while `src/ludoxel/presentation/audio` resolves catalog entries, pooled effects, and the attack PCM mixer.',
           },
           {
             kind: 'paragraph',

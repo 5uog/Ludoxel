@@ -1405,7 +1405,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
     group: 'Audio Feedback',
     title: 'Understanding Material Sounds',
     description:
-      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for break, place, interact, footstep, landing, and damage events, the playback admission with polyphony and cooldown, the volume categories, and the audio-output rebinding path that keeps pooled effects attached to the current platform output.',
+      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for break, place, interact, footstep, landing, damage, and attack events, the pooled-effect admission path, the dedicated PCM one-shot mixer for weak and strong attacks, the volume categories, and the audio-output rebinding path that keeps both `QSoundEffect` slots and the attack mixer attached to the current platform output.',
     sections: [
       {
         id: 'material-sounds-groups',
@@ -1446,7 +1446,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
           },
           {
             kind: 'paragraph',
-            text: 'The catalogs in `src/ludoxel/presentation/audio/catalogs/material.py` map each group to its pools. `BLOCK_SOUND_CATALOG` carries break and place pools, with interactable wood groups also carrying open and close pools; `PLAYER_SURFACE_SOUND_CATALOG` maps each group to a footstep pool; and `PLAYER_EVENT_SOUND_CATALOG` in `src/ludoxel/presentation/audio/catalogs/player.py` holds the landing, damage, attack, and Othello events. `AudioManager._collect_named_pools` flattens every catalog into a keyed pool table at construction.',
+            text: 'The catalogs in `src/ludoxel/presentation/audio/catalogs/material.py` map each group to its pools. `BLOCK_SOUND_CATALOG` carries break and place pools, with interactable wood groups also carrying open and close pools; `PLAYER_SURFACE_SOUND_CATALOG` maps each group to a footstep pool; and `PLAYER_EVENT_SOUND_CATALOG` in `src/ludoxel/presentation/audio/catalogs/player.py` holds landing, damage, weak attack, strong attack, and Othello event pools. `AudioManager._collect_named_pools` flattens every catalog into a keyed pool table at construction. Playback path selection occurs after the catalog has supplied the pool: landing, damage, and Othello events enter the pooled `QSoundEffect` path, while weak and strong attack events keep the same catalog metadata and enter the dedicated `PcmOneShotMixer` path in `src/ludoxel/presentation/audio/playback/manager.py`.',
           },
         ],
       },
@@ -1456,7 +1456,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: '`AudioSamplePool` in `src/ludoxel/presentation/audio/types/events.py` is a frozen record naming its sample paths, an audio category, a selection mode, a spatial flag with a distance cutoff and size, a maximum polyphony, and a cooldown. `make_audio_pool` constructs one with a polyphony floor of one and a non-negative cooldown, and `indexed_paths` expands a numbered family such as the four place samples of a material. `prime_effects` pre-creates the effect slots for non-ambient pools so the first play is not delayed.',
+            text: '`AudioSamplePool` in `src/ludoxel/presentation/audio/types/events.py` is a frozen record naming its sample paths, an audio category, a selection mode, a spatial flag with a distance cutoff and size, a maximum polyphony, and a cooldown. `make_audio_pool` constructs one with a polyphony floor of one and a non-negative cooldown, and `indexed_paths` expands a numbered family such as the four place samples of a material. `prime_effects` pre-creates the effect slots for non-ambient pools so the first play begins from loaded effect objects.',
           },
         ],
       },
@@ -1466,7 +1466,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Material and player events are emitted during the simulation step and routed at the presentation layer. The step result carries footstep, landing, gravity-break, and damage signals; the render loop in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` plays a footstep or landing through `play_surface_event`, a gravity-broken block through `play_interaction`, and a damage hit through `play_player_event`. A landing plays only when the step result raises `play_landing_sound`, and the session step in `src/ludoxel/application/sessions/managers/stepping.py` withholds that flag on any step that applies fall damage, so a damaging landing plays the damage hit under `play_damage_sound` and the landing sample plays only on a fall that did no damage. Block interactions and placements emit their own break, place, and interact events through `play_interaction`, which splits an interaction into open and close variants by reading the block open property from its state.',
+            text: 'Material and player events are emitted during the simulation step and routed at the presentation layer. The step result carries footstep, landing, gravity-break, and damage signals; the render loop in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` plays a footstep or landing through `play_surface_event`, a gravity-broken block through `play_interaction`, and a damage hit through `play_player_event`. A landing plays only when the step result raises `play_landing_sound`, and the session step in `src/ludoxel/application/sessions/managers/stepping.py` withholds that flag on any step that applies fall damage, so a damaging landing plays the damage hit under `play_damage_sound` and the landing sample plays only on a fall that did no damage. Block interactions and placements emit their own break, place, and interact events through `play_interaction`, which splits an interaction into open and close variants by reading the block open property from its state. Left-click melee audio enters the player-event catalog separately: `_perform_left_click` in `src/ludoxel/presentation/interface/viewport/controllers/interaction.py` plays `PLAYER_EVENT_ATTACK_STRONG` after `attack_ai_player` accepts a target, plays `PLAYER_EVENT_DAMAGE_HIT` when that accepted target has a position, and plays `PLAYER_EVENT_ATTACK_WEAK` when the click ends without an accepted AI target and without a successful creative block break. Weak and strong attack events therefore reach `AudioManager.play_player_event` as player events; material block actions remain on `play_interaction`.',
           },
           {
             kind: 'paragraph',
@@ -1480,7 +1480,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. The voice search is pool-wide. `_play_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice is idle only when its `QSoundEffect` is loaded, is not playing, and has passed the source hold interval recorded on `EffectVoiceSlot.busy_until_s`. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a rapid attack request cannot reclaim a voice merely because the Qt playback state has cleared before the audible tail has ended. When every reserved voice is still busy, `_play_pool` drops the request and leaves active voices running.',
+            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates pooled `QSoundEffect` playback on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. This path covers block actions, footsteps, landing events, damage hits, and Othello player events. The voice search is pool-wide: `_play_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice qualifies as idle only when its `QSoundEffect` is loaded, playback has ended, and the source hold interval recorded on `EffectVoiceSlot.busy_until_s` has passed. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a pooled source keeps its voice reserved until the recorded audible tail has cleared even after the Qt playback state has cleared. When every reserved voice is still busy, `_play_pool` drops the request and leaves active voices running.',
           },
           {
             kind: 'code',
@@ -1501,13 +1501,15 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
           },
           {
             kind: 'paragraph',
-            text: 'The pooled-effect lifecycle also owns platform output recovery. `AudioManager` constructs `QMediaDevices`, listens for `audioOutputsChanged`, and schedules `_refresh_audio_output_bindings` through the Qt event loop. That refresh walks every prepared material and player slot and retargets each `QSoundEffect` to the current default output. A Windows WASAPI endpoint invalidation therefore changes the output binding of existing effect slots; it does not change the sound-group fallback chain, the event routing contract, the category gain formula, or the simulation state that emitted the sound.',
+            text: 'Audio output recovery has two playback branches. `AudioManager` constructs `QMediaDevices`, listens for `audioOutputsChanged`, and schedules `_refresh_audio_output_bindings` through the Qt event loop. That refresh first retargets `self._player_attack_mixer`, then walks every prepared material and player `QSoundEffect` slot, and then retargets the ambient effect when one is live. `PcmOneShotMixer.retarget_default_audio_output` drops the current sink and opens a new one when attack voices remain active; the effect-slot branch stops and rebinds each `QSoundEffect` to the current default output. A Windows WASAPI endpoint invalidation therefore changes both the attack mixer sink and the existing effect-slot bindings; the sound-group fallback chain, event routing contract, category gain formula, and simulation state that emitted the sound remain unchanged.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/audio/playback/manager.py',
-            code: `for prepared_group in tuple(self._prepared_sources.values()):
+            code: `self._player_attack_mixer.retarget_default_audio_output()
+
+for prepared_group in tuple(self._prepared_sources.values()):
   for prepared in tuple(prepared_group):
     for slot in tuple(prepared.slots):
       self._retarget_effect_to_default_audio_output(slot.effect)`,
@@ -1519,6 +1521,68 @@ if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
               displayMode: true,
               caption: 'AudioPreferences.volume_for; a category at zero, or master at zero, silences the pool before any slot is taken.',
             },
+          },
+        ],
+      },
+      {
+        id: 'material-sounds-attack-pcm-mixer',
+        title: 'Weak and Strong Attack PCM Mixing',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`AudioManager.play_player_event` intercepts `PLAYER_EVENT_ATTACK_WEAK` and `PLAYER_EVENT_ATTACK_STRONG` before the generic player-event path. `_play_player_attack_event` still reads `PLAYER_EVENT_SOUND_CATALOG`, applies the player category gain, runs the pool cooldown admission, applies the spatial cutoff branch when a pool requests one, resolves existing WAV URLs, and then delegates to `PcmOneShotMixer.play`. The weak and strong attack pools in `src/ludoxel/presentation/audio/catalogs/player.py` are non-spatial, use zero cooldown, and carry twelve-voice limits; those catalog values control the PCM mixer call, and the attack branch bypasses the `QSoundEffect` allocation path for those two event names.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/playback/manager.py',
+            code: `def _play_player_attack_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
+  pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
+  if pool is None:
+    return
+
+  base_volume = float(self._preferences.volume_for(pool.category))
+  if base_volume <= 1e-6:
+    return
+
+  pool_key = f"player_event:{event_name}"
+  if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+    return
+
+  if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
+    if not self._listener_within_cutoff(position=self._normalize_world_position(position), cutoff=float(pool.distance_cutoff)):
+      return
+
+  urls = self._resolved_urls.get(str(pool_key))
+  if urls is None:
+    urls = self._resolve_existing_urls(pool)
+    self._resolved_urls[str(pool_key)] = urls
+
+  self._player_attack_mixer.play(
+    urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random
+  )`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`PcmOneShotMixer` in `src/ludoxel/presentation/audio/playback/mixer.py` owns a single `QAudioSink` stream for rapid attack one-shots. `_ensure_sink` opens a stereo 44.1 kHz signed-16-bit format on the current default output device; `_sample_for_url` caches decoded WAV data; `_load_wav_as_stereo_44100_int16` accepts one-byte and two-byte PCM, converts mono or multichannel data into stereo, and resamples to the mixer rate when the source rate differs. Active voices are mixed in process memory, summed into a temporary left-right buffer, clipped to signed 16-bit range, and written to the sink as little-endian PCM frames.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/audio/playback/mixer.py',
+            code: `voice_limit = max(1, min(_MAX_MIX_VOICES, int(max_voices)))
+if len(self._active) >= voice_limit:
+  self._active = self._active[-max(0, voice_limit - 1) :]
+
+sample = self._pick_sample(pool_key=str(pool_key), selection_mode=str(selection_mode), samples=samples, random_source=random_source)
+if sample is None:
+  return False
+
+self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0, min(1.0, float(volume)))))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The mixer bound acts as an active-voice ceiling. When the active list reaches the catalog voice limit, `PcmOneShotMixer.play` retains the newest `voice_limit - 1` voices, appends the new attack voice, starts the sink if necessary, and immediately pumps available frames. `_play_pool` rejects an event after all `QSoundEffect` voices remain busy; the attack mixer admits the new voice after trimming its active list. Repeated air-punch and accepted attack input therefore share a continuous output stream while the attack mixer remains inside `_MAX_MIX_VOICES` and the pool-specific `max_polyphony` bound.',
           },
         ],
       },
