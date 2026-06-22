@@ -206,6 +206,18 @@ def integrate_with_collisions(
       pos = snapped
       hit_ground = True
 
+  if world_aabb_intersects(world, player.aabb_at(pos), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
+    resolved_pos, residual_shift = _depenetrate(player, world, pos, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
+    pos = resolved_pos
+    if abs(float(residual_shift.x)) > 1e-9:
+      player.velocity = Vec3(0.0, player.velocity.y, player.velocity.z)
+    if abs(float(residual_shift.z)) > 1e-9:
+      player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
+    if abs(float(residual_shift.y)) > 1e-9:
+      player.velocity = Vec3(player.velocity.x, 0.0, player.velocity.z)
+      if float(residual_shift.y) > 1e-9:
+        hit_ground = True
+
   player.position = pos
   supported_after = (
     bool(hit_ground)

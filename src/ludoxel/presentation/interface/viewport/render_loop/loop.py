@@ -314,7 +314,7 @@ class ViewportRenderLoopMixin:
     if bool(step_result.footstep_triggered):
       self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
 
-    if bool(step_result.landed):
+    if bool(step_result.play_landing_sound):
       self._audio.play_surface_event(
         event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks)
       )

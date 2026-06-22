@@ -51,6 +51,7 @@ class SessionStepResult:
   death_killer_name: str | None = None
   gravity_broken_blocks: tuple[GravityBrokenBlock, ...] = ()
   play_damage_sound: bool = False
+  play_landing_sound: bool = False
   ai_damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
 
 
@@ -111,8 +112,10 @@ def step_session(
     movement_action = _player_movement_action(move_f=float(move_f), move_s=float(move_s), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch))
     if movement_action is not None:
       session._record_player_action(kind=RECORD_PLAYER_MOVEMENT, action_id=str(movement_action))
+  fall_damage_applied = bool(float(fall_damage) > 1e-6)
   damage_taken = float(fall_damage) + float(void_damage) + float(ai_report.player_damage_taken)
-  play_damage_sound = bool(float(void_damage) > 1e-6 or float(ai_report.player_damage_taken) > 1e-6)
+  play_damage_sound = bool(fall_damage_applied or float(void_damage) > 1e-6 or float(ai_report.player_damage_taken) > 1e-6)
+  play_landing_sound = bool(step_result.landed) and (not fall_damage_applied)
 
   death_reason: str | None = None
   if not session.player.alive():
@@ -138,5 +141,6 @@ def step_session(
     death_killer_name=None if death_reason != "pvp" or ai_report.player_killer_name is None else str(ai_report.player_killer_name),
     gravity_broken_blocks=tuple(gravity_result.broken_blocks),
     play_damage_sound=bool(play_damage_sound),
+    play_landing_sound=bool(play_landing_sound),
     ai_damage_sound_positions=tuple(ai_report.damage_sound_positions),
   )

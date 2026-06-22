@@ -398,8 +398,6 @@ class AudioManager(QObject):
     if slot is None:
       return False
 
-    if slot.effect.isPlaying():
-      slot.effect.stop()
     slot.effect.setVolume(float(base_volume))
     slot.effect.play()
     return True

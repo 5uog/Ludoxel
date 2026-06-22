@@ -1466,7 +1466,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Material and player events are emitted during the simulation step and routed at the presentation layer. The step result carries footstep, landing, gravity-break, and damage signals; the render loop in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` calls `play_surface_event` for footsteps and landings, `play_interaction` for gravity-broken blocks, and `play_player_event` for damage hits. Block interactions and placements emit their own break, place, and interact events through `play_interaction`, which splits an interaction into open and close variants by reading the block open property from its state.',
+            text: 'Material and player events are emitted during the simulation step and routed at the presentation layer. The step result carries footstep, landing, gravity-break, and damage signals; the render loop in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` plays a footstep or landing through `play_surface_event`, a gravity-broken block through `play_interaction`, and a damage hit through `play_player_event`. A landing plays only when the step result raises `play_landing_sound`, and the session step in `src/ludoxel/application/sessions/managers/stepping.py` withholds that flag on any step that applies fall damage, so a damaging landing plays the damage hit under `play_damage_sound` and the landing sample plays only on a fall that did no damage. Block interactions and placements emit their own break, place, and interact events through `play_interaction`, which splits an interaction into open and close variants by reading the block open property from its state.',
           },
           {
             kind: 'paragraph',
@@ -1480,7 +1480,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and a free effect slot must be available within the polyphony budget through the effect helpers in `src/ludoxel/presentation/audio/playback/effects.py` and the source helpers in `src/ludoxel/presentation/audio/playback/sources.py`.',
+            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates a sound on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and a loaded effect slot that is not already playing must be available within the polyphony budget through the effect helpers in `src/ludoxel/presentation/audio/playback/effects.py` and the source helpers in `src/ludoxel/presentation/audio/playback/sources.py`. `next_effect_slot` advances the per-source cursor over the loaded slots and returns the first one that is idle; when every slot in the chosen source budget is still playing, `_play_pool` drops the request instead of stopping an active voice, so a new sample overlaps an earlier one only while a free voice remains.',
           },
           {
             kind: 'code',
@@ -2106,7 +2106,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.5"`,
+            code: `__version__ = "3.6.6b1"`,
           },
           {
             kind: 'note',

@@ -265,8 +265,8 @@ class SessionManager:
   def interact_block_at_hit(self, hit_cell: tuple[int, int, int]):
     return interact_block_at_hit_for_session(self, hit_cell)
 
-  def place_block_from_hit(self, hit, block_id: str | None):
-    return place_block_from_hit_for_session(self, hit, block_id)
+  def place_block_from_hit(self, hit, block_id: str | None, *, forced_place_state: str | None = None):
+    return place_block_from_hit_for_session(self, hit, block_id, forced_place_state=forced_place_state)
 
   def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None):
     outcome = place_block_for_session(self, block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)

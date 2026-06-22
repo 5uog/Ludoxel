@@ -77,24 +77,41 @@ def _axis_collision_position(
   player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
 ) -> Vec3:
   eps = float(params.eps)
+  half_width = float(player.width) * 0.5
   pos_axis = pos_try
-  aabb = player.aabb_at(pos_axis)
+  blocked = False
 
-  for _bx, _by, _bz, ba in _iter_intersections(world, aabb, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
-    if str(axis) == "x":
-      if float(delta) > 0.0:
-        pos_axis = Vec3(ba.mn.x - (player.width * 0.5) - eps, pos_axis.y, pos_axis.z)
+  for _ in range(8):
+    aabb = player.aabb_at(pos_axis)
+    limit: float | None = None
+
+    for _bx, _by, _bz, ba in _iter_intersections(world, aabb, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
+      if str(axis) == "x":
+        candidate = float(ba.mn.x) - half_width - eps if float(delta) > 0.0 else float(ba.mx.x) + half_width + eps
       else:
-        pos_axis = Vec3(ba.mx.x + (player.width * 0.5) + eps, pos_axis.y, pos_axis.z)
+        candidate = float(ba.mn.z) - half_width - eps if float(delta) > 0.0 else float(ba.mx.z) + half_width + eps
+
+      if limit is None:
+        limit = float(candidate)
+      elif float(delta) > 0.0:
+        limit = min(float(limit), float(candidate))
+      else:
+        limit = max(float(limit), float(candidate))
+
+    if limit is None:
+      break
+
+    blocked = True
+    if str(axis) == "x":
+      pos_axis = Vec3(float(limit), pos_axis.y, pos_axis.z)
+    else:
+      pos_axis = Vec3(pos_axis.x, pos_axis.y, float(limit))
+
+  if blocked:
+    if str(axis) == "x":
       player.velocity = Vec3(0.0, player.velocity.y, player.velocity.z)
     else:
-      if float(delta) > 0.0:
-        pos_axis = Vec3(pos_axis.x, pos_axis.y, ba.mn.z - (player.width * 0.5) - eps)
-      else:
-        pos_axis = Vec3(pos_axis.x, pos_axis.y, ba.mx.z + (player.width * 0.5) + eps)
       player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
-
-    aabb = player.aabb_at(pos_axis)
 
   return pos_axis
 

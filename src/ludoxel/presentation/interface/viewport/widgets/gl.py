@@ -158,6 +158,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._right_mouse_repeat_line_pending_support_hit_point: tuple[float, float, float] | None = None
     self._right_mouse_repeat_support_face_mode: bool = False
     self._right_mouse_repeat_visible_face_chain_mode: bool = False
+    self._right_mouse_repeat_place_state: str | None = None
+    self._right_mouse_repeat_place_block_id: str | None = None
     self._right_mouse_repeat_origin_player_y: float = 0.0
     self._right_mouse_repeat_vertical_lock_sign: int = 0
     self._recent_move_f: float = 0.0

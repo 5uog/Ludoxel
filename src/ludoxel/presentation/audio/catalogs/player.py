@@ -37,7 +37,7 @@ PLAYER_EVENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
   ),
   PLAYER_EVENT_DAMAGE_HIT: make_audio_pool(*indexed_paths("assets/audio/player/damage", "hit", 3), category=AUDIO_CATEGORY_PLAYER, max_polyphony=4, cooldown_s=0.015),
   PLAYER_EVENT_ATTACK_WEAK: make_audio_pool(
-    *indexed_paths("assets/audio/player/attack", "weak", 4), category=AUDIO_CATEGORY_PLAYER, spatial=False, distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF, size=0.0, max_polyphony=2, cooldown_s=0.015
+    *indexed_paths("assets/audio/player/attack", "weak", 4), category=AUDIO_CATEGORY_PLAYER, spatial=False, distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF, size=0.0, max_polyphony=8, cooldown_s=0.015
   ),
   PLAYER_EVENT_ATTACK_STRONG: make_audio_pool(
     *indexed_paths("assets/audio/player/attack", "strong", 6),

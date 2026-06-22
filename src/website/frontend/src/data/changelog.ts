@@ -15,6 +15,46 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.6 Beta 1',
+    tags: ['Desktop Application', 'Audio', 'Gameplay', 'Collision', 'Block Placement'],
+    sections: [
+      {
+        title: 'Audio Sample Voices',
+        items: [
+          'Stopped pooled sound effects from cutting an in-progress voice to replay the same sample: `next_effect_slot` now returns a loaded effect slot only when it is not already playing, and `_play_pool` no longer stops and restarts a playing slot, so a play request that finds every voice in a pool busy is dropped instead of truncating an audible sample.',
+          'Raised the weak attack-swing pool from two to eight voices so repeated swing-through-air sounds overlap across the four weak samples without falling back to dropped requests, while leaving the other player, block, surface, and ambient pool polyphony, cooldown, spatial cutoff, and volume categories unchanged.',
+        ],
+      },
+      {
+        title: 'Fall Damage Audio',
+        items: [
+          'Counted fall damage when deciding whether to play the damage sound: the session step now reports `play_damage_sound` for any fall damage past the safe distance, not only void and combat damage.',
+          'Added a `play_landing_sound` field to the session step result and suppressed the landing sound on a step that applied fall damage, so a damaging landing plays the damage hit while a non-damaging landing still plays its surface landing sample.',
+        ],
+      },
+      {
+        title: 'Structural Hull Collision',
+        items: [
+          'Resolved each horizontal collision axis against every overlapping box: `_axis_collision_position` now clamps the player to the nearest blocking face across all intersecting boxes and re-tests with the updated box until it is clear, replacing the single-pass resolution that could leave the player inside the tall structural hull of a fence, wall, or closed fence gate.',
+          'Added a final depenetration pass after the X, Y, and Z moves in `integrate_with_collisions`, pushing a player that would otherwise remain inside a collision box back out before the position is committed, zeroing the corrected velocity components and treating an upward correction as ground contact.',
+        ],
+      },
+      {
+        title: 'Held Fence Gate Placement',
+        items: [
+          'Made the right-click placement repeat prefer interaction for a held fence gate: when the held block is a fence gate, the player is not crouching, and the current target is a fence gate, the repeat toggles that gate and stops rather than continuing to place gates in the adjacent cells, while a crouching hold still places gates and single placement is unchanged.',
+        ],
+      },
+      {
+        title: 'Held Slab and Stair Placement',
+        items: [
+          'Locked the resolved block state of a held placement repeat to its first committed result: the repeat reuses the initial slab type and the initial stair facing and half (and fence gate facing) for the rest of the hold by threading a forced place state through `place_block_from_hit`, so changing aim no longer flips slabs between top and bottom or rotates stairs mid-hold.',
+          'Kept the placement target cell advancing during the locked hold and limited same-slab opposite-half merging to the locked type, and released the lock when the selected hotbar item changes or the right mouse button is released.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.5',
     tags: ['Desktop Application', 'Rendering', 'First-Person Rendering', 'Third-Person Rendering', 'Player Animation'],
     sections: [

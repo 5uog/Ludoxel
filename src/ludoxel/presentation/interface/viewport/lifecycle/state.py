@@ -230,6 +230,8 @@ class ViewportStateMixin:
     self._right_mouse_repeat_line_pending_support_hit_point = None
     self._right_mouse_repeat_support_face_mode = False
     self._right_mouse_repeat_visible_face_chain_mode = False
+    self._right_mouse_repeat_place_state = None
+    self._right_mouse_repeat_place_block_id = None
     self._right_mouse_repeat_due_s = float(now_s) + float(self._state.block_interact_repeat_interval_s)
 
   def _enable_right_mouse_place_repeat(
@@ -249,6 +251,8 @@ class ViewportStateMixin:
     pending_support_cell: tuple[int, int, int] | None,
     pending_support_face: int | None,
     pending_support_hit_point: tuple[float, float, float] | None,
+    place_state: str | None,
+    block_id: str | None,
   ) -> None:
     self._right_mouse_repeat_enabled = True
     self._right_mouse_repeat_mode = "place"
@@ -268,6 +272,8 @@ class ViewportStateMixin:
     )
     self._right_mouse_repeat_support_face_mode = bool(support_face_mode)
     self._right_mouse_repeat_visible_face_chain_mode = bool(visible_face_chain_mode)
+    self._right_mouse_repeat_place_state = None if place_state is None else str(place_state)
+    self._right_mouse_repeat_place_block_id = None if block_id is None else str(block_id)
     self._right_mouse_repeat_origin_player_y = float(self._session.player.position.y)
     self._right_mouse_repeat_vertical_lock_sign = 0
     self._right_mouse_repeat_due_s = float(now_s) + float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INITIAL_DELAY_S)
@@ -290,6 +296,8 @@ class ViewportStateMixin:
     self._right_mouse_repeat_line_pending_support_hit_point = None
     self._right_mouse_repeat_support_face_mode = False
     self._right_mouse_repeat_visible_face_chain_mode = False
+    self._right_mouse_repeat_place_state = None
+    self._right_mouse_repeat_place_block_id = None
     self._right_mouse_repeat_origin_player_y = 0.0
     self._right_mouse_repeat_vertical_lock_sign = 0
 

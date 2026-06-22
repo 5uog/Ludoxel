@@ -46,7 +46,7 @@ def next_effect_slot(*, parent, prepared: PreparedSource, desired_slots: int, ba
   for offset in range(total_slots):
     idx = int((start_index + offset) % total_slots)
     slot = prepared.slots[idx]
-    if slot.effect.isLoaded():
+    if slot.effect.isLoaded() and (not slot.effect.isPlaying()):
       prepared.cursor = int((idx + 1) % total_slots)
       return slot
 
