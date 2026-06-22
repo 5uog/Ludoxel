@@ -39,11 +39,7 @@ from manim import (
   tempconfig,
 )
 
-WORLD_AXES = (
-  np.array([1.0, 0.0, 0.0]),
-  np.array([0.0, 1.0, 0.0]),
-  np.array([0.0, 0.0, 1.0]),
-)
+WORLD_AXES = (np.array([1.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0]))
 UP_HINT = np.array([0.0, 1.0, 0.0])
 CAMERA_POSITION = np.array([0.0, 1.62, -7.20])
 
@@ -69,11 +65,7 @@ AXIS_COLORS = (RED_C, GREEN_C, BLUE_C)
 AXIS_GLOW_COLORS = (RED_E, GREEN_E, BLUE_E)
 AXIS_LABELS = (r"{+X}", r"{+Y}", r"{+Z}")
 AXIS_SUBSCRIPTS = (r"X", r"Y", r"Z")
-AXIS_ZERO_LABEL_OFFSETS = (
-  np.array([0.34, -0.25, 0.0]),
-  np.array([0.34, 0.25, 0.0]),
-  np.array([-0.38, -0.30, 0.0]),
-)
+AXIS_ZERO_LABEL_OFFSETS = (np.array([0.34, -0.25, 0.0]), np.array([0.34, 0.25, 0.0]), np.array([-0.38, -0.30, 0.0]))
 
 FIGURES_ROOT = Path(__file__).resolve().parents[1]
 PHOTO_OUTPUT = FIGURES_ROOT / "photo" / "debug-hud-axis-crosshair-projection.png"
@@ -81,8 +73,7 @@ VIDEO_OUTPUT = FIGURES_ROOT / "videos" / "debug-hud-axis-crosshair-camera.mp4"
 
 
 class CameraScalar(Protocol):
-  def get_value(self) -> float:
-    ...
+  def get_value(self) -> float: ...
 
 
 class ComputedCameraScalar:
@@ -103,15 +94,7 @@ def normalize(value: np.ndarray) -> np.ndarray:
 def forward_from_yaw_pitch_deg(yaw_deg: float, pitch_deg: float) -> np.ndarray:
   yaw = math.radians(float(yaw_deg))
   pitch = math.radians(float(pitch_deg))
-  return normalize(
-    np.array(
-      [
-        -math.sin(yaw) * math.cos(pitch),
-        -math.sin(pitch),
-        math.cos(yaw) * math.cos(pitch),
-      ]
-    )
-  )
+  return normalize(np.array([-math.sin(yaw) * math.cos(pitch), -math.sin(pitch), math.cos(yaw) * math.cos(pitch)]))
 
 
 def camera_basis(yaw_deg: float, pitch_deg: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -141,11 +124,7 @@ def axis_projection_values(axis_index: int, yaw_deg: float, pitch_deg: float, ro
 
 
 def axis_display_offsets(yaw_deg: float, pitch_deg: float, roll_deg: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-  return (
-    axis_projection_values(0, yaw_deg, pitch_deg, roll_deg)[1],
-    axis_projection_values(1, yaw_deg, pitch_deg, roll_deg)[1],
-    axis_projection_values(2, yaw_deg, pitch_deg, roll_deg)[1],
-  )
+  return (axis_projection_values(0, yaw_deg, pitch_deg, roll_deg)[1], axis_projection_values(1, yaw_deg, pitch_deg, roll_deg)[1], axis_projection_values(2, yaw_deg, pitch_deg, roll_deg)[1])
 
 
 def point(x: float, y: float) -> np.ndarray:
@@ -165,12 +144,7 @@ def clean_number(value: float) -> float:
 def world_view_components(world: np.ndarray, yaw_deg: float, pitch_deg: float) -> tuple[np.ndarray, float]:
   forward, right, up = camera_basis(yaw_deg, pitch_deg)
   relative = world - CAMERA_POSITION
-  view = np.array(
-    [
-      float(np.dot(right, relative)),
-      float(np.dot(up, relative)),
-    ]
-  )
+  view = np.array([float(np.dot(right, relative)), float(np.dot(up, relative))])
   depth = float(np.dot(forward, relative))
   return view, depth
 
@@ -191,12 +165,7 @@ def world_to_display(world: np.ndarray, yaw_deg: float, pitch_deg: float, roll_d
   return view_to_display(view, depth, roll_deg, center)
 
 
-def clip_wire_segment_to_near_plane(
-  start: np.ndarray,
-  end: np.ndarray,
-  yaw_deg: float,
-  pitch_deg: float,
-) -> tuple[np.ndarray, np.ndarray] | None:
+def clip_wire_segment_to_near_plane(start: np.ndarray, end: np.ndarray, yaw_deg: float, pitch_deg: float) -> tuple[np.ndarray, np.ndarray] | None:
   _, start_depth = world_view_components(start, yaw_deg, pitch_deg)
   _, end_depth = world_view_components(end, yaw_deg, pitch_deg)
 
@@ -230,17 +199,7 @@ def clip_wire_segment_to_near_plane(
 
 
 def add_wire_segment(
-  group: VGroup,
-  start: np.ndarray,
-  end: np.ndarray,
-  yaw_deg: float,
-  pitch_deg: float,
-  roll_deg: float,
-  center: np.ndarray,
-  *,
-  color=GREY_A,
-  width: float = 1.15,
-  opacity: float = 0.34,
+  group: VGroup, start: np.ndarray, end: np.ndarray, yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, color=GREY_A, width: float = 1.15, opacity: float = 0.34
 ) -> None:
   clipped = clip_wire_segment_to_near_plane(start, end, yaw_deg, pitch_deg)
   if clipped is None:
@@ -325,43 +284,12 @@ def add_ground_grid(yaw_deg: float, pitch_deg: float, roll_deg: float, center: n
 def add_reference_columns(yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, group: VGroup) -> None:
   for x in (-12.0, -8.0, -4.0, 0.0, 4.0, 8.0, 12.0):
     for z in (-2.0, 6.0, 14.0, 22.0):
-      add_wire_segment(
-        group,
-        np.array([x, 0.0, z]),
-        np.array([x, 4.0, z]),
-        yaw_deg,
-        pitch_deg,
-        roll_deg,
-        center,
-        color=GREY_B,
-        width=0.86,
-        opacity=0.12,
-      )
+      add_wire_segment(group, np.array([x, 0.0, z]), np.array([x, 4.0, z]), yaw_deg, pitch_deg, roll_deg, center, color=GREY_B, width=0.86, opacity=0.12)
 
 
-def add_block_wireframe(
-  group: VGroup,
-  origin: tuple[int, int, int],
-  yaw_deg: float,
-  pitch_deg: float,
-  roll_deg: float,
-  center: np.ndarray,
-  *,
-  opacity: float,
-) -> None:
+def add_block_wireframe(group: VGroup, origin: tuple[int, int, int], yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, opacity: float) -> None:
   for start, end in cube_edges(np.array([float(origin[0]), float(origin[1]), float(origin[2])]), 1.0):
-    add_wire_segment(
-      group,
-      start,
-      end,
-      yaw_deg,
-      pitch_deg,
-      roll_deg,
-      center,
-      color=WHITE,
-      width=1.42,
-      opacity=opacity,
-    )
+    add_wire_segment(group, start, end, yaw_deg, pitch_deg, roll_deg, center, color=WHITE, width=1.42, opacity=opacity)
 
 
 def voxel_wireframe(yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray) -> VGroup:
@@ -392,16 +320,7 @@ def voxel_wireframe(yaw_deg: float, pitch_deg: float, roll_deg: float, center: n
 
 
 def add_projected_polyline(
-  group: VGroup,
-  points: tuple[np.ndarray, ...],
-  yaw_deg: float,
-  pitch_deg: float,
-  roll_deg: float,
-  center: np.ndarray,
-  *,
-  color=WHITE,
-  width: float = 1.0,
-  opacity: float = 1.0,
+  group: VGroup, points: tuple[np.ndarray, ...], yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, color=WHITE, width: float = 1.0, opacity: float = 1.0
 ) -> None:
   for start, end in zip(points, points[1:]):
     add_wire_segment(group, start, end, yaw_deg, pitch_deg, roll_deg, center, color=color, width=width, opacity=opacity)
@@ -434,14 +353,7 @@ def glyph_strokes() -> tuple[tuple[tuple[float, float], tuple[float, float]], ..
   )
 
 
-def projected_segment_length(
-  world_start: np.ndarray,
-  world_end: np.ndarray,
-  yaw_deg: float,
-  pitch_deg: float,
-  roll_deg: float,
-  center: np.ndarray,
-) -> float:
+def projected_segment_length(world_start: np.ndarray, world_end: np.ndarray, yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray) -> float:
   projected_start = world_to_display(world_start, yaw_deg, pitch_deg, roll_deg, center)
   projected_end = world_to_display(world_end, yaw_deg, pitch_deg, roll_deg, center)
   if projected_start is None or projected_end is None:
@@ -476,17 +388,7 @@ def world_label_5uog(yaw_deg: float, pitch_deg: float, roll_deg: float, center: 
   depth_opacity = max(0.30, min(1.0, 1.35 / (0.11 * max(depth, 0.1) + 0.78)))
   stroke_width = max(0.72, min(2.90, 0.60 + horizontal_span * 0.055 + vertical_span * 0.030))
 
-  add_projected_polyline(
-    group,
-    sign_corners,
-    yaw_deg,
-    pitch_deg,
-    roll_deg,
-    center,
-    color=YELLOW_C,
-    width=max(0.62, stroke_width * 0.42),
-    opacity=0.30 * depth_opacity,
-  )
+  add_projected_polyline(group, sign_corners, yaw_deg, pitch_deg, roll_deg, center, color=YELLOW_C, width=max(0.62, stroke_width * 0.42), opacity=0.30 * depth_opacity)
 
   add_wire_segment(
     group,
@@ -654,10 +556,7 @@ def numeric_axis_block(axis_index: int, yaw: CameraScalar, pitch: CameraScalar, 
   q_pair = numeric_pair(r"q_{" + subscript + r"}", q_component(0), q_component(1), color=color, size=17, scale=0.30)
   pi_pair = numeric_pair(r"\pi_{" + subscript + r"}", qt_component(0), qt_component(1), color=color, size=17, scale=0.30)
 
-  m_value = VGroup(
-    tex(r"m_{" + subscript + r"}=", size=17, color=color),
-    make_value(magnitude, color=color, scale=0.30),
-  )
+  m_value = VGroup(tex(r"m_{" + subscript + r"}=", size=17, color=color), make_value(magnitude, color=color, scale=0.30))
   m_value.arrange(RIGHT, buff=0.022)
 
   block = VGroup(header, p_pair, q_pair, pi_pair, m_value)
@@ -676,11 +575,7 @@ def place_top_right(mobject: VGroup, *, right: float, top: float) -> VGroup:
 
 
 def right_top_axis_values(yaw: CameraScalar, pitch: CameraScalar, roll: CameraScalar) -> VGroup:
-  blocks = VGroup(
-    numeric_axis_block(0, yaw, pitch, roll),
-    numeric_axis_block(1, yaw, pitch, roll),
-    numeric_axis_block(2, yaw, pitch, roll),
-  )
+  blocks = VGroup(numeric_axis_block(0, yaw, pitch, roll), numeric_axis_block(1, yaw, pitch, roll), numeric_axis_block(2, yaw, pitch, roll))
   blocks.arrange(DOWN, aligned_edge=LEFT, buff=0.13)
 
   if blocks.width > 2.55:
@@ -753,21 +648,9 @@ class DebugHudAxisCrosshairCameraVideo(Scene):
     self.camera.background_color = BLACK
 
     phase = ValueTracker(0.0)
-    yaw = ComputedCameraScalar(
-      lambda: LOOP_BASE_YAW_DEG
-      + 34.0 * math.sin(phase.get_value())
-      + 14.0 * math.sin(2.0 * phase.get_value())
-    )
-    pitch = ComputedCameraScalar(
-      lambda: LOOP_BASE_PITCH_DEG
-      - 11.0 * math.sin(phase.get_value())
-      + 7.0 * math.sin(3.0 * phase.get_value())
-    )
-    roll = ComputedCameraScalar(
-      lambda: LOOP_BASE_ROLL_DEG
-      + 16.0 * math.sin(2.0 * phase.get_value())
-      - 8.0 * math.sin(phase.get_value())
-    )
+    yaw = ComputedCameraScalar(lambda: LOOP_BASE_YAW_DEG + 34.0 * math.sin(phase.get_value()) + 14.0 * math.sin(2.0 * phase.get_value()))
+    pitch = ComputedCameraScalar(lambda: LOOP_BASE_PITCH_DEG - 11.0 * math.sin(phase.get_value()) + 7.0 * math.sin(3.0 * phase.get_value()))
+    roll = ComputedCameraScalar(lambda: LOOP_BASE_ROLL_DEG + 16.0 * math.sin(2.0 * phase.get_value()) - 8.0 * math.sin(phase.get_value()))
 
     self.add(scene_layout(yaw, pitch, roll))
     self.play(phase.animate.set_value(2.0 * math.pi), run_time=VIDEO_LOOP_SECONDS, rate_func=linear)
