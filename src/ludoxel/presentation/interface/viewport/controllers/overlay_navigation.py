@@ -24,9 +24,7 @@ def bind_overlay_actions(viewport: "RendererViewportWidget") -> None:
   viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
   viewport._overlay.reset_skin_requested.connect(lambda: settings_controller.reset_player_skin(viewport))
   viewport._death.respawn_requested.connect(lambda: respawn(viewport))
-  viewport._inventory.item_selected.connect(lambda item_id: on_inventory_selected(viewport, str(item_id)))
-  viewport._inventory.hotbar_slot_selected.connect(lambda slot_index: settings_controller.select_hotbar_slot(viewport, int(slot_index)))
-  viewport._inventory.hotbar_slot_assigned.connect(lambda slot_index, item_id: settings_controller.assign_hotbar_slot(viewport, int(slot_index), str(item_id)))
+  viewport._inventory.storage_changed.connect(lambda payload: settings_controller.apply_inventory_storage(viewport, hotbar=payload["hotbar"], upper=payload["upper"]))
   viewport._inventory.closed.connect(lambda: on_inventory_closed(viewport))
 
 
@@ -167,16 +165,6 @@ def back_from_othello_settings(viewport: "RendererViewportWidget") -> None:
     viewport._othello_analysis_request_signature = None
     QTimer.singleShot(120, lambda: othello_controller.maybe_request_analysis(viewport))
   settings_controller.sync_cloud_motion_pause(viewport)
-
-
-def on_inventory_selected(viewport: "RendererViewportWidget", item_id: str) -> None:
-  if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
-    return
-
-  active_index = viewport._state.active_hotbar_index()
-  viewport._state.set_hotbar_slot(int(active_index), str(item_id))
-  settings_controller.sync_hotbar_widgets(viewport)
-  settings_controller.sync_first_person_target(viewport)
 
 
 def on_inventory_closed(viewport: "RendererViewportWidget") -> None:

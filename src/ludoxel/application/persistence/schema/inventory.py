@@ -9,6 +9,7 @@ from ludoxel.foundations.mathematics.scalars.coercion import coerce_int
 from ludoxel.simulation.inventories.hotbars.ai_route_defaults import default_ai_route_hotbar_slots
 from ludoxel.simulation.inventories.hotbars.defaults import default_hotbar_slots
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
+from ludoxel.simulation.inventories.storage.grid import UPPER_INVENTORY_SIZE, default_upper_inventory_slots, normalize_upper_inventory_slots
 from ludoxel.simulation.spaces.othello.inventories.hotbar import default_othello_hotbar_slots
 
 
@@ -27,11 +28,14 @@ def _inventory_branch_from_dict(raw_slots: object, raw_index: object, *, size: i
 @dataclass(frozen=True)
 class PersistedInventory:
   HOTBAR_SIZE: ClassVar[int] = DOMAIN_HOTBAR_SIZE
+  UPPER_INVENTORY_SIZE: ClassVar[int] = UPPER_INVENTORY_SIZE
 
   creative_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
   creative_selected_hotbar_index: int = 0
+  creative_upper_slots: tuple[str, ...] = field(default_factory=default_upper_inventory_slots)
   survival_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
   survival_selected_hotbar_index: int = 0
+  survival_upper_slots: tuple[str, ...] = field(default_factory=default_upper_inventory_slots)
   othello_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_othello_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
   othello_selected_hotbar_index: int = 0
   route_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_ai_route_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
@@ -46,8 +50,10 @@ class PersistedInventory:
     return {
       "creative_hotbar_slots": creative_slots,
       "creative_selected_hotbar_index": int(creative_idx),
+      "creative_upper_slots": [str(value) for value in normalize_upper_inventory_slots(self.creative_upper_slots)],
       "survival_hotbar_slots": survival_slots,
       "survival_selected_hotbar_index": int(survival_idx),
+      "survival_upper_slots": [str(value) for value in normalize_upper_inventory_slots(self.survival_upper_slots)],
       "othello_hotbar_slots": othello_slots,
       "othello_selected_hotbar_index": int(othello_idx),
       "route_hotbar_slots": route_slots,
@@ -56,22 +62,19 @@ class PersistedInventory:
 
   @staticmethod
   def from_dict(d: dict[str, Any]) -> "PersistedInventory":
-    previous_slots, previous_idx = _inventory_branch_from_dict(
-      d.get("hotbar_slots"), d.get("selected_hotbar_index", 0), size=PersistedInventory.HOTBAR_SIZE, default_slots=default_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE), default_index=0
-    )
     creative_slots, creative_idx = _inventory_branch_from_dict(
-      d.get("creative_hotbar_slots", previous_slots),
-      d.get("creative_selected_hotbar_index", previous_idx),
+      d.get("creative_hotbar_slots"),
+      d.get("creative_selected_hotbar_index", 0),
       size=PersistedInventory.HOTBAR_SIZE,
-      default_slots=previous_slots,
-      default_index=previous_idx,
+      default_slots=default_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
+      default_index=0,
     )
     survival_slots, survival_idx = _inventory_branch_from_dict(
-      d.get("survival_hotbar_slots", previous_slots),
-      d.get("survival_selected_hotbar_index", previous_idx),
+      d.get("survival_hotbar_slots"),
+      d.get("survival_selected_hotbar_index", 0),
       size=PersistedInventory.HOTBAR_SIZE,
-      default_slots=previous_slots,
-      default_index=previous_idx,
+      default_slots=default_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
+      default_index=0,
     )
     othello_slots, othello_idx = _inventory_branch_from_dict(
       d.get("othello_hotbar_slots", default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)),
@@ -91,8 +94,10 @@ class PersistedInventory:
     return PersistedInventory(
       creative_hotbar_slots=creative_slots,
       creative_selected_hotbar_index=int(creative_idx),
+      creative_upper_slots=normalize_upper_inventory_slots(d.get("creative_upper_slots")),
       survival_hotbar_slots=survival_slots,
       survival_selected_hotbar_index=int(survival_idx),
+      survival_upper_slots=normalize_upper_inventory_slots(d.get("survival_upper_slots")),
       othello_hotbar_slots=othello_slots,
       othello_selected_hotbar_index=int(othello_idx),
       route_hotbar_slots=route_slots,

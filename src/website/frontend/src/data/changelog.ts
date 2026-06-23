@@ -15,6 +15,44 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.0 Beta 1',
+    tags: ['Desktop Application', 'Inventory', 'My World'],
+    sections: [
+      {
+        title: '9x4 My World Inventory Storage',
+        items: [
+          'Expanded the My World inventory from a nine-slot hotbar to thirty-six storage slots per game mode: the nine-slot hotbar plus a 9x3 upper inventory of twenty-seven slots that stays hidden until the inventory opens. `RuntimePreferences` now carries `creative_upper_slots` and `survival_upper_slots` next to the existing per-mode hotbars, and the upper inventory orders its slots row-major from the top-left while the hotbar keeps indices 0 through 8 left to right.',
+          'Each storage slot still holds a single item id; the change adds slots rather than stack counts. `PersistedInventory` now serializes `creative_upper_slots` and `survival_upper_slots`, `runtime_state` carries those fields in both directions, and `PlayerStateFile` advanced to version 8.',
+          'Added a 2x2 crafting input and a 1x1 crafting output to the central box, kept apart from the thirty-six storage slots. The crafting input is a transient working area: closing the inventory moves each crafting item into the storage by hotbar-then-upper priority and leaves the grid empty, so the crafting grid is never persisted. The 1x1 output is read-only and resolves to empty because Ludoxel implements no crafting recipe resolution.',
+        ],
+      },
+      {
+        title: 'Survival and Creative Inventory Layout',
+        items: [
+          'Rebuilt `InventoryOverlay` around a square central box that stacks the 9x3 upper inventory above the 9x1 hotbar row, places a black-background player preview on the upper left and the 2x2 crafting input and 1x1 output on the upper right, and carries a close button driven by `assets/ui/inventory/close.svg` in the top-right corner. Creative Mode adds an All Items box to the left of the central box that supplies every block and special item.',
+          'Search in the All Items box keeps filtered results in the same top-left row-major order as the full catalog, filling each row left to right before wrapping to the next.',
+          'Replaced the inventory title, subtitle, Survival-Mode notice, and the text close control with the slot layout and the `close.svg` icon button.',
+        ],
+      },
+      {
+        title: 'Cursor Carry, Shift Transfer, and Slot Keys',
+        items: [
+          'A left click now lifts an item onto the cursor as a carried item, and the destination is fixed only when the player clicks a slot again. An empty destination moves the item, an occupied destination swaps it with the carry source, and a Creative All Items source replaces the destination. Closing the inventory while carrying returns the item to its source.',
+          'Shift and left click moves an item immediately through `place_into_storage_priority` and the per-region rules in `InventoryOverlay`: an All Items source fills the first empty hotbar slot and then the upper inventory, a hotbar item descends to the first empty upper slot, an upper item rises to the first empty hotbar slot, and a crafting slot returns to the hotbar and then the upper inventory.',
+          'Hovering an item and pressing `1` through `9` outside the search box assigns it to the matching hotbar slot. Creative Mode replaces the hotbar slot with the hovered item; Survival Mode swaps the hovered storage slot with the hotbar slot. The search field keeps `1` through `9` as text while it holds focus.',
+          'Pressing the drop key (default `Q`) while hovering a slot in the 9x4 storage empties that slot. The drop key acts on the hovered hotbar or upper slot, leaving the crafting and All Items regions untouched.',
+        ],
+      },
+      {
+        title: 'Inventory Player Preview and Drag Image',
+        items: [
+          'Added a live player preview inside the inventory through `_update_inventory_preview_frame`, which composes a third-person preview state from the running render snapshot and reflects the current skin and hurt tint. The fixed-step runtime keeps advancing while the inventory stays open, so the preview tracks the player state in real time.',
+          'Scaled the drag image in `start_item_drag` down to the slot icon size with a centered hotspot, matching a block thumbnail to its in-slot appearance during a drag instead of the 300x300 thumbnail source.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.9',
     tags: ['Desktop Application', 'AI NPCs', 'Chat'],
     sections: [

@@ -56,6 +56,16 @@ QWidget#hotbarRoot QFrame#hotbarPanel {
   border: none;
 }
 
+QWidget#inventoryRoot QPushButton#closeBtn {
+  padding: 4px;
+  min-height: 0px;
+}
+
+QWidget#inventoryRoot QLabel#carryCursor {
+  background: transparent;
+  border: none;
+}
+
 /* Notice dialog */
 
 QWidget#noticeDialog {

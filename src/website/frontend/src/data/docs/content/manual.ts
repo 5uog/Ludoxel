@@ -1015,160 +1015,192 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
     group: 'Window and Item Surfaces',
     title: 'Using the Inventory Overlay',
     description:
-      'Defines the inventory as a focus-taking overlay whose creative catalog is assembled from `BlockRegistry` and catalog-visible special-item descriptors. Search, click, drag, and numeric assignment emit requests through overlay-navigation and settings controllers; the active hotbar state mutates only after that controller path admits the request.',
+      'Defines the My World inventory as a focus-taking overlay built around a square central box of thirty-six storage slots, a 2x2 crafting input, a read-only 1x1 output, and a black-background player preview on the upper left, with a Creative All Items box on the left. A click lifts an item onto the cursor, a shift-click transfers it by priority, a hovered number key assigns a hotbar slot, and the drop key empties a hovered storage slot; the overlay commits each arrangement through one storage signal that the settings controller writes into the My World runtime branches.',
     sections: [
       {
         id: 'using-the-inventory-overlay-toggle',
         title: 'The Inventory Opens With E and Closes With E or Escape',
         body: [
-          'The inventory is bound to the toggle-inventory action, which defaults to E. Inside the overlay, the same bound action or the Escape key closes it. Closing emits a closed signal so the controller can hide the overlay and re-arm the viewport.',
-          'While the overlay is open it holds input focus, so the keys that would otherwise move the player are interpreted by the overlay. Opening the inventory therefore enters a held-focus state that routes the movement keys to the overlay until E or Escape closes it, a deliberate state change beyond a transient popup.',
-          '`InventoryOverlay.setVisible` clears the hover id and search text when the surface hides. When a visible creative inventory opens, it focuses and selects the search box with `PopupFocusReason`. The controller receives the `closed` signal and calls `_set_inventory_overlay(False)` followed by `arm_resume_refresh`, so visibility, input focus, capture recovery, and repaint eligibility are coordinated through the overlay path.',
-          '`BlockRegistry.register` rejects mutation after sealing, empty ids, and duplicate ids; `create_default_registry` builds its default catalog once behind a lock and seals it before reuse. Inventory construction reads `all_blocks()` from that registry. The overlay can order and display registered definitions, yet it holds no path that extends the registry from a catalog search or drag operation.',
+          'The inventory is bound to the toggle-inventory action, which defaults to E and is admitted only in My World by `inventory_available`. Inside the overlay the same bound action or the Escape key closes it, and closing emits a `closed` signal so the controller hides the surface and re-arms the viewport.',
+          'While the overlay is open it holds input focus, so the keys that would otherwise move the player are interpreted by the overlay until E or Escape closes it. Opening the inventory keeps the fixed-step runtime advancing, so the simulation, clouds, and AI keep moving while the overlay is shown.',
+          '`_set_inventory_overlay` calls `sync_hotbar_widgets` to push the runtime storage into the overlay before it shows the surface, and clears the inventory preview frame when it hides. `InventoryOverlay.setVisible` clears the carried item, the drag source, the hover record, and the search text when the surface hides; a visible creative inventory focuses and selects the search box with `PopupFocusReason`.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The bound inventory action or Escape closes the overlay.',
-            code: `bound_action = action_for_key(int(key), self._keybinds)
-if bound_action == ACTION_TOGGLE_INVENTORY or key == int(Qt.Key.Key_Escape):
-  self._close()
-  e.accept()
-  return`,
+            caption: 'Escape closes the overlay, and the bound inventory action closes it too.',
+            code: `def keyPressEvent(self, e) -> None:
+  key = int(e.key())
+  if key == int(Qt.Key.Key_Escape):
+    self._close()
+    e.accept()
+    return`,
           },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-modes',
-        title: 'Creative and Survival Modes Show Different Panels',
+        id: 'using-the-inventory-overlay-central-box',
+        title: 'The Central Box Holds the 9x4 Storage, Crafting, and a Preview',
         body: [
-          'In creative mode the overlay is titled "CREATIVE INVENTORY" and shows the searchable item catalog and search box. In survival mode it is titled "SURVIVAL INVENTORY", hides the catalog and search, and states that creative item selection is unavailable.',
-          'The creative-mode toggle defaults to B. Switching modes changes the title, the subtitle instructions, and whether the catalog grid and search box are visible, while the hotbar row at the bottom remains in both modes.',
-          '`set_creative_mode` clears the hovered catalog item and search query on the survival branch, hides both catalog surfaces, and keeps the overlay’s normalized hotbar slots intact. The mode changes a presentation and controller admission condition; it does not manufacture a new item catalog, alter the block registry, or write a saved hotbar branch by itself.',
+          'The central box is square. It stacks a 9x3 upper inventory of twenty-seven slots above the 9x1 hotbar row, so the two regions form thirty-six storage slots. The upper inventory stays hidden until the inventory opens, and the hotbar row mirrors the nine slots the HUD shows during play.',
+          'Along the top of the box a black-background player preview sits on the upper left, and a 2x2 crafting input beside a 1x1 crafting output sits on the upper right. A close button in the top-right corner draws `assets/ui/inventory/close.svg`. The crafting output is read-only and resolves to empty because Ludoxel implements no crafting recipe resolution.',
+          'The crafting input is a transient working area, kept apart from the thirty-six storage slots. An item can move into and out of it while the inventory is open, and closing the inventory empties it into the storage. The crafting grid is never persisted; it resets to empty each time the inventory opens.',
+          'Creative Mode adds an All Items box to the left of the central box, and Survival Mode shows the central box alone. `set_creative_mode` toggles the All Items box, and it clears a catalog carry or catalog hover when the mode leaves creative.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'Survival mode hides the creative catalog and search.',
-            code: `if bool(self._creative_mode):
-  self._title_label.setText("CREATIVE INVENTORY")
-  self._search_box.setVisible(True)
-  self._catalog_scroll.setVisible(True)
-  self._apply_filter()
-  return
-
-self._title_label.setText("SURVIVAL INVENTORY")
-self._subtitle_label.setText("Creative item selection is unavailable in Survival Mode.")
-self._search_box.setVisible(False)
-self._catalog_scroll.setVisible(False)`,
+            caption: 'The upper inventory fills row-major across nine columns.',
+            code: `for slot_index in range(UPPER_INVENTORY_SIZE):
+  button = _StorageSlotButton(REGION_UPPER, slot_index, droppable=True, draggable_getter=self._can_begin_drag, parent=upper)
+  upper_grid.addWidget(button, int(slot_index // UPPER_INVENTORY_COLUMNS), int(slot_index % UPPER_INVENTORY_COLUMNS))`,
           },
         ],
       },
       {
         id: 'using-the-inventory-overlay-catalog',
-        title: 'The Item Grid Is Built From Blocks and Special Items',
+        title: 'The All Items Box Is Built From Blocks and Special Items',
         body: [
-          'The catalog is assembled from every block in the block registry plus every special item in the special-item catalog. Each entry becomes a draggable button with an icon and a search key built from its display name and id, and special items add their description to the search key.',
-          'The grid is laid out twelve columns wide. Registry and catalog entries determine the inventory’s item set at runtime.',
-          '`BlockRegistry.all_blocks` returns definitions sorted by block id. `iter_catalog_special_items` filters descriptors by `catalog_visible`, while the special-item registry joins core and Othello descriptor sources under normalized ids. The inventory’s item list is therefore a projection of the active registry and catalog-visible descriptors. A raw item-id string absent from those owners has no catalog button generated here.',
+          'The All Items box is assembled from every block in the block registry plus every catalog-visible special item. Each entry becomes a draggable button with an icon and a search key built from its display name and id, and special items add their description to the search key.',
+          '`BlockRegistry.all_blocks` returns definitions sorted by block id, and `iter_catalog_special_items` filters descriptors by `catalog_visible`. The box is an infinite source in Creative Mode: a catalog item can be carried or transferred while the box keeps every entry.',
+          'Search splits the query into tokens and keeps entries whose search key contains every token. `_apply_filter` lays the matches out from the top-left in row-major order across nine columns, the same order the full catalog uses, so a filtered result fills each row left to right before wrapping.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'Blocks and special items are both added to the inventory grid.',
-            code: `for block_def in self._reg.all_blocks():
-  item_id = str(block_def.block_id)
-  display_name = str(block_def.display_name)
-  button = _InventoryItemButton(item_id, display_name, self)
-  self._slot_entries.append((str(item_id), f"{display_name.casefold()} {item_id.casefold()}", button))
+            caption: 'Search keeps the top-left, row-major catalog order.',
+            code: `tokens = tuple(token for token in query_text.split() if token)
+matching_entries = [entry for entry in self._catalog_entries if all(token in entry[1] for token in tokens)]
 
-for descriptor in iter_catalog_special_items():
-  item_id = str(descriptor.item_id)
-  display_name = str(descriptor.display_name)
-  button = _InventoryItemButton(item_id, display_name, self)
-  search_key = f"{display_name.casefold()} {item_id.casefold()} {str(descriptor.description).casefold()}"
-  self._slot_entries.append((str(item_id), search_key, button))`,
+for index, (_item_id, _search_key, button) in enumerate(matching_entries):
+  self._grid_layout.addWidget(button, int(index // _CATALOG_COLUMNS), int(index % _CATALOG_COLUMNS))`,
           },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-search',
-        title: 'The Search Box Filters by Name and Id',
+        id: 'using-the-inventory-overlay-carry',
+        title: 'A Click Lifts an Item Onto the Cursor',
         body: [
-          'The search box filters the catalog by splitting the query into tokens and keeping only entries whose search key contains every token. The search key is case-folded name, id, and (for special items) description, so a partial name or id narrows the grid.',
-          'While the search box has focus it takes priority: typing edits the query, and only Escape is treated specially to close the overlay. This keeps number keys and other shortcuts from firing while you are typing a search.',
-          '`_apply_filter` removes the current grid layout entries, hides their widgets, then re-adds matching buttons across twelve columns. It also clears `_hovered_item_id` when its item falls outside the filtered id set. Search reshapes the visible catalog and hover candidate; it never assigns an item until a click, drop, or numeric branch emits a controller-facing signal.',
+          'A left click on a filled slot lifts its item onto the cursor as a carried item and empties the source in the overlay working copy. The carried item follows the pointer as a small image while an event filter tracks mouse movement over the overlay.',
+          'The next click on a storage slot, the crafting input, or the crafting output commits the destination. The output rejects a placed item, so a click on it keeps the carry active.',
+          'An empty destination receives the carried item and the source stays empty, completing a move. An occupied destination receives the carried item while its previous item returns to the carry source, completing a swap. A Creative All Items source replaces the destination, and the previous item is discarded because the box is an infinite source.',
+          'Closing the inventory returns any carried item to its source through `_cancel_carry`, then `_evacuate_crafting` moves each crafting item into the storage by hotbar-then-upper priority so the crafting grid ends empty. A drag started from a slot performs the same move or swap, decoding the `application/x-ludoxel-block-id` MIME payload in `dropEvent` and reading the drag source the overlay recorded when the drag began.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'Every query token must be present in an entry to keep it visible.',
-            code: `query_text = str(self._search_box.text() or "").strip().casefold()
-tokens = tuple(token for token in query_text.split() if token)
-matching_entries = [entry for entry in self._slot_entries if all(token in entry[1] for token in tokens)]`,
+            caption: 'Placing a carried item moves it, swaps it, or replaces the destination.',
+            code: `if self._carry_region == REGION_CATALOG:
+  self._set_slot(dest_region, dest_index, carried)
+else:
+  self._set_slot(dest_region, dest_index, carried)
+  if not (self._carry_region == dest_region and int(self._carry_index) == int(dest_index)):
+    self._set_slot(self._carry_region, self._carry_index, destination_old)`,
           },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-assign',
-        title: 'Click, Drag, or Press a Number to Assign',
+        id: 'using-the-inventory-overlay-shift',
+        title: 'A Shift-Click Transfers an Item by Priority',
         body: [
-          'There are three ways to put an item into the hotbar. Clicking an item assigns it to the currently selected hotbar slot. Dragging an item onto a specific hotbar slot assigns it there. Hovering an item and pressing 1-9 assigns it to that numbered slot. Each path emits a hotbar-assignment signal that the controller applies.',
-          'The hotbar row inside the overlay is itself made of slots that accept drops and report selection. Dropping an item both assigns the slot and selects it, so a drag leaves that slot active.',
-          '`DraggableItemButton` creates `application/x-ludoxel-block-id` MIME data and executes a copy drag. `_HotbarSlotButton.dropEvent` decodes that MIME payload, emits `item_dropped`, emits `slot_selected`, and accepts the proposed action. The widget transfers an item id and target slot index; overlay-navigation and settings controllers remain responsible for installing the resulting runtime hotbar value.',
+          'Shift and left click moves an item immediately, with no carry step. `place_into_storage_priority` and the per-region branches in `_shift_transfer_slot` choose the destination.',
+          'From the All Items box a shift-click fills the first empty hotbar slot, then the first empty upper slot. A hotbar item descends to the first empty upper slot. An upper item rises to the first empty hotbar slot. A crafting slot returns to the hotbar, then the upper inventory.',
+          'When no destination is free the item stays where it is, so a shift-click never discards a crafting item or any other slot content.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'Hovering an item and pressing a number assigns it to that slot.',
-            code: `idx = hotbar_index_from_key(key, self._keybinds)
-if idx is not None:
-  self.hotbar_slot_selected.emit(int(idx))
-  if bool(self._creative_mode) and self._hovered_item_id is not None:
-    self.hotbar_slot_assigned.emit(int(idx), str(self._hovered_item_id))
-  e.accept()
-  return`,
+            caption: 'Priority placement fills the hotbar, then the upper inventory.',
+            code: `inserted_hotbar, hotbar_index = insert_into_first_empty(normalized_hotbar, item_id, size=HOTBAR_SIZE)
+if hotbar_index is not None:
+  return inserted_hotbar, normalized_upper, True
+inserted_upper, upper_index = insert_into_first_empty(normalized_upper, item_id, size=UPPER_INVENTORY_SIZE)
+return normalized_hotbar, inserted_upper, upper_index is not None`,
           },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-signals',
-        title: 'The Overlay Edits Hotbar State Through Signals',
+        id: 'using-the-inventory-overlay-number-keys',
+        title: 'Hovering and Pressing 1-9 Assigns a Hotbar Slot',
         body: [
-          'The overlay does not write hotbar state directly. It emits item-selected, hotbar-slot-selected, and hotbar-slot-assigned signals, which the overlay-navigation controller connects to the settings controller. A creative selection sets the active slot to the chosen item and re-syncs the hotbar and first-person target.',
-          'The emitted signals route inventory hotbar changes through the controller. The controller evaluates permission, including the creative-mode condition, before applying the change.',
-          '`bind_overlay_actions` connects `item_selected`, `hotbar_slot_selected`, and `hotbar_slot_assigned` separately. `on_inventory_selected` checks both `viewport._state.creative_mode` and `settings_controller.inventory_available(viewport)` before mutating the active slot; assignment and selection use their dedicated settings-controller functions. The signal graph gives click, hover-plus-number, and drag operations a common runtime consumer without giving the overlay direct access to the session state object.',
+          'Hovering an item and pressing a number key from 1 to 9 outside the search box assigns it to the matching hotbar slot. `hotbar_index_from_key` maps the bound key to a slot index, and `_handle_number_key` applies the assignment.',
+          'Creative Mode replaces the chosen hotbar slot with the hovered item, whether the item is hovered in the All Items box or in storage. Survival Mode swaps the hovered storage slot with the chosen hotbar slot, and a hovered hotbar slot equal to the pressed number is a no-op.',
+          'While the search box holds focus it keeps the number keys as text, so a numeric query edits the search instead of moving an item. Escape still closes the overlay from the search box.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'A creative inventory selection is applied to the active hotbar slot by the controller.',
-            code: `def on_inventory_selected(viewport, item_id: str) -> None:
-  if not bool(viewport._state.creative_mode) or not settings_controller.inventory_available(viewport):
+            caption: 'Survival number-key assignment swaps the hovered slot with the hotbar slot.',
+            code: `hovered_item = self._get_slot(region, hovered_index)
+hotbar_item = self._get_slot(REGION_HOTBAR, target_index)
+self._set_slot(REGION_HOTBAR, target_index, hovered_item)
+self._set_slot(region, hovered_index, hotbar_item)`,
+          },
+        ],
+      },
+      {
+        id: 'using-the-inventory-overlay-drop-key',
+        title: 'The Drop Key Empties a Hovered Storage Slot',
+        body: [
+          'Hovering a slot in the 9x4 storage and pressing the clear-selected-slot action, bound to Q by default, empties that slot. `_clear_hovered_slot` reads the bound action in `keyPressEvent` and clears the hovered slot when it belongs to the hotbar or the upper inventory.',
+          'The drop key acts on the 9x4 storage only. A hover over the crafting input, the crafting output, or the All Items box leaves the key inert, and the key is ignored while an item is on the cursor.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The drop key clears a hovered hotbar or upper slot.',
+            code: `def _clear_hovered_slot(self) -> None:
+  if self._is_carrying():
     return
-  active_index = viewport._state.active_hotbar_index()
-  viewport._state.set_hotbar_slot(int(active_index), str(item_id))
-  settings_controller.sync_hotbar_widgets(viewport)
-  settings_controller.sync_first_person_target(viewport)`,
+  region = self._hovered_region
+  if region not in (REGION_HOTBAR, REGION_UPPER) or self._hovered_index is None:
+    return
+  hovered_index = int(self._hovered_index)
+  if not self._get_slot(region, hovered_index):
+    return
+  self._set_slot(region, hovered_index, "")
+  self._sync_storage_buttons()
+  self._emit_storage_changed()`,
           },
         ],
       },
       {
-        id: 'using-the-inventory-overlay-icons',
-        title: 'Item Icons Load Asynchronously',
+        id: 'using-the-inventory-overlay-commit',
+        title: 'The Overlay Commits Storage Through One Signal',
         body: [
-          'Item icons are provided by a photo provider that becomes active only while the overlay is visible in creative mode. As icons become available the overlay updates the matching catalog buttons and re-syncs the hotbar row, so icons can appear shortly after the grid is shown.',
-          'Because the provider is deactivated when the overlay is hidden, the inventory does not keep generating icons in the background. This keeps icon work tied to the time the catalog is actually on screen.',
-          '`ItemPhotoProvider` owns caches for static pixmaps, animated pixmaps, and `QMovie` instances. `set_active` and `set_animations_enabled` synchronize each movie’s playback state; an inactive provider stops a movie, jumps to frame zero, updates its cache, and emits the item id. The visible grid and hotbar row consume those emissions through `_on_item_pixmap_changed`, while registry membership and hotbar assignment remain unchanged.',
+          'The overlay edits a working copy of the hotbar, upper inventory, and crafting input while it is open. A click, drag, shift-click, number key, or drop key that changes the hotbar or upper inventory emits one `storage_changed` payload carrying the hotbar and upper tuples; the crafting grid stays out of the payload because it is never persisted.',
+          '`bind_overlay_actions` connects `storage_changed` to `apply_inventory_storage`. The controller writes the active My World hotbar and upper branches through `set_my_world_hotbar_slots` and `set_my_world_upper_slots`, normalizes the runtime, then re-syncs the HUD hotbar, the health strip, and the first-person held item.',
+          'The overlay keeps its working copy while open, and the controller leaves the open overlay alone after a commit. The runtime re-pushes storage into the overlay only when the inventory opens or the game mode changes, so an in-progress carry survives until the player places it.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The icon provider activates only while the creative catalog is visible.',
-            code: `def setVisible(self, visible: bool) -> None:
-  normalized_visible = bool(visible)
-  super().setVisible(normalized_visible)
-  self._photos.set_active(normalized_visible and bool(self._creative_mode))`,
+            caption: 'One signal carries the hotbar and upper tuples to the controller.',
+            code: `self.storage_changed.emit(
+  {
+    "hotbar": tuple(str(value).strip() for value in self._hotbar_slots),
+    "upper": tuple(str(value).strip() for value in self._upper_slots),
+  }
+)`,
+          },
+        ],
+      },
+      {
+        id: 'using-the-inventory-overlay-preview',
+        title: 'The Inventory Preview Tracks the Live Player',
+        body: [
+          'The central box renders a live player preview while the inventory is open. `_update_inventory_preview_frame` runs on each painted frame, composes a third-person preview state from the running render snapshot, and draws it into the inventory preview widget over a black background.',
+          'Because the fixed-step runtime keeps advancing with the inventory open, the preview reflects the current skin and the hurt tint produced by recent damage. The preview frame is cleared when the inventory hides, and this path is separate from the pause-screen preview so neither one drives the other.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The inventory preview composes a third-person state from the live player state.',
+            code: `def _build_inventory_preview_player_state(self, player_state):
+  if player_state is None:
+    return None
+  body_yaw_deg, head_yaw_deg, head_pitch_deg = self._inventory.preview_widget().preview_angles()
+  return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)`,
           },
         ],
       },

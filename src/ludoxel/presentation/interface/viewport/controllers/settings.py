@@ -147,9 +147,23 @@ def sync_hotbar_widgets(viewport: "RendererViewportWidget") -> None:
   viewport._inventory.set_keybinds(viewport._state.keybinds)
   viewport._inventory.set_animations_enabled(bool(viewport._state.animated_textures_enabled))
   viewport._hotbar.set_animations_enabled(bool(viewport._state.animated_textures_enabled))
-  viewport._inventory.sync_hotbar(slots=slots, selected_index=int(selected_index))
+  if inventory_available(viewport):
+    viewport._inventory.sync_storage(slots=slots, upper=viewport._state.my_world_upper_snapshot(), selected_index=int(selected_index))
   viewport._hotbar.sync_hotbar(slots=slots, selected_index=int(selected_index))
   sync_hotbar_status(viewport)
+
+
+def apply_inventory_storage(viewport: "RendererViewportWidget", *, hotbar, upper) -> None:
+  if not inventory_available(viewport):
+    return
+  viewport._state.set_my_world_hotbar_slots(hotbar)
+  viewport._state.set_my_world_upper_slots(upper)
+  viewport._state.normalize()
+  slots = viewport._state.hotbar_snapshot()
+  selected_index = viewport._state.active_hotbar_index()
+  viewport._hotbar.sync_hotbar(slots=slots, selected_index=int(selected_index))
+  sync_hotbar_status(viewport)
+  sync_first_person_target(viewport)
 
 
 def _sync_overlay_crosshair_widgets(viewport: "RendererViewportWidget", overlay) -> None:
@@ -196,12 +210,6 @@ def sync_first_person_target(viewport: "RendererViewportWidget") -> None:
 
 def select_hotbar_slot(viewport: "RendererViewportWidget", slot_index: int) -> None:
   viewport._state.select_hotbar_index(int(slot_index))
-  sync_hotbar_widgets(viewport)
-  sync_first_person_target(viewport)
-
-
-def assign_hotbar_slot(viewport: "RendererViewportWidget", slot_index: int, item_id: str) -> None:
-  viewport._state.set_hotbar_slot(int(slot_index), str(item_id))
   sync_hotbar_widgets(viewport)
   sync_first_person_target(viewport)
 

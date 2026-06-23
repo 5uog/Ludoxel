@@ -127,6 +127,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._ai_skin_images: dict[str, QImage] = {}
     self._pause_preview_cache_key: tuple[object, ...] | None = None
     self._pause_preview_frame = QImage()
+    self._inventory_preview_cache_key: tuple[object, ...] | None = None
+    self._inventory_preview_frame = QImage()
     self._block_break_particles = ()
     self._ai_edit_settings = AiSpawnEggSettings().normalized()
     self._ai_settings_overlay_open: bool = False

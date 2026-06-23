@@ -332,7 +332,7 @@ if env_root:
             caption: 'Player state shows why deleting one file discards multiple saved domains.',
             code: `@dataclass(frozen=True)
 class PlayerStateFile:
-  version: int = 7
+  version: int = 8
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
   inventory: PersistedInventory = field(default_factory=PersistedInventory)
@@ -460,7 +460,7 @@ class PlayerStateFile:
             caption: 'src/ludoxel/application/persistence/schema/files.py',
             code: `@dataclass(frozen=True)
 class PlayerStateFile:
-  version: int = 7
+  version: int = 8
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
   inventory: PersistedInventory = field(default_factory=PersistedInventory)
@@ -686,6 +686,17 @@ def current_block_id(self) -> str | None:
   if item_id is None or is_special_item_id(item_id):
     return None
   return item_id`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'My World carries a per-mode upper inventory beneath the hotbar. `creative_upper_slots` and `survival_upper_slots` each hold a twenty-seven-slot upper inventory ordered row-major. `_my_world_upper_attr` resolves the active branch from `creative_mode`, so the runtime reads `my_world_upper_snapshot` and rewrites it through `set_my_world_upper_slots`. `normalize()` reprojects each branch through `normalize_upper_inventory_slots`, padding or truncating a saved sequence to its fixed length, and `PersistedInventory` serializes the per-mode hotbar and upper branches into `player_state.json`. The inventory crafting grid is a transient presentation working area: the overlay empties it into the storage when it closes, so no crafting field reaches the runtime or the saved envelope.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'The active My World upper-inventory branch resolves from the game mode.',
+            code: `def _my_world_upper_attr(self) -> str:
+  return "creative_upper_slots" if bool(self.creative_mode) else "survival_upper_slots"`,
           },
           {
             kind: 'paragraph',

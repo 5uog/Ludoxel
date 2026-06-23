@@ -132,6 +132,46 @@ class ViewportOverlayMixin:
     self._pause_preview_frame = QImage(frame)
     self._overlay.set_player_preview_frame(frame)
 
+  def _build_inventory_preview_player_state(self: "RendererViewportWidget", player_state) -> object:
+    if player_state is None:
+      return None
+    body_yaw_deg, head_yaw_deg, head_pitch_deg = self._inventory.preview_widget().preview_angles()
+    return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)
+
+  def _clear_inventory_preview_frame(self: "RendererViewportWidget") -> None:
+    if self._inventory_preview_cache_key is None and self._inventory_preview_frame.isNull():
+      return
+    self._inventory_preview_cache_key = None
+    self._inventory_preview_frame = QImage()
+    self._inventory.set_player_preview_frame(QImage())
+
+  def _update_inventory_preview_frame(self: "RendererViewportWidget", player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:
+    if not bool(self._overlays.inventory_open()) or bool(self.loading_active()):
+      self._clear_inventory_preview_frame()
+      return
+    preview_widget = self._inventory.preview_widget()
+    if int(preview_widget.width()) <= 1 or int(preview_widget.height()) <= 1:
+      self._clear_inventory_preview_frame()
+      return
+    w = max(1, int(round(float(preview_widget.width()) * max(1.0, float(dpr)))))
+    h = max(1, int(round(float(preview_widget.height()) * max(1.0, float(dpr)))))
+    preview_state = self._build_inventory_preview_player_state(player_state)
+    preview_key = self._pause_preview_key(player_state=preview_state, width=int(w), height=int(h), device_pixel_ratio=float(dpr))
+    if preview_key is not None and self._inventory_preview_cache_key == preview_key and not self._inventory_preview_frame.isNull():
+      self._inventory.set_player_preview_frame(self._inventory_preview_frame)
+      return
+    frame = self._renderer.render_player_preview_frame(
+      w=int(w),
+      h=int(h),
+      player_state=preview_state,
+      restore_framebuffer=int(self.defaultFramebufferObject()),
+      restore_viewport=(0, 0, int(fb_w), int(fb_h)),
+      device_pixel_ratio=float(max(1.0, float(dpr))),
+    )
+    self._inventory_preview_cache_key = preview_key
+    self._inventory_preview_frame = QImage(frame)
+    self._inventory.set_player_preview_frame(frame)
+
   def _update_ai_preview_frame(self: "RendererViewportWidget", *, fb_w: int, fb_h: int, dpr: float) -> None:
     preview = getattr(self, "_ai_preview", None)
     if preview is None:
@@ -337,7 +377,10 @@ class ViewportOverlayMixin:
       return
     if bool(on):
       self._reset_held_mouse_actions()
+      settings_controller.sync_hotbar_widgets(self)
     self._overlays.set_inventory_open(bool(on))
+    if not bool(on):
+      self._clear_inventory_preview_frame()
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 

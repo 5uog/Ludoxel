@@ -28,6 +28,22 @@ def item_id_from_mime(mime: QMimeData) -> str | None:
   return None
 
 
+def _drag_preview_pixmap(source: QPushButton) -> QPixmap | None:
+  if isinstance(source, ItemSlotButton):
+    pixmap = source.item_pixmap()
+    icon_size = source.item_icon_size()
+  else:
+    icon_size = source.iconSize()
+    pixmap = source.icon().pixmap(icon_size)
+  if pixmap.isNull():
+    return None
+  target_width = max(1, int(icon_size.width()))
+  target_height = max(1, int(icon_size.height()))
+  if int(pixmap.width()) <= target_width and int(pixmap.height()) <= target_height:
+    return pixmap
+  return pixmap.scaled(int(target_width), int(target_height), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+
+
 def start_item_drag(source: QPushButton, item_id: str) -> None:
   normalized = str(item_id).strip()
   if not normalized:
@@ -39,12 +55,10 @@ def start_item_drag(source: QPushButton, item_id: str) -> None:
   mime.setText(normalized)
   drag.setMimeData(mime)
 
-  if isinstance(source, ItemSlotButton):
-    pixmap = source.item_pixmap()
-  else:
-    pixmap = source.icon().pixmap(source.iconSize())
-  if not pixmap.isNull():
-    drag.setPixmap(pixmap)
+  drag_pixmap = _drag_preview_pixmap(source)
+  if drag_pixmap is not None and not drag_pixmap.isNull():
+    drag.setPixmap(drag_pixmap)
+    drag.setHotSpot(QPoint(int(drag_pixmap.width() // 2), int(drag_pixmap.height() // 2)))
 
   drag.exec(Qt.DropAction.CopyAction)
 

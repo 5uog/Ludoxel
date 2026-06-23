@@ -531,7 +531,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
             code: `def save(self, state: AppState) -> None:
-  player_file = PlayerStateFile(version=7, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
+  player_file = PlayerStateFile(version=8, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
   world_file = WorldStateFile(
     version=3,
     my_world=state.my_world if isinstance(state.my_world, PersistedPlaySpace) else PersistedPlaySpace(),
@@ -2170,7 +2170,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.9"`,
+            code: `__version__ = "3.7.0b1"`,
           },
           {
             kind: 'note',

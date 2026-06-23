@@ -27,6 +27,7 @@ QWidget#settingsDialog[detachedWindow="true"] {
 
 QWidget#pauseRoot QFrame#panel,
 QWidget#inventoryRoot QFrame#panel,
+QWidget#inventoryRoot QFrame#allItemsPanel,
 QWidget#deathRoot QFrame#panel,
 QDialog#playerNameDialog QFrame#playerNamePanel {
   background: #2a2a2a;
@@ -35,6 +36,21 @@ QDialog#playerNameDialog QFrame#playerNamePanel {
   border-right: 4px solid #0b0b0b;
   border-bottom: 4px solid #0b0b0b;
   border-radius: 0px;
+}
+
+QWidget#inventoryRoot QFrame#inventoryPreviewBox {
+  background: #050505;
+  border-top: 2px solid #080808;
+  border-left: 2px solid #080808;
+  border-right: 2px solid #3a3a3a;
+  border-bottom: 2px solid #3a3a3a;
+  border-radius: 0px;
+}
+
+QWidget#inventoryRoot QLabel#craftingArrow {
+  color: rgba(255,255,255,210);
+  font-size: 20px;
+  font-weight: 800;
 }
 
 QWidget#settingsRoot QFrame#panel,

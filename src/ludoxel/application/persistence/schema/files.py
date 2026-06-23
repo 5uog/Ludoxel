@@ -18,7 +18,7 @@ from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, norm
 
 @dataclass(frozen=True)
 class PlayerStateFile:
-  version: int = 7
+  version: int = 8
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
   inventory: PersistedInventory = field(default_factory=PersistedInventory)

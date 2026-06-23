@@ -37,6 +37,7 @@ from ludoxel.simulation.inventories.hotbars.ai_route_defaults import default_ai_
 from ludoxel.simulation.inventories.hotbars.defaults import default_hotbar_slots
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE, cycle_hotbar_index, normalize_hotbar_index, normalize_hotbar_slots, with_hotbar_assignment
 from ludoxel.simulation.inventories.special_items.registry import is_special_item_id
+from ludoxel.simulation.inventories.storage.grid import default_upper_inventory_slots, normalize_upper_inventory_slots
 from ludoxel.simulation.spaces.othello.game.state import OthelloSettings
 from ludoxel.simulation.spaces.othello.inventories.hotbar import default_othello_hotbar_slots
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
@@ -62,6 +63,10 @@ def _default_othello_hotbar_slots_list() -> list[str]:
 
 def _default_route_hotbar_slots_list() -> list[str]:
   return list(default_ai_route_hotbar_slots(size=HOTBAR_SIZE))
+
+
+def _default_upper_inventory_slots_list() -> list[str]:
+  return list(default_upper_inventory_slots())
 
 
 def _normalize_hotbar_state(slots: object, index: object, *, size: int = HOTBAR_SIZE) -> tuple[list[str], int]:
@@ -134,8 +139,10 @@ class RuntimePreferences:
   creative_mode: bool = False
   creative_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots_list)
   creative_selected_hotbar_index: int = 0
+  creative_upper_slots: list[str] = field(default_factory=_default_upper_inventory_slots_list)
   survival_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots_list)
   survival_selected_hotbar_index: int = 0
+  survival_upper_slots: list[str] = field(default_factory=_default_upper_inventory_slots_list)
   othello_hotbar_slots: list[str] = field(default_factory=_default_othello_hotbar_slots_list)
   othello_selected_hotbar_index: int = 0
   route_hotbar_slots: list[str] = field(default_factory=_default_route_hotbar_slots_list)
@@ -251,6 +258,8 @@ class RuntimePreferences:
 
     self.creative_hotbar_slots, self.creative_selected_hotbar_index = _normalize_hotbar_state(self.creative_hotbar_slots, self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
     self.survival_hotbar_slots, self.survival_selected_hotbar_index = _normalize_hotbar_state(self.survival_hotbar_slots, self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
+    self.creative_upper_slots = list(normalize_upper_inventory_slots(self.creative_upper_slots))
+    self.survival_upper_slots = list(normalize_upper_inventory_slots(self.survival_upper_slots))
     self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
     self.route_hotbar_slots, self.route_selected_hotbar_index = _normalize_hotbar_state(self.route_hotbar_slots, self.route_selected_hotbar_index, size=HOTBAR_SIZE)
 
@@ -335,6 +344,19 @@ class RuntimePreferences:
     self.normalize()
     self.set_hotbar_slot(self._active_hotbar_index(), None)
 
+  def _my_world_upper_attr(self) -> str:
+    return "creative_upper_slots" if bool(self.creative_mode) else "survival_upper_slots"
+
+  def my_world_upper_snapshot(self) -> tuple[str, ...]:
+    return tuple(str(value).strip() for value in getattr(self, self._my_world_upper_attr()))
+
+  def set_my_world_hotbar_slots(self, slots: object) -> None:
+    slots_attr, _index_attr = self._active_hotbar_state_attrs()
+    setattr(self, slots_attr, list(normalize_hotbar_slots(slots, size=HOTBAR_SIZE)))
+
+  def set_my_world_upper_slots(self, slots: object) -> None:
+    setattr(self, self._my_world_upper_attr(), list(normalize_upper_inventory_slots(slots)))
+
 
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
   if runtime is not None:
@@ -364,8 +386,10 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
       creative_mode=bool(runtime.creative_mode),
       creative_hotbar_slots=list(runtime.creative_hotbar_slots),
       creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index),
+      creative_upper_slots=list(runtime.creative_upper_slots),
       survival_hotbar_slots=list(runtime.survival_hotbar_slots),
       survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index),
+      survival_upper_slots=list(runtime.survival_upper_slots),
       othello_hotbar_slots=list(runtime.othello_hotbar_slots),
       othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index),
       route_hotbar_slots=list(runtime.route_hotbar_slots),
