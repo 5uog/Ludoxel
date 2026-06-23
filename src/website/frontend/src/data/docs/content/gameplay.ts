@@ -1855,4 +1855,53 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
     ],
     relatedTitles: ['Placing an Othello Move', 'Reading Saved Othello State', 'Understanding Othello Setting Persistence'],
   }),
+  defineDocsArticle({
+    category: 'Gameplay',
+    subcategory: 'Chat Commands',
+    group: 'Player Commands',
+    title: 'Using Teleport and Game Mode Commands',
+    description:
+      'Defines what the /teleport and /gamemode chat commands change in player and game state, how teleport moves the local player in My World and the Othello play space, how facing resolves a look direction, and how game mode applies through the shared simulation operation.',
+    sections: [
+      {
+        id: 'commands-teleport-effect',
+        title: 'Teleport Moves the Local Player Coordinate',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The `/teleport` command accepts `/teleport <x> <y> <z>` with an optional trailing `chunkForBlocks` boolean, an optional `facing <x y z>` position, and an optional `facing <target>` entity. The coordinates are accepted only as finite numbers, and the default for `chunkForBlocks` is false. The command moves the local player; in this version it does not move other players. It applies in My World and in the Othello play space, because both sessions hold a player whose position drives the camera. It is a coordinate move of the player and the camera; it does not change Othello board state or disc placement.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'The coordinator parses the coordinates and the optional facing and chunkForBlocks arguments.',
+              'SessionManager.teleport delegates the player change to teleport_player in the simulation layer.',
+              'teleport_player sets the position, zeroes velocity, and resets on-ground, step, crouch, auto-jump, and overlap state.',
+              'The session resets the player motion and void-damage tracking so prior fall distance does not carry over.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'When `facing <x y z>` or `facing <target>` is present, the look direction is computed from the destination eye toward the resolved point through `yaw_pitch_deg_from_forward`, and an entity target that cannot be resolved produces a command error. A true `chunkForBlocks` arms a world-upload sync around the destination through the existing frame-sync path; the world is fully materialized at generation, so this prepares the destination rendering and upload rather than generating new world data.',
+          },
+        ],
+      },
+      {
+        id: 'commands-gamemode-effect',
+        title: 'Game Mode Applies Through the Shared Operation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The `/gamemode` command accepts `survival`, `s`, `0`, `creative`, `c`, and `1`, with an optional trailing player target. The target is parsed for a future player-addressable session but resolves only to the local player in this version, and an unresolvable target produces a command error. Survival and creative are the two modes; the command does not change the game mode of an AI actor.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Both the command and the Settings game-mode toggle route through `apply_game_mode` in `src/ludoxel/application/sessions/game_mode.py`, which writes the runtime creative flag and applies `apply_player_game_mode` to each session player. Leaving creative mode clears player flight. Game mode in this engine is a runtime preference consumed by the session step, not a saved player field, so the command and the Settings surface produce the same simulation-facing transition.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Moving the Player', 'Understanding the Chat Runtime and Command Routing', 'Using Chat and Commands'],
+  }),
 ];

@@ -11,6 +11,7 @@ from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QWidget
 
 import ludoxel.foundations.mathematics.linear.mat4 as mat4
+import ludoxel.presentation.interface.chat.controller as chat_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.foundations.mathematics.linear.transform_matrices import rotate_z_deg_matrix
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -188,6 +189,7 @@ class ViewportOverlayMixin:
     self._route_overlay.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._inventory.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._death.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+    chat_controller.layout_chat(self, int(width), int(height))
     self._sync_player_name_overlays()
 
   def _restore_overlay_stack_after_resize(self: "RendererViewportWidget") -> None:
@@ -218,6 +220,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.othello_settings_open())
       and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
       and (not self._overlays.inventory_open())
+      and (not bool(chat_controller.is_chat_open(self)))
     )
 
   def _debug_hud_active(self: "RendererViewportWidget") -> bool:
@@ -237,6 +240,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.paused())
       and (not self._overlays.inventory_open())
       and (not self._overlays.settings_open())
+      and (not bool(chat_controller.is_chat_open(self)))
       and self._state.is_othello_space()
       and (not bool(self._state.hud_visible))
     )
@@ -249,6 +253,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
       and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
+      and (not bool(chat_controller.is_chat_open(self)))
       and ((not self._state.is_othello_space()) and (bool(self._state.route_edit_active) or len(self._session.ai_route_paths()) > 0))
     )
 
@@ -276,6 +281,7 @@ class ViewportOverlayMixin:
     self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(self._ambient_audio_active()))
     self._sync_player_name_overlays()
     self._raise_open_settings_surface()
+    chat_controller.sync_visibility(self)
 
   def _update_axis_crosshair_camera(self: "RendererViewportWidget", *, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
     self._crosshair.set_axis_camera(yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg))
@@ -294,6 +300,7 @@ class ViewportOverlayMixin:
   def _set_dead_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
+      chat_controller.force_close_if_open(self)
     self._overlays.set_dead(bool(on))
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
@@ -301,6 +308,7 @@ class ViewportOverlayMixin:
   def _set_paused_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
+      chat_controller.force_close_if_open(self)
     self._overlays.set_paused(bool(on))
     self._invalidate_pause_preview_cache()
     if not bool(on):

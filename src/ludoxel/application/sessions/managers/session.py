@@ -39,6 +39,7 @@ from ludoxel.simulation.actors.ai_players.state import AiPlayerState, AiSpawnEgg
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.actors.player.kinematics import PlayerMotionState
 from ludoxel.simulation.actors.player.targets import MELEE_ATTACK_REACH_BLOCKS
+from ludoxel.simulation.actors.player.teleport import teleport_player
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.rules.collision.system import SupportBlockContact, support_block_beneath
 from ludoxel.simulation.rules.gravity.system import GravitySystem
@@ -127,6 +128,11 @@ class SessionManager:
     self._last_jump_press_s = None
     self._player_motion = PlayerMotionState()
     self._death_reason = None
+    self._void_damage_timer_s = 0.0
+
+  def teleport(self, *, x: float, y: float, z: float, yaw_deg: float | None = None, pitch_deg: float | None = None) -> None:
+    teleport_player(self.player, x=float(x), y=float(y), z=float(z), yaw_deg=yaw_deg, pitch_deg=pitch_deg)
+    self._player_motion = PlayerMotionState()
     self._void_damage_timer_s = 0.0
 
   def _update_creative_flight_toggle(self, *, creative_mode: bool, jump_pressed: bool) -> None:

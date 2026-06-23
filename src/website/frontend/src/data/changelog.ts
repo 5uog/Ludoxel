@@ -15,6 +15,51 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.8 Beta 1',
+    tags: ['Desktop Application', 'Chat', 'Commands'],
+    sections: [
+      {
+        title: 'Chat and Commands Screen',
+        items: [
+          'Added a shared chat-and-commands screen for My World and Othello opened with the new `toggle_chat` keybind defaulting to `T`: `chat_controller.bind_chat` attaches a `ChatController` to both the OpenGL and WGPU viewport widgets, `interaction.handle_key_press` opens it through `ACTION_TOGGLE_CHAT`, and `Esc` or the title-bar `< Back` button closes it and restores gameplay capture for the active play space.',
+          'Kept the screen non-pausing: opening chat releases mouse capture and resets held input through `ViewportInput` without entering the dead, paused, settings, or transient-modal states, so `_tick_sim` and `_on_step` keep advancing the fixed-step runtime, the Othello clock, and cloud and AI motion while the input field holds focus; the screen background reuses the pause-screen `rgba(0,0,0,150)` fill without reusing the pause stop path.',
+          'Built the title bar and bottom bar as equal-height, full-width bars: the title bar carries a left `< Back` control, a fixed-width right balancing slot, and a stretched center label so `Chat and Commands` stays centered on the whole window width across resizes, and the bottom bar carries a 1:1 settings button, a stretched message field, and a 2:1 send button that submits on click or `Enter` while empty and whitespace-only input is dropped.',
+        ],
+      },
+      {
+        title: 'Heads-Up Recent Chat Feed',
+        items: [
+          'Added a lower-left heads-up recent chat feed above the hotbar that shows the newest display messages after the chat screen closes: `ChatController.sync_visibility` shows it only while the gameplay HUD is active, the F3 Debug HUD is inactive, Mute All Chat is disabled, and the chat screen is closed, and `ChatFeedWidget` is transparent to mouse events so it never takes camera control, hotbar selection, or block interaction.',
+          'Suppressed the feed while the F3 Debug HUD is shown and restored it once the Debug HUD closes, the chat screen is closed, and Mute All Chat is disabled, limiting the box to the newest ten display rows while the runtime history retains up to one hundred messages.',
+        ],
+      },
+      {
+        title: 'Section Formatting and Message Model',
+        items: [
+          'Added a Qt-free section-formatting contract under `src/ludoxel/foundations/text/`: `palette.py` holds the color table, `format_codes.py` parses `§` codes into style segments where a color code sets foreground and background and only `§r` clears the bold, italic, underline, strikethrough, and obfuscated flags, and `obfuscation.py` supplies same-width-class replacement characters for `§k` text.',
+          'Rendered chat text through the `ChatTextView` painter shared by the chat screen, the heads-up feed, command feedback, command errors, the periodic support message, and death-log rows, pinning each obfuscated glyph to the original character advance so cycling does not shift the layout, and limiting clickable external links to explicitly authored trusted spans.',
+        ],
+      },
+      {
+        title: 'Chat Settings and Runtime History',
+        items: [
+          'Added an embedded Chat Settings surface opened from the bottom-bar settings button with the chat screen visible behind it; its single control is the runtime-only Mute All Chat toggle owned by the application `ChatRuntime`, held only for the running game and never written to saved preferences, the app-state schema, or any world or Othello save.',
+          'Kept the chat history runtime-only with a one-hundred-message cap in `ChatHistory`: messages always accumulate, Mute All Chat hides every kind in both the chat screen and the heads-up feed without deleting them, unmuting shows the retained messages again, and messages dropped by the cap are not restored.',
+          'Added a one-hundred-twenty-second support message that appends `§6[§e!§6] §7Project support: 5uog` to the history, where the `5uog` span is the only link and opens `https://github.com/5uog/` through the Qt desktop URL service while the rest of the message text carries no link.',
+        ],
+      },
+      {
+        title: 'Teleport and Game Mode Commands',
+        items: [
+          'Added command candidate display and parsing under `src/ludoxel/application/chat/commands/`: a leading slash hides the message list and shows `/teleport` candidates for `/t` and `/gamemode` candidates for `/g`, an unknown prefix shows an empty candidate list rather than repeated errors, and the command coordinator routes execution through the simulation player operations.',
+          'Added `/teleport <x> <y> <z>` with an optional `chunkForBlocks` boolean, an optional `facing <x y z>` position, and an optional `facing <target>` entity: finite coordinates move the local player in My World and in the Othello play space, `teleport_player` zeroes velocity and resets fall-related player state, facing resolves a look direction through `yaw_pitch_deg_from_forward`, and a true `chunkForBlocks` arms a world-upload sync around the destination.',
+          'Added `/gamemode` accepting `survival`, `s`, `0`, `creative`, `c`, and `1` with an optional trailing player target resolved to the local player only, routed through the shared `apply_game_mode` operation that the Settings game-mode toggle now also uses.',
+          'Removed the `B` survival and creative toggle: the `toggle_creative_mode` keybind action is gone from the keybind catalog, defaults, display names, and the Controls tab, and game-mode changes now flow through the Settings surface and the `/gamemode` command.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.7',
     tags: ['Desktop Application', 'Debug HUD', 'Crosshair'],
     sections: [

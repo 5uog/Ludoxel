@@ -1860,4 +1860,63 @@ MELEE_HURT_TILT_S = 0.18`,
     ],
     relatedTitles: ['Surviving Fall and Void Hazards', 'Reading Saved World State', 'Understanding Overlay Input Blocking'],
   }),
+  defineDocsArticle({
+    category: 'Manual',
+    subcategory: 'Controlling the Session',
+    group: 'Chat and Commands',
+    title: 'Using Chat and Commands',
+    description:
+      'Explains how to open and close the shared chat screen in My World and Othello, send messages and commands, read the heads-up feed after closing, and open the embedded Chat Settings, grounded in the chat surfaces and the chat runtime.',
+    sections: [
+      {
+        id: 'using-chat-opening',
+        title: 'Opening and Closing the Chat Screen',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The chat screen is shared by My World and Othello. It is opened with the Open Chat keybind, which defaults to `T`, and closed with `Esc` or the title-bar `< Back` button. Opening it releases the gameplay mouse capture so the message field can take keyboard focus, and closing it returns to the normal gameplay input and cursor state for the active play space. The screen reuses the pause-screen background tone, but it does not pause the game: time, the simulation step, the Othello clock, and world motion keep running behind it.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Press T during gameplay to open the chat screen; the message field receives focus.',
+              'Type a message, or type a command that begins with a slash.',
+              'Send with the bottom-right send button or with Enter; empty and whitespace-only input is not sent.',
+              'Press Esc or click < Back to close the screen and return to gameplay.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The title bar and the bottom bar are equal-height bars spanning the full window width. The title text Chat and Commands stays centered on the whole window across resizes, and the bottom bar places a square settings button on the left, the message field in the middle, and a wider send button on the right.',
+          },
+        ],
+      },
+      {
+        id: 'using-chat-feed',
+        title: 'Reading the Heads-Up Feed After Closing',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'After the chat screen closes, a small recent chat box appears at the lower-left of the gameplay HUD, above the hotbar, showing the newest messages. It is a display only: it does not take mouse capture, camera control, hotbar selection, or block interaction. Messages added while the screen is closed appear in the box, which is limited to roughly the newest ten rows while the full history retains up to one hundred messages.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'While the F3 Debug HUD is shown, the recent chat box is hidden so the two do not overlap at the lower-left. Closing the F3 Debug HUD restores the box when Mute All Chat is disabled and the chat screen is closed.',
+          },
+        ],
+      },
+      {
+        id: 'using-chat-settings-and-commands',
+        title: 'Chat Settings and Command Entry',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The square settings button on the bottom bar opens the embedded Chat Settings surface inside the chat screen, with the chat screen still visible behind it. Its only control in this version is Mute All Chat, a setting held only while the game runs. When the message field begins with a slash, the message list is replaced by a command candidate list showing the available command signatures; `/t` shows the teleport signatures and `/g` shows the game-mode signatures. Showing a candidate is not running a command. The full command behavior, the runtime-only mute, and the runtime history are described in the related articles.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Using the Inventory Overlay', 'Understanding the Chat Runtime and Command Routing', 'Using Teleport and Game Mode Commands', 'Changing Chat Visibility'],
+  }),
 ];

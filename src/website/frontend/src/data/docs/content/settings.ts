@@ -727,7 +727,7 @@ class AudioPreferences:
   ACTION_CROUCH,
   ACTION_SPRINT,
   ACTION_TOGGLE_INVENTORY,
-  ACTION_TOGGLE_CREATIVE_MODE,
+  ACTION_TOGGLE_CHAT,
   ACTION_CYCLE_CAMERA_PERSPECTIVE,
   ACTION_TOGGLE_GAMEPLAY_HUD,
   ACTION_TOGGLE_DEBUG_HUD,
@@ -804,7 +804,7 @@ class AudioPreferences:
         ],
       },
     ],
-    relatedTitles: ['Understanding Keybind Resolution', 'Using the Hotbar', 'Understanding Overlay Input Blocking'],
+    relatedTitles: ['Understanding Keybind Resolution', 'Using the Hotbar', 'Understanding Overlay Input Blocking', 'Using Chat and Commands'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -1807,5 +1807,46 @@ def decide(self, observation: AiObservation, mask: AiActionMask) -> PolicyDecisi
       },
     ],
     relatedTitles: ['Choosing a Learning Mode', 'Understanding Policy Evaluation', 'Reading Learned Policies'],
+  }),
+  defineDocsArticle({
+    category: 'Settings',
+    subcategory: 'Visual and Audio Settings',
+    group: 'Chat Settings',
+    title: 'Changing Chat Visibility',
+    description:
+      'Defines the runtime-only Mute All Chat setting, the surface that exposes it, the runtime state that owns it, its effect on the chat screen and the heads-up feed, and its relationship to the one-hundred-message history cap.',
+    sections: [
+      {
+        id: 'chat-visibility-surface-and-owner',
+        title: 'Surface and Owner',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Mute All Chat is the only control on the embedded Chat Settings surface, opened from the settings button on the chat screen bottom bar. The surface is a display and operation surface only; the setting itself is owned by the application chat runtime. `ChatRuntimeSettings` in `src/ludoxel/application/chat/settings.py` holds the flag, and `ChatRuntime` reads it. The presentation toggle does not own the value, and the value is not stored in the keybind, audio, or runtime-preference schemas.',
+          },
+        ],
+      },
+      {
+        id: 'chat-visibility-runtime-only',
+        title: 'The Setting Is Held Only While the Game Runs',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Mute All Chat is a runtime-only setting. It is held for the duration of the running game and is never written to saved preferences, the app-state schema, a world save, or an Othello save, so it resets when the application or the game restarts. No default-value record is read for it from disk because no persisted record exists.',
+          },
+        ],
+      },
+      {
+        id: 'chat-visibility-runtime-effect',
+        title: 'Runtime Effect and the History Cap',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'While Mute All Chat is enabled, every message kind is hidden in both the full chat screen and the heads-up feed: `ChatRuntime.display_messages` and `recent_display_messages` return an empty set. Messages are not deleted; they continue to accumulate into the runtime history, which is capped at one hundred messages. Disabling the setting reveals the retained messages still inside the cap, with the newest roughly ten rows shown in the heads-up feed. Messages dropped by the cap while muted are not restored.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Using Chat and Commands', 'Understanding the Chat Runtime and Command Routing', 'Changing Keybind Preferences'],
   }),
 ];

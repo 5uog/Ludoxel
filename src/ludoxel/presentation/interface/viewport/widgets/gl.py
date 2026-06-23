@@ -9,6 +9,7 @@ from PyQt6.QtGui import QGuiApplication, QImage, QKeyEvent, QMouseEvent, QWheelE
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel
 
+import ludoxel.presentation.interface.chat.controller as chat_controller
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
 import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
@@ -207,6 +208,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     settings_controller.bind_settings_overlay(self)
     othello_controller.bind_othello_controls(self)
     overlay_controller.bind_overlay_actions(self)
+    chat_controller.bind_chat(self)
 
     self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
     self.setMouseTracking(True)

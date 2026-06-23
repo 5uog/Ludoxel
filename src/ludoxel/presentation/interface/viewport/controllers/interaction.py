@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 
+import ludoxel.presentation.interface.chat.controller as chat_controller
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
 import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
@@ -17,7 +18,7 @@ import ludoxel.presentation.interface.viewport.controllers.settings as settings_
 from ludoxel.application.preferences.keybinds import (
   ACTION_CLEAR_SELECTED_SLOT,
   ACTION_CYCLE_CAMERA_PERSPECTIVE,
-  ACTION_TOGGLE_CREATIVE_MODE,
+  ACTION_TOGGLE_CHAT,
   ACTION_TOGGLE_DEBUG_HUD,
   ACTION_TOGGLE_DEBUG_SHADOW,
   ACTION_TOGGLE_GAMEPLAY_HUD,
@@ -108,6 +109,9 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
   bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
   hotbar_idx = hotbar_index_from_key(int(e.key()), viewport._state.keybinds)
 
+  if chat_controller.is_chat_open(viewport):
+    return True
+
   if int(e.key()) == int(Qt.Key.Key_Escape):
     if viewport._overlays.dead():
       return True
@@ -160,9 +164,8 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
     settings_controller.cycle_camera_perspective(viewport)
     return True
 
-  if bound_action == ACTION_TOGGLE_CREATIVE_MODE:
-    settings_controller.set_creative_mode(viewport, not viewport._state.creative_mode)
-    settings_controller.sync_settings_values(viewport)
+  if bound_action == ACTION_TOGGLE_CHAT:
+    chat_controller.open_chat(viewport)
     return True
 
   if bound_action == ACTION_TOGGLE_INVENTORY:

@@ -1,0 +1,122 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+QWidget#chatScreenRoot {
+  background: rgba(0, 0, 0, 150);
+}
+
+QFrame#chatTitleBar {
+  background: #2a2a2a;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QFrame#chatBottomBar {
+  background: #2a2a2a;
+  border-top: 3px solid #0b0b0b;
+}
+
+QLabel#chatTitleLabel {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+QWidget#chatCentral {
+  background: transparent;
+}
+
+QWidget#chatLogText {
+  background: transparent;
+}
+
+QWidget#chatFeedRoot {
+  background: rgba(0, 0, 0, 110);
+  border: 2px solid #0b0b0b;
+  border-radius: 4px;
+}
+
+QWidget#chatFeedText {
+  background: transparent;
+}
+
+QWidget#chatCandidateView {
+  background: rgba(0, 0, 0, 90);
+}
+
+QLabel#chatCandidateRow {
+  color: #d6d6d6;
+  font-size: 14px;
+  padding: 4px 8px;
+  background: rgba(20, 20, 20, 160);
+  border-left: 3px solid #6fb03a;
+}
+
+QLineEdit#chatInput {
+  background: #1c1c1c;
+  color: #ffffff;
+  border-top: 2px solid #0b0b0b;
+  border-left: 2px solid #0b0b0b;
+  border-right: 2px solid #4a4a4a;
+  border-bottom: 2px solid #4a4a4a;
+  padding: 4px 8px;
+  selection-background-color: #6fb03a;
+  selection-color: #0b0b0b;
+}
+
+QLineEdit#chatInput:focus {
+  border-top: 2px solid #6fb03a;
+  border-left: 2px solid #6fb03a;
+}
+
+QPushButton#chatBackButton,
+QPushButton#chatSendButton,
+QPushButton#chatSettingsButton {
+  background: #3a3a3a;
+  color: #ffffff;
+  font-weight: 700;
+  border-top: 3px solid #6f6f6f;
+  border-left: 3px solid #6f6f6f;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QPushButton#chatBackButton:hover,
+QPushButton#chatSendButton:hover,
+QPushButton#chatSettingsButton:hover {
+  background: #474747;
+}
+
+QPushButton#chatBackButton:pressed,
+QPushButton#chatSendButton:pressed,
+QPushButton#chatSettingsButton:pressed {
+  background: #2f2f2f;
+  border-top: 3px solid #0b0b0b;
+  border-left: 3px solid #0b0b0b;
+  border-right: 3px solid #6f6f6f;
+  border-bottom: 3px solid #6f6f6f;
+}
+
+QWidget#chatSettingsRoot {
+  background: rgba(0, 0, 0, 120);
+}
+
+QFrame#chatSettingsPanel {
+  background: #2a2a2a;
+  border-top: 4px solid #666666;
+  border-left: 4px solid #666666;
+  border-right: 4px solid #0b0b0b;
+  border-bottom: 4px solid #0b0b0b;
+}
+
+QLabel#chatSettingsTitle {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+QWidget#chatSettingsRoot QLabel#settingsRowLabel {
+  color: #ffffff;
+  font-size: 15px;
+}

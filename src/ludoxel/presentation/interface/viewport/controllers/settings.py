@@ -14,6 +14,7 @@ from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name, resolve_session_player_name
 from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, PLAYER_SKIN_KIND_CUSTOM
 from ludoxel.application.preferences.runtime import RuntimePreferences
+from ludoxel.application.sessions.game_mode import apply_game_mode
 from ludoxel.application.sessions.pipelines.runtime_state import apply_runtime_to_renderer as apply_runtime_to_renderer_state, sync_runtime_sun_from_renderer
 from ludoxel.presentation.rendering.visuals.players.skin import delete_custom_player_skin, normalize_player_skin_image, write_custom_player_skin
 
@@ -566,9 +567,7 @@ def set_sun_elevation(viewport: "RendererViewportWidget", elevation_deg: float) 
 
 
 def set_creative_mode(viewport: "RendererViewportWidget", on: bool) -> None:
-  viewport._state.creative_mode = bool(on)
-  if not bool(viewport._state.creative_mode):
-    viewport._for_each_session(lambda session: setattr(session.player, "flying", False))
+  apply_game_mode(viewport._state, viewport._sessions.all_sessions(), creative=bool(on))
   sync_hotbar_widgets(viewport)
   sync_first_person_target(viewport)
 

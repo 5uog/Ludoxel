@@ -775,7 +775,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         ],
       },
     ],
-    relatedTitles: ['Using the Inventory Overlay', 'Recovering after Death', 'Understanding Keybind Resolution'],
+    relatedTitles: ['Using the Inventory Overlay', 'Recovering after Death', 'Understanding Keybind Resolution', 'Understanding the Chat Runtime and Command Routing'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -2170,7 +2170,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.7"`,
+            code: `__version__ = "3.6.8b1"`,
           },
           {
             kind: 'note',
@@ -2576,5 +2576,222 @@ if int(lx) >= int(CHUNK_SIZE - 1):
       },
     ],
     relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Building in My World'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Chat and Commands',
+    group: 'Chat Runtime',
+    title: 'Understanding the Chat Runtime and Command Routing',
+    description:
+      'Defines the runtime-only chat state, the non-pausing chat overlay, the heads-up feed visibility arbitration, the periodic support message, and the command coordinator that routes the slash commands through the simulation player operations.',
+    sections: [
+      {
+        id: 'chat-runtime-overlay-does-not-pause',
+        title: 'The Chat Overlay Releases Input Without Stopping the Runtime',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`chat_controller.bind_chat` attaches one `ChatController` to both viewport widgets in `src/ludoxel/presentation/interface/viewport/widgets/gl.py` and `renderer.py`. The `toggle_chat` keybind reaches `interaction.handle_key_press`, which calls `chat_controller.open_chat`. Opening releases gameplay capture through `ViewportInput.set_mouse_capture(False)` and resets held movement, but it does not enter the dead, paused, settings, Othello-settings, or transient-modal states. `_tick_sim` and `_on_step` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` gate only on those states, so the fixed-step runtime, the Othello clock, gravity, and cloud and AI motion keep advancing while the chat input field holds focus.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/interface/viewport/render_loop/loop.py',
+            code: `if (
+  bool(getattr(self, "_shutdown_done", False))
+  or (not bool(getattr(self, "_runtime_active", False)))
+  or (not bool(self.isVisible()))
+  or bool(self.loading_active())
+  or bool(getattr(self, "_ai_settings_overlay_open", False))
+  or bool(self._transient_modal_active())
+  or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open())
+):
+  return`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Because the chat-open flag is absent from that gate, the screen behaves as a focus boundary rather than a time stop. The gameplay HUD is hidden while chat is open because `_gameplay_hud_active` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` excludes the chat-open condition, and `ChatController.close` restores capture for the active play space only when no modal is open and the application is active.',
+          },
+        ],
+      },
+      {
+        id: 'chat-runtime-history-and-mute',
+        title: 'History and Mute Are Held Only While Running',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The application chat state lives under `src/ludoxel/application/chat/`. `ChatRuntime` owns a `ChatHistory` and a `ChatRuntimeSettings`. The history is a `collections.deque` with a one-hundred-message cap, so the oldest message is dropped once the count exceeds the cap and is not restored. The mute flag is held only for the running game. Neither the history nor the mute flag is written to saved preferences, the app-state schema, or any world or Othello save; both reset on restart.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/chat/runtime.py',
+            code: `def display_messages(self) -> tuple[ChatMessage, ...]:
+  if self.mute_all():
+    return ()
+  return self._history.display_messages()
+
+def recent_display_messages(self, count: int) -> tuple[ChatMessage, ...]:
+  if self.mute_all():
+    return ()
+  return self._history.recent_display_messages(int(count))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Mute suppresses every message kind in both surfaces without deleting anything. `display_messages` feeds the full chat screen and `recent_display_messages` feeds the heads-up feed; both return an empty tuple while muted, so unmuting reveals exactly the retained messages still inside the cap. The command-candidate kind is excluded from the display set by `ChatHistory.display_messages`, keeping candidate rows out of the persistent message list.',
+          },
+        ],
+      },
+      {
+        id: 'chat-runtime-support-message',
+        title: 'The Periodic Support Message',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A presentation `QTimer` in `ChatController` fires on the application-defined interval and calls `ChatRuntime.add_support_message`. The interval and the message body are owned by `src/ludoxel/application/chat/support.py`, which appends one information message carrying a single trusted link span. The `5uog` token is the only span that opens an external URL, routed through the Qt desktop URL service in `ChatController._on_link_activated`; the rest of the message text carries no link.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/chat/support.py',
+            code: `SUPPORT_INTERVAL_S: float = 120.0
+SUPPORT_MESSAGE_TEXT: str = "§6[§e!§6] §7Project support: 5uog"
+SUPPORT_LINK_LABEL: str = "5uog"
+SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The message accumulates into the history even while Mute All Chat is enabled; mute only withholds the display. Death events reach the history through `chat_controller.note_death`, called from `_on_step` with the same cause string the death overlay shows, and a death-log row is exempt from the player-name and separator structure used for sent messages.',
+          },
+        ],
+      },
+      {
+        id: 'chat-runtime-command-routing',
+        title: 'Command Routing Reaches Simulation Player Operations',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Input beginning with a slash is handled by `src/ludoxel/application/chat/commands/`. `parse_command` produces a typed `TeleportCommand`, a `GameModeCommand`, or a `CommandError`, and `execute_command` resolves targets and applies the mutation. Teleport calls `SessionManager.teleport`, which delegates the player-state change to `teleport_player` in `src/ludoxel/simulation/actors/player/teleport.py`. Game mode calls `apply_game_mode` in `src/ludoxel/application/sessions/game_mode.py`, which writes the runtime creative flag and routes the player change through `apply_player_game_mode`. The Settings game-mode toggle calls the same `apply_game_mode` operation.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/chat/commands/coordinator.py',
+            code: `def execute_command(text: str, *, prefs, sessions) -> CommandResult:
+  parsed = parse_command(text)
+  if isinstance(parsed, CommandError):
+    return CommandResult(messages=(make_command_error_message(f"§c{parsed.message}"),))
+  if isinstance(parsed, GameModeCommand):
+    return _execute_gamemode(parsed, prefs=prefs, sessions=sessions)
+  return _execute_teleport(parsed, prefs=prefs, sessions=sessions)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The coordinator returns a `CommandResult` carrying feedback or error messages and a `CommandEffects` record. `ChatController._apply_effects` reads the flags: a game-mode change re-synchronises the hotbar, the first-person target, and the Settings values, and a teleport invalidates the selection target and, when `chunkForBlocks` is true, arms a world-upload sync. The presentation passes the input string and renders the result; it does not write player state directly.',
+          },
+        ],
+      },
+      {
+        id: 'chat-runtime-feed-arbitration',
+        title: 'Heads-Up Feed Visibility Arbitration',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ChatController.sync_visibility`, called from `_sync_gameplay_hud_visibility`, decides the lower-left feed. The feed is shown only while the gameplay HUD is active, the F3 Debug HUD is inactive, Mute All Chat is disabled, the chat screen is closed, and at least one display message exists. The feed widget is transparent to mouse events, so it never takes camera control, hotbar selection, or block interaction. Closing the F3 Debug HUD restores the feed under the same conditions; opening the chat screen hides it because the chat screen renders the same messages at full size.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding Chat Text Formatting', 'Understanding Overlay Input Blocking', 'Using Chat and Commands', 'Using Teleport and Game Mode Commands', 'Changing Chat Visibility'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Chat and Commands',
+    group: 'Chat Runtime',
+    title: 'Understanding Chat Text Formatting',
+    description:
+      'Defines the Qt-free section-formatting contract, the foreground and background color rule, the reset behavior of the formatting flags, the layout-stable obfuscation source, and the single renderer adapter that paints every chat message kind.',
+    sections: [
+      {
+        id: 'chat-formatting-contract',
+        title: 'The Section-Formatting Contract Is Qt-Free',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Section formatting is owned by `src/ludoxel/foundations/text/`. `palette.py` holds the color table, `format_codes.py` parses a string into a flat tuple of style segments, and `obfuscation.py` supplies replacement characters by width class. The module set holds no Qt type, no widget, and no domain state. `parse_formatted_text` emits a `FormattedSegment` for each run of identical style, carrying the foreground, the optional background, and the bold, italic, underline, strikethrough, and obfuscated flags.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/text/format_codes.py',
+            code: `@dataclass(frozen=True, slots=True)
+class FormattedSegment:
+  text: str
+  foreground: str
+  background: str | None
+  bold: bool
+  italic: bool
+  underline: bool
+  strikethrough: bool
+  obfuscated: bool`,
+          },
+        ],
+      },
+      {
+        id: 'chat-formatting-color-and-reset',
+        title: 'Color Codes Set Foreground and Background; Reset Clears Flags Only',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A color code changes the foreground and the background of the following text and leaves the formatting flags untouched. `§r` clears the bold, italic, underline, strikethrough, and obfuscated flags and leaves the colors as they stand; it does not return to a default color. White is reached with `§f`, which sets the foreground to white and a dark backing color. Segments before any color code use a default white foreground and a transparent background, so ordinary text shows the chat background rather than a backing fill.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/text/format_codes.py',
+            code: `def _apply_code(state: _FormatState, code: str) -> None:
+  lowered = str(code).lower()
+  if is_color_code(lowered):
+    color = color_for_code(lowered)
+    if color is not None:
+      state.foreground = str(color.foreground)
+      state.background = str(color.background)
+    return
+  if lowered == FLAG_RESET:
+    state.reset_flags()
+    return`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The codes `§m` and `§n` are strikethrough and underline flags, not material colors, and the color table never assigns them a foreground. The flag codes `§k`, `§l`, `§m`, `§n`, and `§o` persist until `§r`, so a later color code keeps the active flags while changing only the foreground and background.',
+          },
+        ],
+      },
+      {
+        id: 'chat-formatting-obfuscation',
+        title: 'Obfuscated Text Preserves Layout Width',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The `§k` flag marks a segment obfuscated. `obfuscation.py` partitions characters into a space, wide, or narrow width class from the Unicode east-asian-width property and returns a same-class replacement. The renderer pins each glyph advance to the original character, so a wide source position keeps a wide replacement and a narrow source position keeps a narrow replacement, and the cycling characters never shift the surrounding layout.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`ChatTextView` in `src/ludoxel/presentation/interface/chat/text_view.py` measures each source glyph once with the segment font, records the advance, and at paint time substitutes a random same-class character while advancing by the recorded width. A repaint timer drives the cycling only while obfuscated content is visible.',
+          },
+        ],
+      },
+      {
+        id: 'chat-formatting-single-renderer',
+        title: 'One Renderer Adapter for Every Message Kind',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ChatTextView` is the single renderer adapter. The full chat screen, the heads-up feed, command feedback, command errors, the periodic support message, and death-log rows are all painted by it, so the parser and the renderer are not duplicated per message kind. The widget converts parser segments into a wrapped, painted layout, fills the per-segment background, draws the foreground glyphs, and applies underline and strikethrough through the segment font. Clickable external links are limited to explicitly authored trusted spans carried on the message; user-entered text never produces a link.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding the Chat Runtime and Command Routing', 'Using Chat and Commands'],
   }),
 ];

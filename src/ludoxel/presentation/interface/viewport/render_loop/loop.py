@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QMessageBox
 
+import ludoxel.presentation.interface.chat.controller as chat_controller
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
 import ludoxel.presentation.interface.viewport.controllers.effects as effects_controller
@@ -337,6 +338,7 @@ class ViewportRenderLoopMixin:
         death_message = f"{player_name} was killed by {str(step_result.death_killer_name)}."
       else:
         death_message = f"{player_name} died."
+      chat_controller.note_death(self, death_message)
       self._death.set_message(death_message)
       self._set_dead_overlay(True)
       return
