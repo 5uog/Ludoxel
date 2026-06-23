@@ -472,11 +472,11 @@ class RenderSnapshotDTO:
         content: [
           {
             kind: 'paragraph',
-            text: '`RuntimePreferences` in `src/ludoxel/application/preferences/runtime.py` is the mutable aggregate shared by persistence, the settings surface, the renderer state, and the active session. It holds the play-space identifier, input inversion, selection and cloud and shadow flags, cloud density and seed and flow and speed and height parameters, hotbar slot lists and selected indices for the creative, survival, Othello, and route branches, the Othello settings, reach and block-repeat intervals, particle rates, camera and view-model and arm parameters, render distance, sun angles, window geometry, and the keybind and audio sub-objects. Numerous class-level constants fix the allowed ranges and defaults.',
+            text: '`RuntimePreferences` in `src/ludoxel/application/preferences/runtime.py` is the mutable aggregate shared by persistence, the settings surface, the renderer state, and the active session. It holds the play-space identifier, input inversion, selection and cloud and shadow flags, cloud density and seed and flow and speed and height parameters, one My World hotbar and upper-inventory state, separate Othello and route-edit hotbar branches, the Othello settings, reach and block-repeat intervals, particle rates, camera and view-model and arm parameters, render distance, sun angles, window geometry, and the keybind and audio sub-objects. Numerous class-level constants fix the allowed ranges and defaults.',
           },
           {
             kind: 'paragraph',
-            text: '`normalize` projects every component into its allowed domain in one pass: booleans are coerced, shadow quality and render distance and cloud parameters are clamped, the play-space identifier and Othello settings are normalized, the arm rotation limits are clamped and reordered if inverted, the legacy block-place interval is migrated to the current default, sun azimuth is wrapped to a full turn and elevation clamped, all four hotbar branches are normalized to size and index, and the keybind and audio sub-objects are normalized in turn.',
+            text: '`normalize` projects every component into its allowed domain in one pass: booleans are coerced, shadow quality and render distance and cloud parameters are clamped, the play-space identifier and Othello settings are normalized, the arm rotation limits are clamped and reordered if inverted, the legacy block-place interval is migrated to the current default, sun azimuth is wrapped to a full turn and elevation clamped, the shared My World, Othello, and route-edit hotbar branches are normalized to size and index, and the keybind and audio sub-objects are normalized in turn.',
           },
           {
             kind: 'code',
@@ -490,7 +490,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
           },
           {
             kind: 'paragraph',
-            text: 'The hotbar accessors select the active branch by play space, route-edit, and creative mode through `_active_hotbar_state_attrs`, and `set_hotbar_slot`, `select_hotbar_index`, `cycle_hotbar`, and `clear_selected_hotbar_slot` normalize before mutating so the slot count and index stay coherent. `current_item_id`, `current_block_id`, and `current_special_item_id` resolve the selected slot, excluding special items from block placement and ordinary blocks from the special path. `is_othello_space`, `is_first_person_view`, `view_model_visible`, and `cycle_camera_perspective` answer derived predicates from the same normalized state.',
+            text: 'The hotbar accessors select the active branch by play space and route-edit state through `_active_hotbar_state_attrs`; Creative Mode continues to use the shared My World branch while exposing the catalog in the overlay. `set_hotbar_slot`, `select_hotbar_index`, `cycle_hotbar`, and `clear_selected_hotbar_slot` normalize before mutating so the slot count and index stay coherent. `current_item_id`, `current_block_id`, and `current_special_item_id` resolve the selected slot, excluding special items from block placement and ordinary blocks from the special path. `is_othello_space`, `is_first_person_view`, `view_model_visible`, and `cycle_camera_perspective` answer derived predicates from the same normalized state.',
           },
         ],
       },
@@ -531,7 +531,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
             code: `def save(self, state: AppState) -> None:
-  player_file = PlayerStateFile(version=8, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
+  player_file = PlayerStateFile(version=9, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
   world_file = WorldStateFile(
     version=3,
     my_world=state.my_world if isinstance(state.my_world, PersistedPlaySpace) else PersistedPlaySpace(),
@@ -2170,7 +2170,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.0b1"`,
+            code: `__version__ = "3.7.0b2"`,
           },
           {
             kind: 'note',

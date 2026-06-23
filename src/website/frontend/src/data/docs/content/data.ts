@@ -332,7 +332,7 @@ if env_root:
             caption: 'Player state shows why deleting one file discards multiple saved domains.',
             code: `@dataclass(frozen=True)
 class PlayerStateFile:
-  version: int = 8
+  version: int = 9
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
   inventory: PersistedInventory = field(default_factory=PersistedInventory)
@@ -460,7 +460,7 @@ class PlayerStateFile:
             caption: 'src/ludoxel/application/persistence/schema/files.py',
             code: `@dataclass(frozen=True)
 class PlayerStateFile:
-  version: int = 8
+  version: int = 9
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
   inventory: PersistedInventory = field(default_factory=PersistedInventory)
@@ -666,7 +666,7 @@ self.audio = self.audio.normalized()`,
           },
           {
             kind: 'paragraph',
-            text: 'Hotbar state contains dedicated Othello, route-edit, creative, and survival branches. Runtime selects the active branch in that order. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, keeping malformed saved indices and slot sequences outside runtime lookup.',
+            text: 'Hotbar state contains dedicated Othello and route-edit branches plus one shared My World branch. Runtime selects Othello first, route editing second, and the My World branch otherwise; `creative_mode` changes catalog availability without selecting a different central storage. The active branch controls `active_hotbar_index`, `hotbar_snapshot`, `current_item_id`, `current_block_id`, `current_special_item_id`, assignment, selection, cycling, and clearing. Each mutating operation normalizes before it writes, keeping malformed saved indices and slot sequences outside runtime lookup.',
           },
           {
             kind: 'code',
@@ -677,9 +677,7 @@ self.audio = self.audio.normalized()`,
     return ("othello_hotbar_slots", "othello_selected_hotbar_index")
   if bool(self.route_edit_active):
     return ("route_hotbar_slots", "route_selected_hotbar_index")
-  if bool(self.creative_mode):
-    return ("creative_hotbar_slots", "creative_selected_hotbar_index")
-  return ("survival_hotbar_slots", "survival_selected_hotbar_index")
+  return ("my_world_hotbar_slots", "my_world_selected_hotbar_index")
 
 def current_block_id(self) -> str | None:
   item_id = self.current_item_id()
@@ -689,14 +687,17 @@ def current_block_id(self) -> str | None:
           },
           {
             kind: 'paragraph',
-            text: 'My World carries a per-mode upper inventory beneath the hotbar. `creative_upper_slots` and `survival_upper_slots` each hold a twenty-seven-slot upper inventory ordered row-major. `_my_world_upper_attr` resolves the active branch from `creative_mode`, so the runtime reads `my_world_upper_snapshot` and rewrites it through `set_my_world_upper_slots`. `normalize()` reprojects each branch through `normalize_upper_inventory_slots`, padding or truncating a saved sequence to its fixed length, and `PersistedInventory` serializes the per-mode hotbar and upper branches into `player_state.json`. The inventory crafting grid is a transient presentation working area: the overlay empties it into the storage when it closes, so no crafting field reaches the runtime or the saved envelope.',
+            text: 'My World carries one shared upper inventory beneath its shared hotbar. `my_world_upper_slots` holds twenty-seven row-major slots, while `my_world_hotbar_slots` and `my_world_selected_hotbar_index` complete the central thirty-six-slot storage. `normalize()` projects that sequence through `normalize_upper_inventory_slots`, padding or truncating saved input to its fixed length, and `PersistedInventory` serializes only the shared My World fields into `player_state.json`. The reader accepts Beta 1 Creative or Survival fields only as a one-time compatibility source selected by the stored game mode; subsequent writes use the shared shape. The crafting grid remains a transient presentation working area and never reaches the runtime or saved envelope.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'The active My World upper-inventory branch resolves from the game mode.',
-            code: `def _my_world_upper_attr(self) -> str:
-  return "creative_upper_slots" if bool(self.creative_mode) else "survival_upper_slots"`,
+            caption: 'The My World upper inventory has one normalized shared field.',
+            code: `def my_world_upper_snapshot(self) -> tuple[str, ...]:
+  return tuple(str(value).strip() for value in self.my_world_upper_slots)
+
+def set_my_world_upper_slots(self, slots: object) -> None:
+  self.my_world_upper_slots = list(normalize_upper_inventory_slots(slots))`,
           },
           {
             kind: 'paragraph',

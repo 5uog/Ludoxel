@@ -137,12 +137,9 @@ class RuntimePreferences:
   shadow_enabled: bool = True
   shadow_map_quality: int = SHADOW_MAP_QUALITY_DEFAULT
   creative_mode: bool = False
-  creative_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots_list)
-  creative_selected_hotbar_index: int = 0
-  creative_upper_slots: list[str] = field(default_factory=_default_upper_inventory_slots_list)
-  survival_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots_list)
-  survival_selected_hotbar_index: int = 0
-  survival_upper_slots: list[str] = field(default_factory=_default_upper_inventory_slots_list)
+  my_world_hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots_list)
+  my_world_selected_hotbar_index: int = 0
+  my_world_upper_slots: list[str] = field(default_factory=_default_upper_inventory_slots_list)
   othello_hotbar_slots: list[str] = field(default_factory=_default_othello_hotbar_slots_list)
   othello_selected_hotbar_index: int = 0
   route_hotbar_slots: list[str] = field(default_factory=_default_route_hotbar_slots_list)
@@ -256,10 +253,8 @@ class RuntimePreferences:
     self.sun_az_deg = azimuth if azimuth >= 0.0 else azimuth + 360.0
     self.sun_el_deg = clampf(float(self.sun_el_deg), 0.0, 90.0)
 
-    self.creative_hotbar_slots, self.creative_selected_hotbar_index = _normalize_hotbar_state(self.creative_hotbar_slots, self.creative_selected_hotbar_index, size=HOTBAR_SIZE)
-    self.survival_hotbar_slots, self.survival_selected_hotbar_index = _normalize_hotbar_state(self.survival_hotbar_slots, self.survival_selected_hotbar_index, size=HOTBAR_SIZE)
-    self.creative_upper_slots = list(normalize_upper_inventory_slots(self.creative_upper_slots))
-    self.survival_upper_slots = list(normalize_upper_inventory_slots(self.survival_upper_slots))
+    self.my_world_hotbar_slots, self.my_world_selected_hotbar_index = _normalize_hotbar_state(self.my_world_hotbar_slots, self.my_world_selected_hotbar_index, size=HOTBAR_SIZE)
+    self.my_world_upper_slots = list(normalize_upper_inventory_slots(self.my_world_upper_slots))
     self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
     self.route_hotbar_slots, self.route_selected_hotbar_index = _normalize_hotbar_state(self.route_hotbar_slots, self.route_selected_hotbar_index, size=HOTBAR_SIZE)
 
@@ -287,9 +282,7 @@ class RuntimePreferences:
       return ("othello_hotbar_slots", "othello_selected_hotbar_index")
     if bool(self.route_edit_active):
       return ("route_hotbar_slots", "route_selected_hotbar_index")
-    if bool(self.creative_mode):
-      return ("creative_hotbar_slots", "creative_selected_hotbar_index")
-    return ("survival_hotbar_slots", "survival_selected_hotbar_index")
+    return ("my_world_hotbar_slots", "my_world_selected_hotbar_index")
 
   def _active_hotbar_slots(self) -> list[str]:
     slots_attr, _index_attr = self._active_hotbar_state_attrs()
@@ -344,18 +337,14 @@ class RuntimePreferences:
     self.normalize()
     self.set_hotbar_slot(self._active_hotbar_index(), None)
 
-  def _my_world_upper_attr(self) -> str:
-    return "creative_upper_slots" if bool(self.creative_mode) else "survival_upper_slots"
-
   def my_world_upper_snapshot(self) -> tuple[str, ...]:
-    return tuple(str(value).strip() for value in getattr(self, self._my_world_upper_attr()))
+    return tuple(str(value).strip() for value in self.my_world_upper_slots)
 
   def set_my_world_hotbar_slots(self, slots: object) -> None:
-    slots_attr, _index_attr = self._active_hotbar_state_attrs()
-    setattr(self, slots_attr, list(normalize_hotbar_slots(slots, size=HOTBAR_SIZE)))
+    self.my_world_hotbar_slots = list(normalize_hotbar_slots(slots, size=HOTBAR_SIZE))
 
   def set_my_world_upper_slots(self, slots: object) -> None:
-    setattr(self, self._my_world_upper_attr(), list(normalize_upper_inventory_slots(slots)))
+    self.my_world_upper_slots = list(normalize_upper_inventory_slots(slots))
 
 
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
@@ -384,12 +373,9 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
       shadow_enabled=bool(runtime.shadow_enabled),
       shadow_map_quality=normalize_shadow_map_quality(runtime.shadow_map_quality),
       creative_mode=bool(runtime.creative_mode),
-      creative_hotbar_slots=list(runtime.creative_hotbar_slots),
-      creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index),
-      creative_upper_slots=list(runtime.creative_upper_slots),
-      survival_hotbar_slots=list(runtime.survival_hotbar_slots),
-      survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index),
-      survival_upper_slots=list(runtime.survival_upper_slots),
+      my_world_hotbar_slots=list(runtime.my_world_hotbar_slots),
+      my_world_selected_hotbar_index=int(runtime.my_world_selected_hotbar_index),
+      my_world_upper_slots=list(runtime.my_world_upper_slots),
       othello_hotbar_slots=list(runtime.othello_hotbar_slots),
       othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index),
       route_hotbar_slots=list(runtime.route_hotbar_slots),

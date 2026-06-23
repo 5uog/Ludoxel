@@ -18,7 +18,7 @@ from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, norm
 
 @dataclass(frozen=True)
 class PlayerStateFile:
-  version: int = 8
+  version: int = 9
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
   inventory: PersistedInventory = field(default_factory=PersistedInventory)
@@ -44,7 +44,7 @@ class PlayerStateFile:
     raw_othello_settings = d.get("othello_settings", {})
 
     settings = PersistedSettings.from_dict(raw_settings) if isinstance(raw_settings, dict) else PersistedSettings()
-    inventory = PersistedInventory.from_dict(raw_inventory) if isinstance(raw_inventory, dict) else PersistedInventory()
+    inventory = PersistedInventory.from_dict(raw_inventory, legacy_creative_mode=bool(settings.creative_mode)) if isinstance(raw_inventory, dict) else PersistedInventory()
     othello_settings = OthelloSettings.from_dict(raw_othello_settings) if isinstance(raw_othello_settings, dict) else OthelloSettings()
 
     return PlayerStateFile(

@@ -15,6 +15,28 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.0 Beta 2',
+    tags: ['Desktop Application', 'Inventory', 'My World'],
+    sections: [
+      {
+        title: 'Shared My World Storage',
+        items: [
+          'Unified the My World hotbar and 9x3 upper inventory into one shared thirty-six-slot storage state. Creative Mode now exposes the All Items catalog while Survival Mode hides it; switching modes retains the same central inventory, selected hotbar index, and HUD projection.',
+          'Replaced the duplicated Creative and Survival persistence branches with `my_world_hotbar_slots`, `my_world_selected_hotbar_index`, and `my_world_upper_slots`. The player-state reader normalizes a Beta 1 save once from the branch selected by its stored game mode, then subsequent saves emit only the shared My World fields while Othello and route-edit hotbars remain separate.',
+        ],
+      },
+      {
+        title: 'Inventory Operations and Preview',
+        items: [
+          'Reserved a dedicated 30x30 close-button header in the central inventory box. The `close.svg` button remains fixed at the box top-right while the player preview and the 2x2 crafting input, arrow, and read-only output occupy the row below it.',
+          'Number keys now distinguish an infinite All Items catalog source from finite central storage. Catalog entries replace the target hotbar slot; hotbar, upper-inventory, and crafting-input sources move or swap atomically with the target, so the source no longer remains as a duplicate. The read-only crafting output is excluded from number-key assignment.',
+          'Inventory preview cache keys now include the skin and the held block or special-item fields consumed by the preview pose. Storage commits synchronize the first-person target, invalidate the inventory preview cache, and queue a repaint so held items disappear or appear in the preview as their selected hotbar slot changes.',
+          'Closing the inventory moves each crafting input item to the hotbar and then the upper inventory when space exists. A full central storage leaves the unplaced input item in the transient crafting grid instead of clearing it.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.0 Beta 1',
     tags: ['Desktop Application', 'Inventory', 'My World'],
     sections: [

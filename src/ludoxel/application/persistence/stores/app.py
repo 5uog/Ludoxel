@@ -70,7 +70,7 @@ class AppStateStore:
     )
 
   def save(self, state: AppState) -> None:
-    player_file = PlayerStateFile(version=8, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
+    player_file = PlayerStateFile(version=9, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
     world_file = WorldStateFile(
       version=3,
       my_world=state.my_world if isinstance(state.my_world, PersistedPlaySpace) else PersistedPlaySpace(),

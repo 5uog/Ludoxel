@@ -1015,7 +1015,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
     group: 'Window and Item Surfaces',
     title: 'Using the Inventory Overlay',
     description:
-      'Defines the My World inventory as a focus-taking overlay built around a square central box of thirty-six storage slots, a 2x2 crafting input, a read-only 1x1 output, and a black-background player preview on the upper left, with a Creative All Items box on the left. A click lifts an item onto the cursor, a shift-click transfers it by priority, a hovered number key assigns a hotbar slot, and the drop key empties a hovered storage slot; the overlay commits each arrangement through one storage signal that the settings controller writes into the My World runtime branches.',
+      'Defines the My World inventory as a focus-taking overlay built around a square central box of thirty-six shared storage slots, a 2x2 crafting input, a read-only 1x1 output, and a black-background player preview on the upper left, with a Creative All Items box on the left. A click lifts an item onto the cursor, a shift-click transfers it by priority, a hovered number key moves or swaps finite storage and copies only from the catalog, and the drop key empties a hovered storage slot; the overlay commits each arrangement through one storage signal that the settings controller writes into the shared My World runtime state.',
     sections: [
       {
         id: 'using-the-inventory-overlay-toggle',
@@ -1043,8 +1043,8 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
         title: 'The Central Box Holds the 9x4 Storage, Crafting, and a Preview',
         body: [
           'The central box is square. It stacks a 9x3 upper inventory of twenty-seven slots above the 9x1 hotbar row, so the two regions form thirty-six storage slots. The upper inventory stays hidden until the inventory opens, and the hotbar row mirrors the nine slots the HUD shows during play.',
-          'Along the top of the box a black-background player preview sits on the upper left, and a 2x2 crafting input beside a 1x1 crafting output sits on the upper right. A close button in the top-right corner draws `assets/ui/inventory/close.svg`. The crafting output is read-only and resolves to empty because Ludoxel implements no crafting recipe resolution.',
-          'The crafting input is a transient working area, kept apart from the thirty-six storage slots. An item can move into and out of it while the inventory is open, and closing the inventory empties it into the storage. The crafting grid is never persisted; it resets to empty each time the inventory opens.',
+          'A dedicated thirty-pixel header fixes the 30x30 close-button hit area at the central box top-right and draws `assets/ui/inventory/close.svg`. The black-background player preview and the 2x2 crafting input, arrow, and 1x1 output occupy the row below that header, so their geometry never consumes the close-button area. The crafting output is read-only and resolves to empty because Ludoxel implements no crafting recipe resolution.',
+          'The crafting input is a transient working area, kept apart from the thirty-six storage slots. An item can move into and out of it while the inventory is open. Closing the inventory places each input item into the hotbar and then the upper inventory when a destination is free; a full central storage leaves the unplaced item in its crafting input instead of clearing it. The crafting grid is never persisted.',
           'Creative Mode adds an All Items box to the left of the central box, and Survival Mode shows the central box alone. `set_creative_mode` toggles the All Items box, and it clears a catalog carry or catalog hover when the mode leaves creative.',
         ],
         codeBlocks: [
@@ -1084,7 +1084,7 @@ for index, (_item_id, _search_key, button) in enumerate(matching_entries):
           'A left click on a filled slot lifts its item onto the cursor as a carried item and empties the source in the overlay working copy. The carried item follows the pointer as a small image while an event filter tracks mouse movement over the overlay.',
           'The next click on a storage slot, the crafting input, or the crafting output commits the destination. The output rejects a placed item, so a click on it keeps the carry active.',
           'An empty destination receives the carried item and the source stays empty, completing a move. An occupied destination receives the carried item while its previous item returns to the carry source, completing a swap. A Creative All Items source replaces the destination, and the previous item is discarded because the box is an infinite source.',
-          'Closing the inventory returns any carried item to its source through `_cancel_carry`, then `_evacuate_crafting` moves each crafting item into the storage by hotbar-then-upper priority so the crafting grid ends empty. A drag started from a slot performs the same move or swap, decoding the `application/x-ludoxel-block-id` MIME payload in `dropEvent` and reading the drag source the overlay recorded when the drag began.',
+          'Closing the inventory returns any carried item to its source through `_cancel_carry`, then `_evacuate_crafting` moves each crafting item into the storage by hotbar-then-upper priority. When no destination is free, the method retains that item in its crafting input; closing never clears an unplaced crafting item. A drag started from a slot performs the same move or swap, decoding the `application/x-ludoxel-block-id` MIME payload in `dropEvent` and reading the drag source the overlay recorded when the drag began.',
         ],
         codeBlocks: [
           {
@@ -1124,13 +1124,13 @@ return normalized_hotbar, inserted_upper, upper_index is not None`,
         title: 'Hovering and Pressing 1-9 Assigns a Hotbar Slot',
         body: [
           'Hovering an item and pressing a number key from 1 to 9 outside the search box assigns it to the matching hotbar slot. `hotbar_index_from_key` maps the bound key to a slot index, and `_handle_number_key` applies the assignment.',
-          'Creative Mode replaces the chosen hotbar slot with the hovered item, whether the item is hovered in the All Items box or in storage. Survival Mode swaps the hovered storage slot with the chosen hotbar slot, and a hovered hotbar slot equal to the pressed number is a no-op.',
+          'The Creative All Items box is the only unlimited source: a hovered catalog entry replaces the chosen hotbar slot. A hovered item in the hotbar, upper inventory, or crafting input is finite in both game modes, so the operation swaps it with the target hotbar slot or leaves the source empty when the target was empty. A hovered hotbar slot equal to the pressed number is a no-op. The read-only crafting output is excluded from number-key assignment.',
           'While the search box holds focus it keeps the number keys as text, so a numeric query edits the search instead of moving an item. Escape still closes the overlay from the search box.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'Survival number-key assignment swaps the hovered slot with the hotbar slot.',
+            caption: 'A finite number-key source swaps atomically with the hotbar target.',
             code: `hovered_item = self._get_slot(region, hovered_index)
 hotbar_item = self._get_slot(REGION_HOTBAR, target_index)
 self._set_slot(REGION_HOTBAR, target_index, hovered_item)
@@ -1169,7 +1169,7 @@ self._set_slot(region, hovered_index, hotbar_item)`,
         title: 'The Overlay Commits Storage Through One Signal',
         body: [
           'The overlay edits a working copy of the hotbar, upper inventory, and crafting input while it is open. A click, drag, shift-click, number key, or drop key that changes the hotbar or upper inventory emits one `storage_changed` payload carrying the hotbar and upper tuples; the crafting grid stays out of the payload because it is never persisted.',
-          '`bind_overlay_actions` connects `storage_changed` to `apply_inventory_storage`. The controller writes the active My World hotbar and upper branches through `set_my_world_hotbar_slots` and `set_my_world_upper_slots`, normalizes the runtime, then re-syncs the HUD hotbar, the health strip, and the first-person held item.',
+          '`bind_overlay_actions` connects `storage_changed` to `apply_inventory_storage`. The controller writes the shared My World hotbar and upper storage through `set_my_world_hotbar_slots` and `set_my_world_upper_slots`, normalizes the runtime, then re-syncs the HUD hotbar, the health strip, and the first-person held item before invalidating the inventory preview cache and requesting another frame.',
           'The overlay keeps its working copy while open, and the controller leaves the open overlay alone after a commit. The runtime re-pushes storage into the overlay only when the inventory opens or the game mode changes, so an in-progress carry survives until the player places it.',
         ],
         codeBlocks: [
@@ -1190,7 +1190,7 @@ self._set_slot(region, hovered_index, hotbar_item)`,
         title: 'The Inventory Preview Tracks the Live Player',
         body: [
           'The central box renders a live player preview while the inventory is open. `_update_inventory_preview_frame` runs on each painted frame, composes a third-person preview state from the running render snapshot, and draws it into the inventory preview widget over a black background.',
-          'Because the fixed-step runtime keeps advancing with the inventory open, the preview reflects the current skin and the hurt tint produced by recent damage. The preview frame is cleared when the inventory hides, and this path is separate from the pause-screen preview so neither one drives the other.',
+          'Because the fixed-step runtime keeps advancing with the inventory open, the preview reflects the current skin, hurt tint, and the held block or special item resolved from the selected hotbar slot. Its cache key includes the skin reference plus `visible_block_id`, `visible_block_kind`, and `visible_special_item_icon`, the `FirstPersonRenderState` fields consumed by the third-person preview pose. A storage commit updates the first-person target, invalidates that cache, and requests a repaint; removing or adding the selected held item therefore changes the open inventory preview. The preview frame is cleared when the inventory hides, and this path is separate from the pause-screen preview so neither one drives the other.',
         ],
         codeBlocks: [
           {

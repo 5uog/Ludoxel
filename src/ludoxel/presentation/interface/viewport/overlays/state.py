@@ -49,6 +49,10 @@ class ViewportOverlayMixin:
     self._pause_preview_cache_key = None
     self._pause_preview_frame = QImage()
 
+  def _invalidate_inventory_preview_cache(self: "RendererViewportWidget") -> None:
+    self._inventory_preview_cache_key = None
+    self._inventory_preview_frame = QImage()
+
   def _clear_pause_preview_frame(self: "RendererViewportWidget") -> None:
     if self._pause_preview_cache_key is None and self._pause_preview_frame.isNull():
       return
@@ -96,6 +100,10 @@ class ViewportOverlayMixin:
       round(float(player_state.crouch_amount), 4),
       round(float(player_state.hurt_tint_strength), 4),
       bool(player_state.is_first_person),
+      None if player_state.skin_texture_key is None else str(player_state.skin_texture_key),
+      None if player_state.first_person is None else player_state.first_person.visible_block_id,
+      None if player_state.first_person is None else player_state.first_person.visible_block_kind,
+      None if player_state.first_person is None else player_state.first_person.visible_special_item_icon,
     )
 
   def _build_pause_preview_player_state(self: "RendererViewportWidget", player_state) -> object:
@@ -141,8 +149,7 @@ class ViewportOverlayMixin:
   def _clear_inventory_preview_frame(self: "RendererViewportWidget") -> None:
     if self._inventory_preview_cache_key is None and self._inventory_preview_frame.isNull():
       return
-    self._inventory_preview_cache_key = None
-    self._inventory_preview_frame = QImage()
+    self._invalidate_inventory_preview_cache()
     self._inventory.set_player_preview_frame(QImage())
 
   def _update_inventory_preview_frame(self: "RendererViewportWidget", player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:

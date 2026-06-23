@@ -164,6 +164,8 @@ def apply_inventory_storage(viewport: "RendererViewportWidget", *, hotbar, upper
   viewport._hotbar.sync_hotbar(slots=slots, selected_index=int(selected_index))
   sync_hotbar_status(viewport)
   sync_first_person_target(viewport)
+  viewport._invalidate_inventory_preview_cache()
+  viewport.update()
 
 
 def _sync_overlay_crosshair_widgets(viewport: "RendererViewportWidget", overlay) -> None:

@@ -37,7 +37,7 @@ REGION_CATALOG = "catalog"
 _SLOT_SIZE = 46
 _SLOT_ICON_SIZE = 36
 _CATALOG_COLUMNS = 9
-_CENTER_PANEL_SIDE = HOTBAR_SIZE * _SLOT_SIZE + (HOTBAR_SIZE - 1) * 6 + 36
+_CENTER_PANEL_SIDE = HOTBAR_SIZE * _SLOT_SIZE + (HOTBAR_SIZE - 1) * 6 + 58
 _INVENTORY_PREVIEW_WIDTH = 116
 _INVENTORY_PREVIEW_HEIGHT = 198
 
@@ -321,10 +321,13 @@ class InventoryOverlay(QWidget):
     layout.setContentsMargins(18, 14, 18, 18)
     layout.setSpacing(10)
 
-    header = QHBoxLayout()
-    header.setContentsMargins(0, 0, 0, 0)
-    header.addStretch(1)
-    self._close_button = QPushButton(panel)
+    header = QWidget(panel)
+    header.setObjectName("inventoryHeader")
+    header.setFixedHeight(30)
+    header_layout = QHBoxLayout(header)
+    header_layout.setContentsMargins(0, 0, 0, 0)
+    header_layout.addStretch(1)
+    self._close_button = QPushButton(header)
     self._close_button.setObjectName("closeBtn")
     self._close_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
     self._close_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -333,8 +336,8 @@ class InventoryOverlay(QWidget):
     self._close_button.setIconSize(QSize(16, 16))
     self._close_button.setToolTip("Close (E or Esc)")
     self._close_button.clicked.connect(self._close)
-    header.addWidget(self._close_button)
-    layout.addLayout(header)
+    header_layout.addWidget(self._close_button)
+    layout.addWidget(header)
 
     top_row = QHBoxLayout()
     top_row.setContentsMargins(0, 0, 0, 0)
@@ -373,6 +376,7 @@ class InventoryOverlay(QWidget):
 
   def _build_crafting_cluster(self, parent: QWidget) -> QWidget:
     cluster = QWidget(parent)
+    cluster.setObjectName("craftingCluster")
     row = QHBoxLayout(cluster)
     row.setContentsMargins(0, 0, 0, 0)
     row.setSpacing(10)
@@ -478,7 +482,8 @@ class InventoryOverlay(QWidget):
     self._drag_source = None
     self._hotbar_slots = list(normalize_hotbar_slots(slots, size=HOTBAR_SIZE))
     self._upper_slots = list(normalize_upper_inventory_slots(upper))
-    self._crafting_slots = list(normalize_crafting_slots(None))
+    if not any(str(item_id).strip() for item_id in self._crafting_slots):
+      self._crafting_slots = list(normalize_crafting_slots(None))
     self._selected_hotbar_index = int(normalize_hotbar_index(selected_index, size=HOTBAR_SIZE))
     self._sync_storage_buttons()
 
@@ -669,8 +674,8 @@ class InventoryOverlay(QWidget):
       if placed:
         self._hotbar_slots = list(new_hotbar)
         self._upper_slots = list(new_upper)
-      self._crafting_slots[index] = ""
-      moved = True
+        self._crafting_slots[index] = ""
+        moved = True
     if moved:
       self._sync_storage_buttons()
       self._emit_storage_changed()
@@ -733,22 +738,24 @@ class InventoryOverlay(QWidget):
 
   def _handle_number_key(self, hotbar_index: int) -> None:
     target_index = int(normalize_hotbar_index(hotbar_index, size=HOTBAR_SIZE))
-    if self._creative_mode:
+    region = self._hovered_region
+    if region == REGION_CATALOG:
       item_id = self._hovered_item_id
-      if not item_id:
+      if (not self._creative_mode) or not item_id:
         return
       self._set_slot(REGION_HOTBAR, target_index, str(item_id))
       self._sync_storage_buttons()
       self._emit_storage_changed()
       return
 
-    region = self._hovered_region
-    if region not in (REGION_HOTBAR, REGION_UPPER) or self._hovered_index is None:
+    if region not in (REGION_HOTBAR, REGION_UPPER, REGION_CRAFTING) or self._hovered_index is None:
       return
     hovered_index = int(self._hovered_index)
     if region == REGION_HOTBAR and int(hovered_index) == int(target_index):
       return
     hovered_item = self._get_slot(region, hovered_index)
+    if not hovered_item:
+      return
     hotbar_item = self._get_slot(REGION_HOTBAR, target_index)
     self._set_slot(REGION_HOTBAR, target_index, hovered_item)
     self._set_slot(region, hovered_index, hotbar_item)
