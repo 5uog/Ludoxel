@@ -183,6 +183,10 @@ def handle_key_press(viewport: "RendererViewportWidget", e: "QKeyEvent") -> bool
 
 
 def handle_wheel(viewport: "RendererViewportWidget", e: "QWheelEvent") -> bool:
+  if chat_controller.is_chat_open(viewport):
+    e.accept()
+    return True
+
   if (
     viewport._overlays.paused()
     or viewport._overlays.inventory_open()
@@ -206,6 +210,12 @@ def handle_wheel(viewport: "RendererViewportWidget", e: "QWheelEvent") -> bool:
 
 
 def handle_mouse_press(viewport: "RendererViewportWidget", e: "QMouseEvent") -> bool:
+  if chat_controller.is_chat_open(viewport):
+    if viewport._inp.captured():
+      viewport._inp.set_mouse_capture(False)
+    e.accept()
+    return True
+
   viewport.setFocus(Qt.FocusReason.MouseFocusReason)
 
   if (
@@ -253,6 +263,9 @@ def handle_mouse_press(viewport: "RendererViewportWidget", e: "QMouseEvent") -> 
 
 
 def handle_mouse_release(viewport: "RendererViewportWidget", e: "QMouseEvent") -> None:
+  if chat_controller.is_chat_open(viewport):
+    return
+
   if e.button() == Qt.MouseButton.LeftButton:
     viewport._left_mouse_held = False
     viewport._left_mouse_repeat_due_s = 0.0

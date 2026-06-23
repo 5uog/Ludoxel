@@ -101,7 +101,7 @@ def parse_command(text: str) -> ParsedCommand:
   if not tokens:
     return CommandError("Empty command.")
   head = tokens[0].lower()
-  if head == "/teleport":
+  if head in ("/teleport", "/tp"):
     return _parse_teleport(tokens[1:])
   if head == "/gamemode":
     return _parse_gamemode(tokens[1:])

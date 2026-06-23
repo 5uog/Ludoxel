@@ -1861,7 +1861,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
     group: 'Player Commands',
     title: 'Using Teleport and Game Mode Commands',
     description:
-      'Defines what the /teleport and /gamemode chat commands change in player and game state, how teleport moves the local player in My World and the Othello play space, how facing resolves a look direction, and how game mode applies through the shared simulation operation.',
+      'Defines what the /teleport and /tp aliases and the /gamemode chat command change in player and game state, how teleport moves the local player in My World and the Othello play space, how facing resolves a look direction, and how game mode applies through the shared simulation operation.',
     sections: [
       {
         id: 'commands-teleport-effect',
@@ -1869,7 +1869,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         content: [
           {
             kind: 'paragraph',
-            text: 'The `/teleport` command accepts `/teleport <x> <y> <z>` with an optional trailing `chunkForBlocks` boolean, an optional `facing <x y z>` position, and an optional `facing <target>` entity. The coordinates are accepted only as finite numbers, and the default for `chunkForBlocks` is false. The command moves the local player; in this version it does not move other players. It applies in My World and in the Othello play space, because both sessions hold a player whose position drives the camera. It is a coordinate move of the player and the camera; it does not change Othello board state or disc placement.',
+            text: 'The `/teleport` command accepts `/teleport <x> <y> <z>` with an optional trailing `chunkForBlocks` boolean, an optional `facing <x y z>` position, and an optional `facing <target>` entity. `/tp` is an alias for the same parser and execution route, so its argument structure, finite-coordinate validation, target resolution, relative execution state, feedback, and errors are identical. The default for `chunkForBlocks` is false. The command moves the local player; in this version it does not move other players. It applies in My World and in the Othello play space, because both sessions hold a player whose position drives the camera. It is a coordinate move of the player and the camera; it leaves Othello board state and disc placement unchanged.',
           },
           {
             kind: 'list',

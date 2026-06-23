@@ -424,8 +424,10 @@ class AiSettingsOverlay(SidebarDialogBase):
 
     _data_card, data_body, data_layout = add_settings_card(layout, host, title="Data Management", description="Export, import, and clear recorded data, and manage the learned policy.")
     self._learning_export_button = QPushButton("Export learning data", data_body)
+    self._learning_export_button.setProperty("buttonStyle", "prominent")
     add_setting_row(data_layout, data_body, label="Export", description="Write recorded demonstrations to a JSON Lines file.", control=self._learning_export_button)
     self._learning_import_button = QPushButton("Import learning data", data_body)
+    self._learning_import_button.setProperty("buttonStyle", "prominent")
     add_setting_row(data_layout, data_body, label="Import", description="Append demonstrations from a JSON Lines file.", control=self._learning_import_button)
     self._learning_clear_button = QPushButton("Clear player demonstration data", data_body)
     self._learning_clear_button.setObjectName("dangerBtn")
@@ -434,6 +436,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_reset_button.setObjectName("dangerBtn")
     add_setting_row(data_layout, data_body, label="Reset policy", description="Return to the built-in deterministic baseline.", control=self._learning_reset_button)
     self._learning_restore_button = QPushButton("Restore bundled policy", data_body)
+    self._learning_restore_button.setProperty("buttonStyle", "prominent")
     add_setting_row(data_layout, data_body, label="Restore policy", description="Use a bundled learned policy as the source.", control=self._learning_restore_button)
     self._learning_dataset_label = QLabel("", data_body)
     self._learning_dataset_label.setObjectName("settingsCardDescription")

@@ -36,7 +36,7 @@ class ChatController:
     self._runtime = ChatRuntime()
     self._open = False
 
-    self._screen = ChatScreen(viewport)
+    self._screen = ChatScreen(viewport, resource_root=viewport._resource_root)
     self._feed = ChatFeedWidget(viewport)
     self._screen.setVisible(False)
     self._feed.setVisible(False)
@@ -48,6 +48,11 @@ class ChatController:
     self._screen.settings_close_requested.connect(self._on_settings_close)
     self._screen.mute_changed.connect(self._on_mute_changed)
     self._screen.link_activated.connect(self._on_link_activated)
+    self._screen.sent_history_requested.connect(self._on_sent_history_requested)
+    self._screen.input_edited.connect(self._reset_sent_history_navigation)
+    self._feed.fade_visibility_changed.connect(self.sync_visibility)
+    self._sent_history_index: int | None = None
+    self._sent_history_draft = ""
 
     self._support_timer = QTimer(viewport)
     self._support_timer.setInterval(int(round(float(self._runtime.support_interval_s()) * 1000.0)))
@@ -70,6 +75,7 @@ class ChatController:
     viewport._inp.set_mouse_capture(False)
     self._screen.set_settings_open(False)
     self._screen.clear_input()
+    self._reset_sent_history_navigation()
     self._screen.show_candidates(False)
     self.layout(int(viewport.width()), int(viewport.height()))
     self._refresh()
@@ -126,8 +132,9 @@ class ChatController:
       self._screen.raise_()
     eligible = bool(viewport._gameplay_hud_active()) and (not bool(viewport._debug_hud_active())) and (not bool(self._runtime.mute_all())) and (not bool(self._open))
     messages = self._runtime.recent_display_messages(int(HUD_FEED_MESSAGE_LIMIT))
-    visible = bool(eligible) and len(messages) > 0
     self._feed.set_messages(messages)
+    self._feed.set_fade_enabled(bool(eligible) and len(messages) > 0)
+    visible = bool(eligible) and len(messages) > 0 and self._feed.ready_for_display()
     self._feed.setVisible(bool(visible))
     if bool(visible):
       self._feed.raise_()
@@ -149,6 +156,8 @@ class ChatController:
     if not body:
       self._screen.clear_input()
       return
+    self._runtime.record_sent_input(body)
+    self._reset_sent_history_navigation()
     if body.startswith("/"):
       result = execute_command(body, prefs=self._v._state, sessions=self._v._sessions)
       self._runtime.extend(result.messages)
@@ -159,6 +168,34 @@ class ChatController:
     self._screen.clear_input()
     self._screen.show_candidates(False)
     self._refresh()
+
+  def _on_sent_history_requested(self, direction: int) -> None:
+    items = self._runtime.sent_inputs()
+    if not items:
+      return
+    step = -1 if int(direction) < 0 else 1
+    if step < 0:
+      if self._sent_history_index is None:
+        self._sent_history_draft = self._screen.input_text()
+        self._sent_history_index = len(items) - 1
+      else:
+        self._sent_history_index = max(0, int(self._sent_history_index) - 1)
+      self._screen.set_input_text(items[int(self._sent_history_index)])
+      return
+    if self._sent_history_index is None:
+      return
+    if int(self._sent_history_index) < len(items) - 1:
+      self._sent_history_index = int(self._sent_history_index) + 1
+      self._screen.set_input_text(items[int(self._sent_history_index)])
+      return
+    self._reset_sent_history_navigation(restore_draft=True)
+
+  def _reset_sent_history_navigation(self, *, restore_draft: bool = False) -> None:
+    draft = str(self._sent_history_draft)
+    self._sent_history_index = None
+    self._sent_history_draft = ""
+    if restore_draft:
+      self._screen.set_input_text(draft)
 
   def _apply_effects(self, effects) -> None:
     viewport = self._v

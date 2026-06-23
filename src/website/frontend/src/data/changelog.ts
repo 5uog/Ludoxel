@@ -15,6 +15,27 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.8',
+    tags: ['Desktop Application', 'Chat', 'Commands', 'Interface'],
+    sections: [
+      {
+        title: 'Chat Input and History Review',
+        items: [
+          'Finalized the Chat and Commands input boundary: clicks and wheel input inside the open chat surface no longer restore gameplay mouse capture, camera control, block interaction, hotbar selection, Othello input, or viewport focus.',
+          'Added a right-side history scrollbar, synchronized the message field with the settings and send controls at the bottom-bar height, restored the settings cog from `assets/ui/settings/cog.svg`, and aligned the Chat Settings Back control with the Send button family.',
+          'Added runtime-only sent-input recall for the focused message field. Up traverses the newest submitted messages and commands first; Down returns toward the current draft. Submitted validation-error commands remain recallable because the existing submission path accepts every nonempty command string before routing.',
+          'Added a thirty-second idle fade for the lower-left recent chat feed after the chat screen closes. The next display message restores the feed, and the existing F3 suppression and runtime history retention remain in force.',
+        ],
+      },
+      {
+        title: 'Command Alias',
+        items: [
+          'Added `/tp` as an alias for `/teleport`, including command candidates. Both spellings share the same parser, validation, target resolution, coordinate handling, execution result, and command-error route.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.8 Beta 1',
     tags: ['Desktop Application', 'Chat', 'Commands'],
     sections: [

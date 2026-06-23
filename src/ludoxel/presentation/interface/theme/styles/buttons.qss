@@ -294,3 +294,39 @@ QWidget#settingsDialog QPushButton#modeToggle:pressed {
   border-bottom-color: #858585;
 }
 
+/* Prominent actions shared by chat and settings surfaces. */
+
+QPushButton[buttonStyle="prominent"] {
+  color: #ffffff;
+  background: #3a3a3a;
+  border-top: 3px solid #6f6f6f;
+  border-left: 3px solid #6f6f6f;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+  border-radius: 0px;
+  padding: 7px 14px;
+  min-height: 24px;
+  font-weight: 700;
+}
+
+QPushButton[buttonStyle="prominent"]:hover {
+  background: #474747;
+}
+
+QPushButton[buttonStyle="prominent"]:pressed {
+  background: #2f2f2f;
+  border-top-color: #0b0b0b;
+  border-left-color: #0b0b0b;
+  border-right-color: #6f6f6f;
+  border-bottom-color: #6f6f6f;
+}
+
+QPushButton[buttonStyle="prominent"]:disabled {
+  color: rgba(255,255,255,115);
+  background: #444444;
+  border-top-color: #606060;
+  border-left-color: #606060;
+  border-right-color: #222222;
+  border-bottom-color: #222222;
+}
+

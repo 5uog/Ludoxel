@@ -32,3 +32,16 @@ class ChatHistory:
     if limit <= 0:
       return ()
     return display[-limit:]
+
+
+class SentInputHistory:
+  def __init__(self, *, cap: int = CHAT_HISTORY_CAP) -> None:
+    self._items: deque[str] = deque(maxlen=max(1, int(cap)))
+
+  def append(self, text: str) -> None:
+    value = str(text)
+    if value:
+      self._items.append(value)
+
+  def items(self) -> tuple[str, ...]:
+    return tuple(self._items)

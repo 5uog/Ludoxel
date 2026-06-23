@@ -2170,7 +2170,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.6.8b1"`,
+            code: `__version__ = "3.6.8"`,
           },
           {
             kind: 'note',
@@ -2583,7 +2583,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
     group: 'Chat Runtime',
     title: 'Understanding the Chat Runtime and Command Routing',
     description:
-      'Defines the runtime-only chat state, the non-pausing chat overlay, the heads-up feed visibility arbitration, the periodic support message, and the command coordinator that routes the slash commands through the simulation player operations.',
+      'Defines the runtime-only chat state, sent-input recall, the non-pausing chat overlay, the heads-up feed visibility and fade arbitration, the periodic support message, and the command coordinator that routes slash commands through the simulation player operations.',
     sections: [
       {
         id: 'chat-runtime-overlay-does-not-pause',
@@ -2591,7 +2591,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
         content: [
           {
             kind: 'paragraph',
-            text: '`chat_controller.bind_chat` attaches one `ChatController` to both viewport widgets in `src/ludoxel/presentation/interface/viewport/widgets/gl.py` and `renderer.py`. The `toggle_chat` keybind reaches `interaction.handle_key_press`, which calls `chat_controller.open_chat`. Opening releases gameplay capture through `ViewportInput.set_mouse_capture(False)` and resets held movement, but it does not enter the dead, paused, settings, Othello-settings, or transient-modal states. `_tick_sim` and `_on_step` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` gate only on those states, so the fixed-step runtime, the Othello clock, gravity, and cloud and AI motion keep advancing while the chat input field holds focus.',
+            text: '`chat_controller.bind_chat` attaches one `ChatController` to both viewport widgets in `src/ludoxel/presentation/interface/viewport/widgets/gl.py` and `renderer.py`. The `toggle_chat` keybind reaches `interaction.handle_key_press`, which calls `chat_controller.open_chat`. Opening releases gameplay capture through `ViewportInput.set_mouse_capture(False)` and resets held movement. `interaction.handle_mouse_press` and `handle_wheel` then consume viewport-level pointer events while the chat-open flag is set, preserving the chat surface as the input boundary. `_tick_sim` and `_on_step` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` have no chat-open stop condition, so the fixed-step runtime, the Othello clock, gravity, and cloud and AI motion keep advancing while the chat input field holds focus.',
           },
           {
             kind: 'code',
@@ -2620,7 +2620,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
         content: [
           {
             kind: 'paragraph',
-            text: 'The application chat state lives under `src/ludoxel/application/chat/`. `ChatRuntime` owns a `ChatHistory` and a `ChatRuntimeSettings`. The history is a `collections.deque` with a one-hundred-message cap, so the oldest message is dropped once the count exceeds the cap and is not restored. The mute flag is held only for the running game. Neither the history nor the mute flag is written to saved preferences, the app-state schema, or any world or Othello save; both reset on restart.',
+            text: 'The application chat state lives under `src/ludoxel/application/chat/`. `ChatRuntime` owns a `ChatHistory`, a `SentInputHistory`, and a `ChatRuntimeSettings`. Both histories use the one-hundred-entry cap, so the oldest entry is dropped when the corresponding sequence reaches capacity. `ChatController` records every nonempty submitted message or command before command routing, while `ChatScreen` keeps only the current traversal index and draft text for its focused field. The mute flag and both histories are held for the running game and are absent from saved preferences, the app-state schema, and every world and Othello save.',
           },
           {
             kind: 'code',
@@ -2671,7 +2671,7 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Input beginning with a slash is handled by `src/ludoxel/application/chat/commands/`. `parse_command` produces a typed `TeleportCommand`, a `GameModeCommand`, or a `CommandError`, and `execute_command` resolves targets and applies the mutation. Teleport calls `SessionManager.teleport`, which delegates the player-state change to `teleport_player` in `src/ludoxel/simulation/actors/player/teleport.py`. Game mode calls `apply_game_mode` in `src/ludoxel/application/sessions/game_mode.py`, which writes the runtime creative flag and routes the player change through `apply_player_game_mode`. The Settings game-mode toggle calls the same `apply_game_mode` operation.',
+            text: 'Input beginning with a slash is handled by `src/ludoxel/application/chat/commands/`. `parse_command` accepts `/teleport` and `/tp` through the same teleport parser, then produces a typed `TeleportCommand`, a `GameModeCommand`, or a `CommandError`; `execute_command` resolves targets and applies the mutation. The candidate model exposes both teleport spellings. Teleport calls `SessionManager.teleport`, which delegates the player-state change to `teleport_player` in `src/ludoxel/simulation/actors/player/teleport.py`. Game mode calls `apply_game_mode` in `src/ludoxel/application/sessions/game_mode.py`, which writes the runtime creative flag and routes the player change through `apply_player_game_mode`. The Settings game-mode toggle calls the same `apply_game_mode` operation.',
           },
           {
             kind: 'code',
@@ -2697,7 +2697,7 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
         content: [
           {
             kind: 'paragraph',
-            text: '`ChatController.sync_visibility`, called from `_sync_gameplay_hud_visibility`, decides the lower-left feed. The feed is shown only while the gameplay HUD is active, the F3 Debug HUD is inactive, Mute All Chat is disabled, the chat screen is closed, and at least one display message exists. The feed widget is transparent to mouse events, so it never takes camera control, hotbar selection, or block interaction. Closing the F3 Debug HUD restores the feed under the same conditions; opening the chat screen hides it because the chat screen renders the same messages at full size.',
+            text: '`ChatController.sync_visibility`, called from `_sync_gameplay_hud_visibility`, decides the lower-left feed. The feed is shown only while the gameplay HUD is active, the F3 Debug HUD is inactive, Mute All Chat is disabled, the chat screen is closed, and at least one display message exists. `ChatFeedWidget` starts a thirty-second single-shot `QTimer` only under those conditions and applies a three-second opacity animation when the timer expires. A new display message resets that presentation timer and returns the widget to full opacity. The feed widget is transparent to mouse events, so it never takes camera control, hotbar selection, or block interaction. Closing the F3 Debug HUD restores the feed under the same conditions; opening the chat screen hides it because the chat screen renders the same messages at full size.',
           },
         ],
       },

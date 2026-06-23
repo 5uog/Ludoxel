@@ -289,6 +289,9 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     if bool(self.loading_active()):
       e.accept()
       return
+    if chat_controller.is_chat_open(self):
+      interaction_controller.handle_mouse_press(self, e)
+      return
     interaction_controller.handle_mouse_press(self, e)
     super().mousePressEvent(e)
 

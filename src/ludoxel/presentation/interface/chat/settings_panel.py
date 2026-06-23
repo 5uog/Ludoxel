@@ -45,7 +45,7 @@ class ChatSettingsPanel(QWidget):
     panel_layout.addWidget(self._mute_row)
 
     self._back_button = QPushButton("Back", panel)
-    self._back_button.setObjectName("menuBtn")
+    self._back_button.setProperty("buttonStyle", "prominent")
     self._back_button.setCursor(Qt.CursorShape.PointingHandCursor)
     self._back_button.clicked.connect(self.back_requested.emit)
     panel_layout.addWidget(self._back_button)

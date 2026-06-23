@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from ludoxel.application.chat.history import ChatHistory
+from ludoxel.application.chat.history import ChatHistory, SentInputHistory
 from ludoxel.application.chat.messages import ChatMessage, make_death_log_message, make_player_message
 from ludoxel.application.chat.settings import ChatRuntimeSettings
 from ludoxel.application.chat.support import SUPPORT_INTERVAL_S, make_support_message
@@ -13,6 +13,7 @@ from ludoxel.application.chat.support import SUPPORT_INTERVAL_S, make_support_me
 class ChatRuntime:
   def __init__(self) -> None:
     self._history = ChatHistory()
+    self._sent_inputs = SentInputHistory()
     self._settings = ChatRuntimeSettings()
 
   def support_interval_s(self) -> float:
@@ -26,6 +27,12 @@ class ChatRuntime:
 
   def append(self, message: ChatMessage) -> None:
     self._history.append(message)
+
+  def record_sent_input(self, text: str) -> None:
+    self._sent_inputs.append(str(text))
+
+  def sent_inputs(self) -> tuple[str, ...]:
+    return self._sent_inputs.items()
 
   def extend(self, messages: Iterable[ChatMessage]) -> None:
     for message in messages:

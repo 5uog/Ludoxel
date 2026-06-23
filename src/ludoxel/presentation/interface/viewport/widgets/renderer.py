@@ -438,6 +438,9 @@ class RendererViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, Viewpo
     if bool(self.loading_active()):
       e.accept()
       return
+    if chat_controller.is_chat_open(self):
+      interaction_controller.handle_mouse_press(self, e)
+      return
     self._dispatch_game_mouse_press(e)
     self._queue_render_after_input()
     if bool(self._macos_game_input_priority_active()):

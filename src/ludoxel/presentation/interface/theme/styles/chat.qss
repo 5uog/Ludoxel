@@ -31,6 +31,11 @@ QWidget#chatLogText {
   background: transparent;
 }
 
+QScrollArea#chatLogScroll {
+  background: transparent;
+  border: none;
+}
+
 QWidget#chatFeedRoot {
   background: rgba(0, 0, 0, 110);
   border: 2px solid #0b0b0b;
@@ -60,7 +65,8 @@ QLineEdit#chatInput {
   border-left: 2px solid #0b0b0b;
   border-right: 2px solid #4a4a4a;
   border-bottom: 2px solid #4a4a4a;
-  padding: 4px 8px;
+  padding: 0px 8px;
+  min-height: 0px;
   selection-background-color: #6fb03a;
   selection-color: #0b0b0b;
 }
@@ -71,7 +77,6 @@ QLineEdit#chatInput:focus {
 }
 
 QPushButton#chatBackButton,
-QPushButton#chatSendButton,
 QPushButton#chatSettingsButton {
   background: #3a3a3a;
   color: #ffffff;
@@ -83,19 +88,71 @@ QPushButton#chatSettingsButton {
 }
 
 QPushButton#chatBackButton:hover,
-QPushButton#chatSendButton:hover,
 QPushButton#chatSettingsButton:hover {
   background: #474747;
 }
 
 QPushButton#chatBackButton:pressed,
-QPushButton#chatSendButton:pressed,
 QPushButton#chatSettingsButton:pressed {
   background: #2f2f2f;
   border-top: 3px solid #0b0b0b;
   border-left: 3px solid #0b0b0b;
   border-right: 3px solid #6f6f6f;
   border-bottom: 3px solid #6f6f6f;
+}
+
+QPushButton#chatBackButton:disabled,
+QPushButton#chatSettingsButton:disabled {
+  color: rgba(255,255,255,115);
+  background: #444444;
+  border-top-color: #606060;
+  border-left-color: #606060;
+  border-right-color: #222222;
+  border-bottom-color: #222222;
+}
+
+QPushButton#chatSettingsButton {
+  padding: 6px;
+}
+
+QWidget#chatScreenRoot QScrollBar:vertical {
+  width: 14px;
+  background: #111111;
+  border-left: 2px solid #080808;
+  margin: 0px;
+}
+
+QWidget#chatScreenRoot QScrollBar::handle:vertical {
+  min-height: 30px;
+  background: #5a5a5a;
+  border-top: 2px solid #8a8a8a;
+  border-left: 2px solid #8a8a8a;
+  border-right: 2px solid #202020;
+  border-bottom: 2px solid #202020;
+}
+
+QWidget#chatScreenRoot QScrollBar::handle:vertical:hover {
+  background: #6a6a6a;
+}
+
+QWidget#chatScreenRoot QScrollBar::handle:vertical:pressed {
+  background: #505050;
+  border-top-color: #777777;
+  border-left-color: #777777;
+  border-right-color: #1c1c1c;
+  border-bottom-color: #1c1c1c;
+}
+
+QWidget#chatScreenRoot QScrollBar::add-line:vertical,
+QWidget#chatScreenRoot QScrollBar::sub-line:vertical {
+  height: 0px;
+  background: transparent;
+  border: none;
+}
+
+QWidget#chatScreenRoot QScrollBar::add-page:vertical,
+QWidget#chatScreenRoot QScrollBar::sub-page:vertical {
+  background: transparent;
 }
 
 QWidget#chatSettingsRoot {

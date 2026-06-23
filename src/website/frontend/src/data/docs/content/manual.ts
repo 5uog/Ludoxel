@@ -1874,14 +1874,14 @@ MELEE_HURT_TILT_S = 0.18`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The chat screen is shared by My World and Othello. It is opened with the Open Chat keybind, which defaults to `T`, and closed with `Esc` or the title-bar `< Back` button. Opening it releases the gameplay mouse capture so the message field can take keyboard focus, and closing it returns to the normal gameplay input and cursor state for the active play space. The screen reuses the pause-screen background tone, but it does not pause the game: time, the simulation step, the Othello clock, and world motion keep running behind it.',
+            text: 'The chat screen is shared by My World and Othello. It is opened with the Open Chat keybind, which defaults to `T`, and closed with `Esc` or the title-bar `< Back` button. Opening it releases gameplay mouse capture so the message field can take keyboard focus, and every click on the chat rendering area, scroll bar, candidate display, settings backdrop, title bar, or bottom bar remains inside that input boundary. Closing the screen restores the normal gameplay input and cursor state for the active play space. The screen reuses the pause-screen background tone while time, the simulation step, the Othello clock, and world motion continue behind it.',
           },
           {
             kind: 'list',
             ordered: true,
             items: [
               'Press T during gameplay to open the chat screen; the message field receives focus.',
-              'Type a message, or type a command that begins with a slash.',
+              'Type a message, or type a command that begins with a slash; use the right-side scroll bar to inspect earlier display rows.',
               'Send with the bottom-right send button or with Enter; empty and whitespace-only input is not sent.',
               'Press Esc or click < Back to close the screen and return to gameplay.',
             ],
@@ -1898,7 +1898,7 @@ MELEE_HURT_TILT_S = 0.18`,
         content: [
           {
             kind: 'paragraph',
-            text: 'After the chat screen closes, a small recent chat box appears at the lower-left of the gameplay HUD, above the hotbar, showing the newest messages. It is a display only: it does not take mouse capture, camera control, hotbar selection, or block interaction. Messages added while the screen is closed appear in the box, which is limited to roughly the newest ten rows while the full history retains up to one hundred messages.',
+            text: 'After the chat screen closes, a small recent chat box appears at the lower-left of the gameplay HUD, above the hotbar, showing the newest messages. It is a display only: it does not take mouse capture, camera control, hotbar selection, or block interaction. Messages added while the screen is closed appear in the box, which is limited to roughly the newest ten rows while the full history retains up to one hundred messages. After thirty seconds without a new display message, the box fades through its Qt opacity transition; the next message restores full opacity and restarts the interval.',
           },
           {
             kind: 'paragraph',
@@ -1912,7 +1912,7 @@ MELEE_HURT_TILT_S = 0.18`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The square settings button on the bottom bar opens the embedded Chat Settings surface inside the chat screen, with the chat screen still visible behind it. Its only control in this version is Mute All Chat, a setting held only while the game runs. When the message field begins with a slash, the message list is replaced by a command candidate list showing the available command signatures; `/t` shows the teleport signatures and `/g` shows the game-mode signatures. Showing a candidate is not running a command. The full command behavior, the runtime-only mute, and the runtime history are described in the related articles.',
+            text: 'The square settings button on the bottom bar opens the embedded Chat Settings surface inside the chat screen, with the chat screen still visible behind it. Its only control in this version is Mute All Chat, a setting held only while the game runs. When the message field begins with a slash, the message list is replaced by a command candidate list showing the available command signatures; `/t`, `/teleport`, and `/tp` show the teleport signatures, while `/g` shows the game-mode signatures. Showing a candidate does not execute a command. Up and Down in the focused message field restore the running-session sent-input sequence, including submitted messages and commands; typing after a restoration leaves the edited text in the field and ends that traversal. The full command behavior, the runtime-only mute, and the runtime history are described in the related articles.',
           },
         ],
       },
