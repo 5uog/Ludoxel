@@ -5,15 +5,17 @@ SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
 # Ludoxel Website Figure Sources
 
-This directory contains the source-controlled figure-generation surface for the Ludoxel website. The `code/` directory contains Python sources that render documentation figures. The `photo/` and `videos/` directories contain selected website artifacts copied from those rendering runs. Manim cache output, temporary TeX files, intermediate movie fragments, and unselected render products are local generation material and stay outside the committed public asset tree.
+This directory contains the source-controlled figure-generation surface for the Ludoxel website. The `code/` directory contains Python sources that render documentation figures. The `photos/` and `videos/` directories contain selected website artifacts copied from those rendering runs. Manim cache output, temporary TeX files, intermediate movie fragments, and unselected render products are local generation material and stay outside the committed public asset tree.
 
-The repository controls three separate contracts for this directory. `pyproject.toml` controls the Python version range and the `figures` extra used to install Manim. Each figure source controls its own temporary Manim output directory, selected final targets, and copy operation. The Git working tree controls overwrite safety because committed images and videos are ordinary tracked files after they have been copied into `photo/` or `videos/`.
+The repository controls four separate contracts for this directory. `pyproject.toml` controls the Python version range and the `figures` extra used to install Manim. Each figure source controls its own temporary Manim output directory, selected final targets, and copy operation. The render operator controls replacement of committed media by deleting the exact selected targets before running the source. The Git working tree controls overwrite safety because committed images and videos are ordinary tracked files after they have been copied into `photos/` or `videos/`.
+
+All commands below assume the repository root as the working directory unless the command explicitly states otherwise.
 
 ## Dependency contract
 
 Use a Python executable that satisfies the repository requirement declared in `pyproject.toml`. Depending on the shell and machine, that executable may be named `python`, `python3`, or `py`. The commands below use `<python>` as an executable placeholder; replace it with the interpreter that satisfies the repository requirement on the current system before running the command.
 
-The repository-local virtual environment path is `.venv_ludoxel/`. The same path is used on macOS and Windows. The hyphenated form `.venv-ludoxel/` is outside the generated/local rule checked by the repository tools.
+The repository-local virtual environment path is `.venv_ludoxel/`. The same logical path is used on macOS and Windows, with the shell-specific separator used only by the activation command. The hyphenated form `.venv-ludoxel/` is outside the generated/local rule checked by the repository tools.
 
 Manim is installed through the repository extra. The version literal belongs to `pyproject.toml`; this README invokes the declared extra. `pycairo`, `manimpango`, and `av` are installed in the same environment because the figure authoring surface uses Cairo-backed rendering, Pango-backed text shaping, and video encoding.
 
@@ -183,7 +185,7 @@ A `No module named manim` result means the active interpreter is missing the fig
 
 A repository figure source must keep Manim's working media directory outside the repository root. A script that relies on Manim's default `media/` directory from the project root creates local generation material in the wrong place. A conforming source wraps rendering in `tempconfig({"media_dir": str(temp_dir), ...})`, where `temp_dir` is a temporary directory created for that render run.
 
-The current Debug HUD axis-crosshair source follows that media-directory rule. It computes `FIGURES_ROOT` from the script path, declares `PHOTO_OUTPUT` under `photo/`, declares `VIDEO_OUTPUT` under `videos/`, renders through a temporary Manim directory, and copies the selected output files into the public asset tree.
+The current Debug HUD axis-crosshair source follows that media-directory rule. It computes `FIGURES_ROOT` from the script path, declares `PHOTO_OUTPUT` under `photos/`, declares `VIDEO_OUTPUT` under `videos/`, renders through a temporary Manim directory, and copies the selected output files into the public asset tree.
 
 Before rendering, confirm that the committed figure asset tree has no unrelated local changes:
 
@@ -192,25 +194,50 @@ git status --short -- src/website/frontend/public/figures
 git diff --exit-code -- src/website/frontend/public/figures/photo src/website/frontend/public/figures/videos
 ```
 
-The current copy path replaces the declared target files with `shutil.copy2`. That operation is acceptable only when the render is intended to refresh those exact website artifacts. Keep a clean working tree before rendering, inspect the resulting diff after rendering, and commit only the intended media updates.
+The current copy path uses `shutil.copy2` and therefore writes over the declared target files when those files exist. That Python behavior is not the operating procedure for a committed media refresh. The render session must first remove only the exact selected targets that the source is about to regenerate. Deleting the whole `photos/` directory, the whole `videos/` directory, or unrelated website media exceeds the figure source's output contract.
 
-Run an existing repository figure source only after the environment checks and clean-tree checks have passed:
+On macOS or another POSIX shell, remove the selected Debug HUD axis-crosshair targets immediately before rendering:
+
+```bash
+rm -f \
+  src/website/frontend/public/figures/photos/debug-hud-axis-crosshair-projection.png \
+  src/website/frontend/public/figures/videos/debug-hud-axis-crosshair-camera.mp4
+```
+
+On Windows PowerShell, remove the same selected targets immediately before rendering:
+
+```powershell
+Remove-Item -Force `
+  .\src\website\frontend\public\figures\photo\debug-hud-axis-crosshair-projection.png, `
+  .\src\website\frontend\public\figures\videos\debug-hud-axis-crosshair-camera.mp4
+```
+
+Run an existing repository figure source only after the environment checks, clean-tree checks, and selected-target reset have passed:
 
 ```bash
 python src/website/frontend/public/figures/code/debug_hud_axis_crosshair.py
 ```
 
-Successful execution prints the selected output paths written by the source script:
+Successful execution prints the selected output paths written by the source script. Because the script derives `FIGURES_ROOT` from `Path(__file__).resolve()`, the printed paths are absolute paths on the current machine. The relevant suffixes are the committed website artifact paths:
 
 ```text
-wrote src/website/frontend/public/figures/photo/debug-hud-axis-crosshair-projection.png
-wrote src/website/frontend/public/figures/videos/debug-hud-axis-crosshair-camera.mp4
+wrote <absolute-repository-path>/src/website/frontend/public/figures/photos/debug-hud-axis-crosshair-projection.png
+wrote <absolute-repository-path>/src/website/frontend/public/figures/videos/debug-hud-axis-crosshair-camera.mp4
 ```
 
-A future figure source must declare its selected output paths, confine Manim's working directory to a temporary location, and document any intentional replacement of committed media. A source that cannot identify its selected final artifacts belongs outside this public figure surface until that output contract is added.
+Inspect the resulting working-tree state after rendering:
+
+```bash
+git status --short -- src/website/frontend/public/figures
+git diff --stat -- src/website/frontend/public/figures/photo src/website/frontend/public/figures/videos
+```
+
+The expected post-render state is a media-only change to the declared selected targets. If Git reports unrelated files, generated Manim cache directories, temporary TeX files, intermediate movie fragments, or unselected render products under `src/website/frontend/public/figures`, the run has crossed the public asset boundary and must be cleaned before commit.
+
+A future figure source must declare its selected output paths, confine Manim's working directory to a temporary location, document the exact target reset command for its committed outputs, and copy only selected final artifacts into `photos/` or `videos/`. A source that cannot identify its selected final artifacts belongs outside this public figure surface until that output contract is added.
 
 ## Rendering contract
 
-A figure source may generate a still image, a video, or both. The script is responsible for creating its temporary render directory, configuring Manim output state, rendering the scene, and copying selected output into `photo/` or `videos/`. Committed media in this directory is the selected website artifact produced by the corresponding source script. Temporary cache output remains outside the committed asset boundary.
+A figure source may generate a still image, a video, or both. The script is responsible for creating its temporary render directory, configuring Manim output state, rendering the scene, and copying selected output into `photos/` or `videos/`. Committed media in this directory is the selected website artifact produced by the corresponding source script. Temporary cache output remains outside the committed asset boundary.
 
 A successful render updates only the committed public media that the source script explicitly copies into this directory. Generated Manim cache directories, intermediate TeX files, and temporary movie fragments remain local build material and stay outside the website asset contract.

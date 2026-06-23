@@ -305,7 +305,7 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
               autoPlay: true,
               muted: true,
               playsInline: true,
-              poster: '/figures/photo/debug-hud-axis-crosshair-projection.png',
+              poster: '/figures/photos/debug-hud-axis-crosshair-projection.png',
             },
           },
           {

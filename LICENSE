@@ -1,9 +1,9 @@
 Ludoxel Independent License
 LicenseRef-All-Rights-Reserved
 
-Version: 2.5.0
+Version: 2.6.0
 Original Effective Date: 2026-06-03
-Current Version Effective Date: 2026-06-19
+Current Version Effective Date: 2026-06-23
 
 Copyright (c) 2026 Kento Konishi (小西拳斗).
 
@@ -58,12 +58,13 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   Licensor under that name.
 
 * "Documentation Site" means the web documentation site for Ludoxel,
-  including the website source tree under src/website/ in the
-  Repository, documentation content, website source code, user
-  interface text, styling, media blocks, images, videos, static
-  assets, search data, metadata, configuration files, build
-  configuration, generated static-site output, and any official
-  deployment or publication of that site by the Licensor.
+  including the website source tree in the Repository, documentation
+  content, website source code, user interface text, styling, media
+  blocks, images, videos, website figure-generation code, selected
+  website figure images, selected website figure videos, static assets,
+  search data, metadata, configuration files, build configuration,
+  generated static-site output, and any official deployment or
+  publication of that site by the Licensor.
 
 * "Repository" means the repository containing or associated with
   Ludoxel and the Documentation Site, including source code,
@@ -138,10 +139,11 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
   Documentation Site content, configuration files, build scripts,
   validation tools, shaders, user interface text, generated metadata,
   package metadata, packaging material, distribution preparation
-  material, static-site output, project-specific assets,
-  project-specific textures, branding material, application icons,
-  and other protected repository contents, to the extent that such
-  materials are not Third-Party Materials.
+  material, static-site output, website figure-generation code,
+  selected website figure images, selected website figure videos,
+  project-specific assets, project-specific textures, branding
+  material, application icons, and other protected repository contents,
+  to the extent that such materials are not Third-Party Materials.
 
 * "Third-Party Materials" means all materials that are not Original
   Materials and that are owned, authored, licensed, maintained, or
@@ -178,7 +180,10 @@ Copyright (c) 2026 Kento Konishi (小西拳斗).
 * "Application Output" means output produced, displayed, recorded,
   or saved through Ordinary Application Use, including screenshots,
   screen recordings, save files, logs, configuration files, rendered
-  states, and other user-specific output.
+  states, and other user-specific output. Selected website figure images
+  and selected website figure videos produced for the Documentation Site
+  by repository figure-generation code are not Application Output merely
+  because a rendering toolchain produced them.
 
 * "Distribution Materials" means application bundles, executable
   files, installers, archives, wheels, source distributions,
@@ -553,12 +558,13 @@ public-domain material, free documentation, or reusable website
 template material.
 
 The Documentation Site may contain explanatory text, code blocks,
-configuration examples, command examples, images, videos, user
-interface text, navigation data, search data, and legal notices. Their
-presence in a public website is not a grant to copy, modify,
-translate, republish, redistribute, mirror, scrape, crawl, index,
-embed, train on, evaluate with, deploy, or incorporate them into any
-other Work, product, service, repository, website, documentation set,
+configuration examples, command examples, images, videos, website
+figure-generation code, selected website figure images, selected website
+figure videos, user interface text, navigation data, search data, and
+legal notices. Their presence in a public website is not a grant to
+copy, modify, translate, republish, redistribute, mirror, scrape, crawl,
+index, embed, train on, evaluate with, deploy, or incorporate them into
+any other Work, product, service, repository, website, documentation set,
 dataset, model, benchmark, or search system.
 
 Any hosting-service terms applicable to display, caching, previewing,
@@ -774,3 +780,12 @@ other right, remedy, claim, or protection.
   hosting-service, GitHub Platform Terms, and anti-circumvention
   language; and preserving the all-rights-reserved control of the
   Original Materials.
+
+* Version 2.6.0, effective 2026-06-23, added website
+  figure-generation code, selected website figure images, and selected
+  website figure videos to the Documentation Site and Original
+  Materials treatment; clarified that selected figure media produced
+  for the Documentation Site by repository figure-generation code are
+  not Application Output merely because a rendering toolchain produced
+  them; and preserved the all-rights-reserved control of the Original
+  Materials.
