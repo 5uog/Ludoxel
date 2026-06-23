@@ -1227,8 +1227,8 @@ MELEE_HURT_TILT_S = 0.18`,
         id: 'understanding-ai-combat-regen-and-defeat',
         title: 'Health, Regeneration, and Defeat Are Simulation State',
         body: [
-          'AI health can regenerate when auto-regeneration is enabled, after a delay since the last damage and at a fixed interval up to a cap. Taking damage resets the regeneration wait, and a defeated AI is removed by the manager.',
-          'All of this is resolved in the session step. The renderer shows the AI’s health and removes its tag when it is gone, but combat outcomes are decided in the simulation, not by the display.',
+          'AI health can regenerate when auto-regeneration is enabled, after a delay since the last damage and at a fixed interval up to a cap. Taking damage resets the regeneration wait, and a defeated AI is removed by the manager after it emits an AI death-log event with the actor name and cause.',
+          'All of this is resolved in the session step or in the direct player-attack path. The renderer shows the AI’s health and removes its tag when it is gone, while chat records the terminal event through the same death-log message kind used for player deaths. Combat outcomes are decided in the simulation, not by the display.',
         ],
         codeBlocks: [
           {

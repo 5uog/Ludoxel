@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.6.9',
+    tags: ['Desktop Application', 'AI NPCs', 'Chat'],
+    sections: [
+      {
+        title: 'AI Death Logs',
+        items: [
+          'Added chat death-log rows for AI actors. Direct player kills now return `AiLocalAttackResult.target_death_log`, and fall, void, or generic AI deaths produced during `AiPlayerManager.step` now travel through `SessionStepResult.ai_death_logs` into the same runtime chat history used by local-player death messages.',
+          'Removed defeated AI actors immediately on direct player kills and continued cancelling their pending navigation plans, so the actor disappears from the simulation and the chat row records the terminal event without waiting for a later manager sweep.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.6.8',
     tags: ['Desktop Application', 'Chat', 'Commands', 'Interface'],
     sections: [

@@ -327,6 +327,8 @@ class ViewportRenderLoopMixin:
       )
     for position in tuple(step_result.ai_damage_sound_positions):
       self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
+    for ai_death_log in tuple(step_result.ai_death_logs):
+      chat_controller.note_ai_death(self, ai_death_log)
 
     if step_result.death_reason is not None:
       player_name = str(self._state.resolved_player_name).strip() or "Player"

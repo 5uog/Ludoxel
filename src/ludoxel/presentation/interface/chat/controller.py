@@ -236,6 +236,32 @@ def bind_chat(viewport: "RendererViewportWidget") -> None:
   viewport._chat = ChatController(viewport)
 
 
+def _ai_death_actor_name(event) -> str:
+  return str(getattr(event, "actor_name", "")).strip() or "AI"
+
+
+def _ai_death_reason(event) -> str:
+  return str(getattr(event, "reason", "")).strip().casefold()
+
+
+def ai_death_message(event, *, killer_name: str | None = None) -> str:
+  actor_name = _ai_death_actor_name(event)
+  reason = _ai_death_reason(event)
+  if reason == "fall":
+    return f"{actor_name} died from falling."
+  if reason == "void":
+    return f"{actor_name} fell into the void."
+  if reason == "pvp":
+    resolved_killer = str(killer_name if killer_name is not None else getattr(event, "killer_name", "")).strip()
+    if resolved_killer:
+      return f"{actor_name} was killed by {resolved_killer}."
+  return f"{actor_name} died."
+
+
+def note_ai_death(viewport, event, *, killer_name: str | None = None) -> None:
+  note_death(viewport, ai_death_message(event, killer_name=killer_name))
+
+
 def _controller(viewport) -> ChatController | None:
   return getattr(viewport, "_chat", None)
 

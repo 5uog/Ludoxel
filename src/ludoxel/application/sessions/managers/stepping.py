@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ludoxel.simulation.actors.ai_players.learning.dataset import RECORD_PLAYER_MOVEMENT
+from ludoxel.simulation.actors.ai_players.runtime import AiDeathLogEvent
 from ludoxel.simulation.actors.player.damage import apply_void_damage
 from ludoxel.simulation.actors.player.kinematics import PlayerStepInput, advance_runtime_player, fall_damage_amount
 from ludoxel.simulation.rules.gravity.system import GravityBrokenBlock
@@ -53,6 +54,7 @@ class SessionStepResult:
   play_damage_sound: bool = False
   play_landing_sound: bool = False
   ai_damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
+  ai_death_logs: tuple[AiDeathLogEvent, ...] = ()
 
 
 def step_session(
@@ -143,4 +145,5 @@ def step_session(
     play_damage_sound=bool(play_damage_sound),
     play_landing_sound=bool(play_landing_sound),
     ai_damage_sound_positions=tuple(ai_report.damage_sound_positions),
+    ai_death_logs=tuple(ai_report.ai_death_logs),
   )

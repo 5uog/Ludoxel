@@ -92,17 +92,27 @@ class AiRoutePathSnapshot:
 
 
 @dataclass(frozen=True)
+class AiDeathLogEvent:
+  actor_id: str
+  actor_name: str
+  reason: str
+  killer_name: str | None = None
+
+
+@dataclass(frozen=True)
 class AiStepReport:
   player_damage_taken: float = 0.0
   player_death_reason: str | None = None
   player_killer_name: str | None = None
   damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
+  ai_death_logs: tuple[AiDeathLogEvent, ...] = ()
 
 
 @dataclass(frozen=True)
 class AiLocalAttackResult:
   success: bool = False
   target_position: tuple[float, float, float] | None = None
+  target_death_log: AiDeathLogEvent | None = None
 
 
 @dataclass(frozen=True)

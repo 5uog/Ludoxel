@@ -84,6 +84,7 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_STUCK_JUMP_RETRIES,
   _AI_STUCK_RECOVERY_SUPPORT_S,
   AiActorObservation,
+  AiDeathLogEvent,
   AiLocalAttackResult,
   AiRoutePathSnapshot,
   AiStepReport,
@@ -733,6 +734,11 @@ class AiPlayerManager:
   @staticmethod
   def _damage_sound_position(player: PlayerEntity) -> tuple[float, float, float]:
     return (float(player.position.x), float(player.position.y) + float(player.eye_height) * 0.5, float(player.position.z))
+
+  @staticmethod
+  def _death_log_event(actor: _AiPlayerRuntime, *, reason: str, killer_name: str | None = None) -> AiDeathLogEvent:
+    actor_name = str(actor.name).strip() or "AI"
+    return AiDeathLogEvent(actor_id=str(actor.actor_id), actor_name=str(actor_name), reason=str(reason), killer_name=None if killer_name is None else str(killer_name))
 
   @staticmethod
   def _note_ai_damage(actor: _AiPlayerRuntime) -> None:
@@ -1767,7 +1773,7 @@ class AiPlayerManager:
 
   def player_attack_from_local(self, *, attacker: PlayerEntity, origin: Vec3, direction: Vec3, reach: float, world_hit: BlockPick | None, sprinting: bool) -> AiLocalAttackResult:
     target_hit = pick_player_target(
-      origin=origin, direction=direction, reach=float(reach), block_hit=world_hit, candidates=tuple((str(actor.actor_id), actor.player) for actor in self._actors.values())
+      origin=origin, direction=direction, reach=float(reach), block_hit=world_hit, candidates=tuple((str(actor.actor_id), actor.player) for actor in self._actors.values() if actor.player.alive())
     )
     if target_hit is None:
       return AiLocalAttackResult()
@@ -1778,10 +1784,16 @@ class AiPlayerManager:
     if float(damage_taken) <= 1e-6:
       return AiLocalAttackResult()
     self._note_ai_damage(actor)
+    target_position = self._damage_sound_position(actor.player)
+    death_log = self._death_log_event(actor, reason="pvp") if not actor.player.alive() else None
     actor.attack_cooldown_s = max(float(actor.attack_cooldown_s), float(MELEE_DAMAGE_COOLDOWN_S) * 0.5)
-    if bool(actor.nav_plan_pending):
+    if death_log is not None:
+      removed_actor = self._actors.pop(str(actor.actor_id), None)
+      if removed_actor is not None and bool(removed_actor.nav_plan_pending):
+        self._cancel_pending_nav_plan(removed_actor)
+    elif bool(actor.nav_plan_pending):
       self._cancel_pending_nav_plan(actor)
-    return AiLocalAttackResult(success=True, target_position=self._damage_sound_position(actor.player))
+    return AiLocalAttackResult(success=True, target_position=target_position, target_death_log=death_log)
 
   def _fence_gate_operable(self, support_cell: tuple[int, int, int]) -> bool:
     x, y, z = (int(support_cell[0]), int(support_cell[1]), int(support_cell[2]))
@@ -2075,9 +2087,13 @@ class AiPlayerManager:
     player_death_reason: str | None = None
     player_killer_name: str | None = None
     damage_sound_positions: list[tuple[float, float, float]] = []
+    ai_death_logs: list[AiDeathLogEvent] = []
     removed_actor_ids: list[str] = []
     paused_ids = {str(actor_id) for actor_id in paused_actor_ids}
     for actor in self._actors.values():
+      if not actor.player.alive():
+        removed_actor_ids.append(str(actor.actor_id))
+        continue
       if str(actor.actor_id) in paused_ids:
         actor.player.velocity = Vec3(0.0, 0.0, 0.0)
         actor.motion.walk_phase_rad = 0.0
@@ -2123,9 +2139,18 @@ class AiPlayerManager:
       if float(fall_damage) > 1e-6 or float(void_damage) > 1e-6:
         self._note_ai_damage(actor)
         damage_sound_positions.append(self._damage_sound_position(actor.player))
-      self._advance_ai_regeneration(actor, dt=float(dt))
+      actor_died_this_step = not bool(actor.player.alive())
+      if bool(actor_died_this_step):
+        if float(void_damage) > 1e-6:
+          ai_death_logs.append(self._death_log_event(actor, reason="void"))
+        elif float(fall_damage) > 1e-6:
+          ai_death_logs.append(self._death_log_event(actor, reason="fall"))
+        else:
+          ai_death_logs.append(self._death_log_event(actor, reason="damage"))
+      else:
+        self._advance_ai_regeneration(actor, dt=float(dt))
       actor_damage_dealt = 0.0
-      if mode != AI_MODE_IDLE:
+      if (not bool(actor_died_this_step)) and mode != AI_MODE_IDLE:
         if learn_action_id is not None and learn_action_source == ACTION_SOURCE_LEARNED_POLICY:
           learn_world_action = self._execute_policy_action(actor, learn_action_id, support_before=learn_support_before)
         self._maybe_interact_or_place(actor, target_player=target_player)
@@ -2191,7 +2216,11 @@ class AiPlayerManager:
       if actor is not None:
         self._cancel_pending_nav_plan(actor)
     return AiStepReport(
-      player_damage_taken=float(total_player_damage), player_death_reason=player_death_reason, player_killer_name=player_killer_name, damage_sound_positions=tuple(damage_sound_positions)
+      player_damage_taken=float(total_player_damage),
+      player_death_reason=player_death_reason,
+      player_killer_name=player_killer_name,
+      damage_sound_positions=tuple(damage_sound_positions),
+      ai_death_logs=tuple(ai_death_logs),
     )
 
   def actor_observations(self) -> tuple[AiActorObservation, ...]:
