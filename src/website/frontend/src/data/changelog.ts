@@ -15,6 +15,18 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.0',
+    tags: ['Desktop Application', 'Inventory'],
+    sections: [
+      {
+        title: 'Inventory Preview Clearance',
+        items: [
+          'Increased the visible gap below the player preview by adding one storage gutter to the existing top-area clearance. `_TOP_AREA_TO_UPPER_GAP` now derives from `_TOP_AREA_CLEARANCE + _SLOT_GAP`, so `_TOP_AREA_HEIGHT` shortens the preview and crafting row while the 9x4 storage coordinates remain fixed.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.0 Beta 3',
     tags: ['Desktop Application', 'Inventory', 'Rendering'],
     sections: [
