@@ -914,7 +914,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
     group: 'Backend Implementations',
     title: 'Understanding WGPU Rendering',
     description:
-      'Documents the WGPU backend end to end: device, surface, and resource construction, the clip-space conversion, the frame-uniform layout, the CPU per-face instance path and wireframe emulation, the shared fog, shadow, light-space, and selection contracts, the full pass order, and the confirmed differences from OpenGL.',
+      'Documents the WGPU backend end to end: device, surface, and resource construction, the clip-space conversion, the frame-uniform layout, the CPU per-face instance path and wireframe emulation, the shared fog, shadow, light-space, and selection contracts, the full pass order, the offscreen player preview, and the confirmed differences from OpenGL.',
     sections: [
       {
         id: 'wgpu-rendering-device',
@@ -972,6 +972,34 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
               'Draw the Othello board, pieces, and highlight overlay; then clouds; then the selection lines.',
               'Begin a separate first-person pass with depth cleared and draw the special item, held block, or arm.',
             ],
+          },
+        ],
+      },
+      {
+        id: 'wgpu-rendering-preview',
+        title: 'Offscreen Player Preview',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`render_player_preview_frame` draws a single third-person player into an offscreen color texture for the pause, inventory, and AI-settings surfaces. It builds the pose with `build_player_model_pose`, allocates a color and depth texture, and opens one render pass that first draws `pose.skin_face_rows` with the skin bind group and then draws the third-person held block from `_third_person_held_block_face_rows(pose.held_block_pose)` with the atlas bind group, before reading the texture back as a `QImage`. The held block uses the same per-face instance path and `held_block_model_boxes_for_kind` geometry as the main third-person model, so the block held in the selected hotbar slot appears in the preview and changes with the slot. This matches the OpenGL preview, whose `draw_world` path already emits the held block alongside the skin.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py',
+            code: `held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
+held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(
+  label="ludoxel-preview-held-frame", view_proj=view_proj, tint_value=0.0, sel_mode=0, sel_block=None
+)
+self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-preview-held-temp", camera_bind_groups=held_uniform_bind_groups)`,
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'The preview clears its own color and depth and composes the skin and held block from the shared pose builder and held-block geometry. Equivalence with the OpenGL preview is claimed only for that shared pose and geometry, not for the offscreen framebuffer construction or pixel readback, which each backend implements separately.',
+            },
           },
         ],
       },
@@ -2170,7 +2198,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.0b2"`,
+            code: `__version__ = "3.7.0b3"`,
           },
           {
             kind: 'note',

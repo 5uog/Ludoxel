@@ -1318,12 +1318,13 @@ class WgpuRendererBackend:
     )
     color_view = color_texture.create_view(label="ludoxel-preview-color-view")
     depth_view = depth_texture.create_view(label="ludoxel-preview-depth-view")
-    uniform_buffers: tuple[object, ...] = ()
+    uniform_buffers: list[object] = []
     temp_uploads: list[WgpuFaceInstances] = []
     try:
-      uniform_buffers, uniform_bind_groups = self._create_frame_uniform_bind_groups(
+      skin_uniform_buffers, skin_uniform_bind_groups = self._create_frame_uniform_bind_groups(
         label="ludoxel-preview-frame", view_proj=view_proj, tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), sel_mode=0, sel_block=None
       )
+      uniform_buffers.extend(skin_uniform_buffers)
       encoder = self._res.device.create_command_encoder(label="ludoxel-preview-encoder")
       render_pass = encoder.begin_render_pass(
         label="ludoxel-preview-pass",
@@ -1333,9 +1334,16 @@ class WgpuRendererBackend:
       render_pass.set_pipeline(self._res.textured_face_pipeline)
       render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
       _draw_calls, _instances, uploads = self._draw_transform_buckets(
-        render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label="ludoxel-preview-player-temp", camera_bind_groups=uniform_bind_groups
+        render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label="ludoxel-preview-player-temp", camera_bind_groups=skin_uniform_bind_groups
       )
       temp_uploads.extend(uploads)
+      held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
+      held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-preview-held-frame", view_proj=view_proj, tint_value=0.0, sel_mode=0, sel_block=None)
+      uniform_buffers.extend(held_uniform_buffers)
+      _held_draw_calls, _held_instances, held_uploads = self._draw_transform_buckets(
+        render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-preview-held-temp", camera_bind_groups=held_uniform_bind_groups
+      )
+      temp_uploads.extend(held_uploads)
       render_pass.end()
       self._res.device.queue.submit([encoder.finish()])
       data = self._res.device.queue.read_texture({"texture": color_texture}, {"bytes_per_row": int(target_width) * 4, "rows_per_image": int(target_height)}, (int(target_width), int(target_height), 1))

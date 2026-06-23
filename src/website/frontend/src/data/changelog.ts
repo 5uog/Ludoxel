@@ -15,6 +15,39 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.0 Beta 3',
+    tags: ['Desktop Application', 'Inventory', 'Rendering'],
+    sections: [
+      {
+        title: 'Inventory Layout Alignment',
+        items: [
+          '`_build_top_area` centers a storage-width row above the 9x4 storage, so the black-background player preview shares the storage left edge, spans the first three storage columns and the two gaps between them, and opens one panel margin below the box top, the same gap the hotbar row leaves above the box bottom.',
+          'The 2x2 crafting input, the arrow, and the read-only output sit centered between the preview box right edge and the storage right edge, and the 30x30 `closeBtn` moved to the top-right of that row with its right edge on the storage right edge. The crafting cluster is the only element that drops below the close button, so the preview and the 9x4 storage keep their positions.',
+          'Removed the full-width close-button header. The inventory preview widget now fills its black box at the box width and height, and the third-person model stays centered in it at that larger size.',
+        ],
+      },
+      {
+        title: 'All Items Catalog and Survival Startup',
+        items: [
+          'Set the Creative All Items box to seven columns with a vertical-only scroll. Its fixed width holds the seven catalog columns beside the vertical scrollbar, and `_apply_filter` lays the entries out across seven columns with no horizontal scroll.',
+          'Stopped a stray AI Spawning Egg slot from drawing at the window top-left when Survival opened the inventory. Catalog buttons are now parented to the All Items scroll host, and `_apply_filter` hides every catalog button before placing the matches, so the Survival inventory and the filtered-out entries leave no button at the overlay origin.',
+        ],
+      },
+      {
+        title: 'Inventory Preview Pointer Tracking',
+        items: [
+          'The inventory preview follows the pointer. The overlay event filter forwards mouse motion to `move_pointer`, and the inventory preview widget enables hover body tracking, so the model turns its head toward the cursor and adjusts its body yaw by a smaller amount; the composed preview state reads those angles through `preview_angles()`.',
+        ],
+      },
+      {
+        title: 'macOS WGPU Inventory Preview Held Block',
+        items: [
+          'Added the third-person held block to the WGPU offscreen preview pass. `render_player_preview_frame` now draws `_third_person_held_block_face_rows(pose.held_block_pose)` with the atlas bind group after the skin, so the block in the selected hotbar slot appears and updates in the macOS inventory preview as it already did on the OpenGL preview path.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.0 Beta 2',
     tags: ['Desktop Application', 'Inventory', 'My World'],
     sections: [

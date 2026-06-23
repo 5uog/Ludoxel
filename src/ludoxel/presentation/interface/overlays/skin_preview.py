@@ -11,6 +11,7 @@ from ludoxel.foundations.mathematics.scalars.numeric import clampf
 _HEAD_YAW_LIMIT_DEG = 55.0
 _HEAD_PITCH_LIMIT_DEG = 35.0
 _DRAG_YAW_SCALE_DEG_PER_PX = 0.9
+_HOVER_BODY_YAW_LIMIT_DEG = 22.0
 
 
 class PlayerSkinPreviewWidget(QWidget):
@@ -23,6 +24,7 @@ class PlayerSkinPreviewWidget(QWidget):
     self._head_yaw_deg = 0.0
     self._head_pitch_deg = 0.0
     self._dragging = False
+    self._hover_body_tracking = False
     self._drag_last_x = 0.0
     self._name_tag_text = ""
     self._name_tag_visible = False
@@ -104,6 +106,9 @@ class PlayerSkinPreviewWidget(QWidget):
     self._head_pitch_deg = 0.0
     self._emit_view_changed()
 
+  def set_hover_body_tracking(self, enabled: bool) -> None:
+    self._hover_body_tracking = bool(enabled)
+
   def resizeEvent(self, event) -> None:
     self._layout_name_tag()
     self.view_changed.emit()
@@ -126,12 +131,26 @@ class PlayerSkinPreviewWidget(QWidget):
       float(clampf(ny * float(_HEAD_PITCH_LIMIT_DEG), -float(_HEAD_PITCH_LIMIT_DEG), float(_HEAD_PITCH_LIMIT_DEG))),
     )
 
+  def _body_target_from_pointer(self, *, x: float, area_width: int) -> float:
+    if int(area_width) <= 1:
+      return float(self._body_yaw_deg)
+    nx = ((float(x) / max(1.0, float(area_width))) - 0.5) * 2.0
+    return float(clampf(nx * float(_HOVER_BODY_YAW_LIMIT_DEG), -float(_HOVER_BODY_YAW_LIMIT_DEG), float(_HOVER_BODY_YAW_LIMIT_DEG)))
+
   def _update_head_tracking(self, *, x: float, y: float, area_width: int, area_height: int) -> None:
     target_head_yaw_deg, target_head_pitch_deg = self._head_target_from_pointer(x=float(x), y=float(y), area_width=int(area_width), area_height=int(area_height))
-    if abs(float(target_head_yaw_deg) - float(self._head_yaw_deg)) <= 1e-6 and abs(float(target_head_pitch_deg) - float(self._head_pitch_deg)) <= 1e-6:
+    target_body_yaw_deg = float(self._body_yaw_deg)
+    if bool(self._hover_body_tracking):
+      target_body_yaw_deg = self._body_target_from_pointer(x=float(x), area_width=int(area_width))
+    if (
+      abs(float(target_head_yaw_deg) - float(self._head_yaw_deg)) <= 1e-6
+      and abs(float(target_head_pitch_deg) - float(self._head_pitch_deg)) <= 1e-6
+      and abs(float(target_body_yaw_deg) - float(self._body_yaw_deg)) <= 1e-6
+    ):
       return
     self._head_yaw_deg = float(target_head_yaw_deg)
     self._head_pitch_deg = float(target_head_pitch_deg)
+    self._body_yaw_deg = float(target_body_yaw_deg)
     self._emit_view_changed()
 
   def _emit_view_changed(self) -> None:

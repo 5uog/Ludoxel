@@ -36,10 +36,18 @@ REGION_CATALOG = "catalog"
 
 _SLOT_SIZE = 46
 _SLOT_ICON_SIZE = 36
-_CATALOG_COLUMNS = 9
-_CENTER_PANEL_SIDE = HOTBAR_SIZE * _SLOT_SIZE + (HOTBAR_SIZE - 1) * 6 + 58
-_INVENTORY_PREVIEW_WIDTH = 116
-_INVENTORY_PREVIEW_HEIGHT = 198
+_SLOT_GAP = 6
+_CATALOG_COLUMNS = 7
+_GRID_WIDTH = HOTBAR_SIZE * _SLOT_SIZE + (HOTBAR_SIZE - 1) * _SLOT_GAP
+_CENTER_PANEL_SIDE = _GRID_WIDTH + 58
+_PANEL_VERTICAL_MARGIN = 18
+_TOP_AREA_TO_UPPER_GAP = 10
+_UPPER_TO_HOTBAR_GAP = 8
+_UPPER_ROW_COUNT = UPPER_INVENTORY_SIZE // UPPER_INVENTORY_COLUMNS
+_UPPER_GRID_HEIGHT = _UPPER_ROW_COUNT * _SLOT_SIZE + (_UPPER_ROW_COUNT - 1) * _SLOT_GAP
+_TOP_AREA_HEIGHT = _CENTER_PANEL_SIDE - 2 * _PANEL_VERTICAL_MARGIN - _TOP_AREA_TO_UPPER_GAP - _UPPER_GRID_HEIGHT - _UPPER_TO_HOTBAR_GAP - _SLOT_SIZE
+_PREVIEW_BOX_WIDTH = 3 * _SLOT_SIZE + 2 * _SLOT_GAP
+_PREVIEW_BOX_HEIGHT = _TOP_AREA_HEIGHT
 
 
 class _StorageSlotButton(DraggableItemButton):
@@ -194,13 +202,14 @@ class _InventoryPreviewWidget(PlayerSkinPreviewWidget):
     super().__init__(parent)
     self.setMinimumSize(0, 0)
     self.setMaximumSize(16777215, 16777215)
-    self.setFixedSize(QSize(_INVENTORY_PREVIEW_WIDTH, _INVENTORY_PREVIEW_HEIGHT))
+    self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+    self.set_hover_body_tracking(True)
 
   def sizeHint(self) -> QSize:
-    return QSize(_INVENTORY_PREVIEW_WIDTH, _INVENTORY_PREVIEW_HEIGHT)
+    return QSize(_PREVIEW_BOX_WIDTH, _PREVIEW_BOX_HEIGHT)
 
   def minimumSizeHint(self) -> QSize:
-    return QSize(_INVENTORY_PREVIEW_WIDTH, _INVENTORY_PREVIEW_HEIGHT)
+    return QSize(0, 0)
 
 
 class InventoryOverlay(QWidget):
@@ -283,7 +292,7 @@ class InventoryOverlay(QWidget):
     panel = QFrame(parent)
     panel.setObjectName("allItemsPanel")
     panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-    panel.setFixedWidth(_CATALOG_COLUMNS * _SLOT_SIZE + (_CATALOG_COLUMNS - 1) * 6 + 36 + 18)
+    panel.setFixedWidth(_CATALOG_COLUMNS * _SLOT_SIZE + (_CATALOG_COLUMNS - 1) * _SLOT_GAP + 36 + 18)
     panel.setFixedHeight(_CENTER_PANEL_SIDE)
 
     layout = QVBoxLayout(panel)
@@ -301,10 +310,11 @@ class InventoryOverlay(QWidget):
     self._catalog_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
     scroll_host = QWidget(self._catalog_scroll)
+    self._catalog_host = scroll_host
     self._grid_layout = QGridLayout(scroll_host)
     self._grid_layout.setContentsMargins(0, 0, 0, 0)
-    self._grid_layout.setHorizontalSpacing(6)
-    self._grid_layout.setVerticalSpacing(6)
+    self._grid_layout.setHorizontalSpacing(_SLOT_GAP)
+    self._grid_layout.setVerticalSpacing(_SLOT_GAP)
     self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
     self._catalog_scroll.setWidget(scroll_host)
@@ -318,40 +328,17 @@ class InventoryOverlay(QWidget):
     panel.setFixedSize(QSize(_CENTER_PANEL_SIDE, _CENTER_PANEL_SIDE))
 
     layout = QVBoxLayout(panel)
-    layout.setContentsMargins(18, 14, 18, 18)
-    layout.setSpacing(10)
+    layout.setContentsMargins(_PANEL_VERTICAL_MARGIN, _PANEL_VERTICAL_MARGIN, _PANEL_VERTICAL_MARGIN, _PANEL_VERTICAL_MARGIN)
+    layout.setSpacing(0)
 
-    header = QWidget(panel)
-    header.setObjectName("inventoryHeader")
-    header.setFixedHeight(30)
-    header_layout = QHBoxLayout(header)
-    header_layout.setContentsMargins(0, 0, 0, 0)
-    header_layout.addStretch(1)
-    self._close_button = QPushButton(header)
-    self._close_button.setObjectName("closeBtn")
-    self._close_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-    self._close_button.setCursor(Qt.CursorShape.PointingHandCursor)
-    self._close_button.setFixedSize(QSize(30, 30))
-    self._close_button.setIcon(QIcon(str(self._resource_root / "assets" / "ui" / "inventory" / "close.svg")))
-    self._close_button.setIconSize(QSize(16, 16))
-    self._close_button.setToolTip("Close (E or Esc)")
-    self._close_button.clicked.connect(self._close)
-    header_layout.addWidget(self._close_button)
-    layout.addWidget(header)
-
-    top_row = QHBoxLayout()
-    top_row.setContentsMargins(0, 0, 0, 0)
-    top_row.setSpacing(16)
-    top_row.addWidget(self._build_preview_box(panel), alignment=Qt.AlignmentFlag.AlignTop)
-    top_row.addStretch(1)
-    top_row.addWidget(self._build_crafting_cluster(panel), alignment=Qt.AlignmentFlag.AlignTop)
-    layout.addLayout(top_row, stretch=1)
+    layout.addWidget(self._build_top_area(panel), alignment=Qt.AlignmentFlag.AlignHCenter)
+    layout.addSpacing(_TOP_AREA_TO_UPPER_GAP)
 
     upper = QWidget(panel)
     upper_grid = QGridLayout(upper)
     upper_grid.setContentsMargins(0, 0, 0, 0)
-    upper_grid.setHorizontalSpacing(6)
-    upper_grid.setVerticalSpacing(6)
+    upper_grid.setHorizontalSpacing(_SLOT_GAP)
+    upper_grid.setVerticalSpacing(_SLOT_GAP)
     for slot_index in range(UPPER_INVENTORY_SIZE):
       button = _StorageSlotButton(REGION_UPPER, slot_index, droppable=True, draggable_getter=self._can_begin_drag, parent=upper)
       self._wire_storage_slot(button)
@@ -359,12 +346,12 @@ class InventoryOverlay(QWidget):
       upper_grid.addWidget(button, int(slot_index // UPPER_INVENTORY_COLUMNS), int(slot_index % UPPER_INVENTORY_COLUMNS))
     layout.addWidget(upper, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-    layout.addSpacing(8)
+    layout.addSpacing(_UPPER_TO_HOTBAR_GAP)
 
     hotbar = QWidget(panel)
     hotbar_grid = QGridLayout(hotbar)
     hotbar_grid.setContentsMargins(0, 0, 0, 0)
-    hotbar_grid.setHorizontalSpacing(6)
+    hotbar_grid.setHorizontalSpacing(_SLOT_GAP)
     hotbar_grid.setVerticalSpacing(0)
     for slot_index in range(HOTBAR_SIZE):
       button = _StorageSlotButton(REGION_HOTBAR, slot_index, droppable=True, draggable_getter=self._can_begin_drag, parent=hotbar)
@@ -373,6 +360,45 @@ class InventoryOverlay(QWidget):
       hotbar_grid.addWidget(button, 0, int(slot_index))
     layout.addWidget(hotbar, alignment=Qt.AlignmentFlag.AlignHCenter)
     return panel
+
+  def _build_top_area(self, panel: QWidget) -> QWidget:
+    top_area = QWidget(panel)
+    top_area.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    top_area.setFixedSize(QSize(_GRID_WIDTH, _TOP_AREA_HEIGHT))
+
+    row = QHBoxLayout(top_area)
+    row.setContentsMargins(0, 0, 0, 0)
+    row.setSpacing(0)
+    row.addWidget(self._build_preview_box(top_area))
+
+    right_side = QWidget(top_area)
+    right_side.setFixedWidth(_GRID_WIDTH - _PREVIEW_BOX_WIDTH)
+    row.addWidget(right_side)
+
+    right_layout = QVBoxLayout(right_side)
+    right_layout.setContentsMargins(0, 0, 0, 0)
+    right_layout.setSpacing(0)
+
+    close_row = QHBoxLayout()
+    close_row.setContentsMargins(0, 0, 0, 0)
+    close_row.setSpacing(0)
+    close_row.addStretch(1)
+    self._close_button = QPushButton(right_side)
+    self._close_button.setObjectName("closeBtn")
+    self._close_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+    self._close_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    self._close_button.setFixedSize(QSize(30, 30))
+    self._close_button.setIcon(QIcon(str(self._resource_root / "assets" / "ui" / "inventory" / "close.svg")))
+    self._close_button.setIconSize(QSize(16, 16))
+    self._close_button.setToolTip("Close (E or Esc)")
+    self._close_button.clicked.connect(self._close)
+    close_row.addWidget(self._close_button)
+    right_layout.addLayout(close_row)
+
+    right_layout.addStretch(1)
+    right_layout.addWidget(self._build_crafting_cluster(right_side), alignment=Qt.AlignmentFlag.AlignHCenter)
+    right_layout.addStretch(1)
+    return top_area
 
   def _build_crafting_cluster(self, parent: QWidget) -> QWidget:
     cluster = QWidget(parent)
@@ -407,11 +433,12 @@ class InventoryOverlay(QWidget):
     box.setObjectName("inventoryPreviewBox")
     box.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
     box.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    box.setFixedSize(QSize(_PREVIEW_BOX_WIDTH, _PREVIEW_BOX_HEIGHT))
     box_layout = QVBoxLayout(box)
     box_layout.setContentsMargins(4, 4, 4, 4)
     box_layout.setSpacing(0)
     self._preview = _InventoryPreviewWidget(box)
-    box_layout.addWidget(self._preview, alignment=Qt.AlignmentFlag.AlignCenter)
+    box_layout.addWidget(self._preview)
     return box
 
   def _wire_storage_slot(self, button: _StorageSlotButton) -> None:
@@ -434,7 +461,7 @@ class InventoryOverlay(QWidget):
     for block_def in self._reg.all_blocks():
       item_id = str(block_def.block_id)
       display_name = str(block_def.display_name)
-      button = _CatalogItemButton(item_id, display_name, self)
+      button = _CatalogItemButton(item_id, display_name, self._catalog_host)
       self._wire_catalog_button(button)
       button.set_icon_pixmap(self._photos.pixmap_for_item(item_id))
       self._catalog_buttons.append(button)
@@ -443,7 +470,7 @@ class InventoryOverlay(QWidget):
     for descriptor in iter_catalog_special_items():
       item_id = str(descriptor.item_id)
       display_name = str(descriptor.display_name)
-      button = _CatalogItemButton(item_id, display_name, self)
+      button = _CatalogItemButton(item_id, display_name, self._catalog_host)
       self._wire_catalog_button(button)
       button.set_icon_pixmap(self._photos.pixmap_for_item(item_id))
       self._catalog_buttons.append(button)
@@ -780,10 +807,9 @@ class InventoryOverlay(QWidget):
 
   def _apply_filter(self) -> None:
     while self._grid_layout.count() > 0:
-      item = self._grid_layout.takeAt(0)
-      widget = item.widget()
-      if widget is not None:
-        widget.setVisible(False)
+      self._grid_layout.takeAt(0)
+    for _item_id, _search_key, button in self._catalog_entries:
+      button.setVisible(False)
 
     if not bool(self._creative_mode):
       return
@@ -869,10 +895,12 @@ class InventoryOverlay(QWidget):
     self._move_carry_cursor(local)
 
   def eventFilter(self, watched, event) -> bool:
-    if event.type() == QEvent.Type.MouseMove and self._is_carrying():
+    if event.type() == QEvent.Type.MouseMove:
       pos = self._map_event_position(watched, event)
       if pos is not None:
-        self._move_carry_cursor(pos)
+        if self._is_carrying():
+          self._move_carry_cursor(pos)
+        self._preview.move_pointer(x=float(pos.x()), y=float(pos.y()), area_width=int(max(1, self.width())), area_height=int(max(1, self.height())))
     return super().eventFilter(watched, event)
 
   def _map_event_position(self, watched, event):
