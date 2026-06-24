@@ -15,6 +15,19 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.2',
+    tags: ['Desktop Application', 'Audio', 'Inventory'],
+    sections: [
+      {
+        title: 'Inventory Ambient Playback Continuity',
+        items: [
+          'Opening the inventory no longer disables the My World ambient source. `_ambient_audio_active` now treats the inventory as an input-neutral storage surface rather than an ambient reset boundary, so the existing ambient key, source rotation, and looping effect stay owned by the active `AudioManager` while storage is open.',
+          'Pause, death, loading, and the Othello settings surface remain ambient stop boundaries. Chat, inventory, the ordinary settings surface, AI settings, and hidden-HUD states leave the ambient loop controlled by the current play-space key and the saved ambient-volume preferences.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.2 Beta 1',
     tags: ['Desktop Application', 'Audio'],
     sections: [

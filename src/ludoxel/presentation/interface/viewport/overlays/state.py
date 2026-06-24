@@ -274,9 +274,7 @@ class ViewportOverlayMixin:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
   def _ambient_audio_active(self: "RendererViewportWidget") -> bool:
-    return bool(
-      (not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open())
-    )
+    return bool((not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.othello_settings_open()))
 
   def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
     show_gameplay_hud = bool(self._gameplay_hud_active())

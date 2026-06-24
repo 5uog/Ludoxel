@@ -696,7 +696,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
     group: 'Preferences and Input Boundaries',
     title: 'Understanding Overlay Input Blocking',
     description:
-      'Documents the overlay state machine and the input gate: every overlay transition and its capture handling, the resume path, the transient-modal counter, the loop predicates that freeze stepping, the precise inventory exception, and the visibility and audio predicates that read the same flags.',
+      'Documents the overlay state machine and the input gate: every overlay transition and its capture handling, the resume path, the transient-modal counter, the loop predicates that freeze stepping, the precise inventory exception, and the visibility and ambient-audio predicates that deliberately diverge.',
     sections: [
       {
         id: 'overlay-input-blocking-state-machine',
@@ -704,7 +704,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`ViewportOverlays` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` owns the blocking flags and their transitions. It holds independent flags for paused, dead, inventory-open, settings-open, and Othello-settings-open, with the two settings flags remembering whether to return to the pause menu on close. `set_paused`, `set_dead`, `set_settings_open`, `set_othello_settings_open`, and `set_inventory_open` enforce mutual exclusion: opening the pause menu clears the settings flags and closes the inventory, the death overlay clears pause and settings, and the inventory cannot open while a modal is already up. `any_modal_open` reports whether any of these except a plain inventory is active.',
+            text: '`ViewportOverlays` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` owns the blocking flags and their transitions. It holds independent flags for paused, dead, inventory-open, settings-open, and Othello-settings-open, with the two settings flags remembering whether to return to the pause menu on close. `set_paused`, `set_dead`, `set_settings_open`, `set_othello_settings_open`, and `set_inventory_open` enforce mutual exclusion: opening the pause menu clears the settings flags and closes the inventory, the death overlay clears pause and settings, and the inventory cannot open while a modal is already up. `any_modal_open` reports every overlay flag in that state machine, including a plain inventory.',
           },
           {
             kind: 'paragraph',
@@ -770,7 +770,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The same predicates drive drawing and audio. `_gameplay_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay is active, and `_set_paused_overlay` and its siblings pause cloud motion. `_ambient_audio_active` follows a related but distinct predicate that keeps ambient audio running while only the HUD is hidden, so hiding the HUD alone does not stop the simulation or the ambient source. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
+            text: '`_gameplay_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay, chat, or HUD-hidden state removes the gameplay surface. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
           },
         ],
       },
@@ -1678,7 +1678,7 @@ self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0
         content: [
           {
             kind: 'paragraph',
-            text: '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` returns the My World key when ambient audio is enabled and the current play space is My World; every other state resolves to no ambient key. The viewport supplies the enabled flag and current space through `AudioManager.set_ambient_active`, using the same gameplay-audible predicate that governs simulation. Othello and menu states therefore have no ambient loop. Effective volume is the product of master and ambient-category gain; an inaudible gain or absent key stops the effect and clears its source.',
+            text: '`ambient_desired_key` in `src/ludoxel/presentation/audio/playback/ambient.py` returns the My World key when ambient audio is enabled and the current play space is My World; every other play-space key resolves to no ambient key. The viewport supplies the enabled flag and current space through `AudioManager.set_ambient_active`. `_ambient_audio_active` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` withholds that flag during loading, death, pause, and Othello settings, but it does not treat the inventory or chat as an ambient reset boundary. Effective volume is the product of master and ambient-category gain; an inaudible gain or absent key stops the effect and clears its source.',
           },
         ],
       },
@@ -2216,7 +2216,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.2-beta.1"`,
+            code: `__version__ = "3.7.2"`,
           },
           {
             kind: 'note',
