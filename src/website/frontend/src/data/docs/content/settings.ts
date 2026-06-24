@@ -293,19 +293,14 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
           {
             kind: 'media',
             media: {
-              kind: 'video',
-              sources: [
-                {
-                  src: '/figures/videos/debug-hud-axis-crosshair-camera.mp4',
-                  type: 'video/mp4',
-                },
-              ],
+              kind: 'youtube',
+              videoId: 'BSHIH24Qr8I',
+              title: 'Debug HUD axis crosshair camera demonstration',
               controls: false,
               loop: true,
               autoPlay: true,
               muted: true,
               playsInline: true,
-              poster: '/figures/photos/debug-hud-axis-crosshair-projection.png',
             },
           },
           {

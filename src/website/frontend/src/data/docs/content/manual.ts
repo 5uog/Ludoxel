@@ -1221,13 +1221,9 @@ self._set_slot(region, hovered_index, hotbar_item)`,
         title: 'Looking Uses Relative Mouse Deltas',
         mediaBlocks: [
           {
-            kind: 'video',
-            sources: [
-              {
-                src: '/assets/videos/looking-around-relative-delta.mp4',
-                type: 'video/mp4',
-              },
-            ],
+            kind: 'youtube',
+            videoId: 'kqt7bfctwzc',
+            title: 'Looking around relative delta demonstration',
             controls: false,
             loop: true,
             autoPlay: true,
