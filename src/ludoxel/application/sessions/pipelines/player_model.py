@@ -7,7 +7,7 @@ import math
 from ludoxel.application.sessions.pipelines.render_snapshot import PlayerModelSnapshotDTO
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.actors.player.entity import PlayerEntity
-from ludoxel.simulation.actors.player.kinematics import PLAYER_HEAD_BODY_YAW_MAX_DEG, PLAYER_WALK_MAX_SWING_SCALE, PlayerMotionState
+from ludoxel.simulation.actors.player.kinematics import PLAYER_WALK_MAX_SWING_SCALE, PlayerMotionState
 
 # First-person view bob is reduced while moving backward so a reverse step does not
 # read as a full forward stride.
