@@ -744,9 +744,7 @@ class AiPlayerManager:
       return
     if outcome.action is None or outcome.target_block_state is None or outcome.target_position is None:
       return
-    self._block_sound_events.append(
-      AiBlockSoundEvent(action=str(outcome.action), block_state=str(outcome.target_block_state), position=tuple(int(value) for value in outcome.target_position))
-    )
+    self._block_sound_events.append(AiBlockSoundEvent(action=str(outcome.action), block_state=str(outcome.target_block_state), position=tuple(int(value) for value in outcome.target_position)))
 
   @staticmethod
   def _death_log_event(actor: _AiPlayerRuntime, *, reason: str, killer_name: str | None = None) -> AiDeathLogEvent:

@@ -237,9 +237,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   left_arm_rot_x = clampf(float(left_arm_rot_x), float(arm_rotation_limit_min_rad), float(arm_rotation_limit_max_rad))
 
   root = compose_matrices(
-    translate_matrix(float(state.base_x), float(state.base_y), float(state.base_z)),
-    rotate_y_rad_matrix(float(body_yaw)),
-    translate_matrix(0.0, float(_MODEL_FEET_OFFSET_Y), 0.0),
+    translate_matrix(float(state.base_x), float(state.base_y), float(state.base_z)), rotate_y_rad_matrix(float(body_yaw)), translate_matrix(0.0, float(_MODEL_FEET_OFFSET_Y), 0.0)
   )
   head_group_y = lerpf(float(_HEAD_GROUP_POS[1]), float(_CROUCH_HEAD_POS_Y), float(crouch))
   body_group_y = lerpf(float(_BODY_GROUP_POS_STAND[1]), float(_CROUCH_BODY_POS_Y), float(crouch))

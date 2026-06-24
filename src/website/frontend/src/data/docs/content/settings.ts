@@ -1091,11 +1091,9 @@ class PlayerRegenParams:
           {
             kind: 'math',
             math: {
-              expression:
-                'd \\in [0,600], \\qquad c \\in [1,1000], \\qquad T \\in [0.5,600]',
+              expression: 'd \\in [0,600], \\qquad c \\in [1,1000], \\qquad T \\in [0.5,600]',
               displayMode: true,
-              caption:
-                '`PlayerRegenParams.normalized()` clamps start delay d, cap c, and time-to-cap T before the fixed-step session consumes the values.',
+              caption: '`PlayerRegenParams.normalized()` clamps start delay d, cap c, and time-to-cap T before the fixed-step session consumes the values.',
             },
           },
         ],
@@ -1128,8 +1126,7 @@ if not bool(params.enabled):
           {
             kind: 'math',
             math: {
-              expression:
-                'h \\leftarrow \\min\\left(\\min(c,h_{max}),\\ h + \\frac{c}{T}\\Delta t\\right)',
+              expression: 'h \\leftarrow \\min\\left(\\min(c,h_{max}),\\ h + \\frac{c}{T}\\Delta t\\right)',
               displayMode: true,
               caption:
                 '`advance_player_regeneration` applies the enabled regeneration rate after the delay has elapsed, with configured cap c, time-to-cap T, player maximum health h_max, and fixed-step quantum Δt.',

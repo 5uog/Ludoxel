@@ -16,12 +16,7 @@ from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS
-from ludoxel.simulation.worlds.config.player_health import (
-  PLAYER_REGEN_DEFAULT_CAP_HP,
-  PLAYER_REGEN_DEFAULT_ENABLED,
-  PLAYER_REGEN_DEFAULT_START_DELAY_S,
-  PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S,
-)
+from ludoxel.simulation.worlds.config.player_health import PLAYER_REGEN_DEFAULT_CAP_HP, PLAYER_REGEN_DEFAULT_ENABLED, PLAYER_REGEN_DEFAULT_START_DELAY_S, PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 
 
