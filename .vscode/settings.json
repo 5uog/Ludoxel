@@ -4,8 +4,9 @@
     "**/.mypy_cache": true,
     "**/.pytest_cache": true,
     "**/.ruff_cache": true,
-    "**/build": true,
-    "**/dist": true,
+    "**/build": false,
+    "**/dist": false,
+    "**/.venv_ludoxel": true,
     "**/node_modules": true,
     "tools/export_directory_markdown/output": false
   },

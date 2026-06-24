@@ -60,7 +60,7 @@ npm run build:desktop -- windows`,
         content: [
           {
             kind: 'paragraph',
-            text: '`buildWindowsPyinstallerCommand` constrains the open instruction to package into a single, auditable argument vector. It fixes `--onefile` mode under the application name `Ludoxel`, binds `--distpath`, `--workpath`, and `--specpath` to tokenized roots, places `src` on the import search path, and collects package data with `--collect-data ludoxel`, then appends the bootstrap hidden imports and the common data roots ahead of the entry script `src/ludoxel/__main__.py`.',
+            text: '`buildWindowsPyinstallerCommand` constrains the open instruction to package into a single, auditable argument vector. It fixes `--onefile` mode under the application name `Ludoxel`, binds `--distpath`, `--workpath`, and `--specpath` to tokenized roots, places `src` on the import search path, and collects package data with `--collect-data ludoxel`, then appends the bootstrap hidden imports and the narrowed desktop data roots ahead of the entry script `src/ludoxel/__main__.py`.',
           },
           {
             kind: 'code',
@@ -68,7 +68,7 @@ npm run build:desktop -- windows`,
             caption: 'addCommonOptionalDataArgs and addApplicationBootstrapHiddenImports in build-command.pyinstaller.mjs.',
             code: `function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
   addOptionalDataArg(args, 'assets', 'assets', targetPlatform);
-  addOptionalDataArg(args, 'src', 'src', targetPlatform);
+  addOptionalDataArg(args, 'src/ludoxel', 'src/ludoxel', targetPlatform);
   addOptionalDataArg(args, 'LICENSE', 'LICENSE', targetPlatform);
   addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
 }
@@ -80,11 +80,11 @@ function addApplicationBootstrapHiddenImports(args) {
           },
           {
             kind: 'paragraph',
-            text: "Two properties of this excerpt govern what the command vector is permitted to contain. The data roots `assets`, `src`, `LICENSE`, and `third-party` are added through `addOptionalDataArg`, which omits any root that is absent; on Windows their absence does not abort the command, so a build can complete with a required root silently missing. And `addRendererBackendArgs(args, 'win32')` returns before adding anything, so this Windows command path does not add the macOS `--collect-all wgpu`, `--collect-all rendercanvas`, or their hidden imports, which is consistent with the repository’s own shader-check statement that Windows retains the OpenGL renderer path. The claim provable from this builder is scoped to the argument vector it constructs, not to whatever PyInstaller’s dependency analysis ultimately collects; merging the Windows and macOS command paths into one description forfeits that scope and misstates the inputs.",
+            text: "Two properties of this excerpt govern what the command vector is permitted to contain. The data roots `assets`, `src/ludoxel`, `LICENSE`, and `third-party` are added through `addOptionalDataArg`, which omits any absent root without aborting the Windows command. The repository source root still appears on the import search path, but the website tree under `src/website` is no longer declared as desktop bundle data. And `addRendererBackendArgs(args, 'win32')` returns before adding anything, so this Windows command path does not add the macOS `--collect-all wgpu`, `--collect-all rendercanvas`, or their hidden imports, which is consistent with the repository’s own shader-check statement that Windows retains the OpenGL renderer path. The claim provable from this builder is scoped to the argument vector it constructs, not to whatever PyInstaller’s dependency analysis ultimately collects; merging the Windows and macOS command paths into one description forfeits that scope and misstates the inputs.",
           },
           {
             kind: 'paragraph',
-            text: 'Named constants and an explicit data list assemble the vector, making the executable reconstructible and its declared inputs auditable from the printed command. The invocation itself supplies the reviewable build specification: a reviewer can determine whether the binary is the OpenGL-configured Ludoxel build with its declared package data from the command that constructs it.',
+            text: 'Named constants and an explicit data list assemble the vector, making the executable reconstructible and its declared inputs auditable from the printed command. The invocation itself supplies the reviewable build specification: a reviewer can distinguish the import root used to locate `ludoxel` from the narrower data root copied into the desktop package, and can determine whether the binary is the OpenGL-configured Ludoxel build with its declared package data from the command that constructs it.',
           },
         ],
       },

@@ -53,7 +53,7 @@ function addRequiredDataArg(args, sourceRelativePath, destinationPath = sourceRe
 
 function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
   addOptionalDataArg(args, 'assets', 'assets', targetPlatform);
-  addOptionalDataArg(args, 'src', 'src', targetPlatform);
+  addOptionalDataArg(args, 'src/ludoxel', 'src/ludoxel', targetPlatform);
   addOptionalDataArg(args, 'LICENSE', 'LICENSE', targetPlatform);
   addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
 }
