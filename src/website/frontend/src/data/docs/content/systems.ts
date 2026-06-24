@@ -1233,7 +1233,7 @@ sy = _snap(float(cy), float(texel))`,
     group: 'World Visuals',
     title: 'Understanding the Player Model Pose',
     description:
-      'Documents how the third-person player and AI bodies are posed: the shared pose builder and its shadow rows consumed by both backends, the visual-side mapping that does not match the variable names, the delayed body yaw with a bounded head separation, the shoulder-pivoted idle arm sway, and the forward attack swing that keeps the arm and held item clear of the torso.',
+      'Documents how the third-person player and AI bodies are posed: the shared pose builder and its shadow rows consumed by both backends, the visual-side mapping that does not match the variable names, the delayed body yaw with a bounded head separation, the pure-strafe body turn that leaves head direction intact, the shoulder-pivoted idle arm sway, and the forward attack swing that keeps the arm and held item clear of the torso.',
     sections: [
       {
         id: 'player-model-pose-shared-builder',
@@ -1314,7 +1314,7 @@ sy = _snap(float(cy), float(texel))`,
           },
           {
             kind: 'paragraph',
-            text: 'The body follows with `PLAYER_BODY_YAW_FOLLOW_TAU_S` and is held within `PLAYER_HEAD_BODY_YAW_MAX_DEG` of the look, so it trails a turn and then catches up quickly. The head follows the look with the much shorter `PLAYER_HEAD_VISUAL_LAG_TAU_S` but is held within only `PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG` of yaw and `PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG` of pitch, so during a fast turn the head trails the camera by at most a few degrees while the body trails further behind. `build_player_model_snapshot` emits `body_yaw_deg` as the absolute visual body yaw, `head_yaw_deg` as the lagged visual head yaw taken relative to the body and clamped to the body separation, and `head_pitch_deg` as the lagged visual head pitch; the pose builder applies the body yaw at the model root, the head yaw at the head group, and the head pitch at the head only, so the body never tilts with the look. The look yaw and pitch the player entity holds are unchanged, so camera placement, picking, placement, collision, the crosshair, and the first-person view keep responding to the turn with no delay.',
+            text: 'The body follows with `PLAYER_BODY_YAW_FOLLOW_TAU_S` and is held within `PLAYER_HEAD_BODY_YAW_MAX_DEG` of the look, so it trails a turn and then catches up quickly. The head follows the look with the much shorter `PLAYER_HEAD_VISUAL_LAG_TAU_S` but is held within only `PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG` of yaw and `PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG` of pitch, so during a fast turn the head trails the camera by at most a few degrees while the body trails further behind. `build_player_model_snapshot` emits `body_yaw_deg` as the visual body yaw after any pure-strafe body turn, then emits `head_yaw_deg` as the lagged visual head yaw relative to that body pose. The compensating relative head yaw keeps the visible head aimed at the head visual yaw while the body, limbs, held item, and shadow rows rotate with the body. The look yaw and pitch the player entity holds are unchanged, so camera placement, picking, placement, collision, the crosshair, and the first-person view keep responding to the turn with no delay.',
           },
         ],
       },
@@ -1393,7 +1393,7 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
         content: [
           {
             kind: 'paragraph',
-            text: '`build_player_model_snapshot` decomposes horizontal velocity in the look frame into signed `limb_forward_ratio` and `limb_strafe_ratio` values, each the dot product of velocity with the look forward or right basis over walk speed. The pose builder uses direction and raw speed: the forward component drives the fore-and-aft stride, a negative forward component damps it, and the strafe component adds a sidestep. Overall speed still advances walk phase, keeping the alternating limb cadence in every direction.',
+            text: '`build_player_model_snapshot` decomposes horizontal velocity in the look frame into signed `limb_forward_ratio` and `limb_strafe_ratio` values, each the dot product of velocity with the look forward or right basis over walk speed. The pose builder uses direction and raw speed for limb amplitude: the forward component drives the fore-and-aft stride, a negative forward component damps it, and the strafe component only contributes a smaller fore-and-aft step term so the feet keep their forward-facing animation. Overall speed still advances walk phase, keeping the alternating limb cadence in every direction.',
           },
           {
             kind: 'code',
@@ -1401,26 +1401,42 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
             caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
             code: `backward_scale = 1.0 if forward_ratio >= -1e-6 else _BACKWARD_SWING_SCALE
 fore_aft_amp = 0.5 * abs(forward_ratio) * backward_scale
-strafe_lean = clampf(strafe_ratio, -1.0, 1.0)
-pitch_amp = clampf(fore_aft_amp + abs(strafe_lean) * _STRAFE_FOREAFT_SCALE, 0.0, swing)
-leg_side_base = strafe_lean * _LEG_STRAFE_ROLL_BASE
-leg_side_swing = strafe_lean * _LEG_STRAFE_ROLL_SCISSOR
-right_leg_rot_z = leg_side_base + leg_side_swing * walk_r
-left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
+strafe_step = abs(clampf(strafe_ratio, -1.0, 1.0))
+pitch_amp = clampf(fore_aft_amp + strafe_step * _STRAFE_FOREAFT_SCALE, 0.0, swing)
+right_leg_rot_x = pitch_amp * walk_r
+left_leg_rot_x = pitch_amp * walk_l
+root = compose_matrices(translate_matrix(base_x, base_y, base_z), rotate_y_rad_matrix(body_yaw), translate_matrix(0.0, _MODEL_FEET_OFFSET_Y, 0.0))`,
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/player/kinematics.py',
+            code: `target = 0.0
+if abs(strafe) > PLAYER_STRAFE_INPUT_EPS and abs(forward) <= PLAYER_STRAFE_INPUT_EPS:
+  target = -strafe * PLAYER_STRAFE_BODY_TURN_MAX_DEG
+alpha = 1.0 - math.exp(-dt / PLAYER_STRAFE_BODY_TURN_TAU_S)
+motion.strafe_turn_deg = motion.strafe_turn_deg + (target - motion.strafe_turn_deg) * alpha`,
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/sessions/pipelines/player_model.py',
+            code: `body_pose_yaw_deg = math.remainder(body_visual_yaw_deg + motion.strafe_turn_deg, 360.0)
+head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0)`,
           },
           {
             kind: 'math',
             math: {
               expression:
-                'A_{fa} = \\tfrac{1}{2}\\,\\lvert f \\rvert\\,k_{back}, \\qquad A_{pitch} = \\operatorname{clamp}\\bigl(A_{fa} + \\lvert s \\rvert\\,c_{fa},\\ 0,\\ A_{swing}\\bigr), \\qquad \\rho_{leg} = s\\,b \\pm s\\,c\\,\\sin\\varphi',
+                'A_{fa} = \\tfrac{1}{2}\\,\\lvert f \\rvert\\,k_{back}, \\qquad A_{pitch} = \\operatorname{clamp}\\bigl(A_{fa} + \\lvert s \\rvert\\,c_{fa},\\ 0,\\ A_{swing}\\bigr), \\qquad \\theta \\leftarrow \\theta + (\\theta^{*} - \\theta)(1 - e^{-\\Delta t / \\tau})',
               displayMode: true,
               caption:
-                'The fore/aft pitch amplitude A_pitch follows the forward ratio f, is damped by k_back while moving backward, adds a small strafe term, and is capped at the total-speed swing A_swing. The leg side roll ρ_leg carries a strafe lean s with a per-leg scissor of opposite phase.',
+                'The fore/aft pitch amplitude A_pitch follows the forward ratio f, is damped by k_back while moving backward, adds a small strafe term, and is capped at the total-speed swing A_swing. The separate body-turn state θ eases toward θ* only for a pure left/right input, with τ = PLAYER_STRAFE_BODY_TURN_TAU_S.',
             },
           },
           {
             kind: 'paragraph',
-            text: 'The fore-and-aft amplitude follows the magnitude of the forward ratio and is multiplied by `_BACKWARD_SWING_SCALE` when that ratio is negative, giving a backward step a shorter stride. A strafe adds a small fore-and-aft step and lateral hip roll; capping their combination at total-speed swing keeps a diagonal within the straight-forward stride at the same speed. The legs use `rot_z` at the hip, moving each foot laterally while its root remains joined to the body, and the same matrices carry the sidestep into ground-shadow rows. Side direction comes from model `+X` and `-X` positions, so a player-right strafe rolls both feet toward `+X` regardless of variable names.',
+            text: 'The fore-and-aft amplitude follows the magnitude of the forward ratio and is multiplied by `_BACKWARD_SWING_SCALE` when that ratio is negative, giving a backward step a shorter stride. A strafe keeps the same forward-facing fore-and-aft leg step. Body turning is owned by `PlayerMotionState.strafe_turn_deg`, not by `limb_strafe_ratio`: the state moves toward a bounded yaw only when the input is pure left or right, and it returns toward zero when a forward or backward component is present. `build_player_model_snapshot` adds that eased yaw to the body pose and subtracts the same pose from the head yaw relation, so the body, arms, legs, held block, and ground-shadow rows turn toward the sidestep while the visible head keeps its own visual heading.',
           },
         ],
       },
@@ -1433,7 +1449,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
     group: 'Audio Feedback',
     title: 'Understanding Material Sounds',
     description:
-      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for break, place, interact, footstep, landing, damage, and attack events, the pooled-effect admission path, the dedicated PCM one-shot mixer for weak and strong attacks, the volume categories, and the audio-output rebinding path that keeps both `QSoundEffect` slots and the attack mixer attached to the current platform output.',
+      'Documents material-driven audio in full: the sound groups and fallback chain, the block, surface, and player event catalogs, the audio sample pool, the manager routing for player and AI break, place, interact, footstep, landing, damage, and attack events, the pooled-effect admission path with optional listener-distance attenuation, the dedicated PCM one-shot mixer for weak and strong attacks, the volume categories, and the audio-output rebinding path that keeps both `QSoundEffect` slots and the attack mixer attached to the current platform output.',
     sections: [
       {
         id: 'material-sounds-groups',
@@ -1441,7 +1457,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Each block definition names a sound group, defined in `src/ludoxel/simulation/blocks/sounds/groups.py`. `AudioManager.sound_group_for_block_state` resolves a block state to its group through the block registry and caches the result. Groups form a fallback chain so a specialised material can borrow a general one: `iter_sound_group_candidates` walks the `SOUND_GROUP_FALLBACKS` map until it terminates, then appends the default stone group, and the playback path tries each candidate in order until a pool resolves.',
+            text: 'Each block definition names a sound group, defined in `src/ludoxel/simulation/blocks/sounds/groups.py`. `AudioManager.sound_group_for_block_state` resolves a block state to its group through the block registry and caches the result. Groups form a fallback chain so a specialised material can borrow a general one: `iter_sound_group_candidates` walks the `SOUND_GROUP_FALLBACKS` map until it terminates, then appends the default stone group. The playback path resolves the first candidate that defines a pool for the action and commits to that material; it does not advance to another material when the resolved pool is momentarily out of voices, so a placed block keeps its own sound during rapid placement instead of falling through to the default stone pool.',
           },
           {
             kind: 'code',
@@ -1498,7 +1514,11 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
           },
           {
             kind: 'paragraph',
-            text: '`play_block_action` walks the group fallback candidates and plays the first resolved pool; `play_surface_event` routes a footstep to `_play_surface_step` and a landing to `_play_landing_event`. Landing severity is distance-graded: a fall of at least twelve blocks plays the big landing sample, at least six blocks plays the small landing sample, and a shorter landing falls back to an ordinary surface step.',
+            text: '`play_block_action` resolves the first candidate group that defines a pool for the action and plays only that pool, so an exhausted voice budget on the placed material no longer advances the candidate chain to the default stone pool; `play_surface_event` routes a footstep to `_play_surface_step` and a landing to `_play_landing_event`. Landing severity is distance-graded: a fall of at least twelve blocks plays the big landing sample, at least six blocks plays the small landing sample, and a shorter landing falls back to an ordinary surface step.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'AI block actions share the same material pools as the player. `AiPlayerManager` records each successful placement, break, and interaction as an `AiBlockSoundEvent` and returns them on `AiStepReport.block_sound_events`, the session step forwards them on `SessionStepResult.ai_block_sound_events`, and the render loop replays each one through `AudioManager.play_ai_interaction`. That entry calls `play_interaction` with attenuation enabled, so an AI action reaches `play_block_action` through the same fallback resolution as a player action while its volume is scaled by listener distance.',
           },
         ],
       },
@@ -1508,7 +1528,7 @@ left_leg_rot_z = leg_side_base + leg_side_swing * walk_l`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates pooled `QSoundEffect` playback on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. This path covers block actions, footsteps, landing events, damage hits, and Othello player events. The voice search is pool-wide: `_play_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice qualifies as idle only when its `QSoundEffect` is loaded, playback has ended, and the source hold interval recorded on `EffectVoiceSlot.busy_until_s` has passed. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a pooled source keeps its voice reserved until the recorded audible tail has cleared even after the Qt playback state has cleared. When every reserved voice is still busy, `_play_pool` drops the request and leaves active voices running.',
+            text: '`_play_pool` in `src/ludoxel/presentation/audio/playback/manager.py` gates pooled `QSoundEffect` playback on four conditions in order: the resolved category volume must be audible, the pool cooldown must have elapsed through `_admit_pool_play`, a spatial pool must be within its distance cutoff of the cached listener pose, and an idle voice must remain somewhere in the pool. When a caller requests attenuation, as `play_ai_interaction` does, a spatial pool also scales the category volume by `spatial_distance_gain`, a linear rolloff from the listener to the pool distance cutoff, and the request is dropped once that gain reaches zero at the cutoff; player actions pass no attenuation flag and keep the unscaled category volume. This path covers block actions, footsteps, landing events, damage hits, and Othello player events. The voice search is pool-wide: `_play_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice qualifies as idle only when its `QSoundEffect` is loaded, playback has ended, and the source hold interval recorded on `EffectVoiceSlot.busy_until_s` has passed. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a pooled source keeps its voice reserved until the recorded audible tail has cleared even after the Qt playback state has cleared. When every reserved voice is still busy, `_play_pool` drops the request and leaves active voices running.',
           },
           {
             kind: 'code',
@@ -2198,7 +2218,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.0"`,
+            code: `__version__ = "3.7.1"`,
           },
           {
             kind: 'note',

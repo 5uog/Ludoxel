@@ -154,6 +154,15 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
   overlay._ctl_fly_ascend_speed.set_value(float(values["fly_ascend_speed"]))
   overlay._ctl_fly_descend_speed.set_value(float(values["fly_descend_speed"]))
 
+  player_regen_enabled = bool(values["player_regen_enabled"])
+  _sync_toggle(overlay._tg_player_regen, player_regen_enabled)
+  overlay._ctl_player_regen_start_delay.set_value(float(values["player_regen_start_delay_s"]))
+  overlay._ctl_player_regen_cap.set_value(float(values["player_regen_cap_hp"]))
+  overlay._ctl_player_regen_time_to_cap.set_value(float(values["player_regen_time_to_cap_s"]))
+  overlay._ctl_player_regen_start_delay.setEnabled(player_regen_enabled)
+  overlay._ctl_player_regen_cap.setEnabled(player_regen_enabled)
+  overlay._ctl_player_regen_time_to_cap.setEnabled(player_regen_enabled)
+
   master_percent = round_clampi(clampf(float(values["audio_master"]), 0.0, 1.0) * 100.0, 0, 100)
   ambient_percent = round_clampi(clampf(float(values["audio_ambient"]), 0.0, 1.0) * 100.0, 0, 100)
   block_percent = round_clampi(clampf(float(values["audio_block"]), 0.0, 1.0) * 100.0, 0, 100)

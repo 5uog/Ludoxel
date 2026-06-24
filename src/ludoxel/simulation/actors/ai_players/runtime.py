@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -82,6 +83,11 @@ _AI_EDGE_LOOKAHEAD_BLOCKS = 0.85
 _AI_EDGE_SAFE_DROP_DEPTH = 3
 _AI_EDGE_ROUTE_DROP_DEPTH = 8
 _AI_PLACEMENT_LOS_EPS = 0.05
+# Minimum dot product between the actor's horizontal view direction and the
+# horizontal direction toward the placement target. Placement is refused when
+# the actor is not looking toward the target column, so an actor may not place
+# against a face it has turned away from.
+_AI_PLACEMENT_FACING_MIN_DOT = math.cos(math.radians(55.0))
 
 
 @dataclass(frozen=True)
@@ -100,12 +106,20 @@ class AiDeathLogEvent:
 
 
 @dataclass(frozen=True)
+class AiBlockSoundEvent:
+  action: str
+  block_state: str
+  position: tuple[int, int, int]
+
+
+@dataclass(frozen=True)
 class AiStepReport:
   player_damage_taken: float = 0.0
   player_death_reason: str | None = None
   player_killer_name: str | None = None
   damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
   ai_death_logs: tuple[AiDeathLogEvent, ...] = ()
+  block_sound_events: tuple[AiBlockSoundEvent, ...] = ()
 
 
 @dataclass(frozen=True)

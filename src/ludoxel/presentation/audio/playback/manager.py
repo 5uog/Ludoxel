@@ -30,7 +30,7 @@ from ludoxel.presentation.audio.catalogs.player import (
 )
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
 from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
-from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal
+from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal, spatial_distance_gain
 from ludoxel.presentation.audio.playback.mixer import PcmOneShotMixer
 from ludoxel.presentation.audio.playback.sources import PreparedSource, effect_voice_hold_s_for_url, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
 from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool
@@ -154,7 +154,7 @@ class AudioManager(QObject):
     self._ambient_enabled = bool(enabled)
     self._sync_ambient_sound()
 
-  def play_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None) -> None:
+  def play_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None, attenuate: bool = False) -> None:
     if action is None or block_state is None or position is None:
       return
 
@@ -166,13 +166,16 @@ class AudioManager(QObject):
       action = BLOCK_EVENT_INTERACT_OPEN if bool(is_open) else BLOCK_EVENT_INTERACT_CLOSE
 
     if action in {BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_INTERACT_CLOSE}:
-      self.play_block_action(action=str(action), sound_group=sound_group, position=tuple(position))
+      self.play_block_action(action=str(action), sound_group=sound_group, position=tuple(position), attenuate=bool(attenuate))
       return
 
     if action in {BLOCK_EVENT_PLACE, BLOCK_EVENT_BREAK}:
-      self.play_block_action(action=str(action), sound_group=sound_group, position=tuple(position))
+      self.play_block_action(action=str(action), sound_group=sound_group, position=tuple(position), attenuate=bool(attenuate))
 
-  def play_block_action(self, *, action: str, sound_group: str, position: tuple[int, int, int]) -> None:
+  def play_ai_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None) -> None:
+    self.play_interaction(action=action, block_state=block_state, position=position, attenuate=True)
+
+  def play_block_action(self, *, action: str, sound_group: str, position: tuple[int, int, int], attenuate: bool = False) -> None:
     world_position = self._block_center(tuple(position))
 
     for candidate_group in iter_sound_group_candidates(str(sound_group)):
@@ -180,8 +183,12 @@ class AudioManager(QObject):
       pool = None if group_catalog is None else group_catalog.get(str(action))
       if pool is None:
         continue
-      if self._play_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool, position=world_position):
-        return
+      # The first candidate group that defines a pool for this action owns the
+      # sound. A momentarily exhausted voice budget on that pool must not fall
+      # through to a different material's pool, so the resolved material is the
+      # only one attempted regardless of whether a voice is currently free.
+      self._play_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool, position=world_position, attenuate=bool(attenuate))
+      return
 
   def play_surface_event(self, *, event_name: str, support_block_state: str | None, position: tuple[int, int, int] | None, fall_distance_blocks: float | None = None) -> None:
     if support_block_state is None or position is None:
@@ -407,6 +414,9 @@ class AudioManager(QObject):
   def _listener_within_cutoff(self, *, position: Vec3, cutoff: float) -> bool:
     return listener_within_cutoff(position=position, cutoff=float(cutoff), listener_pose=self._listener_pose)
 
+  def _spatial_distance_gain(self, *, position: Vec3, cutoff: float) -> float:
+    return spatial_distance_gain(position=position, cutoff=float(cutoff), listener_pose=self._listener_pose)
+
   @staticmethod
   def _slot_budget_per_source(pool: AudioSamplePool, *, source_count: int) -> int:
     return slot_budget_per_source(pool, source_count=int(source_count))
@@ -417,7 +427,7 @@ class AudioManager(QObject):
   def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float, now_s: float | None = None):
     return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output, now_s=now_s)
 
-  def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3) -> bool:
+  def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3, attenuate: bool = False) -> bool:
     base_volume = float(self._preferences.volume_for(pool.category))
     if base_volume <= 1e-6:
       return False
@@ -428,6 +438,12 @@ class AudioManager(QObject):
     if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
       if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
         return False
+
+    if bool(attenuate) and bool(pool.spatial):
+      distance_gain = self._spatial_distance_gain(position=position, cutoff=float(pool.distance_cutoff))
+      if float(distance_gain) <= 1e-6:
+        return False
+      base_volume = float(base_volume) * float(distance_gain)
 
     prepared_sources = self._ensure_prepared_sources(str(pool_key), pool)
     if not prepared_sources:

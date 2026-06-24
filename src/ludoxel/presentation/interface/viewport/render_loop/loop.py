@@ -314,6 +314,9 @@ class ViewportRenderLoopMixin:
       effects_controller.spawn_break_effect(self, block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
       self._audio.play_interaction(action="break", block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
 
+    for ai_block_sound in tuple(step_result.ai_block_sound_events):
+      self._audio.play_ai_interaction(action=str(ai_block_sound.action), block_state=str(ai_block_sound.block_state), position=tuple(int(value) for value in ai_block_sound.position))
+
     if bool(step_result.footstep_triggered):
       self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
 

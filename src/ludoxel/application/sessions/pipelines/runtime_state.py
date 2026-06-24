@@ -6,6 +6,7 @@ import math
 
 from ludoxel.application.persistence import AppState, PersistedInventory, PersistedSettings
 from ludoxel.application.preferences.runtime import RuntimePreferences, coerce_runtime_preferences
+from ludoxel.simulation.worlds.config.player_health import PlayerRegenParams
 from ludoxel.simulation.worlds.state.play_space import normalize_play_space_id
 
 
@@ -53,6 +54,14 @@ def apply_persisted_settings_to_session(session, settings: PersistedSettings) ->
   session.settings.set_fly_speed(float(settings.fly_speed))
   session.settings.set_fly_ascend_speed(float(settings.fly_ascend_speed))
   session.settings.set_fly_descend_speed(float(settings.fly_descend_speed))
+  session.settings.set_player_regen(
+    PlayerRegenParams(
+      enabled=bool(settings.player_regen_enabled),
+      start_delay_s=float(settings.player_regen_start_delay_s),
+      cap_hp=float(settings.player_regen_cap_hp),
+      time_to_cap_s=float(settings.player_regen_time_to_cap_s),
+    )
+  )
 
 
 def runtime_preferences_from_app_state(state: AppState | None, *, runtime: RuntimePreferences | None = None) -> RuntimePreferences:
@@ -145,6 +154,7 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
 def persisted_settings_from_runtime(runtime: RuntimePreferences, session_settings) -> PersistedSettings:
   runtime.normalize()
   movement = session_settings.movement
+  player_regen = session_settings.player_regen
   return PersistedSettings(
     fov_deg=float(session_settings.fov_deg),
     mouse_sens_deg_per_px=float(session_settings.mouse_sens_deg_per_px),
@@ -203,6 +213,10 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
     fly_speed=float(movement.fly_speed),
     fly_ascend_speed=float(movement.fly_ascend_speed),
     fly_descend_speed=float(movement.fly_descend_speed),
+    player_regen_enabled=bool(player_regen.enabled),
+    player_regen_start_delay_s=float(player_regen.start_delay_s),
+    player_regen_cap_hp=float(player_regen.cap_hp),
+    player_regen_time_to_cap_s=float(player_regen.time_to_cap_s),
     render_distance_chunks=int(runtime.render_distance_chunks),
     debug_shadow=bool(runtime.debug_shadow),
     vsync_on=bool(runtime.vsync_on),

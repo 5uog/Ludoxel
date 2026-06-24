@@ -75,6 +75,10 @@ class SettingsOverlay(SidebarDialogBase):
   fly_speed_changed = pyqtSignal(float)
   fly_ascend_speed_changed = pyqtSignal(float)
   fly_descend_speed_changed = pyqtSignal(float)
+  player_regen_enabled_changed = pyqtSignal(bool)
+  player_regen_start_delay_changed = pyqtSignal(float)
+  player_regen_cap_changed = pyqtSignal(float)
+  player_regen_time_to_cap_changed = pyqtSignal(float)
   advanced_reset_requested = pyqtSignal()
   render_distance_changed = pyqtSignal(int)
   keybind_changed = pyqtSignal(str, str)
@@ -333,6 +337,13 @@ class SettingsOverlay(SidebarDialogBase):
     enabled = bool(on)
     self._sld_camera_shake_strength.setEnabled(enabled)
     self.camera_shake_changed.emit(enabled)
+
+  def _on_player_regen_toggled(self, on: bool) -> None:
+    enabled = bool(on)
+    self._ctl_player_regen_start_delay.setEnabled(enabled)
+    self._ctl_player_regen_cap.setEnabled(enabled)
+    self._ctl_player_regen_time_to_cap.setEnabled(enabled)
+    self.player_regen_enabled_changed.emit(enabled)
 
   def _update_cloud_controls_enabled(self, enabled: bool) -> None:
     self._sld_cloud_density.setEnabled(bool(enabled))

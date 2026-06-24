@@ -15,6 +15,44 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.1',
+    tags: ['Desktop Application', 'AI', 'Audio', 'Rendering', 'Settings'],
+    sections: [
+      {
+        title: 'AI Action Sounds',
+        items: [
+          'AI block placement, breaking, and fence-gate interaction now emit the same material sound events as the player. `AiPlayerManager` records each successful `InteractionOutcome` from its placement, break, and interact paths as an `AiBlockSoundEvent` holding the action, block state, and cell, returns them on `AiStepReport.block_sound_events`, and the render loop replays them through `AudioManager.play_ai_interaction` after the session step.',
+          'AI action sounds attenuate with listener distance. `play_ai_interaction` reuses the player block sound pools with attenuation enabled, and `_play_pool` scales the resolved volume by `spatial_distance_gain`, a linear rolloff from the listener to the pool `distance_cutoff`. The sound is loudest at the source, falls off with distance, and is dropped once the listener is past the audible radius.',
+        ],
+      },
+      {
+        title: 'AI Placement Line of Sight',
+        items: [
+          'AI block placement requires the actor to face the target column with a clear line to it. `_placement_ray_clear` adds a horizontal facing test against `actor.player.view_forward()` bounded by `_AI_PLACEMENT_FACING_MIN_DOT` (cosine of 55 degrees) ahead of the existing occlusion ray, so a planner candidate is refused at the final mutation when the actor has turned away from the face or a block stands between the actor and the anchor.',
+        ],
+      },
+      {
+        title: 'Strafe Model Pose',
+        items: [
+          'Player and AI models keep the forward and backward foot animation while strafing and turn the rendered body toward a pure left or right movement input without rotating the head. `PlayerMotionState.strafe_turn_deg` eases toward a bounded 18-degree yaw only when the current movement input has a lateral component and no forward or backward component; `build_player_model_snapshot` adds that offset to `body_yaw_deg` and counter-resolves `head_yaw_deg` so the visible head keeps its world-facing direction while the body, arms, legs, held item, and shadow rows follow the body turn.',
+        ],
+      },
+      {
+        title: 'Rapid Placement Sound Selection',
+        items: [
+          'Rapid block placement plays the placed block material instead of dropping to the stone sound. `AudioManager.play_block_action` commits to the first sound group in `iter_sound_group_candidates` that defines a pool for the action and stops there, so an exhausted voice budget on the placed material no longer advances the candidate chain to the default stone pool.',
+        ],
+      },
+      {
+        title: 'Player Health Regeneration',
+        items: [
+          'The Settings Player tab adds a Health Regeneration card with Regeneration, Start delay, Health cap, and Time to cap controls. `PlayerRegenParams` on `SessionSettings` owns the values, `PersistedSettings` persists them, and saves without the fields load disabled so existing worlds keep their current behavior.',
+          'After the player avoids damage for the start delay, `advance_player_regeneration` heals at `cap_hp / time_to_cap_s` per second up to the lesser of the cap and `max_health`. Damage resets the delay timer, and a disabled toggle leaves health unchanged.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.0',
     tags: ['Desktop Application', 'Inventory'],
     sections: [

@@ -79,14 +79,11 @@ _THIRD_PERSON_SWING_FORWARD_RAD = 1.45
 _THIRD_PERSON_SWING_OUTWARD_RAD = 0.12
 
 # Movement-direction limb shaping. The fore/aft swing amplitude follows the local
-# forward speed and is reduced while moving backward; a strafe contributes a smaller
-# fore/aft step plus a lateral leg side-roll so sidestepping reads as a step rather
-# than a full forward stride. The legs pivot at the hip, so no leg root leaves the body.
+# forward speed and is reduced while moving backward; a strafe keeps the same
+# forward-facing fore/aft step rather than turning the feet sideways. The legs pivot
+# at the hip, so no leg root leaves the body.
 _BACKWARD_SWING_SCALE = 0.65
 _STRAFE_FOREAFT_SCALE = 0.22
-_LEG_STRAFE_ROLL_BASE = math.radians(3.0)
-_LEG_STRAFE_ROLL_SCISSOR = math.radians(2.5)
-
 _WORLD_SPECIAL_ITEM_BOX = LocalBox(1.0 * _PX, 1.0 * _PX, 7.5 * _PX, 15.0 * _PX, 15.0 * _PX, 8.5 * _PX)
 _WORLD_SPECIAL_ITEM_SCALE = 1.75
 _WORLD_SPECIAL_ITEM_UV_RECT = (1.0, 0.0, 0.0, 1.0)
@@ -191,17 +188,18 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   arm_sway = float(walk_fraction) * float(_ARM_SWAY_Z)
 
   # Direction-aware locomotion. Fore/aft swing scales with the local forward speed and is
-  # damped when moving backward; the strafe adds a smaller fore/aft step and a lateral leg
-  # roll. The combined fore/aft amplitude is capped at the total-speed swing so a diagonal
-  # never swings more than a straight forward stride at the same speed.
+  # damped when moving backward; the strafe adds a smaller fore/aft step that keeps the same
+  # forward-facing foot animation. The combined fore/aft amplitude is capped at the
+  # total-speed swing so a diagonal never swings more than a straight forward stride at the
+  # same speed. Body yaw offsets are resolved before the render state reaches this builder;
+  # this file keeps the legs on the forward-facing fore/aft step and does not derive body
+  # yaw from local velocity.
   forward_ratio = float(state.limb_forward_ratio)
   strafe_ratio = float(state.limb_strafe_ratio)
   backward_scale = 1.0 if float(forward_ratio) >= -1e-6 else float(_BACKWARD_SWING_SCALE)
   fore_aft_amp = 0.5 * abs(float(forward_ratio)) * float(backward_scale)
-  strafe_lean = float(clampf(float(strafe_ratio), -1.0, 1.0))
-  pitch_amp = float(clampf(float(fore_aft_amp) + abs(float(strafe_lean)) * float(_STRAFE_FOREAFT_SCALE), 0.0, float(swing)))
-  leg_side_base = float(strafe_lean) * float(_LEG_STRAFE_ROLL_BASE)
-  leg_side_swing = float(strafe_lean) * float(_LEG_STRAFE_ROLL_SCISSOR)
+  strafe_step = abs(float(clampf(float(strafe_ratio), -1.0, 1.0)))
+  pitch_amp = float(clampf(float(fore_aft_amp) + float(strafe_step) * float(_STRAFE_FOREAFT_SCALE), 0.0, float(swing)))
 
   first_person = state.first_person
   swing_pitch = 0.0
@@ -222,11 +220,9 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   # Visual left arm (off-hand, model -X side): outward sway rolls the fingertip toward -X.
   right_arm_rot_x = float(pitch_amp) * float(walk_l) + float(_CROUCH_ARM_ROT_X) * float(crouch) - float(idle_pitch)
   right_arm_rot_z = -(float(arm_sway) + float(_CROUCH_ARM_ROT_Z) * float(crouch)) - float(idle_roll)
-  # Legs pivot at the hip: rot_x is the fore/aft step, rot_z is the lateral sidestep roll.
+  # Legs pivot at the hip and keep the forward-facing fore/aft step only.
   right_leg_rot_x = float(pitch_amp) * float(walk_r)
   left_leg_rot_x = float(pitch_amp) * float(walk_l)
-  right_leg_rot_z = float(leg_side_base) + float(leg_side_swing) * float(walk_r)
-  left_leg_rot_z = float(leg_side_base) + float(leg_side_swing) * float(walk_l)
 
   # Visual right arm (main hand, model +X side): outward sway rolls the fingertip toward +X,
   # and the attack/place swing pitches the arm forward from the shoulder.
@@ -241,7 +237,9 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   left_arm_rot_x = clampf(float(left_arm_rot_x), float(arm_rotation_limit_min_rad), float(arm_rotation_limit_max_rad))
 
   root = compose_matrices(
-    translate_matrix(float(state.base_x), float(state.base_y), float(state.base_z)), rotate_y_rad_matrix(float(body_yaw)), translate_matrix(0.0, float(_MODEL_FEET_OFFSET_Y), 0.0)
+    translate_matrix(float(state.base_x), float(state.base_y), float(state.base_z)),
+    rotate_y_rad_matrix(float(body_yaw)),
+    translate_matrix(0.0, float(_MODEL_FEET_OFFSET_Y), 0.0),
   )
   head_group_y = lerpf(float(_HEAD_GROUP_POS[1]), float(_CROUCH_HEAD_POS_Y), float(crouch))
   body_group_y = lerpf(float(_BODY_GROUP_POS_STAND[1]), float(_CROUCH_BODY_POS_Y), float(crouch))
@@ -271,14 +269,12 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   right_leg_parent = compose_matrices(
     root,
     translate_matrix(float(_RIGHT_LEG_GROUP_POS_STAND[0]), float(_RIGHT_LEG_GROUP_POS_STAND[1]), float(leg_group_z)),
-    rotate_z_rad_matrix(float(right_leg_rot_z)),
     rotate_x_rad_matrix(float(right_leg_rot_x)),
     translate_matrix(float(_LEG_PIVOT[0]), float(_LEG_PIVOT[1]), float(_LEG_PIVOT[2])),
   )
   left_leg_parent = compose_matrices(
     root,
     translate_matrix(float(_LEFT_LEG_GROUP_POS_STAND[0]), float(_LEFT_LEG_GROUP_POS_STAND[1]), float(leg_group_z)),
-    rotate_z_rad_matrix(float(left_leg_rot_z)),
     rotate_x_rad_matrix(float(left_leg_rot_x)),
     translate_matrix(float(_LEG_PIVOT[0]), float(_LEG_PIVOT[1]), float(_LEG_PIVOT[2])),
   )

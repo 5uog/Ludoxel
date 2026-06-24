@@ -66,6 +66,7 @@ class SessionManager:
   _player_motion: PlayerMotionState = field(default_factory=PlayerMotionState, init=False, repr=False)
   _death_reason: str | None = field(default=None, init=False, repr=False)
   _void_damage_timer_s: float = field(default=0.0, init=False, repr=False)
+  _player_regen_wait_s: float = field(default=0.0, init=False, repr=False)
 
   def __post_init__(self) -> None:
     self.player.clamp_health()
@@ -129,6 +130,7 @@ class SessionManager:
     self._player_motion = PlayerMotionState()
     self._death_reason = None
     self._void_damage_timer_s = 0.0
+    self._player_regen_wait_s = 0.0
 
   def teleport(self, *, x: float, y: float, z: float, yaw_deg: float | None = None, pitch_deg: float | None = None) -> None:
     teleport_player(self.player, x=float(x), y=float(y), z=float(z), yaw_deg=yaw_deg, pitch_deg=pitch_deg)

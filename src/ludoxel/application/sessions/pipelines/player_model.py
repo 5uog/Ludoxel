@@ -55,13 +55,14 @@ def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionSta
   body_visual_yaw_deg = float(player.yaw_deg) if motion.body_visual_yaw_deg is None else float(motion.body_visual_yaw_deg)
   head_visual_yaw_deg = float(player.yaw_deg) if motion.head_visual_yaw_deg is None else float(motion.head_visual_yaw_deg)
   head_visual_pitch_deg = float(player.pitch_deg) if motion.head_visual_pitch_deg is None else float(motion.head_visual_pitch_deg)
-  head_yaw_rel_deg = clampf(float(math.remainder(float(head_visual_yaw_deg) - float(body_visual_yaw_deg), 360.0)), -float(PLAYER_HEAD_BODY_YAW_MAX_DEG), float(PLAYER_HEAD_BODY_YAW_MAX_DEG))
+  body_pose_yaw_deg = float(math.remainder(float(body_visual_yaw_deg) + float(motion.strafe_turn_deg), 360.0))
+  head_yaw_rel_deg = float(math.remainder(float(head_visual_yaw_deg) - float(body_pose_yaw_deg), 360.0))
 
   return PlayerModelSnapshotDTO(
     base_x=float(player.position.x),
     base_y=float(player.position.y) + float(step_eye_offset),
     base_z=float(player.position.z),
-    body_yaw_deg=float(body_visual_yaw_deg),
+    body_yaw_deg=float(body_pose_yaw_deg),
     head_yaw_deg=float(head_yaw_rel_deg),
     head_pitch_deg=float(head_visual_pitch_deg),
     limb_phase_rad=float(motion.walk_phase_rad),

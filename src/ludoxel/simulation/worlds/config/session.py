@@ -8,6 +8,13 @@ from typing import ClassVar
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.worlds.config.collision import DEFAULT_COLLISION_PARAMS, CollisionParams
 from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS, MovementParams
+from ludoxel.simulation.worlds.config.player_health import (
+  DEFAULT_PLAYER_REGEN_PARAMS,
+  PlayerRegenParams,
+  normalize_player_regen_cap_hp,
+  normalize_player_regen_start_delay_s,
+  normalize_player_regen_time_to_cap_s,
+)
 
 
 @dataclass
@@ -22,6 +29,7 @@ class SessionSettings:
 
   movement: MovementParams = field(default_factory=lambda: DEFAULT_MOVEMENT_PARAMS)
   collision: CollisionParams = field(default_factory=lambda: DEFAULT_COLLISION_PARAMS)
+  player_regen: PlayerRegenParams = field(default_factory=lambda: DEFAULT_PLAYER_REGEN_PARAMS)
 
   FOV_MIN: ClassVar[float] = 50.0
   FOV_MAX: ClassVar[float] = 110.0
@@ -74,6 +82,21 @@ class SessionSettings:
 
   def set_fly_descend_speed(self, fly_descend_speed: float) -> None:
     self.movement = replace(self.movement, fly_descend_speed=float(clampf(float(fly_descend_speed), float(self.FLY_DESCEND_SPEED_MIN), float(self.FLY_DESCEND_SPEED_MAX))))
+
+  def set_player_regen(self, params: PlayerRegenParams) -> None:
+    self.player_regen = params.normalized()
+
+  def set_player_regen_enabled(self, enabled: bool) -> None:
+    self.player_regen = replace(self.player_regen, enabled=bool(enabled))
+
+  def set_player_regen_start_delay_s(self, start_delay_s: float) -> None:
+    self.player_regen = replace(self.player_regen, start_delay_s=normalize_player_regen_start_delay_s(start_delay_s))
+
+  def set_player_regen_cap_hp(self, cap_hp: float) -> None:
+    self.player_regen = replace(self.player_regen, cap_hp=normalize_player_regen_cap_hp(cap_hp))
+
+  def set_player_regen_time_to_cap_s(self, time_to_cap_s: float) -> None:
+    self.player_regen = replace(self.player_regen, time_to_cap_s=normalize_player_regen_time_to_cap_s(time_to_cap_s))
 
   def reset_advanced_movement_defaults(self) -> None:
     self.movement = replace(

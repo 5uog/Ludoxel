@@ -1034,6 +1034,116 @@ overlay._player_name_hint = QLabel("", identity_body)`,
     category: 'Settings',
     subcategory: 'Player and Match Settings',
     group: 'Player and Othello State',
+    title: 'Changing Player Regeneration Settings',
+    description:
+      'Defines the Player-tab regeneration controls as a persisted player-health contract whose disabled default preserves existing survival damage behavior until the setting is explicitly enabled.',
+    sections: [
+      {
+        id: 'changing-player-regeneration-settings-visible-controls',
+        title: 'Visible Controls and Stored Fields',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The Player tab exposes a Health Regeneration card with `Regeneration`, `Start delay`, `Health cap`, and `Time to cap`. The controls are immediate settings controls, not per-world block state and not AI actor fields. `PersistedSettings` owns the saved keys `player_regen_enabled`, `player_regen_start_delay_s`, `player_regen_cap_hp`, and `player_regen_time_to_cap_s`; missing keys load through the disabled default and the numeric defaults declared by `src/ludoxel/simulation/worlds/config/player_health.py`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/schema/settings.py',
+            code: `player_regen_enabled: bool = bool(PLAYER_REGEN_DEFAULT_ENABLED)
+player_regen_start_delay_s: float = float(PLAYER_REGEN_DEFAULT_START_DELAY_S)
+player_regen_cap_hp: float = float(PLAYER_REGEN_DEFAULT_CAP_HP)
+player_regen_time_to_cap_s: float = float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The UI writes into the same preference aggregate that stores movement, audio, and skin preferences. `apply_persisted_settings_to_session` transfers the persisted values into `SessionSettings.player_regen`, so the fixed-step session owns the runtime copy. A saved preference file cannot enable regeneration for AI actors through these player keys; AI health settings remain in the AI actor settings surface and state path.',
+          },
+        ],
+      },
+      {
+        id: 'changing-player-regeneration-settings-value-domain',
+        title: 'Value Domain and Normalization',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`PlayerRegenParams` is the simulation-facing value object. It normalizes the boolean enabled state and clamps the three numeric values to the admitted ranges: start delay from `0.0` to `600.0` seconds, cap from `1.0` to `1000.0` health points, and time to cap from `0.5` to `600.0` seconds. The default set is disabled, starts at `4.0` seconds, caps at `20.0` health, and reaches that cap over `80.0` seconds when the toggle is enabled.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/worlds/config/player_health.py',
+            code: `@dataclass(frozen=True)
+class PlayerRegenParams:
+  enabled: bool = PLAYER_REGEN_DEFAULT_ENABLED
+  start_delay_s: float = PLAYER_REGEN_DEFAULT_START_DELAY_S
+  cap_hp: float = PLAYER_REGEN_DEFAULT_CAP_HP
+  time_to_cap_s: float = PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S
+
+  def normalized(self) -> "PlayerRegenParams":
+    return PlayerRegenParams(
+      enabled=bool(self.enabled),
+      start_delay_s=normalize_player_regen_start_delay_s(self.start_delay_s),
+      cap_hp=normalize_player_regen_cap_hp(self.cap_hp),
+      time_to_cap_s=normalize_player_regen_time_to_cap_s(self.time_to_cap_s),
+    )`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'd \\in [0,600], \\qquad c \\in [1,1000], \\qquad T \\in [0.5,600]',
+              displayMode: true,
+              caption:
+                '`PlayerRegenParams.normalized()` clamps start delay d, cap c, and time-to-cap T before the fixed-step session consumes the values.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'changing-player-regeneration-settings-runtime-effect',
+        title: 'Runtime Effect',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`advance_player_regeneration` runs during the fixed-step session after damage resolution. Damage resets the wait timer to zero. A dead player receives no regeneration. A disabled toggle leaves health unchanged while the wait timer continues to measure time since damage; enabling the setting later can therefore use the current no-damage interval rather than requiring a separate respawn or reload.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/actors/player/regeneration.py',
+            code: `if bool(took_damage):
+  return 0.0
+if not player.alive():
+  return 0.0
+
+new_wait_s = max(0.0, float(wait_s)) + max(0.0, float(dt))
+if not bool(params.enabled):
+  return float(new_wait_s)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'When enabled, regeneration starts only after `start_delay_s`. The healed amount advances at `cap_hp / time_to_cap_s` health per second and stops at the lower of the configured cap and `player.max_health`. The cap therefore limits the recovery destination, while the player entity still owns current health, maximum health, death state, and damage cooldown.',
+          },
+          {
+            kind: 'math',
+            math: {
+              expression:
+                'h \\leftarrow \\min\\left(\\min(c,h_{max}),\\ h + \\frac{c}{T}\\Delta t\\right)',
+              displayMode: true,
+              caption:
+                '`advance_player_regeneration` applies the enabled regeneration rate after the delay has elapsed, with configured cap c, time-to-cap T, player maximum health h_max, and fixed-step quantum Δt.',
+            },
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding Saved Preferences', 'Reading Saved Preferences', 'Surviving Fall and Void Hazards'],
+  }),
+  defineDocsArticle({
+    category: 'Settings',
+    subcategory: 'Player and Match Settings',
+    group: 'Player and Othello State',
     title: 'Understanding Othello Setting Persistence',
     description:
       'Explains how Othello settings enter the runtime preference aggregate and the persisted Othello space without collapsing match rules, player state, and world state into one authority.',

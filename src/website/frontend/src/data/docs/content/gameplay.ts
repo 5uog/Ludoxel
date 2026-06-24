@@ -1254,7 +1254,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
     group: 'NPC Actions',
     title: 'Understanding AI Placement Behavior',
     description:
-      'Defines AI block placement as a constrained movement aid. Placement supports bridging and footing during navigation, requires line of sight, item state, support, clear collision, and an action mask, and is gated by a per-AI placement permission.',
+      'Defines AI block placement as a constrained movement aid. Placement supports bridging and footing during navigation, requires the actor to face the target column with an unobstructed line of sight, requires item state, support, clear collision, and an action mask, and is gated by a per-AI placement permission.',
     sections: [
       {
         id: 'understanding-ai-placement-behavior-movement-aid',
@@ -1324,7 +1324,8 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         id: 'understanding-ai-placement-behavior-preconditions',
         title: 'Placement Has Preconditions',
         body: [
-          'A bridge placement is only attempted when the preconditions hold: line of sight to the target cell, an available item, support, clear collision, and an action mask that permits the placement. Forward movement can wait until a footing exists before continuing.',
+          'A bridge placement is only attempted when the preconditions hold: the actor must face the target column within a horizontal tolerance and hold an unobstructed line of sight to the target cell, alongside an available item, support, clear collision, and an action mask that permits the placement. Forward movement can wait until a footing exists before continuing.',
+          'The planner may select a candidate cell, but the final mutation re-checks it: `_placement_ray_clear` compares the actor view direction against the direction to the target face through `_AI_PLACEMENT_FACING_MIN_DOT` and then casts the occlusion ray, so a candidate is refused when the actor has turned away from the face or a block stands between the actor and the anchor.',
           'When those preconditions are unmet, the AI pauses at an edge until a placement becomes valid, then steps forward.',
         ],
       },

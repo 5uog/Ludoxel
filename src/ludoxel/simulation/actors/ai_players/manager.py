@@ -73,6 +73,7 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_PARKOUR_SEARCH_CAP,
   _AI_PARKOUR_TAKEOFF_TRIGGER_EPS,
   _AI_PLACE_COOLDOWN_S,
+  _AI_PLACEMENT_FACING_MIN_DOT,
   _AI_PLACEMENT_LOS_EPS,
   _AI_ROUTE_ENGAGE_RANGE,
   _AI_ROUTE_REACHED_EPS,
@@ -84,6 +85,7 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AI_STUCK_JUMP_RETRIES,
   _AI_STUCK_RECOVERY_SUPPORT_S,
   AiActorObservation,
+  AiBlockSoundEvent,
   AiDeathLogEvent,
   AiLocalAttackResult,
   AiRoutePathSnapshot,
@@ -118,6 +120,7 @@ from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.structures.cardinal import cardinal_from_xz, facing_vec_xz
 from ludoxel.simulation.rules.collision.support import world_aabb_intersects
 from ludoxel.simulation.rules.collision.system import support_block_beneath
+from ludoxel.simulation.rules.interaction.outcomes import InteractionOutcome
 from ludoxel.simulation.rules.interaction.service import InteractionService
 from ludoxel.simulation.rules.picking.block import BlockPick
 from ludoxel.simulation.worlds.config.session import SessionSettings
@@ -174,6 +177,7 @@ class AiPlayerManager:
   _full_snapshot_blocks: tuple[tuple[int, int, int, str], ...] = field(default=(), init=False, repr=False)
   _route_requests_this_step: int = field(default=0, init=False, repr=False)
   _recovery_searches_this_step: int = field(default=0, init=False, repr=False)
+  _block_sound_events: list[AiBlockSoundEvent] = field(default_factory=list, init=False, repr=False)
 
   def __post_init__(self) -> None:
     if bool(self.warm_route_worker):
@@ -734,6 +738,15 @@ class AiPlayerManager:
   @staticmethod
   def _damage_sound_position(player: PlayerEntity) -> tuple[float, float, float]:
     return (float(player.position.x), float(player.position.y) + float(player.eye_height) * 0.5, float(player.position.z))
+
+  def _record_block_sound(self, outcome: InteractionOutcome) -> None:
+    if not bool(outcome.success):
+      return
+    if outcome.action is None or outcome.target_block_state is None or outcome.target_position is None:
+      return
+    self._block_sound_events.append(
+      AiBlockSoundEvent(action=str(outcome.action), block_state=str(outcome.target_block_state), position=tuple(int(value) for value in outcome.target_position))
+    )
 
   @staticmethod
   def _death_log_event(actor: _AiPlayerRuntime, *, reason: str, killer_name: str | None = None) -> AiDeathLogEvent:
@@ -1528,6 +1541,8 @@ class AiPlayerManager:
     distance = float(delta.length())
     if float(distance) <= 1e-6:
       return True
+    if not self._placement_facing_ok(actor, delta=delta):
+      return False
     direction = delta.normalized()
     hit = actor.interaction.pick_block(reach=float(distance) + 0.5, origin=eye, direction=direction)
     if hit is None:
@@ -1535,6 +1550,17 @@ class AiPlayerManager:
     if tuple(int(value) for value in hit.hit) == tuple(int(value) for value in anchor_cell):
       return True
     return float(hit.t) >= float(distance) - float(_AI_PLACEMENT_LOS_EPS)
+
+  def _placement_facing_ok(self, actor: _AiPlayerRuntime, *, delta: Vec3) -> bool:
+    view_forward = actor.player.view_forward()
+    view_xz = Vec3(float(view_forward.x), 0.0, float(view_forward.z))
+    target_xz = Vec3(float(delta.x), 0.0, float(delta.z))
+    view_len = float(view_xz.length())
+    target_len = float(target_xz.length())
+    if view_len <= 1e-6 or target_len <= 1e-6:
+      return True
+    facing_dot = float(view_xz.dot(target_xz)) / (float(view_len) * float(target_len))
+    return bool(float(facing_dot) >= float(_AI_PLACEMENT_FACING_MIN_DOT))
 
   def _place_adjacent_block(self, actor: _AiPlayerRuntime, *, anchor_cell: tuple[int, int, int], step_x: int, step_z: int) -> bool:
     if actor.held_item_id is None:
@@ -1556,6 +1582,7 @@ class AiPlayerManager:
     outcome = actor.interaction.place_block_from_hit(hit, str(actor.held_item_id))
     if not bool(outcome.success):
       return False
+    self._record_block_sound(outcome)
     actor.place_cooldown_s = float(_AI_PLACE_COOLDOWN_S)
     return True
 
@@ -1577,6 +1604,7 @@ class AiPlayerManager:
     outcome = actor.interaction.place_block_from_hit(hit, str(actor.held_item_id))
     if not bool(outcome.success):
       return False
+    self._record_block_sound(outcome)
     actor.place_cooldown_s = float(_AI_PLACE_COOLDOWN_S)
     return True
 
@@ -1734,6 +1762,7 @@ class AiPlayerManager:
     if hit is not None and float(actor.interact_cooldown_s) <= 1e-6:
       outcome = actor.interaction.interact_block_at_hit(tuple(int(value) for value in hit.hit))
       if bool(outcome.success):
+        self._record_block_sound(outcome)
         actor.interact_cooldown_s = float(_AI_INTERACT_COOLDOWN_S)
         return
     if actor.held_item_id is None or float(actor.place_cooldown_s) > 1e-6:
@@ -2011,6 +2040,7 @@ class AiPlayerManager:
     outcome = actor.interaction.break_block(reach=3.0, origin=eye, direction=forward)
     if not bool(getattr(outcome, "success", False)):
       return False
+    self._record_block_sound(outcome)
     actor.interact_cooldown_s = float(_AI_INTERACT_COOLDOWN_S)
     return True
 
@@ -2025,6 +2055,7 @@ class AiPlayerManager:
     outcome = actor.interaction.interact_block_at_hit(tuple(int(value) for value in hit.hit))
     if not bool(getattr(outcome, "success", False)):
       return False
+    self._record_block_sound(outcome)
     actor.interact_cooldown_s = float(_AI_INTERACT_COOLDOWN_S)
     return True
 
@@ -2081,6 +2112,7 @@ class AiPlayerManager:
     self._drain_completed_route_plans()
     self._route_requests_this_step = 0
     self._recovery_searches_this_step = 0
+    self._block_sound_events = []
     if learning is not None:
       learning.begin_tick()
     total_player_damage = 0.0
@@ -2221,6 +2253,7 @@ class AiPlayerManager:
       player_killer_name=player_killer_name,
       damage_sound_positions=tuple(damage_sound_positions),
       ai_death_logs=tuple(ai_death_logs),
+      block_sound_events=tuple(self._block_sound_events),
     )
 
   def actor_observations(self) -> tuple[AiActorObservation, ...]:

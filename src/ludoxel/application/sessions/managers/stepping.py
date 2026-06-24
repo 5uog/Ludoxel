@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ludoxel.simulation.actors.ai_players.learning.dataset import RECORD_PLAYER_MOVEMENT
-from ludoxel.simulation.actors.ai_players.runtime import AiDeathLogEvent
+from ludoxel.simulation.actors.ai_players.runtime import AiBlockSoundEvent, AiDeathLogEvent
 from ludoxel.simulation.actors.player.damage import apply_void_damage
 from ludoxel.simulation.actors.player.kinematics import PlayerStepInput, advance_runtime_player, fall_damage_amount
+from ludoxel.simulation.actors.player.regeneration import advance_player_regeneration
 from ludoxel.simulation.rules.gravity.system import GravityBrokenBlock
 
 _MOVE_EPS: float = 0.3
@@ -55,6 +56,7 @@ class SessionStepResult:
   play_landing_sound: bool = False
   ai_damage_sound_positions: tuple[tuple[float, float, float], ...] = ()
   ai_death_logs: tuple[AiDeathLogEvent, ...] = ()
+  ai_block_sound_events: tuple[AiBlockSoundEvent, ...] = ()
 
 
 def step_session(
@@ -117,6 +119,9 @@ def step_session(
   fall_damage_applied = bool(float(fall_damage) > 1e-6)
   damage_taken = float(fall_damage) + float(void_damage) + float(ai_report.player_damage_taken)
   play_damage_sound = bool(fall_damage_applied or float(void_damage) > 1e-6 or float(ai_report.player_damage_taken) > 1e-6)
+  session._player_regen_wait_s = advance_player_regeneration(
+    player=session.player, params=session.settings.player_regen, dt=float(dt), wait_s=float(session._player_regen_wait_s), took_damage=bool(float(damage_taken) > 1e-6)
+  )
   play_landing_sound = bool(step_result.landed) and (not fall_damage_applied)
 
   death_reason: str | None = None
@@ -146,4 +151,5 @@ def step_session(
     play_landing_sound=bool(play_landing_sound),
     ai_damage_sound_positions=tuple(ai_report.damage_sound_positions),
     ai_death_logs=tuple(ai_report.ai_death_logs),
+    ai_block_sound_events=tuple(ai_report.block_sound_events),
   )

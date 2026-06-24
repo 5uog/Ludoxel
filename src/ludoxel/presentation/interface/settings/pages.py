@@ -15,6 +15,17 @@ from ludoxel.presentation.interface.settings.surface import add_page_header, add
 from ludoxel.presentation.interface.settings.widgets.crosshair import CrosshairPixelEditor, CrosshairPreviewWidget
 from ludoxel.presentation.interface.settings.widgets.scalar import AdvancedScalarControl
 from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS
+from ludoxel.simulation.worlds.config.player_health import (
+  PLAYER_REGEN_CAP_MAX_HP,
+  PLAYER_REGEN_CAP_MIN_HP,
+  PLAYER_REGEN_DEFAULT_CAP_HP,
+  PLAYER_REGEN_DEFAULT_START_DELAY_S,
+  PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S,
+  PLAYER_REGEN_START_DELAY_MAX_S,
+  PLAYER_REGEN_START_DELAY_MIN_S,
+  PLAYER_REGEN_TIME_TO_CAP_MAX_S,
+  PLAYER_REGEN_TIME_TO_CAP_MIN_S,
+)
 
 if TYPE_CHECKING:
   from ludoxel.presentation.interface.settings.overlay import SettingsOverlay
@@ -422,6 +433,48 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
 
   overlay._tg_auto_jump = overlay._add_toggle(options_layout, options_body, "Auto-Jump", overlay.auto_jump_changed.emit)
   overlay._tg_auto_sprint = overlay._add_toggle(options_layout, options_body, "Auto-Sprint", overlay.auto_sprint_changed.emit)
+
+  _regen_card, regen_body, regen_layout = add_settings_card(
+    layout, host, title="Health Regeneration", description="Automatic survival-mode health recovery once the player avoids damage for the start delay."
+  )
+
+  overlay._tg_player_regen = overlay._add_toggle(regen_layout, regen_body, "Regeneration", overlay._on_player_regen_toggled)
+
+  overlay._ctl_player_regen_start_delay = AdvancedScalarControl(
+    title="Start delay",
+    min_value=float(PLAYER_REGEN_START_DELAY_MIN_S),
+    max_value=float(PLAYER_REGEN_START_DELAY_MAX_S),
+    slider_scale=10.0,
+    decimals=1,
+    default_value=float(PLAYER_REGEN_DEFAULT_START_DELAY_S),
+    parent=regen_body,
+  )
+  overlay._ctl_player_regen_start_delay.value_changed.connect(overlay.player_regen_start_delay_changed.emit)
+  regen_layout.addWidget(overlay._ctl_player_regen_start_delay)
+
+  overlay._ctl_player_regen_cap = AdvancedScalarControl(
+    title="Health cap",
+    min_value=float(PLAYER_REGEN_CAP_MIN_HP),
+    max_value=float(PLAYER_REGEN_CAP_MAX_HP),
+    slider_scale=10.0,
+    decimals=1,
+    default_value=float(PLAYER_REGEN_DEFAULT_CAP_HP),
+    parent=regen_body,
+  )
+  overlay._ctl_player_regen_cap.value_changed.connect(overlay.player_regen_cap_changed.emit)
+  regen_layout.addWidget(overlay._ctl_player_regen_cap)
+
+  overlay._ctl_player_regen_time_to_cap = AdvancedScalarControl(
+    title="Time to cap",
+    min_value=float(PLAYER_REGEN_TIME_TO_CAP_MIN_S),
+    max_value=float(PLAYER_REGEN_TIME_TO_CAP_MAX_S),
+    slider_scale=10.0,
+    decimals=1,
+    default_value=float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S),
+    parent=regen_body,
+  )
+  overlay._ctl_player_regen_time_to_cap.value_changed.connect(overlay.player_regen_time_to_cap_changed.emit)
+  regen_layout.addWidget(overlay._ctl_player_regen_time_to_cap)
 
   _identity_card, identity_body, identity_layout = add_settings_card(layout, host, title="Player Identity", description="Persisted display name or per-launch random-name fallback.")
 

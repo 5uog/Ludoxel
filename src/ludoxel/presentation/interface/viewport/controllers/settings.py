@@ -86,6 +86,10 @@ def bind_settings_overlay_value_signals(viewport: "RendererViewportWidget", over
   overlay.fly_speed_changed.connect(lambda value: set_fly_speed(viewport, float(value)))
   overlay.fly_ascend_speed_changed.connect(lambda value: set_fly_ascend_speed(viewport, float(value)))
   overlay.fly_descend_speed_changed.connect(lambda value: set_fly_descend_speed(viewport, float(value)))
+  overlay.player_regen_enabled_changed.connect(lambda on: set_player_regen_enabled(viewport, bool(on)))
+  overlay.player_regen_start_delay_changed.connect(lambda value: set_player_regen_start_delay(viewport, float(value)))
+  overlay.player_regen_cap_changed.connect(lambda value: set_player_regen_cap(viewport, float(value)))
+  overlay.player_regen_time_to_cap_changed.connect(lambda value: set_player_regen_time_to_cap(viewport, float(value)))
   overlay.advanced_reset_requested.connect(lambda: reset_advanced_defaults(viewport))
   overlay.render_distance_changed.connect(lambda value: set_render_distance(viewport, int(value)))
   overlay.keybind_changed.connect(lambda action, binding: set_keybind(viewport, str(action), str(binding)))
@@ -288,6 +292,10 @@ def sync_settings_values(viewport: "RendererViewportWidget") -> None:
     fly_speed=float(viewport._session.settings.movement.fly_speed),
     fly_ascend_speed=float(viewport._session.settings.movement.fly_ascend_speed),
     fly_descend_speed=float(viewport._session.settings.movement.fly_descend_speed),
+    player_regen_enabled=bool(viewport._session.settings.player_regen.enabled),
+    player_regen_start_delay_s=float(viewport._session.settings.player_regen.start_delay_s),
+    player_regen_cap_hp=float(viewport._session.settings.player_regen.cap_hp),
+    player_regen_time_to_cap_s=float(viewport._session.settings.player_regen.time_to_cap_s),
     render_distance_chunks=int(viewport._state.render_distance_chunks),
     keybinds=viewport._state.keybinds,
     audio_master=float(viewport._state.audio.master),
@@ -645,6 +653,22 @@ def set_fly_ascend_speed(viewport: "RendererViewportWidget", fly_ascend_speed: f
 
 def set_fly_descend_speed(viewport: "RendererViewportWidget", fly_descend_speed: float) -> None:
   viewport._for_each_session(lambda session: session.settings.set_fly_descend_speed(float(fly_descend_speed)))
+
+
+def set_player_regen_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
+  viewport._for_each_session(lambda session: session.settings.set_player_regen_enabled(bool(on)))
+
+
+def set_player_regen_start_delay(viewport: "RendererViewportWidget", start_delay_s: float) -> None:
+  viewport._for_each_session(lambda session: session.settings.set_player_regen_start_delay_s(float(start_delay_s)))
+
+
+def set_player_regen_cap(viewport: "RendererViewportWidget", cap_hp: float) -> None:
+  viewport._for_each_session(lambda session: session.settings.set_player_regen_cap_hp(float(cap_hp)))
+
+
+def set_player_regen_time_to_cap(viewport: "RendererViewportWidget", time_to_cap_s: float) -> None:
+  viewport._for_each_session(lambda session: session.settings.set_player_regen_time_to_cap_s(float(time_to_cap_s)))
 
 
 def reset_advanced_defaults(viewport: "RendererViewportWidget") -> None:

@@ -49,3 +49,25 @@ def listener_within_cutoff(*, position: Vec3, cutoff: float, listener_pose: tupl
   dy = float(position.y) - float(py)
   dz = float(position.z) - float(pz)
   return (dx * dx + dy * dy + dz * dz) <= float(cutoff * cutoff)
+
+
+def listener_distance(*, position: Vec3, listener_pose: tuple[float, float, float, float, float, float] | None) -> float | None:
+  if listener_pose is None:
+    return None
+  px, py, pz, _yaw_deg, _pitch_deg, _roll_deg = listener_pose
+  dx = float(position.x) - float(px)
+  dy = float(position.y) - float(py)
+  dz = float(position.z) - float(pz)
+  return float((dx * dx + dy * dy + dz * dz) ** 0.5)
+
+
+def spatial_distance_gain(*, position: Vec3, cutoff: float, listener_pose: tuple[float, float, float, float, float, float] | None) -> float:
+  if float(cutoff) <= 1e-6:
+    return 1.0
+  distance = listener_distance(position=position, listener_pose=listener_pose)
+  if distance is None:
+    return 1.0
+  if float(distance) >= float(cutoff):
+    return 0.0
+  gain = 1.0 - (float(distance) / float(cutoff))
+  return float(min(1.0, max(0.0, float(gain))))

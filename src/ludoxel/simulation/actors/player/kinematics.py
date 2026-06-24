@@ -29,6 +29,15 @@ PLAYER_HEAD_VISUAL_LAG_TAU_S = 0.09
 PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG = 12.0
 PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG = 6.0
 
+# Visual-only strafe body turn. A dedicated left or right strafe input turns the rendered
+# body toward the movement by a bounded angle, eased with a frame-rate-independent time
+# constant so it ramps in rather than snapping. A combined forward or backward input
+# suppresses the turn, so a left/right component used only as a diagonal fine adjustment
+# leaves the body facing forward.
+PLAYER_STRAFE_BODY_TURN_MAX_DEG = 18.0
+PLAYER_STRAFE_BODY_TURN_TAU_S = 0.40
+PLAYER_STRAFE_INPUT_EPS = 0.3
+
 
 @dataclass
 class PlayerMotionState:
@@ -39,6 +48,7 @@ class PlayerMotionState:
   body_visual_yaw_deg: float | None = None
   head_visual_yaw_deg: float | None = None
   head_visual_pitch_deg: float | None = None
+  strafe_turn_deg: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -122,6 +132,24 @@ def _update_player_visual_animation(player: PlayerEntity, *, motion: PlayerMotio
   )
 
 
+def _update_player_strafe_body_turn(*, motion: PlayerMotionState, control: PlayerStepInput, dt: float) -> None:
+  step = max(0.0, float(dt))
+  forward = clampf(float(control.move_f), -1.0, 1.0)
+  strafe = clampf(float(control.move_s), -1.0, 1.0)
+
+  target = 0.0
+  if abs(float(strafe)) > float(PLAYER_STRAFE_INPUT_EPS) and abs(float(forward)) <= float(PLAYER_STRAFE_INPUT_EPS):
+    target = -float(strafe) * float(PLAYER_STRAFE_BODY_TURN_MAX_DEG)
+
+  if step <= 1e-6:
+    return
+  tau = max(1e-6, float(PLAYER_STRAFE_BODY_TURN_TAU_S))
+  alpha = 1.0 - math.exp(-float(step) / float(tau))
+  motion.strafe_turn_deg = float(motion.strafe_turn_deg) + (float(target) - float(motion.strafe_turn_deg)) * float(alpha)
+  if abs(float(motion.strafe_turn_deg)) <= 1e-4 and abs(float(target)) <= 1e-4:
+    motion.strafe_turn_deg = 0.0
+
+
 def _update_player_walk_phase(player: PlayerEntity, *, motion: PlayerMotionState, dt: float, walk_speed: float) -> bool:
   speed = math.hypot(float(player.velocity.x), float(player.velocity.z))
   if speed <= 1e-6:
@@ -159,6 +187,7 @@ def advance_runtime_player(
   player.clamp_pitch()
 
   _update_player_visual_animation(player, motion=motion, dt=float(dt))
+  _update_player_strafe_body_turn(motion=motion, control=control, dt=float(dt))
 
   if not bool(control.jump_held):
     player.hold_jump_queued = False

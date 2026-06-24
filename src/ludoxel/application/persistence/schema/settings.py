@@ -16,6 +16,12 @@ from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS
+from ludoxel.simulation.worlds.config.player_health import (
+  PLAYER_REGEN_DEFAULT_CAP_HP,
+  PLAYER_REGEN_DEFAULT_ENABLED,
+  PLAYER_REGEN_DEFAULT_START_DELAY_S,
+  PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S,
+)
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 
 
@@ -85,6 +91,11 @@ class PersistedSettings:
   fly_speed: float = float(DEFAULT_MOVEMENT_PARAMS.fly_speed)
   fly_ascend_speed: float = float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)
   fly_descend_speed: float = float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)
+
+  player_regen_enabled: bool = bool(PLAYER_REGEN_DEFAULT_ENABLED)
+  player_regen_start_delay_s: float = float(PLAYER_REGEN_DEFAULT_START_DELAY_S)
+  player_regen_cap_hp: float = float(PLAYER_REGEN_DEFAULT_CAP_HP)
+  player_regen_time_to_cap_s: float = float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S)
 
   render_distance_chunks: int = 6
   debug_shadow: bool = False
@@ -175,6 +186,10 @@ class PersistedSettings:
       "fly_speed": float(self.fly_speed),
       "fly_ascend_speed": float(self.fly_ascend_speed),
       "fly_descend_speed": float(self.fly_descend_speed),
+      "player_regen_enabled": bool(self.player_regen_enabled),
+      "player_regen_start_delay_s": float(self.player_regen_start_delay_s),
+      "player_regen_cap_hp": float(self.player_regen_cap_hp),
+      "player_regen_time_to_cap_s": float(self.player_regen_time_to_cap_s),
       "render_distance_chunks": int(self.render_distance_chunks),
       "debug_shadow": bool(self.debug_shadow),
       "vsync_on": bool(self.vsync_on),
@@ -250,6 +265,10 @@ class PersistedSettings:
       fly_speed=mapping_float(d, "fly_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_speed)),
       fly_ascend_speed=mapping_float(d, "fly_ascend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)),
       fly_descend_speed=mapping_float(d, "fly_descend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)),
+      player_regen_enabled=mapping_bool(d, "player_regen_enabled", bool(PLAYER_REGEN_DEFAULT_ENABLED)),
+      player_regen_start_delay_s=mapping_float(d, "player_regen_start_delay_s", float(PLAYER_REGEN_DEFAULT_START_DELAY_S)),
+      player_regen_cap_hp=mapping_float(d, "player_regen_cap_hp", float(PLAYER_REGEN_DEFAULT_CAP_HP)),
+      player_regen_time_to_cap_s=mapping_float(d, "player_regen_time_to_cap_s", float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S)),
       render_distance_chunks=int(rd),
       debug_shadow=mapping_bool(d, "debug_shadow", False),
       vsync_on=mapping_bool(d, "vsync_on", False),
