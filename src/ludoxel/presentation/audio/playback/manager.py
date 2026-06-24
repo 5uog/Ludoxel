@@ -39,7 +39,6 @@ from ludoxel.simulation.blocks.sounds.groups import DEFAULT_BLOCK_SOUND_GROUP, i
 from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.states.values import prop_as_bool
 
-
 _EFFECT_HEADROOM_REFERENCE_VOICES = 2
 _EFFECT_HEADROOM_MIN_GAIN = 0.50
 

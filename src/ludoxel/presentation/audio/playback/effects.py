@@ -49,9 +49,7 @@ def has_idle_voice(prepared: PreparedSource, *, now_s: float | None = None) -> b
   return any(slot_is_idle(slot, now_s=now) for slot in prepared.slots)
 
 
-def next_effect_slot(
-  *, parent, prepared: PreparedSource, desired_slots: int, configure_effect: Callable[[QSoundEffect], None] | None = None, now_s: float | None = None
-) -> EffectVoiceSlot | None:
+def next_effect_slot(*, parent, prepared: PreparedSource, desired_slots: int, configure_effect: Callable[[QSoundEffect], None] | None = None, now_s: float | None = None) -> EffectVoiceSlot | None:
   ensure_effect_slots(parent=parent, prepared=prepared, desired_slots=int(desired_slots), configure_effect=configure_effect)
   if not prepared.slots:
     return None
