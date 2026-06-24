@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import math
 import random
 from pathlib import Path
 
@@ -29,7 +30,7 @@ from ludoxel.presentation.audio.catalogs.player import (
   PLAYER_EVENT_SOUND_CATALOG,
 )
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
-from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
+from ludoxel.presentation.audio.playback.effects import active_voice_slots, admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
 from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal, spatial_distance_gain
 from ludoxel.presentation.audio.playback.mixer import PcmOneShotMixer
 from ludoxel.presentation.audio.playback.sources import PreparedSource, effect_voice_hold_s_for_url, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
@@ -38,6 +39,10 @@ from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.sounds.groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
 from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.states.values import prop_as_bool
+
+
+_POOLED_EFFECT_HEADROOM_OUTPUT_GAIN = 0.92
+_POOLED_EFFECT_HEADROOM_MIN_GAIN = 0.55
 
 
 class AudioManager(QObject):
@@ -215,10 +220,17 @@ class AudioManager(QObject):
       self._play_player_attack_event(event_name=normalized_event, position=position)
       return
 
+    self._play_player_event(event_name=normalized_event, position=position, attenuate=False)
+
+  def play_ai_player_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
+    self._play_player_event(event_name=str(event_name), position=position, attenuate=True)
+
+  def _play_player_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None, attenuate: bool = False) -> None:
+    normalized_event = str(event_name)
     pool = PLAYER_EVENT_SOUND_CATALOG.get(normalized_event)
     if pool is None:
       return
-    self._play_pool(pool_key=f"player_event:{normalized_event}", pool=pool, position=self._normalize_world_position(position))
+    self._play_pool(pool_key=f"player_event:{normalized_event}", pool=pool, position=self._normalize_world_position(position), attenuate=bool(attenuate))
 
   def _play_player_attack_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
     pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
@@ -427,23 +439,47 @@ class AudioManager(QObject):
   def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float, now_s: float | None = None):
     return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output, now_s=now_s)
 
+  def _active_effect_slots(self, *, now_s: float) -> tuple:
+    groups: list[PreparedSource] = []
+    for prepared_group in tuple(self._prepared_sources.values()):
+      groups.extend(tuple(prepared_group))
+    return active_voice_slots(tuple(groups), now_s=float(now_s))
+
+  @staticmethod
+  def _pooled_effect_headroom_gain(*, voice_count: int) -> float:
+    total = max(1, int(voice_count))
+    if total <= 1:
+      return 1.0
+    return max(float(_POOLED_EFFECT_HEADROOM_MIN_GAIN), float(_POOLED_EFFECT_HEADROOM_OUTPUT_GAIN) / math.sqrt(float(total)))
+
+  def _apply_pooled_effect_headroom(self, *, new_slot, requested_volume: float, now_s: float) -> None:
+    new_slot.requested_volume = max(0.0, min(1.0, float(requested_volume)))
+    active_slots = list(self._active_effect_slots(now_s=float(now_s)))
+    if all(slot is not new_slot for slot in active_slots):
+      active_slots.append(new_slot)
+    headroom = self._pooled_effect_headroom_gain(voice_count=len(active_slots))
+    for slot in tuple(active_slots):
+      requested = max(0.0, min(1.0, float(getattr(slot, "requested_volume", 0.0))))
+      if requested <= 1e-6:
+        continue
+      slot.effect.setVolume(float(requested) * float(headroom))
+
   def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3, attenuate: bool = False) -> bool:
-    base_volume = float(self._preferences.volume_for(pool.category))
-    if base_volume <= 1e-6:
+    final_volume = float(self._preferences.volume_for(pool.category))
+    if final_volume <= 1e-6:
       return False
-
-    if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
-      return False
-
-    if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
-      if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
-        return False
 
     if bool(attenuate) and bool(pool.spatial):
+      if float(pool.distance_cutoff) > 1e-6:
+        if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
+          return False
       distance_gain = self._spatial_distance_gain(position=position, cutoff=float(pool.distance_cutoff))
       if float(distance_gain) <= 1e-6:
         return False
-      base_volume = float(base_volume) * float(distance_gain)
+      final_volume = float(final_volume) * float(distance_gain)
+
+    if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+      return False
 
     prepared_sources = self._ensure_prepared_sources(str(pool_key), pool)
     if not prepared_sources:
@@ -451,7 +487,7 @@ class AudioManager(QObject):
 
     desired_slots = self._slot_budget_per_source(pool, source_count=len(prepared_sources))
     for prepared in tuple(prepared_sources):
-      self._ensure_effect_slots(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
+      self._ensure_effect_slots(prepared, desired_slots=int(desired_slots), base_volume=float(final_volume))
 
     now_s = effect_clock_s()
     idle_sources = [prepared for prepared in prepared_sources if has_idle_voice(prepared, now_s=now_s)]
@@ -462,11 +498,11 @@ class AudioManager(QObject):
     if prepared is None:
       return False
 
-    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), now_s=now_s)
+    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), base_volume=float(final_volume), now_s=now_s)
     if slot is None:
       return False
 
-    slot.effect.setVolume(float(base_volume))
+    self._apply_pooled_effect_headroom(new_slot=slot, requested_volume=float(final_volume), now_s=float(now_s))
     slot.effect.play()
     mark_slot_started(slot, prepared=prepared, now_s=now_s)
     return True

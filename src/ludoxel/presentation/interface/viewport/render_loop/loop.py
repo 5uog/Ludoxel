@@ -330,7 +330,7 @@ class ViewportRenderLoopMixin:
         position=(float(self._session.player.position.x), float(self._session.player.position.y) + float(self._session.player.eye_height) * 0.5, float(self._session.player.position.z)),
       )
     for position in tuple(step_result.ai_damage_sound_positions):
-      self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
+      self._audio.play_ai_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
     for ai_death_log in tuple(step_result.ai_death_logs):
       chat_controller.note_ai_death(self, ai_death_log)
 

@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-__version__ = "3.7.1"
+__version__ = "3.7.2b1"

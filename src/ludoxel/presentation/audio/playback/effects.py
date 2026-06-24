@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from PyQt6.QtMultimedia import QSoundEffect
 
@@ -42,6 +42,21 @@ def ensure_effect_slots(*, parent, prepared: PreparedSource, desired_slots: int,
 def slot_is_idle(slot: EffectVoiceSlot, *, now_s: float | None = None) -> bool:
   now = effect_clock_s() if now_s is None else float(now_s)
   return bool(slot.effect.isLoaded()) and (not bool(slot.effect.isPlaying())) and now >= float(slot.busy_until_s)
+
+
+def slot_is_active(slot: EffectVoiceSlot, *, now_s: float | None = None) -> bool:
+  now = effect_clock_s() if now_s is None else float(now_s)
+  return bool(slot.effect.isPlaying()) or now < float(slot.busy_until_s)
+
+
+def active_voice_slots(prepared_sources: Iterable[PreparedSource], *, now_s: float | None = None) -> tuple[EffectVoiceSlot, ...]:
+  now = effect_clock_s() if now_s is None else float(now_s)
+  slots: list[EffectVoiceSlot] = []
+  for prepared in tuple(prepared_sources):
+    for slot in tuple(prepared.slots):
+      if slot_is_active(slot, now_s=now):
+        slots.append(slot)
+  return tuple(slots)
 
 
 def has_idle_voice(prepared: PreparedSource, *, now_s: float | None = None) -> bool:

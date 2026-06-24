@@ -15,6 +15,20 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.2 Beta 1',
+    tags: ['Desktop Application', 'Audio', 'AI'],
+    sections: [
+      {
+        title: 'Audio Playback',
+        items: [
+          'Restored block, footstep, landing, damage, and Othello one-shot sounds to the prepared `QSoundEffect` pool instead of routing them through the PCM attack mixer, leaving `QAudioSink` mixing limited to weak and strong player attack swings.',
+          '`AudioManager._play_pool` now keeps listener-distance admission inside callers that explicitly request remote attenuation: AI block-action audio and AI damage-hit audio use `distance_cutoff` and `spatial_distance_gain`, while player block actions, footsteps, landings, local damage, attacks, and Othello feedback remain local playback requests.',
+          'Pooled `QSoundEffect` slots now keep the unscaled request volume on the slot and apply active-voice headroom across currently reserved one-shot slots before starting a new voice, reducing dense material and damage bursts without adding a streamed-output buffer or dropping an admitted event.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.1',
     tags: ['Desktop Application', 'AI', 'Audio', 'Rendering', 'Settings'],
     sections: [

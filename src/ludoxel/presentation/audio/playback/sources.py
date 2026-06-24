@@ -23,6 +23,7 @@ class EffectVoiceSlot:
   source_key: str
   started_at_s: float = 0.0
   busy_until_s: float = 0.0
+  requested_volume: float = 0.0
 
 
 @dataclass
