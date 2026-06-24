@@ -28,12 +28,12 @@ def admit_pool_play(*, pool_key: str, pool: AudioSamplePool, throttle_until_s: d
   return True
 
 
-def ensure_effect_slots(*, parent, prepared: PreparedSource, desired_slots: int, base_volume: float, configure_effect: Callable[[QSoundEffect], None] | None = None) -> None:
+def ensure_effect_slots(*, parent, prepared: PreparedSource, desired_slots: int, configure_effect: Callable[[QSoundEffect], None] | None = None) -> None:
   while len(prepared.slots) < int(desired_slots):
     effect = QSoundEffect(parent)
     effect.setLoopCount(1)
     effect.setSource(prepared.url)
-    effect.setVolume(float(base_volume))
+    effect.setVolume(0.0)
     if configure_effect is not None:
       configure_effect(effect)
     prepared.slots.append(EffectVoiceSlot(effect=effect, source_key=str(prepared.source_key)))
@@ -50,9 +50,9 @@ def has_idle_voice(prepared: PreparedSource, *, now_s: float | None = None) -> b
 
 
 def next_effect_slot(
-  *, parent, prepared: PreparedSource, desired_slots: int, base_volume: float, configure_effect: Callable[[QSoundEffect], None] | None = None, now_s: float | None = None
+  *, parent, prepared: PreparedSource, desired_slots: int, configure_effect: Callable[[QSoundEffect], None] | None = None, now_s: float | None = None
 ) -> EffectVoiceSlot | None:
-  ensure_effect_slots(parent=parent, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=configure_effect)
+  ensure_effect_slots(parent=parent, prepared=prepared, desired_slots=int(desired_slots), configure_effect=configure_effect)
   if not prepared.slots:
     return None
 

@@ -312,10 +312,10 @@ class ViewportRenderLoopMixin:
 
     for break_event in tuple(step_result.gravity_broken_blocks):
       effects_controller.spawn_break_effect(self, block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
-      self._audio.play_interaction(action="break", block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
+      self._audio.play_remote_interaction(action="break", block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
 
     for ai_block_sound in tuple(step_result.ai_block_sound_events):
-      self._audio.play_ai_interaction(action=str(ai_block_sound.action), block_state=str(ai_block_sound.block_state), position=tuple(int(value) for value in ai_block_sound.position))
+      self._audio.play_remote_interaction(action=str(ai_block_sound.action), block_state=str(ai_block_sound.block_state), position=tuple(int(value) for value in ai_block_sound.position))
 
     if bool(step_result.footstep_triggered):
       self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
@@ -325,12 +325,9 @@ class ViewportRenderLoopMixin:
         event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks)
       )
     if bool(step_result.play_damage_sound):
-      self._audio.play_player_event(
-        event_name=PLAYER_EVENT_DAMAGE_HIT,
-        position=(float(self._session.player.position.x), float(self._session.player.position.y) + float(self._session.player.eye_height) * 0.5, float(self._session.player.position.z)),
-      )
+      self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT)
     for position in tuple(step_result.ai_damage_sound_positions):
-      self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
+      self._audio.play_remote_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(float(value) for value in position))
     for ai_death_log in tuple(step_result.ai_death_logs):
       chat_controller.note_ai_death(self, ai_death_log)
 

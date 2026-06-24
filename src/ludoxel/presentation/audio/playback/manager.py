@@ -30,7 +30,7 @@ from ludoxel.presentation.audio.catalogs.player import (
 )
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
 from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
-from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, normalize_world_position, pose_almost_equal, spatial_distance_gain
+from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, pose_almost_equal, spatial_distance_gain
 from ludoxel.presentation.audio.playback.mixer import PcmOneShotMixer
 from ludoxel.presentation.audio.playback.sources import PreparedSource, effect_voice_hold_s_for_url, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
 from ludoxel.presentation.audio.types.events import SELECTION_ROUND_ROBIN, AudioSamplePool
@@ -38,6 +38,10 @@ from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.sounds.groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
 from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.states.values import prop_as_bool
+
+
+_EFFECT_HEADROOM_REFERENCE_VOICES = 2
+_EFFECT_HEADROOM_MIN_GAIN = 0.50
 
 
 class AudioManager(QObject):
@@ -110,16 +114,6 @@ class AudioManager(QObject):
     if self._ambient_effect is not None:
       self._ambient_effect.setVolume(float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)))
 
-    for pool_key, prepared_group in self._prepared_sources.items():
-      pool = self._pool_specs.get(str(pool_key))
-      if pool is None:
-        continue
-
-      base_volume = float(self._preferences.volume_for(pool.category))
-      for prepared in tuple(prepared_group):
-        for slot in tuple(prepared.slots):
-          slot.effect.setVolume(base_volume)
-
     self._sync_ambient_sound()
 
   def prime_effects(self) -> None:
@@ -134,9 +128,8 @@ class AudioManager(QObject):
       if not prepared_sources:
         continue
 
-      base_volume = float(self._preferences.volume_for(pool.category))
       for prepared in tuple(prepared_sources):
-        self._ensure_effect_slots(prepared, desired_slots=int(prepared.desired_slots), base_volume=float(base_volume))
+        self._ensure_effect_slots(prepared, desired_slots=int(prepared.desired_slots))
 
     self._effects_primed = True
 
@@ -154,73 +147,81 @@ class AudioManager(QObject):
     self._ambient_enabled = bool(enabled)
     self._sync_ambient_sound()
 
-  def play_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None, attenuate: bool = False) -> None:
-    if action is None or block_state is None or position is None:
+  def play_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None = None) -> None:
+    del position
+    resolved = self._resolve_block_action(action=action, block_state=block_state)
+    if resolved is None:
       return
 
-    sound_group = self.sound_group_for_block_state(str(block_state))
+    action_name, sound_group = resolved
+    self.play_block_action(action=str(action_name), sound_group=str(sound_group))
 
-    if action == "interact":
-      _base_id, props = parse_state(str(block_state))
-      is_open = prop_as_bool(props, "open", False)
-      action = BLOCK_EVENT_INTERACT_OPEN if bool(is_open) else BLOCK_EVENT_INTERACT_CLOSE
-
-    if action in {BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_INTERACT_CLOSE}:
-      self.play_block_action(action=str(action), sound_group=sound_group, position=tuple(position), attenuate=bool(attenuate))
+  def play_remote_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None) -> None:
+    if position is None:
       return
 
-    if action in {BLOCK_EVENT_PLACE, BLOCK_EVENT_BREAK}:
-      self.play_block_action(action=str(action), sound_group=sound_group, position=tuple(position), attenuate=bool(attenuate))
+    resolved = self._resolve_block_action(action=action, block_state=block_state)
+    if resolved is None:
+      return
 
-  def play_ai_interaction(self, *, action: str | None, block_state: str | None, position: tuple[int, int, int] | None) -> None:
-    self.play_interaction(action=action, block_state=block_state, position=position, attenuate=True)
+    action_name, sound_group = resolved
+    self.play_remote_block_action(action=str(action_name), sound_group=str(sound_group), position=tuple(position))
 
-  def play_block_action(self, *, action: str, sound_group: str, position: tuple[int, int, int], attenuate: bool = False) -> None:
+  def play_block_action(self, *, action: str, sound_group: str, position: tuple[int, int, int] | None = None) -> None:
+    del position
+    self._play_block_action_local(action=str(action), sound_group=str(sound_group))
+
+  def play_remote_block_action(self, *, action: str, sound_group: str, position: tuple[int, int, int]) -> None:
     world_position = self._block_center(tuple(position))
+    self._play_block_action_remote(action=str(action), sound_group=str(sound_group), position=world_position)
 
-    for candidate_group in iter_sound_group_candidates(str(sound_group)):
-      group_catalog = BLOCK_SOUND_CATALOG.get(str(candidate_group))
-      pool = None if group_catalog is None else group_catalog.get(str(action))
-      if pool is None:
-        continue
-      # The first candidate group that defines a pool for this action owns the
-      # sound. A momentarily exhausted voice budget on that pool must not fall
-      # through to a different material's pool, so the resolved material is the
-      # only one attempted regardless of whether a voice is currently free.
-      self._play_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool, position=world_position, attenuate=bool(attenuate))
-      return
-
-  def play_surface_event(self, *, event_name: str, support_block_state: str | None, position: tuple[int, int, int] | None, fall_distance_blocks: float | None = None) -> None:
-    if support_block_state is None or position is None:
+  def play_surface_event(self, *, event_name: str, support_block_state: str | None, position: tuple[int, int, int] | None = None, fall_distance_blocks: float | None = None) -> None:
+    del position
+    if support_block_state is None:
       return
 
     sound_group = self.sound_group_for_block_state(str(support_block_state))
-    world_position = self._block_center(tuple(position))
 
     if str(event_name) == PLAYER_EVENT_LAND:
-      self._play_landing_event(sound_group=sound_group, position=world_position, fall_distance_blocks=fall_distance_blocks)
+      self._play_landing_event(sound_group=sound_group, fall_distance_blocks=fall_distance_blocks)
       return
 
     if str(event_name) != PLAYER_EVENT_STEP:
       return
 
-    self._play_surface_step(sound_group=sound_group, position=world_position)
+    self._play_surface_step(sound_group=sound_group)
 
-  def play_othello_event(self, *, event_name: str, position: tuple[float, float, float]) -> None:
-    self.play_player_event(event_name=str(event_name), position=tuple(position))
+  def play_othello_event(self, *, event_name: str, position: tuple[float, float, float] | None = None) -> None:
+    del position
+    self.play_player_event(event_name=str(event_name))
 
   def play_player_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
+    del position
     normalized_event = str(event_name)
     if normalized_event in {PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_ATTACK_STRONG}:
-      self._play_player_attack_event(event_name=normalized_event, position=position)
+      self._play_player_attack_event(event_name=normalized_event)
       return
 
     pool = PLAYER_EVENT_SOUND_CATALOG.get(normalized_event)
     if pool is None:
       return
-    self._play_pool(pool_key=f"player_event:{normalized_event}", pool=pool, position=self._normalize_world_position(position))
+    self._play_local_pool(pool_key=f"player_event:{normalized_event}", pool=pool)
 
-  def _play_player_attack_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None = None) -> None:
+  def play_remote_player_event(self, *, event_name: str, position: tuple[float, float, float] | Vec3 | None) -> None:
+    normalized_event = str(event_name)
+    if normalized_event in {PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_ATTACK_STRONG}:
+      return
+
+    world_position = self._coerce_world_position(position)
+    if world_position is None:
+      return
+
+    pool = PLAYER_EVENT_SOUND_CATALOG.get(normalized_event)
+    if pool is None:
+      return
+    self._play_remote_pool(pool_key=f"player_event:{normalized_event}", pool=pool, position=world_position)
+
+  def _play_player_attack_event(self, *, event_name: str) -> None:
     pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
     if pool is None:
       return
@@ -233,10 +234,6 @@ class AudioManager(QObject):
     if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
       return
 
-    if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
-      if not self._listener_within_cutoff(position=self._normalize_world_position(position), cutoff=float(pool.distance_cutoff)):
-        return
-
     urls = self._resolved_urls.get(str(pool_key))
     if urls is None:
       urls = self._resolve_existing_urls(pool)
@@ -245,6 +242,23 @@ class AudioManager(QObject):
     self._player_attack_mixer.play(
       urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random
     )
+
+  def _resolve_block_action(self, *, action: str | None, block_state: str | None) -> tuple[str, str] | None:
+    if action is None or block_state is None:
+      return None
+
+    resolved_action = str(action)
+    sound_group = self.sound_group_for_block_state(str(block_state))
+
+    if resolved_action == "interact":
+      _base_id, props = parse_state(str(block_state))
+      is_open = prop_as_bool(props, "open", False)
+      resolved_action = BLOCK_EVENT_INTERACT_OPEN if bool(is_open) else BLOCK_EVENT_INTERACT_CLOSE
+
+    if resolved_action in {BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_INTERACT_CLOSE, BLOCK_EVENT_PLACE, BLOCK_EVENT_BREAK}:
+      return (str(resolved_action), str(sound_group))
+
+    return None
 
   def sound_group_for_block_state(self, block_state_or_id: str) -> str:
     base_id, _props = parse_state(str(block_state_or_id))
@@ -348,27 +362,53 @@ class AudioManager(QObject):
 
     return None
 
-  def _play_landing_event(self, *, sound_group: str, position: Vec3, fall_distance_blocks: float | None) -> None:
+  def _play_landing_event(self, *, sound_group: str, fall_distance_blocks: float | None) -> None:
     event_name = self._landing_event_name(fall_distance_blocks)
 
     if event_name is None:
-      self._play_surface_step(sound_group=str(sound_group), position=position)
+      self._play_surface_step(sound_group=str(sound_group))
       return
 
     pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
     if pool is None:
       return
 
-    self._play_pool(pool_key=f"player_event:{event_name}", pool=pool, position=position)
+    self._play_local_pool(pool_key=f"player_event:{event_name}", pool=pool)
 
-  def _play_surface_step(self, *, sound_group: str, position: Vec3) -> None:
+  def _play_surface_step(self, *, sound_group: str) -> None:
     for candidate_group in iter_sound_group_candidates(str(sound_group)):
       group_catalog = PLAYER_SURFACE_SOUND_CATALOG.get(str(candidate_group))
       pool = None if group_catalog is None else group_catalog.get(PLAYER_EVENT_STEP)
       if pool is None:
         continue
-      if self._play_pool(pool_key=f"player:{candidate_group}:{PLAYER_EVENT_STEP}", pool=pool, position=position):
+      if self._play_local_pool(pool_key=f"player:{candidate_group}:{PLAYER_EVENT_STEP}", pool=pool):
         return
+
+  def _play_block_action_local(self, *, action: str, sound_group: str) -> None:
+    for candidate_group in iter_sound_group_candidates(str(sound_group)):
+      group_catalog = BLOCK_SOUND_CATALOG.get(str(candidate_group))
+      pool = None if group_catalog is None else group_catalog.get(str(action))
+      if pool is None:
+        continue
+      # The first candidate group that defines a pool for this action owns the
+      # sound. A momentarily exhausted voice budget on that pool must not fall
+      # through to a different material's pool, so the resolved material is the
+      # only one attempted regardless of whether a voice is currently free.
+      self._play_local_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool)
+      return
+
+  def _play_block_action_remote(self, *, action: str, sound_group: str, position: Vec3) -> None:
+    for candidate_group in iter_sound_group_candidates(str(sound_group)):
+      group_catalog = BLOCK_SOUND_CATALOG.get(str(candidate_group))
+      pool = None if group_catalog is None else group_catalog.get(str(action))
+      if pool is None:
+        continue
+      # The first candidate group that defines a pool for this action owns the
+      # sound. A momentarily exhausted voice budget on that pool must not fall
+      # through to a different material's pool, so the resolved material is the
+      # only one attempted regardless of whether a voice is currently free.
+      self._play_remote_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool, position=position)
+      return
 
   def _pose_almost_equal(self, left: tuple[float, float, float, float, float, float], right: tuple[float, float, float, float, float, float]) -> bool:
     return pose_almost_equal(left, right, linear_epsilon=float(self._listener_linear_epsilon), angular_epsilon_deg=float(self._listener_angular_epsilon_deg))
@@ -376,8 +416,13 @@ class AudioManager(QObject):
   def _block_center(self, position: tuple[int, int, int]) -> Vec3:
     return block_center(position)
 
-  def _normalize_world_position(self, position: tuple[float, float, float] | Vec3 | None) -> Vec3:
-    return normalize_world_position(position, listener_pose=self._listener_pose)
+  @staticmethod
+  def _coerce_world_position(position: tuple[float, float, float] | Vec3 | None) -> Vec3 | None:
+    if position is None:
+      return None
+    if isinstance(position, Vec3):
+      return Vec3(float(position.x), float(position.y), float(position.z))
+    return Vec3(float(position[0]), float(position[1]), float(position[2]))
 
   def _build_source_cache(self) -> None:
     for pool_key, pool in self._pool_specs.items():
@@ -421,29 +466,60 @@ class AudioManager(QObject):
   def _slot_budget_per_source(pool: AudioSamplePool, *, source_count: int) -> int:
     return slot_budget_per_source(pool, source_count=int(source_count))
 
-  def _ensure_effect_slots(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float) -> None:
-    ensure_effect_slots(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output)
+  def _ensure_effect_slots(self, prepared: PreparedSource, *, desired_slots: int) -> None:
+    ensure_effect_slots(parent=self, prepared=prepared, desired_slots=int(desired_slots), configure_effect=self._configure_effect_for_audio_output)
 
-  def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, base_volume: float, now_s: float | None = None):
-    return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), configure_effect=self._configure_effect_for_audio_output, now_s=now_s)
+  def _next_effect_slot(self, prepared: PreparedSource, *, desired_slots: int, now_s: float | None = None):
+    return next_effect_slot(parent=self, prepared=prepared, desired_slots=int(desired_slots), configure_effect=self._configure_effect_for_audio_output, now_s=now_s)
 
-  def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3, attenuate: bool = False) -> bool:
-    base_volume = float(self._preferences.volume_for(pool.category))
-    if base_volume <= 1e-6:
+  @staticmethod
+  def _active_effect_voice_count(prepared_sources: tuple[PreparedSource, ...], *, now_s: float) -> int:
+    active = 0
+    for prepared in tuple(prepared_sources):
+      for slot in tuple(prepared.slots):
+        if bool(slot.effect.isPlaying()) or float(now_s) < float(slot.busy_until_s):
+          active += 1
+    return int(active)
+
+  @staticmethod
+  def _apply_active_voice_headroom(volume: float, *, active_voice_count: int) -> float:
+    request_volume = max(0.0, min(1.0, float(volume)))
+    voices_after_start = int(active_voice_count) + 1
+    if voices_after_start <= int(_EFFECT_HEADROOM_REFERENCE_VOICES):
+      return float(request_volume)
+
+    ratio = float(_EFFECT_HEADROOM_REFERENCE_VOICES) / float(max(1, voices_after_start))
+    headroom = max(float(_EFFECT_HEADROOM_MIN_GAIN), float(ratio**0.5))
+    return float(request_volume) * float(headroom)
+
+  def _play_local_pool(self, *, pool_key: str, pool: AudioSamplePool) -> bool:
+    request_volume = float(self._preferences.volume_for(pool.category))
+    return self._play_effect_pool(pool_key=str(pool_key), pool=pool, request_volume=float(request_volume))
+
+  def _play_remote_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3) -> bool:
+    if self._listener_pose is None:
       return False
 
-    if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+    request_volume = float(self._preferences.volume_for(pool.category))
+    if request_volume <= 1e-6:
       return False
 
     if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
       if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
         return False
-
-    if bool(attenuate) and bool(pool.spatial):
       distance_gain = self._spatial_distance_gain(position=position, cutoff=float(pool.distance_cutoff))
       if float(distance_gain) <= 1e-6:
         return False
-      base_volume = float(base_volume) * float(distance_gain)
+      request_volume = float(request_volume) * float(distance_gain)
+
+    return self._play_effect_pool(pool_key=str(pool_key), pool=pool, request_volume=float(request_volume))
+
+  def _play_effect_pool(self, *, pool_key: str, pool: AudioSamplePool, request_volume: float) -> bool:
+    if float(request_volume) <= 1e-6:
+      return False
+
+    if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+      return False
 
     prepared_sources = self._ensure_prepared_sources(str(pool_key), pool)
     if not prepared_sources:
@@ -451,7 +527,7 @@ class AudioManager(QObject):
 
     desired_slots = self._slot_budget_per_source(pool, source_count=len(prepared_sources))
     for prepared in tuple(prepared_sources):
-      self._ensure_effect_slots(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume))
+      self._ensure_effect_slots(prepared, desired_slots=int(desired_slots))
 
     now_s = effect_clock_s()
     idle_sources = [prepared for prepared in prepared_sources if has_idle_voice(prepared, now_s=now_s)]
@@ -462,11 +538,13 @@ class AudioManager(QObject):
     if prepared is None:
       return False
 
-    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), base_volume=float(base_volume), now_s=now_s)
+    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), now_s=now_s)
     if slot is None:
       return False
 
-    slot.effect.setVolume(float(base_volume))
+    active_voice_count = self._active_effect_voice_count(tuple(prepared_sources), now_s=now_s)
+    final_volume = self._apply_active_voice_headroom(float(request_volume), active_voice_count=int(active_voice_count))
+    slot.effect.setVolume(float(final_volume))
     slot.effect.play()
     mark_slot_started(slot, prepared=prepared, now_s=now_s)
     return True

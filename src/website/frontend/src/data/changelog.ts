@@ -15,6 +15,21 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.2 Beta 1',
+    tags: ['Desktop Application', 'Audio'],
+    sections: [
+      {
+        title: 'Pooled Sound Playback Gain',
+        items: [
+          'Reused pooled `QSoundEffect` voices now receive the playback request gain immediately before `play()`. Slot preparation keeps only fixed effect setup, so a reused voice cannot retain a previous remote distance gain or a previous full-volume local request.',
+          'Remote world sound events keep the shared listener cutoff and distance gain route. AI block actions, AI damage-hit positions, player hits on AI targets, and gravity-broken block sounds now enter the remote playback entrance with a required world position and cached listener pose before a pooled slot is used.',
+          'Player local feedback remains outside distance attenuation. Player block placement, breaking, interaction, footsteps, landing, local damage, and Othello feedback use the local playback entrance, so a target or board position does not make immediate player feedback quieter or silent.',
+          'Material one-shot playback remains on immediate prepared `QSoundEffect` slots. The existing PCM mixer remains scoped to weak and strong attack feedback, and block, material, footstep, landing, damage, and Othello one-shots are not moved onto the `QAudioSink` stream path.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.1',
     tags: ['Desktop Application', 'AI', 'Audio', 'Rendering', 'Settings'],
     sections: [

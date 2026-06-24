@@ -427,7 +427,7 @@ def _perform_left_click(viewport: "RendererViewportWidget"):
   if bool(attack_success):
     viewport._audio.play_player_event(event_name=PLAYER_EVENT_ATTACK_STRONG)
     if attack_result is not None and attack_result.target_position is not None:
-      viewport._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(attack_result.target_position))
+      viewport._audio.play_remote_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT, position=tuple(attack_result.target_position))
     if attack_result is not None and attack_result.target_death_log is not None:
       player_name = str(viewport._state.resolved_player_name).strip() or "Player"
       chat_controller.note_ai_death(viewport, attack_result.target_death_log, killer_name=player_name)
