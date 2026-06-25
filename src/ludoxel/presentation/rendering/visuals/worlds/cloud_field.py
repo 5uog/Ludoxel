@@ -197,22 +197,25 @@ class CloudField:
       hx = b.size.x * 0.5
       hy = b.size.y * 0.5
       hz = b.size.z * 0.5
-      r = math.sqrt(hx * hx + hy * hy + hz * hz)
 
       v = c_world - eye
       z = v.dot(forward)
+      extent_z = abs(float(forward.x)) * float(hx) + abs(float(forward.y)) * float(hy) + abs(float(forward.z)) * float(hz)
 
-      if z <= 0.0:
+      if z + extent_z <= 0.0:
         continue
-      if z - r > float(z_far):
+      if z - extent_z > float(z_far):
         continue
 
       x = v.dot(right)
       y = v.dot(up)
+      extent_x = abs(float(right.x)) * float(hx) + abs(float(right.y)) * float(hy) + abs(float(right.z)) * float(hz)
+      extent_y = abs(float(up.x)) * float(hx) + abs(float(up.y)) * float(hy) + abs(float(up.z)) * float(hz)
+      farthest_visible_z = max(float(z + extent_z), 0.0)
 
-      if abs(x) > (z * tan_x + r):
+      if abs(float(x)) - extent_x > farthest_visible_z * tan_x:
         continue
-      if abs(y) > (z * tan_y + r):
+      if abs(float(y)) - extent_y > farthest_visible_z * tan_y:
         continue
 
       out.append(b)

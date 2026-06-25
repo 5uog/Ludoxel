@@ -675,7 +675,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Binding resolution is separate from capture. `ViewportInput` in `src/ludoxel/presentation/interface/input/game_input.py` owns mouse capture, cursor warping, relative-delta polling, and the override-cursor synchronisation. On macOS it installs the keyboard event tap `MacosGameplayInputGuard` in `src/ludoxel/presentation/interface/input/macos_guard.py`, a Core Graphics tap that intercepts hardware key events and re-dispatches them to the native key handler while capture is active, swallowing the operating-system event. On other platforms that guard is absent and Qt key events flow directly through the adapter.',
+            text: 'Binding resolution is separate from capture. `ViewportInput` in `src/ludoxel/presentation/interface/input/game_input.py` owns mouse capture, cursor warping, relative-delta polling, and the override-cursor synchronisation. Its reset path clears the pressed keys, accumulated mouse delta, pending macOS relative delta, and capture-resume guard state. When gameplay capture is reacquired after an overlay, it clears stale delta, recenters once when native relative mode is unavailable, rejects center-position recenter events through the ordinary near-center threshold, and accepts the next real movement as gameplay input. On macOS it installs the keyboard event tap `MacosGameplayInputGuard` in `src/ludoxel/presentation/interface/input/macos_guard.py`, a Core Graphics tap that intercepts hardware key events and re-dispatches them to the native key handler while capture is active, swallowing the operating-system event. On other platforms that guard is absent and Qt key events flow directly through the adapter.',
           },
           {
             kind: 'note',
@@ -708,7 +708,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
-            text: 'Every transition calls `self._inp.reset` to clear the pressed-key set, and the modal transitions release mouse capture. `_resume_gameplay` and its deferred form re-acquire capture, restart the runner, and re-raise the gameplay HUD only when no overlay remains. The state machine is the single owner of which overlay is active and what happens to input when it becomes active.',
+            text: 'Every transition calls `self._inp.reset` to clear the pressed-key set, accumulated mouse delta, pending macOS relative delta, and capture-resume guard state, and the modal transitions release mouse capture. `_resume_gameplay` and its deferred form re-acquire capture, restart the runner, and re-raise the gameplay HUD only when no overlay remains. The capture reacquisition uses the post-close cursor baseline, so movement gathered while an overlay was active is discarded before camera input resumes.',
           },
         ],
       },
@@ -744,7 +744,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The inventory overlay is absent from the stepping gate. `set_inventory_open` releases mouse capture and resets the input adapter, leaving the player with no movement or look input; `inventory_open` is outside the gate conditions. Gravity, falling blocks, and AI actors continue advancing while the inventory is open, with neutralized input holding the player still.',
+            text: 'The inventory overlay is absent from the stepping gate. `set_inventory_open` releases mouse capture and resets the input adapter, clearing pressed keys, accumulated mouse delta, and capture-resume guards while leaving the player with no movement or look input; `inventory_open` is outside the gate conditions. Closing the overlay reacquires capture from the post-close cursor baseline. Gravity, falling blocks, and AI actors continue advancing while the inventory is open, with neutralized input holding the player still.',
           },
           {
             kind: 'list',
@@ -752,7 +752,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
             items: [
               'Pause, death, settings, Othello settings, the AI settings flag, a transient modal, and loading freeze the simulation: the runner is not updated and no step runs.',
               'The inventory overlay continues the simulation but neutralizes input by releasing capture and clearing the pressed-key set.',
-              'Every modal transition resets input; modal transitions release capture, and resuming gameplay re-acquires capture and restarts the runner.',
+              'Every modal transition resets input; modal transitions release capture, and resuming gameplay re-acquires capture from a fresh cursor baseline and restarts the runner.',
             ],
           },
           {
@@ -771,6 +771,10 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           {
             kind: 'paragraph',
             text: '`_gameplay_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay, chat, or HUD-hidden state removes the gameplay surface. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`route_overlay_paths` in `src/ludoxel/presentation/interface/viewport/controllers/ai.py` builds overlay paths from the active session route snapshots and the draft route-edit points, while `RouteOverlayWidget` in `src/ludoxel/presentation/interface/hud/route_overlay.py` owns the final screen projection. Point markers are projected individually. Line drawing clips each route segment against the conservative view volume before screen conversion, so a segment remains visible while any part of it crosses the viewport and is skipped only when the whole segment is outside the overlay bounds.',
           },
         ],
       },
@@ -893,7 +897,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
+            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `CloudPass.draw` obtains visible cloud boxes from `CloudField.visible_boxes`, whose culler tests the shifted box extents against the view and skips only volumes confirmed outside the camera bounds. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
           },
           {
             kind: 'note',
@@ -959,7 +963,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
         content: [
           {
             kind: 'paragraph',
-            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. Fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The frame is drawn in the same sequence as the OpenGL pipeline.',
+            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. `CloudField.visible_boxes` shifts each cloud lane, projects the full box extents against the camera basis, and returns a cloud unless the full rendered volume lies outside the conservative view bounds. Cloud visibility, fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The frame is drawn in the same sequence as the OpenGL pipeline.',
           },
           {
             kind: 'list',
@@ -2216,7 +2220,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.2"`,
+            code: `__version__ = "3.7.3 Beta 1"`,
           },
           {
             kind: 'note',
@@ -2694,14 +2698,14 @@ def recent_display_messages(self, count: int) -> tuple[ChatMessage, ...]:
         content: [
           {
             kind: 'paragraph',
-            text: 'A presentation `QTimer` in `ChatController` fires on the application-defined interval and calls `ChatRuntime.add_support_message`. The interval and the message body are owned by `src/ludoxel/application/chat/support.py`, which appends one information message carrying a single trusted link span. The `5uog` token is the only span that opens an external URL, routed through the Qt desktop URL service in `ChatController._on_link_activated`; the rest of the message text carries no link.',
+            text: 'A presentation `QTimer` in `ChatController` fires every 600 seconds and calls `ChatRuntime.add_support_message`. The interval and the message body are owned by `src/ludoxel/application/chat/support.py`, which appends one information message carrying a single trusted link span. The displayed callout reads `Support the creator: 5uog`. The `5uog` token is the only span that opens an external URL, routed through the Qt desktop URL service in `ChatController._on_link_activated`; the rest of the message text carries no link.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/chat/support.py',
-            code: `SUPPORT_INTERVAL_S: float = 120.0
-SUPPORT_MESSAGE_TEXT: str = "§6[§e!§6] §7Project support: 5uog"
+            code: `SUPPORT_INTERVAL_S: float = 600.0
+SUPPORT_MESSAGE_TEXT: str = "§6[§e!§6] §7Support the creator: 5uog"
 SUPPORT_LINK_LABEL: str = "5uog"
 SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
           },

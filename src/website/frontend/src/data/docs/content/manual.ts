@@ -1436,16 +1436,14 @@ self._w.grabKeyboard()`,
         title: 'The Cursor Is Recentered to Produce Deltas',
         body: [
           'On the non-native path, capture works by warping the cursor back to the viewport center and measuring how far it moved before each warp. The offset from center becomes the look delta, and recentering keeps the pointer from reaching a screen edge.',
-          'Right after enabling capture, a short settling window ignores the first cursor moves so the initial warp does not register as a large jump. This is the capture-sync-pending state, which clears once the cursor reports stable, near-center positions.',
-          '`_warp_cursor_to_center` marks a 25 ms ignore window and reserves two mouse-move events before using `MacosCursorWarp` or `QCursor.setPos`. `poll_relative_mouse_delta` clears accumulated delta while synchronization is pending, counts near-center polls, and enables regular offset collection after two stable polls. The settling gate removes synthetic recentering movement from the gameplay delta stream.',
+          'Before gameplay capture resumes, `reset` clears the pressed keys, accumulated mouse delta, pending macOS relative delta, and capture-resume guard state. Capture then recenters once when native relative mode is unavailable, and the ordinary near-center threshold rejects recenter events at the new baseline. Movement gathered while an overlay was open is discarded before the camera receives another delta.',
+          '`_warp_cursor_to_center` uses `MacosCursorWarp` or `QCursor.setPos` without installing a time-based settling window, an event-count gate, or a two-poll capture-sync gate. The first real movement after the recenter becomes the new look delta source.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'A warp recenters the cursor and briefly ignores the resulting moves.',
+            caption: 'A warp recenters the cursor without arming an input-delay gate.',
             code: `def _warp_cursor_to_center(self) -> None:
-  self._ignore_mouse_move_until_s = max(float(self._ignore_mouse_move_until_s), float(time.perf_counter()) + 0.025)
-  self._ignore_mouse_move_events = max(int(self._ignore_mouse_move_events), 2)
   center = self._center_global()
   warped = False
   if self._macos_cursor_warp is not None:
@@ -1467,12 +1465,12 @@ self._w.grabKeyboard()`,
           {
             language: 'py',
             caption: 'Native relative capture is tried first; warping is the fallback.',
-            code: `self._a.clear_mouse_delta()
+            code: `self._clear_capture_resume_guard()
+self._a.clear_mouse_delta()
 center = self._center_global()
 native_relative = bool(self._macos_relative_mouse is not None and self._macos_relative_mouse.begin(x=int(center.x()), y=int(center.y())))
 if not bool(native_relative):
-  self._warp_cursor_to_center()
-self._capture_sync_pending = not bool(native_relative)`,
+  self._warp_cursor_to_center()`,
           },
         ],
       },
@@ -1504,7 +1502,7 @@ if self._macos_input_guard is not None:
         body: [
           'While captured, the relative delta is polled each frame. On the native path it reads accumulated relative movement; on the warp path it measures the cursor offset from center, adds it to the input adapter, and warps back. The captured-move event handler feeds the same adapter when Qt delivers move events.',
           'The poll re-applies the capture state every frame, which keeps focus, the hidden cursor, and the grabs in place even if the window manager tried to change them, so capture stays stable during continuous play.',
-          '`poll_relative_mouse_delta` chooses one producer per call: an active native capture drains `MacosRelativeMouseCapture`, pending synchronization discards movement and recenters, and the normal path measures `QCursor.pos()` against `_center_global()`. `on_captured_mouse_move` feeds the same adapter for accepted Qt move events after ignore gates expire. Both producers converge at `QtInputAdapter.add_mouse_delta`; neither producer changes player yaw directly.',
+          '`poll_relative_mouse_delta` chooses one producer per call: an active native capture drains `MacosRelativeMouseCapture`, and the normal warp path measures `QCursor.pos()` against `_center_global()`. A retained pending-sync branch can discard movement and recenter if explicitly armed, but the ordinary overlay-close resume path clears that guard before capture returns. `on_captured_mouse_move` feeds the same adapter for accepted Qt move events once their offset is outside the near-center threshold. Both producers converge at `QtInputAdapter.add_mouse_delta`; neither producer changes player yaw directly.',
         ],
         codeBlocks: [
           {

@@ -15,6 +15,27 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.3 Beta 1',
+    tags: ['Desktop Application', 'AI', 'Chat', 'Input', 'Rendering'],
+    sections: [
+      {
+        title: 'Conservative Visibility Bounds',
+        items: [
+          'Cloud visibility now tests the shifted cloud box extents against the camera frustum. OpenGL and WGPU consume the same `CloudField.visible_boxes` result, and the shared culler skips a box only when the full rendered volume lies outside the view.',
+          'AI route overlays now clip each route segment against the view volume before drawing it. A segment stays visible while any part of it crosses the screen, even when an endpoint is outside the viewport.',
+        ],
+      },
+      {
+        title: 'Support Callout and Input Resume',
+        items: [
+          'Changed the periodic support callout from `Project support: 5uog` to `Support the creator: 5uog`, keeping only the `5uog` span linked to `https://github.com/5uog/` through the existing chat link activation path.',
+          'Changed the support callout cadence from 120 seconds to 600 seconds.',
+          'Closing inventory, pause, chat, settings, AI settings, or a transient dialog now clears accumulated mouse delta and restores camera capture from the post-close cursor baseline. The first movement after capture resumes is admitted as the new gameplay delta source.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.2',
     tags: ['Desktop Application', 'Audio', 'Inventory'],
     sections: [
