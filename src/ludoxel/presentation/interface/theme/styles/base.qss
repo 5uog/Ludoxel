@@ -9,6 +9,25 @@ QMainWindow {
   background: #101010;
 }
 
+QWidget#gameScreen,
+QFrame#loadingOverlay,
+QFrame#startupSplash {
+  background: #121212;
+}
+
+QLabel#loadingTitle,
+QLabel#startupTitle {
+  color: #f4f4f4;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+QLabel#loadingStatus,
+QLabel#startupStatus {
+  color: #c8c8c8;
+  font-size: 14px;
+}
+
 QToolTip {
   color: #ffffff;
   background: #1e1e1e;
@@ -18,4 +37,3 @@ QToolTip {
   border-bottom: 2px solid #0a0a0a;
   padding: 6px 8px;
 }
-

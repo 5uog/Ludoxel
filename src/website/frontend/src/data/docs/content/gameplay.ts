@@ -1042,17 +1042,17 @@ def _paint_heart_strip(painter, *, x, y, health, max_health):
         id: 'reading-ai-nametags-and-health-composite',
         title: 'The Tag Is One Composite Image',
         body: [
-          'The name and hearts form one base pixmap. The composite is rebuilt only when the content key — name, health, max health, and indicator — changes, leaving an unchanged tag outside the redraw path.',
+          'The name and hearts form one base pixmap. The composite is rebuilt only when the content key — name, health, max health, indicator, and route-owner name color — changes, leaving an unchanged tag outside the redraw path.',
           'A stationary AI’s tag therefore costs almost nothing per frame: the composite image is cached, and only geometry or opacity changes trigger an update.',
         ],
         codeBlocks: [
           {
             language: 'py',
             caption: 'The composite is rebuilt only when the content key changes.',
-            code: `content_key = (text, round(float(next_health), 6), round(float(next_max), 6), str(mode))
+            code: `content_key = (text, round(float(next_health), 6), round(float(next_max), 6), str(mode), str(name_color))
 if content_key != self._content_key:
   self._content_key = content_key
-  self._rebuild_base_pixmap(name=text, health=float(next_health), max_health=float(next_max), indicator=str(mode))
+  self._rebuild_base_pixmap(name=text, health=float(next_health), max_health=float(next_max), indicator=str(mode), name_color_hex=str(name_color))
   self._content_dirty = True`,
           },
         ],

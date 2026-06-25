@@ -829,17 +829,38 @@ class HudPayload:
         id: 'reading-the-main-window-background',
         title: 'The Game Screen Has a Solid Background',
         body: [
-          'The game screen sets a styled dark background before and around viewport content. A narrow object-name selector applies the background color to the game-screen widget itself.',
-          'Because the central widget paints its own `#121212` background under the viewport, the window never shows desktop bleed-through: the viewport renders over the solid background, and the HUD and overlays stack above it. The visible window is therefore a deliberate stack of solid background, renderer output, HUD, and any active overlay.',
-          'The background declaration belongs to `GameScreen` and executes before the backend viewport is inserted into its zero-margin layout. It supplies a host-widget paint surface around renderer content. The declaration provides no information about world geometry, scene clear color, backend shader state, or the composition timing of HUD and overlays beyond their shared parent widget.',
+          '`GameScreen` marks the central widget with `gameScreen` and enables styled background painting. The concrete background rule is owned by `src/ludoxel/presentation/interface/theme/styles/base.qss`, which binds `QWidget#gameScreen` to the same dark surface used by the loading and startup status frames.',
+          'Because the QSS theme paints `#121212` under the viewport, the window never shows desktop bleed-through: the viewport renders over the themed host surface, and the HUD and overlays stack above it. The visible window is therefore a deliberate stack of themed host background, renderer output, HUD, and any active overlay.',
+          'The Python side owns widget identity, styled-background admission, and zero-margin layout insertion. The QSS fragment owns color and typography. This split keeps `GameScreen` from carrying widget-specific decoration while preserving the host-widget paint surface that surrounds renderer content. The declaration provides no information about world geometry, scene clear color, backend shader state, or the composition timing of HUD and overlays beyond their shared parent widget.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The game screen paints a solid background under the viewport.',
+            caption: 'The game screen exposes a QSS-owned host surface under the viewport.',
             code: `self.setObjectName("gameScreen")
-self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-self.setStyleSheet("QWidget#gameScreen { background: #121212; }")`,
+self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)`,
+          },
+          {
+            language: 'qss',
+            caption: 'The theme fragment owns the game-screen and status-frame decoration.',
+            code: `QWidget#gameScreen,
+QFrame#loadingOverlay,
+QFrame#startupSplash {
+  background: #121212;
+}
+
+QLabel#loadingTitle,
+QLabel#startupTitle {
+  color: #f4f4f4;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+QLabel#loadingStatus,
+QLabel#startupStatus {
+  color: #c8c8c8;
+  font-size: 14px;
+}`,
           },
         ],
       },

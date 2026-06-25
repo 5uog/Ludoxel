@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QColor, QPainter, QPixmap
+from PyQt6.QtGui import QColor, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import QLabel, QWidget
 
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
@@ -107,9 +107,11 @@ class _AiStatusTagWidget(QWidget):
     if not text:
       return None
     self._source_label.setText(str(text))
-    previous_style = self._source_label.styleSheet()
+    previous_palette = QPalette(self._source_label.palette())
     if str(name_color_hex):
-      self._source_label.setStyleSheet(f"color: {str(name_color_hex)};")
+      palette = QPalette(previous_palette)
+      palette.setColor(QPalette.ColorRole.WindowText, QColor(str(name_color_hex)))
+      self._source_label.setPalette(palette)
     try:
       self._source_label.ensurePolished()
       self._source_label.adjustSize()
@@ -118,8 +120,7 @@ class _AiStatusTagWidget(QWidget):
       pixmap.fill(Qt.GlobalColor.transparent)
       self._source_label.render(pixmap)
     finally:
-      if self._source_label.styleSheet() != previous_style:
-        self._source_label.setStyleSheet(previous_style)
+      self._source_label.setPalette(previous_palette)
     return pixmap
 
   def _rebuild_base_pixmap(self, *, name: str, health: float, max_health: float, indicator: str, name_color_hex: str) -> None:

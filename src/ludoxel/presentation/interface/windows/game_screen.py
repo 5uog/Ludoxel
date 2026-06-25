@@ -26,7 +26,6 @@ class GameScreen(QWidget):
     self.data_root = data_root
     self.setObjectName("gameScreen")
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-    self.setStyleSheet("QWidget#gameScreen { background: #121212; }")
     self.viewport = ViewportWidget(project_root=self.project_root, resource_root=self.resource_root, data_root=self.data_root, launch_player_name=launch_player_name)
     self.hud = HUDWidget()
 

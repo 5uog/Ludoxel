@@ -38,11 +38,6 @@ class StatusOverlayFrame(QFrame):
     super().__init__(parent, flags)
     self.setObjectName(str(object_name))
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-    self.setStyleSheet(
-      f"QFrame#{object_name} {{ background: #121212; }}"
-      f"QLabel#{title_object_name} {{ color: #f4f4f4; font-size: 28px; font-weight: 700; }}"
-      f"QLabel#{status_object_name} {{ color: #c8c8c8; font-size: 14px; }}"
-    )
     self._title_text = str(title_text).strip()
     self._title_pixmap = QPixmap()
 
