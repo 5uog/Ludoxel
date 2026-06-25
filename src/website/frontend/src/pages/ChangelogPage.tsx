@@ -7,6 +7,77 @@ import Footer from '../components/layout/Footer';
 import Header from '../components/layout/Header';
 import { changelogEntries } from '../data/changelog';
 
+type ChangelogInlinePart = string | React.JSX.Element;
+
+function isEscaped(text: string, index: number): boolean {
+  let backslashCount = 0;
+
+  for (let cursor = index - 1; cursor >= 0 && text[cursor] === '\\'; cursor -= 1) {
+    backslashCount += 1;
+  }
+
+  return backslashCount % 2 === 1;
+}
+
+function findClosingBacktick(text: string, fromIndex: number): number {
+  let cursor = fromIndex;
+
+  while (cursor < text.length) {
+    const nextIndex = text.indexOf('`', cursor);
+
+    if (nextIndex === -1) {
+      return -1;
+    }
+
+    if (!isEscaped(text, nextIndex)) {
+      return nextIndex;
+    }
+
+    cursor = nextIndex + 1;
+  }
+
+  return -1;
+}
+
+function unescapeBackticks(text: string): string {
+  return text.replace(/\\`/g, '`');
+}
+
+function pushTextPart(parts: ChangelogInlinePart[], text: string): void {
+  if (text.length > 0) {
+    parts.push(unescapeBackticks(text));
+  }
+}
+
+function renderChangelogItemText(text: string): ChangelogInlinePart[] {
+  const parts: ChangelogInlinePart[] = [];
+  let cursor = 0;
+  let plainStart = 0;
+
+  while (cursor < text.length) {
+    if (text[cursor] === '`' && !isEscaped(text, cursor)) {
+      const codeEnd = findClosingBacktick(text, cursor + 1);
+
+      if (codeEnd !== -1) {
+        pushTextPart(parts, text.slice(plainStart, cursor));
+        parts.push(
+          <code className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={`code-${cursor}-${codeEnd}`}>
+            {unescapeBackticks(text.slice(cursor + 1, codeEnd))}
+          </code>,
+        );
+        cursor = codeEnd + 1;
+        plainStart = cursor;
+        continue;
+      }
+    }
+
+    cursor += 1;
+  }
+
+  pushTextPart(parts, text.slice(plainStart));
+  return parts;
+}
+
 export default function ChangelogPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
@@ -55,7 +126,7 @@ export default function ChangelogPage(): React.JSX.Element {
                           {section.items.map((item) => (
                             <li className="flex items-start gap-2 text-muted-foreground text-sm leading-relaxed" key={item}>
                               <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-current shrink-0" />
-                              <span>{item}</span>
+                              <span>{renderChangelogItemText(item)}</span>
                             </li>
                           ))}
                         </ul>
