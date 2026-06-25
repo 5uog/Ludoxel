@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QSignalBlocker, QThread, pyqtSignal
+from PyQt6.QtCore import QSignalBlocker, QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QLabel, QLineEdit, QPushButton, QWidget
 
 from ludoxel.application.persistence.schema.ai_learning import (
@@ -116,6 +116,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     skin_importer: Callable[[str], str | None] | None = None,
     skin_available: Callable[[str], bool] | None = None,
     learning_controller: "AiLearningTabController | None" = None,
+    learning_controller_factory: Callable[[], "AiLearningTabController"] | None = None,
     as_window: bool = False,
     include_preview_button: bool = True,
   ) -> None:
@@ -137,6 +138,13 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._skin_importer = skin_importer
     self._skin_available = skin_available
     self._learning_controller = learning_controller
+    self._learning_controller_factory = learning_controller_factory
+    self._learning_page_built = False
+    self._learning_page_build_scheduled = False
+    self._learning_page_index: int | None = None
+    self._learning_placeholder_page: QWidget | None = None
+    self._skin_availability_cache: dict[str, bool] = {}
+    self._skin_availability_check_scheduled = False
     self._edit_route_requested = False
     self._delete_requested = False
 
@@ -148,7 +156,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._tab_placement = self._make_tab_button("Block Placement", 5, self._set_page)
     tab_buttons = [self._tab_identity, self._tab_display, self._tab_skin, self._tab_health, self._tab_behavior, self._tab_placement]
     self._tab_learning: QPushButton | None = None
-    if self._learning_controller is not None:
+    if self._learning_controller is not None or self._learning_controller_factory is not None:
       self._tab_learning = self._make_tab_button("Learning", len(tab_buttons), self._set_page)
       tab_buttons.append(self._tab_learning)
     self._tab_buttons = tuple(tab_buttons)
@@ -178,6 +186,10 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._build_placement_page()
     if self._learning_controller is not None:
       self._build_learning_page()
+      self._learning_page_index = self._stack.count() - 1
+      self._learning_page_built = True
+    elif self._learning_controller_factory is not None:
+      self._build_learning_placeholder_page()
     self._load_settings(self._settings)
     self._connect_immediate_updates()
     self._sync_route_controls()
@@ -355,6 +367,50 @@ class AiSettingsOverlay(SidebarDialogBase):
     safety_layout.addWidget(safety_text)
     layout.addStretch(1)
     self._stack.addWidget(scroll)
+
+  def _build_learning_placeholder_page(self) -> None:
+    scroll, host, layout = self._make_scroll_page()
+    add_page_header(layout, host, title="Learning", subtitle="Demonstration capture and learned-policy settings shared by all AI.")
+    self._learning_placeholder_label = QLabel("Learning controls load when this page is opened.", host)
+    self._learning_placeholder_label.setObjectName("settingsCardDescription")
+    self._learning_placeholder_label.setWordWrap(True)
+    layout.addWidget(self._learning_placeholder_label)
+    layout.addStretch(1)
+    self._learning_page_index = self._stack.addWidget(scroll)
+    self._learning_placeholder_page = scroll
+
+  def _ensure_learning_controller(self) -> "AiLearningTabController | None":
+    if self._learning_controller is None and self._learning_controller_factory is not None:
+      self._learning_controller = self._learning_controller_factory()
+    return self._learning_controller
+
+  def _schedule_learning_page_build(self) -> None:
+    if self._learning_page_built or self._learning_page_build_scheduled:
+      return
+    self._learning_page_build_scheduled = True
+    if hasattr(self, "_learning_placeholder_label"):
+      self._learning_placeholder_label.setText("Loading learning controls...")
+    QTimer.singleShot(0, self._ensure_learning_page)
+
+  def _ensure_learning_page(self) -> None:
+    self._learning_page_build_scheduled = False
+    if self._learning_page_built:
+      return
+    if not self.isVisible():
+      return
+    if self._ensure_learning_controller() is None:
+      return
+    placeholder = self._learning_placeholder_page
+    was_current = bool(placeholder is not None and self._stack.currentWidget() is placeholder)
+    if placeholder is not None:
+      self._stack.removeWidget(placeholder)
+      placeholder.deleteLater()
+      self._learning_placeholder_page = None
+    self._build_learning_page()
+    self._learning_page_index = self._stack.count() - 1
+    self._learning_page_built = True
+    if bool(was_current):
+      self._stack.setCurrentIndex(int(self._learning_page_index))
 
   def _build_learning_page(self) -> None:
     controller = self._learning_controller
@@ -690,7 +746,12 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._edit_route_button.clicked.connect(self._request_route_edit)
 
   def _set_page(self, index: int) -> None:
-    self._set_stack_page(index=index, max_index=len(self._tab_buttons) - 1, tab_buttons=self._tab_buttons)
+    selected_index = self._set_stack_page(index=index, max_index=len(self._tab_buttons) - 1, tab_buttons=self._tab_buttons)
+    if int(selected_index) == 2:
+      self._sync_skin_controls(check_availability=False)
+      self._schedule_skin_availability_check()
+    if self._learning_page_index is not None and int(selected_index) == int(self._learning_page_index):
+      self._schedule_learning_page_build()
 
   @staticmethod
   def _time_to_cap_from_settings(settings: AiSpawnEggSettings) -> float:
@@ -709,7 +770,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._name_edit.setText(str(self._settings.name))
     self._set_combo_value(self._health_indicator_combo, str(self._settings.health_indicator))
     self._set_combo_value(self._skin_mode_combo, str(self._settings.skin_mode))
-    self._sync_skin_controls()
+    self._sync_skin_controls(check_availability=False)
     self._regen_enabled.setChecked(bool(self._settings.auto_regen_enabled))
     self._regen_delay_spin.setValue(float(min(float(_REGEN_DELAY_MAX_UI), max(float(_REGEN_DELAY_MIN_UI), float(self._settings.regen_start_delay_s)))))
     self._regen_cap_spin.setValue(float(min(float(_REGEN_CAP_MAX_UI), max(float(_REGEN_CAP_MIN_UI), float(self._settings.regen_cap_hp)))))
@@ -774,23 +835,60 @@ class AiSettingsOverlay(SidebarDialogBase):
       f"After {delay:.1f} s without damage, the AI heals {amount:.1f} health point(s) every {interval:.1f} s up to {cap:.0f} health points. Restoring the full cap takes about {time_to_cap:.1f} s."
     )
 
-  def _has_available_imported_skin(self) -> bool:
+  def _imported_skin_availability(self, *, check_availability: bool) -> bool | None:
     skin_id = str(self._settings.skin_id)
-    return bool(skin_id) and (self._skin_available is None or bool(self._skin_available(skin_id)))
+    if not bool(skin_id):
+      return False
+    if not bool(check_availability):
+      return None
+    if self._skin_available is None:
+      return True
+    cached = self._skin_availability_cache.get(str(skin_id))
+    if cached is None:
+      cached = bool(self._skin_available(skin_id))
+      self._skin_availability_cache[str(skin_id)] = bool(cached)
+    return bool(cached)
 
-  def _sync_skin_controls(self) -> None:
+  def _has_available_imported_skin(self) -> bool:
+    return bool(self._imported_skin_availability(check_availability=True))
+
+  def _schedule_skin_availability_check(self) -> None:
+    if self._skin_available is None or not str(self._settings.skin_id):
+      self._sync_skin_controls(check_availability=True)
+      return
+    if self._skin_availability_check_scheduled:
+      return
+    self._skin_availability_check_scheduled = True
+    self._skin_status.setText("Checking imported PNG skin file...")
+    QTimer.singleShot(0, self._finish_skin_availability_check)
+
+  def _finish_skin_availability_check(self) -> None:
+    self._skin_availability_check_scheduled = False
+    if not self.isVisible() or self._stack.currentIndex() != 2:
+      return
+    self._sync_skin_controls(check_availability=True)
+
+  def _sync_skin_controls(self, *, check_availability: bool = False) -> None:
     skin_id = str(self._settings.skin_id)
     has_import = bool(skin_id)
-    available = self._has_available_imported_skin()
+    availability = self._imported_skin_availability(check_availability=bool(check_availability))
+    available = availability is True
     mode = str(self._skin_mode_combo.currentData())
     if available:
       status = "An imported PNG skin is stored for this AI."
+    elif availability is None:
+      status = "An imported PNG skin id is stored for this AI. The file is checked when the Skin page is opened."
     elif has_import:
       status = "The imported PNG skin file is missing or invalid. Select Imported PNG again to choose a replacement PNG."
     else:
       status = "No PNG skin has been imported for this AI. Select Imported PNG to choose a 64x64 PNG file."
     if mode == AI_SKIN_MODE_CUSTOM:
-      status += " This AI uses its imported PNG skin." if available else " Imported PNG is selected but no valid image is available, so the player skin is shown until one is imported."
+      if available:
+        status += " This AI uses its imported PNG skin."
+      elif availability is None:
+        status += " Imported PNG is selected; availability is checked only when the Skin page is opened."
+      else:
+        status += " Imported PNG is selected but no valid image is available, so the player skin is shown until one is imported."
     elif mode == AI_SKIN_MODE_ALEX:
       status += " This AI currently uses the bundled Alex skin."
     else:
@@ -836,10 +934,10 @@ class AiSettingsOverlay(SidebarDialogBase):
         blocker = QSignalBlocker(self._skin_mode_combo)
         self._set_combo_value(self._skin_mode_combo, previous_mode)
         del blocker
-        self._sync_skin_controls()
+        self._sync_skin_controls(check_availability=True)
       return
     self._persist_current_settings()
-    self._sync_skin_controls()
+    self._sync_skin_controls(check_availability=True)
 
   def _import_custom_skin(self) -> bool:
     if self._skin_importer is None:
@@ -848,6 +946,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     skin_id = self._skin_importer(str(self._settings.skin_id))
     if not skin_id:
       return False
+    self._skin_availability_cache[str(skin_id)] = True
     blocker = QSignalBlocker(self._skin_mode_combo)
     self._set_combo_value(self._skin_mode_combo, AI_SKIN_MODE_CUSTOM)
     del blocker
@@ -856,9 +955,9 @@ class AiSettingsOverlay(SidebarDialogBase):
       blocker = QSignalBlocker(self._skin_mode_combo)
       self._set_combo_value(self._skin_mode_combo, str(self._settings.skin_mode))
       del blocker
-      self._sync_skin_controls()
+      self._sync_skin_controls(check_availability=True)
       return False
-    self._sync_skin_controls()
+    self._sync_skin_controls(check_availability=True)
     return True
 
   def _on_mode_changed(self, _index: int) -> None:

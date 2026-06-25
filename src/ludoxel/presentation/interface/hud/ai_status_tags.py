@@ -81,32 +81,49 @@ class _AiStatusTagWidget(QWidget):
     self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
     self.setVisible(False)
 
-  def set_content(self, *, name: str, health: float, max_health: float, indicator: str) -> bool:
+  @staticmethod
+  def _normalized_name_color_hex(name_color_hex: str | None) -> str:
+    if name_color_hex is None:
+      return ""
+    color = QColor(str(name_color_hex))
+    if not color.isValid():
+      return ""
+    return str(color.name(QColor.NameFormat.HexRgb))
+
+  def set_content(self, *, name: str, health: float, max_health: float, indicator: str, name_color_hex: str | None = None) -> bool:
     text = str(name).strip()
     mode = normalize_ai_health_indicator(indicator)
+    name_color = self._normalized_name_color_hex(name_color_hex)
     next_max = max(2.0, float(max_health))
     next_health = float(clampf(float(health), 0.0, float(next_max)))
-    content_key = (text, round(float(next_health), 6), round(float(next_max), 6), str(mode))
+    content_key = (text, round(float(next_health), 6), round(float(next_max), 6), str(mode), str(name_color))
     if content_key != self._content_key:
       self._content_key = content_key
-      self._rebuild_base_pixmap(name=text, health=float(next_health), max_health=float(next_max), indicator=str(mode))
+      self._rebuild_base_pixmap(name=text, health=float(next_health), max_health=float(next_max), indicator=str(mode), name_color_hex=str(name_color))
       self._content_dirty = True
     return bool(text) or mode in (AI_HEALTH_INDICATOR_ABOVE, AI_HEALTH_INDICATOR_BELOW)
 
-  def _render_name_pixmap(self, text: str) -> QPixmap | None:
+  def _render_name_pixmap(self, text: str, name_color_hex: str) -> QPixmap | None:
     if not text:
       return None
     self._source_label.setText(str(text))
-    self._source_label.ensurePolished()
-    self._source_label.adjustSize()
-    size = self._source_label.size()
-    pixmap = QPixmap(max(1, int(size.width())), max(1, int(size.height())))
-    pixmap.fill(Qt.GlobalColor.transparent)
-    self._source_label.render(pixmap)
+    previous_style = self._source_label.styleSheet()
+    if str(name_color_hex):
+      self._source_label.setStyleSheet(f"color: {str(name_color_hex)};")
+    try:
+      self._source_label.ensurePolished()
+      self._source_label.adjustSize()
+      size = self._source_label.size()
+      pixmap = QPixmap(max(1, int(size.width())), max(1, int(size.height())))
+      pixmap.fill(Qt.GlobalColor.transparent)
+      self._source_label.render(pixmap)
+    finally:
+      if self._source_label.styleSheet() != previous_style:
+        self._source_label.setStyleSheet(previous_style)
     return pixmap
 
-  def _rebuild_base_pixmap(self, *, name: str, health: float, max_health: float, indicator: str) -> None:
-    name_pixmap = self._render_name_pixmap(str(name))
+  def _rebuild_base_pixmap(self, *, name: str, health: float, max_health: float, indicator: str, name_color_hex: str) -> None:
+    name_pixmap = self._render_name_pixmap(str(name), str(name_color_hex))
     hearts_visible = indicator in (AI_HEALTH_INDICATOR_ABOVE, AI_HEALTH_INDICATOR_BELOW)
     hearts_size = _heart_strip_size(float(max_health)) if hearts_visible else QSize(0, 0)
     name_w = 0 if name_pixmap is None else int(name_pixmap.width())
@@ -190,14 +207,16 @@ class AiStatusTagPool:
   def begin_frame(self) -> None:
     self._seen_ids = set()
 
-  def show_tag(self, *, actor_id: str, name: str, health: float, max_health: float, indicator: str, center_x: float, anchor_bottom_y: float, opacity: float, scale: float = 1.0) -> None:
+  def show_tag(
+    self, *, actor_id: str, name: str, health: float, max_health: float, indicator: str, center_x: float, anchor_bottom_y: float, opacity: float, scale: float = 1.0, name_color_hex: str | None = None
+  ) -> None:
     key = str(actor_id)
     self._seen_ids.add(key)
     entry = self._entries.get(key)
     if entry is None:
       entry = _AiStatusTagWidget(self._parent)
       self._entries[key] = entry
-    if not entry.set_content(name=str(name), health=float(health), max_health=float(max_health), indicator=str(indicator)):
+    if not entry.set_content(name=str(name), health=float(health), max_health=float(max_health), indicator=str(indicator), name_color_hex=name_color_hex):
       entry.setVisible(False)
       return
     entry.place(

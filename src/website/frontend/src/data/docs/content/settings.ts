@@ -1511,23 +1511,24 @@ def normalize_ai_skin_id(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'The AI Settings overlay uses one combo box for the source. Selecting Imported PNG triggers the importer if no available imported skin exists. An import failure restores the previous mode and leaves the actor on a resolved skin source. Status text distinguishes three facts: an imported file exists, an imported id is present but unavailable, or no imported PNG has been stored.',
+            text: 'The AI Settings overlay uses one combo box for the source. Opening the overlay does not decode the stored custom skin file before the Identity page is shown. Initial status text can report that an imported skin id is stored and will be checked when the Skin page opens; selecting the Skin page first switches to the page, then schedules the availability callback through a zero-delay `QTimer`. If the user selects Imported PNG and no available imported skin exists, the importer runs. An import failure restores the previous mode and leaves the actor on a resolved skin source.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `def _on_skin_mode_changed(self, _index: int) -> None:
-  if str(self._skin_mode_combo.currentData()) == AI_SKIN_MODE_CUSTOM and not self._has_available_imported_skin():
-    previous_mode = str(self._settings.skin_mode)
-    if not self._import_custom_skin():
-      blocker = QSignalBlocker(self._skin_mode_combo)
-      self._set_combo_value(self._skin_mode_combo, previous_mode)
-      del blocker
-      self._sync_skin_controls()
-    return
-  self._persist_current_settings()
-  self._sync_skin_controls()`,
+            code: `def _set_page(self, index: int) -> None:
+  selected_index = self._set_stack_page(index=index, max_index=len(self._tab_buttons) - 1, tab_buttons=self._tab_buttons)
+  if int(selected_index) == 2:
+    self._sync_skin_controls(check_availability=False)
+    self._schedule_skin_availability_check()
+
+def _load_settings(self, settings: AiSpawnEggSettings) -> None:
+  self._settings = settings.normalized()
+  self._name_edit.setText(str(self._settings.name))
+  self._set_combo_value(self._health_indicator_combo, str(self._settings.health_indicator))
+  self._set_combo_value(self._skin_mode_combo, str(self._settings.skin_mode))
+  self._sync_skin_controls(check_availability=False)`,
           },
         ],
       },
@@ -1656,6 +1657,10 @@ def normalize_ai_personality(value: object) -> str:
           {
             kind: 'paragraph',
             text: 'The AI Learning page exposes five labels: `Off`, `Observe Only`, `Use Learned Policy`, `Train From Player Data`, and `Train In Sandbox`. That visible set is larger than the set of modes that remain active during ordinary play. `src/ludoxel/application/persistence/schema/ai_learning.py` stores the selected value, while `src/ludoxel/application/sessions/managers/learning.py` configures the active session from the normalized setting. The setting is therefore a control over learning participation, not a general command to run continuous training inside the step loop.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`AiSettingsOverlay` can receive a `learning_controller_factory` instead of an already constructed controller. Opening AI Settings shows the Identity page without constructing `AiLearningController`, scanning bundled or user policies, reading dataset summaries, or resolving the policy folder label. The Learning page starts as a placeholder and builds its controls only when selected; training and evaluation actions still run through the existing background task thread once the page exists.',
           },
           {
             kind: 'code',

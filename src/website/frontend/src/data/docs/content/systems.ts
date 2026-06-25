@@ -770,11 +770,11 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_gameplay_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay, chat, or HUD-hidden state removes the gameplay surface. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
+            text: '`_gameplay_hud_active`, `_debug_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay, chat, or HUD-hidden state removes the gameplay surface. The route overlay has a separate content gate: draft route-edit feedback can show while editing, while completed route paths require the F3 Debug HUD to be visible. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
           },
           {
             kind: 'paragraph',
-            text: '`route_overlay_paths` in `src/ludoxel/presentation/interface/viewport/controllers/ai.py` builds overlay paths from the active session route snapshots and the draft route-edit points, while `RouteOverlayWidget` in `src/ludoxel/presentation/interface/hud/route_overlay.py` owns the final screen projection. Point markers are projected individually. Line drawing clips each route segment against the conservative view volume before screen conversion, so a segment remains visible while any part of it crosses the viewport and is skipped only when the whole segment is outside the overlay bounds.',
+            text: '`route_overlay_paths` in `src/ludoxel/presentation/interface/viewport/controllers/ai.py` builds draft paths from the active route-edit points and builds completed paths from the active session route snapshots only while `_debug_hud_active()` is true. `completed_route_color_hex` in `src/ludoxel/presentation/interface/hud/route_overlay.py` derives the completed-route color from the actor id, so path color is stable across actor-list order changes and overlay rebuilds. `RouteOverlayWidget` owns the final screen projection: point markers are projected individually, and line drawing clips each route segment against the conservative view volume before screen conversion, so a segment remains visible while any part of it crosses the viewport and is skipped only when the whole segment is outside the overlay bounds.',
           },
         ],
       },
@@ -2220,7 +2220,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.3 Beta 1"`,
+            code: `__version__ = "3.7.3 Beta 2"`,
           },
           {
             kind: 'note',

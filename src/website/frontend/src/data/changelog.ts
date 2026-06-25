@@ -15,6 +15,25 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.3 Beta 2',
+    tags: ['Desktop Application', 'AI', 'HUD', 'Settings'],
+    sections: [
+      {
+        title: 'AI Route Overlay',
+        items: [
+          'Completed AI route overlays now derive a deterministic presentation color from the route owner actor id. The completed path segments, closed-loop segment, point markers, and matching AI name text use the same owner color while the route-edit draft remains the green dashed path.',
+          'Completed AI route overlays are now gated by the F3 Debug HUD visibility contract. Draft route-edit feedback remains visible during editing, while completed route paths and the matching AI name color are omitted when the Debug HUD is hidden.',
+        ],
+      },
+      {
+        title: 'AI Settings Open Path',
+        items: [
+          'Opening AI Settings after confirming a route, or by right-clicking an AI actor in Creative Mode, no longer constructs the AI learning controller, scans policy options, reads learning summaries, or decodes imported skin files before the Identity page is shown.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.3 Beta 1',
     tags: ['Desktop Application', 'AI', 'Chat', 'Input', 'Rendering'],
     sections: [

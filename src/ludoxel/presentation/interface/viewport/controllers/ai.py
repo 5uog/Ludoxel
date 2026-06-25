@@ -13,7 +13,7 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y
 from ludoxel.presentation.interface.common.themed_notice_dialog import show_themed_notice
-from ludoxel.presentation.interface.hud.route_overlay import RouteOverlayPath
+from ludoxel.presentation.interface.hud.route_overlay import RouteOverlayPath, completed_route_color_hex
 from ludoxel.presentation.interface.overlays.ai_learning_controller import AiLearningController
 from ludoxel.presentation.interface.overlays.ai_settings import AiSettingsOverlay
 from ludoxel.presentation.rendering.visuals.players.ai_player_render_state import compose_ai_player_render_states
@@ -75,10 +75,12 @@ def _hovered_route_point_index(viewport: "RendererViewportWidget") -> int | None
 def route_overlay_paths(viewport: "RendererViewportWidget") -> tuple[RouteOverlayPath, ...]:
   viewport._ai_route_hover_index = _hovered_route_point_index(viewport)
   paths: list[RouteOverlayPath] = []
-  for route_path in viewport._session.ai_route_paths():
-    points = tuple(point.as_vec3() for point in route_path.points)
-    if len(points) >= 2:
-      paths.append(RouteOverlayPath(points=points, closed=bool(route_path.closed), draft=False))
+  if bool(viewport._debug_hud_active()):
+    for route_path in viewport._session.ai_route_paths():
+      points = tuple(point.as_vec3() for point in route_path.points)
+      if len(points) >= 2:
+        actor_id = str(route_path.actor_id)
+        paths.append(RouteOverlayPath(points=points, closed=bool(route_path.closed), draft=False, actor_id=actor_id, color_hex=completed_route_color_hex(actor_id)))
   if bool(route_edit_active(viewport)) and len(viewport._ai_route_edit_points) >= 1:
     points = tuple(point.as_vec3() for point in viewport._ai_route_edit_points)
     paths.append(RouteOverlayPath(points=points, closed=bool(viewport._ai_route_edit_closed), draft=True, highlighted_index=viewport._ai_route_hover_index))
@@ -172,7 +174,6 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
       settings_controller.sync_ai_skins(viewport, push_to_renderer=True)
     return True
 
-  learning_controller = AiLearningController(project_root=viewport._project_root, data_root=viewport._data_root)
   dialog = AiSettingsOverlay(
     parent=viewport,
     settings=viewport._ai_edit_settings,
@@ -180,7 +181,7 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
     settings_updater=apply_settings,
     skin_importer=lambda current_skin_id: _import_ai_skin(viewport, str(current_skin_id)),
     skin_available=lambda skin_id: _ai_skin_is_available(viewport, str(skin_id)),
-    learning_controller=learning_controller,
+    learning_controller_factory=lambda: AiLearningController(project_root=viewport._project_root, data_root=viewport._data_root),
     as_window=False,
   )
   viewport._ai_settings_dialog = dialog

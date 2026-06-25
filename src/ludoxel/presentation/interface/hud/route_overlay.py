@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import colorsys
+import hashlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -16,6 +18,18 @@ from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_
 
 _VIEW_CLIP_MARGIN = 1.2
 _VIEW_CLIP_EPSILON = 1e-6
+_COMPLETED_ROUTE_COLOR_SATURATION = 0.58
+_COMPLETED_ROUTE_COLOR_VALUE = 1.0
+_COMPLETED_ROUTE_FALLBACK_COLOR = "#67d7ff"
+_DRAFT_ROUTE_COLOR = "#7df279"
+
+
+def completed_route_color_hex(actor_id: str) -> str:
+  identity = str(actor_id).strip() or "ai-route"
+  digest = hashlib.blake2s(identity.encode("utf-8"), digest_size=2).digest()
+  hue = (int.from_bytes(digest, "big") % 360) / 360.0
+  red, green, blue = colorsys.hsv_to_rgb(float(hue), float(_COMPLETED_ROUTE_COLOR_SATURATION), float(_COMPLETED_ROUTE_COLOR_VALUE))
+  return f"#{int(round(float(red) * 255.0)):02x}{int(round(float(green) * 255.0)):02x}{int(round(float(blue) * 255.0)):02x}"
 
 
 @dataclass(frozen=True)
@@ -24,6 +38,8 @@ class RouteOverlayPath:
   closed: bool = False
   draft: bool = False
   highlighted_index: int | None = None
+  actor_id: str = ""
+  color_hex: str = ""
 
 
 class RouteOverlayWidget(QWidget):
@@ -151,7 +167,9 @@ class RouteOverlayWidget(QWidget):
       if len(path.points) < 2:
         continue
       projected = tuple(self._project(point) for point in path.points)
-      color = QColor("#7df279") if bool(path.draft) else QColor("#67d7ff")
+      color = QColor(_DRAFT_ROUTE_COLOR) if bool(path.draft) else QColor(str(path.color_hex) or completed_route_color_hex(str(path.actor_id)))
+      if not color.isValid():
+        color = QColor(_COMPLETED_ROUTE_FALLBACK_COLOR)
       pen = QPen(color, 3.0 if bool(path.draft) else 2.0, Qt.PenStyle.DashLine if bool(path.draft) else Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
       painter.setPen(pen)
       painter.setBrush(color)

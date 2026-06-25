@@ -18,6 +18,7 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.presentation.interface.hud.ai_status_tags import AiStatusTagPool
+from ludoxel.presentation.interface.hud.route_overlay import completed_route_color_hex
 from ludoxel.presentation.rendering.contracts.config import render_distance_fog_range
 
 if TYPE_CHECKING:
@@ -290,8 +291,10 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hud_visible))
     )
     show_crosshair = bool(show_gameplay_hud and self._state.is_first_person_view())
+    route_overlay_content_visible = bool(self._state.route_edit_active) or bool(self._debug_hud_active() and len(self._session.ai_route_paths()) > 0)
     show_route_overlay = bool(
       (not bool(self.loading_active()))
+      and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
       and (not self._overlays.inventory_open())
@@ -299,7 +302,7 @@ class ViewportOverlayMixin:
       and (not self._overlays.othello_settings_open())
       and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
       and (not bool(chat_controller.is_chat_open(self)))
-      and ((not self._state.is_othello_space()) and (bool(self._state.route_edit_active) or len(self._session.ai_route_paths()) > 0))
+      and ((not self._state.is_othello_space()) and bool(route_overlay_content_visible))
     )
 
     self._crosshair.setVisible(bool(show_crosshair))
@@ -533,6 +536,12 @@ class ViewportOverlayMixin:
       self._hide_ai_status_tags()
       return
     ai_snapshots = tuple(self._session.ai_render_snapshots())
+    route_name_colors: dict[str, str] = {}
+    if bool(self._debug_hud_active()):
+      for route_path in self._session.ai_route_paths():
+        if len(route_path.points) >= 2:
+          actor_id = str(route_path.actor_id)
+          route_name_colors[actor_id] = completed_route_color_hex(actor_id)
     pool = self._ai_status_tag_pool()
     pool.begin_frame()
     if len(ai_snapshots) > 0:
@@ -580,5 +589,6 @@ class ViewportOverlayMixin:
           anchor_bottom_y=float(bottom_y),
           opacity=float(opacity),
           scale=float(tag_scale),
+          name_color_hex=route_name_colors.get(str(ai_snapshot.actor_id)),
         )
     pool.end_frame()

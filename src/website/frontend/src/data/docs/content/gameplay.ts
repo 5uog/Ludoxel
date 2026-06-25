@@ -984,6 +984,7 @@ actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=inte
         body: [
           'The displayed name is the AI’s normalized name from its settings, the same value the manager validates against other live AI. Two living AI cannot share a name, so a nametag identifies a specific actor.',
           'The renderer only displays the name; it does not assign or deduplicate it. Name conflicts are resolved on the simulation side before a tag is shown.',
+          'When the F3 Debug HUD is visible and an AI has a confirmed Route Patrol path with at least two points, the AI name text uses the same actor-id-derived color as that AI’s completed route overlay. Hiding the Debug HUD or removing the confirmed route returns the name text to the normal HUD style.',
         ],
       },
       {
@@ -992,6 +993,7 @@ actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=inte
         body: [
           'The health indicator has three placements: above the name, below the name, or off. When hearts are shown, the composite stacks the name and the heart strip in the chosen order; when off, only the name is drawn.',
           'A tag is only shown if it has a name or a visible health indicator. An AI with no name and a hidden indicator produces no tag.',
+          'Route owner color changes only the rendered name pixmap. The heart fill, outline, and highlight colors remain the health indicator colors.',
         ],
         codeBlocks: [
           {
