@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QProgressBar, QSizePolicy, QVBoxLayout, QWidget
 
 
 def add_page_header(layout: QVBoxLayout, parent: QWidget, *, title: str, subtitle: str) -> QWidget:
@@ -77,3 +78,43 @@ def add_setting_row(layout: QVBoxLayout, parent: QWidget, *, label: str, descrip
   row_layout.addWidget(control_host, stretch=2)
   layout.addWidget(row)
   return row
+
+
+def create_settings_loader_page(parent: QWidget, *, text: str) -> tuple[QWidget, QLabel, QProgressBar]:
+  page = QWidget(parent)
+  page.setObjectName("aboutLoaderPage")
+  page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+  loader_layout = QVBoxLayout(page)
+  loader_layout.setContentsMargins(24, 24, 24, 24)
+  loader_layout.setSpacing(12)
+  loader_layout.addStretch(1)
+
+  loader_card = QFrame(page)
+  loader_card.setObjectName("aboutLoaderCard")
+  loader_card.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+  loader_card.setMinimumWidth(360)
+  loader_card.setMaximumWidth(520)
+
+  loader_card_layout = QVBoxLayout(loader_card)
+  loader_card_layout.setContentsMargins(22, 20, 22, 20)
+  loader_card_layout.setSpacing(12)
+
+  loader_label = QLabel(str(text), loader_card)
+  loader_label.setObjectName("settingsPageSubtitle")
+  loader_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+  loader_label.setWordWrap(True)
+  loader_card_layout.addWidget(loader_label)
+
+  loader_progress = QProgressBar(loader_card)
+  loader_progress.setObjectName("aboutLoaderProgress")
+  loader_progress.setRange(0, 100)
+  loader_progress.setValue(0)
+  loader_progress.setTextVisible(True)
+  loader_progress.setMinimumHeight(22)
+  loader_progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+  loader_card_layout.addWidget(loader_progress)
+
+  loader_layout.addWidget(loader_card, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+  loader_layout.addStretch(1)
+  return page, loader_label, loader_progress

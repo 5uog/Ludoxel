@@ -2220,7 +2220,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.3 Beta 2"`,
+            code: `__version__ = "3.7.3"`,
           },
           {
             kind: 'note',
@@ -2724,6 +2724,14 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
             text: 'Input beginning with a slash is handled by `src/ludoxel/application/chat/commands/`. `parse_command` accepts `/teleport` and `/tp` through the same teleport parser, then produces a typed `TeleportCommand`, a `GameModeCommand`, or a `CommandError`; `execute_command` resolves targets and applies the mutation. The candidate model exposes both teleport spellings. Teleport calls `SessionManager.teleport`, which delegates the player-state change to `teleport_player` in `src/ludoxel/simulation/actors/player/teleport.py`. Game mode calls `apply_game_mode` in `src/ludoxel/application/sessions/game_mode.py`, which writes the runtime creative flag and routes the player change through `apply_player_game_mode`. The Settings game-mode toggle calls the same `apply_game_mode` operation.',
           },
           {
+            kind: 'paragraph',
+            text: '`ChatScreen` keeps `ChatCandidateView` in the chat display area and hides the message scroll while candidates are visible. Slash-command candidates and mention candidates therefore share the same row design, selected-row state, mouse activation, and keyboard navigation while the popup is clamped inside the display area and aligned to its lower edge. Tab activates the selected candidate for both suggestion modes. Enter activates the selected candidate only when mention mode is active; slash-command mode leaves Enter to the message field submission path. `ChatController` chooses one suggestion mode from the current token: slash commands when the input begins with `/`, or mention candidates when the token under the cursor begins with `@`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Mention candidates are presentation-time input help. The controller builds them from the resolved local player name and live AI render snapshots, filters by the typed prefix, removes ambiguous duplicate names, and omits defeated AI snapshots. Selecting a mention replaces only the current `@` token with `@Name` and leaves command parsing and command execution unchanged.',
+          },
+          {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/chat/commands/coordinator.py',
@@ -2838,6 +2846,10 @@ class FormattedSegment:
           {
             kind: 'paragraph',
             text: '`ChatTextView` is the single renderer adapter. The full chat screen, the heads-up feed, command feedback, command errors, the periodic support message, and death-log rows are all painted by it, so the parser and the renderer are not duplicated per message kind. The widget converts parser segments into a wrapped, painted layout, fills the per-segment background, draws the foreground glyphs, and applies underline and strikethrough through the segment font. Clickable external links are limited to explicitly authored trusted spans carried on the message; user-entered text never produces a link.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Mention color is derived by the renderer rather than stored in the raw chat body. `ChatController` supplies the local display user as the mention target, `ChatTextView` detects exact known `@Name` spans with word-boundary checks, and only those characters receive the `§e` foreground color. `named_message_text` strips user-provided section formatting from named chat bodies before the runtime message is stored, so a typed control sequence does not become persistent formatting and raw `§e` is not required for a mention.',
           },
         ],
       },

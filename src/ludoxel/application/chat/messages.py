@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ludoxel.foundations.text.format_codes import SECTION_SIGN, strip_formatting
+
 CHAT_KIND_PLAYER_TEXT: str = "player_text"
 CHAT_KIND_RECEIVED_TEXT: str = "received_text"
 CHAT_KIND_AI_TEXT: str = "ai_text"
@@ -30,8 +32,12 @@ class ChatMessage:
   links: tuple[ChatLink, ...] = field(default_factory=tuple)
 
 
+def _sanitize_named_body(body: str) -> str:
+  return strip_formatting(str(body)).replace(str(SECTION_SIGN), "")
+
+
 def named_message_text(sender: str, body: str) -> str:
-  return f"§7{str(sender)} §l>> §r§f{str(body)}"
+  return f"§7{str(sender)} §l>> §r§f{_sanitize_named_body(str(body))}"
 
 
 def make_named_message(*, kind: str, sender: str, body: str) -> ChatMessage:

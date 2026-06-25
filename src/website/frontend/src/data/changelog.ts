@@ -15,6 +15,25 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: 'v3.7.3',
+    tags: ['Desktop Application', 'AI', 'Chat', 'Settings'],
+    sections: [
+      {
+        title: 'AI Settings Learning Loader',
+        items: [
+          'Selecting the Learning tab now shows the same loader structure used by the Settings About tab before the learning controls are built. Controller creation, policy option enumeration, dataset summary reading, and policy path resolution run on a worker thread, then the Learning page is assembled on the UI thread from the loaded snapshot.',
+        ],
+      },
+      {
+        title: 'Chat Suggestions and Mentions',
+        items: [
+          'Command and mention suggestions now hide the chat message list while the candidate view is open and keep the candidate view aligned to the lower edge of the chat display area. Mention suggestions consume Enter to confirm the selected `@Name` before any message submission can run, while slash-command suggestions keep Enter available for submitting the current command text.',
+          'Typing an `@` token now opens the same suggestion view with the local player and live AI names. Selecting a candidate replaces the current token with `@Name`, and the local chat display derives yellow text for exact local-player `@Name` mentions without writing formatting controls into the raw message text.',
+        ],
+      },
+    ],
+  },
+  {
     date: 'v3.7.3 Beta 2',
     tags: ['Desktop Application', 'AI', 'HUD', 'Settings'],
     sections: [

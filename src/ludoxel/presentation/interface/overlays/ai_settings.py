@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QSignalBlocker, QThread, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QLabel, QLineEdit, QPushButton, QWidget
+from PyQt6.QtCore import QEventLoop, QSignalBlocker, QThread, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QLabel, QLineEdit, QProgressBar, QPushButton, QWidget
 
 from ludoxel.application.persistence.schema.ai_learning import (
   LEARNING_MODE_OBSERVE_ONLY,
@@ -19,7 +19,7 @@ from ludoxel.application.persistence.schema.ai_learning import (
 )
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.common.themed_notice_dialog import show_themed_notice
-from ludoxel.presentation.interface.settings.surface import add_page_header, add_setting_row, add_settings_card
+from ludoxel.presentation.interface.settings.surface import add_page_header, add_setting_row, add_settings_card, create_settings_loader_page
 from ludoxel.simulation.actors.ai_players.learning.actions import SKILL_CATEGORIES
 from ludoxel.simulation.actors.ai_players.learning.dataset import (
   RECORD_AI_DEATHS,
@@ -94,6 +94,16 @@ class _LearningTaskThread(QThread):
     self.task_finished.emit(result)
 
 
+@dataclass(frozen=True, slots=True)
+class _LearningInitialSnapshot:
+  controller: object
+  state: object
+  bundled_policy_options: tuple[tuple[str, str], ...]
+  user_policy_options: tuple[tuple[str, str], ...]
+  dataset_summary: object
+  policy_save_path: str
+
+
 _AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + 5
 _REGEN_CAP_MIN_UI = 1.0
 _REGEN_CAP_MAX_UI = 20.0
@@ -141,8 +151,11 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_controller_factory = learning_controller_factory
     self._learning_page_built = False
     self._learning_page_build_scheduled = False
+    self._learning_initial_thread: _LearningTaskThread | None = None
     self._learning_page_index: int | None = None
     self._learning_placeholder_page: QWidget | None = None
+    self._learning_loader_label: QLabel | None = None
+    self._learning_loader_progress: QProgressBar | None = None
     self._skin_availability_cache: dict[str, bool] = {}
     self._skin_availability_check_scheduled = False
     self._edit_route_requested = False
@@ -184,11 +197,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._build_health_page()
     self._build_behavior_page()
     self._build_placement_page()
-    if self._learning_controller is not None:
-      self._build_learning_page()
-      self._learning_page_index = self._stack.count() - 1
-      self._learning_page_built = True
-    elif self._learning_controller_factory is not None:
+    if self._learning_controller is not None or self._learning_controller_factory is not None:
       self._build_learning_placeholder_page()
     self._load_settings(self._settings)
     self._connect_immediate_updates()
@@ -369,54 +378,91 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._stack.addWidget(scroll)
 
   def _build_learning_placeholder_page(self) -> None:
-    scroll, host, layout = self._make_scroll_page()
-    add_page_header(layout, host, title="Learning", subtitle="Demonstration capture and learned-policy settings shared by all AI.")
-    self._learning_placeholder_label = QLabel("Learning controls load when this page is opened.", host)
-    self._learning_placeholder_label.setObjectName("settingsCardDescription")
-    self._learning_placeholder_label.setWordWrap(True)
-    layout.addWidget(self._learning_placeholder_label)
-    layout.addStretch(1)
-    self._learning_page_index = self._stack.addWidget(scroll)
-    self._learning_placeholder_page = scroll
+    page, label, progress = create_settings_loader_page(self._stack, text="Loading learning controls...")
+    self._learning_loader_label = label
+    self._learning_loader_progress = progress
+    self._learning_page_index = self._stack.addWidget(page)
+    self._learning_placeholder_page = page
 
-  def _ensure_learning_controller(self) -> "AiLearningTabController | None":
-    if self._learning_controller is None and self._learning_controller_factory is not None:
-      self._learning_controller = self._learning_controller_factory()
-    return self._learning_controller
+  def _set_learning_loader_progress(self, value: int) -> None:
+    if self._learning_loader_label is not None:
+      self._learning_loader_label.setText("Loading learning controls...")
+    if self._learning_loader_progress is not None:
+      self._learning_loader_progress.setValue(int(max(0, min(100, int(value)))))
+
+  def _paint_learning_loader_once(self) -> None:
+    placeholder = self._learning_placeholder_page
+    if placeholder is None:
+      return
+    self._set_learning_loader_progress(25)
+    placeholder.ensurePolished()
+    placeholder.updateGeometry()
+    self._stack.repaint()
+    self._content.repaint()
+    QApplication.processEvents(QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
+
+  def _load_learning_initial_snapshot(self) -> _LearningInitialSnapshot | dict[str, str]:
+    controller = self._learning_controller
+    if controller is None:
+      if self._learning_controller_factory is None:
+        return {"status": "failed", "message": "Learning controls are unavailable."}
+      controller = self._learning_controller_factory()
+    return _LearningInitialSnapshot(
+      controller=controller,
+      state=controller.state(),
+      bundled_policy_options=tuple(controller.bundled_policy_options()),
+      user_policy_options=tuple(controller.user_policy_options()),
+      dataset_summary=controller.dataset_summary(),
+      policy_save_path=str(controller.policy_save_path()),
+    )
 
   def _schedule_learning_page_build(self) -> None:
     if self._learning_page_built or self._learning_page_build_scheduled:
       return
     self._learning_page_build_scheduled = True
-    if hasattr(self, "_learning_placeholder_label"):
-      self._learning_placeholder_label.setText("Loading learning controls...")
-    QTimer.singleShot(0, self._ensure_learning_page)
+    self._set_learning_loader_progress(0)
+    self._paint_learning_loader_once()
+    thread = _LearningTaskThread(self._load_learning_initial_snapshot, self)
+    self._learning_initial_thread = thread
+    thread.task_finished.connect(lambda result, captured=thread: self._finish_learning_page_build(result, captured))
+    thread.start()
 
-  def _ensure_learning_page(self) -> None:
+  def _finish_learning_page_build(self, result, thread: _LearningTaskThread) -> None:
     self._learning_page_build_scheduled = False
+    if self._learning_initial_thread is thread:
+      self._learning_initial_thread = None
     if self._learning_page_built:
+      thread.deleteLater()
       return
     if not self.isVisible():
+      thread.deleteLater()
       return
-    if self._ensure_learning_controller() is None:
+    if not isinstance(result, _LearningInitialSnapshot):
+      message = str(result.get("message", "Learning controls could not be loaded.")) if isinstance(result, dict) else "Learning controls could not be loaded."
+      if self._learning_loader_label is not None:
+        self._learning_loader_label.setText(message)
+      self._set_learning_loader_progress(0)
+      thread.deleteLater()
       return
+    self._learning_controller = result.controller
     placeholder = self._learning_placeholder_page
     was_current = bool(placeholder is not None and self._stack.currentWidget() is placeholder)
     if placeholder is not None:
       self._stack.removeWidget(placeholder)
       placeholder.deleteLater()
       self._learning_placeholder_page = None
-    self._build_learning_page()
+    self._build_learning_page(initial_data=result)
     self._learning_page_index = self._stack.count() - 1
     self._learning_page_built = True
     if bool(was_current):
       self._stack.setCurrentIndex(int(self._learning_page_index))
+    thread.deleteLater()
 
-  def _build_learning_page(self) -> None:
+  def _build_learning_page(self, *, initial_data: _LearningInitialSnapshot | None = None) -> None:
     controller = self._learning_controller
     if controller is None:
       return
-    state = controller.state()
+    state = initial_data.state if initial_data is not None else controller.state()
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Learning", subtitle="Demonstration capture and learned-policy settings shared by all AI.")
 
@@ -465,7 +511,9 @@ class AiSettingsOverlay(SidebarDialogBase):
     add_setting_row(policy_layout, policy_body, label="Policy source", description="Which policy the AI uses during play.", control=self._learning_policy_kind_combo)
     self._learning_policy_id_combo = QComboBox(policy_body)
     add_setting_row(policy_layout, policy_body, label="Selected policy", description="Used when the source is a bundled or user learned policy.", control=self._learning_policy_id_combo)
-    self._populate_learning_policy_id_combo()
+    self._populate_learning_policy_id_combo(
+      bundled_options=None if initial_data is None else initial_data.bundled_policy_options, user_options=None if initial_data is None else initial_data.user_policy_options
+    )
 
     _eval_card, eval_body, eval_layout = add_settings_card(
       layout, host, title="Evaluation", description="Evaluates the selected policy against the engine and the headless sandbox, then reports pass or fail."
@@ -516,7 +564,9 @@ class AiSettingsOverlay(SidebarDialogBase):
 
     self._load_learning_controls(state)
     self._connect_learning_updates()
-    self._refresh_learning_dynamic()
+    self._refresh_learning_dynamic(
+      state=state, dataset_summary=None if initial_data is None else initial_data.dataset_summary, policy_save_path=None if initial_data is None else initial_data.policy_save_path
+    )
 
   def _load_learning_controls(self, state) -> None:
     settings = state.settings
@@ -570,13 +620,15 @@ class AiSettingsOverlay(SidebarDialogBase):
       return
     self._learning_mode_notice.setText("Learning is off. No demonstrations are recorded and the deterministic baseline drives the AI.")
 
-  def _populate_learning_policy_id_combo(self) -> None:
+  def _populate_learning_policy_id_combo(self, *, bundled_options: tuple[tuple[str, str], ...] | None = None, user_options: tuple[tuple[str, str], ...] | None = None) -> None:
     blocker = QSignalBlocker(self._learning_policy_id_combo)
     self._learning_policy_id_combo.clear()
     self._learning_policy_id_combo.addItem("Automatic", userData="")
-    for policy_id, policy_name in self._learning_controller.bundled_policy_options():
+    bundled = self._learning_controller.bundled_policy_options() if bundled_options is None else tuple(bundled_options)
+    user = self._learning_controller.user_policy_options() if user_options is None else tuple(user_options)
+    for policy_id, policy_name in bundled:
       self._learning_policy_id_combo.addItem(f"Bundled: {policy_name}", userData=str(policy_id))
-    for policy_id, policy_name in self._learning_controller.user_policy_options():
+    for policy_id, policy_name in user:
       self._learning_policy_id_combo.addItem(f"User: {policy_name}", userData=str(policy_id))
     del blocker
 
@@ -707,9 +759,9 @@ class AiSettingsOverlay(SidebarDialogBase):
     del blockers
     self._sync_learning_policy_id_enabled()
 
-  def _refresh_learning_dynamic(self) -> None:
-    summary = self._learning_controller.dataset_summary()
-    state = self._learning_controller.state()
+  def _refresh_learning_dynamic(self, *, state=None, dataset_summary=None, policy_save_path: str | None = None) -> None:
+    summary = self._learning_controller.dataset_summary() if dataset_summary is None else dataset_summary
+    state = self._learning_controller.state() if state is None else state
     self._learning_dataset_label.setText(f"Dataset size: {int(summary.record_count)} record(s), {int(summary.byte_size)} byte(s).")
     training = state.last_training_summary or {}
     if training:
@@ -719,7 +771,8 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_policy_version_label.setText(
       f"Selected policy: {str(state.settings.selected_policy_kind)} '{str(state.settings.selected_policy_id) or 'automatic'}' (version {int(state.policy_version)})."
     )
-    self._learning_path_label.setText(f"Policy folder: {self._learning_controller.policy_save_path()}")
+    path_text = str(self._learning_controller.policy_save_path() if policy_save_path is None else policy_save_path)
+    self._learning_path_label.setText(f"Policy folder: {path_text}")
     evaluation = state.last_evaluation_summary or {}
     if evaluation:
       passed = bool(evaluation.get("passed", False))

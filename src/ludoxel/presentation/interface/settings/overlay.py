@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import QEventLoop, Qt, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QProgressBar, QPushButton, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QPushButton, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON
 from ludoxel.application.preferences.keybinds import action_display_name
@@ -13,6 +13,7 @@ from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, S
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.config.pause_overlay import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ludoxel.presentation.interface.settings.pages import build_audio_tab, build_controls_tab, build_display_tab, build_game_tab, build_world_tab
+from ludoxel.presentation.interface.settings.surface import create_settings_loader_page
 from ludoxel.presentation.interface.settings.sync import sync_overlay_values
 from ludoxel.presentation.interface.settings.widgets.controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
 from ludoxel.presentation.rendering.contracts.state import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
@@ -238,43 +239,7 @@ class SettingsOverlay(SidebarDialogBase):
     self._about_page_stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     page_layout.addWidget(self._about_page_stack, stretch=1)
 
-    self._about_loader_page = QWidget(self._about_page_stack)
-    self._about_loader_page.setObjectName("aboutLoaderPage")
-    self._about_loader_page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-
-    loader_layout = QVBoxLayout(self._about_loader_page)
-    loader_layout.setContentsMargins(24, 24, 24, 24)
-    loader_layout.setSpacing(12)
-    loader_layout.addStretch(1)
-
-    loader_card = QFrame(self._about_loader_page)
-    loader_card.setObjectName("aboutLoaderCard")
-    loader_card.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
-    loader_card.setMinimumWidth(360)
-    loader_card.setMaximumWidth(520)
-
-    loader_card_layout = QVBoxLayout(loader_card)
-    loader_card_layout.setContentsMargins(22, 20, 22, 20)
-    loader_card_layout.setSpacing(12)
-
-    self._about_loader_label = QLabel("Loading About section...", loader_card)
-    self._about_loader_label.setObjectName("settingsPageSubtitle")
-    self._about_loader_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-    self._about_loader_label.setWordWrap(True)
-    loader_card_layout.addWidget(self._about_loader_label)
-
-    self._about_loader_progress = QProgressBar(loader_card)
-    self._about_loader_progress.setObjectName("aboutLoaderProgress")
-    self._about_loader_progress.setRange(0, 100)
-    self._about_loader_progress.setValue(0)
-    self._about_loader_progress.setTextVisible(True)
-    self._about_loader_progress.setMinimumHeight(22)
-    self._about_loader_progress.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-    loader_card_layout.addWidget(self._about_loader_progress)
-
-    loader_layout.addWidget(loader_card, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-    loader_layout.addStretch(1)
-
+    self._about_loader_page, self._about_loader_label, self._about_loader_progress = create_settings_loader_page(self._about_page_stack, text="Loading About section...")
     self._about_page_stack.addWidget(self._about_loader_page)
     self._about_page_stack.setCurrentWidget(self._about_loader_page)
     return page

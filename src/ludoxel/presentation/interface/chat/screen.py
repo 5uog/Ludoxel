@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QEvent, QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.chat.messages import ChatMessage
 from ludoxel.presentation.interface.chat.candidates_view import ChatCandidateView
@@ -28,6 +28,7 @@ class ChatScreen(QWidget):
   link_activated = pyqtSignal(str)
   sent_history_requested = pyqtSignal(int)
   input_edited = pyqtSignal()
+  candidate_activated = pyqtSignal(str)
 
   def __init__(self, parent: QWidget | None = None, *, resource_root: Path) -> None:
     super().__init__(parent)
@@ -36,6 +37,7 @@ class ChatScreen(QWidget):
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
     self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
     self.setVisible(False)
+    self._candidate_enter_activation = False
 
     root = QVBoxLayout(self)
     root.setContentsMargins(0, 0, 0, 0)
@@ -82,10 +84,10 @@ class ChatScreen(QWidget):
     return bar
 
   def _build_central(self) -> QWidget:
-    self._stack = QStackedWidget(self)
-    self._stack.setObjectName("chatCentral")
+    self._central = QWidget(self)
+    self._central.setObjectName("chatCentral")
 
-    self._log_scroll = QScrollArea(self._stack)
+    self._log_scroll = QScrollArea(self._central)
     self._log_scroll.setObjectName("chatLogScroll")
     self._log_scroll.setFrameShape(QFrame.Shape.NoFrame)
     self._log_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -97,12 +99,10 @@ class ChatScreen(QWidget):
     self._log.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
     self._log.link_activated.connect(self.link_activated.emit)
     self._log_scroll.setWidget(self._log)
-    self._candidates = ChatCandidateView(self._stack)
-
-    self._stack.addWidget(self._log_scroll)
-    self._stack.addWidget(self._candidates)
-    self._stack.setCurrentWidget(self._log_scroll)
-    return self._stack
+    self._candidates = ChatCandidateView(self._central)
+    self._candidates.candidate_activated.connect(self.candidate_activated.emit)
+    self._candidates.setVisible(False)
+    return self._central
 
   def _build_bottom_bar(self) -> QWidget:
     bar = QFrame(self)
@@ -152,12 +152,18 @@ class ChatScreen(QWidget):
   def input_text(self) -> str:
     return str(self._input.text())
 
+  def cursor_position(self) -> int:
+    return int(self._input.cursorPosition())
+
   def clear_input(self) -> None:
     self._input.clear()
 
-  def set_input_text(self, text: str) -> None:
+  def set_input_text(self, text: str, *, cursor_position: int | None = None) -> None:
     self._input.setText(str(text))
-    self._input.setCursorPosition(len(self._input.text()))
+    if cursor_position is None:
+      self._input.setCursorPosition(len(self._input.text()))
+    else:
+      self._input.setCursorPosition(max(0, min(len(self._input.text()), int(cursor_position))))
 
   def focus_input(self) -> None:
     self._input.setFocus(Qt.FocusReason.OtherFocusReason)
@@ -167,11 +173,24 @@ class ChatScreen(QWidget):
     QTimer.singleShot(0, self._refresh_log_geometry)
     QTimer.singleShot(0, self._scroll_log_to_bottom)
 
+  def set_mention_targets(self, names: tuple[str, ...]) -> None:
+    self._log.set_mention_targets(tuple(names))
+
   def set_candidates(self, candidates: tuple[str, ...]) -> None:
     self._candidates.set_candidates(tuple(candidates))
+    if self._candidates.isVisible():
+      self._refresh_candidate_geometry()
 
   def show_candidates(self, show: bool) -> None:
-    self._stack.setCurrentWidget(self._candidates if bool(show) else self._log_scroll)
+    visible = bool(show) and self._candidates.has_candidates()
+    self._candidates.setVisible(bool(visible))
+    self._log_scroll.setVisible(not bool(visible))
+    if bool(visible):
+      self._refresh_candidate_geometry()
+      self._candidates.raise_()
+
+  def set_candidate_enter_activation(self, enabled: bool) -> None:
+    self._candidate_enter_activation = bool(enabled)
 
   def settings_open(self) -> bool:
     return bool(self._settings_panel.isVisible())
@@ -192,13 +211,36 @@ class ChatScreen(QWidget):
 
   def resizeEvent(self, e) -> None:
     super().resizeEvent(e)
+    self._refresh_central_geometry()
     self._refresh_log_geometry()
+    self._refresh_candidate_geometry()
     if self._settings_panel.isVisible():
       self._settings_panel.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
 
   def eventFilter(self, watched, event) -> bool:
     if watched is self._input and event.type() == QEvent.Type.KeyPress:
       key = int(event.key())
+      if self._candidates.isVisible():
+        if key == int(Qt.Key.Key_Up):
+          self._candidates.move_selection(-1)
+          event.accept()
+          return True
+        if key == int(Qt.Key.Key_Down):
+          self._candidates.move_selection(1)
+          event.accept()
+          return True
+        if key == int(Qt.Key.Key_Tab):
+          self._candidates.activate_selected()
+          event.accept()
+          return True
+        if bool(self._candidate_enter_activation) and key in (int(Qt.Key.Key_Return), int(Qt.Key.Key_Enter)):
+          self._candidates.activate_selected()
+          event.accept()
+          return True
+        if key == int(Qt.Key.Key_Escape):
+          self.show_candidates(False)
+          event.accept()
+          return True
       if key == int(Qt.Key.Key_Up):
         self.sent_history_requested.emit(-1)
         event.accept()
@@ -209,10 +251,24 @@ class ChatScreen(QWidget):
         return True
     return super().eventFilter(watched, event)
 
+  def _refresh_central_geometry(self) -> None:
+    if not hasattr(self, "_central"):
+      return
+    self._log_scroll.setGeometry(0, 0, max(1, int(self._central.width())), max(1, int(self._central.height())))
+
   def _refresh_log_geometry(self) -> None:
     viewport = self._log_scroll.viewport()
     height = max(int(viewport.height()), int(self._log.content_height()))
     self._log.setFixedHeight(max(1, int(height)))
+
+  def _refresh_candidate_geometry(self) -> None:
+    if not self._candidates.isVisible():
+      return
+    width = max(1, int(self._central.width()))
+    height = max(1, int(self._central.height()))
+    popup_height = max(1, min(height, int(self._candidates.preferred_height())))
+    top = max(0, int(height) - int(popup_height))
+    self._candidates.setGeometry(0, int(top), int(width), int(popup_height))
 
   def _scroll_log_to_bottom(self) -> None:
     bar = self._log_scroll.verticalScrollBar()

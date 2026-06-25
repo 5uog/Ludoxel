@@ -1660,7 +1660,7 @@ def normalize_ai_personality(value: object) -> str:
           },
           {
             kind: 'paragraph',
-            text: '`AiSettingsOverlay` can receive a `learning_controller_factory` instead of an already constructed controller. Opening AI Settings shows the Identity page without constructing `AiLearningController`, scanning bundled or user policies, reading dataset summaries, or resolving the policy folder label. The Learning page starts as a placeholder and builds its controls only when selected; training and evaluation actions still run through the existing background task thread once the page exists.',
+            text: '`AiSettingsOverlay` can receive a `learning_controller_factory` instead of an already constructed controller. Opening AI Settings shows the Identity page without constructing `AiLearningController`, scanning bundled or user policies, reading dataset summaries, or resolving the policy folder label. When the Learning tab is selected, the tab area first shows the same loader shell used by the Settings About page through `create_settings_loader_page`; a `_LearningTaskThread` then creates or reuses the controller and gathers policy options, dataset summary, and the policy path before the Learning controls are assembled on the UI thread. Training and evaluation actions still run through the existing background task thread once the page exists.',
           },
           {
             kind: 'code',

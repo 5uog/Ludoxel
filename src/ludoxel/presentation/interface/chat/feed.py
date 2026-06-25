@@ -55,6 +55,9 @@ class ChatFeedWidget(QFrame):
       self._text.set_messages(normalized)
       self._reset_fade()
 
+  def set_mention_targets(self, names: tuple[str, ...]) -> None:
+    self._text.set_mention_targets(tuple(names))
+
   def set_fade_enabled(self, enabled: bool) -> None:
     requested = bool(enabled)
     if requested == self._fade_enabled:

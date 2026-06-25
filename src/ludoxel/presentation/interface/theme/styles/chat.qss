@@ -58,6 +58,12 @@ QLabel#chatCandidateRow {
   border-left: 3px solid #6fb03a;
 }
 
+QLabel#chatCandidateRow[selected="true"] {
+  color: #ffffff;
+  background: rgba(70, 112, 36, 205);
+  border-left-color: #a7e16d;
+}
+
 QLineEdit#chatInput {
   background: #1c1c1c;
   color: #ffffff;

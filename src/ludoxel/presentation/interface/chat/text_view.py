@@ -12,11 +12,14 @@ from PyQt6.QtWidgets import QWidget
 from ludoxel.application.chat.messages import ChatMessage
 from ludoxel.foundations.text.format_codes import FormattedSegment, parse_formatted_text
 from ludoxel.foundations.text.obfuscation import obfuscated_char_for
+from ludoxel.foundations.text.palette import color_for_code
 
 _HORIZONTAL_PADDING_PX = 10
 _VERTICAL_PADDING_PX = 8
 _LINE_LEADING_PX = 3
 _OBFUSCATION_INTERVAL_MS = 70
+_MENTION_COLOR = color_for_code("e")
+_MENTION_FOREGROUND = "#FFFF55" if _MENTION_COLOR is None else str(_MENTION_COLOR.foreground)
 
 
 @dataclass(slots=True)
@@ -50,7 +53,48 @@ def _font_index(segment: FormattedSegment) -> int:
   return (1 if segment.bold else 0) | (2 if segment.italic else 0)
 
 
-def _styled_chars(message: ChatMessage) -> list[_StyledChar]:
+def _is_mention_name_char(ch: str) -> bool:
+  return ch.isalnum() or ch in ("_", "#")
+
+
+def _mention_spans(plain: str, mention_targets: tuple[str, ...]) -> tuple[tuple[int, int], ...]:
+  if not plain or not mention_targets:
+    return ()
+  occupied: set[int] = set()
+  spans: list[tuple[int, int]] = []
+  names = tuple(sorted({str(name).strip() for name in mention_targets if str(name).strip()}, key=len, reverse=True))
+  for name in names:
+    token = f"@{name}"
+    start = 0
+    while True:
+      index = plain.find(token, start)
+      if int(index) < 0:
+        break
+      end = int(index) + len(token)
+      before_ok = int(index) == 0 or not _is_mention_name_char(plain[int(index) - 1])
+      after_ok = int(end) >= len(plain) or not _is_mention_name_char(plain[int(end)])
+      free = all(pos not in occupied for pos in range(int(index), int(end)))
+      if bool(before_ok and after_ok and free):
+        spans.append((int(index), int(end)))
+        occupied.update(range(int(index), int(end)))
+      start = int(index) + 1
+  return tuple(sorted(spans))
+
+
+def _mention_segment(segment: FormattedSegment, ch: str) -> FormattedSegment:
+  return FormattedSegment(
+    text=str(ch),
+    foreground=str(_MENTION_FOREGROUND),
+    background=segment.background,
+    bold=bool(segment.bold),
+    italic=bool(segment.italic),
+    underline=bool(segment.underline),
+    strikethrough=bool(segment.strikethrough),
+    obfuscated=bool(segment.obfuscated),
+  )
+
+
+def _styled_chars(message: ChatMessage, mention_targets: tuple[str, ...]) -> list[_StyledChar]:
   segments = parse_formatted_text(message.text)
   chars: list[_StyledChar] = []
   for segment in segments:
@@ -67,6 +111,9 @@ def _styled_chars(message: ChatMessage) -> list[_StyledChar]:
         continue
       for index in range(start, start + len(label)):
         chars[index].link_url = str(link.url)
+  for start, end in _mention_spans("".join(item.ch for item in chars), tuple(mention_targets)):
+    for index in range(int(start), int(end)):
+      chars[index].segment = _mention_segment(chars[index].segment, chars[index].ch)
   return chars
 
 
@@ -84,6 +131,7 @@ class ChatTextView(QWidget):
     else:
       self.setMouseTracking(True)
     self._messages: tuple[ChatMessage, ...] = ()
+    self._mention_targets: tuple[str, ...] = ()
     self._rng = Random()
     self._layout: _Layout | None = None
     self._layout_width: int = -1
@@ -98,6 +146,16 @@ class ChatTextView(QWidget):
 
   def set_messages(self, messages: tuple[ChatMessage, ...]) -> None:
     self._messages = tuple(messages)
+    self._layout = None
+    self._layout_width = -1
+    self.updateGeometry()
+    self.update()
+
+  def set_mention_targets(self, names: tuple[str, ...]) -> None:
+    normalized = tuple(str(name).strip() for name in names if str(name).strip())
+    if normalized == self._mention_targets:
+      return
+    self._mention_targets = normalized
     self._layout = None
     self._layout_width = -1
     self.updateGeometry()
@@ -124,7 +182,7 @@ class ChatTextView(QWidget):
     has_obfuscation = False
     lines: list[list[_Glyph]] = []
     for message in self._messages:
-      styled = _styled_chars(message)
+      styled = _styled_chars(message, self._mention_targets)
       current: list[_Glyph] = []
       current_width = 0
       last_space_index = -1
