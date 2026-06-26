@@ -301,6 +301,27 @@
     <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/starting-ludoxel#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library#startup-menu-first-surface</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library#startup-menu-profile-panel</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library#startup-menu-play-my-world-library</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library#startup-menu-play-othello</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library#startup-menu-notification-changelog</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/using-the-startup-menu-and-my-world-library#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/manual/starting-the-application/launch-and-space-selection/switching-play-spaces</loc>
   </url>
   <url>
@@ -1709,6 +1730,27 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-saved-world-state#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library#reading-the-my-world-library-index-and-entries</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library#reading-the-my-world-library-metadata-and-game-mode</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library#reading-the-my-world-library-thumbnails</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library#reading-the-my-world-library-packages</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library#reading-the-my-world-library-active-routing</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-saved-ai-state</loc>

@@ -1,6 +1,6 @@
 {
   "name": "ludoxel",
-  "version": "3.7.3",
+  "version": "3.7.4 Beta 1",
   "private": true,
   "license": "LicenseRef-All-Rights-Reserved",
   "type": "module",
@@ -56,7 +56,9 @@
     "assets:block-thumbnails:help": "node ./tools/generate_block_thumbnails/scripts/run/help.run.mjs",
     "assets:block-thumbnails:generate": "node ./tools/generate_block_thumbnails/scripts/run/generate.run.mjs",
     "assets:block-thumbnails:check": "node ./tools/generate_block_thumbnails/scripts/run/check.run.mjs",
-    "check": "npm run format:check && npm run lint && npm run tools:test && npm run package:check && npm run docs:check && npm run license:check && npm run resources:check && npm run shader:check",
+    "changelog:generate": "node ./tools/sync_changelog/scripts/run/generate.run.mjs",
+    "changelog:check": "node ./tools/sync_changelog/scripts/run/check.run.mjs",
+    "check": "npm run format:check && npm run lint && npm run tools:test && npm run package:check && npm run docs:check && npm run license:check && npm run resources:check && npm run shader:check && npm run changelog:check",
     "ci": "npm run check"
   },
   "devDependencies": {

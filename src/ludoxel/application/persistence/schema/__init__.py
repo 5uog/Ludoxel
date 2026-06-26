@@ -11,6 +11,7 @@ from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
 from ludoxel.application.persistence.schema.player import PersistedPlayer
 from ludoxel.application.persistence.schema.settings import PersistedSettings
 from ludoxel.application.persistence.schema.world import PersistedWorld
+from ludoxel.application.persistence.schema.world_library import PersistedWorldEntry, PersistedWorldLibraryIndex, PersistedWorldMetadata
 
 __all__ = [
   "AppState",
@@ -21,6 +22,9 @@ __all__ = [
   "PersistedPlayer",
   "PersistedSettings",
   "PersistedWorld",
+  "PersistedWorldEntry",
+  "PersistedWorldLibraryIndex",
+  "PersistedWorldMetadata",
   "PlayerStateFile",
   "WorldStateFile",
 ]

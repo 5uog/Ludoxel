@@ -46,6 +46,9 @@ class ViewportOverlayMixin:
   def fullscreen_enabled(self: "RendererViewportWidget") -> bool:
     return bool(self._state.fullscreen)
 
+  def menu_active(self: "RendererViewportWidget") -> bool:
+    return bool(self._overlays.menu_open())
+
   def _invalidate_pause_preview_cache(self: "RendererViewportWidget") -> None:
     self._pause_preview_cache_key = None
     self._pause_preview_frame = QImage()
@@ -237,10 +240,17 @@ class ViewportOverlayMixin:
     self._route_overlay.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._inventory.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     self._death.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+    menu = getattr(self, "_menu", None)
+    if menu is not None:
+      menu.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
     chat_controller.layout_chat(self, int(width), int(height))
     self._sync_player_name_overlays()
 
   def _restore_overlay_stack_after_resize(self: "RendererViewportWidget") -> None:
+    if self._overlays.menu_open():
+      menu = getattr(self, "_menu", None)
+      if menu is not None:
+        menu.raise_()
     if self._overlays.dead():
       self._death.raise_()
     elif self._overlays.othello_settings_open():
@@ -264,6 +274,7 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
+      and (not self._overlays.menu_open())
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
       and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
@@ -275,7 +286,9 @@ class ViewportOverlayMixin:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
   def _ambient_audio_active(self: "RendererViewportWidget") -> bool:
-    return bool((not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.othello_settings_open()))
+    return bool(
+      (not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.menu_open()) and (not self._overlays.othello_settings_open())
+    )
 
   def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
     show_gameplay_hud = bool(self._gameplay_hud_active())
@@ -284,6 +297,7 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
+      and (not self._overlays.menu_open())
       and (not self._overlays.inventory_open())
       and (not self._overlays.settings_open())
       and (not bool(chat_controller.is_chat_open(self)))
@@ -297,6 +311,7 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
+      and (not self._overlays.menu_open())
       and (not self._overlays.inventory_open())
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
@@ -364,6 +379,72 @@ class ViewportOverlayMixin:
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
 
+  def _set_menu_overlay(self: "RendererViewportWidget", on: bool) -> None:
+    if bool(on):
+      self._reset_held_mouse_actions()
+      chat_controller.force_close_if_open(self)
+      menu = getattr(self, "_menu", None)
+      if menu is not None:
+        menu.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
+    self._overlays.set_menu_open(bool(on))
+    self._invalidate_menu_preview_cache()
+    if not bool(on):
+      menu = getattr(self, "_menu", None)
+      if menu is not None:
+        menu.set_player_preview_frame(QImage())
+    self._sync_gameplay_hud_visibility()
+    settings_controller.sync_cloud_motion_pause(self)
+
+  def _invalidate_menu_preview_cache(self: "RendererViewportWidget") -> None:
+    self._menu_preview_cache_key = None
+    self._menu_preview_frame = QImage()
+
+  def _clear_menu_preview_frame(self: "RendererViewportWidget") -> None:
+    if getattr(self, "_menu_preview_cache_key", None) is None and getattr(self, "_menu_preview_frame", QImage()).isNull():
+      return
+    self._invalidate_menu_preview_cache()
+    menu = getattr(self, "_menu", None)
+    if menu is not None:
+      menu.set_player_preview_frame(QImage())
+      menu.set_player_preview_name_tag("", visible=False)
+
+  def _build_menu_preview_player_state(self: "RendererViewportWidget", player_state) -> object:
+    menu = getattr(self, "_menu", None)
+    if player_state is None or menu is None:
+      return None
+    body_yaw_deg, head_yaw_deg, head_pitch_deg = menu.player_preview_angles()
+    return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)
+
+  def _update_menu_preview_frame(self: "RendererViewportWidget", player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:
+    menu = getattr(self, "_menu", None)
+    if menu is None or not bool(menu.menu_preview_visible()) or bool(self.loading_active()):
+      self._clear_menu_preview_frame()
+      return
+    preview_widget = menu.player_preview_widget()
+    if int(preview_widget.width()) <= 1 or int(preview_widget.height()) <= 1:
+      self._clear_menu_preview_frame()
+      return
+    text = str(self._state.resolved_player_name).strip()
+    menu.set_player_preview_name_tag(text, visible=bool(text), opacity=1.0)
+    w = max(1, int(round(float(preview_widget.width()) * max(1.0, float(dpr)))))
+    h = max(1, int(round(float(preview_widget.height()) * max(1.0, float(dpr)))))
+    preview_state = self._build_menu_preview_player_state(player_state)
+    preview_key = self._pause_preview_key(player_state=preview_state, width=int(w), height=int(h), device_pixel_ratio=float(dpr))
+    if preview_key is not None and getattr(self, "_menu_preview_cache_key", None) == preview_key and not getattr(self, "_menu_preview_frame", QImage()).isNull():
+      menu.set_player_preview_frame(self._menu_preview_frame)
+      return
+    frame = self._renderer.render_player_preview_frame(
+      w=int(w),
+      h=int(h),
+      player_state=preview_state,
+      restore_framebuffer=int(self.defaultFramebufferObject()),
+      restore_viewport=(0, 0, int(fb_w), int(fb_h)),
+      device_pixel_ratio=float(max(1.0, float(dpr))),
+    )
+    self._menu_preview_cache_key = preview_key
+    self._menu_preview_frame = QImage(frame)
+    menu.set_player_preview_frame(frame)
+
   def _set_settings_overlay(self: "RendererViewportWidget", on: bool) -> None:
     if bool(on):
       self._reset_held_mouse_actions()
@@ -420,6 +501,7 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
+      and (not self._overlays.menu_open())
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
       and (not self._overlays.inventory_open())
@@ -454,6 +536,7 @@ class ViewportOverlayMixin:
       and (not bool(self._state.hide_hud))
       and (not self._overlays.dead())
       and (not self._overlays.paused())
+      and (not self._overlays.menu_open())
       and (not self._overlays.settings_open())
       and (not self._overlays.othello_settings_open())
       and (not self._overlays.inventory_open())

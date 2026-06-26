@@ -16,6 +16,7 @@ def _server_name_for_root(project_root: Path) -> str:
 
 class SingleInstanceRelay(QObject):
   activation_requested = pyqtSignal()
+  file_open_requested = pyqtSignal(str)
 
   def __init__(self, project_root: Path, parent: QObject | None = None) -> None:
     super().__init__(parent)
@@ -23,14 +24,17 @@ class SingleInstanceRelay(QObject):
     self._server = QLocalServer(self)
     self._server.newConnection.connect(self._consume_pending_connections)
 
-  def activate_existing_instance(self, *, timeout_ms: int = 400) -> bool:
+  def activate_existing_instance(self, *, open_path: str | None = None, timeout_ms: int = 400) -> bool:
     socket = QLocalSocket(self)
     socket.connectToServer(str(self._server_name))
     if not socket.waitForConnected(int(max(1, int(timeout_ms)))):
       socket.abort()
       socket.deleteLater()
       return False
-    socket.write(b"activate\n")
+    payload = b"activate\n"
+    if open_path:
+      payload += b"open " + str(open_path).encode("utf-8") + b"\n"
+    socket.write(payload)
     socket.flush()
     socket.waitForBytesWritten(int(max(1, int(timeout_ms))))
     socket.disconnectFromServer()
@@ -60,8 +64,14 @@ class SingleInstanceRelay(QObject):
       self._consume_socket(socket)
 
   def _consume_socket(self, socket: QLocalSocket) -> None:
-    payload = bytes(socket.readAll()).decode("utf-8", errors="ignore").strip().lower()
-    if "activate" in payload:
-      self.activation_requested.emit()
+    payload = bytes(socket.readAll()).decode("utf-8", errors="ignore")
+    for line in payload.splitlines():
+      text = line.strip()
+      if not text:
+        continue
+      if text.lower() == "activate":
+        self.activation_requested.emit()
+      elif text.lower().startswith("open "):
+        self.file_open_requested.emit(text[5:].strip())
     if socket.state() == QLocalSocket.LocalSocketState.ConnectedState:
       socket.disconnectFromServer()

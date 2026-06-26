@@ -249,9 +249,9 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         body: [
           '`LoadingState` in `src/ludoxel/presentation/interface/viewport/render_loop/frame_sync.py` owns the active flag, text, and chunk-progress pair. Renderer initialization enters that state through `_begin_loading`; `paintGL` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` drains and schedules `WorldUploadTracker` work, updates `Loading world... ready/total chunks`, and calls `_finish_loading` only after the visible chunk set is resident. The status is therefore produced by viewport preparation, not by a splash timer or a fixed message.',
           '`ViewportLifecycleMixin._on_application_state_changed` still clears held input, releases mouse capture, and suppresses the delayed pause while loading. Its runtime-activity gate now keeps the render timer alive when the initialized viewport remains visible and loading is active, even if `_application_active` is false. `_tick_sim` and `_on_step` continue to return during loading, so inactive startup does not advance player simulation, gameplay input, pause state, HUD interaction, or ordinary capture.',
-          'When visible chunks become ready, `_finish_loading` clears loading state, updates HUD and cloud-motion state, re-evaluates runtime activity, emits `loading_state_changed(False)`, and emits `loading_finished`. The initial completion handler closes the splash before activating the main window when the application is already active; the queued `GameScreen` callback then focuses the viewport. This keeps preparation independent of foreground focus without making Ludoxel request foreground activation from an inactive desktop application.',
+          'When visible chunks become ready, `_finish_loading` opens the startup menu on the first completion, clears loading state, updates HUD and cloud-motion state, re-evaluates runtime activity, emits `loading_state_changed(False)`, and emits `loading_finished`. The initial completion handler closes the splash before activating the main window when the application is already active; the queued `GameScreen` callback focuses the viewport only when the startup menu is not active, so a menu shown after loading keeps focus on the menu shell. This keeps preparation independent of foreground focus without making Ludoxel request foreground activation from an inactive desktop application.',
           'The implementation keeps Ludoxel-owned Qt timers and the render/upload path eligible to run during this specific inactive loading state. It does not establish that an operating system will display frames while the process is hidden, suspended, or denied rendering by the window manager, and it does not claim identical OpenGL and WGPU presentation timing on Windows and macOS.',
-          '`GLViewportWidget` accepts key, wheel, mouse-press, mouse-release, and mouse-move events during ordinary operation, then accepts and returns for each of those paths while `loading_active()` is true. Loading retains the preparation path while excluding gameplay mutation from these event handlers. The source fixes the in-application gate; compositor scheduling, driver behavior, and platform suspension remain outside this code path.',
+          '`GLViewportWidget` accepts key, wheel, mouse-press, mouse-release, and mouse-move events during ordinary operation, then ignores each of those paths while `loading_active()` is true or the startup menu is open. Loading and the startup menu retain the preparation path while excluding gameplay mutation from these event handlers, so the menu receives input through its own widgets rather than the viewport. The source fixes the in-application gate; compositor scheduling, driver behavior, and platform suspension remain outside this code path.',
         ],
         codeBlocks: [
           {
@@ -310,7 +310,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         id: 'starting-ludoxel-play-space-and-state-boundary',
         title: 'Play-Space and Saved-State Questions Begin After Launch',
         body: [
-          'After the viewport is loaded and focused, the active surface controls the next interpretation. My World uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A loaded viewport showing the wrong surface identifies a play-space or restored-state condition; module-entry evidence remains in the launch chain.',
+          'After the viewport finishes loading, the startup menu is shown rather than a play space, and gameplay input and mouse capture stay behind a menu modal until a play button is pressed. My World then uses movement, camera control, hotbar state, inventory, block interaction, and world persistence. Othello uses board state, legal-move selection, side state, settings, board animation, and engine response. A menu that does not appear after loading, or a play space entered without the menu, identifies a menu-admission or restored-state condition; module-entry evidence remains in the launch chain.',
           [
             'The immediate operational continuations are ',
             {
@@ -347,6 +347,85 @@ def _handle_loading_state_changed(self, active: bool) -> None:
       'Separating Security Reports from Problem Reports',
       'Understanding Unsafe Public Content',
     ],
+  }),
+  defineDocsArticle({
+    category: 'Manual',
+    subcategory: 'Starting the Application',
+    group: 'Launch and Space Selection',
+    title: 'Using the Startup Menu and My World Library',
+    description:
+      'Explains the startup menu shown after loading, the profile and skin controls, the in-application changelog, and the My World library where worlds are selected, created, renamed, deleted, exported, and imported.',
+    sections: [
+      {
+        id: 'startup-menu-first-surface',
+        title: 'The Menu Is the First Surface After Loading',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'When the viewport finishes loading, `StartupShellOverlay` is shown over the viewport and `ViewportOverlays.set_menu_open` holds the gameplay HUD, mouse capture, and the fixed-step simulation behind a menu modal. The menu is reached whether the launch is a first run or a restored save, and whether the last active space was My World or Othello. The previously saved space is entered only when its play button is pressed.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The menu carries the Ludoxel logo, a creator label on the lower left, the runtime version label on the lower right, a notification button on the lower left, and a player profile panel on the lower right. The central button panel offers Play My World and Play Othello (Reversi). The menu does not start gameplay by itself; each button routes to a distinct surface.',
+          },
+        ],
+      },
+      {
+        id: 'startup-menu-profile-panel',
+        title: 'The Profile Panel Shares the Pause Skin State',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The menu profile panel reuses the same skin preview widget as the pause overlay and offers Change Skin and Reset to Alex. These actions call the same skin controller used by the pause overlay, so the menu and the in-game pause surface read and write one player skin state, and a change made on the menu is persisted through the existing preference path. Dragging the preview rotates the model; the preview frame is rendered each frame while the menu page is visible.',
+          },
+        ],
+      },
+      {
+        id: 'startup-menu-play-my-world-library',
+        title: 'Play My World Opens the Library',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Play My World opens the My World library inside the same shell rather than starting a single world. `MyWorldLibraryPage` keeps the chat-style top bar with a `< Back` control that returns to the menu, a grid and list view toggle on the left, and Create New World and Import World on the right. Each world is shown with a thumbnail, the current Survival or Creative game mode, the created and updated dates, and the on-disk world size; the list view adds the size beside the name.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'Create New World requests a world name and a game mode, then adds the world to the library and returns to the list with the new world present; it does not enter gameplay by itself.',
+              'A per-world action menu provides Rename, Export, and Delete. Rename rejects empty, whitespace-only, and duplicate names. Delete asks for confirmation and removes the world entry and its thumbnail.',
+              'Export writes the world to a chosen `.ldxworld` file, and Import World reads a `.ldxworld` file, rejecting a malformed package without changing the library.',
+              'Opening a world saves the previously loaded world, loads the selected world into the My World session, applies that world game mode, closes the menu, and enters gameplay.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The on-disk shape of these worlds, the per-world game mode, the thumbnail capture, and the `.ldxworld` package are owned by the library persistence, not by this surface.',
+          },
+        ],
+      },
+      {
+        id: 'startup-menu-play-othello',
+        title: 'Play Othello Restores the Othello Space',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Play Othello (Reversi) closes the menu and enters the Othello space through the same controller switch used by the in-game pause overlay. The Othello board, side state, clocks, and settings restored at launch are entered when this button is pressed; the Othello save remains in `world_state.json` and is never placed in the My World library.',
+          },
+        ],
+      },
+      {
+        id: 'startup-menu-notification-changelog',
+        title: 'The Notification Button Opens the Changelog',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The notification button opens the changelog inside the application. The changelog page scrolls, accepts keyboard scrolling, and returns to the menu through its `< Back` control or the Escape key. It renders the dated entries from a packaged changelog resource that is generated from the website changelog data and checked for drift, so the in-application changelog and the website changelog show the same entries.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Starting Ludoxel', 'Switching Play Spaces', 'Reading the My World Library', 'Reading the Main Window'],
   }),
   defineDocsArticle({
     category: 'Manual',

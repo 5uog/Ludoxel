@@ -22,6 +22,7 @@ from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.blocks.states.values import prop_as_bool
 from ludoxel.simulation.blocks.structures.structural_rules import is_fence_gate
 from ludoxel.simulation.rules.gravity.system import GRAVITY_AFFECTED_TAG
+from ludoxel.simulation.spaces.my_world.session import make_my_world_state
 from ludoxel.simulation.spaces.othello.game.board import OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint
 from ludoxel.simulation.spaces.othello.game.state import OthelloGameState
 from ludoxel.simulation.worlds.state.play_space import normalize_play_space_id
@@ -141,6 +142,25 @@ def _persisted_player_from_session(session: SessionManager, *, allow_flying: boo
 def _persisted_world_from_session(session: SessionManager) -> PersistedWorld:
   snapshot = session.snapshot_world_blocks_for_persistence()
   return PersistedWorld(revision=int(session.world.revision), blocks={key: str(value) for (key, value) in snapshot.items()})
+
+
+def capture_my_world_space_from_session(session: SessionManager, *, allow_flying: bool) -> PersistedPlaySpace:
+  return PersistedPlaySpace(
+    player=_persisted_player_from_session(session, allow_flying=bool(allow_flying)),
+    world=_persisted_world_from_session(session),
+    ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in session.ai_states()),
+  )
+
+
+def load_my_world_space_into_session(session: SessionManager, space: PersistedPlaySpace, *, allow_flying: bool) -> None:
+  _load_player_into_session(session=session, player=space.player, allow_flying=bool(allow_flying))
+  if space.world.blocks or int(space.world.revision) > 0:
+    session.world.replace_all(blocks={key: str(value) for (key, value) in space.world.blocks.items()}, revision=int(max(1, int(space.world.revision))))
+  else:
+    fresh = make_my_world_state(seed=0)
+    session.world.replace_all(blocks=fresh.snapshot_blocks(), revision=int(max(1, int(fresh.revision))))
+  session.set_ai_players(tuple(player.to_state() for player in space.ai_players))
+  _restore_player_overlap_exemptions(session)
 
 
 def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceContext, renderer, data_root: Path | None = None) -> tuple[RuntimePreferences, OthelloGameState]:

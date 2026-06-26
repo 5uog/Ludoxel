@@ -12,13 +12,16 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel
 import ludoxel.presentation.interface.chat.controller as chat_controller
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
+import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
 import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.persistence.schedulers.state import apply_persisted_state_if_present
+from ludoxel.application.persistence.stores.world_library import WorldLibraryStore
 from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.sessions.context.play_space import PlaySpaceContext
 from ludoxel.application.sessions.managers.learning import AiLearningRuntime
 from ludoxel.application.sessions.runners.fixed_step import FixedStepRunner
+from ludoxel.foundations.identity import __version__
 from ludoxel.presentation.audio import AudioManager
 from ludoxel.presentation.interface.common.status_overlay import status_overlay_title_image_path
 from ludoxel.presentation.interface.config.game_loop import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
@@ -29,6 +32,7 @@ from ludoxel.presentation.interface.hud.hotbar_widget import HotbarWidget
 from ludoxel.presentation.interface.hud.route_overlay import RouteOverlayWidget
 from ludoxel.presentation.interface.input.game_input import ViewportInput
 from ludoxel.presentation.interface.input.qt import QtInputAdapter
+from ludoxel.presentation.interface.menu.shell import StartupShellOverlay
 from ludoxel.presentation.interface.othello.hud import OthelloHudWidget
 from ludoxel.presentation.interface.othello.settings import OthelloSettingsOverlay
 from ludoxel.presentation.interface.othello.worker import OthelloAiWorker
@@ -127,6 +131,11 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._ai_skin_images: dict[str, QImage] = {}
     self._pause_preview_cache_key: tuple[object, ...] | None = None
     self._pause_preview_frame = QImage()
+    self._menu_preview_cache_key: tuple[object, ...] | None = None
+    self._menu_preview_frame = QImage()
+    self._startup_menu_pending: bool = True
+    self._loaded_my_world_id: str = ""
+    self._pending_open_ldxworld: str = ""
     self._inventory_preview_cache_key: tuple[object, ...] | None = None
     self._inventory_preview_frame = QImage()
     self._block_break_particles = ()
@@ -189,6 +198,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._route_overlay.setVisible(True)
 
     self._inventory = InventoryOverlay(parent=self, resource_root=self._resource_root, registry=self._session.block_registry)
+    self._menu = StartupShellOverlay(resource_root=self._resource_root, version_text=f"v{__version__}", parent=self)
 
     self._overlays = ViewportOverlays(
       refs=OverlayRefs(
@@ -199,6 +209,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
         death=self._death,
         crosshair=self._crosshair,
         hotbar=self._hotbar,
+        menu=self._menu,
         hud_getter=lambda: self._hud,
         othello_hud_getter=lambda: self._othello_hud,
       ),
@@ -210,6 +221,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     settings_controller.bind_settings_overlay(self)
     othello_controller.bind_othello_controls(self)
     overlay_controller.bind_overlay_actions(self)
+    menu_controller.bind_menu(self)
     chat_controller.bind_chat(self)
 
     self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -241,6 +253,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     if launch_player_name is not None:
       self._state.player_name = str(launch_player_name)
     self._session = self._sessions.set_active_space(self._state.current_space_id)
+    self._loaded_my_world_id = str(WorldLibraryStore(project_root=self._project_root, data_root=self._data_root).active_world_id())
     self._learning_runtime = AiLearningRuntime(project_root=self._project_root, data_root=self._data_root)
     self._learning_runtime.configure_session(self._session)
     self._othello_match.set_default_settings(self._state.othello_settings)
@@ -265,31 +278,31 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
       app.applicationStateChanged.connect(self._on_application_state_changed)
 
   def keyPressEvent(self, e: QKeyEvent) -> None:
-    if bool(self.loading_active()):
-      e.accept()
+    if bool(self.loading_active()) or bool(self._overlays.menu_open()):
+      e.ignore()
       return
     if interaction_controller.handle_key_press(self, e):
       return
     super().keyPressEvent(e)
 
   def keyReleaseEvent(self, e) -> None:
-    if bool(self.loading_active()):
-      e.accept()
+    if bool(self.loading_active()) or bool(self._overlays.menu_open()):
+      e.ignore()
       return
     self._inp.on_key_release(e)
     super().keyReleaseEvent(e)
 
   def wheelEvent(self, e: QWheelEvent) -> None:
-    if bool(self.loading_active()):
-      e.accept()
+    if bool(self.loading_active()) or bool(self._overlays.menu_open()):
+      e.ignore()
       return
     if interaction_controller.handle_wheel(self, e):
       return
     super().wheelEvent(e)
 
   def mousePressEvent(self, e: QMouseEvent) -> None:
-    if bool(self.loading_active()):
-      e.accept()
+    if bool(self.loading_active()) or bool(self._overlays.menu_open()):
+      e.ignore()
       return
     if chat_controller.is_chat_open(self):
       interaction_controller.handle_mouse_press(self, e)
@@ -298,8 +311,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     super().mousePressEvent(e)
 
   def mouseReleaseEvent(self, e: QMouseEvent) -> None:
-    if bool(self.loading_active()):
-      e.accept()
+    if bool(self.loading_active()) or bool(self._overlays.menu_open()):
+      e.ignore()
       return
     interaction_controller.handle_mouse_release(self, e)
     super().mouseReleaseEvent(e)

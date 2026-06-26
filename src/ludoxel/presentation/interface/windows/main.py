@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QPoint, QRect, Qt
+from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, Qt
 from PyQt6.QtGui import QIcon, QScreen
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
@@ -45,6 +45,42 @@ def _load_application_icon(resource_root: Path) -> QIcon | None:
       if not icon.isNull():
         return icon
   return None
+
+
+_LDXWORLD_SUFFIX = ".ldxworld"
+
+
+def _ldxworld_path_from_argv(argv) -> str | None:
+  for raw in list(argv)[1:]:
+    candidate = str(raw).strip()
+    if candidate.lower().endswith(_LDXWORLD_SUFFIX) and Path(candidate).is_file():
+      return str(Path(candidate).resolve())
+  return None
+
+
+class _FileOpenEventFilter(QObject):
+  def __init__(self, handler, parent: QObject | None = None) -> None:
+    super().__init__(parent)
+    self._handler = handler
+
+  def eventFilter(self, watched, event) -> bool:
+    if event is not None and event.type() == QEvent.Type.FileOpen:
+      path = ""
+      try:
+        path = str(event.file())
+      except Exception:
+        path = ""
+      if not path:
+        try:
+          url = event.url()
+          if url is not None and url.isLocalFile():
+            path = str(url.toLocalFile())
+        except Exception:
+          path = ""
+      if path.lower().endswith(_LDXWORLD_SUFFIX) and callable(self._handler):
+        self._handler(path)
+        return True
+    return super().eventFilter(watched, event)
 
 
 def _set_windows_application_id() -> None:
@@ -236,22 +272,35 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   elif font_qss:
     app.setStyleSheet(str(font_qss))
 
+  launch_open_path = _ldxworld_path_from_argv(sys.argv)
+
   relay = SingleInstanceRelay(managed_data_root, app)
-  if relay.activate_existing_instance():
+  if relay.activate_existing_instance(open_path=launch_open_path):
     return
   relay.listen()
   app.aboutToQuit.connect(relay.close)
   activation_handler: dict[str, object] = {"callback": None}
+  file_open_handler: dict[str, object] = {"callback": None}
 
   def _set_activation_callback(callback) -> None:
     activation_handler["callback"] = callback
+
+  def _set_file_open_callback(callback) -> None:
+    file_open_handler["callback"] = callback
 
   def _handle_activation_request() -> None:
     callback = activation_handler.get("callback")
     if callable(callback):
       callback()
 
+  def _handle_file_open_request(path: str) -> None:
+    callback = file_open_handler.get("callback")
+    if callable(callback) and str(path).strip():
+      callback(str(path))
+
   relay.activation_requested.connect(_handle_activation_request)
+  relay.file_open_requested.connect(_handle_file_open_request)
+  app.installEventFilter(_FileOpenEventFilter(_handle_file_open_request, app))
 
   persisted_state = AppStateStore(project_root=root, data_root=managed_data_root).load()
   explicit_player_name = ""
@@ -271,6 +320,20 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
 
   w = MainWindow(project_root=root, resource_root=bundled_root, data_root=managed_data_root, launch_player_name=launch_player_name)
   _set_activation_callback(w.request_activation)
+
+  def _route_file_open(path: str) -> None:
+    viewport = w._screen.viewport
+    try:
+      import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
+
+      menu_controller.request_open_ldxworld(viewport, Path(path))
+    except Exception:
+      pass
+    _request_widget_activation(w)
+
+  _set_file_open_callback(_route_file_open)
+  if launch_open_path:
+    w._screen.viewport._pending_open_ldxworld = str(launch_open_path)
   if app_icon is not None:
     w.setWindowIcon(app_icon)
   w.setWindowTitle(f"Ludoxel v{__version__}")

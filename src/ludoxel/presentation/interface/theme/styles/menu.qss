@@ -1,0 +1,443 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+
+/* Startup menu shell, My World library, changelog viewer, and world editor dialogs. */
+
+QWidget#startupShellRoot {
+  background: rgba(0, 0, 0, 170);
+}
+
+QWidget#startupMenuPage,
+QWidget#myWorldLibraryPage,
+QWidget#changelogPage {
+  background: transparent;
+}
+
+/* Menu button panel reuses the pause stone-button look. */
+
+QWidget#startupShellRoot QFrame#panel {
+  background: #2a2a2a;
+  border-top: 4px solid #666666;
+  border-left: 4px solid #666666;
+  border-right: 4px solid #0b0b0b;
+  border-bottom: 4px solid #0b0b0b;
+  border-radius: 0px;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn {
+  color: #ffffff;
+  background: #6b6b6b;
+  border-top: 3px solid #a0a0a0;
+  border-left: 3px solid #a0a0a0;
+  border-right: 3px solid #252525;
+  border-bottom: 3px solid #252525;
+  border-radius: 0px;
+  padding: 7px 14px;
+  min-height: 24px;
+  font-weight: 800;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn:hover {
+  background: #7a7a7a;
+  border-top-color: #b4b4b4;
+  border-left-color: #b4b4b4;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn:pressed {
+  background: #555555;
+  border-top-color: #202020;
+  border-left-color: #202020;
+  border-right-color: #9a9a9a;
+  border-bottom-color: #9a9a9a;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn:focus {
+  border-top-color: #d9d9d9;
+  border-left-color: #d9d9d9;
+  border-right-color: #0b0b0b;
+  border-bottom-color: #0b0b0b;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn:disabled {
+  color: rgba(255, 255, 255, 115);
+  background: #444444;
+  border-top-color: #606060;
+  border-left-color: #606060;
+  border-right-color: #222222;
+  border-bottom-color: #222222;
+}
+
+/* Menu labels and logo. */
+
+QLabel#menuCreatorLabel {
+  color: rgba(255, 255, 255, 205);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+QLabel#menuVersionLabel {
+  color: rgba(255, 255, 255, 175);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+QLabel#menuLogo {
+  color: #ffffff;
+  font-size: 36px;
+  font-weight: 800;
+}
+
+QPushButton#menuNotificationButton {
+  background: #3a3a3a;
+  border-top: 3px solid #6f6f6f;
+  border-left: 3px solid #6f6f6f;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QPushButton#menuNotificationButton:hover {
+  background: #474747;
+}
+
+QPushButton#menuNotificationButton:pressed {
+  background: #2f2f2f;
+  border-top: 3px solid #0b0b0b;
+  border-left: 3px solid #0b0b0b;
+  border-right: 3px solid #6f6f6f;
+  border-bottom: 3px solid #6f6f6f;
+}
+
+QWidget#menuProfilePanel {
+  background: transparent;
+}
+
+/* Shared screen title bar (library and changelog reuse the chat bar design). */
+
+QFrame#screenTitleBar {
+  background: #2a2a2a;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QLabel#screenTitleLabel {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+QPushButton#screenBackButton {
+  background: #3a3a3a;
+  color: #ffffff;
+  font-weight: 700;
+  border-top: 3px solid #6f6f6f;
+  border-left: 3px solid #6f6f6f;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+  padding: 6px 12px;
+}
+
+QPushButton#screenBackButton:hover {
+  background: #474747;
+}
+
+QPushButton#screenBackButton:pressed {
+  background: #2f2f2f;
+  border-top: 3px solid #0b0b0b;
+  border-left: 3px solid #0b0b0b;
+  border-right: 3px solid #6f6f6f;
+  border-bottom: 3px solid #6f6f6f;
+}
+
+/* Library toolbar, toggles, and content. */
+
+QFrame#worldLibraryToolbar {
+  background: #1f1f1f;
+  border-bottom: 2px solid #0b0b0b;
+}
+
+QPushButton#worldViewToggle {
+  background: #3a3a3a;
+  border-top: 3px solid #6f6f6f;
+  border-left: 3px solid #6f6f6f;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QPushButton#worldViewToggle:hover {
+  background: #474747;
+}
+
+QPushButton#worldViewToggle:checked {
+  background: #4c7f2a;
+  border-top-color: #83bc54;
+  border-left-color: #83bc54;
+  border-right-color: #1d3510;
+  border-bottom-color: #1d3510;
+}
+
+QWidget#myWorldLibraryPage {
+  background: rgba(0, 0, 0, 150);
+}
+
+QScrollArea#worldLibraryScroll,
+QScrollArea#changelogScroll {
+  background: transparent;
+  border: none;
+}
+
+QWidget#worldLibraryContent,
+QWidget#worldGridHost,
+QWidget#changelogContent {
+  background: transparent;
+}
+
+QLabel#worldLibraryEmpty,
+QLabel#changelogEmpty {
+  color: rgba(255, 255, 255, 190);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* World cards. */
+
+QFrame#worldGridCard,
+QFrame#worldListRow {
+  background: #2a2a2a;
+  border-top: 3px solid #565656;
+  border-left: 3px solid #565656;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QFrame#worldGridCard:hover,
+QFrame#worldListRow:hover {
+  background: #343434;
+}
+
+QFrame#worldThumbnail {
+  background: #050505;
+  border: 2px solid #080808;
+}
+
+QLabel#worldThumbnailImage {
+  background: #0a0a0a;
+}
+
+QLabel#worldName {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+QLabel#worldMeta {
+  color: rgba(255, 255, 255, 165);
+  font-size: 11px;
+}
+
+QLabel#worldSize {
+  color: rgba(255, 255, 255, 205);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+QLabel#worldModeBadge {
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  background: rgba(76, 127, 42, 230);
+  border: 1px solid #1d3510;
+}
+
+QLabel#worldModeBadge[gameMode="survival"] {
+  background: rgba(58, 90, 140, 230);
+  border: 1px solid #14233c;
+}
+
+QPushButton#worldEditButton {
+  color: #ffffff;
+  background: #555555;
+  border-top: 2px solid #858585;
+  border-left: 2px solid #858585;
+  border-right: 2px solid #202020;
+  border-bottom: 2px solid #202020;
+  padding: 3px 10px;
+  font-weight: 700;
+}
+
+QPushButton#worldEditButton:hover {
+  background: #666666;
+}
+
+QPushButton#worldEditButton:pressed {
+  background: #444444;
+  border-top-color: #202020;
+  border-left-color: #202020;
+  border-right-color: #858585;
+  border-bottom-color: #858585;
+}
+
+/* Changelog viewer. */
+
+QWidget#changelogPage {
+  background: rgba(0, 0, 0, 150);
+}
+
+QFrame#changelogEntry {
+  background: #242424;
+  border-top: 3px solid #565656;
+  border-left: 3px solid #565656;
+  border-right: 3px solid #0b0b0b;
+  border-bottom: 3px solid #0b0b0b;
+}
+
+QLabel#changelogDate {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+QLabel#changelogTag {
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  background: rgba(76, 127, 42, 210);
+  border: 1px solid #1d3510;
+}
+
+QLabel#changelogSectionTitle {
+  color: #f5f5f5;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+QLabel#changelogItem {
+  color: rgba(255, 255, 255, 210);
+  font-size: 13px;
+}
+
+QLabel#changelogItem code {
+  background: #1c1c1c;
+  color: #d7ff9b;
+}
+
+/* World editor dialogs. */
+
+QDialog#worldEditorDialog {
+  background: #151515;
+}
+
+QFrame#worldEditorPanel {
+  background: #2a2a2a;
+  border-top: 4px solid #666666;
+  border-left: 4px solid #666666;
+  border-right: 4px solid #0b0b0b;
+  border-bottom: 4px solid #0b0b0b;
+}
+
+QDialog#worldEditorDialog QLabel#worldEditorTitle {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+QDialog#worldEditorDialog QLabel#worldEditorLabel {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+QDialog#worldEditorDialog QLabel#worldEditorError {
+  color: #ff8a8a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+QDialog#worldEditorDialog QLineEdit#worldEditorInput {
+  background: #1c1c1c;
+  color: #ffffff;
+  border-top: 2px solid #0b0b0b;
+  border-left: 2px solid #0b0b0b;
+  border-right: 2px solid #4a4a4a;
+  border-bottom: 2px solid #4a4a4a;
+  padding: 6px 8px;
+  selection-background-color: #6fb03a;
+  selection-color: #0b0b0b;
+}
+
+QDialog#worldEditorDialog QLineEdit#worldEditorInput:focus {
+  border-top: 2px solid #6fb03a;
+  border-left: 2px solid #6fb03a;
+}
+
+QDialog#worldEditorDialog QPushButton#menuBtn {
+  color: #ffffff;
+  background: #6b6b6b;
+  border-top: 3px solid #a0a0a0;
+  border-left: 3px solid #a0a0a0;
+  border-right: 3px solid #252525;
+  border-bottom: 3px solid #252525;
+  padding: 7px 14px;
+  min-height: 24px;
+  font-weight: 800;
+}
+
+QDialog#worldEditorDialog QPushButton#menuBtn:hover {
+  background: #7a7a7a;
+}
+
+QDialog#worldEditorDialog QPushButton#modeToggle {
+  color: #ffffff;
+  background: #555555;
+  border-top: 3px solid #858585;
+  border-left: 3px solid #858585;
+  border-right: 3px solid #202020;
+  border-bottom: 3px solid #202020;
+  padding: 7px 14px;
+  min-height: 24px;
+  font-weight: 800;
+}
+
+QDialog#worldEditorDialog QPushButton#modeToggle:checked {
+  background: #4c7f2a;
+  border-top-color: #83bc54;
+  border-left-color: #83bc54;
+  border-right-color: #1d3510;
+  border-bottom-color: #1d3510;
+}
+
+/* Scroll bars for the new scroll surfaces. */
+
+QWidget#startupShellRoot QScrollBar:vertical {
+  width: 14px;
+  background: #111111;
+  border-left: 2px solid #080808;
+  margin: 0px;
+}
+
+QWidget#startupShellRoot QScrollBar::handle:vertical {
+  min-height: 30px;
+  background: #5a5a5a;
+  border-top: 2px solid #8a8a8a;
+  border-left: 2px solid #8a8a8a;
+  border-right: 2px solid #202020;
+  border-bottom: 2px solid #202020;
+}
+
+QWidget#startupShellRoot QScrollBar::handle:vertical:hover {
+  background: #6a6a6a;
+}
+
+QWidget#startupShellRoot QScrollBar::add-line:vertical,
+QWidget#startupShellRoot QScrollBar::sub-line:vertical {
+  height: 0px;
+  background: transparent;
+  border: none;
+}
+
+QWidget#startupShellRoot QScrollBar::add-page:vertical,
+QWidget#startupShellRoot QScrollBar::sub-page:vertical {
+  background: transparent;
+}

@@ -21,6 +21,7 @@ class OverlayRefs:
   death: QWidget
   crosshair: QWidget
   hotbar: QWidget
+  menu: QWidget
   hud_getter: Callable[[], QWidget | None]
   othello_hud_getter: Callable[[], QWidget | None]
 
@@ -36,11 +37,16 @@ class ViewportOverlays:
     self._inventory_open: bool = False
     self._settings_open: bool = False
     self._settings_return_to_pause: bool = False
+    self._settings_return_to_menu: bool = False
     self._othello_settings_open: bool = False
     self._othello_settings_return_to_pause: bool = False
+    self._menu_open: bool = False
 
   def paused(self) -> bool:
     return bool(self._paused)
+
+  def menu_open(self) -> bool:
+    return bool(self._menu_open)
 
   def dead(self) -> bool:
     return bool(self._dead)
@@ -55,7 +61,35 @@ class ViewportOverlays:
     return bool(self._othello_settings_open)
 
   def any_modal_open(self) -> bool:
-    return bool(self._paused or self._inventory_open or self._settings_open or self._othello_settings_open or self._dead)
+    return bool(self._paused or self._inventory_open or self._settings_open or self._othello_settings_open or self._dead or self._menu_open)
+
+  def set_menu_open(self, on: bool) -> None:
+    on = bool(on)
+    if self._dead:
+      return
+    self._inp.reset()
+
+    if on:
+      self._menu_open = True
+      self._paused = False
+      self._settings_open = False
+      self._settings_return_to_pause = False
+      self._settings_return_to_menu = False
+      self._othello_settings_open = False
+      self._othello_settings_return_to_pause = False
+      self.set_inventory_open(False)
+      self._inp.set_mouse_capture(False)
+      self._r.hotbar.setVisible(False)
+      self._r.pause.setVisible(False)
+      self._r.settings.setVisible(False)
+      self._r.othello_settings.setVisible(False)
+      self._r.menu.setVisible(True)
+      self._r.menu.raise_()
+      self._r.menu.setFocus()
+      return
+
+    self._menu_open = False
+    self._r.menu.setVisible(False)
 
   def _raise_game_hud(self) -> None:
     self._r.hotbar.setVisible(True)
@@ -71,7 +105,7 @@ class ViewportOverlays:
       othello_hud.raise_()
 
   def _resume_gameplay(self) -> None:
-    if self._dead or self._paused or self._inventory_open or self._settings_open or self._othello_settings_open:
+    if self._dead or self._paused or self._inventory_open or self._settings_open or self._othello_settings_open or self._menu_open:
       return
     self._inp.set_mouse_capture(True)
     self._runner.start()
@@ -174,13 +208,16 @@ class ViewportOverlays:
 
     if self._settings_open:
       self._settings_return_to_pause = bool(self._paused)
+      self._settings_return_to_menu = bool(self._menu_open)
       self._paused = False
+      self._menu_open = False
       self._othello_settings_open = False
       self._othello_settings_return_to_pause = False
       self.set_inventory_open(False)
       self._inp.set_mouse_capture(False)
 
       self._r.pause.setVisible(False)
+      self._r.menu.setVisible(False)
       self._r.othello_settings.setVisible(False)
       self._r.settings.setVisible(True)
       self._r.settings.raise_()
@@ -190,6 +227,12 @@ class ViewportOverlays:
       return
 
     self._r.settings.setVisible(False)
+
+    if self._settings_return_to_menu:
+      self._settings_return_to_menu = False
+      self._settings_return_to_pause = False
+      self.set_menu_open(True)
+      return
 
     if self._settings_return_to_pause:
       self._paused = True
@@ -261,7 +304,7 @@ class ViewportOverlays:
   def set_inventory_open(self, on: bool) -> None:
     on = bool(on)
 
-    if self._dead or self._paused or self._settings_open or self._othello_settings_open:
+    if self._dead or self._paused or self._settings_open or self._othello_settings_open or self._menu_open:
       if on:
         return
 

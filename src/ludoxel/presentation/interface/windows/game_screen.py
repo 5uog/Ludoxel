@@ -65,6 +65,8 @@ class GameScreen(QWidget):
   def _focus_viewport_after_loading(self) -> None:
     if bool(self.viewport.loading_active()):
       return
+    if bool(self.viewport.menu_active()):
+      return
     self.viewport.setFocus(Qt.FocusReason.OtherFocusReason)
 
   def _handle_loading_state_changed(self, active: bool) -> None:

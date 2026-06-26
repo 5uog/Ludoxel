@@ -60,13 +60,7 @@ def open_pause_menu(viewport: "RendererViewportWidget") -> None:
   settings_controller.sync_cloud_motion_pause(viewport)
 
 
-def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
-  normalized = normalize_play_space_id(space_id)
-  if normalized == normalize_play_space_id(viewport._state.current_space_id):
-    if resume:
-      resume_from_overlay(viewport)
-    return
-
+def _perform_space_switch(viewport: "RendererViewportWidget", normalized: str, *, resume: bool) -> None:
   target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
   viewport._reset_held_mouse_actions()
   ai_controller.cancel_route_edit(viewport)
@@ -94,6 +88,19 @@ def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resu
 
   othello_controller.maybe_request_ai(viewport)
   viewport.update()
+
+
+def switch_play_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
+  normalized = normalize_play_space_id(space_id)
+  if normalized == normalize_play_space_id(viewport._state.current_space_id):
+    if resume:
+      resume_from_overlay(viewport)
+    return
+  _perform_space_switch(viewport, normalized, resume=resume)
+
+
+def force_enter_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
+  _perform_space_switch(viewport, normalize_play_space_id(space_id), resume=bool(resume))
 
 
 def open_settings_from_pause(viewport: "RendererViewportWidget") -> None:

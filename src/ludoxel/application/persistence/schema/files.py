@@ -7,10 +7,7 @@ from typing import Any
 
 from ludoxel.application.persistence.schema.inventory import PersistedInventory
 from ludoxel.application.persistence.schema.othello import PersistedOthelloSpace
-from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
-from ludoxel.application.persistence.schema.player import PersistedPlayer
 from ludoxel.application.persistence.schema.settings import PersistedSettings
-from ludoxel.application.persistence.schema.world import PersistedWorld
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_int
 from ludoxel.simulation.spaces.othello.game.state import OthelloSettings
 from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, normalize_play_space_id
@@ -54,12 +51,11 @@ class PlayerStateFile:
 
 @dataclass(frozen=True)
 class WorldStateFile:
-  version: int = 3
-  my_world: PersistedPlaySpace = field(default_factory=PersistedPlaySpace)
+  version: int = 4
   othello_space: PersistedOthelloSpace = field(default_factory=PersistedOthelloSpace)
 
   def to_dict(self) -> dict[str, Any]:
-    return {"version": int(self.version), "spaces": {"my_world": self.my_world.to_dict(), "othello": self.othello_space.to_dict()}}
+    return {"version": int(self.version), "spaces": {"othello": self.othello_space.to_dict()}}
 
   @staticmethod
   def from_dict(d: dict[str, Any]) -> "WorldStateFile":
@@ -67,24 +63,10 @@ class WorldStateFile:
       return WorldStateFile()
 
     version = coerce_int(d.get("version", 1), 1)
-
-    if "spaces" not in d:
-      raw_player = d.get("player", {})
-      raw_world = d.get("world", {})
-      my_world = PersistedPlaySpace(
-        player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(),
-        world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(),
-      )
-      return WorldStateFile(version=int(max(3, version)), my_world=my_world, othello_space=PersistedOthelloSpace())
-
     raw_spaces = d.get("spaces", {})
     if not isinstance(raw_spaces, dict):
       raw_spaces = {}
 
-    raw_my_world = raw_spaces.get("my_world", {})
     raw_othello = raw_spaces.get("othello", {})
-
-    my_world = PersistedPlaySpace.from_dict(raw_my_world) if isinstance(raw_my_world, dict) else PersistedPlaySpace()
     othello_space = PersistedOthelloSpace.from_dict(raw_othello) if isinstance(raw_othello, dict) else PersistedOthelloSpace()
-
-    return WorldStateFile(version=int(max(3, version)), my_world=my_world, othello_space=othello_space)
+    return WorldStateFile(version=int(max(4, version)), othello_space=othello_space)

@@ -94,9 +94,39 @@ class ViewportStateMixin:
     if bool(push_to_renderer):
       self._push_ai_skins_to_renderer(context_current=bool(context_current))
 
+  def capture_framebuffer_image(self: "RendererViewportWidget") -> QImage:
+    grab = getattr(self, "grabFramebuffer", None)
+    if callable(grab):
+      try:
+        return QImage(grab())
+      except Exception:
+        pass
+    try:
+      return QImage(self.grab().toImage())
+    except Exception:
+      return QImage()
+
+  def _capture_active_world_thumbnail(self: "RendererViewportWidget") -> None:
+    if self._state.is_othello_space():
+      return
+    world_id = str(getattr(self, "_loaded_my_world_id", "") or "")
+    if not world_id:
+      return
+    try:
+      from ludoxel.application.persistence.stores.world_library import WorldLibraryStore
+      from ludoxel.presentation.interface.menu.thumbnail import encode_thumbnail_png
+
+      png_bytes = encode_thumbnail_png(self.capture_framebuffer_image())
+      if not png_bytes:
+        return
+      WorldLibraryStore(project_root=self._project_root, data_root=self._data_root).write_thumbnail_bytes(world_id, png_bytes)
+    except Exception:
+      pass
+
   def save_state(self: "RendererViewportWidget") -> None:
     settings_controller.sync_state_from_renderer_sun(self)
     settled_othello_state = self._othello_match.settle_animations()
+    self._capture_active_world_thumbnail()
     save_state(project_root=self._project_root, data_root=self._data_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state)
 
   def loading_status_text(self: "RendererViewportWidget") -> str:
@@ -124,8 +154,15 @@ class ViewportStateMixin:
   def _finish_loading(self: "RendererViewportWidget") -> None:
     if not self._frame_sync.loading.finish():
       return
+    if bool(getattr(self, "_startup_menu_pending", False)):
+      self._startup_menu_pending = False
+      import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
+
+      menu_controller.open_startup_menu(self)
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
+    if (not bool(self._overlays.any_modal_open())) and bool(getattr(self, "_application_active", True)):
+      self._inp.set_mouse_capture(True)
     self._inp.ensure_mouse_capture_applied()
     self.loading_state_changed.emit(False)
     self._sync_runtime_activity()

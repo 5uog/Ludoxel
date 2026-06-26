@@ -870,24 +870,26 @@ finally:
         content: [
           {
             kind: 'paragraph',
-            text: 'Saved world state is stored in `world_state.json`. The current envelope is `WorldStateFile`, whose serialized form contains a `spaces` mapping with `my_world` and `othello` entries. A world save is therefore a play-space container, not a flat block dump.',
+            text: [
+              'Saved world state is stored in `world_state.json`. The current envelope is `WorldStateFile`, whose serialized form contains a `spaces` mapping with a single `othello` entry. My World state is no longer written into this file; each world is owned separately by the ',
+              {
+                kind: 'link',
+                label: 'My World library',
+                href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library',
+              },
+              '. A world save is therefore the Othello play-space container, and the My World data lives beside it under its own per-world files.',
+            ],
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schema/files.py',
             code: `def to_dict(self) -> dict[str, Any]:
-  return {
-    "version": int(self.version),
-    "spaces": {
-      "my_world": self.my_world.to_dict(),
-      "othello": self.othello_space.to_dict(),
-    },
-  }`,
+  return {"version": int(self.version), "spaces": {"othello": self.othello_space.to_dict()}}`,
           },
           {
             kind: 'paragraph',
-            text: 'The `spaces` mapping is the outer structural boundary. It prevents My World state and Othello state from being read as one undifferentiated world. Each space can carry its own player, world, AI actors, and Othello-specific game state where applicable.',
+            text: 'The `spaces` mapping is the outer structural boundary for the Othello save. It keeps Othello state from being read as an undifferentiated world and carries its own player, world, AI actors, and Othello-specific game state. The active My World space is sourced from the library entry and merged into the in-memory `AppState` at load time, so a reader must not expect a `my_world` key inside `world_state.json`.',
           },
         ],
       },
@@ -922,7 +924,7 @@ finally:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/play_space.py` owns `PersistedPlaySpace`, the common My World envelope composed from a player record, a world record, and AI actor rows. The block list does not contain the player pose or AI configuration; the AI records do not contain the world block map. The generic play-space envelope deliberately does not carry Othello match state, so loading it cannot be treated as a substitute for the Othello persistence envelope.',
+            text: '`src/ludoxel/application/persistence/schema/play_space.py` owns `PersistedPlaySpace`, the common play-space envelope composed from a player record, a world record, and AI actor rows. It is the body of each My World library entry and the base of the Othello space. The block list does not contain the player pose or AI configuration; the AI records do not contain the world block map. The generic play-space envelope deliberately does not carry Othello match state, so loading it cannot be treated as a substitute for the Othello persistence envelope.',
           },
           {
             kind: 'code',
@@ -1018,12 +1020,125 @@ if isinstance(raw, list):
           },
           {
             kind: 'paragraph',
-            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, and normalized `PersistedAiPlayer` rows together. The enclosing `WorldStateFile` remains the source that distinguishes the My World and Othello keys, including the older one-space migration path.',
+            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, and normalized `PersistedAiPlayer` rows together. The Othello space is read from `WorldStateFile`, while the active My World space is read from its library entry and supplied to the same restore sequence; `load_my_world_space_into_session` regenerates a fresh map for an empty entry and otherwise replaces the saved block snapshot.',
           },
         ],
       },
     ],
-    relatedTitles: ['Cleaning Local User Data Safely', 'Reading Saved AI State', 'Understanding User-Created Materials'],
+    relatedTitles: ['Cleaning Local User Data Safely', 'Reading the My World Library', 'Reading Saved AI State', 'Understanding User-Created Materials'],
+  }),
+  defineDocsArticle({
+    category: 'Data',
+    subcategory: 'Local and Saved Data',
+    group: 'Saved Runtime State',
+    title: 'Reading the My World Library',
+    description:
+      'Defines the My World library through its index file, per-world entry files, world metadata and game mode, thumbnail capture, active-world routing, and the validated Ludoxel world package used for export and import.',
+    sections: [
+      {
+        id: 'reading-the-my-world-library-index-and-entries',
+        title: 'Library Index and Per-World Entry Files',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/stores/world_library.py` owns the My World library on disk. The library is two kinds of file under the runtime state root. `world_library.json` is the index: an active-world identifier and an ordered list of world identifiers. Each listed world has its own `worlds/<id>.json` entry holding a `PersistedWorldEntry`, the world metadata paired with the same `PersistedPlaySpace` body used elsewhere for player, world blocks, and AI actors.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/schema/world_library.py',
+            code: `def to_dict(self) -> dict[str, Any]:
+  return {"version": int(WORLD_LIBRARY_INDEX_VERSION), "active_world_id": str(self.active_world_id), "world_ids": [str(world_id) for world_id in self.world_ids]}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The split has a structural consequence. The index records membership and order; an entry file records one world. A world identifier present in the index without a readable `worlds/<id>.json` is skipped when the library is listed, and the active identifier is treated as valid only when its entry file is present, otherwise the first present world is reported. Reading the index alone is not reading a world; reading one entry file is not reading the library.',
+          },
+        ],
+      },
+      {
+        id: 'reading-the-my-world-library-metadata-and-game-mode',
+        title: 'World Metadata and Game Mode',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`PersistedWorldMetadata` carries the world identifier, the display name, the game mode, and the created and updated timestamps. The game mode is per world. It is normalized to `survival` or `creative`, applied to the runtime and the player when the world is opened, and written back from the runtime game mode when the world is saved. The created timestamp is fixed at creation; the updated timestamp advances on each entry write. The on-disk size shown in the library is the size of the entry file plus its thumbnail, not a count of blocks.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/schema/world_library.py',
+            code: `def to_dict(self) -> dict[str, Any]:
+  normalized = self.normalized()
+  return {
+    "id": str(normalized.world_id),
+    "name": str(normalized.name),
+    "game_mode": str(normalized.game_mode),
+    "created_at": float(normalized.created_at),
+    "updated_at": float(normalized.updated_at),
+  }`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A name is normalized by collapsing whitespace and is never empty; a blank or whitespace-only name falls back to the default world name. The library rejects an empty or duplicate name at rename, and creation refuses an empty name, so the visible list cannot present two worlds under the same casefolded name.',
+          },
+        ],
+      },
+      {
+        id: 'reading-the-my-world-library-thumbnails',
+        title: 'Thumbnails Are User Runtime Data',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Each world may have a `worlds/<id>.png` thumbnail beside its entry file. The thumbnail is produced by the presentation save path, which reads the viewport framebuffer, encodes a bounded PNG, and writes it through `write_thumbnail_bytes`. The thumbnail is user runtime data: it is created from a rendered frame at save time, tracked by the runtime integrity manifest like the entry and index files, and removed with the world on delete. It is not a bundled asset and is not generated by an asset tool.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'A thumbnail records the frame visible when a world was saved. Its presence does not certify world completeness, and its absence does not indicate a corrupt world; the library lists a world from its entry file whether or not a thumbnail is present.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'reading-the-my-world-library-packages',
+        title: 'Ludoxel World Packages',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/application/persistence/packages/ldxworld.py` owns export and import of a single world as a `.ldxworld` package. The package is a zip archive holding `manifest.json`, `world.json`, and an optional `thumbnail.png`. The manifest records the package format identifier, the format version, the runtime application version, and the world metadata; the world member is the serialized `PersistedPlaySpace`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/persistence/packages/ldxworld.py',
+            code: `if not isinstance(manifest, dict) or str(manifest.get("format", "")) != LDXWORLD_FORMAT_ID:
+  raise LdxworldError("World package is not a Ludoxel world.")`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Import is validation before admission. A package that is not a readable archive, is missing a required member, carries an unreadable manifest or world member, exceeds the member count or size bounds, or does not declare the Ludoxel world format raises `LdxworldError`. The reader returns the world to the caller only after these checks pass, and the library assigns the imported world a fresh identifier, so a malformed package is rejected without changing the existing library and an import never overwrites an existing world.',
+          },
+        ],
+      },
+      {
+        id: 'reading-the-my-world-library-active-routing',
+        title: 'Active World and Save Routing',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The active-world identifier in the index names the world whose body is held in the running My World session. `AppStateStore` reads the active entry into the in-memory `AppState` at load and writes the My World session back into the active entry at save through `save_space`, which also refreshes the entry game mode and updated timestamp. Opening a different world saves the outgoing world into its entry, sets the new active identifier, and reloads the session from the new entry; deleting the loaded world rebinds the session to the new active world. The save path therefore writes to the world that is loaded, not to an arbitrary entry.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'A saved My World remains a runtime state record and a material-classification subject. The library, an exported package, and a thumbnail are user runtime data. Their existence does not authorize publication or redistribution; that boundary is fixed by the License Text and the user-material analysis, not by the presence of a world file.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Reading Saved World State', 'Cleaning Local User Data Safely', 'Understanding User-Created Materials'],
   }),
   defineDocsArticle({
     category: 'Data',
