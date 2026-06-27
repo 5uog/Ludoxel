@@ -366,7 +366,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
           },
           {
             kind: 'paragraph',
-            text: 'The menu carries the Ludoxel logo, a creator label on the lower left, the runtime version label on the lower right, a notification button on the lower left, and a player profile panel on the lower right. The central button panel offers Play My World, Play Othello (Reversi), and Quit. Quit closes the main window, which runs the application shutdown and final save, so it is the application exit control; the in-game pause Save & Quit instead writes the current state and returns to this menu without closing the window. The menu does not start gameplay by itself; each button routes to a distinct surface.',
+            text: 'The menu carries the Ludoxel logo, a creator label on the lower left, the runtime version label on the lower right, a notification button on the lower left, and a player profile panel on the lower right. The central button panel offers Play My World, Play Othello (Reversi), and Quit. Quit closes the main window, which runs the application shutdown and final save, so it is the application exit control; the in-game pause Save & Quit instead saves the active play-space through the shared exit boundary and returns to this menu without closing the window, and it stays in the game and reports the error if that save fails. The menu does not start gameplay by itself; each button routes to a distinct surface.',
           },
         ],
       },
@@ -565,8 +565,8 @@ apply_runtime_to_renderer(runtime, renderer)`,
         title: 'The Pause Overlay Dispatches the Visible Switch Request',
         body: [
           'The visible destination commands are exposed through the pause overlay. `PauseOverlay` declares separate signals for My World and Othello, wires them to the two menu buttons, and disables the button representing the current normalized space. That disabled state is a presentation guard: the overlay does not offer the active destination as a distinct operation.',
-          'The viewport controller binds Play Othello to `switch_play_space` with `resume=True`, and binds Play My World to `open_my_world_library_from_pause`. Play Othello is therefore a pause-menu switch that exits the overlay when a same-space request is resumed or when a real switch is accepted. Play My World does not start a world: it closes the pause overlay and opens the startup shell on the My World library page, so a particular world is entered only by selecting it in the library. The pause origin matters because the controller resets held mouse actions, cancels route editing, and clears transition feedback before any active session reference changes.',
-          '`PauseOverlay.keyPressEvent` maps Escape to `resume_requested`; destination buttons emit their own signals without embedding a session mutation. The widget records the enabled state for the two controls, while `bind_overlay_actions` supplies the controller callbacks. A displayed button therefore reports an available request path; `switch_play_space` owns the accepted Othello transition while the library page owns My World selection.',
+          'Both destination buttons leave the active play-space through one save boundary, `_exit_active_play_space`. It saves the current My World and Othello with `viewport.save_state`, and only when that write succeeds does it run the destination on the next event-loop pass; on a save failure it shows a notification, logs the traceback, and stays in the current play-space. Play Othello then runs `switch_play_space` with `resume=True`, and Play My World runs `open_my_world_library_from_pause`, which closes the pause overlay and opens the startup shell on the My World library page so a particular world is entered only by selecting it in the library. Deferring the destination keeps the pause button that fired the request from being torn down inside its own handler.',
+          '`PauseOverlay.keyPressEvent` maps Escape to `resume_requested`; destination buttons emit their own signals without embedding a session mutation or a save. The widget records the enabled state for the two controls, while `bind_overlay_actions` routes both destinations through the shared exit boundary, so the My World block, player, inventory, health, AI actors, and world settings, and the Othello board, match, and turn state, are persisted before the play-space is left.',
         ],
         codeBlocks: [
           {
@@ -589,9 +589,16 @@ def set_current_space(self, space_id: str) -> None:
           },
           {
             language: 'py',
-            caption: 'Pause Play My World opens the library; Play Othello switches with resume enabled.',
-            code: `viewport._overlay.play_my_world_requested.connect(lambda: open_my_world_library_from_pause(viewport))
-viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))`,
+            caption: 'Both pause destinations save the active play-space first, then proceed on success.',
+            code: `def _exit_active_play_space(viewport, proceed):
+  viewport._reset_held_mouse_actions()
+  if not _persist_active_play_space(viewport):
+    _notify_save_failed(viewport)
+    return
+  QTimer.singleShot(0, lambda: _guard(proceed))
+
+viewport._overlay.play_my_world_requested.connect(lambda: open_my_world_library_from_pause(viewport))
+viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_pause(viewport))`,
           },
         ],
       },

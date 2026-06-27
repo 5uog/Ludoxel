@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import os
+import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -55,12 +57,30 @@ def export_world_package(path: Path, *, entry: PersistedWorldEntry, thumbnail_by
       if thumbnail_bytes:
         archive.writestr(_THUMBNAIL_MEMBER, bytes(thumbnail_bytes))
   except OSError as error:
+    _silent_unlink(tmp)
     raise LdxworldError(f"Could not write world package: {error}") from error
 
-  import os
+  # os.replace can fail transiently on Windows when an antivirus or indexer holds
+  # the freshly written file. Retry briefly, then surface the failure as an
+  # LdxworldError so the caller can report it instead of leaving a partial write.
+  last_error: OSError | None = None
+  for attempt in range(5):
+    try:
+      os.replace(str(tmp), str(target))
+      return target
+    except OSError as error:
+      last_error = error
+      time.sleep(0.05 * float(attempt + 1))
+  _silent_unlink(tmp)
+  raise LdxworldError(f"Could not finalize world package: {last_error}")
 
-  os.replace(str(tmp), str(target))
-  return target
+
+def _silent_unlink(path: Path) -> None:
+  try:
+    if Path(path).exists():
+      Path(path).unlink()
+  except OSError:
+    pass
 
 
 def _read_member(archive: zipfile.ZipFile, name: str) -> bytes | None:

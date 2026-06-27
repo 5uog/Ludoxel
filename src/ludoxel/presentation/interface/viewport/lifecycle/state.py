@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import sys
+import traceback
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
@@ -94,42 +96,35 @@ class ViewportStateMixin:
     if bool(push_to_renderer):
       self._push_ai_skins_to_renderer(context_current=bool(context_current))
 
-  def capture_framebuffer_image(self: "RendererViewportWidget") -> QImage:
-    grab = getattr(self, "grabFramebuffer", None)
-    if callable(grab):
-      try:
-        return QImage(grab())
-      except Exception:
-        pass
-    try:
-      return QImage(self.grab().toImage())
-    except Exception:
-      return QImage()
-
   def _capture_active_world_thumbnail_bytes(self: "RendererViewportWidget") -> bytes | None:
+    # The save path must never grab the framebuffer. A synchronous
+    # QOpenGLWidget.grabFramebuffer() (whether from a save/pause handler or from
+    # the render loop) forces a re-entrant render and aborts the process at the
+    # C++ level inside Qt during the readback/PNG encode, which crashed Save & Quit
+    # and pause navigation before the world edits reached disk. Only previously
+    # cached bytes are returned; when there are none the world keeps whatever
+    # thumbnail it already has on disk and the save still completes.
     if self._state.is_othello_space() or self._overlays.menu_open():
       return None
     if not str(getattr(self, "_loaded_my_world_id", "") or ""):
       return None
-    try:
-      from ludoxel.presentation.interface.menu.thumbnail import encode_thumbnail_png
-
-      png_bytes = encode_thumbnail_png(self.capture_framebuffer_image())
-      return bytes(png_bytes) if png_bytes else None
-    except Exception:
-      return None
+    cached = getattr(self, "_world_thumbnail_png_cache", None)
+    return bytes(cached) if cached else None
 
   def save_state(self: "RendererViewportWidget") -> None:
     # The renderer sun read, the Othello animation settle, and the framebuffer
     # thumbnail grab are auxiliary. They must never block the critical world and
-    # settings save, so each is isolated and the persistence call always runs.
+    # settings save, so each is isolated (logged, not silenced) and the
+    # persistence call always runs. A failure inside that persistence call is
+    # allowed to propagate so the caller can refuse to leave the play-space.
     try:
       settings_controller.sync_state_from_renderer_sun(self)
     except Exception:
-      pass
+      traceback.print_exc(file=sys.stderr)
     try:
       settled_othello_state = self._othello_match.settle_animations()
     except Exception:
+      traceback.print_exc(file=sys.stderr)
       settled_othello_state = None
     thumbnail_bytes = self._capture_active_world_thumbnail_bytes()
     save_state(

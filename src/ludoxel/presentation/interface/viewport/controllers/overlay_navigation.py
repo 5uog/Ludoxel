@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+import sys
+import traceback
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QMessageBox
 
 import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
@@ -19,7 +22,7 @@ def bind_overlay_actions(viewport: "RendererViewportWidget") -> None:
   viewport._overlay.resume_requested.connect(lambda: resume_from_overlay(viewport))
   viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
   viewport._overlay.play_my_world_requested.connect(lambda: open_my_world_library_from_pause(viewport))
-  viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
+  viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_pause(viewport))
   viewport._overlay.save_quit_requested.connect(lambda: save_and_quit(viewport))
   viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
   viewport._overlay.reset_skin_requested.connect(lambda: settings_controller.reset_player_skin(viewport))
@@ -179,6 +182,51 @@ def on_inventory_closed(viewport: "RendererViewportWidget") -> None:
   viewport.arm_resume_refresh()
 
 
+def _persist_active_play_space(viewport: "RendererViewportWidget") -> bool:
+  """Save the active play-space (My World and Othello) to its canonical storage.
+
+  Returns True only when the world and settings write completed. A thumbnail or
+  other auxiliary failure is already isolated inside ``viewport.save_state`` and
+  does not fail the data save. A real data-save failure is surfaced through the
+  log (and the caller's notification) rather than being swallowed.
+  """
+  try:
+    viewport.save_state()
+    return True
+  except Exception:
+    traceback.print_exc(file=sys.stderr)
+    return False
+
+
+def _notify_save_failed(viewport: "RendererViewportWidget") -> None:
+  try:
+    QMessageBox.warning(viewport.window(), "Save Failed", "Ludoxel could not save the current play-space. Your progress is still loaded and was not discarded. The error was written to the log.")
+  except Exception:
+    traceback.print_exc(file=sys.stderr)
+
+
+def _exit_active_play_space(viewport: "RendererViewportWidget", proceed) -> None:
+  """Shared exit boundary for leaving the active play-space.
+
+  The active My World or Othello is saved first; only on success is ``proceed``
+  run on the next event-loop pass. Deferring keeps the pause button that fired
+  this from being torn down inside its own click handler, and the deferred call
+  is guarded so a navigation error logs instead of aborting the Qt event loop.
+  """
+  viewport._reset_held_mouse_actions()
+  if not _persist_active_play_space(viewport):
+    _notify_save_failed(viewport)
+    return
+
+  def _run() -> None:
+    try:
+      proceed()
+    except Exception:
+      traceback.print_exc(file=sys.stderr)
+
+  QTimer.singleShot(0, _run)
+
+
 def _open_library_from_pause(viewport: "RendererViewportWidget") -> None:
   import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
 
@@ -190,20 +238,14 @@ def _open_library_from_pause(viewport: "RendererViewportWidget") -> None:
 
 
 def open_my_world_library_from_pause(viewport: "RendererViewportWidget") -> None:
-  # Defer to the next event-loop pass: the pause button that fired this is hidden
-  # by set_menu_open, and hiding the emitting widget inside its own click handler
-  # is unsafe. Returning first lets the handler finish before the overlay swaps.
-  QTimer.singleShot(0, lambda: _open_library_from_pause(viewport))
+  _exit_active_play_space(viewport, lambda: _open_library_from_pause(viewport))
+
+
+def switch_to_othello_from_pause(viewport: "RendererViewportWidget") -> None:
+  _exit_active_play_space(viewport, lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
 
 
 def save_and_quit(viewport: "RendererViewportWidget") -> None:
   import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
 
-  viewport._reset_held_mouse_actions()
-  try:
-    viewport.save_state()
-  except Exception:
-    pass
-  # set_menu_open clears the paused state; returning to the menu does not close the app.
-  # Defer the overlay swap so the Save & Quit button is not torn down mid-click.
-  QTimer.singleShot(0, lambda: menu_controller.open_startup_menu(viewport))
+  _exit_active_play_space(viewport, lambda: menu_controller.open_startup_menu(viewport))

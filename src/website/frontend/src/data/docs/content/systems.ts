@@ -524,7 +524,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
         content: [
           {
             kind: 'paragraph',
-            text: '`AppStateStore` in `src/ludoxel/application/persistence/stores/app.py` writes the active space, settings, standing Othello settings, and the Othello play space into `app_state.json` beneath the runtime state root, delegates the active My World to `WorldLibraryStore.save_space`, and updates an integrity manifest. `_read_runtime_or_previous` reads the runtime file first, verifies a protected runtime file before trusting it, and consults the legacy configuration path only when the runtime file is absent. `load` reads `app_state.json`, then merges the active world entry from the library, so the returned `AppState` joins one global file with the per-world My World state.',
+            text: '`AppStateStore` in `src/ludoxel/application/persistence/stores/app.py` writes the active space, settings, standing Othello settings, and the Othello play space into `app_state.json` beneath the runtime state root, delegates the active My World to `WorldLibraryStore.save_space`, and updates an integrity manifest. It raises when `save_space` reports that the present active world could not be written, so a caller is not told a save succeeded when the world body was not persisted. `_read_runtime_or_previous` reads the runtime file first, verifies a protected runtime file before trusting it, and consults the legacy configuration path only when the runtime file is absent. `load` reads `app_state.json`, then merges the active world entry from the library, so the returned `AppState` joins one global file with the per-world My World state.',
           },
           {
             kind: 'code',
@@ -545,7 +545,8 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
   if not active_id:
     return
   my_world = state.my_world if isinstance(state.my_world, PersistedPlaySpace) else default_new_world_space()
-  library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes)`,
+  if not library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes):
+    raise OSError(f"failed to save My World package for active world {active_id}")`,
           },
           {
             kind: 'paragraph',
@@ -2226,7 +2227,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.4 Beta 2"`,
+            code: `__version__ = "3.7.4 Beta 3"`,
           },
           {
             kind: 'note',

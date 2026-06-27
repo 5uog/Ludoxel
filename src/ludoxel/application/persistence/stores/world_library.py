@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from ludoxel.application.persistence.integrity.manifest import update_runtime_integrity_manifest, verify_runtime_file
-from ludoxel.application.persistence.packages.ldxworld import LDXWORLD_EXTENSION, LdxworldError, export_world_package, read_world_package, read_world_package_summary
+from ludoxel.application.persistence.packages.ldxworld import LDXWORLD_EXTENSION, export_world_package, read_world_package, read_world_package_summary
 from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
 from ludoxel.application.persistence.schema.world_library import (
   DEFAULT_WORLD_NAME,
@@ -102,7 +102,9 @@ class WorldLibraryStore:
       return None
     try:
       package = read_world_package(path)
-    except LdxworldError:
+    except Exception:
+      # A corrupt or unreadable package must not crash callers that rebuild the
+      # library inside a Qt slot; it is reported as absent.
       return None
     return self._entry_with_world_id(package.entry, world_id)
 
@@ -122,7 +124,7 @@ class WorldLibraryStore:
         continue
       try:
         summary = read_world_package_summary(path)
-      except LdxworldError:
+      except Exception:
         continue
       try:
         size_bytes = int(path.stat().st_size)
@@ -187,12 +189,19 @@ class WorldLibraryStore:
     return True
 
   def save_space(self, world_id: str, space: PersistedPlaySpace, *, game_mode: str | None = None, thumbnail_bytes: bytes | None = None) -> bool:
-    entry = self.load_entry(world_id)
-    if entry is None:
+    path = self._world_path(world_id)
+    if not path.exists() or not verify_runtime_file(self._data_root(), self._world_relative(world_id)):
       return False
-    resolved_game_mode = entry.metadata.game_mode if game_mode is None else normalize_world_game_mode(game_mode)
-    updated = PersistedWorldMetadata(world_id=str(world_id), name=entry.metadata.name, game_mode=resolved_game_mode, created_at=entry.metadata.created_at, updated_at=float(time.time()))
-    resolved_thumbnail = thumbnail_bytes if thumbnail_bytes else self.read_thumbnail_bytes(world_id)
+    # Read only the manifest and thumbnail; the existing world body is being
+    # replaced, so decompressing it on every save is unnecessary and only widens
+    # the window where the package file is open.
+    try:
+      summary = read_world_package_summary(path)
+    except Exception:
+      return False
+    resolved_game_mode = summary.metadata.game_mode if game_mode is None else normalize_world_game_mode(game_mode)
+    updated = PersistedWorldMetadata(world_id=str(world_id), name=summary.metadata.name, game_mode=resolved_game_mode, created_at=summary.metadata.created_at, updated_at=float(time.time()))
+    resolved_thumbnail = thumbnail_bytes if thumbnail_bytes else summary.thumbnail_bytes
     self._write_package(world_id, PersistedWorldEntry(metadata=updated, space=space), thumbnail_bytes=resolved_thumbnail)
     return True
 
@@ -226,7 +235,7 @@ class WorldLibraryStore:
       return None
     try:
       return read_world_package_summary(path).thumbnail_bytes
-    except LdxworldError:
+    except Exception:
       return None
 
   # --- migration -----------------------------------------------------------

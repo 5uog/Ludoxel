@@ -105,4 +105,8 @@ class AppStateStore:
       # The library is intentionally empty; only the global settings file is written.
       return
     my_world = state.my_world if isinstance(state.my_world, PersistedPlaySpace) else default_new_world_space()
-    library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes)
+    if not library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes):
+      # The active world could not be written (missing, unreadable, or the write
+      # failed). Raise so callers do not treat the save as successful and leave
+      # the play-space with unsaved progress.
+      raise OSError(f"failed to save My World package for active world {active_id}")

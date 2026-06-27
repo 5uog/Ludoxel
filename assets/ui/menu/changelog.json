@@ -2,6 +2,33 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.4 Beta 3",
+      "tags": [
+        "Desktop Application",
+        "My World",
+        "Othello",
+        "Data"
+      ],
+      "sections": [
+        {
+          "title": "Shared Play-Space Exit and Save",
+          "items": [
+            "Leaving the active play-space now runs through one boundary. `_exit_active_play_space` saves the current My World and Othello through `viewport.save_state` and only advances on success, and Save & Quit, the pause Play My World button, and the pause Play Othello (Reversi) button all use it. The pause Play My World and Play Othello paths previously switched without saving, so block placement, player position, inventory, health, AI actors, and world settings for My World, and board, match, and turn state for Othello, are now written before the play-space is left.",
+            "The save no longer reports success when the active world cannot be written. `AppStateStore.save` raises when `WorldLibraryStore.save_space` fails, the world-data save is allowed to propagate out of `viewport.save_state`, and the exit boundary catches a failure, shows a notification, logs the traceback, and stays in the current play-space instead of advancing. The previous `try/except Exception: pass` that hid Save & Quit failures is removed.",
+            "Returning to the startup menu after a save is deferred to the next event-loop pass and guarded, so the pause button that triggered it is not torn down inside its own handler and a navigation error is logged rather than aborting the process.",
+            "Auxiliary save steps are isolated from the world write. A failure in the renderer sun read, the Othello animation settle, or the framebuffer thumbnail grab is logged and skipped, and a thumbnail capture failure no longer counts as a world-data save failure."
+          ]
+        },
+        {
+          "title": "World Package Write Path",
+          "items": [
+            "Saving the active world reads only the package manifest and thumbnail rather than decompressing the full world body. `WorldLibraryStore.save_space` resolves the preserved name, created time, and thumbnail from `read_world_package_summary` and writes the new `PersistedPlaySpace`, narrowing the window in which the `state/worlds/<id>.ldxworld` file is held open.",
+            "`export_world_package` retries the final `os.replace` when it fails transiently and raises `LdxworldError` if it cannot finalize, and a failed write removes its temporary file rather than leaving a partial package. An unreadable package is reported as absent by the library reads, so a single corrupt world cannot crash a library rebuild."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.4 Beta 2",
       "tags": [
         "Desktop Application",
