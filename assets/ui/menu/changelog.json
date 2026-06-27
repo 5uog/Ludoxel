@@ -2,6 +2,25 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.4 Beta 4",
+      "tags": [
+        "Desktop Application",
+        "Menu",
+        "UI"
+      ],
+      "sections": [
+        {
+          "title": "Startup Menu Balance",
+          "items": [
+            "The startup menu now computes the Play My World, Play Othello (Reversi), and Quit button panel from the page width alone, keeping the central menu button box centered at the minimum 1040 by 700 desktop window size.",
+            "The changelog notification button is positioned in the lower-left side region between the app edge and the centered menu panel, while the player profile panel is positioned in the lower-right side region between the menu panel and the app edge. The profile panel no longer touches the central button box.",
+            "The creator label and runtime version label are fixed to the bottom edge instead of being lifted by a vertical root layout. The profile panel is bottom-anchored above the version label and keeps the fixed 300 by 360 pixel skin preview visible together with the Change Skin and Reset to Alex buttons.",
+            "MenuProfilePanel uses compact fixed-size action spacing, and PlayerSkinPreviewWidget keeps a fixed preview size. Short menu heights no longer alter the rendered skin size or hide the upper preview area and lower skin action buttons."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.4 Beta 3",
       "tags": [
         "Desktop Application",

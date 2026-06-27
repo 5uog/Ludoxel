@@ -12,6 +12,8 @@ _HEAD_YAW_LIMIT_DEG = 55.0
 _HEAD_PITCH_LIMIT_DEG = 35.0
 _DRAG_YAW_SCALE_DEG_PER_PX = 0.9
 _HOVER_BODY_YAW_LIMIT_DEG = 22.0
+_PREVIEW_WIDTH_PX = 300
+_PREVIEW_HEIGHT_PX = 360
 
 
 class PlayerSkinPreviewWidget(QWidget):
@@ -33,12 +35,8 @@ class PlayerSkinPreviewWidget(QWidget):
     self.setObjectName("playerSkinPreview")
     self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
     self.setMouseTracking(True)
-    # The model is rendered to a frame fit by a fixed vertical FOV, so a shorter
-    # box shows the whole model smaller rather than clipping it. Allowing the box
-    # to shrink keeps it inside short windows instead of overflowing the panel.
-    self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-    self.setMinimumSize(200, 180)
-    self.setMaximumSize(320, 432)
+    self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    self.setFixedSize(int(_PREVIEW_WIDTH_PX), int(_PREVIEW_HEIGHT_PX))
 
     self._name_tag = QLabel(self)
     self._name_tag.setObjectName("playerNameTag")
@@ -51,10 +49,10 @@ class PlayerSkinPreviewWidget(QWidget):
     self._name_tag.setGraphicsEffect(self._name_tag_effect)
 
   def sizeHint(self) -> QSize:
-    return QSize(300, 360)
+    return QSize(int(_PREVIEW_WIDTH_PX), int(_PREVIEW_HEIGHT_PX))
 
   def minimumSizeHint(self) -> QSize:
-    return QSize(200, 180)
+    return QSize(int(_PREVIEW_WIDTH_PX), int(_PREVIEW_HEIGHT_PX))
 
   def set_skin(self, image: QImage, *, slim_arm: bool) -> None:
     del image, slim_arm
