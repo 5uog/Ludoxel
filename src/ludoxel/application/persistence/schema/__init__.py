@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from ludoxel.application.persistence.schema.ai_player import PersistedAiPlayer
 from ludoxel.application.persistence.schema.app import AppState
-from ludoxel.application.persistence.schema.files import PlayerStateFile, WorldStateFile
-from ludoxel.application.persistence.schema.inventory import PersistedInventory
+from ludoxel.application.persistence.schema.files import PersistedAppFile
+from ludoxel.application.persistence.schema.inventory import PersistedWorldInventory
 from ludoxel.application.persistence.schema.othello import PersistedOthelloSpace
 from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
 from ludoxel.application.persistence.schema.player import PersistedPlayer
@@ -16,15 +16,14 @@ from ludoxel.application.persistence.schema.world_library import PersistedWorldE
 __all__ = [
   "AppState",
   "PersistedAiPlayer",
-  "PersistedInventory",
+  "PersistedAppFile",
   "PersistedOthelloSpace",
   "PersistedPlaySpace",
   "PersistedPlayer",
   "PersistedSettings",
   "PersistedWorld",
   "PersistedWorldEntry",
+  "PersistedWorldInventory",
   "PersistedWorldLibraryIndex",
   "PersistedWorldMetadata",
-  "PlayerStateFile",
-  "WorldStateFile",
 ]

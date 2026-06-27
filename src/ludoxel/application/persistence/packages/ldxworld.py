@@ -122,3 +122,35 @@ def read_world_package(path: Path) -> LdxworldPackage:
     raise LdxworldError("World package is not a valid archive.") from error
   except OSError as error:
     raise LdxworldError(f"Could not read world package: {error}") from error
+
+
+@dataclass(frozen=True)
+class LdxworldSummary:
+  metadata: PersistedWorldMetadata
+  thumbnail_bytes: bytes | None
+
+
+def read_world_package_summary(path: Path) -> LdxworldSummary:
+  """Read only the manifest metadata and thumbnail without expanding world data."""
+  source = Path(path)
+  if not source.is_file():
+    raise LdxworldError("World package does not exist.")
+  try:
+    with zipfile.ZipFile(source, "r") as archive:
+      manifest_raw = _read_member(archive, _MANIFEST_MEMBER)
+      if manifest_raw is None:
+        raise LdxworldError("World package is missing required members.")
+      try:
+        manifest = json.loads(manifest_raw.decode("utf-8"))
+      except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise LdxworldError("World package manifest is not valid JSON.") from error
+      if not isinstance(manifest, dict) or str(manifest.get("format", "")) != LDXWORLD_FORMAT_ID:
+        raise LdxworldError("World package is not a Ludoxel world.")
+      raw_metadata = manifest.get("world", {})
+      metadata = PersistedWorldMetadata.from_dict(raw_metadata if isinstance(raw_metadata, dict) else {})
+      thumbnail_bytes = _read_member(archive, _THUMBNAIL_MEMBER)
+      return LdxworldSummary(metadata=metadata, thumbnail_bytes=thumbnail_bytes)
+  except zipfile.BadZipFile as error:
+    raise LdxworldError("World package is not a valid archive.") from error
+  except OSError as error:
+    raise LdxworldError(f"Could not read world package: {error}") from error

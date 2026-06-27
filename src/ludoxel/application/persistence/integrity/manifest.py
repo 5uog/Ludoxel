@@ -12,7 +12,7 @@ from pathlib import Path
 from ludoxel.foundations.locations.roots import runtime_integrity_key_path, runtime_state_manifest_path
 
 _ALGORITHM = "hmac-sha256"
-PROTECTED_RUNTIME_RELATIVE_PATHS = ("state/player_state.json", "state/world_state.json", "state/player_skin.png", "state/othello_opening_book.json")
+PROTECTED_RUNTIME_RELATIVE_PATHS = ("state/app_state.json", "state/player_skin.png", "state/othello_opening_book.json")
 
 
 def _display_relative(path: str | Path) -> str:

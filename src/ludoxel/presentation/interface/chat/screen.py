@@ -6,16 +6,16 @@ from pathlib import Path
 
 from PyQt6.QtCore import QEvent, QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.chat.messages import ChatMessage
 from ludoxel.presentation.interface.chat.candidates_view import ChatCandidateView
 from ludoxel.presentation.interface.chat.settings_panel import ChatSettingsPanel
 from ludoxel.presentation.interface.chat.text_view import ChatTextView
+from ludoxel.presentation.interface.common.screen_title_bar import ScreenTitleBar
 
 _BAR_HEIGHT_PX = 56
 _BAR_INNER_MARGIN_PX = 8
-_SIDE_SLOT_WIDTH_PX = 140
 
 
 class ChatScreen(QWidget):
@@ -43,45 +43,15 @@ class ChatScreen(QWidget):
     root.setContentsMargins(0, 0, 0, 0)
     root.setSpacing(0)
 
-    root.addWidget(self._build_title_bar())
+    self._title_bar = ScreenTitleBar("Chat and Commands", parent=self)
+    self._title_bar.back_requested.connect(self.close_requested.emit)
+    root.addWidget(self._title_bar)
     root.addWidget(self._build_central(), stretch=1)
     root.addWidget(self._build_bottom_bar())
 
     self._settings_panel = ChatSettingsPanel(self)
     self._settings_panel.back_requested.connect(self.settings_close_requested.emit)
     self._settings_panel.mute_changed.connect(self.mute_changed.emit)
-
-  def _build_title_bar(self) -> QWidget:
-    bar = QFrame(self)
-    bar.setObjectName("chatTitleBar")
-    bar.setFixedHeight(int(_BAR_HEIGHT_PX))
-    bar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-
-    layout = QHBoxLayout(bar)
-    layout.setContentsMargins(int(_BAR_INNER_MARGIN_PX), int(_BAR_INNER_MARGIN_PX), int(_BAR_INNER_MARGIN_PX), int(_BAR_INNER_MARGIN_PX))
-    layout.setSpacing(0)
-
-    left_slot = QWidget(bar)
-    left_slot.setFixedWidth(int(_SIDE_SLOT_WIDTH_PX))
-    left_layout = QHBoxLayout(left_slot)
-    left_layout.setContentsMargins(0, 0, 0, 0)
-    left_layout.setSpacing(0)
-    self._back_button = QPushButton("< Back", left_slot)
-    self._back_button.setObjectName("chatBackButton")
-    self._back_button.setCursor(Qt.CursorShape.PointingHandCursor)
-    self._back_button.clicked.connect(self.close_requested.emit)
-    left_layout.addWidget(self._back_button, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-    layout.addWidget(left_slot)
-
-    self._title_label = QLabel("Chat and Commands", bar)
-    self._title_label.setObjectName("chatTitleLabel")
-    self._title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(self._title_label, stretch=1)
-
-    right_slot = QWidget(bar)
-    right_slot.setFixedWidth(int(_SIDE_SLOT_WIDTH_PX))
-    layout.addWidget(right_slot)
-    return bar
 
   def _build_central(self) -> QWidget:
     self._central = QWidget(self)

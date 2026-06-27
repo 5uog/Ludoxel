@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtCore import QEvent, QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QCursor, QIcon, QPixmap
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.presentation.interface.menu.profile_panel import MenuProfilePanel
@@ -22,6 +22,7 @@ class StartupMenuPage(QWidget):
   change_skin_requested = pyqtSignal()
   reset_skin_requested = pyqtSignal()
   preview_changed = pyqtSignal()
+  quit_requested = pyqtSignal()
 
   def __init__(self, *, resource_root: Path, version_text: str, parent: QWidget | None = None) -> None:
     super().__init__(parent)
@@ -29,12 +30,13 @@ class StartupMenuPage(QWidget):
     self._version_text = str(version_text)
     self.setObjectName("startupMenuPage")
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    self.setMouseTracking(True)
 
     root = QVBoxLayout(self)
-    root.setContentsMargins(48, 36, 48, 28)
+    root.setContentsMargins(48, 32, 48, 28)
     root.setSpacing(0)
 
-    root.addSpacing(96)
+    root.addSpacing(64)
 
     self._logo = QLabel(self)
     self._logo.setObjectName("menuLogo")
@@ -47,6 +49,8 @@ class StartupMenuPage(QWidget):
     root.addStretch(3)
 
     root.addLayout(self._build_bottom_row())
+
+    self._install_pointer_tracking()
 
   @property
   def profile_panel(self) -> MenuProfilePanel:
@@ -73,6 +77,13 @@ class StartupMenuPage(QWidget):
     self._btn_othello.setCursor(Qt.CursorShape.PointingHandCursor)
     self._btn_othello.clicked.connect(self.play_othello_requested.emit)
     layout.addWidget(self._btn_othello)
+
+    self._btn_quit = QPushButton("Quit", panel)
+    self._btn_quit.setObjectName("menuBtn")
+    self._btn_quit.setProperty("buttonStyle", "danger")
+    self._btn_quit.setCursor(Qt.CursorShape.PointingHandCursor)
+    self._btn_quit.clicked.connect(self.quit_requested.emit)
+    layout.addWidget(self._btn_quit)
     return panel
 
   def _build_bottom_row(self) -> QHBoxLayout:
@@ -116,7 +127,15 @@ class StartupMenuPage(QWidget):
     self._profile_panel.change_skin_requested.connect(self.change_skin_requested.emit)
     self._profile_panel.reset_skin_requested.connect(self.reset_skin_requested.emit)
     self._profile_panel.preview_changed.connect(self.preview_changed.emit)
-    right_column.addWidget(self._profile_panel, alignment=Qt.AlignmentFlag.AlignRight)
+    # No alignment flag here: an alignment flag would pin the panel to its size
+    # hint and let it overflow on short windows. A right-aligning inner row keeps
+    # it on the right while the column is still free to shrink its height.
+    profile_row = QHBoxLayout()
+    profile_row.setContentsMargins(0, 0, 0, 0)
+    profile_row.setSpacing(0)
+    profile_row.addStretch(1)
+    profile_row.addWidget(self._profile_panel)
+    right_column.addLayout(profile_row)
 
     self._version_label = QLabel(self._version_text, self)
     self._version_label.setObjectName("menuVersionLabel")
@@ -136,3 +155,48 @@ class StartupMenuPage(QWidget):
 
   def set_version_text(self, text: str) -> None:
     self._version_label.setText(str(text))
+
+  # --- page-wide skin preview pointer reaction -----------------------------
+
+  def _install_pointer_tracking(self) -> None:
+    for widget in (self, *self.findChildren(QWidget)):
+      widget.installEventFilter(self)
+      widget.setMouseTracking(True)
+
+  def _skin_preview(self):
+    return self._profile_panel.skin_preview
+
+  def _map_event_position(self, watched, event):
+    if not isinstance(watched, QWidget) or not hasattr(event, "position"):
+      return None
+    return watched.mapTo(self, event.position().toPoint())
+
+  def eventFilter(self, watched, event) -> bool:
+    event_type = event.type()
+    preview = self._skin_preview()
+    if event_type == QEvent.Type.MouseButtonPress and hasattr(event, "button") and event.button() == Qt.MouseButton.LeftButton:
+      pos = self._map_event_position(watched, event)
+      if pos is not None:
+        preview.begin_drag(x=float(pos.x()))
+        self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        self.preview_changed.emit()
+    elif event_type == QEvent.Type.MouseMove and hasattr(event, "position"):
+      pos = self._map_event_position(watched, event)
+      if pos is not None:
+        preview.move_pointer(x=float(pos.x()), y=float(pos.y()), area_width=int(self.width()), area_height=int(self.height()))
+        self.preview_changed.emit()
+    elif event_type == QEvent.Type.MouseButtonRelease and hasattr(event, "button") and event.button() == Qt.MouseButton.LeftButton:
+      pos = self._map_event_position(watched, event)
+      if pos is not None:
+        preview.end_drag(x=float(pos.x()), y=float(pos.y()), area_width=int(self.width()), area_height=int(self.height()))
+      else:
+        preview.note_pointer_left()
+      self.setCursor(Qt.CursorShape.ArrowCursor)
+      self.preview_changed.emit()
+    elif event_type == QEvent.Type.Leave and watched is self:
+      cursor_pos = self.mapFromGlobal(QCursor.pos())
+      if not self.rect().contains(cursor_pos):
+        preview.note_pointer_left()
+      self.setCursor(Qt.CursorShape.ArrowCursor)
+      self.preview_changed.emit()
+    return super().eventFilter(watched, event)

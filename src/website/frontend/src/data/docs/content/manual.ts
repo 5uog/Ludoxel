@@ -366,7 +366,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
           },
           {
             kind: 'paragraph',
-            text: 'The menu carries the Ludoxel logo, a creator label on the lower left, the runtime version label on the lower right, a notification button on the lower left, and a player profile panel on the lower right. The central button panel offers Play My World and Play Othello (Reversi). The menu does not start gameplay by itself; each button routes to a distinct surface.',
+            text: 'The menu carries the Ludoxel logo, a creator label on the lower left, the runtime version label on the lower right, a notification button on the lower left, and a player profile panel on the lower right. The central button panel offers Play My World, Play Othello (Reversi), and Quit. Quit closes the main window, which runs the application shutdown and final save, so it is the application exit control; the in-game pause Save & Quit instead writes the current state and returns to this menu without closing the window. The menu does not start gameplay by itself; each button routes to a distinct surface.',
           },
         ],
       },
@@ -376,7 +376,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: 'The menu profile panel reuses the same skin preview widget as the pause overlay and offers Change Skin and Reset to Alex. These actions call the same skin controller used by the pause overlay, so the menu and the in-game pause surface read and write one player skin state, and a change made on the menu is persisted through the existing preference path. Dragging the preview rotates the model; the preview frame is rendered each frame while the menu page is visible.',
+            text: 'The menu profile panel reuses the same skin preview widget as the pause overlay and offers Change Skin and Reset to Alex. These actions call the same skin controller used by the pause overlay, so the menu and the in-game pause surface read and write one player skin state, and a change made on the menu is persisted through the existing preference path. The whole menu page forwards pointer motion, presses, and releases to the preview, so the model reacts to the cursor across the page as it does on the pause overlay while the menu buttons keep handling their own clicks. Dragging the preview rotates the model, the preview frame is rendered each frame while the menu page is visible, and at short window heights the preview box shrinks and keeps the whole model inside it instead of overflowing toward the buttons.',
           },
         ],
       },
@@ -392,10 +392,10 @@ def _handle_loading_state_changed(self, active: bool) -> None:
             kind: 'list',
             ordered: true,
             items: [
-              'Create New World requests a world name and a game mode, then adds the world to the library and returns to the list with the new world present; it does not enter gameplay by itself.',
-              'A per-world action menu provides Rename, Export, and Delete. Rename rejects empty, whitespace-only, and duplicate names. Delete asks for confirmation and removes the world entry and its thumbnail.',
-              'Export writes the world to a chosen `.ldxworld` file, and Import World reads a `.ldxworld` file, rejecting a malformed package without changing the library.',
-              'Opening a world saves the previously loaded world, loads the selected world into the My World session, applies that world game mode, closes the menu, and enters gameplay.',
+              'Create New World opens an in-shell screen with a name field, a Survival and Creative toggle, and Create. Confirming adds the world to the library and returns to the list with the new world present; it does not enter gameplay by itself. An empty or whitespace-only name is refused at creation, while a name that matches another world is accepted because worlds are identified by id rather than by display name.',
+              'Edit opens an in-shell screen titled Edit followed by the world name, with a rename field, Export (.ldxworld), and a delete confirmation rendered inside the screen. Rename refuses an empty or whitespace-only name and accepts a name that matches another world. Delete asks for confirmation in the same screen and removes the world package; deleting the last world leaves an empty library rather than recreating a default world.',
+              'Export writes the world to a chosen `.ldxworld` file, and Import World reads a `.ldxworld` file, rejecting a malformed package without changing the library. Import accepts a package whose name matches an existing world.',
+              'Opening a world captures the previously loaded world, including its inventory, loads the selected world into the My World session, restores that world inventory into the runtime, applies that world game mode, closes the menu, and enters gameplay.',
             ],
           },
           {
@@ -410,7 +410,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: 'Play Othello (Reversi) closes the menu and enters the Othello space through the same controller switch used by the in-game pause overlay. The Othello board, side state, clocks, and settings restored at launch are entered when this button is pressed; the Othello save remains in `world_state.json` and is never placed in the My World library.',
+            text: 'Play Othello (Reversi) closes the menu and enters the Othello space through the same controller switch used by the in-game pause overlay. The Othello board, side state, clocks, and settings restored at launch are entered when this button is pressed; the Othello play space, with its board, clocks, and game state, is saved inside `app_state.json` and is never placed in the My World library. Othello carries no saved inventory.',
           },
         ],
       },
@@ -527,8 +527,8 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
         title: 'Restoration Loads Both Spaces Before the Active Reference Is Chosen',
         body: [
           'Startup restoration does not load only the space that will be shown first. `apply_persisted_state_if_present` applies persisted settings to every session, restores My World from `state.my_world`, restores Othello from `state.othello_space`, repairs Othello board placement, lifts the Othello player above the board when required, restores overlap exemptions, normalizes runtime preferences, and then calls `sessions.set_active_space(runtime.current_space_id)`. The selected runtime reference is admitted only after both persisted branches have been projected back into their session managers.',
-          '`SessionManager.set_active_space` makes the later visible switch non-destructive after startup. The dormant space is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. Envelope validation and semantic correctness remain with the persistence paths for `state/player_state.json`, `state/world_state.json`, and the Othello payload.',
-          '`AppState` carries `current_space_id`, `my_world`, and `othello_space` as separate fields alongside shared settings, inventory, and Othello settings. That schema shape preserves the split introduced by the session factories. A current-space value selects one branch for presentation after restoration; it does not serialize a conversion between `PersistedPlaySpace` and `PersistedOthelloSpace`.',
+          '`SessionManager.set_active_space` makes the later visible switch non-destructive after startup. The dormant space is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. Envelope validation and semantic correctness remain with the persistence paths for `state/app_state.json` and the per-world `state/worlds/<id>.ldxworld` entries.',
+          '`AppState` carries `current_space_id`, `my_world`, and `othello_space` as separate fields alongside the shared settings and standing Othello settings. Player inventory is not shared at this level: the My World inventory travels inside `my_world`, while the Othello play space carries no saved inventory. A current-space value selects one branch for presentation after restoration and never copies a hotbar across the `PersistedPlaySpace` and `PersistedOthelloSpace` boundary.',
         ],
         codeBlocks: [
           {
@@ -564,9 +564,9 @@ apply_runtime_to_renderer(runtime, renderer)`,
         id: 'switching-play-spaces-pause-surface',
         title: 'The Pause Overlay Dispatches the Visible Switch Request',
         body: [
-          'The visible switch command is exposed through the pause overlay. `PauseOverlay` declares separate signals for My World and Othello, wires them to the two menu buttons, and disables the button representing the current normalized space. That disabled state is a presentation guard: the overlay does not offer the active destination as a distinct operation.',
-          'The viewport controller binds those signals to `switch_play_space` with `resume=True`. The command is therefore a pause-menu dispatch path. It exits the overlay when a same-space request is resumed or when a real switch is accepted. The pause origin matters because the controller resets held mouse actions, cancels route editing, and clears transition feedback before the active session reference changes.',
-          '`PauseOverlay.keyPressEvent` maps Escape to `resume_requested`; destination buttons emit their own signals without embedding a session mutation. The widget records the enabled state for the two controls, while `bind_overlay_actions` supplies the controller callbacks. A displayed button therefore reports an available request path; `switch_play_space` remains the owner of the accepted transition.',
+          'The visible destination commands are exposed through the pause overlay. `PauseOverlay` declares separate signals for My World and Othello, wires them to the two menu buttons, and disables the button representing the current normalized space. That disabled state is a presentation guard: the overlay does not offer the active destination as a distinct operation.',
+          'The viewport controller binds Play Othello to `switch_play_space` with `resume=True`, and binds Play My World to `open_my_world_library_from_pause`. Play Othello is therefore a pause-menu switch that exits the overlay when a same-space request is resumed or when a real switch is accepted. Play My World does not start a world: it closes the pause overlay and opens the startup shell on the My World library page, so a particular world is entered only by selecting it in the library. The pause origin matters because the controller resets held mouse actions, cancels route editing, and clears transition feedback before any active session reference changes.',
+          '`PauseOverlay.keyPressEvent` maps Escape to `resume_requested`; destination buttons emit their own signals without embedding a session mutation. The widget records the enabled state for the two controls, while `bind_overlay_actions` supplies the controller callbacks. A displayed button therefore reports an available request path; `switch_play_space` owns the accepted Othello transition while the library page owns My World selection.',
         ],
         codeBlocks: [
           {
@@ -589,8 +589,8 @@ def set_current_space(self, space_id: str) -> None:
           },
           {
             language: 'py',
-            caption: 'Pause-overlay signals are bound to the controller switch with resume enabled.',
-            code: `viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
+            caption: 'Pause Play My World opens the library; Play Othello switches with resume enabled.',
+            code: `viewport._overlay.play_my_world_requested.connect(lambda: open_my_world_library_from_pause(viewport))
 viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))`,
           },
         ],
@@ -2015,7 +2015,7 @@ MELEE_HURT_TILT_S = 0.18`,
           },
           {
             kind: 'paragraph',
-            text: 'The title bar and the bottom bar are equal-height bars spanning the full window width. The title text Chat and Commands stays centered on the whole window across resizes, and the bottom bar places a square settings button on the left, the message field in the middle, and a wider send button on the right.',
+            text: 'The chat screen uses the shared `ScreenTitleBar`, so its `< Back` control is the same back button the My World library and the changelog page present, and the title text Chat and Commands stays centered on the whole window across resizes. The bottom bar is an equal-height full-width bar that places a square settings button on the left, the message field in the middle, and a wider send button on the right.',
           },
         ],
       },

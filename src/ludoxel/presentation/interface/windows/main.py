@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from PyQt6.QtCore import QEvent, QObject, QPoint, QRect, Qt
@@ -317,6 +318,9 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
     if not bool(dialog.exec()):
       return
     launch_player_name = dialog.selected_player_name()
+    if persisted_state is not None:
+      persisted_state = replace(persisted_state, settings=replace(persisted_state.settings, player_name=normalize_player_name(launch_player_name)))
+      AppStateStore(project_root=root, data_root=managed_data_root).save(persisted_state)
 
   w = MainWindow(project_root=root, resource_root=bundled_root, data_root=managed_data_root, launch_player_name=launch_player_name)
   _set_activation_callback(w.request_activation)

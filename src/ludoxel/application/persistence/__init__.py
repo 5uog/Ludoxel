@@ -8,34 +8,32 @@ __all__ = [
   "AppState",
   "AppStateStore",
   "PersistedAiPlayer",
-  "PersistedInventory",
+  "PersistedAppFile",
   "PersistedOthelloSpace",
   "PersistedPlaySpace",
   "PersistedPlayer",
   "PersistedSettings",
   "PersistedWorld",
   "PersistedWorldEntry",
+  "PersistedWorldInventory",
   "PersistedWorldLibraryIndex",
   "PersistedWorldMetadata",
-  "PlayerStateFile",
   "WorldLibraryStore",
-  "WorldStateFile",
 ]
 
 _SCHEMA_EXPORTS = {
   "AppState",
   "PersistedAiPlayer",
-  "PersistedInventory",
+  "PersistedAppFile",
   "PersistedOthelloSpace",
   "PersistedPlaySpace",
   "PersistedPlayer",
   "PersistedSettings",
   "PersistedWorld",
   "PersistedWorldEntry",
+  "PersistedWorldInventory",
   "PersistedWorldLibraryIndex",
   "PersistedWorldMetadata",
-  "PlayerStateFile",
-  "WorldStateFile",
 }
 
 

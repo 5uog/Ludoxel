@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtGui import QCursor, QImage
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.presentation.interface.overlays.skin_preview import PlayerSkinPreviewWidget
@@ -18,11 +18,10 @@ class MenuProfilePanel(QWidget):
     super().__init__(parent)
     self.setObjectName("menuProfilePanel")
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-    self.setMouseTracking(True)
 
     layout = QVBoxLayout(self)
     layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(10)
+    layout.setSpacing(24)
 
     self._skin_preview = PlayerSkinPreviewWidget(self)
     self._skin_preview.view_changed.connect(self.preview_changed.emit)
@@ -44,8 +43,6 @@ class MenuProfilePanel(QWidget):
     self._btn_reset_skin.clicked.connect(self.reset_skin_requested.emit)
     layout.addWidget(self._btn_reset_skin, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-    self._install_pointer_tracking()
-
   @property
   def skin_preview(self) -> PlayerSkinPreviewWidget:
     return self._skin_preview
@@ -64,42 +61,3 @@ class MenuProfilePanel(QWidget):
 
   def player_preview_size(self) -> tuple[int, int]:
     return (int(self._skin_preview.width()), int(self._skin_preview.height()))
-
-  def _install_pointer_tracking(self) -> None:
-    for widget in (self, *self.findChildren(QWidget)):
-      widget.installEventFilter(self)
-      widget.setMouseTracking(True)
-
-  def _map_event_position(self, watched, event):
-    if not isinstance(watched, QWidget) or not hasattr(event, "position"):
-      return None
-    return watched.mapTo(self, event.position().toPoint())
-
-  def eventFilter(self, watched, event) -> bool:
-    event_type = event.type()
-    if event_type == QEvent.Type.MouseButtonPress and hasattr(event, "button") and event.button() == Qt.MouseButton.LeftButton:
-      pos = self._map_event_position(watched, event)
-      if pos is not None:
-        self._skin_preview.begin_drag(x=float(pos.x()))
-        self.setCursor(Qt.CursorShape.ClosedHandCursor)
-        self.preview_changed.emit()
-    elif event_type == QEvent.Type.MouseMove and hasattr(event, "position"):
-      pos = self._map_event_position(watched, event)
-      if pos is not None:
-        self._skin_preview.move_pointer(x=float(pos.x()), y=float(pos.y()), area_width=int(self.width()), area_height=int(self.height()))
-        self.preview_changed.emit()
-    elif event_type == QEvent.Type.MouseButtonRelease and hasattr(event, "button") and event.button() == Qt.MouseButton.LeftButton:
-      pos = self._map_event_position(watched, event)
-      if pos is not None:
-        self._skin_preview.end_drag(x=float(pos.x()), y=float(pos.y()), area_width=int(self.width()), area_height=int(self.height()))
-      else:
-        self._skin_preview.note_pointer_left()
-      self.setCursor(Qt.CursorShape.ArrowCursor)
-      self.preview_changed.emit()
-    elif event_type == QEvent.Type.Leave and watched is self:
-      cursor_pos = self.mapFromGlobal(QCursor.pos())
-      if not self.rect().contains(cursor_pos):
-        self._skin_preview.note_pointer_left()
-      self.setCursor(Qt.CursorShape.ArrowCursor)
-      self.preview_changed.emit()
-    return super().eventFilter(watched, event)

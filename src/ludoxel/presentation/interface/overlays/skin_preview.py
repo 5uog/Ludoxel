@@ -33,8 +33,11 @@ class PlayerSkinPreviewWidget(QWidget):
     self.setObjectName("playerSkinPreview")
     self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
     self.setMouseTracking(True)
-    self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-    self.setMinimumSize(280, 372)
+    # The model is rendered to a frame fit by a fixed vertical FOV, so a shorter
+    # box shows the whole model smaller rather than clipping it. Allowing the box
+    # to shrink keeps it inside short windows instead of overflowing the panel.
+    self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+    self.setMinimumSize(200, 180)
     self.setMaximumSize(320, 432)
 
     self._name_tag = QLabel(self)
@@ -48,10 +51,10 @@ class PlayerSkinPreviewWidget(QWidget):
     self._name_tag.setGraphicsEffect(self._name_tag_effect)
 
   def sizeHint(self) -> QSize:
-    return QSize(300, 412)
+    return QSize(300, 360)
 
   def minimumSizeHint(self) -> QSize:
-    return QSize(280, 372)
+    return QSize(200, 180)
 
   def set_skin(self, image: QImage, *, slim_arm: bool) -> None:
     del image, slim_arm

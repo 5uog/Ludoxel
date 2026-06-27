@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from pathlib import Path
-
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
@@ -15,10 +13,10 @@ _GRID_THUMBNAIL_SIZE = QSize(220, 124)
 _LIST_THUMBNAIL_SIZE = QSize(128, 72)
 
 
-def _thumbnail_pixmap(thumbnail_path: Path | None, size: QSize) -> QPixmap:
+def _thumbnail_pixmap(thumbnail_bytes: bytes | None, size: QSize) -> QPixmap:
   pixmap = QPixmap()
-  if thumbnail_path is not None:
-    pixmap = QPixmap(str(thumbnail_path))
+  if thumbnail_bytes:
+    pixmap.loadFromData(bytes(thumbnail_bytes))
   if pixmap.isNull():
     placeholder = QPixmap(size)
     placeholder.fill(Qt.GlobalColor.transparent)
@@ -57,7 +55,7 @@ class WorldGridCard(QFrame):
     thumb_image = QLabel(thumb_holder)
     thumb_image.setObjectName("worldThumbnailImage")
     thumb_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    thumb_image.setPixmap(_thumbnail_pixmap(summary.thumbnail_path, _GRID_THUMBNAIL_SIZE))
+    thumb_image.setPixmap(_thumbnail_pixmap(summary.thumbnail_bytes, _GRID_THUMBNAIL_SIZE))
     thumb_layout.addWidget(thumb_image, 0, 0)
     thumb_layout.addWidget(_game_mode_badge(summary.metadata.game_mode, thumb_holder), 0, 0, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
     layout.addWidget(thumb_holder, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -109,7 +107,7 @@ class WorldListRow(QFrame):
     thumb_image.setObjectName("worldThumbnailImage")
     thumb_image.setFixedSize(_LIST_THUMBNAIL_SIZE)
     thumb_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    thumb_image.setPixmap(_thumbnail_pixmap(summary.thumbnail_path, _LIST_THUMBNAIL_SIZE))
+    thumb_image.setPixmap(_thumbnail_pixmap(summary.thumbnail_bytes, _LIST_THUMBNAIL_SIZE))
     layout.addWidget(thumb_image, alignment=Qt.AlignmentFlag.AlignVCenter)
 
     text_column = QVBoxLayout()

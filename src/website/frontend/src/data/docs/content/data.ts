@@ -53,7 +53,7 @@ export const dataPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
-            text: '`AppStateStore._data_root` in `src/ludoxel/application/persistence/stores/app.py` consumes the selected root and derives `state/player_state.json` and `state/world_state.json` through `_state_path`. `load()` reads each envelope through `_read_runtime_or_previous`, then feeds `PlayerStateFile.from_dict` and `WorldStateFile.from_dict` into one `AppState`; `save()` writes both JSON envelopes before `update_runtime_integrity_manifest` refreshes their protected entries. The resolver output reaches a concrete store, schema admission path, and integrity update sequence.',
+            text: '`AppStateStore._data_root` in `src/ludoxel/application/persistence/stores/app.py` consumes the selected root and derives `state/app_state.json` through `_state_path`, while each My World is reached as `state/worlds/<id>.ldxworld` through `WorldLibraryStore`. `load()` reads the global envelope through `_read_runtime_or_previous`, then feeds `PersistedAppFile.from_dict` and the active world entry into one `AppState`; `save()` writes the global envelope and the active world entry before `update_runtime_integrity_manifest` refreshes their protected entries. The resolver output reaches a concrete store, schema admission path, and integrity update sequence.',
           },
           {
             kind: 'paragraph',
@@ -82,7 +82,7 @@ def runtime_cache_root(data_root: Path) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'That split is the first deletion boundary. Removing `state/world_state.json` discards primary play-space state. Removing `state/othello_opening_book.json` discards user opening-book lines. Removing `cache/othello_opening_book_cache.json` forces recompilation from remaining source lines. The implementation does not treat all JSON files beneath the data root as equivalent simply because they share a root path.',
+            text: 'That split is the first deletion boundary. Removing `state/app_state.json` discards the global settings, the active-space selection, and the Othello play space. Removing a `state/worlds/<id>.ldxworld` entry discards one My World, including its inventory. Removing `state/othello_opening_book.json` discards user opening-book lines. Removing `cache/othello_opening_book_cache.json` forces recompilation from remaining source lines. The implementation does not treat all JSON files beneath the data root as equivalent simply because they share a root path.',
           },
         ],
       },
@@ -117,7 +117,7 @@ def runtime_integrity_key_path(data_root: Path) -> Path:
         content: [
           {
             kind: 'paragraph',
-            text: 'The application state store constructs its principal paths from the runtime state root. `player_state.json` and `world_state.json` are not found through source-tree traversal. They are reached through `_state_path`, which appends the file name below `runtime_state_root(self._data_root())`. That expression is the concrete owner of those two JSON files.',
+            text: 'The application state store constructs its principal path from the runtime state root. `app_state.json` is not found through source-tree traversal. It is reached through `_state_path`, which appends the file name below `runtime_state_root(self._data_root())`. That expression is the concrete owner of the global runtime file, while the per-world `state/worlds/<id>.ldxworld` entries are owned by `WorldLibraryStore`.',
           },
           {
             kind: 'code',
@@ -126,11 +126,8 @@ def runtime_integrity_key_path(data_root: Path) -> Path:
             code: `def _state_path(self, name: str) -> Path:
   return runtime_state_root(self._data_root()) / str(name)
 
-def _player_store(self) -> JsonFileStore:
-  return JsonFileStore(path=self._state_path("player_state.json"))
-
-def _world_store(self) -> JsonFileStore:
-  return JsonFileStore(path=self._state_path("world_state.json"))`,
+def _app_store(self) -> JsonFileStore:
+  return JsonFileStore(path=self._state_path("app_state.json"))`,
           },
           {
             kind: 'paragraph',
@@ -144,7 +141,7 @@ def _world_store(self) -> JsonFileStore:
         content: [
           {
             kind: 'paragraph',
-            text: 'A resolved path is evidence of placement, resolver branch, and store ownership. It is not evidence of permission. A file under `<data_root>/state/learning/` is a learning artifact because the learning store writes it there; it is not a public dataset because it is located under that path. A file under `<data_root>/state/world_state.json` is saved local state because the application state store reads it there; it is not a distribution package because it serializes a world.',
+            text: 'A resolved path is evidence of placement, resolver branch, and store ownership. It is not evidence of permission. A file under `<data_root>/state/learning/` is a learning artifact because the learning store writes it there; it is not a public dataset because it is located under that path. A file under `<data_root>/state/worlds/<id>.ldxworld` is saved local state because the world library store reads it there; it is not a distribution package because it serializes a world.',
           },
           {
             kind: 'paragraph',
@@ -227,7 +224,7 @@ def runtime_cache_root(data_root: Path) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'The engineering consequence is direct. Source files, shaders, QSS, website source, bundled textures, bundled fonts, Othello package resources, and third-party license text are not save files. Conversely, `player_state.json`, `world_state.json`, `ai_learning.json`, learning datasets, learned policies, and user opening-book lines are not source files merely because the application serialized them.',
+            text: 'The engineering consequence is direct. Source files, shaders, QSS, website source, bundled textures, bundled fonts, Othello package resources, and third-party license text are not save files. Conversely, `app_state.json`, the per-world `worlds/<id>.ldxworld` entries, `ai_learning.json`, learning datasets, learned policies, and user opening-book lines are not source files merely because the application serialized them.',
           },
         ],
       },
@@ -263,7 +260,7 @@ def runtime_cache_root(data_root: Path) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'The write path is one-way in the current implementation. `AppStateStore.save` constructs `PlayerStateFile` and `WorldStateFile`, writes them through `_player_store` and `_world_store`, and then updates the runtime integrity manifest for `state/player_state.json` and `state/world_state.json`. There is no symmetric save branch back into `configs`; legacy data enters the runtime model only as a read fallback.',
+            text: 'The write path is one-way in the current implementation. `AppStateStore.save` constructs a `PersistedAppFile`, writes it through `_app_store`, delegates the active My World to `WorldLibraryStore.save_space`, and then updates the runtime integrity manifest for `state/app_state.json`. There is no symmetric save branch back into `configs`; legacy data enters the runtime model only as a read fallback.',
           },
         ],
       },
@@ -324,23 +321,23 @@ if env_root:
         content: [
           {
             kind: 'paragraph',
-            text: 'Files below `state` preserve primary local records. `player_state.json` contains persisted settings, inventory, current play-space selection, and standing Othello settings. `world_state.json` contains My World and Othello play-space records. `ai_learning.json` contains learning settings and summaries. `state/learning/` contains datasets and policy artifacts. `state/othello_opening_book.json` contains user opening-book lines.',
+            text: 'Files below `state` preserve primary local records. `app_state.json` contains persisted settings, the current play-space selection, standing Othello settings, and the Othello play space. `world_library.json` and the per-world `worlds/<id>.ldxworld` entries contain the My World library and each My World, including its own inventory. `ai_learning.json` contains learning settings and summaries. `state/learning/` contains datasets and policy artifacts. `state/othello_opening_book.json` contains user opening-book lines.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Player state shows why deleting one file discards multiple saved domains.',
+            caption: 'The global runtime envelope shows why deleting one file discards multiple saved domains.',
             code: `@dataclass(frozen=True)
-class PlayerStateFile:
-  version: int = 9
+class PersistedAppFile:
+  version: int = APP_STATE_FILE_VERSION
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
-  inventory: PersistedInventory = field(default_factory=PersistedInventory)
-  othello_settings: OthelloSettings = field(default_factory=OthelloSettings)`,
+  othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
+  othello_space: PersistedOthelloSpace = field(default_factory=PersistedOthelloSpace)`,
           },
           {
             kind: 'paragraph',
-            text: 'The dataclass composition makes the deletion consequence explicit. Removing `player_state.json` removes every field in the envelope, reaching past the visual preferences into the current play-space id, inventory, and standing Othello settings. The application can construct defaults, but it cannot reconstruct the discarded local values from those defaults.',
+            text: 'The dataclass composition makes the deletion consequence explicit. Removing `app_state.json` removes every field in the envelope, reaching past the visual preferences into the current play-space id, the standing Othello settings, and the Othello play space with its own hotbar. Removing a `worlds/<id>.ldxworld` entry discards that world, including the My World hotbar and upper storage held in its `PersistedWorldInventory`. The application can construct defaults, but it cannot reconstruct the discarded local values from those defaults.',
           },
         ],
       },
@@ -452,31 +449,31 @@ class PlayerStateFile:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/files.py` owns the versioned `PlayerStateFile` envelope for `player_state.json`. Saved preferences are therefore not stored as a separate preference-only file: `settings` is one envelope member beside the current play-space id, inventory, and standing Othello settings.',
+            text: '`src/ludoxel/application/persistence/schema/files.py` owns the versioned `PersistedAppFile` envelope for `app_state.json`. Saved preferences are therefore not stored as a separate preference-only file: `settings` is one envelope member beside the current play-space id, the standing Othello settings, and the Othello play space. Player inventory is not part of this envelope; the My World hotbar travels inside each world entry and the Othello hotbar travels inside the Othello play space.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schema/files.py',
             code: `@dataclass(frozen=True)
-class PlayerStateFile:
-  version: int = 9
+class PersistedAppFile:
+  version: int = APP_STATE_FILE_VERSION
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)
-  inventory: PersistedInventory = field(default_factory=PersistedInventory)
-  othello_settings: OthelloSettings = field(default_factory=OthelloSettings)`,
+  othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
+  othello_space: PersistedOthelloSpace = field(default_factory=PersistedOthelloSpace)`,
           },
           {
             kind: 'paragraph',
-            text: 'The schema composition is operationally important. A failure to load `player_state.json` affects more than camera or audio. It can also affect inventory and current-space selection because the file envelope groups those records. `PlayerStateFile` and its persisted fields identify the relevant evidence; a visible UI preference cannot establish which serialized member, coercion path, or fallback branch supplied the runtime value.',
+            text: 'The schema composition is operationally important. A failure to load `app_state.json` affects more than camera or audio. It can also affect the current-space selection and the Othello play space because the file envelope groups those records. `PersistedAppFile` and its persisted fields identify the relevant evidence; a visible UI preference cannot establish which serialized member, coercion path, or fallback branch supplied the runtime value.',
           },
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/app.py` owns `AppState`, the in-memory persistence aggregate that joins the current-space id, settings, inventory, standing Othello settings, My World state, and Othello state. It is intentionally not a universal codec: `PlayerStateFile` and `WorldStateFile` divide that aggregate into separately versioned on-disk envelopes, while the subordinate schema modules retain their own conversion rules.',
+            text: '`src/ludoxel/application/persistence/schema/app.py` owns `AppState`, the in-memory persistence aggregate that joins the current-space id, settings, standing Othello settings, My World state, and Othello state. It is intentionally not a universal codec: `PersistedAppFile` serializes the global members into `app_state.json` while `WorldLibraryStore` serializes each `PersistedPlaySpace` into its own world entry, and the subordinate schema modules retain their own conversion rules.',
           },
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/inventory.py` owns the persisted hotbar branches as explicit schema. Its reader admits the earlier shared hotbar keys, then constructs creative, survival, Othello, and route branches with each branch’s slot normalization and selected-index bounds. A malformed branch falls back through its own default slots and index while the remaining player-state envelope remains available.',
+            text: '`src/ludoxel/application/persistence/schema/inventory.py` owns the persisted My World inventory as explicit schema. `PersistedWorldInventory` holds the My World hotbar, the 9x3 upper storage, and the AI route hotbar, with each branch slot normalization and selected-index bounds. A malformed branch falls back through its own default slots and index while the remaining inventory remains available. The Othello play space has no persisted inventory; its runtime hotbar is rebuilt from defaults each launch, so it is not part of any saved file.',
           },
         ],
       },
@@ -687,7 +684,7 @@ def current_block_id(self) -> str | None:
           },
           {
             kind: 'paragraph',
-            text: 'My World carries one shared upper inventory beneath its shared hotbar. `my_world_upper_slots` holds twenty-seven row-major slots, while `my_world_hotbar_slots` and `my_world_selected_hotbar_index` complete the central thirty-six-slot storage. `normalize()` projects that sequence through `normalize_upper_inventory_slots`, padding or truncating saved input to its fixed length, and `PersistedInventory` serializes only the shared My World fields into `player_state.json`. The reader accepts Beta 1 Creative or Survival fields only as a one-time compatibility source selected by the stored game mode; subsequent writes use the shared shape. The crafting grid remains a transient presentation working area and never reaches the runtime or saved envelope.',
+            text: 'Each My World carries its own upper inventory beneath its own hotbar. `PersistedWorldInventory.upper_slots` holds twenty-seven row-major slots, while `hotbar_slots` and `selected_hotbar_index` complete the central thirty-six-slot storage, and `route_hotbar_slots` and `route_selected_hotbar_index` hold the AI route hotbar. Its `to_dict` projects the upper sequence through `normalize_upper_inventory_slots`, padding or truncating saved input to its fixed length, and the inventory is serialized into the owning `state/worlds/<id>.ldxworld` entry rather than a library-wide file, so switching worlds restores that world storage instead of one shared storage. The crafting grid remains a transient presentation working area and never reaches the runtime or saved envelope.',
           },
           {
             kind: 'code',
@@ -780,7 +777,7 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
           },
           {
             kind: 'paragraph',
-            text: '`player_state.json` is also protected by runtime integrity. A manually modified file can fail verification before its JSON is trusted. A missing, unreadable, non-object, or unverifiable file falls back through default construction. The data boundary is therefore stricter than “JSON exists”: the record must be in the active runtime path, pass the store read path, survive integrity admission where applicable, and then survive schema normalization.',
+            text: '`app_state.json` is also protected by runtime integrity, as are the per-world `worlds/<id>.ldxworld` entries and the `world_library.json` index. A manually modified file can fail verification before its JSON is trusted. A missing, unreadable, non-object, or unverifiable file falls back through default construction. The data boundary is therefore stricter than “JSON exists”: the record must be in the active runtime path, pass the store read path, survive integrity admission where applicable, and then survive schema normalization.',
           },
           {
             kind: 'paragraph',
@@ -812,7 +809,7 @@ if not isinstance(expected_entry, dict):
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/stores/app.py` owns paired player/world state load and save; it does not treat a legacy file as a repair source for an invalid active runtime file. `_read_runtime_or_previous` reads `state/player_state.json` or `state/world_state.json` from the runtime root when that path exists, and returns no record when the corresponding HMAC verification fails. It visits the previous configuration root only when the active runtime path is absent. `load` returns `None` only when both envelopes are unavailable; otherwise it passes each missing half as an empty mapping to the appropriate envelope reader and reconstitutes one `AppState` aggregate from the current-space, settings, inventory, standing Othello settings, My World, and Othello members. The result is a partial state reconstruction with explicit defaults, not a splice of untrusted active data and legacy data.',
+            text: '`src/ludoxel/application/persistence/stores/app.py` owns the global state load and save and merges the active My World from the library; it does not treat a legacy file as a repair source for an invalid active runtime file. `_read_runtime_or_previous` reads `state/app_state.json` from the runtime root when that path exists, and returns no record when the HMAC verification fails. It visits the previous configuration root only when the active runtime path is absent. `load` reads the global envelope, then merges the active world entry from `WorldLibraryStore`, and reconstitutes one `AppState` aggregate from the current-space, settings, standing Othello settings, My World, and Othello members. The result is a partial state reconstruction with explicit defaults, not a splice of untrusted active data and legacy data.',
           },
           {
             kind: 'code',
@@ -871,25 +868,31 @@ finally:
           {
             kind: 'paragraph',
             text: [
-              'Saved world state is stored in `world_state.json`. The current envelope is `WorldStateFile`, whose serialized form contains a `spaces` mapping with a single `othello` entry. My World state is no longer written into this file; each world is owned separately by the ',
+              'The saved Othello play space lives inside `app_state.json` under the `othello_space` member; the surrounding envelope is `PersistedAppFile`. My World state is not written into the global file; each world is owned separately by the ',
               {
                 kind: 'link',
                 label: 'My World library',
                 href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library',
               },
-              '. A world save is therefore the Othello play-space container, and the My World data lives beside it under its own per-world files.',
+              '. The Othello save is therefore one member of the global runtime file, and the My World data lives beside it under its own per-world entries.',
             ],
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'src/ludoxel/application/persistence/schema/files.py',
+            caption: 'src/ludoxel/application/persistence/schema/othello.py',
             code: `def to_dict(self) -> dict[str, Any]:
-  return {"version": int(self.version), "spaces": {"othello": self.othello_space.to_dict()}}`,
+  return {
+    "player": self.player.to_dict(),
+    "world": self.world.to_dict(),
+    "inventory": self.inventory.to_dict(),
+    "othello_game_state": self.othello_game_state.to_dict(),
+    "ai_players": [player.to_dict() for player in self.ai_players],
+  }`,
           },
           {
             kind: 'paragraph',
-            text: 'The `spaces` mapping is the outer structural boundary for the Othello save. It keeps Othello state from being read as an undifferentiated world and carries its own player, world, AI actors, and Othello-specific game state. The active My World space is sourced from the library entry and merged into the in-memory `AppState` at load time, so a reader must not expect a `my_world` key inside `world_state.json`.',
+            text: 'The `othello_space` member is the outer structural boundary for the Othello save. It keeps Othello state from being read as an undifferentiated world and carries its own player, world, inventory, AI actors, and Othello-specific game state. The active My World space is sourced from the library entry and merged into the in-memory `AppState` at load time, so a reader must not expect a `my_world` key inside `app_state.json`.',
           },
         ],
       },
@@ -914,7 +917,7 @@ finally:
           },
           {
             kind: 'paragraph',
-            text: 'That representation has two consequences. First, the saved world is exactly the surviving explicit cell map, not an instruction to regenerate the same terrain. Second, the revision number belongs to mutation tracking inside `WorldState`; it is not a release version, schema version, proof of content authorship, or substitute for the `WorldStateFile.version` envelope.',
+            text: 'That representation has two consequences. First, the saved world is exactly the surviving explicit cell map, not an instruction to regenerate the same terrain. Second, the revision number belongs to mutation tracking inside `WorldState`; it is not a release version, schema version, proof of content authorship, or substitute for the file envelope version, which is `PersistedAppFile.version` for the Othello save and `WORLD_ENTRY_FILE_VERSION` for a My World entry.',
           },
         ],
       },
@@ -996,7 +999,7 @@ if isinstance(raw, list):
                 label: 'user-created materials',
                 href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-user-created-materials',
               },
-              '; the existence of `world_state.json` alone does not authorize publication or redistribution.',
+              '; the existence of a saved world, whether the Othello save in `app_state.json` or a My World `worlds/<id>.ldxworld` entry, does not authorize publication or redistribution.',
             ],
           },
         ],
@@ -1020,7 +1023,7 @@ if isinstance(raw, list):
           },
           {
             kind: 'paragraph',
-            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, and normalized `PersistedAiPlayer` rows together. The Othello space is read from `WorldStateFile`, while the active My World space is read from its library entry and supplied to the same restore sequence; `load_my_world_space_into_session` regenerates a fresh map for an empty entry and otherwise replaces the saved block snapshot.',
+            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, `PersistedWorldInventory`, and normalized `PersistedAiPlayer` rows together. The Othello space is read from the `othello_space` member of `app_state.json`, while the active My World space is read from its library entry and supplied to the same restore sequence; `load_my_world_space_into_session` regenerates a fresh map for an empty entry and otherwise replaces the saved block snapshot.',
           },
         ],
       },
@@ -1033,7 +1036,7 @@ if isinstance(raw, list):
     group: 'Saved Runtime State',
     title: 'Reading the My World Library',
     description:
-      'Defines the My World library through its index file, per-world entry files, world metadata and game mode, thumbnail capture, active-world routing, and the validated Ludoxel world package used for export and import.',
+      'Defines the My World library through its index file, the per-world `.ldxworld` packages, world metadata and game mode, bundled thumbnail capture, active-world routing, and the validated Ludoxel world package format used for storage, export, and import.',
     sections: [
       {
         id: 'reading-the-my-world-library-index-and-entries',
@@ -1041,7 +1044,7 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/stores/world_library.py` owns the My World library on disk. The library is two kinds of file under the runtime state root. `world_library.json` is the index: an active-world identifier and an ordered list of world identifiers. Each listed world has its own `worlds/<id>.json` entry holding a `PersistedWorldEntry`, the world metadata paired with the same `PersistedPlaySpace` body used elsewhere for player, world blocks, and AI actors.',
+            text: '`src/ludoxel/application/persistence/stores/world_library.py` owns the My World library on disk. The library is two kinds of file under the runtime state root. `world_library.json` is the index: an active-world identifier and an ordered list of world identifiers. Each listed world is stored as its own `worlds/<id>.ldxworld` package, the same archive format used for export and import. The package holds the world metadata and the `PersistedPlaySpace` body used elsewhere for player, world blocks, the per-world inventory, and AI actors, together with the world thumbnail.',
           },
           {
             kind: 'code',
@@ -1052,7 +1055,7 @@ if isinstance(raw, list):
           },
           {
             kind: 'paragraph',
-            text: 'The split has a structural consequence. The index records membership and order; an entry file records one world. A world identifier present in the index without a readable `worlds/<id>.json` is skipped when the library is listed, and the active identifier is treated as valid only when its entry file is present, otherwise the first present world is reported. Reading the index alone is not reading a world; reading one entry file is not reading the library.',
+            text: 'The split has a structural consequence. The index records membership and order; a package records one world. A world identifier present in the index without a readable `worlds/<id>.ldxworld` is skipped when the library is listed, and the active identifier is treated as valid only when its package is present, otherwise the first present world is reported. Listing the library reads only each package manifest and thumbnail; opening a world reads its full body. Reading the index alone is not reading a world; reading one package is not reading the library.',
           },
         ],
       },
@@ -1062,7 +1065,7 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: '`PersistedWorldMetadata` carries the world identifier, the display name, the game mode, and the created and updated timestamps. The game mode is per world. It is normalized to `survival` or `creative`, applied to the runtime and the player when the world is opened, and written back from the runtime game mode when the world is saved. The created timestamp is fixed at creation; the updated timestamp advances on each entry write. The on-disk size shown in the library is the size of the entry file plus its thumbnail, not a count of blocks.',
+            text: '`PersistedWorldMetadata` carries the world identifier, the display name, the game mode, and the created and updated timestamps. The game mode is per world. It is normalized to `survival` or `creative`, applied to the runtime and the player when the world is opened, and written back from the runtime game mode when the world is saved. The created timestamp is fixed at creation; the updated timestamp advances on each package write. The on-disk size shown in the library is the size of the `.ldxworld` package, which already contains the thumbnail, not a count of blocks.',
           },
           {
             kind: 'code',
@@ -1080,7 +1083,7 @@ if isinstance(raw, list):
           },
           {
             kind: 'paragraph',
-            text: 'A name is normalized by collapsing whitespace and is never empty; a blank or whitespace-only name falls back to the default world name. The library rejects an empty or duplicate name at rename, and creation refuses an empty name, so the visible list cannot present two worlds under the same casefolded name.',
+            text: 'A name is normalized by collapsing whitespace and is never empty; a blank or whitespace-only name falls back to the default world name. World identity is the `id` field, not the display name, so the library accepts two worlds under the same name and distinguishes them by their `world_id`. The creation and rename screens still refuse an empty or whitespace-only entry, but no path rejects a name because it matches another world.',
           },
         ],
       },
@@ -1090,14 +1093,14 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: 'Each world may have a `worlds/<id>.png` thumbnail beside its entry file. The thumbnail is produced by the presentation save path, which reads the viewport framebuffer, encodes a bounded PNG, and writes it through `write_thumbnail_bytes`. The thumbnail is user runtime data: it is created from a rendered frame at save time, tracked by the runtime integrity manifest like the entry and index files, and removed with the world on delete. It is not a bundled asset and is not generated by an asset tool.',
+            text: 'Each world may carry a thumbnail bundled inside its `worlds/<id>.ldxworld` package. The thumbnail is produced by the presentation save path, which reads the viewport framebuffer and encodes a bounded PNG, and is written into the package as part of the same world save rather than as a sibling file. The thumbnail is user runtime data: it is created from a rendered frame at save time, tracked by the runtime integrity manifest as part of the world package, and removed with the world on delete. It is not a bundled asset and is not generated by an asset tool.',
           },
           {
             kind: 'note',
             note: {
               type: 'note',
               content:
-                'A thumbnail records the frame visible when a world was saved. Its presence does not certify world completeness, and its absence does not indicate a corrupt world; the library lists a world from its entry file whether or not a thumbnail is present.',
+                'A thumbnail records the frame visible when a world was saved. Its presence does not certify world completeness, and its absence does not indicate a corrupt world; the library lists a world from its package manifest whether or not a thumbnail is present.',
             },
           },
         ],
@@ -1108,7 +1111,7 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/packages/ldxworld.py` owns export and import of a single world as a `.ldxworld` package. The package is a zip archive holding `manifest.json`, `world.json`, and an optional `thumbnail.png`. The manifest records the package format identifier, the format version, the runtime application version, and the world metadata; the world member is the serialized `PersistedPlaySpace`.',
+            text: '`src/ludoxel/application/persistence/packages/ldxworld.py` owns the `.ldxworld` package read and write used both for on-disk library storage and for user export and import of a single world. The package is a zip archive holding `manifest.json`, `world.json`, and an optional `thumbnail.png`. The manifest records the package format identifier, the format version, the runtime application version, and the world metadata; the world member is the serialized `PersistedPlaySpace`. A summary read takes only the manifest and thumbnail, while a full read expands the world body.',
           },
           {
             kind: 'code',
@@ -1362,7 +1365,7 @@ return len(lines)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The board is serialized as a compact 64-cell representation and restored through a coercion path. Standing Othello settings live in `player_state.json`; per-match Othello settings live inside the saved match. These layers must not be conflated. Changing a standing preference does not rewrite the historical configuration under which an already saved match was created.',
+            text: 'The board is serialized as a compact 64-cell representation and restored through a coercion path. Standing Othello settings live in `app_state.json` under the `othello_settings` member; per-match Othello settings live inside the saved match within the `othello_space` member. These layers must not be conflated. Changing a standing preference does not rewrite the historical configuration under which an already saved match was created.',
           },
           {
             kind: 'code',

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from ludoxel.application.persistence import AppState, PersistedInventory, PersistedSettings
+from ludoxel.application.persistence import AppState, PersistedSettings, PersistedWorldInventory
 from ludoxel.application.preferences.runtime import RuntimePreferences, coerce_runtime_preferences
 from ludoxel.simulation.worlds.config.player_health import PlayerRegenParams
 from ludoxel.simulation.worlds.state.play_space import normalize_play_space_id
@@ -71,7 +71,7 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
     return out
 
   settings = state.settings
-  inventory = state.inventory
+  world_inventory = state.my_world.inventory
   loaded_place_repeat_interval_s = float(settings.block_place_repeat_interval_s)
   if math.isclose(float(loaded_place_repeat_interval_s), float(RuntimePreferences.LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S), rel_tol=0.0, abs_tol=1e-9):
     loaded_place_repeat_interval_s = float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
@@ -135,13 +135,11 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
     window_height=int(settings.window_height),
     window_screen_name=str(settings.window_screen_name),
     render_distance_chunks=int(settings.render_distance_chunks),
-    my_world_hotbar_slots=list(inventory.my_world_hotbar_slots),
-    my_world_selected_hotbar_index=int(inventory.my_world_selected_hotbar_index),
-    my_world_upper_slots=list(inventory.my_world_upper_slots),
-    othello_hotbar_slots=list(inventory.othello_hotbar_slots),
-    othello_selected_hotbar_index=int(inventory.othello_selected_hotbar_index),
-    route_hotbar_slots=list(inventory.route_hotbar_slots),
-    route_selected_hotbar_index=int(inventory.route_selected_hotbar_index),
+    my_world_hotbar_slots=list(world_inventory.hotbar_slots),
+    my_world_selected_hotbar_index=int(world_inventory.selected_hotbar_index),
+    my_world_upper_slots=list(world_inventory.upper_slots),
+    route_hotbar_slots=list(world_inventory.route_hotbar_slots),
+    route_selected_hotbar_index=int(world_inventory.route_selected_hotbar_index),
     route_edit_active=False,
     othello_settings=state.othello_settings,
     keybinds=settings.keybinds,
@@ -231,14 +229,21 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
   )
 
 
-def persisted_inventory_from_runtime(runtime: RuntimePreferences) -> PersistedInventory:
+def persisted_world_inventory_from_runtime(runtime: RuntimePreferences) -> PersistedWorldInventory:
   runtime.normalize()
-  return PersistedInventory(
-    my_world_hotbar_slots=tuple(runtime.my_world_hotbar_slots),
-    my_world_selected_hotbar_index=int(runtime.my_world_selected_hotbar_index),
-    my_world_upper_slots=tuple(runtime.my_world_upper_slots),
-    othello_hotbar_slots=tuple(runtime.othello_hotbar_slots),
-    othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index),
+  return PersistedWorldInventory(
+    hotbar_slots=tuple(runtime.my_world_hotbar_slots),
+    selected_hotbar_index=int(runtime.my_world_selected_hotbar_index),
+    upper_slots=tuple(runtime.my_world_upper_slots),
     route_hotbar_slots=tuple(runtime.route_hotbar_slots),
     route_selected_hotbar_index=int(runtime.route_selected_hotbar_index),
   )
+
+
+def apply_world_inventory_to_runtime(runtime: RuntimePreferences, inventory: PersistedWorldInventory) -> None:
+  runtime.my_world_hotbar_slots = list(inventory.hotbar_slots)
+  runtime.my_world_selected_hotbar_index = int(inventory.selected_hotbar_index)
+  runtime.my_world_upper_slots = list(inventory.upper_slots)
+  runtime.route_hotbar_slots = list(inventory.route_hotbar_slots)
+  runtime.route_selected_hotbar_index = int(inventory.route_selected_hotbar_index)
+  runtime.normalize()

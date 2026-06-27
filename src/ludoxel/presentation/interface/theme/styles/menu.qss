@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 
-/* Startup menu shell, My World library, changelog viewer, and world editor dialogs. */
+/* Startup menu shell, My World library, changelog viewer, and in-application world editor screens. */
 
 QWidget#startupShellRoot {
   background: rgba(0, 0, 0, 170);
@@ -67,6 +67,50 @@ QWidget#startupShellRoot QPushButton#menuBtn:disabled {
   border-left-color: #606060;
   border-right-color: #222222;
   border-bottom-color: #222222;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn[buttonStyle="prominent"] {
+  background: #4c7f2a;
+  border-top-color: #83bc54;
+  border-left-color: #83bc54;
+  border-right-color: #1d3510;
+  border-bottom-color: #1d3510;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn[buttonStyle="prominent"]:hover {
+  background: #5a9433;
+  border-top-color: #95cf65;
+  border-left-color: #95cf65;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn[buttonStyle="prominent"]:pressed {
+  background: #3c641f;
+  border-top-color: #1d3510;
+  border-left-color: #1d3510;
+  border-right-color: #83bc54;
+  border-bottom-color: #83bc54;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn[buttonStyle="danger"] {
+  background: #8a3030;
+  border-top-color: #c25a5a;
+  border-left-color: #c25a5a;
+  border-right-color: #3a1010;
+  border-bottom-color: #3a1010;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn[buttonStyle="danger"]:hover {
+  background: #9c3a3a;
+  border-top-color: #d46a6a;
+  border-left-color: #d46a6a;
+}
+
+QWidget#startupShellRoot QPushButton#menuBtn[buttonStyle="danger"]:pressed {
+  background: #6f2424;
+  border-top-color: #3a1010;
+  border-left-color: #3a1010;
+  border-right-color: #c25a5a;
+  border-bottom-color: #c25a5a;
 }
 
 /* Menu labels and logo. */
@@ -176,7 +220,9 @@ QPushButton#worldViewToggle:checked {
   border-bottom-color: #1d3510;
 }
 
-QWidget#myWorldLibraryPage {
+QWidget#myWorldLibraryPage,
+QWidget#worldCreatePage,
+QWidget#worldEditorPage {
   background: rgba(0, 0, 0, 150);
 }
 
@@ -323,13 +369,9 @@ QLabel#changelogItem code {
   color: #d7ff9b;
 }
 
-/* World editor dialogs. */
+/* In-application Create New World and Edit World screens. */
 
-QDialog#worldEditorDialog {
-  background: #151515;
-}
-
-QFrame#worldEditorPanel {
+QWidget#startupShellRoot QFrame#worldEditorFormPanel {
   background: #2a2a2a;
   border-top: 4px solid #666666;
   border-left: 4px solid #666666;
@@ -337,25 +379,19 @@ QFrame#worldEditorPanel {
   border-bottom: 4px solid #0b0b0b;
 }
 
-QDialog#worldEditorDialog QLabel#worldEditorTitle {
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-QDialog#worldEditorDialog QLabel#worldEditorLabel {
+QWidget#startupShellRoot QLabel#worldEditorLabel {
   color: #ffffff;
   font-size: 13px;
   font-weight: 800;
 }
 
-QDialog#worldEditorDialog QLabel#worldEditorError {
-  color: #ff8a8a;
+QWidget#startupShellRoot QLabel#worldEditorHint {
+  color: rgba(255, 255, 255, 175);
   font-size: 12px;
   font-weight: 700;
 }
 
-QDialog#worldEditorDialog QLineEdit#worldEditorInput {
+QWidget#startupShellRoot QLineEdit#worldEditorInput {
   background: #1c1c1c;
   color: #ffffff;
   border-top: 2px solid #0b0b0b;
@@ -367,28 +403,12 @@ QDialog#worldEditorDialog QLineEdit#worldEditorInput {
   selection-color: #0b0b0b;
 }
 
-QDialog#worldEditorDialog QLineEdit#worldEditorInput:focus {
+QWidget#startupShellRoot QLineEdit#worldEditorInput:focus {
   border-top: 2px solid #6fb03a;
   border-left: 2px solid #6fb03a;
 }
 
-QDialog#worldEditorDialog QPushButton#menuBtn {
-  color: #ffffff;
-  background: #6b6b6b;
-  border-top: 3px solid #a0a0a0;
-  border-left: 3px solid #a0a0a0;
-  border-right: 3px solid #252525;
-  border-bottom: 3px solid #252525;
-  padding: 7px 14px;
-  min-height: 24px;
-  font-weight: 800;
-}
-
-QDialog#worldEditorDialog QPushButton#menuBtn:hover {
-  background: #7a7a7a;
-}
-
-QDialog#worldEditorDialog QPushButton#modeToggle {
+QWidget#startupShellRoot QPushButton#modeToggle {
   color: #ffffff;
   background: #555555;
   border-top: 3px solid #858585;
@@ -400,12 +420,26 @@ QDialog#worldEditorDialog QPushButton#modeToggle {
   font-weight: 800;
 }
 
-QDialog#worldEditorDialog QPushButton#modeToggle:checked {
+QWidget#startupShellRoot QPushButton#modeToggle:checked {
   background: #4c7f2a;
   border-top-color: #83bc54;
   border-left-color: #83bc54;
   border-right-color: #1d3510;
   border-bottom-color: #1d3510;
+}
+
+QWidget#startupShellRoot QFrame#worldDeleteConfirm {
+  background: #3a1c1c;
+  border-top: 2px solid #c25a5a;
+  border-left: 2px solid #c25a5a;
+  border-right: 2px solid #1a0808;
+  border-bottom: 2px solid #1a0808;
+}
+
+QWidget#startupShellRoot QLabel#worldDeleteConfirmLabel {
+  color: #ffd0d0;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 /* Scroll bars for the new scroll surfaces. */

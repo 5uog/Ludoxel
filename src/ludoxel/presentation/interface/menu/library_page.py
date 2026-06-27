@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QButtonGroup, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
@@ -15,7 +15,10 @@ from ludoxel.presentation.interface.menu.world_card import WorldGridCard, WorldL
 _VIEW_GRID = "grid"
 _VIEW_LIST = "list"
 _GRID_CARD_WIDTH_PX = 244
+_GRID_SPACING_PX = 16
+_CONTENT_MARGIN_PX = 24
 _TOGGLE_BUTTON_SIZE_PX = 40
+_REFLOW_DEBOUNCE_MS = 30
 
 
 class MyWorldLibraryPage(QWidget):
@@ -30,6 +33,10 @@ class MyWorldLibraryPage(QWidget):
     self._resource_root = Path(resource_root)
     self._view_mode = _VIEW_GRID
     self._summaries: tuple[WorldLibrarySummary, ...] = ()
+    self._grid_host: QWidget | None = None
+    self._grid_layout: QGridLayout | None = None
+    self._grid_cards: list[WorldGridCard] = []
+    self._grid_columns_current = 0
     self.setObjectName("myWorldLibraryPage")
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
@@ -51,14 +58,19 @@ class MyWorldLibraryPage(QWidget):
     self._content = QWidget(self._scroll)
     self._content.setObjectName("worldLibraryContent")
     self._content_layout = QVBoxLayout(self._content)
-    self._content_layout.setContentsMargins(24, 24, 24, 24)
-    self._content_layout.setSpacing(16)
+    self._content_layout.setContentsMargins(_CONTENT_MARGIN_PX, _CONTENT_MARGIN_PX, _CONTENT_MARGIN_PX, _CONTENT_MARGIN_PX)
+    self._content_layout.setSpacing(_GRID_SPACING_PX)
     self._scroll.setWidget(self._content)
     root.addWidget(self._scroll, stretch=1)
 
     self._empty_label = QLabel("No worlds yet. Use Create New World to begin.", self._content)
     self._empty_label.setObjectName("worldLibraryEmpty")
     self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    self._reflow_timer = QTimer(self)
+    self._reflow_timer.setSingleShot(True)
+    self._reflow_timer.setInterval(int(_REFLOW_DEBOUNCE_MS))
+    self._reflow_timer.timeout.connect(self._reflow_grid)
 
     self._rebuild()
 
@@ -72,11 +84,11 @@ class MyWorldLibraryPage(QWidget):
 
     self._grid_button = self._build_toggle_button("grid.svg", "Grid view")
     self._list_button = self._build_toggle_button("list.svg", "List view")
-    self._grid_button.setChecked(True)
     self._view_group = QButtonGroup(self)
     self._view_group.setExclusive(True)
     self._view_group.addButton(self._grid_button)
     self._view_group.addButton(self._list_button)
+    self._grid_button.setChecked(True)
     self._grid_button.clicked.connect(lambda: self.set_view_mode(_VIEW_GRID))
     self._list_button.clicked.connect(lambda: self.set_view_mode(_VIEW_LIST))
     layout.addWidget(self._grid_button)
@@ -115,11 +127,11 @@ class MyWorldLibraryPage(QWidget):
 
   def set_view_mode(self, mode: str) -> None:
     normalized = _VIEW_LIST if str(mode) == _VIEW_LIST else _VIEW_GRID
+    self._grid_button.setChecked(normalized == _VIEW_GRID)
+    self._list_button.setChecked(normalized == _VIEW_LIST)
     if normalized == self._view_mode:
       return
     self._view_mode = normalized
-    self._grid_button.setChecked(normalized == _VIEW_GRID)
-    self._list_button.setChecked(normalized == _VIEW_LIST)
     self._rebuild()
 
   def set_worlds(self, summaries: tuple[WorldLibrarySummary, ...]) -> None:
@@ -127,11 +139,16 @@ class MyWorldLibraryPage(QWidget):
     self._rebuild()
 
   def _clear_content(self) -> None:
+    self._grid_host = None
+    self._grid_layout = None
+    self._grid_cards = []
+    self._grid_columns_current = 0
     while self._content_layout.count():
       item = self._content_layout.takeAt(0)
       widget = item.widget()
       if widget is not None and widget is not self._empty_label:
-        widget.setParent(None)
+        # Keep the widget parented to the content while it is deleted; reparenting
+        # to None would briefly promote it to a top-level window and flicker.
         widget.deleteLater()
 
   def _rebuild(self) -> None:
@@ -156,28 +173,64 @@ class MyWorldLibraryPage(QWidget):
       self._content_layout.addWidget(row)
 
   def _grid_columns(self) -> int:
-    available = max(1, int(self._scroll.viewport().width()) - 48)
-    return max(1, int(available // int(_GRID_CARD_WIDTH_PX)))
+    viewport_width = int(self._scroll.viewport().width())
+    if viewport_width <= 1:
+      return max(1, int(self._grid_columns_current) or 1)
+    scrollbar_reserve = int(self._scroll.verticalScrollBar().sizeHint().width())
+    available = viewport_width - (2 * int(_CONTENT_MARGIN_PX)) - scrollbar_reserve
+    unit = int(_GRID_CARD_WIDTH_PX) + int(_GRID_SPACING_PX)
+    columns = (available + int(_GRID_SPACING_PX)) // unit
+    return max(1, int(columns))
 
   def _build_grid_view(self) -> None:
     grid_host = QWidget(self._content)
     grid_host.setObjectName("worldGridHost")
+    grid_host.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
     grid_layout = QGridLayout(grid_host)
     grid_layout.setContentsMargins(0, 0, 0, 0)
-    grid_layout.setSpacing(16)
+    grid_layout.setSpacing(int(_GRID_SPACING_PX))
     grid_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-    columns = self._grid_columns()
-    for index, summary in enumerate(self._summaries):
+    self._grid_host = grid_host
+    self._grid_layout = grid_layout
+    self._grid_cards = []
+    for summary in self._summaries:
       card = WorldGridCard(summary, parent=grid_host)
       card.open_requested.connect(self.open_world_requested.emit)
       card.edit_requested.connect(self.edit_world_requested.emit)
-      grid_layout.addWidget(card, index // columns, index % columns)
+      self._grid_cards.append(card)
+    self._grid_columns_current = 0
     self._content_layout.addWidget(grid_host)
+    self._place_grid_cards(self._grid_columns())
+
+  def _place_grid_cards(self, columns: int) -> None:
+    layout = self._grid_layout
+    if layout is None:
+      return
+    columns = max(1, int(columns))
+    while layout.count():
+      layout.takeAt(0)
+    for index, card in enumerate(self._grid_cards):
+      layout.addWidget(card, index // columns, index % columns)
+    self._grid_columns_current = int(columns)
+
+  def _reflow_grid(self) -> None:
+    if self._view_mode != _VIEW_GRID or not self._grid_cards or self._grid_layout is None:
+      return
+    columns = self._grid_columns()
+    if int(columns) == int(self._grid_columns_current):
+      return
+    self._place_grid_cards(columns)
+
+  def showEvent(self, event) -> None:
+    super().showEvent(event)
+    # The viewport width is only final after the first show; defer the column
+    # computation so the initial grid wraps across the row instead of stacking.
+    QTimer.singleShot(0, self._reflow_grid)
 
   def resizeEvent(self, event) -> None:
     super().resizeEvent(event)
-    if self._view_mode == _VIEW_GRID and self._summaries:
-      self._rebuild()
+    if self._view_mode == _VIEW_GRID and self._grid_cards:
+      self._reflow_timer.start()
 
 
 __all__ = ["MyWorldLibraryPage"]

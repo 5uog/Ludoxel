@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 def bind_overlay_actions(viewport: "RendererViewportWidget") -> None:
   viewport._overlay.resume_requested.connect(lambda: resume_from_overlay(viewport))
   viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
-  viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
+  viewport._overlay.play_my_world_requested.connect(lambda: open_my_world_library_from_pause(viewport))
   viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
   viewport._overlay.save_quit_requested.connect(lambda: save_and_quit(viewport))
   viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
@@ -179,12 +179,31 @@ def on_inventory_closed(viewport: "RendererViewportWidget") -> None:
   viewport.arm_resume_refresh()
 
 
+def _open_library_from_pause(viewport: "RendererViewportWidget") -> None:
+  import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
+
+  # set_menu_open already clears the paused state; do not resume gameplay first.
+  menu_controller.refresh_library(viewport)
+  settings_controller.sync_player_skin(viewport)
+  viewport._set_menu_overlay(True)
+  viewport._menu.show_library()
+
+
+def open_my_world_library_from_pause(viewport: "RendererViewportWidget") -> None:
+  # Defer to the next event-loop pass: the pause button that fired this is hidden
+  # by set_menu_open, and hiding the emitting widget inside its own click handler
+  # is unsafe. Returning first lets the handler finish before the overlay swaps.
+  QTimer.singleShot(0, lambda: _open_library_from_pause(viewport))
+
+
 def save_and_quit(viewport: "RendererViewportWidget") -> None:
+  import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
+
   viewport._reset_held_mouse_actions()
   try:
     viewport.save_state()
   except Exception:
     pass
-  host = viewport.window()
-  if host is not None:
-    host.close()
+  # set_menu_open clears the paused state; returning to the menu does not close the app.
+  # Defer the overlay swap so the Save & Quit button is not torn down mid-click.
+  QTimer.singleShot(0, lambda: menu_controller.open_startup_menu(viewport))

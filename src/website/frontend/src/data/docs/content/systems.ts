@@ -284,7 +284,7 @@ return (runtime, othello_game_state)`,
           {
             kind: 'paragraph',
             text: [
-              'The order is consequential: an active-space label and renderer flags are derived after their admitting state has been normalized. A missing pair of state files leaves the default runtime intact; `AppStateStore` withholds a present runtime file that fails integrity verification. The envelope versions, JSON failure behavior, legacy fallback, and integrity records are the responsibility of ',
+              'The order is consequential: an active-space label and renderer flags are derived after their admitting state has been normalized. A missing state file leaves the default runtime intact; `AppStateStore` withholds a present runtime file that fails integrity verification. The envelope version, JSON failure behavior, legacy fallback, and integrity records are the responsibility of ',
               {
                 kind: 'link',
                 label: 'saved runtime state',
@@ -301,11 +301,11 @@ return (runtime, othello_game_state)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`AppState` is an immutable aggregate of the current space identifier, persisted settings, inventory, standing Othello settings, My World state, and Othello state. Its two on-disk envelopes split the aggregate: `PlayerStateFile` owns the current space, settings, inventory, and standing Othello settings, while `WorldStateFile` owns both play spaces. `JsonFileStore` serializes each dictionary through a sibling temporary file, flushes and fsyncs it, replaces the target, and removes a remaining temporary path. That write protocol is a durability boundary; it is not a claim that arbitrary edits preserve schema or integrity validity.',
+            text: '`AppState` is an immutable aggregate of the current space identifier, persisted settings, standing Othello settings, My World state, and Othello state. Player inventory is not a top-level member: each My World entry carries its own `PersistedWorldInventory`, while the Othello play space has no persisted inventory. The global envelope `PersistedAppFile` owns the current space, settings, standing Othello settings, and the Othello play space in `app_state.json`, while the active My World is owned by its `state/worlds/<id>.ldxworld` package through `WorldLibraryStore`. The global file is written atomically through `JsonFileStore` and each world package through the `.ldxworld` writer; both are durability boundaries, not a claim that arbitrary edits preserve schema or integrity validity.',
           },
           {
             kind: 'paragraph',
-            text: '`runtime_preferences_from_app_state` produces mutable runtime state for the live session. Its inverse, `persisted_settings_from_runtime`, pulls movement values from the active session settings, while `persisted_inventory_from_runtime` copies every hotbar branch. `save_state` serializes both sessions and their AI projections and then delegates to `AppStateStore.save`. The application keeps the file shape, live aggregate, session parameters, and renderer commands separate because their consumers require different times and mutability.',
+            text: '`runtime_preferences_from_app_state` produces mutable runtime state for the live session, reading the My World hotbar branches from the active world entry while the Othello hotbar is rebuilt from its defaults. Its inverse, `persisted_settings_from_runtime`, pulls movement values from the active session settings, while `persisted_world_inventory_from_runtime` copies the My World hotbar branches into the world inventory schema. `save_state` serializes both sessions and their AI projections and then delegates to `AppStateStore.save`. The application keeps the file shape, live aggregate, session parameters, and renderer commands separate because their consumers require different times and mutability.',
           },
           {
             kind: 'note',
@@ -514,7 +514,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
           },
           {
             kind: 'paragraph',
-            text: 'The runtime-state pipeline in `src/ludoxel/application/sessions/pipelines/runtime_state.py` converts between the two representations. `runtime_preferences_from_app_state` reads a persisted aggregate into a normalized runtime object; `persisted_settings_from_runtime` projects the runtime object and the session movement parameters back into a `PersistedSettings`; `persisted_inventory_from_runtime` extracts the hotbar branches. `apply_runtime_to_renderer` pushes the visual flags and cloud and shadow and sun parameters into the renderer, `sync_runtime_sun_from_renderer` reads the sun angles back, and `apply_persisted_settings_to_session` installs the field-of-view, sensitivity, and movement values into the session settings.',
+            text: 'The runtime-state pipeline in `src/ludoxel/application/sessions/pipelines/runtime_state.py` converts between the two representations. `runtime_preferences_from_app_state` reads a persisted aggregate into a normalized runtime object; `persisted_settings_from_runtime` projects the runtime object and the session movement parameters back into a `PersistedSettings`; `persisted_world_inventory_from_runtime` extracts the My World hotbar branches, and `apply_world_inventory_to_runtime` restores a selected world hotbar set into the runtime when the active world changes. `apply_runtime_to_renderer` pushes the visual flags and cloud and shadow and sun parameters into the renderer, `sync_runtime_sun_from_renderer` reads the sun angles back, and `apply_persisted_settings_to_session` installs the field-of-view, sensitivity, and movement values into the session settings.',
           },
         ],
       },
@@ -524,22 +524,28 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
         content: [
           {
             kind: 'paragraph',
-            text: '`AppStateStore` in `src/ludoxel/application/persistence/stores/app.py` writes settings and inventory into `player_state.json` and world data into `world_state.json` beneath the runtime state root and updates an integrity manifest. `_read_runtime_or_previous` reads the runtime file first, verifies a protected runtime file before trusting it, and consults the legacy configuration path only when the runtime file is absent. `load` returns nothing when neither file exists, otherwise it reconstructs an `AppState` from the two file schemas.',
+            text: '`AppStateStore` in `src/ludoxel/application/persistence/stores/app.py` writes the active space, settings, standing Othello settings, and the Othello play space into `app_state.json` beneath the runtime state root, delegates the active My World to `WorldLibraryStore.save_space`, and updates an integrity manifest. `_read_runtime_or_previous` reads the runtime file first, verifies a protected runtime file before trusting it, and consults the legacy configuration path only when the runtime file is absent. `load` reads `app_state.json`, then merges the active world entry from the library, so the returned `AppState` joins one global file with the per-world My World state.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
-            code: `def save(self, state: AppState) -> None:
-  player_file = PlayerStateFile(version=9, current_space_id=state.current_space_id, settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
-  world_file = WorldStateFile(
-    version=3,
-    my_world=state.my_world if isinstance(state.my_world, PersistedPlaySpace) else PersistedPlaySpace(),
+            code: `def save(self, state: AppState, *, my_world_thumbnail_bytes: bytes | None = None) -> None:
+  app_file = PersistedAppFile(
+    version=int(APP_STATE_FILE_VERSION),
+    current_space_id=state.current_space_id,
+    settings=state.settings,
+    othello_settings=state.othello_settings.normalized(),
     othello_space=(state.othello_space if isinstance(state.othello_space, PersistedOthelloSpace) else PersistedOthelloSpace()),
   )
-  self._player_store().write(player_file.to_dict())
-  self._world_store().write(world_file.to_dict())
-  update_runtime_integrity_manifest(self._data_root(), ("state/player_state.json", "state/world_state.json"))`,
+  self._app_store().write(app_file.to_dict())
+  update_runtime_integrity_manifest(self._data_root(), (_APP_STATE_RELATIVE,))
+  library = self._library()
+  active_id = self._resolve_active_world_id(library)
+  if not active_id:
+    return
+  my_world = state.my_world if isinstance(state.my_world, PersistedPlaySpace) else default_new_world_space()
+  library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes)`,
           },
           {
             kind: 'paragraph',
@@ -2220,7 +2226,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.4 Beta 1"`,
+            code: `__version__ = "3.7.4 Beta 2"`,
           },
           {
             kind: 'note',

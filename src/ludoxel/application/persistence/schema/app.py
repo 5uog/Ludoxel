@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ludoxel.application.persistence.schema.inventory import PersistedInventory
 from ludoxel.application.persistence.schema.othello import PersistedOthelloSpace
 from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
 from ludoxel.application.persistence.schema.settings import PersistedSettings
@@ -16,18 +15,10 @@ from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD
 class AppState:
   current_space_id: str
   settings: PersistedSettings
-  inventory: PersistedInventory
   othello_settings: OthelloSettings
   my_world: PersistedPlaySpace
   othello_space: PersistedOthelloSpace
 
   @staticmethod
   def default() -> "AppState":
-    return AppState(
-      current_space_id=PLAY_SPACE_MY_WORLD,
-      settings=PersistedSettings(),
-      inventory=PersistedInventory(),
-      othello_settings=OthelloSettings(),
-      my_world=PersistedPlaySpace(),
-      othello_space=PersistedOthelloSpace(),
-    )
+    return AppState(current_space_id=PLAY_SPACE_MY_WORLD, settings=PersistedSettings(), othello_settings=OthelloSettings(), my_world=PersistedPlaySpace(), othello_space=PersistedOthelloSpace())

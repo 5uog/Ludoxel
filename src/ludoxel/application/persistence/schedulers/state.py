@@ -5,15 +5,15 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-from ludoxel.application.persistence import AppState, AppStateStore, PersistedAiPlayer, PersistedOthelloSpace, PersistedPlayer, PersistedPlaySpace, PersistedWorld
+from ludoxel.application.persistence import AppState, AppStateStore, PersistedAiPlayer, PersistedOthelloSpace, PersistedPlayer, PersistedPlaySpace, PersistedWorld, PersistedWorldInventory
 from ludoxel.application.preferences.runtime import RuntimePreferences, coerce_runtime_preferences
 from ludoxel.application.sessions.context.play_space import PlaySpaceContext
 from ludoxel.application.sessions.managers.session import SessionManager
 from ludoxel.application.sessions.pipelines.runtime_state import (
   apply_persisted_settings_to_session,
   apply_runtime_to_renderer,
-  persisted_inventory_from_runtime,
   persisted_settings_from_runtime,
+  persisted_world_inventory_from_runtime,
   runtime_preferences_from_app_state,
 )
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -144,10 +144,11 @@ def _persisted_world_from_session(session: SessionManager) -> PersistedWorld:
   return PersistedWorld(revision=int(session.world.revision), blocks={key: str(value) for (key, value) in snapshot.items()})
 
 
-def capture_my_world_space_from_session(session: SessionManager, *, allow_flying: bool) -> PersistedPlaySpace:
+def capture_my_world_space_from_session(session: SessionManager, *, allow_flying: bool, inventory: PersistedWorldInventory | None = None) -> PersistedPlaySpace:
   return PersistedPlaySpace(
     player=_persisted_player_from_session(session, allow_flying=bool(allow_flying)),
     world=_persisted_world_from_session(session),
+    inventory=inventory if isinstance(inventory, PersistedWorldInventory) else PersistedWorldInventory(),
     ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in session.ai_states()),
   )
 
@@ -196,7 +197,15 @@ def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceC
 
 
 def save_state(
-  *, project_root: Path, sessions: PlaySpaceContext, renderer, runtime: RuntimePreferences | None = None, othello_game_state: OthelloGameState | None = None, data_root: Path | None = None, **overrides
+  *,
+  project_root: Path,
+  sessions: PlaySpaceContext,
+  renderer,
+  runtime: RuntimePreferences | None = None,
+  othello_game_state: OthelloGameState | None = None,
+  data_root: Path | None = None,
+  my_world_thumbnail_bytes: bytes | None = None,
+  **overrides,
 ) -> None:
   _ = renderer
   state_runtime = coerce_runtime_preferences(runtime=runtime, **overrides)
@@ -204,17 +213,16 @@ def save_state(
   active_session = sessions.active_session()
 
   settings = persisted_settings_from_runtime(state_runtime, active_session.settings)
-  inventory = persisted_inventory_from_runtime(state_runtime)
   persisted_othello_state = (othello_game_state or OthelloGameState()).normalized()
 
   state = AppState(
     current_space_id=normalize_play_space_id(state_runtime.current_space_id),
     settings=settings,
-    inventory=inventory,
     othello_settings=state_runtime.othello_settings.normalized(),
     my_world=PersistedPlaySpace(
       player=_persisted_player_from_session(sessions.my_world, allow_flying=bool(state_runtime.creative_mode)),
       world=_persisted_world_from_session(sessions.my_world),
+      inventory=persisted_world_inventory_from_runtime(state_runtime),
       ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.my_world.ai_states()),
     ),
     othello_space=PersistedOthelloSpace(
@@ -224,4 +232,4 @@ def save_state(
       ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.othello.ai_states()),
     ),
   )
-  store.save(state)
+  store.save(state, my_world_thumbnail_bytes=my_world_thumbnail_bytes)

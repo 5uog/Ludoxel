@@ -10,12 +10,16 @@ from PyQt6.QtWidgets import QStackedWidget, QVBoxLayout, QWidget
 
 from ludoxel.application.persistence.stores.world_library import WorldLibrarySummary
 from ludoxel.presentation.interface.menu.changelog_page import ChangelogPage
+from ludoxel.presentation.interface.menu.create_page import WorldCreatePage
+from ludoxel.presentation.interface.menu.edit_page import WorldEditPage
 from ludoxel.presentation.interface.menu.library_page import MyWorldLibraryPage
 from ludoxel.presentation.interface.menu.menu_page import StartupMenuPage
 
 _PAGE_MENU = 0
 _PAGE_LIBRARY = 1
 _PAGE_CHANGELOG = 2
+_PAGE_CREATE = 3
+_PAGE_EDIT = 4
 
 
 class StartupShellOverlay(QWidget):
@@ -24,9 +28,14 @@ class StartupShellOverlay(QWidget):
   change_skin_requested = pyqtSignal()
   reset_skin_requested = pyqtSignal()
   preview_changed = pyqtSignal()
+  quit_requested = pyqtSignal()
   create_world_requested = pyqtSignal()
   import_world_requested = pyqtSignal()
   edit_world_requested = pyqtSignal(str)
+  create_world_confirmed = pyqtSignal(str, str)
+  rename_world_confirmed = pyqtSignal(str, str)
+  export_world_requested = pyqtSignal(str)
+  delete_world_confirmed = pyqtSignal(str)
 
   def __init__(self, *, resource_root: Path, version_text: str, parent: QWidget | None = None) -> None:
     super().__init__(parent)
@@ -45,9 +54,13 @@ class StartupShellOverlay(QWidget):
     self._menu_page = StartupMenuPage(resource_root=resource_root, version_text=version_text, parent=self._stack)
     self._library_page = MyWorldLibraryPage(resource_root=resource_root, parent=self._stack)
     self._changelog_page = ChangelogPage(resource_root=resource_root, parent=self._stack)
+    self._create_page = WorldCreatePage(parent=self._stack)
+    self._edit_page = WorldEditPage(parent=self._stack)
     self._stack.addWidget(self._menu_page)
     self._stack.addWidget(self._library_page)
     self._stack.addWidget(self._changelog_page)
+    self._stack.addWidget(self._create_page)
+    self._stack.addWidget(self._edit_page)
 
     self._menu_page.play_my_world_requested.connect(self.show_library)
     self._menu_page.play_othello_requested.connect(self.enter_othello_requested.emit)
@@ -55,6 +68,7 @@ class StartupShellOverlay(QWidget):
     self._menu_page.change_skin_requested.connect(self.change_skin_requested.emit)
     self._menu_page.reset_skin_requested.connect(self.reset_skin_requested.emit)
     self._menu_page.preview_changed.connect(self.preview_changed.emit)
+    self._menu_page.quit_requested.connect(self.quit_requested.emit)
 
     self._library_page.back_requested.connect(self.show_menu)
     self._library_page.open_world_requested.connect(self.enter_my_world_requested.emit)
@@ -63,6 +77,14 @@ class StartupShellOverlay(QWidget):
     self._library_page.import_world_requested.connect(self.import_world_requested.emit)
 
     self._changelog_page.back_requested.connect(self.show_menu)
+
+    self._create_page.back_requested.connect(self.show_library)
+    self._create_page.create_requested.connect(self.create_world_confirmed.emit)
+
+    self._edit_page.back_requested.connect(self.show_library)
+    self._edit_page.rename_requested.connect(self.rename_world_confirmed.emit)
+    self._edit_page.export_requested.connect(self.export_world_requested.emit)
+    self._edit_page.delete_requested.connect(self.delete_world_confirmed.emit)
 
   # --- page navigation -----------------------------------------------------
 
@@ -80,6 +102,14 @@ class StartupShellOverlay(QWidget):
     self._changelog_page.ensure_loaded()
     self._stack.setCurrentIndex(_PAGE_CHANGELOG)
     self._changelog_page.focus_scroll()
+
+  def show_create(self) -> None:
+    self._create_page.reset_form()
+    self._stack.setCurrentIndex(_PAGE_CREATE)
+
+  def show_world_editor(self, *, world_id: str, name: str, game_mode: str) -> None:
+    self._edit_page.configure(world_id=str(world_id), name=str(name), game_mode=str(game_mode))
+    self._stack.setCurrentIndex(_PAGE_EDIT)
 
   def on_menu_page(self) -> bool:
     return int(self._stack.currentIndex()) == _PAGE_MENU
@@ -111,8 +141,14 @@ class StartupShellOverlay(QWidget):
     return bool(self.isVisible()) and self.on_menu_page()
 
   def keyPressEvent(self, event) -> None:
-    if int(event.key()) == int(Qt.Key.Key_Escape) and not self.on_menu_page():
-      self.show_menu()
-      event.accept()
-      return
+    if int(event.key()) == int(Qt.Key.Key_Escape):
+      page = int(self._stack.currentIndex())
+      if page in (_PAGE_CREATE, _PAGE_EDIT):
+        self.show_library()
+        event.accept()
+        return
+      if page != _PAGE_MENU:
+        self.show_menu()
+        event.accept()
+        return
     super().keyPressEvent(event)

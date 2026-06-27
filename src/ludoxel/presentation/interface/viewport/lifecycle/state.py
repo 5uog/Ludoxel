@@ -106,28 +106,41 @@ class ViewportStateMixin:
     except Exception:
       return QImage()
 
-  def _capture_active_world_thumbnail(self: "RendererViewportWidget") -> None:
-    if self._state.is_othello_space():
-      return
-    world_id = str(getattr(self, "_loaded_my_world_id", "") or "")
-    if not world_id:
-      return
+  def _capture_active_world_thumbnail_bytes(self: "RendererViewportWidget") -> bytes | None:
+    if self._state.is_othello_space() or self._overlays.menu_open():
+      return None
+    if not str(getattr(self, "_loaded_my_world_id", "") or ""):
+      return None
     try:
-      from ludoxel.application.persistence.stores.world_library import WorldLibraryStore
       from ludoxel.presentation.interface.menu.thumbnail import encode_thumbnail_png
 
       png_bytes = encode_thumbnail_png(self.capture_framebuffer_image())
-      if not png_bytes:
-        return
-      WorldLibraryStore(project_root=self._project_root, data_root=self._data_root).write_thumbnail_bytes(world_id, png_bytes)
+      return bytes(png_bytes) if png_bytes else None
     except Exception:
-      pass
+      return None
 
   def save_state(self: "RendererViewportWidget") -> None:
-    settings_controller.sync_state_from_renderer_sun(self)
-    settled_othello_state = self._othello_match.settle_animations()
-    self._capture_active_world_thumbnail()
-    save_state(project_root=self._project_root, data_root=self._data_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state)
+    # The renderer sun read, the Othello animation settle, and the framebuffer
+    # thumbnail grab are auxiliary. They must never block the critical world and
+    # settings save, so each is isolated and the persistence call always runs.
+    try:
+      settings_controller.sync_state_from_renderer_sun(self)
+    except Exception:
+      pass
+    try:
+      settled_othello_state = self._othello_match.settle_animations()
+    except Exception:
+      settled_othello_state = None
+    thumbnail_bytes = self._capture_active_world_thumbnail_bytes()
+    save_state(
+      project_root=self._project_root,
+      data_root=self._data_root,
+      sessions=self._sessions,
+      renderer=self._renderer,
+      runtime=self._state,
+      othello_game_state=settled_othello_state,
+      my_world_thumbnail_bytes=thumbnail_bytes,
+    )
 
   def loading_status_text(self: "RendererViewportWidget") -> str:
     return self._frame_sync.loading.status_text()

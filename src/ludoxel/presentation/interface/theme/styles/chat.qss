@@ -7,20 +7,9 @@ QWidget#chatScreenRoot {
   background: rgba(0, 0, 0, 150);
 }
 
-QFrame#chatTitleBar {
-  background: #2a2a2a;
-  border-bottom: 3px solid #0b0b0b;
-}
-
 QFrame#chatBottomBar {
   background: #2a2a2a;
   border-top: 3px solid #0b0b0b;
-}
-
-QLabel#chatTitleLabel {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 QWidget#chatCentral {
@@ -82,7 +71,6 @@ QLineEdit#chatInput:focus {
   border-left: 2px solid #6fb03a;
 }
 
-QPushButton#chatBackButton,
 QPushButton#chatSettingsButton {
   background: #3a3a3a;
   color: #ffffff;
@@ -93,12 +81,10 @@ QPushButton#chatSettingsButton {
   border-bottom: 3px solid #0b0b0b;
 }
 
-QPushButton#chatBackButton:hover,
 QPushButton#chatSettingsButton:hover {
   background: #474747;
 }
 
-QPushButton#chatBackButton:pressed,
 QPushButton#chatSettingsButton:pressed {
   background: #2f2f2f;
   border-top: 3px solid #0b0b0b;
@@ -107,7 +93,6 @@ QPushButton#chatSettingsButton:pressed {
   border-bottom: 3px solid #6f6f6f;
 }
 
-QPushButton#chatBackButton:disabled,
 QPushButton#chatSettingsButton:disabled {
   color: rgba(255,255,255,115);
   background: #444444;

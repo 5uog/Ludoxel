@@ -21,7 +21,7 @@ export function generateDesktopChangelog() {
 
 export function checkDesktopChangelog() {
   const expected = buildDesktopPayload();
-  let actual = null;
+  let actual;
   try {
     actual = fs.readFileSync(desktopChangelogPath, 'utf8');
   } catch {

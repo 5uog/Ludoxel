@@ -2,6 +2,66 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.4 Beta 2",
+      "tags": [
+        "Desktop Application",
+        "Menu",
+        "My World",
+        "Data",
+        "Chat"
+      ],
+      "sections": [
+        {
+          "title": "Startup Menu Profile Preview",
+          "items": [
+            "The skin preview now reacts to the pointer across the whole startup menu page. `StartupMenuPage` installs the pointer event filter and forwards press, move, release, and leave events to the shared `PlayerSkinPreviewWidget`, using the page extent for head and body tracking. The forwarding leaves clicks intact, so Play My World, Play Othello (Reversi), Quit, Change Skin, Reset to Alex, and the changelog button still receive their own input while the model turns toward the cursor.",
+            "The menu skin preview no longer slides into the Change Skin and Reset to Alex buttons at short window heights. `PlayerSkinPreviewWidget` carries a Preferred size policy with a lower minimum box, and the profile panel lets the preview yield height before the buttons, so the box shrinks and keeps the full model rendered inside it at the minimum window height. The model is fit to a fixed vertical field of view, so a shorter box shows the whole model smaller rather than clipping the legs."
+          ]
+        },
+        {
+          "title": "My World Grid Layout",
+          "items": [
+            "The world grid wraps from its first appearance. `MyWorldLibraryPage` defers the column computation to the first show and recomputes it once the scroll viewport reports a width, replacing the single-column layout that formed while the viewport width was still zero.",
+            "Resizing the grid reflows the existing cards. A resize is debounced through a single-shot timer, recomputes the column count, and repositions the same `WorldGridCard` widgets only when the count changes. Cards are no longer reparented to `None` and recreated, removing the momentary top-level windows that appeared while the grid rebuilt on every resize.",
+            "The grid column count subtracts the content margins and the vertical scroll bar width before dividing by the card-plus-spacing width, so the right card column stays inside the scroll viewport at small widths, at full width, and while the vertical scroll bar is shown.",
+            "Grid and List are an exclusive checked pair. The two view toggles share a `QButtonGroup`, and the active view's toggle holds the checked state that the theme stylesheet paints."
+          ]
+        },
+        {
+          "title": "In-Application World Creation and Editing",
+          "items": [
+            "Create New World and Edit World are screens inside the startup shell. `WorldCreatePage` holds the name field, the Survival and Creative toggle, and Create, and returns to the library with the created world present. `WorldEditPage` retitles itself `Edit <name>` and carries the rename field, Export (.ldxworld), and a delete confirmation rendered inside the screen. Each screen returns to the My World library through the shared `ScreenTitleBar` back control.",
+            "The `WorldCreateDialog` and `WorldRenameDialog` classes, the per-world `QMenu` of rename, export, and delete actions, and the `QMessageBox` delete confirmation are removed.",
+            "Creating, renaming, and importing a world no longer refuse a name that matches another world. Worlds are identified by `world_id`, so duplicate display names are accepted on every path; only an empty or whitespace-only name is refused at creation and rename. `WorldLibraryStore.existing_names` is removed.",
+            "Delete removes the selected world and is no longer forced to keep one world. `delete_world` deletes the package and clears the active-world pointer, and deleting the last world leaves an empty library; the store recreates a default world only on a first launch where no library index exists yet, so loading or saving an intentionally empty library no longer repopulates it."
+          ]
+        },
+        {
+          "title": "Pause and Menu Navigation",
+          "items": [
+            "Pause Play My World opens the My World library page. It closes the pause overlay and shows the startup shell on the library page rather than starting the active world, so a specific world is entered only by selecting it in the library.",
+            "Pause Save & Quit saves and returns to the startup menu. It writes the current state through `save_state` and opens the startup menu through `open_startup_menu` instead of closing the window.",
+            "The startup menu adds a Quit button. `StartupMenuPage` emits a quit request that closes the main window, and the window close path runs the existing shutdown and final save. Application exit is no longer reached from the pause Save & Quit button."
+          ]
+        },
+        {
+          "title": "Chat Title Bar",
+          "items": [
+            "The Chat and Commands screen uses the shared `ScreenTitleBar`, so its `< Back` control matches the My World screen back button. The chat-specific title bar frame, title label, and back-button styles are removed while the chat input, settings button, send button, candidate view, and history scroll keep their bottom-bar layout."
+          ]
+        },
+        {
+          "title": "Per-World and Othello Player State",
+          "items": [
+            "Each My World is stored as its own `state/worlds/<id>.ldxworld` package and is updated on every save. `WorldLibraryStore` reads and writes the same archive format used for export and import, so the package holds that world's player, world blocks, AI actors, the `PersistedWorldInventory` hotbar with its 9x3 upper storage and AI route hotbar, and the world thumbnail. The previous shared inventory is gone; switching worlds captures the leaving world into its package and restores the selected world's inventory into the runtime through `apply_world_inventory_to_runtime`.",
+            "The save path writes one world package per save. The active world's thumbnail is captured once and passed through `save_state` and `AppStateStore.save` into `WorldLibraryStore.save_space`, which preserves the existing thumbnail when none is supplied, so saving no longer rewrites the world twice. The renderer sun read, the Othello animation settle, and the framebuffer thumbnail grab are isolated from the persistence call, so a failure in any auxiliary step can no longer prevent the world and settings from being written.",
+            "Othello carries no saved inventory. `PersistedOthelloSpace` holds the board, player, AI actors, and `OthelloGameState`; the Othello runtime hotbar is rebuilt from its defaults each launch and is not written to disk.",
+            "The global runtime file is `state/app_state.json`. `AppStateStore` writes the last active space, the display and control settings, the standing Othello settings, and the Othello play space there, while each world package owns its own player, world, inventory, and AI actors. The `state/player_state.json` and `state/world_state.json` files and their readers are removed, and the runtime integrity manifest protects `state/app_state.json` in place of the two old files."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.4 Beta 1",
       "tags": [
         "Desktop Application",

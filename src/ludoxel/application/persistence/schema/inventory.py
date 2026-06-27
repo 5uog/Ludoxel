@@ -10,7 +10,6 @@ from ludoxel.simulation.inventories.hotbars.ai_route_defaults import default_ai_
 from ludoxel.simulation.inventories.hotbars.defaults import default_hotbar_slots
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ludoxel.simulation.inventories.storage.grid import UPPER_INVENTORY_SIZE, default_upper_inventory_slots, normalize_upper_inventory_slots
-from ludoxel.simulation.spaces.othello.inventories.hotbar import default_othello_hotbar_slots
 
 
 def _inventory_branch_to_dict(*, slots: object, selected_index: object, size: int) -> tuple[list[str], int]:
@@ -26,64 +25,55 @@ def _inventory_branch_from_dict(raw_slots: object, raw_index: object, *, size: i
 
 
 @dataclass(frozen=True)
-class PersistedInventory:
+class PersistedWorldInventory:
+  """My World player inventory owned by a single world entry.
+
+  Holds the My World hotbar, the 9x3 upper-inventory storage, and the AI
+  route-edit hotbar. Each world entry carries its own copy, so switching
+  worlds restores that world's storage instead of one library-wide state.
+  """
+
   HOTBAR_SIZE: ClassVar[int] = DOMAIN_HOTBAR_SIZE
   UPPER_INVENTORY_SIZE: ClassVar[int] = UPPER_INVENTORY_SIZE
 
-  my_world_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
-  my_world_selected_hotbar_index: int = 0
-  my_world_upper_slots: tuple[str, ...] = field(default_factory=default_upper_inventory_slots)
-  othello_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_othello_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
-  othello_selected_hotbar_index: int = 0
+  hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
+  selected_hotbar_index: int = 0
+  upper_slots: tuple[str, ...] = field(default_factory=default_upper_inventory_slots)
   route_hotbar_slots: tuple[str, ...] = field(default_factory=lambda: default_ai_route_hotbar_slots(size=DOMAIN_HOTBAR_SIZE))
   route_selected_hotbar_index: int = 0
 
   def to_dict(self) -> dict[str, Any]:
-    my_world_slots, my_world_idx = _inventory_branch_to_dict(slots=self.my_world_hotbar_slots, selected_index=self.my_world_selected_hotbar_index, size=self.HOTBAR_SIZE)
-    othello_slots, othello_idx = _inventory_branch_to_dict(slots=self.othello_hotbar_slots, selected_index=self.othello_selected_hotbar_index, size=self.HOTBAR_SIZE)
+    hotbar_slots, hotbar_idx = _inventory_branch_to_dict(slots=self.hotbar_slots, selected_index=self.selected_hotbar_index, size=self.HOTBAR_SIZE)
     route_slots, route_idx = _inventory_branch_to_dict(slots=self.route_hotbar_slots, selected_index=self.route_selected_hotbar_index, size=self.HOTBAR_SIZE)
-
     return {
-      "my_world_hotbar_slots": my_world_slots,
-      "my_world_selected_hotbar_index": int(my_world_idx),
-      "my_world_upper_slots": [str(value) for value in normalize_upper_inventory_slots(self.my_world_upper_slots)],
-      "othello_hotbar_slots": othello_slots,
-      "othello_selected_hotbar_index": int(othello_idx),
+      "hotbar_slots": hotbar_slots,
+      "selected_hotbar_index": int(hotbar_idx),
+      "upper_slots": [str(value) for value in normalize_upper_inventory_slots(self.upper_slots)],
       "route_hotbar_slots": route_slots,
       "route_selected_hotbar_index": int(route_idx),
     }
 
   @staticmethod
-  def from_dict(d: dict[str, Any], *, legacy_creative_mode: bool = False) -> "PersistedInventory":
-    legacy_branch = "creative" if bool(legacy_creative_mode) else "survival"
-    my_world_slots, my_world_idx = _inventory_branch_from_dict(
-      d.get("my_world_hotbar_slots", d.get(f"{legacy_branch}_hotbar_slots")),
-      d.get("my_world_selected_hotbar_index", d.get(f"{legacy_branch}_selected_hotbar_index", 0)),
-      size=PersistedInventory.HOTBAR_SIZE,
-      default_slots=default_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
-      default_index=0,
-    )
-    othello_slots, othello_idx = _inventory_branch_from_dict(
-      d.get("othello_hotbar_slots", default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)),
-      d.get("othello_selected_hotbar_index", 0),
-      size=PersistedInventory.HOTBAR_SIZE,
-      default_slots=default_othello_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
+  def from_dict(d: dict[str, Any]) -> "PersistedWorldInventory":
+    raw = d if isinstance(d, dict) else {}
+    hotbar_slots, hotbar_idx = _inventory_branch_from_dict(
+      raw.get("hotbar_slots"),
+      raw.get("selected_hotbar_index", 0),
+      size=PersistedWorldInventory.HOTBAR_SIZE,
+      default_slots=default_hotbar_slots(size=PersistedWorldInventory.HOTBAR_SIZE),
       default_index=0,
     )
     route_slots, route_idx = _inventory_branch_from_dict(
-      d.get("route_hotbar_slots", default_ai_route_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE)),
-      d.get("route_selected_hotbar_index", 0),
-      size=PersistedInventory.HOTBAR_SIZE,
-      default_slots=default_ai_route_hotbar_slots(size=PersistedInventory.HOTBAR_SIZE),
+      raw.get("route_hotbar_slots"),
+      raw.get("route_selected_hotbar_index", 0),
+      size=PersistedWorldInventory.HOTBAR_SIZE,
+      default_slots=default_ai_route_hotbar_slots(size=PersistedWorldInventory.HOTBAR_SIZE),
       default_index=0,
     )
-
-    return PersistedInventory(
-      my_world_hotbar_slots=my_world_slots,
-      my_world_selected_hotbar_index=int(my_world_idx),
-      my_world_upper_slots=normalize_upper_inventory_slots(d.get("my_world_upper_slots", d.get(f"{legacy_branch}_upper_slots"))),
-      othello_hotbar_slots=othello_slots,
-      othello_selected_hotbar_index=int(othello_idx),
+    return PersistedWorldInventory(
+      hotbar_slots=hotbar_slots,
+      selected_hotbar_index=int(hotbar_idx),
+      upper_slots=normalize_upper_inventory_slots(raw.get("upper_slots")),
       route_hotbar_slots=route_slots,
       route_selected_hotbar_index=int(route_idx),
     )
