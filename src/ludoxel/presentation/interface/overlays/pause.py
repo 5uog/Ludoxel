@@ -59,28 +59,23 @@ class PauseOverlay(QWidget):
     panel_layout.setContentsMargins(20, 18, 20, 20)
     panel_layout.setSpacing(12)
 
-    btn_resume = QPushButton("Resume", panel)
-    btn_resume.setObjectName("menuBtn")
+    btn_resume = self._make_menu_button("Resume", panel)
     btn_resume.clicked.connect(self.resume_requested.emit)
     panel_layout.addWidget(btn_resume)
 
-    btn_settings = QPushButton("Settings", panel)
-    btn_settings.setObjectName("menuBtn")
+    btn_settings = self._make_menu_button("Settings", panel)
     btn_settings.clicked.connect(self.settings_requested.emit)
     panel_layout.addWidget(btn_settings)
 
-    self._btn_my_world = QPushButton("Play My World", panel)
-    self._btn_my_world.setObjectName("menuBtn")
+    self._btn_my_world = self._make_menu_button("Play My World", panel)
     self._btn_my_world.clicked.connect(self.play_my_world_requested.emit)
     panel_layout.addWidget(self._btn_my_world)
 
-    self._btn_othello = QPushButton("Play Othello (Reversi)", panel)
-    self._btn_othello.setObjectName("menuBtn")
+    self._btn_othello = self._make_menu_button("Play Othello (Reversi)", panel)
     self._btn_othello.clicked.connect(self.play_othello_requested.emit)
     panel_layout.addWidget(self._btn_othello)
 
-    btn_save_quit = QPushButton("Save && Quit", panel)
-    btn_save_quit.setObjectName("menuBtn")
+    btn_save_quit = self._make_menu_button("Save && Quit", panel)
     btn_save_quit.clicked.connect(self.save_quit_requested.emit)
     panel_layout.addWidget(btn_save_quit)
 
@@ -107,15 +102,13 @@ class PauseOverlay(QWidget):
     actions.setContentsMargins(0, 0, 0, 0)
     actions.setSpacing(10)
 
-    btn_change_skin = QPushButton("Change Skin", self)
-    btn_change_skin.setObjectName("menuBtn")
+    btn_change_skin = self._make_menu_button("Change Skin", self)
     btn_change_skin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     btn_change_skin.setMinimumWidth(240)
     btn_change_skin.clicked.connect(self.change_skin_requested.emit)
     actions.addWidget(btn_change_skin, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-    btn_reset_skin = QPushButton("Reset to Alex", self)
-    btn_reset_skin.setObjectName("menuBtn")
+    btn_reset_skin = self._make_menu_button("Reset to Alex", self)
     btn_reset_skin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     btn_reset_skin.setMinimumWidth(240)
     btn_reset_skin.clicked.connect(self.reset_skin_requested.emit)
@@ -130,6 +123,19 @@ class PauseOverlay(QWidget):
 
     self._install_pointer_tracking()
     self.set_current_space(PLAY_SPACE_MY_WORLD)
+
+  @staticmethod
+  def _make_menu_button(text: str, parent: QWidget) -> QPushButton:
+    button = QPushButton(text, parent)
+    button.setObjectName("menuBtn")
+    # The macOS native style insets push-button layout-item rectangles to reserve
+    # room for the Aqua focus ring. That inset is subtracted from QVBoxLayout
+    # spacing and collapses the gaps between stacked buttons to zero on macOS,
+    # while Windows is unaffected. Laying these buttons out against their widget
+    # rect keeps the structural button spacing identical on both platforms; all
+    # decoration stays in the #menuBtn QSS.
+    button.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect, True)
+    return button
 
   def set_current_space(self, space_id: str) -> None:
     normalized = normalize_play_space_id(space_id)

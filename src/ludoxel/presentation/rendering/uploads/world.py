@@ -44,7 +44,10 @@ class WorldUploadTracker:
 
   @staticmethod
   def _world_token(world: WorldState) -> int:
-    return int(id(world))
+    # Keyed by content_generation, not id(world): the My World session reuses one
+    # WorldState object across world loads, so id(world) would alias World A and
+    # World B and let A's cached chunk meshes satisfy B's first upload.
+    return int(world.content_generation)
 
   @staticmethod
   def _pending_key(world_token: int, chunk: ChunkKey) -> tuple[int, ChunkKey]:
@@ -79,6 +82,9 @@ class WorldUploadTracker:
     self._resident_rev.clear()
     self._visible_cache_key = None
     self._visible_cache_chunks = ()
+    # Drop meshes built for the world being left. They belong to a now-superseded
+    # content_generation and must never be replayed into the incoming world.
+    self._build_cache.clear()
     while True:
       try:
         self._results.get_nowait()

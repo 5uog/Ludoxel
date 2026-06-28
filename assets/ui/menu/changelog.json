@@ -2,6 +2,32 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.4",
+      "tags": [
+        "Desktop Application",
+        "My World",
+        "Rendering",
+        "UI"
+      ],
+      "sections": [
+        {
+          "title": "My World Switch Render State",
+          "items": [
+            "Entering a different My World now reconstructs the visible chunks from the current world's own blocks before any block is placed or broken. `WorldUploadTracker` in `src/ludoxel/presentation/rendering/uploads/world.py` keyed its chunk-mesh build cache by `id(world)`, and the My World session reuses one `WorldState` object across world loads, so the meshes built for a previous My World could satisfy the first upload of the next one and the entered world showed the prior world's blocks until a later edit forced a fresh mesh.",
+            "`WorldState` in `src/ludoxel/simulation/worlds/state/world.py` now carries a process-monotonic `content_generation` that advances on construction and on every `replace_all`. A full content swap restarts `revision` and the per-chunk mesh revisions from a small value, so this generation is the world identity the upload tracker uses as its cache key, and meshes from one loaded world no longer alias another loaded into the same object.",
+            "`WorldUploadTracker.reset`, which runs on every play-space switch and My World load, now also drops its cached chunk meshes so a superseded generation cannot be replayed into the incoming world. The OpenGL and WGPU backends already evict every GPU-side chunk on that reset, so the single upload-tracker correction covers both renderer paths, and a coordinate that held a block in the previous My World no longer renders as transparent residue in the entered one."
+          ]
+        },
+        {
+          "title": "macOS Pause Button Spacing",
+          "items": [
+            "The pause overlay buttons now lay out against their own widget rectangle. The macOS native style insets push-button layout-item rectangles to reserve room for the Aqua focus ring, and that inset was subtracted from the pause panel's `QVBoxLayout` spacing, collapsing the gaps between Resume, Settings, Play My World, Play Othello (Reversi), and Save & Quit to zero on macOS while Windows kept its spacing. `PauseOverlay` in `src/ludoxel/presentation/interface/overlays/pause.py` sets `WA_LayoutUsesWidgetRect` on its `#menuBtn` buttons through one shared constructor, so the structural button and skin-action spacing holds identically on macOS and Windows.",
+            "The change keeps the single pause overlay and leaves the button order, labels, and the Play My World, Play Othello (Reversi), and Save & Quit save-then-navigate behavior intact. Button color, border, radius, hover, and pressed styling remain in the `#menuBtn` QSS."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.4 Beta 4",
       "tags": [
         "Desktop Application",

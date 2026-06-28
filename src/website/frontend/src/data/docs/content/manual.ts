@@ -575,10 +575,10 @@ apply_runtime_to_renderer(runtime, renderer)`,
             code: `play_my_world_requested = pyqtSignal()
 play_othello_requested = pyqtSignal()
 
-self._btn_my_world = QPushButton("Play My World", panel)
+self._btn_my_world = self._make_menu_button("Play My World", panel)
 self._btn_my_world.clicked.connect(self.play_my_world_requested.emit)
 
-self._btn_othello = QPushButton("Play Othello (Reversi)", panel)
+self._btn_othello = self._make_menu_button("Play Othello (Reversi)", panel)
 self._btn_othello.clicked.connect(self.play_othello_requested.emit)
 
 
@@ -688,7 +688,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_
         title: 'Loading, Upload, Selection, and HUD State Follow the New Active Session',
         body: [
           'The visible transition includes the labels `Loading My World...` and `Loading Play Othello...` with frame-sync loading state. `_begin_loading` resets held mouse actions, clears block-break particles, publishes loading status text, resynchronizes gameplay-HUD visibility, pauses cloud motion through settings synchronization, emits the loading-state signal when the transition becomes active, and requests repaint. The host `GameScreen` displays the status overlay while `loading_active()` is true and hides it when loading finishes.',
-          'After `_session` is replaced, the upload tracker is reset with `world=viewport._session.world`, the previous selection target is invalidated, and renderer selection is cleared. These operations prevent a target, chunk-upload schedule, or selected outline from surviving under the wrong session token or wrong world revision. HUD state is then recomputed from the destination space: Othello can suppress ordinary block-gameplay HUD surfaces, while My World can expose them again.',
+          'After `_session` is replaced, the upload tracker is reset with `world=viewport._session.world`, the previous selection target is invalidated, and renderer selection is cleared. `WorldUploadTracker.reset` evicts every backend chunk, drops its cached chunk meshes, and re-identifies the active world by `WorldState.content_generation`. The My World session reuses one `WorldState` object across world loads, and a full content swap restarts `revision` and the per-chunk mesh revisions, so the content generation is the world identity that keeps a mesh built for the departed world from being replayed into the entered one; the entered world rebuilds its visible chunks from its own blocks before the next repaint, and a coordinate that held a block only in the previous world shows no residual surface. HUD state is then recomputed from the destination space: Othello can suppress ordinary block-gameplay HUD surfaces, while My World can expose them again.',
         ],
         codeBlocks: [
           {

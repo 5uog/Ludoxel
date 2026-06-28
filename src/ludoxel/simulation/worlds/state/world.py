@@ -11,6 +11,16 @@ from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, chunk_key, nei
 BlockKey = Tuple[int, int, int]
 ColumnKey = Tuple[int, int]
 
+_CONTENT_GENERATION_LOCK = threading.Lock()
+_content_generation_counter = 0
+
+
+def _next_content_generation() -> int:
+  global _content_generation_counter
+  with _CONTENT_GENERATION_LOCK:
+    _content_generation_counter += 1
+    return int(_content_generation_counter)
+
 
 @dataclass
 class WorldState:
@@ -26,11 +36,25 @@ class WorldState:
   _chunk_mesh_rev: Dict[ChunkKey, int] = field(default_factory=dict, init=False, repr=False)
   _gravity_dirty_columns: Dict[ColumnKey, int] = field(default_factory=dict, init=False, repr=False)
 
+  # Process-monotonic identity for the block contents currently held by this
+  # object. ``revision`` and per-chunk mesh revisions restart from a small value
+  # on every full content swap, and one WorldState object is reused across world
+  # loads, so neither is unique across loaded worlds. content_generation advances
+  # on construction and on every replace_all, giving renderer-side caches a key
+  # that never collides between two worlds loaded into the same object.
+  _content_generation: int = field(default=0, init=False, repr=False)
+
   def __post_init__(self) -> None:
     with self._lock:
+      self._content_generation = _next_content_generation()
       self._rebuild_indexes_locked()
       self._reset_mesh_tracking_locked()
       self._reset_gravity_tracking_locked()
+
+  @property
+  def content_generation(self) -> int:
+    with self._lock:
+      return int(self._content_generation)
 
   def _rebuild_indexes_locked(self) -> None:
     self._chunk_index.clear()
@@ -366,6 +390,7 @@ class WorldState:
         self.blocks[kk] = str(v)
 
       self.revision = int(max(0, int(revision)))
+      self._content_generation = _next_content_generation()
       self._rebuild_indexes_locked()
       self._reset_mesh_tracking_locked()
       self._reset_gravity_tracking_locked()
