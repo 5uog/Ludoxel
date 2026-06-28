@@ -12,6 +12,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.mesh_buffer import MeshBu
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
 from ludoxel.presentation.rendering.backends.opengl.resources.image_texture import ImageTexture
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
+from ludoxel.presentation.rendering.shaders.source import shader_source_root
 from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 
@@ -42,7 +43,7 @@ class GLResources:
 
   @staticmethod
   def load(assets_dir: Path, *, blocks: BlockRegistry) -> "GLResources":
-    shader_dir = Path(__file__).resolve().parents[1] / "shaders"
+    shader_dir = shader_source_root()
     othello_shader_dir = shader_dir
 
     world_prog = ShaderProgram.from_files(shader_dir / "world.vert", shader_dir / "world.frag")

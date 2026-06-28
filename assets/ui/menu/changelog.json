@@ -2,6 +2,31 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.5",
+      "tags": [
+        "Desktop Application",
+        "Rendering",
+        "macOS"
+      ],
+      "sections": [
+        {
+          "title": "Shared Renderer Shader Source",
+          "items": [
+            "The OpenGL and WGPU backends now read one shader source instead of two copies. The stage files and the `common/` includes that were duplicated under `src/ludoxel/presentation/rendering/backends/opengl/shaders/` and `src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources/` are consolidated into `src/ludoxel/presentation/rendering/shaders/`, and `src/ludoxel/presentation/rendering/shaders/source.py` owns the root resolution and `#include` expansion through `shader_source_root`, `expand_shader_source`, and `load_shader_source`. The two separate include-expansion helpers in the backends are removed.",
+            "`GLResources.load` and `ShaderProgram.from_files` compile the shared GLSL 330 directly, while `factory._wgpu_glsl_source` loads the same files through `load_shader_source` and applies `_adapt_wgpu_glsl` to add the explicit varying locations, the `set = 0` uniform blocks, the split texture and sampler bind-group entries, and the `#version 450` rewrite that wgpu-native requires. The fog uniform declarations and the `v_worldPos` varying location that the deleted WGPU copies carried pre-edited are now produced by the adaptation, so the adapted WGPU modules and the compiled OpenGL programs reproduce their previous text from the single source.",
+            "The shader contract checker, package data, and macOS bundle inputs follow the move. `tools/check_project/src/check/shaders/shaders.check.mjs` scans the single `presentation/rendering/shaders` root, the `pyproject.toml` package-data globs and `MANIFEST.in` list one shader path, and `macos-status.service.mjs` requires the shared `world.vert` and `world.frag`."
+          ]
+        },
+        {
+          "title": "WGPU Color Target Contrast",
+          "items": [
+            "The macOS WGPU surface no longer stores fragment output through an sRGB encode that the OpenGL backend does not apply. `configure_wgpu_canvas` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/surface.py` passed the adapter-preferred format straight to `context.configure`; on the Metal path that format carries a `-srgb` suffix, so the surface applied a linear-to-sRGB encode on write. The world, cloud, sun, Othello, and first-person shaders compute lighting and fog on the raw `rgba8unorm` atlas, matching the OpenGL `GL_RGBA` atlas, so the extra encode lifted midtones and lowered contrast relative to the OpenGL output.",
+            "`linear_color_target_format` now drops a trailing `-srgb` suffix from the preferred format, and the configured surface and every pipeline color target use that non-sRGB format. Fragment output is stored without the encode, matching the OpenGL default framebuffer, so the shared lighting, fog, shadow, and selection math is stored with the same encoding on both backends."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.4",
       "tags": [
         "Desktop Application",

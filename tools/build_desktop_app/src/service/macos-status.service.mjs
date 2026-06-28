@@ -23,8 +23,8 @@ const MACOS_REQUIRED_WGPU_SOURCE_PATHS = Object.freeze([
   'src/ludoxel/presentation/rendering/backends/wgpu/runtime/surface.py',
   'src/ludoxel/presentation/rendering/backends/wgpu/pipelines/factory.py',
   'src/ludoxel/presentation/rendering/backends/wgpu/textures/atlas.py',
-  'src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources/world.vert',
-  'src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources/world.frag',
+  'src/ludoxel/presentation/rendering/shaders/world.vert',
+  'src/ludoxel/presentation/rendering/shaders/world.frag',
   'src/ludoxel/presentation/interface/input/macos_cursor.py',
 ]);
 

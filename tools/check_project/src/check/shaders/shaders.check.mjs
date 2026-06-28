@@ -35,10 +35,7 @@ function checkShader(path) {
 }
 
 export function checkShaders() {
-  const shaderRoots = [
-    resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'backends', 'opengl', 'shaders'),
-    resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'backends', 'wgpu', 'shaders', 'sources'),
-  ];
+  const shaderRoots = [resolve(PROJECT_ROOT, 'src', 'ludoxel', 'presentation', 'rendering', 'shaders')];
   const shaderFiles = shaderRoots
     .filter((root) => existsSync(root))
     .flatMap((root) => listFiles(root))

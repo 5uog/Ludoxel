@@ -802,7 +802,15 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`RendererBackend` in `src/ludoxel/presentation/rendering/backends/opengl/runtime/backend.py` requires an OpenGL 4.3 Core Profile context. `_require_gl43_core_context` raises with the context details unless the version, the core profile, and the GLSL version are sufficient, because the chunk face payload is built by a compute shader that needs that floor. `initialize` probes the context, loads shader programs, the texture atlas, and the skin texture into `GLResources`, builds a `BlockVisualResolver`, initializes each pass with its program and resources, assembles the `FramePipeline`, constructs the `TextureAnimationController`, and applies runtime state.',
+            text: [
+              '`RendererBackend` in `src/ludoxel/presentation/rendering/backends/opengl/runtime/backend.py` requires an OpenGL 4.3 Core Profile context. `_require_gl43_core_context` raises with the context details unless the version, the core profile, and the GLSL version are sufficient, because the chunk face payload is built by a compute shader that needs that floor. `initialize` probes the context, loads shader programs, the texture atlas, and the skin texture into `GLResources`, builds a `BlockVisualResolver`, initializes each pass with its program and resources, assembles the `FramePipeline`, constructs the `TextureAnimationController`, and applies runtime state. `GLResources.load` compiles every program with `ShaderProgram.from_files` from the ',
+              {
+                kind: 'link',
+                label: 'shared shader source',
+                href: '/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets',
+              },
+              ', so the Windows path consumes the GLSL 330 source directly with no dialect adaptation.',
+            ],
           },
           {
             kind: 'code',
@@ -917,7 +925,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         ],
       },
     ],
-    relatedTitles: ['Understanding WGPU Rendering', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
+    relatedTitles: ['Understanding WGPU Rendering', 'Understanding Shared Shader Sources and Color Targets', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -933,7 +941,29 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`WgpuRendererBackend` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` requests a high-performance WebGPU adapter and device through wgpu-native, configures the canvas surface, and builds its pipelines from GLSL 450 sources. `initialize` creates the camera bind-group layout and one uniform buffer per face, builds the texture atlas and its bind group, the shadow bind-group layout, the player skin and special-item textures, and the world, shadowed, wireframe, sun, cloud, Othello, shadow-depth, transform-shadow, textured-face, and selection pipelines, all held in `WgpuRendererResources`. The color target uses a `depth24plus` depth texture and the shadow target uses a `depth32float` texture with a comparison sampler.',
+            text: [
+              '`WgpuRendererBackend` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` requests a high-performance WebGPU adapter and device through wgpu-native, configures the canvas surface, and builds its pipelines from GLSL 450 modules adapted from the ',
+              {
+                kind: 'link',
+                label: 'shared shader source',
+                href: '/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets',
+              },
+              '. `initialize` creates the camera bind-group layout and one uniform buffer per face, builds the texture atlas and its bind group, the shadow bind-group layout, the player skin and special-item textures, and the world, shadowed, wireframe, sun, cloud, Othello, shadow-depth, transform-shadow, textured-face, and selection pipelines, all held in `WgpuRendererResources`. The color target uses a `depth24plus` depth texture and the shadow target uses a `depth32float` texture with a comparison sampler.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The surface color format is fixed by `configure_wgpu_canvas` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/surface.py`. It reads the adapter-preferred format and passes it through `linear_color_target_format`, which drops a trailing `-srgb` suffix, so the configured surface and every pipeline target store fragment output without an automatic linear-to-sRGB encode. The block atlas is uploaded as `rgba8unorm` and sampled raw, matching the OpenGL backend, which uploads a `GL_RGBA` atlas and renders to its default framebuffer with no sRGB encode. Both backends therefore run the shared lighting and fog math on raw atlas texels and store the result unencoded, so the WGPU image carries the same tone and contrast as the OpenGL image rather than the lighter, lower-contrast output a preferred `-srgb` surface would produce.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/wgpu/runtime/surface.py',
+            code: `def linear_color_target_format(preferred_format) -> str:
+  fmt = str(preferred_format)
+  if fmt.endswith(_SRGB_SUFFIX):
+    return fmt[: -len(_SRGB_SUFFIX)]
+  return fmt`,
           },
           {
             kind: 'paragraph',
@@ -1033,7 +1063,106 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding Shared Shader Sources and Color Targets', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'Backend Implementations',
+    title: 'Understanding Shared Shader Sources and Color Targets',
+    description:
+      'Documents the backend-neutral shader source owner and its include preprocessing, the OpenGL direct-compile path and the WGPU dialect adaptation that both derive from it, the color and lighting and fog and shadow and selection math fixed by the shared GLSL, the WGPU-only clip-space conversion, uniform blocks, bind groups, and non-sRGB color target, and the parity range each derivation supports.',
+    sections: [
+      {
+        id: 'shared-shaders-source-owner',
+        title: 'The Shared Shader Source Owner',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The GLSL stage files and the `common/` includes live once under `src/ludoxel/presentation/rendering/shaders/`, outside either backend directory. `src/ludoxel/presentation/rendering/shaders/source.py` owns the root resolution and the include preprocessing: `shader_source_root` returns that directory, `expand_shader_source` reads a stage file and expands every `#include "..."` directive against the including file, and `load_shader_source` joins a stage name to the root and expands it. Include resolution is recursive and tracks the active include stack, so a cycle raises rather than recursing without bound. The `chunk_face_payload.comp` compute source, the world, shadow, sun, cloud, selection, Othello, player-model, and first-person stages, and the `distance_fog.glsl` and `face_instance.glsl` includes are all read from this one owner.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The loader exposes one dialect control. `collapse_blank_before_include` is false for the OpenGL path, which preserves the source layout verbatim, and true for the WGPU path, which removes a blank line standing immediately before an expanded include. That flag changes only inert whitespace ahead of included text; it does not alter any declaration, statement, or value the compiler reads.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/shaders/source.py',
+            code: `def load_shader_source(name: str, *, collapse_blank_before_include: bool = False) -> str:
+  return expand_shader_source(shader_source_root() / str(name), collapse_blank_before_include=bool(collapse_blank_before_include))`,
+          },
+        ],
+      },
+      {
+        id: 'shared-shaders-opengl-path',
+        title: 'The OpenGL Direct-Compile Path',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`GLResources.load` in `src/ludoxel/presentation/rendering/backends/opengl/runtime/resources.py` resolves `shader_source_root()` and compiles each program from it with `ShaderProgram.from_files`. `ShaderProgram` in `src/ludoxel/presentation/rendering/backends/opengl/gl/shader_program.py` delegates its include expansion to `expand_shader_source` and hands the GLSL 330 text to the GL compiler unchanged, so the desktop-GL source is the dialect the Windows backend compiles. The attribute locations the pipeline binds come from the `layout(location = ...)` qualifiers already written in the vertex sources, and the loose `uniform` declarations are set through the `glUniform*` helpers on `ShaderProgram`. The block atlas is uploaded with the `GL_RGBA` internal format and the backend renders to its default framebuffer, neither of which applies an sRGB encode.',
+          },
+        ],
+      },
+      {
+        id: 'shared-shaders-wgpu-adaptation',
+        title: 'The WGPU Dialect Adaptation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/presentation/rendering/backends/wgpu/pipelines/factory.py` derives the WGPU modules from the same files. `_wgpu_glsl_source` loads a stage through `load_shader_source`, applies `_adapt_wgpu_glsl`, and rewrites the version line to `#version 450 core`. `_adapt_wgpu_glsl` rewrites the desktop-GL declarations into the dialect wgpu-native accepts: it adds explicit `layout(location = ...)` qualifiers to the inter-stage varyings, replaces the loose `uniform` declarations with `set = 0` uniform blocks, splits each combined sampler into a `texture2D` and a `sampler` bind-group entry, flips the shadow lookup in clip-to-texture space, and substitutes a determinant-guarded inverse-transpose helper for `transpose(inverse(...))`. The fog uniform declarations are removed because the uniform block already carries those fields. The lighting, fog, shadow, selection, and atlas-sampling statements in each shader body are left intact, so the adaptation rewrites interface declarations and leaves the color computation as authored.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/backends/wgpu/pipelines/factory.py',
+            code: `def _wgpu_glsl_source(filename: str) -> str:
+  name = str(filename)
+  text = load_shader_source(name, collapse_blank_before_include=True)
+  text = _adapt_wgpu_glsl(name, text)
+  lines = text.splitlines()
+  version_idx = next((i for i, line in enumerate(lines) if line.strip().startswith("#version")), None)
+  if version_idx is None:
+    raise RuntimeError(f"Shader is missing #version: {filename}")
+  rest = lines[:version_idx] + lines[version_idx + 1 :]
+  return "\\n".join(("#version 450 core", *rest)) + "\\n"`,
+          },
+        ],
+      },
+      {
+        id: 'shared-shaders-boundary',
+        title: 'Shared Math and Backend-Specific Targets',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The vertex transforms, normal and UV handling, the sun lighting terms, the fog mix, the shadow percentage-closer filtering, the selection tint, and the atlas sampling are written once in the shared GLSL, so both backends evaluate the same color math by construction. Each backend retains the work its API requires around that math. The derivation runs as one sequence per stage.',
+          },
+          {
+            kind: 'list',
+            ordered: true,
+            items: [
+              'The shared owner reads the stage file and expands its includes.',
+              'The OpenGL backend compiles the expanded GLSL 330 directly through `ShaderProgram`.',
+              'The WGPU backend adapts the expanded source into the GLSL 450 dialect, rewrites the version line, and builds a pipeline module.',
+              'Each backend binds its own vertex buffers, uniform storage, and color target to that module.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The backend-specific surface state is what makes the stored result agree. The WGPU backend applies `_opengl_clip_to_wgpu` for the zero-to-one depth interval, packs its uniforms into blocks, and declares its bind-group layout, none of which the OpenGL backend shares. For color it configures the surface through `linear_color_target_format`, which selects the non-sRGB variant of the adapter-preferred format, so fragment output is stored without a linear-to-sRGB encode. With a raw `rgba8unorm` atlas matching the OpenGL `GL_RGBA` atlas and a non-sRGB target matching the OpenGL default framebuffer, the shared lighting and fog math is evaluated on the same inputs and stored with the same encoding on both backends.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'The color, lighting, fog, shadow, and selection math is identical because it is authored once in the shared GLSL, and the non-sRGB color target and raw atlas make the stored output match the OpenGL framebuffer rather than a lighter, lower-contrast sRGB-encoded surface. Areas each backend implements separately remain distinct: the zero-to-one clip-space depth correction, the uniform-block and bind-group layout, the CPU per-face chunk path against the OpenGL compute payload, and the `depth32float` shadow target against the OpenGL 24-bit depth. No pixel-level identity is claimed beyond the shared source and the matched color target.',
+            },
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Render Distance Fog and Shadows'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1071,12 +1200,20 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'Both backends consume the same fog factor, defined identically in `src/ludoxel/presentation/rendering/backends/opengl/shaders/common/distance_fog.glsl` and `src/ludoxel/presentation/rendering/backends/wgpu/shaders/sources/common/distance_fog.glsl`. `ldx_geometry_fog_factor` measures three-dimensional distance, `ldx_cloud_fog_factor` measures horizontal distance, and `ldx_apply_geometry_distance_fog` mixes toward the fog color by the factor. A range with end at or below start returns zero, disabling the fade.',
+            text: [
+              'Both backends consume one fog factor defined once in `src/ludoxel/presentation/rendering/shaders/common/distance_fog.glsl` and pulled into each geometry and cloud shader through its `#include` directive. `ldx_geometry_fog_factor` measures three-dimensional distance, `ldx_cloud_fog_factor` measures horizontal distance, and `ldx_apply_geometry_distance_fog` mixes toward the fog color by the factor. A range with end at or below start returns zero, disabling the fade. The OpenGL program and the WGPU module are both derived from that single file through the ',
+              {
+                kind: 'link',
+                label: 'shared shader source',
+                href: '/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets',
+              },
+              ' loader.',
+            ],
           },
           {
             kind: 'code',
             language: 'glsl',
-            caption: 'distance_fog.glsl (identical in both backends)',
+            caption: 'distance_fog.glsl, shared by both backends',
             code: `float ldx_geometry_fog_factor(vec3 worldPos, vec3 camPos, float fogStart, float fogEnd) {
     if (fogEnd <= fogStart) {
         return 0.0;
@@ -2227,7 +2364,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.4"`,
+            code: `__version__ = "3.7.5"`,
           },
           {
             kind: 'note',

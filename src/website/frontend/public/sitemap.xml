@@ -1051,6 +1051,24 @@
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-wgpu-rendering#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-source-owner</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-opengl-path</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-wgpu-adaptation</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-boundary</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-render-distance-fog-and-shadows</loc>
   </url>
   <url>

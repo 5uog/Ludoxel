@@ -2,39 +2,13 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-import re
-from pathlib import Path
-
-_INCLUDE_RE = re.compile(r'^\s*#include\s+"([^"]+)"\s*$', re.MULTILINE)
-
-
-def _shader_root() -> Path:
-  return Path(__file__).resolve().parents[1] / "shaders" / "sources"
-
-
-def _othello_shader_root() -> Path:
-  return _shader_root()
-
-
-def _expand_includes(path: Path, seen: tuple[Path, ...] = ()) -> str:
-  src_path = Path(path).resolve()
-  if src_path in seen:
-    chain = " -> ".join(str(p.name) for p in (*seen, src_path))
-    raise RuntimeError(f"Recursive shader include: {chain}")
-  text = src_path.read_text(encoding="utf-8")
-
-  def repl(match: re.Match[str]) -> str:
-    include_path = src_path.parent / match.group(1)
-    return _expand_includes(include_path, (*seen, src_path))
-
-  return _INCLUDE_RE.sub(repl, text)
+from ludoxel.presentation.rendering.shaders.source import load_shader_source
 
 
 def _wgpu_glsl_source(filename: str) -> str:
   name = str(filename)
-  root = _othello_shader_root() if name.startswith("othello") else _shader_root()
-  text = _expand_includes(root / name)
-  text = _adapt_wgpu_glsl(str(filename), text)
+  text = load_shader_source(name, collapse_blank_before_include=True)
+  text = _adapt_wgpu_glsl(name, text)
   lines = text.splitlines()
   version_idx = next((i for i, line in enumerate(lines) if line.strip().startswith("#version")), None)
   if version_idx is None:
@@ -112,6 +86,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
   name = str(filename)
 
   if name == "world.vert":
+    text = text.replace("out vec3 v_worldPos;", "layout(location = 6) out vec3 v_worldPos;")
     text = text.replace("uniform mat4 u_viewProj;\nuniform mat4 u_lightViewProj;\nuniform int u_face;\nuniform int u_selMode;\nuniform ivec3 u_selBlock;\n", _camera_uniform_block("world"))
     text = text.replace(
       "out vec3 v_normal;\nout vec2 v_uv;\nout vec4 v_uvRect;\nout vec4 v_lightPos;\nout float v_shade;\nout float v_sel;",
@@ -131,6 +106,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text
 
   if name == "world.frag":
+    text = text.replace("in vec3 v_worldPos;", "layout(location = 6) in vec3 v_worldPos;")
+    text = text.replace("uniform vec3 u_fogCamPos;\nuniform float u_fogStart;\nuniform float u_fogEnd;\nuniform vec3 u_fogColor;\n", "")
     text = text.replace(
       "in vec3 v_normal;\nin vec2 v_uv;\nin vec4 v_uvRect;\nin vec4 v_lightPos;\n\nin float v_shade;\nin float v_sel;",
       "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in vec2 v_uv;\nlayout(location = 2) in vec4 v_uvRect;\nlayout(location = 3) in vec4 v_lightPos;\n\nlayout(location = 4) in float v_shade;\nlayout(location = 5) in float v_sel;",
@@ -161,6 +138,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text
 
   if name == "world_no_shadow.frag":
+    text = text.replace("in vec3 v_worldPos;", "layout(location = 6) in vec3 v_worldPos;")
+    text = text.replace("uniform vec3 u_fogCamPos;\nuniform float u_fogStart;\nuniform float u_fogEnd;\nuniform vec3 u_fogColor;\n", "")
     text = text.replace(
       "in vec3 v_normal;\nin vec2 v_uv;\nin vec4 v_uvRect;\n\nin float v_shade;\nin float v_sel;",
       "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in vec2 v_uv;\nlayout(location = 2) in vec4 v_uvRect;\n\nlayout(location = 4) in float v_shade;\nlayout(location = 5) in float v_sel;",
@@ -187,6 +166,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
 
   if name == "cloud_box.vert":
+    text = text.replace("out vec3 v_worldPos;", "layout(location = 2) out vec3 v_worldPos;")
     text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // smooth translation (world space)\n", _cloud_uniform_block())
     text = text.replace("out vec3 v_normal;\nout float v_alphaMul;", "layout(location = 0) out vec3 v_normal;\nlayout(location = 1) out float v_alphaMul;")
     text = text.replace("u_viewProj", "ldx_viewProj")
@@ -194,6 +174,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text
 
   if name == "cloud_box.frag":
+    text = text.replace("in vec3 v_worldPos;", "layout(location = 2) in vec3 v_worldPos;")
+    text = text.replace("uniform vec2 u_fogCamXZ;\nuniform float u_fogStart;\nuniform float u_fogEnd;\n", "")
     text = text.replace("in vec3 v_normal;\nin float v_alphaMul;", "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in float v_alphaMul;")
     text = text.replace("uniform vec3 u_color;\nuniform float u_alpha;\nuniform vec3 u_sunDir;\n", _cloud_uniform_block())
     text = text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
@@ -229,6 +211,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
 
   if name == "first_person_face.vert":
+    text = text.replace("out vec3 v_worldPos;", "layout(location = 3) out vec3 v_worldPos;")
     text = text.replace("uniform mat4 u_viewProj;\n", _camera_uniform_block("first_person"))
     text = text.replace(
       "out vec3 v_normal;\nout vec2 v_uv;\nout vec4 v_uvRect;", "layout(location = 0) out vec3 v_normal;\nlayout(location = 1) out vec2 v_uv;\nlayout(location = 2) out vec4 v_uvRect;"
@@ -237,6 +220,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return _replace_inverse_transpose_calls(text)
 
   if name == "first_person_face.frag":
+    text = text.replace("in vec3 v_worldPos;", "layout(location = 3) in vec3 v_worldPos;")
+    text = text.replace("uniform vec3 u_fogCamPos;\nuniform float u_fogStart;\nuniform float u_fogEnd;\nuniform vec3 u_fogColor;\n", "")
     text = text.replace("in vec3 v_normal;\nin vec2 v_uv;\nin vec4 v_uvRect;", "layout(location = 0) in vec3 v_normal;\nlayout(location = 1) in vec2 v_uv;\nlayout(location = 2) in vec4 v_uvRect;")
     text = text.replace(
       "uniform sampler2D u_texture;\nuniform vec3 u_sunDir;\nuniform vec3 u_tintColor;\nuniform float u_tintMix;\n",
@@ -254,6 +239,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text
 
   if name == "othello.vert":
+    text = text.replace("out vec3 v_worldPos;", "layout(location = 4) out vec3 v_worldPos;")
     text = text.replace("uniform mat4 u_viewProj;\nuniform mat4 u_lightViewProj;\n", _camera_uniform_block("world"))
     text = text.replace(
       "out vec3 v_normal;\nout vec3 v_color;\n\nout float v_alpha;\n\nout vec4 v_lightPos;",
@@ -264,6 +250,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return _replace_inverse_transpose_calls(text)
 
   if name == "othello.frag":
+    text = text.replace("in vec3 v_worldPos;", "layout(location = 4) in vec3 v_worldPos;")
+    text = text.replace("uniform vec3 u_fogCamPos;\nuniform float u_fogStart;\nuniform float u_fogEnd;\nuniform vec3 u_fogColor;\n\n", "")
     text = text.replace(
       "uniform vec3 u_sunDir;\n\nuniform sampler2DShadow u_shadowMap;\n\nuniform int u_shadowEnabled;\n\nuniform vec2 u_shadowTexel;\n\nuniform float u_shadowDarkMul;\nuniform float u_shadowBiasMin;\nuniform float u_shadowBiasSlope;\nuniform float u_shadowPcfRadius;\n\nuniform int u_debugShadow;\n",
       _camera_uniform_block("world") + "\nlayout(set = 1, binding = 0) uniform texture2D ldx_shadowTexture;\nlayout(set = 1, binding = 1) uniform samplerShadow ldx_shadowSampler;\n",

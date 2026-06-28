@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -36,42 +35,11 @@ from OpenGL.GL import (
   glUseProgram,
 )
 
-_INCLUDE_RE = re.compile(r'^\s*#include\s+"([^"]+)"\s*$')
+from ludoxel.presentation.rendering.shaders.source import expand_shader_source
 
 
 def _load_text(path: Path) -> str:
-  return _load_text_recursive(Path(path).resolve(), stack=())
-
-
-def _load_text_recursive(path: Path, *, stack: tuple[Path, ...]) -> str:
-  p = Path(path).resolve()
-
-  if p in stack:
-    chain = " -> ".join(str(x) for x in (*stack, p))
-    raise RuntimeError(f"Shader include cycle detected: {chain}")
-
-  try:
-    raw = p.read_text(encoding="utf-8")
-  except OSError as exc:
-    raise RuntimeError(f"Unable to read shader source: {p}") from exc
-
-  next_stack = (*stack, p)
-  out_lines: list[str] = []
-
-  for raw_line in raw.splitlines(keepends=True):
-    line = raw_line.rstrip("\r\n")
-    m = _INCLUDE_RE.match(str(line))
-    if m is None:
-      out_lines.append(raw_line)
-      continue
-
-    include_path = (p.parent / str(m.group(1))).resolve()
-    included = _load_text_recursive(include_path, stack=next_stack)
-    if included and (not included.endswith("\n")):
-      included += "\n"
-    out_lines.append(included)
-
-  return "".join(out_lines)
+  return expand_shader_source(Path(path))
 
 
 def _shader_stage_name(shader_type: int) -> str:
