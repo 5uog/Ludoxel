@@ -16,6 +16,10 @@ export function validateDesktopBuildArgs(parsed) {
     errors.push('--status and --check cannot be used together.');
   }
 
+  if (parsed.developerConsole && command === 'macos') {
+    errors.push('--developer-console is only valid for the Windows onefile build.');
+  }
+
   return {
     ...parsed,
     command,

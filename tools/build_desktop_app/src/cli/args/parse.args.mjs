@@ -5,7 +5,7 @@
 const HELP_FLAGS = new Set(['--help', '-h']);
 const WINDOWS_FLAGS = new Set(['--windows']);
 const MACOS_FLAGS = new Set(['--macos']);
-const BOOLEAN_FLAGS = new Set(['--dry-run', '--skip-native-build', '--keep-build-cache', '--status', '--check']);
+const BOOLEAN_FLAGS = new Set(['--dry-run', '--skip-native-build', '--keep-build-cache', '--status', '--check', '--developer-console']);
 
 export function parseDesktopBuildArgs(argv = []) {
   const parsed = {
@@ -16,6 +16,7 @@ export function parseDesktopBuildArgs(argv = []) {
     keepBuildCache: false,
     status: false,
     check: false,
+    developerConsole: false,
     language: 'ja',
     errors: [],
   };
@@ -66,6 +67,11 @@ export function parseDesktopBuildArgs(argv = []) {
 
     if (arg === '--check') {
       parsed.check = true;
+      continue;
+    }
+
+    if (arg === '--developer-console') {
+      parsed.developerConsole = true;
       continue;
     }
 

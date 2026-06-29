@@ -179,7 +179,7 @@ export function renderMacosStatus() {
     '',
     'Verified by the macOS build path:',
     '  - Verify the wgpu-native renderer contract against the macOS Metal path.',
-    '  - Collect wgpu and rendercanvas only for the macOS bundle.',
+    '  - Collect the wgpu-native binaries and data with the wgpu_native, rendercanvas.qt, and rendercanvas.pyqt6 imports, without collecting optional demo modules such as wgpu.utils.imgui.',
     '  - Include the presentation-layer macOS cursor recenter helper used by gameplay mouse capture.',
     '  - Preserve bundled assets, fonts, legal material, and Python framework links.',
     '  - Verify .icns icon presence, Ludoxel Info.plist identity fields, and keyboard input monitoring usage text.',

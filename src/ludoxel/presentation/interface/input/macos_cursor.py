@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import ctypes.util
 import sys
 from dataclasses import dataclass
 from threading import Lock
@@ -24,6 +25,17 @@ _CG_MOUSE_EVENT_DELTA_Y = 5
 _RELATIVE_MOUSE_EVENTS = (_CG_EVENT_MOUSE_MOVED, _CG_EVENT_LEFT_MOUSE_DRAGGED, _CG_EVENT_RIGHT_MOUSE_DRAGGED, _CG_EVENT_OTHER_MOUSE_DRAGGED)
 
 _CGEventTapCallback = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_void_p, ctypes.c_void_p)
+
+
+def _load_system_framework(name: str) -> ctypes.CDLL:
+  # Resolve the framework at runtime so no literal absolute framework path is
+  # baked into the bytecode; PyInstaller's ctypes scanner only follows constant
+  # CDLL arguments, so a computed path avoids the "only basenames are supported"
+  # warning while macOS keeps loading CoreGraphics/CoreFoundation normally.
+  located = ctypes.util.find_library(name)
+  if not located:
+    located = "/".join(("", "System", "Library", "Frameworks", name + ".framework", name))
+  return ctypes.CDLL(located)
 
 
 @dataclass(frozen=True)
@@ -62,7 +74,7 @@ class MacosCursorWarp:
       return self._cg is not None
     self._loaded = True
     try:
-      self._cg = ctypes.CDLL("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
+      self._cg = _load_system_framework("CoreGraphics")
       self._cg.CGWarpMouseCursorPosition.argtypes = [_CGPoint]
       self._cg.CGWarpMouseCursorPosition.restype = ctypes.c_int32
       self._cg.CGAssociateMouseAndMouseCursorPosition.argtypes = [ctypes.c_bool]
@@ -205,8 +217,8 @@ class MacosRelativeMouseCapture:
       return self._cg is not None and self._cf is not None
     self._loaded = True
     try:
-      self._cg = ctypes.CDLL("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
-      self._cf = ctypes.CDLL("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+      self._cg = _load_system_framework("CoreGraphics")
+      self._cf = _load_system_framework("CoreFoundation")
 
       self._cg.CGWarpMouseCursorPosition.argtypes = [_CGPoint]
       self._cg.CGWarpMouseCursorPosition.restype = ctypes.c_int32

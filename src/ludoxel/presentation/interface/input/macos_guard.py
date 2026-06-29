@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import ctypes.util
 import sys
 from collections.abc import Callable
 
@@ -124,6 +125,17 @@ _MODIFIER_KEYCODES = {
 }
 
 
+def _load_system_framework(name: str) -> ctypes.CDLL:
+  # Resolve the framework at runtime so no literal absolute framework path is
+  # baked into the bytecode; PyInstaller's ctypes scanner only follows constant
+  # CDLL arguments, so a computed path avoids the "only basenames are supported"
+  # warning while macOS keeps loading CoreGraphics/CoreFoundation normally.
+  located = ctypes.util.find_library(name)
+  if not located:
+    located = "/".join(("", "System", "Library", "Frameworks", name + ".framework", name))
+  return ctypes.CDLL(located)
+
+
 class MacosGameplayInputGuard:
   def __init__(self, key_handler: Callable[[int, bool, bool], None] | None) -> None:
     self._key_handler = key_handler
@@ -174,8 +186,8 @@ class MacosGameplayInputGuard:
       print(f"[ludoxel] macOS gameplay input guard unavailable: {self._install_error}", file=sys.stderr, flush=True)
 
   def _install(self) -> None:
-    self._cg = ctypes.CDLL("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")
-    self._cf = ctypes.CDLL("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+    self._cg = _load_system_framework("CoreGraphics")
+    self._cf = _load_system_framework("CoreFoundation")
 
     self._cg.CGEventTapCreate.restype = ctypes.c_void_p
     self._cg.CGEventTapCreate.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_void_p]

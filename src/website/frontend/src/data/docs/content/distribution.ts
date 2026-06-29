@@ -56,35 +56,44 @@ npm run build:desktop -- windows`,
       },
       {
         id: 'understanding-the-windows-executable-command-construction',
-        title: 'PyInstaller Command Construction',
+        title: 'PyInstaller Spec Construction',
         content: [
           {
             kind: 'paragraph',
-            text: '`buildWindowsPyinstallerCommand` constrains the open instruction to package into a single, auditable argument vector. It fixes `--onefile` mode under the application name `Ludoxel`, binds `--distpath`, `--workpath`, and `--specpath` to tokenized roots, places `src` on the import search path, and collects package data with `--collect-data ludoxel`, then appends the bootstrap hidden imports and the narrowed desktop data roots ahead of the entry script `src/ludoxel/__main__.py`.',
+            text: '`buildWindowsPyinstallerCommand` does not hand PyInstaller a bare argument vector; it generates a PyInstaller spec and returns a command that runs PyInstaller against that spec with `--noconfirm`, `--clean`, and the tokenized `--distpath` and `--workpath` roots. `runWindowsBuild` writes the spec text into the tokenized spec root before the subprocess runs. The spec form is deliberate: only a spec exposes the post-Analysis `a.binaries` and `a.datas` lists, and the Windows build must filter those lists to drop unused PyOpenGL runtime DLLs that a command-line build cannot exclude.',
+          },
+          {
+            kind: 'paragraph',
+            text: "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is deliberately absent from the bundled data: the application does not read it at runtime, a root-level one-file data entry named `LICENSE` fails extraction by the bootloader, and the controlling text is retained beside the executable by the publish-time legal copy rather than packed into the bundle.",
+          },
+          {
+            kind: 'paragraph',
+            text: "The spec's `console` field fixes the console policy of the packaged executable. It is `False` by default, so the published `Ludoxel.exe` launches with no developer console or terminal log window; it is `True` only when the Windows build is invoked with `--developer-console`. A single ternary in the generator selects one value, so the spec never declares both, and the option is confined to the Windows one-file build — a console-bearing executable is an explicit opt-in, never the default artifact.",
           },
           {
             kind: 'code',
-            language: 'js',
-            caption: 'addCommonOptionalDataArgs and addApplicationBootstrapHiddenImports in build-command.pyinstaller.mjs.',
-            code: `function addCommonOptionalDataArgs(args, targetPlatform = process.platform) {
-  addOptionalDataArg(args, 'assets', 'assets', targetPlatform);
-  addOptionalDataArg(args, 'src/ludoxel', 'src/ludoxel', targetPlatform);
-  addOptionalDataArg(args, 'LICENSE', 'LICENSE', targetPlatform);
-  addOptionalDataArg(args, 'third-party', 'third-party', targetPlatform);
-}
+            language: 'py',
+            caption: 'The post-Analysis DLL filter embedded in the generated Windows spec.',
+            code: `def _keep_pyinstaller_entry(dest):
+    dest = str(dest)
+    base = os.path.basename(dest).lower()
+    if base == 'msvcr100.dll':
+        return False
+    if os.path.basename(os.path.dirname(dest)).lower() == 'dlls' and 'opengl' in dest.lower():
+        return False
+    return True
 
-function addApplicationBootstrapHiddenImports(args) {
-  args.push('--hidden-import', 'ludoxel.application.bootstrap');
-  args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
-}`,
+
+a.binaries = [entry for entry in a.binaries if _keep_pyinstaller_entry(entry[0])]
+a.datas = [entry for entry in a.datas if _keep_pyinstaller_entry(entry[0])]`,
           },
           {
             kind: 'paragraph',
-            text: "Two properties of this excerpt govern what the command vector is permitted to contain. The data roots `assets`, `src/ludoxel`, `LICENSE`, and `third-party` are added through `addOptionalDataArg`, which omits any absent root without aborting the Windows command. The repository source root still appears on the import search path, but the website tree under `src/website` is no longer declared as desktop bundle data. And `addRendererBackendArgs(args, 'win32')` returns before adding anything, so this Windows command path does not add the macOS `--collect-all wgpu`, `--collect-all rendercanvas`, or their hidden imports, which is consistent with the repository’s own shader-check statement that Windows retains the OpenGL renderer path. The claim provable from this builder is scoped to the argument vector it constructs, not to whatever PyInstaller’s dependency analysis ultimately collects; merging the Windows and macOS command paths into one description forfeits that scope and misstates the inputs.",
+            text: 'This filter is the reason the Windows build is spec-driven. PyOpenGL ships the GLUT and GLE runtime under `OpenGL/DLLS`, and the upstream hook collects that whole directory as bundle data. Ludoxel drives windowing through Qt and uses only the OpenGL core, which loads the system `opengl32.dll` rather than anything under `OpenGL/DLLS`, so nothing in that directory is ever loaded; its VC10 DLLs additionally pull `MSVCR100.dll` into the bundle. The predicate drops every entry directly under an `OpenGL/DLLS` directory and `MSVCR100.dll`, leaving `OpenGL.GL`, `OpenGL.error`, and `OpenGL.platform` in the bundle. Removing that unused payload both eliminates a startup extraction failure observed for the legacy `MSVCR100.dll` and shrinks the one-file archive the bootloader must extract. The Windows path adds none of the macOS `--collect-binaries wgpu`, `--collect-data wgpu`, or wgpu and rendercanvas imports, consistent with the repository statement that Windows retains the OpenGL renderer path.',
           },
           {
             kind: 'paragraph',
-            text: 'Named constants and an explicit data list assemble the vector, making the executable reconstructible and its declared inputs auditable from the printed command. The invocation itself supplies the reviewable build specification: a reviewer can distinguish the import root used to locate `ludoxel` from the narrower data root copied into the desktop package, and can determine whether the binary is the OpenGL-configured Ludoxel build with its declared package data from the command that constructs it.',
+            text: 'The generated spec is the reviewable build specification. A reviewer reads it to confirm the one-file mode, the console policy, the declared data roots and hidden imports, the import search path, the DLL filter, and the entry script, and a dry run prints the spec in full without writing or building it. What the spec proves is scoped to what it declares and filters, not to whatever a later inspection of the produced binary reveals.',
           },
         ],
       },
@@ -94,36 +103,48 @@ function addApplicationBootstrapHiddenImports(args) {
         content: [
           {
             kind: 'paragraph',
-            text: '`publishWindowsExecutable` institutes the distinction between a staged output and a published artifact, and it is the only writer permitted to touch the public-facing `dist/windows/Ludoxel.exe`. Before it writes, `removeObsoleteOnedir` deletes any stale `dist/windows/Ludoxel` one-directory tree, so an older directory package cannot coexist with the one-file executable and contaminate a later inspection. It then copies legal material into the staging directory, replaces the published executable, and copies legal material beside it.',
+            text: '`publishWindowsExecutable` institutes the distinction between a staged output and a published artifact, and it is the only writer permitted to touch the public-facing `dist/windows/Ludoxel.exe`. Before it writes, `removeObsoleteOnedir` deletes any stale `dist/windows/Ludoxel` one-directory tree, so an older directory package cannot coexist with the one-file executable and contaminate a later inspection. It then copies legal material into the staging directory, copies the staged executable to a temporary name in the publish directory and renames that file atomically over the published path, and copies legal material beside it. The rename is the publication step: it makes the replacement indivisible, so a concurrent launch reads either the previous executable or the complete new one, never a partially written archive that would fail at startup with a bootloader extraction error.',
           },
           {
             kind: 'code',
             language: 'js',
             caption: 'publishWindowsExecutable in windows-build.service.mjs.',
-            code: `function publishWindowsExecutable(stagingDir) {
-  const stagedExe = resolve(stagingDir, \`\${APP_NAME}.exe\`);
-  const publishDir = resolve(PROJECT_ROOT, WINDOWS_PUBLISH_DIR);
-  const publishExe = resolve(publishDir, \`\${APP_NAME}.exe\`);
+            code: `function renamePublishedExecutable(pendingExe, publishExe) {
+  const maxAttempts = 20;
+  const retryDelayMs = 500;
 
-  if (!existsSync(stagedExe)) {
-    throw new Error(\`PyInstaller did not produce staged executable: \${stagedExe}\`);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      renameSync(pendingExe, publishExe);
+      return;
+    } catch (error) {
+      if (attempt < maxAttempts && isFileLockError(error)) {
+        sleepMs(retryDelayMs);
+        continue;
+      }
+
+      throw error;
+    }
   }
+}
 
-  ensureDirectory(publishDir);
-  copyLegalMaterial(stagingDir);
+function publishWindowsExecutable(stagingDir) {
+  // ... staged/publish paths, the staged-output gate, and the legal copy ...
+  const pendingExe = resolve(publishDir, \`\${APP_NAME}.exe.pending-\${randomUUID().replace(/-/g, '').slice(0, 12)}\`);
 
   try {
-    if (existsSync(publishExe)) {
-      unlinkSync(publishExe);
-    }
-
-    copyFileSync(stagedExe, publishExe);
+    copyFileSync(stagedExe, pendingExe);
+    renamePublishedExecutable(pendingExe, publishExe);
     copyLegalMaterial(publishDir);
     console.log(\`[build_desktop_app] published Windows executable: \${publishExe}\`);
   } catch (error) {
-    if (error?.code === 'EPERM' || error?.code === 'EBUSY' || error?.code === 'EACCES') {
-      console.log(\`[build_desktop_app] published executable is locked; staged executable preserved: \${stagedExe}\`);
-      return;
+    removeIfExists(pendingExe);
+
+    if (isFileLockError(error)) {
+      throw new Error(
+        \`Could not publish \${publishExe}: the file is in use. Close any running \${APP_NAME}.exe (and any window previewing it), then run the build again.\`,
+        { cause: error },
+      );
     }
 
     throw error;
@@ -132,11 +153,11 @@ function addApplicationBootstrapHiddenImports(args) {
           },
           {
             kind: 'paragraph',
-            text: 'The function refuses two conditions in opposite registers. A missing staged executable throws, because there is no output to publish. A locked publish target raising `EPERM`, `EBUSY`, or `EACCES` is demoted to a recoverable condition: the staged executable is left in place and the log records that the published target was not replaced. That demotion is the branch a careless reading collapses. A preserved staging file is diagnostic residue, not a published artifact, and to report the locked outcome as a publication is to assert a `dist/windows` artifact that was never written.',
+            text: 'The function refuses two conditions in opposite registers. A missing staged executable throws, because there is no output to publish. A busy publish target raising `EPERM`, `EBUSY`, or `EACCES` is retried through `renamePublishedExecutable`, because antivirus or the shell can hold a freshly written executable for a moment; a target still locked after every retry — a genuinely running instance — raises a hard error rather than leaving the previous executable in place. A rebuild therefore cannot exit successfully while `dist/windows/Ludoxel.exe` still holds the prior build, so a stale executable can never be mistaken for the rebuilt one.',
           },
           {
             kind: 'paragraph',
-            text: 'When the `published Windows executable` line is emitted, it certifies only that `copyFileSync` and the trailing legal copy completed. It does not establish that the binary launches on a clean host, that the package data is complete, or that anyone may circulate it. The legal copy inside the function keeps the controlling text adjacent to the executable; adjacency is retention, not authorization.',
+            text: 'When the `published Windows executable` line is emitted, it certifies only that the copy, the retried rename, and the trailing legal copy completed. It does not establish that the binary launches on a clean host, that the package data is complete, or that anyone may circulate it. The legal copy inside the function keeps the controlling text adjacent to the executable; adjacency is retention, not authorization.',
           },
         ],
       },
@@ -152,7 +173,7 @@ function addApplicationBootstrapHiddenImports(args) {
             kind: 'list',
             ordered: true,
             items: [
-              'Read the printed PyInstaller command and confirm `--onefile`, the application name, the tokenized roots, `--collect-data ludoxel`, the bootstrap hidden imports, and the entry script.',
+              "Read the printed PyInstaller command and the generated spec, and confirm one-file mode, the `console` policy (`False`, or `True` only under `--developer-console`), the declared data roots, the `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the DLL filter, and the entry script.",
               'Confirm the publication line. A `published Windows executable` line and a `published executable is locked` line are different outcomes and must never be conflated.',
               'Inspect `dist/windows` on disk for `Ludoxel.exe` and for the `LICENSE` and `third-party` material that `copyLegalMaterial` writes beside it.',
               'Read the repository checks as separate predicates, not as one release verdict.',
@@ -160,7 +181,7 @@ function addApplicationBootstrapHiddenImports(args) {
           },
           {
             kind: 'paragraph',
-            text: 'A dry run exercises only the first item: it prints the constructed command and returns before host enforcement, native building, and publication, producing no `dist/windows/Ludoxel.exe`.',
+            text: 'A dry run exercises only the first item: it prints the constructed command and the generated spec, then returns before host enforcement, native building, spec writing, and publication, producing no `dist/windows/Ludoxel.exe`.',
           },
           {
             kind: 'code',
@@ -234,7 +255,7 @@ npm run build:macos:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects `wgpu` and `rendercanvas` and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`; `addMacosRequiredDataArgs` adds `assets`, `src`, `LICENSE`, and `third-party` as required data and asserts the default Alex skin. macOS packaging requires those inputs; their absence aborts the command.',
+            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets`, `src`, and `third-party` as required data and asserts the default Alex skin, while `LICENSE` is retained beside the bundle by the publish-time legal copy rather than bundled as internal data. macOS packaging requires those inputs; their absence aborts the command.',
           },
           {
             kind: 'paragraph',
@@ -492,7 +513,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Including the License Text in a desktop artifact is a retention requirement, fixed by `LEGAL_MATERIAL_PATHS` in `src/config/build.config.mjs`, the copy service in `src/service/legal-copy.service.mjs`, and the existence-guarded helper `copyIfExists` in `src/shared/file/path.file.mjs`. The configured set is `LICENSE` and `third-party`, and PyInstaller lists both among its data arguments — optionally on Windows, as required inputs on macOS. The requirement keeps the controlling and attribution material physically adjacent to the artifact.',
+            text: 'Including the License Text in a desktop artifact is a retention requirement, fixed by `LEGAL_MATERIAL_PATHS` in `src/config/build.config.mjs`, the copy service in `src/service/legal-copy.service.mjs`, and the existence-guarded helper `copyIfExists` in `src/shared/file/path.file.mjs`. The configured copy set is `LICENSE` and `third-party`. PyInstaller bundles `third-party` among its data arguments — optionally on Windows, as a required input on macOS — while `LICENSE` is retained for the artifact only by the publish-time copy, because the application does not read it at runtime and a root-level one-file `LICENSE` data entry fails extraction by the bootloader. The requirement keeps the controlling and attribution material physically adjacent to the artifact.',
           },
           {
             kind: 'paragraph',
@@ -809,7 +830,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: '`parseDesktopBuildArgs` reads the command line, recognizing the `windows` and `macos` targets, the flags `--dry-run`, `--skip-native-build`, `--keep-build-cache`, `--status`, and `--check`, and a help-language selection; it records a conflict when two targets are declared and refuses unknown options and commands. The targets and diagnostic modes are reached through the package scripts:',
+            text: '`parseDesktopBuildArgs` reads the command line, recognizing the `windows` and `macos` targets, the flags `--dry-run`, `--developer-console`, `--skip-native-build`, `--keep-build-cache`, `--status`, and `--check`, and a help-language selection; it records a conflict when two targets are declared and refuses unknown options and commands. The targets and diagnostic modes are reached through the package scripts:',
           },
           {
             kind: 'code',
@@ -840,6 +861,10 @@ npm run build:macos -- --status`,
     errors.push('--status and --check cannot be used together.');
   }
 
+  if (parsed.developerConsole && command === 'macos') {
+    errors.push('--developer-console is only valid for the Windows onefile build.');
+  }
+
   return {
     ...parsed,
     command,
@@ -850,7 +875,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'Two decisions govern downstream behavior. A command with no target and no help request resolves to `windows`. `--status` with `--check` is refused because the macOS status report and the macOS prerequisite check are separate modes. Validation precedes every task: a non-empty error list causes the dispatcher to print the errors and return exit code 2 before a platform service receives the request.',
+            text: 'Three decisions govern downstream behavior. A command with no target and no help request resolves to `windows`. `--status` with `--check` is refused because the macOS status report and the macOS prerequisite check are separate modes, and `--developer-console` is refused on the macOS target because the console policy belongs to the Windows onefile build alone. Validation precedes every task: a non-empty error list causes the dispatcher to print the errors and return exit code 2 before a platform service receives the request.',
           },
         ],
       },
@@ -995,7 +1020,7 @@ npm run build:macos -- --status`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The desktop build service prints the PyInstaller command before execution, and on a dry run that printed command is the principal output because the service returns before PyInstaller runs. The line carries the Python executable, the module invocation, the clean and confirmation flags, the application name, the output roots, the source path, the collected package data, the hidden imports, the data arguments, the icon, and the entry script. The dry run is reached as:',
+            text: "The desktop build service prints the PyInstaller command before execution, and on a Windows dry run it additionally prints the generated spec, which is the principal output because the service returns before PyInstaller runs. The command line carries the Python executable, the module invocation, the clean and confirmation flags, the tokenized output roots, and the generated spec path; the printed spec declares the one-file EXE, the console policy, the data roots and `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the import search path, the OpenGL DLL filter, the icon, and the entry script. The dry run is reached as:",
           },
           {
             kind: 'code',

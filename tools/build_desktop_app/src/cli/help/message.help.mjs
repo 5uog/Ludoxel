@@ -42,6 +42,7 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
       options: Object.freeze([
         Object.freeze({ flag: 'help, --help, -h', description: 'このヘルプを表示して終了する。' }),
         Object.freeze({ flag: '--dry-run', description: 'PyInstaller コマンドを表示し、実行しない。' }),
+        Object.freeze({ flag: '--developer-console', description: 'Windows onefile build を console 付き (--console) で構築する。既定は console を出さない --windowed build。' }),
         Object.freeze({ flag: '--skip-native-build', description: 'Windows build 前の native extension build を実行しない。' }),
         Object.freeze({ flag: '--keep-build-cache', description: 'PyInstaller の work/spec/staging directory を削除しない。' }),
         Object.freeze({ flag: '--lang ja|en', description: 'ヘルプ表示言語を指定する。' }),
@@ -106,6 +107,7 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
       options: Object.freeze([
         Object.freeze({ flag: 'help, --help, -h', description: 'Print this help and exit.' }),
         Object.freeze({ flag: '--dry-run', description: 'Print the PyInstaller command without running it.' }),
+        Object.freeze({ flag: '--developer-console', description: 'Build the Windows onefile with a console (--console). The default is a --windowed build that shows no console.' }),
         Object.freeze({ flag: '--skip-native-build', description: 'Skip the native extension build before the Windows build.' }),
         Object.freeze({ flag: '--keep-build-cache', description: 'Keep the PyInstaller work/spec/staging directories.' }),
         Object.freeze({ flag: '--lang ja|en', description: 'Select help language.' }),
