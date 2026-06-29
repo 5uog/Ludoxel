@@ -61,27 +61,15 @@ _CROUCH_ARM_ROT_X = 0.410367746202
 _CROUCH_ARM_ROT_Z = 0.1
 _CROUCH_LEG_POS_Z = -3.4500310377 * _PX
 _ARM_SWAY_Z = math.pi * 0.02
-
-# Idle arm sway is a small shoulder-pivot rotation that runs on the visual-only
-# animation clock when the player is neither walking nor swinging. The roll term
-# carries a constant outward bias so each hand rests slightly away from the body,
-# and the two arms receive mirrored roll and pitch signs.
 _IDLE_SWAY_ROLL_FREQ = 1.8
 _IDLE_SWAY_PITCH_FREQ = 1.34
 _IDLE_SWAY_ROLL_AMP = 0.05
 _IDLE_SWAY_ROLL_BIAS = 0.05
 _IDLE_SWAY_PITCH_AMP = 0.05
 
-# Third-person attack/place swing for the main-hand arm: a forward shoulder pitch
-# with a small outward roll so the arm and any held item clear the torso volume
-# instead of being pulled across the chest or back.
 _THIRD_PERSON_SWING_FORWARD_RAD = 1.45
 _THIRD_PERSON_SWING_OUTWARD_RAD = 0.12
 
-# Movement-direction limb shaping. The fore/aft swing amplitude follows the local
-# forward speed and is reduced while moving backward; a strafe keeps the same
-# forward-facing fore/aft step rather than turning the feet sideways. The legs pivot
-# at the hip, so no leg root leaves the body.
 _BACKWARD_SWING_SCALE = 0.65
 _STRAFE_FOREAFT_SCALE = 0.22
 _WORLD_SPECIAL_ITEM_BOX = LocalBox(1.0 * _PX, 1.0 * _PX, 7.5 * _PX, 15.0 * _PX, 15.0 * _PX, 8.5 * _PX)
@@ -187,13 +175,6 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   walk_fraction = float(clampf(float(swing) / 0.5 if float(swing) > 1e-9 else 0.0, 0.0, 1.0))
   arm_sway = float(walk_fraction) * float(_ARM_SWAY_Z)
 
-  # Direction-aware locomotion. Fore/aft swing scales with the local forward speed and is
-  # damped when moving backward; the strafe adds a smaller fore/aft step that keeps the same
-  # forward-facing foot animation. The combined fore/aft amplitude is capped at the
-  # total-speed swing so a diagonal never swings more than a straight forward stride at the
-  # same speed. Body yaw offsets are resolved before the render state reaches this builder;
-  # this file keeps the legs on the forward-facing fore/aft step and does not derive body
-  # yaw from local velocity.
   forward_ratio = float(state.limb_forward_ratio)
   strafe_ratio = float(state.limb_strafe_ratio)
   backward_scale = 1.0 if float(forward_ratio) >= -1e-6 else float(_BACKWARD_SWING_SCALE)
@@ -217,15 +198,12 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
   arm_rotation_limit_min_rad = math.radians(float(-180.0 if first_person is None else first_person.arm_rotation_limit_min_deg))
   arm_rotation_limit_max_rad = math.radians(float(180.0 if first_person is None else first_person.arm_rotation_limit_max_deg))
 
-  # Visual left arm (off-hand, model -X side): outward sway rolls the fingertip toward -X.
   right_arm_rot_x = float(pitch_amp) * float(walk_l) + float(_CROUCH_ARM_ROT_X) * float(crouch) - float(idle_pitch)
   right_arm_rot_z = -(float(arm_sway) + float(_CROUCH_ARM_ROT_Z) * float(crouch)) - float(idle_roll)
-  # Legs pivot at the hip and keep the forward-facing fore/aft step only.
+
   right_leg_rot_x = float(pitch_amp) * float(walk_r)
   left_leg_rot_x = float(pitch_amp) * float(walk_l)
 
-  # Visual right arm (main hand, model +X side): outward sway rolls the fingertip toward +X,
-  # and the attack/place swing pitches the arm forward from the shoulder.
   main_hand_walk_damping = 1.0 - 0.85 * float(attack_weight)
   main_hand_sway_damping = 1.0 - 0.70 * float(attack_weight)
   left_arm_rot_x = (float(pitch_amp) * float(walk_r) * float(main_hand_walk_damping)) + float(_CROUCH_ARM_ROT_X) * float(crouch) + float(swing_pitch) + float(idle_pitch)

@@ -18,22 +18,12 @@ PLAYER_WALK_MAX_SWING_SCALE = 1.35
 PLAYER_FOOTSTEP_MIN_SPEED = 0.15
 FALL_DAMAGE_SAFE_DISTANCE_BLOCKS = 3.0
 
-# Visual-only body/head yaw separation. The rendered body yaw follows the immediate
-# look yaw with a frame-rate-independent time constant and stays within a bounded
-# relative angle, so the body trails a turn but catches up quickly. The visible head
-# carries its own short yaw/pitch lag, bounded by small maximum angles, so the head
-# trails the camera by a few degrees without delaying input, picking, or the camera.
 PLAYER_BODY_YAW_FOLLOW_TAU_S = 0.24
 PLAYER_HEAD_BODY_YAW_MAX_DEG = 58.0
 PLAYER_HEAD_VISUAL_LAG_TAU_S = 0.09
 PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG = 12.0
 PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG = 6.0
 
-# Visual-only strafe body turn. A dedicated left or right strafe input turns the rendered
-# body toward the movement by a bounded angle, eased with a frame-rate-independent time
-# constant so it ramps in rather than snapping. A combined forward or backward input
-# suppresses the turn, so a left/right component used only as a diagonal fine adjustment
-# leaves the body facing forward.
 PLAYER_STRAFE_BODY_TURN_MAX_DEG = 18.0
 PLAYER_STRAFE_BODY_TURN_TAU_S = 0.40
 PLAYER_STRAFE_INPUT_EPS = 0.3

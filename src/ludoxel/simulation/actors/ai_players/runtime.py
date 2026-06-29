@@ -83,10 +83,6 @@ _AI_EDGE_LOOKAHEAD_BLOCKS = 0.85
 _AI_EDGE_SAFE_DROP_DEPTH = 3
 _AI_EDGE_ROUTE_DROP_DEPTH = 8
 _AI_PLACEMENT_LOS_EPS = 0.05
-# Minimum dot product between the actor's horizontal view direction and the
-# horizontal direction toward the placement target. Placement is refused when
-# the actor is not looking toward the target column, so an actor may not place
-# against a face it has turned away from.
 _AI_PLACEMENT_FACING_MIN_DOT = math.cos(math.radians(55.0))
 
 

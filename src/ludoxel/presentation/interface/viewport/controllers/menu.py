@@ -59,9 +59,6 @@ def refresh_library(viewport: "RendererViewportWidget") -> None:
 
 
 def quit_application(viewport: "RendererViewportWidget") -> None:
-  # Shut the viewport down directly so the final save and resource teardown run
-  # once, then close the window and exit the event loop without waiting on a
-  # second close-path pass.
   try:
     viewport.shutdown()
   except Exception:
@@ -114,10 +111,12 @@ def enter_my_world(viewport: "RendererViewportWidget", world_id: str) -> None:
   loaded_id = str(getattr(viewport, "_loaded_my_world_id", "") or library.active_world_id())
   if loaded_id and loaded_id != str(world_id) and library.load_entry(loaded_id) is not None:
     space = capture_my_world_space_from_session(viewport._sessions.my_world, allow_flying=creative_now, inventory=persisted_world_inventory_from_runtime(viewport._state))
-    library.save_space(loaded_id, space, game_mode=world_game_mode_from_creative(creative_now))
+    thumbnail_bytes = viewport._capture_active_world_thumbnail_bytes()
+    library.save_space(loaded_id, space, game_mode=world_game_mode_from_creative(creative_now), thumbnail_bytes=thumbnail_bytes)
 
   library.set_active_world(world_id)
   viewport._loaded_my_world_id = str(world_id)
+  viewport._clear_world_thumbnail_cache()
   _load_world_into_runtime(viewport, target)
   viewport._set_menu_overlay(False)
   overlay_controller.force_enter_space(viewport, PLAY_SPACE_MY_WORLD)
@@ -160,11 +159,9 @@ def rename_world(viewport: "RendererViewportWidget", world_id: str, name: str) -
 def delete_world(viewport: "RendererViewportWidget", world_id: str) -> None:
   library = _library(viewport)
   library.delete_world(world_id)
-  # Drop the loaded-world pointer if it referenced the deleted world; the orphaned
-  # session world is simply discarded the next time a world is opened. No world is
-  # recreated, so deleting the last world leaves an empty library.
   if str(getattr(viewport, "_loaded_my_world_id", "") or "") == str(world_id):
     viewport._loaded_my_world_id = str(library.active_world_id())
+    viewport._clear_world_thumbnail_cache()
   refresh_library(viewport)
   viewport._menu.show_library()
 

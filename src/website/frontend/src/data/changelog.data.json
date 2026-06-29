@@ -2,6 +2,34 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.6",
+      "tags": ["Desktop Application", "My World", "Rendering", "UI", "Data", "Build"],
+      "sections": [
+        {
+          "title": "My World Menu Spacing",
+          "items": [
+            "My World library, Edit World, and PAUSE overlay buttons now share the `interface/common` menu-button helper for controls that use `#menuBtn`, and the grid/list card edit buttons use the same widget-rectangle layout attribute. The buttons lay out against their widget rectangles, so native push-button insets do not collapse the visual gaps around the Grid/List toggle, Import World, Create New World, Export (.ldxworld), Delete World, Cancel, and destructive confirmation buttons. The visual button styling remains in QSS.",
+            "The Delete World confirmation panel now reserves lower space through its `QVBoxLayout` margins and gives the label-to-button row a structural gap, so the Cancel/Delete row no longer sits flush against the panel bottom."
+          ]
+        },
+        {
+          "title": "World Thumbnail Cache and Packages",
+          "items": [
+            "The active My World thumbnail cache is refreshed at explicit exit boundaries rather than from the save path. Before the PAUSE overlay is shown, and before direct viewport shutdown, the viewport crops the still-visible My World widget with `QScreen.grabWindow`, encodes that image with `encode_thumbnail_png`, and keeps only cached bytes for `save_state`. If no cache exists, the world body still saves and `WorldLibraryStore.save_space` preserves the thumbnail already in the package.",
+            "`encode_thumbnail_png` now keeps the `QByteArray` backing its `QBuffer` alive while `QImage.save` writes the PNG bytes, so thumbnail encoding does not depend on a temporary Qt buffer object.",
+            "The world thumbnail path does not add an OpenGL framebuffer readback, does not require WGPU surface copy-source usage, and does not change the renderer `render` contract. Switching My Worlds passes the outgoing world's cached thumbnail to `save_space` and clears the cache for the selected world, preventing a previous world's image from being saved onto the next entry.",
+            "The `.ldxworld` thumbnail member now remains connected across the visible library path: summaries read `thumbnail.png`, grid cards and list rows display those bytes inside their fixed thumbnail slots, export writes the stored thumbnail, and import passes the package thumbnail into the newly created library entry."
+          ]
+        },
+        {
+          "title": "Windows Package Build",
+          "items": [
+            "The Windows PyInstaller command now writes a generated `hook-OpenGL.py` beside the generated spec. The hook keeps PyOpenGL platform and array discovery while leaving OpenGL DLL data collection empty, and the spec guard drops cached `OpenGL/DLLS`, `MSVCR90.dll`, or `MSVCR100.dll` entries if they appear."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.5",
       "tags": ["Desktop Application", "Rendering", "macOS"],
       "sections": [

@@ -91,6 +91,10 @@ class ViewportLifecycleMixin:
   def shutdown(self: "GLViewportWidget") -> None:
     if self._shutdown_done:
       return
+    try:
+      self._refresh_world_thumbnail_viewport_cache(force=True)
+    except Exception:
+      pass
     self._shutdown_done = True
     self._set_runtime_active(False)
     app = getattr(self, "_application_event_filter_app", None)

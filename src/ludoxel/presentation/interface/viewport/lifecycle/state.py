@@ -16,6 +16,7 @@ from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
+from ludoxel.presentation.interface.menu.thumbnail import capture_widget_thumbnail_image, encode_thumbnail_png
 from ludoxel.presentation.rendering.visuals.cameras.third_person import resolve_camera
 from ludoxel.presentation.rendering.visuals.players.skin import AI_BUNDLED_ALEX_SKIN_KEY, load_bundled_ai_alex_skin_image, load_custom_ai_skin_image, load_player_skin_image
 from ludoxel.presentation.rendering.visuals.worlds.block_break_particles import advance_block_break_particles, render_samples_from_block_break_particles
@@ -96,15 +97,40 @@ class ViewportStateMixin:
     if bool(push_to_renderer):
       self._push_ai_skins_to_renderer(context_current=bool(context_current))
 
+  def _clear_world_thumbnail_cache(self: "RendererViewportWidget") -> None:
+    self._world_thumbnail_png_cache = None
+
+  def _world_thumbnail_capture_allowed(self: "RendererViewportWidget") -> bool:
+    if bool(getattr(self, "_shutdown_done", False)):
+      return False
+    if bool(self.loading_active()):
+      return False
+    if not bool(getattr(self, "_application_active", True)):
+      return False
+    if self._state.is_othello_space():
+      return False
+    if not str(getattr(self, "_loaded_my_world_id", "") or ""):
+      return False
+    if self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open() or self._overlays.inventory_open():
+      return False
+    if bool(getattr(self, "_ai_settings_overlay_open", False)):
+      return False
+    return True
+
+  def _refresh_world_thumbnail_viewport_cache(self: "RendererViewportWidget", *, force: bool = False) -> None:
+    if not bool(self._world_thumbnail_capture_allowed()):
+      return
+    try:
+      image = capture_widget_thumbnail_image(self)
+      data = encode_thumbnail_png(image)
+    except Exception:
+      traceback.print_exc(file=sys.stderr)
+      return
+    if data:
+      self._world_thumbnail_png_cache = bytes(data)
+
   def _capture_active_world_thumbnail_bytes(self: "RendererViewportWidget") -> bytes | None:
-    # The save path must never grab the framebuffer. A synchronous
-    # QOpenGLWidget.grabFramebuffer() (whether from a save/pause handler or from
-    # the render loop) forces a re-entrant render and aborts the process at the
-    # C++ level inside Qt during the readback/PNG encode, which crashed Save & Quit
-    # and pause navigation before the world edits reached disk. Only previously
-    # cached bytes are returned; when there are none the world keeps whatever
-    # thumbnail it already has on disk and the save still completes.
-    if self._state.is_othello_space() or self._overlays.menu_open():
+    if self._state.is_othello_space():
       return None
     if not str(getattr(self, "_loaded_my_world_id", "") or ""):
       return None
@@ -112,11 +138,6 @@ class ViewportStateMixin:
     return bytes(cached) if cached else None
 
   def save_state(self: "RendererViewportWidget") -> None:
-    # The renderer sun read, the Othello animation settle, and the framebuffer
-    # thumbnail grab are auxiliary. They must never block the critical world and
-    # settings save, so each is isolated (logged, not silenced) and the
-    # persistence call always runs. A failure inside that persistence call is
-    # allowed to propagate so the caller can refuse to leave the play-space.
     try:
       settings_controller.sync_state_from_renderer_sun(self)
     except Exception:

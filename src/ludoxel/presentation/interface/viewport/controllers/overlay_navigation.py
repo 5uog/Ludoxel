@@ -56,6 +56,7 @@ def open_pause_menu(viewport: "RendererViewportWidget") -> None:
     back_from_othello_settings(viewport)
   if viewport._overlays.settings_open():
     back_from_settings(viewport)
+  viewport._refresh_world_thumbnail_viewport_cache(force=True)
   settings_controller.sync_settings_values(viewport)
   settings_controller.sync_player_skin(viewport)
   viewport._overlay.set_current_space(viewport._state.current_space_id)
@@ -230,7 +231,6 @@ def _exit_active_play_space(viewport: "RendererViewportWidget", proceed) -> None
 def _open_library_from_pause(viewport: "RendererViewportWidget") -> None:
   import ludoxel.presentation.interface.viewport.controllers.menu as menu_controller
 
-  # set_menu_open already clears the paused state; do not resume gameplay first.
   menu_controller.refresh_library(viewport)
   settings_controller.sync_player_skin(viewport)
   viewport._set_menu_overlay(True)

@@ -60,11 +60,11 @@ npm run build:desktop -- windows`,
         content: [
           {
             kind: 'paragraph',
-            text: '`buildWindowsPyinstallerCommand` does not hand PyInstaller a bare argument vector; it generates a PyInstaller spec and returns a command that runs PyInstaller against that spec with `--noconfirm`, `--clean`, and the tokenized `--distpath` and `--workpath` roots. `runWindowsBuild` writes the spec text into the tokenized spec root before the subprocess runs. The spec form is deliberate: only a spec exposes the post-Analysis `a.binaries` and `a.datas` lists, and the Windows build must filter those lists to drop unused PyOpenGL runtime DLLs that a command-line build cannot exclude.',
+            text: '`buildWindowsPyinstallerCommand` generates a PyInstaller spec and returns a command that runs PyInstaller against that spec with `--noconfirm`, `--clean`, and the tokenized `--distpath` and `--workpath` roots. `runWindowsBuild` writes the spec text and generated `hook-OpenGL.py` into the tokenized spec root before the subprocess runs. The spec points `hookspath` at that generated hook before analysis starts, and it still exposes the post-Analysis `a.binaries` and `a.datas` lists as a guard against cached unused PyOpenGL runtime DLL entries.',
           },
           {
             kind: 'paragraph',
-            text: "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is deliberately absent from the bundled data: the application does not read it at runtime, a root-level one-file data entry named `LICENSE` fails extraction by the bootloader, and the controlling text is retained beside the executable by the publish-time legal copy rather than packed into the bundle.",
+            text: "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, points `hookspath` at the generated hook directory, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is deliberately absent from the bundled data: the application does not read it at runtime, a root-level one-file data entry named `LICENSE` fails extraction by the bootloader, and the controlling text is retained beside the executable by the publish-time legal copy rather than packed into the bundle.",
           },
           {
             kind: 'paragraph',
@@ -73,11 +73,26 @@ npm run build:desktop -- windows`,
           {
             kind: 'code',
             language: 'py',
-            caption: 'The post-Analysis DLL filter embedded in the generated Windows spec.',
-            code: `def _keep_pyinstaller_entry(dest):
+            caption: 'The generated OpenGL hook and post-Analysis DLL guard used by the Windows spec.',
+            code: `from PyInstaller.compat import is_darwin, is_win
+from PyInstaller.utils.hooks import collect_submodules
+
+if is_win:
+    hiddenimports = ['OpenGL.platform.win32']
+elif is_darwin:
+    hiddenimports = ['OpenGL.platform.darwin']
+else:
+    hiddenimports = ['OpenGL.platform.glx']
+
+hiddenimports += collect_submodules('OpenGL.arrays')
+datas = []
+binaries = []
+
+
+def _keep_pyinstaller_entry(dest):
     dest = str(dest)
     base = os.path.basename(dest).lower()
-    if base == 'msvcr100.dll':
+    if base in {'msvcr90.dll', 'msvcr100.dll'}:
         return False
     if os.path.basename(os.path.dirname(dest)).lower() == 'dlls' and 'opengl' in dest.lower():
         return False
@@ -89,11 +104,11 @@ a.datas = [entry for entry in a.datas if _keep_pyinstaller_entry(entry[0])]`,
           },
           {
             kind: 'paragraph',
-            text: 'This filter is the reason the Windows build is spec-driven. PyOpenGL ships the GLUT and GLE runtime under `OpenGL/DLLS`, and the upstream hook collects that whole directory as bundle data. Ludoxel drives windowing through Qt and uses only the OpenGL core, which loads the system `opengl32.dll` rather than anything under `OpenGL/DLLS`, so nothing in that directory is ever loaded; its VC10 DLLs additionally pull `MSVCR100.dll` into the bundle. The predicate drops every entry directly under an `OpenGL/DLLS` directory and `MSVCR100.dll`, leaving `OpenGL.GL`, `OpenGL.error`, and `OpenGL.platform` in the bundle. Removing that unused payload both eliminates a startup extraction failure observed for the legacy `MSVCR100.dll` and shrinks the one-file archive the bootloader must extract. The Windows path adds none of the macOS `--collect-binaries wgpu`, `--collect-data wgpu`, or wgpu and rendercanvas imports, consistent with the repository statement that Windows retains the OpenGL renderer path.',
+            text: 'The generated hook keeps PyOpenGL platform and array hidden imports while setting hook `datas` and `binaries` empty, so the upstream `OpenGL/DLLS` GLUT and GLE runtime directory is absent before dependency analysis. Ludoxel drives windowing through Qt and uses only the OpenGL core, which loads the system `opengl32.dll`; the unused `OpenGL/DLLS` runtime has no load path in the application. The post-Analysis predicate still drops any cached `OpenGL/DLLS`, `MSVCR90.dll`, or `MSVCR100.dll` entry if one appears, leaving `OpenGL.GL`, `OpenGL.error`, and `OpenGL.platform` in the bundle. The Windows path adds none of the macOS `--collect-binaries wgpu`, `--collect-data wgpu`, or wgpu and rendercanvas imports, consistent with the repository statement that Windows retains the OpenGL renderer path.',
           },
           {
             kind: 'paragraph',
-            text: 'The generated spec is the reviewable build specification. A reviewer reads it to confirm the one-file mode, the console policy, the declared data roots and hidden imports, the import search path, the DLL filter, and the entry script, and a dry run prints the spec in full without writing or building it. What the spec proves is scoped to what it declares and filters, not to whatever a later inspection of the produced binary reveals.',
+            text: 'The generated spec and local hook are the reviewable build specification. A reviewer reads them to confirm the one-file mode, the console policy, the declared data roots and hidden imports, the import search path, the OpenGL hook path, the DLL guard, and the entry script, and a dry run prints both without writing or building them. What the dry-run output proves is scoped to what it declares and filters, not to whatever a later inspection of the produced binary reveals.',
           },
         ],
       },
@@ -173,7 +188,7 @@ function publishWindowsExecutable(stagingDir) {
             kind: 'list',
             ordered: true,
             items: [
-              "Read the printed PyInstaller command and the generated spec, and confirm one-file mode, the `console` policy (`False`, or `True` only under `--developer-console`), the declared data roots, the `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the DLL filter, and the entry script.",
+              "Read the printed PyInstaller command, generated spec, and generated hook, and confirm one-file mode, the `console` policy (`False`, or `True` only under `--developer-console`), the declared data roots, the `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the OpenGL hook path, the DLL guard, and the entry script.",
               'Confirm the publication line. A `published Windows executable` line and a `published executable is locked` line are different outcomes and must never be conflated.',
               'Inspect `dist/windows` on disk for `Ludoxel.exe` and for the `LICENSE` and `third-party` material that `copyLegalMaterial` writes beside it.',
               'Read the repository checks as separate predicates, not as one release verdict.',
@@ -1020,7 +1035,7 @@ npm run build:macos -- --status`,
         content: [
           {
             kind: 'paragraph',
-            text: "The desktop build service prints the PyInstaller command before execution, and on a Windows dry run it additionally prints the generated spec, which is the principal output because the service returns before PyInstaller runs. The command line carries the Python executable, the module invocation, the clean and confirmation flags, the tokenized output roots, and the generated spec path; the printed spec declares the one-file EXE, the console policy, the data roots and `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the import search path, the OpenGL DLL filter, the icon, and the entry script. The dry run is reached as:",
+            text: "The desktop build service prints the PyInstaller command before execution, and on a Windows dry run it additionally prints the generated spec and generated OpenGL hook, which are the principal outputs because the service returns before PyInstaller runs. The command line carries the Python executable, the module invocation, the clean and confirmation flags, the tokenized output roots, and the generated spec path; the printed spec declares the one-file EXE, the console policy, the data roots and `collect_data_files('ludoxel')` collection, the bootstrap hidden imports, the import search path, the OpenGL hook path, the DLL guard, the icon, and the entry script. The printed hook shows PyOpenGL platform and array hidden imports while leaving OpenGL DLL data collection empty. The dry run is reached as:",
           },
           {
             kind: 'code',

@@ -7,6 +7,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.persistence.stores.world_library import WorldLibrarySummary
+from ludoxel.presentation.interface.common.buttons import use_layout_widget_rect
 from ludoxel.presentation.interface.menu.formatting import format_world_size, format_world_timestamp, game_mode_label
 
 _GRID_THUMBNAIL_SIZE = QSize(220, 124)
@@ -66,7 +67,7 @@ class WorldGridCard(QFrame):
     name_label = QLabel(str(summary.metadata.name), self)
     name_label.setObjectName("worldName")
     name_row.addWidget(name_label, stretch=1)
-    edit_button = QPushButton("Edit", self)
+    edit_button = use_layout_widget_rect(QPushButton("Edit", self))
     edit_button.setObjectName("worldEditButton")
     edit_button.setCursor(Qt.CursorShape.PointingHandCursor)
     edit_button.clicked.connect(lambda: self.edit_requested.emit(self._world_id))
@@ -129,7 +130,7 @@ class WorldListRow(QFrame):
     size_label.setObjectName("worldSize")
     size_label.setAlignment(Qt.AlignmentFlag.AlignRight)
     right_column.addWidget(size_label, alignment=Qt.AlignmentFlag.AlignRight)
-    edit_button = QPushButton("Edit", self)
+    edit_button = use_layout_widget_rect(QPushButton("Edit", self))
     edit_button.setObjectName("worldEditButton")
     edit_button.setCursor(Qt.CursorShape.PointingHandCursor)
     edit_button.clicked.connect(lambda: self.edit_requested.emit(self._world_id))

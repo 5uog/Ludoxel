@@ -9,6 +9,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QButtonGroup, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.persistence.stores.world_library import WorldLibrarySummary
+from ludoxel.presentation.interface.common.buttons import make_menu_button, use_layout_widget_rect
 from ludoxel.presentation.interface.common.screen_title_bar import ScreenTitleBar
 from ludoxel.presentation.interface.menu.world_card import WorldGridCard, WorldListRow
 
@@ -18,6 +19,7 @@ _GRID_CARD_WIDTH_PX = 244
 _GRID_SPACING_PX = 16
 _CONTENT_MARGIN_PX = 24
 _TOGGLE_BUTTON_SIZE_PX = 40
+_TOOLBAR_SPACING_PX = 12
 _REFLOW_DEBOUNCE_MS = 30
 
 
@@ -80,7 +82,7 @@ class MyWorldLibraryPage(QWidget):
     bar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
     layout = QHBoxLayout(bar)
     layout.setContentsMargins(24, 10, 24, 10)
-    layout.setSpacing(8)
+    layout.setSpacing(int(_TOOLBAR_SPACING_PX))
 
     self._grid_button = self._build_toggle_button("grid.svg", "Grid view")
     self._list_button = self._build_toggle_button("list.svg", "List view")
@@ -96,22 +98,18 @@ class MyWorldLibraryPage(QWidget):
 
     layout.addStretch(1)
 
-    self._import_button = QPushButton("Import World", bar)
-    self._import_button.setObjectName("menuBtn")
-    self._import_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    self._import_button = make_menu_button("Import World", bar)
     self._import_button.clicked.connect(self.import_world_requested.emit)
     layout.addWidget(self._import_button)
 
-    self._create_button = QPushButton("Create New World", bar)
-    self._create_button.setObjectName("menuBtn")
+    self._create_button = make_menu_button("Create New World", bar)
     self._create_button.setProperty("buttonStyle", "prominent")
-    self._create_button.setCursor(Qt.CursorShape.PointingHandCursor)
     self._create_button.clicked.connect(self.create_world_requested.emit)
     layout.addWidget(self._create_button)
     return bar
 
   def _build_toggle_button(self, icon_name: str, tooltip: str) -> QPushButton:
-    button = QPushButton(self)
+    button = use_layout_widget_rect(QPushButton(self))
     button.setObjectName("worldViewToggle")
     button.setCheckable(True)
     button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -147,8 +145,6 @@ class MyWorldLibraryPage(QWidget):
       item = self._content_layout.takeAt(0)
       widget = item.widget()
       if widget is not None and widget is not self._empty_label:
-        # Keep the widget parented to the content while it is deleted; reparenting
-        # to None would briefly promote it to a top-level window and flicker.
         widget.deleteLater()
 
   def _rebuild(self) -> None:
@@ -223,8 +219,6 @@ class MyWorldLibraryPage(QWidget):
 
   def showEvent(self, event) -> None:
     super().showEvent(event)
-    # The viewport width is only final after the first show; defer the column
-    # computation so the initial grid wraps across the row instead of stacking.
     QTimer.singleShot(0, self._reflow_grid)
 
   def resizeEvent(self, event) -> None:

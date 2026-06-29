@@ -38,17 +38,10 @@ function isFileLockError(error) {
 }
 
 function sleepMs(milliseconds) {
-  // Synchronous sleep so the publish step can wait out a transient lock on the
-  // freshly written executable (antivirus or the shell scanning it) without
-  // introducing async control flow into the build pipeline.
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.max(0, milliseconds));
 }
 
 function renamePublishedExecutable(pendingExe, publishExe) {
-  // Replacing the published executable can transiently fail while the previous
-  // file is scanned by antivirus or the shell. Retry the atomic rename to ride
-  // that out; only a genuinely held target (a running instance) survives the
-  // retries, and that is reported as a hard failure rather than silently kept.
   const maxAttempts = 20;
   const retryDelayMs = 500;
 
@@ -82,10 +75,6 @@ function publishWindowsExecutable(stagingDir) {
   ensureDirectory(publishDir);
   copyLegalMaterial(stagingDir);
 
-  // Stage the copy under a temporary name in the publish directory, then rename
-  // it over the published path. The rename is atomic on the same volume, so a
-  // concurrent launch never observes a half-written one-file executable, which
-  // would otherwise fail at startup with a bootloader extraction error.
   const pendingExe = resolve(publishDir, `${APP_NAME}.exe.pending-${randomUUID().replace(/-/g, '').slice(0, 12)}`);
 
   try {
@@ -131,11 +120,19 @@ export function runWindowsBuild(options = {}) {
   if (options.dryRun) {
     console.log(`[build_desktop_app] generated PyInstaller spec (${command.specPath}):`);
     console.log(command.specText);
+    for (const hookFile of command.hookFiles || []) {
+      console.log(`[build_desktop_app] generated PyInstaller hook (${hookFile.path}):`);
+      console.log(hookFile.text);
+    }
     return 0;
   }
 
   ensureDirectory(command.specDir);
+  ensureDirectory(command.hookDir);
   writeFileSync(command.specPath, command.specText);
+  for (const hookFile of command.hookFiles || []) {
+    writeFileSync(hookFile.path, hookFile.text);
+  }
 
   const pyinstallerConfigDir = resolve(PROJECT_ROOT, PYINSTALLER_CONFIG_ROOT);
   ensureDirectory(pyinstallerConfigDir);

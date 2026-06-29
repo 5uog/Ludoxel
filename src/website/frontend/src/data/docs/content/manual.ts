@@ -386,21 +386,21 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: 'Play My World opens the My World library inside the same shell rather than starting a single world. `MyWorldLibraryPage` keeps the chat-style top bar with a `< Back` control that returns to the menu, a grid and list view toggle on the left, and Create New World and Import World on the right. Each world is shown with a thumbnail, the current Survival or Creative game mode, the created and updated dates, and the on-disk world size; the list view adds the size beside the name.',
+            text: 'Play My World opens the My World library inside the same shell rather than starting a single world. `MyWorldLibraryPage` keeps the chat-style top bar with a `< Back` control that returns to the menu, a grid and list view toggle on the left, and Create New World and Import World on the right. Those buttons use the shared `interface/common` menu-button helper and lay out against the widget rectangle, so Qt native button insets do not become the visual spacing contract; color, border, radius, hover, and pressed states remain in QSS. Each world is shown with a thumbnail, the current Survival or Creative game mode, the created and updated dates, and the on-disk world size; the list view adds the size beside the name.',
           },
           {
             kind: 'list',
             ordered: true,
             items: [
               'Create New World opens an in-shell screen with a name field, a Survival and Creative toggle, and Create. Confirming adds the world to the library and returns to the list with the new world present; it does not enter gameplay by itself. An empty or whitespace-only name is refused at creation, while a name that matches another world is accepted because worlds are identified by id rather than by display name.',
-              'Edit opens an in-shell screen titled Edit followed by the world name, with a rename field, Export (.ldxworld), and a delete confirmation rendered inside the screen. Rename refuses an empty or whitespace-only name and accepts a name that matches another world. Delete asks for confirmation in the same screen and removes the world package; deleting the last world leaves an empty library rather than recreating a default world.',
+              'Edit opens an in-shell screen titled Edit followed by the world name, with a rename field, Export (.ldxworld), and a delete confirmation rendered inside the screen. Rename refuses an empty or whitespace-only name and accepts a name that matches another world. Export, Delete, Cancel, and the destructive confirmation button use the same widget-rectangle button rule as the library toolbar, and the confirmation panel owns bottom padding through its layout margins. Delete asks for confirmation in the same screen and removes the world package; deleting the last world leaves an empty library rather than recreating a default world.',
               'Export writes the world to a chosen `.ldxworld` file, and Import World reads a `.ldxworld` file, rejecting a malformed package without changing the library. Import accepts a package whose name matches an existing world.',
-              'Opening a world captures the previously loaded world, including its inventory, loads the selected world into the My World session, restores that world inventory into the runtime, applies that world game mode, closes the menu, and enters gameplay.',
+              'Opening a world saves the previously loaded world, including its inventory and cached thumbnail bytes when present, loads the selected world into the My World session, restores that world inventory into the runtime, applies that world game mode, closes the menu, and enters gameplay.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'The on-disk shape of these worlds, the per-world game mode, the thumbnail capture, and the `.ldxworld` package are owned by the library persistence, not by this surface.',
+            text: 'The on-disk shape of these worlds, the per-world game mode, the thumbnail cache, and the `.ldxworld` package are owned by the library persistence, not by this surface. When a summary has no thumbnail bytes, `WorldGridCard` and `WorldListRow` keep their fixed thumbnail slots with a transparent pixmap and leave the empty slot styling to the existing QSS rather than fabricating image content.',
           },
         ],
       },

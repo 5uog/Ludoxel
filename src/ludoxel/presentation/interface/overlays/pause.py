@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, Qt, pyqtSignal
 from PyQt6.QtGui import QCursor, QImage, QPixmap
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
+from ludoxel.presentation.interface.common.buttons import make_menu_button
 from ludoxel.presentation.interface.overlays.skin_preview import PlayerSkinPreviewWidget
 from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, is_my_world_space, is_othello_space, normalize_play_space_id
 
@@ -126,16 +127,7 @@ class PauseOverlay(QWidget):
 
   @staticmethod
   def _make_menu_button(text: str, parent: QWidget) -> QPushButton:
-    button = QPushButton(text, parent)
-    button.setObjectName("menuBtn")
-    # The macOS native style insets push-button layout-item rectangles to reserve
-    # room for the Aqua focus ring. That inset is subtracted from QVBoxLayout
-    # spacing and collapses the gaps between stacked buttons to zero on macOS,
-    # while Windows is unaffected. Laying these buttons out against their widget
-    # rect keeps the structural button spacing identical on both platforms; all
-    # decoration stays in the #menuBtn QSS.
-    button.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect, True)
-    return button
+    return make_menu_button(text, parent)
 
   def set_current_space(self, space_id: str) -> None:
     normalized = normalize_play_space_id(space_id)

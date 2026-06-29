@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QSizePolicy, QVBoxLayout, QWidget
 
 from ludoxel.application.persistence.schema.world_library import normalize_world_name
+from ludoxel.presentation.interface.common.buttons import make_menu_button
 from ludoxel.presentation.interface.common.screen_title_bar import ScreenTitleBar
 from ludoxel.presentation.interface.menu.formatting import game_mode_label
 
@@ -66,23 +67,17 @@ class WorldEditPage(QWidget):
     self._name_input.textChanged.connect(self._update_rename_enabled)
     self._name_input.returnPressed.connect(self._on_rename)
     rename_row.addWidget(self._name_input, stretch=1)
-    self._rename_button = QPushButton("Rename World", panel)
-    self._rename_button.setObjectName("menuBtn")
-    self._rename_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    self._rename_button = make_menu_button("Rename World", panel)
     self._rename_button.clicked.connect(self._on_rename)
     rename_row.addWidget(self._rename_button)
     layout.addLayout(rename_row)
 
-    self._export_button = QPushButton("Export (.ldxworld)", panel)
-    self._export_button.setObjectName("menuBtn")
-    self._export_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    self._export_button = make_menu_button("Export (.ldxworld)", panel)
     self._export_button.clicked.connect(lambda: self.export_requested.emit(self._world_id))
     layout.addWidget(self._export_button)
 
-    self._delete_button = QPushButton("Delete World", panel)
-    self._delete_button.setObjectName("menuBtn")
+    self._delete_button = make_menu_button("Delete World", panel)
     self._delete_button.setProperty("buttonStyle", "danger")
-    self._delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
     self._delete_button.clicked.connect(self._show_delete_confirm)
     layout.addWidget(self._delete_button)
 
@@ -90,8 +85,8 @@ class WorldEditPage(QWidget):
     self._confirm_panel.setObjectName("worldDeleteConfirm")
     self._confirm_panel.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
     confirm_layout = QVBoxLayout(self._confirm_panel)
-    confirm_layout.setContentsMargins(14, 12, 14, 12)
-    confirm_layout.setSpacing(10)
+    confirm_layout.setContentsMargins(14, 12, 14, 18)
+    confirm_layout.setSpacing(12)
     self._confirm_label = QLabel("Delete this world permanently? This cannot be undone.", self._confirm_panel)
     self._confirm_label.setObjectName("worldDeleteConfirmLabel")
     self._confirm_label.setWordWrap(True)
@@ -100,15 +95,11 @@ class WorldEditPage(QWidget):
     confirm_buttons.setContentsMargins(0, 0, 0, 0)
     confirm_buttons.setSpacing(8)
     confirm_buttons.addStretch(1)
-    cancel_delete = QPushButton("Cancel", self._confirm_panel)
-    cancel_delete.setObjectName("menuBtn")
-    cancel_delete.setCursor(Qt.CursorShape.PointingHandCursor)
+    cancel_delete = make_menu_button("Cancel", self._confirm_panel)
     cancel_delete.clicked.connect(self._hide_delete_confirm)
     confirm_buttons.addWidget(cancel_delete)
-    confirm_delete = QPushButton("Delete", self._confirm_panel)
-    confirm_delete.setObjectName("menuBtn")
+    confirm_delete = make_menu_button("Delete", self._confirm_panel)
     confirm_delete.setProperty("buttonStyle", "danger")
-    confirm_delete.setCursor(Qt.CursorShape.PointingHandCursor)
     confirm_delete.clicked.connect(lambda: self.delete_requested.emit(self._world_id))
     confirm_buttons.addWidget(confirm_delete)
     confirm_layout.addLayout(confirm_buttons)

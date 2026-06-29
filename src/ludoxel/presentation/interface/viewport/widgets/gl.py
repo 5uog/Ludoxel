@@ -135,6 +135,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._menu_preview_frame = QImage()
     self._startup_menu_pending: bool = True
     self._loaded_my_world_id: str = ""
+    self._world_thumbnail_png_cache: bytes | None = None
     self._pending_open_ldxworld: str = ""
     self._inventory_preview_cache_key: tuple[object, ...] | None = None
     self._inventory_preview_frame = QImage()
