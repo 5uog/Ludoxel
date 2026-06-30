@@ -41,9 +41,6 @@ class AppStateStore:
     return WorldLibraryStore(project_root=self.project_root, data_root=self.data_root)
 
   def _resolve_active_world_id(self, library: WorldLibraryStore) -> str:
-    # Create the default world only on a true first launch (no library index yet).
-    # Once the index exists, an empty library is an intentional state (the user
-    # deleted every world) and must not be repopulated with a phantom world.
     active_id = library.active_world_id()
     if active_id:
       return active_id

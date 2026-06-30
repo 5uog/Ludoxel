@@ -28,10 +28,6 @@ _CGEventTapCallback = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.
 
 
 def _load_system_framework(name: str) -> ctypes.CDLL:
-  # Resolve the framework at runtime so no literal absolute framework path is
-  # baked into the bytecode; PyInstaller's ctypes scanner only follows constant
-  # CDLL arguments, so a computed path avoids the "only basenames are supported"
-  # warning while macOS keeps loading CoreGraphics/CoreFoundation normally.
   located = ctypes.util.find_library(name)
   if not located:
     located = "/".join(("", "System", "Library", "Frameworks", name + ".framework", name))

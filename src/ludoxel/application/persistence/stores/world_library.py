@@ -103,8 +103,6 @@ class WorldLibraryStore:
     try:
       package = read_world_package(path)
     except Exception:
-      # A corrupt or unreadable package must not crash callers that rebuild the
-      # library inside a Qt slot; it is reported as absent.
       return None
     return self._entry_with_world_id(package.entry, world_id)
 
@@ -192,9 +190,6 @@ class WorldLibraryStore:
     path = self._world_path(world_id)
     if not path.exists() or not verify_runtime_file(self._data_root(), self._world_relative(world_id)):
       return False
-    # Read only the manifest and thumbnail; the existing world body is being
-    # replaced, so decompressing it on every save is unnecessary and only widens
-    # the window where the package file is open.
     try:
       summary = read_world_package_summary(path)
     except Exception:

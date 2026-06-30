@@ -389,10 +389,6 @@ class AudioManager(QObject):
       pool = None if group_catalog is None else group_catalog.get(str(action))
       if pool is None:
         continue
-      # The first candidate group that defines a pool for this action owns the
-      # sound. A momentarily exhausted voice budget on that pool must not fall
-      # through to a different material's pool, so the resolved material is the
-      # only one attempted regardless of whether a voice is currently free.
       self._play_local_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool)
       return
 
@@ -402,10 +398,6 @@ class AudioManager(QObject):
       pool = None if group_catalog is None else group_catalog.get(str(action))
       if pool is None:
         continue
-      # The first candidate group that defines a pool for this action owns the
-      # sound. A momentarily exhausted voice budget on that pool must not fall
-      # through to a different material's pool, so the resolved material is the
-      # only one attempted regardless of whether a voice is currently free.
       self._play_remote_pool(pool_key=f"block:{candidate_group}:{action}", pool=pool, position=position)
       return
 

@@ -23,7 +23,6 @@ _MANIFEST_MEMBER = "manifest.json"
 _WORLD_MEMBER = "world.json"
 _THUMBNAIL_MEMBER = "thumbnail.png"
 
-# Reject pathological packages before any member is expanded into memory.
 _MAX_TOTAL_UNCOMPRESSED_BYTES = 128 * 1024 * 1024
 _MAX_MEMBER_COUNT = 16
 
@@ -60,9 +59,6 @@ def export_world_package(path: Path, *, entry: PersistedWorldEntry, thumbnail_by
     _silent_unlink(tmp)
     raise LdxworldError(f"Could not write world package: {error}") from error
 
-  # os.replace can fail transiently on Windows when an antivirus or indexer holds
-  # the freshly written file. Retry briefly, then surface the failure as an
-  # LdxworldError so the caller can report it instead of leaving a partial write.
   last_error: OSError | None = None
   for attempt in range(5):
     try:
