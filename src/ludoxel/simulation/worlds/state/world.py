@@ -36,12 +36,6 @@ class WorldState:
   _chunk_mesh_rev: Dict[ChunkKey, int] = field(default_factory=dict, init=False, repr=False)
   _gravity_dirty_columns: Dict[ColumnKey, int] = field(default_factory=dict, init=False, repr=False)
 
-  # Process-monotonic identity for the block contents currently held by this
-  # object. ``revision`` and per-chunk mesh revisions restart from a small value
-  # on every full content swap, and one WorldState object is reused across world
-  # loads, so neither is unique across loaded worlds. content_generation advances
-  # on construction and on every replace_all, giving renderer-side caches a key
-  # that never collides between two worlds loaded into the same object.
   _content_generation: int = field(default=0, init=False, repr=False)
 
   def __post_init__(self) -> None:
