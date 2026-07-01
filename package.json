@@ -5,7 +5,7 @@
   "license": "LicenseRef-All-Rights-Reserved",
   "type": "module",
   "engines": {
-    "node": "^20.19.0 || ^22.13.0 || >=24"
+    "node": ">=22.18.0 <25"
   },
   "scripts": {
     "help": "node ./tools/help_commands/scripts/run/help.run.mjs",
