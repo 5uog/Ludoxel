@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 [package]
 name = "ludoxel_terrain"
-version = "3.7.7"
+version = "3.7.7-hotfix.1"
 edition = "2021"
 publish = false
 license-file = "../../LICENSE"
@@ -12,7 +12,7 @@ name = "ludoxel_terrain"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.23", features = ["extension-module", "abi3-py311", "generate-import-lib"] }
+pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "generate-import-lib"] }
 
 [profile.release]
 opt-level = 3

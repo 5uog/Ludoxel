@@ -1556,7 +1556,7 @@ name = "ludoxel_terrain"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.23", features = ["extension-module", "abi3-py311", "generate-import-lib"] }`,
+pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "generate-import-lib"] }`,
           },
           {
             kind: 'paragraph',

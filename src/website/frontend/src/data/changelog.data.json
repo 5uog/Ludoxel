@@ -2,6 +2,26 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.7 Hotfix 1",
+      "tags": ["Desktop Application", "Build"],
+      "sections": [
+        {
+          "title": "Rust Terrain Binding Dependency Update",
+          "items": [
+            "The `ludoxel_terrain` crate now builds against PyO3 0.25.1 instead of 0.23.5. The upgrade moves the binding past the three published PyO3 advisories affecting versions before 0.24.1: the out-of-bounds read in the `nth` and `nth_back` implementations of the `PyList` and `PyTuple` iterators, the missing `Sync` bound on `PyCFunction::new_closure` closures, and the buffer-overflow risk in `PyString::from_object`. The terrain binding itself calls none of those APIs — it exposes three `#[pyfunction]` entry points returning bytes — so the change removes the vulnerable dependency versions from the build without altering the module contract.",
+            "`native/ludoxel_terrain/Cargo.toml` records the crate version as `3.7.7-hotfix.1`, and `native_build_info()` reports that string through the compiled module. The binding API, the `abi3-py311` stable-ABI configuration, the artifact placement, and the `build:native` and `build:native:check` behavior are unchanged."
+          ]
+        },
+        {
+          "title": "Terrain Noise Channel Naming",
+          "items": [
+            "The per-purpose discriminator that separates the terrain noise fields — height octaves, ravine fields, strata selection, and ore gates — is now named `channel` instead of `salt` in `native/ludoxel_terrain/src/terrain.rs` and `src/ludoxel/simulation/worlds/generation/terrain_math.py`. The value is a procedural noise-lane selector mixed into the deterministic world hash, not cryptographic material, and the previous name caused static analysis to classify the incrementing channel constant as a hard-coded cryptographic salt.",
+            "The rename is lexical only: the hash function, the channel constants, the evaluation order, and every generated value are unchanged, the Rust and Python implementations remain bit-identical for identical inputs, and existing seeded worlds reproduce the same terrain."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.7",
       "tags": ["Desktop Application", "My World", "Rendering", "UI", "Data", "Build"],
       "sections": [
