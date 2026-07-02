@@ -76,7 +76,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._adapter = QtInputAdapter(self)
     self._inp = ViewportInput(widget=self, adapter=self._adapter)
 
-    self._sessions = PlaySpaceContext.create_default(seed=0)
+    self._sessions = PlaySpaceContext.create_default()
     self._session = self._sessions.active_session()
     self._runner = FixedStepRunner(step_dt=self._loop.step_dt(), on_step=self._on_step)
 

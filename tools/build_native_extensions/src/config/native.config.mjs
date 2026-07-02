@@ -21,3 +21,19 @@ export const NATIVE_EXTENSION_MODULES = Object.freeze([
 ]);
 
 export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib']);
+
+// Rust native targets are separate from the Cython targets above: the source
+// is a Rust crate under native/, the artifact is a cdylib renamed to the
+// Python extension module name, and the Python fallback lives in a separate
+// module that the import owner selects when the compiled module is absent.
+export const RUST_NATIVE_MODULES = Object.freeze([
+  Object.freeze({
+    id: 'terrain_native',
+    crateDirectory: 'native/ludoxel_terrain',
+    crateName: 'ludoxel_terrain',
+    moduleName: 'ludoxel.simulation.worlds.generation._terrain_native',
+    artifactStem: '_terrain_native',
+    installDirectory: 'src/ludoxel/simulation/worlds/generation',
+    fallbackModuleName: 'ludoxel.simulation.worlds.generation.fallback',
+  }),
+]);

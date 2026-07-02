@@ -32,7 +32,7 @@ class StartupShellOverlay(QWidget):
   create_world_requested = pyqtSignal()
   import_world_requested = pyqtSignal()
   edit_world_requested = pyqtSignal(str)
-  create_world_confirmed = pyqtSignal(str, str)
+  create_world_confirmed = pyqtSignal(str, str, str, str)
   rename_world_confirmed = pyqtSignal(str, str)
   export_world_requested = pyqtSignal(str)
   delete_world_confirmed = pyqtSignal(str)

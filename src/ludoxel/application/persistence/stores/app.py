@@ -10,21 +10,18 @@ from ludoxel.application.persistence.schema.app import AppState
 from ludoxel.application.persistence.schema.files import APP_STATE_FILE_VERSION, PersistedAppFile
 from ludoxel.application.persistence.schema.othello import PersistedOthelloSpace
 from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
-from ludoxel.application.persistence.schema.player import PersistedPlayer
 from ludoxel.application.persistence.schema.world_library import DEFAULT_WORLD_NAME, WORLD_GAME_MODE_SURVIVAL, world_game_mode_from_creative, world_game_mode_is_creative
 from ludoxel.application.persistence.stores.json_file import JsonFileStore
-from ludoxel.application.persistence.stores.world_library import WorldLibraryStore
+from ludoxel.application.persistence.stores.world_library import WorldLibraryStore, default_my_world_space
 from ludoxel.foundations.locations.roots import default_runtime_data_root, previous_configs_root, runtime_state_root
-from ludoxel.simulation.spaces.my_world.session import MY_WORLD_PITCH_DEG, MY_WORLD_SPAWN, MY_WORLD_YAW_DEG
+from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
 
 _APP_STATE_FILENAME = "app_state.json"
 _APP_STATE_RELATIVE = f"state/{_APP_STATE_FILENAME}"
 
 
-def default_new_world_space() -> PersistedPlaySpace:
-  return PersistedPlaySpace(
-    player=PersistedPlayer(pos_x=float(MY_WORLD_SPAWN[0]), pos_y=float(MY_WORLD_SPAWN[1]), pos_z=float(MY_WORLD_SPAWN[2]), yaw_deg=float(MY_WORLD_YAW_DEG), pitch_deg=float(MY_WORLD_PITCH_DEG))
-  )
+def default_new_world_space(generation: WorldGenerationSpec | None = None) -> PersistedPlaySpace:
+  return default_my_world_space(generation)
 
 
 @dataclass
@@ -99,11 +96,7 @@ class AppStateStore:
     library = self._library()
     active_id = self._resolve_active_world_id(library)
     if not active_id:
-      # The library is intentionally empty; only the global settings file is written.
       return
     my_world = state.my_world if isinstance(state.my_world, PersistedPlaySpace) else default_new_world_space()
     if not library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes):
-      # The active world could not be written (missing, unreadable, or the write
-      # failed). Raise so callers do not treat the save as successful and leave
-      # the play-space with unsaved progress.
       raise OSError(f"failed to save My World package for active world {active_id}")

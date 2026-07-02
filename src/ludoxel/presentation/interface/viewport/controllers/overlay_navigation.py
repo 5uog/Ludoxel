@@ -184,13 +184,6 @@ def on_inventory_closed(viewport: "RendererViewportWidget") -> None:
 
 
 def _persist_active_play_space(viewport: "RendererViewportWidget") -> bool:
-  """Save the active play-space (My World and Othello) to its canonical storage.
-
-  Returns True only when the world and settings write completed. A thumbnail or
-  other auxiliary failure is already isolated inside ``viewport.save_state`` and
-  does not fail the data save. A real data-save failure is surfaced through the
-  log (and the caller's notification) rather than being swallowed.
-  """
   try:
     viewport.save_state()
     return True
@@ -207,13 +200,6 @@ def _notify_save_failed(viewport: "RendererViewportWidget") -> None:
 
 
 def _exit_active_play_space(viewport: "RendererViewportWidget", proceed) -> None:
-  """Shared exit boundary for leaving the active play-space.
-
-  The active My World or Othello is saved first; only on success is ``proceed``
-  run on the next event-loop pass. Deferring keeps the pause button that fired
-  this from being torn down inside its own click handler, and the deferred call
-  is guarded so a navigation error logs instead of aborting the Qt event loop.
-  """
   viewport._reset_held_mouse_actions()
   if not _persist_active_play_space(viewport):
     _notify_save_failed(viewport)

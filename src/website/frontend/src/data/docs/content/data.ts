@@ -902,7 +902,15 @@ finally:
         content: [
           {
             kind: 'paragraph',
-            text: '`WorldState` persists blocks as explicit coordinate/state rows. The saved representation contains user-visible block states keyed by integer coordinates and a revision counter that records world mutation. Procedural seeds, chunk caches, and renderer meshes remain runtime representations outside that saved shape.',
+            text: [
+              '`WorldState` persists a generation spec and a user edit delta, not a materialized block map. `to_persisted_dict` in `src/ludoxel/simulation/worlds/state/world.py` writes a payload version of `2`, the generation spec, the revision counter, the `placed` rows the user added, and the `broken` coordinates the user removed from base terrain. Base terrain itself is never enumerated into the file; it is recomputed from the spec at load. The full derivation of that payload belongs to ',
+              {
+                kind: 'link',
+                label: 'world generation data',
+                href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data',
+              },
+              '.',
+            ],
           },
           {
             kind: 'code',
@@ -910,14 +918,17 @@ finally:
             caption: 'src/ludoxel/simulation/worlds/state/world.py',
             code: `def to_persisted_dict(self) -> dict[str, Any]:
   with self._lock:
-    items: list[list[Any]] = []
-    for (x, y, z), s in self.blocks.items():
-      items.append([int(x), int(y), int(z), str(s)])
-    return {"revision": int(self.revision), "blocks": items}`,
+    placed_items: list[list[Any]] = []
+    for (x, y, z), s in self._placed.items():
+      placed_items.append([int(x), int(y), int(z), str(s)])
+    broken_items: list[list[int]] = []
+    for x, y, z in sorted(self._broken):
+      broken_items.append([int(x), int(y), int(z)])
+    return {"version": 2, "generation": self._generation.to_dict(), "revision": int(self.revision), "placed": placed_items, "broken": broken_items}`,
           },
           {
             kind: 'paragraph',
-            text: 'That representation has two consequences. First, the saved world is exactly the surviving explicit cell map, not an instruction to regenerate the same terrain. Second, the revision number belongs to mutation tracking inside `WorldState`; it is not a release version, schema version, proof of content authorship, or substitute for the file envelope version, which is `PersistedAppFile.version` for the Othello save and `WORLD_ENTRY_FILE_VERSION` for a My World entry.',
+            text: 'That representation has two consequences. First, the saved world is the pair of a deterministic generation spec and the surviving edit delta; identical spec values reproduce identical base terrain, and the delta is applied over it. Second, the revision number belongs to mutation tracking inside `WorldState`; it is not a release version, schema version, proof of content authorship, or substitute for the file envelope version, which is `PersistedAppFile.version` for the Othello save and `WORLD_ENTRY_FILE_VERSION` for a My World entry. A payload that carries a legacy `blocks` list and no `generation` member loads as a static spec whose entire content is treated as placed rows, and a later save normalizes it to the current shape.',
           },
         ],
       },
@@ -949,7 +960,7 @@ class PersistedPlaySpace:
           },
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/world.py` owns the adapter between the persisted `revision` and explicit block map and simulation `WorldState` serialization. It delegates decoding to the world-state persistence reader and snapshots the blocks back into the application schema; it does not serialize player, AI, inventory, or view state.',
+            text: '`src/ludoxel/application/persistence/schema/world.py` owns the adapter between the persisted world payload and simulation `WorldState` serialization. `PersistedWorld` carries the generation spec, the `revision`, the placed-block rows, and the broken-cell coordinates; it delegates decoding to the world-state persistence reader and snapshots the delta back into the application schema. It does not serialize player, AI, inventory, or view state.',
           },
           {
             kind: 'paragraph',
@@ -963,26 +974,25 @@ class PersistedPlaySpace:
         content: [
           {
             kind: 'paragraph',
-            text: 'The block reader is row-tolerant. A malformed block row is skipped, and the scan continues. A row must be a four-element list and must coerce its coordinates to integers. A corrupt row is not repaired; it is excluded from the reconstructed map.',
+            text: 'The row readers are row-tolerant. A malformed placed row or broken row is skipped, and the scan continues. A placed row must be a four-element list with integer-coercible coordinates and a string state; a broken row must be a three-element list of integer-coercible coordinates. Legacy `blocks` rows follow the same four-element rule. A corrupt row is not repaired; it is excluded from the reconstructed delta.',
           },
           {
             kind: 'code',
             language: 'py',
-            caption: 'Malformed block rows are rejected without aborting the whole map.',
-            code: `raw = d.get("blocks", [])
-if isinstance(raw, list):
-  for it in raw:
+            caption: 'Malformed placed rows are rejected without aborting the whole delta.',
+            code: `placed: Dict[BlockKey, str] = {}
+if isinstance(placed_raw, list):
+  for it in placed_raw:
     if not isinstance(it, list) or len(it) != 4:
       continue
     try:
-      x = int(it[0]); y = int(it[1]); z = int(it[2]); s = str(it[3])
+      placed[(int(it[0]), int(it[1]), int(it[2]))] = str(it[3])
     except Exception:
-      continue
-    out[(x, y, z)] = s`,
+      continue`,
           },
           {
             kind: 'paragraph',
-            text: 'The row decoder preserves valid saved state and discards malformed coordinates or block states. A world loaded after row removal may remain usable, yet its accepted rows define a different state from the file that valid rows would have produced; skipped rows remain lost data.',
+            text: 'The row decoders preserve valid saved edits and discard malformed coordinates or block states. A world loaded after row removal may remain usable, yet its accepted rows define a different edit delta from the file that valid rows would have produced; skipped rows remain lost data. A skipped broken row lets the corresponding base-terrain cell resurface, because the record that suppressed it no longer exists.',
           },
         ],
       },
@@ -1010,20 +1020,25 @@ if isinstance(raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schedulers/state.py` owns application-level restore and save sequencing between persisted state, prepared sessions, runtime preferences, and renderer projection. Its `apply_persisted_state_if_present` restores a saved player, block map, and AI tuple into a session that has already been constructed by its factory. Its My World path does not replace a newly generated world when the persisted map is empty and its revision is non-positive; otherwise it replaces the complete block snapshot at a revision of at least one. The Othello path follows the same restore sequence, then ensures the board layout and removes an invalid below-board player position. Loading is therefore a controlled mutation of a prepared session, not a second generator and not an instruction for the renderer to reconstruct world state.',
+            text: '`src/ludoxel/application/persistence/schedulers/state.py` owns application-level restore and save sequencing between persisted state, prepared sessions, runtime preferences, and renderer projection. Its `apply_persisted_state_if_present` restores a saved player, world payload, and AI tuple into a session that has already been constructed by its factory. Its My World path does not replace a newly generated world when the persisted payload is empty; otherwise it replaces the session world content with the saved generation spec, placed rows, and broken coordinates at a revision of at least one. The Othello path follows the same restore sequence, then ensures the board layout and removes an invalid below-board player position. Loading is therefore a controlled mutation of a prepared session, not a second generator and not an instruction for the renderer to reconstruct world state.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schedulers/state.py',
             code: `def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
-  if not persisted_world.blocks and int(persisted_world.revision) <= 0:
+  if persisted_world.is_empty():
     return
-  session.world.replace_all(blocks={key: str(value) for (key, value) in persisted_world.blocks.items()}, revision=int(max(1, int(persisted_world.revision))))`,
+  session.world.replace_content(
+    generation=persisted_world.generation,
+    placed={key: str(value) for (key, value) in persisted_world.placed_blocks.items()},
+    broken=tuple(persisted_world.broken_cells),
+    revision=int(max(1, int(persisted_world.revision))),
+  )`,
           },
           {
             kind: 'paragraph',
-            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, `PersistedWorldInventory`, and normalized `PersistedAiPlayer` rows together. The Othello space is read from the `othello_space` member of `app_state.json`, while the active My World space is read from its library entry and supplied to the same restore sequence; `load_my_world_space_into_session` regenerates a fresh map for an empty entry and otherwise replaces the saved block snapshot.',
+            text: '`PersistedPlayer.from_dict` supplies typed position, velocity, orientation, health, flight, cooldown, and crouch values to the scheduler; malformed coordinate triples fall back to their declared defaults and maximum health is never restored below one. `PersistedPlaySpace` keeps that player record, `PersistedWorld`, `PersistedWorldInventory`, and normalized `PersistedAiPlayer` rows together. The Othello space is read from the `othello_space` member of `app_state.json`, while the active My World space is read from its library entry and supplied to the same restore sequence; `load_my_world_space_into_session` rebuilds a default normal-mode world for an empty entry and otherwise replaces the saved generation spec and edit delta.',
           },
         ],
       },
@@ -2241,5 +2256,86 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
       },
     ],
     relatedTitles: ['Separating Original Materials from Output', 'Understanding Application Output', 'Understanding User-Created Materials'],
+  }),
+  defineDocsArticle({
+    category: 'Data',
+    subcategory: 'Local and Saved Data',
+    group: 'Saved Runtime State',
+    title: 'Reading World Generation Data',
+    description:
+      'Defines the persisted world generation spec, the placed and broken edit-delta rows, seed admission including the explicit zero seed, the version-2 world payload inside `.ldxworld` packages, and the legacy static-payload compatibility rule.',
+    sections: [
+      {
+        id: 'reading-world-generation-data-spec-fields',
+        title: 'Generation Spec Fields',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`WorldGenerationSpec` in `src/ludoxel/simulation/worlds/generation/spec.py` owns the persisted generation identity of one My World. It carries four members: `mode`, one of `normal`, `flat`, or `static`; `version`, the generation-algorithm version, currently `1`; `seed`, a 64-bit signed integer; and `flat_ground_y`, the ground level consumed by flat mode. `normal` selects the deterministic seeded terrain, `flat` selects the single-layer grass plane a user chose explicitly in Create New World, and `static` marks a world whose entire content is carried as placed rows with no computed base terrain — the form every legacy payload loads into.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/worlds/generation/spec.py',
+            code: `def to_dict(self) -> dict[str, Any]:
+  normalized = self.normalized()
+  return {"mode": str(normalized.mode), "version": int(normalized.version), "seed": int(normalized.seed), "flat_ground_y": int(normalized.flat_ground_y)}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Seed admission is fixed by `coerce_seed` and `seed_from_text`: a value must be an integer within the signed 64-bit range, an empty or unspecified entry resolves to the default seed `1`, and an explicit `0` is stored and restored as `0`. No branch rewrites a user-entered zero to the default; the default applies only when the Create New World seed field is left empty. The seed participates identically in flat mode even though the current flat terrain does not vary with it, so the recorded value survives round trips regardless of mode.',
+          },
+        ],
+      },
+      {
+        id: 'reading-world-generation-data-delta-rows',
+        title: 'Placed and Broken Delta Rows',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The version-2 world payload written by `WorldState.to_persisted_dict` holds the spec under `generation`, the mutation counter under `revision`, four-element `placed` rows of coordinates and block state for every block the user added, and three-element `broken` rows for every base-terrain coordinate the user removed. Base terrain is never serialized; it is a function of the spec and the coordinate. A world file therefore stays small in proportion to what the user changed, and two files with the same spec and empty deltas describe the same world.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'Version-2 world payload shape written into `world.json` (schema example).',
+            code: `{
+  "version": 2,
+  "generation": {"mode": "normal", "version": 1, "seed": 1, "flat_ground_y": 0},
+  "revision": 42,
+  "placed": [[3, -5, 9, "minecraft:stone"]],
+  "broken": [[0, -6, 0]]
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The two row families record different consequences. A `placed` row overrides whatever the base terrain holds at that coordinate. A `broken` row suppresses a base-terrain cell to air; it is written only when the removed block belonged to the computed base terrain, so removing a user-placed block deletes its `placed` row without adding a `broken` row, and a `broken` row already present at that coordinate stays. This ordering makes the resolved state reproducible: placed wins, broken suppresses, base terrain answers last.',
+          },
+        ],
+      },
+      {
+        id: 'reading-world-generation-data-package-and-legacy',
+        title: 'Package Version and Legacy Payloads',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'The payload travels inside the `world.json` member of each `.ldxworld` package, whose manifest now records `LDXWORLD_FORMAT_VERSION` of `2`; the archive structure, member validation, and import admission belong to the ',
+              {
+                kind: 'link',
+                label: 'My World library',
+                href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-the-my-world-library',
+              },
+              '. A version-1 package carrying a `blocks` list without a `generation` member remains readable: `WorldState.from_persisted_dict` loads it as a `static` spec whose blocks all become placed rows, so the visible content and collision of an existing world are unchanged, and the next save writes the current version-2 shape.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'No migration path reads the retired `state/world_state.json` or `state/player_state.json` files. The current save owners are `state/world_library.json` and the per-world `state/worlds/<id>.ldxworld` entries; a payload outside those files is not consulted, and the absence of a legacy global world file changes nothing about how a library entry loads. Deleting a `broken` row by hand resurfaces the suppressed base-terrain cell on the next load, and deleting a `placed` row removes the user block; hand edits therefore change the world the rows would have produced, not merely file size.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Reading Saved World State', 'Reading the My World Library', 'Creating Seeded My Worlds'],
   }),
 ];

@@ -38,12 +38,22 @@ class ViewportRenderLoopMixin:
   def _update_loading_progress_from_upload(self: "GLViewportWidget", *, eye: Vec3) -> None:
     if not bool(self.loading_active()):
       return
+    now = time.perf_counter()
     ready_chunks, total_chunks = self._upload.visible_load_progress(world=self._session.world, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
-    if self._frame_sync.loading.set_progress(ready_chunks=int(ready_chunks), total_chunks=int(total_chunks)):
-      if int(total_chunks) > 0:
-        self._set_loading_status(f"Loading world... {int(ready_chunks)}/{int(total_chunks)} chunks")
-      else:
-        self._set_loading_status("Loading world...")
+    progress_changed = self._frame_sync.loading.set_progress(ready_chunks=int(ready_chunks), total_chunks=int(total_chunks))
+    if progress_changed:
+      self._loading_progress_changed_s = float(now)
+    stalled_s = float(now) - float(getattr(self, "_loading_progress_changed_s", now))
+    pending_builds = int(self._upload.pending_build_count())
+    if int(total_chunks) > 0:
+      status = f"Loading world... {int(ready_chunks)}/{int(total_chunks)} chunks"
+      if pending_builds > 0:
+        status = f"{status} ({pending_builds} building)"
+    else:
+      status = "Selecting world chunks..."
+    if float(stalled_s) >= 4.0:
+      status = f"{status} [{self._upload.stall_detail()}]"
+    self._set_loading_status(status)
     if self._upload.visible_chunks_ready(world=self._session.world, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks)):
       self._finish_loading()
 

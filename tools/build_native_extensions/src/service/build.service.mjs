@@ -8,6 +8,7 @@ import { renderNativeBuildPythonScript } from '../script/build-script.script.mjs
 import { removeGeneratedNativeScriptRoot, writeGeneratedJson, writeGeneratedPythonScript } from '../script/temp-script.service.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
+import { buildRustNativeExtensions } from './rust.service.mjs';
 import { verifyNativeExtensions } from './verify.service.mjs';
 
 export function buildNativeExtensions(options = {}, context = {}) {
@@ -18,7 +19,7 @@ export function buildNativeExtensions(options = {}, context = {}) {
     return 1;
   }
 
-  console.log('Native extension build targets:');
+  console.log('Cython native build targets:');
   for (const source of sources) {
     console.log(`  - ${source.moduleName} (${source.displayPath})`);
   }
@@ -42,11 +43,16 @@ export function buildNativeExtensions(options = {}, context = {}) {
       return buildExitCode;
     }
 
+    const rustExitCode = buildRustNativeExtensions(options, context);
+    if (rustExitCode !== 0) {
+      return rustExitCode;
+    }
+
     if (options.skipVerify) {
       return 0;
     }
 
-    return verifyNativeExtensions({ requireBuilt: true });
+    return verifyNativeExtensions({ requireBuilt: true }, context);
   } finally {
     removeGeneratedNativeScriptRoot();
   }

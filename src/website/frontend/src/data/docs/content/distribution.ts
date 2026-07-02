@@ -398,7 +398,15 @@ function requireBundledResource(appPath, label, relativePaths) {
         content: [
           {
             kind: 'paragraph',
-            text: 'Native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `tools/build_native_extensions/src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature.',
+            text: [
+              'Cython native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `tools/build_native_extensions/src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature. The same tool also owns a separate ',
+              {
+                kind: 'link',
+                label: 'Rust crate target',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
+              },
+              ' whose source is Rust rather than a Cython-compiled Python file and whose verification policy differs from the candidates below.',
+            ],
           },
           {
             kind: 'code',
@@ -464,7 +472,7 @@ export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib
         content: [
           {
             kind: 'paragraph',
-            text: '`buildNativeExtensions` in `src/service/build.service.mjs` collects the sources, writes a generated Python build script and a JSON payload under `build/native-extension-scripts`, resolves a Python executable, runs the script, and then verifies with the require-built policy enabled unless verification was skipped. The generated script compiles the extensions in place through Cython and setuptools and instructs the operator to install the development dependencies when they are absent; the generated script root is always removed in a `finally` block, so no payload is left as a stale artifact. The two entry points are:',
+            text: '`buildNativeExtensions` in `src/service/build.service.mjs` collects the sources, writes a generated Python build script and a JSON payload under `build/native-extension-scripts`, resolves a Python executable, runs the script, then runs the Rust crate build, and then verifies with the require-built policy enabled unless verification was skipped. The generated script compiles the Cython extensions in place through Cython and setuptools and instructs the operator to install the development dependencies when they are absent; the generated script root is always removed in a `finally` block, so no payload is left as a stale artifact. The two entry points are:',
           },
           {
             kind: 'code',
@@ -493,7 +501,15 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only source and returns success because a fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. Four conditions move independently. Source availability belongs to the `.py` reference implementation. Compiled acceleration belongs to the module directory and requires `compiledBinariesForSource` to find a suffix-matched binary. Verification policy belongs to the run and is selected by `--require-built`. Release permission belongs to the controlling License Text. A fallback-only directory retains a working implementation, and a passing native build establishes neither runtime superiority nor distribution permission.',
+            text: [
+              'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only Cython source and accepts that state because a Cython fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. The Rust crate target is checked after the Cython candidates on every verification run and does not accept a fallback import; its gate is fixed by the ',
+              {
+                kind: 'link',
+                label: 'Rust verification policy',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
+              },
+              '. Four conditions move independently for the Cython candidates. Source availability belongs to the `.py` reference implementation. Compiled acceleration belongs to the module directory and requires `compiledBinariesForSource` to find a suffix-matched binary. Verification policy belongs to the run and is selected by `--require-built`. Release permission belongs to the controlling License Text. A fallback-only directory retains a working implementation, and a passing native build establishes neither runtime superiority nor distribution permission.',
+            ],
           },
         ],
       },
@@ -512,7 +528,7 @@ npm run build:native:check`,
         ],
       },
     ],
-    relatedTitles: ['Running a Desktop Build with Permission', 'Reading Build Output', 'Running Package Checks with Permission'],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Running a Desktop Build with Permission', 'Reading Build Output', 'Running Package Checks with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1514,5 +1530,115 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
       },
     ],
     relatedTitles: ['Reading Build Output', 'Running Package Checks with Permission', 'Understanding Repository Visibility', 'Understanding Redistribution Restrictions'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
+    subcategory: 'Runtime Inclusions',
+    group: 'Native and Runtime Materials',
+    title: 'Building the Rust Terrain Extension',
+    description:
+      'Defines the Rust terrain crate, its cargo build and artifact placement through build_native_extensions, the compiled-import verification that refuses the Python fallback, the fallback runtime boundary, and the desktop-package inclusion path.',
+    sections: [
+      {
+        id: 'building-the-rust-terrain-extension-crate-and-contract',
+        title: 'Crate Source and Shared Contract',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The Rust terrain engine lives in the repository as `native/ludoxel_terrain`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set. `src/terrain.rs` implements the deterministic hashing, value noise, surface-height, ravine, and material-selection mathematics; `src/lib.rs` exposes `surface_heights`, `terrain_materials`, and `native_build_info` as Python functions and names the module `_terrain_native`. The compiled artifact is imported as `ludoxel.simulation.worlds.generation._terrain_native`; the pure Python implementation of the same formulas is `ludoxel.simulation.worlds.generation.fallback` backed by `terrain_math.py`, and the import owner `native.py` selects between them at import time. Both implementations return the same bytes-level contract: `surface_heights` yields little-endian `int32` values in C order with shape `(nx, nz)`, and `terrain_materials` yields `uint8` material codes in C order with shape `(nx, ny, nz)`, where code zero is air and non-zero codes index the registered block ids in `materials.py`.',
+          },
+          {
+            kind: 'code',
+            language: 'toml',
+            caption: 'native/ludoxel_terrain/Cargo.toml',
+            code: `[lib]
+name = "ludoxel_terrain"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py311", "generate-import-lib"] }`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The crate is a bulk numerical engine and nothing else. It receives a seed, a generation version, a mode code, a flat ground level, and box coordinates, and it returns arrays; the meaning of a seed, the ownership of edit deltas, block-registry membership, persistence schemas, and renderer contracts remain with the Python simulation and application layers. The Rust source returns registered material codes only; when a code is outside the Python material table, the Python side raises rather than substituting a different block, so a registry mismatch is a hard error and never a silent replacement.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-terrain-extension-build-and-placement',
+        title: 'Cargo Build and Artifact Placement',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`buildRustNativeExtensions` in `tools/build_native_extensions/src/service/rust.service.mjs` owns the build. It resolves a cargo executable from `CARGO`, the process path, or the per-user `.cargo/bin` directory, sets `PYO3_PYTHON` to the resolved project Python when unset, runs `cargo build --release --manifest-path` against the crate manifest, and copies the produced cdylib into the import location. On Windows the installed artifact is `src/ludoxel/simulation/worlds/generation/_terrain_native.pyd`; on other platforms the suffix is `.so`. A missing cargo executable, a missing crate manifest, a nonzero cargo exit, or a missing cdylib each terminates the build with a distinct error line, so the desktop preflight that runs this build stops before packaging rather than shipping an ambiguous native state.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'RUST_NATIVE_MODULES in tools/build_native_extensions/src/config/native.config.mjs.',
+            code: `export const RUST_NATIVE_MODULES = Object.freeze([
+  Object.freeze({
+    id: 'terrain_native',
+    crateDirectory: 'native/ludoxel_terrain',
+    crateName: 'ludoxel_terrain',
+    moduleName: 'ludoxel.simulation.worlds.generation._terrain_native',
+    artifactStem: '_terrain_native',
+    installDirectory: 'src/ludoxel/simulation/worlds/generation',
+    fallbackModuleName: 'ludoxel.simulation.worlds.generation.fallback',
+  }),
+]);`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The configured module record separates the crate directory, the compiled module name, the installed artifact stem, and the fallback module. `rustCrateStates` derives from it the manifest path, the built cdylib path under `target/release`, the installed artifact path, and a staleness flag comparing crate source modification times against the installed artifact. A stale artifact is reported with a rebuild instruction; the tool does not rebuild implicitly during verification, and application startup never runs cargo.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-terrain-extension-verification',
+        title: 'Import Verification Refuses the Fallback',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`verifyRustNativeExtensions` runs inside every `npm run build:native:check` invocation and inside the post-build verification of `npm run build:native`. It imports the compiled module name in a subprocess whose `PYTHONPATH` is pinned to the repository `src` tree, reads the imported module’s `__file__`, and accepts the target only when that file resolves under `src/ludoxel` and carries the platform’s compiled suffix. A missing artifact, an import that resolves outside the repository source tree, or an import that resolves to a Python source file each fails the check. The Python fallback therefore never passes this verification: it exists for runtime survival, and the check exists to prove that the compiled extension is the module the interpreter actually loads.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'The compiled-import gate in rust.service.mjs.',
+            code: `const importedFile = resolve(imported.file);
+if (!importedFile.startsWith(srcLudoxelRoot)) {
+  console.error(\`  imported module resolves outside the repository source tree: \${importedFile}\`);
+  failed = true;
+  continue;
+}
+if (!importedFile.endsWith(expectedSuffix)) {
+  console.error(\`  imported module is not a compiled \${expectedSuffix} extension: \${importedFile}\`);
+  failed = true;
+  continue;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'A passing check proves exactly the inspected conditions: a compiled extension file exists at the configured location, the interpreter resolves the module name to that file, and the file is not the fallback source. It does not prove numerical parity for every input, packaging completeness, cross-platform support, or any release permission; those remain with the parity contract in the terrain sources, the desktop packaging path, and the controlling License Text.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-terrain-extension-runtime-and-package',
+        title: 'Runtime Fallback and Package Inclusion',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'At runtime, `native.py` performs one guarded import of `_terrain_native` at module import time; that import is the entire startup native check, and no build, self-test, or bulk generation runs during application startup. When the compiled module is absent, `native_terrain_status` reports `fallback:python` and every bulk query routes to the pure Python implementation, so a source tree without a cargo toolchain still starts and generates terrain, only slower. When the compiled module is present, the same functions return the compiled results, and the two paths are held to identical outputs for identical inputs by the shared formula contract in `terrain_math.py` and `terrain.rs`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The desktop build reaches this target through the existing native preflight: `buildNativeExtensionsBeforeDesktop` runs `npm run build:native`, which now fails when the Rust build fails, and the PyInstaller command declares `ludoxel.simulation.worlds.generation._terrain_native` as a hidden import so the compiled extension is collected into the Windows executable and the macOS bundle. The wheel package data in `pyproject.toml` admits the installed `_terrain_native` artifact, and `MANIFEST.in` carries the crate source while pruning its `target` build output. A packaged application imports the bundled extension or, absent it, the bundled fallback; it never requires cargo, Node.js, or a source-tree rebuild at startup.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding Native Extension Fallbacks', 'Running a Desktop Build with Permission', 'Reading Build Output'],
   }),
 ];

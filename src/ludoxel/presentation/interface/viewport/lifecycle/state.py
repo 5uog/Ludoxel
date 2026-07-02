@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 import traceback
 from dataclasses import replace
 from typing import TYPE_CHECKING
@@ -171,6 +172,7 @@ class ViewportStateMixin:
 
   def _begin_loading(self: "RendererViewportWidget", text: str) -> None:
     became_active = self._frame_sync.loading.begin()
+    self._loading_progress_changed_s = float(time.perf_counter())
     self._reset_held_mouse_actions()
     self._clear_block_break_particles()
     self._set_loading_status(text)

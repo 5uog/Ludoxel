@@ -18,6 +18,9 @@ from ludoxel.presentation.rendering.faces.chunk_payload_cpu import build_chunk_m
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 from ludoxel.simulation.worlds.state.world import WorldState
 
+_INITIAL_GATE_RADIUS = 3
+_KEEP_MARGIN = 2
+
 
 @dataclass(frozen=True)
 class _BuildResult:
@@ -41,6 +44,9 @@ class WorldUploadTracker:
     self._visible_cache_chunks: tuple[ChunkKey, ...] = ()
     self._build_cache: "OrderedDict[tuple[int, ChunkKey, int], _BuildResult]" = OrderedDict()
     self._max_cached_results: int = 192
+    self._last_scheduled_chunk: ChunkKey | None = None
+    self._last_built_chunk: ChunkKey | None = None
+    self._last_submitted_chunk: ChunkKey | None = None
 
   @staticmethod
   def _world_token(world: WorldState) -> int:
@@ -60,9 +66,6 @@ class WorldUploadTracker:
     for cache_key in list(self._build_cache.keys()):
       if cache_key[:2] != prefix:
         continue
-      if int(cache_key[2]) == int(result.chunk_rev):
-        self._build_cache.pop(cache_key, None)
-        continue
       self._build_cache.pop(cache_key, None)
 
     cache_key = self._build_cache_key(int(result.world_token), ck, int(result.chunk_rev))
@@ -80,6 +83,9 @@ class WorldUploadTracker:
     self._visible_cache_key = None
     self._visible_cache_chunks = ()
     self._build_cache.clear()
+    self._last_scheduled_chunk = None
+    self._last_built_chunk = None
+    self._last_submitted_chunk = None
     while True:
       try:
         self._results.get_nowait()
@@ -127,6 +133,7 @@ class WorldUploadTracker:
 
       renderer.submit_chunk(chunk_key=ck, world_revision=int(r.chunk_rev), faces=list(r.faces))
       self._resident_rev[ck] = int(r.chunk_rev)
+      self._last_submitted_chunk = ck
       drained += 1
 
     self._retire_finished()
@@ -139,25 +146,15 @@ class WorldUploadTracker:
     return normalize_chunk_key(chunk_key(bx, by, bz))
 
   @staticmethod
-  def _needed_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int) -> list[ChunkKey]:
+  def _sorted_chunks(candidates: set[ChunkKey], center: ChunkKey) -> list[ChunkKey]:
     cx, cy, cz = normalize_chunk_key(center)
-    r = int(max(0, rd))
-
-    out: list[ChunkKey] = []
-    for ck in existing:
-      kx = int(ck[0])
-      ky = int(ck[1])
-      kz = int(ck[2])
-      if abs(kx - cx) <= r and abs(ky - cy) <= r and abs(kz - cz) <= r:
-        out.append((kx, ky, kz))
-
+    out = [normalize_chunk_key(ck) for ck in candidates]
     out.sort(key=lambda k: (abs(int(k[0]) - cx) + abs(int(k[2]) - cz), abs(int(k[1]) - cy)))
     return out
 
-  @staticmethod
-  def _retained_chunks(existing: set[ChunkKey], center: ChunkKey, rd: int, margin: int = 4) -> set[ChunkKey]:
-    keep = WorldUploadTracker._needed_chunks(existing, center, int(max(0, int(rd))) + int(max(0, int(margin))))
-    return set(keep)
+  def _content_chunks(self, world: WorldState, center: ChunkKey, rd: int) -> list[ChunkKey]:
+    candidates = world.visible_content_chunk_keys(normalize_chunk_key(center), int(max(0, rd)))
+    return self._sorted_chunks(candidates, center)
 
   def _evict_far_chunks(self, *, renderer: BackendRendererApi, keep: set[ChunkKey]) -> None:
     keep_n = {normalize_chunk_key(k) for k in keep}
@@ -192,10 +189,12 @@ class WorldUploadTracker:
 
     return get_state
 
-  @staticmethod
-  def _build_result_for_snapshot(world_token: int, chunk_key: ChunkKey, chunk_rev: int, blocks_local: list[tuple[int, int, int, str]], get_state, uv_lookup, def_lookup) -> _BuildResult:
-    ck = normalize_chunk_key(chunk_key)
+  def _build_result_for_chunk(self, world: WorldState, world_token: int, target: ChunkKey, chunk_rev: int, uv_lookup, def_lookup) -> _BuildResult:
+    ck = normalize_chunk_key(target)
+    blocks_local, state_at = world.snapshot_for_chunk_build(ck)
+    get_state = self._make_state_getter(state_at)
     faces_np, _shadow_faces_np = build_chunk_mesh_cpu(blocks=blocks_local, get_state=get_state, uv_lookup=uv_lookup, def_lookup=def_lookup)
+    self._last_built_chunk = ck
     return _BuildResult(world_token=int(world_token), chunk=ck, chunk_rev=int(chunk_rev), faces=tuple(faces_np))
 
   def _schedule_build(self, *, world: WorldState, renderer: BackendRendererApi, ck: ChunkKey, chunk_rev: int) -> None:
@@ -237,10 +236,8 @@ class WorldUploadTracker:
       self._pending.pop(pending_key, None)
       self._pending_rev.pop(pending_key, None)
 
-    blocks_local, state_at = world.snapshot_for_chunk_build(ck)
-    get_state = self._make_state_getter(state_at)
-
-    fut = self._executor.submit(self._build_result_for_snapshot, int(world_token), ck, int(chunk_rev), blocks_local, get_state, uv_lookup, def_lookup)
+    fut = self._executor.submit(self._build_result_for_chunk, world, int(world_token), ck, int(chunk_rev), uv_lookup, def_lookup)
+    self._last_scheduled_chunk = ck
 
     def _on_done(done_fut: Future) -> None:
       try:
@@ -270,20 +267,32 @@ class WorldUploadTracker:
   def has_ready_results(self) -> bool:
     return not self._results.empty()
 
+  def pending_build_count(self) -> int:
+    return len(self._pending)
+
+  def resident_count(self) -> int:
+    return len(self._resident_rev)
+
+  def stall_detail(self) -> str:
+    parts: list[str] = [f"pending {int(self.pending_build_count())}", f"resident {int(self.resident_count())}"]
+    if self._last_scheduled_chunk is not None:
+      parts.append(f"scheduled {self._last_scheduled_chunk}")
+    if self._last_built_chunk is not None:
+      parts.append(f"built {self._last_built_chunk}")
+    if self._last_submitted_chunk is not None:
+      parts.append(f"uploaded {self._last_submitted_chunk}")
+    return ", ".join(parts)
+
   def visible_load_progress(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> tuple[int, int]:
     world_token = self._world_token(world)
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
-    cache_key = (int(world_token), int(id(world)), int(world.revision), center, int(rd))
+    gate_radius = min(int(rd), int(_INITIAL_GATE_RADIUS))
+    cache_key = (int(world_token), int(id(world)), int(world.revision), center, int(gate_radius))
 
     if cache_key != self._visible_cache_key:
-      existing = {normalize_chunk_key(ck) for ck in world.existing_chunk_keys()}
-      if not existing:
-        self._visible_cache_key = cache_key
-        self._visible_cache_chunks = ()
-        return (0, 0)
       self._visible_cache_key = cache_key
-      self._visible_cache_chunks = tuple(self._needed_chunks(existing, center, rd))
+      self._visible_cache_chunks = tuple(self._content_chunks(world, center, gate_radius))
 
     visible = self._visible_cache_chunks
 
@@ -300,46 +309,39 @@ class WorldUploadTracker:
 
   def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
     ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
+    if int(total) <= 0:
+      center = self._center_chunk(eye)
+      return len(world.visible_content_chunk_keys(center, int(clamp_render_distance_chunks(int(render_distance_chunks))))) == 0
     return int(ready) >= int(total)
 
   def upload_if_needed(self, *, world: WorldState, renderer: BackendRendererApi, eye: Vec3, render_distance_chunks: int) -> None:
     self._active_world_token = self._world_token(world)
     self._drain_results(renderer, world=world)
 
-    existing = {normalize_chunk_key(ck) for ck in world.existing_chunk_keys()}
-    if not existing:
-      return
-
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
 
-    visible = self._needed_chunks(existing, center, rd)
-    prefetch = self._needed_chunks(existing, center, rd + 2)
+    visible = self._content_chunks(world, center, rd)
+    keep_set = set(self._content_chunks(world, center, rd + int(_KEEP_MARGIN)))
+    if not visible and not keep_set:
+      return
 
-    keep = self._retained_chunks(existing, center, rd, margin=4)
-    self._evict_far_chunks(renderer=renderer, keep=keep)
+    self._evict_far_chunks(renderer=renderer, keep=keep_set)
 
     dirty_map = world.consume_dirty_chunks_with_rev()
     for ck0, cr in dirty_map.items():
       ck = normalize_chunk_key(ck0)
-      if ck in existing:
+      if ck in keep_set:
         self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
 
     self._schedule_chunks_if_stale(world=world, renderer=renderer, chunks=visible)
-    self._schedule_chunks_if_stale(world=world, renderer=renderer, chunks=prefetch)
 
     self._drain_results(renderer, world=world)
 
   def prewarm_cache(self, *, world: WorldState, renderer: BackendRendererApi, eye: Vec3, render_distance_chunks: int) -> None:
-    existing = {normalize_chunk_key(ck) for ck in world.existing_chunk_keys()}
-    if not existing:
-      return
-
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
-
-    visible = self._needed_chunks(existing, center, rd)
-    prefetch = self._needed_chunks(existing, center, rd + 1)
-
+    visible = self._content_chunks(world, center, rd)
+    if not visible:
+      return
     self._schedule_chunks_if_stale(world=world, renderer=renderer, chunks=visible)
-    self._schedule_chunks_if_stale(world=world, renderer=renderer, chunks=prefetch)

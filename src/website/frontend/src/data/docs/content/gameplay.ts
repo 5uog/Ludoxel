@@ -1907,4 +1907,100 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
     ],
     relatedTitles: ['Moving the Player', 'Understanding the Chat Runtime and Command Routing', 'Using Chat and Commands'],
   }),
+  defineDocsArticle({
+    category: 'Gameplay',
+    subcategory: 'My World Building',
+    group: 'World Generation',
+    title: 'Creating Seeded My Worlds',
+    description:
+      'Defines Create New World generation-mode and seed selection, the deterministic normal-mode terrain and its ravines and strata, explicit flat mode, the spawn search, and the edit-delta state transitions over base terrain.',
+    sections: [
+      {
+        id: 'creating-seeded-my-worlds-create-form',
+        title: 'The Create Form Fixes Mode and Seed',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`WorldCreatePage` in `src/ludoxel/presentation/interface/menu/create_page.py` collects four values: a world name, a game mode, a world type of Normal or Flat, and a seed. The seed field is pre-filled with `1`; `seed_text_error` rejects a non-integer or out-of-range entry and disables Create, `seed_from_text` resolves an empty field to the default seed `1`, and an explicit `0` is emitted as `0`. The confirmed values travel as one signal through `StartupShellOverlay` to `create_world` in the viewport menu controller, which builds a normalized `WorldGenerationSpec` and hands it to `WorldLibraryStore.create_world` inside a default play space.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/interface/viewport/controllers/menu.py',
+            code: `def create_world(viewport: "RendererViewportWidget", name: str, game_mode: str, generation_mode: str, seed_text: str) -> None:
+  library = _library(viewport)
+  generation = WorldGenerationSpec(mode=normalize_generation_mode(generation_mode), version=GENERATION_VERSION_CURRENT, seed=seed_from_text(seed_text)).normalized()
+  library.create_world(name=str(name), game_mode=str(game_mode), space=default_new_world_space(generation))
+  refresh_library(viewport)
+  viewport._menu.show_library()`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Flat is an explicit selection, never an implicit default: a world uses the single-layer grass plane only when the form chose Flat, and every other creation path produces normal seeded terrain. The Othello play space keeps its own fixed flat board surface through `create_othello_session` and is not part of this selection. The recorded mode, generation version, and seed persist with the world, so reopening it reproduces the same base terrain rather than regenerating from a different seed.',
+          },
+        ],
+      },
+      {
+        id: 'creating-seeded-my-worlds-normal-terrain',
+        title: 'Normal Terrain Is a Deterministic Function',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Normal-mode base terrain is a function of the seed, the generation version, and the world coordinate, implemented identically in `terrain_math.py` and the Rust crate. The continuous surface height is $h(x,z) = 6 + \\sum_i a_i\\,n_i(x,z)$ over four smoothed value-noise octaves with amplitude/wavelength pairs $(16,192)$, $(8,96)$, $(3,36)$, and $(1,16)$; the octave slopes are bounded so adjacent surface columns differ by at most one block. A ravine field carves the surface where a ridge noise crosses zero under a mask noise, lowering the carved height by up to roughly twenty blocks with a floor that meanders instead of holding one level; carved columns expose stone rather than grass. A bedrock layer sits at $y = -65$ and the carved surface never descends closer than four blocks above it.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Material selection is layered and noise-broken. The surface block is grass outside ravines; the next two to three blocks are a dirt band mixed from dirt, coarse dirt, and gravel with a patch noise biasing local composition; below that, stone blends into andesite, granite, diorite, and tuff through three-dimensional noise fields, and deepslate replaces the stone family below a noise-varied boundary near $y=-28$. Ore veins are noise-thresholded regions gated by a per-cell hash: coal, copper, iron, gold, redstone, lapis, and diamond occupy depth ranges and switch to their deepslate variants inside the deepslate zone, and emerald appears as rare single cells at or above $y=0$. Every emitted id is a registered block; `validate_terrain_materials` raises at session construction when a terrain material is missing from the registry instead of substituting another block.',
+          },
+        ],
+      },
+      {
+        id: 'creating-seeded-my-worlds-spawn',
+        title: 'Spawn Search Runs in Simulation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`spawn_for_generation` in `src/ludoxel/simulation/worlds/generation/spawn.py` fixes the initial player position from the spec alone. For normal mode it scans outward from the origin in growing square rings up to radius 48, accepting the first column that is outside every ravine, whose four neighbors differ in height by at most one block and are also ravine-free, and whose surface sits safely above bedrock; the player stands at the column center one block above the surface. Flat mode spawns above the flat ground level, and a static world keeps the legacy fixed position. The renderer and the create form never estimate a spawn height; the simulation owner computes it, so a saved world restores its stored player pose and only a fresh creation runs the search.',
+          },
+        ],
+      },
+      {
+        id: 'creating-seeded-my-worlds-edit-delta',
+        title: 'Edits Resolve Above Base Terrain',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              '`WorldState` resolves every coordinate in a fixed order: a user-placed block answers first, a recorded broken base-terrain coordinate answers as air, and otherwise the deterministic base terrain answers. Breaking a base-terrain block records its coordinate; breaking a placed block deletes only the placed record and keeps any broken record beneath it, so terrain broken once does not resurface after building and removing a block in the same cell. Placing into open air and breaking that block leaves no broken record, because no base terrain exists there to suppress. Picking, placement, collision, gravity, and AI queries all read this composed state through the same `world.blocks` view, so unmaterialized base terrain is targetable and solid like any explicit block; the persisted form of the delta is fixed by ',
+              {
+                kind: 'link',
+                label: 'world generation data',
+                href: '/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data',
+              },
+              '.',
+            ],
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/worlds/state/world.py',
+            code: `def state_at(self, x: int, y: int, z: int) -> str | None:
+  k = (int(x), int(y), int(z))
+  with self._lock:
+    placed = self._placed.get(k)
+    if placed is not None:
+      return placed
+    if k in self._broken:
+      return None
+  return self.base_state_at(int(x), int(y), int(z))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The ordering is the reason saved edits survive regeneration: base terrain is a source for coordinates the user never touched, not an instruction to rebuild the world. Gravity-affected gravel inside the dirt band participates normally — digging beneath surface gravel lets it fall through the same falling-block system as placed sand or gravel — and a block falling from broken base terrain records the broken origin and lands as a placed block.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Building in My World', 'Reading World Generation Data', 'Reading Placement Rejection'],
+  }),
 ];

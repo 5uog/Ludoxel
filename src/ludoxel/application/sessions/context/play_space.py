@@ -8,6 +8,8 @@ from ludoxel.application.sessions.factories.my_world import create_my_world_sess
 from ludoxel.application.sessions.factories.othello import create_othello_session
 from ludoxel.application.sessions.managers.session import SessionManager
 from ludoxel.simulation.blocks.registries.default import create_default_registry
+from ludoxel.simulation.worlds.generation.materials import validate_terrain_materials
+from ludoxel.simulation.worlds.generation.spec import DEFAULT_SEED, WorldGenerationSpec, coerce_seed
 from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_IDS, PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, normalize_play_space_id
 
 
@@ -18,10 +20,11 @@ class PlaySpaceContext:
   active_space_id: str = PLAY_SPACE_MY_WORLD
 
   @staticmethod
-  def create_default(seed: int = 0) -> "PlaySpaceContext":
+  def create_default(seed: int = DEFAULT_SEED) -> "PlaySpaceContext":
     registry = create_default_registry()
+    validate_terrain_materials(registry)
 
-    my_world = create_my_world_session(seed=int(seed), block_registry=registry)
+    my_world = create_my_world_session(generation=WorldGenerationSpec(seed=coerce_seed(seed, default=DEFAULT_SEED)), block_registry=registry)
     othello = create_othello_session(seed=int(seed), block_registry=registry)
 
     return PlaySpaceContext(my_world=my_world, othello=othello, active_space_id=PLAY_SPACE_MY_WORLD)

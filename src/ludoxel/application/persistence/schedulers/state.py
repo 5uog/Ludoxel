@@ -25,6 +25,7 @@ from ludoxel.simulation.rules.gravity.system import GRAVITY_AFFECTED_TAG
 from ludoxel.simulation.spaces.my_world.session import make_my_world_state
 from ludoxel.simulation.spaces.othello.game.board import OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint
 from ludoxel.simulation.spaces.othello.game.state import OthelloGameState
+from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
 from ludoxel.simulation.worlds.state.play_space import normalize_play_space_id
 
 
@@ -51,9 +52,14 @@ def _load_player_into_session(*, session: SessionManager, player: PersistedPlaye
 
 
 def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
-  if not persisted_world.blocks and int(persisted_world.revision) <= 0:
+  if persisted_world.is_empty():
     return
-  session.world.replace_all(blocks={key: str(value) for (key, value) in persisted_world.blocks.items()}, revision=int(max(1, int(persisted_world.revision))))
+  session.world.replace_content(
+    generation=persisted_world.generation,
+    placed={key: str(value) for (key, value) in persisted_world.placed_blocks.items()},
+    broken=tuple(persisted_world.broken_cells),
+    revision=int(max(1, int(persisted_world.revision))),
+  )
 
 
 def _lift_player_above_othello_board_if_needed(session: SessionManager) -> None:
@@ -141,7 +147,7 @@ def _persisted_player_from_session(session: SessionManager, *, allow_flying: boo
 
 def _persisted_world_from_session(session: SessionManager) -> PersistedWorld:
   snapshot = session.snapshot_world_blocks_for_persistence()
-  return PersistedWorld(revision=int(session.world.revision), blocks={key: str(value) for (key, value) in snapshot.items()})
+  return PersistedWorld.from_world_state(session.world, placed_override={key: str(value) for (key, value) in snapshot.items()})
 
 
 def capture_my_world_space_from_session(session: SessionManager, *, allow_flying: bool, inventory: PersistedWorldInventory | None = None) -> PersistedPlaySpace:
@@ -155,11 +161,16 @@ def capture_my_world_space_from_session(session: SessionManager, *, allow_flying
 
 def load_my_world_space_into_session(session: SessionManager, space: PersistedPlaySpace, *, allow_flying: bool) -> None:
   _load_player_into_session(session=session, player=space.player, allow_flying=bool(allow_flying))
-  if space.world.blocks or int(space.world.revision) > 0:
-    session.world.replace_all(blocks={key: str(value) for (key, value) in space.world.blocks.items()}, revision=int(max(1, int(space.world.revision))))
+  if space.world.is_empty():
+    fresh = make_my_world_state(WorldGenerationSpec())
+    session.world.replace_content(generation=fresh.generation_spec(), placed={}, broken=(), revision=int(max(1, int(fresh.revision))))
   else:
-    fresh = make_my_world_state(seed=0)
-    session.world.replace_all(blocks=fresh.snapshot_blocks(), revision=int(max(1, int(fresh.revision))))
+    session.world.replace_content(
+      generation=space.world.generation,
+      placed={key: str(value) for (key, value) in space.world.placed_blocks.items()},
+      broken=tuple(space.world.broken_cells),
+      revision=int(max(1, int(space.world.revision))),
+    )
   session.set_ai_players(tuple(player.to_state() for player in space.ai_players))
   _restore_player_overlap_exemptions(session)
 

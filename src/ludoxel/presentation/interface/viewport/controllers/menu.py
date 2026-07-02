@@ -17,6 +17,7 @@ from ludoxel.application.persistence.stores.app import default_new_world_space
 from ludoxel.application.persistence.stores.world_library import WorldLibraryStore
 from ludoxel.application.sessions.game_mode import apply_game_mode
 from ludoxel.application.sessions.pipelines.runtime_state import apply_world_inventory_to_runtime, persisted_world_inventory_from_runtime
+from ludoxel.simulation.worlds.generation.spec import GENERATION_VERSION_CURRENT, WorldGenerationSpec, normalize_generation_mode, seed_from_text
 from ludoxel.simulation.worlds.state.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO
 
 if TYPE_CHECKING:
@@ -43,7 +44,7 @@ def bind_menu(viewport: "RendererViewportWidget") -> None:
   menu.create_world_requested.connect(lambda: viewport._menu.show_create())
   menu.import_world_requested.connect(lambda: import_world(viewport))
   menu.edit_world_requested.connect(lambda world_id: open_world_editor(viewport, str(world_id)))
-  menu.create_world_confirmed.connect(lambda name, game_mode: create_world(viewport, str(name), str(game_mode)))
+  menu.create_world_confirmed.connect(lambda name, game_mode, generation_mode, seed_text: create_world(viewport, str(name), str(game_mode), str(generation_mode), str(seed_text)))
   menu.rename_world_confirmed.connect(lambda world_id, name: rename_world(viewport, str(world_id), str(name)))
   menu.export_world_requested.connect(lambda world_id: export_world(viewport, str(world_id)))
   menu.delete_world_confirmed.connect(lambda world_id: delete_world(viewport, str(world_id)))
@@ -127,9 +128,10 @@ def enter_othello(viewport: "RendererViewportWidget") -> None:
   overlay_controller.force_enter_space(viewport, PLAY_SPACE_OTHELLO)
 
 
-def create_world(viewport: "RendererViewportWidget", name: str, game_mode: str) -> None:
+def create_world(viewport: "RendererViewportWidget", name: str, game_mode: str, generation_mode: str, seed_text: str) -> None:
   library = _library(viewport)
-  library.create_world(name=str(name), game_mode=str(game_mode), space=default_new_world_space())
+  generation = WorldGenerationSpec(mode=normalize_generation_mode(generation_mode), version=GENERATION_VERSION_CURRENT, seed=seed_from_text(seed_text)).normalized()
+  library.create_world(name=str(name), game_mode=str(game_mode), space=default_new_world_space(generation))
   refresh_library(viewport)
   viewport._menu.show_library()
 

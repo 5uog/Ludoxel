@@ -16,7 +16,7 @@ export function runNativeExtensionTask(options, context = {}) {
   }
 
   if (options.command === 'verify') {
-    return verifyNativeExtensions({ requireBuilt: options.requireBuilt });
+    return verifyNativeExtensions({ requireBuilt: options.requireBuilt }, context);
   }
 
   console.error(`Unknown native extension command: ${options.command}`);

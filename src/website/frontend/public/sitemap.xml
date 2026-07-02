@@ -70,6 +70,9 @@
     <loc>https://ludoxel.vercel.app/docs/gameplay/chat-commands/player-commands</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems</loc>
   </url>
   <url>
@@ -886,6 +889,24 @@
     <loc>https://ludoxel.vercel.app/docs/gameplay/chat-commands/player-commands/using-teleport-and-game-mode-commands#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation/creating-seeded-my-worlds</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation/creating-seeded-my-worlds#creating-seeded-my-worlds-create-form</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation/creating-seeded-my-worlds#creating-seeded-my-worlds-normal-terrain</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation/creating-seeded-my-worlds#creating-seeded-my-worlds-spawn</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation/creating-seeded-my-worlds#creating-seeded-my-worlds-edit-delta</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/my-world-building/world-generation/creating-seeded-my-worlds#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems/runtime-and-render-state/session-loop/understanding-fixed-step-sessions</loc>
   </url>
   <url>
@@ -1307,6 +1328,24 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/chat-and-commands/chat-runtime/understanding-chat-text-formatting#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-surface-envelope-uploads</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-surface-envelope-uploads#understanding-surface-envelope-uploads-content-bands</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-surface-envelope-uploads#understanding-surface-envelope-uploads-build-snapshot</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-surface-envelope-uploads#understanding-surface-envelope-uploads-tracker-selection</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-surface-envelope-uploads#understanding-surface-envelope-uploads-loading-gate</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-surface-envelope-uploads#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/settings/visual-and-audio-settings/camera-and-crosshair/changing-camera-preferences</loc>
@@ -1942,6 +1981,21 @@
     <loc>https://ludoxel.vercel.app/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-third-party-material-boundaries#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data#reading-world-generation-data-spec-fields</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data#reading-world-generation-data-delta-rows</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data#reading-world-generation-data-package-and-legacy</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/data/local-and-saved-data/saved-runtime-state/reading-world-generation-data#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/desktop-artifacts/platform-packages/understanding-the-windows-executable</loc>
   </url>
   <url>
@@ -2147,6 +2201,24 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/release-language/public-identification/avoiding-unofficial-release-claims#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension#building-the-rust-terrain-extension-crate-and-contract</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension#building-the-rust-terrain-extension-build-and-placement</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension#building-the-rust-terrain-extension-verification</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension#building-the-rust-terrain-extension-runtime-and-package</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority</loc>

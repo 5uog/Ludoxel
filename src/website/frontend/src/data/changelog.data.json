@@ -2,6 +2,44 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.7",
+      "tags": ["Desktop Application", "My World", "Rendering", "UI", "Data", "Build"],
+      "sections": [
+        {
+          "title": "Seeded My World Creation",
+          "items": [
+            "Create New World now selects a world type and a seed in addition to the world name and game mode. `WorldCreatePage` adds a Normal/Flat toggle and a seed field pre-filled with `1`; an empty field resolves to seed `1`, an explicit `0` is stored and restored as `0`, and a non-integer or out-of-64-bit-range entry disables Create. The confirmed name, game mode, generation mode, and seed travel through `StartupShellOverlay` and the viewport menu controller into `WorldGenerationSpec` and `WorldLibraryStore.create_world`.",
+            "Normal mode generates deterministic terrain from the seed, the generation version, and the world coordinate: four bounded value-noise octaves keep adjacent surface columns within one block of each other, a masked ridge field carves meandering ravines whose surfaces expose stone, a bedrock layer sits at y = -65, and dirt, coarse dirt, gravel, stone variants, deepslate, and registered ore blocks are mixed through noise fields rather than axis-aligned clusters. `validate_terrain_materials` raises at session construction when a terrain material id is not registered.",
+            "Flat mode is an explicit Create New World selection rather than an implicit default; the previous fixed 65-by-65 flat map path through `generate_test_map` is removed, and `make_my_world_state` now builds a world from a generation spec. The Othello play space keeps its own fixed flat board world through `create_othello_session`.",
+            "The initial player position for a normal-mode world comes from `spawn_for_generation` in the simulation layer, which scans outward from the origin for a ravine-free column whose neighbors differ by at most one block; flat mode spawns above its ground level and legacy static worlds keep the previous fixed spawn."
+          ]
+        },
+        {
+          "title": "World State Edit Delta and Persistence",
+          "items": [
+            "`WorldState` is now a current-state resolver over three layers: user-placed blocks answer first, recorded broken base-terrain coordinates answer as air, and the deterministic base terrain answers last. Breaking a base-terrain block records its coordinate; breaking a placed block removes only the placed record and keeps an underlying broken record, so broken terrain does not resurface after building and removing a block in the same cell, and a block placed into open air leaves no broken record when removed.",
+            "The `world.blocks` view keeps `get`, containment, and indexing over the composed state, so picking, placing, breaking, collision, gravity, selection, and the third-person camera resolve unmaterialized base terrain without enumerating it; finite enumeration through `keys` and `items` is limited to placed blocks. The AI route planner no longer receives a full world snapshot: `AiPlayerManager` builds a bounded planning window around the actor and its route points through `snapshot_block_window`, and gravity column scans read a bounded composite column instead of a finite block dictionary.",
+            "`.ldxworld` packages now carry a version-2 world payload holding the generation spec, the revision, `placed` rows, and `broken` rows; `LDXWORLD_FORMAT_VERSION` and `WORLD_ENTRY_FILE_VERSION` move to 2. A version-1 payload with a materialized `blocks` list still loads, as a static generation spec whose blocks become placed rows, and the next save normalizes it to the current schema. No migration path reads the retired `state/world_state.json` or `state/player_state.json` files."
+          ]
+        },
+        {
+          "title": "Surface Envelope Rendering Uploads",
+          "items": [
+            "`WorldUploadTracker` selects chunks from `WorldState.visible_content_chunk_keys` instead of the existing-block chunk index. Per-chunk-column content bands derived from bulk surface heights bound which chunks exist to render, `snapshot_for_chunk_build` materializes one 18-cubed box per chunk and emits only exposed cells as face sources with a one-cell state margin for occlusion, and materialization runs inside the mesh-build worker thread rather than on the render thread.",
+            "The loading gate counts content chunks within the initial gate radius and closes only when each is resident in the renderer backend at its current mesh revision; a zero denominator closes the loader only when the world genuinely reports no content chunks in range. The loading status line shows ready/total chunks with the pending build count and, after four seconds without progress, appends the tracker stall detail naming pending and resident counts and the last scheduled, built, and uploaded chunk."
+          ]
+        },
+        {
+          "title": "Rust Native Terrain Engine",
+          "items": [
+            "A new Rust crate at `native/ludoxel_terrain` implements the terrain hot path — deterministic hashing, 2D and 3D value noise, surface heights, ravine carving, and material selection — behind a PyO3 `cdylib` built with the stable ABI. The compiled module imports as `ludoxel.simulation.worlds.generation._terrain_native` and returns C-order `int32` height bytes and `uint8` material bytes; `native.py` owns the guarded import and `fallback.py` carries the identical pure-Python contract, verified bit-equal across seeds, modes, and coordinates.",
+            "`tools/build_native_extensions` now dispatches two native families: the existing Cython candidates and the Rust crate target. `npm run build:native` runs `cargo build --release` and installs the cdylib as `_terrain_native.pyd` (or `.so`), and `npm run build:native:check` imports the compiled module with `PYTHONPATH` pinned to the repository source tree, requiring `__file__` to resolve under `src/ludoxel` with the platform's compiled suffix; the Python fallback never passes that check, and stale crate sources are reported with a rebuild instruction.",
+            "The desktop build declares the terrain module as a PyInstaller hidden import for both platforms, wheel package data admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output. Application startup performs only the guarded import; it never runs cargo, a rebuild, or a bulk self-test."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.6",
       "tags": ["Desktop Application", "My World", "Rendering", "UI", "Data", "Build"],
       "sections": [

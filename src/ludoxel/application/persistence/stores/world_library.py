@@ -10,6 +10,8 @@ from pathlib import Path
 from ludoxel.application.persistence.integrity.manifest import update_runtime_integrity_manifest, verify_runtime_file
 from ludoxel.application.persistence.packages.ldxworld import LDXWORLD_EXTENSION, export_world_package, read_world_package, read_world_package_summary
 from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
+from ludoxel.application.persistence.schema.player import PersistedPlayer
+from ludoxel.application.persistence.schema.world import PersistedWorld
 from ludoxel.application.persistence.schema.world_library import (
   DEFAULT_WORLD_NAME,
   WORLD_GAME_MODE_SURVIVAL,
@@ -21,6 +23,8 @@ from ludoxel.application.persistence.schema.world_library import (
 )
 from ludoxel.application.persistence.stores.json_file import JsonFileStore
 from ludoxel.foundations.locations.roots import default_runtime_data_root, runtime_state_root
+from ludoxel.simulation.spaces.my_world.session import MY_WORLD_PITCH_DEG, MY_WORLD_YAW_DEG, my_world_spawn
+from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
 
 _INDEX_FILENAME = "world_library.json"
 _WORLDS_DIRNAME = "worlds"
@@ -29,6 +33,15 @@ _WORLD_SUFFIX = LDXWORLD_EXTENSION
 
 def _new_world_id() -> str:
   return uuid.uuid4().hex
+
+
+def default_my_world_space(generation: WorldGenerationSpec | None = None) -> PersistedPlaySpace:
+  spec = (generation if isinstance(generation, WorldGenerationSpec) else WorldGenerationSpec()).normalized()
+  spawn = my_world_spawn(spec)
+  return PersistedPlaySpace(
+    player=PersistedPlayer(pos_x=float(spawn[0]), pos_y=float(spawn[1]), pos_z=float(spawn[2]), yaw_deg=float(MY_WORLD_YAW_DEG), pitch_deg=float(MY_WORLD_PITCH_DEG)),
+    world=PersistedWorld(generation=spec, revision=1),
+  )
 
 
 @dataclass(frozen=True)
@@ -153,7 +166,7 @@ class WorldLibraryStore:
     now = float(time.time())
     world_id = _new_world_id()
     metadata = PersistedWorldMetadata(world_id=world_id, name=normalize_world_name(name), game_mode=normalize_world_game_mode(game_mode), created_at=now, updated_at=now)
-    entry = PersistedWorldEntry(metadata=metadata, space=space if isinstance(space, PersistedPlaySpace) else PersistedPlaySpace())
+    entry = PersistedWorldEntry(metadata=metadata, space=space if isinstance(space, PersistedPlaySpace) else default_my_world_space())
     self._write_package(world_id, entry, thumbnail_bytes=None)
     index = self._read_index()
     world_ids = tuple(index.world_ids) + (world_id,)
@@ -238,8 +251,8 @@ class WorldLibraryStore:
   def ensure_initialized(self) -> str:
     if self.has_worlds():
       return self.active_world_id()
-    metadata = self.create_world(name=DEFAULT_WORLD_NAME, game_mode=WORLD_GAME_MODE_SURVIVAL, space=None, make_active=True)
+    metadata = self.create_world(name=DEFAULT_WORLD_NAME, game_mode=WORLD_GAME_MODE_SURVIVAL, space=default_my_world_space(), make_active=True)
     return str(metadata.world_id)
 
 
-__all__ = ["WorldLibraryStore", "WorldLibrarySummary"]
+__all__ = ["WorldLibraryStore", "WorldLibrarySummary", "default_my_world_space"]

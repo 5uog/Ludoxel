@@ -66,6 +66,8 @@ ludoxel = [
     "presentation/rendering/shaders/common/*.glsl",
     "simulation/spaces/othello/resources/*.json",
     "simulation/actors/ai_players/learning/resources/policies/*.json",
+    "simulation/worlds/generation/_terrain_native*.pyd",
+    "simulation/worlds/generation/_terrain_native*.so",
 ]
 
 [tool.setuptools.packages.find]

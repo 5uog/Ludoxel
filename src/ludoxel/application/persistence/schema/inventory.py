@@ -26,13 +26,6 @@ def _inventory_branch_from_dict(raw_slots: object, raw_index: object, *, size: i
 
 @dataclass(frozen=True)
 class PersistedWorldInventory:
-  """My World player inventory owned by a single world entry.
-
-  Holds the My World hotbar, the 9x3 upper-inventory storage, and the AI
-  route-edit hotbar. Each world entry carries its own copy, so switching
-  worlds restores that world's storage instead of one library-wide state.
-  """
-
   HOTBAR_SIZE: ClassVar[int] = DOMAIN_HOTBAR_SIZE
   UPPER_INVENTORY_SIZE: ClassVar[int] = UPPER_INVENTORY_SIZE
 

@@ -247,7 +247,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         id: 'starting-ludoxel-viewport-preparation-when-inactive',
         title: 'Viewport Preparation Continues Without Gameplay Focus',
         body: [
-          '`LoadingState` in `src/ludoxel/presentation/interface/viewport/render_loop/frame_sync.py` owns the active flag, text, and chunk-progress pair. Renderer initialization enters that state through `_begin_loading`; `paintGL` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` drains and schedules `WorldUploadTracker` work, updates `Loading world... ready/total chunks`, and calls `_finish_loading` only after the visible chunk set is resident. The status is therefore produced by viewport preparation, not by a splash timer or a fixed message.',
+          '`LoadingState` in `src/ludoxel/presentation/interface/viewport/render_loop/frame_sync.py` owns the active flag, text, and chunk-progress pair. Renderer initialization enters that state through `_begin_loading`; `paintGL` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` drains and schedules `WorldUploadTracker` work, updates `Loading world... ready/total chunks` together with the pending build count, appends the tracker stall detail when progress has not changed for four seconds, and calls `_finish_loading` only after the initial content chunks around the player are resident. The status is therefore produced by viewport preparation, not by a splash timer or a fixed message.',
           '`ViewportLifecycleMixin._on_application_state_changed` still clears held input, releases mouse capture, and suppresses the delayed pause while loading. Its runtime-activity gate now keeps the render timer alive when the initialized viewport remains visible and loading is active, even if `_application_active` is false. `_tick_sim` and `_on_step` continue to return during loading, so inactive startup does not advance player simulation, gameplay input, pause state, HUD interaction, or ordinary capture.',
           'When visible chunks become ready, `_finish_loading` opens the startup menu on the first completion, clears loading state, updates HUD and cloud-motion state, re-evaluates runtime activity, emits `loading_state_changed(False)`, and emits `loading_finished`. The initial completion handler closes the splash before activating the main window when the application is already active; the queued `GameScreen` callback focuses the viewport only when the startup menu is not active, so a menu shown after loading keeps focus on the menu shell. This keeps preparation independent of foreground focus without making Ludoxel request foreground activation from an inactive desktop application.',
           'The implementation keeps Ludoxel-owned Qt timers and the render/upload path eligible to run during this specific inactive loading state. It does not establish that an operating system will display frames while the process is hidden, suspended, or denied rendering by the window manager, and it does not claim identical OpenGL and WGPU presentation timing on Windows and macOS.',
@@ -455,10 +455,11 @@ class PlaySpaceContext:
   active_space_id: str = PLAY_SPACE_MY_WORLD
 
   @staticmethod
-  def create_default(seed: int = 0) -> "PlaySpaceContext":
+  def create_default(seed: int = DEFAULT_SEED) -> "PlaySpaceContext":
     registry = create_default_registry()
+    validate_terrain_materials(registry)
 
-    my_world = create_my_world_session(seed=int(seed), block_registry=registry)
+    my_world = create_my_world_session(generation=WorldGenerationSpec(seed=coerce_seed(seed, default=DEFAULT_SEED)), block_registry=registry)
     othello = create_othello_session(seed=int(seed), block_registry=registry)
 
     return PlaySpaceContext(my_world=my_world, othello=othello, active_space_id=PLAY_SPACE_MY_WORLD)`,
@@ -483,26 +484,28 @@ def set_active_space(self, space_id: object) -> SessionManager:
         id: 'switching-play-spaces-domain-construction',
         title: 'My World and Othello Are Constructed from Different Domain Seeds',
         body: [
-          'The two sessions are built from different domain seeds. My World is created from `MyWorldSessionSeed` and `generate_test_map`; Othello is created from `OthelloSessionSeed`, a flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their generated worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
+          'The two sessions are built from different domain seeds. My World is created from `MyWorldSessionSeed` and a `WorldGenerationSpec`, whose mode, generation version, and seed select the deterministic base terrain the session resolves on demand; Othello is created from `OthelloSessionSeed`, a finite flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
           'The shared `SessionManager` type is a runtime envelope, not an erasure of domain origin. Treating the switch as a mode toggle over one world misstates the implementation. The code creates two domain sessions first and later selects one active reference. The hidden session remains a session with its own world revision and actor state, not a dormant view over the active world.',
           '`make_session_manager` constructs each manager from a `SessionSettings` value, a `WorldState`, a `PlayerEntity`, and the registry. `SessionManager.__post_init__` then constructs its `InteractionService`, `GravitySystem`, and AI manager around that world and player. My World and Othello consequently begin with separate simulation envelopes even though `PlaySpaceContext.create_default` passes one default registry into both factories.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'My World is produced through the My World seed and test-map generator.',
-            code: `MY_WORLD_SPAWN: tuple[float, float, float] = (0.0, 1.0, -10.0)
-
-@dataclass(frozen=True)
+            caption: 'My World is produced through the My World session seed and its generation spec.',
+            code: `@dataclass(frozen=True)
 class MyWorldSessionSeed:
-  seed: int = 0
-  spawn: tuple[float, float, float] = MY_WORLD_SPAWN
+  generation: WorldGenerationSpec = field(default_factory=WorldGenerationSpec)
   yaw_deg: float = MY_WORLD_YAW_DEG
   pitch_deg: float = MY_WORLD_PITCH_DEG
 
+  @property
+  def spawn(self) -> tuple[float, float, float]:
+    return my_world_spawn(self.generation)
 
-def make_my_world_state(seed: int) -> WorldState:
-  return generate_test_map(seed=int(seed))`,
+
+def make_my_world_state(generation: WorldGenerationSpec) -> WorldState:
+  spec = generation.normalized()
+  return WorldState(blocks={}, revision=1, generation=spec)`,
           },
           {
             language: 'py',

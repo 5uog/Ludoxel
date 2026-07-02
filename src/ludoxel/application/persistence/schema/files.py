@@ -16,14 +16,6 @@ APP_STATE_FILE_VERSION: int = 1
 
 @dataclass(frozen=True)
 class PersistedAppFile:
-  """The single global runtime file (``state/app_state.json``).
-
-  It owns the values that are not per-world: the last active play space, the
-  display and control settings, the Othello UI settings, and the Othello play
-  space. Player inventory is not stored here; My World inventory belongs to each
-  world entry and Othello inventory belongs to the Othello play space.
-  """
-
   version: int = APP_STATE_FILE_VERSION
   current_space_id: str = PLAY_SPACE_MY_WORLD
   settings: PersistedSettings = field(default_factory=PersistedSettings)

@@ -16,7 +16,7 @@ from ludoxel.application.persistence.schema.world_library import PersistedWorldE
 from ludoxel.foundations.identity import __version__
 
 LDXWORLD_FORMAT_ID: str = "ludoxel.world"
-LDXWORLD_FORMAT_VERSION: int = 1
+LDXWORLD_FORMAT_VERSION: int = 2
 LDXWORLD_EXTENSION: str = ".ldxworld"
 
 _MANIFEST_MEMBER = "manifest.json"
@@ -147,7 +147,6 @@ class LdxworldSummary:
 
 
 def read_world_package_summary(path: Path) -> LdxworldSummary:
-  """Read only the manifest metadata and thumbnail without expanding world data."""
   source = Path(path)
   if not source.is_file():
     raise LdxworldError("World package does not exist.")

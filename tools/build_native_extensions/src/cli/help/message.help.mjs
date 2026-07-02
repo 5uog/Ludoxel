@@ -11,7 +11,8 @@ export const NATIVE_EXTENSION_HELP_MESSAGES = Object.freeze({
       options: 'オプション',
       discoveryHints: '探索ヒント',
     }),
-    purpose: 'Ludoxel の native hot-path Python extension を探索、一覧、ビルド、検証する。',
+    purpose:
+      'Ludoxel の native hot-path (Cython target と Rust crate target) を探索、一覧、ビルド、検証する。Rust target の検証は compiled extension の import を要求し、Python fallback では合格しない。',
     synopsis: Object.freeze([
       'npm run build:native -- help',
       'npm run build:native -- list',
@@ -26,7 +27,7 @@ export const NATIVE_EXTENSION_HELP_MESSAGES = Object.freeze({
       Object.freeze({ flag: '--require-built', description: 'verify 時、compiled extension がない場合に失敗させる。' }),
       Object.freeze({ flag: '--lang ja|en', description: 'ヘルプ表示言語を指定する。' }),
     ]),
-    discoveryHints: Object.freeze(['ray_aabb', 'voxel_dda', 'view_angles']),
+    discoveryHints: Object.freeze(['ray_aabb', 'voxel_dda', 'view_angles', 'terrain_native (native/ludoxel_terrain)']),
   }),
   en: Object.freeze({
     title: 'native extension build',
@@ -36,7 +37,8 @@ export const NATIVE_EXTENSION_HELP_MESSAGES = Object.freeze({
       options: 'Options',
       discoveryHints: 'Discovery hints',
     }),
-    purpose: 'Discover, list, build, and verify Ludoxel native hot-path Python extensions.',
+    purpose:
+      'Discover, list, build, and verify Ludoxel native hot paths (Cython targets and the Rust crate target). Rust verification requires the compiled extension import; the Python fallback does not pass.',
     synopsis: Object.freeze([
       'npm run build:native -- help',
       'npm run build:native -- list',
@@ -51,7 +53,7 @@ export const NATIVE_EXTENSION_HELP_MESSAGES = Object.freeze({
       Object.freeze({ flag: '--require-built', description: 'Fail verification when compiled extensions are missing.' }),
       Object.freeze({ flag: '--lang ja|en', description: 'Select help language.' }),
     ]),
-    discoveryHints: Object.freeze(['ray_aabb', 'voxel_dda', 'view_angles']),
+    discoveryHints: Object.freeze(['ray_aabb', 'voxel_dda', 'view_angles', 'terrain_native (native/ludoxel_terrain)']),
   }),
 });
 

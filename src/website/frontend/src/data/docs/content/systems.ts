@@ -2364,7 +2364,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.6"`,
+            code: `__version__ = "3.7.7"`,
           },
           {
             kind: 'note',
@@ -2999,5 +2999,99 @@ class FormattedSegment:
       },
     ],
     relatedTitles: ['Understanding the Chat Runtime and Command Routing', 'Using Chat and Commands'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'World Visuals',
+    title: 'Understanding Surface Envelope Uploads',
+    description:
+      'Defines the surface-envelope materialization behind chunk mesh uploads: the per-chunk content bands derived from the generation spec, the bounded build snapshot, content-based visible-chunk selection in the upload tracker, and the loading gate that waits for resident chunks.',
+    sections: [
+      {
+        id: 'understanding-surface-envelope-uploads-content-bands',
+        title: 'Content Bands Bound What Exists to Render',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'A seeded world has no finite block dictionary to enumerate, so `WorldState` in `src/ludoxel/simulation/worlds/state/world.py` answers rendering questions through per-chunk-column content bands. `_chunk_column_band` requests the surface heights of one 16-by-16 chunk column plus a one-cell margin from the native terrain engine, then derives an inclusive y band: the top is the highest carved surface in the core, and the bottom is the lowest of each column’s surface minus the sub-surface buffer and its lowest side-exposed cell against the four neighbor columns. `chunk_has_content` intersects that band with a chunk’s y range and also admits any chunk holding placed blocks or broken cells, and `visible_content_chunk_keys` collects the chunks with content inside a Chebyshev radius of the player’s chunk. Bands are cached per column because base terrain is immutable for a given spec; edits are tracked separately through the placed and broken chunk indexes.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/worlds/state/world.py',
+            code: `def chunk_has_content(self, ck: ChunkKey) -> bool:
+  key = (int(ck[0]), int(ck[1]), int(ck[2]))
+  with self._lock:
+    if key in self._chunk_index or key in self._broken_chunk_keys:
+      return True
+  band = self._chunk_column_band(int(key[0]), int(key[2]))
+  if band is None:
+    return False
+  y_lo = int(key[1]) * CHUNK_SIZE
+  y_hi = y_lo + CHUNK_SIZE - 1
+  return not (int(band[1]) < y_lo or int(band[0]) > y_hi)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The band computation is why neither the whole world nor the whole underground is materialized for rendering: a chunk entirely beneath every exposed surface reports no content and is never scheduled, and a chunk above the surface reports no content unless an edit put blocks there. Static worlds — legacy My Worlds and the Othello play surface — skip the band path entirely and report content from their explicit block indexes.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-surface-envelope-uploads-build-snapshot',
+        title: 'The Build Snapshot Is a Bounded Box',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`snapshot_for_chunk_build` materializes one 18-cubed box — the 16-cubed target chunk plus a one-cell margin — through a single bulk `terrain_materials` call, applies the placed and broken deltas inside that box, and produces the two structures the face builder consumes. `state_at` maps every solid composite cell of the box to its block state so face-visibility checks resolve without further world queries; `blocks_local` holds only the exposed core cells, those solid cells with at least one non-solid six-neighbor, computed with vectorized shifts over the solidity array. Interior cells never reach `iter_visible_faces`, which cuts the per-chunk face-source work to the visible envelope, and the margin cells occlude faces against neighboring chunks without enumerating them.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The snapshot runs inside the mesh-build worker thread of `WorldUploadTracker`, not on the render thread: `_schedule_build` submits the chunk key and revision, and `_build_result_for_chunk` performs materialization and face generation together in the executor. `WorldState` guards its indexes and caches with a reentrant lock, so a build snapshot taken while the simulation mutates blocks sees a consistent composition, and a mutation after scheduling marks the chunk dirty again through the mesh-revision counters so the stale build is superseded rather than trusted.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-surface-envelope-uploads-tracker-selection',
+        title: 'Tracker Selection and Residency',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`WorldUploadTracker` in `src/ludoxel/presentation/rendering/uploads/world.py` selects work from `visible_content_chunk_keys` around the eye chunk at the clamped render distance, sorted by horizontal then vertical chunk distance. `upload_if_needed` drains finished builds into `submit_chunk`, evicts residents outside a keep margin of two chunks beyond the render distance, schedules dirty chunks reported by the world, and schedules any visible content chunk whose resident mesh revision does not match the world’s. A chunk is resident only after the backend accepted its faces; scheduled, built, and queued states are tracked separately and never counted as resident. Camera motion re-evaluates the needed set against existing residents instead of rebuilding them, so a viewpoint change rebuilds nothing whose revision still matches.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Prefetching and caching are subordinate to that selection: a bounded result cache keyed by world content generation, chunk, and revision replays a mesh for a chunk that left and re-entered the keep set, and `reset` clears residency, pending futures, and the cache when the play space or loaded world changes so one world’s meshes cannot satisfy another’s uploads.',
+          },
+        ],
+      },
+      {
+        id: 'understanding-surface-envelope-uploads-loading-gate',
+        title: 'The Loading Gate Counts Resident Content Chunks',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`visible_load_progress` reports progress over the content chunks within the initial gate radius — the smaller of the render distance and three chunks — and `visible_chunks_ready` closes the loading state only when every counted chunk is resident at its current mesh revision. A zero denominator is not completion: when the gate set is empty the tracker asks whether the world reports any content chunk at the full render distance, and only a world with genuinely no content in range closes the loader. During loading, `_tick_sim` and `_on_step` in the render loop continue to return, while `paintGL` keeps draining and scheduling uploads, so simulation stays gated while chunk builds and backend submissions proceed.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/uploads/world.py',
+            code: `def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
+  ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
+  if int(total) <= 0:
+    center = self._center_chunk(eye)
+    return len(world.visible_content_chunk_keys(center, int(clamp_render_distance_chunks(int(render_distance_chunks))))) == 0
+  return int(ready) >= int(total)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The loading overlay text is produced from this state: the status line carries the ready and total counts with the pending build count, and when the progress pair has not changed for four seconds the tracker’s stall detail — pending and resident counts and the last scheduled, built, and uploaded chunk keys — is appended, so a loader that stays open names the stage it is waiting on instead of holding a bare `Loading world...` message. Readiness here is residency of the initial gate set; it is not a claim that every render-distance chunk is built, that both renderer backends perform identically, or that later streaming cannot be observed.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding View, Transform, and Chunk Visibility Contracts', 'Understanding Render Distance Fog and Shadows', 'Creating Seeded My Worlds'],
   }),
 ];

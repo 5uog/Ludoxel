@@ -131,6 +131,11 @@ def _ai_decision_debug_enabled() -> bool:
   return str(os.environ.get("LUDOXEL_AI_DEBUG", "")).strip().lower() in ("1", "true", "yes", "on")
 
 
+_AI_PLANNING_WINDOW_PAD = 16
+_AI_PLANNING_WINDOW_MAX_SPAN = 192
+_AI_PLANNING_WINDOW_Y_PAD = 10
+
+
 class _ManagerNeighborhoodProbe:
   def __init__(self, manager: "AiPlayerManager", actor: _AiPlayerRuntime, *, max_drop: int) -> None:
     self._manager = manager
@@ -173,8 +178,6 @@ class AiPlayerManager:
   _next_actor_index: int = field(default=1, init=False, repr=False)
   _route_worker: AiRouteWorker = field(default_factory=AiRouteWorker, init=False, repr=False)
   _route_plan_generation: int = field(default=0, init=False, repr=False)
-  _full_snapshot_revision: int = field(default=-1, init=False, repr=False)
-  _full_snapshot_blocks: tuple[tuple[int, int, int, str], ...] = field(default=(), init=False, repr=False)
   _route_requests_this_step: int = field(default=0, init=False, repr=False)
   _recovery_searches_this_step: int = field(default=0, init=False, repr=False)
   _block_sound_events: list[AiBlockSoundEvent] = field(default_factory=list, init=False, repr=False)
@@ -191,8 +194,6 @@ class AiPlayerManager:
       self._route_worker.cancel_actor(str(actor_id))
     self._actors.clear()
     self._next_actor_index = 1
-    self._full_snapshot_revision = -1
-    self._full_snapshot_blocks = ()
 
   def actors(self) -> tuple[AiPlayerState, ...]:
     return tuple(actor.to_state() for actor in self._actors.values())
@@ -871,16 +872,31 @@ class AiPlayerManager:
       actor.nav_step_stuck_s = 0.0
     return True
 
-  def _full_world_snapshot(self) -> tuple[tuple[int, int, int, str], ...]:
-    if int(self._full_snapshot_revision) != int(self.world.revision):
-      self._full_snapshot_revision = int(self.world.revision)
-      self._full_snapshot_blocks = tuple((int(x), int(y), int(z), str(state_str)) for x, y, z, state_str in self.world.iter_blocks())
-    return self._full_snapshot_blocks
+  def _planning_window_blocks(self, actor: _AiPlayerRuntime, *, start_support: tuple[int, int, int]) -> tuple[tuple[int, int, int, str], ...]:
+    xs = [int(start_support[0])]
+    ys = [int(start_support[1])]
+    zs = [int(start_support[2])]
+    for point in actor.route_points:
+      vec = point.as_vec3()
+      xs.append(int(math.floor(float(vec.x))))
+      ys.append(int(math.floor(float(vec.y))))
+      zs.append(int(math.floor(float(vec.z))))
+    pad = int(_AI_PLANNING_WINDOW_PAD)
+    half_span = int(_AI_PLANNING_WINDOW_MAX_SPAN) // 2
+    center_x = (min(xs) + max(xs)) // 2
+    center_z = (min(zs) + max(zs)) // 2
+    min_x = max(min(xs) - pad, int(center_x) - half_span)
+    max_x = min(max(xs) + pad, int(center_x) + half_span)
+    min_z = max(min(zs) - pad, int(center_z) - half_span)
+    max_z = min(max(zs) + pad, int(center_z) + half_span)
+    min_y = min(ys) - int(_AI_PLANNING_WINDOW_Y_PAD)
+    max_y = max(ys) + int(_AI_PLANNING_WINDOW_Y_PAD)
+    return self.world.snapshot_block_window(min_x=int(min_x), max_x=int(max_x), min_y=int(min_y), max_y=int(max_y), min_z=int(min_z), max_z=int(max_z))
 
   def _build_route_plan_request(self, actor: _AiPlayerRuntime, *, start_support: tuple[int, int, int]) -> AiRoutePlanRequest | None:
     if len(actor.route_points) <= 0:
       return None
-    world_blocks = self._full_world_snapshot()
+    world_blocks = self._planning_window_blocks(actor, start_support=tuple(int(value) for value in start_support))
     self._route_plan_generation += 1
     blocked_edges = tuple((tuple(int(value) for value in edge[0]), tuple(int(value) for value in edge[1])) for edge, ttl in actor.nav_blocked_edges.items() if float(ttl) > 1e-6)
     avoid_supports = tuple(tuple(int(value) for value in cell) for cell, ttl in actor.nav_avoid_support_cells.items() if float(ttl) > 1e-6)

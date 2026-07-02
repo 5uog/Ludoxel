@@ -62,6 +62,7 @@ function toSpecPath(absolutePath) {
 function addApplicationBootstrapHiddenImports(args) {
   args.push('--hidden-import', 'ludoxel.application.bootstrap');
   args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
+  args.push('--hidden-import', 'ludoxel.simulation.worlds.generation._terrain_native');
 }
 
 function addMacosRendererBackendArgs(args) {
@@ -179,7 +180,7 @@ a = Analysis(
     pathex=[r'${srcPath}'],
     binaries=[],
     datas=datas,
-    hiddenimports=['ludoxel.application.bootstrap', 'ludoxel.application.bootstrap.run'],
+    hiddenimports=['ludoxel.application.bootstrap', 'ludoxel.application.bootstrap.run', 'ludoxel.simulation.worlds.generation._terrain_native'],
     hookspath=[r'${hookPath}'],
     hooksconfig={},
     runtime_hooks=[],

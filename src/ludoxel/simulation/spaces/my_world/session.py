@@ -2,23 +2,35 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from ludoxel.simulation.worlds.generation.test_map import generate_test_map
+from ludoxel.simulation.worlds.generation.spawn import spawn_for_generation
+from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
 from ludoxel.simulation.worlds.state.world import WorldState
 
-MY_WORLD_SPAWN: tuple[float, float, float] = (0.0, 1.0, -10.0)
 MY_WORLD_YAW_DEG: float = 0.0
 MY_WORLD_PITCH_DEG: float = 0.0
 
 
+def my_world_spawn(spec: WorldGenerationSpec) -> tuple[float, float, float]:
+  return spawn_for_generation(spec)
+
+
 @dataclass(frozen=True)
 class MyWorldSessionSeed:
-  seed: int = 0
-  spawn: tuple[float, float, float] = MY_WORLD_SPAWN
+  generation: WorldGenerationSpec = field(default_factory=WorldGenerationSpec)
   yaw_deg: float = MY_WORLD_YAW_DEG
   pitch_deg: float = MY_WORLD_PITCH_DEG
 
+  @property
+  def seed(self) -> int:
+    return int(self.generation.seed)
 
-def make_my_world_state(seed: int) -> WorldState:
-  return generate_test_map(seed=int(seed))
+  @property
+  def spawn(self) -> tuple[float, float, float]:
+    return my_world_spawn(self.generation)
+
+
+def make_my_world_state(generation: WorldGenerationSpec) -> WorldState:
+  spec = generation.normalized()
+  return WorldState(blocks={}, revision=1, generation=spec)
