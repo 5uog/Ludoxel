@@ -399,13 +399,13 @@ function requireBundledResource(appPath, label, relativePaths) {
           {
             kind: 'paragraph',
             text: [
-              'Cython native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `tools/build_native_extensions/src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature. The same tool also owns a separate ',
+              'Cython native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `tools/build_native_extensions/src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature. The same tool also owns the separate ',
               {
                 kind: 'link',
-                label: 'Rust crate target',
+                label: 'Rust crate targets',
                 href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
               },
-              ' whose source is Rust rather than a Cython-compiled Python file and whose verification policy differs from the candidates below.',
+              ' — the terrain engine and the Othello search engine — whose sources are Rust crates rather than Cython-compiled Python files and whose verification policy differs from the candidates below.',
             ],
           },
           {
@@ -502,7 +502,7 @@ npm run build:native:check`,
           {
             kind: 'paragraph',
             text: [
-              'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only Cython source and accepts that state because a Cython fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. The Rust crate target is checked after the Cython candidates on every verification run and does not accept a fallback import; its gate is fixed by the ',
+              'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only Cython source and accepts that state because a Cython fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. The Rust crate targets are checked after the Cython candidates on every verification run and do not accept a fallback import; their gate is fixed by the ',
               {
                 kind: 'link',
                 label: 'Rust verification policy',
@@ -1586,11 +1586,28 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
     installDirectory: 'src/ludoxel/simulation/worlds/generation',
     fallbackModuleName: 'ludoxel.simulation.worlds.generation.fallback',
   }),
+  Object.freeze({
+    id: 'othello_native',
+    crateDirectory: 'native/ludoxel_othello',
+    crateName: 'ludoxel_othello',
+    moduleName: 'ludoxel.simulation.spaces.othello.engines._othello_native',
+    artifactStem: '_othello_native',
+    installDirectory: 'src/ludoxel/simulation/spaces/othello/engines',
+    fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
+  }),
 ]);`,
           },
           {
             kind: 'paragraph',
-            text: 'The configured module record separates the crate directory, the compiled module name, the installed artifact stem, and the fallback module. `rustCrateStates` derives from it the manifest path, the built cdylib path under `target/release`, the installed artifact path, and a staleness flag comparing crate source modification times against the installed artifact. A stale artifact is reported with a rebuild instruction; the tool does not rebuild implicitly during verification, and application startup never runs cargo.',
+            text: [
+              'Each configured module record separates the crate directory, the compiled module name, the installed artifact stem, and the fallback module; the registry carries the terrain crate and the ',
+              {
+                kind: 'link',
+                label: 'Othello engine crate',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-othello-engine-extension',
+              },
+              ', and the build and verification services iterate every entry. `rustCrateStates` derives from each record the manifest path, the built cdylib path under `target/release`, the installed artifact path, and a staleness flag comparing crate source modification times against the installed artifact. A stale artifact is reported with a rebuild instruction; the tool does not rebuild implicitly during verification, and application startup never runs cargo.',
+            ],
           },
         ],
       },
@@ -1639,6 +1656,79 @@ if (!importedFile.endsWith(expectedSuffix)) {
         ],
       },
     ],
-    relatedTitles: ['Understanding Native Extension Fallbacks', 'Running a Desktop Build with Permission', 'Reading Build Output'],
+    relatedTitles: ['Understanding Native Extension Fallbacks', 'Building the Rust Othello Engine Extension', 'Running a Desktop Build with Permission', 'Reading Build Output'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
+    subcategory: 'Runtime Inclusions',
+    group: 'Native and Runtime Materials',
+    title: 'Building the Rust Othello Engine Extension',
+    description:
+      'Defines the Rust Othello search crate, the parity contract it shares with the pure Python engine, the per-cache native search session and its TimeoutError boundary, and the build, verification, and desktop-package inclusion path it shares with the terrain crate.',
+    sections: [
+      {
+        id: 'building-the-rust-othello-engine-extension-crate-and-contract',
+        title: 'Crate Source and Shared Contract',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The Rust Othello engine lives in the repository as `native/ludoxel_othello`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set, matching the terrain crate. `src/engine.rs` implements the bitboard shifts, legal-move and flip resolution, the positional, corner-closeness, frontier, mobility, corner, parity, and disc evaluation terms, the sacrifice-level weight profile, move ordering, the negamax search, and the exact endgame solver; `src/lib.rs` exposes `legal_moves_bitboard`, `apply_move_bits`, `evaluate_position`, `terminal_score`, `native_build_info`, and the `InsaneSearch` class, and names the module `_othello_native`. The compiled artifact is imported as `ludoxel.simulation.spaces.othello.engines._othello_native`; the pure Python implementation of the same search is owned by `search.py` with `bitboards.py`, `evaluation.py`, `ordering.py`, and `transposition.py`, and the import owner `engines/native.py` selects between them at import time.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Parity is a value-level contract. Every rounded evaluation term uses round-ties-to-even because Python `round` does, position weights and ordering bonuses are the same constants, the transposition tables follow the same soft-limit clear-all policy derived from the hash level, and the exact-solver threshold of fourteen empties is shared. For identical positions, levels, and depths, bitboard primitives, evaluations, fixed-depth searches, and exact endgame solves return bit-identical values across the two implementations; searches under a wall-clock budget may truncate at different depths because elapsed time is not part of the contract.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-othello-engine-extension-session-routing',
+        title: 'The Native Session and Its Timeout Boundary',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The search below each root move runs in one native session per `InsaneSearchCache`. `ensure_native_search` constructs an `InsaneSearch` pinned to the cache’s hash and sacrifice levels — a settings change through `prepare` discards the session rather than clearing it — and `_root_move_evaluations` in `insane.py` passes each root child into the compiled `negamax` or `solve_exact` with the remaining wall-clock budget, reading the root ordering hint from `root_best_move`. The session owns its transposition tables in process memory; nothing about it is persisted, and the worker processes that host searches construct their own caches, so no compiled object crosses a process boundary.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/simulation/spaces/othello/engines/native.py',
+            code: `def create_native_insane_search(*, hash_level: int, sacrifice_level: int):
+  # Returns a per-cache native search session owning its own transposition
+  # tables, or None when the compiled module is absent; the pure Python
+  # negamax and solve_exact in search.py stay the fallback owners.
+  if _native_module is None:
+    return None
+  return _native_module.InsaneSearch(int(hash_level), int(sacrifice_level))`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The deadline boundary is the builtin `TimeoutError`. The compiled search converts its remaining budget into a monotonic deadline, checks it at every node entry exactly where the Python `check_deadline` does, releases the interpreter lock for the duration of the search, and raises `TimeoutError` on overrun, so `analyze_insane_position` truncates iterative deepening through the same exception path on both implementations. Match state, clocks, the opening and learning books, board persistence, and the presentation worker remain Python-owned; the crate receives two 64-bit bitboards and integer levels and returns scores.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-othello-engine-extension-build-and-package',
+        title: 'Build, Verification, and Package Inclusion',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              'The crate is the second entry of `RUST_NATIVE_MODULES` in `tools/build_native_extensions/src/config/native.config.mjs`, so `npm run build:native` runs `cargo build --release` against its manifest and installs the cdylib as `_othello_native.pyd` or `.so` beside the engine sources, and `npm run build:native:check` applies the same compiled-import gate the ',
+              {
+                kind: 'link',
+                label: 'terrain crate',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
+              },
+              ' passes through: the module must import from `src/ludoxel` with the platform’s compiled suffix, and the Python fallback never satisfies that check.',
+            ],
+          },
+          {
+            kind: 'paragraph',
+            text: 'The desktop build declares `ludoxel.simulation.spaces.othello.engines._othello_native` as a PyInstaller hidden import on both platform paths, the wheel package data in `pyproject.toml` admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output. Application startup performs only the guarded import in `engines/native.py`; a source tree without a cargo toolchain plays every Othello difficulty through the pure Python engine, and a passing build or check records the inspected compiled-import conditions without conferring release status on any artifact.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Understanding Native Extension Fallbacks', 'Understanding Othello Search', 'Running a Desktop Build with Permission'],
   }),
 ];

@@ -1936,7 +1936,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
           },
           {
             kind: 'paragraph',
-            text: 'Flat is an explicit selection, never an implicit default: a world uses the single-layer grass plane only when the form chose Flat, and every other creation path produces normal seeded terrain. The Othello play space keeps its own fixed flat board surface through `create_othello_session` and is not part of this selection. The recorded mode, generation version, and seed persist with the world, so reopening it reproduces the same base terrain rather than regenerating from a different seed.',
+            text: 'Flat is an explicit selection, never an implicit default: a world uses the single-layer grass plane only when the form chose Flat, and every other creation path produces normal seeded terrain. The Othello play space builds its own generation-backed flat floor through `create_othello_session` and `make_othello_world_state` and is not part of this selection. The recorded mode, generation version, and seed persist with the world, so reopening it reproduces the same base terrain rather than regenerating from a different seed.',
           },
         ],
       },
@@ -1960,7 +1960,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         content: [
           {
             kind: 'paragraph',
-            text: '`spawn_for_generation` in `src/ludoxel/simulation/worlds/generation/spawn.py` fixes the initial player position from the spec alone. For normal mode it scans outward from the origin in growing square rings up to radius 48, accepting the first column that is outside every ravine, whose four neighbors differ in height by at most one block and are also ravine-free, and whose surface sits safely above bedrock; the player stands at the column center one block above the surface. Flat mode spawns above the flat ground level, and a static world keeps the legacy fixed position. The renderer and the create form never estimate a spawn height; the simulation owner computes it, so a saved world restores its stored player pose and only a fresh creation runs the search.',
+            text: '`spawn_for_generation` in `src/ludoxel/simulation/worlds/generation/spawn.py` fixes the initial player position from the spec alone. For normal mode it scans outward from the origin in growing square rings up to radius 48, accepting the first column that is outside every ravine, whose four neighbors differ in height by at most one block and are also ravine-free, and whose surface sits safely above bedrock; the player stands at the column center one block above the surface. Flat mode spawns above the flat ground level, and a static world keeps the legacy fixed position. The renderer and the create form never estimate a spawn height; the simulation owner computes it, a saved world restores its stored player pose, and loading a world also rewrites the session respawn settings from the same function, so a death respawn lands on the loaded world’s spawn column rather than on the spawn of a previously loaded generation.',
           },
         ],
       },

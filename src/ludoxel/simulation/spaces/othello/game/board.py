@@ -8,6 +8,7 @@ from typing import Dict
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.scalars.numeric import clampi
 from ludoxel.simulation.spaces.othello.game.state import BOARD_CELL_COUNT
+from ludoxel.simulation.worlds.generation.spec import DEFAULT_SEED, GENERATION_MODE_FLAT, WorldGenerationSpec
 from ludoxel.simulation.worlds.state.world import BlockKey, WorldState
 
 BOARD_SIZE: int = int(math.isqrt(int(BOARD_CELL_COUNT)))
@@ -74,6 +75,30 @@ def othello_board_block_updates(*, board_y: int = OTHELLO_BOARD_BLOCK_Y) -> Dict
 
 def ensure_othello_board_layout(world: WorldState, *, board_y: int = OTHELLO_BOARD_BLOCK_Y) -> None:
   world.set_blocks_bulk(updates=othello_board_block_updates(board_y=int(board_y)))
+
+
+def othello_world_generation_spec() -> WorldGenerationSpec:
+  return WorldGenerationSpec(mode=GENERATION_MODE_FLAT, seed=DEFAULT_SEED, flat_ground_y=OTHELLO_DEFAULT_GROUND_Y).normalized()
+
+
+def make_othello_world_state() -> WorldState:
+  world = WorldState(blocks={}, revision=1, generation=othello_world_generation_spec())
+  ensure_othello_board_layout(world)
+  return world
+
+
+def strip_othello_flat_floor_blocks(placed: Dict[BlockKey, str]) -> Dict[BlockKey, str]:
+  # Legacy Othello saves materialized the floor as a finite grid of placed
+  # blocks; cells whose placed state equals the flat-generation base state
+  # are dropped so the generation spec becomes the sole floor owner.
+  probe = WorldState(blocks={}, revision=0, generation=othello_world_generation_spec())
+  out: Dict[BlockKey, str] = {}
+  for key, value in placed.items():
+    cell = (int(key[0]), int(key[1]), int(key[2]))
+    if probe.base_state_at(cell[0], cell[1], cell[2]) == str(value):
+      continue
+    out[cell] = str(value)
+  return out
 
 
 def is_othello_board_footprint(x: float, z: float) -> bool:

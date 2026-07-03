@@ -1676,7 +1676,7 @@ head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0
         content: [
           {
             kind: 'paragraph',
-            text: 'Pooled `QSoundEffect` playback has separate local-feedback and remote-world entrances before it reaches the shared effect-slot allocator. `_play_local_pool` resolves only the category volume, so player block placement, block breaking, block interaction, footsteps, landings, local player damage, and Othello feedback remain outside listener cutoff and distance gain even when the simulation result carries a target or board position. `_play_remote_pool` requires a world position and a cached listener pose, checks the pool distance cutoff, multiplies the category volume by `spatial_distance_gain` for spatial pools, and refuses playback when the listener is absent, the position is absent, or the source lies outside the cutoff. Both entrances then call `_play_effect_pool`, which applies pool cooldown admission, searches for an idle prepared `QSoundEffect` slot, applies active-voice headroom to the request gain, calls `setVolume(final_volume)` immediately before `play()`, and records the voice hold interval. The voice search is pool-wide: `_play_effect_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice qualifies as idle only when its `QSoundEffect` is loaded, playback has ended, and the source hold interval recorded on `EffectVoiceSlot.busy_until_s` has passed. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a pooled source keeps its voice reserved until the recorded audible tail has cleared even after the Qt playback state has cleared. When every reserved voice is still busy, `_play_effect_pool` drops the request and leaves active voices running.',
+            text: 'Pooled `QSoundEffect` playback has separate local-feedback and remote-world entrances before it reaches the shared effect-slot allocator. `_play_local_pool` resolves only the category volume, so player block placement, block breaking, block interaction, footsteps, landings, local player damage, and Othello feedback remain outside listener cutoff and distance gain even when the simulation result carries a target or board position. `_play_remote_pool` requires a world position and a cached listener pose, checks the pool distance cutoff, multiplies the category volume by `spatial_distance_gain` for spatial pools, and refuses playback when the listener is absent, the position is absent, or the source lies outside the cutoff. Both entrances then call `_play_effect_pool`, which applies pool cooldown admission, searches for an idle prepared `QSoundEffect` slot, applies active-voice headroom to the request gain, calls `setVolume(final_volume)` immediately before `play()`, and records the voice hold interval. The voice search is pool-wide: `_play_effect_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice qualifies as idle only when its `QSoundEffect` is loaded, playback has ended, and the source hold interval recorded on `EffectVoiceSlot.busy_until_s` has passed. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a pooled source keeps its voice reserved until the recorded audible tail has cleared even after the Qt playback state has cleared. When every reserved voice of every source is still busy, `_play_effect_pool` selects a source over the whole pool and reclaims its longest-playing voice through `steal_oldest_effect_slot` in `src/ludoxel/presentation/audio/playback/effects.py`: the stolen effect is stopped, restarted with the new request gain, and re-marked with its hold interval, so an event that passed cooldown admission always reaches a voice instead of being dropped under load.',
           },
           {
             kind: 'code',
@@ -1758,7 +1758,7 @@ for prepared_group in tuple(self._prepared_sources.values()):
           },
           {
             kind: 'paragraph',
-            text: '`PcmOneShotMixer` in `src/ludoxel/presentation/audio/playback/mixer.py` owns a single `QAudioSink` stream for rapid attack one-shots. `_ensure_sink` opens a stereo 44.1 kHz signed-16-bit format on the current default output device; `_sample_for_url` caches decoded WAV data; `_load_wav_as_stereo_44100_int16` accepts one-byte and two-byte PCM, converts mono or multichannel data into stereo, and resamples to the mixer rate when the source rate differs. Active voices are mixed in process memory, summed into a temporary left-right buffer, clipped to signed 16-bit range, and written to the sink as little-endian PCM frames.',
+            text: '`PcmOneShotMixer` in `src/ludoxel/presentation/audio/playback/mixer.py` owns a single `QAudioSink` stream for rapid attack one-shots. `_ensure_sink` opens a stereo 44.1 kHz signed-16-bit format on the current default output device with an explicit 4096-frame sink buffer; `_sample_for_url` caches decoded WAV data as NumPy `int16` frame arrays; `_load_wav_as_stereo_44100_int16` accepts one-byte and two-byte PCM, converts mono or multichannel data into stereo, and resamples to the mixer rate through linear interpolation when the source rate differs. `_mix_frames` sums the active voices into an `int32` accumulation array with vectorized slice additions, clips to signed 16-bit range, and writes little-endian PCM frames; each pump tick refills every free frame of the sink buffer. The pump timer runs on the GUI thread, so the buffer depth — roughly 93 milliseconds — and the vectorized mix are what keep a render stall from draining the sink and audibly tearing the attack stream while the player walks and swings.',
           },
           {
             kind: 'code',
@@ -1776,7 +1776,7 @@ self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0
           },
           {
             kind: 'paragraph',
-            text: 'The mixer bound acts as an active-voice ceiling. When the active list reaches the catalog voice limit, `PcmOneShotMixer.play` retains the newest `voice_limit - 1` voices, appends the new attack voice, starts the sink if necessary, and immediately pumps available frames. `_play_effect_pool` rejects a prepared-effect event after all `QSoundEffect` voices remain busy; the attack mixer admits the new voice after trimming its active list. Repeated air-punch and accepted attack input therefore share a continuous output stream while the attack mixer remains inside `_MAX_MIX_VOICES` and the pool-specific `max_polyphony` bound.',
+            text: 'The mixer bound acts as an active-voice ceiling. When the active list reaches the catalog voice limit, `PcmOneShotMixer.play` retains the newest `voice_limit - 1` voices, appends the new attack voice, starts the sink if necessary, and immediately pumps available frames. `_play_effect_pool` reclaims the oldest busy `QSoundEffect` voice for an admitted event; the attack mixer admits the new voice after trimming its active list. Repeated air-punch and accepted attack input therefore share a continuous output stream while the attack mixer remains inside `_MAX_MIX_VOICES` and the pool-specific `max_polyphony` bound.',
           },
         ],
       },
@@ -2321,6 +2321,10 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'paragraph',
             text: 'Tied best moves are broken by a seeded random choice, so equal-value play varies across matches without becoming non-deterministic for a given seed.',
           },
+          {
+            kind: 'paragraph',
+            text: 'Below the root, the insane search runs in the compiled Othello engine when it is present. `InsaneSearchCache.ensure_native_search` holds one `InsaneSearch` session from `ludoxel.simulation.spaces.othello.engines._othello_native` — the PyO3 binding of the `native/ludoxel_othello` crate — and `_root_move_evaluations` sends each root move’s subtree into the compiled `negamax` and `solve_exact`, which own their transposition tables under the same soft-limit clearing policy the Python cache applies and expose the root ordering hint through `root_best_move`. The pure Python search in `search.py` remains the fallback owner when the compiled module is absent, both implementations raise `TimeoutError` on a deadline overrun so iterative deepening truncates identically, and bitboard primitives, evaluations, fixed-depth searches, and exact endgame solves return bit-identical values across the two paths; within the same time budget the compiled subtree search reaches greater depths.',
+          },
         ],
       },
       {
@@ -2342,7 +2346,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
         ],
       },
     ],
-    relatedTitles: ['Understanding Othello AI Turns', 'Changing Othello AI Strength', 'Changing Othello Book Behavior'],
+    relatedTitles: ['Understanding Othello AI Turns', 'Changing Othello AI Strength', 'Changing Othello Book Behavior', 'Building the Rust Othello Engine Extension'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -2364,7 +2368,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.7.post1"`,
+            code: `__version__ = "3.7.8"`,
           },
           {
             kind: 'note',
@@ -3014,7 +3018,7 @@ class FormattedSegment:
         content: [
           {
             kind: 'paragraph',
-            text: 'A seeded world has no finite block dictionary to enumerate, so `WorldState` in `src/ludoxel/simulation/worlds/state/world.py` answers rendering questions through per-chunk-column content bands. `_chunk_column_band` requests the surface heights of one 16-by-16 chunk column plus a one-cell margin from the native terrain engine, then derives an inclusive y band: the top is the highest carved surface in the core, and the bottom is the lowest of each column’s surface minus the sub-surface buffer and its lowest side-exposed cell against the four neighbor columns. `chunk_has_content` intersects that band with a chunk’s y range and also admits any chunk holding placed blocks or broken cells, and `visible_content_chunk_keys` collects the chunks with content inside a Chebyshev radius of the player’s chunk. Bands are cached per column because base terrain is immutable for a given spec; edits are tracked separately through the placed and broken chunk indexes.',
+            text: 'A seeded world has no finite block dictionary to enumerate, so `WorldState` in `src/ludoxel/simulation/worlds/state/world.py` answers rendering questions through per-chunk-column content bands. `_chunk_column_band` requests the surface heights of one 16-by-16 chunk column plus a one-cell margin from the native terrain engine, then derives an inclusive y band: the top is the highest carved surface in the core, and the bottom is the lowest of each column’s surface minus the sub-surface buffer and its lowest side-exposed cell against the four neighbor columns. Flat generation — including the Othello play space, whose world carries a flat `WorldGenerationSpec` — collapses the band to the single ground layer without sampling heights. `chunk_has_content` admits any chunk holding placed blocks or broken cells and, for generated worlds, any chunk inside the solid span between the content floor — the bedrock layer for normal generation, the flat layer for flat generation — and the band top. Bands are cached per column because base terrain is immutable for a given spec; edits are tracked separately through the placed and broken chunk indexes.',
           },
           {
             kind: 'code',
@@ -3030,11 +3034,11 @@ class FormattedSegment:
     return False
   y_lo = int(key[1]) * CHUNK_SIZE
   y_hi = y_lo + CHUNK_SIZE - 1
-  return not (int(band[1]) < y_lo or int(band[0]) > y_hi)`,
+  return int(y_hi) >= int(self._content_floor_y()) and int(y_lo) <= int(band[1])`,
           },
           {
             kind: 'paragraph',
-            text: 'The band computation is why neither the whole world nor the whole underground is materialized for rendering: a chunk entirely beneath every exposed surface reports no content and is never scheduled, and a chunk above the surface reports no content unless an edit put blocks there. Static worlds — legacy My Worlds and the Othello play surface — skip the band path entirely and report content from their explicit block indexes.',
+            text: 'Content admission and face output are separate questions: a chunk buried between the surface band and the bedrock layer holds content, but its build snapshot emits zero faces until an edit — its own or a neighboring cell’s — exposes a cell, so admitting the interior does not materialize the underground into geometry. The two permanently face-bearing regions are the surface skin, whose top is open to the sky, and the bedrock layer at the content floor, whose underside is open to the void below; both upload through the same candidate path. Static worlds — legacy My Worlds — skip the band path entirely and report content from their explicit block indexes.',
           },
         ],
       },
@@ -3058,7 +3062,11 @@ class FormattedSegment:
         content: [
           {
             kind: 'paragraph',
-            text: '`WorldUploadTracker` in `src/ludoxel/presentation/rendering/uploads/world.py` selects work from `visible_content_chunk_keys` around the eye chunk at the clamped render distance, sorted by horizontal then vertical chunk distance. `upload_if_needed` drains finished builds into `submit_chunk`, evicts residents outside a keep margin of two chunks beyond the render distance, schedules dirty chunks reported by the world, and schedules any visible content chunk whose resident mesh revision does not match the world’s. A chunk is resident only after the backend accepted its faces; scheduled, built, and queued states are tracked separately and never counted as resident. Camera motion re-evaluates the needed set against existing residents instead of rebuilding them, so a viewpoint change rebuilds nothing whose revision still matches.',
+            text: '`WorldUploadTracker` in `src/ludoxel/presentation/rendering/uploads/world.py` selects work from `visible_content_chunk_keys` around the eye chunk at the clamped render distance, sorted by horizontal then vertical chunk distance. The candidate set is the union of four bounded families: the full vertical band of every column inside the horizontal radius, the content-floor row of every such column, the three-by-three-by-three chunk neighborhood around the eye chunk, and every chunk with tracked mesh state — placed blocks, broken cells, or a mesh revision advanced by a neighboring cell edit — filtered by horizontal distance alone. The band and tracked families are deliberately unclamped against the player’s chunk Y: a column’s surface stays a candidate while the player stands at bedrock beneath it, and a shaft dug from the surface to bedrock stays visible over its whole height. `upload_if_needed` drains finished builds into `submit_chunk`, evicts residents outside a keep margin of two chunks beyond the render distance, schedules dirty chunks reported by the world, and schedules any visible content chunk whose resident mesh revision does not match the world’s. A chunk is resident only after the backend accepted its faces; scheduled, built, and queued states are tracked separately and never counted as resident. Camera motion re-evaluates the needed set against existing residents instead of rebuilding them, so a viewpoint change rebuilds nothing whose revision still matches.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The draw-side bound agrees with that selection: `within_render_distance` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` compares only the horizontal chunk distances against the render distance, and the vertical extent of drawn chunks is whatever the tracker keeps resident. The WGPU backend draws every resident chunk, so a vertical clamp in the OpenGL predicate would have culled resident terrain — the surface seen from bedrock depth — that the other backend keeps visible; frustum culling against the view-projection matrix remains the per-frame visibility test on both paths.',
           },
           {
             kind: 'paragraph',

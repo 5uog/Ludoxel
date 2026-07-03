@@ -23,8 +23,15 @@ from ludoxel.simulation.blocks.states.values import prop_as_bool
 from ludoxel.simulation.blocks.structures.structural_rules import is_fence_gate
 from ludoxel.simulation.rules.gravity.system import GRAVITY_AFFECTED_TAG
 from ludoxel.simulation.spaces.my_world.session import make_my_world_state
-from ludoxel.simulation.spaces.othello.game.board import OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint
+from ludoxel.simulation.spaces.othello.game.board import (
+  OTHELLO_BOARD_SURFACE_Y,
+  ensure_othello_board_layout,
+  is_othello_board_footprint,
+  othello_world_generation_spec,
+  strip_othello_flat_floor_blocks,
+)
 from ludoxel.simulation.spaces.othello.game.state import OthelloGameState
+from ludoxel.simulation.worlds.generation.spawn import spawn_for_generation
 from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
 from ludoxel.simulation.worlds.state.play_space import normalize_play_space_id
 
@@ -51,6 +58,21 @@ def _load_player_into_session(*, session: SessionManager, player: PersistedPlaye
   runtime_player.gravity_block_overlap_exemptions = ()
 
 
+def _sync_my_world_spawn_settings(session: SessionManager) -> None:
+  # Respawn after death reads SessionSettings.spawn_*, which is fixed at
+  # session construction from the startup generation spec. Loading a world
+  # with a different generation (a flat world into a session built for
+  # normal terrain, or the reverse) must move the respawn point onto the
+  # loaded world's own spawn column, or a death respawns the player below
+  # the loaded surface and the fall repeats.
+  spec = session.world.generation_spec()
+  spawn = spawn_for_generation(spec)
+  session.settings.seed = int(spec.seed)
+  session.settings.spawn_x = float(spawn[0])
+  session.settings.spawn_y = float(spawn[1])
+  session.settings.spawn_z = float(spawn[2])
+
+
 def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
   if persisted_world.is_empty():
     return
@@ -60,6 +82,23 @@ def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorl
     broken=tuple(persisted_world.broken_cells),
     revision=int(max(1, int(persisted_world.revision))),
   )
+
+
+def _replace_othello_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
+  if persisted_world.is_empty():
+    return
+  generation = persisted_world.generation
+  placed = {(int(key[0]), int(key[1]), int(key[2])): str(value) for (key, value) in persisted_world.placed_blocks.items()}
+  broken = tuple(persisted_world.broken_cells)
+  if generation.is_static():
+    # Legacy Othello saves persisted a finite materialized static floor.
+    # The Othello play space is generation-backed flat terrain: the flat
+    # spec owns the floor, and only placed blocks that differ from the
+    # flat base state survive as edits.
+    generation = othello_world_generation_spec()
+    placed = strip_othello_flat_floor_blocks(placed)
+    broken = ()
+  session.world.replace_content(generation=generation, placed=placed, broken=broken, revision=int(max(1, int(persisted_world.revision))))
 
 
 def _lift_player_above_othello_board_if_needed(session: SessionManager) -> None:
@@ -171,6 +210,7 @@ def load_my_world_space_into_session(session: SessionManager, space: PersistedPl
       broken=tuple(space.world.broken_cells),
       revision=int(max(1, int(space.world.revision))),
     )
+  _sync_my_world_spawn_settings(session)
   session.set_ai_players(tuple(player.to_state() for player in space.ai_players))
   _restore_player_overlap_exemptions(session)
 
@@ -190,11 +230,12 @@ def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceC
 
     _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
     _maybe_replace_world(sessions.my_world, state.my_world.world)
+    _sync_my_world_spawn_settings(sessions.my_world)
     sessions.my_world.set_ai_players(tuple(player.to_state() for player in state.my_world.ai_players))
     _restore_player_overlap_exemptions(sessions.my_world)
 
     _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
-    _maybe_replace_world(sessions.othello, state.othello_space.world)
+    _replace_othello_world(sessions.othello, state.othello_space.world)
     sessions.othello.set_ai_players(tuple(player.to_state() for player in state.othello_space.ai_players))
     ensure_othello_board_layout(sessions.othello.world)
     _lift_player_above_othello_board_if_needed(sessions.othello)

@@ -6,6 +6,7 @@ graft third-party
 graft tools
 graft native
 prune native/ludoxel_terrain/target
+prune native/ludoxel_othello/target
 
 include pyproject.toml
 include README.md

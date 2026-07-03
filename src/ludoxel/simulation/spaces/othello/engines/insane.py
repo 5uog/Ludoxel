@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from ludoxel.simulation.spaces.othello.books.opening import OpeningBook, load_opening_book, normalize_project_root
 from ludoxel.simulation.spaces.othello.engines.bitboards import apply_move_bits, bit_count, bitboard_to_moves, bitboards_from_board, legal_moves_bitboard
 from ludoxel.simulation.spaces.othello.engines.evaluation import LOSS_SCORE, WIN_SCORE, evaluate_position
+from ludoxel.simulation.spaces.othello.engines.native import create_native_insane_search
 from ludoxel.simulation.spaces.othello.engines.ordering import ordered_moves
 from ludoxel.simulation.spaces.othello.engines.search import check_deadline, negamax, solve_exact
 from ludoxel.simulation.spaces.othello.engines.transposition import TranspositionEntry
@@ -64,6 +65,7 @@ class InsaneSearchCache:
   opening_book_project_root_key: str = ""
   exact_threshold: int = 14
   transposition_soft_limit: int = 1 << 15
+  native_search: object | None = field(default=None, repr=False)
 
   def ensure_opening_book(self, project_root=None) -> None:
     raw_project_root = project_root
@@ -100,6 +102,14 @@ class InsaneSearchCache:
     if bool(changed):
       self.transposition.clear()
       self.exact_transposition.clear()
+      # The native session pins hash and sacrifice levels at construction,
+      # so a settings change replaces it instead of clearing it.
+      self.native_search = None
+
+  def ensure_native_search(self):
+    if self.native_search is None:
+      self.native_search = create_native_insane_search(hash_level=int(self.hash_level), sacrifice_level=int(self.sacrifice_level))
+    return self.native_search
 
 
 def opening_book_moves(cache: InsaneSearchCache | None, board: tuple[int, ...] | list[int], side: int) -> tuple[int, ...]:
@@ -132,20 +142,37 @@ def _fallback_root_evaluations(player_bits: int, opponent_bits: int, legal_moves
   return tuple(sorted(evaluations, key=lambda evaluation: (-float(evaluation.score), int(evaluation.move_index))))
 
 
+def _remaining_budget_s(deadline_s: float | None) -> float | None:
+  if deadline_s is None:
+    return None
+  return max(0.0, float(deadline_s) - time.perf_counter())
+
+
 def _root_move_evaluations(
   cache: InsaneSearchCache, player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], *, depth: int, deadline_s: float | None, exact: bool
 ) -> tuple[InsaneMoveEvaluation, ...]:
   evaluations: list[InsaneMoveEvaluation] = []
-  tt_entry = cache.transposition.get((int(player_bits), int(opponent_bits))) if int(cache.hash_level) > 0 else None
-  for move_index in ordered_moves(int(player_bits), int(opponent_bits), legal_moves, None if tt_entry is None else tt_entry.best_move):
+  native_search = cache.ensure_native_search()
+  if native_search is not None:
+    tt_best_move = native_search.root_best_move(int(player_bits), int(opponent_bits))
+  else:
+    tt_entry = cache.transposition.get((int(player_bits), int(opponent_bits))) if int(cache.hash_level) > 0 else None
+    tt_best_move = None if tt_entry is None else tt_entry.best_move
+  for move_index in ordered_moves(int(player_bits), int(opponent_bits), legal_moves, tt_best_move):
     check_deadline(deadline_s)
     next_player, next_opponent = apply_move_bits(int(player_bits), int(opponent_bits), int(move_index))
     if bool(exact):
-      score = -solve_exact(cache, int(next_opponent), int(next_player), LOSS_SCORE, WIN_SCORE, deadline_s, 0)
+      if native_search is not None:
+        score = -native_search.solve_exact(int(next_opponent), int(next_player), LOSS_SCORE, WIN_SCORE, _remaining_budget_s(deadline_s), 0)
+      else:
+        score = -solve_exact(cache, int(next_opponent), int(next_player), LOSS_SCORE, WIN_SCORE, deadline_s, 0)
       solved = True
       reached_depth = max(1, int(depth))
     else:
-      score = -negamax(cache, int(next_opponent), int(next_player), int(depth) - 1, LOSS_SCORE, WIN_SCORE, deadline_s, 0)
+      if native_search is not None:
+        score = -native_search.negamax(int(next_opponent), int(next_player), int(depth) - 1, LOSS_SCORE, WIN_SCORE, _remaining_budget_s(deadline_s), 0)
+      else:
+        score = -negamax(cache, int(next_opponent), int(next_player), int(depth) - 1, LOSS_SCORE, WIN_SCORE, deadline_s, 0)
       solved = abs(int(score)) >= int(WIN_SCORE)
       reached_depth = max(1, int(depth))
     evaluations.append(InsaneMoveEvaluation(move_index=int(move_index), score=float(score), solved=bool(solved), depth_reached=int(reached_depth)))

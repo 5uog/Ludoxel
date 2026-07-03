@@ -400,7 +400,7 @@ def _handle_loading_state_changed(self, active: bool) -> None:
           },
           {
             kind: 'paragraph',
-            text: 'The on-disk shape of these worlds, the per-world game mode, the thumbnail cache, and the `.ldxworld` package are owned by the library persistence, not by this surface. When a summary has no thumbnail bytes, `WorldGridCard` and `WorldListRow` keep their fixed thumbnail slots with a transparent pixmap and leave the empty slot styling to the existing QSS rather than fabricating image content.',
+            text: 'The on-disk shape of these worlds, the per-world game mode, the thumbnail cache, and the `.ldxworld` package are owned by the library persistence, not by this surface. When a summary has no thumbnail bytes, `WorldGridCard` and `WorldListRow` keep their fixed thumbnail slots with a transparent pixmap and leave the empty slot styling to the existing QSS rather than fabricating image content. `WorldGridCard` also fixes its full width to the thumbnail width plus the card margins — `GRID_CARD_WIDTH_PX` in `src/ludoxel/presentation/interface/menu/world_card.py`, the same constant `MyWorldLibraryPage` uses for its column arithmetic — and both card kinds render the world name through an eliding label that never requests width for its text, so a long world name truncates with an ellipsis and shows its full text as a tooltip instead of widening the grid column.',
           },
         ],
       },
@@ -484,7 +484,7 @@ def set_active_space(self, space_id: object) -> SessionManager:
         id: 'switching-play-spaces-domain-construction',
         title: 'My World and Othello Are Constructed from Different Domain Seeds',
         body: [
-          'The two sessions are built from different domain seeds. My World is created from `MyWorldSessionSeed` and a `WorldGenerationSpec`, whose mode, generation version, and seed select the deterministic base terrain the session resolves on demand; Othello is created from `OthelloSessionSeed`, a finite flat grass world, and `ensure_othello_board_layout`. Their spawn coordinates differ, their worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
+          'The two sessions are built from different domain seeds. My World is created from `MyWorldSessionSeed` and a `WorldGenerationSpec`, whose mode, generation version, and seed select the deterministic base terrain the session resolves on demand; Othello is created from `OthelloSessionSeed` and `make_othello_world_state`, whose world carries a flat `WorldGenerationSpec` at ground level 0 — the grass floor resolves procedurally at every coordinate — and receives `ensure_othello_board_layout` as placed blocks on that floor. Their spawn coordinates differ, their worlds differ, and Othello carries an additional board-layout requirement before it can serve as the Othello play surface.',
           'The shared `SessionManager` type is a runtime envelope, not an erasure of domain origin. Treating the switch as a mode toggle over one world misstates the implementation. The code creates two domain sessions first and later selects one active reference. The hidden session remains a session with its own world revision and actor state, not a dormant view over the active world.',
           '`make_session_manager` constructs each manager from a `SessionSettings` value, a `WorldState`, a `PlayerEntity`, and the registry. `SessionManager.__post_init__` then constructs its `InteractionService`, `GravitySystem`, and AI manager around that world and player. My World and Othello consequently begin with separate simulation envelopes even though `PlaySpaceContext.create_default` passes one default registry into both factories.',
         ],
@@ -509,19 +509,22 @@ def make_my_world_state(generation: WorldGenerationSpec) -> WorldState:
           },
           {
             language: 'py',
-            caption: 'Othello is produced from a flat world and then receives the Othello board layout.',
-            code: `OTHELLO_SPAWN: tuple[float, float, float] = (0.0, 1.0, -12.0)
+            caption: 'Othello is produced from a generation-backed flat world that then receives the board layout.',
+            code: `def othello_world_generation_spec() -> WorldGenerationSpec:
+  return WorldGenerationSpec(mode=GENERATION_MODE_FLAT, seed=DEFAULT_SEED, flat_ground_y=OTHELLO_DEFAULT_GROUND_Y).normalized()
 
 
-def _make_world() -> WorldState:
-  world = generate_flat_world(half_extent=48, ground_y=0, block_id="minecraft:grass_block")
+def make_othello_world_state() -> WorldState:
+  world = WorldState(blocks={}, revision=1, generation=othello_world_generation_spec())
   ensure_othello_board_layout(world)
   return world
 
 
 def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
   spec = OthelloSessionSeed(seed=int(seed))
-  return make_session_manager(seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=_make_world(), block_registry=block_registry)`,
+  return make_session_manager(
+    seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=make_othello_world_state(), block_registry=block_registry
+  )`,
           },
         ],
       },
@@ -529,7 +532,7 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
         id: 'switching-play-spaces-restoration-admission',
         title: 'Restoration Loads Both Spaces Before the Active Reference Is Chosen',
         body: [
-          'Startup restoration does not load only the space that will be shown first. `apply_persisted_state_if_present` applies persisted settings to every session, restores My World from `state.my_world`, restores Othello from `state.othello_space`, repairs Othello board placement, lifts the Othello player above the board when required, restores overlap exemptions, normalizes runtime preferences, and then calls `sessions.set_active_space(runtime.current_space_id)`. The selected runtime reference is admitted only after both persisted branches have been projected back into their session managers.',
+          'Startup restoration does not load only the space that will be shown first. `apply_persisted_state_if_present` applies persisted settings to every session, restores My World from `state.my_world` and resynchronizes its respawn settings from the restored generation spec, restores Othello from `state.othello_space` through `_replace_othello_world` — which reinstates the flat Othello generation for a legacy static save and strips persisted floor cells that equal the flat base state — repairs Othello board placement, lifts the Othello player above the board when required, restores overlap exemptions, normalizes runtime preferences, and then calls `sessions.set_active_space(runtime.current_space_id)`. The selected runtime reference is admitted only after both persisted branches have been projected back into their session managers.',
           '`SessionManager.set_active_space` makes the later visible switch non-destructive after startup. The dormant space is a session object whose persisted world, player, AI players, and, for Othello, `OthelloGameState`, have already been rehydrated or defaulted. The switch selects the runtime reference consumed by the viewport. Envelope validation and semantic correctness remain with the persistence paths for `state/app_state.json` and the per-world `state/worlds/<id>.ldxworld` entries.',
           '`AppState` carries `current_space_id`, `my_world`, and `othello_space` as separate fields alongside the shared settings and standing Othello settings. Player inventory is not shared at this level: the My World inventory travels inside `my_world`, while the Othello play space carries no saved inventory. A current-space value selects one branch for presentation after restoration and never copies a hotbar across the `PersistedPlaySpace` and `PersistedOthelloSpace` boundary.',
         ],
@@ -546,11 +549,12 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
 
   _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
   _maybe_replace_world(sessions.my_world, state.my_world.world)
+  _sync_my_world_spawn_settings(sessions.my_world)
   sessions.my_world.set_ai_players(tuple(player.to_state() for player in state.my_world.ai_players))
   _restore_player_overlap_exemptions(sessions.my_world)
 
   _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
-  _maybe_replace_world(sessions.othello, state.othello_space.world)
+  _replace_othello_world(sessions.othello, state.othello_space.world)
   sessions.othello.set_ai_players(tuple(player.to_state() for player in state.othello_space.ai_players))
   ensure_othello_board_layout(sessions.othello.world)
   _lift_player_above_othello_board_if_needed(sessions.othello)
@@ -1949,7 +1953,7 @@ def apply_void_damage(*, player, dt, timer_s):
         body: [
           'Pressing Respawn resets held mouse actions, cancels any pending AI route edit, respawns the session player, invalidates the current selection target, clears the renderer selection, hides the dead overlay, and re-syncs the hotbar widgets. After this, the viewport is back to ordinary play.',
           'Respawn is handled by the overlay-navigation controller, not by the overlay itself. Because it clears selection and held actions, you do not resume mid-interaction; you start fresh from the respawn position with the hotbar restored.',
-          '`SessionManager.respawn` restores position from `SessionSettings.spawn_x`, `spawn_y`, and `spawn_z`, clears velocity, pitch, flight, eye offsets, queued jump and auto-jump state, overlap exemptions, health, death reason, and void timer. `overlay_navigation.respawn` then hides the dead overlay and synchronizes hotbar widgets after it clears renderer selection. The active session player changes immediately; a later save remains a separate persistence operation.',
+          '`SessionManager.respawn` restores position from `SessionSettings.spawn_x`, `spawn_y`, and `spawn_z`, clears velocity, pitch, flight, eye offsets, queued jump and auto-jump state, overlap exemptions, health, death reason, and void timer. Those spawn settings follow the loaded world: `_sync_my_world_spawn_settings` in `src/ludoxel/application/persistence/schedulers/state.py` rewrites them from the loaded world’s generation spec through `spawn_for_generation` whenever a world is loaded into the session, so a flat world respawns the player one block above its ground layer and a seeded normal world respawns on its searched spawn column rather than on the spawn of the world the session was constructed with. `overlay_navigation.respawn` then hides the dead overlay and synchronizes hotbar widgets after it clears renderer selection. The active session player changes immediately; a later save remains a separate persistence operation.',
         ],
         codeBlocks: [
           {

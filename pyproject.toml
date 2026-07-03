@@ -68,6 +68,8 @@ ludoxel = [
     "simulation/actors/ai_players/learning/resources/policies/*.json",
     "simulation/worlds/generation/_terrain_native*.pyd",
     "simulation/worlds/generation/_terrain_native*.so",
+    "simulation/spaces/othello/engines/_othello_native*.pyd",
+    "simulation/spaces/othello/engines/_othello_native*.so",
 ]
 
 [tool.setuptools.packages.find]

@@ -68,6 +68,18 @@ def next_effect_slot(*, parent, prepared: PreparedSource, desired_slots: int, co
   return None
 
 
+def steal_oldest_effect_slot(prepared: PreparedSource) -> EffectVoiceSlot | None:
+  # Reclaims the voice that has been playing the longest so a new event can
+  # start when every slot of the source is busy. The reclaimed effect is
+  # stopped before reuse; the caller restarts it with the new volume.
+  candidates = [slot for slot in prepared.slots if bool(slot.effect.isLoaded())]
+  if not candidates:
+    return None
+  slot = min(candidates, key=lambda entry: float(entry.started_at_s))
+  slot.effect.stop()
+  return slot
+
+
 def mark_slot_started(slot: EffectVoiceSlot, *, prepared: PreparedSource, now_s: float | None = None) -> None:
   now = effect_clock_s() if now_s is None else float(now_s)
   slot.started_at_s = float(now)

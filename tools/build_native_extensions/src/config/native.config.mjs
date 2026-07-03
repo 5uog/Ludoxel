@@ -36,4 +36,13 @@ export const RUST_NATIVE_MODULES = Object.freeze([
     installDirectory: 'src/ludoxel/simulation/worlds/generation',
     fallbackModuleName: 'ludoxel.simulation.worlds.generation.fallback',
   }),
+  Object.freeze({
+    id: 'othello_native',
+    crateDirectory: 'native/ludoxel_othello',
+    crateName: 'ludoxel_othello',
+    moduleName: 'ludoxel.simulation.spaces.othello.engines._othello_native',
+    artifactStem: '_othello_native',
+    installDirectory: 'src/ludoxel/simulation/spaces/othello/engines',
+    fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
+  }),
 ]);

@@ -11,11 +11,11 @@ from PyQt6.QtWidgets import QButtonGroup, QFrame, QGridLayout, QHBoxLayout, QLab
 from ludoxel.application.persistence.stores.world_library import WorldLibrarySummary
 from ludoxel.presentation.interface.common.buttons import make_menu_button, use_layout_widget_rect
 from ludoxel.presentation.interface.common.screen_title_bar import ScreenTitleBar
-from ludoxel.presentation.interface.menu.world_card import WorldGridCard, WorldListRow
+from ludoxel.presentation.interface.menu.world_card import GRID_CARD_WIDTH_PX, WorldGridCard, WorldListRow
 
 _VIEW_GRID = "grid"
 _VIEW_LIST = "list"
-_GRID_CARD_WIDTH_PX = 244
+_GRID_CARD_WIDTH_PX = int(GRID_CARD_WIDTH_PX)
 _GRID_SPACING_PX = 16
 _CONTENT_MARGIN_PX = 24
 _TOGGLE_BUTTON_SIZE_PX = 40

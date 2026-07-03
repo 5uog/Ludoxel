@@ -2,6 +2,62 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.8",
+      "tags": [
+        "Desktop Application",
+        "My World",
+        "Othello",
+        "Rendering",
+        "Audio",
+        "UI",
+        "Build"
+      ],
+      "sections": [
+        {
+          "title": "Othello Infinite Flat Floor",
+          "items": [
+            "The Othello play space stands on generation-backed flat terrain. `create_othello_session` builds its world through `make_othello_world_state` in `src/ludoxel/simulation/spaces/othello/game/board.py`, whose flat `WorldGenerationSpec` at ground level 0 resolves the grass floor procedurally at every coordinate; the checkerboard from `ensure_othello_board_layout` sits on that floor as placed blocks. The previous world was a materialized 97-by-97 static block grid from `generate_flat_world`, and beyond its edge the space was void; `generate_flat_world` is removed.",
+            "State restoration converts legacy Othello saves to the same contract. `_replace_othello_world` in `src/ludoxel/application/persistence/schedulers/state.py` detects a persisted static Othello world, reinstates the flat generation spec, and drops persisted floor cells whose state equals the flat base through `strip_othello_flat_floor_blocks`, so a save written before this release regains the unbounded floor while its board layer and edits survive."
+          ]
+        },
+        {
+          "title": "Normal World Chunk Loading and the Bedrock Envelope",
+          "items": [
+            "`WorldState.visible_content_chunk_keys` selects render candidates from four bounded sets: the full vertical surface band of every column inside the horizontal render radius, the bedrock floor row of every such column, the three-by-three-by-three chunk neighborhood around the player, and every chunk with tracked mesh state — placed blocks, broken cells, or a mesh revision advanced by a neighboring edit — filtered horizontally. The previous selection clamped the surface band against the player's chunk Y and admitted only band or directly edited chunks, so crossing a sixteen-block chunk boundary, or breaking into a neighboring chunk, left terrain unloaded until that chunk itself was edited.",
+            "`chunk_has_content` reports the whole generated solid span between the content floor and the column band top: buried chunks mesh to zero faces until an edit exposes them, and the bedrock layer at y = -65 uploads its permanently exposed underside the same way the surface skin uploads its top. Flat generation collapses `_chunk_column_band` to the single ground layer, and `_mark_chunks_dirty` advances past the implicit first revision so the first edit of a pristine generated chunk always supersedes its resident mesh.",
+            "`within_render_distance` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` bounds drawn chunks horizontally only. The vertical extent of drawable chunks is fixed by the upload tracker's resident set, so the surface stays visible from bedrock depth and the bedrock underside stays visible from below; the WGPU backend already drew every resident chunk, and the OpenGL predicate now matches that behavior."
+          ]
+        },
+        {
+          "title": "Rust Othello Search Engine",
+          "items": [
+            "A new Rust crate at `native/ludoxel_othello` implements the Othello insane-search hot path — bitboard shifts, legal-move and flip resolution, the positional, corner, frontier, mobility, parity, and disc evaluation, move ordering, the negamax search, and the exact endgame solver — behind a PyO3 `cdylib` with internal transposition tables that follow the same soft-limit clearing policy as the Python cache. The compiled module imports as `ludoxel.simulation.spaces.othello.engines._othello_native`; ties round to even exactly as Python `round`, and primitives, evaluations, fixed-depth searches, and exact endgame solves return values bit-identical to the pure Python implementation, which remains the fallback owner in `search.py`.",
+            "`InsaneSearchCache` holds one native search session per cache through `ensure_native_search`; `_root_move_evaluations` routes each root move's subtree into the compiled `negamax` and `solve_exact` and reads the root ordering hint from the native transposition table. A deadline overrun raises the same `TimeoutError` the Python search raises, so iterative deepening in `analyze_insane_position` truncates identically; within the same time budget the compiled subtree search reaches greater depths. `npm run build:native` and `npm run build:native:check` cover the crate through the `RUST_NATIVE_MODULES` registry, the desktop build declares the module as a PyInstaller hidden import, wheel package data admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output.",
+            "The My World route planner in `src/ludoxel/simulation/actors/ai_players/planner.py` stays in Python: its transition validity is owned by the block-model contract — `has_full_top_support_for_block` and per-state collision boxes — and by the composed mutable world state, so a compiled port would either duplicate the whole block-shape rule set or call back into Python for every neighbor probe."
+          ]
+        },
+        {
+          "title": "Concurrent Sound Delivery",
+          "items": [
+            "`PcmOneShotMixer` mixes attack one-shots through NumPy array operations instead of a per-sample Python loop, opens its `QAudioSink` with an explicit 4096-frame buffer, and refills every free frame of that buffer on each pump tick. The pump runs on the GUI thread, so the enlarged buffer and vectorized mix absorb render stalls that previously drained the sink mid-swing and broke the attack stream audibly while walking.",
+            "The pooled `QSoundEffect` path reclaims the oldest playing voice of the selected source when every voice is busy, through `steal_oldest_effect_slot` in `src/ludoxel/presentation/audio/playback/effects.py`. An admitted event — a footstep landing between swings, a block action during rapid placement — now always reaches a voice; previously `_play_effect_pool` dropped the event and the mix lost sounds under load."
+          ]
+        },
+        {
+          "title": "Respawn Follows the Loaded World",
+          "items": [
+            "Loading a My World now resynchronizes `SessionSettings.spawn_x`, `spawn_y`, `spawn_z`, and `seed` from the loaded world's generation spec through `spawn_for_generation`, in `load_my_world_space_into_session` and in the startup state restore. `SessionManager.respawn` therefore places the player on the loaded world's own spawn column. Previously the spawn settings kept the startup session's normal-terrain spawn, which for a flat world sat below the ground layer, so every death respawned the player into the void and the fall repeated without end."
+          ]
+        },
+        {
+          "title": "World Library Grid Width",
+          "items": [
+            "`WorldGridCard` fixes its width to the thumbnail width plus the card margins and renders the world name through an eliding label that never requests width for its text, so a long world name truncates with an ellipsis — the full name stays available as a tooltip — instead of widening the card. `MyWorldLibraryPage` derives its column arithmetic from the exported card width, and `WorldListRow` elides its name the same way."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.7 Hotfix 1",
       "tags": [
         "Desktop Application",

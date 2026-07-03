@@ -42,8 +42,9 @@ src/**/*.so
 src/**/*.dylib
 src/**/*.dll
 
-# Rust build output for the terrain native crate.
+# Rust build output for the native crates.
 native/ludoxel_terrain/target/
+native/ludoxel_othello/target/
 
 # Local cache used by the repository-managed Ruff wrapper.
 tools/format_python_source/.cache/

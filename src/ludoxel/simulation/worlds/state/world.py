@@ -12,7 +12,7 @@ from ludoxel.foundations.mathematics.chunks.grid import CHUNK_SIZE, ChunkKey, ch
 from ludoxel.simulation.worlds.generation import native as terrain_native
 from ludoxel.simulation.worlds.generation.materials import TERRAIN_MATERIALS
 from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
-from ludoxel.simulation.worlds.generation.terrain_math import BEDROCK_Y, material_code, mode_code, surface_height
+from ludoxel.simulation.worlds.generation.terrain_math import BEDROCK_Y, MODE_FLAT_CODE, material_code, mode_code, surface_height
 
 BlockKey = Tuple[int, int, int]
 ColumnKey = Tuple[int, int]
@@ -262,13 +262,16 @@ class WorldState:
 
   # --- chunk / gravity tracking ---------------------------------------------
 
-  def chunk_mesh_revision(self, ck: ChunkKey) -> int:
+  def _effective_chunk_mesh_rev(self, ck: ChunkKey) -> int:
     key = (int(ck[0]), int(ck[1]), int(ck[2]))
     with self._lock:
       stored = self._chunk_mesh_rev.get(key)
-      if stored is not None:
-        return int(stored)
+    if stored is not None:
+      return int(stored)
     return 1 if self.chunk_has_content(key) else 0
+
+  def chunk_mesh_revision(self, ck: ChunkKey) -> int:
+    return int(self._effective_chunk_mesh_rev(ck))
 
   def consume_dirty_chunks(self) -> set[ChunkKey]:
     with self._lock:
@@ -293,9 +296,13 @@ class WorldState:
   def _mark_chunks_dirty(self, keys: Iterable[ChunkKey]) -> None:
     for ck0 in keys:
       ck = (int(ck0[0]), int(ck0[1]), int(ck0[2]))
-      cur = int(self._chunk_mesh_rev.get(ck, 0))
-      nxt = 1 if cur <= 0 else (cur + 1)
-      self._chunk_mesh_rev[ck] = int(nxt)
+      # Pristine generation-backed chunks are resident under the implicit
+      # revision 1 that chunk_mesh_revision derives from chunk_has_content;
+      # the first edit must therefore advance past that implicit revision,
+      # never restart at 1, or resident meshes would treat the edit as
+      # already uploaded.
+      cur = int(self._effective_chunk_mesh_rev(ck))
+      self._chunk_mesh_rev[ck] = int(cur + 1)
       self._dirty_chunks.add(ck)
 
   def _mark_gravity_dirty_cell(self, x: int, y: int, z: int) -> None:
@@ -460,6 +467,13 @@ class WorldState:
     with self._lock:
       if key in self._chunk_band_cache:
         return self._chunk_band_cache[key]
+    if self._mode_code == MODE_FLAT_CODE:
+      # Flat generation places exactly one solid layer at flat_ground_y and
+      # air everywhere else, so the surface envelope collapses to that layer.
+      band = (int(self._flat_y), int(self._flat_y))
+      with self._lock:
+        self._chunk_band_cache[key] = band
+      return band
     x0 = int(cx) * CHUNK_SIZE
     z0 = int(cz) * CHUNK_SIZE
     heights = terrain_native.surface_heights(self._seed, self._gen_version, self._mode_code, self._flat_y, x0 - 1, z0 - 1, CHUNK_SIZE + 2, CHUNK_SIZE + 2)
@@ -478,6 +492,13 @@ class WorldState:
       self._chunk_band_cache[key] = band
     return band
 
+  def _content_floor_y(self) -> int:
+    # Lowest generated solid cell of any column: the flat layer for flat
+    # generation, the bedrock layer for normal generation.
+    if self._mode_code == MODE_FLAT_CODE:
+      return int(self._flat_y)
+    return int(BEDROCK_Y)
+
   def chunk_has_content(self, ck: ChunkKey) -> bool:
     key = (int(ck[0]), int(ck[1]), int(ck[2]))
     with self._lock:
@@ -486,15 +507,29 @@ class WorldState:
     band = self._chunk_column_band(int(key[0]), int(key[2]))
     if band is None:
       return False
+    # Generated solid cells span from the content floor up to the highest
+    # surface of the column band, so any chunk inside that span holds
+    # content: interior chunks mesh to zero faces until an edit or a
+    # neighboring edit exposes them, and the bedrock layer meshes its
+    # permanently exposed underside exactly like the surface skin.
     y_lo = int(key[1]) * CHUNK_SIZE
     y_hi = y_lo + CHUNK_SIZE - 1
-    return not (int(band[1]) < y_lo or int(band[0]) > y_hi)
+    return int(y_hi) >= int(self._content_floor_y()) and int(y_lo) <= int(band[1])
 
   def visible_content_chunk_keys(self, center: ChunkKey, radius: int) -> set[ChunkKey]:
     ccx, ccy, ccz = (int(center[0]), int(center[1]), int(center[2]))
     r = int(max(0, radius))
     out: set[ChunkKey] = set()
 
+    # Surface-envelope and floor-envelope chunks for every column inside the
+    # horizontal radius. The whole vertical extent of each column band stays
+    # a candidate: the band is a bounded envelope around the generated
+    # surface, and clamping it against the player's chunk Y made the terrain
+    # drop out of the candidate set as soon as the eye crossed a CHUNK_SIZE
+    # boundary away from the band. The floor row carries the content floor
+    # (bedrock for normal generation, the flat layer for flat generation),
+    # whose underside is the world's permanently exposed bottom skin.
+    floor_cy = int(self._content_floor_y()) // int(CHUNK_SIZE)
     for cx in range(ccx - r, ccx + r + 1):
       for cz in range(ccz - r, ccz + r + 1):
         band = self._chunk_column_band(int(cx), int(cz))
@@ -502,13 +537,29 @@ class WorldState:
           continue
         cy_lo = int(math.floor(float(band[0]) / float(CHUNK_SIZE)))
         cy_hi = int(math.floor(float(band[1]) / float(CHUNK_SIZE)))
-        for cy in range(max(cy_lo, ccy - r), min(cy_hi, ccy + r) + 1):
+        for cy in range(cy_lo, cy_hi + 1):
           out.add((int(cx), int(cy), int(cz)))
+        out.add((int(cx), int(floor_cy), int(cz)))
 
+    # Chunks the player occupies or can reach into next; empty ones resolve
+    # to mesh revision 0 and are skipped by the upload scheduler.
+    for dx in (-1, 0, 1):
+      for dy in (-1, 0, 1):
+        for dz in (-1, 0, 1):
+          out.add((int(ccx + dx), int(ccy + dy), int(ccz + dz)))
+
+    # Every chunk with tracked mesh state: chunks holding placed blocks,
+    # chunks holding broken cells, and chunks whose mesh revision advanced
+    # because a neighboring cell edit dirtied them. Without the revision
+    # keys, a chunk dirtied only through a neighbor edit (for example the
+    # chunk below a shaft floor) never re-entered the candidate set until
+    # it was edited directly. The filter is horizontal only, matching the
+    # column envelopes: a shaft dug from the surface to bedrock stays
+    # visible over its whole height while the player stands at either end.
     with self._lock:
-      edited = set(self._chunk_index.keys()) | set(self._broken_chunk_keys)
-    for ck in edited:
-      if abs(int(ck[0]) - ccx) <= r and abs(int(ck[1]) - ccy) <= r and abs(int(ck[2]) - ccz) <= r:
+      tracked = set(self._chunk_index.keys()) | set(self._broken_chunk_keys) | set(self._chunk_mesh_rev.keys())
+    for ck in tracked:
+      if abs(int(ck[0]) - ccx) <= r and abs(int(ck[2]) - ccz) <= r:
         out.add((int(ck[0]), int(ck[1]), int(ck[2])))
     return out
 

@@ -29,7 +29,7 @@ from ludoxel.presentation.audio.catalogs.player import (
   PLAYER_EVENT_SOUND_CATALOG,
 )
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
-from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot
+from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot, steal_oldest_effect_slot
 from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, pose_almost_equal, spatial_distance_gain
 from ludoxel.presentation.audio.playback.mixer import PcmOneShotMixer
 from ludoxel.presentation.audio.playback.sources import PreparedSource, effect_voice_hold_s_for_url, pick_prepared_source, resolve_existing_urls, slot_budget_per_source, source_key_for_url
@@ -522,14 +522,19 @@ class AudioManager(QObject):
 
     now_s = effect_clock_s()
     idle_sources = [prepared for prepared in prepared_sources if has_idle_voice(prepared, now_s=now_s)]
-    if not idle_sources:
-      return False
-
-    prepared = self._pick_prepared_source(str(pool_key), pool, idle_sources)
-    if prepared is None:
-      return False
-
-    slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), now_s=now_s)
+    if idle_sources:
+      prepared = self._pick_prepared_source(str(pool_key), pool, idle_sources)
+      if prepared is None:
+        return False
+      slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), now_s=now_s)
+    else:
+      # Every voice of every source is busy. Admitted events must still be
+      # heard, so the oldest voice of the selected source is reclaimed
+      # instead of dropping the event.
+      prepared = self._pick_prepared_source(str(pool_key), pool, prepared_sources)
+      if prepared is None:
+        return False
+      slot = steal_oldest_effect_slot(prepared)
     if slot is None:
       return False
 
