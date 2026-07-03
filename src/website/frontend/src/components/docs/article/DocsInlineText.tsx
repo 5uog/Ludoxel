@@ -10,6 +10,8 @@ import DocsMath from './DocsMath';
 type InlineTextPart = string | React.JSX.Element;
 
 const INLINE_LINK_CLASS_NAME = 'link font-semibold underline decoration-current underline-offset-4 transition-opacity hover:opacity-80';
+const INLINE_CODE_CLASS_NAME =
+  'inline max-w-full whitespace-normal break-words rounded border border-border bg-secondary px-1.5 py-0.5 align-baseline font-mono text-[0.92em] text-foreground [overflow-wrap:anywhere]';
 
 function isEscaped(text: string, index: number): boolean {
   let backslashCount = 0;
@@ -45,6 +47,26 @@ function findUnescapedSequence(text: string, sequence: string, fromIndex: number
   return -1;
 }
 
+function findClosingBacktick(text: string, fromIndex: number): number {
+  let cursor = fromIndex;
+
+  while (cursor < text.length) {
+    const nextIndex = text.indexOf('`', cursor);
+
+    if (nextIndex === -1) {
+      return -1;
+    }
+
+    if (!isEscaped(text, nextIndex)) {
+      return nextIndex;
+    }
+
+    cursor = nextIndex + 1;
+  }
+
+  return -1;
+}
+
 function findInlineDollarEnd(text: string, fromIndex: number): number {
   let cursor = fromIndex;
 
@@ -65,9 +87,13 @@ function findInlineDollarEnd(text: string, fromIndex: number): number {
   return -1;
 }
 
+function unescapeBackticks(text: string): string {
+  return text.replace(/\\`/g, '`');
+}
+
 function pushTextPart(parts: InlineTextPart[], text: string): void {
   if (text.length > 0) {
-    parts.push(text);
+    parts.push(unescapeBackticks(text));
   }
 }
 
@@ -101,14 +127,14 @@ function renderInlineTextString(text: string): InlineTextPart[] {
   let plainStart = 0;
 
   while (cursor < text.length) {
-    if (text[cursor] === '`') {
-      const codeEnd = text.indexOf('`', cursor + 1);
+    if (text[cursor] === '`' && !isEscaped(text, cursor)) {
+      const codeEnd = findClosingBacktick(text, cursor + 1);
 
       if (codeEnd !== -1) {
         pushTextPart(parts, text.slice(plainStart, cursor));
-        const code = text.slice(cursor + 1, codeEnd);
+        const code = unescapeBackticks(text.slice(cursor + 1, codeEnd));
         parts.push(
-          <code className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={`code-${cursor}-${codeEnd}`}>
+          <code className={INLINE_CODE_CLASS_NAME} key={`code-${cursor}-${codeEnd}`}>
             {code}
           </code>,
         );
