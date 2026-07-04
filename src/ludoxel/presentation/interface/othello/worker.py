@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import multiprocessing
-from concurrent.futures import Future, ProcessPoolExecutor
+import queue
+import threading
+from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass
 from queue import Empty
 
@@ -52,6 +54,7 @@ class OthelloAiWorker(QObject):
     self._search_executor_unavailable = False
     self._book_executor: ProcessPoolExecutor | None = None
     self._book_executor_unavailable = False
+    self._fallback_executor: ThreadPoolExecutor | None = None
     self._pending: list[_PendingTask] = []
     self._worker_count = int(DEFAULT_OTHELLO_THREAD_COUNT)
     self._book_learning_manager = None
@@ -110,6 +113,19 @@ class OthelloAiWorker(QObject):
       self._book_learning_manager = multiprocessing.Manager()
     return self._book_learning_manager
 
+  def _ensure_fallback_executor(self) -> ThreadPoolExecutor | None:
+    # When the process pool is unavailable, the fallback still runs off the
+    # UI thread so a heavy search cannot stall the render loop or the disc
+    # flip animations; the compiled Rust search releases the GIL while it
+    # runs. Results return through the same pending-future poll used by the
+    # process path.
+    if self._fallback_executor is None:
+      try:
+        self._fallback_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="OthelloAiFallback")
+      except Exception:
+        self._fallback_executor = None
+    return self._fallback_executor
+
   def _clear_book_learning_ipc(self) -> None:
     self._book_learning_progress_queue = None
     self._book_learning_cancel_event = None
@@ -127,19 +143,34 @@ class OthelloAiWorker(QObject):
 
   def _emit_fallback_move(self, *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, sacrifice_level: int, hash_level: int) -> None:
 
+    def compute() -> int | None:
+      return choose_ai_move(
+        board,
+        side,
+        difficulty,
+        random_seed=int(seed),
+        project_root=str(project_root),
+        match_generation=int(generation),
+        insane_cache=_fallback_cache(),
+        sacrifice_level=int(sacrifice_level),
+        hash_level=int(hash_level),
+      )
+
+    executor = self._ensure_fallback_executor()
+    if executor is not None:
+      try:
+        future = executor.submit(compute)
+      except Exception:
+        future = None
+      if future is not None:
+        self._pending.append(_PendingTask(kind="move", generation=int(generation), future=future))
+        if not self._poll_timer.isActive():
+          self._poll_timer.start()
+        return
+
     def emit_result() -> None:
       try:
-        move_index = choose_ai_move(
-          board,
-          side,
-          difficulty,
-          random_seed=int(seed),
-          project_root=str(project_root),
-          match_generation=int(generation),
-          insane_cache=_fallback_cache(),
-          sacrifice_level=int(sacrifice_level),
-          hash_level=int(hash_level),
-        )
+        move_index = compute()
       except Exception:
         move_index = None
       self.move_ready.emit(int(generation), move_index)
@@ -148,21 +179,36 @@ class OthelloAiWorker(QObject):
 
   def _emit_fallback_analysis(self, *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, sacrifice_level: int, hash_level: int) -> None:
 
+    def compute():
+      return analyze_position(
+        board,
+        side,
+        difficulty,
+        random_seed=int(seed),
+        project_root=str(project_root),
+        strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S),
+        insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S),
+        match_generation=int(generation),
+        insane_cache=_fallback_cache(),
+        sacrifice_level=int(sacrifice_level),
+        hash_level=int(hash_level),
+      )
+
+    executor = self._ensure_fallback_executor()
+    if executor is not None:
+      try:
+        future = executor.submit(compute)
+      except Exception:
+        future = None
+      if future is not None:
+        self._pending.append(_PendingTask(kind="analysis", generation=int(generation), future=future))
+        if not self._poll_timer.isActive():
+          self._poll_timer.start()
+        return
+
     def emit_result() -> None:
       try:
-        analysis = analyze_position(
-          board,
-          side,
-          difficulty,
-          random_seed=int(seed),
-          project_root=str(project_root),
-          strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S),
-          insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S),
-          match_generation=int(generation),
-          insane_cache=_fallback_cache(),
-          sacrifice_level=int(sacrifice_level),
-          hash_level=int(hash_level),
-        )
+        analysis = compute()
       except Exception:
         analysis = None
       self.analysis_ready.emit(int(generation), analysis)
@@ -170,6 +216,34 @@ class OthelloAiWorker(QObject):
     QTimer.singleShot(0, emit_result)
 
   def _emit_fallback_book_learning(self, *, settings: OthelloSettings, project_root: str) -> None:
+    executor = self._ensure_fallback_executor()
+    if executor is not None:
+      progress_queue = queue.Queue()
+      cancel_event = threading.Event()
+      try:
+        future = executor.submit(
+          _compute_book_learning,
+          int(settings.book_learning_depth),
+          float(settings.book_per_move_error),
+          float(settings.book_cumulative_error),
+          float(settings.book_leaf_error),
+          str(project_root),
+          int(settings.hash_level),
+          int(settings.sacrifice_level),
+          progress_queue,
+          cancel_event,
+          install_othello_book_storage_hooks,
+        )
+      except Exception:
+        future = None
+      if future is not None:
+        self._book_learning_progress_queue = progress_queue
+        self._book_learning_cancel_event = cancel_event
+        self._book_learning_cancelled = False
+        self._pending.append(_PendingTask(kind="book_learning", generation=-1, future=future))
+        if not self._poll_timer.isActive():
+          self._poll_timer.start()
+        return
 
     def emit_result() -> None:
       try:
@@ -388,6 +462,12 @@ class OthelloAiWorker(QObject):
     self._pending.clear()
     self._recreate_search_executor()
     self._recreate_book_executor()
+    if self._fallback_executor is not None:
+      try:
+        self._fallback_executor.shutdown(wait=False, cancel_futures=True)
+      except Exception:
+        pass
+      self._fallback_executor = None
     if self._book_learning_manager is not None:
       try:
         self._book_learning_manager.shutdown()

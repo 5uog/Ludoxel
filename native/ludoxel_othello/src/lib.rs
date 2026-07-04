@@ -4,9 +4,11 @@
 // PyO3 binding for the Othello bitboard search engine. The compiled module
 // is imported as ludoxel.simulation.spaces.othello.engines._othello_native
 // and must keep the exact contract of the pure Python implementation in
-// src/ludoxel/simulation/spaces/othello/engines/ (bitboards.py,
+// src/ludoxel/simulation/spaces/othello/engines/ (bitboards.py, classic.py,
 // evaluation.py, ordering.py, search.py, transposition.py):
 //   legal_moves_bitboard, apply_move_bits, evaluate_position -> pure values
+//   classic_root_scores -> per-root-move float scores for the classic
+//   difficulties, mirroring _alpha_beta and the root loop of _best_move
 //   InsaneSearch -> negamax / solve_exact over internal transposition
 //   tables that follow the same soft-limit clearing policy; a deadline
 //   overrun raises the builtin TimeoutError, matching check_deadline.
@@ -46,6 +48,17 @@ fn terminal_score(player_bits: u64, opponent_bits: u64) -> i64 {
   engine::terminal_score(player_bits, opponent_bits)
 }
 
+// Root scores for the classic difficulties (weak/medium/strong). The result
+// keeps the Python root ordering (position weight descending, index
+// ascending among ties) so the seeded tie selection in classic.py behaves
+// identically on the native and fallback paths.
+#[pyfunction]
+#[pyo3(signature = (player_bits, opponent_bits, depth, sacrifice_level, budget_s=None))]
+fn classic_root_scores(py: Python<'_>, player_bits: u64, opponent_bits: u64, depth: i64, sacrifice_level: i64, budget_s: Option<f64>) -> PyResult<Vec<(u32, f64)>> {
+  let deadline = deadline_from_budget(budget_s);
+  py.detach(move || engine::classic_root_scores(player_bits, opponent_bits, depth, sacrifice_level, deadline)).map_err(|_| timeout_error())
+}
+
 #[pyclass]
 struct InsaneSearch {
   state: engine::SearchState,
@@ -71,14 +84,14 @@ impl InsaneSearch {
   fn negamax(&mut self, py: Python<'_>, player_bits: u64, opponent_bits: u64, depth: i64, alpha: i64, beta: i64, budget_s: Option<f64>, pass_count: i64) -> PyResult<i64> {
     let deadline = deadline_from_budget(budget_s);
     let state = &mut self.state;
-    py.allow_threads(move || state.negamax(player_bits, opponent_bits, depth, alpha, beta, deadline, pass_count)).map_err(|_| timeout_error())
+    py.detach(move || state.negamax(player_bits, opponent_bits, depth, alpha, beta, deadline, pass_count)).map_err(|_| timeout_error())
   }
 
   #[pyo3(signature = (player_bits, opponent_bits, alpha, beta, budget_s=None, pass_count=0))]
   fn solve_exact(&mut self, py: Python<'_>, player_bits: u64, opponent_bits: u64, alpha: i64, beta: i64, budget_s: Option<f64>, pass_count: i64) -> PyResult<i64> {
     let deadline = deadline_from_budget(budget_s);
     let state = &mut self.state;
-    py.allow_threads(move || state.solve_exact(player_bits, opponent_bits, alpha, beta, deadline, pass_count)).map_err(|_| timeout_error())
+    py.detach(move || state.solve_exact(player_bits, opponent_bits, alpha, beta, deadline, pass_count)).map_err(|_| timeout_error())
   }
 }
 
@@ -94,6 +107,7 @@ fn _othello_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
   m.add_function(wrap_pyfunction!(apply_move_bits, m)?)?;
   m.add_function(wrap_pyfunction!(evaluate_position, m)?)?;
   m.add_function(wrap_pyfunction!(terminal_score, m)?)?;
+  m.add_function(wrap_pyfunction!(classic_root_scores, m)?)?;
   m.add_function(wrap_pyfunction!(native_build_info, m)?)?;
   Ok(())
 }

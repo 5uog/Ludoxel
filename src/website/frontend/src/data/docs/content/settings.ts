@@ -400,7 +400,11 @@ overlay._ctl_cloud_speed_min = AdvancedScalarControl(
           },
           {
             kind: 'paragraph',
-            text: 'The visible surface names ordinary controls—show clouds, cloud wireframe, flow direction, density, seed, speed variation, speed endpoints, height variation, fixed Y, spawn interval, preferred interval, and preferred probability—but the persisted and runtime state is narrower than those labels. Every numeric value is admitted only after the runtime preference aggregate calls the corresponding normalizer.',
+            text: 'The visible surface names ordinary controls—show clouds, cloud wireframe, flow direction, density, cloud size, seed, speed variation, speed endpoints, height variation, fixed Y, spawn interval, preferred interval, and preferred probability—but the persisted and runtime state is narrower than those labels. Every numeric value is admitted only after the runtime preference aggregate calls the corresponding normalizer.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The density control and the cloud size control feed the same cloud field but change different quantities. `cloud_density` is clamped to `[0, 4]`, where `0` disables clouds; the field derives the macro cell that hosts one cloud and the fraction of cells it drops from this value, so a higher density places more clouds. `cloud_cell_size` is clamped by `normalize_cloud_cell_size` to `[8, 40]` blocks with a default of `20`, and it sets the edge length of every cloud cell, so a larger value makes each cloud cluster larger. Both reach `CloudField` on both backends through `set_cloud_density` and `set_cloud_cell_size`.',
           },
         ],
       },
@@ -411,6 +415,13 @@ overlay._ctl_cloud_speed_min = AdvancedScalarControl(
           {
             kind: 'paragraph',
             text: 'Cloud speed is a closed interval measured in blocks per second. `normalize_cloud_speed_range` converts both endpoints to floats, clamps them to the implementation range `[0, 4]`, and swaps them when the user or saved file supplies the endpoints in the wrong order. The invariant is therefore not advisory: the renderer is never supposed to receive a speed interval where `min_speed > max_speed`.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/application/preferences/clouds.py',
+            code: `def normalize_cloud_cell_size(value: object) -> int:
+  return int(clampi(int(value), int(CLOUD_CELL_SIZE_MIN), int(CLOUD_CELL_SIZE_MAX)))`,
           },
           {
             kind: 'code',

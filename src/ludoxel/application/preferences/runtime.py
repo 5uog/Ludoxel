@@ -10,10 +10,13 @@ from ludoxel.application.preferences.audio import AudioPreferences
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, cycle_camera_perspective, is_first_person_camera_perspective, normalize_camera_perspective
 from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.application.preferences.clouds import (
+  CLOUD_CELL_SIZE_MAX,
+  CLOUD_CELL_SIZE_MIN,
   CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND,
   CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND,
   CLOUD_Y_MAX,
   CLOUD_Y_MIN,
+  DEFAULT_CLOUD_CELL_SIZE,
   DEFAULT_CLOUD_FIXED_Y,
   DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED,
   DEFAULT_CLOUD_PREFERRED_Y_MAX,
@@ -24,6 +27,7 @@ from ludoxel.application.preferences.clouds import (
   DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND,
   DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND,
   DEFAULT_CLOUD_SPEED_VARIATION_ENABLED,
+  normalize_cloud_cell_size,
   normalize_cloud_height_settings,
   normalize_cloud_speed_range,
 )
@@ -105,6 +109,9 @@ class RuntimePreferences:
   CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND: ClassVar[float] = CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND
   DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND: ClassVar[float] = DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND
   DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND: ClassVar[float] = DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND
+  CLOUD_CELL_SIZE_MIN: ClassVar[int] = CLOUD_CELL_SIZE_MIN
+  CLOUD_CELL_SIZE_MAX: ClassVar[int] = CLOUD_CELL_SIZE_MAX
+  DEFAULT_CLOUD_CELL_SIZE: ClassVar[int] = DEFAULT_CLOUD_CELL_SIZE
   CLOUD_Y_MIN: ClassVar[int] = CLOUD_Y_MIN
   CLOUD_Y_MAX: ClassVar[int] = CLOUD_Y_MAX
   DEFAULT_CLOUD_FIXED_Y: ClassVar[int] = DEFAULT_CLOUD_FIXED_Y
@@ -121,6 +128,7 @@ class RuntimePreferences:
   cloud_wire: bool = False
   cloud_enabled: bool = True
   cloud_density: int = 1
+  cloud_cell_size: int = DEFAULT_CLOUD_CELL_SIZE
   cloud_seed: int = 1337
   cloud_flow_direction: str = DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
   cloud_speed_variation_enabled: bool = DEFAULT_CLOUD_SPEED_VARIATION_ENABLED
@@ -219,6 +227,7 @@ class RuntimePreferences:
     self.hud_visible = bool(self.hud_visible)
 
     self.cloud_density = clampi(int(self.cloud_density), 0, 4)
+    self.cloud_cell_size = normalize_cloud_cell_size(self.cloud_cell_size)
     self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
     self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
     self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
@@ -357,6 +366,7 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
       cloud_wire=bool(runtime.cloud_wire),
       cloud_enabled=bool(runtime.cloud_enabled),
       cloud_density=int(runtime.cloud_density),
+      cloud_cell_size=int(runtime.cloud_cell_size),
       cloud_seed=int(runtime.cloud_seed),
       cloud_flow_direction=str(runtime.cloud_flow_direction),
       cloud_speed_variation_enabled=bool(runtime.cloud_speed_variation_enabled),

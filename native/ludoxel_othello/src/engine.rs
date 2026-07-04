@@ -296,6 +296,159 @@ pub fn evaluate_position(player: u64, opponent: u64, sacrifice_level: i64) -> i6
   round_like_python(score)
 }
 
+// Classic-difficulty evaluation and search. Every term, float operation
+// order, ordering key, pass rule, and terminal value mirrors _evaluate,
+// _terminal_score, _alpha_beta, and the root loop of _best_move in
+// src/ludoxel/simulation/spaces/othello/engines/classic.py. Scores are f64
+// because the Python implementation computes float scores; root tie
+// selection stays in Python so the seeded RNG choice is byte-identical
+// between the compiled module and the fallback.
+
+fn classic_frontier_count(side_bits: u64, occupied: u64) -> i64 {
+  let empty = !occupied;
+  bit_count(side_bits & adjacent_bits(empty))
+}
+
+fn classic_evaluate(root: u64, other: u64, sacrifice_level: i64) -> f64 {
+  let positional = position_score(root, other) as f64;
+
+  let my_moves = bit_count(legal_moves_bitboard(root, other));
+  let enemy_moves = bit_count(legal_moves_bitboard(other, root));
+  let mut mobility = 0.0f64;
+  if (my_moves + enemy_moves) > 0 {
+    mobility = 100.0 * ((my_moves - enemy_moves) as f64) / ((my_moves + enemy_moves) as f64);
+  }
+
+  let mut my_corners = 0i64;
+  let mut enemy_corners = 0i64;
+  for index in CORNERS.iter() {
+    let mask = 1u64 << index;
+    if (root & mask) != 0 {
+      my_corners += 1;
+    } else if (other & mask) != 0 {
+      enemy_corners += 1;
+    }
+  }
+  let corner_score = 25.0 * ((my_corners - enemy_corners) as f64);
+
+  let my_count = bit_count(root);
+  let enemy_count = bit_count(other);
+  let mut disc_diff = 0.0f64;
+  if (my_count + enemy_count) > 0 {
+    disc_diff = 20.0 * ((my_count - enemy_count) as f64) / ((my_count + enemy_count) as f64);
+  }
+
+  let (disc_weight, mobility_weight, corner_weight, frontier_weight) = evaluation_weights(sacrifice_level);
+  let occupied = root | other;
+  let frontier_penalty = -5.0 * ((classic_frontier_count(root, occupied) - classic_frontier_count(other, occupied)) as f64);
+
+  positional + mobility * mobility_weight + corner_score * corner_weight + disc_diff * disc_weight + frontier_penalty * frontier_weight
+}
+
+fn classic_terminal_score(root: u64, other: u64) -> f64 {
+  let my_count = bit_count(root);
+  let enemy_count = bit_count(other);
+  if my_count > enemy_count {
+    return 100000.0 + ((my_count - enemy_count) as f64);
+  }
+  if enemy_count > my_count {
+    return -100000.0 - ((enemy_count - my_count) as f64);
+  }
+  0.0
+}
+
+fn classic_ordered_moves(legal: u64, maximizing: bool) -> Vec<u32> {
+  // Mirrors sorted(moves, key=POSITION_WEIGHTS[index], reverse=maximizing)
+  // over the ascending legal-move list; the stable sort keeps ascending
+  // move order among equal weights exactly like Python's sorted.
+  let mut moves = bitboard_to_moves(legal);
+  if maximizing {
+    moves.sort_by_key(|&m| -POSITION_WEIGHTS[m as usize]);
+  } else {
+    moves.sort_by_key(|&m| POSITION_WEIGHTS[m as usize]);
+  }
+  moves
+}
+
+fn classic_check_deadline(deadline: Option<Instant>) -> Result<(), SearchTimeout> {
+  if let Some(limit) = deadline {
+    if Instant::now() >= limit {
+      return Err(SearchTimeout);
+    }
+  }
+  Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn classic_alpha_beta(
+  root: u64,
+  other: u64,
+  root_to_move: bool,
+  depth: i64,
+  mut alpha: f64,
+  mut beta: f64,
+  deadline: Option<Instant>,
+  pass_count: i64,
+  sacrifice_level: i64,
+) -> Result<f64, SearchTimeout> {
+  classic_check_deadline(deadline)?;
+
+  let (mover, waiter) = if root_to_move { (root, other) } else { (other, root) };
+  let my_legal = legal_moves_bitboard(mover, waiter);
+  let enemy_legal = legal_moves_bitboard(waiter, mover);
+
+  if depth <= 0 {
+    return Ok(classic_evaluate(root, other, sacrifice_level));
+  }
+
+  if my_legal == 0 && enemy_legal == 0 {
+    return Ok(classic_terminal_score(root, other));
+  }
+
+  if my_legal == 0 {
+    if pass_count >= 1 {
+      return Ok(classic_terminal_score(root, other));
+    }
+    return classic_alpha_beta(root, other, !root_to_move, depth - 1, alpha, beta, deadline, pass_count + 1, sacrifice_level);
+  }
+
+  let maximizing = root_to_move;
+  let mut best = if maximizing { f64::NEG_INFINITY } else { f64::INFINITY };
+
+  for move_index in classic_ordered_moves(my_legal, maximizing) {
+    classic_check_deadline(deadline)?;
+    let (next_mover, next_waiter) = apply_move_bits(mover, waiter, move_index);
+    let (next_root, next_other) = if root_to_move { (next_mover, next_waiter) } else { (next_waiter, next_mover) };
+    let child = classic_alpha_beta(next_root, next_other, !root_to_move, depth - 1, alpha, beta, deadline, 0, sacrifice_level)?;
+    if maximizing {
+      best = best.max(child);
+      alpha = alpha.max(best);
+      if alpha >= beta {
+        break;
+      }
+    } else {
+      best = best.min(child);
+      beta = beta.min(best);
+      if beta <= alpha {
+        break;
+      }
+    }
+  }
+  Ok(best)
+}
+
+pub fn classic_root_scores(player: u64, opponent: u64, depth: i64, sacrifice_level: i64, deadline: Option<Instant>) -> Result<Vec<(u32, f64)>, SearchTimeout> {
+  let legal = legal_moves_bitboard(player, opponent);
+  let mut out: Vec<(u32, f64)> = Vec::with_capacity(legal.count_ones() as usize);
+  for move_index in classic_ordered_moves(legal, true) {
+    classic_check_deadline(deadline)?;
+    let (next_root, next_other) = apply_move_bits(player, opponent, move_index);
+    let score = classic_alpha_beta(next_root, next_other, false, depth - 1, f64::NEG_INFINITY, f64::INFINITY, deadline, 0, sacrifice_level)?;
+    out.push((move_index, score));
+  }
+  Ok(out)
+}
+
 fn ordering_bonus(move_index: u32) -> i64 {
   if CORNERS.contains(&move_index) {
     return 50_000;

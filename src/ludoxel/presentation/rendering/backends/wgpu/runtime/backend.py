@@ -10,6 +10,7 @@ import numpy as np
 from PyQt6.QtGui import QColor, QImage
 
 import ludoxel.foundations.mathematics.linear.mat4 as mat4
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_ULTRA
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chunk_key
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -26,6 +27,7 @@ from ludoxel.presentation.rendering.backends.wgpu.meshes.chunk import (
 )
 from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
   create_cloud_pipeline,
+  create_cloud_volume_pipeline,
   create_cloud_wireframe_pipeline,
   create_othello_pipeline,
   create_othello_shadow_pipeline,
@@ -44,7 +46,9 @@ from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuText
 from ludoxel.presentation.rendering.contracts.config import (
   CloudDistanceFog,
   GeometryDistanceFog,
+  cloud_far_distance,
   cloud_fog_range,
+  cloud_projection_z_far,
   effective_backend_shadow_params,
   max_unfogged_render_distance_radius_blocks,
   render_distance_fog_range,
@@ -70,7 +74,7 @@ from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRe
 from ludoxel.presentation.rendering.visuals.players.skin import normalize_player_skin_image
 from ludoxel.presentation.rendering.visuals.selections.outline import SelectionOutlineBuilder
 from ludoxel.presentation.rendering.visuals.worlds.block_visual_resolver import BlockVisualResolver
-from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField
+from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField, cloud_face_rows, cloud_volume_rows
 from ludoxel.presentation.rendering.visuals.worlds.light_space import compute_light_view_proj
 from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
@@ -245,6 +249,7 @@ class WgpuRendererBackend:
     world_wireframe_pipeline = create_world_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_pipeline = create_sun_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_pipeline = create_cloud_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
+    cloud_volume_pipeline = create_cloud_volume_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_wireframe_pipeline = create_cloud_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     othello_pipeline = create_othello_pipeline(
       device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, shadow_bind_group_layout=shadow_bgl, overlay=False
@@ -270,6 +275,8 @@ class WgpuRendererBackend:
     face_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-vertices", data=np.ascontiguousarray(build_face_vertex_rows(), dtype=np.float32), usage=wgpu.BufferUsage.VERTEX)
     face_wire_vertices = np.ascontiguousarray(build_face_wire_vertex_rows(), dtype=np.float32)
     face_wire_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-wire-vertices", data=face_wire_vertices, usage=wgpu.BufferUsage.VERTEX)
+    cloud_cube_vertices = np.ascontiguousarray(build_face_vertex_rows(), dtype=np.float32)
+    cloud_cube_vertex_buffer = device.create_buffer_with_data(label="ludoxel-cloud-cube-vertices", data=cloud_cube_vertices, usage=wgpu.BufferUsage.VERTEX)
     othello_board_vertices = np.ascontiguousarray(build_othello_board_vertices(), dtype=np.float32)
     othello_piece_vertices = np.ascontiguousarray(build_othello_piece_vertices(), dtype=np.float32)
     othello_board_vertex_buffer = device.create_buffer_with_data(label="ludoxel-othello-board-vertices", data=othello_board_vertices, usage=wgpu.BufferUsage.VERTEX)
@@ -295,7 +302,10 @@ class WgpuRendererBackend:
       world_wireframe_pipeline=world_wireframe_pipeline,
       sun_pipeline=sun_pipeline,
       cloud_pipeline=cloud_pipeline,
+      cloud_volume_pipeline=cloud_volume_pipeline,
       cloud_wireframe_pipeline=cloud_wireframe_pipeline,
+      cloud_cube_vertex_buffer=cloud_cube_vertex_buffer,
+      cloud_cube_vertex_count=int(cloud_cube_vertices.shape[0]),
       othello_pipeline=othello_pipeline,
       othello_overlay_pipeline=othello_overlay_pipeline,
       othello_shadow_pipeline=othello_shadow_pipeline,
@@ -377,6 +387,7 @@ class WgpuRendererBackend:
 
   def apply_runtime_state(self) -> None:
     self._cloud_field.set_density(int(self._state.cloud_density))
+    self._cloud_field.set_cell_size(int(self._state.cloud_cell_size))
     self._cloud_field.set_seed(int(self._state.cloud_seed))
     self._cloud_field.set_speed_variation(bool(self._state.cloud_speed_variation_enabled), float(self._state.cloud_speed_min_blocks_per_second), float(self._state.cloud_speed_max_blocks_per_second))
     self._cloud_field.set_height_variation(
@@ -565,11 +576,11 @@ class WgpuRendererBackend:
       ints[40:43] = (0, 0, 0)
     return bytes(raw)
 
-  def _camera_view_proj(self, *, width: int, height: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, z_near: float | None = None) -> np.ndarray:
+  def _camera_view_proj(self, *, width: int, height: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, z_near: float | None = None, z_far: float | None = None) -> np.ndarray:
     aspect = float(max(1, int(width))) / float(max(1, int(height)))
     forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
     view = _look_dir(eye, forward)
-    proj = mat4.perspective(float(fov_deg), aspect, float(self._cfg.camera.z_near if z_near is None else z_near), float(self._cfg.camera.z_far))
+    proj = mat4.perspective(float(fov_deg), aspect, float(self._cfg.camera.z_near if z_near is None else z_near), float(self._cfg.camera.z_far if z_far is None else z_far))
     return mat4.mul(proj, view).astype(np.float32)
 
   def _hand_view_proj(self, *, width: int, height: int, fov_deg: float) -> np.ndarray:
@@ -663,19 +674,27 @@ class WgpuRendererBackend:
     if not bool(self._cloud_motion_paused):
       self._cloud_time_accum += float(dt)
 
-  def _create_cloud_uniform_bind_group(self, *, view_proj: np.ndarray, shift: Vec3, fog: CloudDistanceFog | None = None) -> tuple[object | None, object | None]:
+  def _create_cloud_uniform_bind_group(
+    self, *, view_proj: np.ndarray, shift: Vec3, eye: Vec3, time_s: float, flow_dir_xz: tuple[float, float], cell_size: float, fog: CloudDistanceFog | None = None
+  ) -> tuple[object | None, object | None]:
     if self._res is None:
       return (None, None)
     import wgpu
 
     color = self._cfg.clouds.color
     active_fog = fog if fog is not None else CloudDistanceFog.disabled()
-    uniform = np.zeros((32,), dtype=np.float32)
+    uniform = np.zeros((40,), dtype=np.float32)
     uniform[:16] = np.ascontiguousarray(_opengl_clip_to_wgpu(view_proj).T, dtype=np.float32).reshape(16)
     uniform[16:20] = (float(shift.x), float(shift.y), float(shift.z), float(self._cfg.clouds.alpha))
     uniform[20:24] = (float(color.x), float(color.y), float(color.z), float(self._cfg.clouds.alpha))
     uniform[24:28] = (float(self._state.sun_dir.x), float(self._state.sun_dir.y), float(self._state.sun_dir.z), 0.0)
     uniform[28:32] = (float(active_fog.cam_x), float(active_fog.cam_z), float(active_fog.start), float(active_fog.end))
+    # xyz carry the eye position for the volume raymarch; w carries the
+    # motion clock for the noise churn and the flat-tier turbulence sway.
+    uniform[32:36] = (float(eye.x), float(eye.y), float(eye.z), float(time_s))
+    # xy = flow direction (flat tier sway), z = cloud cell size (volume
+    # footprint mask), w unused.
+    uniform[36:40] = (float(flow_dir_xz[0]), float(flow_dir_xz[1]), float(cell_size), 0.0)
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-cloud-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
     bind_group = self._res.device.create_bind_group(
@@ -739,13 +758,6 @@ class WgpuRendererBackend:
     shadow_pass.draw(FACE_COUNT * 6, int(instance_count), 0, 0)
     return (1, int(instance_count))
 
-  def _cloud_instance_rows(self, *, eye: Vec3, forward: Vec3, fov_deg: float, aspect: float, shift: Vec3) -> np.ndarray:
-    boxes = self._cloud_field.visible_boxes(eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(aspect), z_far=float(self._cfg.camera.z_far))
-    if not boxes:
-      return np.zeros((0, 8), dtype=np.float32)
-    rows = [[b.center.x, b.center.y, b.center.z, b.size.x, b.size.y, b.size.z, b.alpha_mul, b.speed_multiplier] for b in boxes]
-    return np.ascontiguousarray(rows, dtype=np.float32)
-
   def _draw_face_instances(self, render_pass, *, face_idx: int, face: WgpuFaceInstances) -> int:
     if self._res is None or int(face.instance_count) <= 0:
       return 0
@@ -770,20 +782,6 @@ class WgpuRendererBackend:
     positive = fi in (0, 2, 4)
     surface = data[:, axis + (3 if positive else 0)]
     eye_value = (float(eye.x), float(eye.y), float(eye.z))[axis]
-    visible = (float(eye_value) - surface) > 0.0 if positive else (float(eye_value) - surface) < 0.0
-    return np.ascontiguousarray(data[visible], dtype=np.float32)
-
-  @staticmethod
-  def _front_facing_cloud_rows(rows: np.ndarray, *, face_idx: int, eye: Vec3, shift: Vec3) -> np.ndarray:
-    data = np.asarray(rows, dtype=np.float32)
-    if data.ndim != 2 or int(data.shape[0]) <= 0:
-      return np.zeros((0, 8), dtype=np.float32)
-    fi = int(face_idx)
-    axis = 0 if fi in (0, 1) else (1 if fi in (2, 3) else 2)
-    positive = fi in (0, 2, 4)
-    eye_value = (float(eye.x), float(eye.y), float(eye.z))[axis]
-    shift_value = (float(shift.x), float(shift.y), float(shift.z))[axis]
-    surface = data[:, axis] + float(shift_value) * data[:, 7] + ((0.5 if positive else -0.5) * data[:, axis + 3])
     visible = (float(eye_value) - surface) > 0.0 if positive else (float(eye_value) - surface) < 0.0
     return np.ascontiguousarray(data[visible], dtype=np.float32)
 
@@ -884,7 +882,7 @@ class WgpuRendererBackend:
     fog_color = self._cfg.sky.clear_color
     world_fog_start, world_fog_end = render_distance_fog_range(int(render_distance_chunks), float(z_far))
     world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
-    cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
+    cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks))
     cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
 
     self._effective_shadow = effective_backend_shadow_params(self._cfg.shadow, int(self._state.shadow_quality))
@@ -1144,33 +1142,82 @@ class WgpuRendererBackend:
     self._advance_cloud_clock()
     if bool(self._state.cloud_enabled) and int(self._state.cloud_density) > 0:
       shift = self._cloud_field.shift(float(self._cloud_time_accum))
-      cloud_rows = self._cloud_instance_rows(eye=eye, forward=forward, fov_deg=float(fov_deg), aspect=float(width) / max(float(height), 1.0), shift=shift)
-      cloud_instance_buffer, cloud_instance_count = self._upload_temp_rows(label="ludoxel-cloud-temp", rows=cloud_rows)
-      if cloud_instance_buffer is not None and int(cloud_instance_count) > 0:
-        temp_uniform_buffers.append(cloud_instance_buffer)
-        cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(view_proj=view_proj, shift=shift, fog=cloud_fog)
+      # Three separated paths. Wireframe draws the exterior cell-face edges
+      # of the merged cloud footprint (no interior faces); below the Ultra
+      # shadow map quality tier the flat path draws the same exterior faces
+      # solid; the Ultra tier raymarches a translucent animated volume
+      # through one bounding box per cloud.
+      cloud_wireframe = bool(self._state.cloud_wireframe)
+      cloud_ultra = bool(int(self._state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA)) and not cloud_wireframe
+      cloud_shapes = self._cloud_field.visible_shapes(
+        eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(width) / max(float(height), 1.0), z_far=float(cloud_far_distance(int(render_distance_chunks)))
+      )
+      if cloud_shapes:
+        if cloud_ultra:
+          # Draw the translucent volumes back to front so a nearer cloud
+          # blends over the ones behind it instead of hiding them.
+          cloud_shapes = sorted(
+            cloud_shapes,
+            key=lambda s: (
+              -(
+                (float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2
+                + (float(s.bounds.center.y) - float(eye.y)) ** 2
+                + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2
+              )
+            ),
+          )
+        # Clouds use their own far plane so the cloud fade range is not
+        # clipped by the world camera far plane; the Ultra volume pipeline
+        # does not write depth, so the projection difference does not feed
+        # back into the world depth buffer.
+        cloud_view_proj = self._camera_view_proj(
+          width=width,
+          height=height,
+          eye=eye,
+          yaw_deg=float(yaw_deg),
+          pitch_deg=float(pitch_deg),
+          fov_deg=float(fov_deg),
+          z_far=float(cloud_projection_z_far(int(render_distance_chunks), float(z_far))),
+        )
+        cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(
+          view_proj=cloud_view_proj,
+          shift=shift,
+          eye=eye,
+          time_s=float(self._cloud_time_accum),
+          flow_dir_xz=self._cloud_field.flow_dir_xz(),
+          cell_size=float(self._cloud_field.cell_size()),
+          fog=cloud_fog,
+        )
         if cloud_uniform_buffer is not None:
           temp_uniform_buffers.append(cloud_uniform_buffer)
         if cloud_uniform_bind_group is not None:
-          render_pass.set_pipeline(self._res.cloud_wireframe_pipeline if bool(self._state.cloud_wireframe) else self._res.cloud_pipeline)
-          render_pass.set_bind_group(0, cloud_uniform_bind_group)
-          render_pass.set_vertex_buffer(0, self._res.face_wire_vertex_buffer if bool(self._state.cloud_wireframe) else self._res.face_vertex_buffer)
-          if bool(self._state.cloud_wireframe):
-            for face_idx in range(FACE_COUNT):
-              visible_rows = self._front_facing_cloud_rows(cloud_rows, face_idx=int(face_idx), eye=eye, shift=shift)
-              visible_buffer, visible_count = self._upload_temp_rows(label=f"ludoxel-cloud-wireframe-face-{face_idx}", rows=visible_rows)
-              if visible_buffer is None or int(visible_count) <= 0:
-                continue
-              temp_uniform_buffers.append(visible_buffer)
-              render_pass.set_vertex_buffer(1, visible_buffer)
-              render_pass.draw(12, int(visible_count), int(face_idx) * 12, 0)
+          if cloud_ultra:
+            volume_rows = cloud_volume_rows(cloud_shapes)
+            volume_buffer, volume_count = self._upload_temp_rows(label="ludoxel-cloud-volume-temp", rows=volume_rows)
+            if volume_buffer is not None and int(volume_count) > 0:
+              temp_uniform_buffers.append(volume_buffer)
+              render_pass.set_pipeline(self._res.cloud_volume_pipeline)
+              render_pass.set_bind_group(0, cloud_uniform_bind_group)
+              render_pass.set_vertex_buffer(0, self._res.cloud_cube_vertex_buffer)
+              render_pass.set_vertex_buffer(1, volume_buffer)
+              render_pass.draw(int(self._res.cloud_cube_vertex_count), int(volume_count), 0, 0)
               draw_calls += 1
-              instances += int(visible_count)
+              instances += int(volume_count)
           else:
-            render_pass.set_vertex_buffer(1, cloud_instance_buffer)
-            render_pass.draw(FACE_COUNT * 6, int(cloud_instance_count), 0, 0)
-            draw_calls += 1
-            instances += int(cloud_instance_count)
+            render_pass.set_pipeline(self._res.cloud_wireframe_pipeline if cloud_wireframe else self._res.cloud_pipeline)
+            render_pass.set_bind_group(0, cloud_uniform_bind_group)
+            render_pass.set_vertex_buffer(0, self._res.face_wire_vertex_buffer if cloud_wireframe else self._res.face_vertex_buffer)
+            verts_per_face = 12 if cloud_wireframe else 6
+            for face_idx in range(FACE_COUNT):
+              face_rows = cloud_face_rows(cloud_shapes, int(face_idx))
+              face_buffer, face_count = self._upload_temp_rows(label=f"ludoxel-cloud-face-{face_idx}", rows=face_rows)
+              if face_buffer is None or int(face_count) <= 0:
+                continue
+              temp_uniform_buffers.append(face_buffer)
+              render_pass.set_vertex_buffer(1, face_buffer)
+              render_pass.draw(int(verts_per_face), int(face_count), int(face_idx) * int(verts_per_face), 0)
+              draw_calls += 1
+              instances += int(face_count)
 
     if self._selection_buffer is not None and self._selection_vertex_count > 0 and bool(self._state.outline_selection_enabled):
       selection_uniform_buffers, selection_uniform_bind_groups = self._create_frame_uniform_bind_groups(

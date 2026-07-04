@@ -78,6 +78,8 @@ def _cloud_uniform_block() -> str:
     vec4 ldx_cloudColor;
     vec4 ldx_cloudSunDir;
     vec4 ldx_cloudFogParams;
+    vec4 ldx_cloudEyeTime;
+    vec4 ldx_cloudFlowDir;
 };
 """
 
@@ -167,10 +169,12 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
 
   if name == "cloud_box.vert":
     text = text.replace("out vec3 v_worldPos;", "layout(location = 2) out vec3 v_worldPos;")
-    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // smooth translation (world space)\n", _cloud_uniform_block())
+    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // smooth translation (world space)\nuniform float u_time;\nuniform vec2 u_flowDirXZ;\n", _cloud_uniform_block())
     text = text.replace("out vec3 v_normal;\nout float v_alphaMul;", "layout(location = 0) out vec3 v_normal;\nlayout(location = 1) out float v_alphaMul;")
     text = text.replace("u_viewProj", "ldx_viewProj")
     text = text.replace("u_shift", "ldx_cloudShiftAlpha.xyz")
+    text = text.replace("u_time", "ldx_cloudEyeTime.w")
+    text = text.replace("u_flowDirXZ", "ldx_cloudFlowDir.xy")
     return text
 
   if name == "cloud_box.frag":
@@ -182,6 +186,41 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_color", "ldx_cloudColor.rgb")
     text = text.replace("u_alpha", "ldx_cloudColor.a")
     text = text.replace("u_sunDir", "ldx_cloudSunDir.xyz")
+    text = text.replace("u_fogCamXZ", "ldx_cloudFogParams.xy")
+    text = text.replace("u_fogStart", "ldx_cloudFogParams.z")
+    text = text.replace("u_fogEnd", "ldx_cloudFogParams.w")
+    return text
+
+  if name == "cloud_volume.vert":
+    text = text.replace("out vec3 v_worldPos;", "layout(location = 0) out vec3 v_worldPos;")
+    text = text.replace("flat out vec3 v_center;", "layout(location = 1) flat out vec3 v_center;")
+    text = text.replace("flat out vec3 v_halfSize;", "layout(location = 2) flat out vec3 v_halfSize;")
+    text = text.replace("flat out float v_seed;", "layout(location = 3) flat out float v_seed;")
+    text = text.replace("flat out float v_alphaMul;", "layout(location = 4) flat out float v_alphaMul;")
+    text = text.replace("flat out float v_bitmask;", "layout(location = 5) flat out float v_bitmask;")
+    text = text.replace("flat out float v_dims;", "layout(location = 6) flat out float v_dims;")
+    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // wind translation (world space)\n", _cloud_uniform_block())
+    text = text.replace("u_viewProj", "ldx_viewProj")
+    text = text.replace("u_shift", "ldx_cloudShiftAlpha.xyz")
+    return text
+
+  if name == "cloud_volume.frag":
+    text = text.replace("in vec3 v_worldPos;", "layout(location = 0) in vec3 v_worldPos;")
+    text = text.replace("flat in vec3 v_center;", "layout(location = 1) flat in vec3 v_center;")
+    text = text.replace("flat in vec3 v_halfSize;", "layout(location = 2) flat in vec3 v_halfSize;")
+    text = text.replace("flat in float v_seed;", "layout(location = 3) flat in float v_seed;")
+    text = text.replace("flat in float v_alphaMul;", "layout(location = 4) flat in float v_alphaMul;")
+    text = text.replace("flat in float v_bitmask;", "layout(location = 5) flat in float v_bitmask;")
+    text = text.replace("flat in float v_dims;", "layout(location = 6) flat in float v_dims;")
+    text = text.replace("uniform vec2 u_fogCamXZ;\nuniform float u_fogStart;\nuniform float u_fogEnd;\n", "")
+    text = text.replace("uniform vec3 u_color;\nuniform float u_alpha;\nuniform vec3 u_sunDir;\nuniform vec3 u_eyePos;\nuniform float u_time;\nuniform float u_cellSize;\n", _cloud_uniform_block())
+    text = text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
+    text = text.replace("u_color", "ldx_cloudColor.rgb")
+    text = text.replace("u_alpha", "ldx_cloudColor.a")
+    text = text.replace("u_sunDir", "ldx_cloudSunDir.xyz")
+    text = text.replace("u_eyePos", "ldx_cloudEyeTime.xyz")
+    text = text.replace("u_time", "ldx_cloudEyeTime.w")
+    text = text.replace("u_cellSize", "ldx_cloudFlowDir.z")
     text = text.replace("u_fogCamXZ", "ldx_cloudFogParams.xy")
     text = text.replace("u_fogStart", "ldx_cloudFogParams.z")
     text = text.replace("u_fogEnd", "ldx_cloudFogParams.w")
@@ -392,6 +431,29 @@ def create_sun_pipeline(*, device, target_format, depth_format, camera_bind_grou
   )
 
 
+def _cloud_instance_buffer_layout(*, wgpu):
+  # 11-float cloud instance row shared with the OpenGL path: center,
+  # scale + alphaMul, speedMultiplier, turbulence amp/freq/phase.
+  return {
+    "array_stride": 11 * 4,
+    "step_mode": "instance",
+    "attributes": [
+      {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3},
+      {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4},
+      {"format": wgpu.VertexFormat.float32, "offset": 7 * 4, "shader_location": 5},
+      {"format": wgpu.VertexFormat.float32x3, "offset": 8 * 4, "shader_location": 6},
+    ],
+  }
+
+
+def _cloud_vertex_buffer_layout(*, wgpu):
+  return {
+    "array_stride": 8 * 4,
+    "step_mode": "vertex",
+    "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
+  }
+
+
 def create_cloud_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
   import wgpu
 
@@ -405,28 +467,32 @@ def create_cloud_pipeline(*, device, target_format, depth_format, camera_bind_gr
   return device.create_render_pipeline(
     label="ludoxel-cloud-pipeline",
     layout=layout,
-    vertex={
-      "module": vertex_shader,
-      "entry_point": "main",
-      "buffers": [
-        {
-          "array_stride": 8 * 4,
-          "step_mode": "vertex",
-          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
-        },
-        {
-          "array_stride": 8 * 4,
-          "step_mode": "instance",
-          "attributes": [
-            {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3},
-            {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4},
-            {"format": wgpu.VertexFormat.float32, "offset": 7 * 4, "shader_location": 5},
-          ],
-        },
-      ],
-    },
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": [_cloud_vertex_buffer_layout(wgpu=wgpu), _cloud_instance_buffer_layout(wgpu=wgpu)]},
     primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.back},
     depth_stencil={"format": depth_format, "depth_write_enabled": True, "depth_compare": wgpu.CompareFunction.less},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def create_cloud_volume_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  vertex_shader = device.create_shader_module(label="ludoxel-cloud-volume.vert", code=_wgpu_glsl_source("cloud_volume.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-cloud_volume.frag", code=_wgpu_glsl_source("cloud_volume.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-cloud-volume-layout", bind_group_layouts=[camera_bind_group_layout])
+  blend = {
+    "color": {"src_factor": wgpu.BlendFactor.src_alpha, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+    "alpha": {"src_factor": wgpu.BlendFactor.one, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+  }
+  return device.create_render_pipeline(
+    label="ludoxel-cloud-volume-pipeline",
+    layout=layout,
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": [_cloud_vertex_buffer_layout(wgpu=wgpu), _cloud_instance_buffer_layout(wgpu=wgpu)]},
+    # Draw the box back faces so the raymarch proxy is rasterized from any
+    # side, including inside the volume; the translucent result never writes
+    # depth so distant clouds stay visible through nearer ones.
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.front},
+    depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.less},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
   )
 
@@ -440,26 +506,7 @@ def create_cloud_wireframe_pipeline(*, device, target_format, depth_format, came
   return device.create_render_pipeline(
     label="ludoxel-cloud-wireframe-pipeline",
     layout=layout,
-    vertex={
-      "module": vertex_shader,
-      "entry_point": "main",
-      "buffers": [
-        {
-          "array_stride": 8 * 4,
-          "step_mode": "vertex",
-          "attributes": [{"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 0}, {"format": wgpu.VertexFormat.float32x3, "offset": 3 * 4, "shader_location": 1}],
-        },
-        {
-          "array_stride": 8 * 4,
-          "step_mode": "instance",
-          "attributes": [
-            {"format": wgpu.VertexFormat.float32x3, "offset": 0, "shader_location": 3},
-            {"format": wgpu.VertexFormat.float32x4, "offset": 3 * 4, "shader_location": 4},
-            {"format": wgpu.VertexFormat.float32, "offset": 7 * 4, "shader_location": 5},
-          ],
-        },
-      ],
-    },
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": [_cloud_vertex_buffer_layout(wgpu=wgpu), _cloud_instance_buffer_layout(wgpu=wgpu)]},
     primitive={"topology": wgpu.PrimitiveTopology.line_list, "front_face": wgpu.FrontFace.ccw, "cull_mode": wgpu.CullMode.none},
     depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.less_equal},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format}]},

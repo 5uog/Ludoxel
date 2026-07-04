@@ -53,6 +53,7 @@ def bind_settings_overlay_value_signals(viewport: "RendererViewportWidget", over
   overlay.cloud_wireframe_changed.connect(lambda on: set_cloud_wire(viewport, bool(on)))
   overlay.clouds_enabled_changed.connect(lambda on: set_cloud_enabled(viewport, bool(on)))
   overlay.cloud_density_changed.connect(lambda value: set_cloud_density(viewport, int(value)))
+  overlay.cloud_cell_size_changed.connect(lambda value: set_cloud_cell_size(viewport, int(value)))
   overlay.cloud_seed_changed.connect(lambda value: set_cloud_seed(viewport, int(value)))
   overlay.cloud_flow_direction_changed.connect(lambda direction: set_cloud_flow_direction(viewport, str(direction)))
   overlay.cloud_speed_variation_enabled_changed.connect(lambda on: set_cloud_speed_variation_enabled(viewport, bool(on)))
@@ -257,6 +258,7 @@ def sync_settings_values(viewport: "RendererViewportWidget") -> None:
     cloud_wire=viewport._state.cloud_wire,
     clouds_enabled=viewport._state.cloud_enabled,
     cloud_density=int(viewport._state.cloud_density),
+    cloud_cell_size=int(viewport._state.cloud_cell_size),
     cloud_seed=int(viewport._state.cloud_seed),
     cloud_flow_direction=str(viewport._state.cloud_flow_direction),
     cloud_speed_variation_enabled=bool(viewport._state.cloud_speed_variation_enabled),
@@ -448,6 +450,12 @@ def set_cloud_wire(viewport: "RendererViewportWidget", on: bool) -> None:
 def set_cloud_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
   viewport._state.cloud_enabled = bool(on)
   viewport._renderer.set_cloud_enabled(bool(viewport._state.cloud_enabled))
+
+
+def set_cloud_cell_size(viewport: "RendererViewportWidget", cell_size: int) -> None:
+  viewport._state.cloud_cell_size = int(cell_size)
+  viewport._state.normalize()
+  viewport._renderer.set_cloud_cell_size(int(viewport._state.cloud_cell_size))
 
 
 def set_cloud_density(viewport: "RendererViewportWidget", density: int) -> None:

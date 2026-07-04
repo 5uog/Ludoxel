@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_ORDER
+from ludoxel.application.preferences.clouds import CLOUD_CELL_SIZE_MAX, CLOUD_CELL_SIZE_MIN
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_CUSTOM, normalize_crosshair_mode
 from ludoxel.foundations.mathematics.scalars.numeric import clampf, clampi, round_clampi
 from ludoxel.presentation.interface.settings.cloud_flow import cloud_flow_index_for_value
@@ -108,6 +109,10 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
   cloud_density = clampi(int(values["cloud_density"]), 0, 4)
   _block_signals_set_value(overlay._sld_cloud_density, cloud_density)
   overlay._lbl_cloud_density.setText(f"Cloud density: {cloud_density}")
+
+  cloud_cell_size = clampi(int(values["cloud_cell_size"]), int(CLOUD_CELL_SIZE_MIN), int(CLOUD_CELL_SIZE_MAX))
+  _block_signals_set_value(overlay._sld_cloud_cell_size, cloud_cell_size)
+  overlay._lbl_cloud_cell_size.setText(f"Cloud size: {cloud_cell_size} blocks")
 
   cloud_seed = clampi(int(values["cloud_seed"]), 0, 9999)
   _block_signals_set_value(overlay._sld_cloud_seed, cloud_seed)

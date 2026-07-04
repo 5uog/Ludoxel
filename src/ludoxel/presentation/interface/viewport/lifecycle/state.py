@@ -144,7 +144,9 @@ class ViewportStateMixin:
     except Exception:
       traceback.print_exc(file=sys.stderr)
     try:
-      settled_othello_state = self._othello_match.settle_animations()
+      # Persist a settled copy: the saved envelope never stores a pending
+      # flip animation, while the live match state keeps animating.
+      settled_othello_state = self._othello_match.settled_game_state()
     except Exception:
       traceback.print_exc(file=sys.stderr)
       settled_othello_state = None

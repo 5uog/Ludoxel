@@ -912,7 +912,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `CloudPass.draw` obtains visible cloud boxes from `CloudField.visible_boxes`, whose culler tests the shifted box extents against the view and skips only volumes confirmed outside the camera bounds. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
+            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `CloudPass.draw` obtains visible cloud clusters from `CloudField.visible_shapes`, whose culler tests the shifted footprint extents against the view and skips only clusters confirmed outside the camera bounds, then draws the exterior cell faces per direction, or the ellipsoid puffs when the Ultra tier is active. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
           },
           {
             kind: 'note',
@@ -1000,7 +1000,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
         content: [
           {
             kind: 'paragraph',
-            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. `CloudField.visible_boxes` shifts each cloud lane, projects the full box extents against the camera basis, and returns a cloud unless the full rendered volume lies outside the conservative view bounds. Cloud visibility, fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The frame is drawn in the same sequence as the OpenGL pipeline.',
+            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. `CloudField.visible_shapes` shifts each cloud by its per-cloud speed, projects the footprint extents against the camera basis, and returns a cluster unless its rendered volume lies outside the conservative view bounds. Cloud visibility, the shared cluster and puff geometry, fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The frame is drawn in the same sequence as the OpenGL pipeline.',
           },
           {
             kind: 'list',
@@ -1178,14 +1178,15 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_fog_range` derives a separate cloud range whose end is the radius scaled by 1.5, raised to a minimum visible radius so a narrow render distance does not empty the sky, then capped at the far plane.',
+            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_far_distance` derives a separate cloud reach whose value is the render radius scaled by three, raised to a two-hundred-and-fifty-six-block floor so a narrow render distance does not empty the sky, and `cloud_fog_range` fades over that reach without capping it at the camera far plane. `cloud_projection_z_far` gives the cloud pass its own far plane covering that reach, so the cloud fade is decoupled from both the geometry fog and the world camera far plane.',
           },
           {
             kind: 'math',
             math: {
-              expression: 'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad s = 0.85\\,e',
+              expression:
+                'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(3\\,\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ 256\\bigr), \\qquad s = 0.85\\,e',
               displayMode: true,
-              caption: 'render_distance_fog_range; the cloud end raises the radius by 1.5 and a minimum visible radius before the same start fraction.',
+              caption: 'render_distance_fog_range and cloud_far_distance; both fade ranges start at the same fraction of their end, but the cloud reach is not capped at the camera far plane.',
             },
           },
           {
@@ -2368,7 +2369,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.8"`,
+            code: `__version__ = "3.7.9"`,
           },
           {
             kind: 'note',

@@ -26,7 +26,10 @@ class WgpuRendererResources:
   world_wireframe_pipeline: object
   sun_pipeline: object
   cloud_pipeline: object
+  cloud_volume_pipeline: object
   cloud_wireframe_pipeline: object
+  cloud_cube_vertex_buffer: object
+  cloud_cube_vertex_count: int
   othello_pipeline: object
   othello_overlay_pipeline: object
   othello_shadow_pipeline: object
@@ -54,6 +57,7 @@ class WgpuRendererResources:
       self.depth_texture,
       self.face_vertex_buffer,
       self.face_wire_vertex_buffer,
+      self.cloud_cube_vertex_buffer,
       self.othello_board_vertex_buffer,
       self.othello_piece_vertex_buffer,
       *self.camera_buffers,

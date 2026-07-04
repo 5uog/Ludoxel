@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from OpenGL.GL import GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS, glClear, glClearColor, glDepthFunc, glDepthMask, glEnable, glViewport
 
 import ludoxel.foundations.mathematics.linear.mat4 as mat4
+from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_ULTRA
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import chunk_key
 from ludoxel.foundations.mathematics.linear.transform_matrices import rotate_z_deg_matrix
@@ -30,7 +31,9 @@ from ludoxel.presentation.rendering.contracts.config import (
   BackendRendererParams,
   CloudDistanceFog,
   GeometryDistanceFog,
+  cloud_far_distance,
   cloud_fog_range,
+  cloud_projection_z_far,
   effective_backend_shadow_params,
   max_unfogged_render_distance_radius_blocks,
   render_distance_fog_range,
@@ -106,7 +109,7 @@ class FramePipeline:
     fog_color = self.cfg.sky.clear_color
     world_fog_start, world_fog_end = render_distance_fog_range(int(render_distance_chunks), float(z_far))
     world_fog = GeometryDistanceFog(cam_x=float(eye.x), cam_y=float(eye.y), cam_z=float(eye.z), start=float(world_fog_start), end=float(world_fog_end), color=fog_color)
-    cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks), float(z_far))
+    cloud_fog_start, cloud_fog_end = cloud_fog_range(int(render_distance_chunks))
     cloud_fog = CloudDistanceFog(cam_x=float(eye.x), cam_z=float(eye.z), start=float(cloud_fog_start), end=float(cloud_fog_end), color=fog_color)
 
     shadow = effective_backend_shadow_params(self.cfg.shadow, int(self.state.shadow_quality))
@@ -249,7 +252,24 @@ class FramePipeline:
       rendered=bool(world_metrics.rendered or othello_metrics.rendered),
     )
 
-    self.cloud_pass.draw(eye=eye, view_proj=vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir, fog=cloud_fog)
+    # Clouds use their own far plane so the cloud fade range is not clipped
+    # by the world camera far plane. The Ultra shadow map quality tier
+    # selects the ellipsoid puff path, whose depth writes are off, so the
+    # projection difference does not feed back into the world depth
+    # buffer; the lower tiers keep the flat box path.
+    cloud_proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(cloud_projection_z_far(int(render_distance_chunks), float(self.cfg.camera.z_far))))
+    cloud_vp = mat4.mul(cloud_proj, view)
+    self.cloud_pass.draw(
+      eye=eye,
+      view_proj=cloud_vp,
+      forward=forward,
+      fov_deg=float(fov_deg),
+      aspect=float(w) / max(float(h), 1.0),
+      sun_dir=self.state.sun_dir,
+      fog=cloud_fog,
+      far_distance=float(cloud_far_distance(int(render_distance_chunks))),
+      ultra=bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA)),
+    )
 
     self.selection.draw(view_proj=vp)
 

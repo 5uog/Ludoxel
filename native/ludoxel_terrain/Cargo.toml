@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 [package]
 name = "ludoxel_terrain"
-version = "3.7.8"
+version = "3.7.9"
 edition = "2021"
 publish = false
 license-file = "../../LICENSE"

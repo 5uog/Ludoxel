@@ -18,7 +18,6 @@ from ludoxel.presentation.rendering.faces.chunk_payload_cpu import build_chunk_m
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 from ludoxel.simulation.worlds.state.world import WorldState
 
-_INITIAL_GATE_RADIUS = 3
 _KEEP_MARGIN = 2
 
 
@@ -284,10 +283,14 @@ class WorldUploadTracker:
     return ", ".join(parts)
 
   def visible_load_progress(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> tuple[int, int]:
+    # The readiness gate covers the full render distance: the loading
+    # overlay stays up until every content chunk the renderer will draw is
+    # built and resident, so entering a world does not race the remaining
+    # chunk builds during play.
     world_token = self._world_token(world)
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
-    gate_radius = min(int(rd), int(_INITIAL_GATE_RADIUS))
+    gate_radius = int(rd)
     cache_key = (int(world_token), int(id(world)), int(world.revision), center, int(gate_radius))
 
     if cache_key != self._visible_cache_key:

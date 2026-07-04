@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.application.preferences.clouds import (
+  DEFAULT_CLOUD_CELL_SIZE,
   DEFAULT_CLOUD_FIXED_Y,
   DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED,
   DEFAULT_CLOUD_PREFERRED_Y_MAX,
@@ -16,6 +17,7 @@ from ludoxel.application.preferences.clouds import (
   DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND,
   DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND,
   DEFAULT_CLOUD_SPEED_VARIATION_ENABLED,
+  normalize_cloud_cell_size,
   normalize_cloud_height_settings,
   normalize_cloud_speed_range,
 )
@@ -35,6 +37,7 @@ class BackendRendererRuntimeState:
   cloud_wireframe: bool = False
   cloud_enabled: bool = True
   cloud_density: int = 1
+  cloud_cell_size: int = DEFAULT_CLOUD_CELL_SIZE
   cloud_seed: int = 1337
   cloud_flow_direction: str = DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION
   cloud_speed_variation_enabled: bool = DEFAULT_CLOUD_SPEED_VARIATION_ENABLED
@@ -57,6 +60,7 @@ class BackendRendererRuntimeState:
     self.set_shadow_quality(int(self.shadow_quality))
     self.set_sun_angles(float(self.sun_azimuth_deg), float(self.sun_elevation_deg))
     self.set_cloud_density(int(self.cloud_density))
+    self.set_cloud_cell_size(int(self.cloud_cell_size))
     self.set_cloud_seed(int(self.cloud_seed))
     self.set_cloud_flow_direction(str(self.cloud_flow_direction))
     self.set_cloud_speed_variation(bool(self.cloud_speed_variation_enabled), float(self.cloud_speed_min_blocks_per_second), float(self.cloud_speed_max_blocks_per_second))
@@ -84,6 +88,9 @@ class BackendRendererRuntimeState:
 
   def set_cloud_density(self, density: int) -> None:
     self.cloud_density = int(max(0, int(density)))
+
+  def set_cloud_cell_size(self, cell_size: int) -> None:
+    self.cloud_cell_size = normalize_cloud_cell_size(cell_size)
 
   def set_cloud_seed(self, seed: int) -> None:
     self.cloud_seed = int(seed)

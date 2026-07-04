@@ -23,7 +23,7 @@ fn surface_heights(py: Python<'_>, seed: i64, version: u32, mode: u32, flat_grou
   if cells > MAX_HEIGHT_CELLS {
     return Err(PyValueError::new_err("surface_heights extent exceeds the supported cell budget"));
   }
-  let buffer = py.allow_threads(move || {
+  let buffer = py.detach(move || {
     let mut out: Vec<u8> = Vec::with_capacity(cells * 4);
     for ix in 0..nx {
       let wx = x0 + ix as i64;
@@ -47,7 +47,7 @@ fn terrain_materials(py: Python<'_>, seed: i64, version: u32, mode: u32, flat_gr
   if cells > MAX_MATERIAL_CELLS {
     return Err(PyValueError::new_err("terrain_materials extent exceeds the supported cell budget"));
   }
-  let buffer = py.allow_threads(move || {
+  let buffer = py.detach(move || {
     let mut out: Vec<u8> = vec![0u8; cells];
     let mut index = 0usize;
     let mut column_heights: Vec<i64> = vec![0i64; nz];

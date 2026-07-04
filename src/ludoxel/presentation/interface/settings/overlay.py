@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEventLoop, Qt, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QPushButton, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON
+from ludoxel.application.preferences.clouds import normalize_cloud_cell_size
 from ludoxel.application.preferences.keybinds import action_display_name
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, SHADOW_MAP_QUALITY_ORDER, normalize_shadow_map_quality
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
@@ -43,6 +44,7 @@ class SettingsOverlay(SidebarDialogBase):
   cloud_wireframe_changed = pyqtSignal(bool)
   clouds_enabled_changed = pyqtSignal(bool)
   cloud_density_changed = pyqtSignal(int)
+  cloud_cell_size_changed = pyqtSignal(int)
   cloud_seed_changed = pyqtSignal(int)
   cloud_flow_direction_changed = pyqtSignal(str)
   cloud_speed_variation_enabled_changed = pyqtSignal(bool)
@@ -366,6 +368,11 @@ class SettingsOverlay(SidebarDialogBase):
   def _on_sun_el(self, value: int) -> None:
     self._lbl_sun_el.setText(f"Sun elevation: {int(value)} deg")
     self.sun_elevation_changed.emit(float(value))
+
+  def _on_cloud_cell_size(self, value: int) -> None:
+    size = normalize_cloud_cell_size(int(value))
+    self._lbl_cloud_cell_size.setText(f"Cloud size: {size} blocks")
+    self.cloud_cell_size_changed.emit(int(size))
 
   def _on_cloud_density(self, value: int) -> None:
     density = int(value)

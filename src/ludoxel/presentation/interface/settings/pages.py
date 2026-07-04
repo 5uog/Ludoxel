@@ -238,6 +238,18 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   overlay._sld_cloud_density.valueChanged.connect(overlay._on_cloud_density)
   add_setting_row(cloud_layout, cloud_body, label="Cloud density", description="Number of generated cloud layers.", control=overlay._sld_cloud_density, label_widget=overlay._lbl_cloud_density)
 
+  overlay._lbl_cloud_cell_size = QLabel("Cloud size: 20 blocks", host)
+  overlay._sld_cloud_cell_size = overlay._new_slider(host, int(RuntimePreferences.CLOUD_CELL_SIZE_MIN), int(RuntimePreferences.CLOUD_CELL_SIZE_MAX))
+  overlay._sld_cloud_cell_size.valueChanged.connect(overlay._on_cloud_cell_size)
+  add_setting_row(
+    cloud_layout,
+    cloud_body,
+    label="Cloud size",
+    description="Edge length in blocks of each cloud cell; larger cells make bigger clouds.",
+    control=overlay._sld_cloud_cell_size,
+    label_widget=overlay._lbl_cloud_cell_size,
+  )
+
   overlay._lbl_cloud_seed = QLabel("Cloud seed: 1337", host)
   overlay._sld_cloud_seed = overlay._new_slider(host, 0, 9999)
   overlay._sld_cloud_seed.valueChanged.connect(overlay._on_cloud_seed)

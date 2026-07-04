@@ -120,6 +120,7 @@ __all__ = (
   "OthelloAnimationState",
   "OthelloDepthSample",
   "OthelloGameState",
+  "OthelloMoveEvaluation",
   "OthelloSettings",
   "SIDE_BLACK",
   "SIDE_EMPTY",
@@ -224,6 +225,16 @@ class OthelloDepthSample:
 
 
 @dataclass(frozen=True)
+class OthelloMoveEvaluation:
+  move_index: int
+  score: float
+  solved: bool = False
+
+  def normalized(self) -> "OthelloMoveEvaluation":
+    return OthelloMoveEvaluation(move_index=clampi(int(self.move_index), 0, BOARD_CELL_COUNT - 1), score=float(self.score), solved=bool(self.solved))
+
+
+@dataclass(frozen=True)
 class OthelloAnalysis:
   side_to_move: int = SIDE_BLACK
   best_move_index: int | None = None
@@ -232,6 +243,7 @@ class OthelloAnalysis:
   solved: bool = False
   depth_reached: int = 0
   depth_samples: tuple[OthelloDepthSample, ...] = ()
+  move_evaluations: tuple[OthelloMoveEvaluation, ...] = ()
 
   def normalized(self) -> "OthelloAnalysis":
     best_move = self.best_move_index
@@ -253,6 +265,7 @@ class OthelloAnalysis:
       solved=bool(self.solved),
       depth_reached=max(0, int(self.depth_reached)),
       depth_samples=tuple(sample.normalized() for sample in tuple(self.depth_samples)),
+      move_evaluations=tuple(evaluation.normalized() for evaluation in tuple(self.move_evaluations)),
     )
 
 

@@ -7,8 +7,10 @@ import random
 import time
 from dataclasses import dataclass
 
+from ludoxel.simulation.spaces.othello.engines.bitboards import bitboards_from_board
 from ludoxel.simulation.spaces.othello.engines.evaluation_profile import POSITION_WEIGHTS, evaluation_weights
-from ludoxel.simulation.spaces.othello.engines.insane import InsaneSearchCache, analyze_insane_position, opening_book_moves
+from ludoxel.simulation.spaces.othello.engines.insane import InsaneAnalysis, InsaneSearchCache, analyze_insane_position, opening_book_moves
+from ludoxel.simulation.spaces.othello.engines.native import native_classic_root_scores
 from ludoxel.simulation.spaces.othello.game.rules import BOARD_SIZE, apply_move, counts_for_board, find_legal_moves, other_side
 from ludoxel.simulation.spaces.othello.game.state import (
   DEFAULT_OTHELLO_SACRIFICE_LEVEL,
@@ -20,6 +22,7 @@ from ludoxel.simulation.spaces.othello.game.state import (
   SIDE_WHITE,
   OthelloAnalysis,
   OthelloDepthSample,
+  OthelloMoveEvaluation,
   coerce_board,
   normalize_difficulty,
   normalize_sacrifice_level,
@@ -33,6 +36,7 @@ _POSITION_WEIGHTS: tuple[int, ...] = POSITION_WEIGHTS
 class _SearchResult:
   score: float
   move_index: int | None
+  move_scores: tuple[tuple[int, float], ...] = ()
 
 
 def _frontier_count(board: tuple[int, ...], side: int) -> int:
@@ -158,23 +162,45 @@ def _alpha_beta(board: tuple[int, ...], side_to_move: int, root_side: int, depth
   return float(best)
 
 
-def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, rng: random.Random | None = None, sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL) -> _SearchResult:
+def _root_move_scores(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, sacrifice_level: int) -> tuple[tuple[int, float], ...]:
+  # Root scores for every legal move, ordered by position weight descending
+  # with ascending move index among ties. The compiled Rust module owns the
+  # hot path; the pure Python _alpha_beta loop below is the fallback and
+  # must return identical scores in identical order.
   moves = find_legal_moves(board, side)
   if not moves:
-    return _SearchResult(score=0.0, move_index=None)
+    return ()
 
-  best_score = -math.inf
-  best_moves: list[int] = []
+  my_side = normalize_side(side)
+  black_bits, white_bits = bitboards_from_board(board)
+  player_bits = int(black_bits) if int(my_side) == int(SIDE_BLACK) else int(white_bits)
+  opponent_bits = int(white_bits) if int(my_side) == int(SIDE_BLACK) else int(black_bits)
+  budget_s = None if deadline_s is None else max(0.0, float(deadline_s) - time.perf_counter())
+  native_scores = native_classic_root_scores(int(player_bits), int(opponent_bits), depth=int(depth), sacrifice_level=int(sacrifice_level), budget_s=budget_s)
+  if native_scores is not None:
+    return tuple((int(move_index), float(score)) for move_index, score in native_scores)
+
   enemy = other_side(side)
-
   ordered_moves = sorted(moves, key=lambda index: _POSITION_WEIGHTS[int(index)], reverse=True)
-
+  scored: list[tuple[int, float]] = []
   for move_index in ordered_moves:
     if deadline_s is not None and time.perf_counter() >= float(deadline_s):
       raise TimeoutError
     next_board, _flips = apply_move(board, side=side, index=int(move_index))
     score = _alpha_beta(next_board, enemy, side, depth - 1, -math.inf, math.inf, deadline_s, 0, sacrifice_level=int(sacrifice_level))
-    if score > best_score + 1e-9:
+    scored.append((int(move_index), float(score)))
+  return tuple(scored)
+
+
+def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, rng: random.Random | None = None, sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL) -> _SearchResult:
+  scored = _root_move_scores(board, side, depth=int(depth), deadline_s=deadline_s, sacrifice_level=int(sacrifice_level))
+  if not scored:
+    return _SearchResult(score=0.0, move_index=None)
+
+  best_score = -math.inf
+  best_moves: list[int] = []
+  for move_index, score in scored:
+    if float(score) > float(best_score) + 1e-9:
       best_score = float(score)
       best_moves = [int(move_index)]
     elif abs(float(score) - float(best_score)) <= 1e-9:
@@ -184,7 +210,15 @@ def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: flo
     return _SearchResult(score=0.0, move_index=None)
 
   chooser = rng if rng is not None else random.Random(0)
-  return _SearchResult(score=float(best_score), move_index=int(chooser.choice(best_moves)))
+  return _SearchResult(score=float(best_score), move_index=int(chooser.choice(best_moves)), move_scores=tuple(scored))
+
+
+def _move_evaluations_from_scores(move_scores: tuple[tuple[int, float], ...]) -> tuple[OthelloMoveEvaluation, ...]:
+  return tuple(OthelloMoveEvaluation(move_index=int(move_index), score=float(score)) for move_index, score in sorted(move_scores, key=lambda pair: (-float(pair[1]), int(pair[0]))))
+
+
+def _move_evaluations_from_insane(analysis: InsaneAnalysis) -> tuple[OthelloMoveEvaluation, ...]:
+  return tuple(OthelloMoveEvaluation(move_index=int(evaluation.move_index), score=float(evaluation.score), solved=bool(evaluation.solved)) for evaluation in tuple(analysis.move_evaluations))
 
 
 def _select_opening_book_move(board: tuple[int, ...], side: int, legal_moves: tuple[int, ...], *, random_seed: int, cache: InsaneSearchCache | None) -> int | None:
@@ -306,6 +340,7 @@ def analyze_position(
       solved=False,
       depth_reached=1,
       depth_samples=(OthelloDepthSample(depth=1, score=float(result.score)),),
+      move_evaluations=_move_evaluations_from_scores(result.move_scores),
     ).normalized()
 
   if mode == OTHELLO_DIFFICULTY_MEDIUM:
@@ -318,6 +353,7 @@ def analyze_position(
       solved=False,
       depth_reached=3,
       depth_samples=(OthelloDepthSample(depth=3, score=float(result.score)),),
+      move_evaluations=_move_evaluations_from_scores(result.move_scores),
     ).normalized()
 
   if mode == OTHELLO_DIFFICULTY_INSANE:
@@ -332,6 +368,7 @@ def analyze_position(
       solved=bool(analysis.solved),
       depth_reached=int(analysis.depth_reached),
       depth_samples=tuple(OthelloDepthSample(depth=int(sample.depth), score=float(sample.score), solved=bool(sample.solved)) for sample in tuple(analysis.depth_samples)),
+      move_evaluations=_move_evaluations_from_insane(analysis),
     ).normalized()
 
   if mode == OTHELLO_DIFFICULTY_INSANE_PLUS:
@@ -348,6 +385,7 @@ def analyze_position(
       solved=bool(analysis.solved),
       depth_reached=int(analysis.depth_reached),
       depth_samples=tuple(OthelloDepthSample(depth=int(sample.depth), score=float(sample.score), solved=bool(sample.solved)) for sample in tuple(analysis.depth_samples)),
+      move_evaluations=_move_evaluations_from_insane(analysis),
     ).normalized()
 
   deadline = time.perf_counter() + max(0.1, float(strong_time_budget_s))
@@ -373,6 +411,7 @@ def analyze_position(
     solved=False,
     depth_reached=int(best_depth),
     depth_samples=tuple(depth_samples),
+    move_evaluations=_move_evaluations_from_scores(best_result.move_scores),
   ).normalized()
 
 

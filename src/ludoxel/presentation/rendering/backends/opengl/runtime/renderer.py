@@ -32,6 +32,7 @@ class GLRenderer:
       cloud_wireframe=False,
       cloud_enabled=True,
       cloud_density=int(self._cfg.clouds.rects_per_cell),
+      cloud_cell_size=int(self._cfg.clouds.cell_size),
       cloud_seed=int(self._cfg.clouds.seed),
       cloud_flow_direction=DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION,
       cloud_speed_variation_enabled=bool(self._cfg.clouds.speed_variation_enabled),
@@ -76,6 +77,10 @@ class GLRenderer:
 
   def set_cloud_density(self, density: int) -> None:
     self._state.set_cloud_density(int(density))
+    self._backend.apply_runtime_state()
+
+  def set_cloud_cell_size(self, cell_size: int) -> None:
+    self._state.set_cloud_cell_size(int(cell_size))
     self._backend.apply_runtime_state()
 
   def set_cloud_seed(self, seed: int) -> None:

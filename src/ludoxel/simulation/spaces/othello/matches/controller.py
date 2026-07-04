@@ -134,14 +134,19 @@ class OthelloMatchController:
   def set_ai_thinking(self, thinking: bool) -> None:
     self._state = replace(self._state, thinking=bool(thinking)).normalized()
 
-  def settle_animations(self) -> OthelloGameState:
+  def settled_game_state(self) -> OthelloGameState:
+    # A copy of the live state with pending flip animations resolved, for
+    # persistence: the board already holds the post-move cells while an
+    # animation plays, so the settled copy only resolves the turn
+    # transition. The live state keeps animating.
     state = self._state.normalized()
     if state.status != OTHELLO_GAME_STATE_ANIMATING or not state.animations:
-      self._state = replace(state, animations=(), thinking=False).normalized()
-      return self.game_state()
+      return replace(state, animations=(), thinking=False).normalized()
+    resolved = replace(state, animations=(), thinking=False).normalized()
+    return _resolve_turn_transition_state(resolved, message_prefix="Animation settled.", reset_per_move_timer=True)
 
-    self._state = replace(state, animations=(), thinking=False).normalized()
-    self._state = self._resolve_turn_transition(message_prefix="Animation settled.", reset_per_move_timer=True)
+  def settle_animations(self) -> OthelloGameState:
+    self._state = self.settled_game_state()
     return self.game_state()
 
   def tick(self, dt: float, *, paused: bool) -> OthelloGameState:
@@ -267,37 +272,38 @@ class OthelloMatchController:
     return self._resolve_turn_transition(message_prefix="Match restored.", reset_per_move_timer=False)
 
   def _resolve_turn_transition(self, *, message_prefix: str, reset_per_move_timer: bool) -> OthelloGameState:
-    state = self._state.normalized()
-    if state.status == OTHELLO_GAME_STATE_FINISHED:
-      self._state = replace(state, legal_moves=(), thinking=False, animations=()).normalized()
-      return self.game_state()
-
-    current_side = int(state.current_turn)
-    legal_moves = find_legal_moves(state.board, current_side)
-    if legal_moves:
-      next_status = _turn_status_for_player_side(state.player_side, current_side)
-      next_state = replace(state, status=next_status, legal_moves=tuple(legal_moves), thinking=False, message=f"{message_prefix} {side_name(current_side).title()} to move.").normalized()
-      self._state = _reset_turn_timer_if_needed(next_state, next_turn=current_side) if bool(reset_per_move_timer) else next_state
-      return self.game_state()
-
-    other = int(other_side(current_side))
-    other_legal_moves = find_legal_moves(state.board, other)
-    if other_legal_moves:
-      next_status = _turn_status_for_player_side(state.player_side, other)
-      next_state = replace(
-        state,
-        current_turn=other,
-        legal_moves=tuple(other_legal_moves),
-        consecutive_passes=min(2, int(state.consecutive_passes) + 1),
-        status=next_status,
-        thinking=False,
-        message=f"{message_prefix} {side_name(current_side).title()} must pass.",
-      ).normalized()
-      self._state = _reset_turn_timer_if_needed(next_state, next_turn=other) if bool(reset_per_move_timer) else next_state
-      return self.game_state()
-
-    winner = winner_for_board(state.board)
-    black, white = counts_for_board(state.board)
-    message = f"{message_prefix} Match finished. Black {int(black)} - White {int(white)}."
-    self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, animations=(), message=message).normalized()
+    self._state = _resolve_turn_transition_state(self._state, message_prefix=str(message_prefix), reset_per_move_timer=bool(reset_per_move_timer))
     return self.game_state()
+
+
+def _resolve_turn_transition_state(raw_state: OthelloGameState, *, message_prefix: str, reset_per_move_timer: bool) -> OthelloGameState:
+  state = raw_state.normalized()
+  if state.status == OTHELLO_GAME_STATE_FINISHED:
+    return replace(state, legal_moves=(), thinking=False, animations=()).normalized()
+
+  current_side = int(state.current_turn)
+  legal_moves = find_legal_moves(state.board, current_side)
+  if legal_moves:
+    next_status = _turn_status_for_player_side(state.player_side, current_side)
+    next_state = replace(state, status=next_status, legal_moves=tuple(legal_moves), thinking=False, message=f"{message_prefix} {side_name(current_side).title()} to move.").normalized()
+    return _reset_turn_timer_if_needed(next_state, next_turn=current_side) if bool(reset_per_move_timer) else next_state
+
+  other = int(other_side(current_side))
+  other_legal_moves = find_legal_moves(state.board, other)
+  if other_legal_moves:
+    next_status = _turn_status_for_player_side(state.player_side, other)
+    next_state = replace(
+      state,
+      current_turn=other,
+      legal_moves=tuple(other_legal_moves),
+      consecutive_passes=min(2, int(state.consecutive_passes) + 1),
+      status=next_status,
+      thinking=False,
+      message=f"{message_prefix} {side_name(current_side).title()} must pass.",
+    ).normalized()
+    return _reset_turn_timer_if_needed(next_state, next_turn=other) if bool(reset_per_move_timer) else next_state
+
+  winner = winner_for_board(state.board)
+  black, white = counts_for_board(state.board)
+  message = f"{message_prefix} Match finished. Black {int(black)} - White {int(white)}."
+  return replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, animations=(), message=message).normalized()

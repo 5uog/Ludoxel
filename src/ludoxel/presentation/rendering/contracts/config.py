@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 
 from ludoxel.application.preferences.clouds import (
+  DEFAULT_CLOUD_CELL_SIZE,
   DEFAULT_CLOUD_FIXED_Y,
   DEFAULT_CLOUD_HEIGHT_VARIATION_ENABLED,
   DEFAULT_CLOUD_PREFERRED_Y_MAX,
@@ -22,8 +23,9 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.worlds.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, clamp_render_distance_chunks
 
 RENDER_DISTANCE_FADE_START_FRACTION: float = 0.85
-CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 1.5
-CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 128.0
+CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 3.0
+CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 256.0
+CLOUD_FAR_PLANE_MARGIN_BLOCKS: float = 32.0
 
 
 def render_distance_radius_blocks(render_distance_chunks: int) -> float:
@@ -42,10 +44,23 @@ def max_unfogged_render_distance_radius_blocks(z_far: float) -> float:
   return float(min(float(start), float(z_far)))
 
 
-def cloud_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
-  end = min(max(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(CLOUD_MIN_VISIBLE_RADIUS_BLOCKS)), float(z_far))
+def cloud_far_distance(render_distance_chunks: int) -> float:
+  # Horizontal XZ radius up to which clouds stay visible. The cloud fade is
+  # decoupled from the world fog and the camera far plane: both backends
+  # cull cloud shapes against this radius and draw them with a dedicated
+  # projection whose far plane covers it, so clouds do not vanish at the
+  # world render-distance fog.
+  return float(max(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(CLOUD_MIN_VISIBLE_RADIUS_BLOCKS)))
+
+
+def cloud_fog_range(render_distance_chunks: int) -> tuple[float, float]:
+  end = float(cloud_far_distance(int(render_distance_chunks)))
   start = float(end) * float(RENDER_DISTANCE_FADE_START_FRACTION)
   return (float(start), float(end))
+
+
+def cloud_projection_z_far(render_distance_chunks: int, z_far: float) -> float:
+  return float(max(float(z_far), float(cloud_far_distance(int(render_distance_chunks))) + float(CLOUD_FAR_PLANE_MARGIN_BLOCKS)))
 
 
 @dataclass(frozen=True)
@@ -137,11 +152,12 @@ class BackendSunParams:
 @dataclass(frozen=True)
 class BackendCloudParams:
   y: int = DEFAULT_CLOUD_FIXED_Y
-  thickness: int = 3
-  macro: int = 32
+  thickness: int = 12
+  macro: int = 96
+  cell_size: int = DEFAULT_CLOUD_CELL_SIZE
   rects_per_cell: int = 1
-  candidates_per_cell: int = 5
-  view_radius: int = 150
+  candidates_per_cell: int = 4
+  view_radius: int = 256
   speed_x: float = 0.70
   speed_z: float = 0.10
   speed_variation_enabled: bool = DEFAULT_CLOUD_SPEED_VARIATION_ENABLED
@@ -156,8 +172,8 @@ class BackendCloudParams:
   color: Vec3 = Vec3(1.0, 1.0, 1.0)
   alpha: float = 0.90
   seed: int = 1337
-  candidate_drop_threshold: float = 0.20
-  overlap_thresh: float = 0.35
+  candidate_drop_threshold: float = 0.62
+  min_spacing_blocks: int = 8
   rect_margin: int = 5
   rect_size_min: int = 7
   rect_size_range: int = 8

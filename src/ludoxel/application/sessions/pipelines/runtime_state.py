@@ -24,6 +24,7 @@ def apply_runtime_to_renderer(runtime: RuntimePreferences, renderer) -> None:
   renderer.set_cloud_wireframe(bool(runtime.cloud_wire))
   renderer.set_cloud_enabled(bool(runtime.cloud_enabled))
   renderer.set_cloud_density(int(runtime.cloud_density))
+  renderer.set_cloud_cell_size(int(runtime.cloud_cell_size))
   renderer.set_cloud_seed(int(runtime.cloud_seed))
   renderer.set_cloud_flow_direction(str(runtime.cloud_flow_direction))
   renderer.set_cloud_speed_variation(bool(runtime.cloud_speed_variation_enabled), float(runtime.cloud_speed_min_blocks_per_second), float(runtime.cloud_speed_max_blocks_per_second))
@@ -90,6 +91,7 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
     sun_el_deg=float(settings.sun_el_deg),
     cloud_enabled=bool(settings.cloud_enabled),
     cloud_density=int(settings.cloud_density),
+    cloud_cell_size=int(settings.cloud_cell_size),
     cloud_seed=int(settings.cloud_seed),
     cloud_flow_direction=str(settings.cloud_flow_direction),
     cloud_speed_variation_enabled=bool(settings.cloud_speed_variation_enabled),
@@ -167,6 +169,7 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
     sun_el_deg=float(runtime.sun_el_deg),
     cloud_enabled=bool(runtime.cloud_enabled),
     cloud_density=int(runtime.cloud_density),
+    cloud_cell_size=int(runtime.cloud_cell_size),
     cloud_seed=int(runtime.cloud_seed),
     cloud_flow_direction=str(runtime.cloud_flow_direction),
     cloud_speed_variation_enabled=bool(runtime.cloud_speed_variation_enabled),

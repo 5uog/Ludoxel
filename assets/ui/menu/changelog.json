@@ -2,6 +2,58 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.9",
+      "tags": [
+        "Desktop Application",
+        "My World",
+        "Othello",
+        "Rendering",
+        "UI",
+        "Build"
+      ],
+      "sections": [
+        {
+          "title": "Othello Classic Search in the Native Engine",
+          "items": [
+            "The weak, medium, and strong Othello difficulties search through the compiled Rust engine. `classic_root_scores` in `native/ludoxel_othello/src/engine.rs` mirrors the float evaluation terms, the position-weight move ordering, the pass rule, and the terminal values of `_alpha_beta` and the root loop of `_best_move` in `src/ludoxel/simulation/spaces/othello/engines/classic.py`. `_root_move_scores` selects the compiled module through `native_classic_root_scores` in `engines/native.py`, the pure Python loop stays the fallback owner, and the seeded tie selection remains in Python, so the chosen move is identical on both paths. The previous release routed only the insane difficulties through the native engine and searched the classic difficulties in pure Python.",
+            "Both Rust crates compile again under the locked PyO3 0.29. `native/ludoxel_othello/src/lib.rs` and `native/ludoxel_terrain/src/lib.rs` call `Python::detach`, the current name of the former `allow_threads`, so `npm run build:native` rebuilds both artifacts; the previous sources failed to compile against the locked dependency and left stale artifacts installed."
+          ]
+        },
+        {
+          "title": "Othello Candidate Evaluations in the Graph",
+          "items": [
+            "`OthelloAnalysis` carries `move_evaluations`: one scored entry per legal root move, filled by every difficulty in `classic.py` and taken from `InsaneAnalysis.move_evaluations` on the insane paths. `_analysis_graph_samples` in `src/ludoxel/presentation/interface/othello/viewport.py` plots those candidates whenever an analysis holds fewer than two depth samples, so the weak and medium graphs show one real evaluation point per legal move; a position with a single legal move still shows a single point."
+          ]
+        },
+        {
+          "title": "Othello AI Off the UI Thread and Settled Saves",
+          "items": [
+            "`OthelloAiWorker` in `src/ludoxel/presentation/interface/othello/worker.py` runs its in-process fallback on a dedicated worker thread: the move, analysis, and book-learning fallbacks submit to a `ThreadPoolExecutor` and return through the same pending-future poll as the process-pool path. The previous fallback executed the search synchronously on the UI thread, which froze the render loop, the thinking banner, and the disc flip animations while the AI computed.",
+            "Saving keeps a running flip animation intact. `settled_game_state` in `src/ludoxel/simulation/spaces/othello/matches/controller.py` resolves the pending animation and turn transition on a copy, and `save_state` in `src/ludoxel/presentation/interface/viewport/lifecycle/state.py` persists that copy while the live match state keeps animating."
+          ]
+        },
+        {
+          "title": "Cloud Cluster Footprints and Ultra Volumetric Clouds",
+          "items": [
+            "Each cloud is a cluster of occupied cells on a per-cloud grid instead of a single rectangle. `CloudField` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` fills a solid core, notches corners, and attaches edge bumps, keeps the largest connected component, and produces L, T, notched, and stepped footprints that are always contiguous and at most four cells per axis.",
+            "The flat and wireframe tiers draw only the exterior cell faces. `cloud_face_rows` emits a face instance for a cell side only when the neighbouring cell is empty, and always for the top and bottom, so the six face buckets form one merged cloud surface with no interior faces: the wireframe shows the merged silhouette rather than overlapping box frames, and the solid cloud has no doubled internal walls. Both backends draw the same face buckets.",
+            "Ultra clouds are gated on the existing Shadow map quality setting: the OpenGL frame pipeline and the WGPU backend draw the volumetric path only when `shadow_quality` reaches `SHADOW_MAP_QUALITY_ULTRA`, and every lower tier keeps the flat cell-face path. No separate shader-quality preference is added.",
+            "The Ultra path renders each cloud as one translucent volume. `cloud_volume_rows` emits a single bounding box per cloud that carries the occupancy bitmask and grid dimensions; `cloud_volume.vert`/`cloud_volume.frag` march the view ray through that box and integrate an animated value-noise fbm density masked by the cell occupancy, so the volume follows the cluster footprint rather than an oval, has no hard surface or outline, and stays see-through. The noise domain scrolls with `u_time`, so the whole cloud keeps churning in place. The volumes are drawn back to front without depth writes so distant clouds remain visible through nearer ones.",
+            "A cloud size preference joins the Clouds settings. `normalize_cloud_cell_size` in `src/ludoxel/application/preferences/clouds.py` bounds the cell size to eight through forty blocks with a default of twenty; the value persists in the settings schema, projects into `BackendRendererRuntimeState`, and reaches `CloudField.set_cell_size` on both backends. The cloud density preference now changes the number of clouds: the macro cell that hosts one cloud shrinks and the drop threshold falls as density rises, so raising density from one to four multiplies the cloud count.",
+            "Cloud speed varies per cloud. `CloudField` quantizes the configured speed range into twelve multipliers and assigns each whole macro row perpendicular to the flow axis one multiplier, so rows own disjoint bands and clouds of different base speeds never drift into each other; a per-cloud turbulence sway in the vertex stage keeps clouds inside one row moving differently. Footprints stay inside their macro cell, so clouds of the same speed can never overlap.",
+            "The default cloud altitude is y = 128. `DEFAULT_CLOUD_FIXED_Y`, the spawn range 128 to 135, and the preferred interval 128 to 130 in `src/ludoxel/application/preferences/clouds.py` feed the settings defaults, the reset values, and the fallback for missing preference keys; a stored preference keeps its saved value. The default cloud `thickness` rises from 3 to 12 blocks, and each cloud varies between 0.85 and 1.3 times that value.",
+            "Clouds fade on their own horizontal range. `cloud_far_distance` and `cloud_fog_range` in `src/ludoxel/presentation/rendering/contracts/config.py` extend cloud visibility to at least 256 blocks and three times the render-distance radius, and both the OpenGL and the WGPU backend draw clouds with a dedicated far plane from `cloud_projection_z_far`, so the cloud fade is decoupled from the world render-distance fog and the world camera far plane."
+          ]
+        },
+        {
+          "title": "My World Loading Readiness",
+          "items": [
+            "`visible_load_progress` in `src/ludoxel/presentation/rendering/uploads/world.py` gates world entry on the full render distance: the loading overlay stays up until every content chunk inside the render radius is built and resident. The previous gate admitted play after a three-chunk radius and left the remaining chunk builds and uploads running during the first seconds of play."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.8",
       "tags": [
         "Desktop Application",

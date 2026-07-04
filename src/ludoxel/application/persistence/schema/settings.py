@@ -7,7 +7,7 @@ from typing import Any
 
 from ludoxel.application.preferences.audio import AudioPreferences
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, normalize_camera_perspective
-from ludoxel.application.preferences.clouds import normalize_cloud_height_settings, normalize_cloud_speed_range
+from ludoxel.application.preferences.clouds import DEFAULT_CLOUD_CELL_SIZE, normalize_cloud_cell_size, normalize_cloud_height_settings, normalize_cloud_speed_range
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
@@ -40,6 +40,7 @@ class PersistedSettings:
 
   cloud_enabled: bool = True
   cloud_density: int = 1
+  cloud_cell_size: int = int(DEFAULT_CLOUD_CELL_SIZE)
   cloud_seed: int = 1337
   cloud_flow_direction: str = "west_to_east"
   cloud_speed_variation_enabled: bool = True
@@ -120,6 +121,7 @@ class PersistedSettings:
     object.__setattr__(self, "cloud_preferred_y_min", int(preferred_y_min))
     object.__setattr__(self, "cloud_preferred_y_max", int(preferred_y_max))
     object.__setattr__(self, "cloud_preferred_y_probability_percent", int(probability))
+    object.__setattr__(self, "cloud_cell_size", normalize_cloud_cell_size(self.cloud_cell_size))
     object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self.shadow_map_quality))
 
   def to_dict(self) -> dict[str, Any]:
@@ -137,6 +139,7 @@ class PersistedSettings:
       "sun_el_deg": float(self.sun_el_deg),
       "cloud_enabled": bool(self.cloud_enabled),
       "cloud_density": int(self.cloud_density),
+      "cloud_cell_size": int(self.cloud_cell_size),
       "cloud_seed": int(self.cloud_seed),
       "cloud_flow_direction": str(self.cloud_flow_direction),
       "cloud_speed_variation_enabled": bool(self.cloud_speed_variation_enabled),
@@ -216,6 +219,7 @@ class PersistedSettings:
       sun_el_deg=mapping_float(d, "sun_el_deg", 60.0),
       cloud_enabled=mapping_bool(d, "cloud_enabled", True),
       cloud_density=mapping_int(d, "cloud_density", 1),
+      cloud_cell_size=normalize_cloud_cell_size(mapping_int(d, "cloud_cell_size", int(DEFAULT_CLOUD_CELL_SIZE))),
       cloud_seed=mapping_int(d, "cloud_seed", 1337),
       cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"),
       cloud_speed_variation_enabled=mapping_bool(d, "cloud_speed_variation_enabled", True),

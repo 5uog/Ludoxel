@@ -24,6 +24,7 @@ class GLResources:
   shadow_prog: ShaderProgram
   sun_prog: ShaderProgram
   cloud_prog: ShaderProgram
+  cloud_volume_prog: ShaderProgram
   selection_prog: ShaderProgram
   othello_prog: ShaderProgram
   othello_shadow_prog: ShaderProgram
@@ -32,7 +33,9 @@ class GLResources:
 
   player_model_shadow_prog: ShaderProgram
 
-  cloud_mesh: MeshBuffer
+  cloud_face_meshes: tuple[MeshBuffer, ...]
+  cloud_face_wire_meshes: tuple[MeshBuffer, ...]
+  cloud_volume_mesh: MeshBuffer
 
   atlas: TextureAtlas
   skin_texture: ImageTexture
@@ -51,6 +54,7 @@ class GLResources:
     shadow_prog = ShaderProgram.from_files(shader_dir / "shadow.vert", shader_dir / "shadow.frag")
     sun_prog = ShaderProgram.from_files(shader_dir / "sun.vert", shader_dir / "sun.frag")
     cloud_prog = ShaderProgram.from_files(shader_dir / "cloud_box.vert", shader_dir / "cloud_box.frag")
+    cloud_volume_prog = ShaderProgram.from_files(shader_dir / "cloud_volume.vert", shader_dir / "cloud_volume.frag")
     selection_prog = ShaderProgram.from_files(shader_dir / "selection_line.vert", shader_dir / "selection_line.frag")
     othello_prog = ShaderProgram.from_files(othello_shader_dir / "othello.vert", othello_shader_dir / "othello.frag")
     othello_shadow_prog = ShaderProgram.from_files(othello_shader_dir / "othello_shadow.vert", shader_dir / "shadow.frag")
@@ -58,7 +62,9 @@ class GLResources:
     first_person_face_prog = ShaderProgram.from_files(shader_dir / "first_person_face.vert", shader_dir / "first_person_face.frag")
     player_model_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model_shadow.vert", shader_dir / "shadow.frag")
 
-    cloud_mesh = MeshBuffer.create_cube_instanced()
+    cloud_face_meshes = tuple(MeshBuffer.create_cloud_face_instanced(face) for face in range(6))
+    cloud_face_wire_meshes = tuple(MeshBuffer.create_cloud_face_wire_instanced(face) for face in range(6))
+    cloud_volume_mesh = MeshBuffer.create_cloud_volume_instanced()
 
     tex_names = blocks.required_texture_names()
 
@@ -74,13 +80,16 @@ class GLResources:
       shadow_prog=shadow_prog,
       sun_prog=sun_prog,
       cloud_prog=cloud_prog,
+      cloud_volume_prog=cloud_volume_prog,
       selection_prog=selection_prog,
       othello_prog=othello_prog,
       othello_shadow_prog=othello_shadow_prog,
       chunk_face_payload_prog=chunk_face_payload_prog,
       first_person_face_prog=first_person_face_prog,
       player_model_shadow_prog=player_model_shadow_prog,
-      cloud_mesh=cloud_mesh,
+      cloud_face_meshes=cloud_face_meshes,
+      cloud_face_wire_meshes=cloud_face_wire_meshes,
+      cloud_volume_mesh=cloud_volume_mesh,
       atlas=atlas,
       skin_texture=skin_texture,
       empty_vao=empty_vao,
@@ -89,7 +98,11 @@ class GLResources:
     )
 
   def destroy(self) -> None:
-    self.cloud_mesh.destroy()
+    for mesh in self.cloud_face_meshes:
+      mesh.destroy()
+    for mesh in self.cloud_face_wire_meshes:
+      mesh.destroy()
+    self.cloud_volume_mesh.destroy()
     self.atlas.destroy()
     self.skin_texture.destroy()
 
@@ -98,6 +111,7 @@ class GLResources:
     self.shadow_prog.destroy()
     self.sun_prog.destroy()
     self.cloud_prog.destroy()
+    self.cloud_volume_prog.destroy()
     self.selection_prog.destroy()
     self.othello_prog.destroy()
     self.othello_shadow_prog.destroy()

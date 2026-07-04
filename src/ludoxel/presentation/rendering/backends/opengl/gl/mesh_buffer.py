@@ -14,7 +14,10 @@ from ludoxel.presentation.rendering.backends.opengl.gl.instanced_mesh_common imp
   upload_instance_rows,
   upload_instance_rows_range,
 )
-from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices
+from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices, textured_unit_face_wire_vertices
+
+_CLOUD_INSTANCE_ATTRS = ((3, 3, 0), (4, 4, 12), (5, 1, 28), (6, 3, 32))
+_CLOUD_INSTANCE_STRIDE = 11 * 4
 
 
 def _create_default_vertex_buffer(vertices: np.ndarray) -> tuple[int, int, int]:
@@ -31,14 +34,28 @@ class MeshBuffer:
   instance_capacity: int = 0
 
   @staticmethod
-  def create_cube_instanced() -> "MeshBuffer":
-    vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_cube_vertices(), dtype=np.float32))
-    instance_vbo = attach_instance_buffer(stride_bytes=8 * 4, attrs=((3, 3, 0), (4, 4, 12), (5, 1, 28)))
-
+  def _create_cloud_mesh(vertices: np.ndarray) -> "MeshBuffer":
+    # Cloud instance row: center(3), scale(3) + alphaMul(1) as one vec4
+    # pair, speedMultiplier(1), turbulence amp/freq/phase(3).
+    vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(vertices, dtype=np.float32))
+    instance_vbo = attach_instance_buffer(stride_bytes=int(_CLOUD_INSTANCE_STRIDE), attrs=_CLOUD_INSTANCE_ATTRS)
     glBindVertexArray(0)
     glBindBuffer(GL_ARRAY_BUFFER, 0)
+    return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_row_width=11, instance_capacity=0)
 
-    return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_row_width=8, instance_capacity=0)
+  @staticmethod
+  def create_cloud_face_instanced(face: int) -> "MeshBuffer":
+    return MeshBuffer._create_cloud_mesh(np.asarray(textured_unit_face_vertices(int(face)), dtype=np.float32))
+
+  @staticmethod
+  def create_cloud_face_wire_instanced(face: int) -> "MeshBuffer":
+    return MeshBuffer._create_cloud_mesh(np.asarray(textured_unit_face_wire_vertices(int(face)), dtype=np.float32))
+
+  @staticmethod
+  def create_cloud_volume_instanced() -> "MeshBuffer":
+    # A unit cube used only as the raymarch proxy for the Ultra volumetric
+    # cloud fragment stage; its faces are never shaded as a surface.
+    return MeshBuffer._create_cloud_mesh(np.asarray(_cube_vertices(), dtype=np.float32))
 
   @staticmethod
   def create_cube_transform_instanced() -> "MeshBuffer":
