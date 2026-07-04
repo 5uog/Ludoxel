@@ -37,7 +37,7 @@ class SunPass:
     self._prog = prog
     self._empty_vao = int(empty_vao)
 
-  def draw(self, eye: Vec3, view_proj: np.ndarray, sun_dir: Vec3) -> None:
+  def draw(self, eye: Vec3, view_proj: np.ndarray, sun_dir: Vec3, *, ultra: bool = False) -> None:
     if self._prog is None or int(self._empty_vao) == 0:
       return
 
@@ -56,6 +56,7 @@ class SunPass:
     self._prog.set_vec3("u_u", sun_u.x, sun_u.y, sun_u.z)
     self._prog.set_vec3("u_v", sun_v.x, sun_v.y, sun_v.z)
     self._prog.set_float("u_halfSize", float(sun_half))
+    self._prog.set_float("u_ultra", 1.0 if bool(ultra) else 0.0)
 
     glBindVertexArray(int(self._empty_vao))
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 1)

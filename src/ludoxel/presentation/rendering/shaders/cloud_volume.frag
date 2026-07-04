@@ -25,13 +25,9 @@ out vec4 fragColor;
 #include "common/distance_fog.glsl"
 
 // A cloud is one translucent volume. The fragment stage marches the view
-// ray through the cloud's bounding box and integrates a soft density from
-// animated value-noise fbm, masked by the cloud's cell occupancy so the
-// volume follows the cluster footprint rather than a plain oval. The noise
-// domain scrolls with time, so the whole cloud keeps churning in place,
-// which is what reads as the billowing motion; nothing has a hard
-// silhouette and the accumulated alpha stays below one, so the cloud is
-// see-through like water vapour.
+// ray through an expanded proxy box, masks density by the packed occupancy
+// footprint, and feathers only the union boundary between occupied and
+// empty space.
 
 float ldx_hash13(vec3 p) {
     p = fract(p * 0.1031);
@@ -71,33 +67,93 @@ float ldx_fbm(vec3 p) {
     return sum;
 }
 
-// Soft cell-occupancy coverage: 1 deep inside an occupied cell, fading to 0
-// across a one-block band at the footprint boundary so the mask is not a
-// hard staircase.
+float ldx_cloud_grid_w() {
+    return mod(v_dims, 8.0);
+}
+
+float ldx_cloud_grid_d() {
+    return floor(v_dims / 8.0);
+}
+
+float ldx_cloud_occupied(float ci, float cj, float gw, float gd) {
+    if (ci < 0.0 || ci >= gw || cj < 0.0 || cj >= gd) {
+        return 0.0;
+    }
+    float idx = cj * gw + ci;
+    return mod(floor(v_bitmask / exp2(idx)), 2.0);
+}
+
+float ldx_cloud_exterior_edge_distance(float ci, float cj, vec2 inCell, float gw, float gd) {
+    float farDistance = 65535.0;
+    float d = farDistance;
+    if (ldx_cloud_occupied(ci - 1.0, cj, gw, gd) < 0.5) {
+        d = min(d, inCell.x * u_cellSize);
+    }
+    if (ldx_cloud_occupied(ci + 1.0, cj, gw, gd) < 0.5) {
+        d = min(d, (1.0 - inCell.x) * u_cellSize);
+    }
+    if (ldx_cloud_occupied(ci, cj - 1.0, gw, gd) < 0.5) {
+        d = min(d, inCell.y * u_cellSize);
+    }
+    if (ldx_cloud_occupied(ci, cj + 1.0, gw, gd) < 0.5) {
+        d = min(d, (1.0 - inCell.y) * u_cellSize);
+    }
+    return d;
+}
+
+float ldx_cloud_proxy_pad() {
+    return max(u_cellSize, 1.0) * 0.72;
+}
+
+float ldx_cloud_nearest_occupied_distance(vec2 gridPos, float gw, float gd) {
+    float nearest = 65535.0;
+    for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < 4; i++) {
+            float fi = float(i);
+            float fj = float(j);
+            if (fi >= gw || fj >= gd) {
+                continue;
+            }
+            if (ldx_cloud_occupied(fi, fj, gw, gd) < 0.5) {
+                continue;
+            }
+
+            vec2 lo = vec2(fi, fj);
+            vec2 hi = lo + vec2(1.0, 1.0);
+            vec2 outside = max(max(lo - gridPos, gridPos - hi), vec2(0.0, 0.0));
+            nearest = min(nearest, length(outside) * u_cellSize);
+        }
+    }
+    return nearest;
+}
+
 float ldx_cloud_coverage(vec3 p) {
-    float gw = mod(v_dims, 8.0);
-    float gd = floor(v_dims / 8.0);
+    float gw = ldx_cloud_grid_w();
+    float gd = ldx_cloud_grid_d();
     if (gw < 0.5 || gd < 0.5) {
         return 0.0;
     }
+
     vec3 rel = p - (v_center - v_halfSize);
     float fx = rel.x / u_cellSize;
     float fz = rel.z / u_cellSize;
     float ci = floor(fx);
     float cj = floor(fz);
-    if (ci < 0.0 || ci >= gw || cj < 0.0 || cj >= gd) {
-        return 0.0;
+    vec2 gridPos = vec2(fx, fz);
+    float signedDistance = 0.0;
+    if (ldx_cloud_occupied(ci, cj, gw, gd) > 0.5) {
+        vec2 inCell = vec2(fract(fx), fract(fz));
+        float exteriorDistance = ldx_cloud_exterior_edge_distance(ci, cj, inCell, gw, gd);
+        signedDistance = exteriorDistance > 64000.0 ? ldx_cloud_proxy_pad() : exteriorDistance;
+    } else {
+        float nearest = ldx_cloud_nearest_occupied_distance(gridPos, gw, gd);
+        if (nearest > 64000.0) {
+            return 0.0;
+        }
+        signedDistance = -nearest;
     }
-    float idx = cj * gw + ci;
-    float bit = mod(floor(v_bitmask / exp2(idx)), 2.0);
-    if (bit < 0.5) {
-        return 0.0;
-    }
-    // Distance to the nearest cell-interior boundary, in cells, softened.
-    vec2 inCell = vec2(fract(fx), fract(fz));
-    vec2 edge = min(inCell, 1.0 - inCell) * u_cellSize; // blocks to cell edge
-    float soft = clamp(min(edge.x, edge.y) / 3.0 + 0.35, 0.0, 1.0);
-    return soft;
+
+    return smoothstep(-ldx_cloud_proxy_pad(), max(3.5, u_cellSize * 0.18), signedDistance);
 }
 
 float ldx_cloud_density(vec3 p) {
@@ -105,22 +161,36 @@ float ldx_cloud_density(vec3 p) {
     if (coverage <= 0.0) {
         return 0.0;
     }
+
     float qy = (p.y - v_center.y) / max(v_halfSize.y, 0.001);
-    float vert = 1.0 - smoothstep(0.1, 1.0, abs(qy));
-    float base = coverage * vert;
+    float lower = smoothstep(-1.0, -0.55, qy);
+    float upper = 1.0 - smoothstep(0.32, 1.0, qy);
+    float middle = 1.0 - smoothstep(0.72, 1.04, abs(qy));
+    float vertical = clamp(lower * upper * mix(0.72, 1.0, middle), 0.0, 1.0);
+
+    vec3 np = p * 0.045 + vec3(u_time * 0.035, u_time * 0.018, u_time * 0.028) + v_seed;
+    float large = ldx_fbm(np);
+    float detail = ldx_vnoise(np * 3.1 + vec3(17.0, 9.0, 23.0));
+    float edgeNoise = (large - 0.5) * 0.22 + (detail - 0.5) * 0.10;
+    float feather = smoothstep(0.08, 0.96, coverage + edgeNoise);
+    float base = feather * vertical;
     if (base <= 0.0) {
         return 0.0;
     }
-    vec3 np = p * 0.06 + vec3(u_time * 0.05, u_time * 0.02, u_time * 0.035) + v_seed;
-    float n = ldx_fbm(np);
-    return clamp(smoothstep(0.28, 0.8, n * base + base * 0.4) * base, 0.0, 1.0);
+
+    float eroded = smoothstep(0.20, 0.88, large * 0.74 + detail * 0.24 + coverage * 0.20);
+    float wisps = smoothstep(0.30, 0.88, large + (detail - 0.5) * 0.20);
+    float rimThin = smoothstep(0.04, 0.72, coverage);
+    float density = base * eroded * rimThin * (0.70 + 0.42 * wisps) * (0.82 + 0.18 * detail);
+    return clamp(density, 0.0, 1.0);
 }
 
 void main() {
     vec3 ro = u_eyePos;
     vec3 rd = normalize(v_worldPos - u_eyePos);
-    vec3 bmin = v_center - v_halfSize;
-    vec3 bmax = v_center + v_halfSize;
+    vec3 proxyPad = vec3(ldx_cloud_proxy_pad(), 0.0, ldx_cloud_proxy_pad());
+    vec3 bmin = v_center - v_halfSize - proxyPad;
+    vec3 bmax = v_center + v_halfSize + proxyPad;
     vec3 inv = 1.0 / rd;
     vec3 ta = (bmin - ro) * inv;
     vec3 tb = (bmax - ro) * inv;
@@ -143,8 +213,9 @@ void main() {
         float d = ldx_cloud_density(p);
         if (d > 0.002) {
             float ld = ldx_cloud_density(p + u_sunDir * 3.5);
-            float light = clamp(0.72 + (d - ld) * 1.1, 0.45, 1.15);
-            float da = d * 0.5;
+            float facing = max(dot(rd, u_sunDir), 0.0);
+            float light = clamp(0.70 + (d - ld) * 1.45 + facing * 0.10, 0.42, 1.28);
+            float da = d * 0.56;
             acc += (1.0 - acc) * da;
             bright += (1.0 - bright) * da * light;
         }
@@ -160,5 +231,6 @@ void main() {
     float fog = ldx_cloud_fog_factor(v_worldPos, u_fogCamXZ, u_fogStart, u_fogEnd);
     float a = clamp(acc * u_alpha * v_alphaMul, 0.0, 1.0) * (1.0 - fog);
     vec3 col = u_color * clamp(bright / max(acc, 0.001), 0.45, 1.15);
+    col = mix(col, col * vec3(1.04, 0.99, 0.90), clamp(bright / max(acc, 0.001) - 0.70, 0.0, 1.0) * 0.35);
     fragColor = vec4(col, a);
 }

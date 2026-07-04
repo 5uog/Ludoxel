@@ -2,6 +2,20 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.9 Hotfix 1",
+      "tags": ["Desktop Application", "Rendering"],
+      "sections": [
+        {
+          "title": "Ultra Cloud and Sun Rendering",
+          "items": [
+            "`cloud_volume.frag` now evaluates Ultra cloud density as one occupied-cell union. It decodes the packed footprint, treats occupied neighbors as interior, and applies feathering only where the union meets empty space, so shared borders inside one `CloudField` cluster no longer become visible cell walls.",
+            "The Ultra volume shader expands the raymarch proxy around the packed footprint and lets feathered noise extend past the flat cell-face boundary. The material combines union-distance coverage, multi-scale noise erosion, soft vertical shaping, and warmer sunlight so L, T, notched, and stepped clusters read as one vapor mass instead of clipped boxes or a plain oval.",
+            "`sun.frag` keeps lower tiers on the existing simple billboard and uses the Ultra gate for a circular sun disc with a stronger warm halo."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.9",
       "tags": ["Desktop Application", "My World", "Othello", "Rendering", "UI", "Build"],
       "sections": [
@@ -31,7 +45,7 @@
             "Each cloud is a cluster of occupied cells on a per-cloud grid instead of a single rectangle. `CloudField` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` fills a solid core, notches corners, and attaches edge bumps, keeps the largest connected component, and produces L, T, notched, and stepped footprints that are always contiguous and at most four cells per axis.",
             "The flat and wireframe tiers draw only the exterior cell faces. `cloud_face_rows` emits a face instance for a cell side only when the neighbouring cell is empty, and always for the top and bottom, so the six face buckets form one merged cloud surface with no interior faces: the wireframe shows the merged silhouette rather than overlapping box frames, and the solid cloud has no doubled internal walls. Both backends draw the same face buckets.",
             "Ultra clouds are gated on the existing Shadow map quality setting: the OpenGL frame pipeline and the WGPU backend draw the volumetric path only when `shadow_quality` reaches `SHADOW_MAP_QUALITY_ULTRA`, and every lower tier keeps the flat cell-face path. No separate shader-quality preference is added.",
-            "The Ultra path renders each cloud as one translucent volume. `cloud_volume_rows` emits a single bounding box per cloud that carries the occupancy bitmask and grid dimensions; `cloud_volume.vert`/`cloud_volume.frag` march the view ray through that box and integrate an animated value-noise fbm density masked by the cell occupancy, so the volume follows the cluster footprint rather than an oval, has no hard surface or outline, and stays see-through. The noise domain scrolls with `u_time`, so the whole cloud keeps churning in place. The volumes are drawn back to front without depth writes so distant clouds remain visible through nearer ones.",
+            "The Ultra path renders each cloud as one translucent volume. `cloud_volume_rows` emits a single bounding box per cloud that carries the occupancy bitmask and grid dimensions; `cloud_volume.vert`/`cloud_volume.frag` march the view ray through that box and integrate an animated value-noise fbm density masked by the cell occupancy, so the volume uses the cluster footprint instead of a single oval and stays see-through. The noise domain scrolls with `u_time`, so the whole cloud keeps churning in place. The volumes are drawn back to front without depth writes so distant clouds remain visible through nearer ones.",
             "A cloud size preference joins the Clouds settings. `normalize_cloud_cell_size` in `src/ludoxel/application/preferences/clouds.py` bounds the cell size to eight through forty blocks with a default of twenty; the value persists in the settings schema, projects into `BackendRendererRuntimeState`, and reaches `CloudField.set_cell_size` on both backends. The cloud density preference now changes the number of clouds: the macro cell that hosts one cloud shrinks and the drop threshold falls as density rises, so raising density from one to four multiplies the cloud count.",
             "Cloud speed varies per cloud. `CloudField` quantizes the configured speed range into twelve multipliers and assigns each whole macro row perpendicular to the flow axis one multiplier, so rows own disjoint bands and clouds of different base speeds never drift into each other; a per-cloud turbulence sway in the vertex stage keeps clouds inside one row moving differently. Footprints stay inside their macro cell, so clouds of the same speed can never overlap.",
             "The default cloud altitude is y = 128. `DEFAULT_CLOUD_FIXED_Y`, the spawn range 128 to 135, and the preferred interval 128 to 130 in `src/ludoxel/application/preferences/clouds.py` feed the settings defaults, the reset values, and the fallback for missing preference keys; a stored preference keeps its saved value. The default cloud `thickness` rises from 3 to 12 blocks, and each cloud varies between 0.85 and 1.3 times that value.",
@@ -102,7 +116,7 @@
           "title": "Rust Terrain Binding Dependency Update",
           "items": [
             "The `ludoxel_terrain` crate now builds against PyO3 0.25.1 instead of 0.23.5. The upgrade moves the binding past the three published PyO3 advisories affecting versions before 0.24.1: the out-of-bounds read in the `nth` and `nth_back` implementations of the `PyList` and `PyTuple` iterators, the missing `Sync` bound on `PyCFunction::new_closure` closures, and the buffer-overflow risk in `PyString::from_object`. The terrain binding itself calls none of those APIs — it exposes three `#[pyfunction]` entry points returning bytes — so the change removes the vulnerable dependency versions from the build without altering the module contract.",
-            "`native/ludoxel_terrain/Cargo.toml` records the crate version as `3.7.7-hotfix.1`, and `native_build_info()` reports that string through the compiled module. The binding API, the `abi3-py311` stable-ABI configuration, the artifact placement, and the `build:native` and `build:native:check` behavior are unchanged."
+            "`native/ludoxel_terrain/Cargo.toml` records the crate version as `3.7.7-Hotfix.1`, and `native_build_info()` reports that string through the compiled module. The binding API, the `abi3-py311` stable-ABI configuration, the artifact placement, and the `build:native` and `build:native:check` behavior are unchanged."
           ]
         },
         {

@@ -708,7 +708,7 @@ def set_my_world_upper_slots(self, slots: object) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/shadow.py` defines shadow-map quality as a discrete five-step value, not as render distance and not as a free numeric multiplier. The allowed values are 1 `Lowest`, 2 `Low`, 3 `Standard`, 4 `High`, and 5 `Ultra`. The tier controls the shadow-map and shadow-shader quality policy, while render distance remains a separate chunk-visibility setting.',
+            text: '`src/ludoxel/application/preferences/shadow.py` defines shadow-map quality as a discrete five-step value, not as render distance and not as a free numeric multiplier. The allowed values are 1 `Lowest`, 2 `Low`, 3 `Standard`, 4 `High`, and 5 `Ultra`. The tier controls the shadow-map and shadow-shader quality policy, and both renderer paths also read Ultra as the gate for volumetric clouds and the Ultra sun disc branch. Render distance remains a separate chunk-visibility setting.',
           },
           {
             kind: 'code',

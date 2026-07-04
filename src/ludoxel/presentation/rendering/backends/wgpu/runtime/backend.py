@@ -649,17 +649,18 @@ class WgpuRendererBackend:
     sun_half = math.tan(math.radians(float(self._cfg.sun.half_angle_deg))) * sun_dist
     return (sun_center, u, v, float(sun_half))
 
-  def _create_sun_uniform_bind_group(self, *, view_proj: np.ndarray, eye: Vec3) -> tuple[object | None, object | None]:
+  def _create_sun_uniform_bind_group(self, *, view_proj: np.ndarray, eye: Vec3, ultra: bool = False) -> tuple[object | None, object | None]:
     if self._res is None:
       return (None, None)
     import wgpu
 
     sun_center, sun_u, sun_v, sun_half = self._sun_quad(eye=eye)
-    uniform = np.zeros((28,), dtype=np.float32)
+    uniform = np.zeros((32,), dtype=np.float32)
     uniform[:16] = np.ascontiguousarray(_opengl_clip_to_wgpu(view_proj).T, dtype=np.float32).reshape(16)
     uniform[16:20] = (float(sun_center.x), float(sun_center.y), float(sun_center.z), float(sun_half))
     uniform[20:24] = (float(sun_u.x), float(sun_u.y), float(sun_u.z), 0.0)
     uniform[24:28] = (float(sun_v.x), float(sun_v.y), float(sun_v.z), 0.0)
+    uniform[28:32] = (1.0 if bool(ultra) else 0.0, 0.0, 0.0, 0.0)
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
     bind_group = self._res.device.create_bind_group(
@@ -953,6 +954,7 @@ class WgpuRendererBackend:
     self._last_shadow_size = int(getattr(self._res, "shadow_size", 0) or 0)
     self._last_shadow_instances = int(shadow_instances)
     shadow_sampling_ok = bool(shadow_requested and self._res.shadow_bind_group is not None and self._res.shadow_view is not None and self._res.shadow_sampler is not None and shadow_ok)
+    ultra_visuals = bool(int(self._state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA))
     if othello_rows is not None and self._res.shadow_bind_group is None:
       self._ensure_shadow_target()
     world_uniform_buffers, world_uniform_bind_groups = self._create_frame_uniform_bind_groups(
@@ -978,7 +980,7 @@ class WgpuRendererBackend:
 
     draw_calls = 0
     instances = 0
-    sun_uniform_buffer, sun_uniform_bind_group = self._create_sun_uniform_bind_group(view_proj=view_proj, eye=eye)
+    sun_uniform_buffer, sun_uniform_bind_group = self._create_sun_uniform_bind_group(view_proj=view_proj, eye=eye, ultra=bool(ultra_visuals))
     if sun_uniform_buffer is not None:
       temp_uniform_buffers.append(sun_uniform_buffer)
     if sun_uniform_bind_group is not None:
@@ -1148,7 +1150,7 @@ class WgpuRendererBackend:
       # solid; the Ultra tier raymarches a translucent animated volume
       # through one bounding box per cloud.
       cloud_wireframe = bool(self._state.cloud_wireframe)
-      cloud_ultra = bool(int(self._state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA)) and not cloud_wireframe
+      cloud_ultra = bool(ultra_visuals) and not cloud_wireframe
       cloud_shapes = self._cloud_field.visible_shapes(
         eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(width) / max(float(height), 1.0), z_far=float(cloud_far_distance(int(render_distance_chunks)))
       )

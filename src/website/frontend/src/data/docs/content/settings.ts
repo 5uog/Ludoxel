@@ -524,7 +524,7 @@ def normalize_backend_cloud_flow_direction(raw: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'Shadow preferences have two surfaces: a boolean `Shadow map` toggle and a `Shadow map quality` combo box on the World tab. The combo box is populated from `SHADOW_MAP_QUALITY_ORDER`; the labels come from `SHADOW_MAP_QUALITY_LABELS`; and the selection is emitted as an integer. The setting is an admitted quality stage that later renderer code may consume, derived independently of render distance and carrying no promise that every backend produces identical shadow quality on every driver.',
+            text: 'Shadow preferences have two surfaces: a boolean `Shadow map` toggle and a `Shadow map quality` combo box on the World tab. The combo box is populated from `SHADOW_MAP_QUALITY_ORDER`; the labels come from `SHADOW_MAP_QUALITY_LABELS`; and the selection is emitted as an integer. The setting is an admitted quality stage that later renderer code may consume. The Ultra stage also gates the volumetric cloud path and the Ultra sun disc branch in both backends. The stage is derived independently of render distance and carries no promise that every backend produces identical output on every driver.',
           },
           {
             kind: 'code',
@@ -573,7 +573,7 @@ overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_q
         content: [
           {
             kind: 'paragraph',
-            text: '`SettingsOverlay._on_shadow_enabled_toggled` enables or disables the combo box with the toggle and emits the boolean. `_on_shadow_map_quality` emits the current normalized quality value. Runtime preferences then normalize the integer again before renderer state consumes it. The UI can present a disabled combo box, but the persisted stage remains a distinct saved value and must still be read through the normalizer.',
+            text: '`SettingsOverlay._on_shadow_enabled_toggled` enables or disables the combo box with the toggle and emits the boolean. `_on_shadow_map_quality` emits the current normalized quality value. Runtime preferences then normalize the integer again before renderer state consumes it. The UI can present a disabled combo box, but the persisted stage remains a distinct saved value and must still be read through the normalizer. OpenGL `FramePipeline.render` and WGPU `render` read that normalized stage to select the Ultra sun branch and the Ultra cloud volume path.',
           },
           {
             kind: 'code',

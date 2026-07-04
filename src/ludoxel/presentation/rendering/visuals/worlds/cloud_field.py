@@ -16,7 +16,7 @@ from ludoxel.presentation.rendering.contracts.config import BackendCloudParams
 # L, T, plus, notched, and stepped footprints. The flat and wireframe paths
 # draw only the exterior faces of the occupancy (interior faces between two
 # occupied cells are skipped), so the cloud reads as one merged body with a
-# clean silhouette; the Ultra path fills the same cells with rounded puffs.
+# clean silhouette; the Ultra path raymarches the same occupied-cell union.
 #
 # Speeds are assigned to whole macro rows perpendicular to the flow axis:
 # rows own disjoint bands and footprints never leave their macro cell, so
@@ -136,8 +136,9 @@ def cloud_volume_rows(shapes: list[CloudShape]) -> np.ndarray:
   # (never a plain oval) and is never drawn as a solid surface. Row 8 is a
   # per-cloud noise seed, row 9 packs the occupancy bitmask (bit
   # j*gridW + i, i fastest), and row 10 packs the grid dimensions as
-  # gridW + gridD*8. The box is padded vertically to leave room for the
-  # billowing top and soft base.
+  # gridW + gridD*8. The row stores the footprint box; the shader expands
+  # the raymarch proxy horizontally for feathered exterior vapor and keeps
+  # the packed footprint as the density owner.
   rows: list[list[float]] = []
   for shape in shapes:
     if not shape.cells:

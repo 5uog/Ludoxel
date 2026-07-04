@@ -867,7 +867,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
               'Compute the camera chunk, world and cloud fog ranges, and effective shadow parameters; build the light view-projection from the sun direction and coverage radius.',
               'Render the shadow map from world geometry plus player and Othello casters.',
               'Build the camera view and projection; clear color and depth to the sky color.',
-              'Draw the sun billboard, then enable the depth test.',
+              'Draw the camera-facing sun billboard, then enable the depth test.',
               'Draw the world pass with shadow, fog, and selection tint, then falling blocks and block-break particles.',
               'Draw each player model, then the Othello board and pieces.',
               'Draw clouds, then the selection outline.',
@@ -912,7 +912,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `CloudPass.draw` obtains visible cloud clusters from `CloudField.visible_shapes`, whose culler tests the shifted footprint extents against the view and skips only clusters confirmed outside the camera bounds, then draws the exterior cell faces per direction, or the ellipsoid puffs when the Ultra tier is active. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
+            text: '`apply_runtime_state` pushes the cloud flags, density, seed, flow, speed, and height variation into the cloud pass, the animation flag into the texture-animation controller, and the outline flag into the selection controller. `FramePipeline.render` reads the Ultra shadow-quality threshold once for the sun pass and cloud pass. `SunPass.draw` passes that value into `sun.frag`, whose lower branch keeps the simple billboard and whose Ultra branch draws a circular disc with halo. `CloudPass.draw` obtains visible cloud clusters from `CloudField.visible_shapes`, whose culler tests the shifted footprint extents against the view and skips only clusters confirmed outside the camera bounds, then draws exterior cell faces below Ultra or a neighbor-aware raymarched volume at Ultra. `set_cloud_motion_paused` and `set_texture_animation_paused` freeze motion for overlays. `render_player_preview_frame` renders a single player pose into an offscreen framebuffer created by `_ensure_preview_target`, reads the pixels back as an image, and restores the prior framebuffer and viewport; the pause and AI-settings preview surfaces consume this path. The thin wrapper `Renderer` in `src/ludoxel/presentation/rendering/contracts/api.py` forwards every backend call and is where the backend is selected.',
           },
           {
             kind: 'note',
@@ -1000,14 +1000,14 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
         content: [
           {
             kind: 'paragraph',
-            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. `CloudField.visible_shapes` shifts each cloud by its per-cloud speed, projects the footprint extents against the camera basis, and returns a cluster unless its rendered volume lies outside the conservative view bounds. Cloud visibility, the shared cluster and puff geometry, fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The frame is drawn in the same sequence as the OpenGL pipeline.',
+            text: 'The WGPU backend imports the same render-contract helpers as the OpenGL backend: `render_distance_fog_range`, `cloud_fog_range`, `effective_backend_shadow_params`, `max_unfogged_render_distance_radius_blocks`, the `GeometryDistanceFog` and `CloudDistanceFog` types, `compute_light_view_proj`, the `SelectionOutlineBuilder`, the `BlockVisualResolver`, and the `CloudField`. `CloudField.visible_shapes` shifts each cloud by its per-cloud speed, projects the footprint extents against the camera basis, and returns a cluster unless its rendered volume lies outside the conservative view bounds. Cloud visibility, face rows, volume rows, fog math, shadow coverage, light-space construction, and selection-outline geometry are therefore shared between backends. The WGPU render method reads the Ultra shadow-quality threshold for the same sun and cloud decisions as the OpenGL frame pipeline. The frame is drawn in the same sequence as the OpenGL pipeline.',
           },
           {
             kind: 'list',
             ordered: true,
             items: [
               'Render the shadow depth pass from chunk meshes, player transform casters, and Othello pieces.',
-              'Begin the main pass clearing to the fog color; draw the sun.',
+              'Begin the main pass clearing to the fog color; draw the camera-facing sun billboard.',
               'Draw the world, shadowed or plain, or the emulated wireframe.',
               'Draw falling blocks, block-break particles, player skins, and held blocks.',
               'Draw the Othello board, pieces, and highlight overlay; then clouds; then the selection lines.',
@@ -1239,7 +1239,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'Shadow quality is a discrete level from one to five. `ShadowQualityPreset` maps each level to a shadow-map size, a light-space coverage radius, and a PCF radius; `resolve_shadow_quality_preset` normalizes an arbitrary level to a valid preset, collapsing a missing or out-of-range value to the standard level. `effective_backend_shadow_params` substitutes the preset size, coverage, and PCF radius while keeping bias, slope bias, polygon offset, darkness, and stabilization from the base parameters. The coverage radius is a shadow-specific policy, not a function of render distance, so changing render distance does not degrade the texel density of a given quality level.',
+            text: 'Shadow quality is a discrete level from one to five. `ShadowQualityPreset` maps each level to a shadow-map size, a light-space coverage radius, and a PCF radius; `resolve_shadow_quality_preset` normalizes an arbitrary level to a valid preset, collapsing a missing or out-of-range value to the standard level. `effective_backend_shadow_params` substitutes the preset size, coverage, and PCF radius while keeping bias, slope bias, polygon offset, darkness, and stabilization from the base parameters. The OpenGL and WGPU frame paths also read the Ultra threshold as the visual gate for the volumetric cloud path and the Ultra sun disc branch. The coverage radius is a shadow-specific policy, not a function of render distance, so changing render distance does not degrade the texel density of a given quality level.',
           },
           {
             kind: 'math',
@@ -2369,7 +2369,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.9"`,
+            code: `__version__ = "3.7.9 Hotfix 1"`,
           },
           {
             kind: 'note',

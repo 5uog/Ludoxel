@@ -84,6 +84,17 @@ def _cloud_uniform_block() -> str:
 """
 
 
+def _sun_uniform_block() -> str:
+  return """layout(set = 0, binding = 0) uniform LudoxelSunUniforms {
+    mat4 ldx_viewProj;
+    vec4 ldx_centerHalf;
+    vec4 ldx_u;
+    vec4 ldx_v;
+    vec4 ldx_sunMode;
+};
+"""
+
+
 def _adapt_wgpu_glsl(filename: str, text: str) -> str:
   name = str(filename)
 
@@ -199,9 +210,10 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("flat out float v_alphaMul;", "layout(location = 4) flat out float v_alphaMul;")
     text = text.replace("flat out float v_bitmask;", "layout(location = 5) flat out float v_bitmask;")
     text = text.replace("flat out float v_dims;", "layout(location = 6) flat out float v_dims;")
-    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // wind translation (world space)\n", _cloud_uniform_block())
+    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_shift; // wind translation (world space)\nuniform float u_cellSize;\n", _cloud_uniform_block())
     text = text.replace("u_viewProj", "ldx_viewProj")
     text = text.replace("u_shift", "ldx_cloudShiftAlpha.xyz")
+    text = text.replace("u_cellSize", "ldx_cloudFlowDir.z")
     return text
 
   if name == "cloud_volume.frag":
@@ -227,16 +239,7 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     return text
 
   if name == "sun.vert":
-    text = text.replace(
-      "uniform mat4 u_viewProj;\nuniform vec3 u_center;\nuniform vec3 u_u;\nuniform vec3 u_v;\nuniform float u_halfSize;\n",
-      """layout(set = 0, binding = 0) uniform LudoxelSunUniforms {
-    mat4 ldx_viewProj;
-    vec4 ldx_centerHalf;
-    vec4 ldx_u;
-    vec4 ldx_v;
-};
-""",
-    )
+    text = text.replace("uniform mat4 u_viewProj;\nuniform vec3 u_center;\nuniform vec3 u_u;\nuniform vec3 u_v;\nuniform float u_halfSize;\n", _sun_uniform_block())
     text = text.replace("out vec2 v_uv;", "layout(location = 0) out vec2 v_uv;")
     text = text.replace("u_viewProj", "ldx_viewProj")
     text = text.replace("u_center", "ldx_centerHalf.xyz")
@@ -247,6 +250,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
 
   if name == "sun.frag":
     text = text.replace("in vec2 v_uv;", "layout(location = 0) in vec2 v_uv;")
+    text = text.replace("uniform float u_ultra;\n", _sun_uniform_block())
+    text = text.replace("u_ultra", "ldx_sunMode.x")
     return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
 
   if name == "first_person_face.vert":

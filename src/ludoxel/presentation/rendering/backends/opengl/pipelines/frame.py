@@ -162,7 +162,8 @@ class FramePipeline:
     glClearColor(float(cc.x), float(cc.y), float(cc.z), 1.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    self.sun_pass.draw(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir)
+    ultra_visuals = bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA))
+    self.sun_pass.draw(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, ultra=bool(ultra_visuals))
 
     glEnable(GL_DEPTH_TEST)
     glDepthMask(True)
@@ -254,8 +255,8 @@ class FramePipeline:
 
     # Clouds use their own far plane so the cloud fade range is not clipped
     # by the world camera far plane. The Ultra shadow map quality tier
-    # selects the ellipsoid puff path, whose depth writes are off, so the
-    # projection difference does not feed back into the world depth
+    # selects the translucent volume path, whose depth writes are off, so
+    # the projection difference does not feed back into the world depth
     # buffer; the lower tiers keep the flat box path.
     cloud_proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(cloud_projection_z_far(int(render_distance_chunks), float(self.cfg.camera.z_far))))
     cloud_vp = mat4.mul(cloud_proj, view)
@@ -268,7 +269,7 @@ class FramePipeline:
       sun_dir=self.state.sun_dir,
       fog=cloud_fog,
       far_distance=float(cloud_far_distance(int(render_distance_chunks))),
-      ultra=bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA)),
+      ultra=bool(ultra_visuals),
     )
 
     self.selection.draw(view_proj=vp)

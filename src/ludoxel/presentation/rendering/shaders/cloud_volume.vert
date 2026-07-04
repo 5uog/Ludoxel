@@ -11,6 +11,7 @@ layout(location = 6) in vec3 i_extra;  // x = noise seed, y = occupancy bitmask,
 
 uniform mat4 u_viewProj;
 uniform vec3 u_shift; // wind translation (world space)
+uniform float u_cellSize;
 
 out vec3 v_worldPos;
 flat out vec3 v_center;
@@ -22,12 +23,14 @@ flat out float v_dims;
 
 void main() {
     vec3 center = i_center + u_shift * i_speed;
-    vec3 worldPos = (a_pos * max(i_size.xyz, vec3(0.001))) + center;
+    vec3 size = max(i_size.xyz, vec3(0.001));
+    vec3 proxyPad = vec3(max(u_cellSize, 1.0) * 0.72, 0.0, max(u_cellSize, 1.0) * 0.72);
+    vec3 worldPos = (a_pos * max(size + proxyPad * 2.0, vec3(0.001))) + center;
 
     gl_Position = u_viewProj * vec4(worldPos, 1.0);
     v_worldPos = worldPos;
     v_center = center;
-    v_halfSize = max(i_size.xyz, vec3(0.001)) * 0.5;
+    v_halfSize = size * 0.5;
     v_seed = i_extra.x;
     v_alphaMul = i_size.w;
     v_bitmask = i_extra.y;
