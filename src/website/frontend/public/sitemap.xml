@@ -1087,6 +1087,9 @@
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-boundary</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-sun-optics</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#see-also</loc>
   </url>
   <url>
@@ -1097,6 +1100,9 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-render-distance-fog-and-shadows#fog-shadows-fog-shader</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-render-distance-fog-and-shadows#fog-shadows-sun-shafts</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-render-distance-fog-and-shadows#fog-shadows-quality</loc>

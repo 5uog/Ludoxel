@@ -32,6 +32,16 @@ def render_distance_radius_blocks(render_distance_chunks: int) -> float:
   return float(int(clamp_render_distance_chunks(int(render_distance_chunks))) * int(CHUNK_SIZE))
 
 
+def sun_glare_strength(forward: Vec3, sun_dir: Vec3) -> float:
+  # Ultra-only veiling glare weight. It grows with the squared alignment between
+  # the view direction and the sun, fades as the sun nears the horizon, and is
+  # zero when the sun sits behind the camera. Both backends read this one value.
+  d = sun_dir.normalized()
+  align = max(0.0, forward.normalized().dot(d))
+  elevation = max(0.0, min(1.0, float(d.y) * 4.0))
+  return float((align * align) * elevation * 0.9)
+
+
 def render_distance_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
   end = min(float(render_distance_radius_blocks(int(render_distance_chunks))), float(z_far))
   start = float(end) * float(RENDER_DISTANCE_FADE_START_FRACTION)

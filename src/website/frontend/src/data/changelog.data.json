@@ -2,6 +2,21 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.7.9 Hotfix 2",
+      "tags": ["Desktop Application", "Rendering"],
+      "sections": [
+        {
+          "title": "Ultra Sun Disc, Veiling Glare, and Crepuscular Light",
+          "items": [
+            "`ldx_ultra_sun` in `sun.frag` shapes the Ultra sun through coverage alone. The disc, core, and halo terms each decay to zero inside the billboard's inscribed circle, and an edge mask retires coverage before the quad border, so the square billboard no longer leaves a visible frame around the sun. The emitted color is a bright warm white that the falloffs do not pre-attenuate, so alpha blending over the sky brightens toward the disc and the dark ring the earlier weighting left around it is gone.",
+            "The Ultra tier dazzles the view when it faces the sun. `SunPass.draw_glare` in `src/ludoxel/presentation/rendering/backends/opengl/passes/sun.py` and the matching draw in the WGPU backend place a camera-facing veil centered on the sun direction; `ldx_sun_glare` in `sun.frag` whitens the scene most strongly toward the sun and thins outward, and `sun_glare_strength` in `src/ludoxel/presentation/rendering/contracts/config.py` scales the veil by the squared view-to-sun alignment and the sun elevation, so it vanishes as the view turns away or the sun nears the horizon. The veil is depth-tested against the world depth buffer and writes no depth: the OpenGL pass enables the depth test and the WGPU path draws through `create_sun_glare_pipeline` with a `less` comparison, so geometry nearer than the sun occludes the glare and a block between the camera and the sun blocks the dazzle.",
+            "Distant terrain seen toward the sun gains warm in-scattered light. `ldx_apply_sun_shafts` in `src/ludoxel/presentation/rendering/shaders/common/distance_fog.glsl` weights that light by the geometry fog factor and the alignment of the view ray with the sun direction, so it rises only where a surface sits far enough to lie in the fog band and lines up with the sun; `world.frag` and `world_no_shadow.frag` apply it under the `u_ultra` gate.",
+            "The lower shadow-map quality tiers keep the simple sun billboard and the unmodified fog, while the Ultra tier draws the circular disc, the veiling glare, and the in-scattered light only when `shadow_quality` reaches `SHADOW_MAP_QUALITY_ULTRA`. The sun, glare, and world shaders are the shared GLSL that both the OpenGL and WGPU backends compile, and the WGPU dialect adaptation in `src/ludoxel/presentation/rendering/backends/wgpu/pipelines/factory.py` maps the new sun-mode and `u_ultra` uniforms so both backends carry the same effect."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.9 Hotfix 1",
       "tags": ["Desktop Application", "Rendering"],
       "sections": [

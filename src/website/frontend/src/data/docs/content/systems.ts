@@ -871,6 +871,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
               'Draw the world pass with shadow, fog, and selection tint, then falling blocks and block-break particles.',
               'Draw each player model, then the Othello board and pieces.',
               'Draw clouds, then the selection outline.',
+              'In the Ultra tier, when the view faces the sun, draw the depth-tested veiling glare so geometry nearer than the sun occludes it.',
               'Clear the depth buffer and draw exactly one first-person view model: a special item, a held block, or the arm, at a reduced field of view.',
             ],
           },
@@ -1011,6 +1012,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
               'Draw the world, shadowed or plain, or the emulated wireframe.',
               'Draw falling blocks, block-break particles, player skins, and held blocks.',
               'Draw the Othello board, pieces, and highlight overlay; then clouds; then the selection lines.',
+              'In the Ultra tier facing the sun, draw the veiling glare through the depth-tested `create_sun_glare_pipeline` so nearer geometry occludes it.',
               'Begin a separate first-person pass with depth cleared and draw the special item, held block, or arm.',
             ],
           },
@@ -1161,6 +1163,52 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
           },
         ],
       },
+      {
+        id: 'shared-shaders-sun-optics',
+        title: 'The Ultra Sun and Veiling Glare',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The sun billboard is the shared `sun.frag`. Below the Ultra tier `ldx_simple_sun` keeps the earlier square-masked billboard, and at Ultra `ldx_ultra_sun` shapes the disc through coverage alone: its disc, core, and halo terms each fall to zero inside the inscribed circle of the billboard and an edge mask retires coverage before the quad border, so the straight quad edge never clips a lit texel into a visible frame. The emitted color is a bright warm white that the falloffs do not pre-attenuate, so alpha blending over the sky brightens toward the disc rather than pulling a dark ring around it. The `u_ultra` value both backends carry in the sun-mode uniform selects the branch.',
+          },
+          {
+            kind: 'code',
+            language: 'glsl',
+            caption: 'sun.frag; the sun-mode dispatch shared by both backends',
+            code: `void main() {
+    if (u_mode > 0.5) {
+        vec4 glare = ldx_sun_glare(v_uv, u_glare);
+        if (glare.a < 0.003) {
+            discard;
+        }
+        fragColor = glare;
+        return;
+    }
+    if (u_ultra < 0.5) {
+        fragColor = ldx_simple_sun(v_uv);
+        return;
+    }
+    vec4 sun = ldx_ultra_sun(v_uv);
+    if (sun.a < 0.01) {
+        discard;
+    }
+    fragColor = sun;
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The Ultra tier also draws a veiling glare when the view faces the sun. The sun-mode uniform carries a glare flag and a strength; `ldx_sun_glare` whitens a camera-facing billboard most strongly toward the sun center and thins outward, and `sun_glare_strength` in `src/ludoxel/presentation/rendering/contracts/config.py`, read by both backends, scales it by the squared view-to-sun alignment and the sun elevation, so the veil falls to zero when the sun sits behind the camera or near the horizon. The glare is depth-tested against the world depth buffer and writes no depth, so geometry nearer than the sun billboard occludes it and a block between the camera and the sun blocks the dazzle. This is the one place the sun path diverges by backend: the OpenGL `SunPass.draw_glare` enables the depth test around the shared draw, while the WGPU backend bakes the comparison into a dedicated `create_sun_glare_pipeline` because a wgpu pipeline fixes its depth comparison at creation.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'The disc shape, the glare shader, and the glare strength are shared source evaluated the same way on both backends. The sole confirmed backend difference in the sun path is how each enables the glare depth test: OpenGL toggles render state around the draw, and WGPU selects a depth-comparing pipeline. The sun disc, drawn first as background, is occluded by world geometry drawn over it on both backends.',
+            },
+          },
+        ],
+      },
     ],
     relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Render Distance Fog and Shadows'],
   }),
@@ -1229,6 +1277,41 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
               expression: 'f = \\mathrm{clamp}\\!\\left(\\frac{d - s}{\\max(e - s,\\ 10^{-3})},\\ 0,\\ 1\\right)',
               displayMode: true,
               caption: 'The shared fog factor; geometry uses the 3D distance d, the cloud variant uses the horizontal distance.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'fog-shadows-sun-shafts',
+        title: 'Ultra Sun-Direction In-Scattering',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The Ultra tier modulates that same fog toward the sun. `ldx_apply_sun_shafts` in the shared `distance_fog.glsl` adds warm in-scattered light to a fogged surface, weighted by the geometry fog factor and by the alignment of the view ray with the sun direction, so the term rises only where a surface sits far enough to lie in the fog band and its view ray runs toward the sun. A near surface carries no fog weight and a surface turned away from the sun carries no alignment, so scene depth and view direction govern where the crepuscular light lands rather than a flat screen overlay. `world.frag` and `world_no_shadow.frag` add the term under the `u_ultra` gate, which both backends raise only when the shadow-map quality reaches Ultra, so every lower tier leaves the fogged color unchanged.',
+          },
+          {
+            kind: 'code',
+            language: 'glsl',
+            caption: 'distance_fog.glsl; the Ultra sun-shaft term reuses the geometry fog factor',
+            code: `vec3 ldx_apply_sun_shafts(vec3 color, vec3 worldPos, vec3 camPos, vec3 sunDir, float fogStart, float fogEnd) {
+    float fogAmt = ldx_geometry_fog_factor(worldPos, camPos, fogStart, fogEnd);
+    if (fogAmt <= 0.0) {
+        return color;
+    }
+    vec3 viewVec = worldPos - camPos;
+    vec3 viewDir = viewVec / max(length(viewVec), 1e-4);
+    float sunAlign = max(dot(viewDir, normalize(sunDir)), 0.0);
+    float shaft = pow(sunAlign, 6.0) * fogAmt;
+    vec3 shaftColor = vec3(1.00, 0.86, 0.62);
+    return color + shaftColor * shaft * 0.55;
+}`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 's = \\max(\\hat{v}\\cdot\\hat{l},\\ 0)^{6}\\, f',
+              displayMode: true,
+              caption: 'The shaft weight: the sixth power of the view-to-sun alignment times the fog factor f, so warm light concentrates on distant geometry aligned with the sun.',
             },
           },
         ],
@@ -2369,7 +2452,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.9 Hotfix 1"`,
+            code: `__version__ = "3.7.9 Hotfix 2"`,
           },
           {
             kind: 'note',

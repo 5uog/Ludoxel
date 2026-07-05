@@ -33,6 +33,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
   create_othello_shadow_pipeline,
   create_selection_pipeline,
   create_shadow_depth_pipeline,
+  create_sun_glare_pipeline,
   create_sun_pipeline,
   create_textured_face_pipeline,
   create_transform_shadow_pipeline,
@@ -52,6 +53,7 @@ from ludoxel.presentation.rendering.contracts.config import (
   effective_backend_shadow_params,
   max_unfogged_render_distance_radius_blocks,
   render_distance_fog_range,
+  sun_glare_strength,
 )
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
@@ -248,6 +250,7 @@ class WgpuRendererBackend:
     )
     world_wireframe_pipeline = create_world_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_pipeline = create_sun_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
+    sun_glare_pipeline = create_sun_glare_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_pipeline = create_cloud_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_volume_pipeline = create_cloud_volume_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_wireframe_pipeline = create_cloud_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
@@ -301,6 +304,7 @@ class WgpuRendererBackend:
       world_shadowed_pipeline=world_shadowed_pipeline,
       world_wireframe_pipeline=world_wireframe_pipeline,
       sun_pipeline=sun_pipeline,
+      sun_glare_pipeline=sun_glare_pipeline,
       cloud_pipeline=cloud_pipeline,
       cloud_volume_pipeline=cloud_volume_pipeline,
       cloud_wireframe_pipeline=cloud_wireframe_pipeline,
@@ -548,6 +552,7 @@ class WgpuRendererBackend:
     shadow_enabled: bool = False,
     debug_shadow: bool = False,
     fog: GeometryDistanceFog | None = None,
+    ultra: bool = False,
   ) -> bytes:
     vp = _opengl_clip_to_wgpu(view_proj)
     light_vp = vp if light_view_proj is None else _opengl_clip_to_wgpu(light_view_proj)
@@ -563,7 +568,7 @@ class WgpuRendererBackend:
     shadow = self._effective_shadow
     shadow_texel = 1.0 / float(max(1, int(shadow.size)))
     uniform[52:56] = (float(shadow_texel), float(shadow.dark_mul), float(shadow.bias_min), float(shadow.bias_slope))
-    uniform[56:60] = (float(shadow.pcf_radius), 0.0, 0.0, 0.0)
+    uniform[56:60] = (float(shadow.pcf_radius), 1.0 if bool(ultra) else 0.0, 0.0, 0.0)
     raw = bytearray(uniform.tobytes())
     ints = np.frombuffer(raw, dtype=np.int32)
     ints[36] = int(face_idx)
@@ -609,6 +614,7 @@ class WgpuRendererBackend:
     shadow_enabled: bool = False,
     debug_shadow: bool = False,
     fog: GeometryDistanceFog | None = None,
+    ultra: bool = False,
   ) -> tuple[tuple[object, ...], tuple[object, ...]]:
     if self._res is None:
       return ((), ())
@@ -627,6 +633,7 @@ class WgpuRendererBackend:
         shadow_enabled=bool(shadow_enabled),
         debug_shadow=bool(debug_shadow),
         fog=fog,
+        ultra=bool(ultra),
       )
       buffer = self._res.device.create_buffer_with_data(label=f"{label}-uniform-face-{face_idx}", data=data, usage=wgpu.BufferUsage.UNIFORM)
       bind_group = self._res.device.create_bind_group(
@@ -665,6 +672,43 @@ class WgpuRendererBackend:
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
     bind_group = self._res.device.create_bind_group(
       label="ludoxel-sun-frame-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
+    )
+    return (buffer, bind_group)
+
+  def _glare_quad(self, *, eye: Vec3, forward: Vec3) -> tuple[Vec3, Vec3, Vec3, float]:
+    d = self._state.sun_dir.normalized()
+    f = forward.normalized()
+    up = Vec3(0.0, 1.0, 0.0)
+    u = f.cross(up)
+    if u.length() <= 1e-6:
+      u = f.cross(Vec3(1.0, 0.0, 0.0))
+    u = u.normalized()
+    v = u.cross(f).normalized()
+    glare_dist = float(self._cfg.sun.distance)
+    center = eye + d * glare_dist
+    half = math.tan(math.radians(62.0)) * glare_dist
+    return (center, u, v, float(half))
+
+  def _create_sun_glare_uniform_bind_group(self, *, view_proj: np.ndarray, eye: Vec3, forward: Vec3, strength: float) -> tuple[object | None, object | None]:
+    # Ultra veiling glare reuses the sun pipeline and uniform block. The sun-mode
+    # slots carry (ultra, glare mode, glare strength); the quad faces the camera
+    # and is centered on the sun direction so the shader whitens the scene most
+    # strongly toward the sun.
+    if self._res is None:
+      return (None, None)
+    import wgpu
+
+    center, u, v, half = self._glare_quad(eye=eye, forward=forward)
+    uniform = np.zeros((32,), dtype=np.float32)
+    uniform[:16] = np.ascontiguousarray(_opengl_clip_to_wgpu(view_proj).T, dtype=np.float32).reshape(16)
+    uniform[16:20] = (float(center.x), float(center.y), float(center.z), float(half))
+    uniform[20:24] = (float(u.x), float(u.y), float(u.z), 0.0)
+    uniform[24:28] = (float(v.x), float(v.y), float(v.z), 0.0)
+    uniform[28:32] = (1.0, 1.0, float(max(0.0, strength)), 0.0)
+    data = bytes(uniform.tobytes())
+    buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-glare-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
+    bind_group = self._res.device.create_bind_group(
+      label="ludoxel-sun-glare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
     )
     return (buffer, bind_group)
 
@@ -967,6 +1011,7 @@ class WgpuRendererBackend:
       shadow_enabled=bool(shadow_sampling_ok),
       debug_shadow=bool(self._state.debug_shadow),
       fog=world_fog,
+      ultra=bool(ultra_visuals),
     )
     temp_uniform_buffers.extend(world_uniform_buffers)
     temp_uploads: list[WgpuFaceInstances] = []
@@ -1231,6 +1276,18 @@ class WgpuRendererBackend:
       render_pass.set_vertex_buffer(0, self._selection_buffer)
       render_pass.draw(int(self._selection_vertex_count), 1, 0, 0)
       draw_calls += 1
+
+    if bool(ultra_visuals):
+      glare_strength = sun_glare_strength(forward, self._state.sun_dir)
+      if glare_strength > 0.0:
+        glare_buffer, glare_bind_group = self._create_sun_glare_uniform_bind_group(view_proj=view_proj, eye=eye, forward=forward, strength=float(glare_strength))
+        if glare_buffer is not None:
+          temp_uniform_buffers.append(glare_buffer)
+        if glare_bind_group is not None and self._res.sun_glare_pipeline is not None:
+          render_pass.set_pipeline(self._res.sun_glare_pipeline)
+          render_pass.set_bind_group(0, glare_bind_group)
+          render_pass.draw(6, 1, 0, 0)
+          draw_calls += 1
 
     render_pass.end()
 

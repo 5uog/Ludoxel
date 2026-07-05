@@ -27,6 +27,7 @@ uniform vec3 u_fogCamPos;
 uniform float u_fogStart;
 uniform float u_fogEnd;
 uniform vec3 u_fogColor;
+uniform float u_ultra;
 
 out vec4 fragColor;
 
@@ -109,5 +110,8 @@ void main() {
     }
 
     vec3 shaded = ldx_apply_geometry_distance_fog(base * lit, v_worldPos, u_fogCamPos, u_fogStart, u_fogEnd, u_fogColor);
+    if (u_ultra > 0.5) {
+        shaded = ldx_apply_sun_shafts(shaded, v_worldPos, u_fogCamPos, u_sunDir, u_fogStart, u_fogEnd);
+    }
     fragColor = vec4(shaded, tex.a);
 }

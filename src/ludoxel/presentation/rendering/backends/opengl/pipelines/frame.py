@@ -37,6 +37,7 @@ from ludoxel.presentation.rendering.contracts.config import (
   effective_backend_shadow_params,
   max_unfogged_render_distance_radius_blocks,
   render_distance_fog_range,
+  sun_glare_strength,
 )
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
@@ -191,6 +192,7 @@ class FramePipeline:
         sel_z=int(sz),
         sel_tint=float(self.sel_tint_strength),
         fog=world_fog,
+        ultra=bool(ultra_visuals),
       )
     )
 
@@ -273,6 +275,11 @@ class FramePipeline:
     )
 
     self.selection.draw(view_proj=vp)
+
+    if bool(ultra_visuals):
+      glare = sun_glare_strength(forward, self.state.sun_dir)
+      if glare > 0.0:
+        self.sun_pass.draw_glare(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, forward=forward, strength=float(glare))
 
     first_person = None if player_state is None else player_state.first_person
     if (

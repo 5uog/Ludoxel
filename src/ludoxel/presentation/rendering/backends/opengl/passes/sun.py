@@ -9,12 +9,14 @@ from OpenGL.GL import (
   GL_BLEND,
   GL_DEPTH_TEST,
   GL_FUNC_ADD,
+  GL_LESS,
   GL_ONE_MINUS_SRC_ALPHA,
   GL_SRC_ALPHA,
   GL_TRIANGLES,
   glBindVertexArray,
   glBlendEquation,
   glBlendFunc,
+  glDepthFunc,
   glDepthMask,
   glDisable,
   glDrawArraysInstanced,
@@ -24,6 +26,8 @@ from OpenGL.GL import (
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
 from ludoxel.presentation.rendering.contracts.config import BackendSunParams
+
+_GLARE_HALF_ANGLE_DEG = 62.0
 
 
 class SunPass:
@@ -57,12 +61,65 @@ class SunPass:
     self._prog.set_vec3("u_v", sun_v.x, sun_v.y, sun_v.z)
     self._prog.set_float("u_halfSize", float(sun_half))
     self._prog.set_float("u_ultra", 1.0 if bool(ultra) else 0.0)
+    self._prog.set_float("u_mode", 0.0)
+    self._prog.set_float("u_glare", 0.0)
 
     glBindVertexArray(int(self._empty_vao))
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 1)
     glBindVertexArray(0)
 
     glDisable(GL_BLEND)
+
+  def draw_glare(self, eye: Vec3, view_proj: np.ndarray, sun_dir: Vec3, forward: Vec3, *, strength: float) -> None:
+    # Ultra-only veiling glare. A camera-facing billboard is centered on the sun
+    # direction; the shader whitens the scene it covers most strongly toward the
+    # sun so the world stays visible while looking into the light dazzles it.
+    if self._prog is None or int(self._empty_vao) == 0 or float(strength) <= 0.0:
+      return
+
+    glare_center, glare_u, glare_v, glare_half = self._glare_quad(eye=eye, d=sun_dir.normalized(), forward=forward.normalized())
+
+    # Depth-test the glare against the world depth buffer without writing depth,
+    # so geometry nearer than the sun billboard occludes the veil. A block in
+    # front of the sun therefore blocks the dazzle instead of being painted over.
+    glEnable(GL_DEPTH_TEST)
+    glDepthFunc(GL_LESS)
+    glDepthMask(False)
+
+    glEnable(GL_BLEND)
+    glBlendEquation(GL_FUNC_ADD)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    self._prog.use()
+    self._prog.set_mat4("u_viewProj", view_proj)
+    self._prog.set_vec3("u_center", glare_center.x, glare_center.y, glare_center.z)
+    self._prog.set_vec3("u_u", glare_u.x, glare_u.y, glare_u.z)
+    self._prog.set_vec3("u_v", glare_v.x, glare_v.y, glare_v.z)
+    self._prog.set_float("u_halfSize", float(glare_half))
+    self._prog.set_float("u_ultra", 1.0)
+    self._prog.set_float("u_mode", 1.0)
+    self._prog.set_float("u_glare", float(max(0.0, strength)))
+
+    glBindVertexArray(int(self._empty_vao))
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 1)
+    glBindVertexArray(0)
+
+    glDisable(GL_BLEND)
+    glDepthMask(True)
+    glEnable(GL_DEPTH_TEST)
+
+  def _glare_quad(self, eye: Vec3, d: Vec3, forward: Vec3) -> tuple[Vec3, Vec3, Vec3, float]:
+    up = Vec3(0.0, 1.0, 0.0)
+    u = forward.cross(up)
+    if u.length() <= 1e-6:
+      u = forward.cross(Vec3(1.0, 0.0, 0.0))
+    u = u.normalized()
+    v = u.cross(forward).normalized()
+
+    glare_dist = float(self._cfg.distance)
+    glare_center = eye + d * glare_dist
+    glare_half = math.tan(math.radians(float(_GLARE_HALF_ANGLE_DEG))) * glare_dist
+    return glare_center, u, v, float(glare_half)
 
   def _sun_quad(self, eye: Vec3, d: Vec3) -> tuple[Vec3, Vec3, Vec3, float]:
     up = Vec3(0.0, 1.0, 0.0)

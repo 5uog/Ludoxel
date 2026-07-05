@@ -45,6 +45,8 @@ class WorldDrawInputs:
 
   fog: GeometryDistanceFog
 
+  ultra: bool = False
+
 
 class WorldPass:
   def __init__(self) -> None:
@@ -115,6 +117,7 @@ class WorldPass:
       prog.set_float("u_fogStart", float(inp.fog.start))
       prog.set_float("u_fogEnd", float(inp.fog.end))
       prog.set_vec3("u_fogColor", float(inp.fog.color.x), float(inp.fog.color.y), float(inp.fog.color.z))
+      prog.set_float("u_ultra", 1.0 if bool(inp.ultra) else 0.0)
 
       shadow_sampling_ok = False
       if bool(use_shadow_program):

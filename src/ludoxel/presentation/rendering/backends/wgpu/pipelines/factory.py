@@ -148,6 +148,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_fogStart", "ldx_fogCamPosStart.w")
     text = text.replace("u_fogEnd", "ldx_fogColorEnd.w")
     text = text.replace("u_fogColor", "ldx_fogColorEnd.rgb")
+    text = text.replace("uniform float u_ultra;\n", "")
+    text = text.replace("u_ultra", "ldx_shadowParams2.y")
     return text
 
   if name == "world_no_shadow.frag":
@@ -170,6 +172,8 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_fogStart", "ldx_fogCamPosStart.w")
     text = text.replace("u_fogEnd", "ldx_fogColorEnd.w")
     text = text.replace("u_fogColor", "ldx_fogColorEnd.rgb")
+    text = text.replace("uniform float u_ultra;\n", "")
+    text = text.replace("u_ultra", "ldx_shadowParams2.y")
     return text
 
   if name == "selection_line.vert":
@@ -250,8 +254,10 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
 
   if name == "sun.frag":
     text = text.replace("in vec2 v_uv;", "layout(location = 0) in vec2 v_uv;")
-    text = text.replace("uniform float u_ultra;\n", _sun_uniform_block())
+    text = text.replace("uniform float u_ultra;\nuniform float u_mode;\nuniform float u_glare;\n", _sun_uniform_block())
     text = text.replace("u_ultra", "ldx_sunMode.x")
+    text = text.replace("u_mode", "ldx_sunMode.y")
+    text = text.replace("u_glare", "ldx_sunMode.z")
     return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
 
   if name == "first_person_face.vert":
@@ -432,6 +438,29 @@ def create_sun_pipeline(*, device, target_format, depth_format, camera_bind_grou
     vertex={"module": vertex_shader, "entry_point": "main", "buffers": []},
     primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
     depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.always},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def create_sun_glare_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  # The veiling glare reuses the sun shader but is depth-tested against the world
+  # depth buffer so geometry nearer than the sun billboard occludes it; it never
+  # writes depth, so it does not disturb anything drawn afterward.
+  vertex_shader = device.create_shader_module(label="ludoxel-sun-glare.vert", code=_wgpu_glsl_source("sun.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-sun-glare.frag", code=_wgpu_glsl_source("sun.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-sun-glare-layout", bind_group_layouts=[camera_bind_group_layout])
+  blend = {
+    "color": {"src_factor": wgpu.BlendFactor.src_alpha, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+    "alpha": {"src_factor": wgpu.BlendFactor.one, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+  }
+  return device.create_render_pipeline(
+    label="ludoxel-sun-glare-pipeline",
+    layout=layout,
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": []},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.less},
     fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
   )
 
