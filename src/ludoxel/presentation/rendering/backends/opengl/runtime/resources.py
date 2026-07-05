@@ -23,6 +23,7 @@ class GLResources:
   world_no_shadow_prog: ShaderProgram
   shadow_prog: ShaderProgram
   sun_prog: ShaderProgram
+  sun_flare_prog: ShaderProgram
   cloud_prog: ShaderProgram
   cloud_volume_prog: ShaderProgram
   selection_prog: ShaderProgram
@@ -53,6 +54,7 @@ class GLResources:
     world_no_shadow_prog = ShaderProgram.from_files(shader_dir / "world.vert", shader_dir / "world_no_shadow.frag")
     shadow_prog = ShaderProgram.from_files(shader_dir / "shadow.vert", shader_dir / "shadow.frag")
     sun_prog = ShaderProgram.from_files(shader_dir / "sun.vert", shader_dir / "sun.frag")
+    sun_flare_prog = ShaderProgram.from_files(shader_dir / "sun_flare.vert", shader_dir / "sun_flare.frag")
     cloud_prog = ShaderProgram.from_files(shader_dir / "cloud_box.vert", shader_dir / "cloud_box.frag")
     cloud_volume_prog = ShaderProgram.from_files(shader_dir / "cloud_volume.vert", shader_dir / "cloud_volume.frag")
     selection_prog = ShaderProgram.from_files(shader_dir / "selection_line.vert", shader_dir / "selection_line.frag")
@@ -79,6 +81,7 @@ class GLResources:
       world_no_shadow_prog=world_no_shadow_prog,
       shadow_prog=shadow_prog,
       sun_prog=sun_prog,
+      sun_flare_prog=sun_flare_prog,
       cloud_prog=cloud_prog,
       cloud_volume_prog=cloud_volume_prog,
       selection_prog=selection_prog,
@@ -110,6 +113,7 @@ class GLResources:
     self.world_no_shadow_prog.destroy()
     self.shadow_prog.destroy()
     self.sun_prog.destroy()
+    self.sun_flare_prog.destroy()
     self.cloud_prog.destroy()
     self.cloud_volume_prog.destroy()
     self.selection_prog.destroy()

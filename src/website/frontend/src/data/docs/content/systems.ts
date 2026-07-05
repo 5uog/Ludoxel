@@ -1163,11 +1163,11 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
       },
       {
         id: 'shared-shaders-sun-optics',
-        title: 'The Ultra Sun and Veiling Glare',
+        title: 'The Ultra Sun, Veiling Glare, and Lens Flare',
         content: [
           {
             kind: 'paragraph',
-            text: 'The sun billboard is the shared `sun.frag`. Below the Ultra tier `ldx_simple_sun` keeps the earlier square-masked billboard, and at Ultra `ldx_ultra_sun` shapes the disc through coverage alone: its disc, core, and halo terms each fall to zero inside the inscribed circle of the billboard and an edge mask retires coverage before the quad border, so the straight quad edge never clips a lit texel into a visible frame. The emitted color is a bright warm white that the falloffs do not pre-attenuate, so alpha blending over the sky brightens toward the disc rather than pulling a dark ring around it. The `u_ultra` value both backends carry in the sun-mode uniform selects the branch.',
+            text: 'The sun billboard is the shared `sun.frag`. Both tiers shape the disc through coverage alone in `ldx_sun_body`: a photospheric disc fills most of the billboard, a near-white hot core sits at its centre, and a thin warm corona rings the disc, with each radial term falling to zero before the quad border and an edge mask retiring coverage there, so the straight quad edge never clips a lit texel into a visible frame or corner. `ldx_simple_sun` and `ldx_ultra_sun` both call `ldx_sun_body` and differ only in the outer-glow weight, so neither tier draws a square-masked billboard. `half_angle_deg` in `BackendSunParams` sets the billboard half-angle that both backends read, so the disc subtends a fixed apparent size. The emitted color is dominated by the black-body white of the core and disc, and the falloffs do not pre-attenuate it, so alpha blending over the sky brightens toward the disc rather than pulling a dark ring around it. The `u_ultra` value both backends carry in the sun-mode uniform selects the outer-glow branch.',
           },
           {
             kind: 'code',
@@ -1205,6 +1205,18 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
                 'The disc shape, the glare shader, and the glare strength are shared source evaluated the same way on both backends. Both draw the glare and the disc as background before the world pass and neither writes depth, so the opaque world overdraws them and occludes the glow at the terrain silhouette. The disc and the veil are handled the same way on both backends.',
             },
           },
+          {
+            kind: 'paragraph',
+            text: 'The Ultra tier also composites a screen-space lens flare. `sun_flare_screen` in `src/ludoxel/presentation/rendering/contracts/config.py`, read by both backends, projects the sun position through the same view-projection the sun billboard uses, returns its normalized device coordinates, and derives a strength that falls to zero when the sun sits behind the camera, off the screen by a wide margin, near the horizon, or when the view turns well away from it. `sun_flare.frag` runs over a fullscreen triangle emitted by `sun_flare.vert` and places ghost discs along the axis through the sun screen position and the frame center, mirroring the source across the optical axis, with a warm-to-cool tint variation and a soft halo, and fades the whole overlay by that strength. The OpenGL `SunPass.draw_flare` and the WGPU `create_sun_flare_pipeline` draw it at the same stage, after the world, clouds, and selection and before the view model, from a fullscreen triangle that writes no depth, so it composites over the scene as a camera artifact rather than world geometry, and it is gated to the Ultra tier alongside the veiling glare.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'The flare is not depth-sampled against world geometry. The elevation and view-alignment terms in `sun_flare_screen` stand in for the sun dropping behind terrain and for the view turning away, so the flare thins as the sun nears the horizon or leaves the frame; it is a lens artifact keyed to the sun screen position, not an occlusion query.',
+            },
+          },
         ],
       },
     ],
@@ -1224,13 +1236,13 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_far_distance` derives a separate cloud reach whose value is the render radius scaled by three, raised to a two-hundred-and-fifty-six-block floor so a narrow render distance does not empty the sky, and `cloud_fog_range` fades over that reach without capping it at the camera far plane. `cloud_projection_z_far` gives the cloud pass its own far plane covering that reach, so the cloud fade is decoupled from both the geometry fog and the world camera far plane.',
+            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_far_distance` derives a separate cloud reach whose value is the render radius scaled by five, raised to a three-hundred-and-twenty-block floor so the sky stays wider than the world chunk radius even at a narrow render distance, and `cloud_fog_range` fades over that reach without capping it at the camera far plane. `CloudField.set_view_radius` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` generates cloud shapes out to that same reach, so clouds fill the horizon the fade covers rather than ending at a fixed radius short of it. `cloud_projection_z_far` gives the cloud pass its own far plane covering that reach, so the cloud fade is decoupled from both the geometry fog and the world camera far plane.',
           },
           {
             kind: 'math',
             math: {
               expression:
-                'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(3\\,\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ 256\\bigr), \\qquad s = 0.85\\,e',
+                'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(5\\,\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ 320\\bigr), \\qquad s = 0.85\\,e',
               displayMode: true,
               caption: 'render_distance_fog_range and cloud_far_distance; both fade ranges start at the same fraction of their end, but the cloud reach is not capped at the camera far plane.',
             },
@@ -2450,7 +2462,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.0"`,
+            code: `__version__ = "3.8.1 Beta 1"`,
           },
           {
             kind: 'note',

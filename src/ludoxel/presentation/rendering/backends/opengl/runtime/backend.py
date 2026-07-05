@@ -173,7 +173,7 @@ class RendererBackend:
     self._first_person_arm.initialize(prog=self._res.first_person_face_prog, skin_texture=self._res.skin_texture)
     self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
     self._special_item.initialize(prog=self._res.first_person_face_prog)
-    self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
+    self._sun.initialize(self._res.sun_prog, self._res.sun_flare_prog, int(self._res.empty_vao))
     self._cloud.initialize(self._res.cloud_prog, self._res.cloud_face_meshes, self._res.cloud_face_wire_meshes, self._res.cloud_volume_prog, self._res.cloud_volume_mesh)
     self._othello.initialize(world_prog=self._res.othello_prog, shadow_prog=self._res.othello_shadow_prog)
     self._selection_pass.initialize(self._res.selection_prog)

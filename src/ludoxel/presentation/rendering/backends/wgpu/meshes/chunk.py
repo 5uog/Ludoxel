@@ -8,7 +8,7 @@ import numpy as np
 
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chunk_key
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
-from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices
+from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices, textured_unit_face_wire_vertices
 
 _INSTANCE_ROW_WIDTH = 12
 _TRANSFORM_ROW_WIDTH = 20
@@ -49,40 +49,6 @@ class WgpuChunkMesh:
     return int(total)
 
 
-def _face_lines(nx, ny, nz, corners):
-  (a, b, c, d) = corners
-  return [
-    (*a, nx, ny, nz, 0.0, 0.0),
-    (*b, nx, ny, nz, 1.0, 0.0),
-    (*b, nx, ny, nz, 1.0, 0.0),
-    (*c, nx, ny, nz, 1.0, 1.0),
-    (*c, nx, ny, nz, 1.0, 1.0),
-    (*a, nx, ny, nz, 0.0, 0.0),
-    (*a, nx, ny, nz, 0.0, 0.0),
-    (*c, nx, ny, nz, 1.0, 1.0),
-    (*c, nx, ny, nz, 1.0, 1.0),
-    (*d, nx, ny, nz, 0.0, 1.0),
-    (*d, nx, ny, nz, 0.0, 1.0),
-    (*a, nx, ny, nz, 0.0, 0.0),
-  ]
-
-
-def _quad_wire_vertices(face: int):
-  p = 0.5
-
-  if face == 0:
-    return _face_lines(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)])
-  if face == 1:
-    return _face_lines(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)])
-  if face == 2:
-    return _face_lines(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)])
-  if face == 3:
-    return _face_lines(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)])
-  if face == 4:
-    return _face_lines(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)])
-  return _face_lines(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)])
-
-
 def build_face_vertex_rows() -> np.ndarray:
   rows = []
   for face_idx in range(FACE_COUNT):
@@ -91,9 +57,13 @@ def build_face_vertex_rows() -> np.ndarray:
 
 
 def build_face_wire_vertex_rows() -> np.ndarray:
+  # Twelve vertices per face (six line segments) shared with the OpenGL line
+  # path via textured_unit_face_wire_vertices: the four perimeter edges plus
+  # the triangulation diagonal, so world and cloud wireframes carry the same
+  # diagonal edge on both backends.
   rows = []
   for face_idx in range(FACE_COUNT):
-    rows.extend(_quad_wire_vertices(int(face_idx)))
+    rows.extend(textured_unit_face_wire_vertices(int(face_idx)))
   return np.asarray(rows, dtype=np.float32)
 
 

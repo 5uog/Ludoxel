@@ -8,7 +8,14 @@
 //   surface_heights   -> little-endian i32 bytes, C order, shape (nx, nz)
 //   terrain_materials -> u8 bytes, C order, shape (nx, ny, nz)
 
-mod terrain;
+// The engine is split by responsibility: `noise` owns the hashing and
+// value-noise primitives, `height` owns surface height, ravine carving, and
+// the generation-mode selectors, and `material` owns per-cell material and ore
+// selection. This module is only the PyO3 binding surface and holds no terrain
+// mathematics.
+mod height;
+mod material;
+mod noise;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -28,7 +35,7 @@ fn surface_heights(py: Python<'_>, seed: i64, version: u32, mode: u32, flat_grou
     for ix in 0..nx {
       let wx = x0 + ix as i64;
       for iz in 0..nz {
-        let h = terrain::surface_height(seed, version, mode, flat_ground_y, wx, z0 + iz as i64);
+        let h = height::surface_height(seed, version, mode, flat_ground_y, wx, z0 + iz as i64);
         out.extend_from_slice(&(h as i32).to_le_bytes());
       }
     }
@@ -54,13 +61,13 @@ fn terrain_materials(py: Python<'_>, seed: i64, version: u32, mode: u32, flat_gr
     for ix in 0..nx {
       let wx = x0 + ix as i64;
       for (iz, slot) in column_heights.iter_mut().enumerate() {
-        *slot = terrain::surface_height(seed, version, mode, flat_ground_y, wx, z0 + iz as i64);
+        *slot = height::surface_height(seed, version, mode, flat_ground_y, wx, z0 + iz as i64);
       }
       for iy in 0..ny {
         let wy = y0 + iy as i64;
         for iz in 0..nz {
           let wz = z0 + iz as i64;
-          out[index] = terrain::material_code(seed, version, mode, flat_ground_y, wx, wy, wz, column_heights[iz]);
+          out[index] = material::material_code(seed, version, mode, flat_ground_y, wx, wy, wz, column_heights[iz]);
           index += 1;
         }
       }

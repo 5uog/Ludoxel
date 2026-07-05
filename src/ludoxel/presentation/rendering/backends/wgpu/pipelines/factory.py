@@ -95,6 +95,13 @@ def _sun_uniform_block() -> str:
 """
 
 
+def _sun_flare_uniform_block() -> str:
+  return """layout(set = 0, binding = 0) uniform LudoxelSunFlareUniforms {
+    vec4 ldx_flareSunStrengthAspect;
+};
+"""
+
+
 def _adapt_wgpu_glsl(filename: str, text: str) -> str:
   name = str(filename)
 
@@ -258,6 +265,17 @@ def _adapt_wgpu_glsl(filename: str, text: str) -> str:
     text = text.replace("u_ultra", "ldx_sunMode.x")
     text = text.replace("u_mode", "ldx_sunMode.y")
     text = text.replace("u_glare", "ldx_sunMode.z")
+    return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
+
+  if name == "sun_flare.vert":
+    return text.replace("out vec2 v_ndc;", "layout(location = 0) out vec2 v_ndc;")
+
+  if name == "sun_flare.frag":
+    text = text.replace("in vec2 v_ndc;", "layout(location = 0) in vec2 v_ndc;")
+    text = text.replace("uniform vec2 u_sunNdc;\nuniform float u_strength;\nuniform float u_aspect;\n", _sun_flare_uniform_block())
+    text = text.replace("u_sunNdc", "ldx_flareSunStrengthAspect.xy")
+    text = text.replace("u_strength", "ldx_flareSunStrengthAspect.z")
+    text = text.replace("u_aspect", "ldx_flareSunStrengthAspect.w")
     return text.replace("out vec4 fragColor;", "layout(location = 0) out vec4 fragColor;")
 
   if name == "first_person_face.vert":
@@ -461,6 +479,30 @@ def create_sun_glare_pipeline(*, device, target_format, depth_format, camera_bin
   }
   return device.create_render_pipeline(
     label="ludoxel-sun-glare-pipeline",
+    layout=layout,
+    vertex={"module": vertex_shader, "entry_point": "main", "buffers": []},
+    primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},
+    depth_stencil={"format": depth_format, "depth_write_enabled": False, "depth_compare": wgpu.CompareFunction.always},
+    fragment={"module": fragment_shader, "entry_point": "main", "targets": [{"format": target_format, "blend": blend}]},
+  )
+
+
+def create_sun_flare_pipeline(*, device, target_format, depth_format, camera_bind_group_layout):
+  import wgpu
+
+  # Screen-space lens flare. A fullscreen triangle emitted from the vertex
+  # index needs no vertex buffer; the fragment stage places ghost discs from
+  # the sun's screen position. It writes no depth and blends over the composed
+  # frame as a final overlay, matching the OpenGL flare path.
+  vertex_shader = device.create_shader_module(label="ludoxel-sun-flare.vert", code=_wgpu_glsl_source("sun_flare.vert"))
+  fragment_shader = device.create_shader_module(label="ludoxel-sun-flare.frag", code=_wgpu_glsl_source("sun_flare.frag"))
+  layout = device.create_pipeline_layout(label="ludoxel-sun-flare-layout", bind_group_layouts=[camera_bind_group_layout])
+  blend = {
+    "color": {"src_factor": wgpu.BlendFactor.src_alpha, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+    "alpha": {"src_factor": wgpu.BlendFactor.one, "dst_factor": wgpu.BlendFactor.one_minus_src_alpha, "operation": wgpu.BlendOperation.add},
+  }
+  return device.create_render_pipeline(
+    label="ludoxel-sun-flare-pipeline",
     layout=layout,
     vertex={"module": vertex_shader, "entry_point": "main", "buffers": []},
     primitive={"topology": wgpu.PrimitiveTopology.triangle_list, "cull_mode": wgpu.CullMode.none},

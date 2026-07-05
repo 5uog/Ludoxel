@@ -51,6 +51,7 @@ class WgpuRendererResources:
   depth_view: object | None = None
   depth_size: tuple[int, int] = (0, 0)
   sun_glare_pipeline: object | None = None
+  sun_flare_pipeline: object | None = None
 
   def destroy(self) -> None:
     for obj in (

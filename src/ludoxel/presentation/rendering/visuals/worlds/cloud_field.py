@@ -214,6 +214,12 @@ class CloudField:
     self._flow_epoch_s: float = 0.0
     self._flow_base_shift: Vec3 = Vec3(0.0, 0.0, 0.0)
 
+    # Horizontal radius, in blocks, out to which cloud shapes are generated.
+    # It seeds from the config view radius and is later driven by the caller's
+    # cloud far distance so clouds are actually built across the whole cloud
+    # horizon instead of stopping at a fixed radius short of the fog end.
+    self._view_radius: float = float(max(0, int(cfg.view_radius)))
+
     self._bucket_cache: dict[int, tuple[tuple[int, int], list[CloudShape]]] = {}
 
   def _invalidate_cache(self) -> None:
@@ -389,7 +395,18 @@ class CloudField:
         continue
       self._bucket_cache[int(bucket_index)] = (anchor, self._build_bucket_shapes(bucket_index=int(bucket_index), anchor=anchor, speed_multiplier=float(multiplier), bucket_count=len(multipliers)))
 
+  def set_view_radius(self, radius: float) -> None:
+    # The far distance is stable per render-distance setting, so this only
+    # rebuilds the shape cache when the horizon actually changes. A tolerance
+    # of one block avoids float churn.
+    r = float(max(0.0, radius))
+    if abs(r - float(self._view_radius)) < 1.0:
+      return
+    self._view_radius = r
+    self._invalidate_cache()
+
   def visible_shapes(self, eye: Vec3, shift: Vec3, forward: Vec3, fov_deg: float, aspect: float, z_far: float) -> list[CloudShape]:
+    self.set_view_radius(float(z_far))
     self.ensure_cache(eye=eye, shift=shift)
 
     if not self._bucket_cache:
@@ -439,9 +456,9 @@ class CloudField:
 
   def _build_bucket_shapes(self, *, bucket_index: int, anchor: tuple[int, int], speed_multiplier: float, bucket_count: int) -> list[CloudShape]:
     m = int(self._effective_macro())
-    r = int(self._cfg.view_radius)
+    r = int(round(float(self._view_radius)))
 
-    span = int(math.ceil(float(r) / float(m))) + 1
+    span = int(math.ceil(float(max(1, r)) / float(m))) + 1
 
     rects_per_cell = int(max(0, int(self._enabled_density)))
     if rects_per_cell <= 0:

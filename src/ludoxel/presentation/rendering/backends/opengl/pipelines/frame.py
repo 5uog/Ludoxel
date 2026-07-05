@@ -37,6 +37,7 @@ from ludoxel.presentation.rendering.contracts.config import (
   effective_backend_shadow_params,
   max_unfogged_render_distance_radius_blocks,
   render_distance_fog_range,
+  sun_flare_screen,
   sun_glare_strength,
 )
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
@@ -283,6 +284,15 @@ class FramePipeline:
     )
 
     self.selection.draw(view_proj=vp)
+
+    # Lens flare is a screen-space overlay drawn after the world, clouds, and
+    # selection and before the view model, the same stage as the WGPU backend,
+    # so the compositing order matches. It is an Ultra-tier visual alongside the
+    # veiling glare and fades in only while the sun is framed.
+    if bool(ultra_visuals):
+      flare_x, flare_y, flare_strength = sun_flare_screen(vp, self.state.sun_dir, eye, forward, float(self.cfg.sun.distance))
+      if flare_strength > 0.0:
+        self.sun_pass.draw_flare(sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(w) / max(float(h), 1.0))
 
     first_person = None if player_state is None else player_state.first_person
     if (

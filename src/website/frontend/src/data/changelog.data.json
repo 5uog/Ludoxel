@@ -2,6 +2,42 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.1 Beta 1",
+      "tags": ["Desktop Application", "My World", "Rendering"],
+      "sections": [
+        {
+          "title": "Cloud Wireframes Carry the Block Diagonal",
+          "items": [
+            "`textured_unit_face_wire_vertices` in `src/ludoxel/presentation/rendering/faces/unit_quad.py` now emits each cloud face as six line segments: the four perimeter edges and the triangulation diagonal shared by the face's two triangles. World blocks in wireframe mode render their triangulated faces in line polygon mode and show that diagonal, and the cloud silhouette now carries the same edge. The OpenGL cloud pass and the WGPU cloud wireframe pipeline both read this one vertex list, through `build_face_wire_vertex_rows` in `src/ludoxel/presentation/rendering/backends/wgpu/meshes/chunk.py` on the WGPU side, so the diagonal appears identically on both backends. The earlier list held only the four axis-aligned edges, so cloud boxes lacked the diagonal every world block wireframe drew."
+          ]
+        },
+        {
+          "title": "Clouds Reach a Horizon Wider Than the World",
+          "items": [
+            "`cloud_far_distance` in `src/ludoxel/presentation/rendering/contracts/config.py` sets the cloud horizon to five times the render-distance radius with a 320-block floor, and `CloudField.set_view_radius` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` drives shape generation out to that same distance from the camera. Both the OpenGL and WGPU cloud passes pass this far distance as the generation radius, cull cloud shapes against it, and fade them through `cloud_fog_range`, so distant clouds thin into the sky rather than cutting off at the world chunk boundary. The earlier field generated shapes only to a fixed 256-block radius regardless of the cloud fog and far plane, so at larger render distances clouds ended before the fog band began."
+          ]
+        },
+        {
+          "title": "A Larger, White Sun Disc",
+          "items": [
+            "`ldx_sun_body` in `src/ludoxel/presentation/rendering/shaders/sun.frag` fills most of the billboard with a photospheric disc, a near-white hot core, and a thin warm corona, and `half_angle_deg` in `BackendSunParams` in `src/ludoxel/presentation/rendering/contracts/config.py` widens the billboard so the disc subtends a larger angle. Every radial term decays before the quad border, so the disc and its glow stay circular and the square billboard shows no straight lit edge or corner frame. The simple and Ultra tiers share `ldx_sun_body` and differ only in the outer-glow weight, so neither tier draws the flat yellow rectangle the earlier simple path produced. The shared `sun.frag` is the GLSL both the OpenGL and WGPU backends compile."
+          ]
+        },
+        {
+          "title": "Softer Dazzle When Facing the Sun",
+          "items": [
+            "`sun_glare_strength` in `src/ludoxel/presentation/rendering/contracts/config.py` scales the Ultra veiling glare by the squared view-to-sun alignment and the sun elevation at a lower weight, and `ldx_sun_glare` in `sun.frag` holds the full-screen veil and the central bloom below a white-out through reduced weights and a lower clamp. The sun disc keeps its brightness while the surrounding washout drops, and the veil still fades as the view turns away or the sun nears the horizon."
+          ]
+        },
+        {
+          "title": "Lens Flare Toward the Sun",
+          "items": [
+            "`sun_flare_screen` in `src/ludoxel/presentation/rendering/contracts/config.py` projects the sun to normalized device coordinates and returns a strength that falls to zero when the sun is behind the camera, off the screen by a wide margin, near the horizon, or the view turns away. `sun_flare.frag` places ghost discs along the axis through the sun's screen position and the frame centre, with a warm-to-cool tint variation and a soft halo, and fades them by that strength. `SunPass.draw_flare` in `src/ludoxel/presentation/rendering/backends/opengl/passes/sun.py` draws it in the OpenGL frame pipeline after the world, clouds, and selection and before the view model, and the WGPU backend draws `create_sun_flare_pipeline` at the same stage, both from a fullscreen triangle that writes no depth, so the flare reads as a camera artifact over the composed scene. It is an Ultra-tier visual, drawn only when `shadow_quality` reaches `SHADOW_MAP_QUALITY_ULTRA`, alongside the veiling glare."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.0",
       "tags": ["Desktop Application", "My World", "Rendering"],
       "sections": [

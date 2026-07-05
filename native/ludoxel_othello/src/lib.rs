@@ -13,7 +13,14 @@
 //   tables that follow the same soft-limit clearing policy; a deadline
 //   overrun raises the builtin TimeoutError, matching check_deadline.
 
-mod engine;
+// The engine is split by responsibility: `bitboard` owns the board
+// representation and move generation, `evaluation` owns the static and
+// classic scoring terms, and `search` owns move ordering, alpha-beta /
+// negamax, the exact endgame solve, and the transposition tables. This module
+// is only the PyO3 binding surface and holds no engine logic.
+mod bitboard;
+mod evaluation;
+mod search;
 
 use std::time::{Duration, Instant};
 
@@ -30,22 +37,22 @@ fn timeout_error() -> PyErr {
 
 #[pyfunction]
 fn legal_moves_bitboard(player_bits: u64, opponent_bits: u64) -> u64 {
-  engine::legal_moves_bitboard(player_bits, opponent_bits)
+  bitboard::legal_moves_bitboard(player_bits, opponent_bits)
 }
 
 #[pyfunction]
 fn apply_move_bits(player_bits: u64, opponent_bits: u64, move_index: u32) -> (u64, u64) {
-  engine::apply_move_bits(player_bits, opponent_bits, move_index)
+  bitboard::apply_move_bits(player_bits, opponent_bits, move_index)
 }
 
 #[pyfunction]
 fn evaluate_position(player_bits: u64, opponent_bits: u64, sacrifice_level: i64) -> i64 {
-  engine::evaluate_position(player_bits, opponent_bits, sacrifice_level)
+  evaluation::evaluate_position(player_bits, opponent_bits, sacrifice_level)
 }
 
 #[pyfunction]
 fn terminal_score(player_bits: u64, opponent_bits: u64) -> i64 {
-  engine::terminal_score(player_bits, opponent_bits)
+  evaluation::terminal_score(player_bits, opponent_bits)
 }
 
 // Root scores for the classic difficulties (weak/medium/strong). The result
@@ -56,19 +63,19 @@ fn terminal_score(player_bits: u64, opponent_bits: u64) -> i64 {
 #[pyo3(signature = (player_bits, opponent_bits, depth, sacrifice_level, budget_s=None))]
 fn classic_root_scores(py: Python<'_>, player_bits: u64, opponent_bits: u64, depth: i64, sacrifice_level: i64, budget_s: Option<f64>) -> PyResult<Vec<(u32, f64)>> {
   let deadline = deadline_from_budget(budget_s);
-  py.detach(move || engine::classic_root_scores(player_bits, opponent_bits, depth, sacrifice_level, deadline)).map_err(|_| timeout_error())
+  py.detach(move || search::classic_root_scores(player_bits, opponent_bits, depth, sacrifice_level, deadline)).map_err(|_| timeout_error())
 }
 
 #[pyclass]
 struct InsaneSearch {
-  state: engine::SearchState,
+  state: search::SearchState,
 }
 
 #[pymethods]
 impl InsaneSearch {
   #[new]
   fn new(hash_level: i64, sacrifice_level: i64) -> Self {
-    InsaneSearch { state: engine::SearchState::new(hash_level, sacrifice_level) }
+    InsaneSearch { state: search::SearchState::new(hash_level, sacrifice_level) }
   }
 
   fn clear(&mut self) {

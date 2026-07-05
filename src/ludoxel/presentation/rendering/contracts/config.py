@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
+import numpy as np
+
 from ludoxel.application.preferences.clouds import (
   DEFAULT_CLOUD_CELL_SIZE,
   DEFAULT_CLOUD_FIXED_Y,
@@ -23,8 +25,8 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.worlds.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, clamp_render_distance_chunks
 
 RENDER_DISTANCE_FADE_START_FRACTION: float = 0.85
-CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 3.0
-CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 256.0
+CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 5.0
+CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 320.0
 CLOUD_FAR_PLANE_MARGIN_BLOCKS: float = 32.0
 
 
@@ -36,10 +38,47 @@ def sun_glare_strength(forward: Vec3, sun_dir: Vec3) -> float:
   # Ultra-only veiling glare weight. It grows with the squared alignment between
   # the view direction and the sun, fades as the sun nears the horizon, and is
   # zero when the sun sits behind the camera. Both backends read this one value.
+  # The scale is held down so looking into the sun dazzles without whiting the
+  # scene out; the sun disc keeps its own brightness independently.
   d = sun_dir.normalized()
   align = max(0.0, forward.normalized().dot(d))
   elevation = max(0.0, min(1.0, float(d.y) * 4.0))
-  return float((align * align) * elevation * 0.9)
+  return float((align * align) * elevation * 0.55)
+
+
+def _smoothstep(edge0: float, edge1: float, x: float) -> float:
+  if edge0 == edge1:
+    return 0.0 if float(x) < float(edge0) else 1.0
+  t = max(0.0, min(1.0, (float(x) - float(edge0)) / (float(edge1) - float(edge0))))
+  return float(t * t * (3.0 - 2.0 * t))
+
+
+def sun_flare_screen(view_proj: np.ndarray, sun_dir: Vec3, eye: Vec3, forward: Vec3, distance: float) -> tuple[float, float, float]:
+  # Screen-space lens-flare parameters shared by both backends: the sun's
+  # normalized-device x and y, and a strength in [0, 1]. The strength is zero
+  # when the sun is behind the camera, off the screen by a wide margin, near or
+  # below the horizon, or when the camera looks well away from the sun, so the
+  # ghosts fade in only while the sun is framed. Geometry occlusion is not
+  # depth-sampled; the elevation term stands in for the sun dropping behind
+  # terrain, and the alignment term for looking away from the light. Both
+  # backends pass their OpenGL-convention view_proj, whose clip x and y match
+  # the WGPU billboard, so the projected sun position is identical.
+  d = sun_dir.normalized()
+  center = eye + d * float(distance)
+  mat = np.asarray(view_proj, dtype=np.float64)
+  clip = mat @ np.array([float(center.x), float(center.y), float(center.z), 1.0], dtype=np.float64)
+  w = float(clip[3])
+  if w <= 1e-6:
+    return (0.0, 0.0, 0.0)
+  ndc_x = float(clip[0]) / w
+  ndc_y = float(clip[1]) / w
+  onscreen = 1.0 - _smoothstep(1.0, 1.7, max(abs(ndc_x), abs(ndc_y)))
+  if onscreen <= 0.0:
+    return (float(ndc_x), float(ndc_y), 0.0)
+  elevation = max(0.0, min(1.0, float(d.y) * 4.0))
+  align = max(0.0, forward.normalized().dot(d))
+  strength = float(onscreen) * float(elevation) * (0.35 + 0.45 * float(align)) * 0.9
+  return (float(ndc_x), float(ndc_y), float(max(0.0, min(1.0, strength))))
 
 
 def render_distance_fog_range(render_distance_chunks: int, z_far: float) -> tuple[float, float]:
@@ -152,7 +191,7 @@ class BackendSunParams:
   azimuth_deg: float = 45.0
   elevation_deg: float = 60.0
   distance: float = 150.0
-  half_angle_deg: float = 2.6
+  half_angle_deg: float = 3.4
   light_distance: float = 60.0
   ortho_radius: float = 30.0
   ortho_near: float = 0.1

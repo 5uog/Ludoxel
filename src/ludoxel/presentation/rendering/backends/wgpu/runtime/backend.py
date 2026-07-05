@@ -33,6 +33,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
   create_othello_shadow_pipeline,
   create_selection_pipeline,
   create_shadow_depth_pipeline,
+  create_sun_flare_pipeline,
   create_sun_glare_pipeline,
   create_sun_pipeline,
   create_textured_face_pipeline,
@@ -53,6 +54,7 @@ from ludoxel.presentation.rendering.contracts.config import (
   effective_backend_shadow_params,
   max_unfogged_render_distance_radius_blocks,
   render_distance_fog_range,
+  sun_flare_screen,
   sun_glare_strength,
 )
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
@@ -251,6 +253,7 @@ class WgpuRendererBackend:
     world_wireframe_pipeline = create_world_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_pipeline = create_sun_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_glare_pipeline = create_sun_glare_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
+    sun_flare_pipeline = create_sun_flare_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_pipeline = create_cloud_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_volume_pipeline = create_cloud_volume_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_wireframe_pipeline = create_cloud_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
@@ -305,6 +308,7 @@ class WgpuRendererBackend:
       world_wireframe_pipeline=world_wireframe_pipeline,
       sun_pipeline=sun_pipeline,
       sun_glare_pipeline=sun_glare_pipeline,
+      sun_flare_pipeline=sun_flare_pipeline,
       cloud_pipeline=cloud_pipeline,
       cloud_volume_pipeline=cloud_volume_pipeline,
       cloud_wireframe_pipeline=cloud_wireframe_pipeline,
@@ -709,6 +713,23 @@ class WgpuRendererBackend:
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-glare-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
     bind_group = self._res.device.create_bind_group(
       label="ludoxel-sun-glare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
+    )
+    return (buffer, bind_group)
+
+  def _create_sun_flare_uniform_bind_group(self, *, sun_ndc: tuple[float, float], strength: float, aspect: float) -> tuple[object | None, object | None]:
+    # Screen-space lens-flare uniforms: one vec4 carrying the sun's normalized
+    # device x/y, the flare strength, and the viewport aspect. The fullscreen
+    # triangle needs no view matrix, so only these four floats are uploaded.
+    if self._res is None:
+      return (None, None)
+    import wgpu
+
+    uniform = np.zeros((4,), dtype=np.float32)
+    uniform[0:4] = (float(sun_ndc[0]), float(sun_ndc[1]), float(max(0.0, strength)), float(max(1e-6, aspect)))
+    data = bytes(uniform.tobytes())
+    buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-flare-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
+    bind_group = self._res.device.create_bind_group(
+      label="ludoxel-sun-flare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
     )
     return (buffer, bind_group)
 
@@ -1291,6 +1312,23 @@ class WgpuRendererBackend:
       render_pass.set_vertex_buffer(0, self._selection_buffer)
       render_pass.draw(int(self._selection_vertex_count), 1, 0, 0)
       draw_calls += 1
+
+    # Lens flare is a final screen-space overlay, drawn after the scene as an
+    # Ultra-tier visual matching the veiling glare. It fades in only while the
+    # sun is framed; sun_flare_screen returns a zero strength otherwise.
+    if bool(ultra_visuals) and self._res.sun_flare_pipeline is not None:
+      flare_x, flare_y, flare_strength = sun_flare_screen(view_proj, self._state.sun_dir, eye, forward, float(self._cfg.sun.distance))
+      if flare_strength > 0.0:
+        flare_buffer, flare_bind_group = self._create_sun_flare_uniform_bind_group(
+          sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(width) / max(float(height), 1.0)
+        )
+        if flare_buffer is not None:
+          temp_uniform_buffers.append(flare_buffer)
+        if flare_bind_group is not None:
+          render_pass.set_pipeline(self._res.sun_flare_pipeline)
+          render_pass.set_bind_group(0, flare_bind_group)
+          render_pass.draw(3, 1, 0, 0)
+          draw_calls += 1
 
     render_pass.end()
 

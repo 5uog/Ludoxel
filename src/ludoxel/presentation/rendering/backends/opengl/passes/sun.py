@@ -17,6 +17,7 @@ from OpenGL.GL import (
   glBlendFunc,
   glDepthMask,
   glDisable,
+  glDrawArrays,
   glDrawArraysInstanced,
   glEnable,
 )
@@ -32,11 +33,13 @@ class SunPass:
   def __init__(self, cfg: BackendSunParams) -> None:
     self._cfg = cfg
     self._prog: ShaderProgram | None = None
+    self._flare_prog: ShaderProgram | None = None
 
     self._empty_vao: int = 0
 
-  def initialize(self, prog: ShaderProgram, empty_vao: int) -> None:
+  def initialize(self, prog: ShaderProgram, flare_prog: ShaderProgram, empty_vao: int) -> None:
     self._prog = prog
+    self._flare_prog = flare_prog
     self._empty_vao = int(empty_vao)
 
   def draw(self, eye: Vec3, view_proj: np.ndarray, sun_dir: Vec3, *, ultra: bool = False) -> None:
@@ -102,6 +105,35 @@ class SunPass:
 
     glBindVertexArray(int(self._empty_vao))
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 1)
+    glBindVertexArray(0)
+
+    glDisable(GL_BLEND)
+    glDepthMask(True)
+    glEnable(GL_DEPTH_TEST)
+
+  def draw_flare(self, sun_ndc: tuple[float, float], strength: float, aspect: float) -> None:
+    # Screen-space lens flare drawn as a final overlay. A fullscreen triangle
+    # covers the frame; the fragment stage places ghost discs along the axis
+    # through the sun's screen position and the frame centre. It writes no
+    # depth and blends over the composed scene, so it reads as a lens artifact
+    # rather than world geometry.
+    if self._flare_prog is None or int(self._empty_vao) == 0 or float(strength) <= 0.0:
+      return
+
+    glDisable(GL_DEPTH_TEST)
+    glDepthMask(False)
+
+    glEnable(GL_BLEND)
+    glBlendEquation(GL_FUNC_ADD)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    self._flare_prog.use()
+    self._flare_prog.set_vec2("u_sunNdc", float(sun_ndc[0]), float(sun_ndc[1]))
+    self._flare_prog.set_float("u_strength", float(max(0.0, strength)))
+    self._flare_prog.set_float("u_aspect", float(max(1e-6, aspect)))
+
+    glBindVertexArray(int(self._empty_vao))
+    glDrawArrays(GL_TRIANGLES, 0, 3)
     glBindVertexArray(0)
 
     glDisable(GL_BLEND)
