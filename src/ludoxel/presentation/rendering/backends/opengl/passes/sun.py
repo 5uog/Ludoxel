@@ -9,14 +9,12 @@ from OpenGL.GL import (
   GL_BLEND,
   GL_DEPTH_TEST,
   GL_FUNC_ADD,
-  GL_LESS,
   GL_ONE_MINUS_SRC_ALPHA,
   GL_SRC_ALPHA,
   GL_TRIANGLES,
   glBindVertexArray,
   glBlendEquation,
   glBlendFunc,
-  glDepthFunc,
   glDepthMask,
   glDisable,
   glDrawArraysInstanced,
@@ -79,11 +77,13 @@ class SunPass:
 
     glare_center, glare_u, glare_v, glare_half = self._glare_quad(eye=eye, d=sun_dir.normalized(), forward=forward.normalized())
 
-    # Depth-test the glare against the world depth buffer without writing depth,
-    # so geometry nearer than the sun billboard occludes the veil. A block in
-    # front of the sun therefore blocks the dazzle instead of being painted over.
-    glEnable(GL_DEPTH_TEST)
-    glDepthFunc(GL_LESS)
+    # The veil is drawn as background before the world pass, so it writes no
+    # depth and never tests against it. The opaque world drawn next overdraws the
+    # veil wherever geometry stands, so foreground blocks occlude the glow at the
+    # terrain silhouette. Depth-testing this flat card at its single world depth
+    # instead cut a hard line across the fogged terrain and framed the veil
+    # against the sky; leaving it as background keeps the falloff continuous.
+    glDisable(GL_DEPTH_TEST)
     glDepthMask(False)
 
     glEnable(GL_BLEND)

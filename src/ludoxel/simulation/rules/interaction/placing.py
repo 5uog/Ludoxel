@@ -52,10 +52,14 @@ def place_from_hit_for_service(service, *, hit: BlockPick, block_id: str | None,
   hit_state = service.world.blocks.get(hit_cell)
 
   if hit_state is not None:
-    if forced_slab_type is not None:
+    # A slab placed against the exposed top or bottom face of a matching slab
+    # completes that cell to a double, so a held slab packs in 0.5-block steps
+    # instead of stepping a full cell and leaving a gap. The exposed face, not
+    # the held half, chooses which half is added, so this holds even while the
+    # continuous-placement lock forces one half.
+    merge_hit_state = service.placement_policy.resolve_slab_merge_state_from_hit(existing_state=str(hit_state), block_id=str(bid), hit_face=int(hit.face))
+    if merge_hit_state is None and forced_slab_type is not None:
       merge_hit_state = service.placement_policy._try_merge_same_slab(existing_state=str(hit_state), block_id=str(bid), desired_type=str(forced_slab_type))
-    else:
-      merge_hit_state = service.placement_policy.resolve_slab_merge_state_from_hit(existing_state=str(hit_state), block_id=str(bid), hit_face=int(hit.face))
     if merge_hit_state is not None:
       return apply_place_state_for_service(service, cell=hit_cell, place_state=str(merge_hit_state))
 

@@ -2,6 +2,31 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.0",
+      "tags": ["Desktop Application", "My World", "Rendering"],
+      "sections": [
+        {
+          "title": "Ultra Sun Glare Occluded by World Geometry",
+          "items": [
+            "The Ultra veiling glare now draws as background before the world pass, alongside the sun disc: `FramePipeline.render` in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU render encoder in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` issue the `SunPass.draw_glare` and `create_sun_glare_pipeline` draws before the world, and both write no depth so the opaque world drawn next overdraws them. World geometry nearer than the sun therefore occludes the glow at the terrain silhouette rather than the glow painting over foreground blocks. The earlier build drew the veil after the world and depth-tested a flat billboard at one world depth, which cut a hard line across the fogged terrain and framed the glow against the sky beyond the fog band; drawing it behind the world removes that frame and keeps the radial falloff of `ldx_sun_glare` continuous."
+          ]
+        },
+        {
+          "title": "Partial-Shape Blocks No Longer Bury Their Neighbors",
+          "items": [
+            "`snapshot_for_chunk_build` in `src/ludoxel/simulation/worlds/state/world.py` now separates cell occupancy from face occlusion. A `full_occ` grid marks only cells filled by a full solid cube, resolved through the shared default block registry with `is_full_cube` and `is_solid`, and a cell counts as buried only when it is a full cube whose six neighbors are all full cubes. A slab, stair, fence, fence gate, or wall neighbor no longer covers a whole face, so a full block behind such a partial shape keeps its exposed face and is meshed, and a non-full-cube block always keeps its interior faces. The earlier grid treated every occupied cell as a full occluder, so a block sealed behind a partial shape was dropped from the chunk mesh and the view passed through it."
+          ]
+        },
+        {
+          "title": "Slabs Stack in Half-Block Steps",
+          "items": [
+            "`place_from_hit_for_service` in `src/ludoxel/simulation/rules/interaction/placing.py` now chooses the added slab half from the exposed top or bottom face of the slab under the cursor, so a held slab completes the struck cell to a double rather than stepping a full cell and leaving a 0.5-block gap, even while the continuous-placement lock forces one half.",
+            "`_perform_vertical_slab_pillar` in `src/ludoxel/presentation/interface/viewport/controllers/interaction.py` drives the vertical build gesture for slabs: it fills a cell's second half before advancing to the next cell, so a held slab pillar rises in 0.5-block units without gaps. The earlier path applied the full-cube placement offset to slabs and stepped a whole cell for each one."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.7.9 Hotfix 2",
       "tags": ["Desktop Application", "Rendering"],
       "sections": [

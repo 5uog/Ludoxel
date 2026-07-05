@@ -1025,6 +1025,21 @@ class WgpuRendererBackend:
 
     draw_calls = 0
     instances = 0
+    # Draw the veiling glare and then the sun disc as background, before the world
+    # pass. Both write no depth, and the opaque world drawn next overdraws them, so
+    # world geometry nearer than the sun occludes the glow at the terrain
+    # silhouette instead of the glow being painted over foreground blocks.
+    if bool(ultra_visuals):
+      glare_strength = sun_glare_strength(forward, self._state.sun_dir)
+      if glare_strength > 0.0:
+        glare_buffer, glare_bind_group = self._create_sun_glare_uniform_bind_group(view_proj=view_proj, eye=eye, forward=forward, strength=float(glare_strength))
+        if glare_buffer is not None:
+          temp_uniform_buffers.append(glare_buffer)
+        if glare_bind_group is not None and self._res.sun_glare_pipeline is not None:
+          render_pass.set_pipeline(self._res.sun_glare_pipeline)
+          render_pass.set_bind_group(0, glare_bind_group)
+          render_pass.draw(6, 1, 0, 0)
+          draw_calls += 1
     sun_uniform_buffer, sun_uniform_bind_group = self._create_sun_uniform_bind_group(view_proj=view_proj, eye=eye, ultra=bool(ultra_visuals))
     if sun_uniform_buffer is not None:
       temp_uniform_buffers.append(sun_uniform_buffer)
@@ -1276,18 +1291,6 @@ class WgpuRendererBackend:
       render_pass.set_vertex_buffer(0, self._selection_buffer)
       render_pass.draw(int(self._selection_vertex_count), 1, 0, 0)
       draw_calls += 1
-
-    if bool(ultra_visuals):
-      glare_strength = sun_glare_strength(forward, self._state.sun_dir)
-      if glare_strength > 0.0:
-        glare_buffer, glare_bind_group = self._create_sun_glare_uniform_bind_group(view_proj=view_proj, eye=eye, forward=forward, strength=float(glare_strength))
-        if glare_buffer is not None:
-          temp_uniform_buffers.append(glare_buffer)
-        if glare_bind_group is not None and self._res.sun_glare_pipeline is not None:
-          render_pass.set_pipeline(self._res.sun_glare_pipeline)
-          render_pass.set_bind_group(0, glare_bind_group)
-          render_pass.draw(6, 1, 0, 0)
-          draw_calls += 1
 
     render_pass.end()
 

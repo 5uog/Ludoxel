@@ -32,7 +32,7 @@ from ludoxel.presentation.audio import PLAYER_EVENT_ATTACK_STRONG, PLAYER_EVENT_
 from ludoxel.presentation.interface.common.hotbar_support import hotbar_index_from_key
 from ludoxel.presentation.interface.viewport.controllers.effects import spawn_break_effect
 from ludoxel.simulation.blocks.models.api import has_full_top_support_for_block
-from ludoxel.simulation.blocks.states.codec import parse_state
+from ludoxel.simulation.blocks.states.codec import format_state, parse_state
 from ludoxel.simulation.blocks.states.values import slab_type_value
 from ludoxel.simulation.blocks.states.view import def_from_state
 from ludoxel.simulation.blocks.structures.cardinal import cardinal_from_xz
@@ -1384,6 +1384,77 @@ def _projected_frontier_support_face_candidate(
   )
 
 
+def _held_slab_block_id(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine) -> str | None:
+  # A vertical slab pillar packs in 0.5-block units, so it needs the locked slab
+  # block id. The lock only reports the committed slab state while the held block
+  # still matches, so this returns None whenever the pillar should fall back to
+  # the full-cube advance (non-slab blocks or a changed selection).
+  forced = _forced_place_state_for_line(viewport, line)
+  if forced is None:
+    return None
+  base, _props = parse_state(str(forced))
+  defn = viewport._session.block_registry.get(str(base))
+  if defn is None or not is_slab(defn):
+    return None
+  return str(base)
+
+
+def _perform_vertical_slab_pillar(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, feet_offset: float, block_id: str) -> _RightClickResult:
+  # A slab pillar fills each cell to a double before stepping to the next cell,
+  # so held half-blocks stack in continuous 0.5-block units instead of leaving a
+  # 0.5 gap between full-cell steps. The frontier cell carries the leading half
+  # (bottom while rising, top while descending); its complement completes the
+  # cell once the player clears it, and only then does the pillar advance.
+  step = tuple(int(value) for value in line.step)
+  sign = int(step[1])
+  max_progress = int(line.max_progress)
+  start_cell = tuple(int(value) for value in line.start_cell)
+
+  leading_type = "bottom" if sign > 0 else "top"
+  complement_type = "top" if sign > 0 else "bottom"
+
+  frontier_cell = _repeat_line_cell(start_cell=start_cell, step=step, progress=int(max_progress))
+  frontier_state = viewport._session.world.blocks.get(tuple(int(value) for value in frontier_cell))
+
+  frontier_is_leading_half = False
+  if frontier_state is not None:
+    base, props = parse_state(str(frontier_state))
+    frontier_is_leading_half = str(base) == str(block_id) and str(slab_type_value(props)) == str(leading_type)
+
+  if bool(frontier_is_leading_half):
+    target_progress = int(max_progress)
+    target_cell = tuple(int(value) for value in frontier_cell)
+    slab_type = str(complement_type)
+    clearance = float(max_progress) + 1.0
+  else:
+    target_progress = int(max_progress) + 1
+    target_cell = _repeat_line_cell(start_cell=start_cell, step=step, progress=int(target_progress))
+    slab_type = str(leading_type)
+    clearance = float(max_progress) + 0.5
+
+  if float(feet_offset) <= float(clearance) + 1e-4:
+    outcome = InteractionOutcome(success=False)
+    _finalize_right_click(viewport, outcome)
+    return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
+
+  place_state = format_state(str(block_id), {"type": str(slab_type)})
+  support_progress = int(target_progress) - int(sign)
+  support_cell = _repeat_line_cell(start_cell=start_cell, step=step, progress=int(support_progress))
+  support_face = int(FACE_POS_Y) if sign > 0 else int(FACE_NEG_Y)
+  support_hit_point_y = float(target_cell[1]) if sign > 0 else float(target_cell[1] + 1)
+  synthetic_hit = BlockPick(
+    hit=tuple(int(value) for value in support_cell),
+    place=tuple(int(value) for value in target_cell),
+    t=0.0,
+    face=int(support_face),
+    hit_point=Vec3(float(target_cell[0]) + 0.5, float(support_hit_point_y), float(target_cell[2]) + 0.5),
+  )
+  outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=str(place_state), inherit_state=None)
+  place_line = _place_line_after_attempt(viewport, line=line, target_progress=int(target_progress), target_cell=tuple(int(value) for value in target_cell), outcome=outcome)
+  _finalize_right_click(viewport, outcome)
+  return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
+
+
 def _perform_generic_place_repeat(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, interaction_eye: Vec3, interaction_direction: Vec3, hit: BlockPick | None) -> _RightClickResult:
   start_cell = tuple(int(value) for value in line.start_cell)
   step = tuple(int(value) for value in line.step)
@@ -1395,6 +1466,11 @@ def _perform_generic_place_repeat(viewport: "RendererViewportWidget", *, line: _
   if int(step[1]) != 0:
     hold_origin_y = float(getattr(viewport, "_right_mouse_repeat_origin_player_y", float(viewport._session.player.position.y)))
     feet_offset = (float(viewport._session.player.position.y) - float(hold_origin_y)) * float(step[1])
+
+    slab_block_id = _held_slab_block_id(viewport, line=line)
+    if slab_block_id is not None:
+      return _perform_vertical_slab_pillar(viewport, line=line, feet_offset=float(feet_offset), block_id=str(slab_block_id))
+
     target_progress: int | None = None
     if float(feet_offset) > (float(max_progress) + 0.5 + 1e-4):
       target_progress = int(max_progress) + 1

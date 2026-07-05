@@ -9,6 +9,8 @@ from typing import Any, Dict, Iterable, Iterator, Tuple
 import numpy as np
 
 from ludoxel.foundations.mathematics.chunks.grid import CHUNK_SIZE, ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
+from ludoxel.simulation.blocks.registries.default import create_default_registry
+from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.worlds.generation import native as terrain_native
 from ludoxel.simulation.worlds.generation.materials import TERRAIN_MATERIALS
 from ludoxel.simulation.worlds.generation.spec import WorldGenerationSpec
@@ -25,6 +27,24 @@ _STATE_CACHE_LIMIT = 131072
 _SUB_SURFACE_BUFFER = 3
 
 _NO_BASE_HEIGHT = BEDROCK_Y - 1
+
+_FULL_OCCLUDER_CACHE: dict[str, bool] = {}
+
+
+def _state_is_full_cube_occluder(state_str: str) -> bool:
+  # A cell hides its neighbor's shared face only when a full solid cube fills the
+  # cell. Slabs, stairs, fences, fence gates, and walls occupy their cell without
+  # covering a whole face, so they never occlude a neighbor's face and must not
+  # count toward burying it. This gate mirrors the renderer's per-face occlusion,
+  # which reads the same block definitions through the shared default registry.
+  cached = _FULL_OCCLUDER_CACHE.get(state_str)
+  if cached is not None:
+    return cached
+  base, _props = parse_state(str(state_str))
+  defn = create_default_registry().get(str(base))
+  result = bool(defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid))
+  _FULL_OCCLUDER_CACHE[str(state_str)] = result
+  return result
 
 
 def _next_content_generation() -> int:
@@ -606,6 +626,11 @@ class WorldState:
 
     materials = terrain_native.terrain_materials(self._seed, self._gen_version, self._mode_code, self._flat_y, x0, y0, z0, n, n, n)
     solid = materials != 0
+    # Occupancy alone cannot decide burial: a cell can be filled by a slab, fence,
+    # or stair that does not cover a whole face, so a full-cube neighbor behind it
+    # would still be visible. `full_occ` tracks only cells filled by a full solid
+    # cube, and terrain materials are all full cubes, so it starts from occupancy.
+    full_occ = np.array(solid, dtype=bool)
 
     with self._lock:
       placed_box: Dict[BlockKey, str] = {}
@@ -622,8 +647,10 @@ class WorldState:
 
     for k in broken_box:
       solid[int(k[0]) - x0, int(k[1]) - y0, int(k[2]) - z0] = False
-    for k in placed_box.keys():
+      full_occ[int(k[0]) - x0, int(k[1]) - y0, int(k[2]) - z0] = False
+    for k, state in placed_box.items():
       solid[int(k[0]) - x0, int(k[1]) - y0, int(k[2]) - z0] = True
+      full_occ[int(k[0]) - x0, int(k[1]) - y0, int(k[2]) - z0] = _state_is_full_cube_occluder(str(state))
 
     state_at: Dict[BlockKey, str] = {}
     solid_indices = np.argwhere(solid)
@@ -637,16 +664,22 @@ class WorldState:
       if code > 0:
         state_at[k] = TERRAIN_MATERIALS[code]
 
-    core = solid[1 : n - 1, 1 : n - 1, 1 : n - 1]
-    open_any = (
-      (~solid[0 : n - 2, 1 : n - 1, 1 : n - 1])
-      | (~solid[2:n, 1 : n - 1, 1 : n - 1])
-      | (~solid[1 : n - 1, 0 : n - 2, 1 : n - 1])
-      | (~solid[1 : n - 1, 2:n, 1 : n - 1])
-      | (~solid[1 : n - 1, 1 : n - 1, 0 : n - 2])
-      | (~solid[1 : n - 1, 1 : n - 1, 2:n])
+    # A cell is meshed when it holds a block and is not fully buried. It is buried
+    # only when it is a full cube itself and every neighbor is a full cube too;
+    # then all six faces are covered. A non-full cube (slab, stair, fence, wall)
+    # always keeps interior faces and is never buried, and a full cube beside any
+    # non-full-cube neighbor keeps the face toward that gap, so both are meshed.
+    core_occ = solid[1 : n - 1, 1 : n - 1, 1 : n - 1]
+    core_full = full_occ[1 : n - 1, 1 : n - 1, 1 : n - 1]
+    neighbor_open = (
+      (~full_occ[0 : n - 2, 1 : n - 1, 1 : n - 1])
+      | (~full_occ[2:n, 1 : n - 1, 1 : n - 1])
+      | (~full_occ[1 : n - 1, 0 : n - 2, 1 : n - 1])
+      | (~full_occ[1 : n - 1, 2:n, 1 : n - 1])
+      | (~full_occ[1 : n - 1, 1 : n - 1, 0 : n - 2])
+      | (~full_occ[1 : n - 1, 1 : n - 1, 2:n])
     )
-    exposed = np.argwhere(core & open_any)
+    exposed = np.argwhere(core_occ & (~core_full | neighbor_open))
 
     blocks_local: list[tuple[int, int, int, str]] = []
     for ix, iy, iz in exposed:

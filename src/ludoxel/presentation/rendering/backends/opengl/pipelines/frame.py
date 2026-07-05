@@ -164,6 +164,14 @@ class FramePipeline:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     ultra_visuals = bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA))
+    # Draw the veiling glare and then the sun disc as background, before the world
+    # pass. Both write no depth and the opaque world drawn next overdraws them, so
+    # world geometry nearer than the sun occludes the glow at the terrain
+    # silhouette instead of the glow being painted over foreground blocks.
+    if bool(ultra_visuals):
+      glare = sun_glare_strength(forward, self.state.sun_dir)
+      if glare > 0.0:
+        self.sun_pass.draw_glare(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, forward=forward, strength=float(glare))
     self.sun_pass.draw(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, ultra=bool(ultra_visuals))
 
     glEnable(GL_DEPTH_TEST)
@@ -275,11 +283,6 @@ class FramePipeline:
     )
 
     self.selection.draw(view_proj=vp)
-
-    if bool(ultra_visuals):
-      glare = sun_glare_strength(forward, self.state.sun_dir)
-      if glare > 0.0:
-        self.sun_pass.draw_glare(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, forward=forward, strength=float(glare))
 
     first_person = None if player_state is None else player_state.first_person
     if (

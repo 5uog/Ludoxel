@@ -867,11 +867,10 @@ jump_pressed = bool(self._jump_pressed_edge)`,
               'Compute the camera chunk, world and cloud fog ranges, and effective shadow parameters; build the light view-projection from the sun direction and coverage radius.',
               'Render the shadow map from world geometry plus player and Othello casters.',
               'Build the camera view and projection; clear color and depth to the sky color.',
-              'Draw the camera-facing sun billboard, then enable the depth test.',
-              'Draw the world pass with shadow, fog, and selection tint, then falling blocks and block-break particles.',
+              'As background, draw the Ultra veiling glare when the view faces the sun, then the camera-facing sun billboard; neither writes depth. Then enable the depth test.',
+              'Draw the world pass with shadow, fog, and selection tint, then falling blocks and block-break particles; the opaque world overdraws the background glare and disc where geometry stands.',
               'Draw each player model, then the Othello board and pieces.',
               'Draw clouds, then the selection outline.',
-              'In the Ultra tier, when the view faces the sun, draw the depth-tested veiling glare so geometry nearer than the sun occludes it.',
               'Clear the depth buffer and draw exactly one first-person view model: a special item, a held block, or the arm, at a reduced field of view.',
             ],
           },
@@ -1008,11 +1007,10 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
             ordered: true,
             items: [
               'Render the shadow depth pass from chunk meshes, player transform casters, and Othello pieces.',
-              'Begin the main pass clearing to the fog color; draw the camera-facing sun billboard.',
-              'Draw the world, shadowed or plain, or the emulated wireframe.',
+              'Begin the main pass clearing to the fog color; as background, draw the Ultra veiling glare when the view faces the sun through `create_sun_glare_pipeline`, then the camera-facing sun billboard; neither writes depth.',
+              'Draw the world, shadowed or plain, or the emulated wireframe; the opaque world overdraws the background glare and disc where geometry stands.',
               'Draw falling blocks, block-break particles, player skins, and held blocks.',
               'Draw the Othello board, pieces, and highlight overlay; then clouds; then the selection lines.',
-              'In the Ultra tier facing the sun, draw the veiling glare through the depth-tested `create_sun_glare_pipeline` so nearer geometry occludes it.',
               'Begin a separate first-person pass with depth cleared and draw the special item, held block, or arm.',
             ],
           },
@@ -1197,14 +1195,14 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
           },
           {
             kind: 'paragraph',
-            text: 'The Ultra tier also draws a veiling glare when the view faces the sun. The sun-mode uniform carries a glare flag and a strength; `ldx_sun_glare` whitens a camera-facing billboard most strongly toward the sun center and thins outward, and `sun_glare_strength` in `src/ludoxel/presentation/rendering/contracts/config.py`, read by both backends, scales it by the squared view-to-sun alignment and the sun elevation, so the veil falls to zero when the sun sits behind the camera or near the horizon. The glare is depth-tested against the world depth buffer and writes no depth, so geometry nearer than the sun billboard occludes it and a block between the camera and the sun blocks the dazzle. This is the one place the sun path diverges by backend: the OpenGL `SunPass.draw_glare` enables the depth test around the shared draw, while the WGPU backend bakes the comparison into a dedicated `create_sun_glare_pipeline` because a wgpu pipeline fixes its depth comparison at creation.',
+            text: 'The Ultra tier also draws a veiling glare when the view faces the sun. The sun-mode uniform carries a glare flag and a strength; `ldx_sun_glare` whitens a camera-facing billboard most strongly toward the sun center and thins outward, and `sun_glare_strength` in `src/ludoxel/presentation/rendering/contracts/config.py`, read by both backends, scales it by the squared view-to-sun alignment and the sun elevation, so the veil falls to zero when the sun sits behind the camera or near the horizon. The billboard is a flat card whose surface resolves to a single world depth, so depth-testing it against the world buffer cut a hard line where that depth crossed the fogged terrain and framed the veil against the sky beyond the fog band. The glare therefore draws as background before the world pass, together with the sun disc: the OpenGL `SunPass.draw_glare` runs before the world with the depth test disabled, and the WGPU backend issues the `create_sun_glare_pipeline` draw before the world. Neither writes depth, so the opaque world drawn next overdraws the veil wherever geometry stands, and world geometry nearer than the sun occludes the glow at the terrain silhouette instead of the glow painting over foreground blocks.',
           },
           {
             kind: 'note',
             note: {
               type: 'note',
               content:
-                'The disc shape, the glare shader, and the glare strength are shared source evaluated the same way on both backends. The sole confirmed backend difference in the sun path is how each enables the glare depth test: OpenGL toggles render state around the draw, and WGPU selects a depth-comparing pipeline. The sun disc, drawn first as background, is occluded by world geometry drawn over it on both backends.',
+                'The disc shape, the glare shader, and the glare strength are shared source evaluated the same way on both backends. Both draw the glare and the disc as background before the world pass and neither writes depth, so the opaque world overdraws them and occludes the glow at the terrain silhouette. The disc and the veil are handled the same way on both backends.',
             },
           },
         ],
@@ -2452,7 +2450,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.7.9 Hotfix 2"`,
+            code: `__version__ = "3.8.0"`,
           },
           {
             kind: 'note',
@@ -3132,7 +3130,7 @@ class FormattedSegment:
         content: [
           {
             kind: 'paragraph',
-            text: '`snapshot_for_chunk_build` materializes one 18-cubed box — the 16-cubed target chunk plus a one-cell margin — through a single bulk `terrain_materials` call, applies the placed and broken deltas inside that box, and produces the two structures the face builder consumes. `state_at` maps every solid composite cell of the box to its block state so face-visibility checks resolve without further world queries; `blocks_local` holds only the exposed core cells, those solid cells with at least one non-solid six-neighbor, computed with vectorized shifts over the solidity array. Interior cells never reach `iter_visible_faces`, which cuts the per-chunk face-source work to the visible envelope, and the margin cells occlude faces against neighboring chunks without enumerating them.',
+            text: '`snapshot_for_chunk_build` materializes one 18-cubed box — the 16-cubed target chunk plus a one-cell margin — through a single bulk `terrain_materials` call, applies the placed and broken deltas inside that box, and produces the two structures the face builder consumes. `state_at` maps every solid composite cell of the box to its block state so face-visibility checks resolve without further world queries; `blocks_local` holds only the exposed core cells. Occupancy and face occlusion are separate grids: `solid` marks any occupied cell, and `full_occ` marks only cells filled by a full solid cube — every terrain material, and each placed block whose definition reports `is_full_cube` and `is_solid` through the shared block registry. A cell is exposed when it holds a block and is not fully buried, where buried means the cell is itself a full cube and all six neighbors are full-cube occluders, evaluated with vectorized shifts over `full_occ`. A slab, stair, fence, fence gate, or wall never counts as a full occluder, so a full cube behind such a partial shape is kept and a non-full-cube block is always kept; `iter_visible_faces` then drops only the faces a full-cube neighbor actually covers. Interior full-cube cells never reach `iter_visible_faces`, which cuts the per-chunk face-source work to the visible envelope, and the margin cells occlude faces against neighboring chunks without enumerating them.',
           },
           {
             kind: 'paragraph',
