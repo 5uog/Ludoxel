@@ -2,6 +2,18 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.1 Beta 2",
+      "tags": ["Desktop Application", "My World", "Rendering"],
+      "sections": [
+        {
+          "title": "The Sun Flare and Glare Are Occluded by Geometry",
+          "items": [
+            "The Ultra lens flare now draws as background before the world pass, alongside the sun disc and the veiling glare, on both backends. `FramePipeline.render` in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU render encoder in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` issue `SunPass.draw_flare` and the `create_sun_flare_pipeline` draw before the world, and the fullscreen triangle writes no depth, so the opaque world drawn next overdraws it and a block between the camera and the sun occludes the flare at that block's silhouette. The sun disc and glare already used the background draw; the flare now shares it, so when a block fully hides the sun its disc, glare, and flare are hidden together. The earlier build drew the flare as a screen-space overlay after the world, clouds, and selection, so its ghost discs painted over blocks that hid the sun."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.1 Beta 1",
       "tags": ["Desktop Application", "My World", "Rendering"],
       "sections": [

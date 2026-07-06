@@ -1207,14 +1207,14 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
           },
           {
             kind: 'paragraph',
-            text: 'The Ultra tier also composites a screen-space lens flare. `sun_flare_screen` in `src/ludoxel/presentation/rendering/contracts/config.py`, read by both backends, projects the sun position through the same view-projection the sun billboard uses, returns its normalized device coordinates, and derives a strength that falls to zero when the sun sits behind the camera, off the screen by a wide margin, near the horizon, or when the view turns well away from it. `sun_flare.frag` runs over a fullscreen triangle emitted by `sun_flare.vert` and places ghost discs along the axis through the sun screen position and the frame center, mirroring the source across the optical axis, with a warm-to-cool tint variation and a soft halo, and fades the whole overlay by that strength. The OpenGL `SunPass.draw_flare` and the WGPU `create_sun_flare_pipeline` draw it at the same stage, after the world, clouds, and selection and before the view model, from a fullscreen triangle that writes no depth, so it composites over the scene as a camera artifact rather than world geometry, and it is gated to the Ultra tier alongside the veiling glare.',
+            text: 'The Ultra tier also composites a screen-space lens flare. `sun_flare_screen` in `src/ludoxel/presentation/rendering/contracts/config.py`, read by both backends, projects the sun position through the same view-projection the sun billboard uses, returns its normalized device coordinates, and derives a strength that falls to zero when the sun sits behind the camera, off the screen by a wide margin, near the horizon, or when the view turns well away from it. `sun_flare.frag` runs over a fullscreen triangle emitted by `sun_flare.vert` and places ghost discs along the axis through the sun screen position and the frame center, mirroring the source across the optical axis, with a warm-to-cool tint variation and a soft halo, and fades the whole overlay by that strength. The OpenGL `SunPass.draw_flare` and the WGPU `create_sun_flare_pipeline` draw it as background before the world pass, together with the sun disc and the veiling glare; the fullscreen triangle writes no depth, so the opaque world drawn next overdraws it and geometry nearer than the sun occludes it at the block silhouette. It is gated to the Ultra tier alongside the glare.',
           },
           {
             kind: 'note',
             note: {
               type: 'note',
               content:
-                'The flare is not depth-sampled against world geometry. The elevation and view-alignment terms in `sun_flare_screen` stand in for the sun dropping behind terrain and for the view turning away, so the flare thins as the sun nears the horizon or leaves the frame; it is a lens artifact keyed to the sun screen position, not an occlusion query.',
+                'The flare is occluded by the world overdraw, the same mechanism that occludes the sun disc and the glare: all three draw as background before the world and write no depth, so a block that hides the sun hides its flare at that block silhouette without a depth query. The elevation and view-alignment terms in `sun_flare_screen` still fade the flare as the sun nears the horizon or the view turns away.',
             },
           },
         ],
@@ -2462,7 +2462,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.1 Beta 1"`,
+            code: `__version__ = "3.8.1 Beta 2"`,
           },
           {
             kind: 'note',

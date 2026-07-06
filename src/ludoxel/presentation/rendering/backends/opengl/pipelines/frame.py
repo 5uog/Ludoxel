@@ -165,15 +165,20 @@ class FramePipeline:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     ultra_visuals = bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA))
-    # Draw the veiling glare and then the sun disc as background, before the world
-    # pass. Both write no depth and the opaque world drawn next overdraws them, so
-    # world geometry nearer than the sun occludes the glow at the terrain
-    # silhouette instead of the glow being painted over foreground blocks.
+    # Draw the veiling glare, the sun disc, and the lens flare as background,
+    # before the world pass. All three write no depth and the opaque world drawn
+    # next overdraws them, so world geometry nearer than the sun occludes them at
+    # the terrain silhouette instead of the glow being painted over foreground
+    # blocks. A block that hides the sun therefore hides its glare and flare.
     if bool(ultra_visuals):
       glare = sun_glare_strength(forward, self.state.sun_dir)
       if glare > 0.0:
         self.sun_pass.draw_glare(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, forward=forward, strength=float(glare))
     self.sun_pass.draw(eye=eye, view_proj=vp, sun_dir=self.state.sun_dir, ultra=bool(ultra_visuals))
+    if bool(ultra_visuals):
+      flare_x, flare_y, flare_strength = sun_flare_screen(vp, self.state.sun_dir, eye, forward, float(self.cfg.sun.distance))
+      if flare_strength > 0.0:
+        self.sun_pass.draw_flare(sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(w) / max(float(h), 1.0))
 
     glEnable(GL_DEPTH_TEST)
     glDepthMask(True)
@@ -284,15 +289,6 @@ class FramePipeline:
     )
 
     self.selection.draw(view_proj=vp)
-
-    # Lens flare is a screen-space overlay drawn after the world, clouds, and
-    # selection and before the view model, the same stage as the WGPU backend,
-    # so the compositing order matches. It is an Ultra-tier visual alongside the
-    # veiling glare and fades in only while the sun is framed.
-    if bool(ultra_visuals):
-      flare_x, flare_y, flare_strength = sun_flare_screen(vp, self.state.sun_dir, eye, forward, float(self.cfg.sun.distance))
-      if flare_strength > 0.0:
-        self.sun_pass.draw_flare(sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(w) / max(float(h), 1.0))
 
     first_person = None if player_state is None else player_state.first_person
     if (

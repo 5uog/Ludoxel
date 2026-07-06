@@ -1046,10 +1046,11 @@ class WgpuRendererBackend:
 
     draw_calls = 0
     instances = 0
-    # Draw the veiling glare and then the sun disc as background, before the world
-    # pass. Both write no depth, and the opaque world drawn next overdraws them, so
-    # world geometry nearer than the sun occludes the glow at the terrain
-    # silhouette instead of the glow being painted over foreground blocks.
+    # Draw the veiling glare, the sun disc, and the lens flare as background,
+    # before the world pass. All three write no depth, and the opaque world drawn
+    # next overdraws them, so world geometry nearer than the sun occludes them at
+    # the terrain silhouette instead of the glow being painted over foreground
+    # blocks. A block that hides the sun therefore hides its glare and flare.
     if bool(ultra_visuals):
       glare_strength = sun_glare_strength(forward, self._state.sun_dir)
       if glare_strength > 0.0:
@@ -1069,6 +1070,19 @@ class WgpuRendererBackend:
       render_pass.set_bind_group(0, sun_uniform_bind_group)
       render_pass.draw(6, 1, 0, 0)
       draw_calls += 1
+    if bool(ultra_visuals) and self._res.sun_flare_pipeline is not None:
+      flare_x, flare_y, flare_strength = sun_flare_screen(view_proj, self._state.sun_dir, eye, forward, float(self._cfg.sun.distance))
+      if flare_strength > 0.0:
+        flare_buffer, flare_bind_group = self._create_sun_flare_uniform_bind_group(
+          sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(width) / max(float(height), 1.0)
+        )
+        if flare_buffer is not None:
+          temp_uniform_buffers.append(flare_buffer)
+        if flare_bind_group is not None:
+          render_pass.set_pipeline(self._res.sun_flare_pipeline)
+          render_pass.set_bind_group(0, flare_bind_group)
+          render_pass.draw(3, 1, 0, 0)
+          draw_calls += 1
 
     use_shadow_pipeline = bool(shadow_requested and self._res.shadow_bind_group is not None)
     if bool(self._state.world_wireframe):
@@ -1312,23 +1326,6 @@ class WgpuRendererBackend:
       render_pass.set_vertex_buffer(0, self._selection_buffer)
       render_pass.draw(int(self._selection_vertex_count), 1, 0, 0)
       draw_calls += 1
-
-    # Lens flare is a final screen-space overlay, drawn after the scene as an
-    # Ultra-tier visual matching the veiling glare. It fades in only while the
-    # sun is framed; sun_flare_screen returns a zero strength otherwise.
-    if bool(ultra_visuals) and self._res.sun_flare_pipeline is not None:
-      flare_x, flare_y, flare_strength = sun_flare_screen(view_proj, self._state.sun_dir, eye, forward, float(self._cfg.sun.distance))
-      if flare_strength > 0.0:
-        flare_buffer, flare_bind_group = self._create_sun_flare_uniform_bind_group(
-          sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(width) / max(float(height), 1.0)
-        )
-        if flare_buffer is not None:
-          temp_uniform_buffers.append(flare_buffer)
-        if flare_bind_group is not None:
-          render_pass.set_pipeline(self._res.sun_flare_pipeline)
-          render_pass.set_bind_group(0, flare_bind_group)
-          render_pass.draw(3, 1, 0, 0)
-          draw_calls += 1
 
     render_pass.end()
 
