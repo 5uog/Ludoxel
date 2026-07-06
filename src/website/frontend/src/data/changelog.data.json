@@ -2,6 +2,24 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.1",
+      "tags": ["Desktop Application", "My World", "Startup", "UI"],
+      "sections": [
+        {
+          "title": "Loading Completes When No Chunk Remains to Build",
+          "items": [
+            "`visible_chunks_ready` in `src/ludoxel/presentation/rendering/uploads/world.py` now gates loading completion on the same denominator the overlay reports: the visible content chunks that carry a positive mesh revision, which are the chunks the upload scheduler builds and makes resident. The visible candidate set also holds the empty chunks the player can reach into, and the eye's own chunk column resolves to mesh revision 0, so the scheduler skips them and they never become resident. The earlier gate treated a non-empty candidate set with a zero build denominator as not ready, so whenever the only visible content was those revision-0 chunks the overlay held at `Selecting world chunks... [pending 0, resident 0]` and never advanced. A world whose visible chunks carry content still waits until every one of them is resident before the overlay clears."
+          ]
+        },
+        {
+          "title": "One Startup Loading Surface",
+          "items": [
+            "`run_app` in `src/ludoxel/presentation/interface/windows/main.py` shows the main window directly and lets the loading overlay owned by `GameScreen` carry startup feedback. That overlay covers the viewport while `loading_active` holds, follows `loading_status_changed`, and hides on `loading_finished`, and it is the same surface shown when a later world load re-enters loading. The earlier startup path also built a separate top-level `StatusOverlayFrame` splash bound to the same `loading_status_changed` and `loading_finished` signals, so two surfaces stacked over one load and split the loading status between them. The `startupSplash` theme rules in `src/ludoxel/presentation/interface/theme/styles/base.qss` are removed with that surface."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.1 Beta 2",
       "tags": ["Desktop Application", "My World", "Rendering"],
       "sections": [

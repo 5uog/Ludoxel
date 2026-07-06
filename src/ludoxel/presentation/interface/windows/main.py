@@ -15,7 +15,7 @@ from ludoxel.application.preferences.player_name import normalize_player_name
 from ludoxel.foundations.identity import __version__
 from ludoxel.presentation.interface.common.player_name_dialog import PlayerNameDialog
 from ludoxel.presentation.interface.common.single_instance import SingleInstanceRelay
-from ludoxel.presentation.interface.common.status_overlay import StatusOverlayFrame, status_overlay_title_image_path
+from ludoxel.presentation.interface.common.status_overlay import status_overlay_title_image_path
 from ludoxel.presentation.interface.theme.fonts import application_font_stylesheet, apply_application_font, install_minecraft_fonts
 from ludoxel.presentation.interface.theme.stylesheet import load_theme_stylesheet
 from ludoxel.presentation.interface.windows.game_screen import GameScreen
@@ -308,10 +308,10 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   if persisted_state is not None:
     explicit_player_name = normalize_player_name(persisted_state.settings.player_name)
 
-  splash_title_image_path = status_overlay_title_image_path(bundled_root)
+  startup_title_image_path = status_overlay_title_image_path(bundled_root)
   launch_player_name = explicit_player_name
   if not launch_player_name:
-    dialog = PlayerNameDialog(title_image_path=splash_title_image_path, initial_name=explicit_player_name)
+    dialog = PlayerNameDialog(title_image_path=startup_title_image_path, initial_name=explicit_player_name)
     if app_icon is not None:
       dialog.setWindowIcon(app_icon)
     _set_activation_callback(lambda current=dialog: _request_widget_activation(current))
@@ -345,49 +345,33 @@ def run_app(*, project_root: Path, resource_root: Path, data_root: Path) -> None
   restore_screen = _screen_for_restore(app, screen_name=str(prefs.window_screen_name), left=prefs.window_left, top=prefs.window_top, width=int(prefs.window_width), height=int(prefs.window_height))
   restore_geometry = _restored_window_geometry(restore_screen, left=prefs.window_left, top=prefs.window_top, width=int(prefs.window_width), height=int(prefs.window_height))
   if bool(w.wants_fullscreen()) and restore_screen is not None:
-    splash_geometry = restore_screen.availableGeometry()
-    w.setGeometry(splash_geometry)
+    w.setGeometry(restore_screen.availableGeometry())
   else:
-    splash_geometry = restore_geometry
     w.setGeometry(restore_geometry)
 
-  splash = StatusOverlayFrame(
-    title_text="Ludoxel",
-    status_text="Preparing viewport...",
-    object_name="startupSplash",
-    title_object_name="startupTitle",
-    status_object_name="startupStatus",
-    title_image_path=splash_title_image_path,
-    flags=Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen,
-  )
-  if app_icon is not None:
-    splash.setWindowIcon(app_icon)
-  splash.setGeometry(splash_geometry)
-  _set_activation_callback(lambda main_window=w, splash_widget=splash: (_request_widget_activation(main_window), _request_widget_activation(splash_widget)))
-  splash.show()
-  splash.raise_()
-  app.processEvents()
-
+  # The loading overlay that GameScreen owns is the single loading surface.
+  # It covers the viewport from construction while loading is active, follows
+  # loading_status_changed, and hides on loading_finished, so the main window
+  # is shown directly and that overlay carries startup feedback. A separate
+  # top-level startup splash used to mirror the same status and finished
+  # signals, stacking a second surface over the same load and splitting the
+  # loading status between the two.
+  _set_activation_callback(w.request_activation)
   viewport = w._screen.viewport
-  startup_loading_finished = False
+  startup_activation_done = False
 
-  def _finish_startup_loading() -> None:
-    nonlocal startup_loading_finished
-    if bool(startup_loading_finished):
+  def _activate_after_startup_loading() -> None:
+    nonlocal startup_activation_done
+    if bool(startup_activation_done):
       return
-    startup_loading_finished = True
-    splash.close()
-    _set_activation_callback(w.request_activation)
+    startup_activation_done = True
     if app.applicationState() == Qt.ApplicationState.ApplicationActive:
       w.request_activation()
 
-  viewport.loading_status_changed.connect(splash.set_status_text)
-  viewport.loading_finished.connect(_finish_startup_loading)
-  splash.set_status_text(viewport.loading_status_text())
+  viewport.loading_finished.connect(_activate_after_startup_loading)
   if bool(w.wants_fullscreen()):
     w.showFullScreen()
   else:
     w.show()
-  splash.raise_()
 
   app.exec()

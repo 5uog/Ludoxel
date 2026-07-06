@@ -106,9 +106,15 @@ float ldx_cloud_proxy_pad() {
 }
 
 float ldx_cloud_nearest_occupied_distance(vec2 gridPos, float gw, float gd) {
+    // The packed footprint spans at most five cells per axis (a three-cell
+    // core plus one edge bump on each side), so the scan must cover indices
+    // zero through four. The former four-by-four scan skipped the fifth
+    // column or row, so an empty fragment beyond a five-wide footprint found
+    // no occupied cell and lost its exterior feather, leaving that side of
+    // the cloud a hard rectangular edge while narrower clouds stayed soft.
     float nearest = 65535.0;
-    for (int j = 0; j < 4; j++) {
-        for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 5; j++) {
+        for (int i = 0; i < 5; i++) {
             float fi = float(i);
             float fj = float(j);
             if (fi >= gw || fj >= gd) {
@@ -203,19 +209,35 @@ void main() {
     }
     t0 = max(t0, 0.0);
 
-    const int STEPS = 16;
-    float dt = (t1 - t0) / float(STEPS);
+    // A fixed sixteen-step march aliased the per-cell coverage and the
+    // density noise into visible horizontal slabs on clouds whose view ray
+    // crossed a long span of the proxy box: wide footprints and grazing
+    // angles produced a large step, so a handful of samples painted the
+    // cloud as stacked plates. The step count now scales with the traversed
+    // span so the world-space step stays near refStep, and the per-step
+    // absorption is raised to the power sixteen over steps so the opacity
+    // accumulated across a uniform span equals the former sixteen-step
+    // result exactly. A cloud already resolved at sixteen steps keeps
+    // steps == 16 and stepScale == 1.0 and renders identically.
+    const int MAX_STEPS = 48;
+    float refStep = max(u_cellSize * 0.16, 2.0);
+    int steps = int(clamp(ceil((t1 - t0) / refStep), 16.0, float(MAX_STEPS)));
+    float dt = (t1 - t0) / float(steps);
+    float stepScale = 16.0 / float(steps);
     float t = t0 + dt * 0.5;
     float acc = 0.0;
     float bright = 0.0;
-    for (int i = 0; i < STEPS; i++) {
+    for (int i = 0; i < MAX_STEPS; i++) {
+        if (i >= steps) {
+            break;
+        }
         vec3 p = ro + rd * t;
         float d = ldx_cloud_density(p);
         if (d > 0.002) {
             float ld = ldx_cloud_density(p + u_sunDir * 3.5);
             float facing = max(dot(rd, u_sunDir), 0.0);
             float light = clamp(0.70 + (d - ld) * 1.45 + facing * 0.10, 0.42, 1.28);
-            float da = d * 0.56;
+            float da = 1.0 - pow(1.0 - clamp(d * 0.56, 0.0, 0.98), stepScale);
             acc += (1.0 - acc) * da;
             bright += (1.0 - bright) * da * light;
         }

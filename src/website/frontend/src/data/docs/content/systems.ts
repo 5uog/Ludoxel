@@ -2462,7 +2462,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.1 Beta 2"`,
+            code: `__version__ = "3.8.1"`,
           },
           {
             kind: 'note',
@@ -3174,7 +3174,7 @@ class FormattedSegment:
         content: [
           {
             kind: 'paragraph',
-            text: '`visible_load_progress` reports progress over the content chunks within the initial gate radius — the smaller of the render distance and three chunks — and `visible_chunks_ready` closes the loading state only when every counted chunk is resident at its current mesh revision. A zero denominator is not completion: when the gate set is empty the tracker asks whether the world reports any content chunk at the full render distance, and only a world with genuinely no content in range closes the loader. During loading, `_tick_sim` and `_on_step` in the render loop continue to return, while `paintGL` keeps draining and scheduling uploads, so simulation stays gated while chunk builds and backend submissions proceed.',
+            text: '`visible_load_progress` reports progress over the content chunks within the gate radius — the full clamped render distance, so the overlay stays up until every content chunk the renderer will draw is built and resident — and it counts a chunk only when its mesh revision is positive, the same set the upload scheduler builds. `visible_chunks_ready` closes the loading state when every counted chunk is resident at its current mesh revision, expressed as `ready >= total`. A zero denominator is therefore completion, not a stall: the candidate set also holds the empty chunks the eye can reach into, and the eye’s own chunk column resolves to mesh revision 0, so the scheduler skips them; when no visible chunk carries buildable content there is nothing to upload and the loader closes. The earlier gate instead asked whether the world reported any content chunk key in range, and that key set included those reachable empty chunks, so a world whose only in-range content was the revision-0 chunks held the loader open with no build ever scheduled. During loading, `_tick_sim` and `_on_step` in the render loop continue to return, while `paintGL` keeps draining and scheduling uploads, so simulation stays gated while chunk builds and backend submissions proceed.',
           },
           {
             kind: 'code',
@@ -3182,14 +3182,11 @@ class FormattedSegment:
             caption: 'src/ludoxel/presentation/rendering/uploads/world.py',
             code: `def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
   ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
-  if int(total) <= 0:
-    center = self._center_chunk(eye)
-    return len(world.visible_content_chunk_keys(center, int(clamp_render_distance_chunks(int(render_distance_chunks))))) == 0
   return int(ready) >= int(total)`,
           },
           {
             kind: 'paragraph',
-            text: 'The loading overlay text is produced from this state: the status line carries the ready and total counts with the pending build count, and when the progress pair has not changed for four seconds the tracker’s stall detail — pending and resident counts and the last scheduled, built, and uploaded chunk keys — is appended, so a loader that stays open names the stage it is waiting on instead of holding a bare `Loading world...` message. Readiness here is residency of the initial gate set; it is not a claim that every render-distance chunk is built, that both renderer backends perform identically, or that later streaming cannot be observed.',
+            text: 'The loading overlay text is produced from this state: with content in range the status line reads `Loading world... R/T chunks` and appends the outstanding build count, while a denominator still at zero reads `Selecting world chunks...`, and either line gains the tracker’s stall detail — pending and resident counts and the last scheduled, built, and uploaded chunk keys — once the progress pair has held for four seconds. Because a zero denominator now completes loading rather than holding it, the `Selecting world chunks... [pending 0, resident 0]` stall no longer persists. Readiness here is residency of the counted content chunks; it is not a claim that both renderer backends perform identically or that later streaming as the player moves cannot be observed.',
           },
         ],
       },

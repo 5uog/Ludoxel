@@ -10,20 +10,17 @@ QMainWindow {
 }
 
 QWidget#gameScreen,
-QFrame#loadingOverlay,
-QFrame#startupSplash {
+QFrame#loadingOverlay {
   background: #121212;
 }
 
-QLabel#loadingTitle,
-QLabel#startupTitle {
+QLabel#loadingTitle {
   color: #f4f4f4;
   font-size: 28px;
   font-weight: 700;
 }
 
-QLabel#loadingStatus,
-QLabel#startupStatus {
+QLabel#loadingStatus {
   color: #c8c8c8;
   font-size: 14px;
 }
