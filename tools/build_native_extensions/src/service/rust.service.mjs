@@ -13,12 +13,7 @@ import { displayPath } from '../shared/file/find.file.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
 
-const DARWIN_PYO3_EXTENSION_RUSTFLAGS = Object.freeze([
-  '-C',
-  'link-arg=-undefined',
-  '-C',
-  'link-arg=dynamic_lookup',
-]);
+const DARWIN_PYO3_EXTENSION_RUSTFLAGS = Object.freeze(['-C', 'link-arg=-undefined', '-C', 'link-arg=dynamic_lookup']);
 
 function installedArtifactSuffix() {
   return process.platform === 'win32' ? '.pyd' : '.so';
