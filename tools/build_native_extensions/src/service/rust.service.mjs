@@ -13,6 +13,13 @@ import { displayPath } from '../shared/file/find.file.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
 
+const DARWIN_PYO3_EXTENSION_RUSTFLAGS = Object.freeze([
+  '-C',
+  'link-arg=-undefined',
+  '-C',
+  'link-arg=dynamic_lookup',
+]);
+
 function installedArtifactSuffix() {
   return process.platform === 'win32' ? '.pyd' : '.so';
 }
@@ -25,6 +32,53 @@ function builtCdylibName(crateName) {
     return `lib${crateName}.dylib`;
   }
   return `lib${crateName}.so`;
+}
+
+function flagSequenceExists(flags, sequence) {
+  if (sequence.length === 0) {
+    return true;
+  }
+
+  for (let index = 0; index <= flags.length - sequence.length; index += 1) {
+    let matched = true;
+
+    for (let offset = 0; offset < sequence.length; offset += 1) {
+      if (flags[index + offset] !== sequence[offset]) {
+        matched = false;
+        break;
+      }
+    }
+
+    if (matched) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function appendRustFlagSequence(existingFlags, sequence) {
+  const flags = String(existingFlags || '').trim().length > 0 ? String(existingFlags).trim().split(/\s+/) : [];
+
+  if (!flagSequenceExists(flags, sequence)) {
+    flags.push(...sequence);
+  }
+
+  return flags.join(' ');
+}
+
+function rustNativeBuildEnv(baseEnv) {
+  const env = { ...baseEnv };
+
+  if (!env.PYO3_PYTHON) {
+    env.PYO3_PYTHON = resolvePythonExecutable(env);
+  }
+
+  if (process.platform === 'darwin') {
+    env.RUSTFLAGS = appendRustFlagSequence(env.RUSTFLAGS, DARWIN_PYO3_EXTENSION_RUSTFLAGS);
+  }
+
+  return env;
 }
 
 export function resolveCargoExecutable(env = process.env) {
@@ -98,10 +152,7 @@ export function buildRustNativeExtensions(options = {}, context = {}) {
     return 1;
   }
 
-  const env = { ...(context.env || process.env) };
-  if (!env.PYO3_PYTHON) {
-    env.PYO3_PYTHON = resolvePythonExecutable(env);
-  }
+  const env = rustNativeBuildEnv(context.env || process.env);
 
   console.log('Rust native build targets:');
   for (const state of states) {
