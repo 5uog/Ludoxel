@@ -4,8 +4,8 @@
  */
 import { Link } from 'react-router-dom';
 
-import Footer from '../components/layout/Footer';
-import Header from '../components/layout/Header';
+import Footer from '../features/layout/components/Footer';
+import Header from '../features/layout/components/Header';
 
 export default function NotFoundPage(): React.JSX.Element {
   return (
