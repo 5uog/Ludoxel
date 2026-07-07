@@ -52,7 +52,7 @@
   "[python]": {
     "editor.formatOnSave": false,
     "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 200,
+    "editor.wordWrapColumn": 320,
     "editor.tabSize": 2,
     "editor.rulers": [150, 200]
   },
