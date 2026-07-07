@@ -6,17 +6,17 @@ from ludoxel.simulation.blocks.families.stone import StoneType, cube_textures, s
 from ludoxel.simulation.blocks.sounds.groups import SOUND_GROUP_DEEPSLATE_BRICKS, SOUND_GROUP_TUFF
 
 DECORATIVE_STONE_TYPES: tuple[StoneType, ...] = (
-  StoneType(key="stone_bricks", display="Stone Bricks", textures=cube_textures("stonebrick"), slab_key="stone_brick_slab", stairs_key="stone_brick_stairs", wall_key="stone_brick_wall"),
+  StoneType(key="stone_bricks", display="Stone Bricks", textures=cube_textures("stone_brick"), slab_key="stone_brick_slab", stairs_key="stone_brick_stairs", wall_key="stone_brick_wall"),
   StoneType(
     key="mossy_stone_bricks",
     display="Mossy Stone Bricks",
-    textures=cube_textures("stonebrick_mossy"),
+    textures=cube_textures("stone_brick_mossy"),
     slab_key="mossy_stone_brick_slab",
     stairs_key="mossy_stone_brick_stairs",
     wall_key="mossy_stone_brick_wall",
   ),
-  StoneType(key="cracked_stone_bricks", display="Cracked Stone Bricks", textures=cube_textures("stonebrick_cracked")),
-  StoneType(key="chiseled_stone_bricks", display="Chiseled Stone Bricks", textures=cube_textures("stonebrick_carved")),
+  StoneType(key="cracked_stone_bricks", display="Cracked Stone Bricks", textures=cube_textures("stone_brick_cracked")),
+  StoneType(key="chiseled_stone_bricks", display="Chiseled Stone Bricks", textures=cube_textures("stone_brick_chiseled")),
   StoneType(key="double_smooth_stone_slab", display="Double Smooth Stone Slab", textures=side_top_bottom_textures("stone_slab_side", "stone_slab_top", "stone_slab_top"), slab_key="smooth_stone_slab"),
   StoneType(key="smooth_stone", display="Smooth Stone", textures=cube_textures("stone_slab_top")),
   StoneType(

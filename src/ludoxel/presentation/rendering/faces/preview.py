@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QImage
+from PyQt6.QtGui import QImage, QPainter
 
 from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState
 from ludoxel.presentation.rendering.faces.row_utils import atlas_face_uv
@@ -159,7 +159,7 @@ def _sample_texture(texture: TexturePixels, u: float, v: float) -> tuple[int, in
   vv = min(1.0, max(0.0, float(v)))
 
   x = int(round(uu * float(texture.width - 1)))
-  y = int(round(vv * float(texture.height - 1)))
+  y = int(round((1.0 - vv) * float(texture.height - 1)))
 
   offset = ((y * int(texture.width)) + x) * 4
   return (int(texture.data[offset]), int(texture.data[offset + 1]), int(texture.data[offset + 2]), int(texture.data[offset + 3]))
@@ -264,7 +264,59 @@ def _image_from_rgba_bytes(width: int, height: int, data: bytearray) -> QImage:
 def _downsample_preview(raster: QImage) -> QImage:
   image = raster.scaled(PREVIEW_CANVAS_SIZE, PREVIEW_CANVAS_SIZE, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
-  return image.convertToFormat(QImage.Format.Format_RGBA8888)
+  return _center_visible_alpha(image.convertToFormat(QImage.Format.Format_RGBA8888))
+
+
+def _visible_alpha_bounds(image: QImage) -> tuple[int, int, int, int] | None:
+  if image.isNull() or not image.hasAlphaChannel():
+    return None
+
+  rgba = image.convertToFormat(QImage.Format.Format_RGBA8888)
+  ptr = rgba.bits()
+  ptr.setsize(rgba.sizeInBytes())
+  data = bytes(ptr)
+  width = int(rgba.width())
+  height = int(rgba.height())
+  min_x = width
+  min_y = height
+  max_x = -1
+  max_y = -1
+
+  for y in range(height):
+    for x in range(width):
+      if data[((int(y) * width) + int(x)) * 4 + 3] <= 0:
+        continue
+      min_x = min(min_x, int(x))
+      min_y = min(min_y, int(y))
+      max_x = max(max_x, int(x))
+      max_y = max(max_y, int(y))
+
+  if max_x < min_x or max_y < min_y:
+    return None
+  return (int(min_x), int(min_y), int(max_x), int(max_y))
+
+
+def _center_visible_alpha(image: QImage) -> QImage:
+  bounds = _visible_alpha_bounds(image)
+  if bounds is None:
+    return image
+
+  min_x, min_y, max_x, max_y = bounds
+  center_x = (float(min_x) + float(max_x)) * 0.5
+  center_y = (float(min_y) + float(max_y)) * 0.5
+  target_x = (float(image.width()) - 1.0) * 0.5
+  target_y = (float(image.height()) - 1.0) * 0.5
+  dx = int(round(float(target_x) - float(center_x)))
+  dy = int(round(float(target_y) - float(center_y)))
+  if dx == 0 and dy == 0:
+    return image
+
+  centered = QImage(int(image.width()), int(image.height()), QImage.Format.Format_RGBA8888)
+  centered.fill(Qt.GlobalColor.transparent)
+  painter = QPainter(centered)
+  painter.drawImage(int(dx), int(dy), image)
+  painter.end()
+  return centered
 
 
 def image_has_visible_alpha(image: QImage) -> bool:
@@ -292,7 +344,7 @@ def render_block_preview_frame(
   pitch_deg: float = 30.0,
   roll_deg: float = 0.0,
   scale: float = 1.0,
-  fit_padding: float = 36.0,
+  fit_padding: float = 18.0,
 ) -> QImage:
   if int(width) != PREVIEW_CANVAS_SIZE or int(height) != PREVIEW_CANVAS_SIZE:
     raise ValueError("block preview frames must be 300x300")
@@ -329,7 +381,7 @@ def write_block_preview_png(
   pitch_deg: float = 30.0,
   roll_deg: float = 0.0,
   scale: float = 1.0,
-  fit_padding: float = 36.0,
+  fit_padding: float = 18.0,
 ) -> None:
   image = render_block_preview_frame(
     block=block,

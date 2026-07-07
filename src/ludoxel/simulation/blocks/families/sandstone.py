@@ -13,7 +13,7 @@ SANDSTONE_TYPES: tuple[StoneType, ...] = (
     stairs_key="sandstone_stairs",
     wall_key="sandstone_wall",
   ),
-  StoneType(key="chiseled_sandstone", display="Chiseled Sandstone", textures=side_top_bottom_textures("sandstone_carved", "sandstone_top", "sandstone_top")),
+  StoneType(key="chiseled_sandstone", display="Chiseled Sandstone", textures=side_top_bottom_textures("sandstone_chiseled", "sandstone_top", "sandstone_top")),
   StoneType(key="cut_sandstone", display="Cut Sandstone", textures=side_top_bottom_textures("sandstone_smooth", "sandstone_top", "sandstone_top"), slab_key="cut_sandstone_slab"),
   StoneType(key="smooth_sandstone", display="Smooth Sandstone", textures=cube_textures("sandstone_top"), slab_key="smooth_sandstone_slab", stairs_key="smooth_sandstone_stairs"),
   StoneType(
@@ -24,7 +24,7 @@ SANDSTONE_TYPES: tuple[StoneType, ...] = (
     stairs_key="red_sandstone_stairs",
     wall_key="red_sandstone_wall",
   ),
-  StoneType(key="chiseled_red_sandstone", display="Chiseled Red Sandstone", textures=side_top_bottom_textures("red_sandstone_carved", "red_sandstone_top", "red_sandstone_top")),
+  StoneType(key="chiseled_red_sandstone", display="Chiseled Red Sandstone", textures=side_top_bottom_textures("red_sandstone_chiseled", "red_sandstone_top", "red_sandstone_top")),
   StoneType(
     key="cut_red_sandstone", display="Cut Red Sandstone", textures=side_top_bottom_textures("red_sandstone_smooth", "red_sandstone_top", "red_sandstone_top"), slab_key="cut_red_sandstone_slab"
   ),

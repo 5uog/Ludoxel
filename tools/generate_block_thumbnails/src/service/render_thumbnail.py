@@ -101,7 +101,7 @@ def _default_state_props(block: BlockDefinition) -> dict[str, str]:
   if kind == "fence_gate":
     return {"facing": "south", "in_wall": "false", "open": "false", "powered": "false", "waterlogged": "false"}
   if kind == "wall":
-    return {"waterlogged": "false"}
+    return {"north": "low", "east": "none", "south": "low", "west": "none", "up": "true", "waterlogged": "false"}
   return {}
 
 
@@ -236,7 +236,7 @@ def _parse_arguments(argv: Sequence[str] | None = None) -> BlockPreviewRequest:
   parser.add_argument("--pitch", type=float, default=30.0)
   parser.add_argument("--roll", type=float, default=0.0)
   parser.add_argument("--scale", type=float, default=1.0)
-  parser.add_argument("--fit-padding", type=float, default=36.0)
+  parser.add_argument("--fit-padding", type=float, default=18.0)
   parser.add_argument("--dry-run", action="store_true")
   parser.add_argument("--allow-overwrite", action="store_true")
   args = parser.parse_args(argv)

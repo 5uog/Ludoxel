@@ -933,6 +933,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
     ],
     relatedTitles: [
       'Understanding WGPU Rendering',
+      'Understanding Held Block Geometry',
       'Understanding First-Person Arm Geometry',
       'Understanding Shared Shader Sources and Color Targets',
       'Understanding Render Distance Fog and Shadows',
@@ -1077,6 +1078,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
     ],
     relatedTitles: [
       'Understanding OpenGL Rendering',
+      'Understanding Held Block Geometry',
       'Understanding First-Person Arm Geometry',
       'Understanding Shared Shader Sources and Color Targets',
       'Understanding Render Distance Fog and Shadows',
@@ -1491,6 +1493,80 @@ sy = _snap(float(cy), float(texel))`,
     category: 'Systems',
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
+    title: 'Understanding Held Block Geometry',
+    description:
+      'Documents the player-held block geometry contract: registry kind resolution, the shared visual box owner, short-cube height matching the block-model render box, and the OpenGL and WGPU consumers that receive the same face rows.',
+    sections: [
+      {
+        id: 'held-block-geometry-owner',
+        title: 'One Visual Box Owner',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/presentation/rendering/visuals/players/held_block_geometry.py` owns the visual model boxes used when a player holds a block. `held_block_model_boxes` resolves the block definition from the registry, reads `kind_name()`, and delegates to `held_block_model_boxes_for_kind`. Slabs, stairs, walls, fences, fence gates, and short cubes enter kind-specific branches before the final unit-cube fallback handles ordinary full-cube visual kinds.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/held_block_geometry.py',
+            code: `def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple[TexturedBox, ...]:
+  if block_id is None:
+    return ()
+
+  block_def = def_lookup(str(block_id))
+  if block_def is None:
+    return ()
+
+  return held_block_model_boxes_for_kind(block_def.kind_name())`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The function returns `TexturedBox` records only for rendering. Block placement, collision, picking, occlusion, and inventory ownership stay with the simulation block model and inventory layers.',
+          },
+        ],
+      },
+      {
+        id: 'held-block-geometry-short-cube',
+        title: 'Short Cubes Keep Their Model Height',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/simulation/blocks/families/special_dirt.py` defines farmland and dirt path as `kind="short_cube"` with `is_full_cube=False`. World rendering resolves that kind in `src/ludoxel/simulation/blocks/models/api.py` to one local box from `(0, 0, 0)` through `(1, 15/16, 1)`. The held-block geometry maps the same kind through `px_box(0, 0, 0, 16, 15, 16)`, producing the same normalized local box for the player-held visual.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'The held-block short-cube branch uses the same sixteenth height as the block model.',
+            code: `if normalized == "short_cube":
+  return (TexturedBox(box=px_box(0, 0, 0, 16, 15, 16)),)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Because the branch is keyed by block kind, every short-cube block follows one shared visual contract. Farmland receives the 15/16 held height through its definition instead of through a block-name branch.',
+          },
+        ],
+      },
+      {
+        id: 'held-block-geometry-consumers',
+        title: 'First-Person, Third-Person, and Preview Consumers',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`build_first_person_held_block_face_rows` in `first_person_geometry.py` builds the first-person rows from `held_block_model_boxes`; `src/ludoxel/presentation/rendering/backends/opengl/passes/held_block.py` and the WGPU first-person pass consume those rows after their own pass setup. Third-person held blocks call `held_block_model_boxes_for_kind` from `src/ludoxel/presentation/rendering/backends/opengl/passes/player_model.py` and from `_third_person_held_block_face_rows` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py`. `render_player_preview_frame` reaches the same WGPU helper for the offscreen player preview.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The backend files decide pass ordering, bind groups, uniforms, and draw submission. The held-block shape reaches them as face rows already derived from the shared visual box owner.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding First-Person Arm Geometry', 'Understanding the Player Model Pose', 'Understanding WGPU Rendering', 'Understanding Block Shapes'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'World Visuals',
     title: 'Understanding First-Person Arm Geometry',
     description:
       'Tracks the shared first-person arm row builder, its camera-space transform boundary, the visual right-arm skin face map, and the OpenGL and WGPU backend paths that consume the same row contract.',
@@ -1561,7 +1637,7 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding the Player Model Pose', 'Understanding Render Snapshots'],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Held Block Geometry', 'Understanding the Player Model Pose', 'Understanding Render Snapshots'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1779,6 +1855,7 @@ head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0
     ],
     relatedTitles: [
       'Understanding Render Snapshots',
+      'Understanding Held Block Geometry',
       'Understanding First-Person Arm Geometry',
       'Understanding OpenGL Rendering',
       'Understanding WGPU Rendering',
@@ -2563,7 +2640,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.2+hotfix.1"`,
+            code: `__version__ = "3.8.3"`,
           },
           {
             kind: 'note',

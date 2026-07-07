@@ -37,7 +37,7 @@ _PRISMARINE_FRAMES: tuple[str, ...] = (
   "prismarine_rough_04",
 )
 
-_MAGMA_BLOCK_FRAMES: tuple[str, ...] = ("magma_01", "magma_02", "magma_03")
+_MAGMA_BLOCK_FRAMES: tuple[str, ...] = ("magma_01", "magma_02", "magma_03", "magma_04")
 
 
 def default_texture_animation_tracks() -> tuple[AnimatedTextureTrack, ...]:

@@ -1410,6 +1410,105 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
   }),
   defineDocsArticle({
     category: 'Distribution',
+    subcategory: 'Verification',
+    group: 'Generated Assets',
+    title: 'Generating Block Thumbnails',
+    description:
+      'Documents the repository block-thumbnail generator as a package-script surface over the default block registry, the visual asset resolver, and the runtime thumbnail directory consumed by inventory and hotbar item photos.',
+    sections: [
+      {
+        id: 'generating-block-thumbnails-command-surface',
+        title: 'Command Surface and Tool Directory',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The root package exposes the block-thumbnail tool through `assets:block-thumbnails:help`, `assets:block-thumbnails:generate`, and `assets:block-thumbnails:check`. Each script enters `tools/generate_block_thumbnails/scripts/run/`, which dispatches to the shared CLI service. The tool directory is `tools/generate_block_thumbnails`; no runtime or package script points at a split `tools/generate_block/thumbnails` path.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'package.json',
+            code: `"assets:block-thumbnails:generate": "node ./tools/generate_block_thumbnails/scripts/run/generate.run.mjs",
+"assets:block-thumbnails:check": "node ./tools/generate_block_thumbnails/scripts/run/check.run.mjs"`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`generate.service.mjs` and `check.service.mjs` both call `generateBlockThumbnails`; the Python interpreter comes from `PYTHON` when that environment variable is set, otherwise the service asks for `python3`. The Node layer supplies `PYTHONPATH` for `src`, then runs `tools/generate_block_thumbnails/src/service/render_thumbnail.py` with the selected mode.',
+          },
+        ],
+      },
+      {
+        id: 'generating-block-thumbnails-selection-and-roots',
+        title: 'Selection, Texture Root, and Output Root',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The argument parser defaults `all` to true, so the generator selects every block from `create_default_registry()` unless the caller supplies a narrower block or category selection. `render_thumbnail.py` resolves the requested texture root to its `block` child and validates that every selected block texture can be resolved. The generated PNG path is the selected output root plus the block id basename.',
+          },
+          {
+            kind: 'code',
+            language: 'sh',
+            caption: 'Full-registry regeneration with the Ludoxel texture family.',
+            code: `npm run assets:block-thumbnails:generate -- --all --texture-root assets/ludoxel/textures --output-root assets/ludoxel/thumbnails/blocks --allow-overwrite`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`--allow-overwrite` is required when an output PNG already exists. Without that flag, generate mode reports each existing output as a validation failure. Check mode validates the same roots and selected blocks, reports the selected and existing counts, and exits before writing files. The parser default uses `fitPadding` 18, and the Python service accepts the same `--fit-padding` value for direct execution.',
+          },
+        ],
+      },
+      {
+        id: 'generating-block-thumbnails-rendering-contract',
+        title: 'Preview Rendering Contract',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/presentation/rendering/faces/preview.py` projects the visible faces from `iter_visible_faces`, fits their projected alpha footprint into a 300x300 canvas, and recenters the final visible alpha bounds after downsampling. Texture sampling treats `v=0` as the lower texture row, matching the runtime atlas preparation that mirrors block texture images before OpenGL and WGPU upload.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/faces/preview.py',
+            code: `x = int(round(uu * float(texture.width - 1)))
+y = int(round((1.0 - vv) * float(texture.height - 1)))`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`render_thumbnail.py` supplies representative state before rendering. Slabs, stairs, and fence gates receive their ordinary inventory-facing state, fences receive same-block north and south neighbor context when no explicit neighbor is supplied, and walls receive `north=low`, `south=low`, `east=none`, `west=none`, and `up=true` so a center post and two straight arms are rendered from the wall model.',
+          },
+        ],
+      },
+      {
+        id: 'generating-block-thumbnails-runtime-consumption',
+        title: 'Runtime Consumption',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`write_block_preview_png` renders each selected block preview to a 300x300 RGBA PNG. `ItemPhotoProvider.pixmap_for_item` later resolves the visual asset family through `resolve_visual_asset_roots`, checks the selected family thumbnail directory for `<block>.gif` and then `<block>.png`, and only then falls back to item textures. Inventory cells and hotbar slots consume the resulting pixmaps through that provider.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/interface/common/item_photo_provider.py',
+            code: `gif_path = self._paths.thumbs_dir() / f"{name}.gif"
+if gif_path.exists():
+  return self._ensure_movie_pixmap(str(bid), gif_path)
+
+p = self._paths.thumbs_dir() / f"{name}.png"
+if not p.exists():
+  p = self._paths.item_dir() / f"{name}.png"`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The output directory belongs to repository-controlled generated assets. Runtime loading still follows the asset-family resolver, whose selected family depends on the required block textures present under `assets/ludoxel/textures/block` or the fallback family.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Running Resource and Shader Checks with Permission', 'Separating Original Materials from Output', 'Using the Hotbar', 'Understanding Block Shapes'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
     subcategory: 'Release Language',
     group: 'Public Identification',
     title: 'Avoiding Unofficial Release Claims',

@@ -208,6 +208,9 @@
     <loc>https://ludoxel.vercel.app/docs/distribution/verification/package-inspection</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/release-language</loc>
   </url>
   <url>
@@ -1127,6 +1130,21 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-selection-outlines#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-held-block-geometry</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-held-block-geometry#held-block-geometry-owner</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-held-block-geometry#held-block-geometry-short-cube</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-held-block-geometry#held-block-geometry-consumers</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-held-block-geometry#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-first-person-arm-geometry</loc>
@@ -2201,6 +2219,24 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/verification/package-inspection/running-resource-and-shader-checks-with-permission#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets/generating-block-thumbnails</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets/generating-block-thumbnails#generating-block-thumbnails-command-surface</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets/generating-block-thumbnails#generating-block-thumbnails-selection-and-roots</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets/generating-block-thumbnails#generating-block-thumbnails-rendering-contract</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets/generating-block-thumbnails#generating-block-thumbnails-runtime-consumption</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/verification/generated-assets/generating-block-thumbnails#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/release-language/public-identification/avoiding-unofficial-release-claims</loc>

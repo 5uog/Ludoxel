@@ -36,7 +36,7 @@ export function parseBlockThumbnailArgs(argv = [], defaults = {}) {
     pitch: 30,
     roll: 0,
     scale: 1,
-    fitPadding: 36,
+    fitPadding: 18,
     dryRun: false,
     allowOverwrite: false,
     errors: [],

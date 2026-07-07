@@ -2,6 +2,29 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.3",
+      "tags": [
+        "Desktop Application",
+        "Rendering",
+        "Assets"
+      ],
+      "sections": [
+        {
+          "title": "Block Thumbnails Use the Current Registry and Preview Contract",
+          "items": [
+            "`tools/generate_block_thumbnails` regenerated `assets/ludoxel/thumbnails/blocks` through the existing `assets:block-thumbnails:generate` command surface with `assets/ludoxel/textures` as the texture root. The directory contains one 300x300 RGBA PNG for each block in the current default registry, 276 block thumbnails under the `assets/ludoxel/thumbnails/blocks` path.",
+            "`render_block_preview_frame` now recenters the final visible alpha bounds, uses 18 pixels of default fit padding, and samples texture `v` coordinates from the lower texture row so PNG previews match the runtime atlas orientation. Wall thumbnails use a default state with a center post, north and south low arms, and no east or west arm."
+          ]
+        },
+        {
+          "title": "Short-Cube Held Blocks Use Their Model Height",
+          "items": [
+            "`held_block_model_boxes_for_kind` in `src/ludoxel/presentation/rendering/visuals/players/held_block_geometry.py` handles `short_cube` with the same 15/16 local box height used by `render_boxes_for_block`. Farmland and dirt path held blocks receive shared short-cube geometry before OpenGL and WGPU first-person passes, third-person player held blocks, and the WGPU offscreen preview consume the generated face rows."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.2 Hotfix 1",
       "tags": [
         "Desktop Application",

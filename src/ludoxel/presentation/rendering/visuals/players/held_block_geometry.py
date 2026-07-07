@@ -61,7 +61,7 @@ _WALL_INVENTORY_BOXES: tuple[TexturedBox, ...] = tuple(
   for b in boxes_for_wall(props={"north": "low", "south": "low", "east": "none", "west": "none", "up": "true"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0)
 )
 
-_HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0, "stairs": 1.0, "wall": 1.16, "fence": 1.12, "fence_gate": 1.72}
+_HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "short_cube": 1.0, "slab": 1.0, "stairs": 1.0, "wall": 1.16, "fence": 1.12, "fence_gate": 1.72}
 
 
 def _normalize_kind(kind: str | None) -> str:
@@ -94,6 +94,8 @@ def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]
     return _FENCE_INVENTORY_BOXES
   if normalized == "fence_gate":
     return tuple(TexturedBox(box=b) for b in boxes_for_fence_gate({"facing": "south", "open": "false", "in_wall": "false"}))
+  if normalized == "short_cube":
+    return (TexturedBox(box=px_box(0, 0, 0, 16, 15, 16)),)
   return (TexturedBox(box=LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)),)
 
 

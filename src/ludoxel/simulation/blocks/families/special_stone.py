@@ -69,7 +69,7 @@ SPECIAL_STONE_TYPES: tuple[StoneType, ...] = (
   StoneType(key="netherite_block", display="Block of Netherite", textures=cube_textures("netherite_block"), sound_group=SOUND_GROUP_NETHERITE),
   StoneType(key="lodestone", display="Lodestone", textures=side_top_bottom_textures("lodestone_side", "lodestone_top", "lodestone_top"), sound_group=SOUND_GROUP_LODESTONE),
   StoneType(key="purpur_block", display="Purpur Block", textures=cube_textures("purpur_block"), slab_key="purpur_slab", stairs_key="purpur_stairs"),
-  StoneType(key="purpur_pillar", display="Purpur Pillar", textures=column_textures("purpur_pillar", "purpur_pillar_top")),
+  StoneType(key="purpur_pillar", display="Purpur Pillar", textures=column_textures("purpur_pillar_side", "purpur_pillar_top")),
   StoneType(key="honeycomb_block", display="Honeycomb Block", textures=cube_textures("honeycomb"), sound_group=SOUND_GROUP_CORAL_BLOCK),
   StoneType(key="dark_prismarine", display="Dark Prismarine", textures=cube_textures("prismarine_dark"), slab_key="dark_prismarine_slab", stairs_key="dark_prismarine_stairs"),
   StoneType(key="prismarine_bricks", display="Prismarine Bricks", textures=cube_textures("prismarine_bricks"), slab_key="prismarine_brick_slab", stairs_key="prismarine_brick_stairs"),
