@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/branding/ludoxel_banner.png" alt="Ludoxel" width="100%">
+  <img src="assets/branding/ludoxel.png" alt="Ludoxel" width="100%">
 </p>
 
 # Ludoxel
