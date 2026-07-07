@@ -13,7 +13,7 @@ AI_HEALTH_INDICATOR_OFF: str = "off"
 AI_HEALTH_INDICATOR_ABOVE: str = "above"
 AI_HEALTH_INDICATOR_BELOW: str = "below"
 AI_SKIN_MODE_PLAYER: str = "player"
-AI_SKIN_MODE_ALEX: str = "alex"
+AI_SKIN_MODE_TIMO: str = "timo"
 AI_SKIN_MODE_CUSTOM: str = "custom"
 
 
@@ -53,8 +53,8 @@ def normalize_ai_health_indicator(value: object) -> str:
 
 def normalize_ai_skin_mode(value: object) -> str:
   raw = str(value).strip().lower()
-  if raw == AI_SKIN_MODE_ALEX:
-    return AI_SKIN_MODE_ALEX
+  if raw == AI_SKIN_MODE_TIMO:
+    return AI_SKIN_MODE_TIMO
   if raw == AI_SKIN_MODE_CUSTOM:
     return AI_SKIN_MODE_CUSTOM
   return AI_SKIN_MODE_PLAYER

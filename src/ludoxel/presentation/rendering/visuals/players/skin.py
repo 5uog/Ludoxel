@@ -14,11 +14,11 @@ from ludoxel.simulation.actors.ai_players.state import normalize_ai_skin_id
 _SKIN_WIDTH = 64
 _SKIN_HEIGHT = 64
 
-AI_BUNDLED_ALEX_SKIN_KEY: str = "alex"
+AI_BUNDLED_TIMO_SKIN_KEY: str = "timo"
 
 
 def default_player_skin_path(resource_root: Path) -> Path:
-  return Path(resource_root) / "assets" / "minecraft" / "skins" / "alex.png"
+  return Path(resource_root) / "assets" / "ludoxel" / "skins" / "timo.png"
 
 
 def custom_player_skin_path(data_root: Path) -> Path:
@@ -49,7 +49,7 @@ def load_player_skin_image(data_root: Path, *, kind: object, resource_root: Path
   bundled_root = Path(data_root if resource_root is None else resource_root)
   default_image = QImage(str(default_player_skin_path(bundled_root)))
   if default_image.isNull():
-    raise RuntimeError("The bundled Alex skin texture could not be loaded.")
+    raise RuntimeError("The bundled Timo skin texture could not be loaded.")
   return normalize_player_skin_image(default_image)
 
 
@@ -69,10 +69,10 @@ def delete_custom_player_skin(data_root: Path) -> None:
   update_runtime_integrity_manifest(Path(data_root), ("state/player_skin.png",))
 
 
-def load_bundled_ai_alex_skin_image(resource_root: Path) -> QImage:
+def load_bundled_ai_timo_skin_image(resource_root: Path) -> QImage:
   image = QImage(str(default_player_skin_path(Path(resource_root))))
   if image.isNull():
-    raise RuntimeError("The bundled Alex skin texture could not be loaded.")
+    raise RuntimeError("The bundled Timo skin texture could not be loaded.")
   return normalize_player_skin_image(image)
 
 

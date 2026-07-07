@@ -2,6 +2,24 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.2 Hotfix 1",
+      "tags": ["Desktop Application", "Rendering", "Settings"],
+      "sections": [
+        {
+          "title": "First-Person Arm UV Source Matches the Visual Right Arm",
+          "items": [
+            "`FIRST_PERSON_RIGHT_ARM_BASE_UV_PX` and `FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX` are direct aliases of `VISUAL_RIGHT_ARM_BASE_UV_PX` and `VISUAL_RIGHT_ARM_SLEEVE_UV_PX`. `build_first_person_arm_face_rows` keeps the existing arm boxes, parent transform, view bob, idle sway, swing, equip-hide, projection fit, and safe-frame placement, then sends each face index to `append_face_instance` with the right-arm base or sleeve rectangle used by the player body. OpenGL `FirstPersonArmPass.draw` and the WGPU first-person pass receive the same row-builder output."
+          ]
+        },
+        {
+          "title": "Default Skin Contract Targets Bundled Timo",
+          "items": [
+            "`PLAYER_SKIN_KIND_TIMO`, `assets/ludoxel/skins/timo.png`, and the `Reset to Timo` menu and pause labels define the bundled default-skin surface. OpenGL resource loading, macOS bundle verification, Windows PyInstaller data validation, and `resources:check` all terminate at `ludoxel/skins/timo.png`; `minecraft/skins/alex.png` and `PLAYER_SKIN_KIND_ALEX` are absent from the player-skin, renderer-resource, packaging, and resource-check paths."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.2",
       "tags": ["Desktop Application", "Rendering", "Settings"],
       "sections": [

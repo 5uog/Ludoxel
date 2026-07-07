@@ -34,7 +34,7 @@ from ludoxel.application.preferences.clouds import (
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
-from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
+from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_TIMO, normalize_player_skin_kind
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.scalars.numeric import clampf, clampi
 from ludoxel.simulation.inventories.hotbars.ai_route_defaults import default_ai_route_hotbar_slots
@@ -168,7 +168,7 @@ class RuntimePreferences:
   resolved_player_name: str = ""
   crosshair_mode: str = CROSSHAIR_MODE_DEFAULT
   crosshair_pixels: tuple[str, ...] = field(default_factory=lambda: EMPTY_CROSSHAIR_PIXELS)
-  player_skin_kind: str = PLAYER_SKIN_KIND_ALEX
+  player_skin_kind: str = PLAYER_SKIN_KIND_TIMO
   camera_perspective: str = CAMERA_PERSPECTIVE_FIRST_PERSON
   fullscreen: bool = False
   view_bobbing_enabled: bool = True

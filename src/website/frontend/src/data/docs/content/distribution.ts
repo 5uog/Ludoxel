@@ -270,11 +270,11 @@ npm run build:macos:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets`, `src`, and `third-party` as required data and asserts the default Alex skin, while `LICENSE` is retained beside the bundle by the publish-time legal copy rather than bundled as internal data. macOS packaging requires those inputs; their absence aborts the command.',
+            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets`, `src`, and `third-party` as required data and asserts the default Timo skin, while `LICENSE` is retained beside the bundle by the publish-time legal copy rather than bundled as internal data. macOS packaging requires those inputs; their absence aborts the command.',
           },
           {
             kind: 'paragraph',
-            text: '`checkMacosPackagingInputs` enforces the same envelope before a build runs, requiring the entry script, `package.json`, `pyproject.toml`, the bundled `assets` and `src` roots, the Alex skin, every legal-material path, every required font, and a fixed set of WGPU renderer sources, and confirming that `pyproject.toml` declares the Darwin-only `wgpu` and `rendercanvas` dependencies and a PyInstaller development dependency and that the command source still carries the `wgpu.backends.wgpu_native`, `rendercanvas.pyqt6`, and `macos_cursor` terms. The check establishes assembly of the repository-defined macOS renderer envelope. A build that omits it produces a different object from the repository specification.',
+            text: '`checkMacosPackagingInputs` enforces the same envelope before a build runs, requiring the entry script, `package.json`, `pyproject.toml`, the bundled `assets` and `src` roots, the Timo skin, every legal-material path, every required font, and a fixed set of WGPU renderer sources, and confirming that `pyproject.toml` declares the Darwin-only `wgpu` and `rendercanvas` dependencies and a PyInstaller development dependency and that the command source still carries the `wgpu.backends.wgpu_native`, `rendercanvas.pyqt6`, and `macos_cursor` terms. The check establishes assembly of the repository-defined macOS renderer envelope. A build that omits it produces a different object from the repository specification.',
           },
           {
             kind: 'note',
@@ -337,7 +337,7 @@ function verifyMacosCodeSignature(appPath) {
         content: [
           {
             kind: 'paragraph',
-            text: '`verifyMacosAppBundle` refuses a bundle that exists but lacks required content: the `Contents/MacOS/Ludoxel` executable, the `Contents/Frameworks/Python` shared-library link, a `.icns` icon under `Contents/Resources`, the patched `Info.plist` fields, the default Alex skin, and each required font. Several of those are admitted under more than one container location, which `requireBundledResource` and `bundledAssetCandidates` encode.',
+            text: '`verifyMacosAppBundle` refuses a bundle that exists but lacks required content: the `Contents/MacOS/Ludoxel` executable, the `Contents/Frameworks/Python` shared-library link, a `.icns` icon under `Contents/Resources`, the patched `Info.plist` fields, the default Timo skin, and each required font. Several of those are admitted under more than one container location, which `requireBundledResource` and `bundledAssetCandidates` encode.',
           },
           {
             kind: 'code',
@@ -359,7 +359,7 @@ function requireBundledResource(appPath, label, relativePaths) {
           },
           {
             kind: 'paragraph',
-            text: 'The tolerance is bounded, not permissive. PyInstaller may deposit collected data under either `Contents/Frameworks` or `Contents/Resources`, so the verifier accepts either location for the Alex skin and the fonts, but `requireBundledResource` throws when none of the candidates holds the file. The check therefore survives a benign layout variation while still refusing a genuinely absent resource; to read the two-location allowance as optionality is to invert a presence requirement into a permission to omit.',
+            text: 'The tolerance is bounded, not permissive. PyInstaller may deposit collected data under either `Contents/Frameworks` or `Contents/Resources`, so the verifier accepts either location for the Timo skin and the fonts, but `requireBundledResource` throws when none of the candidates holds the file. The check therefore survives a benign layout variation while still refusing a genuinely absent resource; to read the two-location allowance as optionality is to invert a presence requirement into a permission to omit.',
           },
           {
             kind: 'paragraph',
@@ -946,7 +946,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'The two services impose different host gates, and the gates are why the target must be fixed before any artifact is discussed. `runWindowsBuild` requires a Windows host for a real build and checks the Windows entry script, though a Windows dry run forgoes the host requirement because it does not execute. `runMacosBuild` requires a macOS host and, before PyInstaller runs, the entry script, the default Alex skin, a macOS `.icns` icon candidate, and every required font asset. The hosts, renderer paths, and artifact forms differ; treating the two targets as one generic desktop build collapses three distinct containment boundaries at once.',
+            text: 'The two services impose different host gates, and the gates are why the target must be fixed before any artifact is discussed. `runWindowsBuild` requires a Windows host for a real build and checks the Windows entry script, though a Windows dry run forgoes the host requirement because it does not execute. `runMacosBuild` requires a macOS host and, before PyInstaller runs, the entry script, the default Timo skin, a macOS `.icns` icon candidate, and every required font asset. The hosts, renderer paths, and artifact forms differ; treating the two targets as one generic desktop build collapses three distinct containment boundaries at once.',
           },
         ],
       },
@@ -1387,7 +1387,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: 'A resource check can pass while macOS still fails to bundle a font or the Alex skin in an accepted location, and a shader check can pass while a platform dependency is absent from the macOS build environment. A distribution statement must name the exact level it verified — repository resource invariants, the shader-source contract, platform packaging prerequisites, or final artifact inspection — because each is a separate layer of evidence and none stands in for another.',
+            text: 'A resource check can pass while macOS still fails to bundle a font or the Timo skin in an accepted location, and a shader check can pass while a platform dependency is absent from the macOS build environment. A distribution statement must name the exact level it verified — repository resource invariants, the shader-source contract, platform packaging prerequisites, or final artifact inspection — because each is a separate layer of evidence and none stands in for another.',
           },
         ],
       },

@@ -1996,7 +1996,7 @@ for row in rows:
             kind: 'code',
             language: 'py',
             caption: 'Player-state schema stores the skin mode that decides whether a custom skin participates.',
-            code: `player_skin_kind: str = PLAYER_SKIN_KIND_ALEX
+            code: `player_skin_kind: str = PLAYER_SKIN_KIND_TIMO
 player_name: str = ""`,
           },
           {

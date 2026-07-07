@@ -425,7 +425,7 @@ class RenderSnapshotDTO:
         content: [
           {
             kind: 'paragraph',
-            text: 'AI actors reach the renderer the same way. `ai_render_snapshots_for_session` in `src/ludoxel/application/sessions/managers/ai_players.py` walks the actor observations and builds an `AiPlayerRenderSnapshotDTO` for each, reusing `build_player_model_snapshot` in third-person mode and carrying the held item, attack swing progress and its previous value, the actor identity and name, health and the health indicator, the skin mode and skin identifier, and the position and height for the world-space name tag. The skin mode is a three-valued field selecting the shared player skin, a bundled Alex skin, or an actor-specific imported skin, and the renderer uses only a resolved skin reference per frame.',
+            text: 'AI actors reach the renderer the same way. `ai_render_snapshots_for_session` in `src/ludoxel/application/sessions/managers/ai_players.py` walks the actor observations and builds an `AiPlayerRenderSnapshotDTO` for each, reusing `build_player_model_snapshot` in third-person mode and carrying the held item, attack swing progress and its previous value, the actor identity and name, health and the health indicator, the skin mode and skin identifier, and the position and height for the world-space name tag. The skin mode is a three-valued field selecting the shared player skin, a bundled Timo skin, or an actor-specific imported skin, and the renderer uses only a resolved skin reference per frame.',
           },
           {
             kind: 'paragraph',
@@ -1493,7 +1493,7 @@ sy = _snap(float(cy), float(texel))`,
     group: 'World Visuals',
     title: 'Understanding First-Person Arm Geometry',
     description:
-      'Documents the shared first-person arm row builder, its camera-space transform boundary, the first-person-only right-arm skin face map, and the OpenGL and WGPU backend paths that consume the same geometry.',
+      'Tracks the shared first-person arm row builder, its camera-space transform boundary, the visual right-arm skin face map, and the OpenGL and WGPU backend paths that consume the same row contract.',
     sections: [
       {
         id: 'first-person-arm-geometry-shared-builder',
@@ -1501,7 +1501,7 @@ sy = _snap(float(cy), float(texel))`,
         content: [
           {
             kind: 'paragraph',
-            text: '`build_first_person_arm_face_rows` in `src/ludoxel/presentation/rendering/visuals/players/first_person_geometry.py` owns the first-person arm geometry. It returns six per-face row arrays for `TexturedFacePass`, after applying the existing view bob, idle sway, swing, equip-hide, projection fit, safe-frame anchoring, and camera-space arm transform. The row shape stays the same as other transform-instanced faces: a row-major model matrix plus one UV rectangle. This builder is the boundary for the arm mesh and skin-face assignment; the backend pass that consumes the rows does not choose a different arm texture map.',
+            text: '`build_first_person_arm_face_rows` in `src/ludoxel/presentation/rendering/visuals/players/first_person_geometry.py` owns the first-person arm geometry. It applies the existing view bob, idle sway, swing, equip-hide, projection fit, safe-frame anchoring, and camera-space arm transform, then returns six per-face row arrays for `TexturedFacePass`. Each row keeps the transform-instanced face shape used elsewhere: one row-major model matrix and one UV rectangle. The builder fixes the mesh and skin-face assignment before backend code receives rows; backend passes consume buckets and skin bindings downstream from that assignment.',
           },
           {
             kind: 'code',
@@ -1515,7 +1515,7 @@ sy = _snap(float(cy), float(texel))`,
           },
           {
             kind: 'paragraph',
-            text: 'The first-person arm draw is mutually exclusive with the held-block and special-item view models. `FramePipeline.render` clears depth before the OpenGL view-model draw and then calls `FirstPersonArmPass.draw` only when the first-person render state has no visible held block or special item and `show_arm` remains true. The WGPU backend opens a separate first-person render pass with depth cleared and follows the same special-item, held-block, arm selection order.',
+            text: 'The first-person arm occupies the final view-model branch after special-item and held-block rows have yielded. `FramePipeline.render` clears depth before the OpenGL view-model draw and calls `FirstPersonArmPass.draw` when the first-person render state carries empty held-block and special-item fields with `show_arm` still true. The WGPU backend opens a separate first-person render pass with depth cleared and follows the same special-item, held-block, arm selection order.',
           },
         ],
       },
@@ -1525,25 +1525,20 @@ sy = _snap(float(cy), float(texel))`,
         content: [
           {
             kind: 'paragraph',
-            text: '`skin_uv_maps.py` keeps the ordinary slim right-arm maps as `SLIM_RIGHT_ARM_BASE_UV_PX` and `SLIM_RIGHT_ARM_SLEEVE_UV_PX`, then derives `FIRST_PERSON_RIGHT_ARM_BASE_UV_PX` and `FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX` for this camera-space arm. The first-person transform makes the local `FACE_POS_X` and `FACE_POS_Y` surfaces the visible upper and right-side surfaces of the sleeve in the view model. The first-person map therefore assigns the top texture to local `FACE_POS_X` and the side texture to local `FACE_POS_Y`, with the same exchange applied to the negative pair for complete cube-face coverage.',
+            text: '`skin_uv_maps.py` keeps the ordinary slim right-arm maps as `SLIM_RIGHT_ARM_BASE_UV_PX` and `SLIM_RIGHT_ARM_SLEEVE_UV_PX`, derives `VISUAL_RIGHT_ARM_BASE_UV_PX` and `VISUAL_RIGHT_ARM_SLEEVE_UV_PX` from the ordinary right-arm maps, and assigns the first-person right-arm constants to those visual maps by identity. `FACE_POS_X` carries the right-arm side rectangle `(40.0, 20.0, 44.0, 32.0)` for the base layer and `(40.0, 36.0, 44.0, 48.0)` for the sleeve layer; `FACE_POS_Y` carries the rotated top rectangles from the same right-arm maps. `build_first_person_arm_face_rows` iterates `face_idx` from the unit cube and passes that same index to `append_face_instance`, so the side rectangle remains attached to the side face through row construction.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/players/skin_uv_maps.py',
-            code: `def first_person_right_arm_uv_map(uv_map: dict[int, tuple[float, float, float, float]]) -> dict[int, tuple[float, float, float, float]]:
-  return {
-    FACE_POS_X: tuple(uv_map[FACE_POS_Y]),
-    FACE_NEG_X: tuple(uv_map[FACE_NEG_Y]),
-    FACE_POS_Y: tuple(uv_map[FACE_POS_X]),
-    FACE_NEG_Y: tuple(uv_map[FACE_NEG_X]),
-    FACE_POS_Z: tuple(uv_map[FACE_POS_Z]),
-    FACE_NEG_Z: tuple(uv_map[FACE_NEG_Z]),
-  }`,
+            code: `VISUAL_RIGHT_ARM_BASE_UV_PX = uv_map_with_rotated_faces(RIGHT_ARM_BASE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
+VISUAL_RIGHT_ARM_SLEEVE_UV_PX = uv_map_with_rotated_faces(RIGHT_ARM_SLEEVE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
+FIRST_PERSON_RIGHT_ARM_BASE_UV_PX = VISUAL_RIGHT_ARM_BASE_UV_PX
+FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
           },
           {
             kind: 'paragraph',
-            text: 'This map is separate from the third-person visual-side maps. `VISUAL_RIGHT_ARM_BASE_UV_PX` and `VISUAL_RIGHT_ARM_SLEEVE_UV_PX` remain consumed by `build_player_model_pose` for the third-person player body, AI player bodies, previews, and held-item anchors. World block faces, held block geometry, special-item faces, and offscreen player preview rows do not read the first-person arm map.',
+            text: 'The same visual right-arm maps are consumed by `build_player_model_pose` for the visible right-arm base and sleeve in the player body, AI player body, preview, and held-item anchor path. World block faces, held block geometry, special-item faces, and offscreen preview rows keep their own UV sources through separate import paths and constants.',
           },
         ],
       },
@@ -1553,14 +1548,14 @@ sy = _snap(float(cy), float(texel))`,
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/presentation/rendering/backends/opengl/passes/first_person_arm.py` calls `build_first_person_arm_face_rows` and draws the returned buckets through `TexturedFacePass`. `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` imports the same builder and uploads the returned buckets into temporary transform buffers in the first-person pass. Because the UV map is selected before either backend receives rows, OpenGL and WGPU consume the same first-person arm skin-face assignment. Their API-specific work remains the draw pass, texture binding, uniform upload, and clip-space handling.',
+            text: '`src/ludoxel/presentation/rendering/backends/opengl/passes/first_person_arm.py` calls `build_first_person_arm_face_rows` and draws the returned buckets through `TexturedFacePass`. `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` imports the same builder and uploads the returned buckets into temporary transform buffers in the first-person pass. The UV map is selected before either backend receives rows, so OpenGL and WGPU consume one first-person arm skin-face assignment. Their API-specific work remains draw-pass selection, texture binding, uniform upload, and clip-space handling.',
           },
           {
             kind: 'note',
             note: {
               type: 'note',
               content:
-                'This article describes the shared source path. It does not assert that an OpenGL or WGPU device was visually inspected frame by frame; backend parity here is limited to the shared row builder and first-person UV map both paths import.',
+                'Backend parity here covers the imported row builder and the first-person UV constants consumed by that builder. Frame-by-frame visual inspection on an OpenGL or WGPU device remains a separate manual check.',
             },
           },
         ],
@@ -2568,7 +2563,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.2"`,
+            code: `__version__ = "3.8.2+hotfix.1"`,
           },
           {
             kind: 'note',

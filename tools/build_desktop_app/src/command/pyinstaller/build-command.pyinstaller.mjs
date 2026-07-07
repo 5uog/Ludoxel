@@ -84,7 +84,7 @@ function addRendererBackendArgs(args, targetPlatform = process.platform) {
 }
 
 function addMacosRequiredDataArgs(args) {
-  requireProjectPath('assets/minecraft/skins/alex.png');
+  requireProjectPath('assets/ludoxel/skins/timo.png');
 
   addRequiredDataArg(args, 'assets', 'assets', 'darwin');
   addRequiredDataArg(args, 'src', 'src', 'darwin');

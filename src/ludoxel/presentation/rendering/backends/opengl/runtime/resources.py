@@ -72,7 +72,7 @@ class GLResources:
 
     visual_roots = resolve_visual_asset_roots(assets_dir, required_texture_names=tex_names)
     atlas = TextureAtlas.build_from_dir(visual_roots.block_texture_dir, tile_size=64, names=tex_names, pad=1)
-    skin_texture = ImageTexture.load(assets_dir / "minecraft" / "skins" / "alex.png")
+    skin_texture = ImageTexture.load(assets_dir / "ludoxel" / "skins" / "timo.png")
 
     empty_vao = int(glGenVertexArrays(1))
 

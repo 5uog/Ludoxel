@@ -11,7 +11,7 @@ from ludoxel.application.preferences.clouds import DEFAULT_CLOUD_CELL_SIZE, norm
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name
-from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
+from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_TIMO, normalize_player_skin_kind
 from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
@@ -67,7 +67,7 @@ class PersistedSettings:
   player_name: str = ""
   crosshair_mode: str = CROSSHAIR_MODE_DEFAULT
   crosshair_pixels: tuple[str, ...] = field(default_factory=lambda: EMPTY_CROSSHAIR_PIXELS)
-  player_skin_kind: str = PLAYER_SKIN_KIND_ALEX
+  player_skin_kind: str = PLAYER_SKIN_KIND_TIMO
   camera_perspective: str = CAMERA_PERSPECTIVE_FIRST_PERSON
   fullscreen: bool = False
   view_bobbing_enabled: bool = True
@@ -245,7 +245,7 @@ class PersistedSettings:
       player_name=normalize_player_name(mapping_str(d, "player_name", "")),
       crosshair_mode=normalize_crosshair_mode(mapping_str(d, "crosshair_mode", CROSSHAIR_MODE_DEFAULT)),
       crosshair_pixels=normalize_crosshair_pixels(d.get("crosshair_pixels", EMPTY_CROSSHAIR_PIXELS)),
-      player_skin_kind=normalize_player_skin_kind(mapping_str(d, "player_skin_kind", PLAYER_SKIN_KIND_ALEX)),
+      player_skin_kind=normalize_player_skin_kind(mapping_str(d, "player_skin_kind", PLAYER_SKIN_KIND_TIMO)),
       camera_perspective=normalize_camera_perspective(mapping_str(d, "camera_perspective", CAMERA_PERSPECTIVE_FIRST_PERSON)),
       fullscreen=mapping_bool(d, "fullscreen", False),
       view_bobbing_enabled=mapping_bool(d, "view_bobbing_enabled", True),

@@ -47,7 +47,7 @@ from ludoxel.simulation.actors.ai_players.state import (
   AI_PERSONALITY_PEACEFUL,
   AI_ROUTE_STYLE_FLEXIBLE,
   AI_ROUTE_STYLE_STRICT,
-  AI_SKIN_MODE_ALEX,
+  AI_SKIN_MODE_TIMO,
   AI_SKIN_MODE_CUSTOM,
   AI_SKIN_MODE_PLAYER,
   AiSpawnEggSettings,
@@ -246,11 +246,11 @@ class AiSettingsOverlay(SidebarDialogBase):
       layout,
       host,
       title="Skin Source",
-      description="Same as player follows the player's current skin. Bundled Alex uses the built-in Alex skin. Imported PNG opens a PNG picker when no valid imported image is already registered, then uses that 64x64 image for this AI only.",
+      description="Same as player follows the player's current skin. Bundled Timo uses the built-in Timo skin. Imported PNG opens a PNG picker when no valid imported image is already registered, then uses that 64x64 image for this AI only.",
     )
     self._skin_mode_combo = QComboBox(body)
     self._skin_mode_combo.addItem("Same as player", userData=AI_SKIN_MODE_PLAYER)
-    self._skin_mode_combo.addItem("Bundled Alex", userData=AI_SKIN_MODE_ALEX)
+    self._skin_mode_combo.addItem("Bundled Timo", userData=AI_SKIN_MODE_TIMO)
     self._skin_mode_combo.addItem("Imported PNG", userData=AI_SKIN_MODE_CUSTOM)
     add_setting_row(body_layout, body, label="Skin source", description="Applied immediately to this AI.", control=self._skin_mode_combo)
 
@@ -942,8 +942,8 @@ class AiSettingsOverlay(SidebarDialogBase):
         status += " Imported PNG is selected; availability is checked only when the Skin page is opened."
       else:
         status += " Imported PNG is selected but no valid image is available, so the player skin is shown until one is imported."
-    elif mode == AI_SKIN_MODE_ALEX:
-      status += " This AI currently uses the bundled Alex skin."
+    elif mode == AI_SKIN_MODE_TIMO:
+      status += " This AI currently uses the bundled Timo skin."
     else:
       status += " This AI currently follows the player skin."
     self._skin_status.setText(status)

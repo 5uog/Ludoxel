@@ -26,7 +26,7 @@ import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
 import { runProcess } from '../shared/process/run.process.mjs';
 import { copyLegalMaterial } from './legal-copy.service.mjs';
 
-const MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS = Object.freeze(['Contents/Frameworks/assets/minecraft/skins/alex.png', 'Contents/Resources/assets/minecraft/skins/alex.png']);
+const MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS = Object.freeze(['Contents/Frameworks/assets/ludoxel/skins/timo.png', 'Contents/Resources/assets/ludoxel/skins/timo.png']);
 const MACOS_REQUIRED_FONT_ASSET_PATHS = Object.freeze([
   'assets/fonts/MinecraftRegular-Bmg3.otf',
   'assets/fonts/MinecraftBold-nMK1.otf',
@@ -252,8 +252,8 @@ function verifyMacosAppBundle(appPath) {
   requireMacosIcon(appPath);
   verifyMacosCodeSignature(appPath);
 
-  const alexSkinPath = requireBundledResource(appPath, 'bundled Alex skin texture', MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS);
-  console.log(`[build_desktop_app] verified macOS bundled asset: ${alexSkinPath}`);
+  const timoSkinPath = requireBundledResource(appPath, 'bundled Timo skin texture', MACOS_REQUIRED_BUNDLED_RESOURCE_PATHS);
+  console.log(`[build_desktop_app] verified macOS bundled asset: ${timoSkinPath}`);
 
   for (const fontAssetPath of MACOS_REQUIRED_FONT_ASSET_PATHS) {
     const bundledFontPath = requireBundledResource(appPath, `bundled font asset ${fontAssetPath}`, bundledAssetCandidates(fontAssetPath));
@@ -289,7 +289,7 @@ function publishMacosApp(stagingDir) {
 export function runMacosBuild(options = {}) {
   requireMacosHost();
   requireMacosEntryScript();
-  requireProjectAsset('assets/minecraft/skins/alex.png');
+  requireProjectAsset('assets/ludoxel/skins/timo.png');
   requireFirstProjectAsset(MACOS_ICON_CANDIDATE_PATHS, 'macOS project icon');
 
   for (const fontAssetPath of MACOS_REQUIRED_FONT_ASSET_PATHS) {

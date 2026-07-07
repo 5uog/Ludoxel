@@ -825,20 +825,20 @@ class AudioPreferences:
         content: [
           {
             kind: 'paragraph',
-            text: 'The player skin source is a narrow preference: bundled Alex or a custom runtime PNG. `src/ludoxel/application/preferences/player_skin.py` admits only `custom`; every other value, including missing data and older strings, collapses to `alex`. The setting therefore cannot be used to name an arbitrary package asset, a network resource, or an AI-specific skin identifier.',
+            text: 'The player skin source is a narrow preference: bundled Timo or a custom runtime PNG. `src/ludoxel/application/preferences/player_skin.py` admits only `custom`; every other value, including missing data and older strings, collapses to `timo`. The setting therefore cannot be used to name an arbitrary package asset, a network resource, or an AI-specific skin identifier.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/player_skin.py',
-            code: `PLAYER_SKIN_KIND_ALEX = "alex"
+            code: `PLAYER_SKIN_KIND_TIMO = "timo"
 PLAYER_SKIN_KIND_CUSTOM = "custom"
 
 def normalize_player_skin_kind(value: object) -> str:
   normalized = str(value or "").strip().lower()
   if normalized == PLAYER_SKIN_KIND_CUSTOM:
     return PLAYER_SKIN_KIND_CUSTOM
-  return PLAYER_SKIN_KIND_ALEX`,
+  return PLAYER_SKIN_KIND_TIMO`,
           },
         ],
       },
@@ -848,7 +848,7 @@ def normalize_player_skin_kind(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'A custom player skin is stored as `state/player_skin.png` under the runtime state root. The loader verifies that protected runtime file before use, then normalizes the image to the accepted 64 x 64 RGBA form. Verification or decoding failure selects the bundled Alex texture and closes the custom-skin branch.',
+            text: 'A custom player skin is stored as `state/player_skin.png` under the runtime state root. The loader verifies that protected runtime file before use, then normalizes the image to the accepted 64 x 64 RGBA form. Verification or decoding failure selects the bundled Timo texture and closes the custom-skin branch.',
           },
           {
             kind: 'code',
@@ -876,7 +876,7 @@ def normalize_player_skin_kind(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'Changing the source changes which player-skin image the runtime attempts to load. It does not publish the custom PNG, license the custom image, copy it into documentation, or make imported third-party art safe to redistribute. The correct evidence for a setting report is the selected kind, the existence and integrity status of `state/player_skin.png`, the image dimensions, and whether the renderer fell back to Alex.',
+            text: 'Changing the source changes which player-skin image the runtime attempts to load. It does not publish the custom PNG, license the custom image, copy it into documentation, or make imported third-party art safe to redistribute. The correct evidence for a setting report is the selected kind, the existence and integrity status of `state/player_skin.png`, the image dimensions, and whether the renderer fell back to Timo.',
           },
           {
             kind: 'note',
@@ -929,7 +929,7 @@ def normalize_player_skin_kind(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'The validator accepts only modern 64 x 64 Minecraft skin textures and converts the accepted image to RGBA8888. The writer saves that normalized image as `state/player_skin.png` and updates the runtime integrity manifest for that protected path. Reset deletes the same runtime file and returns the preference to bundled Alex. The persistence consequence is explicit: the imported image is a local runtime artifact guarded by integrity metadata.',
+            text: 'The validator accepts only modern 64 x 64 Minecraft skin textures and converts the accepted image to RGBA8888. The writer saves that normalized image as `state/player_skin.png` and updates the runtime integrity manifest for that protected path. Reset deletes the same runtime file and returns the preference to bundled Timo. The persistence consequence is explicit: the imported image is a local runtime artifact guarded by integrity metadata.',
           },
           {
             kind: 'code',
@@ -1482,7 +1482,7 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
     group: 'AI Identity and Skin',
     title: 'Choosing an AI Skin Source',
     description:
-      'Explains AI skin source selection as a per-actor mode with player, bundled Alex, and imported PNG branches, including the fallback when a custom skin identifier is absent or invalid.',
+      'Explains AI skin source selection as a per-actor mode with player, bundled Timo, and imported PNG branches, including the fallback when a custom skin identifier is absent or invalid.',
     sections: [
       {
         id: 'choosing-ai-skin-source-mode-domain',
@@ -1490,20 +1490,20 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
         content: [
           {
             kind: 'paragraph',
-            text: 'AI skin selection is independent from player skin selection. The per-actor mode can follow the player skin, use bundled Alex, or use a custom AI PNG identified by a thirty-two-character hexadecimal skin id. The normalizer accepts `alex` and `custom`; everything else collapses to `player`. The custom branch is additionally invalid without a valid `skin_id`, and both spawn settings and live AI state fall back to `player` in that case.',
+            text: 'AI skin selection is independent from player skin selection. The per-actor mode can follow the player skin, use bundled Timo, or use a custom AI PNG identified by a thirty-two-character hexadecimal skin id. The normalizer accepts `timo` and `custom`; everything else collapses to `player`. The custom branch is additionally invalid without a valid `skin_id`, and both spawn settings and live AI state fall back to `player` in that case.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/modes.py',
             code: `AI_SKIN_MODE_PLAYER: str = "player"
-AI_SKIN_MODE_ALEX: str = "alex"
+AI_SKIN_MODE_TIMO: str = "timo"
 AI_SKIN_MODE_CUSTOM: str = "custom"
 
 def normalize_ai_skin_mode(value: object) -> str:
   raw = str(value).strip().lower()
-  if raw == AI_SKIN_MODE_ALEX:
-    return AI_SKIN_MODE_ALEX
+  if raw == AI_SKIN_MODE_TIMO:
+    return AI_SKIN_MODE_TIMO
   if raw == AI_SKIN_MODE_CUSTOM:
     return AI_SKIN_MODE_CUSTOM
   return AI_SKIN_MODE_PLAYER

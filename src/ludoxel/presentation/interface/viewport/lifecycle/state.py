@@ -12,14 +12,14 @@ from PyQt6.QtGui import QImage
 
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.persistence.schedulers.state import save_state
-from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX
+from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_TIMO
 from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.presentation.interface.menu.thumbnail import capture_widget_thumbnail_image, encode_thumbnail_png
 from ludoxel.presentation.rendering.visuals.cameras.third_person import resolve_camera
-from ludoxel.presentation.rendering.visuals.players.skin import AI_BUNDLED_ALEX_SKIN_KEY, load_bundled_ai_alex_skin_image, load_custom_ai_skin_image, load_player_skin_image
+from ludoxel.presentation.rendering.visuals.players.skin import AI_BUNDLED_TIMO_SKIN_KEY, load_bundled_ai_timo_skin_image, load_custom_ai_skin_image, load_player_skin_image
 from ludoxel.presentation.rendering.visuals.worlds.block_break_particles import advance_block_break_particles, render_samples_from_block_break_particles
 from ludoxel.simulation.actors.ai_players.state import AI_SKIN_MODE_CUSTOM, normalize_ai_skin_id, normalize_ai_skin_mode
 
@@ -58,7 +58,7 @@ class ViewportStateMixin:
     try:
       image = load_player_skin_image(self._data_root, kind=self._state.player_skin_kind, resource_root=self._resource_root)
     except Exception:
-      self._state.player_skin_kind = PLAYER_SKIN_KIND_ALEX
+      self._state.player_skin_kind = PLAYER_SKIN_KIND_TIMO
       self._state.normalize()
       image = load_player_skin_image(self._data_root, kind=self._state.player_skin_kind, resource_root=self._resource_root)
 
@@ -81,9 +81,9 @@ class ViewportStateMixin:
   def _sync_ai_skin_designs(self: "RendererViewportWidget", *, push_to_renderer: bool = False, context_current: bool = False) -> None:
     images: dict[str, QImage] = {}
     try:
-      images[AI_BUNDLED_ALEX_SKIN_KEY] = load_bundled_ai_alex_skin_image(self._resource_root)
+      images[AI_BUNDLED_TIMO_SKIN_KEY] = load_bundled_ai_timo_skin_image(self._resource_root)
     except Exception:
-      images.pop(AI_BUNDLED_ALEX_SKIN_KEY, None)
+      images.pop(AI_BUNDLED_TIMO_SKIN_KEY, None)
     for session in self._sessions.all_sessions():
       for state in session.ai_states():
         if normalize_ai_skin_mode(state.skin_mode) != AI_SKIN_MODE_CUSTOM:

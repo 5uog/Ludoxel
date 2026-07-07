@@ -28,17 +28,6 @@ def uv_map_with_rotated_faces(uv_map: dict[int, tuple[float, float, float, float
   return out
 
 
-def first_person_right_arm_uv_map(uv_map: dict[int, tuple[float, float, float, float]]) -> dict[int, tuple[float, float, float, float]]:
-  return {
-    FACE_POS_X: tuple(uv_map[FACE_POS_Y]),
-    FACE_NEG_X: tuple(uv_map[FACE_NEG_Y]),
-    FACE_POS_Y: tuple(uv_map[FACE_POS_X]),
-    FACE_NEG_Y: tuple(uv_map[FACE_NEG_X]),
-    FACE_POS_Z: tuple(uv_map[FACE_POS_Z]),
-    FACE_NEG_Z: tuple(uv_map[FACE_NEG_Z]),
-  }
-
-
 RIGHT_ARM_BASE_UV_PX = skin_cube_uv_map(
   pos_x=(40.0, 20.0, 44.0, 32.0), neg_x=(47.0, 20.0, 51.0, 32.0), pos_y=(44.0, 16.0, 47.0, 20.0), neg_y=(47.0, 16.0, 50.0, 20.0), pos_z=(44.0, 20.0, 47.0, 32.0), neg_z=(51.0, 20.0, 54.0, 32.0)
 )
@@ -54,10 +43,10 @@ LEFT_ARM_SLEEVE_UV_PX = skin_cube_uv_map(
 
 SLIM_RIGHT_ARM_BASE_UV_PX = RIGHT_ARM_BASE_UV_PX
 SLIM_RIGHT_ARM_SLEEVE_UV_PX = RIGHT_ARM_SLEEVE_UV_PX
-FIRST_PERSON_RIGHT_ARM_BASE_UV_PX = first_person_right_arm_uv_map(SLIM_RIGHT_ARM_BASE_UV_PX)
-FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = first_person_right_arm_uv_map(SLIM_RIGHT_ARM_SLEEVE_UV_PX)
 
 VISUAL_RIGHT_ARM_BASE_UV_PX = uv_map_with_rotated_faces(RIGHT_ARM_BASE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
 VISUAL_RIGHT_ARM_SLEEVE_UV_PX = uv_map_with_rotated_faces(RIGHT_ARM_SLEEVE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
+FIRST_PERSON_RIGHT_ARM_BASE_UV_PX = VISUAL_RIGHT_ARM_BASE_UV_PX
+FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX
 VISUAL_LEFT_ARM_BASE_UV_PX = uv_map_with_rotated_faces(LEFT_ARM_BASE_UV_PX, FACE_POS_Y, FACE_NEG_Y)
 VISUAL_LEFT_ARM_SLEEVE_UV_PX = uv_map_with_rotated_faces(LEFT_ARM_SLEEVE_UV_PX, FACE_POS_Y, FACE_NEG_Y)

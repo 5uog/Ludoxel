@@ -40,7 +40,7 @@ class MenuProfilePanel(QWidget):
     self._btn_change_skin.clicked.connect(self.change_skin_requested.emit)
     layout.addWidget(self._btn_change_skin, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-    self._btn_reset_skin = QPushButton("Reset to Alex", self)
+    self._btn_reset_skin = QPushButton("Reset to Timo", self)
     self._btn_reset_skin.setObjectName("menuBtn")
     self._btn_reset_skin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     self._btn_reset_skin.setFixedWidth(int(_PROFILE_BUTTON_WIDTH_PX))

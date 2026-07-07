@@ -34,7 +34,7 @@ const MACOS_REQUIRED_PROJECT_INPUTS = Object.freeze([
   { label: 'macOS entry script', path: MACOS_ENTRY_SCRIPT, type: 'file' },
   { label: 'bundled assets root', path: 'assets', type: 'directory' },
   { label: 'bundled source root', path: 'src', type: 'directory' },
-  { label: 'default player skin asset', path: 'assets/minecraft/skins/alex.png', type: 'file' },
+  { label: 'default player skin asset', path: 'assets/ludoxel/skins/timo.png', type: 'file' },
   ...LEGAL_MATERIAL_PATHS.map((path) => ({ label: `legal material ${path}`, path, type: 'any' })),
   ...MACOS_REQUIRED_FONT_ASSET_PATHS.map((path) => ({ label: `font asset ${path}`, path, type: 'file' })),
   ...MACOS_REQUIRED_WGPU_SOURCE_PATHS.map((path) => ({ label: `macOS WGPU source ${path}`, path, type: 'file' })),

@@ -12,7 +12,7 @@ from ludoxel.application.preferences.camera import normalize_camera_perspective
 from ludoxel.application.preferences.crosshair import CROSSHAIR_MODE_CUSTOM, normalize_crosshair_mode
 from ludoxel.application.preferences.keybinds import KeybindSettings
 from ludoxel.application.preferences.player_name import normalize_player_name, resolve_session_player_name
-from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_ALEX, PLAYER_SKIN_KIND_CUSTOM
+from ludoxel.application.preferences.player_skin import PLAYER_SKIN_KIND_TIMO, PLAYER_SKIN_KIND_CUSTOM
 from ludoxel.application.preferences.runtime import RuntimePreferences
 from ludoxel.application.sessions.game_mode import apply_game_mode
 from ludoxel.application.sessions.pipelines.runtime_state import apply_runtime_to_renderer as apply_runtime_to_renderer_state, sync_runtime_sun_from_renderer
@@ -732,6 +732,6 @@ def change_player_skin(viewport: "RendererViewportWidget") -> None:
 
 def reset_player_skin(viewport: "RendererViewportWidget") -> None:
   delete_custom_player_skin(viewport._data_root)
-  viewport._state.player_skin_kind = PLAYER_SKIN_KIND_ALEX
+  viewport._state.player_skin_kind = PLAYER_SKIN_KIND_TIMO
   viewport._state.normalize()
   sync_player_skin(viewport, push_to_renderer=True)

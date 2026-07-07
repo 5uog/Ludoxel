@@ -6,8 +6,8 @@ from ludoxel.application.sessions.pipelines.render_snapshot import AiPlayerRende
 from ludoxel.presentation.rendering.visuals.players.first_person_motion import FirstPersonMotionSample
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
 from ludoxel.presentation.rendering.visuals.players.render_state_composer import compose_player_render_state_from_parts
-from ludoxel.presentation.rendering.visuals.players.skin import AI_BUNDLED_ALEX_SKIN_KEY
-from ludoxel.simulation.actors.ai_players.state import AI_SKIN_MODE_ALEX, AI_SKIN_MODE_CUSTOM, normalize_ai_skin_id, normalize_ai_skin_mode
+from ludoxel.presentation.rendering.visuals.players.skin import AI_BUNDLED_TIMO_SKIN_KEY
+from ludoxel.simulation.actors.ai_players.state import AI_SKIN_MODE_TIMO, AI_SKIN_MODE_CUSTOM, normalize_ai_skin_id, normalize_ai_skin_mode
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 
 
@@ -16,8 +16,8 @@ def _resolve_ai_skin_texture_key(skin_mode: str, skin_id: str) -> str | None:
   if mode == AI_SKIN_MODE_CUSTOM:
     resolved_skin_id = normalize_ai_skin_id(skin_id)
     return resolved_skin_id if resolved_skin_id else None
-  if mode == AI_SKIN_MODE_ALEX:
-    return AI_BUNDLED_ALEX_SKIN_KEY
+  if mode == AI_SKIN_MODE_TIMO:
+    return AI_BUNDLED_TIMO_SKIN_KEY
   return None
 
 

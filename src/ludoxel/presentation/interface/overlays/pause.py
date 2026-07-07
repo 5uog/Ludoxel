@@ -109,7 +109,7 @@ class PauseOverlay(QWidget):
     btn_change_skin.clicked.connect(self.change_skin_requested.emit)
     actions.addWidget(btn_change_skin, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-    btn_reset_skin = self._make_menu_button("Reset to Alex", self)
+    btn_reset_skin = self._make_menu_button("Reset to Timo", self)
     btn_reset_skin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     btn_reset_skin.setMinimumWidth(240)
     btn_reset_skin.clicked.connect(self.reset_skin_requested.emit)
