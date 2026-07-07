@@ -47,9 +47,9 @@ from ludoxel.simulation.actors.ai_players.state import (
   AI_PERSONALITY_PEACEFUL,
   AI_ROUTE_STYLE_FLEXIBLE,
   AI_ROUTE_STYLE_STRICT,
-  AI_SKIN_MODE_TIMO,
   AI_SKIN_MODE_CUSTOM,
   AI_SKIN_MODE_PLAYER,
+  AI_SKIN_MODE_TIMO,
   AiSpawnEggSettings,
 )
 
