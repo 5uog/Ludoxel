@@ -6,13 +6,4 @@ from ludoxel.presentation.interface.settings.widgets.controls import BedrockTogg
 from ludoxel.presentation.interface.settings.widgets.crosshair import CrosshairPixelEditor, CrosshairPreviewWidget
 from ludoxel.presentation.interface.settings.widgets.scalar import AdvancedScalarControl
 
-__all__ = [
-  "AdvancedScalarControl",
-  "BedrockToggleRow",
-  "CrosshairPixelEditor",
-  "CrosshairPreviewWidget",
-  "KeybindCaptureButton",
-  "KeybindRow",
-  "WheelPassthroughDoubleSpinBox",
-  "WheelPassthroughSlider",
-]
+__all__ = ["AdvancedScalarControl", "BedrockToggleRow", "CrosshairPixelEditor", "CrosshairPreviewWidget", "KeybindCaptureButton", "KeybindRow", "WheelPassthroughDoubleSpinBox", "WheelPassthroughSlider"]

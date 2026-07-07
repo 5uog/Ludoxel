@@ -17,16 +17,7 @@ from ludoxel.presentation.interface.overlays.skin_preview import PlayerSkinPrevi
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ludoxel.simulation.inventories.special_items.registry import iter_catalog_special_items
-from ludoxel.simulation.inventories.storage.grid import (
-  CRAFTING_INPUT_COLUMNS,
-  CRAFTING_INPUT_SIZE,
-  UPPER_INVENTORY_COLUMNS,
-  UPPER_INVENTORY_SIZE,
-  insert_into_first_empty,
-  normalize_crafting_slots,
-  normalize_upper_inventory_slots,
-  place_into_storage_priority,
-)
+from ludoxel.simulation.inventories.storage.grid import CRAFTING_INPUT_COLUMNS, CRAFTING_INPUT_SIZE, UPPER_INVENTORY_COLUMNS, UPPER_INVENTORY_SIZE, insert_into_first_empty, normalize_crafting_slots, normalize_upper_inventory_slots, place_into_storage_priority
 
 REGION_HOTBAR = "hotbar"
 REGION_UPPER = "upper"
@@ -839,9 +830,7 @@ class InventoryOverlay(QWidget):
     for slot_index, button in enumerate(self._hotbar_buttons):
       item_id = str(self._hotbar_slots[slot_index]).strip()
       pixmap = self._photos.pixmap_for_item(item_id) if item_id else None
-      button.set_slot_state(
-        item_id=item_id, selected=(int(slot_index) == int(self._selected_hotbar_index)), tooltip=hotbar_slot_tooltip(self._reg, slot_index=slot_index, item_id=item_id), pixmap=pixmap
-      )
+      button.set_slot_state(item_id=item_id, selected=(int(slot_index) == int(self._selected_hotbar_index)), tooltip=hotbar_slot_tooltip(self._reg, slot_index=slot_index, item_id=item_id), pixmap=pixmap)
     for slot_index, button in enumerate(self._upper_buttons):
       item_id = str(self._upper_slots[slot_index]).strip()
       pixmap = self._photos.pixmap_for_item(item_id) if item_id else None

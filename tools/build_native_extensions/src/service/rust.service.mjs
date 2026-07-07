@@ -220,9 +220,7 @@ export function verifyRustNativeExtensions(context = {}) {
     console.log(`rust native target: ${state.id}: ${state.moduleName} -> ${displayPath(state.crateRoot)}`);
 
     if (!state.installedExists) {
-      console.error(
-        `  compiled extension: missing (${displayPath(state.installedArtifactPath)}). The Python fallback (${state.fallbackModuleName}) is not accepted by this check; run: npm run build:native`,
-      );
+      console.error(`  compiled extension: missing (${displayPath(state.installedArtifactPath)}). The Python fallback (${state.fallbackModuleName}) is not accepted by this check; run: npm run build:native`);
       failed = true;
       continue;
     }

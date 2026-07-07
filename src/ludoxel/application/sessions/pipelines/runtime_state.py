@@ -28,15 +28,7 @@ def apply_runtime_to_renderer(runtime: RuntimePreferences, renderer) -> None:
   renderer.set_cloud_seed(int(runtime.cloud_seed))
   renderer.set_cloud_flow_direction(str(runtime.cloud_flow_direction))
   renderer.set_cloud_speed_variation(bool(runtime.cloud_speed_variation_enabled), float(runtime.cloud_speed_min_blocks_per_second), float(runtime.cloud_speed_max_blocks_per_second))
-  renderer.set_cloud_height_variation(
-    bool(runtime.cloud_height_variation_enabled),
-    int(runtime.cloud_fixed_y),
-    int(runtime.cloud_spawn_y_min),
-    int(runtime.cloud_spawn_y_max),
-    int(runtime.cloud_preferred_y_min),
-    int(runtime.cloud_preferred_y_max),
-    int(runtime.cloud_preferred_y_probability_percent),
-  )
+  renderer.set_cloud_height_variation(bool(runtime.cloud_height_variation_enabled), int(runtime.cloud_fixed_y), int(runtime.cloud_spawn_y_min), int(runtime.cloud_spawn_y_max), int(runtime.cloud_preferred_y_min), int(runtime.cloud_preferred_y_max), int(runtime.cloud_preferred_y_probability_percent))
   renderer.set_animated_textures_enabled(bool(runtime.animated_textures_enabled))
   renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
   renderer.set_shadow_map_quality(int(runtime.shadow_map_quality))
@@ -55,14 +47,7 @@ def apply_persisted_settings_to_session(session, settings: PersistedSettings) ->
   session.settings.set_fly_speed(float(settings.fly_speed))
   session.settings.set_fly_ascend_speed(float(settings.fly_ascend_speed))
   session.settings.set_fly_descend_speed(float(settings.fly_descend_speed))
-  session.settings.set_player_regen(
-    PlayerRegenParams(
-      enabled=bool(settings.player_regen_enabled),
-      start_delay_s=float(settings.player_regen_start_delay_s),
-      cap_hp=float(settings.player_regen_cap_hp),
-      time_to_cap_s=float(settings.player_regen_time_to_cap_s),
-    )
-  )
+  session.settings.set_player_regen(PlayerRegenParams(enabled=bool(settings.player_regen_enabled), start_delay_s=float(settings.player_regen_start_delay_s), cap_hp=float(settings.player_regen_cap_hp), time_to_cap_s=float(settings.player_regen_time_to_cap_s)))
 
 
 def runtime_preferences_from_app_state(state: AppState | None, *, runtime: RuntimePreferences | None = None) -> RuntimePreferences:
@@ -235,11 +220,7 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
 def persisted_world_inventory_from_runtime(runtime: RuntimePreferences) -> PersistedWorldInventory:
   runtime.normalize()
   return PersistedWorldInventory(
-    hotbar_slots=tuple(runtime.my_world_hotbar_slots),
-    selected_hotbar_index=int(runtime.my_world_selected_hotbar_index),
-    upper_slots=tuple(runtime.my_world_upper_slots),
-    route_hotbar_slots=tuple(runtime.route_hotbar_slots),
-    route_selected_hotbar_index=int(runtime.route_selected_hotbar_index),
+    hotbar_slots=tuple(runtime.my_world_hotbar_slots), selected_hotbar_index=int(runtime.my_world_selected_hotbar_index), upper_slots=tuple(runtime.my_world_upper_slots), route_hotbar_slots=tuple(runtime.route_hotbar_slots), route_selected_hotbar_index=int(runtime.route_selected_hotbar_index)
   )
 
 

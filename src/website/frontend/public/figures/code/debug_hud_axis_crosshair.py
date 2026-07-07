@@ -9,34 +9,7 @@ from pathlib import Path
 from typing import Callable, Protocol
 
 import numpy as np
-from manim import (
-  BLACK,
-  BLUE_C,
-  BLUE_E,
-  DOWN,
-  GREEN_C,
-  GREEN_E,
-  GREY_A,
-  GREY_B,
-  LEFT,
-  RED_C,
-  RED_E,
-  RIGHT,
-  WHITE,
-  YELLOW_C,
-  Arrow,
-  DecimalNumber,
-  Dot,
-  Line,
-  MathTex,
-  Scene,
-  ValueTracker,
-  VGroup,
-  always_redraw,
-  config,
-  linear,
-  tempconfig,
-)
+from manim import BLACK, BLUE_C, BLUE_E, DOWN, GREEN_C, GREEN_E, GREY_A, GREY_B, LEFT, RED_C, RED_E, RIGHT, WHITE, YELLOW_C, Arrow, DecimalNumber, Dot, Line, MathTex, Scene, ValueTracker, VGroup, always_redraw, config, linear, tempconfig
 
 WORLD_AXES = (np.array([1.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0]))
 UP_HINT = np.array([0.0, 1.0, 0.0])
@@ -197,9 +170,7 @@ def clip_wire_segment_to_near_plane(start: np.ndarray, end: np.ndarray, yaw_deg:
   return clipped_start, clipped_end
 
 
-def add_wire_segment(
-  group: VGroup, start: np.ndarray, end: np.ndarray, yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, color=GREY_A, width: float = 1.15, opacity: float = 0.34
-) -> None:
+def add_wire_segment(group: VGroup, start: np.ndarray, end: np.ndarray, yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, color=GREY_A, width: float = 1.15, opacity: float = 0.34) -> None:
   clipped = clip_wire_segment_to_near_plane(start, end, yaw_deg, pitch_deg)
   if clipped is None:
     return
@@ -220,64 +191,20 @@ def cube_edges(origin: np.ndarray, size: float) -> tuple[tuple[np.ndarray, np.nd
   x, y, z = origin
   s = float(size)
 
-  vertices = {
-    "000": np.array([x, y, z]),
-    "100": np.array([x + s, y, z]),
-    "010": np.array([x, y + s, z]),
-    "110": np.array([x + s, y + s, z]),
-    "001": np.array([x, y, z + s]),
-    "101": np.array([x + s, y, z + s]),
-    "011": np.array([x, y + s, z + s]),
-    "111": np.array([x + s, y + s, z + s]),
-  }
+  vertices = {"000": np.array([x, y, z]), "100": np.array([x + s, y, z]), "010": np.array([x, y + s, z]), "110": np.array([x + s, y + s, z]), "001": np.array([x, y, z + s]), "101": np.array([x + s, y, z + s]), "011": np.array([x, y + s, z + s]), "111": np.array([x + s, y + s, z + s])}
 
-  keys = (
-    ("000", "100"),
-    ("010", "110"),
-    ("001", "101"),
-    ("011", "111"),
-    ("000", "010"),
-    ("100", "110"),
-    ("001", "011"),
-    ("101", "111"),
-    ("000", "001"),
-    ("100", "101"),
-    ("010", "011"),
-    ("110", "111"),
-  )
+  keys = (("000", "100"), ("010", "110"), ("001", "101"), ("011", "111"), ("000", "010"), ("100", "110"), ("001", "011"), ("101", "111"), ("000", "001"), ("100", "101"), ("010", "011"), ("110", "111"))
   return tuple((vertices[a], vertices[b]) for a, b in keys)
 
 
 def add_ground_grid(yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, group: VGroup) -> None:
   for z in range(GRID_Z_MIN, GRID_Z_MAX + 1):
     for x in range(GRID_X_MIN, GRID_X_MAX):
-      add_wire_segment(
-        group,
-        np.array([float(x), GRID_Y, float(z)]),
-        np.array([float(x + 1), GRID_Y, float(z)]),
-        yaw_deg,
-        pitch_deg,
-        roll_deg,
-        center,
-        color=GROUND_GRID_COLOR,
-        width=GROUND_GRID_WIDTH,
-        opacity=GROUND_GRID_OPACITY,
-      )
+      add_wire_segment(group, np.array([float(x), GRID_Y, float(z)]), np.array([float(x + 1), GRID_Y, float(z)]), yaw_deg, pitch_deg, roll_deg, center, color=GROUND_GRID_COLOR, width=GROUND_GRID_WIDTH, opacity=GROUND_GRID_OPACITY)
 
   for x in range(GRID_X_MIN, GRID_X_MAX + 1):
     for z in range(GRID_Z_MIN, GRID_Z_MAX):
-      add_wire_segment(
-        group,
-        np.array([float(x), GRID_Y, float(z)]),
-        np.array([float(x), GRID_Y, float(z + 1)]),
-        yaw_deg,
-        pitch_deg,
-        roll_deg,
-        center,
-        color=GROUND_GRID_COLOR,
-        width=GROUND_GRID_WIDTH,
-        opacity=GROUND_GRID_OPACITY,
-      )
+      add_wire_segment(group, np.array([float(x), GRID_Y, float(z)]), np.array([float(x), GRID_Y, float(z + 1)]), yaw_deg, pitch_deg, roll_deg, center, color=GROUND_GRID_COLOR, width=GROUND_GRID_WIDTH, opacity=GROUND_GRID_OPACITY)
 
 
 def add_reference_columns(yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, group: VGroup) -> None:
@@ -296,21 +223,7 @@ def voxel_wireframe(yaw_deg: float, pitch_deg: float, roll_deg: float, center: n
   add_ground_grid(yaw_deg, pitch_deg, roll_deg, center, group)
   add_reference_columns(yaw_deg, pitch_deg, roll_deg, center, group)
 
-  block_specs = (
-    ((-4, 0, 2), 0.56),
-    ((-3, 0, 2), 0.54),
-    ((-2, 0, 2), 0.52),
-    ((3, 0, 3), 0.54),
-    ((4, 0, 3), 0.52),
-    ((5, 0, 3), 0.50),
-    ((-1, 0, 5), 0.48),
-    ((0, 0, 5), 0.46),
-    ((0, 1, 5), 0.42),
-    ((-7, 0, 8), 0.36),
-    ((6, 0, 9), 0.34),
-    ((-3, 0, 12), 0.30),
-    ((3, 0, 14), 0.28),
-  )
+  block_specs = (((-4, 0, 2), 0.56), ((-3, 0, 2), 0.54), ((-2, 0, 2), 0.52), ((3, 0, 3), 0.54), ((4, 0, 3), 0.52), ((5, 0, 3), 0.50), ((-1, 0, 5), 0.48), ((0, 0, 5), 0.46), ((0, 1, 5), 0.42), ((-7, 0, 8), 0.36), ((6, 0, 9), 0.34), ((-3, 0, 12), 0.30), ((3, 0, 14), 0.28))
 
   for origin, opacity in block_specs:
     add_block_wireframe(group, origin, yaw_deg, pitch_deg, roll_deg, center, opacity=opacity)
@@ -318,9 +231,7 @@ def voxel_wireframe(yaw_deg: float, pitch_deg: float, roll_deg: float, center: n
   return group
 
 
-def add_projected_polyline(
-  group: VGroup, points: tuple[np.ndarray, ...], yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, color=WHITE, width: float = 1.0, opacity: float = 1.0
-) -> None:
+def add_projected_polyline(group: VGroup, points: tuple[np.ndarray, ...], yaw_deg: float, pitch_deg: float, roll_deg: float, center: np.ndarray, *, color=WHITE, width: float = 1.0, opacity: float = 1.0) -> None:
   for start, end in zip(points, points[1:]):
     add_wire_segment(group, start, end, yaw_deg, pitch_deg, roll_deg, center, color=color, width=width, opacity=opacity)
 
@@ -389,34 +300,12 @@ def world_label_5uog(yaw_deg: float, pitch_deg: float, roll_deg: float, center: 
 
   add_projected_polyline(group, sign_corners, yaw_deg, pitch_deg, roll_deg, center, color=YELLOW_C, width=max(0.62, stroke_width * 0.42), opacity=0.30 * depth_opacity)
 
-  add_wire_segment(
-    group,
-    np.array([sign_center[0], 0.12, sign_center[2]]),
-    sign_plane_point(sign_center, 0.0, -sign_height * 0.52),
-    yaw_deg,
-    pitch_deg,
-    roll_deg,
-    center,
-    color=YELLOW_C,
-    width=max(0.60, stroke_width * 0.36),
-    opacity=0.28 * depth_opacity,
-  )
+  add_wire_segment(group, np.array([sign_center[0], 0.12, sign_center[2]]), sign_plane_point(sign_center, 0.0, -sign_height * 0.52), yaw_deg, pitch_deg, roll_deg, center, color=YELLOW_C, width=max(0.60, stroke_width * 0.36), opacity=0.28 * depth_opacity)
 
   for start, end in glyph_strokes():
     local_start = (text_left + start[0], text_bottom + start[1])
     local_end = (text_left + end[0], text_bottom + end[1])
-    add_wire_segment(
-      group,
-      sign_plane_point(sign_center, local_start[0], local_start[1]),
-      sign_plane_point(sign_center, local_end[0], local_end[1]),
-      yaw_deg,
-      pitch_deg,
-      roll_deg,
-      center,
-      color=YELLOW_C,
-      width=stroke_width * 1.08,
-      opacity=depth_opacity,
-    )
+    add_wire_segment(group, sign_plane_point(sign_center, local_start[0], local_start[1]), sign_plane_point(sign_center, local_end[0], local_end[1]), yaw_deg, pitch_deg, roll_deg, center, color=YELLOW_C, width=stroke_width * 1.08, opacity=depth_opacity)
 
   return group
 
@@ -522,14 +411,7 @@ def make_value(function: Callable[[], float], *, color=WHITE, scale: float = 0.4
 
 
 def numeric_pair(prefix: str, first: Callable[[], float], second: Callable[[], float], *, color=WHITE, size: int = 19, scale: float = 0.34) -> VGroup:
-  group = VGroup(
-    tex(prefix + r"=", size=size, color=color),
-    tex(r"(", size=size, color=GREY_A),
-    make_value(first, color=color, scale=scale),
-    tex(r",", size=size, color=GREY_A),
-    make_value(second, color=color, scale=scale),
-    tex(r")", size=size, color=GREY_A),
-  )
+  group = VGroup(tex(prefix + r"=", size=size, color=color), tex(r"(", size=size, color=GREY_A), make_value(first, color=color, scale=scale), tex(r",", size=size, color=GREY_A), make_value(second, color=color, scale=scale), tex(r")", size=size, color=GREY_A))
   group.arrange(RIGHT, buff=0.022)
   return group
 

@@ -336,25 +336,14 @@ def _handle_loading_state_changed(self, active: bool) -> None:
         ],
       },
     ],
-    relatedTitles: [
-      'Reading the Main Window',
-      'Switching Play Spaces',
-      'Changing Camera Preferences',
-      'Writing a Problem Report',
-      'Supplying Platform Evidence',
-      'Supplying Logs Without Secrets',
-      'Asking a Limited Question',
-      'Separating Security Reports from Problem Reports',
-      'Understanding Unsafe Public Content',
-    ],
+    relatedTitles: ['Reading the Main Window', 'Switching Play Spaces', 'Changing Camera Preferences', 'Writing a Problem Report', 'Supplying Platform Evidence', 'Supplying Logs Without Secrets', 'Asking a Limited Question', 'Separating Security Reports from Problem Reports', 'Understanding Unsafe Public Content'],
   }),
   defineDocsArticle({
     category: 'Manual',
     subcategory: 'Starting the Application',
     group: 'Launch and Space Selection',
     title: 'Using the Startup Menu and My World Library',
-    description:
-      'Explains the startup menu shown after loading, the profile and skin controls, the in-application changelog, and the My World library where worlds are selected, created, renamed, deleted, exported, and imported.',
+    description: 'Explains the startup menu shown after loading, the profile and skin controls, the in-application changelog, and the My World library where worlds are selected, created, renamed, deleted, exported, and imported.',
     sections: [
       {
         id: 'startup-menu-first-surface',
@@ -1416,11 +1405,9 @@ player.clamp_pitch()`,
         ],
         mathBlocks: [
           {
-            expression:
-              '\\varphi \\leftarrow \\operatorname{clamp}\\bigl(\\varphi + \\Delta\\varphi,\\ -89.5^{\\circ},\\ 89.5^{\\circ}\\bigr), \\qquad \\psi \\leftarrow \\psi + \\Delta\\psi \\;\\; (\\text{unbounded})',
+            expression: '\\varphi \\leftarrow \\operatorname{clamp}\\bigl(\\varphi + \\Delta\\varphi,\\ -89.5^{\\circ},\\ 89.5^{\\circ}\\bigr), \\qquad \\psi \\leftarrow \\psi + \\Delta\\psi \\;\\; (\\text{unbounded})',
             displayMode: true,
-            caption:
-              'clamp_pitch in src/ludoxel/simulation/actors/player/entity.py bounds the pitch φ to ±89.5° after each step, while the yaw ψ accumulates without limit, so the view turns fully but never rolls past vertical.',
+            caption: 'clamp_pitch in src/ludoxel/simulation/actors/player/entity.py bounds the pitch φ to ±89.5° after each step, while the yaw ψ accumulates without limit, so the view turns fully but never rolls past vertical.',
           },
         ],
         codeBlocks: [
@@ -1503,8 +1490,7 @@ self._warp_cursor_to_center()`,
           {
             expression: '\\Delta\\psi = -\\,\\Delta x \\cdot s, \\qquad \\Delta\\varphi = \\Delta y \\cdot s, \\qquad s = \\texttt{mouse\\_sens\\_deg\\_per\\_px}',
             displayMode: true,
-            caption:
-              'The look mapping in src/ludoxel/application/sessions/managers/stepping.py multiplies the raw pixel offset by the sensitivity s in degrees per pixel; the yaw delta Δψ is negated so a rightward push turns the view right, and inversion preferences are applied to Δx and Δy upstream.',
+            caption: 'The look mapping in src/ludoxel/application/sessions/managers/stepping.py multiplies the raw pixel offset by the sensitivity s in degrees per pixel; the yaw delta Δψ is negated so a rightward push turns the view right, and inversion preferences are applied to Δx and Δy upstream.',
           },
         ],
       },
@@ -1815,11 +1801,9 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
         ],
         mathBlocks: [
           {
-            expression:
-              '\\alpha = 1 - e^{-18\\,\\Delta t}, \\qquad o \\leftarrow \\operatorname{clamp}\\bigl(o + (o^{*} - o)\\,\\alpha,\\ 0,\\ o_{\\max}\\bigr), \\qquad o^{*} = \\begin{cases} o_{\\max} & \\text{crouching} \\\\[1pt] 0 & \\text{otherwise} \\end{cases}',
+            expression: '\\alpha = 1 - e^{-18\\,\\Delta t}, \\qquad o \\leftarrow \\operatorname{clamp}\\bigl(o + (o^{*} - o)\\,\\alpha,\\ 0,\\ o_{\\max}\\bigr), \\qquad o^{*} = \\begin{cases} o_{\\max} & \\text{crouching} \\\\[1pt] 0 & \\text{otherwise} \\end{cases}',
             displayMode: true,
-            caption:
-              '_update_crouch_eye in src/ludoxel/simulation/actors/player/kinematics.py drives the eye offset o toward its target with a frame-rate-independent decay α; the same form smooths the step-up offset, and o_max = crouch_eye_drop = 0.25 blocks bounds the drop.',
+            caption: '_update_crouch_eye in src/ludoxel/simulation/actors/player/kinematics.py drives the eye offset o toward its target with a frame-rate-independent decay α; the same form smooths the step-up offset, and o_max = crouch_eye_drop = 0.25 blocks bounds the drop.',
           },
         ],
         codeBlocks: [
@@ -2003,8 +1987,7 @@ MELEE_HURT_TILT_S = 0.18`,
     subcategory: 'Controlling the Session',
     group: 'Chat and Commands',
     title: 'Using Chat and Commands',
-    description:
-      'Explains how to open and close the shared chat screen in My World and Othello, send messages and commands, read the heads-up feed after closing, and open the embedded Chat Settings, grounded in the chat surfaces and the chat runtime.',
+    description: 'Explains how to open and close the shared chat screen in My World and Othello, send messages and commands, read the heads-up feed after closing, and open the embedded Chat Settings, grounded in the chat surfaces and the chat runtime.',
     sections: [
       {
         id: 'using-chat-opening',

@@ -20,9 +20,7 @@ class _HorizontalMoveResult:
   step_up_dy: float
 
 
-def _resolve_downward_snap(
-  player: PlayerEntity, world: WorldState, pos: Vec3, drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> tuple[Vec3, bool]:
+def _resolve_downward_snap(player: PlayerEntity, world: WorldState, pos: Vec3, drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> tuple[Vec3, bool]:
   eps = float(params.eps)
   dy = -float(max(0.0, drop))
   if dy >= 0.0:
@@ -42,18 +40,7 @@ def _resolve_downward_snap(
   return Vec3(pos_y.x, float(best_support_y) + eps, pos_y.z), True
 
 
-def _try_step_up_height(
-  player: PlayerEntity,
-  world: WorldState,
-  pos: Vec3,
-  dx: float,
-  dz: float,
-  height: float,
-  params: CollisionParams,
-  *,
-  block_registry: BlockRegistry,
-  collision_exempt_cell: tuple[int, int, int] | None = None,
-) -> Vec3 | None:
+def _try_step_up_height(player: PlayerEntity, world: WorldState, pos: Vec3, dx: float, dz: float, height: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> Vec3 | None:
   sh = float(max(0.0, height))
   if sh <= 1e-6:
     return None
@@ -73,9 +60,7 @@ def _try_step_up_height(
   return landed
 
 
-def _axis_collision_position(
-  player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> Vec3:
+def _axis_collision_position(player: PlayerEntity, world: WorldState, pos_try: Vec3, *, axis: str, delta: float, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> Vec3:
   eps = float(params.eps)
   half_width = float(player.width) * 0.5
   pos_axis = pos_try
@@ -116,18 +101,7 @@ def _axis_collision_position(
   return pos_axis
 
 
-def _resolve_horizontal_axis_move(
-  player: PlayerEntity,
-  world: WorldState,
-  pos: Vec3,
-  *,
-  axis: str,
-  delta: float,
-  allow_step: bool,
-  params: CollisionParams,
-  block_registry: BlockRegistry,
-  collision_exempt_cell: tuple[int, int, int] | None = None,
-) -> _HorizontalMoveResult:
+def _resolve_horizontal_axis_move(player: PlayerEntity, world: WorldState, pos: Vec3, *, axis: str, delta: float, allow_step: bool, params: CollisionParams, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> _HorizontalMoveResult:
   if str(axis) == "x":
     pos_try = Vec3(pos.x + float(delta), pos.y, pos.z)
     step_dx = float(delta)

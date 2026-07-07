@@ -10,8 +10,7 @@ import DocsMath from './DocsMath';
 type InlineTextPart = string | React.JSX.Element;
 
 const INLINE_LINK_CLASS_NAME = 'link font-semibold underline decoration-current underline-offset-4 transition-opacity hover:opacity-80';
-const INLINE_CODE_CLASS_NAME =
-  'inline max-w-full whitespace-normal break-words rounded border border-border bg-secondary px-1.5 py-0.5 align-baseline font-mono text-[0.92em] text-foreground [overflow-wrap:anywhere]';
+const INLINE_CODE_CLASS_NAME = 'inline max-w-full whitespace-normal break-words rounded border border-border bg-secondary px-1.5 py-0.5 align-baseline font-mono text-[0.92em] text-foreground [overflow-wrap:anywhere]';
 
 function isEscaped(text: string, index: number): boolean {
   let backslashCount = 0;

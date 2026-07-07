@@ -5,17 +5,7 @@
 import { existsSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
 
-import {
-  APP_NAME,
-  MACOS_BUNDLE_IDENTIFIER,
-  MACOS_ENTRY_SCRIPT,
-  MACOS_ICON_CANDIDATE_PATHS,
-  PYINSTALLER_SPEC_ROOT,
-  PYINSTALLER_STAGING_ROOT,
-  PYINSTALLER_WORK_ROOT,
-  WINDOWS_ENTRY_SCRIPT,
-  WINDOWS_ICON_CANDIDATE_PATHS,
-} from '../../config/build.config.mjs';
+import { APP_NAME, MACOS_BUNDLE_IDENTIFIER, MACOS_ENTRY_SCRIPT, MACOS_ICON_CANDIDATE_PATHS, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT, WINDOWS_ENTRY_SCRIPT, WINDOWS_ICON_CANDIDATE_PATHS } from '../../config/build.config.mjs';
 import { PROJECT_ROOT } from '../../config/path.config.mjs';
 
 function pyinstallerDataSeparator(targetPlatform = process.platform) {
@@ -244,27 +234,7 @@ export function buildMacosPyinstallerCommand({ pythonExecutable, token }) {
   const workDir = resolve(PROJECT_ROOT, PYINSTALLER_WORK_ROOT, token);
   const specDir = resolve(PROJECT_ROOT, PYINSTALLER_SPEC_ROOT, token);
   const stagingDir = resolve(PROJECT_ROOT, PYINSTALLER_STAGING_ROOT, token);
-  const args = [
-    '-m',
-    'PyInstaller',
-    '--noconfirm',
-    '--clean',
-    '--windowed',
-    '--name',
-    APP_NAME,
-    '--osx-bundle-identifier',
-    MACOS_BUNDLE_IDENTIFIER,
-    '--distpath',
-    stagingDir,
-    '--workpath',
-    workDir,
-    '--specpath',
-    specDir,
-    '--paths',
-    resolve(PROJECT_ROOT, 'src'),
-    '--collect-data',
-    'ludoxel',
-  ];
+  const args = ['-m', 'PyInstaller', '--noconfirm', '--clean', '--windowed', '--name', APP_NAME, '--osx-bundle-identifier', MACOS_BUNDLE_IDENTIFIER, '--distpath', stagingDir, '--workpath', workDir, '--specpath', specDir, '--paths', resolve(PROJECT_ROOT, 'src'), '--collect-data', 'ludoxel'];
 
   addApplicationBootstrapHiddenImports(args);
   addRendererBackendArgs(args, 'darwin');

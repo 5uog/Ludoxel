@@ -37,9 +37,7 @@ def normalize_cloud_speed_range(min_speed: object, max_speed: object) -> tuple[f
   return (float(lo), float(hi))
 
 
-def normalize_cloud_height_settings(
-  fixed_y: object, spawn_y_min: object, spawn_y_max: object, preferred_y_min: object, preferred_y_max: object, preferred_y_probability_percent: object
-) -> tuple[int, int, int, int, int, int]:
+def normalize_cloud_height_settings(fixed_y: object, spawn_y_min: object, spawn_y_max: object, preferred_y_min: object, preferred_y_max: object, preferred_y_probability_percent: object) -> tuple[int, int, int, int, int, int]:
   fixed = clampi(int(fixed_y), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
   spawn_lo = clampi(int(spawn_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
   spawn_hi = clampi(int(spawn_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))

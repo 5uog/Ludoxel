@@ -15,15 +15,7 @@ type ChangelogPaginationProps = {
   jumpToPage: () => void;
 };
 
-export default function ChangelogPagination({
-  currentPage,
-  pageJumpValue,
-  totalPages,
-  goToPage,
-  handlePageJumpChange,
-  handlePageJumpKeyDown,
-  jumpToPage,
-}: ChangelogPaginationProps): React.JSX.Element | null {
+export default function ChangelogPagination({ currentPage, pageJumpValue, totalPages, goToPage, handlePageJumpChange, handlePageJumpKeyDown, jumpToPage }: ChangelogPaginationProps): React.JSX.Element | null {
   if (totalPages <= 1) {
     return null;
   }
@@ -53,13 +45,7 @@ export default function ChangelogPagination({
             }
 
             return (
-              <button
-                aria-current={item.page === currentPage ? 'page' : undefined}
-                className={getChangelogPageNumberButtonClassName(item.page === currentPage)}
-                key={item.page}
-                type="button"
-                onClick={() => goToPage(item.page)}
-              >
+              <button aria-current={item.page === currentPage ? 'page' : undefined} className={getChangelogPageNumberButtonClassName(item.page === currentPage)} key={item.page} type="button" onClick={() => goToPage(item.page)}>
                 {item.page}
               </button>
             );

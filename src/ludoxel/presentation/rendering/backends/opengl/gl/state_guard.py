@@ -6,22 +6,7 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Sequence
 
-from OpenGL.GL import (
-  GL_CULL_FACE_MODE,
-  GL_FRAMEBUFFER,
-  GL_FRAMEBUFFER_BINDING,
-  GL_FRONT_AND_BACK,
-  GL_POLYGON_MODE,
-  GL_VIEWPORT,
-  glBindFramebuffer,
-  glCullFace,
-  glDisable,
-  glEnable,
-  glGetIntegerv,
-  glIsEnabled,
-  glPolygonMode,
-  glViewport,
-)
+from OpenGL.GL import GL_CULL_FACE_MODE, GL_FRAMEBUFFER, GL_FRAMEBUFFER_BINDING, GL_FRONT_AND_BACK, GL_POLYGON_MODE, GL_VIEWPORT, glBindFramebuffer, glCullFace, glDisable, glEnable, glGetIntegerv, glIsEnabled, glPolygonMode, glViewport
 
 
 @dataclass(frozen=True)
@@ -31,9 +16,7 @@ class _EnableCapState:
 
 
 class GLStateGuard:
-  def __init__(
-    self, *, capture_framebuffer: bool = True, capture_viewport: bool = True, capture_enables: Sequence[int] = (), capture_cull_mode: bool = False, capture_polygon_mode: bool = False
-  ) -> None:
+  def __init__(self, *, capture_framebuffer: bool = True, capture_viewport: bool = True, capture_enables: Sequence[int] = (), capture_cull_mode: bool = False, capture_polygon_mode: bool = False) -> None:
     self._cap_fb = bool(capture_framebuffer)
     self._cap_vp = bool(capture_viewport)
     self._cap_en = tuple(int(x) for x in capture_enables)

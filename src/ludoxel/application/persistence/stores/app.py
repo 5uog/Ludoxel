@@ -82,13 +82,7 @@ class AppStateStore:
     return AppState(current_space_id=app_file.current_space_id, settings=settings, othello_settings=app_file.othello_settings.normalized(), my_world=my_world, othello_space=app_file.othello_space)
 
   def save(self, state: AppState, *, my_world_thumbnail_bytes: bytes | None = None) -> None:
-    app_file = PersistedAppFile(
-      version=int(APP_STATE_FILE_VERSION),
-      current_space_id=state.current_space_id,
-      settings=state.settings,
-      othello_settings=state.othello_settings.normalized(),
-      othello_space=(state.othello_space if isinstance(state.othello_space, PersistedOthelloSpace) else PersistedOthelloSpace()),
-    )
+    app_file = PersistedAppFile(version=int(APP_STATE_FILE_VERSION), current_space_id=state.current_space_id, settings=state.settings, othello_settings=state.othello_settings.normalized(), othello_space=(state.othello_space if isinstance(state.othello_space, PersistedOthelloSpace) else PersistedOthelloSpace()))
 
     self._app_store().write(app_file.to_dict())
     update_runtime_integrity_manifest(self._data_root(), (_APP_STATE_RELATIVE,))

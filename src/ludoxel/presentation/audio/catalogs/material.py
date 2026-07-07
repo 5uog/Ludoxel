@@ -45,9 +45,7 @@ BLOCK_EVENT_INTERACT_CLOSE = "interact_close"
 PLAYER_EVENT_STEP = "step"
 
 
-def _block_material_catalog(
-  material: str, *, place_count: int = 4, break_count: int = 4, open_count: int = 0, close_count: int = 0, place_polyphony: int = 4, break_polyphony: int = 4, interact_polyphony: int = 2
-) -> dict[str, AudioSamplePool]:
+def _block_material_catalog(material: str, *, place_count: int = 4, break_count: int = 4, open_count: int = 0, close_count: int = 0, place_polyphony: int = 4, break_polyphony: int = 4, interact_polyphony: int = 2) -> dict[str, AudioSamplePool]:
   base = f"assets/audio/block/{material}"
   catalog: dict[str, AudioSamplePool] = {
     BLOCK_EVENT_PLACE: make_audio_pool(*indexed_paths(f"{base}/place", "place", place_count), category=AUDIO_CATEGORY_BLOCK, max_polyphony=place_polyphony),
@@ -64,16 +62,7 @@ def _block_material_catalog(
 
 
 def _step_pool(material: str, *, count: int = 6, cooldown_s: float = 0.045, max_polyphony: int = 4) -> AudioSamplePool:
-  return make_audio_pool(
-    *indexed_paths(f"assets/audio/player/footstep/{material}", "step", count),
-    category=AUDIO_CATEGORY_PLAYER,
-    selection_mode=SELECTION_ROUND_ROBIN,
-    spatial=False,
-    distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-    size=0.0,
-    max_polyphony=max_polyphony,
-    cooldown_s=cooldown_s,
-  )
+  return make_audio_pool(*indexed_paths(f"assets/audio/player/footstep/{material}", "step", count), category=AUDIO_CATEGORY_PLAYER, selection_mode=SELECTION_ROUND_ROBIN, spatial=False, distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF, size=0.0, max_polyphony=max_polyphony, cooldown_s=cooldown_s)
 
 
 BLOCK_SOUND_CATALOG: dict[str, dict[str, AudioSamplePool]] = {

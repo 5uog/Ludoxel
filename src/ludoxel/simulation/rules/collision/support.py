@@ -98,9 +98,7 @@ def _ground_probe(player: PlayerEntity, world: WorldState, params: CollisionPara
   return _has_support_at(player, world, player.position, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
 
 
-def support_block_beneath(
-  player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> SupportBlockContact | None:
+def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, collision_exempt_cell: tuple[int, int, int] | None = None) -> SupportBlockContact | None:
   feet_y = float(player.position.y)
   eps = float(max(float(params.eps), 1e-5))
   probe_depth = float(max(float(params.ground_probe), eps * 2.0, 0.25))

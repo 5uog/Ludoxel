@@ -34,14 +34,7 @@ function DocsArticleFeedbackButton({ activeVote, disabled, label, vote, onSelect
   const Icon = vote === 'yes' ? ThumbsUp : ThumbsDown;
 
   return (
-    <button
-      aria-pressed={isActive}
-      className={getFeedbackButtonClassName(isActive)}
-      disabled={disabled}
-      id={vote === 'yes' ? 'feedback-thumbs-up' : 'feedback-thumbs-down'}
-      onClick={() => onSelect(vote)}
-      type="button"
-    >
+    <button aria-pressed={isActive} className={getFeedbackButtonClassName(isActive)} disabled={disabled} id={vote === 'yes' ? 'feedback-thumbs-up' : 'feedback-thumbs-down'} onClick={() => onSelect(vote)} type="button">
       <Icon aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
       <small className="text-sm font-normal leading-4">{label}</small>
     </button>

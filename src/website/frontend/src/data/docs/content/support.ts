@@ -10,8 +10,7 @@ export const supportPages: DocsPageContent[] = [
     subcategory: 'Public Problem Support',
     group: 'Issue Report Content',
     title: 'Writing a Problem Report',
-    description:
-      'Defines the public problem-report form as a narrow non-security support channel, including required fields, prohibited public content, and the boundary between observable evidence and contribution or security material.',
+    description: 'Defines the public problem-report form as a narrow non-security support channel, including required fields, prohibited public content, and the boundary between observable evidence and contribution or security material.',
     sections: [
       {
         id: 'writing-a-problem-report-channel-authority',
@@ -151,21 +150,14 @@ body:
         ],
       },
     ],
-    relatedTitles: [
-      'Supplying Reproduction Steps',
-      'Supplying Platform Evidence',
-      'Supplying Logs Without Secrets',
-      'Separating Security Reports from Problem Reports',
-      'Understanding Public Issue Limits',
-    ],
+    relatedTitles: ['Supplying Reproduction Steps', 'Supplying Platform Evidence', 'Supplying Logs Without Secrets', 'Separating Security Reports from Problem Reports', 'Understanding Public Issue Limits'],
   }),
   defineDocsArticle({
     category: 'Support',
     subcategory: 'Public Problem Support',
     group: 'Issue Report Content',
     title: 'Supplying Reproduction Steps',
-    description:
-      'Defines reproduction steps as public, non-sensitive evidence for a non-security problem report, and separates reproducible observation from diagnosis, exploit disclosure, private files, and implementation proposals.',
+    description: 'Defines reproduction steps as public, non-sensitive evidence for a non-security problem report, and separates reproducible observation from diagnosis, exploit disclosure, private files, and implementation proposals.',
     sections: [
       {
         id: 'supplying-reproduction-steps-evidentiary-function',
@@ -251,8 +243,7 @@ body:
     subcategory: 'Public Problem Support',
     group: 'Evidence Handling',
     title: 'Supplying Platform Evidence',
-    description:
-      'Defines how platform and environment evidence supports a Ludoxel problem report when operating system, Python, PyQt6, GPU, OpenGL, package state, or build path materially affects reproducibility.',
+    description: 'Defines how platform and environment evidence supports a Ludoxel problem report when operating system, Python, PyQt6, GPU, OpenGL, package state, or build path materially affects reproducibility.',
     sections: [
       {
         id: 'supplying-platform-evidence-purpose',
@@ -335,8 +326,7 @@ body:
     subcategory: 'Public Problem Support',
     group: 'Evidence Handling',
     title: 'Supplying Logs Without Secrets',
-    description:
-      'Defines how logs and additional context may be used in public Ludoxel support only after secrets, private files, vulnerability details, and non-public reproduction information have been removed.',
+    description: 'Defines how logs and additional context may be used in public Ludoxel support only after secrets, private files, vulnerability details, and non-public reproduction information have been removed.',
     sections: [
       {
         id: 'supplying-logs-without-secrets-context-field',
@@ -623,8 +613,7 @@ body:
     subcategory: 'Security and Safety Support',
     group: 'Public Safety Limits',
     title: 'Avoiding Public Exploit Details',
-    description:
-      'Defines why vulnerability mechanisms, exploit procedures, proof-of-concept code, sensitive URLs, secrets, and non-public reproduction information must be excluded from public Ludoxel support channels.',
+    description: 'Defines why vulnerability mechanisms, exploit procedures, proof-of-concept code, sensitive URLs, secrets, and non-public reproduction information must be excluded from public Ludoxel support channels.',
     sections: [
       {
         id: 'avoiding-public-exploit-details-categorical-public-exclusion',
@@ -701,8 +690,7 @@ body:
     subcategory: 'Security and Safety Support',
     group: 'Public Safety Limits',
     title: 'Understanding Unsafe Public Content',
-    description:
-      'Defines content that must not be placed in public Ludoxel support channels and states why usefulness, good faith, or public GitHub visibility does not make excluded material acceptable.',
+    description: 'Defines content that must not be placed in public Ludoxel support channels and states why usefulness, good faith, or public GitHub visibility does not make excluded material acceptable.',
     sections: [
       {
         id: 'understanding-unsafe-public-content-definition',
@@ -772,8 +760,7 @@ body:
     subcategory: 'Scope and Closure Support',
     group: 'Limited Question Scope',
     title: 'Asking a Limited Question',
-    description:
-      'Defines the limited-question form as a narrow public route for repository-policy, license, third-party-material, ordinary-use, packaging, build-status, and security-reporting questions.',
+    description: 'Defines the limited-question form as a narrow public route for repository-policy, license, third-party-material, ordinary-use, packaging, build-status, and security-reporting questions.',
     sections: [
       {
         id: 'asking-a-limited-question-form-function',
@@ -874,8 +861,7 @@ body:
     subcategory: 'Scope and Closure Support',
     group: 'Limited Question Scope',
     title: 'Keeping a Question Within Scope',
-    description:
-      'Defines how a limited public question remains inside the repository-policy subjects accepted by the issue template without turning it into a feature request, contribution, public security disclosure, or unsupported demand.',
+    description: 'Defines how a limited public question remains inside the repository-policy subjects accepted by the issue template without turning it into a feature request, contribution, public security disclosure, or unsupported demand.',
     sections: [
       {
         id: 'keeping-a-question-within-scope-question-standard',
@@ -962,8 +948,7 @@ body:
     subcategory: 'Scope and Closure Support',
     group: 'Unsupported Requests',
     title: 'Avoiding Feature Requests',
-    description:
-      'Defines why Ludoxel public support forms do not accept feature requests, feature implementations, patches, refactoring proposals, design submissions, or replacement repository content.',
+    description: 'Defines why Ludoxel public support forms do not accept feature requests, feature implementations, patches, refactoring proposals, design submissions, or replacement repository content.',
     sections: [
       {
         id: 'avoiding-feature-requests-contribution-boundary',
@@ -1041,8 +1026,7 @@ body:
     subcategory: 'Scope and Closure Support',
     group: 'Unsupported Requests',
     title: 'Understanding Closure Without Review',
-    description:
-      'Defines closure without review as an enforcement of repository support and contribution boundaries, not as technical evaluation, legal acceptance, remediation commitment, or permission.',
+    description: 'Defines closure without review as an enforcement of repository support and contribution boundaries, not as technical evaluation, legal acceptance, remediation commitment, or permission.',
     sections: [
       {
         id: 'understanding-closure-without-review-public-submission-boundary',
@@ -1108,8 +1092,7 @@ body:
     subcategory: 'Scope and Closure Support',
     group: 'Unsupported Requests',
     title: 'Understanding Unsupported Requests',
-    description:
-      'Defines request categories outside Ludoxel support scope and why unsupported material cannot be made acceptable by relabeling it as a problem report, limited question, or security contact request.',
+    description: 'Defines request categories outside Ludoxel support scope and why unsupported material cannot be made acceptable by relabeling it as a problem report, limited question, or security contact request.',
     sections: [
       {
         id: 'understanding-unsupported-requests-definition',

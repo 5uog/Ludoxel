@@ -7,23 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable
 
-from OpenGL.GL import (
-  GL_CLAMP_TO_EDGE,
-  GL_NEAREST,
-  GL_RGBA,
-  GL_TEXTURE_2D,
-  GL_TEXTURE_MAG_FILTER,
-  GL_TEXTURE_MIN_FILTER,
-  GL_TEXTURE_WRAP_S,
-  GL_TEXTURE_WRAP_T,
-  GL_UNSIGNED_BYTE,
-  glBindTexture,
-  glDeleteTextures,
-  glGenTextures,
-  glTexImage2D,
-  glTexParameteri,
-  glTexSubImage2D,
-)
+from OpenGL.GL import GL_CLAMP_TO_EDGE, GL_NEAREST, GL_RGBA, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_UNSIGNED_BYTE, glBindTexture, glDeleteTextures, glGenTextures, glTexImage2D, glTexParameteri, glTexSubImage2D
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QImage, QPainter
 

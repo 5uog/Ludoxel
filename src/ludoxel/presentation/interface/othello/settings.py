@@ -98,18 +98,7 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     add_page_header(layout, host, title="Match", subtitle="Opponent strength, player order, disc animation, and clock behavior.")
     _card, body, body_layout = add_settings_card(layout, host, title="Match", description="Changes are applied immediately to the persisted Othello settings.")
 
-    self._difficulty = self._add_combo(
-      body_layout,
-      body,
-      "AI difficulty",
-      (
-        (OTHELLO_DIFFICULTY_WEAK, "Weak"),
-        (OTHELLO_DIFFICULTY_MEDIUM, "Medium"),
-        (OTHELLO_DIFFICULTY_STRONG, "Strong"),
-        (OTHELLO_DIFFICULTY_INSANE, "Insane"),
-        (OTHELLO_DIFFICULTY_INSANE_PLUS, "Insane+"),
-      ),
-    )
+    self._difficulty = self._add_combo(body_layout, body, "AI difficulty", ((OTHELLO_DIFFICULTY_WEAK, "Weak"), (OTHELLO_DIFFICULTY_MEDIUM, "Medium"), (OTHELLO_DIFFICULTY_STRONG, "Strong"), (OTHELLO_DIFFICULTY_INSANE, "Insane"), (OTHELLO_DIFFICULTY_INSANE_PLUS, "Insane+")))
     self._time_control = self._add_combo(
       body_layout,
       body,
@@ -126,9 +115,7 @@ class OthelloSettingsOverlay(SidebarDialogBase):
         (OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"),
       ),
     )
-    self._animation_mode = self._add_combo(
-      body_layout, body, "Disc animation", ((OTHELLO_ANIMATION_OFF, "Animation off"), (OTHELLO_ANIMATION_FAST, "Ripple fast"), (OTHELLO_ANIMATION_SLOW, "Ripple slow"))
-    )
+    self._animation_mode = self._add_combo(body_layout, body, "Disc animation", ((OTHELLO_ANIMATION_OFF, "Animation off"), (OTHELLO_ANIMATION_FAST, "Ripple fast"), (OTHELLO_ANIMATION_SLOW, "Ripple slow")))
     self._player_side = self._add_combo(body_layout, body, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
     layout.addStretch(1)
     self._stack.addWidget(scroll)
@@ -172,15 +159,9 @@ class OthelloSettingsOverlay(SidebarDialogBase):
     add_page_header(layout, host, title="Learning", subtitle="Opening-book learning depth, error limits, progress, and cancellation.")
     _card, body, body_layout = add_settings_card(layout, host, title="Learning Parameters", description="Learning uses the current Othello settings without changing the book schema.")
     self._book_learning_depth = self._add_spin(body_layout, body, "Book depth", minimum=int(OTHELLO_BOOK_LEARNING_DEPTH_MIN), maximum=int(OTHELLO_BOOK_LEARNING_DEPTH_MAX))
-    self._book_per_move_error = self._add_double_spin(
-      body_layout, body, "Per-move error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR)
-    )
-    self._book_cumulative_error = self._add_double_spin(
-      body_layout, body, "Cumulative error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR)
-    )
-    self._book_leaf_error = self._add_double_spin(
-      body_layout, body, "Leaf error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR)
-    )
+    self._book_per_move_error = self._add_double_spin(body_layout, body, "Per-move error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR))
+    self._book_cumulative_error = self._add_double_spin(body_layout, body, "Cumulative error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR))
+    self._book_leaf_error = self._add_double_spin(body_layout, body, "Leaf error", minimum=float(OTHELLO_BOOK_ERROR_MIN), maximum=float(OTHELLO_BOOK_ERROR_MAX), default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR))
     self._learning_status = QLabel("", host)
     self._learning_status.setObjectName("subtitle")
     self._learning_status.setWordWrap(True)

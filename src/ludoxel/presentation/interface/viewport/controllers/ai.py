@@ -186,11 +186,7 @@ def _open_actor_dialog(viewport: "RendererViewportWidget", *, actor_id: str, ini
   )
   viewport._ai_settings_dialog = dialog
   dialog.preview_requested.connect(lambda: open_ai_settings_preview(viewport))
-  dialog.finished.connect(
-    lambda _result, captured_dialog=dialog, captured_actor=str(actor_id), captured_was_captured=bool(was_captured): _on_actor_dialog_finished(
-      viewport, actor_id=captured_actor, was_captured=captured_was_captured, dialog=captured_dialog
-    )
-  )
+  dialog.finished.connect(lambda _result, captured_dialog=dialog, captured_actor=str(actor_id), captured_was_captured=bool(was_captured): _on_actor_dialog_finished(viewport, actor_id=captured_actor, was_captured=captured_was_captured, dialog=captured_dialog))
   dialog.setGeometry(0, 0, max(1, int(viewport.width())), max(1, int(viewport.height())))
   dialog.setVisible(True)
   dialog.raise_()
@@ -363,9 +359,7 @@ def _route_point_from_top_face_hit(hit) -> AiRoutePoint | None:
   if hit is None or int(hit.face) != int(FACE_POS_Y):
     return None
   cell_x, _cell_y, cell_z = (int(hit.hit[0]), int(hit.hit[1]), int(hit.hit[2]))
-  return AiRoutePoint(
-    x=clampf(float(hit.hit_point.x), float(cell_x) + 0.15, float(cell_x) + 0.85), y=float(hit.hit_point.y), z=clampf(float(hit.hit_point.z), float(cell_z) + 0.15, float(cell_z) + 0.85)
-  )
+  return AiRoutePoint(x=clampf(float(hit.hit_point.x), float(cell_x) + 0.15, float(cell_x) + 0.85), y=float(hit.hit_point.y), z=clampf(float(hit.hit_point.z), float(cell_z) + 0.15, float(cell_z) + 0.85))
 
 
 def handle_route_left_click(viewport: "RendererViewportWidget") -> bool:

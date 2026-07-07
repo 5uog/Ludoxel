@@ -24,6 +24,4 @@ class OthelloSessionSeed:
 
 def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
   spec = OthelloSessionSeed(seed=int(seed))
-  return make_session_manager(
-    seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=make_othello_world_state(), block_registry=block_registry
-  )
+  return make_session_manager(seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=make_othello_world_state(), block_registry=block_registry)

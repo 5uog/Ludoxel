@@ -11,12 +11,7 @@ export const EXPORT_HELP_MESSAGES = Object.freeze({
       options: 'Options:',
       examples: 'Examples:',
     }),
-    usage: Object.freeze([
-      'npm run tools:export -- [target] [options]',
-      'npm run tools:export -- --target <target> [options]',
-      'node tools/export_directory_markdown/scripts/run-export.mjs [target] [options]',
-      'node tools/export_directory_markdown/scripts/run-export.mjs --target <target> [options]',
-    ]),
+    usage: Object.freeze(['npm run tools:export -- [target] [options]', 'npm run tools:export -- --target <target> [options]', 'node tools/export_directory_markdown/scripts/run-export.mjs [target] [options]', 'node tools/export_directory_markdown/scripts/run-export.mjs --target <target> [options]']),
     targetDescriptions: Object.freeze({
       root: 'repository root。生成物と local runtime data を除外する。',
       src: 'Ludoxel source tree。',
@@ -53,12 +48,7 @@ export const EXPORT_HELP_MESSAGES = Object.freeze({
       options: 'Options:',
       examples: 'Examples:',
     }),
-    usage: Object.freeze([
-      'npm run tools:export -- [target] [options]',
-      'npm run tools:export -- --target <target> [options]',
-      'node tools/export_directory_markdown/scripts/run-export.mjs [target] [options]',
-      'node tools/export_directory_markdown/scripts/run-export.mjs --target <target> [options]',
-    ]),
+    usage: Object.freeze(['npm run tools:export -- [target] [options]', 'npm run tools:export -- --target <target> [options]', 'node tools/export_directory_markdown/scripts/run-export.mjs [target] [options]', 'node tools/export_directory_markdown/scripts/run-export.mjs --target <target> [options]']),
     targetDescriptions: Object.freeze({
       root: 'repository root, excluding generated artifacts and local runtime data',
       src: 'Ludoxel source tree',

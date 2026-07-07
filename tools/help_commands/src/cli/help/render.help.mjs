@@ -28,18 +28,7 @@ export function renderHelpIndex(language = 'ja') {
   const commandsTitle = language === 'en' ? 'Commands:' : 'コマンド:';
   const width = Math.max(...HELP_COMMANDS.map((command) => command.npmScript.length));
 
-  return lines([
-    title,
-    '',
-    usageTitle,
-    '  npm run help',
-    '  npm run help -- <command>',
-    '  npm run <command> -- --help',
-    '',
-    commandsTitle,
-    ...HELP_COMMANDS.map((command) => `  ${command.npmScript.padEnd(width)}  ${text(command.description, language)}`),
-    '',
-  ]);
+  return lines([title, '', usageTitle, '  npm run help', '  npm run help -- <command>', '  npm run <command> -- --help', '', commandsTitle, ...HELP_COMMANDS.map((command) => `  ${command.npmScript.padEnd(width)}  ${text(command.description, language)}`), '']);
 }
 
 export function renderHelpDetail(command, language = 'ja') {

@@ -9,17 +9,7 @@ import { basename, resolve } from 'node:path';
 
 import { buildNativeExtensionsBeforeDesktop } from '../command/native/build-native.command.mjs';
 import { buildMacosPyinstallerCommand } from '../command/pyinstaller/build-command.pyinstaller.mjs';
-import {
-  APP_NAME,
-  MACOS_BUNDLE_IDENTIFIER,
-  MACOS_ENTRY_SCRIPT,
-  MACOS_ICON_CANDIDATE_PATHS,
-  MACOS_PUBLISH_DIR,
-  PYINSTALLER_CONFIG_ROOT,
-  PYINSTALLER_SPEC_ROOT,
-  PYINSTALLER_STAGING_ROOT,
-  PYINSTALLER_WORK_ROOT,
-} from '../config/build.config.mjs';
+import { APP_NAME, MACOS_BUNDLE_IDENTIFIER, MACOS_ENTRY_SCRIPT, MACOS_ICON_CANDIDATE_PATHS, MACOS_PUBLISH_DIR, PYINSTALLER_CONFIG_ROOT, PYINSTALLER_SPEC_ROOT, PYINSTALLER_STAGING_ROOT, PYINSTALLER_WORK_ROOT } from '../config/build.config.mjs';
 import { PROJECT_ROOT } from '../config/path.config.mjs';
 import { ensureDirectory } from '../shared/file/path.file.mjs';
 import { resolvePythonExecutable } from '../shared/python/resolve.python.mjs';
@@ -149,11 +139,7 @@ function patchMacosInfoPlist(appPath) {
   plistText = upsertPlistString(plistText, 'CFBundleShortVersionString', MACOS_APP_VERSION);
   plistText = upsertPlistString(plistText, 'CFBundleVersion', MACOS_APP_VERSION);
   plistText = upsertPlistString(plistText, 'CFBundleIconFile', bundledIconName);
-  plistText = upsertPlistString(
-    plistText,
-    'NSInputMonitoringUsageDescription',
-    'Ludoxel uses keyboard input monitoring while gameplay mouse capture is active so macOS and global app shortcuts do not steal game controls.',
-  );
+  plistText = upsertPlistString(plistText, 'NSInputMonitoringUsageDescription', 'Ludoxel uses keyboard input monitoring while gameplay mouse capture is active so macOS and global app shortcuts do not steal game controls.');
 
   writeFileSync(plistPath, plistText);
 }

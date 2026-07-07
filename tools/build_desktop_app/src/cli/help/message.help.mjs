@@ -17,28 +17,12 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
     }),
     desktop: Object.freeze({
       purpose: 'Ludoxel desktop build tool の入口。Windows EXE build と macOS .app build/status/check を扱う。',
-      synopsis: Object.freeze([
-        'npm run build:desktop -- help',
-        'npm run build:desktop -- --help',
-        'npm run build:desktop -- windows',
-        'npm run build:desktop -- --windows',
-        'npm run build:desktop -- macos',
-        'npm run build:desktop -- --macos',
-      ]),
-      commands: Object.freeze([
-        Object.freeze({ flag: 'windows, --windows', description: 'Windows onefile EXE build を実行する。' }),
-        Object.freeze({ flag: 'macos, --macos', description: 'macOS .app build/status/check を実行する。' }),
-        Object.freeze({ flag: 'help, --help, -h', description: 'ヘルプを表示する。' }),
-      ]),
+      synopsis: Object.freeze(['npm run build:desktop -- help', 'npm run build:desktop -- --help', 'npm run build:desktop -- windows', 'npm run build:desktop -- --windows', 'npm run build:desktop -- macos', 'npm run build:desktop -- --macos']),
+      commands: Object.freeze([Object.freeze({ flag: 'windows, --windows', description: 'Windows onefile EXE build を実行する。' }), Object.freeze({ flag: 'macos, --macos', description: 'macOS .app build/status/check を実行する。' }), Object.freeze({ flag: 'help, --help, -h', description: 'ヘルプを表示する。' })]),
     }),
     windows: Object.freeze({
       purpose: 'Ludoxel の Windows onefile EXE を既存 OpenGL renderer 経路のまま PyInstaller で構築する。',
-      synopsis: Object.freeze([
-        'npm run build:desktop -- windows [options]',
-        'npm run build:desktop -- --windows [options]',
-        'npm run build:windows -- [options]',
-        'node tools/build_desktop_app/scripts/run/windows.run.mjs [options]',
-      ]),
+      synopsis: Object.freeze(['npm run build:desktop -- windows [options]', 'npm run build:desktop -- --windows [options]', 'npm run build:windows -- [options]', 'node tools/build_desktop_app/scripts/run/windows.run.mjs [options]']),
       options: Object.freeze([
         Object.freeze({ flag: 'help, --help, -h', description: 'このヘルプを表示して終了する。' }),
         Object.freeze({ flag: '--dry-run', description: 'PyInstaller コマンドを表示し、実行しない。' }),
@@ -50,13 +34,7 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
     }),
     macos: Object.freeze({
       purpose: 'Ludoxel の macOS .app bundle を PyInstaller で構築し、wgpu-native の Metal 経路、同梱 font、.icns、Info.plist、gameplay input monitoring 表記を検証する。',
-      synopsis: Object.freeze([
-        'npm run build:desktop -- macos [options]',
-        'npm run build:desktop -- --macos [options]',
-        'npm run build:macos -- [options]',
-        'npm run build:macos:help',
-        'npm run build:macos:check',
-      ]),
+      synopsis: Object.freeze(['npm run build:desktop -- macos [options]', 'npm run build:desktop -- --macos [options]', 'npm run build:macos -- [options]', 'npm run build:macos:help', 'npm run build:macos:check']),
       options: Object.freeze([
         Object.freeze({ flag: 'help, --help, -h', description: 'このヘルプを表示して終了する。' }),
         Object.freeze({ flag: '--dry-run', description: 'PyInstaller コマンドを表示し、実行しない。' }),
@@ -82,28 +60,12 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
     }),
     desktop: Object.freeze({
       purpose: 'Entry point for the Ludoxel desktop build tool. Dispatches Windows EXE builds and macOS .app build/status/check tasks.',
-      synopsis: Object.freeze([
-        'npm run build:desktop -- help',
-        'npm run build:desktop -- --help',
-        'npm run build:desktop -- windows',
-        'npm run build:desktop -- --windows',
-        'npm run build:desktop -- macos',
-        'npm run build:desktop -- --macos',
-      ]),
-      commands: Object.freeze([
-        Object.freeze({ flag: 'windows, --windows', description: 'Run the Windows onefile EXE build.' }),
-        Object.freeze({ flag: 'macos, --macos', description: 'Run the macOS .app build/status/check path.' }),
-        Object.freeze({ flag: 'help, --help, -h', description: 'Print help.' }),
-      ]),
+      synopsis: Object.freeze(['npm run build:desktop -- help', 'npm run build:desktop -- --help', 'npm run build:desktop -- windows', 'npm run build:desktop -- --windows', 'npm run build:desktop -- macos', 'npm run build:desktop -- --macos']),
+      commands: Object.freeze([Object.freeze({ flag: 'windows, --windows', description: 'Run the Windows onefile EXE build.' }), Object.freeze({ flag: 'macos, --macos', description: 'Run the macOS .app build/status/check path.' }), Object.freeze({ flag: 'help, --help, -h', description: 'Print help.' })]),
     }),
     windows: Object.freeze({
       purpose: 'Build the Ludoxel Windows onefile EXE with PyInstaller while keeping the existing OpenGL renderer path.',
-      synopsis: Object.freeze([
-        'npm run build:desktop -- windows [options]',
-        'npm run build:desktop -- --windows [options]',
-        'npm run build:windows -- [options]',
-        'node tools/build_desktop_app/scripts/run/windows.run.mjs [options]',
-      ]),
+      synopsis: Object.freeze(['npm run build:desktop -- windows [options]', 'npm run build:desktop -- --windows [options]', 'npm run build:windows -- [options]', 'node tools/build_desktop_app/scripts/run/windows.run.mjs [options]']),
       options: Object.freeze([
         Object.freeze({ flag: 'help, --help, -h', description: 'Print this help and exit.' }),
         Object.freeze({ flag: '--dry-run', description: 'Print the PyInstaller command without running it.' }),
@@ -115,13 +77,7 @@ export const DESKTOP_BUILD_HELP_MESSAGES = Object.freeze({
     }),
     macos: Object.freeze({
       purpose: 'Build the Ludoxel macOS .app bundle with PyInstaller and check the wgpu-native Metal path, bundled fonts, .icns files, Info.plist, and gameplay input-monitoring text.',
-      synopsis: Object.freeze([
-        'npm run build:desktop -- macos [options]',
-        'npm run build:desktop -- --macos [options]',
-        'npm run build:macos -- [options]',
-        'npm run build:macos:help',
-        'npm run build:macos:check',
-      ]),
+      synopsis: Object.freeze(['npm run build:desktop -- macos [options]', 'npm run build:desktop -- --macos [options]', 'npm run build:macos -- [options]', 'npm run build:macos:help', 'npm run build:macos:check']),
       options: Object.freeze([
         Object.freeze({ flag: 'help, --help, -h', description: 'Print this help and exit.' }),
         Object.freeze({ flag: '--dry-run', description: 'Print the PyInstaller command without running it.' }),

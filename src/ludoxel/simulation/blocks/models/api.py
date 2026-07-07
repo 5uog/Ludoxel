@@ -229,9 +229,7 @@ def _translate_boxes_to_aabbs(boxes: Sequence[LocalBox], x: int, y: int, z: int)
 
 def collision_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[AABB]:
   key = _world_aabb_cache_key("collision_aabb", str(state_str), get_state, get_def, int(x), int(y), int(z))
-  return _cache_get_or_build(
-    _COLLISION_AABB_CACHE, key, lambda: _translate_boxes_to_aabbs(collision_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)), int(x), int(y), int(z))
-  )
+  return _cache_get_or_build(_COLLISION_AABB_CACHE, key, lambda: _translate_boxes_to_aabbs(collision_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)), int(x), int(y), int(z)))
 
 
 def pick_aabbs_for_block(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> Sequence[AABB]:

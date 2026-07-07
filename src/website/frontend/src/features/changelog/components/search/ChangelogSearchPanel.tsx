@@ -87,13 +87,7 @@ export default function ChangelogSearchPanel({ controls }: ChangelogSearchPanelP
                   const isActive = controls.selectedReleaseKinds.includes(releaseKind.id);
 
                   return (
-                    <button
-                      aria-pressed={isActive}
-                      className={getChangelogFilterButtonClassName(isActive)}
-                      key={releaseKind.id}
-                      type="button"
-                      onClick={() => controls.toggleReleaseKind(releaseKind.id)}
-                    >
+                    <button aria-pressed={isActive} className={getChangelogFilterButtonClassName(isActive)} key={releaseKind.id} type="button" onClick={() => controls.toggleReleaseKind(releaseKind.id)}>
                       {releaseKind.label}
                       <span className="ml-1 opacity-70">{countChangelogEntriesByReleaseKind(controls.entries, releaseKind.id)}</span>
                     </button>

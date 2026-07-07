@@ -48,23 +48,11 @@ class PersistedWorldMetadata:
   updated_at: float = 0.0
 
   def normalized(self) -> "PersistedWorldMetadata":
-    return PersistedWorldMetadata(
-      world_id=str(self.world_id).strip(),
-      name=normalize_world_name(self.name),
-      game_mode=normalize_world_game_mode(self.game_mode),
-      created_at=float(max(0.0, coerce_float(self.created_at, 0.0))),
-      updated_at=float(max(0.0, coerce_float(self.updated_at, 0.0))),
-    )
+    return PersistedWorldMetadata(world_id=str(self.world_id).strip(), name=normalize_world_name(self.name), game_mode=normalize_world_game_mode(self.game_mode), created_at=float(max(0.0, coerce_float(self.created_at, 0.0))), updated_at=float(max(0.0, coerce_float(self.updated_at, 0.0))))
 
   def to_dict(self) -> dict[str, Any]:
     normalized = self.normalized()
-    return {
-      "id": str(normalized.world_id),
-      "name": str(normalized.name),
-      "game_mode": str(normalized.game_mode),
-      "created_at": float(normalized.created_at),
-      "updated_at": float(normalized.updated_at),
-    }
+    return {"id": str(normalized.world_id), "name": str(normalized.name), "game_mode": str(normalized.game_mode), "created_at": float(normalized.created_at), "updated_at": float(normalized.updated_at)}
 
   @staticmethod
   def from_dict(data: dict[str, Any], *, world_id: str | None = None) -> "PersistedWorldMetadata":

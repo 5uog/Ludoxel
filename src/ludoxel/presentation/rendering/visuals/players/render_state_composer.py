@@ -10,27 +10,11 @@ from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.inventories.special_items.registry import get_special_item_descriptor
 
 
-def compose_player_render_state(
-  *, snapshot: RenderSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float
-) -> PlayerRenderState:
-  return compose_player_render_state_from_parts(
-    player_model=snapshot.player_model,
-    motion=motion,
-    block_registry=block_registry,
-    arm_rotation_limit_min_deg=float(arm_rotation_limit_min_deg),
-    arm_rotation_limit_max_deg=float(arm_rotation_limit_max_deg),
-  )
+def compose_player_render_state(*, snapshot: RenderSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float) -> PlayerRenderState:
+  return compose_player_render_state_from_parts(player_model=snapshot.player_model, motion=motion, block_registry=block_registry, arm_rotation_limit_min_deg=float(arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(arm_rotation_limit_max_deg))
 
 
-def compose_player_render_state_from_parts(
-  *,
-  player_model: PlayerModelSnapshotDTO,
-  motion: FirstPersonMotionSample,
-  block_registry: BlockRegistry,
-  arm_rotation_limit_min_deg: float,
-  arm_rotation_limit_max_deg: float,
-  skin_texture_key: str | None = None,
-) -> PlayerRenderState:
+def compose_player_render_state_from_parts(*, player_model: PlayerModelSnapshotDTO, motion: FirstPersonMotionSample, block_registry: BlockRegistry, arm_rotation_limit_min_deg: float, arm_rotation_limit_max_deg: float, skin_texture_key: str | None = None) -> PlayerRenderState:
   visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))
   special_descriptor = None if motion.visible_item_id is None else get_special_item_descriptor(motion.visible_item_id)
   swing_active = clampf(float(motion.swing_progress) * 5.0, 0.0, 1.0)

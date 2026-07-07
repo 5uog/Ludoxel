@@ -41,7 +41,4 @@ _MAGMA_BLOCK_FRAMES: tuple[str, ...] = ("magma_01", "magma_02", "magma_03", "mag
 
 
 def default_texture_animation_tracks() -> tuple[AnimatedTextureTrack, ...]:
-  return (
-    AnimatedTextureTrack(logical_name="magma_01", frame_sequence=_MAGMA_BLOCK_FRAMES, frame_duration_s=0.4),
-    AnimatedTextureTrack(logical_name="prismarine_rough_01", frame_sequence=_PRISMARINE_FRAMES, frame_duration_s=15.0),
-  )
+  return (AnimatedTextureTrack(logical_name="magma_01", frame_sequence=_MAGMA_BLOCK_FRAMES, frame_duration_s=0.4), AnimatedTextureTrack(logical_name="prismarine_rough_01", frame_sequence=_PRISMARINE_FRAMES, frame_duration_s=15.0))

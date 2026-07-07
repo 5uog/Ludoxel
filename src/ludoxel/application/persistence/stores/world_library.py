@@ -12,15 +12,7 @@ from ludoxel.application.persistence.packages.ldxworld import LDXWORLD_EXTENSION
 from ludoxel.application.persistence.schema.play_space import PersistedPlaySpace
 from ludoxel.application.persistence.schema.player import PersistedPlayer
 from ludoxel.application.persistence.schema.world import PersistedWorld
-from ludoxel.application.persistence.schema.world_library import (
-  DEFAULT_WORLD_NAME,
-  WORLD_GAME_MODE_SURVIVAL,
-  PersistedWorldEntry,
-  PersistedWorldLibraryIndex,
-  PersistedWorldMetadata,
-  normalize_world_game_mode,
-  normalize_world_name,
-)
+from ludoxel.application.persistence.schema.world_library import DEFAULT_WORLD_NAME, WORLD_GAME_MODE_SURVIVAL, PersistedWorldEntry, PersistedWorldLibraryIndex, PersistedWorldMetadata, normalize_world_game_mode, normalize_world_name
 from ludoxel.application.persistence.stores.json_file import JsonFileStore
 from ludoxel.foundations.locations.roots import default_runtime_data_root, runtime_state_root
 from ludoxel.simulation.spaces.my_world.session import MY_WORLD_PITCH_DEG, MY_WORLD_YAW_DEG, my_world_spawn
@@ -38,10 +30,7 @@ def _new_world_id() -> str:
 def default_my_world_space(generation: WorldGenerationSpec | None = None) -> PersistedPlaySpace:
   spec = (generation if isinstance(generation, WorldGenerationSpec) else WorldGenerationSpec()).normalized()
   spawn = my_world_spawn(spec)
-  return PersistedPlaySpace(
-    player=PersistedPlayer(pos_x=float(spawn[0]), pos_y=float(spawn[1]), pos_z=float(spawn[2]), yaw_deg=float(MY_WORLD_YAW_DEG), pitch_deg=float(MY_WORLD_PITCH_DEG)),
-    world=PersistedWorld(generation=spec, revision=1),
-  )
+  return PersistedPlaySpace(player=PersistedPlayer(pos_x=float(spawn[0]), pos_y=float(spawn[1]), pos_z=float(spawn[2]), yaw_deg=float(MY_WORLD_YAW_DEG), pitch_deg=float(MY_WORLD_PITCH_DEG)), world=PersistedWorld(generation=spec, revision=1))
 
 
 @dataclass(frozen=True)
@@ -177,13 +166,7 @@ class WorldLibraryStore:
   def import_entry(self, entry: PersistedWorldEntry, *, thumbnail_bytes: bytes | None = None, make_active: bool = False) -> PersistedWorldMetadata:
     now = float(time.time())
     world_id = _new_world_id()
-    metadata = PersistedWorldMetadata(
-      world_id=world_id,
-      name=normalize_world_name(entry.metadata.name),
-      game_mode=normalize_world_game_mode(entry.metadata.game_mode),
-      created_at=float(entry.metadata.created_at) if float(entry.metadata.created_at) > 0.0 else now,
-      updated_at=now,
-    )
+    metadata = PersistedWorldMetadata(world_id=world_id, name=normalize_world_name(entry.metadata.name), game_mode=normalize_world_game_mode(entry.metadata.game_mode), created_at=float(entry.metadata.created_at) if float(entry.metadata.created_at) > 0.0 else now, updated_at=now)
     self._write_package(world_id, PersistedWorldEntry(metadata=metadata, space=entry.space), thumbnail_bytes=thumbnail_bytes)
     index = self._read_index()
     world_ids = tuple(index.world_ids) + (world_id,)

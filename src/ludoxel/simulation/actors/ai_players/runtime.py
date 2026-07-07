@@ -7,18 +7,7 @@ from dataclasses import dataclass, field
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.actors.ai_players.planner import AiRoutePlanStep
-from ludoxel.simulation.actors.ai_players.state import (
-  AI_HEALTH_INDICATOR_ABOVE,
-  AI_REGEN_DEFAULT_AMOUNT_HP,
-  AI_REGEN_DEFAULT_CAP_HP,
-  AI_REGEN_DEFAULT_ENABLED,
-  AI_REGEN_DEFAULT_INTERVAL_S,
-  AI_REGEN_DEFAULT_START_DELAY_S,
-  AI_ROUTE_STYLE_STRICT,
-  AI_SKIN_MODE_PLAYER,
-  AiPlayerState,
-  AiRoutePoint,
-)
+from ludoxel.simulation.actors.ai_players.state import AI_HEALTH_INDICATOR_ABOVE, AI_REGEN_DEFAULT_AMOUNT_HP, AI_REGEN_DEFAULT_CAP_HP, AI_REGEN_DEFAULT_ENABLED, AI_REGEN_DEFAULT_INTERVAL_S, AI_REGEN_DEFAULT_START_DELAY_S, AI_ROUTE_STYLE_STRICT, AI_SKIN_MODE_PLAYER, AiPlayerState, AiRoutePoint
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.actors.player.kinematics import PlayerMotionState
 from ludoxel.simulation.rules.interaction.service import InteractionService

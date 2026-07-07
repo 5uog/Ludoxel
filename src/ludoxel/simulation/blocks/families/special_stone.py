@@ -3,67 +3,17 @@
 from __future__ import annotations
 
 from ludoxel.simulation.blocks.families.stone import StoneType, column_textures, cube_textures, side_top_bottom_textures
-from ludoxel.simulation.blocks.sounds.groups import (
-  SOUND_GROUP_CALCITE,
-  SOUND_GROUP_CORAL_BLOCK,
-  SOUND_GROUP_DEEPSLATE,
-  SOUND_GROUP_GILDED_BLACKSTONE,
-  SOUND_GROUP_LODESTONE,
-  SOUND_GROUP_METAL,
-  SOUND_GROUP_NETHER_BRICKS,
-  SOUND_GROUP_NETHERITE,
-  SOUND_GROUP_RESIN,
-)
+from ludoxel.simulation.blocks.sounds.groups import SOUND_GROUP_CALCITE, SOUND_GROUP_CORAL_BLOCK, SOUND_GROUP_DEEPSLATE, SOUND_GROUP_GILDED_BLACKSTONE, SOUND_GROUP_LODESTONE, SOUND_GROUP_METAL, SOUND_GROUP_NETHER_BRICKS, SOUND_GROUP_NETHERITE, SOUND_GROUP_RESIN
 
 SPECIAL_STONE_TYPES: tuple[StoneType, ...] = (
   StoneType(key="cobblestone", display="Cobblestone", textures=cube_textures("cobblestone"), slab_key="cobblestone_slab", stairs_key="cobblestone_stairs", wall_key="cobblestone_wall"),
-  StoneType(
-    key="mossy_cobblestone",
-    display="Mossy Cobblestone",
-    textures=cube_textures("cobblestone_mossy"),
-    slab_key="mossy_cobblestone_slab",
-    stairs_key="mossy_cobblestone_stairs",
-    wall_key="mossy_cobblestone_wall",
-  ),
-  StoneType(
-    key="cobbled_deepslate",
-    display="Cobbled Deepslate",
-    textures=cube_textures("cobbled_deepslate"),
-    slab_key="cobbled_deepslate_slab",
-    stairs_key="cobbled_deepslate_stairs",
-    wall_key="cobbled_deepslate_wall",
-    sound_group=SOUND_GROUP_DEEPSLATE,
-  ),
+  StoneType(key="mossy_cobblestone", display="Mossy Cobblestone", textures=cube_textures("cobblestone_mossy"), slab_key="mossy_cobblestone_slab", stairs_key="mossy_cobblestone_stairs", wall_key="mossy_cobblestone_wall"),
+  StoneType(key="cobbled_deepslate", display="Cobbled Deepslate", textures=cube_textures("cobbled_deepslate"), slab_key="cobbled_deepslate_slab", stairs_key="cobbled_deepslate_stairs", wall_key="cobbled_deepslate_wall", sound_group=SOUND_GROUP_DEEPSLATE),
   StoneType(key="resin_block", display="Block of Resin", textures=cube_textures("resin_block"), sound_group=SOUND_GROUP_RESIN),
-  StoneType(
-    key="resin_bricks",
-    display="Resin Bricks",
-    textures=cube_textures("resin_bricks"),
-    slab_key="resin_brick_slab",
-    stairs_key="resin_brick_stairs",
-    wall_key="resin_brick_wall",
-    sound_group=SOUND_GROUP_RESIN,
-  ),
+  StoneType(key="resin_bricks", display="Resin Bricks", textures=cube_textures("resin_bricks"), slab_key="resin_brick_slab", stairs_key="resin_brick_stairs", wall_key="resin_brick_wall", sound_group=SOUND_GROUP_RESIN),
   StoneType(key="chiseled_resin_bricks", display="Chiseled Resin Bricks", textures=cube_textures("chiseled_resin_bricks"), sound_group=SOUND_GROUP_RESIN),
-  StoneType(
-    key="nether_bricks",
-    display="Nether Bricks",
-    textures=cube_textures("nether_brick"),
-    slab_key="nether_brick_slab",
-    stairs_key="nether_brick_stairs",
-    wall_key="nether_brick_wall",
-    fence_key="nether_brick_fence",
-    sound_group=SOUND_GROUP_NETHER_BRICKS,
-  ),
-  StoneType(
-    key="red_nether_bricks",
-    display="Red Nether Bricks",
-    textures=cube_textures("red_nether_brick"),
-    slab_key="red_nether_brick_slab",
-    stairs_key="red_nether_brick_stairs",
-    wall_key="red_nether_brick_wall",
-    sound_group=SOUND_GROUP_NETHER_BRICKS,
-  ),
+  StoneType(key="nether_bricks", display="Nether Bricks", textures=cube_textures("nether_brick"), slab_key="nether_brick_slab", stairs_key="nether_brick_stairs", wall_key="nether_brick_wall", fence_key="nether_brick_fence", sound_group=SOUND_GROUP_NETHER_BRICKS),
+  StoneType(key="red_nether_bricks", display="Red Nether Bricks", textures=cube_textures("red_nether_brick"), slab_key="red_nether_brick_slab", stairs_key="red_nether_brick_stairs", wall_key="red_nether_brick_wall", sound_group=SOUND_GROUP_NETHER_BRICKS),
   StoneType(key="chiseled_nether_bricks", display="Chiseled Nether Bricks", textures=cube_textures("chiseled_nether_bricks"), sound_group=SOUND_GROUP_NETHER_BRICKS),
   StoneType(key="cracked_nether_bricks", display="Cracked Nether Bricks", textures=cube_textures("cracked_nether_bricks"), sound_group=SOUND_GROUP_NETHER_BRICKS),
   StoneType(key="netherite_block", display="Block of Netherite", textures=cube_textures("netherite_block"), sound_group=SOUND_GROUP_NETHERITE),

@@ -180,17 +180,7 @@ def _triangle_area(a: tuple[float, float, float, float, float], b: tuple[float, 
   return ((float(b[0]) - float(a[0])) * (float(c[1]) - float(a[1]))) - ((float(b[1]) - float(a[1])) * (float(c[0]) - float(a[0])))
 
 
-def _rasterize_triangle(
-  *,
-  out: bytearray,
-  zbuffer: list[float],
-  size: int,
-  texture: TexturePixels,
-  shade_alpha: int,
-  a: tuple[float, float, float, float, float],
-  b: tuple[float, float, float, float, float],
-  c: tuple[float, float, float, float, float],
-) -> None:
+def _rasterize_triangle(*, out: bytearray, zbuffer: list[float], size: int, texture: TexturePixels, shade_alpha: int, a: tuple[float, float, float, float, float], b: tuple[float, float, float, float, float], c: tuple[float, float, float, float, float]) -> None:
   area = _triangle_area(a, b, c)
 
   if abs(area) <= 1e-9:
@@ -332,30 +322,13 @@ def image_has_visible_alpha(image: QImage) -> bool:
 
 
 def render_block_preview_frame(
-  *,
-  block: BlockDefinition,
-  state_str: str,
-  get_state: GetState,
-  def_lookup: DefLookup,
-  texture_root: Path,
-  width: int = PREVIEW_CANVAS_SIZE,
-  height: int = PREVIEW_CANVAS_SIZE,
-  yaw_deg: float = 45.0,
-  pitch_deg: float = 30.0,
-  roll_deg: float = 0.0,
-  scale: float = 1.0,
-  fit_padding: float = 18.0,
+  *, block: BlockDefinition, state_str: str, get_state: GetState, def_lookup: DefLookup, texture_root: Path, width: int = PREVIEW_CANVAS_SIZE, height: int = PREVIEW_CANVAS_SIZE, yaw_deg: float = 45.0, pitch_deg: float = 30.0, roll_deg: float = 0.0, scale: float = 1.0, fit_padding: float = 18.0
 ) -> QImage:
   if int(width) != PREVIEW_CANVAS_SIZE or int(height) != PREVIEW_CANVAS_SIZE:
     raise ValueError("block preview frames must be 300x300")
 
   faces = _fit_faces_to_canvas(
-    _project_faces(
-      block=block, state_str=str(state_str), get_state=get_state, texture_root=Path(texture_root), def_lookup=def_lookup, yaw=float(yaw_deg), pitch=float(pitch_deg), roll=float(roll_deg)
-    ),
-    canvas_size=PREVIEW_RASTER_SIZE,
-    scale=float(scale),
-    fit_padding=float(fit_padding) * PREVIEW_RASTER_SCALE,
+    _project_faces(block=block, state_str=str(state_str), get_state=get_state, texture_root=Path(texture_root), def_lookup=def_lookup, yaw=float(yaw_deg), pitch=float(pitch_deg), roll=float(roll_deg)), canvas_size=PREVIEW_RASTER_SIZE, scale=float(scale), fit_padding=float(fit_padding) * PREVIEW_RASTER_SCALE
   )
 
   out = bytearray(PREVIEW_RASTER_SIZE * PREVIEW_RASTER_SIZE * 4)
@@ -369,33 +342,9 @@ def render_block_preview_frame(
   return _downsample_preview(raster)
 
 
-def write_block_preview_png(
-  *,
-  block: BlockDefinition,
-  state_str: str,
-  get_state: GetState,
-  def_lookup: DefLookup,
-  texture_root: Path,
-  output_path: Path,
-  yaw_deg: float = 45.0,
-  pitch_deg: float = 30.0,
-  roll_deg: float = 0.0,
-  scale: float = 1.0,
-  fit_padding: float = 18.0,
-) -> None:
+def write_block_preview_png(*, block: BlockDefinition, state_str: str, get_state: GetState, def_lookup: DefLookup, texture_root: Path, output_path: Path, yaw_deg: float = 45.0, pitch_deg: float = 30.0, roll_deg: float = 0.0, scale: float = 1.0, fit_padding: float = 18.0) -> None:
   image = render_block_preview_frame(
-    block=block,
-    state_str=str(state_str),
-    get_state=get_state,
-    def_lookup=def_lookup,
-    texture_root=Path(texture_root),
-    width=PREVIEW_CANVAS_SIZE,
-    height=PREVIEW_CANVAS_SIZE,
-    yaw_deg=float(yaw_deg),
-    pitch_deg=float(pitch_deg),
-    roll_deg=float(roll_deg),
-    scale=float(scale),
-    fit_padding=float(fit_padding),
+    block=block, state_str=str(state_str), get_state=get_state, def_lookup=def_lookup, texture_root=Path(texture_root), width=PREVIEW_CANVAS_SIZE, height=PREVIEW_CANVAS_SIZE, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), scale=float(scale), fit_padding=float(fit_padding)
   )
 
   if not image_has_visible_alpha(image):

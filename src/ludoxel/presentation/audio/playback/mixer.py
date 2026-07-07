@@ -17,8 +17,7 @@ _PCM_SAMPLE_RATE = 44100
 _PCM_CHANNELS = 2
 _PCM_SAMPLE_BYTES = 2
 _PCM_FRAME_BYTES = _PCM_CHANNELS * _PCM_SAMPLE_BYTES
-# The pump runs on the GUI thread, so the sink buffer must absorb render
-# stalls longer than one timer tick: 4096 frames hold ~93 ms at 44.1 kHz,
+# The pump runs on the GUI thread, so the sink buffer must absorb render stalls longer than one timer tick: 4096 frames hold ~93 ms at 44.1 kHz,
 # and each pump refills every free frame up to that same bound.
 _PCM_SINK_BUFFER_FRAMES = 4096
 _PCM_PUMP_MAX_FRAMES = 4096
@@ -231,8 +230,7 @@ def _decode_pcm_to_stereo_int16(raw: bytes, *, channels: int, sample_width: int)
 
   if channels == 1:
     return np.repeat(frames, 2, axis=1)
-  # For two or more channels, the mix consumes the first two channels as
-  # the stereo pair.
+  # For two or more channels, the mix consumes the first two channels as the stereo pair.
   return np.ascontiguousarray(frames[:, :2])
 
 

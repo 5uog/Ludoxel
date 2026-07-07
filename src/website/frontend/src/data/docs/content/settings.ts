@@ -53,8 +53,7 @@ overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_p
           {
             kind: 'math',
             math: {
-              expression:
-                '\\operatorname{coerceFloat}(v,d)=\\operatorname{float}(v)\\ \\text{when conversion succeeds};\\qquad \\operatorname{coerceFloat}(v,d)=\\operatorname{float}(d)\\ \\text{when it raises}',
+              expression: '\\operatorname{coerceFloat}(v,d)=\\operatorname{float}(v)\\ \\text{when conversion succeeds};\\qquad \\operatorname{coerceFloat}(v,d)=\\operatorname{float}(d)\\ \\text{when it raises}',
               displayMode: true,
               caption: '`coerce_float` in `src/ludoxel/foundations/mathematics/scalars/coercion.py`; this is exception fallback, not a finite-value, range, or camera-mode validator.',
             },
@@ -84,11 +83,9 @@ def mapping_float(d: Mapping[str, Any], key: str, default: float) -> float:
           {
             kind: 'math',
             math: {
-              expression:
-                '\\operatorname{clampf}(x,\\ell,h)=\\min(\\max(x,\\ell),h)\\quad(\\ell\\le h),\\qquad \\operatorname{round\\_clampi}(x,\\ell,h)=\\operatorname{clampi}(\\operatorname{int}(\\operatorname{round}(\\operatorname{float}(x))),\\ell,h)',
+              expression: '\\operatorname{clampf}(x,\\ell,h)=\\min(\\max(x,\\ell),h)\\quad(\\ell\\le h),\\qquad \\operatorname{round\\_clampi}(x,\\ell,h)=\\operatorname{clampi}(\\operatorname{int}(\\operatorname{round}(\\operatorname{float}(x))),\\ell,h)',
               displayMode: true,
-              caption:
-                '`clampf` and `round_clampi` in `src/ludoxel/foundations/mathematics/scalars/numeric.py`. The source compares the caller-provided bounds as given; it does not sort or normalize an inverted interval.',
+              caption: '`clampf` and `round_clampi` in `src/ludoxel/foundations/mathematics/scalars/numeric.py`. The source compares the caller-provided bounds as given; it does not sort or normalize an inverted interval.',
             },
           },
           {
@@ -181,8 +178,7 @@ self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Changing perspective changes camera presentation. It does not by itself establish a change to the player collision body, world state, save-file authority, input-capture policy, or legal permission boundary.',
+              content: 'Changing perspective changes camera presentation. It does not by itself establish a change to the player collision body, world state, save-file authority, input-capture policy, or legal permission boundary.',
             },
           },
         ],
@@ -195,8 +191,7 @@ self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`
     subcategory: 'Visual and Audio Settings',
     group: 'Camera and Crosshair',
     title: 'Changing Crosshair Preferences',
-    description:
-      'Defines the 16 x 16 crosshair editor, normalized bitmap persistence, and F3 Debug HUD axis projection as separate HUD rendering contracts that share the center-screen crosshair surface.',
+    description: 'Defines the 16 x 16 crosshair editor, normalized bitmap persistence, and F3 Debug HUD axis projection as separate HUD rendering contracts that share the center-screen crosshair surface.',
     sections: [
       {
         id: 'changing-crosshair-preferences-surface',
@@ -324,11 +319,9 @@ screen_dy = -float(rolled_y)`,
           {
             kind: 'math',
             math: {
-              expression:
-                '\\begin{aligned}p_a&=(\\hat r\\cdot a,\\ \\hat u\\cdot a)\\\\q_a&=R_\\rho p_a\\\\\\pi(q_x,q_y)&=(q_x,-q_y)\\\\m_a&=\\lVert p_a\\rVert_2=\\sqrt{1-(\\hat f\\cdot a)^2}\\end{aligned}',
+              expression: '\\begin{aligned}p_a&=(\\hat r\\cdot a,\\ \\hat u\\cdot a)\\\\q_a&=R_\\rho p_a\\\\\\pi(q_x,q_y)&=(q_x,-q_y)\\\\m_a&=\\lVert p_a\\rVert_2=\\sqrt{1-(\\hat f\\cdot a)^2}\\end{aligned}',
               displayMode: true,
-              caption:
-                'The notation exposes the implementation quantities: view-plane components enter the roll transform, the vertical component is inverted for screen coordinates, and the painter derives m from the resulting pair before arm scaling.',
+              caption: 'The notation exposes the implementation quantities: view-plane components enter the roll transform, the vertical component is inverted for screen coordinates, and the painter derives m from the resulting pair before arm scaling.',
             },
           },
           {
@@ -370,8 +363,7 @@ screen_dy = -float(rolled_y)`,
     subcategory: 'Visual and Audio Settings',
     group: 'World Visual Preferences',
     title: 'Changing Cloud Preferences',
-    description:
-      'Defines the cloud settings surface as a constrained renderer-input contract: visibility, density, seed, flow direction, per-cloud speed range, height range, preferred-height interval, and the normalization rules that prevent malformed saved values from entering the renderer.',
+    description: 'Defines the cloud settings surface as a constrained renderer-input contract: visibility, density, seed, flow direction, per-cloud speed range, height range, preferred-height interval, and the normalization rules that prevent malformed saved values from entering the renderer.',
     sections: [
       {
         id: 'changing-cloud-preferences-setting-scope',
@@ -515,8 +507,7 @@ def normalize_backend_cloud_flow_direction(raw: object) -> str:
     subcategory: 'Visual and Audio Settings',
     group: 'World Visual Preferences',
     title: 'Changing Shadow Preferences',
-    description:
-      'Explains the shadow-map toggle and five-step quality setting as a renderer-input contract independent of render distance, including UI emission, persistence normalization, fallback to Standard, and backend consumption.',
+    description: 'Explains the shadow-map toggle and five-step quality setting as a renderer-input contract independent of render distance, including UI emission, persistence normalization, fallback to Standard, and backend consumption.',
     sections: [
       {
         id: 'changing-shadow-preferences-setting-scope',
@@ -605,8 +596,7 @@ def _on_shadow_map_quality(self, _index: int) -> None:
     subcategory: 'Visual and Audio Settings',
     group: 'Audio and Keybinds',
     title: 'Changing Audio Preferences',
-    description:
-      'Defines audio settings as a four-component normalized gain vector: master, ambient, block, and player gains, the closed [0, 1] admission rule, persistence shape, and multiplicative category consumption.',
+    description: 'Defines audio settings as a four-component normalized gain vector: master, ambient, block, and player gains, the closed [0, 1] admission rule, persistence shape, and multiplicative category consumption.',
     sections: [
       {
         id: 'changing-audio-preferences-setting-scope',
@@ -709,8 +699,7 @@ class AudioPreferences:
     subcategory: 'Visual and Audio Settings',
     group: 'Audio and Keybinds',
     title: 'Changing Keybind Preferences',
-    description:
-      'Defines keybind settings as a fixed action-to-portable-text mapping with alias folding, single-key admission, duplicate resolution, runtime key-code projection, and public evidence limits for input bugs.',
+    description: 'Defines keybind settings as a fixed action-to-portable-text mapping with alias folding, single-key admission, duplicate resolution, runtime key-code projection, and public evidence limits for input bugs.',
     sections: [
       {
         id: 'changing-keybind-preferences-setting-scope',
@@ -929,7 +918,7 @@ def normalize_player_skin_kind(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'The validator accepts only modern 64 x 64 Minecraft skin textures and converts the accepted image to RGBA8888. The writer saves that normalized image as `state/player_skin.png` and updates the runtime integrity manifest for that protected path. Reset deletes the same runtime file and returns the preference to bundled Timo. The persistence consequence is explicit: the imported image is a local runtime artifact guarded by integrity metadata.',
+            text: 'The validator accepts only modern 64 x 64 skin textures and converts the accepted image to RGBA8888. The writer saves that normalized image as `state/player_skin.png` and updates the runtime integrity manifest for that protected path. Reset deletes the same runtime file and returns the preference to bundled Timo. The persistence consequence is explicit: the imported image is a local runtime artifact guarded by integrity metadata.',
           },
           {
             kind: 'code',
@@ -940,7 +929,7 @@ def normalize_player_skin_kind(value: object) -> str:
   if candidate.isNull():
     raise ValueError("The selected skin image could not be decoded.")
   if int(candidate.width()) != int(_SKIN_WIDTH) or int(candidate.height()) != int(_SKIN_HEIGHT):
-    raise ValueError("Only modern 64x64 Minecraft skin textures are accepted.")
+    raise ValueError("Only modern 64x64 skin textures are accepted.")
   return candidate.convertToFormat(QImage.Format.Format_RGBA8888)
 
 def write_custom_player_skin(data_root: Path, image: QImage) -> None:
@@ -1041,8 +1030,7 @@ overlay._player_name_hint = QLabel("", identity_body)`,
     subcategory: 'Player and Match Settings',
     group: 'Player and Othello State',
     title: 'Changing Player Regeneration Settings',
-    description:
-      'Defines the Player-tab regeneration controls as a persisted player-health contract whose disabled default preserves existing survival damage behavior until the setting is explicitly enabled.',
+    description: 'Defines the Player-tab regeneration controls as a persisted player-health contract whose disabled default preserves existing survival damage behavior until the setting is explicitly enabled.',
     sections: [
       {
         id: 'changing-player-regeneration-settings-visible-controls',
@@ -1134,8 +1122,7 @@ if not bool(params.enabled):
             math: {
               expression: 'h \\leftarrow \\min\\left(\\min(c,h_{max}),\\ h + \\frac{c}{T}\\Delta t\\right)',
               displayMode: true,
-              caption:
-                '`advance_player_regeneration` applies the enabled regeneration rate after the delay has elapsed, with configured cap c, time-to-cap T, player maximum health h_max, and fixed-step quantum Δt.',
+              caption: '`advance_player_regeneration` applies the enabled regeneration rate after the delay has elapsed, with configured cap c, time-to-cap T, player maximum health h_max, and fixed-step quantum Δt.',
             },
           },
         ],
@@ -1148,8 +1135,7 @@ if not bool(params.enabled):
     subcategory: 'Player and Match Settings',
     group: 'Player and Othello State',
     title: 'Understanding Othello Setting Persistence',
-    description:
-      'Explains how Othello settings enter the runtime preference aggregate and the persisted Othello space without collapsing match rules, player state, and world state into one authority.',
+    description: 'Explains how Othello settings enter the runtime preference aggregate and the persisted Othello space without collapsing match rules, player state, and world state into one authority.',
     sections: [
       {
         id: 'understanding-othello-setting-persistence-aggregate',
@@ -1481,8 +1467,7 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
     subcategory: 'AI Configuration',
     group: 'AI Identity and Skin',
     title: 'Choosing an AI Skin Source',
-    description:
-      'Explains AI skin source selection as a per-actor mode with player, bundled Timo, and imported PNG branches, including the fallback when a custom skin identifier is absent or invalid.',
+    description: 'Explains AI skin source selection as a per-actor mode with player, bundled Timo, and imported PNG branches, including the fallback when a custom skin identifier is absent or invalid.',
     sections: [
       {
         id: 'choosing-ai-skin-source-mode-domain',
@@ -1658,8 +1643,7 @@ def normalize_ai_personality(value: object) -> str:
     subcategory: 'AI Configuration',
     group: 'AI Behavior and Mode',
     title: 'Choosing a Learning Mode',
-    description:
-      'Defines the Learning Mode control as a five-value saved setting whose runtime-active subset is deliberately smaller than the selectable set, separating observation, learned-policy use, training triggers, and safe fallback.',
+    description: 'Defines the Learning Mode control as a five-value saved setting whose runtime-active subset is deliberately smaller than the selectable set, separating observation, learned-policy use, training triggers, and safe fallback.',
     sections: [
       {
         id: 'choosing-a-learning-mode-setting-scope',
@@ -1740,8 +1724,7 @@ def captured_kinds(self) -> tuple[str, ...]:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Learning Mode is not evidence that a learned policy is usable, that a dataset is clean, or that training succeeded. Those conclusions require the Data and Systems articles that own policy artifacts, corrupt rows, and evaluation.',
+              content: 'Learning Mode is not evidence that a learned policy is usable, that a dataset is clean, or that training succeeded. Those conclusions require the Data and Systems articles that own policy artifacts, corrupt rows, and evaluation.',
             },
           },
         ],
@@ -1754,8 +1737,7 @@ def captured_kinds(self) -> tuple[str, ...]:
     subcategory: 'AI Configuration',
     group: 'AI Policy Workflow',
     title: 'Training a Policy',
-    description:
-      'Defines the two training triggers as settings-surface workflows that read normalized learning state, decode or synthesize training evidence, write user policy artifacts, save evaluation and training summaries, and switch the selected policy only after a completed result.',
+    description: 'Defines the two training triggers as settings-surface workflows that read normalized learning state, decode or synthesize training evidence, write user policy artifacts, save evaluation and training summaries, and switch the selected policy only after a completed result.',
     sections: [
       {
         id: 'training-a-policy-setting-scope',
@@ -1931,8 +1913,7 @@ def decide(self, observation: AiObservation, mask: AiActionMask) -> PolicyDecisi
     subcategory: 'Visual and Audio Settings',
     group: 'Chat Settings',
     title: 'Changing Chat Visibility',
-    description:
-      'Defines the runtime-only Mute All Chat setting, the surface that exposes it, the runtime state that owns it, its effect on the chat screen and the heads-up feed, and its relationship to the one-hundred-message history cap.',
+    description: 'Defines the runtime-only Mute All Chat setting, the surface that exposes it, the runtime state that owns it, its effect on the chat screen and the heads-up feed, and its relationship to the one-hundred-message history cap.',
     sections: [
       {
         id: 'chat-visibility-surface-and-owner',

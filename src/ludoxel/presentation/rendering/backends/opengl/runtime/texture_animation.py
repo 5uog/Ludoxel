@@ -57,9 +57,7 @@ class TextureAnimationController:
 
     if not frames:
       return None
-    return _RuntimeAnimatedTrack(
-      logical_name=str(track.logical_name), base_frame=QImage(fallback), frame_tokens=tuple(frame_tokens), frames=tuple(frames), frame_duration_s=float(track.frame_duration_s)
-    )
+    return _RuntimeAnimatedTrack(logical_name=str(track.logical_name), base_frame=QImage(fallback), frame_tokens=tuple(frame_tokens), frames=tuple(frames), frame_duration_s=float(track.frame_duration_s))
 
   def set_enabled(self, enabled: bool) -> None:
     next_enabled = bool(enabled)

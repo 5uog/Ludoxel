@@ -9,19 +9,7 @@ from PyQt6.QtCore import QSize, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QIcon, QPixmap
 from PyQt6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
-from ludoxel.presentation.documentation.about.content import (
-  ABOUT_CREATOR_AGE,
-  ABOUT_CREATOR_AGE_LABEL,
-  ABOUT_CREATOR_DISPLAY_NAME,
-  ABOUT_CREATOR_HANDLE,
-  ABOUT_CREATOR_PRONOUNCE_LABEL,
-  ABOUT_CREATOR_PRONOUNS,
-  ABOUT_CREATOR_ROLE,
-  ABOUT_ETYMOLOGY_PARAGRAPHS,
-  ABOUT_GITHUB_URL,
-  ABOUT_PROFILE_BIO_TEXT,
-  ABOUT_PROFILE_TAGS,
-)
+from ludoxel.presentation.documentation.about.content import ABOUT_CREATOR_AGE, ABOUT_CREATOR_AGE_LABEL, ABOUT_CREATOR_DISPLAY_NAME, ABOUT_CREATOR_HANDLE, ABOUT_CREATOR_PRONOUNCE_LABEL, ABOUT_CREATOR_PRONOUNS, ABOUT_CREATOR_ROLE, ABOUT_ETYMOLOGY_PARAGRAPHS, ABOUT_GITHUB_URL, ABOUT_PROFILE_BIO_TEXT, ABOUT_PROFILE_TAGS
 from ludoxel.presentation.interface.common.status_overlay import status_overlay_title_image_path
 from ludoxel.presentation.interface.settings.about.renderer import add_about_section_title, render_about_paragraphs, render_about_text
 from ludoxel.presentation.interface.settings.about.widgets import about_card, about_meta_title, about_meta_value, about_tag_flow, about_text, github_image_path, profile_image_path

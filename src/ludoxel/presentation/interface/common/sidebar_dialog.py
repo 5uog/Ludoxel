@@ -23,20 +23,7 @@ def _apply_solid_palette(widget: QWidget, color: QColor) -> None:
 
 
 class SidebarDialogBase(QDialog):
-  def __init__(
-    self,
-    parent: QWidget | None = None,
-    *,
-    as_window: bool,
-    root_object_name: str,
-    window_title: str,
-    window_size: tuple[int, int],
-    minimum_window_size: tuple[int, int],
-    panel_minimum_size: tuple[int, int],
-    sidebar_object_name: str,
-    content_object_name: str,
-    stack_object_name: str,
-  ) -> None:
+  def __init__(self, parent: QWidget | None = None, *, as_window: bool, root_object_name: str, window_title: str, window_size: tuple[int, int], minimum_window_size: tuple[int, int], panel_minimum_size: tuple[int, int], sidebar_object_name: str, content_object_name: str, stack_object_name: str) -> None:
     super().__init__(parent)
 
     self.setVisible(False)

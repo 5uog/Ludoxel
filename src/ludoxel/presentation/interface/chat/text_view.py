@@ -82,16 +82,7 @@ def _mention_spans(plain: str, mention_targets: tuple[str, ...]) -> tuple[tuple[
 
 
 def _mention_segment(segment: FormattedSegment, ch: str) -> FormattedSegment:
-  return FormattedSegment(
-    text=str(ch),
-    foreground=str(_MENTION_FOREGROUND),
-    background=segment.background,
-    bold=bool(segment.bold),
-    italic=bool(segment.italic),
-    underline=bool(segment.underline),
-    strikethrough=bool(segment.strikethrough),
-    obfuscated=bool(segment.obfuscated),
-  )
+  return FormattedSegment(text=str(ch), foreground=str(_MENTION_FOREGROUND), background=segment.background, bold=bool(segment.bold), italic=bool(segment.italic), underline=bool(segment.underline), strikethrough=bool(segment.strikethrough), obfuscated=bool(segment.obfuscated))
 
 
 def _styled_chars(message: ChatMessage, mention_targets: tuple[str, ...]) -> list[_StyledChar]:

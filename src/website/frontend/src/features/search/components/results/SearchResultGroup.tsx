@@ -20,11 +20,7 @@ export default function SearchResultGroup({ displayRows, rows, sectionKey, selec
   const sectionMeta = getSectionMeta(sectionKey);
 
   return (
-    <div
-      aria-label={sectionMeta.label}
-      className="**:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-muted-foreground"
-      role="group"
-    >
+    <div aria-label={sectionMeta.label} className="**:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-muted-foreground" role="group">
       <div cmdk-group-heading="">{sectionMeta.label}</div>
 
       {rows.map((row) => {

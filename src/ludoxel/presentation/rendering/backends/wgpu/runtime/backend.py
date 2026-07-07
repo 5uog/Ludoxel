@@ -16,15 +16,7 @@ from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chun
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.presentation.interface.common.special_item_art import build_special_item_icon_image
-from ludoxel.presentation.rendering.backends.wgpu.meshes.chunk import (
-  WgpuChunkMesh,
-  WgpuFaceInstances,
-  build_face_vertex_rows,
-  build_face_wire_vertex_rows,
-  upload_chunk_mesh,
-  upload_face_rows,
-  upload_transform_face_rows,
-)
+from ludoxel.presentation.rendering.backends.wgpu.meshes.chunk import WgpuChunkMesh, WgpuFaceInstances, build_face_vertex_rows, build_face_wire_vertex_rows, upload_chunk_mesh, upload_face_rows, upload_transform_face_rows
 from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
   create_cloud_pipeline,
   create_cloud_volume_pipeline,
@@ -45,18 +37,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
-from ludoxel.presentation.rendering.contracts.config import (
-  CloudDistanceFog,
-  GeometryDistanceFog,
-  cloud_far_distance,
-  cloud_fog_range,
-  cloud_projection_z_far,
-  effective_backend_shadow_params,
-  max_unfogged_render_distance_radius_blocks,
-  render_distance_fog_range,
-  sun_flare_screen,
-  sun_glare_strength,
-)
+from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_far_distance, cloud_fog_range, cloud_projection_z_far, effective_backend_shadow_params, max_unfogged_render_distance_radius_blocks, render_distance_fog_range, sun_flare_screen, sun_glare_strength
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -66,12 +47,7 @@ from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occlude
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
 from ludoxel.presentation.rendering.visuals.othello.scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
-from ludoxel.presentation.rendering.visuals.players.first_person_geometry import (
-  FIRST_PERSON_HAND_NEAR,
-  build_first_person_arm_face_rows,
-  build_first_person_held_block_face_rows,
-  build_first_person_special_item_face_rows,
-)
+from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR, build_first_person_arm_face_rows, build_first_person_held_block_face_rows, build_first_person_special_item_face_rows
 from ludoxel.presentation.rendering.visuals.players.held_block_geometry import held_block_model_boxes_for_kind
 from ludoxel.presentation.rendering.visuals.players.model_pose import HeldBlockPose, PlayerModelPose, build_player_model_pose
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
@@ -140,9 +116,7 @@ def _create_texture_bind_group(*, device, layout, label: str, image: QImage, mir
   import wgpu
 
   img, data = _qimage_rgba_bytes(image, mirror_y=bool(mirror_y))
-  texture = device.create_texture(
-    label=f"{label}-texture", size=(int(img.width()), int(img.height()), 1), format=wgpu.TextureFormat.rgba8unorm, usage=wgpu.TextureUsage.TEXTURE_BINDING | wgpu.TextureUsage.COPY_DST
-  )
+  texture = device.create_texture(label=f"{label}-texture", size=(int(img.width()), int(img.height()), 1), format=wgpu.TextureFormat.rgba8unorm, usage=wgpu.TextureUsage.TEXTURE_BINDING | wgpu.TextureUsage.COPY_DST)
   device.queue.write_texture({"texture": texture}, data, {"bytes_per_row": int(img.width()) * 4, "rows_per_image": int(img.height())}, (int(img.width()), int(img.height()), 1))
   view = texture.create_view(label=f"{label}-view")
   sampler = device.create_sampler(label=f"{label}-sampler", mag_filter="nearest", min_filter="nearest", mipmap_filter="nearest")
@@ -204,32 +178,16 @@ class WgpuRendererBackend:
     for face_idx in range(FACE_COUNT):
       camera_buffer = device.create_buffer(label=f"ludoxel-frame-uniforms-face-{face_idx}", size=_UNIFORM_SIZE_BYTES, usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST)
       camera_buffers.append(camera_buffer)
-      camera_bgs.append(
-        device.create_bind_group(
-          label=f"ludoxel-frame-bg-face-{face_idx}", layout=camera_bgl, entries=[{"binding": 0, "resource": {"buffer": camera_buffer, "offset": 0, "size": _UNIFORM_SIZE_BYTES}}]
-        )
-      )
+      camera_bgs.append(device.create_bind_group(label=f"ludoxel-frame-bg-face-{face_idx}", layout=camera_bgl, entries=[{"binding": 0, "resource": {"buffer": camera_buffer, "offset": 0, "size": _UNIFORM_SIZE_BYTES}}]))
 
     names = block_registry.required_texture_names()
     visual_roots = resolve_visual_asset_roots(assets_dir, required_texture_names=names)
     atlas = WgpuTextureAtlas.build_from_dir(visual_roots.block_texture_dir, names=names)
     atlas.upload(device=device)
 
-    atlas_bgl = device.create_bind_group_layout(
-      label="ludoxel-texture-bgl",
-      entries=[
-        {"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "float", "view_dimension": "2d", "multisampled": False}},
-        {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "filtering"}},
-      ],
-    )
+    atlas_bgl = device.create_bind_group_layout(label="ludoxel-texture-bgl", entries=[{"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "float", "view_dimension": "2d", "multisampled": False}}, {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "filtering"}}])
     atlas_bg = device.create_bind_group(label="ludoxel-atlas-bg", layout=atlas_bgl, entries=[{"binding": 0, "resource": atlas.texture_view}, {"binding": 1, "resource": atlas.sampler}])
-    shadow_bgl = device.create_bind_group_layout(
-      label="ludoxel-shadow-bgl",
-      entries=[
-        {"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "depth", "view_dimension": "2d", "multisampled": False}},
-        {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "comparison"}},
-      ],
-    )
+    shadow_bgl = device.create_bind_group_layout(label="ludoxel-shadow-bgl", entries=[{"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "depth", "view_dimension": "2d", "multisampled": False}}, {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "comparison"}}])
     initial_skin = self._player_skin_image if not self._player_skin_image.isNull() else QImage(64, 64, QImage.Format.Format_RGBA8888)
     if initial_skin.isNull():
       raise RuntimeError("Unable to create the initial player skin texture.")
@@ -240,16 +198,12 @@ class WgpuRendererBackend:
     special_item_bind_groups: dict[str, object] = {}
     for icon_key in special_item_icon_keys():
       key = str(icon_key)
-      texture, _view, _sampler, bind_group, _w, _h = _create_texture_bind_group(
-        device=device, layout=atlas_bgl, label=f"ludoxel-special-item-{key}", image=build_special_item_icon_image(key, size=192), mirror_y=True
-      )
+      texture, _view, _sampler, bind_group, _w, _h = _create_texture_bind_group(device=device, layout=atlas_bgl, label=f"ludoxel-special-item-{key}", image=build_special_item_icon_image(key, size=192), mirror_y=True)
       special_item_textures[key] = texture
       special_item_bind_groups[key] = bind_group
 
     world_pipeline = create_world_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, atlas_bind_group_layout=atlas_bgl)
-    world_shadowed_pipeline = create_world_shadowed_pipeline(
-      device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, atlas_bind_group_layout=atlas_bgl, shadow_bind_group_layout=shadow_bgl
-    )
+    world_shadowed_pipeline = create_world_shadowed_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, atlas_bind_group_layout=atlas_bgl, shadow_bind_group_layout=shadow_bgl)
     world_wireframe_pipeline = create_world_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_pipeline = create_sun_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     sun_glare_pipeline = create_sun_glare_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
@@ -257,26 +211,14 @@ class WgpuRendererBackend:
     cloud_pipeline = create_cloud_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_volume_pipeline = create_cloud_volume_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     cloud_wireframe_pipeline = create_cloud_wireframe_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
-    othello_pipeline = create_othello_pipeline(
-      device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, shadow_bind_group_layout=shadow_bgl, overlay=False
-    )
-    othello_overlay_pipeline = create_othello_pipeline(
-      device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, shadow_bind_group_layout=shadow_bgl, overlay=True
-    )
+    othello_pipeline = create_othello_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, shadow_bind_group_layout=shadow_bgl, overlay=False)
+    othello_overlay_pipeline = create_othello_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, shadow_bind_group_layout=shadow_bgl, overlay=True)
     shadow_depth_bias = int(round(float(self._cfg.shadow.poly_offset_units)))
     shadow_depth_slope = float(self._cfg.shadow.poly_offset_factor)
-    shadow_depth_pipeline = create_shadow_depth_pipeline(
-      device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope)
-    )
-    othello_shadow_pipeline = create_othello_shadow_pipeline(
-      device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope)
-    )
-    transform_shadow_pipeline = create_transform_shadow_pipeline(
-      device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope)
-    )
-    textured_face_pipeline = create_textured_face_pipeline(
-      device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, texture_bind_group_layout=atlas_bgl
-    )
+    shadow_depth_pipeline = create_shadow_depth_pipeline(device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope))
+    othello_shadow_pipeline = create_othello_shadow_pipeline(device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope))
+    transform_shadow_pipeline = create_transform_shadow_pipeline(device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope))
+    textured_face_pipeline = create_textured_face_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, texture_bind_group_layout=atlas_bgl)
     selection_pipeline = create_selection_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     face_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-vertices", data=np.ascontiguousarray(build_face_vertex_rows(), dtype=np.float32), usage=wgpu.BufferUsage.VERTEX)
     face_wire_vertices = np.ascontiguousarray(build_face_wire_vertex_rows(), dtype=np.float32)
@@ -399,13 +341,7 @@ class WgpuRendererBackend:
     self._cloud_field.set_seed(int(self._state.cloud_seed))
     self._cloud_field.set_speed_variation(bool(self._state.cloud_speed_variation_enabled), float(self._state.cloud_speed_min_blocks_per_second), float(self._state.cloud_speed_max_blocks_per_second))
     self._cloud_field.set_height_variation(
-      bool(self._state.cloud_height_variation_enabled),
-      int(self._state.cloud_fixed_y),
-      int(self._state.cloud_spawn_y_min),
-      int(self._state.cloud_spawn_y_max),
-      int(self._state.cloud_preferred_y_min),
-      int(self._state.cloud_preferred_y_max),
-      int(self._state.cloud_preferred_y_probability_percent),
+      bool(self._state.cloud_height_variation_enabled), int(self._state.cloud_fixed_y), int(self._state.cloud_spawn_y_min), int(self._state.cloud_spawn_y_max), int(self._state.cloud_preferred_y_min), int(self._state.cloud_preferred_y_max), int(self._state.cloud_preferred_y_probability_percent)
     )
     direction = str(self._state.cloud_flow_direction)
     if direction != str(self._cloud_flow_direction):
@@ -465,9 +401,7 @@ class WgpuRendererBackend:
     self._selection_key = key
     self._refresh_selection_buffer(vertices)
 
-  def submit_chunk(
-    self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None
-  ) -> None:
+  def submit_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None) -> None:
     del shadow_faces, gpu_face_sources, gpu_bucket_counts
     if self._res is None:
       return
@@ -521,21 +455,10 @@ class WgpuRendererBackend:
     if self._res.shadow_texture is not None and hasattr(self._res.shadow_texture, "destroy"):
       self._res.shadow_texture.destroy()
 
-    texture = self._res.device.create_texture(
-      label="ludoxel-shadow-depth", size=(int(size), int(size), 1), format=wgpu.TextureFormat.depth32float, usage=wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.TEXTURE_BINDING
-    )
+    texture = self._res.device.create_texture(label="ludoxel-shadow-depth", size=(int(size), int(size), 1), format=wgpu.TextureFormat.depth32float, usage=wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.TEXTURE_BINDING)
     view = texture.create_view(label="ludoxel-shadow-depth-view")
-    sampler = self._res.device.create_sampler(
-      label="ludoxel-shadow-compare-sampler",
-      address_mode_u=wgpu.AddressMode.clamp_to_edge,
-      address_mode_v=wgpu.AddressMode.clamp_to_edge,
-      mag_filter=wgpu.FilterMode.linear,
-      min_filter=wgpu.FilterMode.linear,
-      compare=wgpu.CompareFunction.less_equal,
-    )
-    bind_group = self._res.device.create_bind_group(
-      label="ludoxel-shadow-bg", layout=self._res.shadow_bind_group_layout, entries=[{"binding": 0, "resource": view}, {"binding": 1, "resource": sampler}]
-    )
+    sampler = self._res.device.create_sampler(label="ludoxel-shadow-compare-sampler", address_mode_u=wgpu.AddressMode.clamp_to_edge, address_mode_v=wgpu.AddressMode.clamp_to_edge, mag_filter=wgpu.FilterMode.linear, min_filter=wgpu.FilterMode.linear, compare=wgpu.CompareFunction.less_equal)
+    bind_group = self._res.device.create_bind_group(label="ludoxel-shadow-bg", layout=self._res.shadow_bind_group_layout, entries=[{"binding": 0, "resource": view}, {"binding": 1, "resource": sampler}])
 
     self._res.shadow_texture = texture
     self._res.shadow_view = view
@@ -545,18 +468,7 @@ class WgpuRendererBackend:
     return True
 
   def _frame_uniform_bytes(
-    self,
-    *,
-    view_proj: np.ndarray,
-    light_view_proj: np.ndarray | None = None,
-    face_idx: int,
-    tint_value: float = 0.55,
-    sel_mode: int = 0,
-    sel_block: tuple[int, int, int] | None = None,
-    shadow_enabled: bool = False,
-    debug_shadow: bool = False,
-    fog: GeometryDistanceFog | None = None,
-    ultra: bool = False,
+    self, *, view_proj: np.ndarray, light_view_proj: np.ndarray | None = None, face_idx: int, tint_value: float = 0.55, sel_mode: int = 0, sel_block: tuple[int, int, int] | None = None, shadow_enabled: bool = False, debug_shadow: bool = False, fog: GeometryDistanceFog | None = None, ultra: bool = False
   ) -> bytes:
     vp = _opengl_clip_to_wgpu(view_proj)
     light_vp = vp if light_view_proj is None else _opengl_clip_to_wgpu(light_view_proj)
@@ -602,23 +514,10 @@ class WgpuRendererBackend:
 
   def _light_view_proj(self, *, center: Vec3, coverage_radius: float | None = None) -> np.ndarray:
     shadow_size = max(1, int(self._effective_shadow.size))
-    return compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._effective_shadow, shadow_size=int(shadow_size), coverage_radius=coverage_radius).astype(
-      np.float32
-    )
+    return compute_light_view_proj(center=center, sun_dir=self._state.sun_dir, sun=self._cfg.sun, shadow=self._effective_shadow, shadow_size=int(shadow_size), coverage_radius=coverage_radius).astype(np.float32)
 
   def _create_frame_uniform_bind_groups(
-    self,
-    *,
-    label: str,
-    view_proj: np.ndarray,
-    light_view_proj: np.ndarray | None = None,
-    tint_value: float = 0.55,
-    sel_mode: int = 0,
-    sel_block: tuple[int, int, int] | None = None,
-    shadow_enabled: bool = False,
-    debug_shadow: bool = False,
-    fog: GeometryDistanceFog | None = None,
-    ultra: bool = False,
+    self, *, label: str, view_proj: np.ndarray, light_view_proj: np.ndarray | None = None, tint_value: float = 0.55, sel_mode: int = 0, sel_block: tuple[int, int, int] | None = None, shadow_enabled: bool = False, debug_shadow: bool = False, fog: GeometryDistanceFog | None = None, ultra: bool = False
   ) -> tuple[tuple[object, ...], tuple[object, ...]]:
     if self._res is None:
       return ((), ())
@@ -627,22 +526,9 @@ class WgpuRendererBackend:
     buffers: list[object] = []
     bind_groups: list[object] = []
     for face_idx in range(FACE_COUNT):
-      data = self._frame_uniform_bytes(
-        view_proj=view_proj,
-        light_view_proj=light_view_proj,
-        face_idx=int(face_idx),
-        tint_value=float(tint_value),
-        sel_mode=int(sel_mode),
-        sel_block=sel_block,
-        shadow_enabled=bool(shadow_enabled),
-        debug_shadow=bool(debug_shadow),
-        fog=fog,
-        ultra=bool(ultra),
-      )
+      data = self._frame_uniform_bytes(view_proj=view_proj, light_view_proj=light_view_proj, face_idx=int(face_idx), tint_value=float(tint_value), sel_mode=int(sel_mode), sel_block=sel_block, shadow_enabled=bool(shadow_enabled), debug_shadow=bool(debug_shadow), fog=fog, ultra=bool(ultra))
       buffer = self._res.device.create_buffer_with_data(label=f"{label}-uniform-face-{face_idx}", data=data, usage=wgpu.BufferUsage.UNIFORM)
-      bind_group = self._res.device.create_bind_group(
-        label=f"{label}-bg-face-{face_idx}", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": _UNIFORM_SIZE_BYTES}}]
-      )
+      bind_group = self._res.device.create_bind_group(label=f"{label}-bg-face-{face_idx}", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": _UNIFORM_SIZE_BYTES}}])
       buffers.append(buffer)
       bind_groups.append(bind_group)
     return (tuple(buffers), tuple(bind_groups))
@@ -674,9 +560,7 @@ class WgpuRendererBackend:
     uniform[28:32] = (1.0 if bool(ultra) else 0.0, 0.0, 0.0, 0.0)
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
-    bind_group = self._res.device.create_bind_group(
-      label="ludoxel-sun-frame-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
-    )
+    bind_group = self._res.device.create_bind_group(label="ludoxel-sun-frame-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}])
     return (buffer, bind_group)
 
   def _glare_quad(self, *, eye: Vec3, forward: Vec3) -> tuple[Vec3, Vec3, Vec3, float]:
@@ -694,10 +578,8 @@ class WgpuRendererBackend:
     return (center, u, v, float(half))
 
   def _create_sun_glare_uniform_bind_group(self, *, view_proj: np.ndarray, eye: Vec3, forward: Vec3, strength: float) -> tuple[object | None, object | None]:
-    # Ultra veiling glare reuses the sun pipeline and uniform block. The sun-mode
-    # slots carry (ultra, glare mode, glare strength); the quad faces the camera
-    # and is centered on the sun direction so the shader whitens the scene most
-    # strongly toward the sun.
+    # Ultra veiling glare reuses the sun pipeline and uniform block. The sun-mode slots carry (ultra, glare mode, glare strength); the quad faces the
+    # camera and is centered on the sun direction so the shader whitens the scene most strongly toward the sun.
     if self._res is None:
       return (None, None)
     import wgpu
@@ -711,15 +593,12 @@ class WgpuRendererBackend:
     uniform[28:32] = (1.0, 1.0, float(max(0.0, strength)), 0.0)
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-glare-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
-    bind_group = self._res.device.create_bind_group(
-      label="ludoxel-sun-glare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
-    )
+    bind_group = self._res.device.create_bind_group(label="ludoxel-sun-glare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}])
     return (buffer, bind_group)
 
   def _create_sun_flare_uniform_bind_group(self, *, sun_ndc: tuple[float, float], strength: float, aspect: float) -> tuple[object | None, object | None]:
-    # Screen-space lens-flare uniforms: one vec4 carrying the sun's normalized
-    # device x/y, the flare strength, and the viewport aspect. The fullscreen
-    # triangle needs no view matrix, so only these four floats are uploaded.
+    # Screen-space lens-flare uniforms: one vec4 carrying the sun's normalized device x/y, the flare strength, and the viewport aspect.
+    # The fullscreen triangle needs no view matrix, so only these four floats are uploaded.
     if self._res is None:
       return (None, None)
     import wgpu
@@ -728,9 +607,7 @@ class WgpuRendererBackend:
     uniform[0:4] = (float(sun_ndc[0]), float(sun_ndc[1]), float(max(0.0, strength)), float(max(1e-6, aspect)))
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-sun-flare-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
-    bind_group = self._res.device.create_bind_group(
-      label="ludoxel-sun-flare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
-    )
+    bind_group = self._res.device.create_bind_group(label="ludoxel-sun-flare-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}])
     return (buffer, bind_group)
 
   def _advance_cloud_clock(self) -> None:
@@ -740,9 +617,7 @@ class WgpuRendererBackend:
     if not bool(self._cloud_motion_paused):
       self._cloud_time_accum += float(dt)
 
-  def _create_cloud_uniform_bind_group(
-    self, *, view_proj: np.ndarray, shift: Vec3, eye: Vec3, time_s: float, flow_dir_xz: tuple[float, float], cell_size: float, fog: CloudDistanceFog | None = None
-  ) -> tuple[object | None, object | None]:
+  def _create_cloud_uniform_bind_group(self, *, view_proj: np.ndarray, shift: Vec3, eye: Vec3, time_s: float, flow_dir_xz: tuple[float, float], cell_size: float, fog: CloudDistanceFog | None = None) -> tuple[object | None, object | None]:
     if self._res is None:
       return (None, None)
     import wgpu
@@ -755,17 +630,13 @@ class WgpuRendererBackend:
     uniform[20:24] = (float(color.x), float(color.y), float(color.z), float(self._cfg.clouds.alpha))
     uniform[24:28] = (float(self._state.sun_dir.x), float(self._state.sun_dir.y), float(self._state.sun_dir.z), 0.0)
     uniform[28:32] = (float(active_fog.cam_x), float(active_fog.cam_z), float(active_fog.start), float(active_fog.end))
-    # xyz carry the eye position for the volume raymarch; w carries the
-    # motion clock for the noise churn and the flat-tier turbulence sway.
+    # xyz carry the eye position for the volume raymarch; w carries the motion clock for the noise churn and the flat-tier turbulence sway.
     uniform[32:36] = (float(eye.x), float(eye.y), float(eye.z), float(time_s))
-    # xy = flow direction (flat tier sway), z = cloud cell size (volume
-    # footprint mask), w unused.
+    # xy = flow direction (flat tier sway), z = cloud cell size (volume footprint mask), w unused.
     uniform[36:40] = (float(flow_dir_xz[0]), float(flow_dir_xz[1]), float(cell_size), 0.0)
     data = bytes(uniform.tobytes())
     buffer = self._res.device.create_buffer_with_data(label="ludoxel-cloud-frame-uniform", data=data, usage=wgpu.BufferUsage.UNIFORM)
-    bind_group = self._res.device.create_bind_group(
-      label="ludoxel-cloud-frame-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}]
-    )
+    bind_group = self._res.device.create_bind_group(label="ludoxel-cloud-frame-bg", layout=self._res.camera_bind_group_layout, entries=[{"binding": 0, "resource": {"buffer": buffer, "offset": 0, "size": len(data)}}])
     return (buffer, bind_group)
 
   def _upload_temp_rows(self, *, label: str, rows: np.ndarray | None) -> tuple[object | None, int]:
@@ -779,9 +650,7 @@ class WgpuRendererBackend:
     buffer = self._res.device.create_buffer_with_data(label=str(label), data=data, usage=wgpu.BufferUsage.VERTEX)
     return (buffer, int(data.shape[0]))
 
-  def _draw_othello_rows(
-    self, render_pass, *, pipeline, uniform_bind_group, shadow_bind_group, vertex_buffer, vertex_count: int, rows: np.ndarray | None, label: str, temp_buffers: list[object]
-  ) -> tuple[int, int]:
+  def _draw_othello_rows(self, render_pass, *, pipeline, uniform_bind_group, shadow_bind_group, vertex_buffer, vertex_count: int, rows: np.ndarray | None, label: str, temp_buffers: list[object]) -> tuple[int, int]:
     if self._res is None or uniform_bind_group is None or shadow_bind_group is None:
       return (0, 0)
     instance_buffer, instance_count = self._upload_temp_rows(label=label, rows=rows)
@@ -890,9 +759,7 @@ class WgpuRendererBackend:
         append_face_instance(buffers, int(face_idx), model, uv_rect)
     return face_rows_from_buffers(buffers)
 
-  def _draw_transform_buckets(
-    self, render_pass, *, buckets: tuple[np.ndarray, ...] | list[np.ndarray], texture_bind_group, label: str, camera_bind_groups: tuple[object, ...] | None = None
-  ) -> tuple[int, int, list[WgpuFaceInstances]]:
+  def _draw_transform_buckets(self, render_pass, *, buckets: tuple[np.ndarray, ...] | list[np.ndarray], texture_bind_group, label: str, camera_bind_groups: tuple[object, ...] | None = None) -> tuple[int, int, list[WgpuFaceInstances]]:
     if self._res is None or texture_bind_group is None:
       return (0, 0, [])
     frame_bgs = self._res.camera_bind_groups if camera_bind_groups is None else tuple(camera_bind_groups)
@@ -977,15 +844,9 @@ class WgpuRendererBackend:
     shadow_instances = 0
     shadow_ok = False
     if bool(shadow_requested) and self._ensure_shadow_target() and self._res.shadow_view is not None:
-      shadow_uniform_buffers, shadow_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-shadow-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, shadow_enabled=False, debug_shadow=False
-      )
+      shadow_uniform_buffers, shadow_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-shadow-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, shadow_enabled=False, debug_shadow=False)
       temp_uniform_buffers.extend(shadow_uniform_buffers)
-      shadow_pass = encoder.begin_render_pass(
-        label="ludoxel-shadow-pass",
-        color_attachments=[],
-        depth_stencil_attachment={"view": self._res.shadow_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
-      )
+      shadow_pass = encoder.begin_render_pass(label="ludoxel-shadow-pass", color_attachments=[], depth_stencil_attachment={"view": self._res.shadow_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store})
       shadow_pass.set_pipeline(self._res.shadow_depth_pipeline)
       shadow_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
       for face_idx in range(FACE_COUNT):
@@ -1000,16 +861,12 @@ class WgpuRendererBackend:
           shadow_draw_calls += 1
           shadow_instances += int(count)
       for pose_idx, pose in enumerate(player_poses):
-        player_shadow_dc, player_shadow_instances = self._draw_transform_shadow_rows(
-          shadow_pass, uniform_bind_group=shadow_uniform_bind_groups[0], rows=pose.shadow_rows, label=f"ludoxel-player-shadow-temp-{pose_idx}", temp_buffers=temp_uniform_buffers
-        )
+        player_shadow_dc, player_shadow_instances = self._draw_transform_shadow_rows(shadow_pass, uniform_bind_group=shadow_uniform_bind_groups[0], rows=pose.shadow_rows, label=f"ludoxel-player-shadow-temp-{pose_idx}", temp_buffers=temp_uniform_buffers)
         shadow_draw_calls += int(player_shadow_dc)
         shadow_instances += int(player_shadow_instances)
       if othello_rows is not None:
         _board_rows, _highlight_rows, othello_piece_rows = othello_rows
-        othello_shadow_dc, othello_shadow_instances = self._draw_othello_shadow_rows(
-          shadow_pass, uniform_bind_group=shadow_uniform_bind_groups[0], rows=othello_piece_rows, label="ludoxel-othello-shadow-piece-temp", temp_buffers=temp_uniform_buffers
-        )
+        othello_shadow_dc, othello_shadow_instances = self._draw_othello_shadow_rows(shadow_pass, uniform_bind_group=shadow_uniform_bind_groups[0], rows=othello_piece_rows, label="ludoxel-othello-shadow-piece-temp", temp_buffers=temp_uniform_buffers)
         shadow_draw_calls += int(othello_shadow_dc)
         shadow_instances += int(othello_shadow_instances)
       shadow_pass.end()
@@ -1023,34 +880,21 @@ class WgpuRendererBackend:
     if othello_rows is not None and self._res.shadow_bind_group is None:
       self._ensure_shadow_target()
     world_uniform_buffers, world_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-      label="ludoxel-world-frame",
-      view_proj=view_proj,
-      light_view_proj=light_view_proj,
-      tint_value=0.55,
-      sel_mode=int(sel_mode),
-      sel_block=sel_block,
-      shadow_enabled=bool(shadow_sampling_ok),
-      debug_shadow=bool(self._state.debug_shadow),
-      fog=world_fog,
-      ultra=bool(ultra_visuals),
+      label="ludoxel-world-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.55, sel_mode=int(sel_mode), sel_block=sel_block, shadow_enabled=bool(shadow_sampling_ok), debug_shadow=bool(self._state.debug_shadow), fog=world_fog, ultra=bool(ultra_visuals)
     )
     temp_uniform_buffers.extend(world_uniform_buffers)
     temp_uploads: list[WgpuFaceInstances] = []
     render_pass = encoder.begin_render_pass(
       label="ludoxel-main-pass",
-      color_attachments=[
-        {"view": color_view, "resolve_target": None, "clear_value": (float(fog_color.x), float(fog_color.y), float(fog_color.z), 1.0), "load_op": wgpu.LoadOp.clear, "store_op": wgpu.StoreOp.store}
-      ],
+      color_attachments=[{"view": color_view, "resolve_target": None, "clear_value": (float(fog_color.x), float(fog_color.y), float(fog_color.z), 1.0), "load_op": wgpu.LoadOp.clear, "store_op": wgpu.StoreOp.store}],
       depth_stencil_attachment={"view": self._res.depth_view, "depth_clear_value": 1.0, "depth_load_op": wgpu.LoadOp.clear, "depth_store_op": wgpu.StoreOp.store},
     )
 
     draw_calls = 0
     instances = 0
-    # Draw the veiling glare, the sun disc, and the lens flare as background,
-    # before the world pass. All three write no depth, and the opaque world drawn
-    # next overdraws them, so world geometry nearer than the sun occludes them at
-    # the terrain silhouette instead of the glow being painted over foreground
-    # blocks. A block that hides the sun therefore hides its glare and flare.
+    # Draw the veiling glare, the sun disc, and the lens flare as background, before the world pass. All three write no depth, and the opaque world
+    # drawn next overdraws them, so world geometry nearer than the sun occludes them at the terrain silhouette instead of the glow being painted over
+    # foreground blocks. A block that hides the sun therefore hides its glare and flare.
     if bool(ultra_visuals):
       glare_strength = sun_glare_strength(forward, self._state.sun_dir)
       if glare_strength > 0.0:
@@ -1073,9 +917,7 @@ class WgpuRendererBackend:
     if bool(ultra_visuals) and self._res.sun_flare_pipeline is not None:
       flare_x, flare_y, flare_strength = sun_flare_screen(view_proj, self._state.sun_dir, eye, forward, float(self._cfg.sun.distance))
       if flare_strength > 0.0:
-        flare_buffer, flare_bind_group = self._create_sun_flare_uniform_bind_group(
-          sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(width) / max(float(height), 1.0)
-        )
+        flare_buffer, flare_bind_group = self._create_sun_flare_uniform_bind_group(sun_ndc=(float(flare_x), float(flare_y)), strength=float(flare_strength), aspect=float(width) / max(float(height), 1.0))
         if flare_buffer is not None:
           temp_uniform_buffers.append(flare_buffer)
         if flare_bind_group is not None:
@@ -1124,26 +966,18 @@ class WgpuRendererBackend:
 
     if self._visuals is not None:
       falling_rows = build_falling_block_face_rows(samples=tuple(falling_blocks), uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
-      falling_uniform_buffers, falling_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-falling-block-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog
-      )
+      falling_uniform_buffers, falling_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-falling-block-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog)
       temp_uniform_buffers.extend(falling_uniform_buffers)
-      dc, inst, uploads = self._draw_transform_buckets(
-        render_pass, buckets=falling_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-falling-block-temp", camera_bind_groups=falling_uniform_bind_groups
-      )
+      dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=falling_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-falling-block-temp", camera_bind_groups=falling_uniform_bind_groups)
       draw_calls += int(dc)
       instances += int(inst)
       temp_uploads.extend(uploads)
 
     if tuple(block_break_particles):
       particle_rows = build_block_break_particle_face_rows(samples=tuple(block_break_particles), camera_forward=forward)
-      particle_uniform_buffers, particle_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-block-break-particle-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog
-      )
+      particle_uniform_buffers, particle_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-block-break-particle-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog)
       temp_uniform_buffers.extend(particle_uniform_buffers)
-      dc, inst, uploads = self._draw_transform_buckets(
-        render_pass, buckets=particle_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-block-break-particle-temp", camera_bind_groups=particle_uniform_bind_groups
-      )
+      dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=particle_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-block-break-particle-temp", camera_bind_groups=particle_uniform_bind_groups)
       draw_calls += int(dc)
       instances += int(inst)
       temp_uploads.extend(uploads)
@@ -1153,45 +987,23 @@ class WgpuRendererBackend:
       if pose.skin_texture_key is not None:
         skin_bind_group = self._ai_skin_bind_groups.get(str(pose.skin_texture_key), skin_bind_group)
       if skin_bind_group is not None:
-        player_uniform_buffers, player_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-          label=f"ludoxel-player-skin-frame-{pose_idx}",
-          view_proj=view_proj,
-          light_view_proj=light_view_proj,
-          tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))),
-          sel_mode=0,
-          sel_block=None,
-          fog=world_fog,
-        )
+        player_uniform_buffers, player_uniform_bind_groups = self._create_frame_uniform_bind_groups(label=f"ludoxel-player-skin-frame-{pose_idx}", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), sel_mode=0, sel_block=None, fog=world_fog)
         temp_uniform_buffers.extend(player_uniform_buffers)
-        dc, inst, uploads = self._draw_transform_buckets(
-          render_pass, buckets=pose.skin_face_rows, texture_bind_group=skin_bind_group, label=f"ludoxel-player-skin-temp-{pose_idx}", camera_bind_groups=player_uniform_bind_groups
-        )
+        dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=pose.skin_face_rows, texture_bind_group=skin_bind_group, label=f"ludoxel-player-skin-temp-{pose_idx}", camera_bind_groups=player_uniform_bind_groups)
         draw_calls += int(dc)
         instances += int(inst)
         temp_uploads.extend(uploads)
       held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
-      held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label=f"ludoxel-player-held-frame-{pose_idx}", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog
-      )
+      held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(label=f"ludoxel-player-held-frame-{pose_idx}", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, fog=world_fog)
       temp_uniform_buffers.extend(held_uniform_buffers)
-      dc, inst, uploads = self._draw_transform_buckets(
-        render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label=f"ludoxel-player-held-temp-{pose_idx}", camera_bind_groups=held_uniform_bind_groups
-      )
+      dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label=f"ludoxel-player-held-temp-{pose_idx}", camera_bind_groups=held_uniform_bind_groups)
       draw_calls += int(dc)
       instances += int(inst)
       temp_uploads.extend(uploads)
 
     if othello_rows is not None and self._res.shadow_bind_group is not None:
       othello_uniform_buffers, othello_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-othello-frame",
-        view_proj=view_proj,
-        light_view_proj=light_view_proj,
-        tint_value=0.0,
-        sel_mode=0,
-        sel_block=None,
-        shadow_enabled=bool(shadow_sampling_ok),
-        debug_shadow=bool(self._state.debug_shadow),
-        fog=world_fog,
+        label="ludoxel-othello-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None, shadow_enabled=bool(shadow_sampling_ok), debug_shadow=bool(self._state.debug_shadow), fog=world_fog
       )
       temp_uniform_buffers.extend(othello_uniform_buffers)
       board_rows, highlight_rows, piece_rows = othello_rows
@@ -1239,52 +1051,20 @@ class WgpuRendererBackend:
     self._advance_cloud_clock()
     if bool(self._state.cloud_enabled) and int(self._state.cloud_density) > 0:
       shift = self._cloud_field.shift(float(self._cloud_time_accum))
-      # Three separated paths. Wireframe draws the exterior cell-face edges
-      # of the merged cloud footprint (no interior faces); below the Ultra
-      # shadow map quality tier the flat path draws the same exterior faces
-      # solid; the Ultra tier raymarches a translucent animated volume
-      # through one bounding box per cloud.
+      # Three separated paths. Wireframe draws the exterior cell-face edges of the merged cloud footprint (no interior faces);
+      # below the Ultra shadow map quality tier the flat path draws the same exterior faces solid;
+      # the Ultra tier raymarches a translucent animated volume through one bounding box per cloud.
       cloud_wireframe = bool(self._state.cloud_wireframe)
       cloud_ultra = bool(ultra_visuals) and not cloud_wireframe
-      cloud_shapes = self._cloud_field.visible_shapes(
-        eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(width) / max(float(height), 1.0), z_far=float(cloud_far_distance(int(render_distance_chunks)))
-      )
+      cloud_shapes = self._cloud_field.visible_shapes(eye=eye, shift=shift, forward=forward, fov_deg=float(fov_deg), aspect=float(width) / max(float(height), 1.0), z_far=float(cloud_far_distance(int(render_distance_chunks))))
       if cloud_shapes:
         if cloud_ultra:
-          # Draw the translucent volumes back to front so a nearer cloud
-          # blends over the ones behind it instead of hiding them.
-          cloud_shapes = sorted(
-            cloud_shapes,
-            key=lambda s: (
-              -(
-                (float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2
-                + (float(s.bounds.center.y) - float(eye.y)) ** 2
-                + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2
-              )
-            ),
-          )
-        # Clouds use their own far plane so the cloud fade range is not
-        # clipped by the world camera far plane; the Ultra volume pipeline
-        # does not write depth, so the projection difference does not feed
-        # back into the world depth buffer.
-        cloud_view_proj = self._camera_view_proj(
-          width=width,
-          height=height,
-          eye=eye,
-          yaw_deg=float(yaw_deg),
-          pitch_deg=float(pitch_deg),
-          fov_deg=float(fov_deg),
-          z_far=float(cloud_projection_z_far(int(render_distance_chunks), float(z_far))),
-        )
-        cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(
-          view_proj=cloud_view_proj,
-          shift=shift,
-          eye=eye,
-          time_s=float(self._cloud_time_accum),
-          flow_dir_xz=self._cloud_field.flow_dir_xz(),
-          cell_size=float(self._cloud_field.cell_size()),
-          fog=cloud_fog,
-        )
+          # Draw the translucent volumes back to front so a nearer cloud blends over the ones behind it instead of hiding them.
+          cloud_shapes = sorted(cloud_shapes, key=lambda s: -((float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2 + (float(s.bounds.center.y) - float(eye.y)) ** 2 + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2))
+        # Clouds use their own far plane so the cloud fade range is not clipped by the world camera far plane;
+        # the Ultra volume pipeline does not write depth, so the projection difference does not feed back into the world depth buffer.
+        cloud_view_proj = self._camera_view_proj(width=width, height=height, eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), z_far=float(cloud_projection_z_far(int(render_distance_chunks), float(z_far))))
+        cloud_uniform_buffer, cloud_uniform_bind_group = self._create_cloud_uniform_bind_group(view_proj=cloud_view_proj, shift=shift, eye=eye, time_s=float(self._cloud_time_accum), flow_dir_xz=self._cloud_field.flow_dir_xz(), cell_size=float(self._cloud_field.cell_size()), fog=cloud_fog)
         if cloud_uniform_buffer is not None:
           temp_uniform_buffers.append(cloud_uniform_buffer)
         if cloud_uniform_bind_group is not None:
@@ -1317,9 +1097,7 @@ class WgpuRendererBackend:
               instances += int(face_count)
 
     if self._selection_buffer is not None and self._selection_vertex_count > 0 and bool(self._state.outline_selection_enabled):
-      selection_uniform_buffers, selection_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-selection-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None
-      )
+      selection_uniform_buffers, selection_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-selection-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None)
       temp_uniform_buffers.extend(selection_uniform_buffers)
       render_pass.set_pipeline(self._res.selection_pipeline)
       render_pass.set_bind_group(0, selection_uniform_bind_groups[0])
@@ -1355,9 +1133,7 @@ class WgpuRendererBackend:
         hand_label = "ludoxel-first-person-arm-temp"
         tint_mix = float(0.0 if player_state is None else player_state.hurt_tint_strength)
 
-      hand_uniform_buffers, hand_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-first-person-frame", view_proj=hand_vp, tint_value=float(tint_mix), sel_mode=0, sel_block=None
-      )
+      hand_uniform_buffers, hand_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-first-person-frame", view_proj=hand_vp, tint_value=float(tint_mix), sel_mode=0, sel_block=None)
       temp_uniform_buffers.extend(hand_uniform_buffers)
       hand_pass = encoder.begin_render_pass(
         label="ludoxel-first-person-pass",
@@ -1378,10 +1154,7 @@ class WgpuRendererBackend:
         buffer.destroy()
 
     elapsed_ms = float((time.perf_counter() - t0) * 1000.0)
-    self._last_metrics = BackendRendererFrameMetrics(
-      world=BackendPassFrameMetrics(cpu_ms=elapsed_ms, draw_calls=int(draw_calls), instances=int(instances), rendered=True),
-      shadow=BackendPassFrameMetrics(cpu_ms=0.0, draw_calls=int(shadow_draw_calls), instances=int(shadow_instances), rendered=bool(shadow_ok)),
-    )
+    self._last_metrics = BackendRendererFrameMetrics(world=BackendPassFrameMetrics(cpu_ms=elapsed_ms, draw_calls=int(draw_calls), instances=int(instances), rendered=True), shadow=BackendPassFrameMetrics(cpu_ms=0.0, draw_calls=int(shadow_draw_calls), instances=int(shadow_instances), rendered=bool(shadow_ok)))
 
   def set_player_skin_image(self, image: QImage) -> None:
     self._player_skin_image = QImage(image)
@@ -1389,9 +1162,7 @@ class WgpuRendererBackend:
       return
     if self._skin_texture is not None and hasattr(self._skin_texture, "destroy"):
       self._skin_texture.destroy()
-    texture, view, sampler, bind_group, width, height = _create_texture_bind_group(
-      device=self._res.device, layout=self._res.atlas_bind_group_layout, label="ludoxel-player-skin", image=self._player_skin_image, mirror_y=True
-    )
+    texture, view, sampler, bind_group, width, height = _create_texture_bind_group(device=self._res.device, layout=self._res.atlas_bind_group_layout, label="ludoxel-player-skin", image=self._player_skin_image, mirror_y=True)
     self._skin_texture = texture
     self._skin_texture_view = view
     self._skin_sampler = sampler
@@ -1417,9 +1188,7 @@ class WgpuRendererBackend:
     bind_groups: dict[str, object] = {}
     try:
       for skin_key, image in self._ai_skin_images.items():
-        texture, view, sampler, bind_group, _width, _height = _create_texture_bind_group(
-          device=self._res.device, layout=self._res.atlas_bind_group_layout, label=f"ludoxel-ai-skin-{skin_key}", image=image, mirror_y=True
-        )
+        texture, view, sampler, bind_group, _width, _height = _create_texture_bind_group(device=self._res.device, layout=self._res.atlas_bind_group_layout, label=f"ludoxel-ai-skin-{skin_key}", image=image, mirror_y=True)
         textures[str(skin_key)] = texture
         texture_views[str(skin_key)] = view
         samplers[str(skin_key)] = sampler
@@ -1438,9 +1207,7 @@ class WgpuRendererBackend:
     self._ai_skin_images = {str(skin_key): normalize_player_skin_image(QImage(image)) for skin_key, image in images.items()}
     self._replace_ai_skin_gpu_resources()
 
-  def render_player_preview_frame(
-    self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
-  ) -> QImage:
+  def render_player_preview_frame(self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0) -> QImage:
     del restore_framebuffer, restore_viewport
     if self._res is None or player_state is None or self._res.skin_bind_group is None:
       return QImage()
@@ -1454,20 +1221,14 @@ class WgpuRendererBackend:
     proj = mat4.perspective(float(_PREVIEW_FOV_DEG), float(aspect), float(_PREVIEW_NEAR), float(_PREVIEW_FAR))
     view_proj = mat4.mul(proj, view).astype(np.float32)
 
-    color_texture = self._res.device.create_texture(
-      label="ludoxel-preview-color", size=(int(target_width), int(target_height), 1), format=self._res.target_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.COPY_SRC
-    )
-    depth_texture = self._res.device.create_texture(
-      label="ludoxel-preview-depth", size=(int(target_width), int(target_height), 1), format=self._res.depth_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT
-    )
+    color_texture = self._res.device.create_texture(label="ludoxel-preview-color", size=(int(target_width), int(target_height), 1), format=self._res.target_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.COPY_SRC)
+    depth_texture = self._res.device.create_texture(label="ludoxel-preview-depth", size=(int(target_width), int(target_height), 1), format=self._res.depth_format, usage=wgpu.TextureUsage.RENDER_ATTACHMENT)
     color_view = color_texture.create_view(label="ludoxel-preview-color-view")
     depth_view = depth_texture.create_view(label="ludoxel-preview-depth-view")
     uniform_buffers: list[object] = []
     temp_uploads: list[WgpuFaceInstances] = []
     try:
-      skin_uniform_buffers, skin_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-        label="ludoxel-preview-frame", view_proj=view_proj, tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), sel_mode=0, sel_block=None
-      )
+      skin_uniform_buffers, skin_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-preview-frame", view_proj=view_proj, tint_value=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), sel_mode=0, sel_block=None)
       uniform_buffers.extend(skin_uniform_buffers)
       encoder = self._res.device.create_command_encoder(label="ludoxel-preview-encoder")
       render_pass = encoder.begin_render_pass(
@@ -1477,16 +1238,12 @@ class WgpuRendererBackend:
       )
       render_pass.set_pipeline(self._res.textured_face_pipeline)
       render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
-      _draw_calls, _instances, uploads = self._draw_transform_buckets(
-        render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label="ludoxel-preview-player-temp", camera_bind_groups=skin_uniform_bind_groups
-      )
+      _draw_calls, _instances, uploads = self._draw_transform_buckets(render_pass, buckets=pose.skin_face_rows, texture_bind_group=self._res.skin_bind_group, label="ludoxel-preview-player-temp", camera_bind_groups=skin_uniform_bind_groups)
       temp_uploads.extend(uploads)
       held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
       held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-preview-held-frame", view_proj=view_proj, tint_value=0.0, sel_mode=0, sel_block=None)
       uniform_buffers.extend(held_uniform_buffers)
-      _held_draw_calls, _held_instances, held_uploads = self._draw_transform_buckets(
-        render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-preview-held-temp", camera_bind_groups=held_uniform_bind_groups
-      )
+      _held_draw_calls, _held_instances, held_uploads = self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-preview-held-temp", camera_bind_groups=held_uniform_bind_groups)
       temp_uploads.extend(held_uploads)
       render_pass.end()
       self._res.device.queue.submit([encoder.finish()])

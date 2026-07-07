@@ -144,13 +144,7 @@ def _learn_from_position(
       committer.flush()
     return
 
-  analysis = analyze_insane_position(
-    board,
-    int(side),
-    random_seed=0,
-    time_budget_s=_analysis_time_budget_s(requested_depth=int(requested_depth), ply_index=max(0, int(requested_depth) - int(remaining_depth)), hash_level=int(cache.hash_level)),
-    cache=cache,
-  )
+  analysis = analyze_insane_position(board, int(side), random_seed=0, time_budget_s=_analysis_time_budget_s(requested_depth=int(requested_depth), ply_index=max(0, int(requested_depth) - int(remaining_depth)), hash_level=int(cache.hash_level)), cache=cache)
   explored_counter[0] = int(explored_counter[0]) + 1
   progress.emit(board=tuple(board), side=int(side), line=tuple(line), legal_moves=tuple(legal_moves), explored_positions=int(explored_counter[0]), remaining_depth=int(remaining_depth))
   evaluations = tuple(analysis.move_evaluations)
@@ -208,16 +202,7 @@ def _learn_from_position(
 
 
 def learn_opening_book(
-  *,
-  depth: int,
-  per_move_error: float,
-  cumulative_error: float,
-  leaf_error: float,
-  project_root=None,
-  hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL,
-  sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL,
-  progress_sink: Callable[[dict[str, object]], None] | None = None,
-  cancel_check: Callable[[], bool] | None = None,
+  *, depth: int, per_move_error: float, cumulative_error: float, leaf_error: float, project_root=None, hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL, sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL, progress_sink: Callable[[dict[str, object]], None] | None = None, cancel_check: Callable[[], bool] | None = None
 ) -> BookLearningResult:
   normalized_depth = normalize_book_learning_depth(depth)
   normalized_per_move_error = normalize_book_error(per_move_error, default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR))
@@ -238,15 +223,7 @@ def learn_opening_book(
   _ensure_not_cancelled(cancel_check)
 
   initial_board = create_initial_board()
-  progress.emit(
-    board=tuple(initial_board),
-    side=int(SIDE_BLACK),
-    line=(),
-    legal_moves=tuple(int(move) for move in find_legal_moves(initial_board, int(SIDE_BLACK))),
-    explored_positions=0,
-    remaining_depth=int(normalized_depth),
-    force=True,
-  )
+  progress.emit(board=tuple(initial_board), side=int(SIDE_BLACK), line=(), legal_moves=tuple(int(move) for move in find_legal_moves(initial_board, int(SIDE_BLACK))), explored_positions=0, remaining_depth=int(normalized_depth), force=True)
 
   try:
     _learn_from_position(

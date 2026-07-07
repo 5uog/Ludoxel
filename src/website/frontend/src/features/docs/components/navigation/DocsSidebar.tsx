@@ -38,25 +38,13 @@ export default function DocsSidebar({ currentPathname, onNavigate }: DocsSidebar
           return (
             <div key={section.title}>
               <h3 className="px-3 py-2 text-sm font-semibold text-muted-foreground">
-                <button
-                  aria-controls={sectionPanelId}
-                  aria-expanded={isSectionOpen}
-                  className="flex w-full items-center gap-2 text-left transition-colors hover:text-foreground"
-                  type="button"
-                  onClick={() => toggleSection(section.title)}
-                >
-                  <ChevronRight
-                    className={isSectionOpen ? 'h-3.5 w-3.5 shrink-0 rotate-90 transition-transform duration-300 ease-out' : 'h-3.5 w-3.5 shrink-0 transition-transform duration-300 ease-out'}
-                  />
+                <button aria-controls={sectionPanelId} aria-expanded={isSectionOpen} className="flex w-full items-center gap-2 text-left transition-colors hover:text-foreground" type="button" onClick={() => toggleSection(section.title)}>
+                  <ChevronRight className={isSectionOpen ? 'h-3.5 w-3.5 shrink-0 rotate-90 transition-transform duration-300 ease-out' : 'h-3.5 w-3.5 shrink-0 transition-transform duration-300 ease-out'} />
                   <span className="truncate">{section.title}</span>
                 </button>
               </h3>
 
-              <div
-                aria-hidden={!isSectionOpen}
-                className={isSectionOpen ? 'grid grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out' : 'grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out'}
-                id={sectionPanelId}
-              >
+              <div aria-hidden={!isSectionOpen} className={isSectionOpen ? 'grid grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out' : 'grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out'} id={sectionPanelId}>
                 <div className="min-h-0 overflow-hidden">
                   <div className="relative mt-1">
                     <div className="absolute bottom-0 left-3 top-0 w-0.5 bg-border" />
@@ -68,11 +56,7 @@ export default function DocsSidebar({ currentPathname, onNavigate }: DocsSidebar
                         return (
                           <Link
                             aria-hidden={!isSectionOpen}
-                            className={
-                              isActive
-                                ? 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm font-medium text-foreground transition-colors'
-                                : 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm text-muted-foreground transition-colors hover:text-foreground'
-                            }
+                            className={isActive ? 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm font-medium text-foreground transition-colors' : 'relative flex items-center gap-3 py-2 pl-6 pr-3 text-sm text-muted-foreground transition-colors hover:text-foreground'}
                             key={item.href}
                             tabIndex={isSectionOpen ? undefined : -1}
                             to={item.href}

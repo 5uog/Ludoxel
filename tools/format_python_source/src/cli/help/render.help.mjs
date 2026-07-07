@@ -37,15 +37,7 @@ export function renderPythonQualityHelp(task, language = 'ja') {
     '',
     section(messages.synopsis, lines([`  npm run ${task.npmScript} -- [options]`, `  node tools/format_python_source/scripts/run/${task.entryFile} [options]`])),
     '',
-    section(
-      messages.options,
-      lines([
-        option('--help, -h', messages.helpOption),
-        option('--lang ja|en', messages.languageOption),
-        option('--language ja|en', messages.languageOption),
-        option('--locale ja|en', messages.languageOption),
-      ]),
-    ),
+    section(messages.options, lines([option('--help, -h', messages.helpOption), option('--lang ja|en', messages.languageOption), option('--language ja|en', messages.languageOption), option('--locale ja|en', messages.languageOption)])),
     '',
     section(messages.targets, lines([`  ${messages.targetDescription}`, ...targets.map((targetPath) => `  - ${targetPath}`)])),
   ]);

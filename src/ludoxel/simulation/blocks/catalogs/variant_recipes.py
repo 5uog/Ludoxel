@@ -25,9 +25,7 @@ class CatalogVariantRecipe:
   is_solid: bool = True
 
 
-def register_catalog_variants(
-  reg: BlockRegistry, entry: object, *, textures: BlockTextures, tags: tuple[str, ...], recipes: tuple[CatalogVariantRecipe, ...], sound_group=DEFAULT_BLOCK_SOUND_GROUP
-) -> None:
+def register_catalog_variants(reg: BlockRegistry, entry: object, *, textures: BlockTextures, tags: tuple[str, ...], recipes: tuple[CatalogVariantRecipe, ...], sound_group=DEFAULT_BLOCK_SOUND_GROUP) -> None:
   for recipe in recipes:
     variant_id = recipe.variant_id(entry)
     if variant_id is None:

@@ -15,16 +15,7 @@ import ludoxel.presentation.interface.othello.viewport as othello_controller
 import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
 import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
-from ludoxel.application.preferences.keybinds import (
-  ACTION_CLEAR_SELECTED_SLOT,
-  ACTION_CYCLE_CAMERA_PERSPECTIVE,
-  ACTION_TOGGLE_CHAT,
-  ACTION_TOGGLE_DEBUG_HUD,
-  ACTION_TOGGLE_DEBUG_SHADOW,
-  ACTION_TOGGLE_GAMEPLAY_HUD,
-  ACTION_TOGGLE_INVENTORY,
-  action_for_key,
-)
+from ludoxel.application.preferences.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CHAT, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_GAMEPLAY_HUD, ACTION_TOGGLE_INVENTORY, action_for_key
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z, face_neighbor_offset
@@ -87,14 +78,7 @@ def _ai_settings_open(viewport: "RendererViewportWidget") -> bool:
 
 
 def _overlay_blocks_gameplay_keybinds(viewport: "RendererViewportWidget") -> bool:
-  return bool(
-    viewport._overlays.paused()
-    or viewport._overlays.inventory_open()
-    or viewport._overlays.dead()
-    or viewport._overlays.settings_open()
-    or viewport._overlays.othello_settings_open()
-    or _ai_settings_open(viewport)
-  )
+  return bool(viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or _ai_settings_open(viewport))
 
 
 def _overlay_blocks_inventory_toggle_keybind(viewport: "RendererViewportWidget") -> bool:
@@ -187,14 +171,7 @@ def handle_wheel(viewport: "RendererViewportWidget", e: "QWheelEvent") -> bool:
     e.accept()
     return True
 
-  if (
-    viewport._overlays.paused()
-    or viewport._overlays.inventory_open()
-    or viewport._overlays.dead()
-    or viewport._overlays.settings_open()
-    or viewport._overlays.othello_settings_open()
-    or _ai_settings_open(viewport)
-  ):
+  if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or _ai_settings_open(viewport):
     return False
 
   delta_y = int(e.angleDelta().y())
@@ -218,14 +195,7 @@ def handle_mouse_press(viewport: "RendererViewportWidget", e: "QMouseEvent") -> 
 
   viewport.setFocus(Qt.FocusReason.MouseFocusReason)
 
-  if (
-    viewport._overlays.paused()
-    or viewport._overlays.inventory_open()
-    or viewport._overlays.dead()
-    or viewport._overlays.settings_open()
-    or viewport._overlays.othello_settings_open()
-    or _ai_settings_open(viewport)
-  ):
+  if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or _ai_settings_open(viewport):
     return False
 
   if not viewport._inp.captured():
@@ -287,9 +257,7 @@ def _advance_right_mouse_place_repeat(viewport: "RendererViewportWidget", *, now
     viewport._right_mouse_repeat_line_start_cell_materialized = bool(result.place_line.start_cell_materialized)
     viewport._right_mouse_repeat_line_pending_support_cell = None if result.place_line.pending_support_cell is None else tuple(int(value) for value in result.place_line.pending_support_cell)
     viewport._right_mouse_repeat_line_pending_support_face = None if result.place_line.pending_support_face is None else int(result.place_line.pending_support_face)
-    viewport._right_mouse_repeat_line_pending_support_hit_point = (
-      None if result.place_line.pending_support_hit_point is None else tuple(float(value) for value in result.place_line.pending_support_hit_point)
-    )
+    viewport._right_mouse_repeat_line_pending_support_hit_point = None if result.place_line.pending_support_hit_point is None else tuple(float(value) for value in result.place_line.pending_support_hit_point)
     viewport._right_mouse_repeat_support_face_mode = bool(result.place_line.support_face_mode)
     viewport._right_mouse_repeat_visible_face_chain_mode = bool(result.place_line.visible_face_chain_mode)
     viewport._right_mouse_repeat_place_state = None if result.place_line.place_state is None else str(result.place_line.place_state)
@@ -335,16 +303,7 @@ def _update_right_mouse_place_vertical_lock(viewport: "RendererViewportWidget") 
 
 
 def handle_held_mouse_buttons_pre_step(viewport: "RendererViewportWidget") -> None:
-  if (
-    viewport._overlays.paused()
-    or viewport._overlays.inventory_open()
-    or viewport._overlays.dead()
-    or viewport._overlays.settings_open()
-    or viewport._overlays.othello_settings_open()
-    or _ai_settings_open(viewport)
-    or (not viewport._inp.captured())
-    or viewport._state.is_othello_space()
-  ):
+  if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or _ai_settings_open(viewport) or (not viewport._inp.captured()) or viewport._state.is_othello_space():
     return
 
   if bool(viewport._right_mouse_held) and (not bool(_physical_right_mouse_button_held())):
@@ -355,50 +314,24 @@ def handle_held_mouse_buttons_pre_step(viewport: "RendererViewportWidget") -> No
   _update_right_mouse_place_vertical_lock(viewport)
 
   now_s = time.perf_counter()
-  if (
-    bool(viewport._right_mouse_held)
-    and bool(viewport._right_mouse_repeat_enabled)
-    and is_my_world_space(viewport._state.current_space_id)
-    and float(now_s) + 1e-9 >= float(viewport._right_mouse_repeat_due_s)
-    and str(viewport._right_mouse_repeat_mode) == INTERACTION_ACTION_PLACE
-  ):
+  if bool(viewport._right_mouse_held) and bool(viewport._right_mouse_repeat_enabled) and is_my_world_space(viewport._state.current_space_id) and float(now_s) + 1e-9 >= float(viewport._right_mouse_repeat_due_s) and str(viewport._right_mouse_repeat_mode) == INTERACTION_ACTION_PLACE:
     _advance_right_mouse_place_repeat(viewport, now_s=float(now_s))
 
 
 def handle_held_mouse_buttons(viewport: "RendererViewportWidget") -> None:
-  if (
-    viewport._overlays.paused()
-    or viewport._overlays.inventory_open()
-    or viewport._overlays.dead()
-    or viewport._overlays.settings_open()
-    or viewport._overlays.othello_settings_open()
-    or _ai_settings_open(viewport)
-    or (not viewport._inp.captured())
-    or viewport._state.is_othello_space()
-  ):
+  if viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or _ai_settings_open(viewport) or (not viewport._inp.captured()) or viewport._state.is_othello_space():
     return
 
   now_s = time.perf_counter()
 
-  if (
-    bool(viewport._left_mouse_held)
-    and bool(viewport._state.creative_mode)
-    and is_my_world_space(viewport._state.current_space_id)
-    and float(viewport._left_mouse_repeat_due_s) > 0.0
-    and float(now_s) + 1e-9 >= float(viewport._left_mouse_repeat_due_s)
-  ):
+  if bool(viewport._left_mouse_held) and bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id) and float(viewport._left_mouse_repeat_due_s) > 0.0 and float(now_s) + 1e-9 >= float(viewport._left_mouse_repeat_due_s):
     outcome = _perform_left_click(viewport)
     if outcome is not None and bool(outcome.success):
       viewport._left_mouse_repeat_due_s = float(now_s) + float(viewport._state.block_break_repeat_interval_s)
     else:
       viewport._left_mouse_repeat_due_s = 0.0
 
-  if (
-    bool(viewport._right_mouse_held)
-    and bool(viewport._right_mouse_repeat_enabled)
-    and is_my_world_space(viewport._state.current_space_id)
-    and float(now_s) + 1e-9 >= float(viewport._right_mouse_repeat_due_s)
-  ):
+  if bool(viewport._right_mouse_held) and bool(viewport._right_mouse_repeat_enabled) and is_my_world_space(viewport._state.current_space_id) and float(now_s) + 1e-9 >= float(viewport._right_mouse_repeat_due_s):
     if str(viewport._right_mouse_repeat_mode) == INTERACTION_ACTION_INTERACT:
       _perform_right_click_interact_repeat(viewport)
       viewport._right_mouse_repeat_due_s = float(now_s) + float(viewport._state.block_interact_repeat_interval_s)
@@ -823,12 +756,7 @@ def _project_repeat_step(viewport: "RendererViewportWidget", *, face: int, direc
         mag, step, _axis = best_horizontal
       else:
         local_y = 0.5 if hit_point is None else (float(hit_point.y) - math.floor(float(hit_point.y)))
-        vertical_intent = (
-          (int(vertical_motion_sign) != 0)
-          and (int(best_vertical[1][1]) == int(vertical_motion_sign))
-          and (float(best_vertical[0]) > float(best_horizontal[0]) * 1.10)
-          and ((float(best_vertical[1][1]) < 0 and float(local_y) <= 0.40) or (float(best_vertical[1][1]) > 0 and float(local_y) >= 0.60))
-        )
+        vertical_intent = (int(vertical_motion_sign) != 0) and (int(best_vertical[1][1]) == int(vertical_motion_sign)) and (float(best_vertical[0]) > float(best_horizontal[0]) * 1.10) and ((float(best_vertical[1][1]) < 0 and float(local_y) <= 0.40) or (float(best_vertical[1][1]) > 0 and float(local_y) >= 0.60))
         mag, step, _axis = best_vertical if bool(vertical_intent) else best_horizontal
     else:
       mag, step, _axis = max(candidates, key=lambda item: float(item[0]))
@@ -950,13 +878,7 @@ def _support_face_repeat_line_for_result(viewport: "RendererViewportWidget", hit
 def _deferred_place_repeat_line(line: _PlaceRepeatLine | None, *, hit: BlockPick) -> _PlaceRepeatLine | None:
   if line is None:
     return None
-  return replace(
-    line,
-    start_cell_materialized=False,
-    pending_support_cell=tuple(int(value) for value in hit.hit),
-    pending_support_face=int(hit.face),
-    pending_support_hit_point=(float(hit.hit_point.x), float(hit.hit_point.y), float(hit.hit_point.z)),
-  )
+  return replace(line, start_cell_materialized=False, pending_support_cell=tuple(int(value) for value in hit.hit), pending_support_face=int(hit.face), pending_support_hit_point=(float(hit.hit_point.x), float(hit.hit_point.y), float(hit.hit_point.z)))
 
 
 def _should_arm_deferred_place_repeat(viewport: "RendererViewportWidget", *, hit: BlockPick | None) -> bool:
@@ -968,17 +890,11 @@ def _should_arm_deferred_place_repeat(viewport: "RendererViewportWidget", *, hit
     return False
 
   block_id = settings_controller.current_block_id(viewport)
-  place_state = viewport._session.interaction.placement_policy.resolve_place_state(
-    player=viewport._session.player, block_id="" if block_id is None else str(block_id), hit_face=int(hit.face), hit_point=hit.hit_point
-  )
+  place_state = viewport._session.interaction.placement_policy.resolve_place_state(player=viewport._session.player, block_id="" if block_id is None else str(block_id), hit_face=int(hit.face), hit_point=hit.hit_point)
   if place_state is None:
     return False
 
-  return bool(
-    viewport._session.interaction.placement_policy.placement_intersects_player(
-      player=viewport._session.player, world=viewport._session.world, px=int(place_cell[0]), py=int(place_cell[1]), pz=int(place_cell[2]), place_state=str(place_state)
-    )
-  )
+  return bool(viewport._session.interaction.placement_policy.placement_intersects_player(player=viewport._session.player, world=viewport._session.world, px=int(place_cell[0]), py=int(place_cell[1]), pz=int(place_cell[2]), place_state=str(place_state)))
 
 
 def _state_is_gravity_affected(viewport: "RendererViewportWidget", *, state_str: str | None) -> bool:
@@ -1036,23 +952,13 @@ def _outcome_establishes_repeat_frontier(viewport: "RendererViewportWidget", *, 
   return bool(_cell_establishes_repeat_frontier(viewport, cell=tuple(int(value) for value in target_cell), state_str=state_str))
 
 
-def _place_line_after_attempt(
-  viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, target_progress: int, target_cell: tuple[int, int, int], outcome: InteractionOutcome
-) -> _PlaceRepeatLine | None:
+def _place_line_after_attempt(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, target_progress: int, target_cell: tuple[int, int, int], outcome: InteractionOutcome) -> _PlaceRepeatLine | None:
   if not bool(_outcome_establishes_repeat_frontier(viewport, outcome=outcome, target_cell=tuple(int(value) for value in target_cell))):
     if bool(outcome.success) and str(outcome.action) == INTERACTION_ACTION_PLACE:
       return None
     return line
 
-  advanced = replace(
-    line,
-    min_progress=int(min(int(line.min_progress), int(target_progress))),
-    max_progress=int(max(int(line.max_progress), int(target_progress))),
-    start_cell_materialized=True,
-    pending_support_cell=None,
-    pending_support_face=None,
-    pending_support_hit_point=None,
-  )
+  advanced = replace(line, min_progress=int(min(int(line.min_progress), int(target_progress))), max_progress=int(max(int(line.max_progress), int(target_progress))), start_cell_materialized=True, pending_support_cell=None, pending_support_face=None, pending_support_hit_point=None)
   return _with_place_state_lock(viewport, line=advanced, outcome=outcome)
 
 
@@ -1065,19 +971,8 @@ def _retry_pending_place_repeat_start(viewport: "RendererViewportWidget", *, lin
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
 
-  synthetic_hit = BlockPick(
-    hit=tuple(int(value) for value in support_cell),
-    place=tuple(int(value) for value in line.start_cell),
-    t=0.0,
-    face=int(support_face),
-    hit_point=Vec3(float(support_hit_point[0]), float(support_hit_point[1]), float(support_hit_point[2])),
-  )
-  outcome = viewport._session.place_block_from_hit(
-    synthetic_hit,
-    settings_controller.current_block_id(viewport),
-    forced_place_state=_forced_place_state_for_line(viewport, line),
-    inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)),
-  )
+  synthetic_hit = BlockPick(hit=tuple(int(value) for value in support_cell), place=tuple(int(value) for value in line.start_cell), t=0.0, face=int(support_face), hit_point=Vec3(float(support_hit_point[0]), float(support_hit_point[1]), float(support_hit_point[2])))
+  outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=_forced_place_state_for_line(viewport, line), inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)))
   place_line = _place_line_after_attempt(viewport, line=line, target_progress=0, target_cell=tuple(int(value) for value in line.start_cell), outcome=outcome)
   if place_line is not None and bool(outcome.success):
     vertical_line = _initial_vertical_transition_repeat_line(viewport, line=place_line, hit=synthetic_hit)
@@ -1234,9 +1129,7 @@ def _repeat_line_cell(*, start_cell: tuple[int, int, int], step: tuple[int, int,
   return (int(start_cell[0] + step[0] * progress), int(start_cell[1] + step[1] * progress), int(start_cell[2] + step[2] * progress))
 
 
-def _support_face_repeat_candidate_hit(
-  *, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int
-) -> tuple[BlockPick, int, int] | None:
+def _support_face_repeat_candidate_hit(*, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int) -> tuple[BlockPick, int, int] | None:
   if hit is None or hit.place is None:
     return None
   if int(hit.face) != int(face):
@@ -1302,33 +1195,19 @@ def _initial_vertical_transition_repeat_line(viewport: "RendererViewportWidget",
   if not bool(anchor_preserved):
     return None
   return replace(
-    line,
-    step=tuple(int(value) for value in vertical_step),
-    face=int(face),
-    plane_normal=tuple(int(value) for value in plane_normal),
-    plane_point=tuple(float(value) for value in plane_point),
-    min_progress=int(min_progress),
-    max_progress=int(max_progress),
-    support_face_mode=False,
-    visible_face_chain_mode=False,
+    line, step=tuple(int(value) for value in vertical_step), face=int(face), plane_normal=tuple(int(value) for value in plane_normal), plane_point=tuple(float(value) for value in plane_point), min_progress=int(min_progress), max_progress=int(max_progress), support_face_mode=False, visible_face_chain_mode=False
   )
 
 
-def _visible_face_chain_candidate_hit(
-  *, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int
-) -> tuple[BlockPick, int, int] | None:
+def _visible_face_chain_candidate_hit(*, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int) -> tuple[BlockPick, int, int] | None:
   if hit is None or hit.place is None:
     return None
   if int(hit.face) != int(face):
     return None
-  return _support_face_repeat_candidate_hit(
-    hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress)
-  )
+  return _support_face_repeat_candidate_hit(hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
 
 
-def _direct_visible_support_face_candidate(
-  viewport: "RendererViewportWidget", *, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int
-) -> tuple[BlockPick, int, int] | None:
+def _direct_visible_support_face_candidate(viewport: "RendererViewportWidget", *, hit: BlockPick | None, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, min_progress: int, max_progress: int) -> tuple[BlockPick, int, int] | None:
   if hit is None or hit.place is None or _is_vertical_face(int(hit.face)):
     return None
   if int(hit.face) != int(face):
@@ -1338,14 +1217,10 @@ def _direct_visible_support_face_candidate(
   if contact is not None and tuple(int(value) for value in hit.hit) == tuple(int(value) for value in contact.cell):
     return None
 
-  return _support_face_repeat_candidate_hit(
-    hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress)
-  )
+  return _support_face_repeat_candidate_hit(hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
 
 
-def _projected_frontier_support_face_candidate(
-  viewport: "RendererViewportWidget", *, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, max_progress: int, eye: Vec3, direction: Vec3, hit: BlockPick | None
-) -> tuple[BlockPick, int, int] | None:
+def _projected_frontier_support_face_candidate(viewport: "RendererViewportWidget", *, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, max_progress: int, eye: Vec3, direction: Vec3, hit: BlockPick | None) -> tuple[BlockPick, int, int] | None:
   intent_direction = Vec3(float(direction.x), float(direction.y), float(direction.z))
   if math.hypot(float(direction.x), float(direction.z)) <= 0.25:
     horizontal_fallback = forward_from_yaw_pitch_deg(float(viewport._session.player.yaw_deg), 0.0)
@@ -1377,18 +1252,12 @@ def _projected_frontier_support_face_candidate(
   if hit_point is None:
     return None
 
-  return (
-    BlockPick(hit=tuple(int(value) for value in frontier_cell), place=tuple(int(value) for value in target_cell), t=0.0, face=int(face), hit_point=hit_point),
-    int(frontier_progress),
-    int(target_progress),
-  )
+  return (BlockPick(hit=tuple(int(value) for value in frontier_cell), place=tuple(int(value) for value in target_cell), t=0.0, face=int(face), hit_point=hit_point), int(frontier_progress), int(target_progress))
 
 
 def _held_slab_block_id(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine) -> str | None:
-  # A vertical slab pillar packs in 0.5-block units, so it needs the locked slab
-  # block id. The lock only reports the committed slab state while the held block
-  # still matches, so this returns None whenever the pillar should fall back to
-  # the full-cube advance (non-slab blocks or a changed selection).
+  # A vertical slab pillar packs in 0.5-block units, so it needs the locked slab block id. The lock only reports the committed slab state while the
+  # held block still matches, so this returns None whenever the pillar should fall back to the full-cube advance (non-slab blocks or a changed selection).
   forced = _forced_place_state_for_line(viewport, line)
   if forced is None:
     return None
@@ -1400,11 +1269,9 @@ def _held_slab_block_id(viewport: "RendererViewportWidget", *, line: _PlaceRepea
 
 
 def _perform_vertical_slab_pillar(viewport: "RendererViewportWidget", *, line: _PlaceRepeatLine, feet_offset: float, block_id: str) -> _RightClickResult:
-  # A slab pillar fills each cell to a double before stepping to the next cell,
-  # so held half-blocks stack in continuous 0.5-block units instead of leaving a
-  # 0.5 gap between full-cell steps. The frontier cell carries the leading half
-  # (bottom while rising, top while descending); its complement completes the
-  # cell once the player clears it, and only then does the pillar advance.
+  # A slab pillar fills each cell to a double before stepping to the next cell, so held half-blocks stack in continuous 0.5-block units instead of
+  # leaving a 0.5 gap between full-cell steps. The frontier cell carries the leading half (bottom while rising, top while descending); its complement
+  # completes the cell once the player clears it, and only then does the pillar advance.
   step = tuple(int(value) for value in line.step)
   sign = int(step[1])
   max_progress = int(line.max_progress)
@@ -1442,13 +1309,7 @@ def _perform_vertical_slab_pillar(viewport: "RendererViewportWidget", *, line: _
   support_cell = _repeat_line_cell(start_cell=start_cell, step=step, progress=int(support_progress))
   support_face = int(FACE_POS_Y) if sign > 0 else int(FACE_NEG_Y)
   support_hit_point_y = float(target_cell[1]) if sign > 0 else float(target_cell[1] + 1)
-  synthetic_hit = BlockPick(
-    hit=tuple(int(value) for value in support_cell),
-    place=tuple(int(value) for value in target_cell),
-    t=0.0,
-    face=int(support_face),
-    hit_point=Vec3(float(target_cell[0]) + 0.5, float(support_hit_point_y), float(target_cell[2]) + 0.5),
-  )
+  synthetic_hit = BlockPick(hit=tuple(int(value) for value in support_cell), place=tuple(int(value) for value in target_cell), t=0.0, face=int(support_face), hit_point=Vec3(float(target_cell[0]) + 0.5, float(support_hit_point_y), float(target_cell[2]) + 0.5))
   outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=str(place_state), inherit_state=None)
   place_line = _place_line_after_attempt(viewport, line=line, target_progress=int(target_progress), target_cell=tuple(int(value) for value in target_cell), outcome=outcome)
   _finalize_right_click(viewport, outcome)
@@ -1485,19 +1346,8 @@ def _perform_generic_place_repeat(viewport: "RendererViewportWidget", *, line: _
     support_cell = _repeat_line_cell(start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), progress=int(support_progress))
     support_face = int(FACE_POS_Y) if int(target_cell[1]) > int(support_cell[1]) else int(FACE_NEG_Y)
     support_hit_point_y = float(support_cell[1] + 1) if int(support_face) == int(FACE_POS_Y) else float(support_cell[1])
-    synthetic_hit = BlockPick(
-      hit=tuple(int(value) for value in support_cell),
-      place=tuple(int(value) for value in target_cell),
-      t=0.0,
-      face=int(support_face),
-      hit_point=Vec3(float(support_cell[0]) + 0.5, float(support_hit_point_y), float(support_cell[2]) + 0.5),
-    )
-    outcome = viewport._session.place_block_from_hit(
-      synthetic_hit,
-      settings_controller.current_block_id(viewport),
-      forced_place_state=_forced_place_state_for_line(viewport, line),
-      inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)),
-    )
+    synthetic_hit = BlockPick(hit=tuple(int(value) for value in support_cell), place=tuple(int(value) for value in target_cell), t=0.0, face=int(support_face), hit_point=Vec3(float(support_cell[0]) + 0.5, float(support_hit_point_y), float(support_cell[2]) + 0.5))
+    outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=_forced_place_state_for_line(viewport, line), inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)))
     place_line = _place_line_after_attempt(viewport, line=line, target_progress=int(target_progress), target_cell=tuple(int(value) for value in target_cell), outcome=outcome)
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
@@ -1507,13 +1357,7 @@ def _perform_generic_place_repeat(viewport: "RendererViewportWidget", *, line: _
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
 
-  plane_hit = _ray_hits_repeat_plane(
-    eye=interaction_eye,
-    direction=interaction_direction,
-    plane_normal=tuple(int(value) for value in plane_normal),
-    plane_point=tuple(float(value) for value in plane_point),
-    reach=float(viewport._state.reach),
-  )
+  plane_hit = _ray_hits_repeat_plane(eye=interaction_eye, direction=interaction_direction, plane_normal=tuple(int(value) for value in plane_normal), plane_point=tuple(float(value) for value in plane_point), reach=float(viewport._state.reach))
   if plane_hit is None:
     outcome = InteractionOutcome(success=False)
     _finalize_right_click(viewport, outcome)
@@ -1547,15 +1391,8 @@ def _perform_generic_place_repeat(viewport: "RendererViewportWidget", *, line: _
   support_progress = int(target_progress) - 1 if int(target_progress) > 0 else int(target_progress) + 1
   support_cell = _repeat_line_cell(start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), progress=int(support_progress))
 
-  synthetic_hit = BlockPick(
-    hit=tuple(int(value) for value in support_cell), place=tuple(int(value) for value in target_cell), t=0.0, face=int(face), hit_point=Vec3(float(hit_point.x), float(hit_point.y), float(hit_point.z))
-  )
-  outcome = viewport._session.place_block_from_hit(
-    synthetic_hit,
-    settings_controller.current_block_id(viewport),
-    forced_place_state=_forced_place_state_for_line(viewport, line),
-    inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)),
-  )
+  synthetic_hit = BlockPick(hit=tuple(int(value) for value in support_cell), place=tuple(int(value) for value in target_cell), t=0.0, face=int(face), hit_point=Vec3(float(hit_point.x), float(hit_point.y), float(hit_point.z)))
+  outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=_forced_place_state_for_line(viewport, line), inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)))
   place_line = _place_line_after_attempt(viewport, line=line, target_progress=int(target_progress), target_cell=tuple(int(value) for value in target_cell), outcome=outcome)
   _finalize_right_click(viewport, outcome)
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
@@ -1575,28 +1412,15 @@ def _perform_visible_face_place_repeat(viewport: "RendererViewportWidget", *, li
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
 
-  candidate = _visible_face_chain_candidate_hit(
-    hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress)
-  )
+  candidate = _visible_face_chain_candidate_hit(hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
   if candidate is None:
     outcome = InteractionOutcome(success=False)
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
 
   candidate_hit, _frontier_progress, target_progress = candidate
-  synthetic_hit = BlockPick(
-    hit=tuple(int(value) for value in candidate_hit.hit),
-    place=tuple(int(value) for value in candidate_hit.place),
-    t=0.0,
-    face=int(candidate_hit.face),
-    hit_point=Vec3(float(candidate_hit.hit_point.x), float(candidate_hit.hit_point.y), float(candidate_hit.hit_point.z)),
-  )
-  outcome = viewport._session.place_block_from_hit(
-    synthetic_hit,
-    settings_controller.current_block_id(viewport),
-    forced_place_state=_forced_place_state_for_line(viewport, line),
-    inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)),
-  )
+  synthetic_hit = BlockPick(hit=tuple(int(value) for value in candidate_hit.hit), place=tuple(int(value) for value in candidate_hit.place), t=0.0, face=int(candidate_hit.face), hit_point=Vec3(float(candidate_hit.hit_point.x), float(candidate_hit.hit_point.y), float(candidate_hit.hit_point.z)))
+  outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=_forced_place_state_for_line(viewport, line), inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)))
   place_line = _place_line_after_attempt(viewport, line=line, target_progress=int(target_progress), target_cell=tuple(int(value) for value in candidate_hit.place), outcome=outcome)
   _finalize_right_click(viewport, outcome)
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
@@ -1616,53 +1440,22 @@ def _perform_support_face_place_repeat(viewport: "RendererViewportWidget", *, li
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
 
-  candidate = _direct_visible_support_face_candidate(
-    viewport, hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress)
-  )
+  candidate = _direct_visible_support_face_candidate(viewport, hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
   support_face_hit = _support_face_place_hit(viewport, eye=interaction_eye, direction=interaction_direction, world_hit=hit)
   if candidate is None:
-    candidate = _projected_frontier_support_face_candidate(
-      viewport,
-      start_cell=tuple(int(value) for value in start_cell),
-      step=tuple(int(value) for value in step),
-      face=int(face),
-      max_progress=int(max_progress),
-      eye=interaction_eye,
-      direction=interaction_direction,
-      hit=hit,
-    )
+    candidate = _projected_frontier_support_face_candidate(viewport, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), max_progress=int(max_progress), eye=interaction_eye, direction=interaction_direction, hit=hit)
   if candidate is None:
-    candidate = _support_face_repeat_candidate_hit(
-      hit=support_face_hit,
-      start_cell=tuple(int(value) for value in start_cell),
-      step=tuple(int(value) for value in step),
-      face=int(face),
-      min_progress=int(min_progress),
-      max_progress=int(max_progress),
-    )
+    candidate = _support_face_repeat_candidate_hit(hit=support_face_hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
   if candidate is None:
-    candidate = _support_face_repeat_candidate_hit(
-      hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress)
-    )
+    candidate = _support_face_repeat_candidate_hit(hit=hit, start_cell=tuple(int(value) for value in start_cell), step=tuple(int(value) for value in step), face=int(face), min_progress=int(min_progress), max_progress=int(max_progress))
   if candidate is None:
     outcome = InteractionOutcome(success=False)
     _finalize_right_click(viewport, outcome)
     return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=line)
 
   candidate_hit, _frontier_progress, target_progress = candidate
-  synthetic_hit = BlockPick(
-    hit=tuple(int(value) for value in candidate_hit.hit),
-    place=tuple(int(value) for value in candidate_hit.place),
-    t=0.0,
-    face=int(candidate_hit.face),
-    hit_point=Vec3(float(candidate_hit.hit_point.x), float(candidate_hit.hit_point.y), float(candidate_hit.hit_point.z)),
-  )
-  outcome = viewport._session.place_block_from_hit(
-    synthetic_hit,
-    settings_controller.current_block_id(viewport),
-    forced_place_state=_forced_place_state_for_line(viewport, line),
-    inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)),
-  )
+  synthetic_hit = BlockPick(hit=tuple(int(value) for value in candidate_hit.hit), place=tuple(int(value) for value in candidate_hit.place), t=0.0, face=int(candidate_hit.face), hit_point=Vec3(float(candidate_hit.hit_point.x), float(candidate_hit.hit_point.y), float(candidate_hit.hit_point.z)))
+  outcome = viewport._session.place_block_from_hit(synthetic_hit, settings_controller.current_block_id(viewport), forced_place_state=_forced_place_state_for_line(viewport, line), inherit_state=_inherit_state_for_hit(viewport, hit=synthetic_hit, block_id=settings_controller.current_block_id(viewport)))
   place_line = _place_line_after_attempt(viewport, line=line, target_progress=int(target_progress), target_cell=tuple(int(value) for value in candidate_hit.place), outcome=outcome)
   _finalize_right_click(viewport, outcome)
   return _RightClickResult(outcome=outcome, repeat_action=INTERACTION_ACTION_PLACE, place_line=place_line)
@@ -1696,9 +1489,7 @@ def _perform_right_click_place_repeat(viewport: "RendererViewportWidget") -> _Ri
     start_cell_materialized=bool(viewport._right_mouse_repeat_line_start_cell_materialized),
     pending_support_cell=None if viewport._right_mouse_repeat_line_pending_support_cell is None else tuple(int(value) for value in viewport._right_mouse_repeat_line_pending_support_cell),
     pending_support_face=None if viewport._right_mouse_repeat_line_pending_support_face is None else int(viewport._right_mouse_repeat_line_pending_support_face),
-    pending_support_hit_point=None
-    if viewport._right_mouse_repeat_line_pending_support_hit_point is None
-    else tuple(float(value) for value in viewport._right_mouse_repeat_line_pending_support_hit_point),
+    pending_support_hit_point=None if viewport._right_mouse_repeat_line_pending_support_hit_point is None else tuple(float(value) for value in viewport._right_mouse_repeat_line_pending_support_hit_point),
     place_state=None if viewport._right_mouse_repeat_place_state is None else str(viewport._right_mouse_repeat_place_state),
     block_id=None if viewport._right_mouse_repeat_place_block_id is None else str(viewport._right_mouse_repeat_place_block_id),
   )

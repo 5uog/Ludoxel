@@ -5,28 +5,7 @@ from __future__ import annotations
 import time
 
 import numpy as np
-from OpenGL.GL import (
-  GL_BACK,
-  GL_BLEND,
-  GL_CULL_FACE,
-  GL_DEPTH_TEST,
-  GL_FRONT,
-  GL_FUNC_ADD,
-  GL_LESS,
-  GL_LINES,
-  GL_ONE_MINUS_SRC_ALPHA,
-  GL_SRC_ALPHA,
-  GL_TRIANGLES,
-  glBindVertexArray,
-  glBlendEquation,
-  glBlendFunc,
-  glCullFace,
-  glDepthFunc,
-  glDepthMask,
-  glDisable,
-  glDrawArraysInstanced,
-  glEnable,
-)
+from OpenGL.GL import GL_BACK, GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_FRONT, GL_FUNC_ADD, GL_LESS, GL_LINES, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_TRIANGLES, glBindVertexArray, glBlendEquation, glBlendFunc, glCullFace, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable
 
 from ludoxel.application.preferences.cloud_flow import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, normalize_backend_cloud_flow_direction
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
@@ -135,9 +114,7 @@ class CloudPass:
     self._advance_clock()
     self._motion_paused = bool(on)
 
-  def draw(
-    self, eye: Vec3, view_proj: np.ndarray, forward: Vec3, fov_deg: float, aspect: float, sun_dir: Vec3, fog: CloudDistanceFog | None = None, far_distance: float | None = None, ultra: bool = False
-  ) -> None:
+  def draw(self, eye: Vec3, view_proj: np.ndarray, forward: Vec3, fov_deg: float, aspect: float, sun_dir: Vec3, fog: CloudDistanceFog | None = None, far_distance: float | None = None, ultra: bool = False) -> None:
     self._advance_clock()
 
     if not bool(self._enabled):
@@ -155,33 +132,20 @@ class CloudPass:
       self._invalidate()
       return
 
-    # Three separated paths. Wireframe draws the exterior cell-face edges of
-    # the merged cloud footprint (no interior faces); the flat path draws
-    # the same exterior faces solid; the Ultra path raymarches a translucent
-    # animated volume through one bounding box per cloud.
+    # Three separated paths. Wireframe draws the exterior cell-face edges of the merged cloud footprint (no interior faces); the flat path draws
+    # the same exterior faces solid; the Ultra path raymarches a translucent animated volume through one bounding box per cloud.
     use_volume = bool(ultra) and not bool(self._wireframe)
     mode = "volume" if use_volume else ("wire" if bool(self._wireframe) else "flat")
     if bool(use_volume):
-      # Draw the translucent volumes back to front so a nearer cloud blends
-      # over the ones behind it instead of hiding them.
-      shapes = sorted(
-        shapes,
-        key=lambda s: (
-          -(
-            (float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2
-            + (float(s.bounds.center.y) - float(eye.y)) ** 2
-            + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2
-          )
-        ),
-      )
+      # Draw the translucent volumes back to front so a nearer cloud blends over the ones behind it instead of hiding them.
+      shapes = sorted(shapes, key=lambda s: -((float(s.bounds.center.x) + float(shift.x) * float(s.bounds.speed_multiplier) - float(eye.x)) ** 2 + (float(s.bounds.center.y) - float(eye.y)) ** 2 + (float(s.bounds.center.z) + float(shift.z) * float(s.bounds.speed_multiplier) - float(eye.z)) ** 2))
     signature = (str(mode), tuple(int(id(shape)) for shape in shapes))
     if self._signature != signature:
       self._upload(shapes, mode=str(mode))
       self._signature = signature
 
     glEnable(GL_DEPTH_TEST)
-    # The translucent volume never writes depth so it stays see-through and
-    # blends front to back; the flat faces and wireframe edges write depth.
+    # The translucent volume never writes depth so it stays see-through and blends front to back; the flat faces and wireframe edges write depth.
     glDepthMask(not bool(use_volume))
     glDepthFunc(GL_LESS)
 
@@ -190,8 +154,7 @@ class CloudPass:
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     if bool(use_volume):
-      # Draw the box back faces so the raymarch proxy is rasterized from any
-      # camera side, including inside the volume.
+      # Draw the box back faces so the raymarch proxy is rasterized from any camera side, including inside the volume.
       glEnable(GL_CULL_FACE)
       glCullFace(GL_FRONT)
     elif bool(self._wireframe):

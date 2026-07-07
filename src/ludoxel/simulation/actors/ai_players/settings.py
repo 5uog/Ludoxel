@@ -20,7 +20,7 @@ from ludoxel.simulation.actors.ai_players.modes import (
 )
 from ludoxel.simulation.actors.ai_players.serialization import AiRoutePoint, normalize_route_points
 
-AI_DEFAULT_HELD_ITEM_ID: str = "minecraft:oak_planks"
+AI_DEFAULT_HELD_ITEM_ID: str = "ludoxel:oak_planks"
 
 AI_REGEN_DEFAULT_ENABLED: bool = False
 AI_REGEN_DEFAULT_START_DELAY_S: float = 4.0

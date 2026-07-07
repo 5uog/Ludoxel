@@ -141,9 +141,7 @@ class ShadowMapPass:
   def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
     self._batch.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
 
-  def render(
-    self, light_vp: np.ndarray, *, camera_chunk: ChunkKey | None = None, render_distance_chunks: int | None = None, extra_draw: ExtraShadowDraw | None = None, extra_cache_key: object | None = None
-  ) -> PassFrameMetrics:
+  def render(self, light_vp: np.ndarray, *, camera_chunk: ChunkKey | None = None, render_distance_chunks: int | None = None, extra_draw: ExtraShadowDraw | None = None, extra_cache_key: object | None = None) -> PassFrameMetrics:
     t0 = time.perf_counter()
 
     if self._prog is None:
@@ -175,9 +173,7 @@ class ShadowMapPass:
     visible_chunks = select_visible_chunks(self._batch.chunk_keys(), vp, predicate=predicate)
     commands = self._batch.build_commands(visible_chunks)
 
-    with GLStateGuard(
-      capture_framebuffer=True, capture_viewport=True, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL), capture_cull_mode=True, capture_polygon_mode=False
-    ):
+    with GLStateGuard(capture_framebuffer=True, capture_viewport=True, capture_enables=(GL_BLEND, GL_DEPTH_TEST, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL), capture_cull_mode=True, capture_polygon_mode=False):
       glBindFramebuffer(GL_FRAMEBUFFER, int(self._fbo))
       glViewport(0, 0, s, s)
 

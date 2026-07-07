@@ -7,20 +7,7 @@ const globals = require('globals');
 
 module.exports = [
   {
-    ignores: [
-      'node_modules/**',
-      'dist/**',
-      'build/**',
-      'coverage/**',
-      'third-party/**',
-      '.venv/**',
-      '.venv_ludoxel/**',
-      '__pycache__/**',
-      'tools/export_directory_markdown/output/**',
-      'tools/format_python_source/.cache/**',
-      'assets/**',
-      'configs/**',
-    ],
+    ignores: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**', 'third-party/**', '.venv/**', '.venv_ludoxel/**', '__pycache__/**', 'tools/export_directory_markdown/output/**', 'tools/format_python_source/.cache/**', 'assets/**', 'configs/**'],
   },
   js.configs.recommended,
   {

@@ -12,14 +12,7 @@ export const AUDIO_ASSET_HELP_MESSAGES = Object.freeze({
       defaultBehavior: '既定動作',
     }),
     purpose: 'assets/audio/ 配下の .ogg から対応する .wav を生成または検査する。',
-    synopsis: Object.freeze([
-      'npm run assets:audio:convert -- help',
-      'npm run assets:audio:convert -- --dry-run',
-      'npm run assets:audio:convert -- --overwrite',
-      'npm run assets:audio:check',
-      'npm run assets:audio:check -- --require-ffmpeg',
-      'npm run assets:audio:check -- --require-wav',
-    ]),
+    synopsis: Object.freeze(['npm run assets:audio:convert -- help', 'npm run assets:audio:convert -- --dry-run', 'npm run assets:audio:convert -- --overwrite', 'npm run assets:audio:check', 'npm run assets:audio:check -- --require-ffmpeg', 'npm run assets:audio:check -- --require-wav']),
     options: Object.freeze([
       Object.freeze({ flag: 'help, --help, -h', description: 'このヘルプを表示して終了する。' }),
       Object.freeze({ flag: '--dry-run', description: 'ffmpeg を実行せず、変換予定だけを表示する。' }),
@@ -39,14 +32,7 @@ export const AUDIO_ASSET_HELP_MESSAGES = Object.freeze({
       defaultBehavior: 'Default behavior',
     }),
     purpose: 'Generate or check matching .wav derivatives from .ogg files under assets/audio/.',
-    synopsis: Object.freeze([
-      'npm run assets:audio:convert -- help',
-      'npm run assets:audio:convert -- --dry-run',
-      'npm run assets:audio:convert -- --overwrite',
-      'npm run assets:audio:check',
-      'npm run assets:audio:check -- --require-ffmpeg',
-      'npm run assets:audio:check -- --require-wav',
-    ]),
+    synopsis: Object.freeze(['npm run assets:audio:convert -- help', 'npm run assets:audio:convert -- --dry-run', 'npm run assets:audio:convert -- --overwrite', 'npm run assets:audio:check', 'npm run assets:audio:check -- --require-ffmpeg', 'npm run assets:audio:check -- --require-wav']),
     options: Object.freeze([
       Object.freeze({ flag: 'help, --help, -h', description: 'Print this help and exit.' }),
       Object.freeze({ flag: '--dry-run', description: 'List planned conversions without running ffmpeg.' }),

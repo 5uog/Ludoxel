@@ -5,19 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from OpenGL.GL import (
-  GL_CONTEXT_COMPATIBILITY_PROFILE_BIT,
-  GL_CONTEXT_CORE_PROFILE_BIT,
-  GL_CONTEXT_PROFILE_MASK,
-  GL_MAJOR_VERSION,
-  GL_MINOR_VERSION,
-  GL_RENDERER,
-  GL_SHADING_LANGUAGE_VERSION,
-  GL_VENDOR,
-  GL_VERSION,
-  glGetIntegerv,
-  glGetString,
-)
+from OpenGL.GL import GL_CONTEXT_COMPATIBILITY_PROFILE_BIT, GL_CONTEXT_CORE_PROFILE_BIT, GL_CONTEXT_PROFILE_MASK, GL_MAJOR_VERSION, GL_MINOR_VERSION, GL_RENDERER, GL_SHADING_LANGUAGE_VERSION, GL_VENDOR, GL_VERSION, glGetIntegerv, glGetString
 
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)")
 
@@ -129,14 +117,4 @@ def probe_gl_info() -> GLInfoSnapshot:
   if profile_mask is None:
     profile_mask = 0
 
-  return GLInfoSnapshot(
-    vendor=_gl_get_string(GL_VENDOR),
-    renderer=_gl_get_string(GL_RENDERER),
-    version=str(version),
-    glsl_version=str(glsl_version),
-    major_version=int(major),
-    minor_version=int(minor),
-    glsl_major_version=int(glsl_major),
-    glsl_minor_version=int(glsl_minor),
-    context_profile_mask=int(profile_mask),
-  )
+  return GLInfoSnapshot(vendor=_gl_get_string(GL_VENDOR), renderer=_gl_get_string(GL_RENDERER), version=str(version), glsl_version=str(glsl_version), major_version=int(major), minor_version=int(minor), glsl_major_version=int(glsl_major), glsl_minor_version=int(glsl_minor), context_profile_mask=int(profile_mask))

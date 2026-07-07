@@ -106,17 +106,7 @@ def can_auto_jump_one_block(player: PlayerEntity, world: WorldState, dx: float, 
   return True
 
 
-def integrate_with_collisions(
-  player: PlayerEntity,
-  world: WorldState,
-  dt: float,
-  *,
-  block_registry: BlockRegistry,
-  params: CollisionParams = DEFAULT_COLLISION_PARAMS,
-  crouch: bool = False,
-  jump_pressed: bool = False,
-  flying: bool = False,
-) -> CollisionReport:
+def integrate_with_collisions(player: PlayerEntity, world: WorldState, dt: float, *, block_registry: BlockRegistry, params: CollisionParams = DEFAULT_COLLISION_PARAMS, crouch: bool = False, jump_pressed: bool = False, flying: bool = False) -> CollisionReport:
   is_flying = bool(flying)
   collision_exempt_cell = _active_collision_exempt_cells(player, world, block_registry=block_registry)
   rising_eps = float(max(float(params.eps), 1e-6))
@@ -131,14 +121,7 @@ def integrate_with_collisions(
       player.velocity = Vec3(player.velocity.x, player.velocity.y, 0.0)
     player.position = depenetrated_pos
 
-  supported_before = (
-    False
-    if bool(is_flying)
-    else (
-      (bool(player.on_ground) and float(player.velocity.y) <= float(rising_eps))
-      or ((not bool(player.on_ground)) and _ground_probe(player, world, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell))
-    )
-  )
+  supported_before = False if bool(is_flying) else ((bool(player.on_ground) and float(player.velocity.y) <= float(rising_eps)) or ((not bool(player.on_ground)) and _ground_probe(player, world, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)))
 
   delta = player.velocity * float(dt)
   pos0 = player.position
@@ -156,9 +139,7 @@ def integrate_with_collisions(
   step_up_dy = 0.0
 
   if abs(delta.x) > 0.0:
-    x_result = _resolve_horizontal_axis_move(
-      player, world, pos, axis="x", delta=float(delta.x), allow_step=bool(allow_step), params=params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell
-    )
+    x_result = _resolve_horizontal_axis_move(player, world, pos, axis="x", delta=float(delta.x), allow_step=bool(allow_step), params=params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
     pos = x_result.pos
     hit_ground = bool(hit_ground or x_result.hit_ground)
     if bool(x_result.stepped_up):
@@ -191,9 +172,7 @@ def integrate_with_collisions(
     pos = pos_y
 
   if abs(delta.z) > 0.0:
-    z_result = _resolve_horizontal_axis_move(
-      player, world, pos, axis="z", delta=float(delta.z), allow_step=bool(allow_step), params=params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell
-    )
+    z_result = _resolve_horizontal_axis_move(player, world, pos, axis="z", delta=float(delta.z), allow_step=bool(allow_step), params=params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
     pos = z_result.pos
     hit_ground = bool(hit_ground or z_result.hit_ground)
     if bool(z_result.stepped_up):
@@ -219,22 +198,11 @@ def integrate_with_collisions(
         hit_ground = True
 
   player.position = pos
-  supported_after = (
-    bool(hit_ground)
-    if bool(is_flying)
-    else (bool(hit_ground) or ((float(player.velocity.y) <= float(rising_eps)) and _ground_probe(player, world, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)))
-  )
+  supported_after = bool(hit_ground) if bool(is_flying) else (bool(hit_ground) or ((float(player.velocity.y) <= float(rising_eps)) and _ground_probe(player, world, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)))
   player.on_ground = supported_after
 
   landed_now = (not bool(is_flying)) and (not bool(supported_before)) and bool(supported_after)
 
   y_correction = float(pos.y) - float(intended_y)
 
-  return CollisionReport(
-    supported_before=bool(supported_before),
-    supported_after=bool(supported_after),
-    landed_now=bool(landed_now),
-    stepped_up=bool(stepped_up),
-    step_up_dy=float(step_up_dy),
-    y_correction_dy=float(y_correction),
-  )
+  return CollisionReport(supported_before=bool(supported_before), supported_after=bool(supported_after), landed_now=bool(landed_now), stepped_up=bool(stepped_up), step_up_dy=float(step_up_dy), y_correction_dy=float(y_correction))

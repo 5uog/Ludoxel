@@ -144,22 +144,13 @@ class ViewportStateMixin:
     except Exception:
       traceback.print_exc(file=sys.stderr)
     try:
-      # Persist a settled copy: the saved envelope never stores a pending
-      # flip animation, while the live match state keeps animating.
+      # Persist a settled copy: the saved envelope never stores a pending flip animation, while the live match state keeps animating.
       settled_othello_state = self._othello_match.settled_game_state()
     except Exception:
       traceback.print_exc(file=sys.stderr)
       settled_othello_state = None
     thumbnail_bytes = self._capture_active_world_thumbnail_bytes()
-    save_state(
-      project_root=self._project_root,
-      data_root=self._data_root,
-      sessions=self._sessions,
-      renderer=self._renderer,
-      runtime=self._state,
-      othello_game_state=settled_othello_state,
-      my_world_thumbnail_bytes=thumbnail_bytes,
-    )
+    save_state(project_root=self._project_root, data_root=self._data_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state, my_world_thumbnail_bytes=thumbnail_bytes)
 
   def loading_status_text(self: "RendererViewportWidget") -> str:
     return self._frame_sync.loading.status_text()
@@ -212,11 +203,7 @@ class ViewportStateMixin:
 
   def _make_render_snapshot(self: "RendererViewportWidget"):
     snapshot = self._session.make_snapshot(
-      enable_view_bobbing=bool(self._state.view_bobbing_enabled),
-      enable_camera_shake=bool(self._state.camera_shake_enabled),
-      view_bobbing_strength=float(self._state.view_bobbing_strength),
-      camera_shake_strength=float(self._state.camera_shake_strength),
-      is_first_person_view=bool(self._state.is_first_person_view()),
+      enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), is_first_person_view=bool(self._state.is_first_person_view())
     )
     if not self._block_break_particles:
       return snapshot
@@ -266,12 +253,7 @@ class ViewportStateMixin:
     self._runner.start()
     self._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(self)
-    if (
-      (not bool(self.loading_active()))
-      and (not bool(self._overlays.any_modal_open()))
-      and (not bool(getattr(self, "_ai_settings_overlay_open", False)))
-      and bool(getattr(self, "_application_active", True))
-    ):
+    if (not bool(self.loading_active())) and (not bool(self._overlays.any_modal_open())) and (not bool(getattr(self, "_ai_settings_overlay_open", False))) and bool(getattr(self, "_application_active", True)):
       self._inp.set_mouse_capture(True)
       self.arm_resume_refresh()
 
@@ -337,9 +319,7 @@ class ViewportStateMixin:
     self._right_mouse_repeat_line_start_cell_materialized = bool(start_cell_materialized)
     self._right_mouse_repeat_line_pending_support_cell = None if pending_support_cell is None else (int(pending_support_cell[0]), int(pending_support_cell[1]), int(pending_support_cell[2]))
     self._right_mouse_repeat_line_pending_support_face = None if pending_support_face is None else int(pending_support_face)
-    self._right_mouse_repeat_line_pending_support_hit_point = (
-      None if pending_support_hit_point is None else (float(pending_support_hit_point[0]), float(pending_support_hit_point[1]), float(pending_support_hit_point[2]))
-    )
+    self._right_mouse_repeat_line_pending_support_hit_point = None if pending_support_hit_point is None else (float(pending_support_hit_point[0]), float(pending_support_hit_point[1]), float(pending_support_hit_point[2]))
     self._right_mouse_repeat_support_face_mode = bool(support_face_mode)
     self._right_mouse_repeat_visible_face_chain_mode = bool(visible_face_chain_mode)
     self._right_mouse_repeat_place_state = None if place_state is None else str(place_state)
@@ -390,9 +370,7 @@ class ViewportStateMixin:
     yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
     pitch_deg = clampf(float(cam.pitch_deg) + float(cam.shake_pitch_deg), -float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG), float(_EFFECTIVE_CAMERA_PITCH_LIMIT_DEG))
     roll_deg = float(cam.shake_roll_deg)
-    eye, resolved_yaw_deg, resolved_pitch_deg, direction = resolve_camera(
-      world=self._session.world, block_registry=self._session.block_registry, anchor_eye=anchor_eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), perspective=str(self._state.camera_perspective)
-    )
+    eye, resolved_yaw_deg, resolved_pitch_deg, direction = resolve_camera(world=self._session.world, block_registry=self._session.block_registry, anchor_eye=anchor_eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), perspective=str(self._state.camera_perspective))
     return (eye, float(resolved_yaw_deg), float(resolved_pitch_deg), float(roll_deg), direction)
 
   def _interaction_pose_from_snapshot(self: "RendererViewportWidget", snapshot) -> tuple[Vec3, float, float, Vec3]:
@@ -421,12 +399,7 @@ class ViewportStateMixin:
     if self._frame_sync.upload.world_revision_changed(world_revision=int(world_revision)):
       self._arm_world_change_sync()
     return self._frame_sync.upload.due(
-      has_ready_results=self._upload.has_ready_results(),
-      visible_chunks_ready=self._upload.visible_chunks_ready(world=self._session.world, eye=eye, render_distance_chunks=int(render_distance)),
-      world_revision=int(world_revision),
-      session_token=int(session_token),
-      render_distance_chunks=int(render_distance),
-      eye=eye,
+      has_ready_results=self._upload.has_ready_results(), visible_chunks_ready=self._upload.visible_chunks_ready(world=self._session.world, eye=eye, render_distance_chunks=int(render_distance)), world_revision=int(world_revision), session_token=int(session_token), render_distance_chunks=int(render_distance), eye=eye
     )
 
   def _mark_upload(self: "RendererViewportWidget", *, eye: Vec3) -> None:
@@ -437,17 +410,7 @@ class ViewportStateMixin:
     current_world_revision = int(self._session.world.revision)
     if self._frame_sync.selection.world_revision_changed(world_revision=int(current_world_revision)):
       self._arm_world_change_sync()
-    return self._frame_sync.selection.due(
-      eye=eye,
-      yaw_deg=float(yaw_deg),
-      pitch_deg=float(pitch_deg),
-      current_space_id=str(current_space_id),
-      current_world_revision=int(current_world_revision),
-      target_present=(self._selection_state.target() is not None),
-      is_othello_space=bool(self._state.is_othello_space()),
-    )
+    return self._frame_sync.selection.due(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(current_space_id), current_world_revision=int(current_world_revision), target_present=(self._selection_state.target() is not None), is_othello_space=bool(self._state.is_othello_space()))
 
   def _mark_selection(self: "RendererViewportWidget", *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> None:
-    self._frame_sync.selection.mark(
-      eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(self._state.current_space_id), current_world_revision=int(self._session.world.revision)
-    )
+    self._frame_sync.selection.mark(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(self._state.current_space_id), current_world_revision=int(self._session.world.revision))

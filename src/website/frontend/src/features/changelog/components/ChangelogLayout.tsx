@@ -29,9 +29,7 @@ export default function ChangelogLayout(): React.JSX.Element {
 
           <p className="page-reveal page-reveal-delay-2 mb-4 text-xl font-medium text-primary">Ludoxel desktop application release notes</p>
 
-          <p className="page-reveal page-reveal-delay-3 max-w-2xl text-muted-foreground">
-            Track user-visible changes to the Ludoxel desktop application without treating local build artifacts as release authority.
-          </p>
+          <p className="page-reveal page-reveal-delay-3 max-w-2xl text-muted-foreground">Track user-visible changes to the Ludoxel desktop application without treating local build artifacts as release authority.</p>
         </header>
 
         <div className="page-reveal page-reveal-delay-2 mb-10 w-full max-w-150">
@@ -40,15 +38,7 @@ export default function ChangelogLayout(): React.JSX.Element {
 
         <ChangelogEntryList entries={controls.visibleEntries} />
 
-        <ChangelogPagination
-          currentPage={controls.currentPage}
-          goToPage={controls.goToPage}
-          handlePageJumpChange={controls.handlePageJumpChange}
-          handlePageJumpKeyDown={controls.handlePageJumpKeyDown}
-          jumpToPage={controls.jumpToPage}
-          pageJumpValue={controls.pageJumpValue}
-          totalPages={controls.totalPages}
-        />
+        <ChangelogPagination currentPage={controls.currentPage} goToPage={controls.goToPage} handlePageJumpChange={controls.handlePageJumpChange} handlePageJumpKeyDown={controls.handlePageJumpKeyDown} jumpToPage={controls.jumpToPage} pageJumpValue={controls.pageJumpValue} totalPages={controls.totalPages} />
       </div>
 
       {controls.isPanelOpen ? createPortal(<ChangelogSearchPanel controls={controls} />, document.body) : null}

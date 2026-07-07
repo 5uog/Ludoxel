@@ -14,12 +14,7 @@ POLICY_KIND_USER: str = "user_learned"
 POLICY_KIND_EXPERIMENTAL: str = "experimental"
 
 POLICY_KINDS: tuple[str, str] = (POLICY_KIND_BUILTIN, POLICY_KIND_BUNDLED)
-POLICY_KIND_LABELS: tuple[tuple[str, str], ...] = (
-  (POLICY_KIND_BUILTIN, "Built-in Deterministic AI"),
-  (POLICY_KIND_BUNDLED, "Bundled Learned Policy"),
-  (POLICY_KIND_USER, "User Learned Policy"),
-  (POLICY_KIND_EXPERIMENTAL, "Experimental Policy"),
-)
+POLICY_KIND_LABELS: tuple[tuple[str, str], ...] = ((POLICY_KIND_BUILTIN, "Built-in Deterministic AI"), (POLICY_KIND_BUNDLED, "Bundled Learned Policy"), (POLICY_KIND_USER, "User Learned Policy"), (POLICY_KIND_EXPERIMENTAL, "Experimental Policy"))
 
 _BUNDLED_RESOURCE_PACKAGE: str = "ludoxel.simulation.actors.ai_players.learning"
 _BUNDLED_RESOURCE_PARTS: tuple[str, str] = ("resources", "policies")

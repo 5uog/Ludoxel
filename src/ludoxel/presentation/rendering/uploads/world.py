@@ -283,10 +283,8 @@ class WorldUploadTracker:
     return ", ".join(parts)
 
   def visible_load_progress(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> tuple[int, int]:
-    # The readiness gate covers the full render distance: the loading
-    # overlay stays up until every content chunk the renderer will draw is
-    # built and resident, so entering a world does not race the remaining
-    # chunk builds during play.
+    # The readiness gate covers the full render distance: the loading overlay stays up until every content chunk the renderer will draw is
+    # built and resident, so entering a world does not race the remaining chunk builds during play.
     world_token = self._world_token(world)
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
@@ -311,18 +309,12 @@ class WorldUploadTracker:
     return (int(ready), int(total))
 
   def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
-    # Readiness is measured against the same denominator the overlay shows:
-    # the visible content chunks that carry a positive mesh revision, i.e.
-    # the chunks the scheduler actually builds and makes resident. The
-    # candidate set also holds empty chunks the player can reach into (the
-    # eye's own chunk column resolves to mesh revision 0), and those are
-    # skipped by the scheduler and never become resident. Gating completion
-    # on the candidate set being empty therefore stalled forever whenever the
-    # only visible content was those revision-0 chunks, holding the loading
-    # overlay at "Selecting world chunks... [pending 0, resident 0]". When no
-    # visible chunk carries content to build, there is nothing to upload and
-    # loading is complete; otherwise it waits until every buildable chunk is
-    # resident.
+    # Readiness is measured against the same denominator the overlay shows: the visible content chunks that carry a positive mesh revision,
+    # i.e. the chunks the scheduler actually builds and makes resident. The candidate set also holds empty chunks the player can reach into (the
+    # eye's own chunk column resolves to mesh revision 0), and those are skipped by the scheduler and never become resident. Gating completion on the
+    # candidate set being empty therefore stalled forever whenever the only visible content was those revision-0 chunks, holding the loading overlay
+    # at "Selecting world chunks... [pending 0, resident 0]". When no visible chunk carries content to build, there is nothing to upload and loading
+    # is complete; otherwise it waits until every buildable chunk is resident.
     ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
     return int(ready) >= int(total)
 

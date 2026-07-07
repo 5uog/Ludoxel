@@ -18,13 +18,7 @@ from ludoxel.application.sessions.managers.ai_players import (
   spawn_ai_player_for_session,
   update_ai_player_settings_for_session,
 )
-from ludoxel.application.sessions.managers.interactions import (
-  break_block_for_session,
-  interact_block_at_hit_for_session,
-  pick_block_for_session,
-  place_block_for_session,
-  place_block_from_hit_for_session,
-)
+from ludoxel.application.sessions.managers.interactions import break_block_for_session, interact_block_at_hit_for_session, pick_block_for_session, place_block_for_session, place_block_from_hit_for_session
 from ludoxel.application.sessions.managers.snapshots import make_camera_snapshot_for_session, make_render_snapshot_for_session
 from ludoxel.application.sessions.managers.stepping import SessionStepResult, step_session
 from ludoxel.application.sessions.pipelines.render_snapshot import AiPlayerRenderSnapshotDTO, CameraDTO, RenderSnapshotDTO
@@ -87,12 +81,7 @@ class SessionManager:
     return self.learning.pending_count()
 
   def _player_observation_dict(self) -> dict:
-    return {
-      "self_position": [float(self.player.position.x), float(self.player.position.y), float(self.player.position.z)],
-      "on_ground": bool(self.player.on_ground),
-      "health": float(self.player.health),
-      "max_health": float(self.player.max_health),
-    }
+    return {"self_position": [float(self.player.position.x), float(self.player.position.y), float(self.player.position.z)], "on_ground": bool(self.player.on_ground), "health": float(self.player.health), "max_health": float(self.player.max_health)}
 
   def _player_feature_keys(self) -> list[str]:
     max_health = max(1.0, float(self.player.max_health))
@@ -105,9 +94,7 @@ class SessionManager:
     return features
 
   def _record_player_action(self, *, kind: str, action_id: str) -> None:
-    self.learning.record_player_demonstration(
-      kind=str(kind), observation=self._player_observation_dict(), action_id=str(action_id), actor_id="player", detail={"feature_keys": self._player_feature_keys()}
-    )
+    self.learning.record_player_demonstration(kind=str(kind), observation=self._player_observation_dict(), action_id=str(action_id), actor_id="player", detail={"feature_keys": self._player_feature_keys()})
 
   def respawn(self) -> None:
     player = self.player
@@ -218,21 +205,7 @@ class SessionManager:
   def make_camera_snapshot(self, *, enable_camera_shake: bool = True, camera_shake_strength: float = 0.20) -> CameraDTO:
     return make_camera_snapshot_for_session(self, enable_camera_shake=bool(enable_camera_shake), camera_shake_strength=float(camera_shake_strength))
 
-  def step(
-    self,
-    dt: float,
-    move_f: float,
-    move_s: float,
-    jump_held: bool,
-    jump_pressed: bool,
-    sprint: bool,
-    crouch: bool,
-    mdx: float,
-    mdy: float,
-    creative_mode: bool,
-    auto_jump_enabled: bool,
-    paused_ai_actor_ids: tuple[str, ...] = (),
-  ) -> SessionStepResult:
+  def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool, paused_ai_actor_ids: tuple[str, ...] = ()) -> SessionStepResult:
     return step_session(
       self,
       dt=float(dt),
@@ -249,17 +222,8 @@ class SessionManager:
       paused_ai_actor_ids=tuple(str(actor_id) for actor_id in paused_ai_actor_ids),
     )
 
-  def make_snapshot(
-    self, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20, is_first_person_view: bool = True
-  ) -> RenderSnapshotDTO:
-    return make_render_snapshot_for_session(
-      self,
-      enable_view_bobbing=bool(enable_view_bobbing),
-      enable_camera_shake=bool(enable_camera_shake),
-      view_bobbing_strength=float(view_bobbing_strength),
-      camera_shake_strength=float(camera_shake_strength),
-      is_first_person_view=bool(is_first_person_view),
-    )
+  def make_snapshot(self, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20, is_first_person_view: bool = True) -> RenderSnapshotDTO:
+    return make_render_snapshot_for_session(self, enable_view_bobbing=bool(enable_view_bobbing), enable_camera_shake=bool(enable_camera_shake), view_bobbing_strength=float(view_bobbing_strength), camera_shake_strength=float(camera_shake_strength), is_first_person_view=bool(is_first_person_view))
 
   def break_block(self, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
     outcome = break_block_for_session(self, reach=float(reach), origin=origin, direction=direction)

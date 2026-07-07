@@ -5,8 +5,7 @@
 const CHANGELOG_FILTER_BUTTON_CLASS_NAME =
   'rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
-const CHANGELOG_FILTER_BUTTON_ACTIVE_CLASS_NAME =
-  'rounded-lg border border-primary bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+const CHANGELOG_FILTER_BUTTON_ACTIVE_CLASS_NAME = 'rounded-lg border border-primary bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
 const CHANGELOG_PAGE_NUMBER_BUTTON_CLASS_NAME =
   'inline-flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:bg-secondary/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';

@@ -55,15 +55,7 @@ class OthelloAnimationState:
     duration = max(1e-6, float(self.duration_s))
     start_delay = max(0.0, float(self.start_delay_s))
     lift = max(0.0, float(self.lift_height))
-    return OthelloAnimationState(
-      square_index=int(square_index),
-      from_side=normalize_side(self.from_side),
-      to_side=normalize_side(self.to_side),
-      elapsed_s=float(elapsed),
-      duration_s=float(duration),
-      start_delay_s=float(start_delay),
-      lift_height=float(lift),
-    )
+    return OthelloAnimationState(square_index=int(square_index), from_side=normalize_side(self.from_side), to_side=normalize_side(self.to_side), elapsed_s=float(elapsed), duration_s=float(duration), start_delay_s=float(start_delay), lift_height=float(lift))
 
   def total_duration_s(self) -> float:
     normalized = self.normalized()

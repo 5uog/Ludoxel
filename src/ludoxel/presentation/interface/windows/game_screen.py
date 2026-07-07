@@ -38,15 +38,7 @@ class GameScreen(QWidget):
     self.viewport.hud_updated.connect(self.hud.set_payload)
 
     title_image_path = status_overlay_title_image_path(self.resource_root)
-    self._loading_overlay = StatusOverlayFrame(
-      title_text="Ludoxel",
-      status_text="Preparing viewport...",
-      object_name="loadingOverlay",
-      title_object_name="loadingTitle",
-      status_object_name="loadingStatus",
-      title_image_path=title_image_path,
-      parent=self,
-    )
+    self._loading_overlay = StatusOverlayFrame(title_text="Ludoxel", status_text="Preparing viewport...", object_name="loadingOverlay", title_object_name="loadingTitle", status_object_name="loadingStatus", title_image_path=title_image_path, parent=self)
     self._loading_overlay.setGeometry(0, 0, max(1, self.width()), max(1, self.height()))
     self._loading_overlay.set_status_text(self.viewport.loading_status_text())
     self._loading_overlay.setVisible(bool(self.viewport.loading_active()))

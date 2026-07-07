@@ -108,37 +108,10 @@ def _void_directions() -> dict[str, DirectionProbe]:
 
 def _sample_observations() -> tuple[AiObservation, ...]:
   return (
-    AiObservation(
-      visible_player=True, attack_in_range=True, attack_cooldown_ready=True, on_ground=True, jump_available=True, distance_to_player=2.0, health=20.0, max_health=20.0, directions=_flat_directions()
-    ),
-    AiObservation(
-      visible_player=True,
-      attack_in_range=True,
-      attack_cooldown_ready=True,
-      on_ground=True,
-      jump_available=True,
-      distance_to_player=2.0,
-      health=4.0,
-      max_health=20.0,
-      low_health=True,
-      low_health_in_threat=True,
-      directions=_flat_directions(),
-    ),
-    AiObservation(
-      visible_player=True,
-      attack_in_range=False,
-      distance_to_player=8.0,
-      on_ground=True,
-      jump_available=True,
-      health=20.0,
-      max_health=20.0,
-      can_place_blocks=True,
-      available_block_count=999,
-      directions=_flat_directions(),
-    ),
-    AiObservation(
-      route_present=True, route_blocked=True, route_target=(5.0, 1.0, 5.0), on_ground=True, jump_available=True, can_place_blocks=True, available_block_count=999, directions=_flat_directions()
-    ),
+    AiObservation(visible_player=True, attack_in_range=True, attack_cooldown_ready=True, on_ground=True, jump_available=True, distance_to_player=2.0, health=20.0, max_health=20.0, directions=_flat_directions()),
+    AiObservation(visible_player=True, attack_in_range=True, attack_cooldown_ready=True, on_ground=True, jump_available=True, distance_to_player=2.0, health=4.0, max_health=20.0, low_health=True, low_health_in_threat=True, directions=_flat_directions()),
+    AiObservation(visible_player=True, attack_in_range=False, distance_to_player=8.0, on_ground=True, jump_available=True, health=20.0, max_health=20.0, can_place_blocks=True, available_block_count=999, directions=_flat_directions()),
+    AiObservation(route_present=True, route_blocked=True, route_target=(5.0, 1.0, 5.0), on_ground=True, jump_available=True, can_place_blocks=True, available_block_count=999, directions=_flat_directions()),
     AiObservation(on_ground=True, jump_available=True, directions=_void_directions()),
   )
 

@@ -160,9 +160,7 @@ class Renderer:
   def block_display_name(self, block_state_or_id: str) -> str:
     return self._backend.block_display_name(str(block_state_or_id))
 
-  def submit_chunk(
-    self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None
-  ) -> None:
+  def submit_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources=None, gpu_bucket_counts=None) -> None:
     self._backend.submit_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces, shadow_faces=shadow_faces, gpu_face_sources=gpu_face_sources, gpu_bucket_counts=gpu_bucket_counts)
 
   def render(
@@ -204,9 +202,5 @@ class Renderer:
   def set_ai_skin_images(self, images: dict[str, QImage]) -> None:
     self._backend.set_ai_skin_images(dict(images))
 
-  def render_player_preview_frame(
-    self, *, w: int, h: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
-  ) -> QImage:
-    return self._backend.render_player_preview_frame(
-      width=int(w), height=int(h), player_state=player_state, restore_framebuffer=int(restore_framebuffer), restore_viewport=restore_viewport, device_pixel_ratio=float(device_pixel_ratio)
-    )
+  def render_player_preview_frame(self, *, w: int, h: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0) -> QImage:
+    return self._backend.render_player_preview_frame(width=int(w), height=int(h), player_state=player_state, restore_framebuffer=int(restore_framebuffer), restore_viewport=restore_viewport, device_pixel_ratio=float(device_pixel_ratio))

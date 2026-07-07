@@ -20,9 +20,7 @@ function getMobileSidebarBackdropClassName(isClosing: boolean): string {
 }
 
 function getMobileSidebarPanelClassName(isClosing: boolean): string {
-  return isClosing
-    ? 'mobile-sheet-panel-left mobile-sheet-panel-left-exit fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg'
-    : 'mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg';
+  return isClosing ? 'mobile-sheet-panel-left mobile-sheet-panel-left-exit fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg' : 'mobile-sheet-panel-left fixed inset-y-0 left-0 z-50 h-full w-3/4 max-w-sm border-r border-border bg-background shadow-lg';
 }
 
 export function useDocsMobileSidebar(currentLocationKey: string): DocsMobileSidebarState {

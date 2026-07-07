@@ -4,37 +4,9 @@ from __future__ import annotations
 
 from importlib import import_module
 
-__all__ = [
-  "AppState",
-  "AppStateStore",
-  "PersistedAiPlayer",
-  "PersistedAppFile",
-  "PersistedOthelloSpace",
-  "PersistedPlaySpace",
-  "PersistedPlayer",
-  "PersistedSettings",
-  "PersistedWorld",
-  "PersistedWorldEntry",
-  "PersistedWorldInventory",
-  "PersistedWorldLibraryIndex",
-  "PersistedWorldMetadata",
-  "WorldLibraryStore",
-]
+__all__ = ["AppState", "AppStateStore", "PersistedAiPlayer", "PersistedAppFile", "PersistedOthelloSpace", "PersistedPlaySpace", "PersistedPlayer", "PersistedSettings", "PersistedWorld", "PersistedWorldEntry", "PersistedWorldInventory", "PersistedWorldLibraryIndex", "PersistedWorldMetadata", "WorldLibraryStore"]
 
-_SCHEMA_EXPORTS = {
-  "AppState",
-  "PersistedAiPlayer",
-  "PersistedAppFile",
-  "PersistedOthelloSpace",
-  "PersistedPlaySpace",
-  "PersistedPlayer",
-  "PersistedSettings",
-  "PersistedWorld",
-  "PersistedWorldEntry",
-  "PersistedWorldInventory",
-  "PersistedWorldLibraryIndex",
-  "PersistedWorldMetadata",
-}
+_SCHEMA_EXPORTS = {"AppState", "PersistedAiPlayer", "PersistedAppFile", "PersistedOthelloSpace", "PersistedPlaySpace", "PersistedPlayer", "PersistedSettings", "PersistedWorld", "PersistedWorldEntry", "PersistedWorldInventory", "PersistedWorldLibraryIndex", "PersistedWorldMetadata"}
 
 
 def __getattr__(name: str):

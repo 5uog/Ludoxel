@@ -90,17 +90,7 @@ def _record_actor_kind(record: DemonstrationRecord) -> str:
   return ACTOR_KIND_PLAYER if str(record.kind).startswith("player_") else ACTOR_KIND_AI
 
 
-def train_policy_from_records(
-  records: Iterable[DemonstrationRecord],
-  *,
-  policy_id: str,
-  policy_name: str = "",
-  dataset_id: str = "default",
-  dataset_size: int = 0,
-  policy_version: int = 1,
-  source: str = POLICY_SOURCE_PLAYER_DATA,
-  corrupt_lines: int = 0,
-) -> TrainingResult:
+def train_policy_from_records(records: Iterable[DemonstrationRecord], *, policy_id: str, policy_name: str = "", dataset_id: str = "default", dataset_size: int = 0, policy_version: int = 1, source: str = POLICY_SOURCE_PLAYER_DATA, corrupt_lines: int = 0) -> TrainingResult:
   feature_action_pos: dict[tuple[str, str], float] = {}
   feature_action_neg: dict[tuple[str, str], float] = {}
   negative_action: dict[str, float] = {}
@@ -221,16 +211,5 @@ def train_policy_from_records(
 
 @dataclass(frozen=True)
 class TrainingService:
-  def train_from_player_data(
-    self, records: Iterable[DemonstrationRecord], *, policy_id: str, policy_name: str = "", dataset_id: str = "default", dataset_size: int = 0, policy_version: int = 1, corrupt_lines: int = 0
-  ) -> TrainingResult:
-    return train_policy_from_records(
-      records,
-      policy_id=str(policy_id),
-      policy_name=str(policy_name),
-      dataset_id=str(dataset_id),
-      dataset_size=int(dataset_size),
-      policy_version=int(policy_version),
-      source=POLICY_SOURCE_PLAYER_DATA,
-      corrupt_lines=int(corrupt_lines),
-    )
+  def train_from_player_data(self, records: Iterable[DemonstrationRecord], *, policy_id: str, policy_name: str = "", dataset_id: str = "default", dataset_size: int = 0, policy_version: int = 1, corrupt_lines: int = 0) -> TrainingResult:
+    return train_policy_from_records(records, policy_id=str(policy_id), policy_name=str(policy_name), dataset_id=str(dataset_id), dataset_size=int(dataset_size), policy_version=int(policy_version), source=POLICY_SOURCE_PLAYER_DATA, corrupt_lines=int(corrupt_lines))

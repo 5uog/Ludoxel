@@ -412,14 +412,7 @@ def _plan_support_path(ctx: _PlannerContext, *, start_cell: tuple[int, int, int]
   steps: list[AiRoutePlanStep] = []
   for cell in path:
     normalized = tuple(int(value) for value in cell)
-    steps.append(
-      AiRoutePlanStep(
-        support_cell=normalized,
-        placement_anchor=None if placement_anchor.get(normalized) is None else tuple(int(value) for value in placement_anchor[normalized]),
-        jump_required=bool(jump_required.get(normalized, False)),
-        jump_span=max(1, int(jump_span.get(normalized, 1))),
-      )
-    )
+    steps.append(AiRoutePlanStep(support_cell=normalized, placement_anchor=None if placement_anchor.get(normalized) is None else tuple(int(value) for value in placement_anchor[normalized]), jump_required=bool(jump_required.get(normalized, False)), jump_span=max(1, int(jump_span.get(normalized, 1)))))
   return tuple(steps)
 
 
@@ -461,22 +454,12 @@ def compute_ai_route_plan(request: AiRoutePlanRequest) -> AiRoutePlanResult:
   route_points = tuple(request.route_points)
   point_count = len(route_points)
   if point_count <= 0:
-    return AiRoutePlanResult(
-      generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=0, success=False, path=()
-    )
+    return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=0, success=False, path=())
   current_index = int(request.route_target_index) % int(point_count)
   route_point = route_points[int(current_index)].as_vec3()
   target_support = _nearest_standable_support_cell(ctx, _support_cell_from_point(route_point))
   if target_support is None:
-    return AiRoutePlanResult(
-      generation=int(request.generation),
-      actor_id=str(request.actor_id),
-      world_revision=int(request.world_revision),
-      start_support=start_support,
-      route_target_index=int(current_index),
-      success=False,
-      path=(),
-    )
+    return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=False, path=())
   if bool(_direct_route_clear(ctx, from_cell=start_support, to_cell=target_support)):
     return AiRoutePlanResult(
       generation=int(request.generation),
@@ -489,21 +472,5 @@ def compute_ai_route_plan(request: AiRoutePlanRequest) -> AiRoutePlanResult:
     )
   path = _plan_support_path(ctx, start_cell=start_support, target_cell=target_support, search_radius=int(request.search_radius))
   if len(path) >= 2 and tuple(int(value) for value in path[-1].support_cell) == tuple(int(value) for value in target_support):
-    return AiRoutePlanResult(
-      generation=int(request.generation),
-      actor_id=str(request.actor_id),
-      world_revision=int(request.world_revision),
-      start_support=start_support,
-      route_target_index=int(current_index),
-      success=True,
-      path=tuple(path),
-    )
-  return AiRoutePlanResult(
-    generation=int(request.generation),
-    actor_id=str(request.actor_id),
-    world_revision=int(request.world_revision),
-    start_support=start_support,
-    route_target_index=int(current_index),
-    success=False,
-    path=(),
-  )
+    return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=True, path=tuple(path))
+  return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=False, path=())

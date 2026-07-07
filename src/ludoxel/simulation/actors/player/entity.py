@@ -132,9 +132,7 @@ class PlayerEntity:
     else:
       self.hurt_tilt_sign = -1.0 if float(cross) < 0.0 else 1.0
 
-  def apply_damage(
-    self, amount: float, *, cooldown_s: float = 0.0, bypass_cooldown: bool = False, source_position: Vec3 | None = None, flash_s: float = 0.5, tilt_s: float = 0.18, jump_reset_window_s: float = 0.0
-  ) -> float:
+  def apply_damage(self, amount: float, *, cooldown_s: float = 0.0, bypass_cooldown: bool = False, source_position: Vec3 | None = None, flash_s: float = 0.5, tilt_s: float = 0.18, jump_reset_window_s: float = 0.0) -> float:
     self.clamp_health()
     if (not bool(bypass_cooldown)) and float(self.hurt_cooldown_s) > 1e-6:
       return 0.0

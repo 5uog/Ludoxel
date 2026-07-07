@@ -36,28 +36,10 @@ export function renderDesktopBuildHelp(command = null, language = 'ja') {
   const help = messages[key];
 
   if (key === 'desktop') {
-    return lines([
-      messages.titles.desktop,
-      '',
-      section(messages.labels.purpose, `  ${help.purpose}`),
-      '',
-      section(messages.labels.synopsis, renderIndentedLines(help.synopsis)),
-      '',
-      section(messages.labels.commands, renderLineRecords(help.commands)),
-      '',
-    ]);
+    return lines([messages.titles.desktop, '', section(messages.labels.purpose, `  ${help.purpose}`), '', section(messages.labels.synopsis, renderIndentedLines(help.synopsis)), '', section(messages.labels.commands, renderLineRecords(help.commands)), '']);
   }
 
-  return lines([
-    messages.titles[key],
-    '',
-    section(messages.labels.purpose, `  ${help.purpose}`),
-    '',
-    section(messages.labels.synopsis, renderIndentedLines(help.synopsis)),
-    '',
-    section(messages.labels.options, renderLineRecords(help.options)),
-    '',
-  ]);
+  return lines([messages.titles[key], '', section(messages.labels.purpose, `  ${help.purpose}`), '', section(messages.labels.synopsis, renderIndentedLines(help.synopsis)), '', section(messages.labels.options, renderLineRecords(help.options)), '']);
 }
 
 export function renderDesktopBuildErrors(errors, command = null, language = 'ja') {

@@ -38,35 +38,11 @@ class PersistedWorldInventory:
   def to_dict(self) -> dict[str, Any]:
     hotbar_slots, hotbar_idx = _inventory_branch_to_dict(slots=self.hotbar_slots, selected_index=self.selected_hotbar_index, size=self.HOTBAR_SIZE)
     route_slots, route_idx = _inventory_branch_to_dict(slots=self.route_hotbar_slots, selected_index=self.route_selected_hotbar_index, size=self.HOTBAR_SIZE)
-    return {
-      "hotbar_slots": hotbar_slots,
-      "selected_hotbar_index": int(hotbar_idx),
-      "upper_slots": [str(value) for value in normalize_upper_inventory_slots(self.upper_slots)],
-      "route_hotbar_slots": route_slots,
-      "route_selected_hotbar_index": int(route_idx),
-    }
+    return {"hotbar_slots": hotbar_slots, "selected_hotbar_index": int(hotbar_idx), "upper_slots": [str(value) for value in normalize_upper_inventory_slots(self.upper_slots)], "route_hotbar_slots": route_slots, "route_selected_hotbar_index": int(route_idx)}
 
   @staticmethod
   def from_dict(d: dict[str, Any]) -> "PersistedWorldInventory":
     raw = d if isinstance(d, dict) else {}
-    hotbar_slots, hotbar_idx = _inventory_branch_from_dict(
-      raw.get("hotbar_slots"),
-      raw.get("selected_hotbar_index", 0),
-      size=PersistedWorldInventory.HOTBAR_SIZE,
-      default_slots=default_hotbar_slots(size=PersistedWorldInventory.HOTBAR_SIZE),
-      default_index=0,
-    )
-    route_slots, route_idx = _inventory_branch_from_dict(
-      raw.get("route_hotbar_slots"),
-      raw.get("route_selected_hotbar_index", 0),
-      size=PersistedWorldInventory.HOTBAR_SIZE,
-      default_slots=default_ai_route_hotbar_slots(size=PersistedWorldInventory.HOTBAR_SIZE),
-      default_index=0,
-    )
-    return PersistedWorldInventory(
-      hotbar_slots=hotbar_slots,
-      selected_hotbar_index=int(hotbar_idx),
-      upper_slots=normalize_upper_inventory_slots(raw.get("upper_slots")),
-      route_hotbar_slots=route_slots,
-      route_selected_hotbar_index=int(route_idx),
-    )
+    hotbar_slots, hotbar_idx = _inventory_branch_from_dict(raw.get("hotbar_slots"), raw.get("selected_hotbar_index", 0), size=PersistedWorldInventory.HOTBAR_SIZE, default_slots=default_hotbar_slots(size=PersistedWorldInventory.HOTBAR_SIZE), default_index=0)
+    route_slots, route_idx = _inventory_branch_from_dict(raw.get("route_hotbar_slots"), raw.get("route_selected_hotbar_index", 0), size=PersistedWorldInventory.HOTBAR_SIZE, default_slots=default_ai_route_hotbar_slots(size=PersistedWorldInventory.HOTBAR_SIZE), default_index=0)
+    return PersistedWorldInventory(hotbar_slots=hotbar_slots, selected_hotbar_index=int(hotbar_idx), upper_slots=normalize_upper_inventory_slots(raw.get("upper_slots")), route_hotbar_slots=route_slots, route_selected_hotbar_index=int(route_idx))

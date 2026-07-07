@@ -17,12 +17,5 @@ def spawn_break_effect(viewport: "RendererViewportWidget", *, block_state: str |
   if tools is None:
     return
   uv_lookup, def_lookup = tools
-  particles = spawn_block_break_particles(
-    state_str=str(block_state),
-    cell=(int(position[0]), int(position[1]), int(position[2])),
-    uv_lookup=uv_lookup,
-    def_lookup=def_lookup,
-    spawn_rate=float(viewport._state.block_break_particle_spawn_rate),
-    speed_scale=float(viewport._state.block_break_particle_speed_scale),
-  )
+  particles = spawn_block_break_particles(state_str=str(block_state), cell=(int(position[0]), int(position[1]), int(position[2])), uv_lookup=uv_lookup, def_lookup=def_lookup, spawn_rate=float(viewport._state.block_break_particle_spawn_rate), speed_scale=float(viewport._state.block_break_particle_speed_scale))
   viewport._append_block_break_particles(particles)

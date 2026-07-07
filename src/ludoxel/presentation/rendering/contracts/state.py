@@ -64,15 +64,7 @@ class BackendRendererRuntimeState:
     self.set_cloud_seed(int(self.cloud_seed))
     self.set_cloud_flow_direction(str(self.cloud_flow_direction))
     self.set_cloud_speed_variation(bool(self.cloud_speed_variation_enabled), float(self.cloud_speed_min_blocks_per_second), float(self.cloud_speed_max_blocks_per_second))
-    self.set_cloud_height_variation(
-      bool(self.cloud_height_variation_enabled),
-      int(self.cloud_fixed_y),
-      int(self.cloud_spawn_y_min),
-      int(self.cloud_spawn_y_max),
-      int(self.cloud_preferred_y_min),
-      int(self.cloud_preferred_y_max),
-      int(self.cloud_preferred_y_probability_percent),
-    )
+    self.set_cloud_height_variation(bool(self.cloud_height_variation_enabled), int(self.cloud_fixed_y), int(self.cloud_spawn_y_min), int(self.cloud_spawn_y_max), int(self.cloud_preferred_y_min), int(self.cloud_preferred_y_max), int(self.cloud_preferred_y_probability_percent))
 
   def set_shadow_quality(self, quality: int) -> None:
     self.shadow_quality = normalize_shadow_map_quality(quality)
@@ -105,9 +97,7 @@ class BackendRendererRuntimeState:
     self.cloud_speed_max_blocks_per_second = float(speed_max)
 
   def set_cloud_height_variation(self, enabled: bool, fixed_y: int, spawn_y_min: int, spawn_y_max: int, preferred_y_min: int, preferred_y_max: int, preferred_y_probability_percent: int) -> None:
-    fixed, spawn_min, spawn_max, preferred_min, preferred_max, probability = normalize_cloud_height_settings(
-      fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, preferred_y_probability_percent
-    )
+    fixed, spawn_min, spawn_max, preferred_min, preferred_max, probability = normalize_cloud_height_settings(fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, preferred_y_probability_percent)
     self.cloud_height_variation_enabled = bool(enabled)
     self.cloud_fixed_y = int(fixed)
     self.cloud_spawn_y_min = int(spawn_min)

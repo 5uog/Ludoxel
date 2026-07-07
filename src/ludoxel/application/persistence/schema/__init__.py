@@ -13,17 +13,4 @@ from ludoxel.application.persistence.schema.settings import PersistedSettings
 from ludoxel.application.persistence.schema.world import PersistedWorld
 from ludoxel.application.persistence.schema.world_library import PersistedWorldEntry, PersistedWorldLibraryIndex, PersistedWorldMetadata
 
-__all__ = [
-  "AppState",
-  "PersistedAiPlayer",
-  "PersistedAppFile",
-  "PersistedOthelloSpace",
-  "PersistedPlaySpace",
-  "PersistedPlayer",
-  "PersistedSettings",
-  "PersistedWorld",
-  "PersistedWorldEntry",
-  "PersistedWorldInventory",
-  "PersistedWorldLibraryIndex",
-  "PersistedWorldMetadata",
-]
+__all__ = ["AppState", "PersistedAiPlayer", "PersistedAppFile", "PersistedOthelloSpace", "PersistedPlaySpace", "PersistedPlayer", "PersistedSettings", "PersistedWorld", "PersistedWorldEntry", "PersistedWorldInventory", "PersistedWorldLibraryIndex", "PersistedWorldMetadata"]

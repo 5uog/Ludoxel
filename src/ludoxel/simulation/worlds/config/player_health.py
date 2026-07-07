@@ -47,12 +47,7 @@ class PlayerRegenParams:
   time_to_cap_s: float = PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S
 
   def normalized(self) -> "PlayerRegenParams":
-    return PlayerRegenParams(
-      enabled=bool(self.enabled),
-      start_delay_s=normalize_player_regen_start_delay_s(self.start_delay_s),
-      cap_hp=normalize_player_regen_cap_hp(self.cap_hp),
-      time_to_cap_s=normalize_player_regen_time_to_cap_s(self.time_to_cap_s),
-    )
+    return PlayerRegenParams(enabled=bool(self.enabled), start_delay_s=normalize_player_regen_start_delay_s(self.start_delay_s), cap_hp=normalize_player_regen_cap_hp(self.cap_hp), time_to_cap_s=normalize_player_regen_time_to_cap_s(self.time_to_cap_s))
 
 
 DEFAULT_PLAYER_REGEN_PARAMS = PlayerRegenParams()

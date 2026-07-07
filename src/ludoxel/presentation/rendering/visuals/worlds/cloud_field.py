@@ -12,17 +12,13 @@ from ludoxel.application.preferences.clouds import normalize_cloud_height_settin
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.contracts.config import BackendCloudParams
 
-# A cloud is a cluster of occupied cells on a small per-cloud grid, forming
-# L, T, plus, notched, and stepped footprints. The flat and wireframe paths
-# draw only the exterior faces of the occupancy (interior faces between two
-# occupied cells are skipped), so the cloud reads as one merged body with a
+# A cloud is a cluster of occupied cells on a small per-cloud grid, forming L, T, plus, notched, and stepped footprints. The flat and wireframe paths
+# draw only the exterior faces of the occupancy (interior faces between two occupied cells are skipped), so the cloud reads as one merged body with a
 # clean silhouette; the Ultra path raymarches the same occupied-cell union.
 #
 # Speeds are assigned to whole macro rows perpendicular to the flow axis:
-# rows own disjoint bands and footprints never leave their macro cell, so
-# clouds of different base speeds cannot drift into each other; a per-cloud
-# turbulence sway on top of the row speed keeps clouds in one row moving
-# differently.
+# rows own disjoint bands and footprints never leave their macro cell, so clouds of different base speeds cannot drift into each other;
+# a per-cloud turbulence sway on top of the row speed keeps clouds in one row moving differently.
 CLOUD_FACE_COUNT = 6
 CLOUD_INSTANCE_ROW_WIDTH = 11
 _CLOUD_SPEED_BUCKET_COUNT = 12
@@ -31,8 +27,7 @@ _TURBULENCE_AMP_MAX_BLOCKS = 1.0
 _TURBULENCE_FREQ_MIN_RAD_S = 0.05
 _TURBULENCE_FREQ_MAX_RAD_S = 0.20
 
-# Face-index convention matches textured_unit_face_vertices:
-# 0=+X, 1=-X, 2=+Y (top), 3=-Y (bottom), 4=+Z, 5=-Z.
+# Face-index convention matches textured_unit_face_vertices: 0=+X, 1=-X, 2=+Y (top), 3=-Y (bottom), 4=+Z, 5=-Z.
 _FACE_NEIGHBOUR: dict[int, tuple[int, int] | None] = {0: (1, 0), 1: (-1, 0), 2: None, 3: None, 4: (0, 1), 5: (0, -1)}
 
 
@@ -82,33 +77,16 @@ class CloudShape:
 def _rows_from_boxes(boxes: list[tuple[CloudShape, CloudBox]]) -> np.ndarray:
   rows: list[list[float]] = []
   for shape, box in boxes:
-    rows.append(
-      [
-        float(box.center.x),
-        float(box.center.y),
-        float(box.center.z),
-        float(box.size.x),
-        float(box.size.y),
-        float(box.size.z),
-        float(box.alpha_mul),
-        float(box.speed_multiplier),
-        float(shape.turbulence_amp),
-        float(shape.turbulence_freq),
-        float(shape.turbulence_phase),
-      ]
-    )
+    rows.append([float(box.center.x), float(box.center.y), float(box.center.z), float(box.size.x), float(box.size.y), float(box.size.z), float(box.alpha_mul), float(box.speed_multiplier), float(shape.turbulence_amp), float(shape.turbulence_freq), float(shape.turbulence_phase)])
   if not rows:
     return np.zeros((0, CLOUD_INSTANCE_ROW_WIDTH), dtype=np.float32)
   return np.ascontiguousarray(rows, dtype=np.float32)
 
 
 def cloud_face_rows(shapes: list[CloudShape], face_index: int) -> np.ndarray:
-  # One instance row per exterior cell face of the requested direction. A
-  # side face is exterior only when the neighbouring cell is empty; the top
-  # and bottom faces are always exterior. Each row carries the cell centre
-  # and cell size (cellW, thickness, cellD); the face quad supplies the
-  # per-face offset and normal, so the six buckets together form the merged
-  # cloud surface with no interior faces.
+  # One instance row per exterior cell face of the requested direction. A side face is exterior only when the neighbouring cell is empty; the top
+  # and bottom faces are always exterior. Each row carries the cell centre and cell size (cellW, thickness, cellD); the face quad supplies the
+  # per-face offset and normal, so the six buckets together form the merged cloud surface with no interior faces.
   face = int(face_index)
   neighbour = _FACE_NEIGHBOUR.get(face)
   out: list[tuple[CloudShape, CloudBox]] = []
@@ -118,27 +96,17 @@ def cloud_face_rows(shapes: list[CloudShape], face_index: int) -> np.ndarray:
     for cell in shape.cells:
       if neighbour is not None and (int(cell.i) + int(neighbour[0]), int(cell.j) + int(neighbour[1])) in occupied:
         continue
-      box = CloudBox(
-        center=Vec3(cell.center_x(), cy, cell.center_z()),
-        size=Vec3(cell.width(), float(shape.thickness), cell.depth()),
-        alpha_mul=float(shape.alpha_mul),
-        speed_multiplier=float(shape.speed_multiplier),
-      )
+      box = CloudBox(center=Vec3(cell.center_x(), cy, cell.center_z()), size=Vec3(cell.width(), float(shape.thickness), cell.depth()), alpha_mul=float(shape.alpha_mul), speed_multiplier=float(shape.speed_multiplier))
       out.append((shape, box))
   return _rows_from_boxes(out)
 
 
 def cloud_volume_rows(shapes: list[CloudShape]) -> np.ndarray:
-  # Ultra path: one bounding box per cloud, used only as a raymarch proxy.
-  # The fragment stage marches the view ray through this box and integrates
-  # an animated noise density masked by the cloud's cell occupancy, so the
-  # whole cloud is one translucent volume that follows the cluster footprint
-  # (never a plain oval) and is never drawn as a solid surface. Row 8 is a
-  # per-cloud noise seed, row 9 packs the occupancy bitmask (bit
-  # j*gridW + i, i fastest), and row 10 packs the grid dimensions as
-  # gridW + gridD*8. The row stores the footprint box; the shader expands
-  # the raymarch proxy horizontally for feathered exterior vapor and keeps
-  # the packed footprint as the density owner.
+  # Ultra path: one bounding box per cloud, used only as a raymarch proxy. The fragment stage marches the view ray through this box and integrates
+  # an animated noise density masked by the cloud's cell occupancy, so the whole cloud is one translucent volume that follows the cluster footprint
+  # (never a plain oval) and is never drawn as a solid surface. Row 8 is a per-cloud noise seed, row 9 packs the occupancy bitmask (bit j*gridW + i,
+  # i fastest), and row 10 packs the grid dimensions as gridW + gridD*8. The row stores the footprint box; the shader expands the raymarch proxy
+  # horizontally for feathered exterior vapor and keeps the packed footprint as the density owner.
   rows: list[list[float]] = []
   for shape in shapes:
     if not shape.cells:
@@ -166,21 +134,7 @@ def cloud_volume_rows(shapes: list[CloudShape]) -> np.ndarray:
     center_z = float(min_z + max_z) * 0.5
     center_y = float(shape.y0) + thickness * 0.5
     seed = float((int(round(shape.turbulence_phase * 1000.0)) ^ int(round(center_x)) ^ (int(round(center_z)) << 1)) % 4093)
-    rows.append(
-      [
-        float(center_x),
-        float(center_y),
-        float(center_z),
-        float(max_x - min_x),
-        float(thickness * 1.9),
-        float(max_z - min_z),
-        float(shape.alpha_mul),
-        float(shape.speed_multiplier),
-        float(seed),
-        float(bitmask),
-        float(int(grid_w) + int(grid_d) * 8),
-      ]
-    )
+    rows.append([float(center_x), float(center_y), float(center_z), float(max_x - min_x), float(thickness * 1.9), float(max_z - min_z), float(shape.alpha_mul), float(shape.speed_multiplier), float(seed), float(bitmask), float(int(grid_w) + int(grid_d) * 8)])
   if not rows:
     return np.zeros((0, CLOUD_INSTANCE_ROW_WIDTH), dtype=np.float32)
   return np.ascontiguousarray(rows, dtype=np.float32)
@@ -206,18 +160,14 @@ class CloudField:
     self._speed_variation_enabled: bool = bool(cfg.speed_variation_enabled)
     self._speed_min_blocks_per_second, self._speed_max_blocks_per_second = normalize_cloud_speed_range(cfg.speed_min_blocks_per_second, cfg.speed_max_blocks_per_second)
     self._height_variation_enabled: bool = bool(cfg.height_variation_enabled)
-    (self._fixed_y, self._spawn_y_min, self._spawn_y_max, self._preferred_y_min, self._preferred_y_max, self._preferred_y_probability_percent) = normalize_cloud_height_settings(
-      cfg.y, cfg.spawn_y_min, cfg.spawn_y_max, cfg.preferred_y_min, cfg.preferred_y_max, cfg.preferred_y_probability_percent
-    )
+    (self._fixed_y, self._spawn_y_min, self._spawn_y_max, self._preferred_y_min, self._preferred_y_max, self._preferred_y_probability_percent) = normalize_cloud_height_settings(cfg.y, cfg.spawn_y_min, cfg.spawn_y_max, cfg.preferred_y_min, cfg.preferred_y_max, cfg.preferred_y_probability_percent)
 
     self._flow_direction: str = normalize_backend_cloud_flow_direction(DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION)
     self._flow_epoch_s: float = 0.0
     self._flow_base_shift: Vec3 = Vec3(0.0, 0.0, 0.0)
 
-    # Horizontal radius, in blocks, out to which cloud shapes are generated.
-    # It seeds from the config view radius and is later driven by the caller's
-    # cloud far distance so clouds are actually built across the whole cloud
-    # horizon instead of stopping at a fixed radius short of the fog end.
+    # Horizontal radius, in blocks, out to which cloud shapes are generated. It seeds from the config view radius and is later driven by the caller's
+    # cloud far distance so clouds are actually built across the whole cloud horizon instead of stopping at a fixed radius short of the fog end.
     self._view_radius: float = float(max(0, int(cfg.view_radius)))
 
     self._bucket_cache: dict[int, tuple[tuple[int, int], list[CloudShape]]] = {}
@@ -260,19 +210,9 @@ class CloudField:
     return True
 
   def set_height_variation(self, enabled: bool, fixed_y: int, spawn_y_min: int, spawn_y_max: int, preferred_y_min: int, preferred_y_max: int, preferred_y_probability_percent: int) -> bool:
-    fixed, spawn_min, spawn_max, preferred_min, preferred_max, probability = normalize_cloud_height_settings(
-      fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, preferred_y_probability_percent
-    )
+    fixed, spawn_min, spawn_max, preferred_min, preferred_max, probability = normalize_cloud_height_settings(fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, preferred_y_probability_percent)
     signature = (bool(enabled), int(fixed), int(spawn_min), int(spawn_max), int(preferred_min), int(preferred_max), int(probability))
-    current = (
-      bool(self._height_variation_enabled),
-      int(self._fixed_y),
-      int(self._spawn_y_min),
-      int(self._spawn_y_max),
-      int(self._preferred_y_min),
-      int(self._preferred_y_max),
-      int(self._preferred_y_probability_percent),
-    )
+    current = (bool(self._height_variation_enabled), int(self._fixed_y), int(self._spawn_y_min), int(self._spawn_y_max), int(self._preferred_y_min), int(self._preferred_y_max), int(self._preferred_y_probability_percent))
     if signature == current:
       return False
     self._height_variation_enabled = bool(enabled)
@@ -361,20 +301,17 @@ class CloudField:
     return min(int(count - 1), int(float(bucket_random) * float(count)))
 
   def _effective_macro(self) -> int:
-    # The macro cell holds one cloud. Its size scales with the cloud size
-    # (cell size times the cluster grid) and shrinks with density, so a
-    # higher density preference packs more clouds into the sky while the
-    # cloud size preference controls how large each cloud is. Both feed the
-    # same grid, so raising either is visible.
+    # The macro cell holds one cloud. Its size scales with the cloud size (cell size times the cluster grid) and shrinks with density,
+    # so a higher density preference packs more clouds into the sky while the cloud size preference controls how large each cloud is.
+    # Both feed the same grid, so raising either is visible.
     density = int(min(4, max(1, int(self._enabled_density))))
     gap_cells = {1: 10, 2: 6, 3: 3, 4: 1}.get(int(density), 3)
     grid_max = 4
     return int(max(int(self._cell_size) * (int(grid_max) + int(gap_cells)), int(self._cell_size) * 5))
 
   def _effective_drop_threshold(self) -> float:
-    # Fewer clouds are dropped at higher density, which combines with the
-    # smaller macro cell to make the density preference clearly change the
-    # number of clouds in the sky.
+    # Fewer clouds are dropped at higher density,
+    # which combines with the smaller macro cell to make the density preference clearly change the number of clouds in the sky.
     density = int(min(4, max(1, int(self._enabled_density))))
     return float(max(0.15, 0.70 - 0.14 * float(density - 1)))
 
@@ -396,9 +333,8 @@ class CloudField:
       self._bucket_cache[int(bucket_index)] = (anchor, self._build_bucket_shapes(bucket_index=int(bucket_index), anchor=anchor, speed_multiplier=float(multiplier), bucket_count=len(multipliers)))
 
   def set_view_radius(self, radius: float) -> None:
-    # The far distance is stable per render-distance setting, so this only
-    # rebuilds the shape cache when the horizon actually changes. A tolerance
-    # of one block avoids float churn.
+    # The far distance is stable per render-distance setting, so this only rebuilds the shape cache when the horizon actually changes.
+    # A tolerance of one block avoids float churn.
     r = float(max(0.0, radius))
     if abs(r - float(self._view_radius)) < 1.0:
       return
@@ -506,14 +442,10 @@ class CloudField:
     def rand(salt: int) -> float:
       return self._hash3(mx, mz, 7, int(self._seed) ^ int(salt))
 
-    # Footprint grid. Edge bumps can extend the core by one cell on each
-    # side, so the core is bounded to leave room for that growth inside the
-    # macro cell; the actual normalized extent is measured afterward and the
-    # footprint is placed so the whole cloud stays within the cell margins,
-    # guaranteeing same-speed clouds in neighbouring cells never overlap.
-    # Grid is capped at four cells per axis so the occupancy bitmask fits
-    # exactly in a float32 (at most sixteen cells), and a bump can extend the
-    # three-cell core by one.
+    # Footprint grid. Edge bumps can extend the core by one cell on each side, so the core is bounded to leave room for that growth inside the macro
+    # cell; the actual normalized extent is measured afterward and the footprint is placed so the whole cloud stays within the cell margins,
+    # guaranteeing same-speed clouds in neighbouring cells never overlap. Grid is capped at four cells per axis so the occupancy bitmask fits exactly
+    # in a float32 (at most sixteen cells), and a bump can extend the three-cell core by one.
     max_cells = max(2, int((m - 2 * margin) // cell_size))
     core_limit = max(2, min(3, int(max_cells) - 1))
     grid_w = min(int(core_limit), 2 + int(rand(0xD1B54A35) * 2.0))
@@ -534,9 +466,7 @@ class CloudField:
 
     cells: list[_Cell] = []
     for i, j in sorted(occupancy):
-      cells.append(
-        _Cell(i=int(i), j=int(j), min_x=int(origin_x + i * cell_size), max_x=int(origin_x + (i + 1) * cell_size), min_z=int(origin_z + j * cell_size), max_z=int(origin_z + (j + 1) * cell_size))
-      )
+      cells.append(_Cell(i=int(i), j=int(j), min_x=int(origin_x + i * cell_size), max_x=int(origin_x + (i + 1) * cell_size), min_z=int(origin_z + j * cell_size), max_z=int(origin_z + (j + 1) * cell_size)))
 
     thickness = float(max(1, int(self._cfg.thickness))) * (0.85 + 0.45 * rand(0x8DA6B343))
     y0 = self._cloud_y(mx, mz)
@@ -546,34 +476,17 @@ class CloudField:
     max_x = max(c.max_x for c in cells)
     min_z = min(c.min_z for c in cells)
     max_z = max(c.max_z for c in cells)
-    bounds = CloudBox(
-      center=Vec3(float(min_x + max_x) * 0.5, y0 + thickness * 0.5, float(min_z + max_z) * 0.5),
-      size=Vec3(float(max_x - min_x), float(thickness), float(max_z - min_z)),
-      alpha_mul=float(alpha),
-      speed_multiplier=float(speed_multiplier),
-    )
+    bounds = CloudBox(center=Vec3(float(min_x + max_x) * 0.5, y0 + thickness * 0.5, float(min_z + max_z) * 0.5), size=Vec3(float(max_x - min_x), float(thickness), float(max_z - min_z)), alpha_mul=float(alpha), speed_multiplier=float(speed_multiplier))
 
     turbulence_amp = float(_TURBULENCE_AMP_MIN_BLOCKS) + (float(_TURBULENCE_AMP_MAX_BLOCKS) - float(_TURBULENCE_AMP_MIN_BLOCKS)) * rand(0x38B4DA56)
     turbulence_freq = float(_TURBULENCE_FREQ_MIN_RAD_S) + (float(_TURBULENCE_FREQ_MAX_RAD_S) - float(_TURBULENCE_FREQ_MIN_RAD_S)) * rand(0x9E3779B9)
     turbulence_phase = 2.0 * math.pi * rand(0xB2F0E1CC)
 
-    return CloudShape(
-      bounds=bounds,
-      cells=tuple(cells),
-      y0=float(y0),
-      thickness=float(thickness),
-      alpha_mul=float(alpha),
-      speed_multiplier=float(speed_multiplier),
-      turbulence_amp=float(turbulence_amp),
-      turbulence_freq=float(turbulence_freq),
-      turbulence_phase=float(turbulence_phase),
-    )
+    return CloudShape(bounds=bounds, cells=tuple(cells), y0=float(y0), thickness=float(thickness), alpha_mul=float(alpha), speed_multiplier=float(speed_multiplier), turbulence_amp=float(turbulence_amp), turbulence_freq=float(turbulence_freq), turbulence_phase=float(turbulence_phase))
 
   def _cluster_occupancy(self, mx: int, mz: int, grid_w: int, grid_d: int) -> set[tuple[int, int]]:
-    # Build a contiguous, non-rectangular footprint: a solid core, then
-    # corner notches and edge bumps that turn it into an L, T, plus,
-    # notched, or stepped silhouette. The result is guaranteed contiguous
-    # and never a plain filled rectangle.
+    # Build a contiguous, non-rectangular footprint: a solid core, then corner notches and edge bumps that turn it into an L, T, plus, notched, or
+    # stepped silhouette. The result is guaranteed contiguous and never a plain filled rectangle.
     def rand(salt: int) -> float:
       return self._hash3(mx, mz, int(salt), int(self._seed) ^ 0x27D4EB2F)
 
@@ -614,8 +527,7 @@ class CloudField:
     if not modified and len(occupancy) > 3:
       occupancy.discard((0, 0))
 
-    # Keep only the largest 4-connected component so a notch or a bump can
-    # never leave a detached cell; the footprint is always contiguous.
+    # Keep only the largest 4-connected component so a notch or a bump can never leave a detached cell; the footprint is always contiguous.
     occupancy = self._largest_connected_component(occupancy)
 
     # Normalise to non-negative indices.

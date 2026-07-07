@@ -16,8 +16,7 @@ export const siteOrigin = 'https://ludoxel.vercel.app';
 const siteTitle = 'Ludoxel';
 const technicalAudience = 'practitioners, researchers, and programming-literate readers';
 const homeTitle = 'Ludoxel - Technical Voxel Sandbox Documentation';
-const homeDescription =
-  'Technical Ludoxel documentation for practitioners and programming-literate readers covering renderer behavior, AI NPC systems, Othello rules, settings, distribution boundaries, and legal material scope.';
+const homeDescription = 'Technical Ludoxel documentation for practitioners and programming-literate readers covering renderer behavior, AI NPC systems, Othello rules, settings, distribution boundaries, and legal material scope.';
 
 function trimTrailingSlash(pathname: string): string {
   if (pathname === '/') {

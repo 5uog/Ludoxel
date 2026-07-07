@@ -12,14 +12,7 @@ def pose_almost_equal(left: tuple[float, float, float, float, float, float], rig
   linear_eps = float(linear_epsilon)
   angular_eps = float(angular_epsilon_deg)
 
-  return (
-    abs(lx - rx) <= linear_eps
-    and abs(ly - ry) <= linear_eps
-    and abs(lz - rz) <= linear_eps
-    and abs(lyaw - ryaw) <= angular_eps
-    and abs(lpitch - rpitch) <= angular_eps
-    and abs(lroll - rroll) <= angular_eps
-  )
+  return abs(lx - rx) <= linear_eps and abs(ly - ry) <= linear_eps and abs(lz - rz) <= linear_eps and abs(lyaw - ryaw) <= angular_eps and abs(lpitch - rpitch) <= angular_eps and abs(lroll - rroll) <= angular_eps
 
 
 def block_center(position: tuple[int, int, int]) -> Vec3:

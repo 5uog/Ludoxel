@@ -63,13 +63,9 @@ def make_camera_snapshot_for_session(session, *, enable_camera_shake: bool = Tru
   )
 
 
-def make_render_snapshot_for_session(
-  session, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20, is_first_person_view: bool = True
-) -> RenderSnapshotDTO:
+def make_render_snapshot_for_session(session, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20, is_first_person_view: bool = True) -> RenderSnapshotDTO:
   camera = make_camera_snapshot_for_session(session, enable_camera_shake=bool(enable_camera_shake), camera_shake_strength=float(camera_shake_strength))
-  player_model = build_player_model_snapshot(
-    player=session.player, motion=session._player_motion, walk_speed=float(session.settings.movement.walk_speed), is_first_person_view=bool(is_first_person_view)
-  )
+  player_model = build_player_model_snapshot(player=session.player, motion=session._player_motion, walk_speed=float(session.settings.movement.walk_speed), is_first_person_view=bool(is_first_person_view))
   scale = 0.0 if not bool(enable_view_bobbing) else clampf(float(view_bobbing_strength), 0.0, 1.0)
   player_model = type(player_model)(
     base_x=float(player_model.base_x),

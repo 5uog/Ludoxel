@@ -19,8 +19,8 @@ OTHELLO_DEFAULT_GROUND_Y: int = 0
 OTHELLO_GRASS_TOP_Y: float = float(OTHELLO_DEFAULT_GROUND_Y + 1)
 OTHELLO_BOARD_BLOCK_Y: int = OTHELLO_DEFAULT_GROUND_Y + 1
 OTHELLO_BOARD_SURFACE_Y: float = float(OTHELLO_BOARD_BLOCK_Y + 1)
-OTHELLO_BOARD_DARK_BLOCK_ID: str = "minecraft:dark_oak_planks"
-OTHELLO_BOARD_LIGHT_BLOCK_ID: str = "minecraft:spruce_planks"
+OTHELLO_BOARD_DARK_BLOCK_ID: str = "ludoxel:dark_oak_planks"
+OTHELLO_BOARD_LIGHT_BLOCK_ID: str = "ludoxel:spruce_planks"
 
 
 def row_col_to_square_index(row: int, col: int) -> int:
@@ -88,9 +88,8 @@ def make_othello_world_state() -> WorldState:
 
 
 def strip_othello_flat_floor_blocks(placed: Dict[BlockKey, str]) -> Dict[BlockKey, str]:
-  # Legacy Othello saves materialized the floor as a finite grid of placed
-  # blocks; cells whose placed state equals the flat-generation base state
-  # are dropped so the generation spec becomes the sole floor owner.
+  # Legacy Othello saves materialized the floor as a finite grid of placed blocks;
+  # cells whose placed state equals the flat-generation base state are dropped so the generation spec becomes the sole floor owner.
   probe = WorldState(blocks={}, revision=0, generation=othello_world_generation_spec())
   out: Dict[BlockKey, str] = {}
   for key, value in placed.items():

@@ -5,23 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from OpenGL.GL import (
-  GL_BLEND,
-  GL_CULL_FACE,
-  GL_DEPTH_TEST,
-  GL_LESS,
-  GL_TEXTURE0,
-  GL_TEXTURE_2D,
-  GL_TRIANGLES,
-  glActiveTexture,
-  glBindTexture,
-  glBindVertexArray,
-  glDepthFunc,
-  glDepthMask,
-  glDisable,
-  glDrawArraysInstanced,
-  glEnable,
-)
+from OpenGL.GL import GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LESS, GL_TEXTURE0, GL_TEXTURE_2D, GL_TRIANGLES, glActiveTexture, glBindTexture, glBindVertexArray, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.mesh_buffer import MeshBuffer
@@ -45,17 +29,7 @@ class TexturedFacePass:
     self._meshes = ()
     self._prog = None
 
-  def draw(
-    self,
-    *,
-    face_rows: tuple[np.ndarray, ...],
-    view_proj: np.ndarray,
-    tex_id: int,
-    sun_dir: Vec3,
-    tint_color: tuple[float, float, float] = (1.0, 0.32, 0.32),
-    tint_mix: float = 0.0,
-    fog: GeometryDistanceFog | None = None,
-  ) -> tuple[int, int]:
+  def draw(self, *, face_rows: tuple[np.ndarray, ...], view_proj: np.ndarray, tex_id: int, sun_dir: Vec3, tint_color: tuple[float, float, float] = (1.0, 0.32, 0.32), tint_mix: float = 0.0, fog: GeometryDistanceFog | None = None) -> tuple[int, int]:
     if self._prog is None or len(self._meshes) != 6 or int(tex_id) == 0:
       return (0, 0)
 

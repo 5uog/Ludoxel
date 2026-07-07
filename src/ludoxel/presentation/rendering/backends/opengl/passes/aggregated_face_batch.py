@@ -208,9 +208,7 @@ class AggregatedFaceBatch:
       else:
         offsets[fi] = 0
 
-      self._chunk_slices[ck] = _ChunkSlice(
-        offsets=(int(offsets[0]), int(offsets[1]), int(offsets[2]), int(offsets[3]), int(offsets[4]), int(offsets[5])), counts=chunk_slice.counts, last_rev=int(chunk_slice.last_rev)
-      )
+      self._chunk_slices[ck] = _ChunkSlice(offsets=(int(offsets[0]), int(offsets[1]), int(offsets[2]), int(offsets[3]), int(offsets[4]), int(offsets[5])), counts=chunk_slice.counts, last_rev=int(chunk_slice.last_rev))
 
     self._face_storage[fi] = compact
     self._face_committed_rows[fi] = int(live_rows)
@@ -289,9 +287,7 @@ class AggregatedFaceBatch:
       self._chunk_slices.pop(ck, None)
     else:
       self._chunk_slices[ck] = _ChunkSlice(
-        offsets=(int(new_offsets[0]), int(new_offsets[1]), int(new_offsets[2]), int(new_offsets[3]), int(new_offsets[4]), int(new_offsets[5])),
-        counts=(int(new_counts[0]), int(new_counts[1]), int(new_counts[2]), int(new_counts[3]), int(new_counts[4]), int(new_counts[5])),
-        last_rev=int(world_revision),
+        offsets=(int(new_offsets[0]), int(new_offsets[1]), int(new_offsets[2]), int(new_offsets[3]), int(new_offsets[4]), int(new_offsets[5])), counts=(int(new_counts[0]), int(new_counts[1]), int(new_counts[2]), int(new_counts[3]), int(new_counts[4]), int(new_counts[5])), last_rev=int(world_revision)
       )
 
     for fi in range(FACE_COUNT):

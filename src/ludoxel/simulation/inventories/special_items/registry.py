@@ -6,9 +6,7 @@ from ludoxel.simulation.inventories.special_items.core import iter_core_special_
 from ludoxel.simulation.inventories.special_items.descriptors import SpecialItemDescriptor
 from ludoxel.simulation.spaces.othello.inventories.special_items import iter_othello_special_item_descriptors
 
-_SPECIAL_ITEMS: dict[str, SpecialItemDescriptor] = {
-  str(descriptor.item_id).strip().lower(): descriptor for descriptor in (*iter_core_special_item_descriptors(), *iter_othello_special_item_descriptors())
-}
+_SPECIAL_ITEMS: dict[str, SpecialItemDescriptor] = {str(descriptor.item_id).strip().lower(): descriptor for descriptor in (*iter_core_special_item_descriptors(), *iter_othello_special_item_descriptors())}
 
 
 def get_special_item_descriptor(item_id: object) -> SpecialItemDescriptor | None:

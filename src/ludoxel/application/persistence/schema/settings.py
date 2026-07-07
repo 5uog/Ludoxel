@@ -108,9 +108,7 @@ class PersistedSettings:
 
   def __post_init__(self) -> None:
     speed_min, speed_max = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
-    fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, probability = normalize_cloud_height_settings(
-      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
-    )
+    fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, probability = normalize_cloud_height_settings(self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent)
     object.__setattr__(self, "cloud_speed_variation_enabled", bool(self.cloud_speed_variation_enabled))
     object.__setattr__(self, "cloud_speed_min_blocks_per_second", float(speed_min))
     object.__setattr__(self, "cloud_speed_max_blocks_per_second", float(speed_max))

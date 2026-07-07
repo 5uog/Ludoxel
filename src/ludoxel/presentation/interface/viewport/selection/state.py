@@ -25,9 +25,7 @@ class ViewportSelectionState:
     self._target = None
 
   @staticmethod
-  def _make_key(
-    session: SessionManager, reach: float, *, eye: Vec3 | None = None, yaw_deg: float | None = None, pitch_deg: float | None = None
-  ) -> tuple[float, float, float, float, float, int, float]:
+  def _make_key(session: SessionManager, reach: float, *, eye: Vec3 | None = None, yaw_deg: float | None = None, pitch_deg: float | None = None) -> tuple[float, float, float, float, float, int, float]:
     eye_vec = session.player.eye_pos() if eye is None else eye
     yaw = float(session.player.yaw_deg) if yaw_deg is None else float(yaw_deg)
     pitch = float(session.player.pitch_deg) if pitch_deg is None else float(pitch_deg)

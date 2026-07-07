@@ -109,21 +109,9 @@ def _movement_inputs_toward_target(*, player: PlayerEntity, target: Vec3, yaw_de
 def _pursuit_control(*, player: PlayerEntity, target: Vec3, dt: float, sprint: bool, auto_jump_enabled: bool, jump_pressed: bool = False, crouch: bool = False) -> PlayerStepInput:
   yaw_delta_deg, pitch_delta_deg, remaining_yaw_error_deg, _distance_xz = _turn_toward_target(player=player, target=target, dt=float(dt))
   move_f, move_s = _movement_inputs_toward_target(player=player, target=target, yaw_deg=float(player.yaw_deg) + float(yaw_delta_deg), remaining_yaw_error_deg=float(remaining_yaw_error_deg))
-  return PlayerStepInput(
-    move_f=float(move_f),
-    move_s=float(move_s),
-    jump_held=bool(jump_pressed),
-    jump_pressed=bool(jump_pressed),
-    sprint=bool(sprint),
-    crouch=bool(crouch),
-    yaw_delta_deg=float(yaw_delta_deg),
-    pitch_delta_deg=float(pitch_delta_deg),
-    auto_jump_enabled=bool(auto_jump_enabled),
-  )
+  return PlayerStepInput(move_f=float(move_f), move_s=float(move_s), jump_held=bool(jump_pressed), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=bool(auto_jump_enabled))
 
 
 def _turn_only_control(*, player: PlayerEntity, target: Vec3, dt: float) -> PlayerStepInput:
   yaw_delta_deg, pitch_delta_deg, _remaining_yaw_error_deg, _distance_xz = _turn_toward_target(player=player, target=target, dt=float(dt))
-  return PlayerStepInput(
-    move_f=0.0, move_s=0.0, jump_held=False, jump_pressed=False, sprint=False, crouch=False, yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=False
-  )
+  return PlayerStepInput(move_f=0.0, move_s=0.0, jump_held=False, jump_pressed=False, sprint=False, crouch=False, yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=False)

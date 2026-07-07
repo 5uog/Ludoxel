@@ -90,21 +90,8 @@ class SettingsOverlay(SidebarDialogBase):
   player_name_changed = pyqtSignal(str)
   preview_requested = pyqtSignal()
 
-  def __init__(
-    self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS, *, resource_root: Path | None = None, as_window: bool = False, include_preview_button: bool = True
-  ) -> None:
-    super().__init__(
-      parent,
-      as_window=as_window,
-      root_object_name="settingsRoot",
-      window_title="Settings",
-      window_size=(1120, 780),
-      minimum_window_size=(1000, 720),
-      panel_minimum_size=(960, 620),
-      sidebar_object_name="settingsSidebar",
-      content_object_name="settingsContent",
-      stack_object_name="settingsStack",
-    )
+  def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS, *, resource_root: Path | None = None, as_window: bool = False, include_preview_button: bool = True) -> None:
+    super().__init__(parent, as_window=as_window, root_object_name="settingsRoot", window_title="Settings", window_size=(1120, 780), minimum_window_size=(1000, 720), panel_minimum_size=(960, 620), sidebar_object_name="settingsSidebar", content_object_name="settingsContent", stack_object_name="settingsStack")
     self._params = params
     self._resource_root = None if resource_root is None else Path(resource_root)
     self._keybind_rows: dict[str, KeybindRow] = {}

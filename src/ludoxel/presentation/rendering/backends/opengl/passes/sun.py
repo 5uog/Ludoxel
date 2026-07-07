@@ -5,22 +5,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
-from OpenGL.GL import (
-  GL_BLEND,
-  GL_DEPTH_TEST,
-  GL_FUNC_ADD,
-  GL_ONE_MINUS_SRC_ALPHA,
-  GL_SRC_ALPHA,
-  GL_TRIANGLES,
-  glBindVertexArray,
-  glBlendEquation,
-  glBlendFunc,
-  glDepthMask,
-  glDisable,
-  glDrawArrays,
-  glDrawArraysInstanced,
-  glEnable,
-)
+from OpenGL.GL import GL_BLEND, GL_DEPTH_TEST, GL_FUNC_ADD, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_TRIANGLES, glBindVertexArray, glBlendEquation, glBlendFunc, glDepthMask, glDisable, glDrawArrays, glDrawArraysInstanced, glEnable
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import ShaderProgram
@@ -72,20 +57,17 @@ class SunPass:
     glDisable(GL_BLEND)
 
   def draw_glare(self, eye: Vec3, view_proj: np.ndarray, sun_dir: Vec3, forward: Vec3, *, strength: float) -> None:
-    # Ultra-only veiling glare. A camera-facing billboard is centered on the sun
-    # direction; the shader whitens the scene it covers most strongly toward the
-    # sun so the world stays visible while looking into the light dazzles it.
+    # Ultra-only veiling glare. A camera-facing billboard is centered on the sun direction; the shader whitens the scene it covers most strongly
+    # toward the sun so the world stays visible while looking into the light dazzles it.
     if self._prog is None or int(self._empty_vao) == 0 or float(strength) <= 0.0:
       return
 
     glare_center, glare_u, glare_v, glare_half = self._glare_quad(eye=eye, d=sun_dir.normalized(), forward=forward.normalized())
 
-    # The veil is drawn as background before the world pass, so it writes no
-    # depth and never tests against it. The opaque world drawn next overdraws the
-    # veil wherever geometry stands, so foreground blocks occlude the glow at the
-    # terrain silhouette. Depth-testing this flat card at its single world depth
-    # instead cut a hard line across the fogged terrain and framed the veil
-    # against the sky; leaving it as background keeps the falloff continuous.
+    # The veil is drawn as background before the world pass, so it writes no depth and never tests against it.
+    # The opaque world drawn next overdraws the veil wherever geometry stands, so foreground blocks occlude the glow at the terrain silhouette.
+    # Depth-testing this flat card at its single world depth instead cut a hard line across the fogged terrain and framed the veil against the sky;
+    # leaving it as background keeps the falloff continuous.
     glDisable(GL_DEPTH_TEST)
     glDepthMask(False)
 
@@ -112,11 +94,9 @@ class SunPass:
     glEnable(GL_DEPTH_TEST)
 
   def draw_flare(self, sun_ndc: tuple[float, float], strength: float, aspect: float) -> None:
-    # Screen-space lens flare drawn as a final overlay. A fullscreen triangle
-    # covers the frame; the fragment stage places ghost discs along the axis
-    # through the sun's screen position and the frame centre. It writes no
-    # depth and blends over the composed scene, so it reads as a lens artifact
-    # rather than world geometry.
+    # Screen-space lens flare drawn as a final overlay. A fullscreen triangle covers the frame;
+    # the fragment stage places ghost discs along the axis through the sun's screen position and the frame centre.
+    # It writes no depth and blends over the composed scene, so it reads as a lens artifact rather than world geometry.
     if self._flare_prog is None or int(self._empty_vao) == 0 or float(strength) <= 0.0:
       return
 

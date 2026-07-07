@@ -135,10 +135,8 @@ class OthelloMatchController:
     self._state = replace(self._state, thinking=bool(thinking)).normalized()
 
   def settled_game_state(self) -> OthelloGameState:
-    # A copy of the live state with pending flip animations resolved, for
-    # persistence: the board already holds the post-move cells while an
-    # animation plays, so the settled copy only resolves the turn
-    # transition. The live state keeps animating.
+    # A copy of the live state with pending flip animations resolved, for persistence: the board already holds the post-move cells while an animation
+    # plays, so the settled copy only resolves the turn transition. The live state keeps animating.
     state = self._state.normalized()
     if state.status != OTHELLO_GAME_STATE_ANIMATING or not state.animations:
       return replace(state, animations=(), thinking=False).normalized()
@@ -193,9 +191,7 @@ class OthelloMatchController:
 
     if (timed_state.current_turn == SIDE_BLACK and black_time is not None and black_time <= 1e-9) or (timed_state.current_turn == SIDE_WHITE and white_time is not None and white_time <= 1e-9):
       winner = side_name(other_side(timed_state.current_turn))
-      self._state = replace(
-        timed_state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, message=f"{side_name(timed_state.current_turn).title()} ran out of time."
-      ).normalized()
+      self._state = replace(timed_state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, message=f"{side_name(timed_state.current_turn).title()} ran out of time.").normalized()
       return self.game_state()
 
     self._state = timed_state
@@ -233,14 +229,7 @@ class OthelloMatchController:
     next_board, flipped = apply_move(state.board, side=side, index=int(square_index))
     ordered_flips = _ordered_flipped_squares(placed_square_index=int(square_index), flipped=tuple(flipped))
     animations = tuple(
-      OthelloAnimationState(
-        square_index=int(index),
-        from_side=other_side(side),
-        to_side=side,
-        duration_s=float(_ANIMATION_DURATION_S),
-        start_delay_s=float(_animation_start_delay_s(mode=state.settings.animation_mode, flip_order_index=order_index)),
-      ).normalized()
-      for order_index, index in enumerate(ordered_flips)
+      OthelloAnimationState(square_index=int(index), from_side=other_side(side), to_side=side, duration_s=float(_ANIMATION_DURATION_S), start_delay_s=float(_animation_start_delay_s(mode=state.settings.animation_mode, flip_order_index=order_index))).normalized() for order_index, index in enumerate(ordered_flips)
     )
 
     updated = replace(
@@ -292,15 +281,7 @@ def _resolve_turn_transition_state(raw_state: OthelloGameState, *, message_prefi
   other_legal_moves = find_legal_moves(state.board, other)
   if other_legal_moves:
     next_status = _turn_status_for_player_side(state.player_side, other)
-    next_state = replace(
-      state,
-      current_turn=other,
-      legal_moves=tuple(other_legal_moves),
-      consecutive_passes=min(2, int(state.consecutive_passes) + 1),
-      status=next_status,
-      thinking=False,
-      message=f"{message_prefix} {side_name(current_side).title()} must pass.",
-    ).normalized()
+    next_state = replace(state, current_turn=other, legal_moves=tuple(other_legal_moves), consecutive_passes=min(2, int(state.consecutive_passes) + 1), status=next_status, thinking=False, message=f"{message_prefix} {side_name(current_side).title()} must pass.").normalized()
     return _reset_turn_timer_if_needed(next_state, next_turn=other) if bool(reset_per_move_timer) else next_state
 
   winner = winner_for_board(state.board)

@@ -30,7 +30,7 @@
   "editor.smoothScrolling": true,
   "editor.wordSegmenterLocales": ["ja"],
   "editor.wrappingIndent": "same",
-  "editor.rulers": [70, 100],
+  "editor.rulers": [100, 150],
   "editor.detectIndentation": true,
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
@@ -54,7 +54,7 @@
     "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 200,
     "editor.tabSize": 2,
-    "editor.rulers": [70, 100]
+    "editor.rulers": [150, 200]
   },
   "files.associations": {
     "*.pyi": "python",

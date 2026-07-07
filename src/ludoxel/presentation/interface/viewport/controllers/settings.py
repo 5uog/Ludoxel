@@ -446,20 +446,12 @@ def set_cloud_flow_direction(viewport: "RendererViewportWidget", direction: str)
 
 
 def _apply_cloud_speed_variation(viewport: "RendererViewportWidget") -> None:
-  viewport._renderer.set_cloud_speed_variation(
-    bool(viewport._state.cloud_speed_variation_enabled), float(viewport._state.cloud_speed_min_blocks_per_second), float(viewport._state.cloud_speed_max_blocks_per_second)
-  )
+  viewport._renderer.set_cloud_speed_variation(bool(viewport._state.cloud_speed_variation_enabled), float(viewport._state.cloud_speed_min_blocks_per_second), float(viewport._state.cloud_speed_max_blocks_per_second))
 
 
 def _apply_cloud_height_variation(viewport: "RendererViewportWidget") -> None:
   viewport._renderer.set_cloud_height_variation(
-    bool(viewport._state.cloud_height_variation_enabled),
-    int(viewport._state.cloud_fixed_y),
-    int(viewport._state.cloud_spawn_y_min),
-    int(viewport._state.cloud_spawn_y_max),
-    int(viewport._state.cloud_preferred_y_min),
-    int(viewport._state.cloud_preferred_y_max),
-    int(viewport._state.cloud_preferred_y_probability_percent),
+    bool(viewport._state.cloud_height_variation_enabled), int(viewport._state.cloud_fixed_y), int(viewport._state.cloud_spawn_y_min), int(viewport._state.cloud_spawn_y_max), int(viewport._state.cloud_preferred_y_min), int(viewport._state.cloud_preferred_y_max), int(viewport._state.cloud_preferred_y_probability_percent)
   )
 
 
@@ -680,12 +672,7 @@ def reset_keybinds(viewport: "RendererViewportWidget") -> None:
 
 def _replace_audio_preferences(viewport: "RendererViewportWidget", *, master: float | None = None, ambient: float | None = None, block: float | None = None, player: float | None = None) -> None:
   current = viewport._state.audio.normalized()
-  viewport._state.audio = AudioPreferences(
-    master=float(current.master if master is None else master),
-    ambient=float(current.ambient if ambient is None else ambient),
-    block=float(current.block if block is None else block),
-    player=float(current.player if player is None else player),
-  ).normalized()
+  viewport._state.audio = AudioPreferences(master=float(current.master if master is None else master), ambient=float(current.ambient if ambient is None else ambient), block=float(current.block if block is None else block), player=float(current.player if player is None else player)).normalized()
   sync_audio_preferences(viewport)
 
 

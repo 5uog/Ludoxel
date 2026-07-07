@@ -6,15 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ludoxel.foundations.mathematics.scalars.numeric import clampf, clampi
-from ludoxel.simulation.spaces.othello.game.animations import (
-  OTHELLO_ANIMATION_FAST,
-  OTHELLO_ANIMATION_MODES,
-  OTHELLO_ANIMATION_OFF,
-  OTHELLO_ANIMATION_SLOW,
-  OthelloAnimationState,
-  animation_mode_display_name,
-  normalize_animation_mode,
-)
+from ludoxel.simulation.spaces.othello.game.animations import OTHELLO_ANIMATION_FAST, OTHELLO_ANIMATION_MODES, OTHELLO_ANIMATION_OFF, OTHELLO_ANIMATION_SLOW, OthelloAnimationState, animation_mode_display_name, normalize_animation_mode
 from ludoxel.simulation.spaces.othello.game.clocks import (
   DEFAULT_TIME_LIMIT_S,
   OTHELLO_TIME_CONTROL_NONE,

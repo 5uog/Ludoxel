@@ -29,8 +29,7 @@ function getQualityLabel(row: SearchRow): string {
 }
 
 function getQualityClassName(row: SearchRow): string {
-  const baseClassName =
-    'rounded-full px-2 py-0.5 text-[0.625rem] font-medium uppercase tracking-wide transition-colors group-data-[selected=true]:bg-primary group-data-[selected=true]:text-primary-foreground';
+  const baseClassName = 'rounded-full px-2 py-0.5 text-[0.625rem] font-medium uppercase tracking-wide transition-colors group-data-[selected=true]:bg-primary group-data-[selected=true]:text-primary-foreground';
 
   if (row.quality === 'direct') {
     return `${baseClassName} bg-primary/10 text-primary`;
@@ -90,10 +89,7 @@ export default function SearchResultRow({ row, isSelected, sectionMeta, onMouseE
           <span className="truncate text-[0.6875rem] text-muted-foreground transition-colors group-data-[selected=true]:text-foreground">{row.reason}</span>
 
           {visibleTerms.map((term) => (
-            <span
-              className="rounded-md bg-secondary px-1.5 py-0.5 text-[0.625rem] text-muted-foreground transition-colors group-data-[selected=true]:bg-background/80 group-data-[selected=true]:text-foreground"
-              key={term}
-            >
+            <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[0.625rem] text-muted-foreground transition-colors group-data-[selected=true]:bg-background/80 group-data-[selected=true]:text-foreground" key={term}>
               {term}
             </span>
           ))}

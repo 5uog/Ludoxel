@@ -6,13 +6,7 @@ from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y,
 
 
 def skin_cube_uv_map(
-  *,
-  pos_x: tuple[float, float, float, float],
-  neg_x: tuple[float, float, float, float],
-  pos_y: tuple[float, float, float, float],
-  neg_y: tuple[float, float, float, float],
-  pos_z: tuple[float, float, float, float],
-  neg_z: tuple[float, float, float, float],
+  *, pos_x: tuple[float, float, float, float], neg_x: tuple[float, float, float, float], pos_y: tuple[float, float, float, float], neg_y: tuple[float, float, float, float], pos_z: tuple[float, float, float, float], neg_z: tuple[float, float, float, float]
 ) -> dict[int, tuple[float, float, float, float]]:
   return {FACE_POS_X: pos_x, FACE_NEG_X: neg_x, FACE_POS_Y: pos_y, FACE_NEG_Y: neg_y, FACE_POS_Z: pos_z, FACE_NEG_Z: neg_z}
 
@@ -28,18 +22,10 @@ def uv_map_with_rotated_faces(uv_map: dict[int, tuple[float, float, float, float
   return out
 
 
-RIGHT_ARM_BASE_UV_PX = skin_cube_uv_map(
-  pos_x=(40.0, 20.0, 44.0, 32.0), neg_x=(47.0, 20.0, 51.0, 32.0), pos_y=(44.0, 16.0, 47.0, 20.0), neg_y=(47.0, 16.0, 50.0, 20.0), pos_z=(44.0, 20.0, 47.0, 32.0), neg_z=(51.0, 20.0, 54.0, 32.0)
-)
-RIGHT_ARM_SLEEVE_UV_PX = skin_cube_uv_map(
-  pos_x=(40.0, 36.0, 44.0, 48.0), neg_x=(47.0, 36.0, 51.0, 48.0), pos_y=(44.0, 32.0, 47.0, 36.0), neg_y=(47.0, 32.0, 50.0, 36.0), pos_z=(44.0, 36.0, 47.0, 48.0), neg_z=(51.0, 36.0, 54.0, 48.0)
-)
-LEFT_ARM_BASE_UV_PX = skin_cube_uv_map(
-  pos_x=(32.0, 52.0, 36.0, 64.0), neg_x=(39.0, 52.0, 43.0, 64.0), pos_y=(36.0, 48.0, 39.0, 52.0), neg_y=(39.0, 48.0, 42.0, 52.0), pos_z=(36.0, 52.0, 39.0, 64.0), neg_z=(43.0, 52.0, 46.0, 64.0)
-)
-LEFT_ARM_SLEEVE_UV_PX = skin_cube_uv_map(
-  pos_x=(48.0, 52.0, 52.0, 64.0), neg_x=(55.0, 52.0, 59.0, 64.0), pos_y=(52.0, 48.0, 55.0, 52.0), neg_y=(55.0, 48.0, 58.0, 52.0), pos_z=(52.0, 52.0, 55.0, 64.0), neg_z=(59.0, 52.0, 62.0, 64.0)
-)
+RIGHT_ARM_BASE_UV_PX = skin_cube_uv_map(pos_x=(40.0, 20.0, 44.0, 32.0), neg_x=(47.0, 20.0, 51.0, 32.0), pos_y=(44.0, 16.0, 47.0, 20.0), neg_y=(47.0, 16.0, 50.0, 20.0), pos_z=(44.0, 20.0, 47.0, 32.0), neg_z=(51.0, 20.0, 54.0, 32.0))
+RIGHT_ARM_SLEEVE_UV_PX = skin_cube_uv_map(pos_x=(40.0, 36.0, 44.0, 48.0), neg_x=(47.0, 36.0, 51.0, 48.0), pos_y=(44.0, 32.0, 47.0, 36.0), neg_y=(47.0, 32.0, 50.0, 36.0), pos_z=(44.0, 36.0, 47.0, 48.0), neg_z=(51.0, 36.0, 54.0, 48.0))
+LEFT_ARM_BASE_UV_PX = skin_cube_uv_map(pos_x=(32.0, 52.0, 36.0, 64.0), neg_x=(39.0, 52.0, 43.0, 64.0), pos_y=(36.0, 48.0, 39.0, 52.0), neg_y=(39.0, 48.0, 42.0, 52.0), pos_z=(36.0, 52.0, 39.0, 64.0), neg_z=(43.0, 52.0, 46.0, 64.0))
+LEFT_ARM_SLEEVE_UV_PX = skin_cube_uv_map(pos_x=(48.0, 52.0, 52.0, 64.0), neg_x=(55.0, 52.0, 59.0, 64.0), pos_y=(52.0, 48.0, 55.0, 52.0), neg_y=(55.0, 48.0, 58.0, 52.0), pos_z=(52.0, 52.0, 55.0, 64.0), neg_z=(59.0, 52.0, 62.0, 64.0))
 
 SLIM_RIGHT_ARM_BASE_UV_PX = RIGHT_ARM_BASE_UV_PX
 SLIM_RIGHT_ARM_SLEEVE_UV_PX = RIGHT_ARM_SLEEVE_UV_PX

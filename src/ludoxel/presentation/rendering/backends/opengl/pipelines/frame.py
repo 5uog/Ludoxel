@@ -121,9 +121,7 @@ class FramePipeline:
     use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
     if bool(use_light_space):
       shadow_info_pre = self.shadow_pass.info()
-      light_vp = compute_light_view_proj(
-        center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=shadow, shadow_size=int(max(1, int(shadow_info_pre.size))), coverage_radius=float(shadow_coverage_radius)
-      )
+      light_vp = compute_light_view_proj(center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=shadow, shadow_size=int(max(1, int(shadow_info_pre.size))), coverage_radius=float(shadow_coverage_radius))
     else:
       light_vp = mat4.identity()
 
@@ -144,9 +142,7 @@ class FramePipeline:
         othello_result = self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp)
         return (int(player_draw_calls + int(othello_result[0])), int(player_instances + int(othello_result[1])))
 
-      shadow_metrics = self.shadow_pass.render(
-        light_vp, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), extra_draw=_draw_shadow_extra, extra_cache_key=(tuple(all_player_states), othello_shadow_key)
-      )
+      shadow_metrics = self.shadow_pass.render(light_vp, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), extra_draw=_draw_shadow_extra, extra_cache_key=(tuple(all_player_states), othello_shadow_key))
 
     forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
@@ -165,11 +161,9 @@ class FramePipeline:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     ultra_visuals = bool(int(self.state.shadow_quality) >= int(SHADOW_MAP_QUALITY_ULTRA))
-    # Draw the veiling glare, the sun disc, and the lens flare as background,
-    # before the world pass. All three write no depth and the opaque world drawn
-    # next overdraws them, so world geometry nearer than the sun occludes them at
-    # the terrain silhouette instead of the glow being painted over foreground
-    # blocks. A block that hides the sun therefore hides its glare and flare.
+    # Draw the veiling glare, the sun disc, and the lens flare as background, before the world pass. All three write no depth and the opaque world
+    # drawn next overdraws them, so world geometry nearer than the sun occludes them at the terrain silhouette instead of the glow being painted over
+    # foreground blocks. A block that hides the sun therefore hides its glare and flare.
     if bool(ultra_visuals):
       glare = sun_glare_strength(forward, self.state.sun_dir)
       if glare > 0.0:
@@ -211,91 +205,35 @@ class FramePipeline:
     )
 
     falling_dc, falling_inst = self.falling_block_pass.draw(samples=falling_blocks, view_proj=vp, sun_dir=self.state.sun_dir, fog=world_fog)
-    world_metrics = PassFrameMetrics(
-      cpu_ms=float(world_metrics.cpu_ms),
-      draw_calls=int(world_metrics.draw_calls + falling_dc),
-      instances=int(world_metrics.instances + falling_inst),
-      rendered=bool(world_metrics.rendered or (falling_dc > 0)),
-    )
+    world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + falling_dc), instances=int(world_metrics.instances + falling_inst), rendered=bool(world_metrics.rendered or (falling_dc > 0)))
 
     particle_dc, particle_inst = self.block_break_particle_pass.draw(samples=block_break_particles, view_proj=vp, sun_dir=self.state.sun_dir, camera_forward=forward, fog=world_fog)
-    world_metrics = PassFrameMetrics(
-      cpu_ms=float(world_metrics.cpu_ms),
-      draw_calls=int(world_metrics.draw_calls + particle_dc),
-      instances=int(world_metrics.instances + particle_inst),
-      rendered=bool(world_metrics.rendered or (particle_dc > 0)),
-    )
+    world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + particle_dc), instances=int(world_metrics.instances + particle_inst), rendered=bool(world_metrics.rendered or (particle_dc > 0)))
 
     player_dc = 0
     player_inst = 0
     for pose in player_poses:
-      draw_calls, instances = self.player_pass.draw_world(
-        pose=pose,
-        view_proj=vp,
-        light_view_proj=light_vp,
-        sun_dir=self.state.sun_dir,
-        debug_shadow=bool(self.state.debug_shadow),
-        shadow_enabled=bool(self.state.shadow_enabled),
-        shadow=shadow,
-        shadow_info=shadow_info,
-        fog=world_fog,
-      )
+      draw_calls, instances = self.player_pass.draw_world(pose=pose, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=shadow, shadow_info=shadow_info, fog=world_fog)
       player_dc += int(draw_calls)
       player_inst += int(instances)
 
-    world_metrics = PassFrameMetrics(
-      cpu_ms=float(world_metrics.cpu_ms),
-      draw_calls=int(world_metrics.draw_calls + player_dc),
-      instances=int(world_metrics.instances + player_inst),
-      rendered=bool(world_metrics.rendered or (player_dc > 0)),
-    )
+    world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + player_dc), instances=int(world_metrics.instances + player_inst), rendered=bool(world_metrics.rendered or (player_dc > 0)))
 
-    othello_metrics = self.othello_pass.draw(
-      render_state=othello_state,
-      view_proj=vp,
-      light_view_proj=light_vp,
-      sun_dir=self.state.sun_dir,
-      debug_shadow=bool(self.state.debug_shadow),
-      shadow_enabled=bool(self.state.shadow_enabled),
-      shadow=shadow,
-      shadow_info=shadow_info,
-      fog=world_fog,
-    )
+    othello_metrics = self.othello_pass.draw(render_state=othello_state, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=shadow, shadow_info=shadow_info, fog=world_fog)
 
-    world_metrics = PassFrameMetrics(
-      cpu_ms=float(world_metrics.cpu_ms),
-      draw_calls=int(world_metrics.draw_calls + othello_metrics.draw_calls),
-      instances=int(world_metrics.instances + othello_metrics.instances),
-      rendered=bool(world_metrics.rendered or othello_metrics.rendered),
-    )
+    world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + othello_metrics.draw_calls), instances=int(world_metrics.instances + othello_metrics.instances), rendered=bool(world_metrics.rendered or othello_metrics.rendered))
 
-    # Clouds use their own far plane so the cloud fade range is not clipped
-    # by the world camera far plane. The Ultra shadow map quality tier
-    # selects the translucent volume path, whose depth writes are off, so
-    # the projection difference does not feed back into the world depth
-    # buffer; the lower tiers keep the flat box path.
+    # Clouds use their own far plane so the cloud fade range is not clipped by the world camera far plane.
+    # The Ultra shadow map quality tier selects the translucent volume path, whose depth writes are off, so the projection difference does not feed
+    # back into the world depth buffer; the lower tiers keep the flat box path.
     cloud_proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(cloud_projection_z_far(int(render_distance_chunks), float(self.cfg.camera.z_far))))
     cloud_vp = mat4.mul(cloud_proj, view)
-    self.cloud_pass.draw(
-      eye=eye,
-      view_proj=cloud_vp,
-      forward=forward,
-      fov_deg=float(fov_deg),
-      aspect=float(w) / max(float(h), 1.0),
-      sun_dir=self.state.sun_dir,
-      fog=cloud_fog,
-      far_distance=float(cloud_far_distance(int(render_distance_chunks))),
-      ultra=bool(ultra_visuals),
-    )
+    self.cloud_pass.draw(eye=eye, view_proj=cloud_vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir, fog=cloud_fog, far_distance=float(cloud_far_distance(int(render_distance_chunks))), ultra=bool(ultra_visuals))
 
     self.selection.draw(view_proj=vp)
 
     first_person = None if player_state is None else player_state.first_person
-    if (
-      first_person is not None
-      and bool(first_person.show_view_model)
-      and (bool(first_person.show_arm) or first_person.visible_block_id is not None or first_person.visible_special_item_icon is not None)
-    ):
+    if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None or first_person.visible_special_item_icon is not None):
       glClear(GL_DEPTH_BUFFER_BIT)
       hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
       hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
@@ -304,8 +242,6 @@ class FramePipeline:
       elif first_person.visible_block_id is not None:
         self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
       else:
-        self.first_person_arm_pass.draw(
-          first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir, hurt_tint_strength=float(0.0 if player_state is None else player_state.hurt_tint_strength)
-        )
+        self.first_person_arm_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir, hurt_tint_strength=float(0.0 if player_state is None else player_state.hurt_tint_strength))
 
     return RendererFrameMetrics(world=world_metrics, shadow=shadow_metrics)

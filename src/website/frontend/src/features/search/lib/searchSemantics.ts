@@ -30,39 +30,7 @@ type SearchSignal = {
   quality: SearchMatchQuality;
 };
 
-const SEARCH_STOP_WORDS = new Set([
-  'a',
-  'an',
-  'and',
-  'are',
-  'as',
-  'at',
-  'be',
-  'by',
-  'can',
-  'for',
-  'from',
-  'how',
-  'i',
-  'in',
-  'into',
-  'is',
-  'it',
-  'of',
-  'on',
-  'or',
-  'that',
-  'the',
-  'this',
-  'to',
-  'use',
-  'using',
-  'what',
-  'when',
-  'where',
-  'why',
-  'with',
-]);
+const SEARCH_STOP_WORDS = new Set(['a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'can', 'for', 'from', 'how', 'i', 'in', 'into', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'use', 'using', 'what', 'when', 'where', 'why', 'with']);
 
 const SEARCH_CONCEPTS: SearchConcept[] = [
   {
@@ -110,24 +78,7 @@ const SEARCH_CONCEPTS: SearchConcept[] = [
   {
     id: 'legal',
     label: 'Legal authority and material scope',
-    terms: [
-      'legal',
-      'license',
-      'licence',
-      'copyright',
-      'permission',
-      'reuse',
-      'redistribution',
-      'rights',
-      'terms',
-      'third party',
-      'attribution',
-      'jurisdiction',
-      '法務',
-      '著作権',
-      '許諾',
-      'ライセンス',
-    ],
+    terms: ['legal', 'license', 'licence', 'copyright', 'permission', 'reuse', 'redistribution', 'rights', 'terms', 'third party', 'attribution', 'jurisdiction', '法務', '著作権', '許諾', 'ライセンス'],
     categoryHints: ['legal', 'distribution', 'support'],
     intentHints: ['legal-boundary'],
   },
@@ -199,16 +150,9 @@ function prepareSearchQuery(rawQuery: string): SearchPreparedQuery {
   const tokens = tokenizeSearchText(normalized);
   const concepts = SEARCH_CONCEPTS.filter((concept) => conceptMatchesQuery(concept, normalized, tokens));
 
-  const expandedTokens = uniqueValues([
-    ...tokens,
-    ...concepts.flatMap((concept) => concept.terms.flatMap((term) => tokenizeSearchText(term))),
-    ...concepts.flatMap((concept) => concept.intentHints ?? []),
-    ...concepts.flatMap((concept) => concept.categoryHints ?? []),
-  ]);
+  const expandedTokens = uniqueValues([...tokens, ...concepts.flatMap((concept) => concept.terms.flatMap((term) => tokenizeSearchText(term))), ...concepts.flatMap((concept) => concept.intentHints ?? []), ...concepts.flatMap((concept) => concept.categoryHints ?? [])]);
 
-  const exactPhrases = uniqueValues([normalized, ...concepts.flatMap((concept) => concept.terms.map(normalizeSearchText)), ...concepts.map((concept) => normalizeSearchText(concept.label))]).filter(
-    (phrase) => phrase.length >= 3,
-  );
+  const exactPhrases = uniqueValues([normalized, ...concepts.flatMap((concept) => concept.terms.map(normalizeSearchText)), ...concepts.map((concept) => normalizeSearchText(concept.label))]).filter((phrase) => phrase.length >= 3);
 
   return {
     raw: rawQuery,
@@ -236,15 +180,7 @@ function addSignal(signals: SearchSignal[], label: string, score: number, qualit
   return score;
 }
 
-function scorePhraseMatch(
-  text: string,
-  preparedQuery: SearchPreparedQuery,
-  phraseWeight: number,
-  label: string,
-  quality: SearchMatchQuality,
-  signals: SearchSignal[],
-  matchedTerms: Set<string>,
-): number {
+function scorePhraseMatch(text: string, preparedQuery: SearchPreparedQuery, phraseWeight: number, label: string, quality: SearchMatchQuality, signals: SearchSignal[], matchedTerms: Set<string>): number {
   if (!text) {
     return 0;
   }
@@ -276,15 +212,7 @@ function scorePhraseMatch(
   return score;
 }
 
-function scoreTokenMatch(
-  text: string,
-  preparedQuery: SearchPreparedQuery,
-  tokenWeight: number,
-  label: string,
-  quality: SearchMatchQuality,
-  signals: SearchSignal[],
-  matchedTerms: Set<string>,
-): number {
+function scoreTokenMatch(text: string, preparedQuery: SearchPreparedQuery, tokenWeight: number, label: string, quality: SearchMatchQuality, signals: SearchSignal[], matchedTerms: Set<string>): number {
   if (!text) {
     return 0;
   }
@@ -325,10 +253,7 @@ function scoreTextField(
   signals: SearchSignal[],
   matchedTerms: Set<string>,
 ): number {
-  return (
-    scorePhraseMatch(text, preparedQuery, options.phraseWeight, options.label, options.quality, signals, matchedTerms) +
-    scoreTokenMatch(text, preparedQuery, options.tokenWeight, options.label, options.quality, signals, matchedTerms)
-  );
+  return scorePhraseMatch(text, preparedQuery, options.phraseWeight, options.label, options.quality, signals, matchedTerms) + scoreTokenMatch(text, preparedQuery, options.tokenWeight, options.label, options.quality, signals, matchedTerms);
 }
 
 function scoreListField(
@@ -414,21 +339,7 @@ function diceCoefficient(left: string, right: string): number {
 }
 
 function scoreFuzzyMatch(entry: SearchIndexEntry, preparedQuery: SearchPreparedQuery, signals: SearchSignal[], matchedTerms: Set<string>): number {
-  const candidateTokens = uniqueValues(
-    tokenizeSearchText(
-      [
-        entry.title,
-        entry.description,
-        entry.section,
-        entry.semantic.category,
-        entry.semantic.subcategory,
-        entry.semantic.group,
-        ...entry.semantic.headings,
-        ...entry.semantic.keywords,
-        ...entry.semantic.aliases,
-      ].join(' '),
-    ),
-  );
+  const candidateTokens = uniqueValues(tokenizeSearchText([entry.title, entry.description, entry.section, entry.semantic.category, entry.semantic.subcategory, entry.semantic.group, ...entry.semantic.headings, ...entry.semantic.keywords, ...entry.semantic.aliases].join(' ')));
 
   let score = 0;
 
@@ -471,9 +382,7 @@ function truncateSearchExcerpt(value: string, preferredTerm: string | undefined,
 }
 
 function buildSearchExcerpt(entry: SearchIndexEntry, preparedQuery: SearchPreparedQuery, matchedTerms: string[]): string {
-  const candidates = [entry.description, ...entry.semantic.headings, entry.semantic.body, entry.semantic.code, entry.semantic.media, entry.semantic.text].filter(
-    (candidate) => candidate.trim().length > 0,
-  );
+  const candidates = [entry.description, ...entry.semantic.headings, entry.semantic.body, entry.semantic.code, entry.semantic.media, entry.semantic.text].filter((candidate) => candidate.trim().length > 0);
 
   const preferredTerms = uniqueValues([preparedQuery.normalized, ...matchedTerms, ...preparedQuery.tokens]).filter((term) => term.length >= 2);
 

@@ -154,9 +154,7 @@ class RendererBackend:
     try:
       self._res = GLResources.load(assets_dir, blocks=block_registry)
     except Exception as exc:
-      raise RuntimeError(
-        f"OpenGL 4.3 initialization failed while compiling or linking one or more required shader resources for the renderer, including the compute-backed chunk face payload program. {_format_context_details(self._gl_info)}\nOriginal error:\n{exc}"
-      ) from exc
+      raise RuntimeError(f"OpenGL 4.3 initialization failed while compiling or linking one or more required shader resources for the renderer, including the compute-backed chunk face payload program. {_format_context_details(self._gl_info)}\nOriginal error:\n{exc}") from exc
 
     self._visuals = BlockVisualResolver(uv_by_texture=self._res.atlas.uv, blocks=self._res.blocks)
 
@@ -167,9 +165,7 @@ class RendererBackend:
     self._world.initialize(shadowed_prog=self._res.world_prog, no_shadow_prog=self._res.world_no_shadow_prog, atlas=self._res.atlas)
     self._falling_blocks.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
     self._block_break_particles.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas)
-    self._player.initialize(
-      face_prog=self._res.first_person_face_prog, shadow_prog=self._res.player_model_shadow_prog, atlas=self._res.atlas, skin_texture=self._res.skin_texture, uv_lookup=self._visuals.atlas_uv_face
-    )
+    self._player.initialize(face_prog=self._res.first_person_face_prog, shadow_prog=self._res.player_model_shadow_prog, atlas=self._res.atlas, skin_texture=self._res.skin_texture, uv_lookup=self._visuals.atlas_uv_face)
     self._first_person_arm.initialize(prog=self._res.first_person_face_prog, skin_texture=self._res.skin_texture)
     self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
     self._special_item.initialize(prog=self._res.first_person_face_prog)
@@ -179,9 +175,7 @@ class RendererBackend:
     self._selection_pass.initialize(self._res.selection_prog)
     self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
-    self._selection = SelectionController(
-      outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled)
-    )
+    self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
     self._pipeline = FramePipeline(
       cfg=self._cfg,
       state=self._state,
@@ -238,13 +232,7 @@ class RendererBackend:
     self._cloud.set_flow_direction(str(self._state.cloud_flow_direction))
     self._cloud.set_speed_variation(bool(self._state.cloud_speed_variation_enabled), float(self._state.cloud_speed_min_blocks_per_second), float(self._state.cloud_speed_max_blocks_per_second))
     self._cloud.set_height_variation(
-      bool(self._state.cloud_height_variation_enabled),
-      int(self._state.cloud_fixed_y),
-      int(self._state.cloud_spawn_y_min),
-      int(self._state.cloud_spawn_y_max),
-      int(self._state.cloud_preferred_y_min),
-      int(self._state.cloud_preferred_y_max),
-      int(self._state.cloud_preferred_y_probability_percent),
+      bool(self._state.cloud_height_variation_enabled), int(self._state.cloud_fixed_y), int(self._state.cloud_spawn_y_min), int(self._state.cloud_spawn_y_max), int(self._state.cloud_preferred_y_min), int(self._state.cloud_preferred_y_max), int(self._state.cloud_preferred_y_probability_percent)
     )
     if self._texture_animations is not None:
       self._texture_animations.set_enabled(bool(self._state.animated_textures_enabled))
@@ -304,16 +292,7 @@ class RendererBackend:
 
     self._selection.set_target(x=int(x), y=int(y), z=int(z), state_str=str(state_str), get_state=get_state, world_revision=int(world_revision))
 
-  def submit_chunk(
-    self,
-    *,
-    chunk_key: ChunkKey,
-    world_revision: int,
-    faces: list[np.ndarray] | None = None,
-    shadow_faces: list[np.ndarray] | None = None,
-    gpu_face_sources: np.ndarray | None = None,
-    gpu_bucket_counts: BucketCounts | None = None,
-  ) -> None:
+  def submit_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray] | None = None, shadow_faces: list[np.ndarray] | None = None, gpu_face_sources: np.ndarray | None = None, gpu_bucket_counts: BucketCounts | None = None) -> None:
     if self._res is None:
       return
 
@@ -386,9 +365,7 @@ class RendererBackend:
       return
     self._player.set_ai_skin_images(dict(images))
 
-  def render_player_preview_frame(
-    self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0
-  ) -> QImage:
+  def render_player_preview_frame(self, *, width: int, height: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float = 1.0) -> QImage:
     if self._res is None or self._player is None or player_state is None:
       return QImage()
     target_width = max(1, int(width))
@@ -409,16 +386,7 @@ class RendererBackend:
         glViewport(0, 0, int(target_width), int(target_height))
         glClearColor(0.0, 0.0, 0.0, 0.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        self._player.draw_world(
-          pose=pose,
-          view_proj=view_proj,
-          light_view_proj=mat4.identity(),
-          sun_dir=self._state.sun_dir,
-          debug_shadow=False,
-          shadow_enabled=False,
-          shadow=self._cfg.shadow,
-          shadow_info=self._shadow.info(),
-        )
+        self._player.draw_world(pose=pose, view_proj=view_proj, light_view_proj=mat4.identity(), sun_dir=self._state.sun_dir, debug_shadow=False, shadow_enabled=False, shadow=self._cfg.shadow, shadow_info=self._shadow.info())
         frame_bytes = glReadPixels(0, 0, int(target_width), int(target_height), GL_RGBA, GL_UNSIGNED_BYTE)
       finally:
         glBindFramebuffer(GL_FRAMEBUFFER, int(restore_framebuffer))
@@ -446,13 +414,7 @@ class RendererBackend:
   def _ensure_preview_target(self, width: int, height: int) -> bool:
     target_width = max(1, int(width))
     target_height = max(1, int(height))
-    if (
-      int(self._preview_fbo) != 0
-      and int(self._preview_color_tex) != 0
-      and int(self._preview_depth_rbo) != 0
-      and int(self._preview_width) == int(target_width)
-      and int(self._preview_height) == int(target_height)
-    ):
+    if int(self._preview_fbo) != 0 and int(self._preview_color_tex) != 0 and int(self._preview_depth_rbo) != 0 and int(self._preview_width) == int(target_width) and int(self._preview_height) == int(target_height):
       return True
 
     self._destroy_preview_target()

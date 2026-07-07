@@ -69,8 +69,7 @@ if self._accum >= step:
           {
             kind: 'math',
             math: {
-              expression:
-                'f = \\max\\bigl(0,\\ \\min(0.25,\\ t_{now}-t_{last})\\bigr), \\qquad n = \\min\\!\\left(\\left\\lfloor\\frac{a}{\\Delta t}\\right\\rfloor,\\ \\max(1,\\text{maxSubsteps})\\right)',
+              expression: 'f = \\max\\bigl(0,\\ \\min(0.25,\\ t_{now}-t_{last})\\bigr), \\qquad n = \\min\\!\\left(\\left\\lfloor\\frac{a}{\\Delta t}\\right\\rfloor,\\ \\max(1,\\text{maxSubsteps})\\right)',
               displayMode: true,
               caption: 'The per-frame elapsed time f is clamped to 0.25 s; n fixed steps are emitted per update from accumulated time a.',
             },
@@ -140,8 +139,7 @@ if self._accum >= step:
             math: {
               expression: 'a=\\begin{cases}0&r\\le10^{-9}\\ \\text{or}\\ t\\le10^{-9}\\\\1-e^{-rt}&r>10^{-9}\\ \\text{and}\\ t>10^{-9}\\end{cases},\\qquad v_{next}=v+(v_{target}-v)a',
               displayMode: true,
-              caption:
-                '`exp_alpha` in `src/ludoxel/foundations/mathematics/scalars/smoothing.py` clamps its inputs to non-negative values before this guard; `src/ludoxel/simulation/rules/movement/system.py` applies the component-wise update.',
+              caption: '`exp_alpha` in `src/ludoxel/foundations/mathematics/scalars/smoothing.py` clamps its inputs to non-negative values before this guard; `src/ludoxel/simulation/rules/movement/system.py` applies the component-wise update.',
             },
           },
           {
@@ -196,8 +194,7 @@ if self._accum >= step:
     subcategory: 'Runtime and Render State',
     group: 'Session Loop',
     title: 'Understanding Application Runtime Assembly',
-    description:
-      'Traces the application-owned construction of a desktop runtime from bootstrap roots and Othello storage hooks through dual play-space construction, persisted-state rehydration, normalized runtime projection, and the fixed-step and snapshot boundaries that hand work to presentation.',
+    description: 'Traces the application-owned construction of a desktop runtime from bootstrap roots and Othello storage hooks through dual play-space construction, persisted-state rehydration, normalized runtime projection, and the fixed-step and snapshot boundaries that hand work to presentation.',
     sections: [
       {
         id: 'application-runtime-assembly-bootstrap',
@@ -311,8 +308,7 @@ return (runtime, othello_game_state)`,
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                'A cache is not primary state. Removing the Othello opening-book cache does not remove the user opening-book file; deleting or corrupting a primary state envelope changes what the next runtime can restore. Neither classification answers a permission question about data at the resolved path.',
+              content: 'A cache is not primary state. Removing the Othello opening-book cache does not remove the user opening-book file; deleting or corrupting a primary state envelope changes what the next runtime can restore. Neither classification answers a permission question about data at the resolved path.',
             },
           },
         ],
@@ -346,22 +342,14 @@ return (runtime, othello_game_state)`,
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Fixed Step Sessions',
-      'Understanding Render Snapshots',
-      'Understanding Saved Preferences',
-      'Reading Saved Preferences',
-      'Reading Saved Othello State',
-      'Switching Play Spaces',
-    ],
+    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding Render Snapshots', 'Understanding Saved Preferences', 'Reading Saved Preferences', 'Reading Saved Othello State', 'Switching Play Spaces'],
   }),
   defineDocsArticle({
     category: 'Systems',
     subcategory: 'Runtime and Render State',
     group: 'Session Loop',
     title: 'Understanding Render Snapshots',
-    description:
-      'Documents the render-snapshot contract end to end: the camera, player-model, falling-block, and particle DTOs, the camera-shake and view-bobbing mathematics that build them, the AI snapshot projection, the renderer protocol and wrapper that consume them, and the cache-key render states.',
+    description: 'Documents the render-snapshot contract end to end: the camera, player-model, falling-block, and particle DTOs, the camera-shake and view-bobbing mathematics that build them, the AI snapshot projection, the renderer protocol and wrapper that consume them, and the cache-key render states.',
     sections: [
       {
         id: 'render-snapshots-dtos',
@@ -456,13 +444,7 @@ class RenderSnapshotDTO:
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Fixed Step Sessions',
-      'Understanding First-Person Arm Geometry',
-      'Understanding the Player Model Pose',
-      'Understanding OpenGL Rendering',
-      'Understanding WGPU Rendering',
-    ],
+    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding First-Person Arm Geometry', 'Understanding the Player Model Pose', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -584,8 +566,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                'A persisted preferences file records the normalized runtime aggregate at the last save event. Defined lifecycle points issue the write; intermediate control adjustments remain live runtime state until then.',
+              content: 'A persisted preferences file records the normalized runtime aggregate at the last save event. Defined lifecycle points issue the write; intermediate control adjustments remain live runtime state until then.',
             },
           },
         ],
@@ -799,8 +780,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
     subcategory: 'Rendering Backends',
     group: 'Backend Implementations',
     title: 'Understanding OpenGL Rendering',
-    description:
-      'Documents the Windows OpenGL backend end to end: the OpenGL 4.3 core requirement, resource and pass construction, the compute-backed and CPU chunk payload paths, the ordered frame pipeline and every pass, runtime-state application, and the offscreen preview path.',
+    description: 'Documents the Windows OpenGL backend end to end: the OpenGL 4.3 core requirement, resource and pass construction, the compute-backed and CPU chunk payload paths, the ordered frame pipeline and every pass, runtime-state application, and the offscreen preview path.',
     sections: [
       {
         id: 'opengl-rendering-context',
@@ -924,21 +904,13 @@ jump_pressed = bool(self._jump_pressed_edge)`,
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                '`src/ludoxel/presentation/rendering/backends/opengl/` supplies this backend path. WGPU uses its own clip-space conversion, chunk-mesh path, and camera-roll handling under `src/ludoxel/presentation/rendering/backends/wgpu/`; parity requires evidence from both implementations.',
+              content: '`src/ludoxel/presentation/rendering/backends/opengl/` supplies this backend path. WGPU uses its own clip-space conversion, chunk-mesh path, and camera-roll handling under `src/ludoxel/presentation/rendering/backends/wgpu/`; parity requires evidence from both implementations.',
             },
           },
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding WGPU Rendering',
-      'Understanding Held Block Geometry',
-      'Understanding First-Person Arm Geometry',
-      'Understanding Shared Shader Sources and Color Targets',
-      'Understanding Render Distance Fog and Shadows',
-      'Understanding Selection Outlines',
-    ],
+    relatedTitles: ['Understanding WGPU Rendering', 'Understanding Held Block Geometry', 'Understanding First-Person Arm Geometry', 'Understanding Shared Shader Sources and Color Targets', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1076,14 +1048,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding OpenGL Rendering',
-      'Understanding Held Block Geometry',
-      'Understanding First-Person Arm Geometry',
-      'Understanding Shared Shader Sources and Color Targets',
-      'Understanding Render Distance Fog and Shadows',
-      'Understanding Selection Outlines',
-    ],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding Held Block Geometry', 'Understanding First-Person Arm Geometry', 'Understanding Shared Shader Sources and Color Targets', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1247,8 +1212,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
     title: 'Understanding Render Distance Fog and Shadows',
-    description:
-      'Documents the distance and shadow mathematics: the render-distance radius and the geometry and cloud fog ranges, the disabled-fog sentinels, the shared fog shader, the shadow quality presets and their decoupling from render distance, and the texel-snapped light-space orthographic.',
+    description: 'Documents the distance and shadow mathematics: the render-distance radius and the geometry and cloud fog ranges, the disabled-fog sentinels, the shared fog shader, the shadow quality presets and their decoupling from render distance, and the texel-snapped light-space orthographic.',
     sections: [
       {
         id: 'fog-shadows-fog-range',
@@ -1261,8 +1225,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
           {
             kind: 'math',
             math: {
-              expression:
-                'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(5\\,\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ 320\\bigr), \\qquad s = 0.85\\,e',
+              expression: 'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(5\\,\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ 320\\bigr), \\qquad s = 0.85\\,e',
               displayMode: true,
               caption: 'render_distance_fog_range and cloud_far_distance; both fade ranges start at the same fraction of their end, but the cloud reach is not capped at the camera far plane.',
             },
@@ -1394,8 +1357,7 @@ sy = _snap(float(cy), float(texel))`,
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                '`src/ludoxel/presentation/rendering` computes fog ranges, the shared fog factor, shadow quality presets, and light-space transforms from the corresponding preference values. Cloud-field generation and chunk culling follow their separate world-visual data and selection paths.',
+              content: '`src/ludoxel/presentation/rendering` computes fog ranges, the shared fog factor, shadow quality presets, and light-space transforms from the corresponding preference values. Cloud-field generation and chunk culling follow their separate world-visual data and selection paths.',
             },
           },
         ],
@@ -1480,8 +1442,7 @@ sy = _snap(float(cy), float(texel))`,
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                'The outline is the silhouette of the block-model render boxes for the picked cell, not a wireframe of a unit cube. The same builder is shared by both backends, so the outline geometry is equivalent across them; only the line-drawing pass that consumes it differs.',
+              content: 'The outline is the silhouette of the block-model render boxes for the picked cell, not a wireframe of a unit cube. The same builder is shared by both backends, so the outline geometry is equivalent across them; only the line-drawing pass that consumes it differs.',
             },
           },
         ],
@@ -1494,8 +1455,7 @@ sy = _snap(float(cy), float(texel))`,
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
     title: 'Understanding Held Block Geometry',
-    description:
-      'Documents the player-held block geometry contract: registry kind resolution, the shared visual box owner, short-cube height matching the block-model render box, and the OpenGL and WGPU consumers that receive the same face rows.',
+    description: 'Documents the player-held block geometry contract: registry kind resolution, the shared visual box owner, short-cube height matching the block-model render box, and the OpenGL and WGPU consumers that receive the same face rows.',
     sections: [
       {
         id: 'held-block-geometry-owner',
@@ -1568,8 +1528,7 @@ sy = _snap(float(cy), float(texel))`,
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
     title: 'Understanding First-Person Arm Geometry',
-    description:
-      'Tracks the shared first-person arm row builder, its camera-space transform boundary, the visual right-arm skin face map, and the OpenGL and WGPU backend paths that consume the same row contract.',
+    description: 'Tracks the shared first-person arm row builder, its camera-space transform boundary, the visual right-arm skin face map, and the OpenGL and WGPU backend paths that consume the same row contract.',
     sections: [
       {
         id: 'first-person-arm-geometry-shared-builder',
@@ -1630,8 +1589,7 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                'Backend parity here covers the imported row builder and the first-person UV constants consumed by that builder. Frame-by-frame visual inspection on an OpenGL or WGPU device remains a separate manual check.',
+              content: 'Backend parity here covers the imported row builder and the first-person UV constants consumed by that builder. Frame-by-frame visual inspection on an OpenGL or WGPU device remains a separate manual check.',
             },
           },
         ],
@@ -1717,11 +1675,9 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
           {
             kind: 'math',
             math: {
-              expression:
-                '\\alpha = 1 - e^{-\\Delta t / \\tau}, \\qquad \\psi \\leftarrow \\psi + \\alpha \\cdot \\operatorname{rem}\\!\\left(\\psi_{\\ell} - \\psi,\\ 360^{\\circ}\\right), \\qquad \\lvert \\psi_{\\ell} - \\psi \\rvert \\le \\Lambda',
+              expression: '\\alpha = 1 - e^{-\\Delta t / \\tau}, \\qquad \\psi \\leftarrow \\psi + \\alpha \\cdot \\operatorname{rem}\\!\\left(\\psi_{\\ell} - \\psi,\\ 360^{\\circ}\\right), \\qquad \\lvert \\psi_{\\ell} - \\psi \\rvert \\le \\Lambda',
               displayMode: true,
-              caption:
-                'Each visual angle ψ eases toward its look target ψ_ℓ with a time constant τ and is held within a maximum lag Λ. The body uses a longer τ and a large Λ; the head uses a short τ and a small Λ. The signed remainder takes the shortest path, so a turn past ±180° never spins the long way around.',
+              caption: 'Each visual angle ψ eases toward its look target ψ_ℓ with a time constant τ and is held within a maximum lag Λ. The body uses a longer τ and a large Λ; the head uses a short τ and a small Λ. The signed remainder takes the shortest path, so a turn past ±180° never spins the long way around.',
             },
           },
           {
@@ -1752,8 +1708,7 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
             math: {
               expression: 'w_{idle} = (1 - f_{walk})(1 - w_{atk}), \\qquad \\rho = \\bigl(A_{r}\\cos(\\omega_{r} t) + b_{r}\\bigr)\\,w_{idle}, \\qquad \\theta = A_{p}\\sin(\\omega_{p} t)\\,w_{idle}',
               displayMode: true,
-              caption:
-                'The idle roll ρ and pitch θ scale by the idle weight, which falls to zero as the walk fraction f_walk or the attack weight w_atk rises, so the idle sway never fights the walk cycle or a swing.',
+              caption: 'The idle roll ρ and pitch θ scale by the idle weight, which falls to zero as the walk fraction f_walk or the attack weight w_atk rises, so the idle sway never fights the walk cycle or a swing.',
             },
           },
           {
@@ -1839,8 +1794,7 @@ head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0
           {
             kind: 'math',
             math: {
-              expression:
-                'A_{fa} = \\tfrac{1}{2}\\,\\lvert f \\rvert\\,k_{back}, \\qquad A_{pitch} = \\operatorname{clamp}\\bigl(A_{fa} + \\lvert s \\rvert\\,c_{fa},\\ 0,\\ A_{swing}\\bigr), \\qquad \\theta \\leftarrow \\theta + (\\theta^{*} - \\theta)(1 - e^{-\\Delta t / \\tau})',
+              expression: 'A_{fa} = \\tfrac{1}{2}\\,\\lvert f \\rvert\\,k_{back}, \\qquad A_{pitch} = \\operatorname{clamp}\\bigl(A_{fa} + \\lvert s \\rvert\\,c_{fa},\\ 0,\\ A_{swing}\\bigr), \\qquad \\theta \\leftarrow \\theta + (\\theta^{*} - \\theta)(1 - e^{-\\Delta t / \\tau})',
               displayMode: true,
               caption:
                 'The fore/aft pitch amplitude A_pitch follows the forward ratio f, is damped by k_back while moving backward, adds a small strafe term, and is capped at the total-speed swing A_swing. The separate body-turn state θ eases toward θ* only for a pure left/right input, with τ = PLAYER_STRAFE_BODY_TURN_TAU_S.',
@@ -1853,15 +1807,7 @@ head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Render Snapshots',
-      'Understanding Held Block Geometry',
-      'Understanding First-Person Arm Geometry',
-      'Understanding OpenGL Rendering',
-      'Understanding WGPU Rendering',
-      'Understanding Selection Outlines',
-      'Looking Around',
-    ],
+    relatedTitles: ['Understanding Render Snapshots', 'Understanding Held Block Geometry', 'Understanding First-Person Arm Geometry', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Looking Around'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -2273,8 +2219,7 @@ else:
     subcategory: 'Feedback and Intelligence',
     group: 'AI Decision Records',
     title: 'Understanding AI Learning Records',
-    description:
-      'Documents how demonstration records are formed and consumed: record structure, observation feature encoding, reward transition, buffered recording, learning-mode activation, and the application-layer sink boundary that keeps file paths outside simulation.',
+    description: 'Documents how demonstration records are formed and consumed: record structure, observation feature encoding, reward transition, buffered recording, learning-mode activation, and the application-layer sink boundary that keeps file paths outside simulation.',
     sections: [
       {
         id: 'ai-learning-records-record',
@@ -2360,8 +2305,7 @@ def policy_enabled(self) -> bool:
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                '`DatasetSink` carries records across the simulation/application boundary. `AiLearningStore.dataset_writer` selects the JSON Lines path and writer beneath the runtime data root; decode, export, corrupt-line accounting, and retention follow `AiLearningStore` storage paths.',
+              content: '`DatasetSink` carries records across the simulation/application boundary. `AiLearningStore.dataset_writer` selects the JSON Lines path and writer beneath the runtime data root; decode, export, corrupt-line accounting, and retention follow `AiLearningStore` storage paths.',
             },
           },
         ],
@@ -2611,8 +2555,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                '`src/ludoxel/simulation/spaces/othello/` implements the Ludoxel Othello search. Its engine consults opening and learning books as move sources, while the persistence store determines their on-disk form and the worker keeps search off the interface thread.',
+              content: '`src/ludoxel/simulation/spaces/othello/` implements the Ludoxel Othello search. Its engine consults opening and learning books as move sources, while the persistence store determines their on-disk form and the worker keeps search off the interface thread.',
             },
           },
         ],
@@ -2625,8 +2568,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
     subcategory: 'Runtime and Render State',
     group: 'Runtime Identity and Diagnostics',
     title: 'Understanding Runtime Identity and Diagnostic Evidence',
-    description:
-      'Defines the version source, root-resolution boundary, and operating-system diagnostic probes that the desktop runtime consumes, while keeping release authority, file contents, and renderer implementation outside those foundation contracts.',
+    description: 'Defines the version source, root-resolution boundary, and operating-system diagnostic probes that the desktop runtime consumes, while keeping release authority, file contents, and renderer implementation outside those foundation contracts.',
     sections: [
       {
         id: 'runtime-identity-and-diagnostics-version-source',
@@ -2646,8 +2588,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'note',
             note: {
               type: 'note',
-              content:
-                'A matching version string can identify one runtime and one metadata value. It is not evidence that a local build is an official release or that any distribution action is authorized.',
+              content: 'A matching version string can identify one runtime and one metadata value. It is not evidence that a local build is an official release or that any distribution action is authorized.',
             },
           },
         ],
@@ -2727,8 +2668,7 @@ def search_project_root(start: Path) -> Path | None:
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
     title: 'Understanding View, Transform, and Chunk Visibility Contracts',
-    description:
-      'Documents the lower-level vector, angle, matrix, transform, chunk-key, and clip-volume contracts consumed by camera, renderer, and world-upload code without assigning backend draw work or simulation rules to those contracts.',
+    description: 'Documents the lower-level vector, angle, matrix, transform, chunk-key, and clip-volume contracts consumed by camera, renderer, and world-upload code without assigning backend draw work or simulation rules to those contracts.',
     sections: [
       {
         id: 'view-transform-and-chunk-visibility-vectors-and-angles',
@@ -2757,8 +2697,7 @@ def search_project_root(start: Path) -> Path | None:
           {
             kind: 'math',
             math: {
-              expression:
-                '\\|\\mathbf{v}\\|=\\sqrt{x^2+y^2+z^2},\\qquad \\operatorname{normalized}(\\mathbf{v})=\\begin{cases}\\mathbf{v}/\\|\\mathbf{v}\\|&\\|\\mathbf{v}\\|>10^{-12}\\\\(0,0,0)&\\|\\mathbf{v}\\|\\le10^{-12}\\end{cases}',
+              expression: '\\|\\mathbf{v}\\|=\\sqrt{x^2+y^2+z^2},\\qquad \\operatorname{normalized}(\\mathbf{v})=\\begin{cases}\\mathbf{v}/\\|\\mathbf{v}\\|&\\|\\mathbf{v}\\|>10^{-12}\\\\(0,0,0)&\\|\\mathbf{v}\\|\\le10^{-12}\\end{cases}',
               displayMode: true,
               caption: '`Vec3.length` and `Vec3.normalized` in `src/ludoxel/foundations/mathematics/linear/vec3.py`; zero-length input resolves to the zero vector.',
             },
@@ -2783,8 +2722,7 @@ def normalized(self) -> "Vec3":
           {
             kind: 'math',
             math: {
-              expression:
-                'y=\\operatorname{radians}(\\mathrm{yaw}_{deg}),\\quad p=\\operatorname{radians}(\\mathrm{pitch}_{deg}),\\qquad \\mathbf{f}=\\operatorname{normalize}(-\\sin(y)\\cos(p),-\\sin(p),\\cos(y)\\cos(p))',
+              expression: 'y=\\operatorname{radians}(\\mathrm{yaw}_{deg}),\\quad p=\\operatorname{radians}(\\mathrm{pitch}_{deg}),\\qquad \\mathbf{f}=\\operatorname{normalize}(-\\sin(y)\\cos(p),-\\sin(p),\\cos(y)\\cos(p))',
               displayMode: true,
               caption: '`forward_from_yaw_pitch_deg` in `src/ludoxel/foundations/mathematics/linear/view_angles.py`, after converting the supplied degree values to radians.',
             },
@@ -2792,11 +2730,9 @@ def normalized(self) -> "Vec3":
           {
             kind: 'math',
             math: {
-              expression:
-                'p=-\\arcsin(\\operatorname{clamp}(d_y,-1,1)),\\qquad y=\\operatorname{atan2}(-d_x,d_z),\\qquad \\mathbf{s}=\\operatorname{normalize}(\\cos(e)\\sin(a),\\sin(e),\\cos(e)\\cos(a))',
+              expression: 'p=-\\arcsin(\\operatorname{clamp}(d_y,-1,1)),\\qquad y=\\operatorname{atan2}(-d_x,d_z),\\qquad \\mathbf{s}=\\operatorname{normalize}(\\cos(e)\\sin(a),\\sin(e),\\cos(e)\\cos(a))',
               displayMode: true,
-              caption:
-                '`yaw_pitch_deg_from_forward` and `sun_dir_from_az_el_deg` in `src/ludoxel/foundations/mathematics/linear/view_angles.py`; they normalize their vector input or output and convert degrees at the function boundary.',
+              caption: '`yaw_pitch_deg_from_forward` and `sun_dir_from_az_el_deg` in `src/ludoxel/foundations/mathematics/linear/view_angles.py`; they normalize their vector input or output and convert degrees at the function boundary.',
             },
           },
           {
@@ -2851,8 +2787,7 @@ def normalized(self) -> "Vec3":
           {
             kind: 'math',
             math: {
-              expression:
-                'r_l=\\max(r-l,10^{-9}),\\ t_b=\\max(t-b,10^{-9}),\\ f_n=\\max(z_f-z_n,10^{-9}),\\quad M_{\\mathrm{ortho}}=\\begin{bmatrix}2/r_l&0&0&-(r+l)/r_l\\\\0&2/t_b&0&-(t+b)/t_b\\\\0&0&-2/f_n&-(z_f+z_n)/f_n\\\\0&0&0&1\\end{bmatrix}',
+              expression: 'r_l=\\max(r-l,10^{-9}),\\ t_b=\\max(t-b,10^{-9}),\\ f_n=\\max(z_f-z_n,10^{-9}),\\quad M_{\\mathrm{ortho}}=\\begin{bmatrix}2/r_l&0&0&-(r+l)/r_l\\\\0&2/t_b&0&-(t+b)/t_b\\\\0&0&-2/f_n&-(z_f+z_n)/f_n\\\\0&0&0&1\\end{bmatrix}',
               displayMode: true,
               caption: '`ortho` in `src/ludoxel/foundations/mathematics/linear/mat4.py`; each span denominator is floored independently before the `float32` entries are written.',
             },
@@ -2860,8 +2795,7 @@ def normalized(self) -> "Vec3":
           {
             kind: 'math',
             math: {
-              expression:
-                '\\mathbf{f}=\\operatorname{normalize}(\\mathrm{forward}),\\quad \\mathbf{r}=\\operatorname{normalize}(\\mathrm{upHint}\\times\\mathbf{f}),\\quad \\mathbf{u}=\\operatorname{normalize}(\\mathbf{f}\\times\\mathbf{r}),\\quad M_{0:3,0:3}=[\\mathbf{r};\\mathbf{u};-\\mathbf{f}]',
+              expression: '\\mathbf{f}=\\operatorname{normalize}(\\mathrm{forward}),\\quad \\mathbf{r}=\\operatorname{normalize}(\\mathrm{upHint}\\times\\mathbf{f}),\\quad \\mathbf{u}=\\operatorname{normalize}(\\mathbf{f}\\times\\mathbf{r}),\\quad M_{0:3,0:3}=[\\mathbf{r};\\mathbf{u};-\\mathbf{f}]',
               displayMode: true,
               caption: '`look_dir` in `src/ludoxel/foundations/mathematics/linear/mat4.py`; the source writes the basis in rows, then writes the eye terms into column 3.',
             },
@@ -2869,8 +2803,7 @@ def normalized(self) -> "Vec3":
           {
             kind: 'math',
             math: {
-              expression:
-                '(M_{03},M_{13},M_{23})=(-\\mathbf{r}\\cdot\\mathbf{e},-\\mathbf{u}\\cdot\\mathbf{e},\\mathbf{f}\\cdot\\mathbf{e}),\\qquad \\operatorname{mul}(A,B)=\\operatorname{float32}(A@B),\\quad A,B\\in\\mathbb{R}^{4\\times4}',
+              expression: '(M_{03},M_{13},M_{23})=(-\\mathbf{r}\\cdot\\mathbf{e},-\\mathbf{u}\\cdot\\mathbf{e},\\mathbf{f}\\cdot\\mathbf{e}),\\qquad \\operatorname{mul}(A,B)=\\operatorname{float32}(A@B),\\quad A,B\\in\\mathbb{R}^{4\\times4}',
               displayMode: true,
               caption: 'The translation placement and multiplication result of `look_dir` and `mul` in `src/ludoxel/foundations/mathematics/linear/mat4.py`.',
             },
@@ -2917,11 +2850,9 @@ def mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
           {
             kind: 'math',
             math: {
-              expression:
-                'R_x=\\begin{bmatrix}1&0&0&0\\\\0&c&-s&0\\\\0&s&c&0\\\\0&0&0&1\\end{bmatrix},\\quad R_y=\\begin{bmatrix}c&0&-s&0\\\\0&1&0&0\\\\s&0&c&0\\\\0&0&0&1\\end{bmatrix},\\quad R_z=\\begin{bmatrix}c&-s&0&0\\\\s&c&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix},\\quad c=\\cos(\\theta),\\ s=\\sin(\\theta)',
+              expression: 'R_x=\\begin{bmatrix}1&0&0&0\\\\0&c&-s&0\\\\0&s&c&0\\\\0&0&0&1\\end{bmatrix},\\quad R_y=\\begin{bmatrix}c&0&-s&0\\\\0&1&0&0\\\\s&0&c&0\\\\0&0&0&1\\end{bmatrix},\\quad R_z=\\begin{bmatrix}c&-s&0&0\\\\s&c&0&0\\\\0&0&1&0\\\\0&0&0&1\\end{bmatrix},\\quad c=\\cos(\\theta),\\ s=\\sin(\\theta)',
               displayMode: true,
-              caption:
-                'The three radian rotation constructors in `src/ludoxel/foundations/mathematics/linear/transform_matrices.py`; the degree wrappers pass `math.radians(float(deg))` to these constructors.',
+              caption: 'The three radian rotation constructors in `src/ludoxel/foundations/mathematics/linear/transform_matrices.py`; the degree wrappers pass `math.radians(float(deg))` to these constructors.',
             },
           },
           {
@@ -3001,15 +2932,13 @@ if int(lx) >= int(CHUNK_SIZE - 1):
             math: {
               expression: '\\mathbf{C}_{clip}=\\left(M_{\\mathrm{float32}}\\mathbf{C}_{world}^{\\mathsf{T}}\\right)^{\\mathsf{T}},\\qquad \\mathbf{C}_{world}\\in\\mathbb{R}^{8\\times4},\\quad c_w=1',
               displayMode: true,
-              caption:
-                '`chunk_corners_homogeneous` and `chunk_intersects_clip_volume` in `src/ludoxel/foundations/mathematics/frustums/clip.py`: eight `float32` homogeneous chunk corners enter the supplied matrix product.',
+              caption: '`chunk_corners_homogeneous` and `chunk_intersects_clip_volume` in `src/ludoxel/foundations/mathematics/frustums/clip.py`: eight `float32` homogeneous chunk corners enter the supplied matrix product.',
             },
           },
           {
             kind: 'math',
             math: {
-              expression:
-                '\\operatorname{reject}\\Longleftrightarrow \\operatorname{all}(x<-w)\\lor\\operatorname{all}(x>w)\\lor\\operatorname{all}(y<-w)\\lor\\operatorname{all}(y>w)\\lor\\operatorname{all}(z<-w)\\lor\\operatorname{all}(z>w)',
+              expression: '\\operatorname{reject}\\Longleftrightarrow \\operatorname{all}(x<-w)\\lor\\operatorname{all}(x>w)\\lor\\operatorname{all}(y<-w)\\lor\\operatorname{all}(y>w)\\lor\\operatorname{all}(z<-w)\\lor\\operatorname{all}(z>w)',
               displayMode: true,
               caption: 'The six exact all-corners tests in `chunk_intersects_clip_volume`. A chunk is retained unless one complete corner set violates one plane inequality.',
             },
@@ -3052,8 +2981,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
     subcategory: 'Chat and Commands',
     group: 'Chat Runtime',
     title: 'Understanding the Chat Runtime and Command Routing',
-    description:
-      'Defines the runtime-only chat state, sent-input recall, the non-pausing chat overlay, the heads-up feed visibility and fade arbitration, the periodic support message, and the command coordinator that routes slash commands through the simulation player operations.',
+    description: 'Defines the runtime-only chat state, sent-input recall, the non-pausing chat overlay, the heads-up feed visibility and fade arbitration, the periodic support message, and the command coordinator that routes slash commands through the simulation player operations.',
     sections: [
       {
         id: 'chat-runtime-overlay-does-not-pause',
@@ -3187,8 +3115,7 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
     subcategory: 'Chat and Commands',
     group: 'Chat Runtime',
     title: 'Understanding Chat Text Formatting',
-    description:
-      'Defines the Qt-free section-formatting contract, the foreground and background color rule, the reset behavior of the formatting flags, the layout-stable obfuscation source, and the single renderer adapter that paints every chat message kind.',
+    description: 'Defines the Qt-free section-formatting contract, the foreground and background color rule, the reset behavior of the formatting flags, the layout-stable obfuscation source, and the single renderer adapter that paints every chat message kind.',
     sections: [
       {
         id: 'chat-formatting-contract',
@@ -3281,8 +3208,7 @@ class FormattedSegment:
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
     title: 'Understanding Surface Envelope Uploads',
-    description:
-      'Defines the surface-envelope materialization behind chunk mesh uploads: the per-chunk content bands derived from the generation spec, the bounded build snapshot, content-based visible-chunk selection in the upload tracker, and the loading gate that waits for resident chunks.',
+    description: 'Defines the surface-envelope materialization behind chunk mesh uploads: the per-chunk content bands derived from the generation spec, the bounded build snapshot, content-based visible-chunk selection in the upload tracker, and the loading gate that waits for resident chunks.',
     sections: [
       {
         id: 'understanding-surface-envelope-uploads-content-bands',

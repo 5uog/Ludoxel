@@ -10,16 +10,12 @@ import SearchCommand from '../../search/components/SearchCommand';
 import HeroShortcutList from './HeroShortcutList';
 
 const heroTitle = 'Challenge AI across blocks and boards.';
-const heroDescription =
-  'Ludoxel is documented for practitioners and programming-literate readers who need precise notes on renderer behavior, AI NPC systems, Othello rules, settings, distribution boundaries, and legal material scope.';
+const heroDescription = 'Ludoxel is documented for practitioners and programming-literate readers who need precise notes on renderer behavior, AI NPC systems, Othello rules, settings, distribution boundaries, and legal material scope.';
 
 export default function HeroSection(): React.JSX.Element {
   return (
     <section className="relative flex flex-col items-center justify-center px-4 md:px-8 pt-32 md:pt-40 pb-12 md:pb-16 overflow-hidden min-h-125">
-      <Link
-        className="page-reveal inline-flex items-center gap-2 pl-4 pr-2 py-2 mb-8 text-sm text-muted-foreground bg-[#121314] rounded-full"
-        to="/docs/manual/starting-the-application/launch-and-space-selection/starting-ludoxel"
-      >
+      <Link className="page-reveal inline-flex items-center gap-2 pl-4 pr-2 py-2 mb-8 text-sm text-muted-foreground bg-[#121314] rounded-full" to="/docs/manual/starting-the-application/launch-and-space-selection/starting-ludoxel">
         <span>Welcome to Ludoxel.</span>
         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#1B1C1D]">
           <ChevronRight className="w-4 h-4" />

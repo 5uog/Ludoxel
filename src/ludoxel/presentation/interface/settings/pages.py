@@ -46,14 +46,7 @@ def build_display_tab(overlay: "SettingsOverlay") -> None:
   for value in CAMERA_PERSPECTIVE_ORDER:
     overlay._cmb_camera_perspective.addItem(str(CAMERA_PERSPECTIVE_LABELS[str(value)]), userData=str(value))
   overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_perspective)
-  add_setting_row(
-    camera_layout,
-    camera_body,
-    label="Camera perspective",
-    description="First-person, third-person back, or third-person front view.",
-    control=overlay._cmb_camera_perspective,
-    label_widget=overlay._lbl_camera_perspective,
-  )
+  add_setting_row(camera_layout, camera_body, label="Camera perspective", description="First-person, third-person back, or third-person front view.", control=overlay._cmb_camera_perspective, label_widget=overlay._lbl_camera_perspective)
 
   overlay._lbl_sens = QLabel("Mouse sensitivity: 0.090 deg/px", host)
   overlay._sld_sens = overlay._new_slider(host, int(overlay._params.sens_milli_min), int(overlay._params.sens_milli_max))
@@ -83,27 +76,13 @@ def build_display_tab(overlay: "SettingsOverlay") -> None:
   overlay._lbl_view_bobbing_strength = QLabel("View bobbing strength: 35%", host)
   overlay._sld_view_bobbing_strength = overlay._new_slider(host, int(overlay._params.bob_strength_percent_min), int(overlay._params.bob_strength_percent_max))
   overlay._sld_view_bobbing_strength.valueChanged.connect(overlay._on_view_bobbing_strength)
-  add_setting_row(
-    motion_layout,
-    motion_body,
-    label="View bobbing strength",
-    description="Amplitude applied while walking.",
-    control=overlay._sld_view_bobbing_strength,
-    label_widget=overlay._lbl_view_bobbing_strength,
-  )
+  add_setting_row(motion_layout, motion_body, label="View bobbing strength", description="Amplitude applied while walking.", control=overlay._sld_view_bobbing_strength, label_widget=overlay._lbl_view_bobbing_strength)
 
   overlay._tg_camera_shake = overlay._add_toggle(motion_layout, motion_body, "Camera shake", overlay._on_camera_shake_toggled)
   overlay._lbl_camera_shake_strength = QLabel("Camera shake strength: 20%", host)
   overlay._sld_camera_shake_strength = overlay._new_slider(host, int(overlay._params.shake_strength_percent_min), int(overlay._params.shake_strength_percent_max))
   overlay._sld_camera_shake_strength.valueChanged.connect(overlay._on_camera_shake_strength)
-  add_setting_row(
-    motion_layout,
-    motion_body,
-    label="Camera shake strength",
-    description="Amplitude applied by camera shake events.",
-    control=overlay._sld_camera_shake_strength,
-    label_widget=overlay._lbl_camera_shake_strength,
-  )
+  add_setting_row(motion_layout, motion_body, label="Camera shake strength", description="Amplitude applied by camera shake events.", control=overlay._sld_camera_shake_strength, label_widget=overlay._lbl_camera_shake_strength)
 
   _crosshair_card, crosshair_body, crosshair_layout = add_settings_card(layout, host, title="Crosshair", description="Edit the custom 16 x 16 bitmap or return to the built-in art.")
 
@@ -146,14 +125,7 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   for value in SHADOW_MAP_QUALITY_ORDER:
     overlay._cmb_shadow_quality.addItem(str(SHADOW_MAP_QUALITY_LABELS[int(value)]), userData=int(value))
   overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_quality)
-  add_setting_row(
-    world_layout,
-    world_body,
-    label="Shadow map quality",
-    description="Shadow map resolution and filtering, independent of render distance.",
-    control=overlay._cmb_shadow_quality,
-    label_widget=overlay._lbl_shadow_quality,
-  )
+  add_setting_row(world_layout, world_body, label="Shadow map quality", description="Shadow map resolution and filtering, independent of render distance.", control=overlay._cmb_shadow_quality, label_widget=overlay._lbl_shadow_quality)
 
   _particles_card, particles_body, particles_layout = add_settings_card(layout, host, title="Particles", description="Block-break particle emission and movement.")
 
@@ -191,9 +163,7 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   for value, label in CLOUD_FLOW_OPTIONS:
     overlay._cmb_cloud_flow.addItem(str(label), userData=str(value))
   overlay._cmb_cloud_flow.currentIndexChanged.connect(overlay._on_cloud_flow_direction)
-  add_setting_row(
-    cloud_layout, cloud_body, label="Cloud flow direction", description="Horizontal direction used by cloud motion.", control=overlay._cmb_cloud_flow, label_widget=overlay._lbl_cloud_flow
-  )
+  add_setting_row(cloud_layout, cloud_body, label="Cloud flow direction", description="Horizontal direction used by cloud motion.", control=overlay._cmb_cloud_flow, label_widget=overlay._lbl_cloud_flow)
 
   overlay._lbl_cloud_density = QLabel("Cloud density: 1", host)
   overlay._sld_cloud_density = overlay._new_slider(host, 0, 4)
@@ -203,14 +173,7 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   overlay._lbl_cloud_cell_size = QLabel("Cloud size: 20 blocks", host)
   overlay._sld_cloud_cell_size = overlay._new_slider(host, int(RuntimePreferences.CLOUD_CELL_SIZE_MIN), int(RuntimePreferences.CLOUD_CELL_SIZE_MAX))
   overlay._sld_cloud_cell_size.valueChanged.connect(overlay._on_cloud_cell_size)
-  add_setting_row(
-    cloud_layout,
-    cloud_body,
-    label="Cloud size",
-    description="Edge length in blocks of each cloud cell; larger cells make bigger clouds.",
-    control=overlay._sld_cloud_cell_size,
-    label_widget=overlay._lbl_cloud_cell_size,
-  )
+  add_setting_row(cloud_layout, cloud_body, label="Cloud size", description="Edge length in blocks of each cloud cell; larger cells make bigger clouds.", control=overlay._sld_cloud_cell_size, label_widget=overlay._lbl_cloud_cell_size)
 
   overlay._lbl_cloud_seed = QLabel("Cloud seed: 1337", host)
   overlay._sld_cloud_seed = overlay._new_slider(host, 0, 9999)
@@ -243,75 +206,27 @@ def build_world_tab(overlay: "SettingsOverlay") -> None:
   cloud_layout.addWidget(overlay._ctl_cloud_speed_max)
 
   overlay._tg_cloud_height_variation = overlay._add_toggle(cloud_layout, cloud_body, "Enable cloud height variation", overlay._on_cloud_height_variation_toggled)
-  overlay._ctl_cloud_fixed_y = AdvancedScalarControl(
-    title="Fixed cloud Y coordinate",
-    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
-    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_CLOUD_FIXED_Y),
-    parent=cloud_body,
-  )
+  overlay._ctl_cloud_fixed_y = AdvancedScalarControl(title="Fixed cloud Y coordinate", min_value=float(RuntimePreferences.CLOUD_Y_MIN), max_value=float(RuntimePreferences.CLOUD_Y_MAX), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_CLOUD_FIXED_Y), parent=cloud_body)
   overlay._ctl_cloud_fixed_y.value_changed.connect(lambda value: overlay.cloud_fixed_y_changed.emit(int(round(float(value)))))
   cloud_layout.addWidget(overlay._ctl_cloud_fixed_y)
 
-  overlay._ctl_cloud_spawn_y_min = AdvancedScalarControl(
-    title="Random spawn Y range minimum",
-    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
-    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MIN),
-    parent=cloud_body,
-  )
+  overlay._ctl_cloud_spawn_y_min = AdvancedScalarControl(title="Random spawn Y range minimum", min_value=float(RuntimePreferences.CLOUD_Y_MIN), max_value=float(RuntimePreferences.CLOUD_Y_MAX), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MIN), parent=cloud_body)
   overlay._ctl_cloud_spawn_y_min.value_changed.connect(lambda value: overlay.cloud_spawn_y_min_changed.emit(int(round(float(value)))))
   cloud_layout.addWidget(overlay._ctl_cloud_spawn_y_min)
 
-  overlay._ctl_cloud_spawn_y_max = AdvancedScalarControl(
-    title="Random spawn Y range maximum",
-    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
-    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MAX),
-    parent=cloud_body,
-  )
+  overlay._ctl_cloud_spawn_y_max = AdvancedScalarControl(title="Random spawn Y range maximum", min_value=float(RuntimePreferences.CLOUD_Y_MIN), max_value=float(RuntimePreferences.CLOUD_Y_MAX), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MAX), parent=cloud_body)
   overlay._ctl_cloud_spawn_y_max.value_changed.connect(lambda value: overlay.cloud_spawn_y_max_changed.emit(int(round(float(value)))))
   cloud_layout.addWidget(overlay._ctl_cloud_spawn_y_max)
 
-  overlay._ctl_cloud_preferred_y_min = AdvancedScalarControl(
-    title="Preferred Y interval minimum",
-    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
-    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MIN),
-    parent=cloud_body,
-  )
+  overlay._ctl_cloud_preferred_y_min = AdvancedScalarControl(title="Preferred Y interval minimum", min_value=float(RuntimePreferences.CLOUD_Y_MIN), max_value=float(RuntimePreferences.CLOUD_Y_MAX), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MIN), parent=cloud_body)
   overlay._ctl_cloud_preferred_y_min.value_changed.connect(lambda value: overlay.cloud_preferred_y_min_changed.emit(int(round(float(value)))))
   cloud_layout.addWidget(overlay._ctl_cloud_preferred_y_min)
 
-  overlay._ctl_cloud_preferred_y_max = AdvancedScalarControl(
-    title="Preferred Y interval maximum",
-    min_value=float(RuntimePreferences.CLOUD_Y_MIN),
-    max_value=float(RuntimePreferences.CLOUD_Y_MAX),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MAX),
-    parent=cloud_body,
-  )
+  overlay._ctl_cloud_preferred_y_max = AdvancedScalarControl(title="Preferred Y interval maximum", min_value=float(RuntimePreferences.CLOUD_Y_MIN), max_value=float(RuntimePreferences.CLOUD_Y_MAX), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MAX), parent=cloud_body)
   overlay._ctl_cloud_preferred_y_max.value_changed.connect(lambda value: overlay.cloud_preferred_y_max_changed.emit(int(round(float(value)))))
   cloud_layout.addWidget(overlay._ctl_cloud_preferred_y_max)
 
-  overlay._ctl_cloud_preferred_y_probability = AdvancedScalarControl(
-    title="Preferred Y interval probability (%)",
-    min_value=0.0,
-    max_value=100.0,
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT),
-    parent=cloud_body,
-  )
+  overlay._ctl_cloud_preferred_y_probability = AdvancedScalarControl(title="Preferred Y interval probability (%)", min_value=0.0, max_value=100.0, slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT), parent=cloud_body)
   overlay._ctl_cloud_preferred_y_probability.value_changed.connect(lambda value: overlay.cloud_preferred_y_probability_changed.emit(int(round(float(value)))))
   cloud_layout.addWidget(overlay._ctl_cloud_preferred_y_probability)
 
@@ -365,23 +280,17 @@ def build_audio_tab(overlay: "SettingsOverlay") -> None:
   overlay._lbl_master_volume = QLabel("Master volume: 100%", host)
   overlay._sld_master_volume = overlay._new_slider(host, 0, 100)
   overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)
-  add_setting_row(
-    mixer_layout, mixer_body, label="Master volume", description="Global output gain applied before category gain.", control=overlay._sld_master_volume, label_widget=overlay._lbl_master_volume
-  )
+  add_setting_row(mixer_layout, mixer_body, label="Master volume", description="Global output gain applied before category gain.", control=overlay._sld_master_volume, label_widget=overlay._lbl_master_volume)
 
   overlay._lbl_ambient_volume = QLabel("Ambient volume: 100%", host)
   overlay._sld_ambient_volume = overlay._new_slider(host, 0, 100)
   overlay._sld_ambient_volume.valueChanged.connect(overlay._on_ambient_volume)
-  add_setting_row(
-    mixer_layout, mixer_body, label="Ambient volume", description="Ambient loop gain multiplied by master gain.", control=overlay._sld_ambient_volume, label_widget=overlay._lbl_ambient_volume
-  )
+  add_setting_row(mixer_layout, mixer_body, label="Ambient volume", description="Ambient loop gain multiplied by master gain.", control=overlay._sld_ambient_volume, label_widget=overlay._lbl_ambient_volume)
 
   overlay._lbl_block_volume = QLabel("Block volume: 100%", host)
   overlay._sld_block_volume = overlay._new_slider(host, 0, 100)
   overlay._sld_block_volume.valueChanged.connect(overlay._on_block_volume)
-  add_setting_row(
-    mixer_layout, mixer_body, label="Block volume", description="Placement, breaking, and interaction effect gain.", control=overlay._sld_block_volume, label_widget=overlay._lbl_block_volume
-  )
+  add_setting_row(mixer_layout, mixer_body, label="Block volume", description="Placement, breaking, and interaction effect gain.", control=overlay._sld_block_volume, label_widget=overlay._lbl_block_volume)
 
   overlay._lbl_player_volume = QLabel("Player volume: 100%", host)
   overlay._sld_player_volume = overlay._new_slider(host, 0, 100)
@@ -408,45 +317,19 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
   overlay._tg_auto_jump = overlay._add_toggle(options_layout, options_body, "Auto-Jump", overlay.auto_jump_changed.emit)
   overlay._tg_auto_sprint = overlay._add_toggle(options_layout, options_body, "Auto-Sprint", overlay.auto_sprint_changed.emit)
 
-  _regen_card, regen_body, regen_layout = add_settings_card(
-    layout, host, title="Health Regeneration", description="Automatic survival-mode health recovery once the player avoids damage for the start delay."
-  )
+  _regen_card, regen_body, regen_layout = add_settings_card(layout, host, title="Health Regeneration", description="Automatic survival-mode health recovery once the player avoids damage for the start delay.")
 
   overlay._tg_player_regen = overlay._add_toggle(regen_layout, regen_body, "Regeneration", overlay._on_player_regen_toggled)
 
-  overlay._ctl_player_regen_start_delay = AdvancedScalarControl(
-    title="Start delay",
-    min_value=float(PLAYER_REGEN_START_DELAY_MIN_S),
-    max_value=float(PLAYER_REGEN_START_DELAY_MAX_S),
-    slider_scale=10.0,
-    decimals=1,
-    default_value=float(PLAYER_REGEN_DEFAULT_START_DELAY_S),
-    parent=regen_body,
-  )
+  overlay._ctl_player_regen_start_delay = AdvancedScalarControl(title="Start delay", min_value=float(PLAYER_REGEN_START_DELAY_MIN_S), max_value=float(PLAYER_REGEN_START_DELAY_MAX_S), slider_scale=10.0, decimals=1, default_value=float(PLAYER_REGEN_DEFAULT_START_DELAY_S), parent=regen_body)
   overlay._ctl_player_regen_start_delay.value_changed.connect(overlay.player_regen_start_delay_changed.emit)
   regen_layout.addWidget(overlay._ctl_player_regen_start_delay)
 
-  overlay._ctl_player_regen_cap = AdvancedScalarControl(
-    title="Health cap",
-    min_value=float(PLAYER_REGEN_CAP_MIN_HP),
-    max_value=float(PLAYER_REGEN_CAP_MAX_HP),
-    slider_scale=10.0,
-    decimals=1,
-    default_value=float(PLAYER_REGEN_DEFAULT_CAP_HP),
-    parent=regen_body,
-  )
+  overlay._ctl_player_regen_cap = AdvancedScalarControl(title="Health cap", min_value=float(PLAYER_REGEN_CAP_MIN_HP), max_value=float(PLAYER_REGEN_CAP_MAX_HP), slider_scale=10.0, decimals=1, default_value=float(PLAYER_REGEN_DEFAULT_CAP_HP), parent=regen_body)
   overlay._ctl_player_regen_cap.value_changed.connect(overlay.player_regen_cap_changed.emit)
   regen_layout.addWidget(overlay._ctl_player_regen_cap)
 
-  overlay._ctl_player_regen_time_to_cap = AdvancedScalarControl(
-    title="Time to cap",
-    min_value=float(PLAYER_REGEN_TIME_TO_CAP_MIN_S),
-    max_value=float(PLAYER_REGEN_TIME_TO_CAP_MAX_S),
-    slider_scale=10.0,
-    decimals=1,
-    default_value=float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S),
-    parent=regen_body,
-  )
+  overlay._ctl_player_regen_time_to_cap = AdvancedScalarControl(title="Time to cap", min_value=float(PLAYER_REGEN_TIME_TO_CAP_MIN_S), max_value=float(PLAYER_REGEN_TIME_TO_CAP_MAX_S), slider_scale=10.0, decimals=1, default_value=float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S), parent=regen_body)
   overlay._ctl_player_regen_time_to_cap.value_changed.connect(overlay.player_regen_time_to_cap_changed.emit)
   regen_layout.addWidget(overlay._ctl_player_regen_time_to_cap)
 
@@ -462,9 +345,7 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
   add_setting_row(identity_layout, identity_body, label="Player name", description="Blank values use the resolved random identity shown here.", control=overlay._name_edit)
   identity_layout.addWidget(overlay._player_name_hint)
 
-  _interaction_card, interaction_body, interaction_layout = add_settings_card(
-    layout, host, title="Interaction Parameters", description="Repeat intervals for break, place, and state-changing interaction input."
-  )
+  _interaction_card, interaction_body, interaction_layout = add_settings_card(layout, host, title="Interaction Parameters", description="Repeat intervals for break, place, and state-changing interaction input.")
 
   overlay._ctl_block_break_repeat_interval = AdvancedScalarControl(
     title="Break repeat interval",

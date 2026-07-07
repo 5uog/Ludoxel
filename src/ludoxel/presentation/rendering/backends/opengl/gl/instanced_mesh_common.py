@@ -5,22 +5,7 @@ from __future__ import annotations
 from ctypes import c_void_p
 
 import numpy as np
-from OpenGL.GL import (
-  GL_ARRAY_BUFFER,
-  GL_FLOAT,
-  GL_STATIC_DRAW,
-  GL_STREAM_DRAW,
-  glBindBuffer,
-  glBindVertexArray,
-  glBufferData,
-  glDeleteBuffers,
-  glDeleteVertexArrays,
-  glEnableVertexAttribArray,
-  glGenBuffers,
-  glGenVertexArrays,
-  glVertexAttribDivisor,
-  glVertexAttribPointer,
-)
+from OpenGL.GL import GL_ARRAY_BUFFER, GL_FLOAT, GL_STATIC_DRAW, GL_STREAM_DRAW, glBindBuffer, glBindVertexArray, glBufferData, glDeleteBuffers, glDeleteVertexArrays, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glVertexAttribDivisor, glVertexAttribPointer
 
 from ludoxel.presentation.rendering.backends.opengl.gl.array_view import as_float32_c_array, as_float32_rows
 from ludoxel.presentation.rendering.backends.opengl.gl.buffer_upload import upload_array_buffer, upload_array_buffer_range

@@ -14,25 +14,8 @@ from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 from ludoxel.application.persistence.stores.othello_book import install_othello_book_storage_hooks
 from ludoxel.simulation.spaces.othello.books.learning import BookLearningCancelled, learn_opening_book
 from ludoxel.simulation.spaces.othello.engines.classic import analyze_position, choose_ai_move
-from ludoxel.simulation.spaces.othello.engines.worker import (
-  _ANALYSIS_INSANE_BUDGET_S,
-  _ANALYSIS_STRONG_BUDGET_S,
-  _BOOK_EXECUTOR_WORKERS,
-  _SEARCH_EXECUTOR_WORKERS,
-  _compute_ai_move,
-  _compute_analysis,
-  _compute_book_learning,
-  _fallback_cache,
-)
-from ludoxel.simulation.spaces.othello.game.state import (
-  DEFAULT_OTHELLO_HASH_LEVEL,
-  DEFAULT_OTHELLO_SACRIFICE_LEVEL,
-  DEFAULT_OTHELLO_THREAD_COUNT,
-  OthelloSettings,
-  normalize_hash_level,
-  normalize_sacrifice_level,
-  normalize_thread_count,
-)
+from ludoxel.simulation.spaces.othello.engines.worker import _ANALYSIS_INSANE_BUDGET_S, _ANALYSIS_STRONG_BUDGET_S, _BOOK_EXECUTOR_WORKERS, _SEARCH_EXECUTOR_WORKERS, _compute_ai_move, _compute_analysis, _compute_book_learning, _fallback_cache
+from ludoxel.simulation.spaces.othello.game.state import DEFAULT_OTHELLO_HASH_LEVEL, DEFAULT_OTHELLO_SACRIFICE_LEVEL, DEFAULT_OTHELLO_THREAD_COUNT, OthelloSettings, normalize_hash_level, normalize_sacrifice_level, normalize_thread_count
 
 
 @dataclass
@@ -114,11 +97,8 @@ class OthelloAiWorker(QObject):
     return self._book_learning_manager
 
   def _ensure_fallback_executor(self) -> ThreadPoolExecutor | None:
-    # When the process pool is unavailable, the fallback still runs off the
-    # UI thread so a heavy search cannot stall the render loop or the disc
-    # flip animations; the compiled Rust search releases the GIL while it
-    # runs. Results return through the same pending-future poll used by the
-    # process path.
+    # When the process pool is unavailable, the fallback still runs off the UI thread so a heavy search cannot stall the render loop or the disc flip
+    # animations; the compiled Rust search releases the GIL while it runs. Results return through the same pending-future poll used by the process path.
     if self._fallback_executor is None:
       try:
         self._fallback_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="OthelloAiFallback")
@@ -144,17 +124,7 @@ class OthelloAiWorker(QObject):
   def _emit_fallback_move(self, *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, sacrifice_level: int, hash_level: int) -> None:
 
     def compute() -> int | None:
-      return choose_ai_move(
-        board,
-        side,
-        difficulty,
-        random_seed=int(seed),
-        project_root=str(project_root),
-        match_generation=int(generation),
-        insane_cache=_fallback_cache(),
-        sacrifice_level=int(sacrifice_level),
-        hash_level=int(hash_level),
-      )
+      return choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_fallback_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
 
     executor = self._ensure_fallback_executor()
     if executor is not None:
@@ -222,17 +192,7 @@ class OthelloAiWorker(QObject):
       cancel_event = threading.Event()
       try:
         future = executor.submit(
-          _compute_book_learning,
-          int(settings.book_learning_depth),
-          float(settings.book_per_move_error),
-          float(settings.book_cumulative_error),
-          float(settings.book_leaf_error),
-          str(project_root),
-          int(settings.hash_level),
-          int(settings.sacrifice_level),
-          progress_queue,
-          cancel_event,
-          install_othello_book_storage_hooks,
+          _compute_book_learning, int(settings.book_learning_depth), float(settings.book_per_move_error), float(settings.book_cumulative_error), float(settings.book_leaf_error), str(project_root), int(settings.hash_level), int(settings.sacrifice_level), progress_queue, cancel_event, install_othello_book_storage_hooks
         )
       except Exception:
         future = None
@@ -249,13 +209,7 @@ class OthelloAiWorker(QObject):
       try:
         install_othello_book_storage_hooks()
         result = learn_opening_book(
-          depth=int(settings.book_learning_depth),
-          per_move_error=float(settings.book_per_move_error),
-          cumulative_error=float(settings.book_cumulative_error),
-          leaf_error=float(settings.book_leaf_error),
-          project_root=str(project_root),
-          hash_level=int(settings.hash_level),
-          sacrifice_level=int(settings.sacrifice_level),
+          depth=int(settings.book_learning_depth), per_move_error=float(settings.book_per_move_error), cumulative_error=float(settings.book_cumulative_error), leaf_error=float(settings.book_leaf_error), project_root=str(project_root), hash_level=int(settings.hash_level), sacrifice_level=int(settings.sacrifice_level)
         )
         payload = {"ok": True, "result": result, "error": ""}
       except Exception as exc:
@@ -264,19 +218,7 @@ class OthelloAiWorker(QObject):
 
     QTimer.singleShot(0, emit_result)
 
-  def request_move(
-    self,
-    *,
-    generation: int,
-    board: tuple[int, ...],
-    side: int,
-    difficulty: str,
-    seed: int,
-    project_root: str = "",
-    thread_count: int = DEFAULT_OTHELLO_THREAD_COUNT,
-    sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL,
-    hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL,
-  ) -> None:
+  def request_move(self, *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str = "", thread_count: int = DEFAULT_OTHELLO_THREAD_COUNT, sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL, hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL) -> None:
     normalized_board = tuple(int(value) for value in tuple(board))
     normalized_side = int(side)
     normalized_difficulty = str(difficulty)
@@ -288,61 +230,21 @@ class OthelloAiWorker(QObject):
     self._cancel_pending_kind("move")
     executor = self._ensure_search_executor(worker_count=int(thread_count))
     if executor is None:
-      self._emit_fallback_move(
-        generation=int(generation),
-        board=normalized_board,
-        side=normalized_side,
-        difficulty=normalized_difficulty,
-        seed=normalized_seed,
-        project_root=normalized_project_root,
-        sacrifice_level=int(normalized_sacrifice_level),
-        hash_level=int(normalized_hash_level),
-      )
+      self._emit_fallback_move(generation=int(generation), board=normalized_board, side=normalized_side, difficulty=normalized_difficulty, seed=normalized_seed, project_root=normalized_project_root, sacrifice_level=int(normalized_sacrifice_level), hash_level=int(normalized_hash_level))
       return
 
     try:
-      future = executor.submit(
-        _compute_ai_move,
-        normalized_board,
-        normalized_side,
-        normalized_difficulty,
-        normalized_seed,
-        int(generation),
-        normalized_project_root,
-        int(normalized_sacrifice_level),
-        int(normalized_hash_level),
-      )
+      future = executor.submit(_compute_ai_move, normalized_board, normalized_side, normalized_difficulty, normalized_seed, int(generation), normalized_project_root, int(normalized_sacrifice_level), int(normalized_hash_level))
     except Exception:
       self._search_executor_unavailable = True
       self._recreate_search_executor()
-      self._emit_fallback_move(
-        generation=int(generation),
-        board=normalized_board,
-        side=normalized_side,
-        difficulty=normalized_difficulty,
-        seed=normalized_seed,
-        project_root=normalized_project_root,
-        sacrifice_level=int(normalized_sacrifice_level),
-        hash_level=int(normalized_hash_level),
-      )
+      self._emit_fallback_move(generation=int(generation), board=normalized_board, side=normalized_side, difficulty=normalized_difficulty, seed=normalized_seed, project_root=normalized_project_root, sacrifice_level=int(normalized_sacrifice_level), hash_level=int(normalized_hash_level))
       return
     self._pending.append(_PendingTask(kind="move", generation=int(generation), future=future))
     if not self._poll_timer.isActive():
       self._poll_timer.start()
 
-  def request_analysis(
-    self,
-    *,
-    generation: int,
-    board: tuple[int, ...],
-    side: int,
-    difficulty: str,
-    seed: int,
-    project_root: str = "",
-    thread_count: int = DEFAULT_OTHELLO_THREAD_COUNT,
-    sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL,
-    hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL,
-  ) -> None:
+  def request_analysis(self, *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str = "", thread_count: int = DEFAULT_OTHELLO_THREAD_COUNT, sacrifice_level: int = DEFAULT_OTHELLO_SACRIFICE_LEVEL, hash_level: int = DEFAULT_OTHELLO_HASH_LEVEL) -> None:
     normalized_board = tuple(int(value) for value in tuple(board))
     normalized_side = int(side)
     normalized_difficulty = str(difficulty)
@@ -354,43 +256,15 @@ class OthelloAiWorker(QObject):
     self._cancel_pending_kind("analysis")
     executor = self._ensure_search_executor(worker_count=int(thread_count))
     if executor is None:
-      self._emit_fallback_analysis(
-        generation=int(generation),
-        board=normalized_board,
-        side=normalized_side,
-        difficulty=normalized_difficulty,
-        seed=normalized_seed,
-        project_root=normalized_project_root,
-        sacrifice_level=int(normalized_sacrifice_level),
-        hash_level=int(normalized_hash_level),
-      )
+      self._emit_fallback_analysis(generation=int(generation), board=normalized_board, side=normalized_side, difficulty=normalized_difficulty, seed=normalized_seed, project_root=normalized_project_root, sacrifice_level=int(normalized_sacrifice_level), hash_level=int(normalized_hash_level))
       return
 
     try:
-      future = executor.submit(
-        _compute_analysis,
-        normalized_board,
-        normalized_side,
-        normalized_difficulty,
-        normalized_seed,
-        int(generation),
-        normalized_project_root,
-        int(normalized_sacrifice_level),
-        int(normalized_hash_level),
-      )
+      future = executor.submit(_compute_analysis, normalized_board, normalized_side, normalized_difficulty, normalized_seed, int(generation), normalized_project_root, int(normalized_sacrifice_level), int(normalized_hash_level))
     except Exception:
       self._search_executor_unavailable = True
       self._recreate_search_executor()
-      self._emit_fallback_analysis(
-        generation=int(generation),
-        board=normalized_board,
-        side=normalized_side,
-        difficulty=normalized_difficulty,
-        seed=normalized_seed,
-        project_root=normalized_project_root,
-        sacrifice_level=int(normalized_sacrifice_level),
-        hash_level=int(normalized_hash_level),
-      )
+      self._emit_fallback_analysis(generation=int(generation), board=normalized_board, side=normalized_side, difficulty=normalized_difficulty, seed=normalized_seed, project_root=normalized_project_root, sacrifice_level=int(normalized_sacrifice_level), hash_level=int(normalized_hash_level))
       return
     self._pending.append(_PendingTask(kind="analysis", generation=int(generation), future=future))
     if not self._poll_timer.isActive():

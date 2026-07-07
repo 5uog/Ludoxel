@@ -7,13 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from OpenGL.GL import GL_ARRAY_BUFFER, glBindBuffer, glBindVertexArray
 
-from ludoxel.presentation.rendering.backends.opengl.gl.instanced_mesh_common import (
-  attach_instance_buffer,
-  create_static_vertex_buffer,
-  destroy_mesh_handles,
-  upload_instance_rows,
-  upload_instance_rows_range,
-)
+from ludoxel.presentation.rendering.backends.opengl.gl.instanced_mesh_common import attach_instance_buffer, create_static_vertex_buffer, destroy_mesh_handles, upload_instance_rows, upload_instance_rows_range
 from ludoxel.presentation.rendering.faces.unit_quad import textured_unit_face_vertices, textured_unit_face_wire_vertices
 
 _CLOUD_INSTANCE_ATTRS = ((3, 3, 0), (4, 4, 12), (5, 1, 28), (6, 3, 32))
@@ -35,8 +29,7 @@ class MeshBuffer:
 
   @staticmethod
   def _create_cloud_mesh(vertices: np.ndarray) -> "MeshBuffer":
-    # Cloud instance row: center(3), scale(3) + alphaMul(1) as one vec4
-    # pair, speedMultiplier(1), turbulence amp/freq/phase(3).
+    # Cloud instance row: center(3), scale(3) + alphaMul(1) as one vec4 pair, speedMultiplier(1), turbulence amp/freq/phase(3).
     vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(vertices, dtype=np.float32))
     instance_vbo = attach_instance_buffer(stride_bytes=int(_CLOUD_INSTANCE_STRIDE), attrs=_CLOUD_INSTANCE_ATTRS)
     glBindVertexArray(0)
@@ -53,8 +46,7 @@ class MeshBuffer:
 
   @staticmethod
   def create_cloud_volume_instanced() -> "MeshBuffer":
-    # A unit cube used only as the raymarch proxy for the Ultra volumetric
-    # cloud fragment stage; its faces are never shaded as a surface.
+    # A unit cube used only as the raymarch proxy for the Ultra volumetric cloud fragment stage; its faces are never shaded as a surface.
     return MeshBuffer._create_cloud_mesh(np.asarray(_cube_vertices(), dtype=np.float32))
 
   @staticmethod
@@ -91,9 +83,7 @@ class MeshBuffer:
     self.instance_capacity = upload_instance_rows(buffer=int(self.instance_vbo), instance_data=instance_data, capacity_bytes=int(self.instance_capacity))
 
   def upload_instances_subrange(self, instance_data: np.ndarray, *, row_offset: int) -> None:
-    self.instance_capacity = upload_instance_rows_range(
-      buffer=int(self.instance_vbo), instance_data=instance_data, capacity_bytes=int(self.instance_capacity), row_offset=int(row_offset), row_width=int(self.instance_row_width)
-    )
+    self.instance_capacity = upload_instance_rows_range(buffer=int(self.instance_vbo), instance_data=instance_data, capacity_bytes=int(self.instance_capacity), row_offset=int(row_offset), row_width=int(self.instance_row_width))
 
   def destroy(self) -> None:
     destroy_mesh_handles(vao=int(self.vao), buffers=(int(self.vbo), int(self.instance_vbo)))

@@ -5,28 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from OpenGL.GL import (
-  GL_BLEND,
-  GL_CULL_FACE,
-  GL_DEPTH_TEST,
-  GL_LEQUAL,
-  GL_LESS,
-  GL_ONE_MINUS_SRC_ALPHA,
-  GL_SRC_ALPHA,
-  GL_TEXTURE0,
-  GL_TEXTURE1,
-  GL_TEXTURE_2D,
-  GL_TRIANGLES,
-  glActiveTexture,
-  glBindTexture,
-  glBindVertexArray,
-  glBlendFunc,
-  glDepthFunc,
-  glDepthMask,
-  glDisable,
-  glDrawArraysInstanced,
-  glEnable,
-)
+from OpenGL.GL import GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LEQUAL, GL_LESS, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_TRIANGLES, glActiveTexture, glBindTexture, glBindVertexArray, glBlendFunc, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable
 
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.backends.opengl.gl.colored_mesh_buffer import ColoredMeshBuffer
@@ -74,19 +53,7 @@ class OthelloPass:
   def _piece_key(render_state: OthelloRenderState) -> tuple[object, ...]:
     return (bool(render_state.enabled), render_state.board, render_state.animations)
 
-  def draw(
-    self,
-    *,
-    render_state: OthelloRenderState | None,
-    view_proj: np.ndarray,
-    light_view_proj: np.ndarray,
-    sun_dir: Vec3,
-    debug_shadow: bool,
-    shadow_enabled: bool,
-    shadow: BackendShadowParams,
-    shadow_info: ShadowMapInfo,
-    fog: GeometryDistanceFog | None = None,
-  ) -> PassFrameMetrics:
+  def draw(self, *, render_state: OthelloRenderState | None, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo, fog: GeometryDistanceFog | None = None) -> PassFrameMetrics:
     if self._world_prog is None or self._board_mesh is None or self._piece_mesh is None or render_state is None or not bool(render_state.enabled):
       return PassFrameMetrics()
 

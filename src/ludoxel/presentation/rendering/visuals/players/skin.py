@@ -30,7 +30,7 @@ def normalize_player_skin_image(image: QImage) -> QImage:
   if candidate.isNull():
     raise ValueError("The selected skin image could not be decoded.")
   if int(candidate.width()) != int(_SKIN_WIDTH) or int(candidate.height()) != int(_SKIN_HEIGHT):
-    raise ValueError("Only modern 64x64 Minecraft skin textures are accepted.")
+    raise ValueError("Only modern 64x64 skin textures are accepted.")
   return candidate.convertToFormat(QImage.Format.Format_RGBA8888)
 
 

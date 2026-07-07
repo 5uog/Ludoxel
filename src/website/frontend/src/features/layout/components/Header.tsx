@@ -31,12 +31,7 @@ export default function Header({ activePath }: HeaderProps): React.JSX.Element {
         <div className="flex items-center gap-2">
           <DesktopHeaderNavigation currentPath={currentPath} />
 
-          <a
-            className="hidden lg:inline-flex items-center justify-center gap-1 py-3 px-5 bg-primary text-primary-foreground text-sm font-medium rounded-xl transition-colors hover:bg-primary/90"
-            href={getStartedHref}
-            rel="noreferrer"
-            target="_blank"
-          >
+          <a className="hidden lg:inline-flex items-center justify-center gap-1 py-3 px-5 bg-primary text-primary-foreground text-sm font-medium rounded-xl transition-colors hover:bg-primary/90" href={getStartedHref} rel="noreferrer" target="_blank">
             <span>Get started</span>
             <ArrowUpRight className="w-4 h-4" />
           </a>
@@ -59,9 +54,7 @@ export default function Header({ activePath }: HeaderProps): React.JSX.Element {
         </div>
       </nav>
 
-      {mobileNavigation.isOpen ? (
-        <MobileHeaderNavigation backdropClassName={mobileNavigation.backdropClassName} currentPath={currentPath} panelClassName={mobileNavigation.panelClassName} onClose={mobileNavigation.close} />
-      ) : null}
+      {mobileNavigation.isOpen ? <MobileHeaderNavigation backdropClassName={mobileNavigation.backdropClassName} currentPath={currentPath} panelClassName={mobileNavigation.panelClassName} onClose={mobileNavigation.close} /> : null}
     </header>
   );
 }

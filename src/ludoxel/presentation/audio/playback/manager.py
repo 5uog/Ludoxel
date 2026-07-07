@@ -11,23 +11,8 @@ from PyQt6.QtMultimedia import QMediaDevices, QSoundEffect
 from ludoxel.application.preferences.audio import AUDIO_CATEGORY_AMBIENT, AudioPreferences
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.audio.catalogs.ambient import AMBIENT_SOUND_CATALOG
-from ludoxel.presentation.audio.catalogs.material import (
-  BLOCK_EVENT_BREAK,
-  BLOCK_EVENT_INTERACT_CLOSE,
-  BLOCK_EVENT_INTERACT_OPEN,
-  BLOCK_EVENT_PLACE,
-  BLOCK_SOUND_CATALOG,
-  PLAYER_EVENT_STEP,
-  PLAYER_SURFACE_SOUND_CATALOG,
-)
-from ludoxel.presentation.audio.catalogs.player import (
-  PLAYER_EVENT_ATTACK_STRONG,
-  PLAYER_EVENT_ATTACK_WEAK,
-  PLAYER_EVENT_LAND,
-  PLAYER_EVENT_LAND_BIG,
-  PLAYER_EVENT_LAND_SMALL,
-  PLAYER_EVENT_SOUND_CATALOG,
-)
+from ludoxel.presentation.audio.catalogs.material import BLOCK_EVENT_BREAK, BLOCK_EVENT_INTERACT_CLOSE, BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_PLACE, BLOCK_SOUND_CATALOG, PLAYER_EVENT_STEP, PLAYER_SURFACE_SOUND_CATALOG
+from ludoxel.presentation.audio.catalogs.player import PLAYER_EVENT_ATTACK_STRONG, PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
 from ludoxel.presentation.audio.playback.ambient import ambient_desired_key
 from ludoxel.presentation.audio.playback.effects import admit_pool_play, effect_clock_s, ensure_effect_slots, has_idle_voice, mark_slot_started, next_effect_slot, steal_oldest_effect_slot
 from ludoxel.presentation.audio.playback.listener import block_center, listener_within_cutoff, pose_almost_equal, spatial_distance_gain
@@ -238,9 +223,7 @@ class AudioManager(QObject):
       urls = self._resolve_existing_urls(pool)
       self._resolved_urls[str(pool_key)] = urls
 
-    self._player_attack_mixer.play(
-      urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random
-    )
+    self._player_attack_mixer.play(urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random)
 
   def _resolve_block_action(self, *, action: str | None, block_state: str | None) -> tuple[str, str] | None:
     if action is None or block_state is None:
@@ -528,9 +511,8 @@ class AudioManager(QObject):
         return False
       slot = self._next_effect_slot(prepared, desired_slots=int(desired_slots), now_s=now_s)
     else:
-      # Every voice of every source is busy. Admitted events must still be
-      # heard, so the oldest voice of the selected source is reclaimed
-      # instead of dropping the event.
+      # Every voice of every source is busy.
+      # Admitted events must still be heard, so the oldest voice of the selected source is reclaimed instead of dropping the event.
       prepared = self._pick_prepared_source(str(pool_key), pool, prepared_sources)
       if prepared is None:
         return False

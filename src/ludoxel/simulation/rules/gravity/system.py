@@ -137,9 +137,7 @@ class GravitySystem:
           continue
 
         below_state = get_state(int(x), int(y - 1), int(z))
-        landing_target = (
-          None if below_state is None else self._landing_target_for_support(world, x=int(x), y=int(y - 1), z=int(z), state_str=str(below_state), updates=empty_updates, removals=removals)
-        )
+        landing_target = None if below_state is None else self._landing_target_for_support(world, x=int(x), y=int(y - 1), z=int(z), state_str=str(below_state), updates=empty_updates, removals=removals)
         if landing_target is not None and str(landing_target.mode) == "land":
           continue
 

@@ -3,16 +3,7 @@
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
 import { docsPages, getDocsPageHref } from './articles';
-import {
-  type DocsArticleContentBlock,
-  type DocsCodeBlock,
-  type DocsInlineText,
-  type DocsInlineTextPart,
-  type DocsMediaBlock,
-  type DocsNoteBlock,
-  type DocsPageContent,
-  type DocsSection,
-} from './types';
+import { type DocsArticleContentBlock, type DocsCodeBlock, type DocsInlineText, type DocsInlineTextPart, type DocsMediaBlock, type DocsNoteBlock, type DocsPageContent, type DocsSection } from './types';
 
 export type SearchIndexRecommendation = {
   title: string;
@@ -52,32 +43,7 @@ type SearchContentFragments = {
   media: string[];
 };
 
-const SEARCH_KEYWORD_STOP_WORDS = new Set([
-  'about',
-  'after',
-  'also',
-  'and',
-  'are',
-  'because',
-  'before',
-  'between',
-  'does',
-  'for',
-  'from',
-  'how',
-  'into',
-  'its',
-  'only',
-  'that',
-  'the',
-  'this',
-  'through',
-  'under',
-  'when',
-  'where',
-  'which',
-  'with',
-]);
+const SEARCH_KEYWORD_STOP_WORDS = new Set(['about', 'after', 'also', 'and', 'are', 'because', 'before', 'between', 'does', 'for', 'from', 'how', 'into', 'its', 'only', 'that', 'the', 'this', 'through', 'under', 'when', 'where', 'which', 'with']);
 
 const CATEGORY_ALIASES: Record<string, string[]> = {
   Manual: ['guide', 'how to', 'operation', 'starting', 'usage', 'user manual', 'manual', '使い方', '操作'],
@@ -289,12 +255,7 @@ function readSectionFragments(section: DocsSection): SearchContentFragments {
   });
 
   return mergeFragments(contentFragments, {
-    body: [
-      ...(section.body ?? []).map(readInlineText),
-      ...(section.items ?? []).map(readInlineText),
-      ...(section.mathBlocks ?? []).map((math) => compactText([math.expression, math.caption ?? ''])),
-      ...(section.noteBlocks ?? []).map(readNoteBlock),
-    ],
+    body: [...(section.body ?? []).map(readInlineText), ...(section.items ?? []).map(readInlineText), ...(section.mathBlocks ?? []).map((math) => compactText([math.expression, math.caption ?? ''])), ...(section.noteBlocks ?? []).map(readNoteBlock)],
     code: (section.codeBlocks ?? []).map(readCodeBlock),
     media: (section.mediaBlocks ?? []).map(readMediaBlock),
   });

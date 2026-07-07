@@ -5,13 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-_BLOCK_TEXTURE_FILE_ALIASES: dict[str, str] = {
-  "dirt_path_side": "grass_path_side",
-  "dirt_path_top": "grass_path_top",
-  "quartz_column_side": "quartz_block_lines",
-  "quartz_column_top": "quartz_block_lines_top",
-  "smooth_quartz": "quartz_block_bottom",
-}
+_BLOCK_TEXTURE_FILE_ALIASES: dict[str, str] = {"dirt_path_side": "grass_path_side", "dirt_path_top": "grass_path_top", "quartz_column_side": "quartz_block_lines", "quartz_column_top": "quartz_block_lines_top", "smooth_quartz": "quartz_block_bottom"}
 
 
 @dataclass(frozen=True)
@@ -54,12 +48,4 @@ def resolve_visual_asset_roots(assets_dir: Path, *, required_texture_names: list
   family_root = ludoxel_root if family == "ludoxel" else minecraft_root
   texture_root = family_root / "textures"
   thumbnail_root = family_root / "thumbnails"
-  return VisualAssetRoots(
-    family=str(family),
-    family_root=family_root,
-    texture_root=texture_root,
-    block_texture_dir=texture_root / "block",
-    item_texture_dir=texture_root / "item",
-    thumbnail_root=thumbnail_root,
-    block_thumbnail_dir=thumbnail_root / "blocks",
-  )
+  return VisualAssetRoots(family=str(family), family_root=family_root, texture_root=texture_root, block_texture_dir=texture_root / "block", item_texture_dir=texture_root / "item", thumbnail_root=thumbnail_root, block_thumbnail_dir=thumbnail_root / "blocks")

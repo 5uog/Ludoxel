@@ -23,18 +23,7 @@ def status_overlay_title_image_path(resource_root: Path) -> Path | None:
 
 
 class StatusOverlayFrame(QFrame):
-  def __init__(
-    self,
-    *,
-    title_text: str,
-    status_text: str,
-    object_name: str,
-    title_object_name: str,
-    status_object_name: str,
-    title_image_path: Path | None = None,
-    parent: QWidget | None = None,
-    flags=Qt.WindowType.Widget,
-  ) -> None:
+  def __init__(self, *, title_text: str, status_text: str, object_name: str, title_object_name: str, status_object_name: str, title_image_path: Path | None = None, parent: QWidget | None = None, flags=Qt.WindowType.Widget) -> None:
     super().__init__(parent, flags)
     self.setObjectName(str(object_name))
     self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)

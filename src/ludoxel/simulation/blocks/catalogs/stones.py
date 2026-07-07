@@ -28,9 +28,7 @@ def _all_stones() -> tuple[StoneType, ...]:
 
 
 _STONE_VARIANT_RECIPES: tuple[CatalogVariantRecipe, ...] = (
-  CatalogVariantRecipe(
-    variant_id=lambda stone: block_id(stone), display_name=lambda stone: str(stone.display), kind=lambda stone: str(stone.kind), family="block", is_full_cube=lambda stone: bool(stone.is_full_cube)
-  ),
+  CatalogVariantRecipe(variant_id=lambda stone: block_id(stone), display_name=lambda stone: str(stone.display), kind=lambda stone: str(stone.kind), family="block", is_full_cube=lambda stone: bool(stone.is_full_cube)),
   CatalogVariantRecipe(variant_id=lambda stone: slab_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Slab"), kind="slab", family="slab", is_full_cube=False),
   CatalogVariantRecipe(variant_id=lambda stone: stairs_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Stairs"), kind="stairs", family="stairs", is_full_cube=False),
   CatalogVariantRecipe(variant_id=lambda stone: wall_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Wall"), kind="wall", family="wall", is_full_cube=False),

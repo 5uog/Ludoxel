@@ -23,22 +23,7 @@ function renderOptionRecords(records) {
 export function renderAudioAssetHelp(language = 'ja') {
   const messages = audioAssetHelpMessagesFor(language);
 
-  return lines([
-    messages.title,
-    '',
-    messages.labels.purpose,
-    `  ${messages.purpose}`,
-    '',
-    messages.labels.synopsis,
-    renderIndentedLines(messages.synopsis),
-    '',
-    messages.labels.options,
-    renderOptionRecords(messages.options),
-    '',
-    messages.labels.defaultBehavior,
-    renderIndentedLines(messages.defaultBehavior),
-    '',
-  ]);
+  return lines([messages.title, '', messages.labels.purpose, `  ${messages.purpose}`, '', messages.labels.synopsis, renderIndentedLines(messages.synopsis), '', messages.labels.options, renderOptionRecords(messages.options), '', messages.labels.defaultBehavior, renderIndentedLines(messages.defaultBehavior), '']);
 }
 
 export function renderAudioAssetErrors(errors, language = 'ja') {

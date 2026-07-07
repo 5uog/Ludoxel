@@ -25,7 +25,7 @@ from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.worlds.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, clamp_render_distance_chunks
 
 RENDER_DISTANCE_FADE_START_FRACTION: float = 0.85
-CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 5.0
+CLOUD_RENDER_DISTANCE_MULTIPLIER: float = 15.0
 CLOUD_MIN_VISIBLE_RADIUS_BLOCKS: float = 320.0
 CLOUD_FAR_PLANE_MARGIN_BLOCKS: float = 32.0
 
@@ -35,11 +35,9 @@ def render_distance_radius_blocks(render_distance_chunks: int) -> float:
 
 
 def sun_glare_strength(forward: Vec3, sun_dir: Vec3) -> float:
-  # Ultra-only veiling glare weight. It grows with the squared alignment between
-  # the view direction and the sun, fades as the sun nears the horizon, and is
-  # zero when the sun sits behind the camera. Both backends read this one value.
-  # The scale is held down so looking into the sun dazzles without whiting the
-  # scene out; the sun disc keeps its own brightness independently.
+  # Ultra-only veiling glare weight. It grows with the squared alignment between the view direction and the sun, fades as the sun nears the horizon,
+  # and is zero when the sun sits behind the camera. Both backends read this one value. The scale is held down so looking into the sun dazzles without
+  # whiting the scene out; the sun disc keeps its own brightness independently.
   d = sun_dir.normalized()
   align = max(0.0, forward.normalized().dot(d))
   elevation = max(0.0, min(1.0, float(d.y) * 4.0))
@@ -54,15 +52,11 @@ def _smoothstep(edge0: float, edge1: float, x: float) -> float:
 
 
 def sun_flare_screen(view_proj: np.ndarray, sun_dir: Vec3, eye: Vec3, forward: Vec3, distance: float) -> tuple[float, float, float]:
-  # Screen-space lens-flare parameters shared by both backends: the sun's
-  # normalized-device x and y, and a strength in [0, 1]. The strength is zero
-  # when the sun is behind the camera, off the screen by a wide margin, near or
-  # below the horizon, or when the camera looks well away from the sun, so the
-  # ghosts fade in only while the sun is framed. Geometry occlusion is not
-  # depth-sampled; the elevation term stands in for the sun dropping behind
-  # terrain, and the alignment term for looking away from the light. Both
-  # backends pass their OpenGL-convention view_proj, whose clip x and y match
-  # the WGPU billboard, so the projected sun position is identical.
+  # Screen-space lens-flare parameters shared by both backends: the sun's normalized-device x and y, and a strength in [0, 1]. The strength is zero
+  # when the sun is behind the camera, off the screen by a wide margin, near or below the horizon, or when the camera looks well away from the sun,
+  # so the ghosts fade in only while the sun is framed. Geometry occlusion is not depth-sampled; the elevation term stands in for the sun dropping
+  # behind terrain, and the alignment term for looking away from the light. Both backends pass their OpenGL-convention view_proj, whose clip x and y
+  # match the WGPU billboard, so the projected sun position is identical.
   d = sun_dir.normalized()
   center = eye + d * float(distance)
   mat = np.asarray(view_proj, dtype=np.float64)
@@ -94,11 +88,9 @@ def max_unfogged_render_distance_radius_blocks(z_far: float) -> float:
 
 
 def cloud_far_distance(render_distance_chunks: int) -> float:
-  # Horizontal XZ radius up to which clouds stay visible. The cloud fade is
-  # decoupled from the world fog and the camera far plane: both backends
-  # cull cloud shapes against this radius and draw them with a dedicated
-  # projection whose far plane covers it, so clouds do not vanish at the
-  # world render-distance fog.
+  # Horizontal XZ radius up to which clouds stay visible.
+  # The cloud fade is decoupled from the world fog and the camera far plane: both backends cull cloud shapes against this radius and draw them with a
+  # dedicated projection whose far plane covers it, so clouds do not vanish at the world render-distance fog.
   return float(max(float(render_distance_radius_blocks(int(render_distance_chunks))) * float(CLOUD_RENDER_DISTANCE_MULTIPLIER), float(CLOUD_MIN_VISIBLE_RADIUS_BLOCKS)))
 
 

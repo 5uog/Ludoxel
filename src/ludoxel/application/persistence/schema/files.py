@@ -23,13 +23,7 @@ class PersistedAppFile:
   othello_space: PersistedOthelloSpace = field(default_factory=PersistedOthelloSpace)
 
   def to_dict(self) -> dict[str, Any]:
-    return {
-      "version": int(self.version),
-      "current_space_id": str(normalize_play_space_id(self.current_space_id)),
-      "settings": self.settings.to_dict(),
-      "othello_settings": self.othello_settings.normalized().to_dict(),
-      "othello_space": self.othello_space.to_dict(),
-    }
+    return {"version": int(self.version), "current_space_id": str(normalize_play_space_id(self.current_space_id)), "settings": self.settings.to_dict(), "othello_settings": self.othello_settings.normalized().to_dict(), "othello_space": self.othello_space.to_dict()}
 
   @staticmethod
   def from_dict(d: dict[str, Any]) -> "PersistedAppFile":
@@ -45,10 +39,4 @@ class PersistedAppFile:
     othello_settings = OthelloSettings.from_dict(raw_othello_settings) if isinstance(raw_othello_settings, dict) else OthelloSettings()
     othello_space = PersistedOthelloSpace.from_dict(raw_othello_space) if isinstance(raw_othello_space, dict) else PersistedOthelloSpace()
 
-    return PersistedAppFile(
-      version=int(max(1, version)),
-      current_space_id=normalize_play_space_id(d.get("current_space_id", PLAY_SPACE_MY_WORLD)),
-      settings=settings,
-      othello_settings=othello_settings,
-      othello_space=othello_space,
-    )
+    return PersistedAppFile(version=int(max(1, version)), current_space_id=normalize_play_space_id(d.get("current_space_id", PLAY_SPACE_MY_WORLD)), settings=settings, othello_settings=othello_settings, othello_space=othello_space)

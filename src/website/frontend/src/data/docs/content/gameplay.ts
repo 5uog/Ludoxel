@@ -10,8 +10,7 @@ export const gameplayPages: DocsPageContent[] = [
     subcategory: 'My World Building',
     group: 'Block Construction',
     title: 'Building in My World',
-    description:
-      'Describes how block placement and breaking are accepted in My World: the interaction service picks a target along the view ray, decides between interacting and placing, and commits world edits that also update structural neighbors and mark chunks dirty for the renderer.',
+    description: 'Describes how block placement and breaking are accepted in My World: the interaction service picks a target along the view ray, decides between interacting and placing, and commits world edits that also update structural neighbors and mark chunks dirty for the renderer.',
     sections: [
       {
         id: 'building-in-my-world-interaction-service',
@@ -53,8 +52,7 @@ class InteractionService:
           {
             expression: '\\mathbf{p}(t) = \\mathbf{o} + t\\mathbf{d}, \\qquad \\mathbf{o},\\mathbf{d} \\in \\mathbb{R}^{3}',
             displayMode: true,
-            caption:
-              '`Ray` in `src/ludoxel/foundations/mathematics/geometry/ray.py` supplies o and d; `ray_aabb_face` in `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py` evaluates the returned hit point.',
+            caption: '`Ray` in `src/ludoxel/foundations/mathematics/geometry/ray.py` supplies o and d; `ray_aabb_face` in `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py` evaluates the returned hit point.',
           },
           {
             expression: '|d_i| < 10^{-12} \\Rightarrow (o_i < mn_i \\lor o_i > mx_i) \\text{ rejects}; \\qquad t_{i1}=\\frac{mn_i-o_i}{d_i},\\quad t_{i2}=\\frac{mx_i-o_i}{d_i}',
@@ -62,8 +60,7 @@ class InteractionService:
             caption: 'The parallel-axis branch and raw slab parameters in `ray_aabb_face`; the source orders t_i1 and t_i2 before updating the accumulated interval.',
           },
           {
-            expression:
-              't_{\\min}\\leftarrow\\max(t_{\\min},\\min(t_{i1},t_{i2})),\\qquad t_{\\max}\\leftarrow\\min(t_{\\max},\\max(t_{i1},t_{i2})),\\qquad t_{\\min}>t_{\\max}\\Rightarrow\\varnothing',
+            expression: 't_{\\min}\\leftarrow\\max(t_{\\min},\\min(t_{i1},t_{i2})),\\qquad t_{\\max}\\leftarrow\\min(t_{\\max},\\max(t_{i1},t_{i2})),\\qquad t_{\\min}>t_{\\max}\\Rightarrow\\varnothing',
             displayMode: true,
             caption: 'Equivalent to the conditional interval updates in `ray_aabb_face`, initialized by the source to -10^30 and 10^30.',
           },
@@ -71,30 +68,25 @@ class InteractionService:
             expression:
               't_{\\mathrm{hit}}=\\begin{cases}t_{\\min}&t_{\\min}\\ge0\\\\t_{\\max}&t_{\\min}<0\\le t_{\\max}\\end{cases},\\qquad F_{\\mathrm{hit}}=\\begin{cases}F_{\\mathrm{enter}}&t_{\\min}\\ge0\\\\F_{\\mathrm{exit}}&t_{\\min}<0\\le t_{\\max}\\end{cases},\\qquad \\mathbf{p}=\\mathbf{o}+t_{\\mathrm{hit}}\\mathbf{d}',
             displayMode: true,
-            caption:
-              '`ray_aabb_face` in `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py`: `tmax < 0` rejects behind-origin boxes, while an inside origin exits through the face recorded by `_exit_face_for_axis`.',
+            caption: '`ray_aabb_face` in `src/ludoxel/foundations/mathematics/geometry/ray_aabb.py`: `tmax < 0` rejects behind-origin boxes, while an inside origin exits through the face recorded by `_exit_face_for_axis`.',
           },
           {
-            expression:
-              'c_i^{(0)}=\\left\\lfloor\\frac{o_i}{s}\\right\\rfloor,\\quad \\sigma_i=\\begin{cases}1&d_i>0\\\\-1&d_i\\le0\\end{cases},\\quad \\Delta t_i=\\begin{cases}s/|d_i|&|d_i|>10^{-12}\\\\10^{30}&|d_i|\\le10^{-12}\\end{cases}',
+            expression: 'c_i^{(0)}=\\left\\lfloor\\frac{o_i}{s}\\right\\rfloor,\\quad \\sigma_i=\\begin{cases}1&d_i>0\\\\-1&d_i\\le0\\end{cases},\\quad \\Delta t_i=\\begin{cases}s/|d_i|&|d_i|>10^{-12}\\\\10^{30}&|d_i|\\le10^{-12}\\end{cases}',
             displayMode: true,
             caption: '`dda_grid_traverse` in `src/ludoxel/foundations/mathematics/voxels/dda.py`, with cell size s and its exact zero-component sentinel.',
           },
           {
-            expression:
-              'u_i=\\frac{o_i}{s}-\\left\\lfloor\\frac{o_i}{s}\\right\\rfloor,\\qquad t_{\\max i}^{(0)}=\\begin{cases}(1-u_i)/d_i&d_i>10^{-12}\\\\u_i/(-d_i)&d_i<-10^{-12}\\\\10^{30}&|d_i|\\le10^{-12}\\end{cases}',
+            expression: 'u_i=\\frac{o_i}{s}-\\left\\lfloor\\frac{o_i}{s}\\right\\rfloor,\\qquad t_{\\max i}^{(0)}=\\begin{cases}(1-u_i)/d_i&d_i>10^{-12}\\\\u_i/(-d_i)&d_i<-10^{-12}\\\\10^{30}&|d_i|\\le10^{-12}\\end{cases}',
             displayMode: true,
             caption: '`int_bound` and the three `tm?` initializers in `dda_grid_traverse`. The source computes the fractional coordinate before choosing the positive or non-positive branch.',
           },
           {
-            expression:
-              'j=\\begin{cases}x&t_{\\max x}<t_{\\max y}\\ \\land\\ t_{\\max x}<t_{\\max z}\\\\y&t_{\\max y}<t_{\\max z}\\\\z&\\text{otherwise}\\end{cases},\\qquad c_j\\leftarrow c_j+\\sigma_j,\\quad t\\leftarrow t_{\\max j},\\quad t_{\\max j}\\leftarrow t_{\\max j}+\\Delta t_j,\\quad t\\le t_{\\max}',
+            expression: 'j=\\begin{cases}x&t_{\\max x}<t_{\\max y}\\ \\land\\ t_{\\max x}<t_{\\max z}\\\\y&t_{\\max y}<t_{\\max z}\\\\z&\\text{otherwise}\\end{cases},\\qquad c_j\\leftarrow c_j+\\sigma_j,\\quad t\\leftarrow t_{\\max j},\\quad t_{\\max j}\\leftarrow t_{\\max j}+\\Delta t_j,\\quad t\\le t_{\\max}',
             displayMode: true,
             caption: 'The exact branch order, recurrence, and `while t <= t_max` bound in `dda_grid_traverse`. The final z branch resolves ties.',
           },
           {
-            expression:
-              'F_x=\\begin{cases}1&\\sigma_x>0\\\\0&\\sigma_x\\le0\\end{cases},\\quad F_y=\\begin{cases}3&\\sigma_y>0\\\\2&\\sigma_y\\le0\\end{cases},\\quad F_z=\\begin{cases}5&\\sigma_z>0\\\\4&\\sigma_z\\le0\\end{cases}',
+            expression: 'F_x=\\begin{cases}1&\\sigma_x>0\\\\0&\\sigma_x\\le0\\end{cases},\\quad F_y=\\begin{cases}3&\\sigma_y>0\\\\2&\\sigma_y\\le0\\end{cases},\\quad F_z=\\begin{cases}5&\\sigma_z>0\\\\4&\\sigma_z\\le0\\end{cases}',
             displayMode: true,
             caption: 'The `enter_face` emitted after each crossed axis in `dda_grid_traverse`; the integer remains a face identifier for the picker, not a block-action decision.',
           },
@@ -106,8 +98,7 @@ class InteractionService:
           {
             expression: '\\delta(0)=-\\delta(1),\\qquad \\delta(2)=-\\delta(3),\\qquad \\delta(4)=-\\delta(5)',
             displayMode: true,
-            caption:
-              'The opposite signed-axis pairing follows directly from the six offsets in `src/ludoxel/foundations/mathematics/voxels/faces.py`. The module exposes that mapping, not a separate `opposite_face` function.',
+            caption: 'The opposite signed-axis pairing follows directly from the six offsets in `src/ludoxel/foundations/mathematics/voxels/faces.py`. The module exposes that mapping, not a separate `opposite_face` function.',
           },
         ],
         codeBlocks: [
@@ -360,8 +351,7 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
     subcategory: 'My World Building',
     group: 'Block Construction',
     title: 'Understanding Block Shapes',
-    description:
-      'Explains how non-cube block models produce different collision, pick, and render geometry: slabs, stairs, fences, fence gates, and walls each build their own boxes in sixteenth-of-a-block units, and structural blocks are raised to a tall hull for collision and picking.',
+    description: 'Explains how non-cube block models produce different collision, pick, and render geometry: slabs, stairs, fences, fence gates, and walls each build their own boxes in sixteenth-of-a-block units, and structural blocks are raised to a tall hull for collision and picking.',
     sections: [
       {
         id: 'understanding-block-shapes-kinds',
@@ -493,11 +483,9 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
         ],
         mathBlocks: [
           {
-            expression:
-              'Q_{16}(v) = \\mathrm{clamp}\\bigl(\\operatorname{round}(16v),\\, 0,\\, 16\\bigr), \\qquad \\text{full top} \\iff \\bigcup_{b\\,:\\,b_y^{\\max} \\ge 1-\\epsilon} \\bigl[Q_{16}(b_{x_0}), Q_{16}(b_{x_1})\\bigr) \\times \\bigl[Q_{16}(b_{z_0}), Q_{16}(b_{z_1})\\bigr) = \\{0,\\dots,15\\}^2',
+            expression: 'Q_{16}(v) = \\mathrm{clamp}\\bigl(\\operatorname{round}(16v),\\, 0,\\, 16\\bigr), \\qquad \\text{full top} \\iff \\bigcup_{b\\,:\\,b_y^{\\max} \\ge 1-\\epsilon} \\bigl[Q_{16}(b_{x_0}), Q_{16}(b_{x_1})\\bigr) \\times \\bigl[Q_{16}(b_{z_0}), Q_{16}(b_{z_1})\\bigr) = \\{0,\\dots,15\\}^2',
             displayMode: true,
-            caption:
-              'The full-top query in src/ludoxel/simulation/blocks/models/api.py snaps each render box to a sixteenth-of-a-block lattice and accepts the surface only when full-height boxes cover every one of the 16×16 cells; the same one-sixteenth grid measures all block-model extents.',
+            caption: 'The full-top query in src/ludoxel/simulation/blocks/models/api.py snaps each render box to a sixteenth-of-a-block lattice and accepts the surface only when full-height boxes cover every one of the 16×16 cells; the same one-sixteenth grid measures all block-model extents.',
           },
         ],
         codeBlocks: [
@@ -521,8 +509,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
     subcategory: 'My World Building',
     group: 'Placement and Hazards',
     title: 'Reading Placement Rejection',
-    description:
-      'Helps interpret why a placement did not change the world. Placement can be rejected for a missing or unplaceable item, a missing target, an invalid slab merge, an occupied cell, or an intersection with the player, and each rejection returns a failed outcome without editing the world.',
+    description: 'Helps interpret why a placement did not change the world. Placement can be rejected for a missing or unplaceable item, a missing target, an invalid slab merge, an occupied cell, or an intersection with the player, and each rejection returns a failed outcome without editing the world.',
     sections: [
       {
         id: 'reading-placement-rejection-empty-or-unregistered',
@@ -687,8 +674,7 @@ if place is not None and place in world.blocks:
     subcategory: 'My World Building',
     group: 'Placement and Hazards',
     title: 'Surviving Fall and Void Hazards',
-    description:
-      'Explains the two environmental damage sources in survival play: fall damage past a three-block safe distance, computed from the airborne start height on landing, and void damage that ticks a fixed amount on a fixed interval below the void threshold depth.',
+    description: 'Explains the two environmental damage sources in survival play: fall damage past a three-block safe distance, computed from the airborne start height on landing, and void damage that ticks a fixed amount on a fixed interval below the void threshold depth.',
     sections: [
       {
         id: 'surviving-fall-and-void-hazards-airborne-tracking',
@@ -722,11 +708,9 @@ if bool(landed_now):
         ],
         mathBlocks: [
           {
-            expression:
-              '\\mathrm{dmg}(d) = \\begin{cases} 0 & d \\le d_{\\mathrm{safe}} \\\\[2pt] \\lceil\\, d - d_{\\mathrm{safe}} \\,\\rceil & d > d_{\\mathrm{safe}} \\end{cases}, \\qquad d_{\\mathrm{safe}} = 3',
+            expression: '\\mathrm{dmg}(d) = \\begin{cases} 0 & d \\le d_{\\mathrm{safe}} \\\\[2pt] \\lceil\\, d - d_{\\mathrm{safe}} \\,\\rceil & d > d_{\\mathrm{safe}} \\end{cases}, \\qquad d_{\\mathrm{safe}} = 3',
             displayMode: true,
-            caption:
-              'fall_damage_amount in src/ludoxel/simulation/actors/player/kinematics.py, with FALL_DAMAGE_SAFE_DISTANCE_BLOCKS fixed at three blocks; the ceiling makes every excess block a whole point.',
+            caption: 'fall_damage_amount in src/ludoxel/simulation/actors/player/kinematics.py, with FALL_DAMAGE_SAFE_DISTANCE_BLOCKS fixed at three blocks; the ceiling makes every excess block a whole point.',
           },
         ],
         codeBlocks: [
@@ -779,8 +763,7 @@ def apply_void_damage(*, player, dt, timer_s):
           {
             expression: 'n = \\left\\lfloor \\frac{t + \\Delta t}{T} \\right\\rfloor, \\qquad \\mathrm{damage} = A\\,n, \\qquad t_{\\mathrm{next}} = (t + \\Delta t) - T\\,n',
             displayMode: true,
-            caption:
-              'apply_void_damage in src/ludoxel/simulation/actors/player/damage.py drains the accumulator in whole intervals: VOID_DAMAGE_INTERVAL_S sets the period T = 0.5 s, VOID_DAMAGE_AMOUNT sets A = 4 per tick (bypassing the hurt cooldown), and the sub-interval remainder is carried to the next step.',
+            caption: 'apply_void_damage in src/ludoxel/simulation/actors/player/damage.py drains the accumulator in whole intervals: VOID_DAMAGE_INTERVAL_S sets the period T = 0.5 s, VOID_DAMAGE_AMOUNT sets A = 4 per tick (bypassing the hurt cooldown), and the sub-interval remainder is carried to the next step.',
           },
         ],
         codeBlocks: [
@@ -820,8 +803,7 @@ return (float(damage_taken), max(0.0, float(remaining)))`,
     subcategory: 'AI NPC Combat',
     group: 'NPC Lifecycle',
     title: 'Spawning AI NPCs',
-    description:
-      'Explains the state created when an AI NPC is added to a world: a spawn egg supplies normalized settings, the manager allocates a live actor id, checks that the spawn position is clear, and builds a runtime actor with its own player body, behavior mode, and personality.',
+    description: 'Explains the state created when an AI NPC is added to a world: a spawn egg supplies normalized settings, the manager allocates a live actor id, checks that the spawn position is clear, and builds a runtime actor with its own player body, behavior mode, and personality.',
     sections: [
       {
         id: 'spawning-ai-npcs-egg-settings',
@@ -954,8 +936,7 @@ actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=inte
     subcategory: 'AI NPC Combat',
     group: 'NPC Lifecycle',
     title: 'Reading AI Nametags and Health',
-    description:
-      'Explains the world-space AI nametag and health indicator: a pooled tag widget composites the name and a pixel-heart strip into one image, places it above each AI scaled by distance, and shows health above, below, or not at all according to the AI settings.',
+    description: 'Explains the world-space AI nametag and health indicator: a pooled tag widget composites the name and a pixel-heart strip into one image, places it above each AI scaled by distance, and shows health above, below, or not at all according to the AI settings.',
     sections: [
       {
         id: 'reading-ai-nametags-and-health-pool',
@@ -1017,11 +998,9 @@ elif hearts_visible:
         ],
         mathBlocks: [
           {
-            expression:
-              'N = \\max\\!\\bigl(1,\\ \\bigl\\lceil \\tfrac{1}{2}\\max(2, H_{\\max}) \\bigr\\rceil\\bigr), \\qquad F = \\tfrac{1}{2}\\,\\mathrm{clamp}\\bigl(H,\\, 0,\\, \\max(2, H_{\\max})\\bigr)',
+            expression: 'N = \\max\\!\\bigl(1,\\ \\bigl\\lceil \\tfrac{1}{2}\\max(2, H_{\\max}) \\bigr\\rceil\\bigr), \\qquad F = \\tfrac{1}{2}\\,\\mathrm{clamp}\\bigl(H,\\, 0,\\, \\max(2, H_{\\max})\\bigr)',
             displayMode: true,
-            caption:
-              '_heart_count and _paint_heart_strip in src/ludoxel/presentation/interface/hud/ai_status_tags.py: the strip draws N hearts at one heart per two maximum-health points, and the fractional fill F lets a heart render half-full.',
+            caption: '_heart_count and _paint_heart_strip in src/ludoxel/presentation/interface/hud/ai_status_tags.py: the strip draws N hearts at one heart per two maximum-health points, and the fractional fill F lets a heart render half-full.',
           },
         ],
         codeBlocks: [
@@ -1090,8 +1069,7 @@ display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._dis
     subcategory: 'AI NPC Combat',
     group: 'NPC Actions',
     title: 'Understanding AI Combat',
-    description:
-      'Describes how aggressive AI fights: it turns toward the target, closes distance, strafes, and times short engagement taps, then applies melee damage with a cooldown and knockback. Peaceful AI avoids the combat role, and damage and defeat are resolved in simulation state.',
+    description: 'Describes how aggressive AI fights: it turns toward the target, closes distance, strafes, and times short engagement taps, then applies melee damage with a cooldown and knockback. Peaceful AI avoids the combat role, and damage and defeat are resolved in simulation state.',
     sections: [
       {
         id: 'understanding-ai-combat-personality-gate',
@@ -1110,11 +1088,9 @@ display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._dis
         ],
         mathBlocks: [
           {
-            expression:
-              '\\mathrm{move}_f(\\varepsilon) = \\begin{cases} 1.00 & \\varepsilon \\le 12^{\\circ} \\\\[1pt] 0.85 & 12^{\\circ} < \\varepsilon \\le 24^{\\circ} \\\\[1pt] 0.45 & 24^{\\circ} < \\varepsilon \\le 42^{\\circ} \\\\[1pt] 0.00 & \\varepsilon > 42^{\\circ} \\end{cases}',
+            expression: '\\mathrm{move}_f(\\varepsilon) = \\begin{cases} 1.00 & \\varepsilon \\le 12^{\\circ} \\\\[1pt] 0.85 & 12^{\\circ} < \\varepsilon \\le 24^{\\circ} \\\\[1pt] 0.45 & 24^{\\circ} < \\varepsilon \\le 42^{\\circ} \\\\[1pt] 0.00 & \\varepsilon > 42^{\\circ} \\end{cases}',
             displayMode: true,
-            caption:
-              'The combat controller in src/ludoxel/simulation/actors/ai_players/combat.py gates the forward component on the absolute yaw error ε = |abs_error_deg|, so the actor only commits full speed once it is nearly aligned.',
+            caption: 'The combat controller in src/ludoxel/simulation/actors/ai_players/combat.py gates the forward component on the absolute yaw error ε = |abs_error_deg|, so the actor only commits full speed once it is nearly aligned.',
           },
         ],
         codeBlocks: [
@@ -1141,11 +1117,9 @@ else:
         ],
         mathBlocks: [
           {
-            expression:
-              's = \\begin{cases} \\sigma\\,M & \\tau_s > 0 \\;\\wedge\\; d_{xz} \\in [d_{\\min}, d_{\\max}] \\;\\wedge\\; \\varepsilon \\le 18^{\\circ} \\\\[2pt] 0 & \\text{otherwise} \\end{cases}, \\quad d_{\\min}=1.45,\\ d_{\\max}=2.75,\\ M=0.18',
+            expression: 's = \\begin{cases} \\sigma\\,M & \\tau_s > 0 \\;\\wedge\\; d_{xz} \\in [d_{\\min}, d_{\\max}] \\;\\wedge\\; \\varepsilon \\le 18^{\\circ} \\\\[2pt] 0 & \\text{otherwise} \\end{cases}, \\quad d_{\\min}=1.45,\\ d_{\\max}=2.75,\\ M=0.18',
             displayMode: true,
-            caption:
-              'src/ludoxel/simulation/actors/ai_players/combat.py with constants from runtime.py: the strafe magnitude M is signed by σ = sign(combat_strafe_sign) and admitted only inside the [d_min, d_max] window while a strafe timer τ_s is active and the yaw error ε stays small.',
+            caption: 'src/ludoxel/simulation/actors/ai_players/combat.py with constants from runtime.py: the strafe magnitude M is signed by σ = sign(combat_strafe_sign) and admitted only inside the [d_min, d_max] window while a strafe timer τ_s is active and the yaw error ε stays small.',
           },
         ],
         codeBlocks: [
@@ -1205,8 +1179,7 @@ MELEE_HURT_TILT_S = 0.18`,
         ],
         mathBlocks: [
           {
-            expression:
-              '\\begin{aligned} s_{kb} &= v_h + [\\,\\mathrm{sprint}\\,]\\,v_h^{+} \\\\[2pt] (v_x, v_z) &= \\tfrac{1}{2}\\,(v_x^{t}, v_z^{t}) + s_{kb}\\,\\hat{\\mathbf{h}} \\\\[2pt] v_y &= \\min\\!\\bigl(v_v,\\ \\max(0,\\ \\tfrac{1}{2} v_y^{t}) + v_v\\bigr) \\end{aligned}',
+            expression: '\\begin{aligned} s_{kb} &= v_h + [\\,\\mathrm{sprint}\\,]\\,v_h^{+} \\\\[2pt] (v_x, v_z) &= \\tfrac{1}{2}\\,(v_x^{t}, v_z^{t}) + s_{kb}\\,\\hat{\\mathbf{h}} \\\\[2pt] v_y &= \\min\\!\\bigl(v_v,\\ \\max(0,\\ \\tfrac{1}{2} v_y^{t}) + v_v\\bigr) \\end{aligned}',
             displayMode: true,
             caption:
               'apply_melee_knockback in src/ludoxel/simulation/actors/player/damage.py: ĥ is the normalized horizontal attack direction, the target keeps half its prior velocity, the horizontal push is v_h = 8.0 with a sprint bonus v_h⁺ = 10.0 (0.40 and 0.50 times the 20 Hz tick base), and the vertical push v_v = 8.0 applies only when the target is grounded.',
@@ -1372,8 +1345,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
     subcategory: 'Othello Play',
     group: 'Match Turns',
     title: 'Starting an Othello Match',
-    description:
-      'Explains the state initialized for a playable Othello match: the controller builds the standard four-disc opening, assigns sides from settings, sets the clocks, and resolves the first turn so legal moves are ready. Othello is its own play space with its own persisted state.',
+    description: 'Explains the state initialized for a playable Othello match: the controller builds the standard four-disc opening, assigns sides from settings, sets the clocks, and resolves the first turn so legal moves are ready. Othello is its own play space with its own persisted state.',
     sections: [
       {
         id: 'starting-an-othello-match-initial-board',
@@ -1386,8 +1358,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
           {
             expression: 'i = S\\,r + c, \\qquad (r, c) = \\bigl(\\lfloor i / S \\rfloor,\\ i \\bmod S\\bigr), \\qquad S = \\sqrt{64} = 8',
             displayMode: true,
-            caption:
-              'row_col_to_index and index_to_row_col in src/ludoxel/simulation/spaces/othello/game/board.py flatten the 8×8 grid (S = BOARD_SIZE = isqrt(BOARD_CELL_COUNT)); the opening sets indices (3,3) and (4,4) white and (3,4) and (4,3) black.',
+            caption: 'row_col_to_index and index_to_row_col in src/ludoxel/simulation/spaces/othello/game/board.py flatten the 8×8 grid (S = BOARD_SIZE = isqrt(BOARD_CELL_COUNT)); the opening sets indices (3,3) and (4,4) white and (3,4) and (4,3) black.',
           },
         ],
         codeBlocks: [
@@ -1499,8 +1470,7 @@ if legal_moves:
     subcategory: 'Othello Play',
     group: 'Match Turns',
     title: 'Placing an Othello Move',
-    description:
-      'Explains how a player move is accepted on the board: it must be the player turn and a legal square, the move flips captured lines in the eight directions, and the controller then schedules flip animations and advances the turn, pass, or finished state.',
+    description: 'Explains how a player move is accepted on the board: it must be the player turn and a legal square, the move flips captured lines in the eight directions, and the controller then schedules flip animations and advances the turn, pass, or finished state.',
     sections: [
       {
         id: 'placing-an-othello-move-gate',
@@ -1633,8 +1603,7 @@ if not animations:
     subcategory: 'Othello Play',
     group: 'Match Outcomes',
     title: 'Understanding Othello AI Turns',
-    description:
-      'Describes how the AI move is chosen and applied: on an AI turn the controller requests a move from the configured engine, applies it through the same move rule as a player, and falls back to a legal move if the engine result is missing or illegal so the state stays valid.',
+    description: 'Describes how the AI move is chosen and applied: on an AI turn the controller requests a move from the configured engine, applies it through the same move rule as a player, and falls back to a legal move if the engine result is missing or illegal so the state stays valid.',
     sections: [
       {
         id: 'understanding-othello-ai-turns-request',
@@ -1740,8 +1709,7 @@ if other_legal_moves:
     subcategory: 'Othello Play',
     group: 'Match Outcomes',
     title: 'Reading Match Results',
-    description:
-      'Explains how an Othello result is determined: the match finishes when neither side can move or a clock runs out, the winner is decided by disc counts with ties producing a draw, and the controller records the status, winner, message, and counts in the saved state.',
+    description: 'Explains how an Othello result is determined: the match finishes when neither side can move or a clock runs out, the winner is decided by disc counts with ties producing a draw, and the controller records the status, winner, message, and counts in the saved state.',
     sections: [
       {
         id: 'reading-match-results-terminal',
@@ -1770,11 +1738,9 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         ],
         mathBlocks: [
           {
-            expression:
-              'B = \\bigl|\\{\\, i : \\mathrm{board}[i] = \\mathrm{black} \\,\\}\\bigr|, \\quad W = \\bigl|\\{\\, i : \\mathrm{board}[i] = \\mathrm{white} \\,\\}\\bigr|, \\qquad w = \\begin{cases} \\mathrm{black} & B > W \\\\[1pt] \\mathrm{white} & W > B \\\\[1pt] \\mathrm{draw} & B = W \\end{cases}',
+            expression: 'B = \\bigl|\\{\\, i : \\mathrm{board}[i] = \\mathrm{black} \\,\\}\\bigr|, \\quad W = \\bigl|\\{\\, i : \\mathrm{board}[i] = \\mathrm{white} \\,\\}\\bigr|, \\qquad w = \\begin{cases} \\mathrm{black} & B > W \\\\[1pt] \\mathrm{white} & W > B \\\\[1pt] \\mathrm{draw} & B = W \\end{cases}',
             displayMode: true,
-            caption:
-              'winner_for_board over counts_for_board in src/ludoxel/simulation/spaces/othello/game/board.py decides the result purely by disc tally with no positional tiebreak, so an equal count is a draw.',
+            caption: 'winner_for_board over counts_for_board in src/ludoxel/simulation/spaces/othello/game/board.py decides the result purely by disc tally with no positional tiebreak, so an equal count is a draw.',
           },
         ],
         codeBlocks: [
@@ -1863,8 +1829,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
     subcategory: 'Chat Commands',
     group: 'Player Commands',
     title: 'Using Teleport and Game Mode Commands',
-    description:
-      'Defines what the /teleport and /tp aliases and the /gamemode chat command change in player and game state, how teleport moves the local player in My World and the Othello play space, how facing resolves a look direction, and how game mode applies through the shared simulation operation.',
+    description: 'Defines what the /teleport and /tp aliases and the /gamemode chat command change in player and game state, how teleport moves the local player in My World and the Othello play space, how facing resolves a look direction, and how game mode applies through the shared simulation operation.',
     sections: [
       {
         id: 'commands-teleport-effect',
@@ -1912,8 +1877,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
     subcategory: 'My World Building',
     group: 'World Generation',
     title: 'Creating Seeded My Worlds',
-    description:
-      'Defines Create New World generation-mode and seed selection, the deterministic normal-mode terrain and its ravines and strata, explicit flat mode, the spawn search, and the edit-delta state transitions over base terrain.',
+    description: 'Defines Create New World generation-mode and seed selection, the deterministic normal-mode terrain and its ravines and strata, explicit flat mode, the spawn search, and the edit-delta state transitions over base terrain.',
     sections: [
       {
         id: 'creating-seeded-my-worlds-create-form',

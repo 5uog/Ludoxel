@@ -28,17 +28,7 @@ def _fallback_cache() -> InsaneSearchCache:
 
 
 def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int, project_root: str, sacrifice_level: int, hash_level: int) -> int | None:
-  return choose_ai_move(
-    board,
-    side,
-    difficulty,
-    random_seed=int(seed),
-    project_root=str(project_root),
-    match_generation=int(generation),
-    insane_cache=_process_cache(),
-    sacrifice_level=int(sacrifice_level),
-    hash_level=int(hash_level),
-  )
+  return choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_process_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
 
 
 def _compute_analysis(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int, project_root: str, sacrifice_level: int, hash_level: int):
@@ -66,9 +56,7 @@ def _push_book_learning_progress(progress_queue, payload: dict[str, object]) -> 
     pass
 
 
-def _compute_book_learning(
-  depth: int, per_move_error: float, cumulative_error: float, leaf_error: float, project_root: str, hash_level: int, sacrifice_level: int, progress_queue, cancel_event, storage_initializer=None
-) -> BookLearningResult:
+def _compute_book_learning(depth: int, per_move_error: float, cumulative_error: float, leaf_error: float, project_root: str, hash_level: int, sacrifice_level: int, progress_queue, cancel_event, storage_initializer=None) -> BookLearningResult:
   if callable(storage_initializer):
     storage_initializer()
 
@@ -83,14 +71,4 @@ def _compute_book_learning(
     except Exception:
       return False
 
-  return learn_opening_book(
-    depth=int(depth),
-    per_move_error=float(per_move_error),
-    cumulative_error=float(cumulative_error),
-    leaf_error=float(leaf_error),
-    project_root=str(project_root),
-    hash_level=int(hash_level),
-    sacrifice_level=int(sacrifice_level),
-    progress_sink=progress_sink,
-    cancel_check=cancel_check,
-  )
+  return learn_opening_book(depth=int(depth), per_move_error=float(per_move_error), cumulative_error=float(cumulative_error), leaf_error=float(leaf_error), project_root=str(project_root), hash_level=int(hash_level), sacrifice_level=int(sacrifice_level), progress_sink=progress_sink, cancel_check=cancel_check)

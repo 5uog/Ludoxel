@@ -26,16 +26,7 @@ export function renderCheckHelp(checkName, language = 'ja') {
   const messages = checkHelpMessagesFor(language);
   const description = messages.descriptions[checkName] || checkName;
 
-  return lines([
-    `${messages.titlePrefix}: ${checkName}`,
-    '',
-    section(messages.labels.purpose, `  ${description}`),
-    '',
-    section(messages.labels.options, renderIndentedLines(messages.options)),
-    '',
-    section(messages.labels.synopsis, `  npm run ${usageScriptFor(checkName)} -- [options]`),
-    '',
-  ]);
+  return lines([`${messages.titlePrefix}: ${checkName}`, '', section(messages.labels.purpose, `  ${description}`), '', section(messages.labels.options, renderIndentedLines(messages.options)), '', section(messages.labels.synopsis, `  npm run ${usageScriptFor(checkName)} -- [options]`), '']);
 }
 
 export function renderCheckErrors(errors, checkName, language = 'ja') {

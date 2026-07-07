@@ -59,22 +59,7 @@ class SessionStepResult:
   ai_block_sound_events: tuple[AiBlockSoundEvent, ...] = ()
 
 
-def step_session(
-  session,
-  *,
-  dt: float,
-  move_f: float,
-  move_s: float,
-  jump_held: bool,
-  jump_pressed: bool,
-  sprint: bool,
-  crouch: bool,
-  mdx: float,
-  mdy: float,
-  creative_mode: bool,
-  auto_jump_enabled: bool,
-  paused_ai_actor_ids: tuple[str, ...] = (),
-) -> SessionStepResult:
+def step_session(session, *, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool, paused_ai_actor_ids: tuple[str, ...] = ()) -> SessionStepResult:
   session._sim_time_s += float(dt)
   gravity_result = session.gravity.step(session.world, float(dt), player=session.player)
   yaw_delta = (-float(mdx)) * float(session.settings.mouse_sens_deg_per_px)
@@ -89,17 +74,7 @@ def step_session(
     settings=session.settings,
     motion=session._player_motion,
     dt=float(dt),
-    control=PlayerStepInput(
-      move_f=float(move_f),
-      move_s=float(move_s),
-      jump_held=bool(jump_held),
-      jump_pressed=bool(jump_pressed),
-      sprint=bool(sprint),
-      crouch=bool(crouch),
-      yaw_delta_deg=float(yaw_delta),
-      pitch_delta_deg=float(pitch_delta),
-      auto_jump_enabled=bool(auto_jump_enabled),
-    ),
+    control=PlayerStepInput(move_f=float(move_f), move_s=float(move_s), jump_held=bool(jump_held), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), yaw_delta_deg=float(yaw_delta), pitch_delta_deg=float(pitch_delta), auto_jump_enabled=bool(auto_jump_enabled)),
   )
 
   fall_damage = 0.0
@@ -109,9 +84,7 @@ def step_session(
     void_damage, session._void_damage_timer_s = apply_void_damage(player=session.player, dt=float(dt), timer_s=float(session._void_damage_timer_s))
   else:
     session._void_damage_timer_s = 0.0
-  ai_report = session.ai_players.step(
-    dt=float(dt), target_player=session.player, allow_pvp=(not bool(creative_mode)), paused_actor_ids=tuple(str(actor_id) for actor_id in paused_ai_actor_ids), learning=session.learning
-  )
+  ai_report = session.ai_players.step(dt=float(dt), target_player=session.player, allow_pvp=(not bool(creative_mode)), paused_actor_ids=tuple(str(actor_id) for actor_id in paused_ai_actor_ids), learning=session.learning)
   if session.learning.recording():
     movement_action = _player_movement_action(move_f=float(move_f), move_s=float(move_s), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch))
     if movement_action is not None:
@@ -119,9 +92,7 @@ def step_session(
   fall_damage_applied = bool(float(fall_damage) > 1e-6)
   damage_taken = float(fall_damage) + float(void_damage) + float(ai_report.player_damage_taken)
   play_damage_sound = bool(fall_damage_applied or float(void_damage) > 1e-6 or float(ai_report.player_damage_taken) > 1e-6)
-  session._player_regen_wait_s = advance_player_regeneration(
-    player=session.player, params=session.settings.player_regen, dt=float(dt), wait_s=float(session._player_regen_wait_s), took_damage=bool(float(damage_taken) > 1e-6)
-  )
+  session._player_regen_wait_s = advance_player_regeneration(player=session.player, params=session.settings.player_regen, dt=float(dt), wait_s=float(session._player_regen_wait_s), took_damage=bool(float(damage_taken) > 1e-6))
   play_landing_sound = bool(step_result.landed) and (not fall_damage_applied)
 
   death_reason: str | None = None

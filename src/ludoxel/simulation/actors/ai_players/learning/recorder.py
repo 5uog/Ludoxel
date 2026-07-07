@@ -30,18 +30,7 @@ class DemonstrationRecorder:
   def captures(self, kind: str) -> bool:
     return bool(self._enabled) and str(kind) in self._captured_kinds
 
-  def record(
-    self,
-    *,
-    kind: str,
-    observation: AiObservation | dict[str, Any] | None = None,
-    action: str | None = None,
-    success: bool | None = None,
-    reward: float | None = None,
-    tick: int = 0,
-    actor_id: str = "",
-    detail: dict[str, Any] | None = None,
-  ) -> bool:
+  def record(self, *, kind: str, observation: AiObservation | dict[str, Any] | None = None, action: str | None = None, success: bool | None = None, reward: float | None = None, tick: int = 0, actor_id: str = "", detail: dict[str, Any] | None = None) -> bool:
     if not self.captures(kind):
       return False
     observation_dict: dict[str, Any]
@@ -51,16 +40,7 @@ class DemonstrationRecorder:
       observation_dict = dict(observation)
     else:
       observation_dict = {}
-    entry = DemonstrationRecord(
-      kind=str(kind),
-      tick=int(tick),
-      actor_id=str(actor_id),
-      observation=observation_dict,
-      action=(None if action is None else str(action)),
-      success=(None if success is None else bool(success)),
-      reward=(None if reward is None else float(reward)),
-      detail=dict(detail or {}),
-    )
+    entry = DemonstrationRecord(kind=str(kind), tick=int(tick), actor_id=str(actor_id), observation=observation_dict, action=(None if action is None else str(action)), success=(None if success is None else bool(success)), reward=(None if reward is None else float(reward)), detail=dict(detail or {}))
     if len(self._buffer) >= int(_MAX_BUFFER):
       del self._buffer[0]
     self._buffer.append(entry)

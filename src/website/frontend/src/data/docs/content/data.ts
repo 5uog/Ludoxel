@@ -163,8 +163,7 @@ def _app_store(self) -> JsonFileStore:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'A resolved data path establishes runtime placement. Legal permission, release status, support eligibility, and disclosure treatment remain governed by their respective legal and policy sources.',
+              content: 'A resolved data path establishes runtime placement. Legal permission, release status, support eligibility, and disclosure treatment remain governed by their respective legal and policy sources.',
             },
           },
         ],
@@ -290,8 +289,7 @@ def runtime_cache_root(data_root: Path) -> Path:
     subcategory: 'Local and Saved Data',
     group: 'User Data Location',
     title: 'Cleaning Local User Data Safely',
-    description:
-      'Defines cleanup as an operation against the active runtime data root, separating primary state deletion, rebuildable cache deletion, integrity-manifest effects, and unrelated build-artifact cleanup.',
+    description: 'Defines cleanup as an operation against the active runtime data root, separating primary state deletion, rebuildable cache deletion, integrity-manifest effects, and unrelated build-artifact cleanup.',
     sections: [
       {
         id: 'cleaning-local-user-data-active-target',
@@ -408,8 +406,7 @@ class PersistedAppFile:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Deleting runtime state and deleting integrity material are different operations. A cleanup instruction that does not distinguish the state file, manifest, and key can destroy evidence while leaving the application in a fallback state that conceals what was removed.',
+              content: 'Deleting runtime state and deleting integrity material are different operations. A cleanup instruction that does not distinguish the state file, manifest, and key can destroy evidence while leaving the application in a fallback state that conceals what was removed.',
             },
           },
         ],
@@ -440,8 +437,7 @@ class PersistedAppFile:
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading Saved Preferences',
-    description:
-      'Defines saved preferences through the player-state envelope, `PersistedSettings`, audio vectors, cloud ranges, keybind canonicalization, runtime projection, shadow quality normalization, legacy key migration, and integrity failure.',
+    description: 'Defines saved preferences through the player-state envelope, `PersistedSettings`, audio vectors, cloud ranges, keybind canonicalization, runtime projection, shadow quality normalization, legacy key migration, and integrity failure.',
     sections: [
       {
         id: 'reading-saved-preferences-envelope',
@@ -858,8 +854,7 @@ finally:
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading Saved World State',
-    description:
-      'Defines saved world state through the world-state envelope, play-space composition, explicit block rows, revision semantics, corruption skipping, migration behavior, and material-classification limits.',
+    description: 'Defines saved world state through the world-state envelope, play-space composition, explicit block rows, revision semantics, corruption skipping, migration behavior, and material-classification limits.',
     sections: [
       {
         id: 'reading-saved-world-state-envelope',
@@ -1050,8 +1045,7 @@ if isinstance(placed_raw, list):
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading the My World Library',
-    description:
-      'Defines the My World library through its index file, the per-world `.ldxworld` packages, world metadata and game mode, bundled thumbnail capture, active-world routing, and the validated Ludoxel world package format used for storage, export, and import.',
+    description: 'Defines the My World library through its index file, the per-world `.ldxworld` packages, world metadata and game mode, bundled thumbnail capture, active-world routing, and the validated Ludoxel world package format used for storage, export, and import.',
     sections: [
       {
         id: 'reading-the-my-world-library-index-and-entries',
@@ -1163,8 +1157,7 @@ if isinstance(placed_raw, list):
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading Saved AI State',
-    description:
-      'Separates persisted AI actors, learning settings, demonstration datasets, learned policies, evaluation summaries, and training histories through the schema module that admits values and the store module that owns runtime files.',
+    description: 'Separates persisted AI actors, learning settings, demonstration datasets, learned policies, evaluation summaries, and training histories through the schema module that admits values and the store module that owns runtime files.',
     sections: [
       {
         id: 'reading-saved-ai-state-artifact-families',
@@ -1484,8 +1477,7 @@ def _load_compiled_opening_book_cache(project_root_key: str, _fingerprint: str) 
     subcategory: 'Learning and Material Data',
     group: 'Learning Artifacts',
     title: 'Reading Demonstration Data',
-    description:
-      'Defines demonstration data as append-only JSON Lines records with observations, actions, rewards, success flags, details, schema versioning, corrupt-line accounting, and training-evidence limits.',
+    description: 'Defines demonstration data as append-only JSON Lines records with observations, actions, rewards, success flags, details, schema versioning, corrupt-line accounting, and training-evidence limits.',
     sections: [
       {
         id: 'reading-demonstration-data-record-schema',
@@ -1827,8 +1819,7 @@ for row in rows:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not describe corrupt-row handling as data recovery. The implementation rejects invalid lines and preserves surrounding valid lines. It does not infer the missing observation, action, reward, success flag, or detail mapping.',
+              content: 'Do not describe corrupt-row handling as data recovery. The implementation rejects invalid lines and preserves surrounding valid lines. It does not infer the missing observation, action, reward, success flag, or detail mapping.',
             },
           },
           {
@@ -1947,8 +1938,7 @@ for row in rows:
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not collapse ordinary runtime output and build output into one category. A screenshot, a saved world, a JSON learning row, a Windows executable, and a Vercel static build are all generated in some sense, but they have different owners, retention rules, and authority consequences.',
+              content: 'Do not collapse ordinary runtime output and build output into one category. A screenshot, a saved world, a JSON learning row, a Windows executable, and a Vercel static build are all generated in some sense, but they have different owners, retention rules, and authority consequences.',
             },
           },
         ],
@@ -2064,8 +2054,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
     subcategory: 'Learning and Material Data',
     group: 'Output and Material Boundaries',
     title: 'Separating Original Materials from Output',
-    description:
-      'Separates repository-controlled originals, provenance-sensitive resources, third-party material, ordinary output, and build output by source path, resolver behavior, and embedded-material evidence.',
+    description: 'Separates repository-controlled originals, provenance-sensitive resources, third-party material, ordinary output, and build output by source path, resolver behavior, and embedded-material evidence.',
     sections: [
       {
         id: 'separating-original-materials-repository-material',
@@ -2163,8 +2152,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
     subcategory: 'Learning and Material Data',
     group: 'Output and Material Boundaries',
     title: 'Understanding Third Party Material Boundaries',
-    description:
-      'Defines third-party and provenance-sensitive boundaries through retained license text, dependency/resource categories, asset-family selection, repository presence, runtime loading, and output embedding.',
+    description: 'Defines third-party and provenance-sensitive boundaries through retained license text, dependency/resource categories, asset-family selection, repository presence, runtime loading, and output embedding.',
     sections: [
       {
         id: 'understanding-third-party-material-boundaries-retained-text',
@@ -2248,8 +2236,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Repository presence, runtime loading, output embedding, and notice inclusion are four different facts. None of them alone grants reuse authority over third-party or provenance-sensitive material.',
+              content: 'Repository presence, runtime loading, output embedding, and notice inclusion are four different facts. None of them alone grants reuse authority over third-party or provenance-sensitive material.',
             },
           },
         ],
@@ -2262,8 +2249,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
     subcategory: 'Local and Saved Data',
     group: 'Saved Runtime State',
     title: 'Reading World Generation Data',
-    description:
-      'Defines the persisted world generation spec, the placed and broken edit-delta rows, seed admission including the explicit zero seed, the version-2 world payload inside `.ldxworld` packages, and the legacy static-payload compatibility rule.',
+    description: 'Defines the persisted world generation spec, the placed and broken edit-delta rows, seed admission including the explicit zero seed, the version-2 world payload inside `.ldxworld` packages, and the legacy static-payload compatibility rule.',
     sections: [
       {
         id: 'reading-world-generation-data-spec-fields',
@@ -2303,7 +2289,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
   "version": 2,
   "generation": {"mode": "normal", "version": 1, "seed": 1, "flat_ground_y": 0},
   "revision": 42,
-  "placed": [[3, -5, 9, "minecraft:stone"]],
+  "placed": [[3, -5, 9, "ludoxel:stone"]],
   "broken": [[0, -6, 0]]
 }`,
           },

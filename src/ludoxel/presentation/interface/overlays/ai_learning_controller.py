@@ -140,15 +140,7 @@ class AiLearningController:
     records, corrupt = self._store.iter_demonstration_records(dataset_id)
     summary = self._store.dataset_summary(dataset_id)
     next_version = int(self._state.policy_version) + 1
-    result = TrainingService().train_from_player_data(
-      records,
-      policy_id=USER_PLAYER_POLICY_ID,
-      policy_name="User Learned Policy",
-      dataset_id=dataset_id,
-      dataset_size=int(summary.record_count),
-      policy_version=int(next_version),
-      corrupt_lines=int(corrupt),
-    )
+    result = TrainingService().train_from_player_data(records, policy_id=USER_PLAYER_POLICY_ID, policy_name="User Learned Policy", dataset_id=dataset_id, dataset_size=int(summary.record_count), policy_version=int(next_version), corrupt_lines=int(corrupt))
     run_id = f"train_player_{int(time.time())}"
     if result.policy is None:
       self._store.save_training_run(run_id, {**result.to_dict(), "mode": "train_from_player_data"})
@@ -164,14 +156,7 @@ class AiLearningController:
     self._last_evaluation_path = str(evaluation_path)
     next_settings = replace(self._state.settings, selected_policy_kind=POLICY_KIND_USER, selected_policy_id=str(result.policy.policy_id))
     self._save(next_settings, last_training_summary=result.to_dict(), last_evaluation_summary=report.to_dict(), policy_version=int(result.policy.policy_version))
-    return {
-      "status": str(result.status),
-      "message": str(result.message),
-      "policy_id": str(result.policy.policy_id),
-      "passed": bool(report.passed),
-      "policy_path": str(policy_path),
-      "evaluation_path": str(evaluation_path),
-    }
+    return {"status": str(result.status), "message": str(result.message), "policy_id": str(result.policy.policy_id), "passed": bool(report.passed), "policy_path": str(policy_path), "evaluation_path": str(evaluation_path)}
 
   def train_in_sandbox(self) -> dict[str, Any]:
     from ludoxel.simulation.actors.ai_players.learning.sandbox import train_in_sandbox as sandbox_train
@@ -187,22 +172,13 @@ class AiLearningController:
     evaluation = dict(result.policy.evaluation)
     policy_path = str(self._store.save_policy(result.policy.to_dict()))
     evaluation_path = str(self._store.save_evaluation(result.policy.policy_id, evaluation))
-    self._store.save_training_run(
-      run_id, {"status": str(result.status), "message": str(result.message), "mode": "train_in_sandbox", "summary": dict(result.summary), "task_results": list(result.task_results)}
-    )
+    self._store.save_training_run(run_id, {"status": str(result.status), "message": str(result.message), "mode": "train_in_sandbox", "summary": dict(result.summary), "task_results": list(result.task_results)})
     self._last_policy_path = str(policy_path)
     self._last_evaluation_path = str(evaluation_path)
     next_settings = replace(self._state.settings, selected_policy_kind=POLICY_KIND_USER, selected_policy_id=str(result.policy.policy_id))
     training_summary = {"status": str(result.status), "message": str(result.message), "policy_score": float(result.policy_score), "baseline_score": float(result.baseline_score)}
     self._save(next_settings, last_training_summary=training_summary, last_evaluation_summary=evaluation, policy_version=int(result.policy.policy_version))
-    return {
-      "status": str(result.status),
-      "message": str(result.message),
-      "policy_id": str(result.policy.policy_id),
-      "passed": bool(evaluation.get("passed", False)),
-      "policy_path": str(policy_path),
-      "evaluation_path": str(evaluation_path),
-    }
+    return {"status": str(result.status), "message": str(result.message), "policy_id": str(result.policy.policy_id), "passed": bool(evaluation.get("passed", False)), "policy_path": str(policy_path), "evaluation_path": str(evaluation_path)}
 
   def export_dataset(self, destination: str) -> int:
     written = self._store.export_dataset(self._state.settings.dataset_id, Path(destination))

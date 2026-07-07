@@ -13,17 +13,7 @@ from ludoxel.simulation.spaces.othello.engines.native import create_native_insan
 from ludoxel.simulation.spaces.othello.engines.ordering import ordered_moves
 from ludoxel.simulation.spaces.othello.engines.search import check_deadline, negamax, solve_exact
 from ludoxel.simulation.spaces.othello.engines.transposition import TranspositionEntry
-from ludoxel.simulation.spaces.othello.game.state import (
-  BOARD_CELL_COUNT,
-  DEFAULT_OTHELLO_HASH_LEVEL,
-  DEFAULT_OTHELLO_SACRIFICE_LEVEL,
-  SIDE_BLACK,
-  SIDE_WHITE,
-  coerce_board,
-  normalize_hash_level,
-  normalize_sacrifice_level,
-  normalize_side,
-)
+from ludoxel.simulation.spaces.othello.game.state import BOARD_CELL_COUNT, DEFAULT_OTHELLO_HASH_LEVEL, DEFAULT_OTHELLO_SACRIFICE_LEVEL, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_hash_level, normalize_sacrifice_level, normalize_side
 
 _EMPTY_OPENING_BOOK = OpeningBook(moves_by_key={})
 
@@ -84,12 +74,7 @@ class InsaneSearchCache:
     normalized_hash_level = normalize_hash_level(hash_level, default=DEFAULT_OTHELLO_HASH_LEVEL)
     normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=DEFAULT_OTHELLO_SACRIFICE_LEVEL)
     normalized_project_root_key = str(normalize_project_root(project_root))
-    changed = bool(
-      normalized_generation != int(self.generation)
-      or normalized_hash_level != int(self.hash_level)
-      or normalized_sacrifice_level != int(self.sacrifice_level)
-      or normalized_project_root_key != str(self.project_root_key)
-    )
+    changed = bool(normalized_generation != int(self.generation) or normalized_hash_level != int(self.hash_level) or normalized_sacrifice_level != int(self.sacrifice_level) or normalized_project_root_key != str(self.project_root_key))
 
     self.generation = int(normalized_generation)
     self.hash_level = int(normalized_hash_level)
@@ -148,9 +133,7 @@ def _remaining_budget_s(deadline_s: float | None) -> float | None:
   return max(0.0, float(deadline_s) - time.perf_counter())
 
 
-def _root_move_evaluations(
-  cache: InsaneSearchCache, player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], *, depth: int, deadline_s: float | None, exact: bool
-) -> tuple[InsaneMoveEvaluation, ...]:
+def _root_move_evaluations(cache: InsaneSearchCache, player_bits: int, opponent_bits: int, legal_moves: tuple[int, ...], *, depth: int, deadline_s: float | None, exact: bool) -> tuple[InsaneMoveEvaluation, ...]:
   evaluations: list[InsaneMoveEvaluation] = []
   native_search = cache.ensure_native_search()
   if native_search is not None:
@@ -207,14 +190,7 @@ def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, ra
     best_move_index = _choose_tied_best(move_evaluations, random_seed=int(random_seed))
     best_score = 0.0 if not move_evaluations else float(move_evaluations[0].score)
     depth_reached = max(1, int(empties))
-    return InsaneAnalysis(
-      best_move_index=best_move_index,
-      score=float(best_score),
-      solved=True,
-      depth_reached=int(depth_reached),
-      depth_samples=(InsaneDepthSample(depth=int(depth_reached), score=float(best_score), solved=True),),
-      move_evaluations=move_evaluations,
-    )
+    return InsaneAnalysis(best_move_index=best_move_index, score=float(best_score), solved=True, depth_reached=int(depth_reached), depth_samples=(InsaneDepthSample(depth=int(depth_reached), score=float(best_score), solved=True),), move_evaluations=move_evaluations)
 
   last_complete_evaluations: tuple[InsaneMoveEvaluation, ...] = ()
   depth_samples: list[InsaneDepthSample] = []
@@ -240,19 +216,10 @@ def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, ra
   best_score = 0.0 if not last_complete_evaluations else float(last_complete_evaluations[0].score)
   solved = bool(last_complete_evaluations and last_complete_evaluations[0].solved)
   depth_reached = max((int(sample.depth) for sample in depth_samples), default=0)
-  return InsaneAnalysis(
-    best_move_index=best_move_index,
-    score=float(best_score),
-    solved=bool(solved),
-    depth_reached=int(depth_reached),
-    depth_samples=tuple(depth_samples),
-    move_evaluations=tuple(last_complete_evaluations),
-  )
+  return InsaneAnalysis(best_move_index=best_move_index, score=float(best_score), solved=bool(solved), depth_reached=int(depth_reached), depth_samples=tuple(depth_samples), move_evaluations=tuple(last_complete_evaluations))
 
 
-def choose_insane_move(
-  board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = 4.0, cache: InsaneSearchCache | None = None, use_opening_book: bool = False
-) -> int | None:
+def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = 4.0, cache: InsaneSearchCache | None = None, use_opening_book: bool = False) -> int | None:
   materialized = coerce_board(board)
   normalized_side = normalize_side(side, default=SIDE_BLACK)
   if normalized_side not in (SIDE_BLACK, SIDE_WHITE):

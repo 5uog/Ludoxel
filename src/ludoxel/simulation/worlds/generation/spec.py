@@ -72,9 +72,7 @@ class WorldGenerationSpec:
   flat_ground_y: int = DEFAULT_FLAT_GROUND_Y
 
   def normalized(self) -> "WorldGenerationSpec":
-    return WorldGenerationSpec(
-      mode=normalize_generation_mode(self.mode), version=int(max(1, int(self.version))), seed=coerce_seed(self.seed, default=DEFAULT_SEED), flat_ground_y=int(self.flat_ground_y)
-    )
+    return WorldGenerationSpec(mode=normalize_generation_mode(self.mode), version=int(max(1, int(self.version))), seed=coerce_seed(self.seed, default=DEFAULT_SEED), flat_ground_y=int(self.flat_ground_y))
 
   def is_static(self) -> bool:
     return normalize_generation_mode(self.mode) == GENERATION_MODE_STATIC

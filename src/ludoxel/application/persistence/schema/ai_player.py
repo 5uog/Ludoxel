@@ -7,17 +7,7 @@ from typing import Any
 
 from ludoxel.application.persistence.schema.player import coerce_xyz_triplet
 from ludoxel.foundations.mathematics.scalars.coercion import coerce_bool, coerce_float, coerce_int, mapping_str
-from ludoxel.simulation.actors.ai_players.settings import (
-  AI_REGEN_DEFAULT_AMOUNT_HP,
-  AI_REGEN_DEFAULT_CAP_HP,
-  AI_REGEN_DEFAULT_ENABLED,
-  AI_REGEN_DEFAULT_INTERVAL_S,
-  AI_REGEN_DEFAULT_START_DELAY_S,
-  normalize_ai_regen_amount_hp,
-  normalize_ai_regen_cap_hp,
-  normalize_ai_regen_interval_s,
-  normalize_ai_regen_start_delay_s,
-)
+from ludoxel.simulation.actors.ai_players.settings import AI_REGEN_DEFAULT_AMOUNT_HP, AI_REGEN_DEFAULT_CAP_HP, AI_REGEN_DEFAULT_ENABLED, AI_REGEN_DEFAULT_INTERVAL_S, AI_REGEN_DEFAULT_START_DELAY_S, normalize_ai_regen_amount_hp, normalize_ai_regen_cap_hp, normalize_ai_regen_interval_s, normalize_ai_regen_start_delay_s
 from ludoxel.simulation.actors.ai_players.state import (
   AI_DEFAULT_HELD_ITEM_ID,
   AI_HEALTH_INDICATOR_ABOVE,

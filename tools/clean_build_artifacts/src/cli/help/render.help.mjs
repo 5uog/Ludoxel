@@ -23,19 +23,7 @@ function renderOptionRecords(records) {
 export function renderCleanHelp(language = 'ja') {
   const messages = cleanHelpMessagesFor(language);
 
-  return lines([
-    messages.title,
-    '',
-    messages.labels.purpose,
-    `  ${messages.purpose}`,
-    '',
-    messages.labels.synopsis,
-    renderIndentedLines(messages.synopsis),
-    '',
-    messages.labels.options,
-    renderOptionRecords(messages.options),
-    '',
-  ]);
+  return lines([messages.title, '', messages.labels.purpose, `  ${messages.purpose}`, '', messages.labels.synopsis, renderIndentedLines(messages.synopsis), '', messages.labels.options, renderOptionRecords(messages.options), '']);
 }
 
 export function renderCleanErrors(errors, language = 'ja') {

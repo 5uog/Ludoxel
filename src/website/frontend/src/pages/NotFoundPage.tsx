@@ -18,10 +18,7 @@ export default function NotFoundPage(): React.JSX.Element {
             <p className="text-muted-foreground max-w-2xl">The requested Ludoxel documentation page does not exist.</p>
           </div>
 
-          <Link
-            className="inline-flex items-center px-4 py-2 text-sm text-muted-foreground border border-border rounded-xl transition-colors hover:text-foreground hover:border-muted-foreground/50"
-            to="/"
-          >
+          <Link className="inline-flex items-center px-4 py-2 text-sm text-muted-foreground border border-border rounded-xl transition-colors hover:text-foreground hover:border-muted-foreground/50" to="/">
             Back to Home
           </Link>
         </div>

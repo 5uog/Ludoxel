@@ -29,12 +29,7 @@ class PersistedWorld:
   @staticmethod
   def from_world_state(world: WorldState, *, placed_override: dict[tuple[int, int, int], str] | None = None) -> "PersistedWorld":
     placed = placed_override if placed_override is not None else world.placed_snapshot()
-    return PersistedWorld(
-      generation=world.generation_spec(),
-      revision=int(world.revision),
-      placed_blocks={(int(k[0]), int(k[1]), int(k[2])): str(v) for k, v in placed.items()},
-      broken_cells=tuple(world.broken_snapshot()),
-    )
+    return PersistedWorld(generation=world.generation_spec(), revision=int(world.revision), placed_blocks={(int(k[0]), int(k[1]), int(k[2])): str(v) for k, v in placed.items()}, broken_cells=tuple(world.broken_snapshot()))
 
   def to_dict(self) -> dict[str, Any]:
     world = self.to_world_state()

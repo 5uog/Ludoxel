@@ -9,12 +9,7 @@ import numpy as np
 
 from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
-from ludoxel.simulation.spaces.othello.game.board import (
-  BOARD_SIZE as OTHELLO_BOARD_SIZE,
-  OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y,
-  OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y,
-  square_center,
-)
+from ludoxel.simulation.spaces.othello.game.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, square_center
 from ludoxel.simulation.spaces.othello.game.state import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side
 
 OTHELLO_SQUARE_SIZE: float = 1.0
@@ -169,11 +164,7 @@ def _build_othello_instance_rows_cached(render_state: OthelloRenderState) -> tup
       if end_angle <= start_angle:
         end_angle += 360.0
       angle_deg = float(start_angle) + (float(end_angle) - float(start_angle)) * float(progress)
-    matrix = compose_matrices(
-      translate_matrix(float(x), float(OTHELLO_PIECE_BASE_Y) + float(lift), float(z)),
-      rotate_x_deg_matrix(float(angle_deg)),
-      scale_matrix(float(OTHELLO_PIECE_RADIUS) * 2.0, float(OTHELLO_PIECE_THICKNESS), float(OTHELLO_PIECE_RADIUS) * 2.0),
-    )
+    matrix = compose_matrices(translate_matrix(float(x), float(OTHELLO_PIECE_BASE_Y) + float(lift), float(z)), rotate_x_deg_matrix(float(angle_deg)), scale_matrix(float(OTHELLO_PIECE_RADIUS) * 2.0, float(OTHELLO_PIECE_THICKNESS), float(OTHELLO_PIECE_RADIUS) * 2.0))
     piece_rows.append(_instance_row(matrix, _TINT_WHITE))
 
   return (

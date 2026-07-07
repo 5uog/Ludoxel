@@ -54,16 +54,7 @@ class WgpuRendererResources:
   sun_flare_pipeline: object | None = None
 
   def destroy(self) -> None:
-    for obj in (
-      self.shadow_texture,
-      self.depth_texture,
-      self.face_vertex_buffer,
-      self.face_wire_vertex_buffer,
-      self.cloud_cube_vertex_buffer,
-      self.othello_board_vertex_buffer,
-      self.othello_piece_vertex_buffer,
-      *self.camera_buffers,
-    ):
+    for obj in (self.shadow_texture, self.depth_texture, self.face_vertex_buffer, self.face_wire_vertex_buffer, self.cloud_cube_vertex_buffer, self.othello_board_vertex_buffer, self.othello_piece_vertex_buffer, *self.camera_buffers):
       if obj is not None and hasattr(obj, "destroy"):
         obj.destroy()
     self.shadow_texture = None

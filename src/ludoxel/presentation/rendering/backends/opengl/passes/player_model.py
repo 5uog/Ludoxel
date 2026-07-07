@@ -106,19 +106,7 @@ class PlayerModelPass:
 
     return face_rows_from_buffers(buffers)
 
-  def draw_world(
-    self,
-    *,
-    pose: PlayerModelPose,
-    view_proj: np.ndarray,
-    light_view_proj: np.ndarray,
-    sun_dir: Vec3,
-    debug_shadow: bool,
-    shadow_enabled: bool,
-    shadow: BackendShadowParams,
-    shadow_info: ShadowMapInfo,
-    fog: GeometryDistanceFog | None = None,
-  ) -> tuple[int, int]:
+  def draw_world(self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo, fog: GeometryDistanceFog | None = None) -> tuple[int, int]:
     del light_view_proj, debug_shadow, shadow_enabled, shadow, shadow_info
     skin_texture = self._skin_texture
     if pose.skin_texture_key is not None:
@@ -129,9 +117,7 @@ class PlayerModelPass:
     draw_calls = 0
     instances = 0
 
-    dc, inst = self._face_pass.draw(
-      face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), fog=fog
-    )
+    dc, inst = self._face_pass.draw(face_rows=pose.skin_face_rows, view_proj=view_proj, tex_id=int(skin_texture.tex_id), sun_dir=sun_dir, tint_mix=float(max(0.0, min(1.0, float(pose.hurt_tint_strength)))), fog=fog)
     draw_calls += int(dc)
     instances += int(inst)
 
@@ -176,10 +162,6 @@ class PlayerModelPass:
 
     return (1, int(rows.shape[0]))
 
-  def world_metrics(
-    self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo
-  ) -> PassFrameMetrics:
-    dc, inst = self.draw_world(
-      pose=pose, view_proj=view_proj, light_view_proj=light_view_proj, sun_dir=sun_dir, debug_shadow=bool(debug_shadow), shadow_enabled=bool(shadow_enabled), shadow=shadow, shadow_info=shadow_info
-    )
+  def world_metrics(self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: BackendShadowParams, shadow_info: ShadowMapInfo) -> PassFrameMetrics:
+    dc, inst = self.draw_world(pose=pose, view_proj=view_proj, light_view_proj=light_view_proj, sun_dir=sun_dir, debug_shadow=bool(debug_shadow), shadow_enabled=bool(shadow_enabled), shadow=shadow, shadow_info=shadow_info)
     return PassFrameMetrics(cpu_ms=0.0, draw_calls=int(dc), instances=int(inst), rendered=bool(dc > 0))

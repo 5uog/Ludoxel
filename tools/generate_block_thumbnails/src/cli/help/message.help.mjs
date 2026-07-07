@@ -9,18 +9,11 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
       generate: 'block thumbnail generate',
       check: 'block thumbnail check',
     }),
-    purpose: Object.freeze([
-      'Ludoxel の既存 block model / state / face rendering code path から 300x300 RGBA PNG preview を生成又は検査する。',
-      'tool 側では block geometry、connectivity、UV、face projection を定義しない。',
-    ]),
+    purpose: Object.freeze(['Ludoxel の既存 block model / state / face rendering code path から 300x300 RGBA PNG preview を生成又は検査する。', 'tool 側では block geometry、connectivity、UV、face projection を定義しない。']),
     sections: Object.freeze([
       Object.freeze({
         heading: 'Commands',
-        lines: Object.freeze([
-          'assets:block-thumbnails:help       この help を表示する。',
-          'assets:block-thumbnails:generate   既存 Ludoxel rendering API を呼び出して PNG を生成する。',
-          'assets:block-thumbnails:check      入力、state、neighbor、既存 output PNG を検査する。',
-        ]),
+        lines: Object.freeze(['assets:block-thumbnails:help       この help を表示する。', 'assets:block-thumbnails:generate   既存 Ludoxel rendering API を呼び出して PNG を生成する。', 'assets:block-thumbnails:check      入力、state、neighbor、既存 output PNG を検査する。']),
       }),
       Object.freeze({
         heading: 'Options',
@@ -46,7 +39,7 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
       Object.freeze({
         heading: 'Connectivity',
         lines: Object.freeze([
-          '--neighbor north=minecraft:oak_fence は north 側の隣接 state を context として渡す指定であり、隣接 block 自体を描画する指定ではない。',
+          '--neighbor north=ludoxel:oak_fence は north 側の隣接 state を context として渡す指定であり、隣接 block 自体を描画する指定ではない。',
           'fence で --neighbor がない場合は、代表 thumbnail として north-south の同種 neighbor context を使う。wall は north/south low、east/west none、center post enabled の state を使う。',
           '接続 arm の位置、高さ、太さは simulation model が決める。tool 側では作らない。',
         ]),
@@ -56,8 +49,8 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
         lines: Object.freeze([
           'npm run assets:block-thumbnails:help -- --lang ja',
           'npm run assets:block-thumbnails:generate -- --help --lang en',
-          'npm run assets:block-thumbnails:check -- --block minecraft:oak_fence --neighbor north=minecraft:oak_fence --neighbor south=minecraft:oak_fence --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/',
-          'npm run assets:block-thumbnails:generate -- --block minecraft:stone_brick_wall --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/ --allow-overwrite',
+          'npm run assets:block-thumbnails:check -- --block ludoxel:oak_fence --neighbor north=ludoxel:oak_fence --neighbor south=ludoxel:oak_fence --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/',
+          'npm run assets:block-thumbnails:generate -- --block ludoxel:stone_brick_wall --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/ --allow-overwrite',
         ]),
       }),
     ]),
@@ -68,18 +61,11 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
       generate: 'block thumbnail generate',
       check: 'block thumbnail check',
     }),
-    purpose: Object.freeze([
-      'Generate or check 300x300 RGBA PNG previews through the existing Ludoxel block model, state, and face rendering code path.',
-      'The repository tool does not define block geometry, connectivity, UVs, or face projection.',
-    ]),
+    purpose: Object.freeze(['Generate or check 300x300 RGBA PNG previews through the existing Ludoxel block model, state, and face rendering code path.', 'The repository tool does not define block geometry, connectivity, UVs, or face projection.']),
     sections: Object.freeze([
       Object.freeze({
         heading: 'Commands',
-        lines: Object.freeze([
-          'assets:block-thumbnails:help       Show this help.',
-          'assets:block-thumbnails:generate   Generate PNG files through the existing Ludoxel rendering API.',
-          'assets:block-thumbnails:check      Check inputs, states, neighbors, and existing output PNG files.',
-        ]),
+        lines: Object.freeze(['assets:block-thumbnails:help       Show this help.', 'assets:block-thumbnails:generate   Generate PNG files through the existing Ludoxel rendering API.', 'assets:block-thumbnails:check      Check inputs, states, neighbors, and existing output PNG files.']),
       }),
       Object.freeze({
         heading: 'Options',
@@ -105,7 +91,7 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
       Object.freeze({
         heading: 'Connectivity',
         lines: Object.freeze([
-          '--neighbor north=minecraft:oak_fence passes a north-side neighbor state as context; it does not request drawing the neighboring block.',
+          '--neighbor north=ludoxel:oak_fence passes a north-side neighbor state as context; it does not request drawing the neighboring block.',
           'When fence has no --neighbor option, the representative thumbnail uses same-block north-south neighbor context. Wall uses north/south low, east/west none, and an enabled center post.',
           'The simulation model decides connection arm position, height, and thickness. The tool does not create those arms.',
         ]),
@@ -115,8 +101,8 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
         lines: Object.freeze([
           'npm run assets:block-thumbnails:help -- --lang en',
           'npm run assets:block-thumbnails:generate -- --help --lang ja',
-          'npm run assets:block-thumbnails:check -- --block minecraft:oak_fence --neighbor north=minecraft:oak_fence --neighbor south=minecraft:oak_fence --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/',
-          'npm run assets:block-thumbnails:generate -- --block minecraft:stone_brick_wall --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/ --allow-overwrite',
+          'npm run assets:block-thumbnails:check -- --block ludoxel:oak_fence --neighbor north=ludoxel:oak_fence --neighbor south=ludoxel:oak_fence --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/',
+          'npm run assets:block-thumbnails:generate -- --block ludoxel:stone_brick_wall --texture-root assets/ludoxel/textures/ --output-root assets/ludoxel/thumbnails/blocks/ --allow-overwrite',
         ]),
       }),
     ]),

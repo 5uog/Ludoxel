@@ -79,13 +79,7 @@ function DocsCodeCopyButton({ code }: DocsCodeCopyButtonProps): React.JSX.Elemen
 
   return (
     <>
-      <button
-        aria-label={copyButtonLabel}
-        className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded bg-secondary text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
-        onClick={copyCode}
-        title={copyButtonLabel}
-        type="button"
-      >
+      <button aria-label={copyButtonLabel} className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded bg-secondary text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground" onClick={copyCode} title={copyButtonLabel} type="button">
         {renderCodeCopyIcon(copyStatus)}
       </button>
 
@@ -103,9 +97,7 @@ function DocsCodeHeaderMeta({ caption, language }: DocsCodeHeaderMetaProps): Rea
   return (
     <div className="flex min-w-0 items-center gap-3">
       {caption ? <figcaption className="min-w-0 text-sm text-muted-foreground">{renderInlineText(caption)}</figcaption> : null}
-      <span className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-1 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {languageLabel}
-      </span>
+      <span className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-1 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{languageLabel}</span>
     </div>
   );
 }

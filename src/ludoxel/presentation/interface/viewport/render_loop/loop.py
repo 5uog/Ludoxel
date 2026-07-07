@@ -75,9 +75,7 @@ class ViewportRenderLoopMixin:
     self._othello_hover_square = None
     if not self._selection_due(eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg)):
       return
-    self._last_selection_pick_ms = self._selection_state.refresh(
-      session=self._session, reach=float(self._state.reach), eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg)
-    )
+    self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=interaction_eye, yaw_deg=float(interaction_yaw_deg), pitch_deg=float(interaction_pitch_deg))
     selection_target = self._selection_state.target()
     if selection_target is None:
       self._renderer.clear_selection()
@@ -202,13 +200,7 @@ class ViewportRenderLoopMixin:
     self._refresh_selection_for_frame(snapshot=snapshot, interaction_eye=interaction_eye, interaction_yaw_deg=float(interaction_yaw_deg), interaction_pitch_deg=float(interaction_pitch_deg))
 
     fb_w, fb_h, dpr = self._framebuffer_extent()
-    player_state = compose_player_render_state(
-      snapshot=snapshot,
-      motion=self._first_person_motion.sample(),
-      block_registry=self._session.block_registry,
-      arm_rotation_limit_min_deg=float(self._state.arm_rotation_limit_min_deg),
-      arm_rotation_limit_max_deg=float(self._state.arm_rotation_limit_max_deg),
-    )
+    player_state = compose_player_render_state(snapshot=snapshot, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry, arm_rotation_limit_min_deg=float(self._state.arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(self._state.arm_rotation_limit_max_deg))
     extra_player_states = ai_controller.extra_player_render_states(self, snapshot=snapshot)
 
     self._renderer.render(
@@ -228,15 +220,7 @@ class ViewportRenderLoopMixin:
     )
     route_paths = ai_controller.route_overlay_paths(self)
     if route_paths:
-      self._route_overlay.set_paths(
-        eye=render_eye,
-        yaw_deg=float(render_yaw_deg),
-        pitch_deg=float(render_pitch_deg),
-        roll_deg=float(render_roll_deg),
-        fov_deg=float(camera_snapshot.fov_deg),
-        z_far=float(self._renderer._cfg.camera.z_far),
-        paths=route_paths,
-      )
+      self._route_overlay.set_paths(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(camera_snapshot.fov_deg), z_far=float(self._renderer._cfg.camera.z_far), paths=route_paths)
     else:
       self._route_overlay.clear_paths()
     self._update_world_player_name_tag(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
@@ -266,12 +250,7 @@ class ViewportRenderLoopMixin:
   def _on_step(self: "GLViewportWidget", dt: float) -> None:
     if bool(getattr(self, "_shutdown_done", False)):
       return
-    if (
-      bool(self.loading_active())
-      or bool(getattr(self, "_ai_settings_overlay_open", False))
-      or bool(self._transient_modal_active())
-      or (self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open())
-    ):
+    if bool(self.loading_active()) or bool(getattr(self, "_ai_settings_overlay_open", False)) or bool(self._transient_modal_active()) or (self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open()):
       return
     othello_controller.consume_pending_ai_result(self)
     self._update_block_break_particles(float(dt))
@@ -332,9 +311,7 @@ class ViewportRenderLoopMixin:
       self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
 
     if bool(step_result.play_landing_sound):
-      self._audio.play_surface_event(
-        event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks)
-      )
+      self._audio.play_surface_event(event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position, fall_distance_blocks=float(step_result.fall_distance_blocks))
     if bool(step_result.play_damage_sound):
       self._audio.play_player_event(event_name=PLAYER_EVENT_DAMAGE_HIT)
     for position in tuple(step_result.ai_damage_sound_positions):

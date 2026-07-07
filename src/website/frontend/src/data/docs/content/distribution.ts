@@ -48,8 +48,7 @@ npm run build:desktop -- windows`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'A completed `Ludoxel.exe` is an implementation result. The repository does not, by producing it, grant distribution permission, declare an official release, or clear third-party material; none of those follow from the file existing on disk.',
+              content: 'A completed `Ludoxel.exe` is an implementation result. The repository does not, by producing it, grant distribution permission, declare an official release, or clear third-party material; none of those follow from the file existing on disk.',
             },
           },
         ],
@@ -280,8 +279,7 @@ npm run build:macos:check`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'A macOS bundle that omits the WGPU and cursor-helper inclusions is materially incomplete regardless of the directory’s presence. The renderer path or gameplay mouse capture can be broken while `Ludoxel.app` appears to exist.',
+              content: 'A macOS bundle that omits the WGPU and cursor-helper inclusions is materially incomplete regardless of the directory’s presence. The renderer path or gameplay mouse capture can be broken while `Ludoxel.app` appears to exist.',
             },
           },
         ],
@@ -554,8 +552,7 @@ npm run build:native:check`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'A package containing `LICENSE` may still be unauthorized; a package lacking `LICENSE` is defective even where a repository surface can be opened in a browser. Presence of the text and permission to distribute are independent and must not be inferred from one another.',
+              content: 'A package containing `LICENSE` may still be unauthorized; a package lacking `LICENSE` is defective even where a repository surface can be opened in a browser. Presence of the text and permission to distribute are independent and must not be inferred from one another.',
             },
           },
         ],
@@ -673,8 +670,7 @@ npm run build:native:check`,
     subcategory: 'Runtime Inclusions',
     group: 'Legal Material Inclusion',
     title: 'Including Third Party License Text',
-    description:
-      'Separates third-party notice retention from redistribution clearance, centered on the Kaisei Opti font: the legal policy constant, the required-terms checker, the macOS font requirements, and the refusal to read one verified notice as blanket provenance clearance.',
+    description: 'Separates third-party notice retention from redistribution clearance, centered on the Kaisei Opti font: the legal policy constant, the required-terms checker, the macOS font requirements, and the refusal to read one verified notice as blanket provenance clearance.',
     sections: [
       {
         id: 'including-third-party-license-text-owner-files',
@@ -704,8 +700,7 @@ npm run build:native:check`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Third-party license inclusion is a notice-retention problem. It is not a provenance certificate for every asset that appears in the repository, a build output, or a rendered scene.',
+              content: 'Third-party license inclusion is a notice-retention problem. It is not a provenance certificate for every asset that appears in the repository, a build output, or a rendered scene.',
             },
           },
         ],
@@ -849,8 +844,7 @@ npm run build:native:check`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'The build path records validation, dispatch, subprocess construction, staging, publication, and status. Permission to build, distribute, publish, mirror, or upload Ludoxel remains with the License Text and any later competent written instrument.',
+              content: 'The build path records validation, dispatch, subprocess construction, staging, publication, and status. Permission to build, distribute, publish, mirror, or upload Ludoxel remains with the License Text and any later competent written instrument.',
             },
           },
         ],
@@ -1014,8 +1008,7 @@ npm run build:macos -- --status`,
     subcategory: 'Build Operation',
     group: 'Local Build Procedure',
     title: 'Reading Build Output',
-    description:
-      'Defines the evidentiary granularity of build and check output and forbids the inference from a favorable line to a release conclusion: the printed PyInstaller command, the report function pass/note/failure hierarchy, native verification lines, and the platform publication results.',
+    description: 'Defines the evidentiary granularity of build and check output and forbids the inference from a favorable line to a release conclusion: the printed PyInstaller command, the report function pass/note/failure hierarchy, native verification lines, and the platform publication results.',
     sections: [
       {
         id: 'reading-build-output-evidentiary-function',
@@ -1148,8 +1141,7 @@ if (source.binaries.length === 0) {
     subcategory: 'Verification',
     group: 'Package Inspection',
     title: 'Running Package Checks with Permission',
-    description:
-      'Defines the repository verification surface as the decomposition of policy into named predicates with bounded evidentiary reach: the frozen check dispatch table, the package identity and script-surface contract, the legal and documentation predicates, and the suppression of green-check overreading.',
+    description: 'Defines the repository verification surface as the decomposition of policy into named predicates with bounded evidentiary reach: the frozen check dispatch table, the package identity and script-surface contract, the legal and documentation predicates, and the suppression of green-check overreading.',
     sections: [
       {
         id: 'running-package-checks-with-permission-authority-premise',
@@ -1172,8 +1164,7 @@ npm run check`,
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'A passing check is a repository signal bounded to one policy. It is not a release approval, not legal permission, not package completeness, and not evidence that a later copied artifact still contains every required file.',
+              content: 'A passing check is a repository signal bounded to one policy. It is not a release approval, not legal permission, not package completeness, and not evidence that a later copied artifact still contains every required file.',
             },
           },
         ],
@@ -1413,8 +1404,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
     subcategory: 'Verification',
     group: 'Generated Assets',
     title: 'Generating Block Thumbnails',
-    description:
-      'Documents the repository block-thumbnail generator as a package-script surface over the default block registry, the visual asset resolver, and the runtime thumbnail directory consumed by inventory and hotbar item photos.',
+    description: 'Documents the repository block-thumbnail generator as a package-script surface over the default block registry, the visual asset resolver, and the runtime thumbnail directory consumed by inventory and hotbar item photos.',
     sections: [
       {
         id: 'generating-block-thumbnails-command-surface',
@@ -1531,8 +1521,7 @@ if not p.exists():
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not call a local build, preview deployment, copied artifact, preserved staging file, or check result an official release unless separate release authority and release-status evidence actually exist.',
+              content: 'Do not call a local build, preview deployment, copied artifact, preserved staging file, or check result an official release unless separate release authority and release-status evidence actually exist.',
             },
           },
         ],
@@ -1635,8 +1624,7 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
     subcategory: 'Runtime Inclusions',
     group: 'Native and Runtime Materials',
     title: 'Building the Rust Terrain Extension',
-    description:
-      'Defines the Rust terrain crate, its cargo build and artifact placement through build_native_extensions, the compiled-import verification that refuses the Python fallback, the fallback runtime boundary, and the desktop-package inclusion path.',
+    description: 'Defines the Rust terrain crate, its cargo build and artifact placement through build_native_extensions, the compiled-import verification that refuses the Python fallback, the fallback runtime boundary, and the desktop-package inclusion path.',
     sections: [
       {
         id: 'building-the-rust-terrain-extension-crate-and-contract',
@@ -1762,8 +1750,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
     subcategory: 'Runtime Inclusions',
     group: 'Native and Runtime Materials',
     title: 'Building the Rust Othello Engine Extension',
-    description:
-      'Defines the Rust Othello search crate, the parity contract it shares with the pure Python engine, the per-cache native search session and its TimeoutError boundary, and the build, verification, and desktop-package inclusion path it shares with the terrain crate.',
+    description: 'Defines the Rust Othello search crate, the parity contract it shares with the pure Python engine, the per-cache native search session and its TimeoutError boundary, and the build, verification, and desktop-package inclusion path it shares with the terrain crate.',
     sections: [
       {
         id: 'building-the-rust-othello-engine-extension-crate-and-contract',
@@ -1792,9 +1779,8 @@ if (!importedFile.endsWith(expectedSuffix)) {
             language: 'py',
             caption: 'src/ludoxel/simulation/spaces/othello/engines/native.py',
             code: `def create_native_insane_search(*, hash_level: int, sacrifice_level: int):
-  # Returns a per-cache native search session owning its own transposition
-  # tables, or None when the compiled module is absent; the pure Python
-  # negamax and solve_exact in search.py stay the fallback owners.
+  # Returns a per-cache native search session owning its own transposition tables, or None when the compiled module is absent;
+  # the pure Python negamax and solve_exact in search.py stay the fallback owners.
   if _native_module is None:
     return None
   return _native_module.InsaneSearch(int(hash_level), int(sacrifice_level))`,

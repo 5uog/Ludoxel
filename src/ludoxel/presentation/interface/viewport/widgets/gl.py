@@ -202,18 +202,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._menu = StartupShellOverlay(resource_root=self._resource_root, version_text=f"v{__version__}", parent=self)
 
     self._overlays = ViewportOverlays(
-      refs=OverlayRefs(
-        pause=self._overlay,
-        settings=self._settings,
-        othello_settings=self._othello_settings,
-        inventory=self._inventory,
-        death=self._death,
-        crosshair=self._crosshair,
-        hotbar=self._hotbar,
-        menu=self._menu,
-        hud_getter=lambda: self._hud,
-        othello_hud_getter=lambda: self._othello_hud,
-      ),
+      refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, menu=self._menu, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud),
       runner=self._runner,
       inp=self._inp,
     )
@@ -319,9 +308,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     super().mouseReleaseEvent(e)
 
   def mouseMoveEvent(self, e: QMouseEvent) -> None:
-    if bool(self.loading_active()) or (
-      self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())
-    ):
+    if bool(self.loading_active()) or (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):
       super().mouseMoveEvent(e)
       return
     e.accept()

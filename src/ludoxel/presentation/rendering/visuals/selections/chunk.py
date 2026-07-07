@@ -13,12 +13,9 @@ ChunkPredicate = Callable[[ChunkKey], bool]
 
 
 def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_distance_chunks: int) -> bool:
-  # Render distance is a horizontal bound. The vertical extent of drawable
-  # chunks is fixed by the upload tracker's resident set (surface envelope,
-  # floor envelope, and tracked edits), so a vertical clamp here would cull
-  # resident terrain — the surface seen from bedrock depth, or the bedrock
-  # underside seen from below — that the WGPU backend, which draws every
-  # resident chunk, keeps visible.
+  # Render distance is a horizontal bound. The vertical extent of drawable chunks is fixed by the upload tracker's resident set (surface envelope,
+  # floor envelope, and tracked edits), so a vertical clamp here would cull resident terrain — the surface seen from bedrock depth, or the bedrock
+  # underside seen from below — that the WGPU backend, which draws every resident chunk, keeps visible.
   ck = normalize_chunk_key(chunk_key)
   cam = normalize_chunk_key(camera_chunk)
   rd = int(render_distance_chunks)

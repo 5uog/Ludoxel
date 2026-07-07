@@ -19,17 +19,7 @@ from ludoxel.simulation.actors.ai_players.learning.feature_encoder import encode
 from ludoxel.simulation.actors.ai_players.learning.observation import DIRECTION_OFFSETS, AiObservation, build_neighborhood
 from ludoxel.simulation.actors.ai_players.learning.rewards import RewardTransition
 from ludoxel.simulation.actors.ai_players.naming import ai_display_name_format_error, ai_name_duplicate_key, allocate_default_spawn_ai_name, allocate_suffixed_ai_name, split_ai_display_name
-from ludoxel.simulation.actors.ai_players.navigation import (
-  _horizontal_transition_distance,
-  _navigation_transition_target,
-  _parkour_takeoff_point,
-  _point_distance_xz,
-  _pursuit_control,
-  _support_cell_beneath,
-  _support_cell_center,
-  _support_cell_from_point,
-  _turn_only_control,
-)
+from ludoxel.simulation.actors.ai_players.navigation import _horizontal_transition_distance, _navigation_transition_target, _parkour_takeoff_point, _point_distance_xz, _pursuit_control, _support_cell_beneath, _support_cell_center, _support_cell_from_point, _turn_only_control
 from ludoxel.simulation.actors.ai_players.parkour import _parkour_control, _parkour_navigation_target
 from ludoxel.simulation.actors.ai_players.placement import _face_for_horizontal_step, _face_hit_point, _held_item_id_for_settings, _side_step_from_forward
 from ludoxel.simulation.actors.ai_players.planner import AiRoutePlanRequest, AiRoutePlanResult
@@ -93,20 +83,7 @@ from ludoxel.simulation.actors.ai_players.runtime import (
   _AiPlayerRuntime,
 )
 from ludoxel.simulation.actors.ai_players.spawning import _spawn_position_clear
-from ludoxel.simulation.actors.ai_players.state import (
-  AI_MODE_IDLE,
-  AI_MODE_ROUTE,
-  AI_MODE_WANDER,
-  AI_PERSONALITY_AGGRESSIVE,
-  AI_ROUTE_STYLE_FLEXIBLE,
-  AiPlayerState,
-  AiSpawnEggSettings,
-  normalize_ai_health_indicator,
-  normalize_ai_mode,
-  normalize_ai_personality,
-  normalize_ai_route_style,
-  normalize_ai_skin_mode,
-)
+from ludoxel.simulation.actors.ai_players.state import AI_MODE_IDLE, AI_MODE_ROUTE, AI_MODE_WANDER, AI_PERSONALITY_AGGRESSIVE, AI_ROUTE_STYLE_FLEXIBLE, AiPlayerState, AiSpawnEggSettings, normalize_ai_health_indicator, normalize_ai_mode, normalize_ai_personality, normalize_ai_route_style, normalize_ai_skin_mode
 from ludoxel.simulation.actors.ai_players.stuck import stuck_edge_key
 from ludoxel.simulation.actors.ai_players.wander import _wander_interval_s, _wander_seed
 from ludoxel.simulation.actors.ai_players.worker import AiRouteWorker
@@ -155,9 +132,7 @@ class _ManagerNeighborhoodProbe:
     return self._manager._state_at(int(cell[0]), int(cell[1]), int(cell[2]))
 
   def can_place_against(self, anchor_cell: tuple[int, int, int], target_cell: tuple[int, int, int]) -> bool:
-    return bool(
-      self._manager._can_place_support_block(self._actor, anchor_cell=tuple(int(value) for value in anchor_cell), target_cell=tuple(int(value) for value in target_cell), ignore_cooldown=True)
-    )
+    return bool(self._manager._can_place_support_block(self._actor, anchor_cell=tuple(int(value) for value in anchor_cell), target_cell=tuple(int(value) for value in target_cell), ignore_cooldown=True))
 
   def support_drop_depth(self, column_cell: tuple[int, int, int], max_depth: int) -> int:
     x, y, z = (int(column_cell[0]), int(column_cell[1]), int(column_cell[2]))
@@ -458,27 +433,14 @@ class AiPlayerManager:
     next_route_closed = bool(normalized.route_closed)
     next_route_run = bool(normalized.route_run)
     next_route_style = normalize_ai_route_style(normalized.route_style)
-    nav_affecting_changed = bool(
-      next_mode != str(actor.mode)
-      or next_can_place_blocks != bool(actor.can_place_blocks)
-      or next_route_points != tuple(actor.route_points)
-      or next_route_closed != bool(actor.route_closed)
-      or next_route_run != bool(actor.route_run)
-      or next_route_style != str(actor.route_style)
-    )
+    nav_affecting_changed = bool(next_mode != str(actor.mode) or next_can_place_blocks != bool(actor.can_place_blocks) or next_route_points != tuple(actor.route_points) or next_route_closed != bool(actor.route_closed) or next_route_run != bool(actor.route_run) or next_route_style != str(actor.route_style))
 
     next_regen_enabled = bool(normalized.auto_regen_enabled)
     next_regen_start_delay_s = float(normalized.regen_start_delay_s)
     next_regen_interval_s = float(normalized.regen_interval_s)
     next_regen_amount_hp = float(normalized.regen_amount_hp)
     next_regen_cap_hp = float(normalized.regen_cap_hp)
-    regen_changed = bool(
-      next_regen_enabled != bool(actor.auto_regen_enabled)
-      or next_regen_start_delay_s != float(actor.regen_start_delay_s)
-      or next_regen_interval_s != float(actor.regen_interval_s)
-      or next_regen_amount_hp != float(actor.regen_amount_hp)
-      or next_regen_cap_hp != float(actor.regen_cap_hp)
-    )
+    regen_changed = bool(next_regen_enabled != bool(actor.auto_regen_enabled) or next_regen_start_delay_s != float(actor.regen_start_delay_s) or next_regen_interval_s != float(actor.regen_interval_s) or next_regen_amount_hp != float(actor.regen_amount_hp) or next_regen_cap_hp != float(actor.regen_cap_hp))
 
     actor.name = str(resolved_name)
     actor.mode = next_mode
@@ -593,9 +555,7 @@ class AiPlayerManager:
         movement_target = _support_cell_center(next_support)
       elif parkour_target is not None:
         movement_target = parkour_target
-      return _parkour_control(
-        player=actor.player, target=movement_target, dt=float(dt), sprint=bool(sprint), auto_jump_enabled=bool(auto_jump_enabled), jump_pressed=bool(jump_pressed), crouch=False, commit_forward=True
-      )
+      return _parkour_control(player=actor.player, target=movement_target, dt=float(dt), sprint=bool(sprint), auto_jump_enabled=bool(auto_jump_enabled), jump_pressed=bool(jump_pressed), crouch=False, commit_forward=True)
     pursuit_control = _pursuit_control(player=actor.player, target=movement_target, dt=float(dt), sprint=bool(sprint), auto_jump_enabled=True, jump_pressed=bool(jump_pressed), crouch=False)
     guarded_control, _blocked = self._apply_edge_safety(actor, pursuit_control, max_drop=int(_AI_EDGE_ROUTE_DROP_DEPTH))
     return guarded_control
@@ -638,11 +598,7 @@ class AiPlayerManager:
     support = self._current_support_cell(actor)
     if support is None:
       return True
-    probe = Vec3(
-      float(actor.player.position.x) + float(direction.x) * float(_AI_EDGE_LOOKAHEAD_BLOCKS),
-      float(actor.player.position.y),
-      float(actor.player.position.z) + float(direction.z) * float(_AI_EDGE_LOOKAHEAD_BLOCKS),
-    )
+    probe = Vec3(float(actor.player.position.x) + float(direction.x) * float(_AI_EDGE_LOOKAHEAD_BLOCKS), float(actor.player.position.y), float(actor.player.position.z) + float(direction.z) * float(_AI_EDGE_LOOKAHEAD_BLOCKS))
     ahead_x = int(math.floor(float(probe.x)))
     ahead_z = int(math.floor(float(probe.z)))
     if ahead_x == int(support[0]) and ahead_z == int(support[2]):
@@ -657,17 +613,7 @@ class AiPlayerManager:
 
   @staticmethod
   def _halted_control(control: PlayerStepInput) -> PlayerStepInput:
-    return PlayerStepInput(
-      move_f=0.0,
-      move_s=0.0,
-      jump_held=False,
-      jump_pressed=False,
-      sprint=False,
-      crouch=bool(control.crouch),
-      yaw_delta_deg=float(control.yaw_delta_deg),
-      pitch_delta_deg=float(control.pitch_delta_deg),
-      auto_jump_enabled=False,
-    )
+    return PlayerStepInput(move_f=0.0, move_s=0.0, jump_held=False, jump_pressed=False, sprint=False, crouch=bool(control.crouch), yaw_delta_deg=float(control.yaw_delta_deg), pitch_delta_deg=float(control.pitch_delta_deg), auto_jump_enabled=False)
 
   def _apply_edge_safety(self, actor: _AiPlayerRuntime, control: PlayerStepInput, *, max_drop: int) -> tuple[PlayerStepInput, bool]:
     if bool(actor.player.flying) or (not bool(actor.player.on_ground)):
@@ -682,9 +628,7 @@ class AiPlayerManager:
     return (self._halted_control(control), True)
 
   def pick_actor(self, *, origin: Vec3, direction: Vec3, reach: float, block_hit: BlockPick | None) -> str | None:
-    target_hit = pick_player_target(
-      origin=origin, direction=direction, reach=float(reach), block_hit=block_hit, candidates=tuple((str(actor.actor_id), actor.player) for actor in self._actors.values())
-    )
+    target_hit = pick_player_target(origin=origin, direction=direction, reach=float(reach), block_hit=block_hit, candidates=tuple((str(actor.actor_id), actor.player) for actor in self._actors.values()))
     if target_hit is None:
       return None
     return str(target_hit.actor_id)
@@ -1050,24 +994,12 @@ class AiPlayerManager:
     for sample_index in range(1, int(sample_count) + 1):
       ratio = float(sample_index) / float(sample_count)
       lift = 0.24 * (1.0 - float(ratio))
-      probe = Vec3(
-        float(start.x) + (float(end.x) - float(start.x)) * float(ratio),
-        float(start.y) + (float(end.y) - float(start.y)) * float(ratio) + float(lift),
-        float(start.z) + (float(end.z) - float(start.z)) * float(ratio),
-      )
+      probe = Vec3(float(start.x) + (float(end.x) - float(start.x)) * float(ratio), float(start.y) + (float(end.y) - float(start.y)) * float(ratio) + float(lift), float(start.z) + (float(end.z) - float(start.z)) * float(ratio))
       if not bool(self._player_clear_at(actor, position=probe)):
         return False
     return True
 
-  def _local_recovery_neighbors(
-    self,
-    actor: _AiPlayerRuntime,
-    *,
-    support_cell: tuple[int, int, int],
-    blocked_edges: set[tuple[tuple[int, int, int], tuple[int, int, int]]],
-    avoid_cells: set[tuple[int, int, int]],
-    desired_target_cell: tuple[int, int, int] | None,
-  ) -> tuple[tuple[int, int, int], ...]:
+  def _local_recovery_neighbors(self, actor: _AiPlayerRuntime, *, support_cell: tuple[int, int, int], blocked_edges: set[tuple[tuple[int, int, int], tuple[int, int, int]]], avoid_cells: set[tuple[int, int, int]], desired_target_cell: tuple[int, int, int] | None) -> tuple[tuple[int, int, int], ...]:
     current = tuple(int(value) for value in support_cell)
     x, y, z = current
     candidates: list[tuple[int, int, int]] = []
@@ -1152,9 +1084,7 @@ class AiPlayerManager:
       cell, depth = queue.popleft()
       if int(depth) >= int(_AI_LOCAL_RECOVERY_SEARCH_RADIUS):
         continue
-      for candidate in self._local_recovery_neighbors(
-        actor, support_cell=tuple(int(value) for value in cell), blocked_edges=blocked_edges, avoid_cells=avoid_cells, desired_target_cell=desired_target_support
-      ):
+      for candidate in self._local_recovery_neighbors(actor, support_cell=tuple(int(value) for value in cell), blocked_edges=blocked_edges, avoid_cells=avoid_cells, desired_target_cell=desired_target_support):
         normalized = tuple(int(value) for value in candidate)
         if normalized in visited:
           continue
@@ -1188,12 +1118,7 @@ class AiPlayerManager:
         return actor.local_recovery_cache_target
       return None
     self._recovery_searches_this_step += 1
-    result = self._local_recovery_target(
-      actor,
-      current_support=tuple(int(value) for value in current_support),
-      desired_target=desired_target,
-      desired_target_support=None if target_support is None else tuple(int(value) for value in target_support),
-    )
+    result = self._local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, desired_target_support=None if target_support is None else tuple(int(value) for value in target_support))
     actor.local_recovery_cache_key = key
     actor.local_recovery_cache_target = result
     actor.local_recovery_cache_age_s = 0.0
@@ -1386,12 +1311,7 @@ class AiPlayerManager:
       elif float(actor.nav_failure_retry_s) <= 1e-6:
         self._reset_nav_failure(actor)
       else:
-        local_recovery_target = self._cached_local_recovery_target(
-          actor,
-          current_support=tuple(int(value) for value in current_support),
-          desired_target=desired_target,
-          target_support=None if target_support is None else tuple(int(value) for value in target_support),
-        )
+        local_recovery_target = self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=None if target_support is None else tuple(int(value) for value in target_support))
         return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
     normalized_target_support = None if target_support is None else tuple(int(value) for value in target_support)
     goal_changed = bool(actor.nav_goal_support_cell != normalized_target_support and (actor.nav_goal_support_cell is not None or normalized_target_support is not None))
@@ -1405,10 +1325,7 @@ class AiPlayerManager:
     cached_place_anchor = None if actor.nav_place_anchor_cell is None else tuple(int(value) for value in actor.nav_place_anchor_cell)
     cached_place_target = None if actor.nav_place_target_cell is None else tuple(int(value) for value in actor.nav_place_target_cell)
     if bool(cached_step_active) and cached_next_cell is not None:
-      placement_invalid = bool(
-        cached_place_target is not None
-        and (cached_place_anchor is None or (not bool(self._can_place_support_block(actor, anchor_cell=cached_place_anchor, target_cell=cached_place_target, ignore_cooldown=True))))
-      )
+      placement_invalid = bool(cached_place_target is not None and (cached_place_anchor is None or (not bool(self._can_place_support_block(actor, anchor_cell=cached_place_anchor, target_cell=cached_place_target, ignore_cooldown=True)))))
       waiting_for_placement = bool(cached_place_target is not None and (not bool(placement_invalid)) and float(actor.place_cooldown_s) > 1e-6)
       if bool(waiting_for_placement):
         actor.route_stuck_s = 0.0
@@ -1437,12 +1354,7 @@ class AiPlayerManager:
         return _navigation_transition_target(tuple(int(value) for value in current_support), tuple(int(value) for value in cached_next_cell))
     else:
       self._clear_active_nav_step(actor)
-    if (
-      target_support is not None
-      and (not bool(actor.nav_plan_pending))
-      and float(actor.nav_replan_cooldown_s) <= 1e-6
-      and bool(self._direct_route_clear(actor, from_cell=start_support, to_cell=target_support))
-    ):
+    if target_support is not None and (not bool(actor.nav_plan_pending)) and float(actor.nav_replan_cooldown_s) <= 1e-6 and bool(self._direct_route_clear(actor, from_cell=start_support, to_cell=target_support)):
       actor.nav_next_support_cell = None
       actor.nav_from_support_cell = None
       actor.nav_place_anchor_cell = None
@@ -1463,26 +1375,14 @@ class AiPlayerManager:
       return desired_target
     should_attempt_local_recovery = bool(len(active_avoid_support_cells(actor)) > 0 or float(actor.route_stuck_s) > 1e-6 or bool(actor.nav_path_failed))
     if bool(actor.nav_plan_pending):
-      local_recovery_target = (
-        self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support)
-        if bool(should_attempt_local_recovery)
-        else None
-      )
+      local_recovery_target = self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support) if bool(should_attempt_local_recovery) else None
       return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
     if float(actor.nav_replan_cooldown_s) > 1e-6:
-      local_recovery_target = (
-        self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support)
-        if bool(should_attempt_local_recovery)
-        else None
-      )
+      local_recovery_target = self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support) if bool(should_attempt_local_recovery) else None
       return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
     actor.nav_goal_support_cell = None if normalized_target_support is None else tuple(int(value) for value in normalized_target_support)
     self._request_route_plan(actor, start_support=tuple(int(value) for value in current_support))
-    local_recovery_target = (
-      self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support)
-      if bool(should_attempt_local_recovery)
-      else None
-    )
+    local_recovery_target = self._cached_local_recovery_target(actor, current_support=tuple(int(value) for value in current_support), desired_target=desired_target, target_support=normalized_target_support) if bool(should_attempt_local_recovery) else None
     return fallback_route_target(tuple(int(value) for value in current_support), local_recovery_target)
 
   def _update_stuck_recovery_state(self, actor: _AiPlayerRuntime, *, dt: float, jump_started: bool) -> None:
@@ -1586,13 +1486,7 @@ class AiPlayerManager:
       return False
     if not self._placement_ray_clear(actor, anchor_cell=tuple(int(value) for value in anchor_cell), face=int(_face_for_horizontal_step(int(step_x), int(step_z)))):
       return False
-    hit = BlockPick(
-      hit=tuple(int(value) for value in anchor_cell),
-      place=tuple(int(value) for value in place_cell),
-      t=0.0,
-      face=int(_face_for_horizontal_step(int(step_x), int(step_z))),
-      hit_point=_face_hit_point(tuple(int(value) for value in anchor_cell), int(_face_for_horizontal_step(int(step_x), int(step_z)))),
-    )
+    hit = BlockPick(hit=tuple(int(value) for value in anchor_cell), place=tuple(int(value) for value in place_cell), t=0.0, face=int(_face_for_horizontal_step(int(step_x), int(step_z))), hit_point=_face_hit_point(tuple(int(value) for value in anchor_cell), int(_face_for_horizontal_step(int(step_x), int(step_z)))))
     outcome = actor.interaction.place_block_from_hit(hit, str(actor.held_item_id))
     if not bool(outcome.success):
       return False
@@ -1608,13 +1502,7 @@ class AiPlayerManager:
       return False
     if not self._placement_ray_clear(actor, anchor_cell=tuple(int(value) for value in support_cell), face=int(FACE_POS_Y)):
       return False
-    hit = BlockPick(
-      hit=tuple(int(value) for value in support_cell),
-      place=tuple(int(value) for value in place_cell),
-      t=0.0,
-      face=int(FACE_POS_Y),
-      hit_point=_face_hit_point(tuple(int(value) for value in support_cell), int(FACE_POS_Y)),
-    )
+    hit = BlockPick(hit=tuple(int(value) for value in support_cell), place=tuple(int(value) for value in place_cell), t=0.0, face=int(FACE_POS_Y), hit_point=_face_hit_point(tuple(int(value) for value in support_cell), int(FACE_POS_Y)))
     outcome = actor.interaction.place_block_from_hit(hit, str(actor.held_item_id))
     if not bool(outcome.success):
       return False
@@ -1706,25 +1594,13 @@ class AiPlayerManager:
       chase_distance = float(player_delta.length())
       if chase_distance <= float(_AI_CHASE_RANGE):
         target = Vec3(float(target_player.position.x), float(target_player.position.y) + 1.0, float(target_player.position.z))
-        jump_pressed = bool(actor.player.on_ground) and (
-          float(target_player.position.y) > float(actor.player.position.y) + 0.55 or (float(actor.player.jump_reset_window_s) > 1e-6 and float(chase_distance) <= 3.4)
-        )
+        jump_pressed = bool(actor.player.on_ground) and (float(target_player.position.y) > float(actor.player.position.y) + 0.55 or (float(actor.player.jump_reset_window_s) > 1e-6 and float(chase_distance) <= 3.4))
         chase_control = _combat_control(actor=actor, target=target, dt=float(dt), jump_pressed=bool(jump_pressed))
         max_health = max(1.0, float(actor.player.max_health))
         low_health = bool(float(actor.player.health) <= float(max_health) * 0.35)
         if bool(low_health) and float(chase_distance) <= float(_AI_COMBAT_STRAFE_DISTANCE_MAX) + 1.5:
           strafe_sign = 1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0
-          retreat_control = PlayerStepInput(
-            move_f=-1.0,
-            move_s=float(strafe_sign) * 0.5,
-            jump_held=False,
-            jump_pressed=False,
-            sprint=False,
-            crouch=False,
-            yaw_delta_deg=float(chase_control.yaw_delta_deg),
-            pitch_delta_deg=float(chase_control.pitch_delta_deg),
-            auto_jump_enabled=True,
-          )
+          retreat_control = PlayerStepInput(move_f=-1.0, move_s=float(strafe_sign) * 0.5, jump_held=False, jump_pressed=False, sprint=False, crouch=False, yaw_delta_deg=float(chase_control.yaw_delta_deg), pitch_delta_deg=float(chase_control.pitch_delta_deg), auto_jump_enabled=True)
           guarded_retreat, retreat_blocked = self._apply_edge_safety(actor, retreat_control, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
           if not bool(retreat_blocked):
             return guarded_retreat
@@ -1815,9 +1691,7 @@ class AiPlayerManager:
     return AiStepReport(player_damage_taken=float(damage_taken), player_death_reason=death_reason, player_killer_name=killer_name)
 
   def player_attack_from_local(self, *, attacker: PlayerEntity, origin: Vec3, direction: Vec3, reach: float, world_hit: BlockPick | None, sprinting: bool) -> AiLocalAttackResult:
-    target_hit = pick_player_target(
-      origin=origin, direction=direction, reach=float(reach), block_hit=world_hit, candidates=tuple((str(actor.actor_id), actor.player) for actor in self._actors.values() if actor.player.alive())
-    )
+    target_hit = pick_player_target(origin=origin, direction=direction, reach=float(reach), block_hit=world_hit, candidates=tuple((str(actor.actor_id), actor.player) for actor in self._actors.values() if actor.player.alive()))
     if target_hit is None:
       return AiLocalAttackResult()
     actor = self._actors.get(str(target_hit.actor_id))
@@ -2022,15 +1896,7 @@ class AiPlayerManager:
     else:
       return control
     adjusted = PlayerStepInput(
-      move_f=float(move_f),
-      move_s=float(move_s),
-      jump_held=bool(jump_held),
-      jump_pressed=bool(jump_pressed),
-      sprint=bool(sprint),
-      crouch=bool(control.crouch),
-      yaw_delta_deg=float(control.yaw_delta_deg),
-      pitch_delta_deg=float(control.pitch_delta_deg),
-      auto_jump_enabled=bool(control.auto_jump_enabled),
+      move_f=float(move_f), move_s=float(move_s), jump_held=bool(jump_held), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(control.crouch), yaw_delta_deg=float(control.yaw_delta_deg), pitch_delta_deg=float(control.pitch_delta_deg), auto_jump_enabled=bool(control.auto_jump_enabled)
     )
     guarded_control, _blocked = self._apply_edge_safety(actor, adjusted, max_drop=int(_AI_EDGE_SAFE_DROP_DEPTH))
     return guarded_control
@@ -2094,20 +1960,7 @@ class AiPlayerManager:
     return False
 
   def _log_ai_decision(
-    self,
-    *,
-    actor: _AiPlayerRuntime,
-    mode: str,
-    observation: AiObservation,
-    mask: AiActionMask,
-    deterministic_ranked: tuple[tuple[str, float], ...],
-    learned_ranked: tuple[tuple[str, float], ...],
-    selected_action: str,
-    source: str,
-    policy_id: str,
-    policy_usable: bool,
-    control: PlayerStepInput,
-    world_action: bool,
+    self, *, actor: _AiPlayerRuntime, mode: str, observation: AiObservation, mask: AiActionMask, deterministic_ranked: tuple[tuple[str, float], ...], learned_ranked: tuple[tuple[str, float], ...], selected_action: str, source: str, policy_id: str, policy_usable: bool, control: PlayerStepInput, world_action: bool
   ) -> None:
     features = ",".join(encode_features(observation))
     forbidden = ",".join(sorted(mask.forbidden.keys()))
@@ -2218,15 +2071,7 @@ class AiPlayerManager:
           failure_reason = "failed_route"
         else:
           failure_reason = None
-        transition = RewardTransition(
-          survived=bool(alive_after),
-          progress_delta=0.0,
-          damage_dealt=float(actor_damage_dealt),
-          damage_taken=float(fall_damage) + float(void_damage),
-          fell=bool(float(fall_damage) > 1e-6),
-          died=bool(died),
-          void_death=bool(void_death),
-        )
+        transition = RewardTransition(survived=bool(alive_after), progress_delta=0.0, damage_dealt=float(actor_damage_dealt), damage_taken=float(fall_damage) + float(void_damage), fell=bool(float(fall_damage) > 1e-6), died=bool(died), void_death=bool(void_death))
         learning.record_decision(
           observation=learn_observation,
           mask=learn_mask,
@@ -2261,14 +2106,7 @@ class AiPlayerManager:
       actor = self._actors.pop(str(actor_id), None)
       if actor is not None:
         self._cancel_pending_nav_plan(actor)
-    return AiStepReport(
-      player_damage_taken=float(total_player_damage),
-      player_death_reason=player_death_reason,
-      player_killer_name=player_killer_name,
-      damage_sound_positions=tuple(damage_sound_positions),
-      ai_death_logs=tuple(ai_death_logs),
-      block_sound_events=tuple(self._block_sound_events),
-    )
+    return AiStepReport(player_damage_taken=float(total_player_damage), player_death_reason=player_death_reason, player_killer_name=player_killer_name, damage_sound_positions=tuple(damage_sound_positions), ai_death_logs=tuple(ai_death_logs), block_sound_events=tuple(self._block_sound_events))
 
   def actor_observations(self) -> tuple[AiActorObservation, ...]:
     return tuple(

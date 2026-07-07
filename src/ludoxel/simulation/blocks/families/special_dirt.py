@@ -4,18 +4,7 @@ from __future__ import annotations
 
 from ludoxel.simulation.blocks.definitions.block import BlockTextures
 from ludoxel.simulation.blocks.families.stone import StoneType, cube_textures, side_top_bottom_textures
-from ludoxel.simulation.blocks.sounds.groups import (
-  SOUND_GROUP_DIRT,
-  SOUND_GROUP_GRASS,
-  SOUND_GROUP_GRAVEL,
-  SOUND_GROUP_MUD,
-  SOUND_GROUP_NETHERRACK,
-  SOUND_GROUP_NYLIUM,
-  SOUND_GROUP_ROOTED_DIRT,
-  SOUND_GROUP_SAND,
-  SOUND_GROUP_SOUL_SAND,
-  SOUND_GROUP_SOUL_SOIL,
-)
+from ludoxel.simulation.blocks.sounds.groups import SOUND_GROUP_DIRT, SOUND_GROUP_GRASS, SOUND_GROUP_GRAVEL, SOUND_GROUP_MUD, SOUND_GROUP_NETHERRACK, SOUND_GROUP_NYLIUM, SOUND_GROUP_ROOTED_DIRT, SOUND_GROUP_SAND, SOUND_GROUP_SOUL_SAND, SOUND_GROUP_SOUL_SOIL
 
 SPECIAL_DIRT_TYPES: tuple[StoneType, ...] = (
   StoneType(key="crimson_nylium", display="Crimson Nylium", textures=side_top_bottom_textures("crimson_nylium_side", "crimson_nylium_top", "netherrack"), sound_group=SOUND_GROUP_NYLIUM),
@@ -23,12 +12,7 @@ SPECIAL_DIRT_TYPES: tuple[StoneType, ...] = (
   StoneType(key="netherrack", display="Netherrack", textures=cube_textures("netherrack"), sound_group=SOUND_GROUP_NETHERRACK),
   StoneType(key="soul_soil", display="Soul Soil", textures=cube_textures("soul_soil"), sound_group=SOUND_GROUP_SOUL_SOIL),
   StoneType(key="soul_sand", display="Soul Sand", textures=cube_textures("soul_sand"), sound_group=SOUND_GROUP_SOUL_SAND),
-  StoneType(
-    key="grass_block",
-    display="Grass Block",
-    textures=BlockTextures(pos_x="grass_side_carried", neg_x="grass_side_carried", pos_y="grass_carried", neg_y="dirt", pos_z="grass_side_carried", neg_z="grass_side_carried"),
-    sound_group=SOUND_GROUP_GRASS,
-  ),
+  StoneType(key="grass_block", display="Grass Block", textures=BlockTextures(pos_x="grass_side_carried", neg_x="grass_side_carried", pos_y="grass_carried", neg_y="dirt", pos_z="grass_side_carried", neg_z="grass_side_carried"), sound_group=SOUND_GROUP_GRASS),
   StoneType(key="podzol", display="Podzol", textures=side_top_bottom_textures("dirt_podzol_side", "dirt_podzol_top", "dirt"), sound_group=SOUND_GROUP_GRASS),
   StoneType(key="mycelium", display="Mycelium", textures=side_top_bottom_textures("mycelium_side", "mycelium_top", "dirt"), sound_group=SOUND_GROUP_GRASS),
   StoneType(key="dirt_path", display="Dirt Path", textures=side_top_bottom_textures("dirt_path_side", "dirt_path_top", "dirt"), kind="short_cube", is_full_cube=False, sound_group=SOUND_GROUP_DIRT),

@@ -12,38 +12,9 @@ import SearchDialogOverlay from './SearchDialogOverlay';
 
 const SEARCH_RESULTS_LISTBOX_ID = 'search-results-listbox';
 
-type SearchDialogProps = Pick<
-  SearchCommandState,
-  | 'closeSearch'
-  | 'displayRows'
-  | 'filteredRows'
-  | 'groupedRows'
-  | 'handleInputChange'
-  | 'handleInputKeyDown'
-  | 'inputRef'
-  | 'isClosing'
-  | 'normalizedQuery'
-  | 'query'
-  | 'selectEntry'
-  | 'selectedIndex'
-  | 'setSelectedIndex'
->;
+type SearchDialogProps = Pick<SearchCommandState, 'closeSearch' | 'displayRows' | 'filteredRows' | 'groupedRows' | 'handleInputChange' | 'handleInputKeyDown' | 'inputRef' | 'isClosing' | 'normalizedQuery' | 'query' | 'selectEntry' | 'selectedIndex' | 'setSelectedIndex'>;
 
-export default function SearchDialog({
-  closeSearch,
-  displayRows,
-  filteredRows,
-  groupedRows,
-  handleInputChange,
-  handleInputKeyDown,
-  inputRef,
-  isClosing,
-  normalizedQuery,
-  query,
-  selectEntry,
-  selectedIndex,
-  setSelectedIndex,
-}: SearchDialogProps): React.JSX.Element {
+export default function SearchDialog({ closeSearch, displayRows, filteredRows, groupedRows, handleInputChange, handleInputKeyDown, inputRef, isClosing, normalizedQuery, query, selectEntry, selectedIndex, setSelectedIndex }: SearchDialogProps): React.JSX.Element {
   const activeRow = displayRows[selectedIndex] ?? null;
   const activeDescendantId = activeRow === null ? undefined : getSearchRowDomId(activeRow);
 

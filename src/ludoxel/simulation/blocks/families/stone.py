@@ -42,31 +42,31 @@ def column_textures(side: str, top: str) -> BlockTextures:
 
 
 def block_id(v: StoneType) -> str:
-  return f"minecraft:{v.key}"
+  return f"ludoxel:{v.key}"
 
 
 def slab_id(v: StoneType) -> str | None:
   if v.slab_key is None:
     return None
-  return f"minecraft:{v.slab_key}"
+  return f"ludoxel:{v.slab_key}"
 
 
 def stairs_id(v: StoneType) -> str | None:
   if v.stairs_key is None:
     return None
-  return f"minecraft:{v.stairs_key}"
+  return f"ludoxel:{v.stairs_key}"
 
 
 def wall_id(v: StoneType) -> str | None:
   if v.wall_key is None:
     return None
-  return f"minecraft:{v.wall_key}"
+  return f"ludoxel:{v.wall_key}"
 
 
 def fence_id(v: StoneType) -> str | None:
   if v.fence_key is None:
     return None
-  return f"minecraft:{v.fence_key}"
+  return f"ludoxel:{v.fence_key}"
 
 
 STONE_TYPES: tuple[StoneType, ...] = (
@@ -81,32 +81,9 @@ STONE_TYPES: tuple[StoneType, ...] = (
   StoneType(key="polished_granite", display="Polished Granite", textures=cube_textures("stone_granite_smooth"), slab_key="polished_granite_slab", stairs_key="polished_granite_stairs"),
   StoneType(key="polished_diorite", display="Polished Diorite", textures=cube_textures("stone_diorite_smooth"), slab_key="polished_diorite_slab", stairs_key="polished_diorite_stairs"),
   StoneType(key="polished_andesite", display="Polished Andesite", textures=cube_textures("stone_andesite_smooth"), slab_key="polished_andesite_slab", stairs_key="polished_andesite_stairs"),
-  StoneType(
-    key="polished_blackstone",
-    display="Polished Blackstone",
-    textures=cube_textures("polished_blackstone"),
-    slab_key="polished_blackstone_slab",
-    stairs_key="polished_blackstone_stairs",
-    wall_key="polished_blackstone_wall",
-  ),
-  StoneType(
-    key="polished_deepslate",
-    display="Polished Deepslate",
-    textures=cube_textures("polished_deepslate"),
-    slab_key="polished_deepslate_slab",
-    stairs_key="polished_deepslate_stairs",
-    wall_key="polished_deepslate_wall",
-    sound_group=SOUND_GROUP_DEEPSLATE,
-  ),
-  StoneType(
-    key="polished_tuff",
-    display="Polished Tuff",
-    textures=cube_textures("polished_tuff"),
-    slab_key="polished_tuff_slab",
-    stairs_key="polished_tuff_stairs",
-    wall_key="polished_tuff_wall",
-    sound_group=SOUND_GROUP_TUFF,
-  ),
+  StoneType(key="polished_blackstone", display="Polished Blackstone", textures=cube_textures("polished_blackstone"), slab_key="polished_blackstone_slab", stairs_key="polished_blackstone_stairs", wall_key="polished_blackstone_wall"),
+  StoneType(key="polished_deepslate", display="Polished Deepslate", textures=cube_textures("polished_deepslate"), slab_key="polished_deepslate_slab", stairs_key="polished_deepslate_stairs", wall_key="polished_deepslate_wall", sound_group=SOUND_GROUP_DEEPSLATE),
+  StoneType(key="polished_tuff", display="Polished Tuff", textures=cube_textures("polished_tuff"), slab_key="polished_tuff_slab", stairs_key="polished_tuff_stairs", wall_key="polished_tuff_wall", sound_group=SOUND_GROUP_TUFF),
   StoneType(key="polished_basalt", display="Polished Basalt", textures=column_textures("polished_basalt_side", "polished_basalt_top"), sound_group=SOUND_GROUP_BASALT),
   StoneType(key="smooth_basalt", display="Smooth Basalt", textures=cube_textures("smooth_basalt"), sound_group=SOUND_GROUP_BASALT),
 )

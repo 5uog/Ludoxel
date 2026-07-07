@@ -9,7 +9,6 @@ name = "ludoxel"
 dynamic = ["version"]
 description = "PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and platform-specific desktop renderers."
 keywords = [
-    "minecraft",
     "pvp",
     "aim",
     "simulation",

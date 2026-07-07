@@ -9,7 +9,5 @@ export function getMobileHeaderBackdropClassName(isClosing: boolean): string {
 }
 
 export function getMobileHeaderPanelClassName(isClosing: boolean): string {
-  return isClosing
-    ? 'mobile-sheet-panel-right mobile-sheet-panel-right-exit fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg'
-    : 'mobile-sheet-panel-right fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg';
+  return isClosing ? 'mobile-sheet-panel-right mobile-sheet-panel-right-exit fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg' : 'mobile-sheet-panel-right fixed inset-y-0 right-0 z-50 h-full w-3/4 max-w-sm border-l border-border bg-background p-6 shadow-lg';
 }

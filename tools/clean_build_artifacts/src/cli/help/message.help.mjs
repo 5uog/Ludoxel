@@ -11,14 +11,7 @@ export const CLEAN_HELP_MESSAGES = Object.freeze({
       options: 'オプション',
     }),
     purpose: 'Ludoxel の生成物、cache、build artifact を実在確認したうえで削除または列挙する。',
-    synopsis: Object.freeze([
-      'npm run clean -- help',
-      'npm run clean -- --help',
-      'npm run clean -- --dry-run',
-      'npm run clean -- --all --dry-run',
-      'npm run clean:check',
-      'npm run clean:check -- --all',
-    ]),
+    synopsis: Object.freeze(['npm run clean -- help', 'npm run clean -- --help', 'npm run clean -- --dry-run', 'npm run clean -- --all --dry-run', 'npm run clean:check', 'npm run clean:check -- --all']),
     options: Object.freeze([
       Object.freeze({ flag: 'help, --help, -h', description: 'このヘルプを表示して終了する。' }),
       Object.freeze({ flag: '--dry-run', description: '削除せず、対象だけを表示する。' }),
@@ -34,14 +27,7 @@ export const CLEAN_HELP_MESSAGES = Object.freeze({
       options: 'Options',
     }),
     purpose: 'Delete or list Ludoxel generated files, caches, and build artifacts after resolving real targets.',
-    synopsis: Object.freeze([
-      'npm run clean -- help',
-      'npm run clean -- --help',
-      'npm run clean -- --dry-run',
-      'npm run clean -- --all --dry-run',
-      'npm run clean:check',
-      'npm run clean:check -- --all',
-    ]),
+    synopsis: Object.freeze(['npm run clean -- help', 'npm run clean -- --help', 'npm run clean -- --dry-run', 'npm run clean -- --all --dry-run', 'npm run clean:check', 'npm run clean:check -- --all']),
     options: Object.freeze([
       Object.freeze({ flag: 'help, --help, -h', description: 'Print this help and exit.' }),
       Object.freeze({ flag: '--dry-run', description: 'List targets without deleting them.' }),

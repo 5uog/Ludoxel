@@ -20,23 +20,11 @@ def _all_plank_variants() -> tuple[WoodType, ...]:
   return WOOD_TYPES + MOSAIC_TYPES
 
 
-_PLANK_RECIPE = CatalogVariantRecipe(
-  variant_id=lambda wood: planks_id(wood), display_name=lambda wood: f"{wood.display} Planks" if wood.key != "bamboo_mosaic" else str(wood.display), kind="cube", family="block", is_full_cube=True
-)
-_SLAB_RECIPE = CatalogVariantRecipe(
-  variant_id=lambda wood: slab_id(wood), display_name=lambda wood: f"{wood.display} Slab" if wood.key != "bamboo_mosaic" else "Bamboo Mosaic Slab", kind="slab", family="slab", is_full_cube=False
-)
-_STAIR_RECIPE = CatalogVariantRecipe(
-  variant_id=lambda wood: stairs_id(wood),
-  display_name=lambda wood: f"{wood.display} Stairs" if wood.key != "bamboo_mosaic" else "Bamboo Mosaic Stairs",
-  kind="stairs",
-  family="stairs",
-  is_full_cube=False,
-)
+_PLANK_RECIPE = CatalogVariantRecipe(variant_id=lambda wood: planks_id(wood), display_name=lambda wood: f"{wood.display} Planks" if wood.key != "bamboo_mosaic" else str(wood.display), kind="cube", family="block", is_full_cube=True)
+_SLAB_RECIPE = CatalogVariantRecipe(variant_id=lambda wood: slab_id(wood), display_name=lambda wood: f"{wood.display} Slab" if wood.key != "bamboo_mosaic" else "Bamboo Mosaic Slab", kind="slab", family="slab", is_full_cube=False)
+_STAIR_RECIPE = CatalogVariantRecipe(variant_id=lambda wood: stairs_id(wood), display_name=lambda wood: f"{wood.display} Stairs" if wood.key != "bamboo_mosaic" else "Bamboo Mosaic Stairs", kind="stairs", family="stairs", is_full_cube=False)
 _FENCE_RECIPE = CatalogVariantRecipe(variant_id=lambda wood: fence_id(wood), display_name=lambda wood: f"{wood.display} Fence", kind="fence", family="fence", is_full_cube=False)
-_FENCE_GATE_RECIPE = CatalogVariantRecipe(
-  variant_id=lambda wood: fence_gate_id(wood), display_name=lambda wood: f"{wood.display} Fence Gate", kind="fence_gate", family="fence_gate", is_full_cube=False
-)
+_FENCE_GATE_RECIPE = CatalogVariantRecipe(variant_id=lambda wood: fence_gate_id(wood), display_name=lambda wood: f"{wood.display} Fence Gate", kind="fence_gate", family="fence_gate", is_full_cube=False)
 
 
 def _sound_group_for_wood(wood: WoodType) -> str:

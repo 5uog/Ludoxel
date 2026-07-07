@@ -208,9 +208,7 @@ class AiStatusTagPool:
   def begin_frame(self) -> None:
     self._seen_ids = set()
 
-  def show_tag(
-    self, *, actor_id: str, name: str, health: float, max_health: float, indicator: str, center_x: float, anchor_bottom_y: float, opacity: float, scale: float = 1.0, name_color_hex: str | None = None
-  ) -> None:
+  def show_tag(self, *, actor_id: str, name: str, health: float, max_health: float, indicator: str, center_x: float, anchor_bottom_y: float, opacity: float, scale: float = 1.0, name_color_hex: str | None = None) -> None:
     key = str(actor_id)
     self._seen_ids.add(key)
     entry = self._entries.get(key)
@@ -220,14 +218,7 @@ class AiStatusTagPool:
     if not entry.set_content(name=str(name), health=float(health), max_health=float(max_health), indicator=str(indicator), name_color_hex=name_color_hex):
       entry.setVisible(False)
       return
-    entry.place(
-      center_x=float(center_x),
-      anchor_bottom_y=float(anchor_bottom_y),
-      scale=float(scale),
-      opacity=float(opacity),
-      viewport_w=max(1, int(self._parent.width())),
-      viewport_h=max(1, int(self._parent.height())),
-    )
+    entry.place(center_x=float(center_x), anchor_bottom_y=float(anchor_bottom_y), scale=float(scale), opacity=float(opacity), viewport_w=max(1, int(self._parent.width())), viewport_h=max(1, int(self._parent.height())))
 
   def end_frame(self) -> None:
     stale_ids = [actor_id for actor_id in self._entries.keys() if actor_id not in self._seen_ids]

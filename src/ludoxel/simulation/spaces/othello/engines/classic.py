@@ -103,9 +103,7 @@ def _evaluate(board: tuple[int, ...], side: int, *, sacrifice_level: int = DEFAU
 
   disc_weight, mobility_weight, corner_weight, frontier_weight = evaluation_weights(int(sacrifice_level))
   frontier_penalty = -5.0 * float(_frontier_count(board, my_side) - _frontier_count(board, enemy))
-  return (
-    float(positional) + float(mobility) * float(mobility_weight) + float(corner_score) * float(corner_weight) + float(disc_diff) * float(disc_weight) + float(frontier_penalty) * float(frontier_weight)
-  )
+  return float(positional) + float(mobility) * float(mobility_weight) + float(corner_score) * float(corner_weight) + float(disc_diff) * float(disc_weight) + float(frontier_penalty) * float(frontier_weight)
 
 
 def _terminal_score(board: tuple[int, ...], side: int) -> float:
@@ -163,10 +161,8 @@ def _alpha_beta(board: tuple[int, ...], side_to_move: int, root_side: int, depth
 
 
 def _root_move_scores(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, sacrifice_level: int) -> tuple[tuple[int, float], ...]:
-  # Root scores for every legal move, ordered by position weight descending
-  # with ascending move index among ties. The compiled Rust module owns the
-  # hot path; the pure Python _alpha_beta loop below is the fallback and
-  # must return identical scores in identical order.
+  # Root scores for every legal move, ordered by position weight descending with ascending move index among ties. The compiled Rust module owns the
+  # hot path; the pure Python _alpha_beta loop below is the fallback and must return identical scores in identical order.
   moves = find_legal_moves(board, side)
   if not moves:
     return ()
@@ -232,21 +228,7 @@ def _select_opening_book_move(board: tuple[int, ...], side: int, legal_moves: tu
   return int(chooser.choice(tuple(sorted(candidate_moves))))
 
 
-def _forecast_line(
-  board: tuple[int, ...],
-  side: int,
-  difficulty: str,
-  *,
-  random_seed: int,
-  project_root=None,
-  sacrifice_level: int,
-  hash_level: int,
-  match_generation: int,
-  insane_cache: InsaneSearchCache | None,
-  strong_time_budget_s: float,
-  insane_time_budget_s: float,
-  max_plies: int = 6,
-) -> tuple[int, ...]:
+def _forecast_line(board: tuple[int, ...], side: int, difficulty: str, *, random_seed: int, project_root=None, sacrifice_level: int, hash_level: int, match_generation: int, insane_cache: InsaneSearchCache | None, strong_time_budget_s: float, insane_time_budget_s: float, max_plies: int = 6) -> tuple[int, ...]:
   materialized = coerce_board(board)
   current_side = normalize_side(side)
   line: list[int] = []
@@ -333,27 +315,13 @@ def analyze_position(
   if mode == OTHELLO_DIFFICULTY_WEAK:
     result = _best_move(materialized, ai_side, depth=1, deadline_s=None, rng=rng, sacrifice_level=int(normalized_sacrifice_level))
     return OthelloAnalysis(
-      side_to_move=int(ai_side),
-      best_move_index=result.move_index,
-      best_line=build_forecast(4),
-      score=float(result.score),
-      solved=False,
-      depth_reached=1,
-      depth_samples=(OthelloDepthSample(depth=1, score=float(result.score)),),
-      move_evaluations=_move_evaluations_from_scores(result.move_scores),
+      side_to_move=int(ai_side), best_move_index=result.move_index, best_line=build_forecast(4), score=float(result.score), solved=False, depth_reached=1, depth_samples=(OthelloDepthSample(depth=1, score=float(result.score)),), move_evaluations=_move_evaluations_from_scores(result.move_scores)
     ).normalized()
 
   if mode == OTHELLO_DIFFICULTY_MEDIUM:
     result = _best_move(materialized, ai_side, depth=3, deadline_s=None, sacrifice_level=int(normalized_sacrifice_level))
     return OthelloAnalysis(
-      side_to_move=int(ai_side),
-      best_move_index=result.move_index,
-      best_line=build_forecast(6),
-      score=float(result.score),
-      solved=False,
-      depth_reached=3,
-      depth_samples=(OthelloDepthSample(depth=3, score=float(result.score)),),
-      move_evaluations=_move_evaluations_from_scores(result.move_scores),
+      side_to_move=int(ai_side), best_move_index=result.move_index, best_line=build_forecast(6), score=float(result.score), solved=False, depth_reached=3, depth_samples=(OthelloDepthSample(depth=3, score=float(result.score)),), move_evaluations=_move_evaluations_from_scores(result.move_scores)
     ).normalized()
 
   if mode == OTHELLO_DIFFICULTY_INSANE:

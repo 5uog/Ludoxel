@@ -19,19 +19,7 @@ ACTION_CATEGORY_TRAP: str = "trap"
 ACTION_CATEGORY_FENCE_GATE: str = "fence_gate"
 ACTION_CATEGORY_NO_OP: str = "no_op"
 
-ACTION_CATEGORIES: tuple[str, ...] = (
-  ACTION_CATEGORY_MOVEMENT,
-  ACTION_CATEGORY_LOOK,
-  ACTION_CATEGORY_COMBAT,
-  ACTION_CATEGORY_BLOCK_PLACEMENT,
-  ACTION_CATEGORY_BLOCK_BREAKING,
-  ACTION_CATEGORY_ROUTE,
-  ACTION_CATEGORY_ESCAPE,
-  ACTION_CATEGORY_PARKOUR,
-  ACTION_CATEGORY_TRAP,
-  ACTION_CATEGORY_FENCE_GATE,
-  ACTION_CATEGORY_NO_OP,
-)
+ACTION_CATEGORIES: tuple[str, ...] = (ACTION_CATEGORY_MOVEMENT, ACTION_CATEGORY_LOOK, ACTION_CATEGORY_COMBAT, ACTION_CATEGORY_BLOCK_PLACEMENT, ACTION_CATEGORY_BLOCK_BREAKING, ACTION_CATEGORY_ROUTE, ACTION_CATEGORY_ESCAPE, ACTION_CATEGORY_PARKOUR, ACTION_CATEGORY_TRAP, ACTION_CATEGORY_FENCE_GATE, ACTION_CATEGORY_NO_OP)
 
 SKILL_MOVEMENT: str = "movement"
 SKILL_WASD_CONTROL: str = "wasd_control"
@@ -94,27 +82,11 @@ class AiAction:
       object.__setattr__(self, "parameters", {})
 
   def to_dict(self) -> dict[str, Any]:
-    return {
-      "action_id": str(self.action_id),
-      "category": str(self.category),
-      "skill_category": str(self.skill_category),
-      "safety_requirement": str(self.safety_requirement),
-      "expected_duration_tick": int(self.expected_duration_tick),
-      "parameters": dict(self.parameters or {}),
-      "description": str(self.description),
-    }
+    return {"action_id": str(self.action_id), "category": str(self.category), "skill_category": str(self.skill_category), "safety_requirement": str(self.safety_requirement), "expected_duration_tick": int(self.expected_duration_tick), "parameters": dict(self.parameters or {}), "description": str(self.description)}
 
 
 def _action(action_id: str, category: str, skill_category: str, safety: str, duration: int, description: str, **parameters: Any) -> AiAction:
-  return AiAction(
-    action_id=str(action_id),
-    category=str(category),
-    skill_category=str(skill_category),
-    safety_requirement=str(safety),
-    expected_duration_tick=max(1, int(duration)),
-    parameters=dict(parameters),
-    description=str(description),
-  )
+  return AiAction(action_id=str(action_id), category=str(category), skill_category=str(skill_category), safety_requirement=str(safety), expected_duration_tick=max(1, int(duration)), parameters=dict(parameters), description=str(description))
 
 
 _CATALOG: tuple[AiAction, ...] = (

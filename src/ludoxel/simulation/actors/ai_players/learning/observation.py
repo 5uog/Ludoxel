@@ -40,15 +40,7 @@ class DirectionProbe:
   can_place_support: bool = False
 
   def to_dict(self) -> dict[str, Any]:
-    return {
-      "direction": str(self.direction),
-      "standable_step": bool(self.standable_step),
-      "headroom_clear": bool(self.headroom_clear),
-      "blocked_by_wall": bool(self.blocked_by_wall),
-      "drop_depth": int(self.drop_depth),
-      "is_void": bool(self.is_void),
-      "can_place_support": bool(self.can_place_support),
-    }
+    return {"direction": str(self.direction), "standable_step": bool(self.standable_step), "headroom_clear": bool(self.headroom_clear), "blocked_by_wall": bool(self.blocked_by_wall), "drop_depth": int(self.drop_depth), "is_void": bool(self.is_void), "can_place_support": bool(self.can_place_support)}
 
 
 @dataclass(frozen=True)
@@ -160,15 +152,7 @@ def _probe_direction(probe: NeighborhoodProbe, *, support_cell: tuple[int, int, 
   drop_depth = int(probe.support_drop_depth(forward_cell, int(max_drop)))
   is_void = bool(int(drop_depth) < 0) and (not bool(standable_step))
   can_place_support = bool(probe.can_place_against(support_cell, forward_cell))
-  return DirectionProbe(
-    direction=str(name),
-    standable_step=bool(standable_step),
-    headroom_clear=bool(headroom_clear),
-    blocked_by_wall=bool(body_blocked),
-    drop_depth=int(drop_depth),
-    is_void=bool(is_void),
-    can_place_support=bool(can_place_support),
-  )
+  return DirectionProbe(direction=str(name), standable_step=bool(standable_step), headroom_clear=bool(headroom_clear), blocked_by_wall=bool(body_blocked), drop_depth=int(drop_depth), is_void=bool(is_void), can_place_support=bool(can_place_support))
 
 
 def build_neighborhood(probe: NeighborhoodProbe, *, support_cell: tuple[int, int, int], max_drop: int = 3) -> dict[str, DirectionProbe]:

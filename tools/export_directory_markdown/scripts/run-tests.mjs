@@ -55,21 +55,7 @@ const srcCode = readProjectFile('tools/export_directory_markdown/output/export_t
 assertContains({ name: 'src code export', text: srcCode, expected: 'src/ludoxel/__main__.py' });
 assertContains({ name: 'src code export', text: srcCode, expected: '## Files' });
 
-await runCase('root target option with excludes', [
-  '--target',
-  'root',
-  '--format',
-  'tree',
-  '--output',
-  'tools/export_directory_markdown/output/export_test_root_exclude_tree.md',
-  '--overwrite',
-  '--exclude',
-  'folder:tools',
-  '--exclude',
-  'file:README.md',
-  '--exclude',
-  'ext:.toml',
-]);
+await runCase('root target option with excludes', ['--target', 'root', '--format', 'tree', '--output', 'tools/export_directory_markdown/output/export_test_root_exclude_tree.md', '--overwrite', '--exclude', 'folder:tools', '--exclude', 'file:README.md', '--exclude', 'ext:.toml']);
 
 const excludedRootTree = readProjectFile('tools/export_directory_markdown/output/export_test_root_exclude_tree.md');
 assertContains({ name: 'root target option with excludes', text: excludedRootTree, expected: 'src/' });

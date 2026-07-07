@@ -52,11 +52,9 @@ def place_from_hit_for_service(service, *, hit: BlockPick, block_id: str | None,
   hit_state = service.world.blocks.get(hit_cell)
 
   if hit_state is not None:
-    # A slab placed against the exposed top or bottom face of a matching slab
-    # completes that cell to a double, so a held slab packs in 0.5-block steps
-    # instead of stepping a full cell and leaving a gap. The exposed face, not
-    # the held half, chooses which half is added, so this holds even while the
-    # continuous-placement lock forces one half.
+    # A slab placed against the exposed top or bottom face of a matching slab completes that cell to a double,
+    # so a held slab packs in 0.5-block steps instead of stepping a full cell and leaving a gap. The exposed face, not the held half,
+    # chooses which half is added, so this holds even while the continuous-placement lock forces one half.
     merge_hit_state = service.placement_policy.resolve_slab_merge_state_from_hit(existing_state=str(hit_state), block_id=str(bid), hit_face=int(hit.face))
     if merge_hit_state is None and forced_slab_type is not None:
       merge_hit_state = service.placement_policy._try_merge_same_slab(existing_state=str(hit_state), block_id=str(bid), desired_type=str(forced_slab_type))
@@ -86,9 +84,7 @@ def place_from_hit_for_service(service, *, hit: BlockPick, block_id: str | None,
   if forced is not None:
     place_state: str | None = str(forced)
   else:
-    place_state = service.placement_policy.resolve_place_state(
-      player=service.player, block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point, inherit_state=(None if inherit_state is None else str(inherit_state))
-    )
+    place_state = service.placement_policy.resolve_place_state(player=service.player, block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point, inherit_state=(None if inherit_state is None else str(inherit_state)))
   if place_state is None:
     return InteractionOutcome(success=False)
 

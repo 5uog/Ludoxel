@@ -86,12 +86,7 @@ def _clear_compiled_opening_book_cache(project_root_key: str) -> None:
 
 def install_othello_book_storage_hooks() -> None:
   configure_opening_book_storage(
-    normalize_root_hook=normalize_opening_book_root,
-    load_user_lines_hook=_load_user_opening_book_lines_payload,
-    save_user_lines_hook=_save_user_opening_book_lines,
-    load_cache_hook=_load_compiled_opening_book_cache,
-    save_cache_hook=_save_compiled_opening_book_cache,
-    clear_cache_hook=_clear_compiled_opening_book_cache,
+    normalize_root_hook=normalize_opening_book_root, load_user_lines_hook=_load_user_opening_book_lines_payload, save_user_lines_hook=_save_user_opening_book_lines, load_cache_hook=_load_compiled_opening_book_cache, save_cache_hook=_save_compiled_opening_book_cache, clear_cache_hook=_clear_compiled_opening_book_cache
   )
 
 

@@ -19,9 +19,4 @@ def make_player_entity(*, spawn: tuple[float, float, float], yaw_deg: float = 0.
 
 
 def make_session_manager(*, seed: int, spawn: tuple[float, float, float], world: WorldState, block_registry: BlockRegistry, yaw_deg: float = 0.0, pitch_deg: float = 0.0) -> SessionManager:
-  return SessionManager(
-    settings=make_session_settings(seed=int(seed), spawn=tuple(spawn)),
-    world=world,
-    player=make_player_entity(spawn=tuple(spawn), yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg)),
-    block_registry=block_registry,
-  )
+  return SessionManager(settings=make_session_settings(seed=int(seed), spawn=tuple(spawn)), world=world, player=make_player_entity(spawn=tuple(spawn), yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg)), block_registry=block_registry)

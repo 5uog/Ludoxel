@@ -18,11 +18,4 @@ def six_neighbor_state_signature(get_state: GetState, x: int, y: int, z: int) ->
   sx = int(x)
   sy = int(y)
   sz = int(z)
-  return (
-    state_or_empty(get_state, sx + 1, sy, sz),
-    state_or_empty(get_state, sx - 1, sy, sz),
-    state_or_empty(get_state, sx, sy + 1, sz),
-    state_or_empty(get_state, sx, sy - 1, sz),
-    state_or_empty(get_state, sx, sy, sz + 1),
-    state_or_empty(get_state, sx, sy, sz - 1),
-  )
+  return (state_or_empty(get_state, sx + 1, sy, sz), state_or_empty(get_state, sx - 1, sy, sz), state_or_empty(get_state, sx, sy + 1, sz), state_or_empty(get_state, sx, sy - 1, sz), state_or_empty(get_state, sx, sy, sz + 1), state_or_empty(get_state, sx, sy, sz - 1))

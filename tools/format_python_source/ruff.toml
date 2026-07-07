@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Kento Konishi
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 
-line-length = 200
+line-length = 320
 indent-width = 2
 target-version = "py313"
 

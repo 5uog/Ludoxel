@@ -61,12 +61,7 @@ class PlayerSkinPreviewWidget(QWidget):
     next_image = QImage(image)
     if next_image.isNull() and self._frame_image.isNull():
       return
-    if (
-      not next_image.isNull()
-      and not self._frame_image.isNull()
-      and int(next_image.cacheKey()) == int(self._frame_image.cacheKey())
-      and abs(float(next_image.devicePixelRatio()) - float(self._frame_image.devicePixelRatio())) <= 1e-9
-    ):
+    if not next_image.isNull() and not self._frame_image.isNull() and int(next_image.cacheKey()) == int(self._frame_image.cacheKey()) and abs(float(next_image.devicePixelRatio()) - float(self._frame_image.devicePixelRatio())) <= 1e-9:
       return
     self._frame_image = next_image
     self.update()
@@ -127,10 +122,7 @@ class PlayerSkinPreviewWidget(QWidget):
       return (float(self._head_yaw_deg), float(self._head_pitch_deg))
     nx = ((float(x) / max(1.0, float(area_width))) - 0.5) * 2.0
     ny = ((float(y) / max(1.0, float(area_height))) - 0.5) * 2.0
-    return (
-      float(clampf(nx * float(_HEAD_YAW_LIMIT_DEG), -float(_HEAD_YAW_LIMIT_DEG), float(_HEAD_YAW_LIMIT_DEG))),
-      float(clampf(ny * float(_HEAD_PITCH_LIMIT_DEG), -float(_HEAD_PITCH_LIMIT_DEG), float(_HEAD_PITCH_LIMIT_DEG))),
-    )
+    return (float(clampf(nx * float(_HEAD_YAW_LIMIT_DEG), -float(_HEAD_YAW_LIMIT_DEG), float(_HEAD_YAW_LIMIT_DEG))), float(clampf(ny * float(_HEAD_PITCH_LIMIT_DEG), -float(_HEAD_PITCH_LIMIT_DEG), float(_HEAD_PITCH_LIMIT_DEG))))
 
   def _body_target_from_pointer(self, *, x: float, area_width: int) -> float:
     if int(area_width) <= 1:
@@ -143,11 +135,7 @@ class PlayerSkinPreviewWidget(QWidget):
     target_body_yaw_deg = float(self._body_yaw_deg)
     if bool(self._hover_body_tracking):
       target_body_yaw_deg = self._body_target_from_pointer(x=float(x), area_width=int(area_width))
-    if (
-      abs(float(target_head_yaw_deg) - float(self._head_yaw_deg)) <= 1e-6
-      and abs(float(target_head_pitch_deg) - float(self._head_pitch_deg)) <= 1e-6
-      and abs(float(target_body_yaw_deg) - float(self._body_yaw_deg)) <= 1e-6
-    ):
+    if abs(float(target_head_yaw_deg) - float(self._head_yaw_deg)) <= 1e-6 and abs(float(target_head_pitch_deg) - float(self._head_pitch_deg)) <= 1e-6 and abs(float(target_body_yaw_deg) - float(self._body_yaw_deg)) <= 1e-6:
       return
     self._head_yaw_deg = float(target_head_yaw_deg)
     self._head_pitch_deg = float(target_head_pitch_deg)

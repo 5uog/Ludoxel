@@ -10,9 +10,7 @@ from ludoxel.simulation.worlds.config.collision import CollisionParams
 from ludoxel.simulation.worlds.state.world import WorldState
 
 
-def _depenetrate(
-  player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> tuple[Vec3, Vec3]:
+def _depenetrate(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> tuple[Vec3, Vec3]:
   eps = float(params.eps)
   current = Vec3(float(pos.x), float(pos.y), float(pos.z))
   total_shift = Vec3(0.0, 0.0, 0.0)

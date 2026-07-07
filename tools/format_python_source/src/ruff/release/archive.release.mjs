@@ -14,10 +14,7 @@ export async function extractRuffArchive(archivePath, destinationDir) {
   await mkdir(destinationDir, { recursive: true });
 
   if (archivePath.endsWith('.zip')) {
-    const command = [
-      "$ErrorActionPreference = 'Stop'",
-      `Expand-Archive -LiteralPath ${quotePowerShellSingleQuotedString(archivePath)} -DestinationPath ${quotePowerShellSingleQuotedString(destinationDir)} -Force`,
-    ].join('; ');
+    const command = ["$ErrorActionPreference = 'Stop'", `Expand-Archive -LiteralPath ${quotePowerShellSingleQuotedString(archivePath)} -DestinationPath ${quotePowerShellSingleQuotedString(destinationDir)} -Force`].join('; ');
 
     runProcessCommand('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command], {
       cwd: PROJECT_ROOT,

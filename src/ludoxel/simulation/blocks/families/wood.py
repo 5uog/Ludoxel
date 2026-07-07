@@ -35,25 +35,25 @@ MOSAIC_TYPES: tuple[WoodType, ...] = (WoodType("bamboo_mosaic", "Bamboo Mosaic",
 
 def planks_id(w: WoodType) -> str:
   if w.key == "bamboo_mosaic":
-    return "minecraft:bamboo_mosaic"
-  return f"minecraft:{w.key}_planks"
+    return "ludoxel:bamboo_mosaic"
+  return f"ludoxel:{w.key}_planks"
 
 
 def slab_id(w: WoodType) -> str:
   if w.key == "bamboo_mosaic":
-    return "minecraft:bamboo_mosaic_slab"
-  return f"minecraft:{w.key}_slab"
+    return "ludoxel:bamboo_mosaic_slab"
+  return f"ludoxel:{w.key}_slab"
 
 
 def stairs_id(w: WoodType) -> str:
   if w.key == "bamboo_mosaic":
-    return "minecraft:bamboo_mosaic_stairs"
-  return f"minecraft:{w.key}_stairs"
+    return "ludoxel:bamboo_mosaic_stairs"
+  return f"ludoxel:{w.key}_stairs"
 
 
 def fence_id(w: WoodType) -> str:
-  return f"minecraft:{w.key}_fence"
+  return f"ludoxel:{w.key}_fence"
 
 
 def fence_gate_id(w: WoodType) -> str:
-  return f"minecraft:{w.key}_fence_gate"
+  return f"ludoxel:{w.key}_fence_gate"

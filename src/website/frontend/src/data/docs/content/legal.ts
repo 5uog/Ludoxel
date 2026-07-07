@@ -10,8 +10,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'License Authority and Materials',
     group: 'Authority Text',
     title: 'Understanding License Authority',
-    description:
-      'Defines the juridical source of permission for Ludoxel Original Materials, the non-authoritative character of public surfaces, and the point at which authority analysis must stop before material classification or distribution analysis begins.',
+    description: 'Defines the juridical source of permission for Ludoxel Original Materials, the non-authoritative character of public surfaces, and the point at which authority analysis must stop before material classification or distribution analysis begins.',
     sections: [
       {
         id: 'understanding-license-authority-juridical-function',
@@ -150,8 +149,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'License Authority and Materials',
     group: 'Authority Text',
     title: 'Understanding Controlling Text',
-    description:
-      'Defines the legal priority of the root License Text over inconsistent repository, documentation, metadata, generated, hosted, interface, issue, release, summary, or translation statements.',
+    description: 'Defines the legal priority of the root License Text over inconsistent repository, documentation, metadata, generated, hosted, interface, issue, release, summary, or translation statements.',
     sections: [
       {
         id: 'understanding-controlling-text-doctrinal-function',
@@ -329,8 +327,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'License Authority and Materials',
     group: 'Material Scope',
     title: 'Understanding Repository Visibility',
-    description:
-      'Defines why public repository visibility, platform affordances, browser access, static-site publication, cache state, indexing, and technical obtainability do not grant rights in Ludoxel materials beyond the License Text.',
+    description: 'Defines why public repository visibility, platform affordances, browser access, static-site publication, cache state, indexing, and technical obtainability do not grant rights in Ludoxel materials beyond the License Text.',
     sections: [
       {
         id: 'understanding-repository-visibility-juridical-function',
@@ -430,8 +427,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content:
-                        'Public access may explain how a person obtained material. It does not make the acquisition, reuse, or republication lawful where the License Text withholds permission.',
+                      content: 'Public access may explain how a person obtained material. It does not make the acquisition, reuse, or republication lawful where the License Text withholds permission.',
                     },
                   },
                 ],
@@ -478,8 +474,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'License Authority and Materials',
     group: 'Material Scope',
     title: 'Understanding Original Materials',
-    description:
-      'Defines the legal classification of Ludoxel Original Materials, the exclusion of third-party and user-created materials, and the boundary between material classification and permission to use or distribute.',
+    description: 'Defines the legal classification of Ludoxel Original Materials, the exclusion of third-party and user-created materials, and the boundary between material classification and permission to use or distribute.',
     sections: [
       {
         id: 'understanding-original-materials-juridical-function',
@@ -962,8 +957,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'Use Permissions and Restrictions',
     group: 'Ordinary Use and Output',
     title: 'Understanding Ordinary Application Use',
-    description:
-      'Defines the limited permission to use Ludoxel as a desktop application, separates ordinary interactive operation from restricted uses of Ludoxel Original Materials, and states the boundary between local use, user-created materials, application output, distribution, and AI Use.',
+    description: 'Defines the limited permission to use Ludoxel as a desktop application, separates ordinary interactive operation from restricted uses of Ludoxel Original Materials, and states the boundary between local use, user-created materials, application output, distribution, and AI Use.',
     sections: [
       {
         id: 'understanding-ordinary-application-use-juridical-function',
@@ -1282,8 +1276,7 @@ export const legalPages: DocsPageContent[] = [
     subcategory: 'Use Permissions and Restrictions',
     group: 'Ordinary Use and Output',
     title: 'Understanding Generated Output',
-    description:
-      'Defines the legal treatment of output produced through Ordinary Application Use, the composite material character of that output, and the boundary between a permission to use the user’s own output and any asserted right to reuse the underlying Ludoxel Original Materials.',
+    description: 'Defines the legal treatment of output produced through Ordinary Application Use, the composite material character of that output, and the boundary between a permission to use the user’s own output and any asserted right to reuse the underlying Ludoxel Original Materials.',
     sections: [
       {
         id: 'understanding-generated-output-juridical-function',
@@ -1387,8 +1380,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content:
-                        'Possession of a generated file does not grant permission to reuse the source code, assets, shaders, branding, interface text, documentation material, or package contents that the file may depict or contain.',
+                      content: 'Possession of a generated file does not grant permission to reuse the source code, assets, shaders, branding, interface text, documentation material, or package contents that the file may depict or contain.',
                     },
                   },
                 ],
@@ -1466,8 +1458,7 @@ export const legalPages: DocsPageContent[] = [
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Output containing protected material requires authority for training, benchmarking, retrieval, and dataset use even when ordinary application operation produced it. Computational ingestion of protected material is AI Use; the limited grant covers the stated local operation.',
+              content: 'Output containing protected material requires authority for training, benchmarking, retrieval, and dataset use even when ordinary application operation produced it. Computational ingestion of protected material is AI Use; the limited grant covers the stated local operation.',
             },
           },
         ],
@@ -1618,8 +1609,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content:
-                        'A noncommercial motive, an educational setting, a private group, or mere personal convenience does not convert an ungranted redistribution into a permitted one. The License Text grants the act, or the act is not granted.',
+                      content: 'A noncommercial motive, an educational setting, a private group, or mere personal convenience does not convert an ungranted redistribution into a permitted one. The License Text grants the act, or the act is not granted.',
                     },
                   },
                 ],
@@ -1815,8 +1805,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content:
-                        'The technical ability of local tools to modify project files is not permission to prepare or use a public derivative work based on Ludoxel Original Materials. Capability is not authority.',
+                      content: 'The technical ability of local tools to modify project files is not permission to prepare or use a public derivative work based on Ludoxel Original Materials. Capability is not authority.',
                     },
                   },
                 ],
@@ -1880,14 +1869,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Original Materials',
-      'Understanding Redistribution Restrictions',
-      'Understanding AI Use Restrictions',
-      'Understanding Contribution Refusal',
-      'Understanding Ordinary Application Use',
-      'Understanding Repository Visibility',
-    ],
+    relatedTitles: ['Understanding Original Materials', 'Understanding Redistribution Restrictions', 'Understanding AI Use Restrictions', 'Understanding Contribution Refusal', 'Understanding Ordinary Application Use', 'Understanding Repository Visibility'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -1990,8 +1972,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content:
-                        'Public visibility, technical obtainability, a noncommercial purpose, a research purpose, or an evaluation-only purpose does not authorize AI Use. The License Text grants the act, or the act is not granted.',
+                      content: 'Public visibility, technical obtainability, a noncommercial purpose, a research purpose, or an evaluation-only purpose does not authorize AI Use. The License Text grants the act, or the act is not granted.',
                     },
                   },
                 ],
@@ -2049,22 +2030,14 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Ordinary Application Use',
-      'Understanding Original Materials',
-      'Understanding Generated Output',
-      'Understanding User-Created Materials',
-      'Understanding Redistribution Restrictions',
-      'Understanding Contribution Refusal',
-    ],
+    relatedTitles: ['Understanding Ordinary Application Use', 'Understanding Original Materials', 'Understanding Generated Output', 'Understanding User-Created Materials', 'Understanding Redistribution Restrictions', 'Understanding Contribution Refusal'],
   }),
   defineDocsArticle({
     category: 'Legal',
     subcategory: 'Reporting and Contributions',
     group: 'Public and Private Reporting',
     title: 'Understanding Public Issue Limits',
-    description:
-      'Defines the legal and operational limits of the Ludoxel public issue surface, the narrow categories of submission it admits, the content it must never carry, and why a public form does not create permission, a right of submission, or acceptance of any contribution.',
+    description: 'Defines the legal and operational limits of the Ludoxel public issue surface, the narrow categories of submission it admits, the content it must never carry, and why a public form does not create permission, a right of submission, or acceptance of any contribution.',
     sections: [
       {
         id: 'understanding-public-issue-limits-juridical-function',
@@ -2251,14 +2224,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Private Security Reporting',
-      'Understanding Contribution Refusal',
-      'Understanding Pull Request Boundaries',
-      'Writing a Problem Report',
-      'Asking a Limited Question',
-      'Requesting a Private Security Channel',
-    ],
+    relatedTitles: ['Understanding Private Security Reporting', 'Understanding Contribution Refusal', 'Understanding Pull Request Boundaries', 'Writing a Problem Report', 'Asking a Limited Question', 'Requesting a Private Security Channel'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -2336,8 +2302,7 @@ export const legalPages: DocsPageContent[] = [
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Do not disclose vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other non-public reproduction information through any public channel.',
+              content: 'Do not disclose vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or other non-public reproduction information through any public channel.',
             },
           },
         ],
@@ -2506,8 +2471,7 @@ export const legalPages: DocsPageContent[] = [
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'The ability to open a pull request, post an issue, start a discussion, or create a fork does not create a contribution invitation, a license grant, a review obligation, acceptance of an assignment, joint authorship, or implied consent.',
+              content: 'The ability to open a pull request, post an issue, start a discussion, or create a fork does not create a contribution invitation, a license grant, a review obligation, acceptance of an assignment, joint authorship, or implied consent.',
             },
           },
         ],
@@ -2551,21 +2515,14 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Pull Request Boundaries',
-      'Understanding Public Issue Limits',
-      'Understanding Derivative Work Restrictions',
-      'Reading Contribution Policy',
-      'Avoiding Feature Requests',
-    ],
+    relatedTitles: ['Understanding Pull Request Boundaries', 'Understanding Public Issue Limits', 'Understanding Derivative Work Restrictions', 'Reading Contribution Policy', 'Avoiding Feature Requests'],
   }),
   defineDocsArticle({
     category: 'Legal',
     subcategory: 'Reporting and Contributions',
     group: 'Contribution Boundaries',
     title: 'Understanding Pull Request Boundaries',
-    description:
-      'Defines why a pull request is not an accepted contribution path for Ludoxel, why a public pull request may be closed without review, and why the pull-request interface creates no submission permission, review obligation, merge expectation, license amendment, or right to have material considered.',
+    description: 'Defines why a pull request is not an accepted contribution path for Ludoxel, why a public pull request may be closed without review, and why the pull-request interface creates no submission permission, review obligation, merge expectation, license amendment, or right to have material considered.',
     sections: [
       {
         id: 'understanding-pull-request-boundaries-juridical-function',
@@ -2605,8 +2562,7 @@ export const legalPages: DocsPageContent[] = [
             kind: 'note',
             note: {
               type: 'warning',
-              content:
-                'Opening a pull request does not create submission permission, a review obligation, a merge expectation, a license amendment, acceptance of a contribution, or a right to have the submitted material considered.',
+              content: 'Opening a pull request does not create submission permission, a review obligation, a merge expectation, a license amendment, acceptance of a contribution, or a right to have the submitted material considered.',
             },
           },
         ],
@@ -2668,13 +2624,6 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: [
-      'Understanding Contribution Refusal',
-      'Understanding Public Issue Limits',
-      'Understanding Derivative Work Restrictions',
-      'Reading Contribution Policy',
-      'Reading Issue Template Boundaries',
-      'Avoiding Unauthorized Repository Operations',
-    ],
+    relatedTitles: ['Understanding Contribution Refusal', 'Understanding Public Issue Limits', 'Understanding Derivative Work Restrictions', 'Reading Contribution Policy', 'Reading Issue Template Boundaries', 'Avoiding Unauthorized Repository Operations'],
   }),
 ];

@@ -42,8 +42,5 @@ export function checkShaders() {
     .filter((path) => SHADER_SUFFIXES.includes(extname(path).toLowerCase()));
   const failures = shaderFiles.flatMap(checkShader);
 
-  return printCheckResult('shaders', failures, [
-    `checked ${shaderFiles.length} shader files`,
-    'shader check validates Ludoxel renderer shader source; macOS uses wgpu-native and Windows retains the existing OpenGL renderer path',
-  ]);
+  return printCheckResult('shaders', failures, [`checked ${shaderFiles.length} shader files`, 'shader check validates Ludoxel renderer shader source; macOS uses wgpu-native and Windows retains the existing OpenGL renderer path']);
 }

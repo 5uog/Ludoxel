@@ -48,16 +48,7 @@ class _FormatState:
     self.obfuscated = False
 
   def emit(self, text: str) -> FormattedSegment:
-    return FormattedSegment(
-      text=str(text),
-      foreground=str(self.foreground),
-      background=None if self.background is None else str(self.background),
-      bold=bool(self.bold),
-      italic=bool(self.italic),
-      underline=bool(self.underline),
-      strikethrough=bool(self.strikethrough),
-      obfuscated=bool(self.obfuscated),
-    )
+    return FormattedSegment(text=str(text), foreground=str(self.foreground), background=None if self.background is None else str(self.background), bold=bool(self.bold), italic=bool(self.italic), underline=bool(self.underline), strikethrough=bool(self.strikethrough), obfuscated=bool(self.obfuscated))
 
 
 def _apply_code(state: _FormatState, code: str) -> None:

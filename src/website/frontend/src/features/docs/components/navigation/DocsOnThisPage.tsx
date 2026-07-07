@@ -204,10 +204,7 @@ export default function DocsOnThisPage({ currentHash, footerOverlapPx, items }: 
   }, [targets]);
 
   return (
-    <aside
-      className="fixed right-[max(0px,calc((100vw-90rem)/2))] top-24 z-20 hidden w-56 shrink-0 overflow-y-auto pr-6 transition-[max-height] duration-300 ease-out xl:block"
-      style={{ maxHeight: `calc(100vh - 6rem - ${footerOverlapPx}px)` }}
-    >
+    <aside className="fixed right-[max(0px,calc((100vw-90rem)/2))] top-24 z-20 hidden w-56 shrink-0 overflow-y-auto pr-6 transition-[max-height] duration-300 ease-out xl:block" style={{ maxHeight: `calc(100vh - 6rem - ${footerOverlapPx}px)` }}>
       <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
         <List className="h-4 w-4" />
         <span>On this page</span>
@@ -222,11 +219,7 @@ export default function DocsOnThisPage({ currentHash, footerOverlapPx, items }: 
 
             return (
               <a
-                className={
-                  isActive
-                    ? 'relative block w-full py-1.5 pl-4 text-left text-sm font-medium text-foreground transition-colors'
-                    : 'relative block w-full py-1.5 pl-4 text-left text-sm text-muted-foreground transition-colors hover:text-foreground'
-                }
+                className={isActive ? 'relative block w-full py-1.5 pl-4 text-left text-sm font-medium text-foreground transition-colors' : 'relative block w-full py-1.5 pl-4 text-left text-sm text-muted-foreground transition-colors hover:text-foreground'}
                 href={item.href}
                 key={item.href}
                 aria-current={isActive ? 'location' : undefined}

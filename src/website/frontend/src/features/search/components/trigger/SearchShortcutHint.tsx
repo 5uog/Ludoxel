@@ -11,9 +11,7 @@ type SearchShortcutHintProps = {
 };
 
 function getKeyClassName(variant: SearchCommandVariant): string {
-  return variant === 'hero'
-    ? 'flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-xs font-semibold text-muted-foreground backdrop-blur-sm'
-    : 'flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-muted-foreground';
+  return variant === 'hero' ? 'flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-xs font-semibold text-muted-foreground backdrop-blur-sm' : 'flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-xs font-semibold text-muted-foreground';
 }
 
 export default function SearchShortcutHint({ variant }: SearchShortcutHintProps): React.JSX.Element {

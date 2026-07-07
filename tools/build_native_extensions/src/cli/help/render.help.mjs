@@ -23,22 +23,7 @@ function renderOptionRecords(records) {
 export function renderNativeExtensionHelp(language = 'ja') {
   const messages = nativeExtensionHelpMessagesFor(language);
 
-  return lines([
-    messages.title,
-    '',
-    messages.labels.purpose,
-    `  ${messages.purpose}`,
-    '',
-    messages.labels.synopsis,
-    renderIndentedLines(messages.synopsis),
-    '',
-    messages.labels.options,
-    renderOptionRecords(messages.options),
-    '',
-    messages.labels.discoveryHints,
-    renderIndentedLines(messages.discoveryHints),
-    '',
-  ]);
+  return lines([messages.title, '', messages.labels.purpose, `  ${messages.purpose}`, '', messages.labels.synopsis, renderIndentedLines(messages.synopsis), '', messages.labels.options, renderOptionRecords(messages.options), '', messages.labels.discoveryHints, renderIndentedLines(messages.discoveryHints), '']);
 }
 
 export function renderNativeExtensionErrors(errors, language = 'ja') {

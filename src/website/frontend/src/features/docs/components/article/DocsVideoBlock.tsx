@@ -45,12 +45,7 @@ export default function DocsVideoBlock({ block }: DocsVideoBlockProps): React.JS
         {hasControls ? (
           <div className="border-t border-border bg-background px-4 py-3">
             <div className="flex items-center gap-3">
-              <button
-                aria-label={playback.isPlaying ? 'Pause video' : 'Play video'}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground"
-                onClick={playback.togglePlayback}
-                type="button"
-              >
+              <button aria-label={playback.isPlaying ? 'Pause video' : 'Play video'} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-secondary/80 hover:text-foreground" onClick={playback.togglePlayback} type="button">
                 {playback.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </button>
 

@@ -57,13 +57,7 @@ export default function DocsSectionHeading({ sectionId, title }: DocsSectionHead
 
   return (
     <div className="group/header relative">
-      <button
-        aria-label={label}
-        className="absolute -left-10 top-1 flex items-center border-0 bg-transparent p-0 opacity-0 transition-opacity duration-150 group-hover/header:opacity-100 focus:opacity-100 focus:outline-0 group/link"
-        onClick={handleCopySectionLink}
-        title={label}
-        type="button"
-      >
+      <button aria-label={label} className="absolute -left-10 top-1 flex items-center border-0 bg-transparent p-0 opacity-0 transition-opacity duration-150 group-hover/header:opacity-100 focus:opacity-100 focus:outline-0 group/link" onClick={handleCopySectionLink} title={label} type="button">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-card text-muted-foreground shadow-sm brightness-[1.35] ring-1 ring-border/80 transition-[filter,box-shadow,color,border-color] duration-150 hover:text-foreground hover:brightness-150 hover:ring-muted-foreground/60 group-focus/link:border-2 group-focus/link:border-primary">
           <Link2 className="h-3 w-3" aria-hidden="true" />
         </span>

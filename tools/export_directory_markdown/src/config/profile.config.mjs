@@ -31,20 +31,7 @@ export const EXPORT_TARGETS = Object.freeze({
 
 export const DEFAULT_TARGET = 'root';
 
-export const DEFAULT_EXCLUDED_DIRECTORY_NAMES = Object.freeze([
-  '.git',
-  '.artifacts',
-  '.venv',
-  '.venv_ludoxel',
-  '__pycache__',
-  '.pytest_cache',
-  '.mypy_cache',
-  '.ruff_cache',
-  'node_modules',
-  'dist',
-  'build',
-  'coverage',
-]);
+export const DEFAULT_EXCLUDED_DIRECTORY_NAMES = Object.freeze(['.git', '.artifacts', '.venv', '.venv_ludoxel', '__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache', 'node_modules', 'dist', 'build', 'coverage']);
 
 export const DEFAULT_EXCLUDED_RELATIVE_PREFIXES = Object.freeze(['tools/export_directory_markdown/output', 'tools/format_python_source/.cache']);
 

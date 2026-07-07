@@ -64,18 +64,7 @@ class LearningCoordinator:
     self._tick += 1
 
   def record_decision(
-    self,
-    *,
-    observation: AiObservation,
-    mask: AiActionMask,
-    action_id: str,
-    action_source: str,
-    actor_id: str,
-    transition: RewardTransition,
-    failure_reason: str | None = None,
-    route_state: dict[str, Any] | None = None,
-    combat_state: dict[str, Any] | None = None,
-    placement_state: dict[str, Any] | None = None,
+    self, *, observation: AiObservation, mask: AiActionMask, action_id: str, action_source: str, actor_id: str, transition: RewardTransition, failure_reason: str | None = None, route_state: dict[str, Any] | None = None, combat_state: dict[str, Any] | None = None, placement_state: dict[str, Any] | None = None
   ) -> bool:
     if not self._recorder.captures(RECORD_AI_DECISIONS):
       return False
@@ -89,14 +78,7 @@ class LearningCoordinator:
       "action_source": str(action_source),
       "feature_keys": list(encode_features(observation)),
       "action_mask_summary": {"allowed": len(mask.allowed), "forbidden": len(mask.forbidden)},
-      "reward_terms": {
-        "damage_dealt": float(transition.damage_dealt),
-        "damage_taken": float(transition.damage_taken),
-        "fell": bool(transition.fell),
-        "died": bool(transition.died),
-        "void_death": bool(transition.void_death),
-        "progress_delta": float(transition.progress_delta),
-      },
+      "reward_terms": {"damage_dealt": float(transition.damage_dealt), "damage_taken": float(transition.damage_taken), "fell": bool(transition.fell), "died": bool(transition.died), "void_death": bool(transition.void_death), "progress_delta": float(transition.progress_delta)},
       "failure_reason": (None if failure_reason is None else str(failure_reason)),
       "route_state": dict(route_state or {}),
       "combat_state": dict(combat_state or {}),
@@ -104,9 +86,7 @@ class LearningCoordinator:
       "health_state": {"health": float(observation.health), "max_health": float(observation.max_health), "low_health": bool(observation.low_health)},
       "position_summary": {"position": [float(value) for value in observation.self_position], "on_ground": bool(observation.on_ground)},
     }
-    return self._recorder.record(
-      kind=RECORD_AI_DECISIONS, observation=observation, action=str(action_id), success=bool(success), reward=float(reward), tick=int(self._tick), actor_id=str(actor_id), detail=detail
-    )
+    return self._recorder.record(kind=RECORD_AI_DECISIONS, observation=observation, action=str(action_id), success=bool(success), reward=float(reward), tick=int(self._tick), actor_id=str(actor_id), detail=detail)
 
   def record_player_demonstration(self, *, kind: str, observation: AiObservation | dict[str, Any] | None, action_id: str, actor_id: str = "player", detail: dict[str, Any] | None = None) -> bool:
     if not self._recorder.captures(kind):
@@ -114,14 +94,7 @@ class LearningCoordinator:
     feature_keys: list[str] = []
     if isinstance(observation, AiObservation):
       feature_keys = list(encode_features(observation))
-    merged_detail: dict[str, Any] = {
-      "record_type": "player_demonstration",
-      "timestamp": float(time.time()),
-      "session_id": str(self._session_id),
-      "actor_kind": "player",
-      "action_source": ACTION_SOURCE_PLAYER,
-      "feature_keys": feature_keys,
-    }
+    merged_detail: dict[str, Any] = {"record_type": "player_demonstration", "timestamp": float(time.time()), "session_id": str(self._session_id), "actor_kind": "player", "action_source": ACTION_SOURCE_PLAYER, "feature_keys": feature_keys}
     if isinstance(detail, dict):
       merged_detail.update(detail)
     return self._recorder.record(kind=str(kind), observation=observation, action=str(action_id), success=True, tick=int(self._tick), actor_id=str(actor_id), detail=merged_detail)

@@ -53,14 +53,7 @@ def apply_melee_knockback(*, attacker: PlayerEntity, target: PlayerEntity, attac
 
 
 def apply_melee_damage(*, attacker: PlayerEntity, target: PlayerEntity, attack_direction: Vec3, sprinting: bool, damage: float = MELEE_ATTACK_DAMAGE) -> float:
-  damage_taken = target.apply_damage(
-    float(damage),
-    cooldown_s=float(MELEE_DAMAGE_COOLDOWN_S),
-    source_position=attacker.eye_pos(),
-    flash_s=float(MELEE_HURT_FLASH_S),
-    tilt_s=float(MELEE_HURT_TILT_S),
-    jump_reset_window_s=float(MELEE_JUMP_RESET_WINDOW_S),
-  )
+  damage_taken = target.apply_damage(float(damage), cooldown_s=float(MELEE_DAMAGE_COOLDOWN_S), source_position=attacker.eye_pos(), flash_s=float(MELEE_HURT_FLASH_S), tilt_s=float(MELEE_HURT_TILT_S), jump_reset_window_s=float(MELEE_JUMP_RESET_WINDOW_S))
   if float(damage_taken) <= 1e-6:
     return 0.0
   apply_melee_knockback(attacker=attacker, target=target, attack_direction=attack_direction, sprinting=bool(sprinting))

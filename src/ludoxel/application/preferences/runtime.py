@@ -231,10 +231,8 @@ class RuntimePreferences:
     self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
     self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
     self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
-    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = (
-      normalize_cloud_height_settings(
-        self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
-      )
+    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = normalize_cloud_height_settings(
+      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
     )
     self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
     self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)

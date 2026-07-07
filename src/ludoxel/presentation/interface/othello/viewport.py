@@ -14,16 +14,7 @@ from ludoxel.presentation.audio import PLAYER_EVENT_OTHELLO_FLIP, PLAYER_EVENT_O
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.simulation.spaces.othello.game.board import OTHELLO_BOARD_SURFACE_Y, raycast_board_square, square_center, square_index_to_name
 from ludoxel.simulation.spaces.othello.game.rules import counts_for_board
-from ludoxel.simulation.spaces.othello.game.state import (
-  OTHELLO_GAME_STATE_AI_TURN,
-  OTHELLO_GAME_STATE_FINISHED,
-  OTHELLO_GAME_STATE_PLAYER_TURN,
-  OTHELLO_WINNER_DRAW,
-  SIDE_BLACK,
-  SIDE_WHITE,
-  OthelloAnalysis,
-  difficulty_display_name,
-)
+from ludoxel.simulation.spaces.othello.game.state import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_WHITE, OthelloAnalysis, difficulty_display_name
 from ludoxel.simulation.spaces.othello.inventories.special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
 
 if TYPE_CHECKING:
@@ -92,8 +83,7 @@ def _analysis_graph_samples(viewport: "RendererViewportWidget") -> tuple[tuple[i
   sign = 1.0 if int(analysis.side_to_move) == int(state.player_side) else -1.0
   if len(analysis.depth_samples) >= 2:
     return tuple((int(sample.depth), float(sample.score) * float(sign), bool(sample.solved)) for sample in tuple(analysis.depth_samples)[-12:])
-  # A single-depth analysis (weak, medium, or a solved endgame) plots the
-  # per-candidate root evaluations instead of one depth point; the series
+  # A single-depth analysis (weak, medium, or a solved endgame) plots the per-candidate root evaluations instead of one depth point; the series
   # is the engine's real candidate ordering, best score first.
   if len(analysis.move_evaluations) >= 2:
     return tuple((int(evaluation.move_index), float(evaluation.score) * float(sign), bool(evaluation.solved)) for evaluation in tuple(analysis.move_evaluations)[:12])
@@ -237,13 +227,7 @@ def sync_hud_text(viewport: "RendererViewportWidget") -> None:
   left_lines.append(f"Search depth {int(analysis.depth_reached)} | Solved {int(bool(analysis.solved))}")
   left_lines.append(str(state.message))
 
-  right_lines = [
-    f"AI {difficulty} | You {player_color} | AI {ai_color}",
-    f"Black clock: {black_clock}",
-    f"White clock: {white_clock}",
-    f"Sacrifice {int(state.settings.sacrifice_level)} | Threads {int(state.settings.thread_count)} | Hash {int(state.settings.hash_level)}",
-    str(viewport._othello_book_summary_text),
-  ]
+  right_lines = [f"AI {difficulty} | You {player_color} | AI {ai_color}", f"Black clock: {black_clock}", f"White clock: {white_clock}", f"Sacrifice {int(state.settings.sacrifice_level)} | Threads {int(state.settings.thread_count)} | Hash {int(state.settings.hash_level)}", str(viewport._othello_book_summary_text)]
 
   signature = (tuple(left_lines), tuple(right_lines), str(banner), tuple(graph_samples), (None if player_edge is None else round(float(player_edge), 4)))
   if viewport._othello_hud_signature == signature:
@@ -268,9 +252,7 @@ def build_render_state(viewport: "RendererViewportWidget") -> OthelloRenderState
     cache_key = ("learning", learning_board, learning_legal_moves, learning_last_move)
     if viewport._othello_render_state_cache_key == cache_key and viewport._othello_render_state_cache is not None:
       return viewport._othello_render_state_cache
-    render_state = OthelloRenderState(
-      enabled=True, board=tuple(learning_board), legal_move_indices=tuple(learning_legal_moves), hover_square_index=None, last_move_index=learning_last_move, animations=()
-    )
+    render_state = OthelloRenderState(enabled=True, board=tuple(learning_board), legal_move_indices=tuple(learning_legal_moves), hover_square_index=None, last_move_index=learning_last_move, animations=())
     viewport._othello_render_state_cache_key = cache_key
     viewport._othello_render_state_cache = render_state
     return render_state
@@ -279,14 +261,7 @@ def build_render_state(viewport: "RendererViewportWidget") -> OthelloRenderState
   if viewport._othello_render_state_cache_key == cache_key and viewport._othello_render_state_cache is not None:
     return viewport._othello_render_state_cache
   legal_moves = game_state.legal_moves if game_state.status == OTHELLO_GAME_STATE_PLAYER_TURN else ()
-  render_state = OthelloRenderState(
-    enabled=True,
-    board=game_state.board,
-    legal_move_indices=legal_moves,
-    hover_square_index=viewport._othello_hover_square,
-    last_move_index=game_state.last_move_index,
-    animations=game_state.animations,
-  )
+  render_state = OthelloRenderState(enabled=True, board=game_state.board, legal_move_indices=legal_moves, hover_square_index=viewport._othello_hover_square, last_move_index=game_state.last_move_index, animations=game_state.animations)
   viewport._othello_render_state_cache_key = cache_key
   viewport._othello_render_state_cache = render_state
   return render_state
@@ -481,26 +456,13 @@ def maybe_request_ai(viewport: "RendererViewportWidget") -> None:
   viewport._othello_ai_request_armed = True
   QTimer.singleShot(
     0,
-    lambda generation=generation, board=board, side=side, difficulty=difficulty, seed=seed, project_root=project_root, thread_count=thread_count, sacrifice_level=sacrifice_level, hash_level=hash_level: (
-      dispatch_ai_request(
-        viewport,
-        generation=generation,
-        board=board,
-        side=side,
-        difficulty=difficulty,
-        seed=seed,
-        project_root=project_root,
-        thread_count=thread_count,
-        sacrifice_level=sacrifice_level,
-        hash_level=hash_level,
-      )
+    lambda generation=generation, board=board, side=side, difficulty=difficulty, seed=seed, project_root=project_root, thread_count=thread_count, sacrifice_level=sacrifice_level, hash_level=hash_level: dispatch_ai_request(
+      viewport, generation=generation, board=board, side=side, difficulty=difficulty, seed=seed, project_root=project_root, thread_count=thread_count, sacrifice_level=sacrifice_level, hash_level=hash_level
     ),
   )
 
 
-def dispatch_ai_request(
-  viewport: "RendererViewportWidget", *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, thread_count: int, sacrifice_level: int, hash_level: int
-) -> None:
+def dispatch_ai_request(viewport: "RendererViewportWidget", *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int, project_root: str, thread_count: int, sacrifice_level: int, hash_level: int) -> None:
   viewport._othello_ai_request_armed = False
   if not viewport._state.is_othello_space():
     return
@@ -511,17 +473,7 @@ def dispatch_ai_request(
   if int(state.match_generation) != int(generation) or state.status != OTHELLO_GAME_STATE_AI_TURN or not bool(state.thinking):
     return
 
-  viewport._othello_ai.request_move(
-    generation=int(generation),
-    board=tuple(board),
-    side=int(side),
-    difficulty=str(difficulty),
-    seed=int(seed),
-    project_root=str(project_root),
-    thread_count=int(thread_count),
-    sacrifice_level=int(sacrifice_level),
-    hash_level=int(hash_level),
-  )
+  viewport._othello_ai.request_move(generation=int(generation), board=tuple(board), side=int(side), difficulty=str(difficulty), seed=int(seed), project_root=str(project_root), thread_count=int(thread_count), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
 
 
 def maybe_request_analysis(viewport: "RendererViewportWidget") -> None:
@@ -536,15 +488,7 @@ def maybe_request_analysis(viewport: "RendererViewportWidget") -> None:
   if state.status not in (OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_GAME_STATE_FINISHED):
     return
 
-  signature = (
-    int(state.match_generation),
-    tuple(state.board),
-    int(state.current_turn),
-    str(state.status),
-    str(state.settings.difficulty),
-    int(state.settings.sacrifice_level),
-    int(state.settings.hash_level),
-  )
+  signature = (int(state.match_generation), tuple(state.board), int(state.current_turn), str(state.status), str(state.settings.difficulty), int(state.settings.sacrifice_level), int(state.settings.hash_level))
   if viewport._othello_analysis_request_signature == signature:
     return
 

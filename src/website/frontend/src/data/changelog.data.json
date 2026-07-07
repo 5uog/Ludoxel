@@ -558,9 +558,7 @@
         },
         {
           "title": "AI Settings Open Path",
-          "items": [
-            "Opening AI Settings after confirming a route, or by right-clicking an AI actor in Creative Mode, no longer constructs the AI learning controller, scans policy options, reads learning summaries, or decodes imported skin files before the Identity page is shown."
-          ]
+          "items": ["Opening AI Settings after confirming a route, or by right-clicking an AI actor in Creative Mode, no longer constructs the AI learning controller, scans policy options, reads learning summaries, or decodes imported skin files before the Identity page is shown."]
         }
       ]
     },
@@ -784,9 +782,7 @@
         },
         {
           "title": "Command Alias",
-          "items": [
-            "Added `/tp` as an alias for `/teleport`, including command candidates. Both spellings share the same parser, validation, target resolution, coordinate handling, execution result, and command-error route."
-          ]
+          "items": ["Added `/tp` as an alias for `/teleport`, including command candidates. Both spellings share the same parser, validation, target resolution, coordinate handling, execution result, and command-error route."]
         }
       ]
     },
@@ -1007,10 +1003,7 @@
         },
         {
           "title": "First-Person Idle",
-          "items": [
-            "Added a faint idle sway to the first-person held item, bare arm, and special item so the hands are not perfectly frozen while standing still.",
-            "Faded the first-person idle out while walking, swinging, or switching items so it never stacks onto the view bob or a swing."
-          ]
+          "items": ["Added a faint idle sway to the first-person held item, bare arm, and special item so the hands are not perfectly frozen while standing still.", "Faded the first-person idle out while walking, swinging, or switching items so it never stacks onto the view bob or a swing."]
         },
         {
           "title": "Movement Swing",
@@ -1036,10 +1029,7 @@
         },
         {
           "title": "Idle Arm Motion",
-          "items": [
-            "Added a gentle idle sway to both arms while the player is standing still, pivoting each arm at the shoulder so only the lower arm drifts outward and the shoulder stays in place.",
-            "Faded the idle sway out while walking or swinging so it never fights the walk cycle or an attack."
-          ]
+          "items": ["Added a gentle idle sway to both arms while the player is standing still, pivoting each arm at the shoulder so only the lower arm drifts outward and the shoulder stays in place.", "Faded the idle sway out while walking or swinging so it never fights the walk cycle or an attack."]
         },
         {
           "title": "Head and Body Turning",
@@ -1056,10 +1046,7 @@
       "sections": [
         {
           "title": "Viewport Loading",
-          "items": [
-            "Continued viewport preparation when Ludoxel loses desktop focus during startup, so loading status can advance while visible chunks are prepared.",
-            "Completed startup loading by closing the splash, restoring the active main window when appropriate, and then returning focus to the loaded viewport."
-          ]
+          "items": ["Continued viewport preparation when Ludoxel loses desktop focus during startup, so loading status can advance while visible chunks are prepared.", "Completed startup loading by closing the splash, restoring the active main window when appropriate, and then returning focus to the loaded viewport."]
         }
       ]
     }

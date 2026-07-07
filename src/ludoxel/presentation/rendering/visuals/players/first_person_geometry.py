@@ -102,12 +102,7 @@ def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float
 
 
 def _view_bob_transform(first_person: FirstPersonRenderState) -> np.ndarray:
-  return compose_matrices(
-    translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)),
-    rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)),
-    rotate_y_deg_matrix(float(first_person.view_bob_yaw_deg)),
-    rotate_x_deg_matrix(float(first_person.view_bob_pitch_deg)),
-  )
+  return compose_matrices(translate_matrix(float(first_person.view_bob_x), float(first_person.view_bob_y), float(first_person.view_bob_z)), rotate_z_deg_matrix(float(first_person.view_bob_roll_deg)), rotate_y_deg_matrix(float(first_person.view_bob_yaw_deg)), rotate_x_deg_matrix(float(first_person.view_bob_pitch_deg)))
 
 
 def _idle_sway_transform(first_person: FirstPersonRenderState) -> np.ndarray:
@@ -264,17 +259,7 @@ def _equip_hide_transform(first_person: FirstPersonRenderState, *, hide_distance
   return translate_matrix(0.0, -float(hide_distance) * eased, 0.0)
 
 
-def _fitted_first_person_parent_transform(
-  *,
-  boxes: tuple[LocalBox, ...] | list[LocalBox],
-  projection: np.ndarray,
-  safe_frame: SafeFrame,
-  transform_builder,
-  projection_scale_exponent: float,
-  x_anchor_mode: AnchorMode,
-  y_anchor_mode: AnchorMode,
-  reference_transform_builder=None,
-) -> np.ndarray:
+def _fitted_first_person_parent_transform(*, boxes: tuple[LocalBox, ...] | list[LocalBox], projection: np.ndarray, safe_frame: SafeFrame, transform_builder, projection_scale_exponent: float, x_anchor_mode: AnchorMode, y_anchor_mode: AnchorMode, reference_transform_builder=None) -> np.ndarray:
   projection_scale_multiplier = _projection_uniform_scale_multiplier(projection, exponent=float(projection_scale_exponent))
   best_scale = 1.0
   transform = np.asarray(transform_builder(projection_scale_multiplier), dtype=np.float32)
@@ -339,9 +324,7 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
     projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT),
     x_anchor_mode=_RIGHT_EDGE_ANCHOR,
     y_anchor_mode=_BOTTOM_EDGE_ANCHOR,
-    reference_transform_builder=(
-      lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(kind_scale))
-    ),
+    reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(kind_scale))),
   )
   parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
 
@@ -399,17 +382,9 @@ def build_first_person_special_item_face_rows(first_person: FirstPersonRenderSta
     projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT),
     x_anchor_mode=_RIGHT_EDGE_ANCHOR,
     y_anchor_mode=_BOTTOM_EDGE_ANCHOR,
-    reference_transform_builder=(
-      lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))
-    ),
+    reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))),
   )
-  parent_transform = compose_matrices(
-    _equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)),
-    base_parent_transform,
-    translate_matrix(8.0 * _PX, 8.0 * _PX, 8.0 * _PX),
-    rotate_z_deg_matrix(float(_SPECIAL_ITEM_ROTATE_Z_DEG)),
-    translate_matrix(-8.0 * _PX, -8.0 * _PX, -8.0 * _PX),
-  )
+  parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform, translate_matrix(8.0 * _PX, 8.0 * _PX, 8.0 * _PX), rotate_z_deg_matrix(float(_SPECIAL_ITEM_ROTATE_Z_DEG)), translate_matrix(-8.0 * _PX, -8.0 * _PX, -8.0 * _PX))
   model = model_matrix_for_local_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
   buffers: list[list[list[float]]] = [[] for _ in range(6)]
   append_face_instance(buffers, int(FACE_POS_Z), model, _SPECIAL_ITEM_UV_RECT)

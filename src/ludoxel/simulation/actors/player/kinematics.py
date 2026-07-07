@@ -111,15 +111,9 @@ def _ease_angle_toward(current: float | None, target: float, *, tau: float, dt: 
 def _update_player_visual_animation(player: PlayerEntity, *, motion: PlayerMotionState, dt: float) -> None:
   step = max(0.0, float(dt))
   motion.visual_time_s = float(motion.visual_time_s) + float(step)
-  motion.body_visual_yaw_deg = _ease_angle_toward(
-    motion.body_visual_yaw_deg, float(player.yaw_deg), tau=float(PLAYER_BODY_YAW_FOLLOW_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_BODY_YAW_MAX_DEG)
-  )
-  motion.head_visual_yaw_deg = _ease_angle_toward(
-    motion.head_visual_yaw_deg, float(player.yaw_deg), tau=float(PLAYER_HEAD_VISUAL_LAG_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG)
-  )
-  motion.head_visual_pitch_deg = _ease_angle_toward(
-    motion.head_visual_pitch_deg, float(player.pitch_deg), tau=float(PLAYER_HEAD_VISUAL_LAG_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG)
-  )
+  motion.body_visual_yaw_deg = _ease_angle_toward(motion.body_visual_yaw_deg, float(player.yaw_deg), tau=float(PLAYER_BODY_YAW_FOLLOW_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_BODY_YAW_MAX_DEG))
+  motion.head_visual_yaw_deg = _ease_angle_toward(motion.head_visual_yaw_deg, float(player.yaw_deg), tau=float(PLAYER_HEAD_VISUAL_LAG_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG))
+  motion.head_visual_pitch_deg = _ease_angle_toward(motion.head_visual_pitch_deg, float(player.pitch_deg), tau=float(PLAYER_HEAD_VISUAL_LAG_TAU_S), dt=float(step), max_lag_deg=float(PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG))
 
 
 def _update_player_strafe_body_turn(*, motion: PlayerMotionState, control: PlayerStepInput, dt: float) -> None:
@@ -163,9 +157,7 @@ def _support_contact(player: PlayerEntity, *, world: WorldState, block_registry:
   return (str(contact.block_state), tuple(int(value) for value in contact.cell))
 
 
-def advance_runtime_player(
-  *, player: PlayerEntity, world: WorldState, block_registry: BlockRegistry, settings: SessionSettings, motion: PlayerMotionState, dt: float, control: PlayerStepInput
-) -> RuntimePlayerStepResult:
+def advance_runtime_player(*, player: PlayerEntity, world: WorldState, block_registry: BlockRegistry, settings: SessionSettings, motion: PlayerMotionState, dt: float, control: PlayerStepInput) -> RuntimePlayerStepResult:
   player.advance_hurt_state(float(dt))
 
   prev_on_ground = bool(player.on_ground)
@@ -183,16 +175,7 @@ def advance_runtime_player(
     player.hold_jump_queued = False
 
   if bool(player.flying):
-    move_input = MoveInput(
-      forward=clampf(control.move_f, -1.0, 1.0),
-      strafe=clampf(control.move_s, -1.0, 1.0),
-      sprint=bool(control.sprint),
-      crouch=bool(control.crouch),
-      jump_pulse=False,
-      jump_held=bool(control.jump_held),
-      yaw_delta_deg=0.0,
-      pitch_delta_deg=0.0,
-    )
+    move_input = MoveInput(forward=clampf(control.move_f, -1.0, 1.0), strafe=clampf(control.move_s, -1.0, 1.0), sprint=bool(control.sprint), crouch=bool(control.crouch), jump_pulse=False, jump_held=bool(control.jump_held), yaw_delta_deg=0.0, pitch_delta_deg=0.0)
     step_flying(player, move_input, float(dt), params=settings.movement)
     integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=False, jump_pressed=False, flying=True)
 
@@ -229,16 +212,7 @@ def advance_runtime_player(
           player.auto_jump_pending = True
           player.auto_jump_start_y = float(player.position.y)
 
-  move_input = MoveInput(
-    forward=clampf(control.move_f, -1.0, 1.0),
-    strafe=clampf(control.move_s, -1.0, 1.0),
-    sprint=bool(control.sprint),
-    crouch=bool(control.crouch),
-    jump_pulse=bool(jump_pulse),
-    jump_held=bool(control.jump_held),
-    yaw_delta_deg=0.0,
-    pitch_delta_deg=0.0,
-  )
+  move_input = MoveInput(forward=clampf(control.move_f, -1.0, 1.0), strafe=clampf(control.move_s, -1.0, 1.0), sprint=bool(control.sprint), crouch=bool(control.crouch), jump_pulse=bool(jump_pulse), jump_held=bool(control.jump_held), yaw_delta_deg=0.0, pitch_delta_deg=0.0)
   step_bedrock(player, move_input, float(dt), params=settings.movement)
   report = integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=bool(control.crouch), jump_pressed=bool(jump_pulse), flying=False)
 
@@ -263,15 +237,7 @@ def advance_runtime_player(
 
   delta_y_correction = float(report.y_correction_dy)
   step_height = float(settings.collision.step_height)
-  if (
-    abs(delta_y_correction) > 1e-6
-    and abs(delta_y_correction) <= (step_height + 1e-3)
-    and bool(report.supported_before)
-    and bool(report.supported_after)
-    and (not bool(jump_pulse))
-    and abs(float(prev_vy)) <= 1e-6
-    and abs(float(player.velocity.y)) <= 1e-6
-  ):
+  if abs(delta_y_correction) > 1e-6 and abs(delta_y_correction) <= (step_height + 1e-3) and bool(report.supported_before) and bool(report.supported_after) and (not bool(jump_pulse)) and abs(float(prev_vy)) <= 1e-6 and abs(float(player.velocity.y)) <= 1e-6:
     player.step_eye_offset = float(player.step_eye_offset) - float(delta_y_correction)
 
   if bool(report.supported_after):
@@ -281,11 +247,4 @@ def advance_runtime_player(
   _update_step_eye(player, dt=float(dt))
   footstep_triggered = _update_player_walk_phase(player, motion=motion, dt=float(dt), walk_speed=float(settings.movement.walk_speed))
   support_state, support_position = _support_contact(player, world=world, block_registry=block_registry, settings=settings)
-  return RuntimePlayerStepResult(
-    jump_started=bool(jump_pulse),
-    landed=bool(landed_now),
-    footstep_triggered=bool(footstep_triggered),
-    support_block_state=support_state,
-    support_position=support_position,
-    fall_distance_blocks=fall_distance_blocks,
-  )
+  return RuntimePlayerStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position, fall_distance_blocks=fall_distance_blocks)

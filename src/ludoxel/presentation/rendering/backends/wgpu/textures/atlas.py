@@ -76,9 +76,7 @@ class WgpuTextureAtlas:
     ptr.setsize(image.sizeInBytes())
     data = bytes(ptr)
 
-    texture = device.create_texture(
-      label="ludoxel-block-atlas", size=(int(self.width), int(self.height), 1), format=wgpu.TextureFormat.rgba8unorm, usage=wgpu.TextureUsage.TEXTURE_BINDING | wgpu.TextureUsage.COPY_DST
-    )
+    texture = device.create_texture(label="ludoxel-block-atlas", size=(int(self.width), int(self.height), 1), format=wgpu.TextureFormat.rgba8unorm, usage=wgpu.TextureUsage.TEXTURE_BINDING | wgpu.TextureUsage.COPY_DST)
     device.queue.write_texture({"texture": texture}, data, {"bytes_per_row": int(self.width) * 4, "rows_per_image": int(self.height)}, (int(self.width), int(self.height), 1))
     self.texture = texture
     self.texture_view = texture.create_view(label="ludoxel-block-atlas-view")

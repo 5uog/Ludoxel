@@ -62,9 +62,7 @@ def _canonical_wall_state(get_state: GetState, x: int, y: int, z: int, *, block_
 
 
 def make_fence_gate_state(base_id: str, facing: str, *, open_state: bool = False, powered: bool = False, in_wall: bool = False, waterlogged: bool = False) -> str:
-  return format_state(
-    str(base_id), {"facing": str(facing), "in_wall": bool_str(bool(in_wall)), "open": bool_str(bool(open_state)), "powered": bool_str(bool(powered)), "waterlogged": bool_str(bool(waterlogged))}
-  )
+  return format_state(str(base_id), {"facing": str(facing), "in_wall": bool_str(bool(in_wall)), "open": bool_str(bool(open_state)), "powered": bool_str(bool(powered)), "waterlogged": bool_str(bool(waterlogged))})
 
 
 def _canonical_fence_gate_state(get_state: GetState, x: int, y: int, z: int, *, block_registry: BlockRegistry, facing_override: str | None = None, open_override: bool | None = None) -> str | None:
@@ -93,9 +91,7 @@ def canonical_wall_state(world: WorldState, x: int, y: int, z: int, *, block_reg
 
 
 def canonical_fence_gate_state(world: WorldState, x: int, y: int, z: int, *, block_registry: BlockRegistry, facing_override: str | None = None, open_override: bool | None = None) -> str | None:
-  return _canonical_fence_gate_state(
-    lambda gx, gy, gz: world_state_at(world, gx, gy, gz), int(x), int(y), int(z), block_registry=block_registry, facing_override=facing_override, open_override=open_override
-  )
+  return _canonical_fence_gate_state(lambda gx, gy, gz: world_state_at(world, gx, gy, gz), int(x), int(y), int(z), block_registry=block_registry, facing_override=facing_override, open_override=open_override)
 
 
 def structural_neighbor_targets(cells: Iterable[BlockKey]) -> set[BlockKey]:
@@ -117,9 +113,7 @@ def _overlay_state_getter(world: WorldState, *, overlay_updates: dict[BlockKey, 
   return overlay_world_state_getter(world, updates=overlay_updates, removals=overlay_removals)
 
 
-def collect_structural_neighbor_updates(
-  world: WorldState, cells: Iterable[BlockKey], *, block_registry: BlockRegistry, overlay_updates: dict[BlockKey, str] | None = None, overlay_removals: Iterable[BlockKey] = ()
-) -> dict[BlockKey, str]:
+def collect_structural_neighbor_updates(world: WorldState, cells: Iterable[BlockKey], *, block_registry: BlockRegistry, overlay_updates: dict[BlockKey, str] | None = None, overlay_removals: Iterable[BlockKey] = ()) -> dict[BlockKey, str]:
   get_state = _overlay_state_getter(world, overlay_updates=overlay_updates, overlay_removals=overlay_removals)
   updates: dict[BlockKey, str] = {}
 

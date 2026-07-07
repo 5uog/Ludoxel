@@ -8,13 +8,7 @@ from typing import ClassVar
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.worlds.config.collision import DEFAULT_COLLISION_PARAMS, CollisionParams
 from ludoxel.simulation.worlds.config.movement import DEFAULT_MOVEMENT_PARAMS, MovementParams
-from ludoxel.simulation.worlds.config.player_health import (
-  DEFAULT_PLAYER_REGEN_PARAMS,
-  PlayerRegenParams,
-  normalize_player_regen_cap_hp,
-  normalize_player_regen_start_delay_s,
-  normalize_player_regen_time_to_cap_s,
-)
+from ludoxel.simulation.worlds.config.player_health import DEFAULT_PLAYER_REGEN_PARAMS, PlayerRegenParams, normalize_player_regen_cap_hp, normalize_player_regen_start_delay_s, normalize_player_regen_time_to_cap_s
 
 
 @dataclass

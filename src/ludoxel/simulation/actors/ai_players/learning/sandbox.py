@@ -20,7 +20,7 @@ from ludoxel.simulation.worlds.state.world import WorldState
 
 _SANDBOX_DT: float = 0.1
 _EPISODE_TICKS: int = 120
-_FLOOR_STATE: str = "minecraft:stone"
+_FLOOR_STATE: str = "ludoxel:stone"
 _FLOOR_RADIUS: int = 10
 
 _REGISTRY = None
@@ -86,18 +86,7 @@ def _static_target(position: Vec3) -> Callable[[int], PlayerEntity | None]:
 
 
 def _wander_actor(*, pos: tuple[float, float, float], health: float = 20.0, can_place: bool = False) -> AiPlayerState:
-  return AiPlayerState(
-    actor_id="sandbox_actor",
-    mode=AI_MODE_WANDER,
-    personality=AI_PERSONALITY_AGGRESSIVE,
-    can_place_blocks=bool(can_place),
-    pos_x=float(pos[0]),
-    pos_y=float(pos[1]),
-    pos_z=float(pos[2]),
-    on_ground=True,
-    health=float(health),
-    max_health=20.0,
-  )
+  return AiPlayerState(actor_id="sandbox_actor", mode=AI_MODE_WANDER, personality=AI_PERSONALITY_AGGRESSIVE, can_place_blocks=bool(can_place), pos_x=float(pos[0]), pos_y=float(pos[1]), pos_z=float(pos[2]), on_ground=True, health=float(health), max_health=20.0)
 
 
 def _run_episode(scenario: SandboxScenario, policy: Policy | None) -> dict[str, Any]:
@@ -132,15 +121,7 @@ def _run_episode(scenario: SandboxScenario, policy: Policy | None) -> dict[str, 
     if target is not None:
       final_distance = float((target.position - Vec3(float(actor.pos_x), float(actor.pos_y), float(actor.pos_z))).length())
   manager.shutdown()
-  return {
-    "task_id": str(scenario.task_id),
-    "alive": bool(alive),
-    "survived_ticks": int(survived_ticks),
-    "total_ticks": int(scenario.ticks),
-    "initial_distance": initial_distance,
-    "final_distance": final_distance,
-    "final_position": [float(value) for value in last_pos],
-  }
+  return {"task_id": str(scenario.task_id), "alive": bool(alive), "survived_ticks": int(survived_ticks), "total_ticks": int(scenario.ticks), "initial_distance": initial_distance, "final_distance": final_distance, "final_position": [float(value) for value in last_pos]}
 
 
 def _survival_score(metrics: dict[str, Any]) -> float:
@@ -169,41 +150,11 @@ def _approach_score(metrics: dict[str, Any]) -> float:
 
 def default_scenarios() -> tuple[SandboxScenario, ...]:
   return (
-    SandboxScenario(
-      task_id="survive_flat", world_factory=lambda: _flat_world(), actor_state=_wander_actor(pos=(0.5, 1.0, 0.5)), target_factory=_no_target, score_fn=_survival_score, success_threshold=0.9
-    ),
-    SandboxScenario(
-      task_id="avoid_void",
-      world_factory=lambda: _flat_world(void_min_z=3),
-      actor_state=_wander_actor(pos=(0.5, 1.0, 0.5)),
-      target_factory=_static_target(Vec3(0.5, 1.0, 8.0)),
-      score_fn=_survival_score,
-      success_threshold=0.9,
-    ),
-    SandboxScenario(
-      task_id="retreat_at_low_health",
-      world_factory=lambda: _flat_world(),
-      actor_state=_wander_actor(pos=(0.5, 1.0, 0.5), health=4.0),
-      target_factory=_static_target(Vec3(0.5, 1.0, 2.5)),
-      score_fn=_retreat_score,
-      success_threshold=0.5,
-    ),
-    SandboxScenario(
-      task_id="reach_target",
-      world_factory=lambda: _flat_world(),
-      actor_state=_wander_actor(pos=(0.5, 1.0, 0.5)),
-      target_factory=_static_target(Vec3(0.5, 1.0, 7.5)),
-      score_fn=_approach_score,
-      success_threshold=0.2,
-    ),
-    SandboxScenario(
-      task_id="bridge_gap",
-      world_factory=lambda: _gap_world(gap_lo=1, gap_hi=3),
-      actor_state=_wander_actor(pos=(0.5, 1.0, 0.5), can_place=True),
-      target_factory=_static_target(Vec3(0.5, 1.0, 7.5)),
-      score_fn=_approach_score,
-      success_threshold=0.2,
-    ),
+    SandboxScenario(task_id="survive_flat", world_factory=lambda: _flat_world(), actor_state=_wander_actor(pos=(0.5, 1.0, 0.5)), target_factory=_no_target, score_fn=_survival_score, success_threshold=0.9),
+    SandboxScenario(task_id="avoid_void", world_factory=lambda: _flat_world(void_min_z=3), actor_state=_wander_actor(pos=(0.5, 1.0, 0.5)), target_factory=_static_target(Vec3(0.5, 1.0, 8.0)), score_fn=_survival_score, success_threshold=0.9),
+    SandboxScenario(task_id="retreat_at_low_health", world_factory=lambda: _flat_world(), actor_state=_wander_actor(pos=(0.5, 1.0, 0.5), health=4.0), target_factory=_static_target(Vec3(0.5, 1.0, 2.5)), score_fn=_retreat_score, success_threshold=0.5),
+    SandboxScenario(task_id="reach_target", world_factory=lambda: _flat_world(), actor_state=_wander_actor(pos=(0.5, 1.0, 0.5)), target_factory=_static_target(Vec3(0.5, 1.0, 7.5)), score_fn=_approach_score, success_threshold=0.2),
+    SandboxScenario(task_id="bridge_gap", world_factory=lambda: _gap_world(gap_lo=1, gap_hi=3), actor_state=_wander_actor(pos=(0.5, 1.0, 0.5), can_place=True), target_factory=_static_target(Vec3(0.5, 1.0, 7.5)), score_fn=_approach_score, success_threshold=0.2),
   )
 
 

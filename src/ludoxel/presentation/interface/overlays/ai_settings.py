@@ -9,14 +9,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QEventLoop, QSignalBlocker, QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QLabel, QLineEdit, QProgressBar, QPushButton, QWidget
 
-from ludoxel.application.persistence.schema.ai_learning import (
-  LEARNING_MODE_OBSERVE_ONLY,
-  LEARNING_MODE_OFF,
-  LEARNING_MODE_TRAIN_FROM_PLAYER_DATA,
-  LEARNING_MODE_TRAIN_IN_SANDBOX,
-  LEARNING_MODE_USE_LEARNED_POLICY,
-  is_active_learning_mode,
-)
+from ludoxel.application.persistence.schema.ai_learning import LEARNING_MODE_OBSERVE_ONLY, LEARNING_MODE_OFF, LEARNING_MODE_TRAIN_FROM_PLAYER_DATA, LEARNING_MODE_TRAIN_IN_SANDBOX, LEARNING_MODE_USE_LEARNED_POLICY, is_active_learning_mode
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 from ludoxel.presentation.interface.common.themed_notice_dialog import show_themed_notice
 from ludoxel.presentation.interface.settings.surface import add_page_header, add_setting_row, add_settings_card, create_settings_loader_page
@@ -56,13 +49,7 @@ from ludoxel.simulation.actors.ai_players.state import (
 if TYPE_CHECKING:
   from ludoxel.presentation.interface.overlays.ai_learning_controller import AiLearningTabController
 
-_LEARNING_MODE_LABELS: tuple[tuple[str, str], ...] = (
-  (LEARNING_MODE_OFF, "Off"),
-  (LEARNING_MODE_OBSERVE_ONLY, "Observe Only"),
-  (LEARNING_MODE_USE_LEARNED_POLICY, "Use Learned Policy"),
-  (LEARNING_MODE_TRAIN_FROM_PLAYER_DATA, "Train From Player Data"),
-  (LEARNING_MODE_TRAIN_IN_SANDBOX, "Train In Sandbox"),
-)
+_LEARNING_MODE_LABELS: tuple[tuple[str, str], ...] = ((LEARNING_MODE_OFF, "Off"), (LEARNING_MODE_OBSERVE_ONLY, "Observe Only"), (LEARNING_MODE_USE_LEARNED_POLICY, "Use Learned Policy"), (LEARNING_MODE_TRAIN_FROM_PLAYER_DATA, "Train From Player Data"), (LEARNING_MODE_TRAIN_IN_SANDBOX, "Train In Sandbox"))
 
 _LEARNING_CAPTURE_LABELS: tuple[tuple[str, str], ...] = (
   (RECORD_PLAYER_MOVEMENT, "Player movement"),
@@ -130,18 +117,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     as_window: bool = False,
     include_preview_button: bool = True,
   ) -> None:
-    super().__init__(
-      parent,
-      as_window=as_window,
-      root_object_name="settingsRoot",
-      window_title="AI Settings",
-      window_size=(1000, 740),
-      minimum_window_size=(900, 660),
-      panel_minimum_size=(840, 580),
-      sidebar_object_name="settingsSidebar",
-      content_object_name="settingsContent",
-      stack_object_name="settingsStack",
-    )
+    super().__init__(parent, as_window=as_window, root_object_name="settingsRoot", window_title="AI Settings", window_size=(1000, 740), minimum_window_size=(900, 660), panel_minimum_size=(840, 580), sidebar_object_name="settingsSidebar", content_object_name="settingsContent", stack_object_name="settingsStack")
     self._settings = settings.normalized()
     self._name_validator = name_validator
     self._settings_updater = settings_updater
@@ -208,12 +184,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _build_identity_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Identity", subtitle="Name and world nametag identity for this AI.")
-    _card, body, body_layout = add_settings_card(
-      layout,
-      host,
-      title="AI Name",
-      description="Use 1 to 16 letters or digits, beginning with a letter. An optional suffix from #0001 to #9999 can distinguish AI that share a name body. Names of live AI must be unique.",
-    )
+    _card, body, body_layout = add_settings_card(layout, host, title="AI Name", description="Use 1 to 16 letters or digits, beginning with a letter. An optional suffix from #0001 to #9999 can distinguish AI that share a name body. Names of live AI must be unique.")
     self._name_edit = QLineEdit(body)
     self._name_edit.setMaxLength(int(_AI_NAME_INPUT_MAX_LENGTH))
     self._name_edit.setPlaceholderText("Example: Guard or Guard#0001")
@@ -233,21 +204,14 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._health_indicator_combo.addItem("Above nametag", userData=AI_HEALTH_INDICATOR_ABOVE)
     self._health_indicator_combo.addItem("Below nametag", userData=AI_HEALTH_INDICATOR_BELOW)
     self._health_indicator_combo.addItem("Off", userData=AI_HEALTH_INDICATOR_OFF)
-    add_setting_row(
-      body_layout, body, label="Indicator position", description="New AI defaults to Above nametag. Off hides the heart row without hiding the name.", control=self._health_indicator_combo
-    )
+    add_setting_row(body_layout, body, label="Indicator position", description="New AI defaults to Above nametag. Off hides the heart row without hiding the name.", control=self._health_indicator_combo)
     layout.addStretch(1)
     self._stack.addWidget(scroll)
 
   def _build_skin_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Skin", subtitle="Choose the skin source for this AI.")
-    _card, body, body_layout = add_settings_card(
-      layout,
-      host,
-      title="Skin Source",
-      description="Same as player follows the player's current skin. Bundled Timo uses the built-in Timo skin. Imported PNG opens a PNG picker when no valid imported image is already registered, then uses that 64x64 image for this AI only.",
-    )
+    _card, body, body_layout = add_settings_card(layout, host, title="Skin Source", description="Same as player follows the player's current skin. Bundled Timo uses the built-in Timo skin. Imported PNG opens a PNG picker when no valid imported image is already registered, then uses that 64x64 image for this AI only.")
     self._skin_mode_combo = QComboBox(body)
     self._skin_mode_combo.addItem("Same as player", userData=AI_SKIN_MODE_PLAYER)
     self._skin_mode_combo.addItem("Bundled Timo", userData=AI_SKIN_MODE_TIMO)
@@ -264,9 +228,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _build_health_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Health", subtitle="Automatic regeneration timing and cap for this AI.")
-    _card, body, body_layout = add_settings_card(
-      layout, host, title="Automatic Regeneration", description="Damage restarts the delay. Regeneration never exceeds the lower of this cap and the AI's maximum health."
-    )
+    _card, body, body_layout = add_settings_card(layout, host, title="Automatic Regeneration", description="Damage restarts the delay. Regeneration never exceeds the lower of this cap and the AI's maximum health.")
     self._regen_enabled = QCheckBox("Enable auto regeneration", body)
     add_setting_row(body_layout, body, label="Regeneration", description="Disabled by default.", control=self._regen_enabled)
 
@@ -315,19 +277,11 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._mode_description.setWordWrap(True)
     role_layout.addWidget(self._mode_description)
 
-    _route_card, route_body, route_layout = add_settings_card(
-      layout, host, title="Route Patrol", description="Route editing uses the dedicated route hotbar in the world: confirm, eraser, and cancel remain available there."
-    )
+    _route_card, route_body, route_layout = add_settings_card(layout, host, title="Route Patrol", description="Route editing uses the dedicated route hotbar in the world: confirm, eraser, and cancel remain available there.")
     self._route_style_combo = QComboBox(route_body)
     self._route_style_combo.addItem("Strict", userData=AI_ROUTE_STYLE_STRICT)
     self._route_style_combo.addItem("Flexible", userData=AI_ROUTE_STYLE_FLEXIBLE)
-    add_setting_row(
-      route_layout,
-      route_body,
-      label="Route style",
-      description="Strict follows authored segments directly. Flexible may detour, recover, and bridge when placement is allowed.",
-      control=self._route_style_combo,
-    )
+    add_setting_row(route_layout, route_body, label="Route style", description="Strict follows authored segments directly. Flexible may detour, recover, and bridge when placement is allowed.", control=self._route_style_combo)
 
     self._route_run = QCheckBox("Run route segments", route_body)
     add_setting_row(route_layout, route_body, label="Movement speed", description="Sprint along route segments without changing their order.", control=self._route_run)
@@ -349,23 +303,15 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _build_placement_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Block Placement", subtitle="Placement permission and the movement safety rules that depend on it.")
-    _placement_card, placement_body, placement_layout = add_settings_card(
-      layout, host, title="Placement Permission", description="Block placement is a movement aid rather than unrestricted building permission."
-    )
+    _placement_card, placement_body, placement_layout = add_settings_card(layout, host, title="Placement Permission", description="Block placement is a movement aid rather than unrestricted building permission.")
     self._can_place_blocks = QCheckBox("Allow block placement", placement_body)
-    add_setting_row(
-      placement_layout, placement_body, label="Placement", description="Allows bridging, securing the next footing, escaping boxed positions, and defensive placement.", control=self._can_place_blocks
-    )
-    placement_note = QLabel(
-      "Placement requires a clear line of sight. During bridging, forward movement waits until the next footing exists instead of advancing ahead of an unfinished bridge.", placement_body
-    )
+    add_setting_row(placement_layout, placement_body, label="Placement", description="Allows bridging, securing the next footing, escaping boxed positions, and defensive placement.", control=self._can_place_blocks)
+    placement_note = QLabel("Placement requires a clear line of sight. During bridging, forward movement waits until the next footing exists instead of advancing ahead of an unfinished bridge.", placement_body)
     placement_note.setObjectName("settingsCardDescription")
     placement_note.setWordWrap(True)
     placement_layout.addWidget(placement_note)
 
-    _safety_card, safety_body, safety_layout = add_settings_card(
-      layout, host, title="Movement Safety", description="Safety is always active and has no independent toggle because its fallback depends on the placement permission above."
-    )
+    _safety_card, safety_body, safety_layout = add_settings_card(layout, host, title="Movement Safety", description="Safety is always active and has no independent toggle because its fallback depends on the placement permission above.")
     safety_text = QLabel(
       "Before walking forward on the ground, the AI checks the next footing. Free Roam and PVP allow drops of up to three blocks onto solid ground; deeper gaps and the void stop or redirect movement. "
       "Route patrol permits deeper descents only when ground exists below the next step. If placement is enabled, the AI may secure the gap with a bridge; otherwise it stops or turns away.",
@@ -407,14 +353,7 @@ class AiSettingsOverlay(SidebarDialogBase):
       if self._learning_controller_factory is None:
         return {"status": "failed", "message": "Learning controls are unavailable."}
       controller = self._learning_controller_factory()
-    return _LearningInitialSnapshot(
-      controller=controller,
-      state=controller.state(),
-      bundled_policy_options=tuple(controller.bundled_policy_options()),
-      user_policy_options=tuple(controller.user_policy_options()),
-      dataset_summary=controller.dataset_summary(),
-      policy_save_path=str(controller.policy_save_path()),
-    )
+    return _LearningInitialSnapshot(controller=controller, state=controller.state(), bundled_policy_options=tuple(controller.bundled_policy_options()), user_policy_options=tuple(controller.user_policy_options()), dataset_summary=controller.dataset_summary(), policy_save_path=str(controller.policy_save_path()))
 
   def _schedule_learning_page_build(self) -> None:
     if self._learning_page_built or self._learning_page_build_scheduled:
@@ -467,12 +406,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     add_page_header(layout, host, title="Learning", subtitle="Demonstration capture and learned-policy settings shared by all AI.")
 
     self._learning_task_thread: _LearningTaskThread | None = None
-    _mode_card, mode_body, mode_layout = add_settings_card(
-      layout,
-      host,
-      title="Learning Mode",
-      description="Off, Observe Only, and Use Learned Policy apply during play. Selecting a Train mode runs training in the background and then switches to Use Learned Policy.",
-    )
+    _mode_card, mode_body, mode_layout = add_settings_card(layout, host, title="Learning Mode", description="Off, Observe Only, and Use Learned Policy apply during play. Selecting a Train mode runs training in the background and then switches to Use Learned Policy.")
     self._learning_mode_combo = QComboBox(mode_body)
     for value, label in _LEARNING_MODE_LABELS:
       self._learning_mode_combo.addItem(label, userData=value)
@@ -486,9 +420,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     self._learning_busy_label.setWordWrap(True)
     mode_layout.addWidget(self._learning_busy_label)
 
-    _capture_card, capture_body, capture_layout = add_settings_card(
-      layout, host, title="Data Capture", description="Recorded only while the mode is Observe Only. Records are game state and actions, never screen images."
-    )
+    _capture_card, capture_body, capture_layout = add_settings_card(layout, host, title="Data Capture", description="Recorded only while the mode is Observe Only. Records are game state and actions, never screen images.")
     self._learning_capture_checks: dict[str, QCheckBox] = {}
     for kind, label in _LEARNING_CAPTURE_LABELS:
       check = QCheckBox(label, capture_body)
@@ -502,22 +434,16 @@ class AiSettingsOverlay(SidebarDialogBase):
       add_setting_row(skill_layout, skill_body, label=label, description="", control=check)
       self._learning_skill_checks[skill_id] = check
 
-    _policy_card, policy_body, policy_layout = add_settings_card(
-      layout, host, title="Policy Selection", description="A broken or unevaluated policy is never used; the AI falls back to the built-in deterministic baseline."
-    )
+    _policy_card, policy_body, policy_layout = add_settings_card(layout, host, title="Policy Selection", description="A broken or unevaluated policy is never used; the AI falls back to the built-in deterministic baseline.")
     self._learning_policy_kind_combo = QComboBox(policy_body)
     for value, label in POLICY_KIND_LABELS:
       self._learning_policy_kind_combo.addItem(label, userData=value)
     add_setting_row(policy_layout, policy_body, label="Policy source", description="Which policy the AI uses during play.", control=self._learning_policy_kind_combo)
     self._learning_policy_id_combo = QComboBox(policy_body)
     add_setting_row(policy_layout, policy_body, label="Selected policy", description="Used when the source is a bundled or user learned policy.", control=self._learning_policy_id_combo)
-    self._populate_learning_policy_id_combo(
-      bundled_options=None if initial_data is None else initial_data.bundled_policy_options, user_options=None if initial_data is None else initial_data.user_policy_options
-    )
+    self._populate_learning_policy_id_combo(bundled_options=None if initial_data is None else initial_data.bundled_policy_options, user_options=None if initial_data is None else initial_data.user_policy_options)
 
-    _eval_card, eval_body, eval_layout = add_settings_card(
-      layout, host, title="Evaluation", description="Evaluates the selected policy against the engine and the headless sandbox, then reports pass or fail."
-    )
+    _eval_card, eval_body, eval_layout = add_settings_card(layout, host, title="Evaluation", description="Evaluates the selected policy against the engine and the headless sandbox, then reports pass or fail.")
     self._learning_eval_button = QPushButton("Run evaluation", eval_body)
     self._learning_eval_button.setObjectName("primaryBtn")
     add_setting_row(eval_layout, eval_body, label="Evaluate selected policy", description="Validates schema, compatibility, mask compliance, and sandbox behavior.", control=self._learning_eval_button)
@@ -564,9 +490,7 @@ class AiSettingsOverlay(SidebarDialogBase):
 
     self._load_learning_controls(state)
     self._connect_learning_updates()
-    self._refresh_learning_dynamic(
-      state=state, dataset_summary=None if initial_data is None else initial_data.dataset_summary, policy_save_path=None if initial_data is None else initial_data.policy_save_path
-    )
+    self._refresh_learning_dynamic(state=state, dataset_summary=None if initial_data is None else initial_data.dataset_summary, policy_save_path=None if initial_data is None else initial_data.policy_save_path)
 
   def _load_learning_controls(self, state) -> None:
     settings = state.settings
@@ -668,17 +592,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _set_learning_busy(self, busy: bool, text: str) -> None:
     enabled = not bool(busy)
     self._learning_busy_label.setText(str(text))
-    for widget in (
-      self._learning_mode_combo,
-      self._learning_eval_button,
-      self._learning_policy_kind_combo,
-      self._learning_policy_id_combo,
-      self._learning_export_button,
-      self._learning_import_button,
-      self._learning_clear_button,
-      self._learning_reset_button,
-      self._learning_restore_button,
-    ):
+    for widget in (self._learning_mode_combo, self._learning_eval_button, self._learning_policy_kind_combo, self._learning_policy_id_combo, self._learning_export_button, self._learning_import_button, self._learning_clear_button, self._learning_reset_button, self._learning_restore_button):
       widget.setEnabled(bool(enabled))
     if bool(enabled):
       self._sync_learning_policy_id_enabled()
@@ -768,9 +682,7 @@ class AiSettingsOverlay(SidebarDialogBase):
       self._learning_training_label.setText(f"Last training: {str(training.get('status', 'unknown'))} - {str(training.get('message', ''))}")
     else:
       self._learning_training_label.setText("Last training: none yet.")
-    self._learning_policy_version_label.setText(
-      f"Selected policy: {str(state.settings.selected_policy_kind)} '{str(state.settings.selected_policy_id) or 'automatic'}' (version {int(state.policy_version)})."
-    )
+    self._learning_policy_version_label.setText(f"Selected policy: {str(state.settings.selected_policy_kind)} '{str(state.settings.selected_policy_id) or 'automatic'}' (version {int(state.policy_version)}).")
     path_text = str(self._learning_controller.policy_save_path() if policy_save_path is None else policy_save_path)
     self._learning_path_label.setText(f"Policy folder: {path_text}")
     evaluation = state.last_evaluation_summary or {}
@@ -884,9 +796,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     time_to_cap = float(self._regen_time_to_cap_spin.value())
     amount = max(1e-6, float(self._settings.regen_amount_hp))
     interval = max(1e-6, float(time_to_cap) * float(amount) / max(1.0, float(cap)))
-    self._regen_summary.setText(
-      f"After {delay:.1f} s without damage, the AI heals {amount:.1f} health point(s) every {interval:.1f} s up to {cap:.0f} health points. Restoring the full cap takes about {time_to_cap:.1f} s."
-    )
+    self._regen_summary.setText(f"After {delay:.1f} s without damage, the AI heals {amount:.1f} health point(s) every {interval:.1f} s up to {cap:.0f} health points. Restoring the full cap takes about {time_to_cap:.1f} s.")
 
   def _imported_skin_availability(self, *, check_availability: bool) -> bool | None:
     skin_id = str(self._settings.skin_id)
@@ -962,10 +872,7 @@ class AiSettingsOverlay(SidebarDialogBase):
     mode = str(self._mode_combo.currentData())
     if mode == AI_MODE_ROUTE:
       suffix = "" if len(self._settings.route_points) >= 2 else " This mode is applied after at least two route points are confirmed in the world editor."
-      self._mode_description.setText(
-        "Route Patrol follows the authored path, can engage the player at close range, and returns to the route when the target escapes. Edge handling follows the safety rules on Block Placement."
-        + suffix
-      )
+      self._mode_description.setText("Route Patrol follows the authored path, can engage the player at close range, and returns to the route when the target escapes. Edge handling follows the safety rules on Block Placement." + suffix)
       return
     if mode == AI_MODE_WANDER:
       self._mode_description.setText("Free Roam / PVP uses player kinematics, collision, jump, placement, and interaction behavior. It checks the next footing before advancing near an edge.")

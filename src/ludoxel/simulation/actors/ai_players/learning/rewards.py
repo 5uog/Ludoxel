@@ -19,15 +19,7 @@ class RewardWeights:
   void_death: float = -8.0
 
   def to_dict(self) -> dict[str, Any]:
-    return {
-      "survival": float(self.survival),
-      "progress": float(self.progress),
-      "damage_dealt": float(self.damage_dealt),
-      "damage_taken": float(self.damage_taken),
-      "fall": float(self.fall),
-      "death": float(self.death),
-      "void_death": float(self.void_death),
-    }
+    return {"survival": float(self.survival), "progress": float(self.progress), "damage_dealt": float(self.damage_dealt), "damage_taken": float(self.damage_taken), "fall": float(self.fall), "death": float(self.death), "void_death": float(self.void_death)}
 
 
 @dataclass(frozen=True)

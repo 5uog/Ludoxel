@@ -13,17 +13,14 @@ from ludoxel.presentation.interface.menu.formatting import format_world_size, fo
 _GRID_THUMBNAIL_SIZE = QSize(220, 124)
 _LIST_THUMBNAIL_SIZE = QSize(128, 72)
 _GRID_CARD_MARGIN_PX = 10
-# The library page lays grid cards out in fixed-width columns; the card
-# width is therefore a hard bound and must not follow the name label's
-# preferred text width.
+# The library page lays grid cards out in fixed-width columns;
+# the card width is therefore a hard bound and must not follow the name label's preferred text width.
 GRID_CARD_WIDTH_PX = int(_GRID_THUMBNAIL_SIZE.width() + 2 * _GRID_CARD_MARGIN_PX)
 
 
 class _ElidedNameLabel(QLabel):
-  # A QLabel reports its full text width as both size hint and minimum size
-  # hint, so a long world name widens any fixed layout that contains it.
-  # This label never requests width for its text and elides the stored name
-  # to whatever width the layout actually grants.
+  # A QLabel reports its full text width as both size hint and minimum size hint, so a long world name widens any fixed layout that contains it.
+  # This label never requests width for its text and elides the stored name to whatever width the layout actually grants.
   def __init__(self, text: str, parent: QWidget | None = None) -> None:
     super().__init__(parent)
     self._full_text = str(text)

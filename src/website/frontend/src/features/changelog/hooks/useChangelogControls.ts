@@ -112,9 +112,7 @@ export function useChangelogControls(entries: ChangelogEntry[], entriesPerPage: 
   };
 
   const toggleReleaseKind = (releaseKind: ChangelogReleaseKindId): void => {
-    setSelectedReleaseKinds((currentReleaseKinds) =>
-      currentReleaseKinds.includes(releaseKind) ? currentReleaseKinds.filter((currentReleaseKind) => currentReleaseKind !== releaseKind) : [...currentReleaseKinds, releaseKind],
-    );
+    setSelectedReleaseKinds((currentReleaseKinds) => (currentReleaseKinds.includes(releaseKind) ? currentReleaseKinds.filter((currentReleaseKind) => currentReleaseKind !== releaseKind) : [...currentReleaseKinds, releaseKind]));
     resetPage();
   };
 

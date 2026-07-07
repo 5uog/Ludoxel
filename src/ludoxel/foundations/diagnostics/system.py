@@ -321,9 +321,7 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 
 def _nvidia_smi_util_percent() -> float | None:
   try:
-    out = subprocess.check_output(
-      ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8, **_windows_hidden_subprocess_kwargs()
-    )
+    out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8, **_windows_hidden_subprocess_kwargs())
     line = str(out).strip().splitlines()[0].strip()
     value = float(line)
     if value < 0.0:

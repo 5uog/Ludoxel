@@ -21,24 +21,18 @@ def _backoff(delta: float, step: float) -> float:
   return min(0.0, v)
 
 
-def _has_support_within_drop(
-  player: PlayerEntity, world: WorldState, pos: Vec3, max_drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> bool:
+def _has_support_within_drop(player: PlayerEntity, world: WorldState, pos: Vec3, max_drop: float, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
   _p, hit = _resolve_downward_snap(player, world, pos, float(max_drop), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
   return bool(hit)
 
 
-def _has_sneak_support(
-  player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> bool:
+def _has_sneak_support(player: PlayerEntity, world: WorldState, pos: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> bool:
   if _has_support_at(player, world, pos, params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell):
     return True
   return _has_support_within_drop(player, world, pos, float(params.step_height), params, block_registry=block_registry, collision_exempt_cell=collision_exempt_cell)
 
 
-def _apply_sneak_edge_clamp(
-  player: PlayerEntity, world: WorldState, pos: Vec3, delta: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None
-) -> Vec3:
+def _apply_sneak_edge_clamp(player: PlayerEntity, world: WorldState, pos: Vec3, delta: Vec3, params: CollisionParams, *, block_registry: BlockRegistry, collision_exempt_cell: tuple[int, int, int] | None = None) -> Vec3:
   step = float(params.sneak_step)
   dx = float(delta.x)
   dz = float(delta.z)

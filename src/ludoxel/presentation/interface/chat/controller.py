@@ -100,12 +100,7 @@ class ChatController:
     viewport._reset_recent_input_state()
     viewport._sync_gameplay_hud_visibility()
     settings_controller.sync_cloud_motion_pause(viewport)
-    if (
-      (not bool(viewport.loading_active()))
-      and (not bool(viewport._overlays.any_modal_open()))
-      and (not bool(getattr(viewport, "_ai_settings_overlay_open", False)))
-      and bool(getattr(viewport, "_application_active", True))
-    ):
+    if (not bool(viewport.loading_active())) and (not bool(viewport._overlays.any_modal_open())) and (not bool(getattr(viewport, "_ai_settings_overlay_open", False))) and bool(getattr(viewport, "_application_active", True)):
       viewport._inp.set_mouse_capture(True)
       viewport.arm_resume_refresh()
 

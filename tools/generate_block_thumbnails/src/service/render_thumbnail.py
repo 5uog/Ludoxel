@@ -276,19 +276,7 @@ def run(request: BlockPreviewRequest) -> int:
     return 0
 
   for plan in plans:
-    write_block_preview_png(
-      block=plan.block,
-      state_str=plan.state_str,
-      get_state=plan.get_state,
-      def_lookup=registry.get,
-      texture_root=texture_root,
-      output_path=plan.output_path,
-      yaw_deg=request.yaw,
-      pitch_deg=request.pitch,
-      roll_deg=request.roll,
-      scale=request.scale,
-      fit_padding=request.fit_padding,
-    )
+    write_block_preview_png(block=plan.block, state_str=plan.state_str, get_state=plan.get_state, def_lookup=registry.get, texture_root=texture_root, output_path=plan.output_path, yaw_deg=request.yaw, pitch_deg=request.pitch, roll_deg=request.roll, scale=request.scale, fit_padding=request.fit_padding)
     print(f"[generate_block_thumbnails] wrote {plan.output_path}")
   return 0
 

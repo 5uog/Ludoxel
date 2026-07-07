@@ -132,14 +132,7 @@ class ViewportOverlayMixin:
     if preview_key is not None and self._pause_preview_cache_key == preview_key and not self._pause_preview_frame.isNull():
       self._overlay.set_player_preview_frame(self._pause_preview_frame)
       return
-    frame = self._renderer.render_player_preview_frame(
-      w=int(w),
-      h=int(h),
-      player_state=preview_state,
-      restore_framebuffer=int(self.defaultFramebufferObject()),
-      restore_viewport=(0, 0, int(fb_w), int(fb_h)),
-      device_pixel_ratio=float(max(1.0, float(dpr))),
-    )
+    frame = self._renderer.render_player_preview_frame(w=int(w), h=int(h), player_state=preview_state, restore_framebuffer=int(self.defaultFramebufferObject()), restore_viewport=(0, 0, int(fb_w), int(fb_h)), device_pixel_ratio=float(max(1.0, float(dpr))))
     self._pause_preview_cache_key = preview_key
     self._pause_preview_frame = QImage(frame)
     self._overlay.set_player_preview_frame(frame)
@@ -171,14 +164,7 @@ class ViewportOverlayMixin:
     if preview_key is not None and self._inventory_preview_cache_key == preview_key and not self._inventory_preview_frame.isNull():
       self._inventory.set_player_preview_frame(self._inventory_preview_frame)
       return
-    frame = self._renderer.render_player_preview_frame(
-      w=int(w),
-      h=int(h),
-      player_state=preview_state,
-      restore_framebuffer=int(self.defaultFramebufferObject()),
-      restore_viewport=(0, 0, int(fb_w), int(fb_h)),
-      device_pixel_ratio=float(max(1.0, float(dpr))),
-    )
+    frame = self._renderer.render_player_preview_frame(w=int(w), h=int(h), player_state=preview_state, restore_framebuffer=int(self.defaultFramebufferObject()), restore_viewport=(0, 0, int(fb_w), int(fb_h)), device_pixel_ratio=float(max(1.0, float(dpr))))
     self._inventory_preview_cache_key = preview_key
     self._inventory_preview_frame = QImage(frame)
     self._inventory.set_player_preview_frame(frame)
@@ -205,19 +191,10 @@ class ViewportOverlayMixin:
         widget.set_frame_image(QImage())
         return
       body_yaw_deg, head_yaw_deg, head_pitch_deg = widget.preview_angles()
-      preview_state = replace(
-        states[0], base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False
-      )
+      preview_state = replace(states[0], base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)
       w = max(1, int(round(float(widget.width()) * max(1.0, float(dpr)))))
       h = max(1, int(round(float(widget.height()) * max(1.0, float(dpr)))))
-      frame = self._renderer.render_player_preview_frame(
-        w=int(w),
-        h=int(h),
-        player_state=preview_state,
-        restore_framebuffer=int(self.defaultFramebufferObject()),
-        restore_viewport=(0, 0, int(fb_w), int(fb_h)),
-        device_pixel_ratio=float(max(1.0, float(dpr))),
-      )
+      frame = self._renderer.render_player_preview_frame(w=int(w), h=int(h), player_state=preview_state, restore_framebuffer=int(self.defaultFramebufferObject()), restore_viewport=(0, 0, int(fb_w), int(fb_h)), device_pixel_ratio=float(max(1.0, float(dpr))))
       widget.set_frame_image(frame)
     except Exception:
       try:
@@ -286,9 +263,7 @@ class ViewportOverlayMixin:
     return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
   def _ambient_audio_active(self: "RendererViewportWidget") -> bool:
-    return bool(
-      (not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.menu_open()) and (not self._overlays.othello_settings_open())
-    )
+    return bool((not bool(self.loading_active())) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.menu_open()) and (not self._overlays.othello_settings_open()))
 
   def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
     show_gameplay_hud = bool(self._gameplay_hud_active())
@@ -433,14 +408,7 @@ class ViewportOverlayMixin:
     if preview_key is not None and getattr(self, "_menu_preview_cache_key", None) == preview_key and not getattr(self, "_menu_preview_frame", QImage()).isNull():
       menu.set_player_preview_frame(self._menu_preview_frame)
       return
-    frame = self._renderer.render_player_preview_frame(
-      w=int(w),
-      h=int(h),
-      player_state=preview_state,
-      restore_framebuffer=int(self.defaultFramebufferObject()),
-      restore_viewport=(0, 0, int(fb_w), int(fb_h)),
-      device_pixel_ratio=float(max(1.0, float(dpr))),
-    )
+    frame = self._renderer.render_player_preview_frame(w=int(w), h=int(h), player_state=preview_state, restore_framebuffer=int(self.defaultFramebufferObject()), restore_viewport=(0, 0, int(fb_w), int(fb_h)), device_pixel_ratio=float(max(1.0, float(dpr))))
     self._menu_preview_cache_key = preview_key
     self._menu_preview_frame = QImage(frame)
     menu.set_player_preview_frame(frame)
