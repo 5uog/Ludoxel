@@ -2,6 +2,24 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.2",
+      "tags": ["Desktop Application", "Rendering", "Settings"],
+      "sections": [
+        {
+          "title": "Display No Longer Exposes First-Person Arm Motion Fields",
+          "items": [
+            "`build_display_tab` in `src/ludoxel/presentation/interface/settings/pages.py` no longer builds the Display tab's `Player Model` card or the `Arm rotation minimum`, `Arm rotation maximum`, and `Arm swing duration` controls. `SettingsOverlay`, `sync_overlay_values`, and the viewport settings controller no longer expose the corresponding signals, widget synchronization, setters, or reset side effect, while `Hide Hand` remains the visible first-person hand toggle. The runtime preference and persisted settings fields remain loadable compatibility data and are not Display controls."
+          ]
+        },
+        {
+          "title": "First-Person Arm Uses Its Own Skin Face Map",
+          "items": [
+            "`skin_uv_maps.py` now derives first-person right-arm base and sleeve maps from the slim right-arm maps, assigning the top texture to the local face that reads as the arm's upper surface in the camera-space view model and the side texture to the local face that reads as the right side. `build_first_person_arm_face_rows` uses those first-person maps, so the arm's right side is not drawn with the top-face texture. OpenGL `FirstPersonArmPass` and the WGPU backend both call that shared row builder, so the fix reaches both renderer paths without backend-specific UV branches."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.1",
       "tags": ["Desktop Application", "My World", "Startup", "UI"],
       "sections": [

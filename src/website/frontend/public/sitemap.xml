@@ -1129,6 +1129,21 @@
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-selection-outlines#see-also</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-first-person-arm-geometry</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-first-person-arm-geometry#first-person-arm-geometry-shared-builder</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-first-person-arm-geometry#first-person-arm-geometry-skin-faces</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-first-person-arm-geometry#first-person-arm-geometry-backend-path</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-first-person-arm-geometry#see-also</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-the-player-model-pose</loc>
   </url>
   <url>

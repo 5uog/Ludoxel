@@ -26,7 +26,7 @@ export const settingsPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
-            text: 'Camera preference handling has four distinct write and read stages. `SettingsOverlay` emits a control value, the viewport settings controller applies it to runtime state, `RuntimePreferences.normalize()` admits the canonical representation, and the synchronization/runtime-application path distributes that value to widgets and presentation consumers. `PersistedSettings` later serializes the normalized preference set for the application store. Projection, mouse response, first-person geometry, and the camera-facing renderer state consume the admitted fields; the widget label supplies neither a second value domain nor a rendering instruction outside that pipeline.',
+            text: 'Camera preference handling has four distinct write and read stages. `SettingsOverlay` emits a control value, the viewport settings controller applies it to runtime state, `RuntimePreferences.normalize()` admits the canonical representation, and the synchronization/runtime-application path distributes that value to widgets and presentation consumers. `PersistedSettings` later serializes the normalized preference set for the application store. Projection, mouse response, first-person visibility, and the camera-facing renderer state consume the admitted fields; the widget label supplies neither a second value domain nor a rendering instruction outside that pipeline.',
           },
           {
             kind: 'code',
@@ -175,7 +175,7 @@ self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`
           },
           {
             kind: 'paragraph',
-            text: 'The same normalization pass clamps both view-bobbing and camera-shake strength to `[0, 1]`, clamps arm rotation limits to `[-180, 180]` degrees and orders them if reversed, and clamps arm swing duration to `[0.05, 1.50]` seconds. Those are admitted runtime values, not claims that every camera mode displays the same motion. `view_model_visible()` separately requires the normalized first-person perspective and `hide_hand == false`; a saved third-person perspective cannot expose the first-person arm merely by retaining hand-motion fields.',
+            text: 'The same normalization pass clamps both view-bobbing and camera-shake strength to `[0, 1]`. `view_model_visible()` separately requires the normalized first-person perspective and `hide_hand == false`; a saved third-person perspective cannot expose the first-person arm merely by retaining hand-motion compatibility fields. The Display tab does not expose arm rotation limits or arm swing duration as visible controls: those saved fields remain runtime compatibility data, not user-facing Display settings.',
           },
           {
             kind: 'note',

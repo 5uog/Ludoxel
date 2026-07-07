@@ -456,7 +456,13 @@ class RenderSnapshotDTO:
         ],
       },
     ],
-    relatedTitles: ['Understanding Fixed Step Sessions', 'Understanding the Player Model Pose', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering'],
+    relatedTitles: [
+      'Understanding Fixed Step Sessions',
+      'Understanding First-Person Arm Geometry',
+      'Understanding the Player Model Pose',
+      'Understanding OpenGL Rendering',
+      'Understanding WGPU Rendering',
+    ],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -472,11 +478,11 @@ class RenderSnapshotDTO:
         content: [
           {
             kind: 'paragraph',
-            text: '`RuntimePreferences` in `src/ludoxel/application/preferences/runtime.py` is the mutable aggregate shared by persistence, the settings surface, the renderer state, and the active session. It holds the play-space identifier, input inversion, selection and cloud and shadow flags, cloud density and seed and flow and speed and height parameters, one My World hotbar and upper-inventory state, separate Othello and route-edit hotbar branches, the Othello settings, reach and block-repeat intervals, particle rates, camera and view-model and arm parameters, render distance, sun angles, window geometry, and the keybind and audio sub-objects. Numerous class-level constants fix the allowed ranges and defaults.',
+            text: '`RuntimePreferences` in `src/ludoxel/application/preferences/runtime.py` is the mutable aggregate shared by persistence, the settings surface, the renderer state, and the active session. It holds the play-space identifier, input inversion, selection and cloud and shadow flags, cloud density and seed and flow and speed and height parameters, one My World hotbar and upper-inventory state, separate Othello and route-edit hotbar branches, the Othello settings, reach and block-repeat intervals, particle rates, camera and view-model visibility values, compatibility fields for first-person arm motion, render distance, sun angles, window geometry, and the keybind and audio sub-objects. Numerous class-level constants fix the allowed ranges and defaults.',
           },
           {
             kind: 'paragraph',
-            text: '`normalize` projects every component into its allowed domain in one pass: booleans are coerced, shadow quality and render distance and cloud parameters are clamped, the play-space identifier and Othello settings are normalized, the arm rotation limits are clamped and reordered if inverted, the legacy block-place interval is migrated to the current default, sun azimuth is wrapped to a full turn and elevation clamped, the shared My World, Othello, and route-edit hotbar branches are normalized to size and index, and the keybind and audio sub-objects are normalized in turn.',
+            text: '`normalize` projects every component into its allowed domain in one pass: booleans are coerced, shadow quality and render distance and cloud parameters are clamped, the play-space identifier and Othello settings are normalized, the first-person arm compatibility fields are clamped for runtime use, the legacy block-place interval is migrated to the current default, sun azimuth is wrapped to a full turn and elevation clamped, the shared My World, Othello, and route-edit hotbar branches are normalized to size and index, and the keybind and audio sub-objects are normalized in turn.',
           },
           {
             kind: 'code',
@@ -568,7 +574,7 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
         content: [
           {
             kind: 'paragraph',
-            text: 'The settings surface in `src/ludoxel/presentation/interface/settings/` displays and edits these values. `sync_overlay_values` in `src/ludoxel/presentation/interface/settings/sync.py` is the one-way push from runtime preferences into the visible controls: it clamps and rounds each value, blocks widget signals while setting, and renders the field-of-view, sensitivity, render distance, sun angles, toggles, sliders, hotbar, crosshair, camera, cloud, particle, movement, audio, and keybind controls. The pause-overlay parameter ranges are fixed by `PauseOverlayParams` in `src/ludoxel/presentation/interface/config/pause_overlay.py`.',
+            text: 'The settings surface in `src/ludoxel/presentation/interface/settings/` displays and edits the visible subset of these values. `sync_overlay_values` in `src/ludoxel/presentation/interface/settings/sync.py` is the one-way push from runtime preferences into the visible controls: it clamps and rounds each value, blocks widget signals while setting, and renders the field-of-view, sensitivity, render distance, sun angles, toggles, sliders, hotbar, crosshair, camera, cloud, particle, movement, audio, and keybind controls. It does not project the first-person arm rotation limits or arm swing duration into widgets. The pause-overlay parameter ranges are fixed by `PauseOverlayParams` in `src/ludoxel/presentation/interface/config/pause_overlay.py`.',
           },
           {
             kind: 'paragraph',
@@ -925,7 +931,13 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         ],
       },
     ],
-    relatedTitles: ['Understanding WGPU Rendering', 'Understanding Shared Shader Sources and Color Targets', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
+    relatedTitles: [
+      'Understanding WGPU Rendering',
+      'Understanding First-Person Arm Geometry',
+      'Understanding Shared Shader Sources and Color Targets',
+      'Understanding Render Distance Fog and Shadows',
+      'Understanding Selection Outlines',
+    ],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1063,7 +1075,13 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding Shared Shader Sources and Color Targets', 'Understanding Render Distance Fog and Shadows', 'Understanding Selection Outlines'],
+    relatedTitles: [
+      'Understanding OpenGL Rendering',
+      'Understanding First-Person Arm Geometry',
+      'Understanding Shared Shader Sources and Color Targets',
+      'Understanding Render Distance Fog and Shadows',
+      'Understanding Selection Outlines',
+    ],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1473,6 +1491,87 @@ sy = _snap(float(cy), float(texel))`,
     category: 'Systems',
     subcategory: 'Rendering Backends',
     group: 'World Visuals',
+    title: 'Understanding First-Person Arm Geometry',
+    description:
+      'Documents the shared first-person arm row builder, its camera-space transform boundary, the first-person-only right-arm skin face map, and the OpenGL and WGPU backend paths that consume the same geometry.',
+    sections: [
+      {
+        id: 'first-person-arm-geometry-shared-builder',
+        title: 'One Builder Emits the Arm Rows',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`build_first_person_arm_face_rows` in `src/ludoxel/presentation/rendering/visuals/players/first_person_geometry.py` owns the first-person arm geometry. It returns six per-face row arrays for `TexturedFacePass`, after applying the existing view bob, idle sway, swing, equip-hide, projection fit, safe-frame anchoring, and camera-space arm transform. The row shape stays the same as other transform-instanced faces: a row-major model matrix plus one UV rectangle. This builder is the boundary for the arm mesh and skin-face assignment; the backend pass that consumes the rows does not choose a different arm texture map.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/first_person_geometry.py',
+            code: `for box, uv_map in ((arm_boxes[0], FIRST_PERSON_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX)):
+  model = model_matrix_for_local_box(parent_transform, box)
+  for face_idx in range(6):
+    uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
+    append_face_instance(buffers, int(face_idx), model, uv_rect)`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The first-person arm draw is mutually exclusive with the held-block and special-item view models. `FramePipeline.render` clears depth before the OpenGL view-model draw and then calls `FirstPersonArmPass.draw` only when the first-person render state has no visible held block or special item and `show_arm` remains true. The WGPU backend opens a separate first-person render pass with depth cleared and follows the same special-item, held-block, arm selection order.',
+          },
+        ],
+      },
+      {
+        id: 'first-person-arm-geometry-skin-faces',
+        title: 'The First-Person Skin Face Map',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`skin_uv_maps.py` keeps the ordinary slim right-arm maps as `SLIM_RIGHT_ARM_BASE_UV_PX` and `SLIM_RIGHT_ARM_SLEEVE_UV_PX`, then derives `FIRST_PERSON_RIGHT_ARM_BASE_UV_PX` and `FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX` for this camera-space arm. The first-person transform makes the local `FACE_POS_X` and `FACE_POS_Y` surfaces the visible upper and right-side surfaces of the sleeve in the view model. The first-person map therefore assigns the top texture to local `FACE_POS_X` and the side texture to local `FACE_POS_Y`, with the same exchange applied to the negative pair for complete cube-face coverage.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/players/skin_uv_maps.py',
+            code: `def first_person_right_arm_uv_map(uv_map: dict[int, tuple[float, float, float, float]]) -> dict[int, tuple[float, float, float, float]]:
+  return {
+    FACE_POS_X: tuple(uv_map[FACE_POS_Y]),
+    FACE_NEG_X: tuple(uv_map[FACE_NEG_Y]),
+    FACE_POS_Y: tuple(uv_map[FACE_POS_X]),
+    FACE_NEG_Y: tuple(uv_map[FACE_NEG_X]),
+    FACE_POS_Z: tuple(uv_map[FACE_POS_Z]),
+    FACE_NEG_Z: tuple(uv_map[FACE_NEG_Z]),
+  }`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'This map is separate from the third-person visual-side maps. `VISUAL_RIGHT_ARM_BASE_UV_PX` and `VISUAL_RIGHT_ARM_SLEEVE_UV_PX` remain consumed by `build_player_model_pose` for the third-person player body, AI player bodies, previews, and held-item anchors. World block faces, held block geometry, special-item faces, and offscreen player preview rows do not read the first-person arm map.',
+          },
+        ],
+      },
+      {
+        id: 'first-person-arm-geometry-backend-path',
+        title: 'Backend Consumption',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/presentation/rendering/backends/opengl/passes/first_person_arm.py` calls `build_first_person_arm_face_rows` and draws the returned buckets through `TexturedFacePass`. `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` imports the same builder and uploads the returned buckets into temporary transform buffers in the first-person pass. Because the UV map is selected before either backend receives rows, OpenGL and WGPU consume the same first-person arm skin-face assignment. Their API-specific work remains the draw pass, texture binding, uniform upload, and clip-space handling.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'This article describes the shared source path. It does not assert that an OpenGL or WGPU device was visually inspected frame by frame; backend parity here is limited to the shared row builder and first-person UV map both paths import.',
+            },
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding the Player Model Pose', 'Understanding Render Snapshots'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'World Visuals',
     title: 'Understanding the Player Model Pose',
     description:
       'Documents how the third-person player and AI bodies are posed: the shared pose builder and its shadow rows consumed by both backends, the visual-side mapping that does not match the variable names, the delayed body yaw with a bounded head separation, the pure-strafe body turn that leaves head direction intact, the shoulder-pivoted idle arm sway, and the forward attack swing that keeps the arm and held item clear of the torso.',
@@ -1683,7 +1782,14 @@ head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0
         ],
       },
     ],
-    relatedTitles: ['Understanding Render Snapshots', 'Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Selection Outlines', 'Looking Around'],
+    relatedTitles: [
+      'Understanding Render Snapshots',
+      'Understanding First-Person Arm Geometry',
+      'Understanding OpenGL Rendering',
+      'Understanding WGPU Rendering',
+      'Understanding Selection Outlines',
+      'Looking Around',
+    ],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -2462,7 +2568,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.1"`,
+            code: `__version__ = "3.8.2"`,
           },
           {
             kind: 'note',

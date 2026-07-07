@@ -41,9 +41,6 @@ def bind_settings_overlay_value_signals(viewport: "RendererViewportWidget", over
   overlay.crosshair_pixels_changed.connect(lambda pixels: set_crosshair_pixels(viewport, pixels))
   overlay.crosshair_clear_requested.connect(lambda: clear_crosshair(viewport))
   overlay.camera_perspective_changed.connect(lambda value: set_camera_perspective(viewport, str(value)))
-  overlay.arm_rotation_limit_min_changed.connect(lambda value: set_arm_rotation_limit_min_deg(viewport, float(value)))
-  overlay.arm_rotation_limit_max_changed.connect(lambda value: set_arm_rotation_limit_max_deg(viewport, float(value)))
-  overlay.arm_swing_duration_changed.connect(lambda value: set_arm_swing_duration_s(viewport, float(value)))
   overlay.view_bobbing_changed.connect(lambda on: set_view_bobbing_enabled(viewport, bool(on)))
   overlay.camera_shake_changed.connect(lambda on: set_camera_shake_enabled(viewport, bool(on)))
   overlay.view_bobbing_strength_changed.connect(lambda value: set_view_bobbing_strength(viewport, float(value)))
@@ -250,9 +247,6 @@ def sync_settings_values(viewport: "RendererViewportWidget") -> None:
     camera_shake_enabled=viewport._state.camera_shake_enabled,
     view_bobbing_strength=float(viewport._state.view_bobbing_strength),
     camera_shake_strength=float(viewport._state.camera_shake_strength),
-    arm_rotation_limit_min_deg=float(viewport._state.arm_rotation_limit_min_deg),
-    arm_rotation_limit_max_deg=float(viewport._state.arm_rotation_limit_max_deg),
-    arm_swing_duration_s=float(viewport._state.arm_swing_duration_s),
     animated_textures_enabled=bool(viewport._state.animated_textures_enabled),
     outline_selection=viewport._state.outline_selection,
     cloud_wire=viewport._state.cloud_wire,
@@ -404,31 +398,6 @@ def set_view_bobbing_strength(viewport: "RendererViewportWidget", strength: floa
 def set_camera_shake_strength(viewport: "RendererViewportWidget", strength: float) -> None:
   viewport._state.camera_shake_strength = float(strength)
   viewport._state.normalize()
-
-
-def set_arm_rotation_limit_min_deg(viewport: "RendererViewportWidget", value: float) -> None:
-  viewport._state.arm_rotation_limit_min_deg = float(value)
-  viewport._state.normalize()
-  viewport._invalidate_pause_preview_cache()
-  sync_settings_values(viewport)
-  viewport.update()
-
-
-def set_arm_rotation_limit_max_deg(viewport: "RendererViewportWidget", value: float) -> None:
-  viewport._state.arm_rotation_limit_max_deg = float(value)
-  viewport._state.normalize()
-  viewport._invalidate_pause_preview_cache()
-  sync_settings_values(viewport)
-  viewport.update()
-
-
-def set_arm_swing_duration_s(viewport: "RendererViewportWidget", value: float) -> None:
-  viewport._state.arm_swing_duration_s = float(value)
-  viewport._state.normalize()
-  viewport._first_person_motion.set_swing_duration_s(float(viewport._state.arm_swing_duration_s))
-  viewport._invalidate_pause_preview_cache()
-  sync_settings_values(viewport)
-  viewport.update()
 
 
 def set_animated_textures_enabled(viewport: "RendererViewportWidget", on: bool) -> None:
@@ -684,9 +653,7 @@ def reset_advanced_defaults(viewport: "RendererViewportWidget") -> None:
   viewport._state.block_break_repeat_interval_s = float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S)
   viewport._state.block_place_repeat_interval_s = float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
   viewport._state.block_interact_repeat_interval_s = float(RuntimePreferences.DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S)
-  viewport._state.arm_swing_duration_s = float(RuntimePreferences.DEFAULT_ARM_SWING_DURATION_S)
   viewport._state.normalize()
-  viewport._first_person_motion.set_swing_duration_s(float(viewport._state.arm_swing_duration_s))
   sync_settings_values(viewport)
 
 

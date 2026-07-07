@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 def build_display_tab(overlay: "SettingsOverlay") -> None:
   scroll, host, layout = overlay._make_scroll_page()
-  add_page_header(layout, host, title="Display", subtitle="Camera, window, HUD, view motion, player model, and crosshair presentation.")
+  add_page_header(layout, host, title="Display", subtitle="Camera, window, HUD, view motion, and crosshair presentation.")
   _camera_card, camera_body, camera_layout = add_settings_card(layout, host, title="Display", description="Camera projection, mouse response, perspective, and axis direction.")
 
   overlay._lbl_fov = QLabel("FOV: 80 deg", host)
@@ -76,44 +76,6 @@ def build_display_tab(overlay: "SettingsOverlay") -> None:
   overlay._tg_fullscreen = overlay._add_toggle(window_layout, window_body, "Fullscreen", overlay.fullscreen_changed.emit)
   overlay._tg_hide_hud = overlay._add_toggle(window_layout, window_body, "Hide HUD", overlay.hide_hud_changed.emit)
   overlay._tg_hide_hand = overlay._add_toggle(window_layout, window_body, "Hide Hand", overlay.hide_hand_changed.emit)
-
-  _model_card, model_body, model_layout = add_settings_card(layout, host, title="Player Model", description="First-person arm rotation and swing timing limits.")
-
-  overlay._ctl_arm_rotation_limit_min = AdvancedScalarControl(
-    title="Arm rotation minimum",
-    min_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG),
-    max_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MIN_DEG),
-    parent=model_body,
-  )
-  overlay._ctl_arm_rotation_limit_min.value_changed.connect(overlay.arm_rotation_limit_min_changed.emit)
-  model_layout.addWidget(overlay._ctl_arm_rotation_limit_min)
-
-  overlay._ctl_arm_rotation_limit_max = AdvancedScalarControl(
-    title="Arm rotation maximum",
-    min_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG),
-    max_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG),
-    slider_scale=1.0,
-    decimals=0,
-    default_value=float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MAX_DEG),
-    parent=model_body,
-  )
-  overlay._ctl_arm_rotation_limit_max.value_changed.connect(overlay.arm_rotation_limit_max_changed.emit)
-  model_layout.addWidget(overlay._ctl_arm_rotation_limit_max)
-
-  overlay._ctl_arm_swing_duration = AdvancedScalarControl(
-    title="Arm swing duration",
-    min_value=float(RuntimePreferences.ARM_SWING_DURATION_MIN_S),
-    max_value=float(RuntimePreferences.ARM_SWING_DURATION_MAX_S),
-    slider_scale=100.0,
-    decimals=2,
-    default_value=float(RuntimePreferences.DEFAULT_ARM_SWING_DURATION_S),
-    parent=model_body,
-  )
-  overlay._ctl_arm_swing_duration.value_changed.connect(overlay.arm_swing_duration_changed.emit)
-  model_layout.addWidget(overlay._ctl_arm_swing_duration)
 
   _motion_card, motion_body, motion_layout = add_settings_card(layout, host, title="View Motion", description="Camera movement effects and their strength.")
 

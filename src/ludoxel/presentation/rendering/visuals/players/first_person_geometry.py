@@ -16,7 +16,7 @@ from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occlude
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
 from ludoxel.presentation.rendering.visuals.players.held_block_geometry import held_block_kind_scale_multiplier, held_block_model_boxes
 from ludoxel.presentation.rendering.visuals.players.render_state import FirstPersonRenderState
-from ludoxel.presentation.rendering.visuals.players.skin_uv_maps import SLIM_RIGHT_ARM_BASE_UV_PX, SLIM_RIGHT_ARM_SLEEVE_UV_PX
+from ludoxel.presentation.rendering.visuals.players.skin_uv_maps import FIRST_PERSON_RIGHT_ARM_BASE_UV_PX, FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX
 from ludoxel.simulation.blocks.models.common import LocalBox
 
 SafeFrame = tuple[float, float, float, float]
@@ -377,7 +377,7 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
   parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ARM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
   buffers: list[list[list[float]]] = [[] for _ in range(6)]
 
-  for box, uv_map in ((arm_boxes[0], SLIM_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], SLIM_RIGHT_ARM_SLEEVE_UV_PX)):
+  for box, uv_map in ((arm_boxes[0], FIRST_PERSON_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX)):
     model = model_matrix_for_local_box(parent_transform, box)
     for face_idx in range(6):
       uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
