@@ -490,7 +490,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Operative Text and Owner',
         body: [
           'The operative definition is supplied by the License Text. The relevant owner for Ludoxel Original Materials is Kento Konishi as the Licensor where the material is created, owned, or controlled by that Licensor for Ludoxel.',
-          'Ownership or control is not inferred from public display alone. A file can be visible yet remain unfree to use; a rendered page does not pass into the public domain; a generated build artifact does not turn redistributable; and a readable documentation example does not become reusable template material.',
+          'Public display alone leaves ownership and control unresolved. Visibility can coexist with unfree material; rendered pages stay outside the public domain; generated build artifacts stay outside redistributable status; and readable documentation examples stay outside reusable template material.',
           'The inverse is also true. The fact that a material appears in object form, generated form, bundled form, website-build form, or package form does not remove it from Original Materials when the underlying protected expression is Ludoxel material created, owned, or controlled by the Licensor.',
         ],
       },
@@ -550,7 +550,7 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'A finding that material is Original Materials only identifies the legal material perimeter. It does not authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark construction, deployment, sublicensing, or removal of legal markings. Permission remains a separate License Text question.',
+                    text: 'A finding that material is Original Materials only identifies the legal material perimeter. Permission for copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark construction, deployment, sublicensing, or removal of legal markings remains a separate License Text question.',
                   },
                 ],
               },
@@ -811,13 +811,13 @@ export const legalPages: DocsPageContent[] = [
             {
               kind: 'link',
               label: 'Including License Text',
-              href: '/docs/distribution/desktop-artifacts/packaged-components/including-license-text',
+              href: '/docs/distribution/runtime-inclusions/legal-material-inclusion/including-license-text',
             },
             ' and ',
             {
               kind: 'link',
               label: 'third-party license text',
-              href: '/docs/distribution/desktop-artifacts/packaged-components/including-third-party-license-text',
+              href: '/docs/distribution/runtime-inclusions/legal-material-inclusion/including-third-party-license-text',
             },
             '.',
           ],
@@ -882,13 +882,13 @@ export const legalPages: DocsPageContent[] = [
             {
               kind: 'link',
               label: 'package checks',
-              href: '/docs/distribution/build-and-release-checks/release-checks-and-claims/running-package-checks-with-permission',
+              href: '/docs/distribution/verification/package-inspection/running-package-checks-with-permission',
             },
             ' and ',
             {
               kind: 'link',
               label: 'unofficial release claims',
-              href: '/docs/distribution/build-and-release-checks/release-checks-and-claims/avoiding-unofficial-release-claims',
+              href: '/docs/distribution/release-language/public-identification/avoiding-unofficial-release-claims',
             },
             '.',
           ],
@@ -1232,7 +1232,7 @@ export const legalPages: DocsPageContent[] = [
         body: [
           'An interface control, settings screen, screenshot function, recording workflow, save operation, package file, visible asset, public route, application window, cache file, local data file, or generated display does not amend the License Text.',
           [
-            'A technical affordance may explain how an act occurred. It does not prove that the act is authorized. The same rule applies to repository access and platform surfaces: access may be factually possible, but legal authority must still come from the ',
+            'A technical affordance may explain how an act occurred. Authorization for that act must come from the License Text. The same rule applies to repository access and platform surfaces: access may be factually possible, but legal authority must still come from the ',
             {
               kind: 'link',
               label: 'controlling',
@@ -1632,7 +1632,7 @@ export const legalPages: DocsPageContent[] = [
             ' does not authorize redistribution. The fact that material can be viewed, cloned, forked, downloaded, archived, cached, indexed, or rendered in a browser establishes technical obtainability, not permission to circulate.',
           ],
           'The existence of a package, build artifact, or generated site directory does not authorize redistribution. An artifact can exist, be reproducible, and contain the correct files while no permission to publish or host it exists.',
-          'Inclusion of the License Text, Third-Party License Text, SPDX identifiers, or other legal materials inside a copy does not authorize redistribution. Retained legal text is a condition that an authorized distribution must satisfy; it is not itself the authorization. A noncommercial purpose, an educational purpose, and private convenience are equally insufficient, because the limited grant does not turn on the Licensee’s purpose.',
+          'Inclusion of the License Text, Third-Party License Text, SPDX identifiers, or other legal materials inside a copy leaves redistribution authority with Section 9 of the License Text. Retained legal text is a condition that an authorized distribution must satisfy. Authorization itself requires the permission source stated by the License Text. A noncommercial purpose, an educational purpose, and private convenience are equally insufficient, because the limited grant does not turn on the Licensee’s purpose.',
         ],
       },
       {
@@ -1644,7 +1644,7 @@ export const legalPages: DocsPageContent[] = [
             {
               kind: 'link',
               label: 'unofficial release claims',
-              href: '/docs/distribution/build-and-release-checks/release-checks-and-claims/avoiding-unofficial-release-claims',
+              href: '/docs/distribution/release-language/public-identification/avoiding-unofficial-release-claims',
             },
             '.',
           ],
@@ -1986,7 +1986,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Internal AI Features Are Not External AI Permission',
         body: [
           'Ludoxel contains AI-controlled non-player actors and produces AI learning records as part of its ordinary operation. Those features are runtime behavior of the application and the resulting records are user data produced locally. Their existence does not grant permission to train, evaluate, benchmark, or otherwise ingest Ludoxel Original Materials into any external model, dataset, index, or benchmark.',
-          'The internal learning behavior operates within the application’s own runtime context. It is not a representation that the project source, assets, documentation, or package contents are available as training, evaluation, indexing, benchmark, retrieval, embedding, or dataset material for systems outside Ludoxel. The presence of machine-learning functionality inside the application must not be read as consent to AI Use of the protected materials that compose the application.',
+          'The internal learning behavior operates within the application’s own runtime context. It represents runtime behavior only. The project source, assets, documentation, and package contents remain outside training, evaluation, indexing, benchmark, retrieval, embedding, and dataset material for systems outside Ludoxel. The presence of machine-learning functionality inside the application must not be read as consent to AI Use of the protected materials that compose the application.',
         ],
       },
       {
@@ -2399,7 +2399,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding Public Issue Limits', 'Requesting a Private Security Channel', 'Avoiding Public Exploit Details', 'Reading Security Policy'],
+    relatedTitles: ['Understanding Public Issue Limits', 'Requesting a Private Security Channel', 'Avoiding Public Exploit Details', 'Separating Security Reports from Problem Reports'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -2430,7 +2430,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-contribution-refusal-operative-text',
         title: 'Operative Text',
         body: [
-          'The operative sources are the License Text governing External Contributions and the Repository Contribution Policy in `.github/CONTRIBUTING.md`. The License Text states that the Repository is not maintained as an open contribution project, that an External Contribution is not requested and is not accepted through a public pull request, a Public Issue, a discussion, a patch, a website text proposal, or a comparable submission, and that Contribution Materials submitted as an External Contribution are not accepted.',
+          'The operative sources are the License Text governing External Contributions and the Repository Contribution Policy in `.github/CONTRIBUTING.md`. The License Text places the Repository outside open contribution maintenance, refuses External Contributions across public pull requests, Public Issues, discussions, patches, website text proposals, and comparable submissions, and refuses Contribution Materials submitted as External Contributions.',
           [
             'The Contribution Policy reinforces this by stating that an External Contribution is not accepted and that a pull request, or a public submission that proposes Contribution Materials, may be ',
             {
@@ -2515,7 +2515,7 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding Pull Request Boundaries', 'Understanding Public Issue Limits', 'Understanding Derivative Work Restrictions', 'Reading Contribution Policy', 'Avoiding Feature Requests'],
+    relatedTitles: ['Understanding Pull Request Boundaries', 'Understanding Public Issue Limits', 'Understanding Derivative Work Restrictions', 'Understanding Closure Without Review', 'Avoiding Feature Requests'],
   }),
   defineDocsArticle({
     category: 'Legal',
@@ -2546,7 +2546,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Operative Text',
         body: [
           'The operative sources are the License Text governing External Contributions, the Repository Contribution Policy in `.github/CONTRIBUTING.md`, and the Pull Request Policy in `.github/pull_request_template.md`. The License Text states that an External Contribution is not accepted through a public pull request and that submission of an External Contribution does not expand the Licensee’s rights in the Original Materials.',
-          'The Pull Request Policy states that the Repository is not an open source project and does not accept an External Contribution, that a pull request may be closed without review, and that submission of a pull request does not grant permission to Use the Original Materials beyond the License. The Contribution Policy is to the same effect.',
+          'The Pull Request Policy places the Repository outside open source project status, rejects External Contributions, allows pull-request closure without review, and leaves Use permissions bounded by the License. The Contribution Policy is to the same effect.',
           'These sources control the surface. No interface affordance and no subordinate statement converts the ability to open a pull request into an accepted contribution path.',
         ],
       },
@@ -2596,7 +2596,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Closure Without Review',
         body: [
           'A public pull request may be closed without review. The Contribution Policy and the Pull Request Policy state this expressly, and the License Text imposes no obligation on the Licensor to review, accept, preserve, credit, respond to, incorporate, license, publish, deploy, or return the submitted material.',
-          'Closure without review is not a defect in handling and does not indicate that the material was evaluated. It is the ordinary consequence of the refusal: the pull-request path is not an accepted contribution path, and a submission through it carries no entitlement to consideration.',
+          'Closure without review follows the stated refusal policy and carries no evaluation signal. The pull-request path remains outside accepted contribution routes, and a submission through it carries no entitlement to consideration.',
         ],
       },
       {
@@ -2624,6 +2624,6 @@ export const legalPages: DocsPageContent[] = [
         ],
       },
     ],
-    relatedTitles: ['Understanding Contribution Refusal', 'Understanding Public Issue Limits', 'Understanding Derivative Work Restrictions', 'Reading Contribution Policy', 'Reading Issue Template Boundaries', 'Avoiding Unauthorized Repository Operations'],
+    relatedTitles: ['Understanding Contribution Refusal', 'Understanding Public Issue Limits', 'Understanding Derivative Work Restrictions', 'Understanding Closure Without Review', 'Understanding Unsupported Requests', 'Avoiding Feature Requests'],
   }),
 ];

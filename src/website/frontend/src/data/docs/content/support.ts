@@ -956,7 +956,7 @@ body:
         content: [
           {
             kind: 'paragraph',
-            text: 'Ludoxel’s repository policy states that the repository is not maintained as an open contribution project and that External Contributions are not accepted. That rule controls public support practice. A public issue form cannot be used to solicit, review, accept, or preserve a feature request or implementation proposal that the repository policy excludes.',
+            text: 'Ludoxel’s repository policy places the repository outside open contribution maintenance and rejects External Contributions. That rule controls public support practice. A public issue form cannot be used to solicit, review, accept, or preserve a feature request or implementation proposal that the repository policy excludes.',
           },
           {
             kind: 'paragraph',

@@ -938,7 +938,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
-            text: 'The surface color format is fixed by `configure_wgpu_canvas` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/surface.py`. It reads the adapter-preferred format and passes it through `linear_color_target_format`, which drops a trailing `-srgb` suffix, so the configured surface and every pipeline target store fragment output without an automatic linear-to-sRGB encode. The block atlas is uploaded as `rgba8unorm` and sampled raw, matching the OpenGL backend, which uploads a `GL_RGBA` atlas and renders to its default framebuffer with no sRGB encode. Both backends therefore run the shared lighting and fog math on raw atlas texels and store the result unencoded, so the WGPU image carries the same tone and contrast as the OpenGL image rather than the lighter, lower-contrast output a preferred `-srgb` surface would produce.',
+            text: 'The surface color format is fixed by `configure_wgpu_canvas` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/surface.py`. It reads the adapter-preferred format and passes it through `linear_color_target_format`, which drops a trailing `-srgb` suffix, so the configured surface and every pipeline target store fragment output without an automatic linear-to-sRGB encode. The block atlas is uploaded as `rgba8unorm` and sampled raw, matching the OpenGL backend, which uploads a `GL_RGBA` atlas and renders to its default framebuffer with no sRGB encode. Both backends therefore run the shared lighting and fog math on raw atlas texels and store the result unencoded, giving the WGPU image the same tone and contrast as the OpenGL image; a preferred `-srgb` surface would produce lighter, lower-contrast output.',
           },
           {
             kind: 'code',
@@ -1064,7 +1064,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'The GLSL stage files and the `common/` includes live once under `src/ludoxel/presentation/rendering/shaders/`, outside either backend directory. `src/ludoxel/presentation/rendering/shaders/source.py` owns the root resolution and the include preprocessing: `shader_source_root` returns that directory, `expand_shader_source` reads a stage file and expands every `#include "..."` directive against the including file, and `load_shader_source` joins a stage name to the root and expands it. Include resolution is recursive and tracks the active include stack, so a cycle raises rather than recursing without bound. The `chunk_face_payload.comp` compute source, the world, shadow, sun, cloud, selection, Othello, player-model, and first-person stages, and the `distance_fog.glsl` and `face_instance.glsl` includes are all read from this one owner.',
+            text: 'The GLSL stage files and the `src/ludoxel/presentation/rendering/shaders/common` includes live once under `src/ludoxel/presentation/rendering/shaders/`, outside either backend directory. `src/ludoxel/presentation/rendering/shaders/source.py` owns the root resolution and the include preprocessing: `shader_source_root` returns that directory, `expand_shader_source` reads a stage file and expands every `#include "..."` directive against the including file, and `load_shader_source` joins a stage name to the root and expands it. Include resolution is recursive and tracks the active include stack, so a cycle raises before unbounded recursion. The `chunk_face_payload.comp` compute source, the world, shadow, sun, cloud, selection, Othello, player-model, and first-person stages, and the `distance_fog.glsl` and `face_instance.glsl` includes are all read from this one owner.',
           },
           {
             kind: 'paragraph',
@@ -1141,7 +1141,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
             note: {
               type: 'note',
               content:
-                'The color, lighting, fog, shadow, and selection math is identical because it is authored once in the shared GLSL, and the non-sRGB color target and raw atlas make the stored output match the OpenGL framebuffer rather than a lighter, lower-contrast sRGB-encoded surface. Areas each backend implements separately remain distinct: the zero-to-one clip-space depth correction, the uniform-block and bind-group layout, the CPU per-face chunk path against the OpenGL compute payload, and the `depth32float` shadow target against the OpenGL 24-bit depth. No pixel-level identity is claimed beyond the shared source and the matched color target.',
+                'The color, lighting, fog, shadow, and selection math is identical because it is authored once in the shared GLSL, and the non-sRGB color target and raw atlas make the stored output match the OpenGL framebuffer. A lighter, lower-contrast sRGB-encoded surface is outside the configured WGPU target. Areas each backend implements separately remain distinct: the zero-to-one clip-space depth correction, the uniform-block and bind-group layout, the CPU per-face chunk path against the OpenGL compute payload, and the `depth32float` shadow target against the OpenGL 24-bit depth. No pixel-level identity is claimed beyond the shared source and the matched color target.',
             },
           },
         ],
@@ -1152,7 +1152,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'The sun billboard is the shared `sun.frag`. Both tiers shape the disc through coverage alone in `ldx_sun_body`: a photospheric disc fills most of the billboard, a near-white hot core sits at its centre, and a thin warm corona rings the disc, with each radial term falling to zero before the quad border and an edge mask retiring coverage there, so the straight quad edge never clips a lit texel into a visible frame or corner. `ldx_simple_sun` and `ldx_ultra_sun` both call `ldx_sun_body` and differ only in the outer-glow weight, so neither tier draws a square-masked billboard. `half_angle_deg` in `BackendSunParams` sets the billboard half-angle that both backends read, so the disc subtends a fixed apparent size. The emitted color is dominated by the black-body white of the core and disc, and the falloffs do not pre-attenuate it, so alpha blending over the sky brightens toward the disc rather than pulling a dark ring around it. The `u_ultra` value both backends carry in the sun-mode uniform selects the outer-glow branch.',
+            text: 'The sun billboard is the shared `sun.frag`. Both tiers shape the disc through coverage alone in `ldx_sun_body`: a photospheric disc fills most of the billboard, a near-white hot core sits at its centre, and a thin warm corona rings the disc, with each radial term falling to zero before the quad border and an edge mask retiring coverage there, so the straight quad edge never clips a lit texel into a visible frame or corner. `ldx_simple_sun` and `ldx_ultra_sun` both call `ldx_sun_body` and differ only in the outer-glow weight, so neither tier draws a square-masked billboard. `half_angle_deg` in `BackendSunParams` sets the billboard half-angle that both backends read, so the disc subtends a fixed apparent size. The emitted color is dominated by the black-body white of the core and disc, and the falloffs do not pre-attenuate it, so alpha blending over the sky brightens toward the disc and avoids a dark ring around it. The `u_ultra` value both backends carry in the sun-mode uniform selects the outer-glow branch.',
           },
           {
             kind: 'code',
@@ -1220,14 +1220,14 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_far_distance` derives a separate cloud reach whose value is the render radius scaled by five, raised to a three-hundred-and-twenty-block floor so the sky stays wider than the world chunk radius even at a narrow render distance, and `cloud_fog_range` fades over that reach without capping it at the camera far plane. `CloudField.set_view_radius` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` generates cloud shapes out to that same reach, so clouds fill the horizon the fade covers rather than ending at a fixed radius short of it. `cloud_projection_z_far` gives the cloud pass its own far plane covering that reach, so the cloud fade is decoupled from both the geometry fog and the world camera far plane.',
+            text: 'Render distance is configured in chunks and converted to a horizontal block radius by `render_distance_radius_blocks` in `src/ludoxel/presentation/rendering/contracts/config.py`. `render_distance_fog_range` derives the geometry fog from that radius and the camera far plane: the end distance is the smaller of the radius and the far plane, and the start distance is a fixed fraction of the end, so fully fogged geometry is reached before the hard far-plane clip. `cloud_far_distance` derives a separate cloud reach by multiplying the render radius by `CLOUD_RENDER_DISTANCE_MULTIPLIER`, currently `15.0`, then raising the result to the `CLOUD_MIN_VISIBLE_RADIUS_BLOCKS` floor of `320.0`; the sky therefore stays wider than the world chunk radius even at a narrow render distance. `cloud_fog_range` fades over that reach without capping it at the camera far plane. `CloudField.set_view_radius` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` generates cloud shapes out to that same reach, so the fade-covered horizon receives generated cloud geometry. `cloud_projection_z_far` gives the cloud pass its own far plane covering that reach, so the cloud fade is decoupled from both the geometry fog and the world camera far plane.',
           },
           {
             kind: 'math',
             math: {
-              expression: 'e_{\\text{geom}} = \\min\\bigl(\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(5\\,\\mathrm{rd}\\cdot\\mathrm{CHUNK},\\ 320\\bigr), \\qquad s = 0.85\\,e',
+              expression: 'r = \\mathrm{rd}\\cdot\\mathrm{CHUNK}, \\qquad e_{\\text{geom}} = \\min\\bigl(r,\\ z_{\\mathrm{far}}\\bigr), \\qquad e_{\\text{cloud}} = \\max\\bigl(15.0\\,r,\\ 320.0\\bigr), \\qquad s = 0.85\\,e',
               displayMode: true,
-              caption: 'render_distance_fog_range and cloud_far_distance; both fade ranges start at the same fraction of their end, but the cloud reach is not capped at the camera far plane.',
+              caption: '`render_distance_fog_range` uses `e_geom`; `cloud_far_distance` uses `e_cloud` with `CLOUD_RENDER_DISTANCE_MULTIPLIER = 15.0`; both fade ranges start from `s = 0.85 e`, and the cloud reach stays outside the geometry far-plane cap.',
             },
           },
           {
@@ -1280,7 +1280,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'The Ultra tier modulates that same fog toward the sun. `ldx_apply_sun_shafts` in the shared `distance_fog.glsl` adds warm in-scattered light to a fogged surface, weighted by the geometry fog factor and by the alignment of the view ray with the sun direction, so the term rises only where a surface sits far enough to lie in the fog band and its view ray runs toward the sun. A near surface carries no fog weight and a surface turned away from the sun carries no alignment, so scene depth and view direction govern where the crepuscular light lands rather than a flat screen overlay. `world.frag` and `world_no_shadow.frag` add the term under the `u_ultra` gate, which both backends raise only when the shadow-map quality reaches Ultra, so every lower tier leaves the fogged color unchanged.',
+            text: 'The Ultra tier modulates that same fog toward the sun. `ldx_apply_sun_shafts` in the shared `distance_fog.glsl` adds warm in-scattered light to a fogged surface, weighted by the geometry fog factor and by the alignment of the view ray with the sun direction, so the term rises only where a surface sits far enough to lie in the fog band and its view ray runs toward the sun. A near surface carries no fog weight and a surface turned away from the sun carries no alignment, so scene depth and view direction govern where the crepuscular light lands. `world.frag` and `world_no_shadow.frag` add the term under the `u_ultra` gate, which both backends raise only when the shadow-map quality reaches Ultra, so every lower tier leaves the fogged color unchanged.',
           },
           {
             kind: 'code',
@@ -2256,7 +2256,7 @@ class DemonstrationRecord:
           },
           {
             kind: 'paragraph',
-            text: 'Rewards are computed from `RewardTransition`, not from visual presentation. `compute_step_reward` weights survival, progress, damage, falling, death, and void death. The resulting reward is a state-transition measurement attached to a record; it is not a renderer score and not a UI animation metric.',
+            text: '`RewardTransition` supplies the reward inputs. `compute_step_reward` weights survival, progress, damage, falling, death, and void death, then the learning coordinator stores the resulting state-transition measurement on the record. Renderer scores and UI animation metrics have separate owners outside this reward path.',
           },
         ],
       },
@@ -2327,11 +2327,11 @@ def policy_enabled(self) -> bool:
         content: [
           {
             kind: 'paragraph',
-            text: 'A learned policy in Ludoxel is a lightweight set of feature-conditioned utility adjustments, not a neural network. `Policy` in `src/ludoxel/simulation/actors/ai_players/learning/policy.py` holds, among schema and version fields, a mapping from feature key to per-action weights, per-action negative modifiers, and legacy global modifiers. `load_policy` reconstructs one tolerantly, coercing weight maps and reading either the new or the legacy evaluation field; a structural defect yields nothing while a version or compatibility mismatch is loaded but later rejected by the usability gate.',
+            text: 'A learned policy in Ludoxel is a lightweight set of feature-conditioned utility adjustments. `Policy` in `src/ludoxel/simulation/actors/ai_players/learning/policy.py` holds, among schema and version fields, a mapping from feature key to per-action weights, per-action negative modifiers, and legacy global modifiers. `load_policy` reconstructs one tolerantly, coercing weight maps and reading either the new or the legacy evaluation field; a structural defect yields nothing while a version or compatibility mismatch is loaded but later rejected by the usability gate. Neural-network checkpoint fields are outside this policy object.',
           },
           {
             kind: 'paragraph',
-            text: '`DeterministicPolicy` is the baseline that decides actions. `decide` computes a baseline utility for each permitted action with `_baseline_scores` from the observation context, then `_apply_policy` adds the policy adjustments for the encoded feature keys, the negative modifiers, and the legacy category and skill modifiers, and selects the highest-utility action with a deterministic tie-break by catalog order. The policy biases the ranking; it does not replace the baseline, and `PolicyDecision` reports the chosen action, its utility, the ranked candidates, and the decision source.',
+            text: '`DeterministicPolicy` is the baseline that decides actions. `decide` computes a baseline utility for each permitted action with `_baseline_scores` from the observation context, then `_apply_policy` adds the policy adjustments for the encoded feature keys, the negative modifiers, and the legacy category and skill modifiers, and selects the highest-utility action with a deterministic tie-break by catalog order. The policy biases the ranking while the baseline still supplies the candidate utilities, and `PolicyDecision` reports the chosen action, its utility, the ranked candidates, and the decision source.',
           },
           {
             kind: 'code',
@@ -3008,7 +3008,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
           },
           {
             kind: 'paragraph',
-            text: 'Because the chat-open flag is absent from that gate, the screen behaves as a focus boundary rather than a time stop. The gameplay HUD is hidden while chat is open because `_gameplay_hud_active` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` excludes the chat-open condition, and `ChatController.close` restores capture for the active play space only when no modal is open and the application is active.',
+            text: 'Because the chat-open flag is absent from that gate, the screen behaves as a focus boundary. The gameplay HUD is hidden while chat is open because `_gameplay_hud_active` in `src/ludoxel/presentation/interface/viewport/overlays/state.py` excludes the chat-open condition, and `ChatController.close` restores capture for the active play space only when no modal is open and the application is active.',
           },
         ],
       },
@@ -3148,7 +3148,7 @@ class FormattedSegment:
         content: [
           {
             kind: 'paragraph',
-            text: 'A color code changes the foreground and the background of the following text and leaves the formatting flags untouched. `§r` clears the bold, italic, underline, strikethrough, and obfuscated flags and leaves the colors as they stand; it does not return to a default color. White is reached with `§f`, which sets the foreground to white and a dark backing color. Segments before any color code use a default white foreground and a transparent background, so ordinary text shows the chat background rather than a backing fill.',
+            text: 'A color code changes the foreground and the background of the following text and leaves the formatting flags untouched. `§r` clears the bold, italic, underline, strikethrough, and obfuscated flags and leaves the colors as they stand. White is reached with `§f`, which sets the foreground to white and a dark backing color. Segments before any color code use a default white foreground and a transparent background, so ordinary text shows the chat background with no backing fill.',
           },
           {
             kind: 'code',
@@ -3196,7 +3196,7 @@ class FormattedSegment:
           },
           {
             kind: 'paragraph',
-            text: 'Mention color is derived by the renderer rather than stored in the raw chat body. `ChatController` supplies the local display user as the mention target, `ChatTextView` detects exact known `@Name` spans with word-boundary checks, and only those characters receive the `§e` foreground color. `named_message_text` strips user-provided section formatting from named chat bodies before the runtime message is stored, so a typed control sequence does not become persistent formatting and raw `§e` is not required for a mention.',
+            text: 'Mention color is renderer-derived. `ChatController` supplies the local display user as the mention target, `ChatTextView` detects exact known `@Name` spans with word-boundary checks, and only those characters receive the `§e` foreground color. `named_message_text` strips user-provided section formatting from named chat bodies before the runtime message is stored, so a typed control sequence does not become persistent formatting and raw `§e` is not required for a mention.',
           },
         ],
       },
@@ -3250,7 +3250,7 @@ class FormattedSegment:
           },
           {
             kind: 'paragraph',
-            text: 'The snapshot runs inside the mesh-build worker thread of `WorldUploadTracker`, not on the render thread: `_schedule_build` submits the chunk key and revision, and `_build_result_for_chunk` performs materialization and face generation together in the executor. `WorldState` guards its indexes and caches with a reentrant lock, so a build snapshot taken while the simulation mutates blocks sees a consistent composition, and a mutation after scheduling marks the chunk dirty again through the mesh-revision counters so the stale build is superseded rather than trusted.',
+            text: 'The snapshot runs inside the mesh-build worker thread of `WorldUploadTracker`, not on the render thread: `_schedule_build` submits the chunk key and revision, and `_build_result_for_chunk` performs materialization and face generation together in the executor. `WorldState` guards its indexes and caches with a reentrant lock, so a build snapshot taken while the simulation mutates blocks sees a consistent composition, and a mutation after scheduling marks the chunk dirty again through the mesh-revision counters so the stale build is superseded.',
           },
         ],
       },
@@ -3290,7 +3290,7 @@ class FormattedSegment:
           },
           {
             kind: 'paragraph',
-            text: 'The loading overlay text is produced from this state: with content in range the status line reads `Loading world... R/T chunks` and appends the outstanding build count, while a denominator still at zero reads `Selecting world chunks...`, and either line gains the tracker’s stall detail — pending and resident counts and the last scheduled, built, and uploaded chunk keys — once the progress pair has held for four seconds. Because a zero denominator now completes loading rather than holding it, the `Selecting world chunks... [pending 0, resident 0]` stall no longer persists. Readiness here is residency of the counted content chunks; it is not a claim that both renderer backends perform identically or that later streaming as the player moves cannot be observed.',
+            text: 'The loading overlay text is produced from this state: with content in range the status line reads `Loading world... R/T chunks` and appends the outstanding build count, while a denominator still at zero reads `Selecting world chunks...`, and either line gains the tracker’s stall detail — pending and resident counts and the last scheduled, built, and uploaded chunk keys — once the progress pair has held for four seconds. A zero denominator now completes loading, so the `Selecting world chunks... [pending 0, resident 0]` stall no longer persists. Readiness here is residency of the counted content chunks; renderer-backend equivalence and later streaming as the player moves remain separate observations.',
           },
         ],
       },

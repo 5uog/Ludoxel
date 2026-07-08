@@ -263,7 +263,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         id: 'building-in-my-world-placement-cell',
         title: 'Placement Resolves the Cell and State Shape',
         body: [
-          'Placement requires a non-empty, registered item. If the hit block is a slab matching the held item, the merge completes that cell to a double at the hit cell, and the added half is taken from the exposed top or bottom face the pick reports rather than the held half, so a held slab packs in half-block steps even while continuous placement is locked to one half. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing, while a held bridge that extends from a slab or stair source inherits that source half or facing instead.',
+          'Placement requires a non-empty, registered item. If the hit block is a slab matching the held item, the merge completes that cell to a double at the hit cell, and the exposed pick face supplies the added half, so a held slab packs in half-block steps even while continuous placement is locked to one half. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing, while a held bridge that extends from a slab or stair source inherits that source half or facing.',
           'A placement that would intersect the player is rejected before any edit. `placement_intersects_player` builds the candidate block collision boxes at the target cell and tests them against the player box, so standing too close to the target stops a placement that would otherwise be legal.',
           '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method requires non-empty overlap in every coordinate dimension; faces that meet at a maximum/minimum boundary remain separate. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then converts an accepted predicate into a placement rejection. Block shapes, item registration, and world edits remain under their respective simulation owners.',
         ],
@@ -704,7 +704,7 @@ if bool(landed_now):
         title: 'Falls Within Three Blocks Are Safe',
         body: [
           'Fall damage is computed from the distance fallen relative to a safe distance of three blocks. A landing within the safe distance does no damage, and beyond it the damage is the whole number of blocks past the safe distance, rounded up.',
-          'So a four-block fall does one point, a five-block fall does two, and short hops do nothing. The damage scales with how far past three blocks the fall was, not with the total height alone.',
+          'So a four-block fall does one point, a five-block fall does two, and short hops do nothing. The damage scales with the excess distance past three blocks; total height alone is outside the formula.',
         ],
         mathBlocks: [
           {
@@ -1235,7 +1235,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
         id: 'understanding-ai-placement-behavior-movement-aid',
         title: 'Placement Serves Navigation',
         body: [
-          'AI placement exists to help the AI move: bridging gaps, securing the next footing, escaping a boxed-in position, recovering a route, and defensive placement. It is not a general building permission, and the AI does not place blocks for their own sake.',
+          'AI placement exists to help the AI move: bridging gaps, securing the next footing, escaping a boxed-in position, recovering a route, and defensive placement. The placement owner admits those movement and defense cases only; general construction and decorative self-directed placement stay outside the permission check.',
           'Because placement is tied to navigation, an AI only builds when its movement plan calls for it, which keeps placement purposeful and limited.',
         ],
       },
@@ -1851,7 +1851,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
           },
           {
             kind: 'paragraph',
-            text: 'When `facing <x y z>` or `facing <target>` is present, the look direction is computed from the destination eye toward the resolved point through `yaw_pitch_deg_from_forward`, and an entity target that cannot be resolved produces a command error. A true `chunkForBlocks` arms a world-upload sync around the destination through the existing frame-sync path; the world is fully materialized at generation, so this prepares the destination rendering and upload rather than generating new world data.',
+            text: 'When `facing <x y z>` or `facing <target>` is present, the look direction is computed from the destination eye toward the resolved point through `yaw_pitch_deg_from_forward`, and an entity target that cannot be resolved produces a command error. A true `chunkForBlocks` arms a world-upload sync around the destination through the existing frame-sync path; generation has already materialized world data, so this prepares the destination rendering and upload only.',
           },
         ],
       },
@@ -1900,7 +1900,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
           },
           {
             kind: 'paragraph',
-            text: 'Flat is an explicit selection, never an implicit default: a world uses the single-layer grass plane only when the form chose Flat, and every other creation path produces normal seeded terrain. The Othello play space builds its own generation-backed flat floor through `create_othello_session` and `make_othello_world_state` and is not part of this selection. The recorded mode, generation version, and seed persist with the world, so reopening it reproduces the same base terrain rather than regenerating from a different seed.',
+            text: 'Flat is an explicit selection, never an implicit default: a world uses the single-layer grass plane only when the form chose Flat, and every other creation path produces normal seeded terrain. The Othello play space builds its own generation-backed flat floor through `create_othello_session` and `make_othello_world_state` and is not part of this selection. The recorded mode, generation version, and seed persist with the world, so reopening it reproduces the recorded base terrain from that same seed.',
           },
         ],
       },
@@ -1910,7 +1910,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         content: [
           {
             kind: 'paragraph',
-            text: 'Normal-mode base terrain is a function of the seed, the generation version, and the world coordinate, implemented identically in `terrain_math.py` and the Rust crate. The continuous surface height is $h(x,z) = 6 + \\sum_i a_i\\,n_i(x,z)$ over four smoothed value-noise octaves with amplitude/wavelength pairs $(16,192)$, $(8,96)$, $(3,36)$, and $(1,16)$; the octave slopes are bounded so adjacent surface columns differ by at most one block. A ravine field carves the surface where a ridge noise crosses zero under a mask noise, lowering the carved height by up to roughly twenty blocks with a floor that meanders instead of holding one level; carved columns expose stone rather than grass. A bedrock layer sits at $y = -65$ and the carved surface never descends closer than four blocks above it.',
+            text: 'Normal-mode base terrain is a function of the seed, the generation version, and the world coordinate, implemented identically in `terrain_math.py` and the Rust crate. The continuous surface height is $h(x,z) = 6 + \\sum_i a_i\\,n_i(x,z)$ over four smoothed value-noise octaves with amplitude/wavelength pairs $(16,192)$, $(8,96)$, $(3,36)$, and $(1,16)$; the octave slopes are bounded so adjacent surface columns differ by at most one block. A ravine field carves the surface where a ridge noise crosses zero under a mask noise, lowering the carved height by up to roughly twenty blocks with a meandering floor; carved columns expose stone. A bedrock layer sits at $y = -65$ and the carved surface never descends closer than four blocks above it.',
           },
           {
             kind: 'paragraph',
@@ -1924,7 +1924,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
         content: [
           {
             kind: 'paragraph',
-            text: '`spawn_for_generation` in `src/ludoxel/simulation/worlds/generation/spawn.py` fixes the initial player position from the spec alone. For normal mode it scans outward from the origin in growing square rings up to radius 48, accepting the first column that is outside every ravine, whose four neighbors differ in height by at most one block and are also ravine-free, and whose surface sits safely above bedrock; the player stands at the column center one block above the surface. Flat mode spawns above the flat ground level, and a static world keeps the legacy fixed position. The renderer and the create form never estimate a spawn height; the simulation owner computes it, a saved world restores its stored player pose, and loading a world also rewrites the session respawn settings from the same function, so a death respawn lands on the loaded world’s spawn column rather than on the spawn of a previously loaded generation.',
+            text: '`spawn_for_generation` in `src/ludoxel/simulation/worlds/generation/spawn.py` fixes the initial player position from the spec alone. For normal mode it scans outward from the origin in growing square rings up to radius 48, accepting the first column that is outside every ravine, whose four neighbors differ in height by at most one block and are also ravine-free, and whose surface sits safely above bedrock; the player stands at the column center one block above the surface. Flat mode spawns above the flat ground level, and a static world keeps the legacy fixed position. The renderer and the create form never estimate a spawn height; the simulation owner computes it, a saved world restores its stored player pose, and loading a world also rewrites the session respawn settings from the same function, so a death respawn lands on the loaded world’s spawn column.',
           },
         ],
       },

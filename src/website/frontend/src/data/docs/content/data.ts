@@ -141,7 +141,7 @@ def _app_store(self) -> JsonFileStore:
         content: [
           {
             kind: 'paragraph',
-            text: 'A resolved path is evidence of placement, resolver branch, and store ownership. It is not evidence of permission. A file under `<data_root>/state/learning/` is a learning artifact because the learning store writes it there; it is not a public dataset because it is located under that path. A file under `<data_root>/state/worlds/<id>.ldxworld` is saved local state because the world library store reads it there; it is not a distribution package because it serializes a world.',
+            text: 'A resolved path is evidence of placement, resolver branch, and store ownership. Permission requires the controlling license or policy document. A file under `<data_root>/state/learning/` is a learning artifact because the learning store writes it there; public-dataset status requires a separate publication source. A file under `<data_root>/state/worlds/<id>.ldxworld` is saved local state because the world library store reads it there; distribution-package status belongs to package and build output, not to a serialized world.',
           },
           {
             kind: 'paragraph',
@@ -255,7 +255,7 @@ def runtime_cache_root(data_root: Path) -> Path:
           },
           {
             kind: 'paragraph',
-            text: 'The fallback is migration evidence, not a current write contract. It proves that older records can be imported when no runtime file exists. It does not prove that modern state belongs in the repository, that repository-local files should be edited to repair runtime state, or that the project root has become mutable application storage.',
+            text: 'The fallback is migration evidence with a narrow reach: older records can be imported when no runtime file exists. Modern state ownership stays with the app-data root, and repository-local edits remain outside the runtime repair path.',
           },
           {
             kind: 'paragraph',
@@ -680,7 +680,7 @@ def current_block_id(self) -> str | None:
           },
           {
             kind: 'paragraph',
-            text: 'Each My World carries its own upper inventory beneath its own hotbar. `PersistedWorldInventory.upper_slots` holds twenty-seven row-major slots, while `hotbar_slots` and `selected_hotbar_index` complete the central thirty-six-slot storage, and `route_hotbar_slots` and `route_selected_hotbar_index` hold the AI route hotbar. Its `to_dict` projects the upper sequence through `normalize_upper_inventory_slots`, padding or truncating saved input to its fixed length, and the inventory is serialized into the owning `state/worlds/<id>.ldxworld` entry rather than a library-wide file, so switching worlds restores that world storage instead of one shared storage. The crafting grid remains a transient presentation working area and never reaches the runtime or saved envelope.',
+            text: 'Each My World carries its own upper inventory beneath its own hotbar. `PersistedWorldInventory.upper_slots` holds twenty-seven row-major slots, while `hotbar_slots` and `selected_hotbar_index` complete the central thirty-six-slot storage, and `route_hotbar_slots` and `route_selected_hotbar_index` hold the AI route hotbar. Its `to_dict` projects the upper sequence through `normalize_upper_inventory_slots`, padding or truncating saved input to its fixed length, and the inventory is serialized into the owning `state/worlds/<id>.ldxworld` entry. World switching therefore restores that world storage; a library-wide inventory file is outside the persistence contract. The crafting grid remains a transient presentation working area and never reaches the runtime or saved envelope.',
           },
           {
             kind: 'code',
@@ -704,7 +704,7 @@ def set_my_world_upper_slots(self, slots: object) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/shadow.py` defines shadow-map quality as a discrete five-step value, not as render distance and not as a free numeric multiplier. The allowed values are 1 `Lowest`, 2 `Low`, 3 `Standard`, 4 `High`, and 5 `Ultra`. The tier controls the shadow-map and shadow-shader quality policy, and both renderer paths also read Ultra as the gate for volumetric clouds and the Ultra sun disc branch. Render distance remains a separate chunk-visibility setting.',
+            text: '`src/ludoxel/application/preferences/shadow.py` defines shadow-map quality as a discrete five-step value. The allowed values are 1 `Lowest`, 2 `Low`, 3 `Standard`, 4 `High`, and 5 `Ultra`. The tier controls the shadow-map and shadow-shader quality policy, and both renderer paths also read Ultra as the gate for volumetric clouds and the Ultra sun disc branch. Render distance and free numeric multipliers remain separate from this preference schema.',
           },
           {
             kind: 'code',
@@ -1015,7 +1015,7 @@ if isinstance(placed_raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schedulers/state.py` owns application-level restore and save sequencing between persisted state, prepared sessions, runtime preferences, and renderer projection. Its `apply_persisted_state_if_present` restores a saved player, world payload, and AI tuple into a session that has already been constructed by its factory. Its My World path does not replace a newly generated world when the persisted payload is empty; otherwise it replaces the session world content with the saved generation spec, placed rows, and broken coordinates at a revision of at least one. The Othello path follows the same restore sequence, then ensures the board layout and removes an invalid below-board player position. Loading is therefore a controlled mutation of a prepared session, not a second generator and not an instruction for the renderer to reconstruct world state.',
+            text: '`src/ludoxel/application/persistence/schedulers/state.py` owns application-level restore and save sequencing between persisted state, prepared sessions, runtime preferences, and renderer projection. Its `apply_persisted_state_if_present` restores a saved player, world payload, and AI tuple into a session that has already been constructed by its factory. In the My World path, an empty persisted payload leaves the generated session world in place; any non-empty payload replaces the session world content with the saved generation spec, placed rows, and broken coordinates at a revision of at least one. The Othello path follows the same restore sequence, then ensures the board layout and removes an invalid below-board player position. Loading is a controlled mutation of a prepared session. Generator ownership and renderer reconstruction stay with their own owners.',
           },
           {
             kind: 'code',
@@ -1102,7 +1102,7 @@ if isinstance(placed_raw, list):
         content: [
           {
             kind: 'paragraph',
-            text: 'Each world may carry a thumbnail bundled inside its `worlds/<id>.ldxworld` package. `_refresh_world_thumbnail_viewport_cache` is called at explicit exit boundaries that still have an active visible My World image: `open_pause_menu` runs it before the pause overlay is shown, and `shutdown` runs it before teardown when the world view is still eligible. The refresh calls `capture_widget_thumbnail_image` to crop the visible viewport widget with `QScreen.grabWindow`; `encode_thumbnail_png` bounds that image, keeps the `QByteArray` backing its `QBuffer` alive while `QImage.save` writes the PNG, and stores the bytes in `_world_thumbnail_png_cache`. The save path reads only that cache through `_capture_active_world_thumbnail_bytes`; it performs no synchronous framebuffer grab and it asks no renderer backend to read the current surface. If the cache is empty, `WorldLibraryStore.save_space` preserves the package thumbnail already on disk and the world body save still proceeds. The thumbnail is user runtime data: it is created from the visible My World viewport image, tracked by the runtime integrity manifest as part of the world package, and removed with the world on delete. It is not a bundled asset and is not generated by an asset tool.',
+            text: 'Each world may carry a thumbnail bundled inside its `worlds/<id>.ldxworld` package. `_refresh_world_thumbnail_viewport_cache` is called at explicit exit boundaries that still have an active visible My World image: `open_pause_menu` runs it before the pause overlay is shown, and `shutdown` runs it before teardown when the world view is still eligible. The refresh calls `capture_widget_thumbnail_image` to crop the visible viewport widget with `QScreen.grabWindow`; `encode_thumbnail_png` bounds that image, keeps the `QByteArray` backing its `QBuffer` alive while `QImage.save` writes the PNG, and stores the bytes in `_world_thumbnail_png_cache`. The save path reads only that cache through `_capture_active_world_thumbnail_bytes`; it performs no synchronous framebuffer grab and it asks no renderer backend to read the current surface. If the cache is empty, `WorldLibraryStore.save_space` preserves the package thumbnail already on disk and the world body save still proceeds. The thumbnail is user runtime data: it is created from the visible My World viewport image, tracked by the runtime integrity manifest as part of the world package, and removed with the world on delete. Bundled assets and asset-tool outputs have separate owners.',
           },
           {
             kind: 'note',
@@ -1145,7 +1145,7 @@ if isinstance(placed_raw, list):
           },
           {
             kind: 'paragraph',
-            text: 'A saved My World remains a runtime state record and a material-classification subject. The library, an exported package, and a thumbnail are user runtime data. Their existence does not authorize publication or redistribution; that boundary is fixed by the License Text and the user-material analysis, not by the presence of a world file.',
+            text: 'A saved My World remains a runtime state record and a material-classification subject. The library, an exported package, and a thumbnail are user runtime data. Publication and redistribution authority comes from the License Text and the user-material analysis, with the world file supplying only runtime-state evidence.',
           },
         ],
       },
@@ -1182,7 +1182,7 @@ class PersistedAiLearningState:
           },
           {
             kind: 'paragraph',
-            text: 'The learning-state envelope records settings and summaries. It is not the demonstration dataset and not the policy corpus. `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are mapping-shaped reports admitted as shallow copies; their presence does not prove that every underlying dataset row is clean or that the selected policy is usable at runtime.',
+            text: 'The learning-state envelope records settings and summaries. Demonstration rows and policy corpus rows live under their own dataset and policy owners. `dataset_summary`, `last_training_summary`, and `last_evaluation_summary` are mapping-shaped reports admitted as shallow copies; they establish stored report fields, while dataset row hygiene and runtime policy usability require the dataset decoder and policy loader owners.',
           },
         ],
       },
@@ -1209,7 +1209,7 @@ class PersistedAiLearningSettings:
           },
           {
             kind: 'paragraph',
-            text: 'Normalization is a value-domain filter, not a cosmetic cleanup. `learning_mode` is restricted to the five learning constants; selected policy kind is restricted to the known policy families; capture flags are rebuilt against `RECORD_KINDS` with default `False`; skill flags are rebuilt against `skill_category_ids()` with default `True`; and an empty dataset id becomes `default`. Unknown keys do not survive into the normalized object.',
+            text: 'Normalization is a value-domain filter. `learning_mode` is restricted to the five learning constants; selected policy kind is restricted to the known policy families; capture flags are rebuilt against `RECORD_KINDS` with default `False`; skill flags are rebuilt against `skill_category_ids()` with default `True`; and an empty dataset id becomes `default`. Unknown keys are dropped before the normalized object is returned.',
           },
           {
             kind: 'code',
@@ -1352,7 +1352,7 @@ return len(lines)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/persistence/schema/othello.py` owns `PersistedOthelloSpace`, the application persistence envelope for the Othello play space. It combines the player, world, AI actor tuple, and `OthelloGameState`; it is not interchangeable with the common `PersistedPlaySpace` because the latter has no match-state field. Othello match state is therefore stored inside this play-space envelope, not in a separate match-only file. The `OthelloGameState` member contains board state, lifecycle status, per-match settings, sides, side to move, clocks, move and pass counts, winner, last move, legal moves, thinking state, and pending animations.',
+            text: '`src/ludoxel/application/persistence/schema/othello.py` owns `PersistedOthelloSpace`, the application persistence envelope for the Othello play space. It combines the player, world, AI actor tuple, and `OthelloGameState`; the common `PersistedPlaySpace` in `src/ludoxel/application/persistence/schema/play_space.py` instead combines player, world, inventory, and AI actor rows. Othello match state is therefore stored inside the Othello play-space envelope. The `OthelloGameState` member contains board state, lifecycle status, per-match settings, sides, side to move, clocks, move and pass counts, winner, last move, legal moves, thinking state, and pending animations.',
           },
           {
             kind: 'code',
@@ -1601,7 +1601,7 @@ return (records, int(corrupt))`,
         content: [
           {
             kind: 'paragraph',
-            text: 'A learned policy is a versioned policy artifact. It is not a neural-network checkpoint. The policy record stores identity, compatibility target, skill categories, feature encoder version, action catalog version, action weight overrides, negative modifiers, utility score modifiers, and an evaluation mapping. Runtime behavior is affected only through those structured modifiers.',
+            text: 'A learned policy is a versioned policy artifact made of structured modifiers. The policy record stores identity, compatibility target, skill categories, feature encoder version, action catalog version, action weight overrides, negative modifiers, utility score modifiers, and an evaluation mapping. Runtime behavior is affected only through those fields; neural-network checkpoints sit outside this schema.',
           },
           {
             kind: 'code',
@@ -1679,7 +1679,7 @@ class Policy:
           },
           {
             kind: 'paragraph',
-            text: 'The JSON shape shows the scale of the artifact: narrow modifiers, identity fields, compatibility metadata, and evaluation summary. It does not contain an opaque trained model. Bundled presence also does not prove user learning; it proves package inclusion.',
+            text: 'The JSON shape shows the scale of the artifact: narrow modifiers, identity fields, compatibility metadata, and evaluation summary. Opaque trained-model payloads are outside this file shape. Bundled presence proves package inclusion only; user-learning evidence requires the runtime learning store.',
           },
         ],
       },
@@ -1754,7 +1754,7 @@ class AiActionMask:
           },
           {
             kind: 'paragraph',
-            text: 'The returned `None` has strict meaning. It does not prove whether the writer, a text editor, an interrupted transfer, or a manual merge caused the bad line. It proves only that the row is excluded from the decoded dataset.',
+            text: 'The returned `None` has strict meaning: the decoder excluded the row from the dataset. Causation for the bad line stays outside that return value and requires evidence from the writer, editor, transfer, or merge path.',
           },
         ],
       },
@@ -1980,7 +1980,7 @@ for row in rows:
         content: [
           {
             kind: 'paragraph',
-            text: 'Imported material can be user-created, third-party, or otherwise outside the project’s control. A local `player_skin.png` records that the user supplied an image to the application. It does not prove the user owns the image or that the image is free of outside restrictions.',
+            text: 'Imported material can be user-created, third-party, or otherwise outside the project’s control. A local `player_skin.png` records that the user supplied an image to the application. Image ownership and outside restrictions require separate provenance evidence.',
           },
           {
             kind: 'code',
@@ -2086,7 +2086,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
         content: [
           {
             kind: 'paragraph',
-            text: 'The visual asset resolver demonstrates why output analysis must preserve source family. It selects the first-party `assets/ludoxel` family only when required block textures exist there; otherwise it falls back to the `assets/minecraft` family. The selected family can affect rendered output, thumbnails, and block presentation.',
+            text: 'The visual asset resolver demonstrates why output analysis must preserve source family. It selects the first-party `assets/ludoxel` family only when required block textures exist there; otherwise it selects the computed Minecraft-named fallback family. The current checkout carries the first-party family, and the selected family can affect rendered output, thumbnails, and block presentation.',
           },
           {
             kind: 'code',
@@ -2317,7 +2317,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           },
           {
             kind: 'paragraph',
-            text: 'No migration path reads the retired `state/world_state.json` or `state/player_state.json` files. The current save owners are `state/world_library.json` and the per-world `state/worlds/<id>.ldxworld` entries; a payload outside those files is not consulted, and the absence of a legacy global world file changes nothing about how a library entry loads. Deleting a `broken` row by hand resurfaces the suppressed base-terrain cell on the next load, and deleting a `placed` row removes the user block; hand edits therefore change the world the rows would have produced, not merely file size.',
+            text: 'No migration path reads the retired `state/world_state.json` or `state/player_state.json` files. The current save owners are `state/world_library.json` and the per-world `state/worlds/<id>.ldxworld` entries; the loader consults only those owners, and the absence of a legacy global world file changes nothing about how a library entry loads. Deleting a `broken` row by hand resurfaces the suppressed base-terrain cell on the next load, and deleting a `placed` row removes the user block; hand edits therefore change the world the rows would have produced, while file size alone is outside the save contract.',
           },
         ],
       },

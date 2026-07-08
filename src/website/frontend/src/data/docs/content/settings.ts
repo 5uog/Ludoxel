@@ -371,7 +371,7 @@ screen_dy = -float(rolled_y)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Cloud preferences are exposed on the World tab of `SettingsOverlay`, but their authority is not the widget tree. `src/ludoxel/presentation/interface/settings/pages.py` creates the visible controls, `src/ludoxel/presentation/interface/settings/overlay.py` emits the typed change signals, `src/ludoxel/application/preferences/runtime.py` holds the mutable runtime fields, and `src/ludoxel/application/preferences/clouds.py` is the numerical contract that clamps and orders speed and height values. The page therefore concerns a renderer-facing preference vector, not a general weather system and not a world-generation rule.',
+            text: 'Cloud preferences are exposed on the World tab of `SettingsOverlay`. Their authority comes from `src/ludoxel/presentation/interface/settings/pages.py` for visible controls, `src/ludoxel/presentation/interface/settings/overlay.py` for typed change signals, `src/ludoxel/application/preferences/runtime.py` for mutable runtime fields, and `src/ludoxel/application/preferences/clouds.py` for the numerical contract that clamps and orders speed and height values. The page concerns a renderer-facing preference vector; weather systems and world-generation rules have separate owners.',
           },
           {
             kind: 'code',
@@ -707,7 +707,7 @@ class AudioPreferences:
         content: [
           {
             kind: 'paragraph',
-            text: 'Keybind preferences are not free-form shortcuts. `src/ludoxel/application/preferences/keybinds.py` defines the action catalog, the display names, the defaults, the portable key names, the alias table, duplicate-resolution behavior, and runtime lookup maps. The Controls tab merely exposes those known actions through rows; it does not authorize arbitrary key sequences, modifier chords, or additional commands.',
+            text: 'Keybind preferences draw from a fixed action catalog. `src/ludoxel/application/preferences/keybinds.py` defines the action catalog, the display names, the defaults, the portable key names, the alias table, duplicate-resolution behavior, and runtime lookup maps. The Controls tab exposes those known actions through rows; arbitrary key sequences, modifier chords, and additional commands stay outside that catalog.',
           },
           {
             kind: 'code',
@@ -877,7 +877,7 @@ def normalize_player_skin_kind(value: object) -> str:
         ],
       },
     ],
-    relatedTitles: ['Importing a Player Skin', 'Reading Saved Preferences', 'Understanding Protected Runtime Files'],
+    relatedTitles: ['Importing a Player Skin', 'Reading Saved Preferences', 'Separating User Data from Source Files'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -892,7 +892,7 @@ def normalize_player_skin_kind(value: object) -> str:
         content: [
           {
             kind: 'paragraph',
-            text: 'Player skin import is initiated from the viewport settings controller by opening a local PNG file dialog. The controller decodes the selected path into a `QImage`, normalizes the image through the shared skin validator, writes the normalized result to the runtime state root, switches `player_skin_kind` to `custom`, and then synchronizes the renderer skin design. The operation is immediate runtime state work; it is not a source-tree edit and not a website asset import.',
+            text: 'Player skin import is initiated from the viewport settings controller by opening a local PNG file dialog. The controller decodes the selected path into a `QImage`, normalizes the image through the shared skin validator, writes the normalized result to the runtime state root, switches `player_skin_kind` to `custom`, and then synchronizes the renderer skin design. The operation is immediate runtime state work; source-tree edits and website asset imports have separate owners.',
           },
           {
             kind: 'code',
@@ -952,7 +952,7 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
         ],
       },
     ],
-    relatedTitles: ['Changing the Player Skin Source', 'Understanding Protected Runtime Files', 'Reading Saved Preferences'],
+    relatedTitles: ['Changing the Player Skin Source', 'Separating User Data from Source Files', 'Reading Saved Preferences'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -967,7 +967,7 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/player_name.py` owns player-name normalization and the blank-value session fallback. The Player tab exposes a single name field with a blank-value fallback hint, but the controller does not persist raw text verbatim: `normalize_player_name` collapses internal whitespace, truncates to thirty-two characters, and strips the result. A display name is therefore a normalized runtime preference, not an account credential and not a world-state block value.',
+            text: '`src/ludoxel/application/preferences/player_name.py` owns player-name normalization and the blank-value session fallback. The Player tab exposes a single name field with a blank-value fallback hint, but the controller does not persist raw text verbatim: `normalize_player_name` collapses internal whitespace, truncates to thirty-two characters, and strips the result. A display name is therefore a normalized runtime preference; account credentials and world-state block values stay outside this field.',
           },
           {
             kind: 'code',
@@ -1038,7 +1038,7 @@ overlay._player_name_hint = QLabel("", identity_body)`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The Player tab exposes a Health Regeneration card with `Regeneration`, `Start delay`, `Health cap`, and `Time to cap`. The controls are immediate settings controls, not per-world block state and not AI actor fields. `PersistedSettings` owns the saved keys `player_regen_enabled`, `player_regen_start_delay_s`, `player_regen_cap_hp`, and `player_regen_time_to_cap_s`; missing keys load through the disabled default and the numeric defaults declared by `src/ludoxel/simulation/worlds/config/player_health.py`.',
+            text: 'The Player tab exposes a Health Regeneration card with `Regeneration`, `Start delay`, `Health cap`, and `Time to cap`. The controls are immediate settings controls. Per-world block state and AI actor fields have separate owners. `PersistedSettings` owns the saved keys `player_regen_enabled`, `player_regen_start_delay_s`, `player_regen_cap_hp`, and `player_regen_time_to_cap_s`; missing keys load through the disabled default and the numeric defaults declared by `src/ludoxel/simulation/worlds/config/player_health.py`.',
           },
           {
             kind: 'code',
@@ -1098,7 +1098,7 @@ class PlayerRegenParams:
         content: [
           {
             kind: 'paragraph',
-            text: '`advance_player_regeneration` runs during the fixed-step session after damage resolution. Damage resets the wait timer to zero. A dead player receives no regeneration. A disabled toggle leaves health unchanged while the wait timer continues to measure time since damage; enabling the setting later can therefore use the current no-damage interval rather than requiring a separate respawn or reload.',
+            text: '`advance_player_regeneration` runs during the fixed-step session after damage resolution. Damage resets the wait timer to zero. A dead player receives no regeneration. A disabled toggle leaves health unchanged while the wait timer continues to measure time since damage; enabling the setting later can therefore use the current no-damage interval without a separate respawn or reload.',
           },
           {
             kind: 'code',
@@ -1190,7 +1190,7 @@ class PersistedOthelloSpace:
         ],
       },
     ],
-    relatedTitles: ['Reading Saved Othello Space', 'Changing Match Rules', 'Reading Saved Preferences'],
+    relatedTitles: ['Reading Saved Othello State', 'Changing Match Rules', 'Reading Saved Preferences'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -1229,7 +1229,7 @@ class OthelloSettings:
         content: [
           {
             kind: 'paragraph',
-            text: 'Every externally supplied rule value is read through a normalizer before storage or runtime use. Difficulty falls back to medium unless it is one of the five admitted difficulty identifiers. Thread count, hash level, sacrifice level, book depth, and book error values are clamped to their declared domains. That design prevents a corrupt or obsolete settings file from turning a visible combo box into undefined engine input.',
+            text: 'Every externally supplied rule value is read through a normalizer before storage or runtime use. Difficulty falls back to medium unless it is one of the five admitted difficulty identifiers. Thread count, hash level, sacrifice level, book depth, and book error values are clamped to their declared domains. The normalizers keep corrupt or obsolete settings files inside declared engine input domains.',
           },
           {
             kind: 'code',
@@ -1329,7 +1329,7 @@ def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THRE
         ],
       },
     ],
-    relatedTitles: ['Changing Match Rules', 'Changing Othello Book Behavior', 'Playing Othello'],
+    relatedTitles: ['Changing Match Rules', 'Changing Othello Book Behavior', 'Starting an Othello Match'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -1367,7 +1367,7 @@ OTHELLO_BOOK_ERROR_MAX: float = 24.0`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The book-learning worker forwards normalized depth, error tolerances, hash level, and sacrifice level into `learn_opening_book`. Existing book lines are loaded, new lines are accumulated, and cancellation is handled by the learning routine. Settings own the parameter values; Data owns the persisted book file; Gameplay owns whether a move is legal and strategically useful.',
+            text: 'The book-learning worker forwards normalized depth, error tolerances, hash level, and sacrifice level into `learn_opening_book`. Existing book lines are loaded, new lines are accumulated, and cancellation is handled by the learning routine. `OthelloSettings` supplies the parameter values, the opening-book store supplies the persisted book file, and the Othello rules and engines decide move legality and strategic value.',
           },
           {
             kind: 'code',
@@ -1393,7 +1393,7 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
         ],
       },
     ],
-    relatedTitles: ['Changing Othello AI Strength', 'Reading Saved Othello Space', 'Playing Othello'],
+    relatedTitles: ['Changing Othello AI Strength', 'Reading Saved Othello State', 'Starting an Othello Match'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -1460,7 +1460,7 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
         ],
       },
     ],
-    relatedTitles: ['Changing the Player Name', 'Choosing an AI Skin Source', 'Understanding AI Player State'],
+    relatedTitles: ['Changing the Player Name', 'Choosing an AI Skin Source', 'Reading Saved AI State'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -1534,12 +1534,12 @@ def _load_settings(self, settings: AiSpawnEggSettings) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: 'AI custom skins are actor-specific runtime files under the AI skin storage path, not player skins and not package assets. A public issue should not attach private imported PNGs unless the right to share them is clear; the useful technical evidence is the selected mode, normalized skin id, file availability, and fallback status.',
+            text: 'AI custom skins are actor-specific runtime files under the AI skin storage path. Player skins and package assets have separate storage owners. A public issue should not attach private imported PNGs unless the right to share them is clear; the useful technical evidence is the selected mode, normalized skin id, file availability, and fallback status.',
           },
         ],
       },
     ],
-    relatedTitles: ['Naming an AI NPC', 'Changing the Player Skin Source', 'Understanding AI Player State'],
+    relatedTitles: ['Naming an AI NPC', 'Changing the Player Skin Source', 'Reading Saved AI State'],
   }),
   defineDocsArticle({
     category: 'Settings',
@@ -1554,7 +1554,7 @@ def _load_settings(self, settings: AiSpawnEggSettings) -> None:
         content: [
           {
             kind: 'paragraph',
-            text: 'AI behavior values are held in `AiSpawnEggSettings` while editing and in `AiPlayerState` while the actor is alive. The shared fields include mode, personality, block-placement permission, health indicator, regeneration parameters, route points, route loop state, route run flag, and route style. The object is a bounded state vector, not a script interface and not permission for the AI to modify arbitrary world data.',
+            text: 'AI behavior values are held in `AiSpawnEggSettings` while editing and in `AiPlayerState` while the actor is alive. The shared fields include mode, personality, block-placement permission, health indicator, regeneration parameters, route points, route loop state, route run flag, and route style. The object is a bounded state vector. Script interfaces and arbitrary world-data mutation permissions are outside that vector.',
           },
           {
             kind: 'code',
@@ -1636,7 +1636,7 @@ def normalize_ai_personality(value: object) -> str:
         ],
       },
     ],
-    relatedTitles: ['Choosing a Learning Mode', 'Naming an AI NPC', 'Understanding AI Player State'],
+    relatedTitles: ['Choosing a Learning Mode', 'Naming an AI NPC', 'Reading Saved AI State'],
   }),
   defineDocsArticle({
     category: 'Settings',

@@ -19,7 +19,7 @@ export const distributionPages: DocsPageContent[] = [
         content: [
           {
             kind: 'paragraph',
-            text: '`dist/windows/Ludoxel.exe` is the publication coordinate written by the Windows path of `tools/build_desktop_app`. `src/config/build.config.mjs` fixes the path constants, `buildWindowsPyinstallerCommand` builds the PyInstaller invocation, `windows-build.service.mjs` stages and publishes the executable, and `legal-copy.service.mjs` copies the configured notice paths beside it. A file occupying that path gains repository build provenance only through that service sequence.',
+            text: '`dist/windows/Ludoxel.exe` is the publication coordinate written by the Windows path of `tools/build_desktop_app`. `tools/build_desktop_app/src/config/build.config.mjs` fixes the path constants, `buildWindowsPyinstallerCommand` builds the PyInstaller invocation, `tools/build_desktop_app/src/service/windows-build.service.mjs` stages and publishes the executable, and `tools/build_desktop_app/src/service/legal-copy.service.mjs` copies the configured notice paths beside it. A file occupying that path gains repository build provenance only through that service sequence.',
           },
           {
             kind: 'paragraph',
@@ -63,7 +63,7 @@ npm run build:desktop -- windows`,
           },
           {
             kind: 'paragraph',
-            text: "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, points `hookspath` at the generated hook directory, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is deliberately absent from the bundled data: the application does not read it at runtime, a root-level one-file data entry named `LICENSE` fails extraction by the bootloader, and the controlling text is retained beside the executable by the publish-time legal copy rather than packed into the bundle.",
+            text: "The spec fixes the one-file build under the application name `Ludoxel`. It declares the data roots `assets`, `src/ludoxel`, and `third-party` — each included only when present — appends `collect_data_files('ludoxel')`, places `src` on the import search path, points `hookspath` at the generated hook directory, names the bootstrap hidden imports `ludoxel.application.bootstrap` and `ludoxel.application.bootstrap.run`, sets the Windows icon when one resolves, and points the analysis at the entry script `src/ludoxel/__main__.py`. `LICENSE` is deliberately absent from the bundled data: the application does not read it at runtime, a root-level one-file data entry named `LICENSE` fails extraction by the bootloader, and the publish-time legal copy retains the controlling text beside the executable.",
           },
           {
             kind: 'paragraph',
@@ -107,7 +107,7 @@ a.datas = [entry for entry in a.datas if _keep_pyinstaller_entry(entry[0])]`,
           },
           {
             kind: 'paragraph',
-            text: 'The generated spec and local hook are the reviewable build specification. A reviewer reads them to confirm the one-file mode, the console policy, the declared data roots and hidden imports, the import search path, the OpenGL hook path, the DLL guard, and the entry script, and a dry run prints both without writing or building them. What the dry-run output proves is scoped to what it declares and filters, not to whatever a later inspection of the produced binary reveals.',
+            text: 'The generated spec and local hook are the reviewable build specification. A dry run prints both without writing or building them, and those texts expose the one-file mode, the console policy, the declared data roots and hidden imports, the import search path, the OpenGL hook path, the DLL guard, and the entry script. The dry-run output proves only the declarations and filters it prints; binary inspection has a separate evidentiary source.',
           },
         ],
       },
@@ -167,7 +167,7 @@ function publishWindowsExecutable(stagingDir) {
           },
           {
             kind: 'paragraph',
-            text: 'The function refuses two conditions in opposite registers. A missing staged executable throws, because there is no output to publish. A busy publish target raising `EPERM`, `EBUSY`, or `EACCES` is retried through `renamePublishedExecutable`, because antivirus or the shell can hold a freshly written executable for a moment; a target still locked after every retry — a genuinely running instance — raises a hard error rather than leaving the previous executable in place. A rebuild therefore cannot exit successfully while `dist/windows/Ludoxel.exe` still holds the prior build, so a stale executable can never be mistaken for the rebuilt one.',
+            text: 'The function refuses two conditions in opposite registers. A missing staged executable throws, because there is no output to publish. A busy publish target raising `EPERM`, `EBUSY`, or `EACCES` is retried through `renamePublishedExecutable`, because antivirus or the shell can hold a freshly written executable for a moment; a target still locked after every retry — a genuinely running instance — raises a hard error and leaves no successful result that could preserve the previous executable as the published build. A rebuild therefore cannot exit successfully while `dist/windows/Ludoxel.exe` still holds the prior build, so a stale executable can never be mistaken for the rebuilt one.',
           },
           {
             kind: 'paragraph',
@@ -244,7 +244,7 @@ function publishWindowsExecutable(stagingDir) {
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS artifact threshold is not satisfied by a directory name. `Ludoxel.app` under `dist/macos` is the artifact only when the repository-defined bundle identity, executable payload, renderer envelope, required resources, copied legal material, and local signature verification all survive the publication path; anything short of that is an incomplete or unverified output, not a macOS release candidate. The owners are `buildMacosPyinstallerCommand` in `src/command/pyinstaller/build-command.pyinstaller.mjs`, the verification and publication path in `src/service/macos-build.service.mjs`, and the prerequisite inspector in `src/service/macos-status.service.mjs`.',
+            text: 'The macOS artifact threshold is not satisfied by a directory name. `Ludoxel.app` under `dist/macos` is the artifact only when the repository-defined bundle identity, executable payload, renderer envelope, required resources, copied legal material, and local signature verification all survive the publication path; anything short of that is an incomplete or unverified output, not a macOS release candidate. The owners are `buildMacosPyinstallerCommand` in `tools/build_desktop_app/src/command/pyinstaller/build-command.pyinstaller.mjs`, the verification and publication path in `tools/build_desktop_app/src/service/macos-build.service.mjs`, and the prerequisite inspector in `tools/build_desktop_app/src/service/macos-status.service.mjs`.',
           },
           {
             kind: 'paragraph',
@@ -269,7 +269,7 @@ npm run build:macos:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets`, `src`, and `third-party` as required data and asserts the default Timo skin, while `LICENSE` is retained beside the bundle by the publish-time legal copy rather than bundled as internal data. macOS packaging requires those inputs; their absence aborts the command.',
+            text: 'The macOS command targets the WGPU and Metal-oriented route. `addMacosRendererBackendArgs` collects the `wgpu` native binaries and package data with `--collect-binaries wgpu` and `--collect-data wgpu`, and adds hidden imports for `wgpu.backends.wgpu_native`, `rendercanvas.qt`, `rendercanvas.pyqt6`, and `ludoxel.presentation.interface.input.macos_cursor`, so the wgpu-native Metal runtime and the rendercanvas Qt backend are bundled while optional wgpu submodules such as the imgui demo integration are left uncollected; `addMacosRequiredDataArgs` adds `assets`, `src`, and `third-party` as required data and asserts the default Timo skin, while the publish-time legal copy retains `LICENSE` beside the bundle. macOS packaging requires those inputs; their absence aborts the command.',
           },
           {
             kind: 'paragraph',
@@ -403,7 +403,7 @@ function requireBundledResource(appPath, label, relativePaths) {
                 label: 'Rust crate targets',
                 href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
               },
-              ' — the terrain engine and the Othello search engine — whose sources are Rust crates rather than Cython-compiled Python files and whose verification policy differs from the candidates below.',
+              ' — the terrain engine and the Othello search engine — whose sources are Rust crates with verification policy separate from the Cython candidates below.',
             ],
           },
           {
@@ -442,7 +442,7 @@ export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib
         content: [
           {
             kind: 'paragraph',
-            text: '`compiledBinariesForSource` in `src/collect/binary.collect.mjs` classifies a source as compiled or fallback-only. It derives the stem from the Python file name, lists the source directory, and admits only files whose extension is a recognized compiled suffix and whose base name begins with that stem.',
+            text: '`compiledBinariesForSource` in `tools/build_native_extensions/src/collect/binary.collect.mjs` classifies a source as compiled or fallback-only. It derives the stem from the Python file name, lists the source directory, and admits only files whose extension is a recognized compiled suffix and whose base name begins with that stem.',
           },
           {
             kind: 'code',
@@ -470,7 +470,7 @@ export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib
         content: [
           {
             kind: 'paragraph',
-            text: '`buildNativeExtensions` in `src/service/build.service.mjs` collects the sources, writes a generated Python build script and a JSON payload under `build/native-extension-scripts`, resolves a Python executable, runs the script, then runs the Rust crate build, and then verifies with the require-built policy enabled unless verification was skipped. The generated script compiles the Cython extensions in place through Cython and setuptools and instructs the operator to install the development dependencies when they are absent; the generated script root is always removed in a `finally` block, so no payload is left as a stale artifact. The two entry points are:',
+            text: '`buildNativeExtensions` in `tools/build_native_extensions/src/service/build.service.mjs` collects the sources, writes a generated Python build script and a JSON payload under `build/native-extension-scripts`, resolves a Python executable, runs the script, then runs the Rust crate build, and then verifies with the require-built policy enabled unless verification was skipped. The generated script compiles the Cython extensions in place through Cython and setuptools and instructs the operator to install the development dependencies when they are absent; the generated script root is always removed in a `finally` block, so no payload is left as a stale artifact. The two entry points are:',
           },
           {
             kind: 'code',
@@ -542,7 +542,7 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Including the License Text in a desktop artifact is a retention requirement, fixed by `LEGAL_MATERIAL_PATHS` in `src/config/build.config.mjs`, the copy service in `src/service/legal-copy.service.mjs`, and the existence-guarded helper `copyIfExists` in `src/shared/file/path.file.mjs`. The configured copy set is `LICENSE` and `third-party`. PyInstaller bundles `third-party` among its data arguments — optionally on Windows, as a required input on macOS — while `LICENSE` is retained for the artifact only by the publish-time copy, because the application does not read it at runtime and a root-level one-file `LICENSE` data entry fails extraction by the bootloader. The requirement keeps the controlling and attribution material physically adjacent to the artifact.',
+            text: 'Including the License Text in a desktop artifact is a retention requirement, fixed by `LEGAL_MATERIAL_PATHS` in `tools/build_desktop_app/src/config/build.config.mjs`, the copy service in `tools/build_desktop_app/src/service/legal-copy.service.mjs`, and the existence-guarded helper `copyIfExists` in `tools/build_desktop_app/src/shared/file/path.file.mjs`. The configured copy set is `LICENSE` and `third-party`. PyInstaller bundles `third-party` among its data arguments — optionally on Windows, as a required input on macOS — while `LICENSE` is retained for the artifact only by the publish-time copy, because the application does not read it at runtime and a root-level one-file `LICENSE` data entry fails extraction by the bootloader. The requirement keeps the controlling and attribution material physically adjacent to the artifact.',
           },
           {
             kind: 'paragraph',
@@ -597,7 +597,7 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Because the move is existence-guarded and returns a boolean, a missing `LICENSE` does not abort the build; it produces a recorded `skipped` line. The build record, not silence, is therefore the evidence that legal material was retained, and a `skipped` line is the precise point at which the artifact becomes defective. A reviewer who ignores those lines certifies a complete package while the build itself reported that the controlling text was never copied.',
+            text: 'Because the move is existence-guarded and returns a boolean, a missing `LICENSE` produces a recorded `skipped` line and the build continues. The build record is the evidence that legal material was retained, and a `skipped` line is the precise point at which the artifact becomes defective. Package completeness requires every legal-material line to report a copied source.',
           },
         ],
       },
@@ -1090,7 +1090,7 @@ npm run build:macos -- --status`,
           },
           {
             kind: 'paragraph',
-            text: 'Three severities are encoded and may not be merged. A `name: passed` line establishes that the named check found no failures. A `note:` line is diagnostic context, not a failure — the resource check, for instance, notes that `assets/` exists and must stay ignored until provenance is reviewed, which is a non-clearance, not a defect. A `- failure` line is a specific, named defect. The text after the check name governs the reading, because each check owns its own evidence set and its own boundary; a note is never a failure, and one failure line is never a verdict on the repository.',
+            text: 'Three severities are encoded and may not be merged. A `name: passed` line establishes that the named check found no failures. A `note:` line is diagnostic context; the resource check, for instance, records that `assets/` exists and must stay ignored until provenance is reviewed, which is a non-clearance signal. A `- failure` line is a specific, named defect. The text after the check name governs the reading, because each check owns its own evidence set and its own boundary; note lines and failure lines therefore stay within their named check boundary.',
           },
         ],
       },
@@ -1164,7 +1164,7 @@ npm run check`,
             kind: 'note',
             note: {
               type: 'warning',
-              content: 'A passing check is a repository signal bounded to one policy. It is not a release approval, not legal permission, not package completeness, and not evidence that a later copied artifact still contains every required file.',
+              content: 'A passing check is a repository signal bounded to one policy. Release approval, legal permission, package completeness, and later artifact retention each require their own controlling evidence.',
             },
           },
         ],
@@ -1212,7 +1212,7 @@ export async function runProjectCheck(checkName, options = {}) {
         content: [
           {
             kind: 'paragraph',
-            text: '`checkPackage` constrains package identity and the declared script surface to a fixed contract: the name `ludoxel`, the license identifier `LicenseRef-All-Rights-Reserved`, the presence of the expected Ludoxel scripts, the rejection of known obsolete or improper script terms, the existence of node-based script entry files, and the absence of a root `scripts/` directory and the `future_ai_workbench` tooling directory.',
+            text: '`checkPackage` constrains package identity and the declared script surface to a fixed contract: the name `ludoxel`, the license identifier `LicenseRef-All-Rights-Reserved`, the presence of the expected Ludoxel scripts, the rejection of known obsolete or improper script terms, the existence of node-based script entry files, and the absence of a root `scripts` directory and the `future_ai_workbench` tooling directory.',
           },
           {
             kind: 'code',
@@ -1312,7 +1312,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: 'The predicate’s refusals are as load-bearing as its admissions. A `.gitignore` missing `dist/`, `build/`, or the export-output path fails because an un-ignored generated tree corrupts the source/output boundary required by a frozen package. The runtime path module must name `default_runtime_data_root`, `state_manifest.json`, and `integrity_key.bin`, and the asset resolver must cover the `assets/ludoxel` and `assets/minecraft` roots with the block texture and thumbnail directories. The notes classify `assets/` as ignored pending provenance review, identify the previous-format `configs/` as outside the runtime write target, and record the export-tool output as generated and ignored.',
+            text: 'The predicate’s refusals are as load-bearing as its admissions. A `.gitignore` missing `dist/`, `build/`, or the export-output path fails because an un-ignored generated tree corrupts the source/output boundary required by a frozen package. The runtime path module must name `default_runtime_data_root`, `state_manifest.json`, and `integrity_key.bin`, and the asset resolver must cover the first-party `assets/ludoxel` root plus the computed fallback family with the block texture and thumbnail directories. The notes classify `assets/` as ignored pending provenance review, identify the previous-format `configs/` as outside the runtime write target, and record the export-tool output as generated and ignored.',
           },
           {
             kind: 'paragraph',
@@ -1412,7 +1412,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
         content: [
           {
             kind: 'paragraph',
-            text: 'The root package exposes the block-thumbnail tool through `assets:block-thumbnails:help`, `assets:block-thumbnails:generate`, and `assets:block-thumbnails:check`. Each script enters `tools/generate_block_thumbnails/scripts/run/`, which dispatches to the shared CLI service. The tool directory is `tools/generate_block_thumbnails`; no runtime or package script points at a split `tools/generate_block/thumbnails` path.',
+            text: 'The root package exposes the block-thumbnail tool through `assets:block-thumbnails:help`, `assets:block-thumbnails:generate`, and `assets:block-thumbnails:check`. Each script enters `tools/generate_block_thumbnails/scripts/run/`, which dispatches to the shared CLI service. The tool directory is `tools/generate_block_thumbnails`, and the package script surface resolves to that single directory.',
           },
           {
             kind: 'code',
@@ -1632,7 +1632,7 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The Rust terrain engine lives in the repository as `native/ludoxel_terrain`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set. The crate is split by responsibility: `src/noise.rs` owns the deterministic hashing and value-noise sampling, `src/height.rs` owns the surface-height octaves, the ravine carving, and the generation-mode selectors, and `src/material.rs` owns the per-cell material and ore selection. `src/lib.rs` holds only the PyO3 binding surface: it exposes `surface_heights`, `terrain_materials`, and `native_build_info` as Python functions and names the module `_terrain_native`. The compiled artifact is imported as `ludoxel.simulation.worlds.generation._terrain_native`; the pure Python implementation of the same formulas is `ludoxel.simulation.worlds.generation.fallback` backed by `terrain_math.py`, and the import owner `native.py` selects between them at import time. Both implementations return the same bytes-level contract: `surface_heights` yields little-endian `int32` values in C order with shape `(nx, nz)`, and `terrain_materials` yields `uint8` material codes in C order with shape `(nx, ny, nz)`, where code zero is air and non-zero codes index the registered block ids in `materials.py`.',
+            text: 'The Rust terrain engine lives in the repository as `native/ludoxel_terrain`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set. The crate is split by responsibility: `native/ludoxel_terrain/src/noise.rs` owns the deterministic hashing and value-noise sampling, `native/ludoxel_terrain/src/height.rs` owns the surface-height octaves, the ravine carving, and the generation-mode selectors, and `native/ludoxel_terrain/src/material.rs` owns the per-cell material and ore selection. `native/ludoxel_terrain/src/lib.rs` holds only the PyO3 binding surface: it exposes `surface_heights`, `terrain_materials`, and `native_build_info` as Python functions and names the module `_terrain_native`. The compiled artifact is imported as `ludoxel.simulation.worlds.generation._terrain_native`; the pure Python implementation of the same formulas is `ludoxel.simulation.worlds.generation.fallback` backed by `terrain_math.py`, and the import owner `native.py` selects between them at import time. Both implementations return the same bytes-level contract: `surface_heights` yields little-endian `int32` values in C order with shape `(nx, nz)`, and `terrain_materials` yields `uint8` material codes in C order with shape `(nx, ny, nz)`, where code zero is air and non-zero codes index the registered block ids in `materials.py`.',
           },
           {
             kind: 'code',
@@ -1647,7 +1647,7 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
           },
           {
             kind: 'paragraph',
-            text: 'The crate is a bulk numerical engine and nothing else. It receives a seed, a generation version, a mode code, a flat ground level, and box coordinates, and it returns arrays; the meaning of a seed, the ownership of edit deltas, block-registry membership, persistence schemas, and renderer contracts remain with the Python simulation and application layers. The Rust source returns registered material codes only; when a code is outside the Python material table, the Python side raises rather than substituting a different block, so a registry mismatch is a hard error and never a silent replacement.',
+            text: 'The crate is a bulk numerical engine and nothing else. It receives a seed, a generation version, a mode code, a flat ground level, and box coordinates, and it returns arrays; the meaning of a seed, the ownership of edit deltas, block-registry membership, persistence schemas, and renderer contracts remain with the Python simulation and application layers. The Rust source returns registered material codes only; when a code is outside the Python material table, the Python side raises, making registry mismatch a hard error and silent replacement unreachable.',
           },
         ],
       },
@@ -1657,7 +1657,7 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
         content: [
           {
             kind: 'paragraph',
-            text: '`buildRustNativeExtensions` in `tools/build_native_extensions/src/service/rust.service.mjs` owns the build. It resolves a cargo executable from `CARGO`, the process path, or the per-user `.cargo/bin` directory, sets `PYO3_PYTHON` to the resolved project Python when unset, runs `cargo build --release --manifest-path` against the crate manifest, and copies the produced cdylib into the import location. On Windows the installed artifact is `src/ludoxel/simulation/worlds/generation/_terrain_native.pyd`; on other platforms the suffix is `.so`. A missing cargo executable, a missing crate manifest, a nonzero cargo exit, or a missing cdylib each terminates the build with a distinct error line, so the desktop preflight that runs this build stops before packaging rather than shipping an ambiguous native state.',
+            text: '`buildRustNativeExtensions` in `tools/build_native_extensions/src/service/rust.service.mjs` owns the build. It resolves a cargo executable from `CARGO`, the process path, or the per-user `.cargo/bin` directory, sets `PYO3_PYTHON` to the resolved project Python when unset, runs `cargo build --release --manifest-path` against the crate manifest, and copies the produced cdylib into the import location. On Windows the installed artifact is `src/ludoxel/simulation/worlds/generation/_terrain_native.pyd`; on other platforms the suffix is `.so`. A missing cargo executable, a missing crate manifest, a nonzero cargo exit, or a missing cdylib each terminates the build with a distinct error line, so the desktop preflight that runs this build stops before packaging with a distinct native-state failure.',
           },
           {
             kind: 'code',
@@ -1724,7 +1724,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
           },
           {
             kind: 'paragraph',
-            text: 'A passing check proves exactly the inspected conditions: a compiled extension file exists at the configured location, the interpreter resolves the module name to that file, and the file is not the fallback source. It does not prove numerical parity for every input, packaging completeness, cross-platform support, or any release permission; those remain with the parity contract in the terrain sources, the desktop packaging path, and the controlling License Text.',
+            text: 'A passing check proves exactly the inspected conditions: a compiled extension file exists at the configured location, the interpreter resolves the module name to that file, and the file has the compiled extension suffix under `src/ludoxel`. Numerical parity, packaging completeness, cross-platform support, and release permission require their own controlling sources: the parity contract in the terrain sources, the desktop packaging path, and the controlling License Text.',
           },
         ],
       },
@@ -1758,7 +1758,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
         content: [
           {
             kind: 'paragraph',
-            text: 'The Rust Othello engine lives in the repository as `native/ludoxel_othello`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set, matching the terrain crate. The crate is split by responsibility: `src/bitboard.rs` owns the board representation and move generation — the bitboard shifts and the legal-move and flip resolution; `src/evaluation.rs` owns the positional, corner-closeness, frontier, mobility, corner, parity, and disc evaluation terms, the sacrifice-level weight profile, and the classic evaluation; and `src/search.rs` owns move ordering, the negamax search, the exact endgame solver, and the transposition tables. `src/lib.rs` holds only the PyO3 binding surface: it exposes `legal_moves_bitboard`, `apply_move_bits`, `evaluate_position`, `terminal_score`, `native_build_info`, and the `InsaneSearch` class, and names the module `_othello_native`. The compiled artifact is imported as `ludoxel.simulation.spaces.othello.engines._othello_native`; the pure Python implementation of the same search is owned by `search.py` with `bitboards.py`, `evaluation.py`, `ordering.py`, and `transposition.py`, and the import owner `engines/native.py` selects between them at import time.',
+            text: 'The Rust Othello engine lives in the repository as `native/ludoxel_othello`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set, matching the terrain crate. The crate is split by responsibility: `native/ludoxel_othello/src/bitboard.rs` owns the board representation and move generation — the bitboard shifts and the legal-move and flip resolution; `native/ludoxel_othello/src/evaluation.rs` owns the positional, corner-closeness, frontier, mobility, corner, parity, and disc evaluation terms, the sacrifice-level weight profile, and the classic evaluation; and `native/ludoxel_othello/src/search.rs` owns move ordering, the negamax search, the exact endgame solver, and the transposition tables. `native/ludoxel_othello/src/lib.rs` holds only the PyO3 binding surface: it exposes `legal_moves_bitboard`, `apply_move_bits`, `evaluate_position`, `terminal_score`, `native_build_info`, and the `InsaneSearch` class, and names the module `_othello_native`. The compiled artifact is imported as `ludoxel.simulation.spaces.othello.engines._othello_native`; the pure Python implementation of the same search is owned by `search.py` with `bitboards.py`, `evaluation.py`, `ordering.py`, and `transposition.py`, and the import owner `src/ludoxel/simulation/spaces/othello/engines/native.py` selects between them at import time.',
           },
           {
             kind: 'paragraph',
@@ -1772,7 +1772,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
         content: [
           {
             kind: 'paragraph',
-            text: 'The search below each root move runs in one native session per `InsaneSearchCache`. `ensure_native_search` constructs an `InsaneSearch` pinned to the cache’s hash and sacrifice levels — a settings change through `prepare` discards the session rather than clearing it — and `_root_move_evaluations` in `insane.py` passes each root child into the compiled `negamax` or `solve_exact` with the remaining wall-clock budget, reading the root ordering hint from `root_best_move`. The session owns its transposition tables in process memory; nothing about it is persisted, and the worker processes that host searches construct their own caches, so no compiled object crosses a process boundary.',
+            text: 'The search below each root move runs in one native session per `InsaneSearchCache`. `ensure_native_search` constructs an `InsaneSearch` pinned to the cache’s hash and sacrifice levels; a settings change through `prepare` discards the old session and constructs a new one on demand. `_root_move_evaluations` in `insane.py` passes each root child into the compiled `negamax` or `solve_exact` with the remaining wall-clock budget, reading the root ordering hint from `root_best_move`. The session owns its transposition tables in process memory and persists no table state; worker processes construct their own caches, so compiled objects remain process-local.',
           },
           {
             kind: 'code',
@@ -1809,7 +1809,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
           },
           {
             kind: 'paragraph',
-            text: 'The desktop build declares `ludoxel.simulation.spaces.othello.engines._othello_native` as a PyInstaller hidden import on both platform paths, the wheel package data in `pyproject.toml` admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output. Application startup performs only the guarded import in `engines/native.py`; a source tree without a cargo toolchain plays every Othello difficulty through the pure Python engine, and a passing build or check records the inspected compiled-import conditions without conferring release status on any artifact.',
+            text: 'The desktop build declares `ludoxel.simulation.spaces.othello.engines._othello_native` as a PyInstaller hidden import on both platform paths, the wheel package data in `pyproject.toml` admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output. Application startup performs only the guarded import in `src/ludoxel/simulation/spaces/othello/engines/native.py`; a source tree without a cargo toolchain plays every Othello difficulty through the pure Python engine, and a passing build or check records the inspected compiled-import conditions without conferring release status on any artifact.',
           },
         ],
       },
