@@ -67,6 +67,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.cloud import CloudPas
 from ludoxel.presentation.rendering.backends.opengl.passes.falling_block import FallingBlockPass
 from ludoxel.presentation.rendering.backends.opengl.passes.first_person_arm import FirstPersonArmPass
 from ludoxel.presentation.rendering.backends.opengl.passes.held_block import HeldBlockPass
+from ludoxel.presentation.rendering.backends.opengl.passes.name_tag import NameTagPass
 from ludoxel.presentation.rendering.backends.opengl.passes.player_model import PlayerModelPass
 from ludoxel.presentation.rendering.backends.opengl.passes.selection import SelectionPass
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapPass
@@ -82,6 +83,7 @@ from ludoxel.presentation.rendering.backends.opengl.runtime.texture_animation im
 from ludoxel.presentation.rendering.contracts.config import BackendRendererParams
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
 from ludoxel.presentation.rendering.faces.bucket_layout import BucketCounts
+from ludoxel.presentation.rendering.visuals.name_tags import NameTagRenderState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.model_pose import build_player_model_pose
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
@@ -129,6 +131,7 @@ class RendererBackend:
     self._player = PlayerModelPass()
     self._first_person_arm = FirstPersonArmPass()
     self._held_block = HeldBlockPass()
+    self._name_tag = NameTagPass()
     self._special_item = SpecialItemPass()
     self._sun = SunPass(self._cfg.sun)
     self._cloud = CloudPass(self._cfg.clouds, self._cfg.camera)
@@ -168,6 +171,7 @@ class RendererBackend:
     self._player.initialize(face_prog=self._res.first_person_face_prog, shadow_prog=self._res.player_model_shadow_prog, atlas=self._res.atlas, skin_texture=self._res.skin_texture, uv_lookup=self._visuals.atlas_uv_face)
     self._first_person_arm.initialize(prog=self._res.first_person_face_prog, skin_texture=self._res.skin_texture)
     self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
+    self._name_tag.initialize(prog=self._res.name_tag_prog)
     self._special_item.initialize(prog=self._res.first_person_face_prog)
     self._sun.initialize(self._res.sun_prog, self._res.sun_flare_prog, int(self._res.empty_vao))
     self._cloud.initialize(self._res.cloud_prog, self._res.cloud_face_meshes, self._res.cloud_face_wire_meshes, self._res.cloud_volume_prog, self._res.cloud_volume_mesh)
@@ -186,6 +190,7 @@ class RendererBackend:
       player_pass=self._player,
       first_person_arm_pass=self._first_person_arm,
       held_block_pass=self._held_block,
+      name_tag_pass=self._name_tag,
       special_item_pass=self._special_item,
       sun_pass=self._sun,
       cloud_pass=self._cloud,
@@ -206,6 +211,7 @@ class RendererBackend:
     self._player.destroy()
     self._first_person_arm.destroy()
     self._held_block.destroy()
+    self._name_tag.destroy()
     self._special_item.destroy()
     self._othello.destroy()
     self._selection_pass.destroy()
@@ -327,6 +333,7 @@ class RendererBackend:
     render_distance_chunks: int,
     player_state: PlayerRenderState | None = None,
     extra_player_states: tuple[PlayerRenderState, ...] = (),
+    name_tags: tuple[NameTagRenderState, ...] = (),
     othello_state: OthelloRenderState | None = None,
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = (),
     block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = (),
@@ -348,6 +355,7 @@ class RendererBackend:
       render_distance_chunks=int(render_distance_chunks),
       player_state=player_state,
       extra_player_states=tuple(extra_player_states),
+      name_tags=tuple(name_tags),
       othello_state=othello_state,
       falling_blocks=falling_blocks,
       block_break_particles=block_break_particles,

@@ -1404,7 +1404,7 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
     subcategory: 'AI Configuration',
     group: 'AI Identity and Skin',
     title: 'Naming an AI NPC',
-    description: 'Explains AI NPC naming as a validated per-actor setting with a constrained body, optional numeric suffix, and live-AI uniqueness check.',
+    description: 'Explains AI NPC naming as a validated per-actor setting with a constrained plain body, optional numeric suffix, display-only § color codes, and live-AI uniqueness check.',
     sections: [
       {
         id: 'naming-ai-npc-format',
@@ -1412,7 +1412,7 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
         content: [
           {
             kind: 'paragraph',
-            text: 'AI NPC names use a stricter format than the player display name. The body must begin with a letter, may contain only letters and digits, and may have at most sixteen characters. An optional suffix uses exactly four digits after `#`, from `#0001` to `#9999`. The overlay enforces this format as a hard gate: `split_ai_display_name` returns `None` for input that fails the body or suffix pattern, and the per-actor settings update is refused before it is accepted.',
+            text: 'AI NPC names use a stricter plain-name format than the player display name. After recognized `§` formatting codes are stripped, the body must begin with a letter, may contain only letters and digits, and may have at most sixteen characters. An optional suffix uses exactly four digits after `#`, from `#0001` to `#9999`. The overlay enforces this format as a hard gate: `split_ai_display_name` returns `None` for input whose plain name fails the body or suffix pattern, and the per-actor settings update is refused before it is accepted.',
           },
           {
             kind: 'code',
@@ -1426,7 +1426,7 @@ _AI_NAME_BODY_PATTERN = re.compile(r"\A[A-Za-z][A-Za-z0-9]{0,15}\Z")
 _AI_NAME_SUFFIX_PATTERN = re.compile(r"\A[0-9]{4}\Z")
 
 def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
-  text = str(name).strip()
+  text = ai_plain_display_name(name)
   if "#" not in text:
     if _AI_NAME_BODY_PATTERN.match(text) is None:
       return None
@@ -1440,13 +1440,17 @@ def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
         content: [
           {
             kind: 'paragraph',
-            text: 'The AI Settings overlay exposes the name on its Identity page and routes validation through the session boundary so that format errors and duplicate live names are checked against the current actor collection. The actor being renamed is passed through `actor_id`, which allows the manager to ignore self-collision while still rejecting another living AI that already owns the same display key.',
+            text: 'The AI Settings overlay exposes the raw display name on its Identity page and routes validation through the session boundary so that format errors and duplicate live names are checked against the current actor collection. The actor being renamed is passed through `actor_id`, which allows the manager to ignore self-collision while still rejecting another living AI that already owns the same plain display key.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `self._name_edit = QLineEdit(body)
+            code: `_AI_NAME_SUFFIX_TEXT_LENGTH = 5
+_AI_NAME_FORMAT_CODE_ALLOWANCE = 16
+_AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + int(_AI_NAME_SUFFIX_TEXT_LENGTH) + int(_AI_NAME_FORMAT_CODE_ALLOWANCE)
+
+self._name_edit = QLineEdit(body)
 self._name_edit.setMaxLength(int(_AI_NAME_INPUT_MAX_LENGTH))
 self._name_edit.setPlaceholderText("Example: Guard or Guard#0001")
 add_setting_row(body_layout, body, label="Name", description="Shown in the world nametag above this AI.", control=self._name_edit)`,
@@ -1459,7 +1463,7 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
         content: [
           {
             kind: 'paragraph',
-            text: 'An AI NPC name belongs to per-actor simulation state and world-space presentation. It does not change the player name preference, Othello participant identity, license attribution, or saved route semantics. A report should include the attempted name, the exact validation error, whether the target actor already existed, and the names of other live AI if a duplicate is suspected.',
+            text: 'An AI NPC name belongs to per-actor simulation state and world-space presentation. Recognized `§` color codes affect the name tag text color, but they do not change the player name preference, Othello participant identity, license attribution, saved route semantics, or duplicate-name identity. A report should include the attempted raw display name, the exact validation error, whether the target actor already existed, and the plain names of other live AI if a duplicate is suspected.',
           },
         ],
       },

@@ -31,6 +31,7 @@ class GLResources:
   othello_shadow_prog: ShaderProgram
   chunk_face_payload_prog: ShaderProgram
   first_person_face_prog: ShaderProgram
+  name_tag_prog: ShaderProgram
 
   player_model_shadow_prog: ShaderProgram
 
@@ -62,6 +63,7 @@ class GLResources:
     othello_shadow_prog = ShaderProgram.from_files(othello_shader_dir / "othello_shadow.vert", shader_dir / "shadow.frag")
     chunk_face_payload_prog = ShaderProgram.from_compute_file(shader_dir / "chunk_face_payload.comp")
     first_person_face_prog = ShaderProgram.from_files(shader_dir / "first_person_face.vert", shader_dir / "first_person_face.frag")
+    name_tag_prog = ShaderProgram.from_files(shader_dir / "name_tag.vert", shader_dir / "name_tag.frag")
     player_model_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model_shadow.vert", shader_dir / "shadow.frag")
 
     cloud_face_meshes = tuple(MeshBuffer.create_cloud_face_instanced(face) for face in range(6))
@@ -89,6 +91,7 @@ class GLResources:
       othello_shadow_prog=othello_shadow_prog,
       chunk_face_payload_prog=chunk_face_payload_prog,
       first_person_face_prog=first_person_face_prog,
+      name_tag_prog=name_tag_prog,
       player_model_shadow_prog=player_model_shadow_prog,
       cloud_face_meshes=cloud_face_meshes,
       cloud_face_wire_meshes=cloud_face_wire_meshes,
@@ -121,6 +124,7 @@ class GLResources:
     self.othello_shadow_prog.destroy()
     self.chunk_face_payload_prog.destroy()
     self.first_person_face_prog.destroy()
+    self.name_tag_prog.destroy()
     self.player_model_shadow_prog.destroy()
 
     if int(self.empty_vao) != 0:

@@ -427,7 +427,7 @@ class RenderSnapshotDTO:
         content: [
           {
             kind: 'paragraph',
-            text: 'The backend protocol `BackendRendererApi` in `src/ludoxel/presentation/rendering/contracts/api.py` declares the surface every backend implements: `initialize`, `render`, `submit_chunk`, `set_selection_target`, `clear_selection`, `evict_chunks`, `atlas_uv_face`, `set_player_skin_image`, `set_ai_skin_images`, `render_player_preview_frame`, and the diagnostic accessors. The concrete `Renderer` wrapper in the same module forwards each call to the active backend and forwards the snapshot fields, the player render state, the extra player states, the Othello state, and the falling-block and particle tuples to `render`.',
+            text: 'The backend protocol `BackendRendererApi` in `src/ludoxel/presentation/rendering/contracts/api.py` declares the surface every backend implements: `initialize`, `render`, `submit_chunk`, `set_selection_target`, `clear_selection`, `evict_chunks`, `atlas_uv_face`, `set_player_skin_image`, `set_ai_skin_images`, `render_player_preview_frame`, and the diagnostic accessors. The concrete `Renderer` wrapper in the same module forwards each call to the active backend and forwards the snapshot fields, the player render state, the extra player states, the world-space `name_tags`, the Othello state, and the falling-block and particle tuples to `render`.',
           },
           {
             kind: 'paragraph',
@@ -764,7 +764,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`_gameplay_hud_active`, `_debug_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, route overlay, and player and AI name tags when an overlay, chat, or HUD-hidden state removes the gameplay surface. The route overlay has a separate content gate: draft route-edit feedback can show while editing, while completed route paths require the F3 Debug HUD to be visible. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
+            text: '`_gameplay_hud_active`, `_debug_hud_active`, `_sync_gameplay_hud_visibility`, and the related helpers in `src/ludoxel/presentation/interface/viewport/overlays/state.py` hide the hotbar, crosshair, and route overlay when an overlay, chat, or HUD-hidden state removes the gameplay surface. Player and AI name tags are no longer Qt overlay labels; `_build_world_name_tags` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` sends them to the backend renderer as world-space name tag states, so chat, pause, settings, AI settings, and inventory surfaces stay above them through normal widget composition. The route overlay has a separate content gate: draft route-edit feedback can show while editing, while completed route paths require the F3 Debug HUD to be visible. `_ambient_audio_active` is narrower: loading, death, pause, and Othello settings stop the ambient source, while the inventory, chat, HUD-hidden state, ordinary settings surface, and AI settings surface leave the My World ambient loop under the same `AudioManager` key. The inventory therefore behaves as an input-neutral storage surface, not as an audio reset boundary. The navigation between overlays is wired in `src/ludoxel/presentation/interface/viewport/controllers/overlay_navigation.py`, whose `open_pause_menu`, `resume_from_overlay`, `switch_play_space`, `open_settings_from_pause`, `back_from_settings`, `on_inventory_closed`, and `save_and_quit` drive the state machine and synchronise the surfaces.',
           },
           {
             kind: 'paragraph',
@@ -814,7 +814,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
-            text: 'The pass objects are constructed once: a shadow-map pass, a world pass, falling-block and block-break-particle passes, a player-model pass, first-person arm and held-block and special-item passes, a sun pass, a cloud pass, an Othello pass, a selection pass, and the compute payload builder. `destroy` releases every pass, the resources, and the preview target. The backend owns resource lifetime and pass construction; the per-frame ordering is the pipeline.',
+            text: 'The pass objects are constructed once: a shadow-map pass, a world pass, falling-block and block-break-particle passes, a player-model pass, first-person arm and held-block and special-item passes, a name-tag pass, a sun pass, a cloud pass, an Othello pass, a selection pass, and the compute payload builder. `destroy` releases every pass, the resources, and the preview target. The backend owns resource lifetime and pass construction; the per-frame ordering is the pipeline.',
           },
         ],
       },
@@ -856,13 +856,13 @@ jump_pressed = bool(self._jump_pressed_edge)`,
               'As background, draw the Ultra veiling glare when the view faces the sun, then the camera-facing sun billboard; neither writes depth. Then enable the depth test.',
               'Draw the world pass with shadow, fog, and selection tint, then falling blocks and block-break particles; the opaque world overdraws the background glare and disc where geometry stands.',
               'Draw each player model, then the Othello board and pieces.',
-              'Draw clouds, then the selection outline.',
+              'Draw clouds, then world-space name tags from `NameTagPass` before the selection outline.',
               'Clear the depth buffer and draw exactly one first-person view model: a special item, a held block, or the arm, at a reduced field of view.',
             ],
           },
           {
             kind: 'paragraph',
-            text: 'The first-person view model clears depth before drawing so the hand or held block is never occluded by world geometry, and `_first_person_viewmodel_fov_deg` reduces a wide field of view to keep the model proportionate. The special item, held block, and arm are mutually exclusive, selected by the first-person render state. The pipeline returns frame metrics aggregated across the world, falling-block, particle, player, and Othello draws.',
+            text: 'The first-person view model clears depth before drawing so the hand or held block is never occluded by world geometry, and `_first_person_viewmodel_fov_deg` reduces a wide field of view to keep the model proportionate. The special item, held block, and arm are mutually exclusive, selected by the first-person render state. The pipeline returns frame metrics aggregated across the world, falling-block, particle, player, Othello, and name-tag draws.',
           },
         ],
       },
@@ -933,7 +933,7 @@ jump_pressed = bool(self._jump_pressed_edge)`,
                 label: 'shared shader source',
                 href: '/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets',
               },
-              '. `initialize` creates the camera bind-group layout and one uniform buffer per face, builds the texture atlas and its bind group, the shadow bind-group layout, the player skin and special-item textures, and the world, shadowed, wireframe, sun, cloud, Othello, shadow-depth, transform-shadow, textured-face, and selection pipelines, all held in `WgpuRendererResources`. The color target uses a `depth24plus` depth texture and the shadow target uses a `depth32float` texture with a comparison sampler.',
+              '. `initialize` creates the camera bind-group layout and one uniform buffer per face, builds the texture atlas and its bind group, the shadow bind-group layout, the player skin and special-item textures, and the world, shadowed, wireframe, sun, cloud, Othello, shadow-depth, transform-shadow, textured-face, name-tag, and selection pipelines, all held in `WgpuRendererResources`. The color target uses a `depth24plus` depth texture and the shadow target uses a `depth32float` texture with a comparison sampler.',
             ],
           },
           {
@@ -971,7 +971,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
         content: [
           {
             kind: 'paragraph',
-            text: 'The WGPU backend does not use the compute payload builder. Its `submit_chunk` discards the GPU face sources and shadow faces and uploads CPU-built face rows through `upload_chunk_mesh` into a `WgpuChunkMesh`. Transient geometry such as falling blocks, particles, player skins, held blocks, and Othello pieces is built into per-face instance rows each frame by the row builders and uploaded into temporary vertex buffers, drawn with per-face camera bind groups, and destroyed after the frame’s commands are submitted, so a moving object never carries a prior frame’s instance buffer into the next. `set_selection_target` builds the outline vertices inline and `_refresh_selection_buffer` uploads them. This per-face CPU instancing is the structural difference from the OpenGL backend, which builds chunk payloads on the GPU.',
+            text: 'The WGPU backend does not use the compute payload builder. Its `submit_chunk` discards the GPU face sources and shadow faces and uploads CPU-built face rows through `upload_chunk_mesh` into a `WgpuChunkMesh`. Transient geometry such as falling blocks, particles, player skins, held blocks, Othello pieces, and name-tag faces is built into per-face instance rows each frame by the row builders and uploaded into temporary vertex buffers, drawn with per-face camera bind groups, and destroyed after the frame’s commands are submitted, so a moving object never carries a prior frame’s instance buffer into the next. Name-tag textures are cached by tag id and content key while their transform rows remain per-frame world-space renderer input. `set_selection_target` builds the outline vertices inline and `_refresh_selection_buffer` uploads them. This per-face CPU instancing is the structural difference from the OpenGL backend, which builds chunk payloads on the GPU.',
           },
           {
             kind: 'paragraph',
@@ -995,7 +995,7 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
               'Begin the main pass clearing to the fog color; as background, draw the Ultra veiling glare when the view faces the sun through `create_sun_glare_pipeline`, then the camera-facing sun billboard; neither writes depth.',
               'Draw the world, shadowed or plain, or the emulated wireframe; the opaque world overdraws the background glare and disc where geometry stands.',
               'Draw falling blocks, block-break particles, player skins, and held blocks.',
-              'Draw the Othello board, pieces, and highlight overlay; then clouds; then the selection lines.',
+              'Draw the Othello board, pieces, and highlight overlay; then clouds; then world-space name tags before the selection lines.',
               'Begin a separate first-person pass with depth cleared and draw the special item, held block, or arm.',
             ],
           },
@@ -1064,7 +1064,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'The GLSL stage files and the `src/ludoxel/presentation/rendering/shaders/common` includes live once under `src/ludoxel/presentation/rendering/shaders/`, outside either backend directory. `src/ludoxel/presentation/rendering/shaders/source.py` owns the root resolution and the include preprocessing: `shader_source_root` returns that directory, `expand_shader_source` reads a stage file and expands every `#include "..."` directive against the including file, and `load_shader_source` joins a stage name to the root and expands it. Include resolution is recursive and tracks the active include stack, so a cycle raises before unbounded recursion. The `chunk_face_payload.comp` compute source, the world, shadow, sun, cloud, selection, Othello, player-model, and first-person stages, and the `distance_fog.glsl` and `face_instance.glsl` includes are all read from this one owner.',
+            text: 'The GLSL stage files and the `src/ludoxel/presentation/rendering/shaders/common` includes live once under `src/ludoxel/presentation/rendering/shaders/`, outside either backend directory. `src/ludoxel/presentation/rendering/shaders/source.py` owns the root resolution and the include preprocessing: `shader_source_root` returns that directory, `expand_shader_source` reads a stage file and expands every `#include "..."` directive against the including file, and `load_shader_source` joins a stage name to the root and expands it. Include resolution is recursive and tracks the active include stack, so a cycle raises before unbounded recursion. The `chunk_face_payload.comp` compute source, the world, shadow, sun, cloud, selection, Othello, player-model, name-tag, and first-person stages, and the `distance_fog.glsl` and `face_instance.glsl` includes are all read from this one owner.',
           },
           {
             kind: 'paragraph',
@@ -2582,7 +2582,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.4"`,
+            code: `__version__ = "3.8.5"`,
           },
           {
             kind: 'note',
@@ -3081,7 +3081,7 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
           },
           {
             kind: 'paragraph',
-            text: 'Mention candidates are presentation-time input help. The controller builds them from the resolved local player name and live AI render snapshots, filters by the typed prefix, removes ambiguous duplicate names, and omits defeated AI snapshots. Selecting a mention replaces only the current `@` token with `@Name` and leaves command parsing and command execution unchanged.',
+            text: 'Mention candidates are presentation-time input help. The controller builds them from the resolved local player name and live AI render snapshots, strips recognized formatting from those names before matching, filters by the typed prefix, removes ambiguous duplicate names, and omits defeated AI snapshots. Selecting a mention replaces only the current `@` token with `@Name` and leaves command parsing and command execution unchanged.',
           },
           {
             kind: 'code',

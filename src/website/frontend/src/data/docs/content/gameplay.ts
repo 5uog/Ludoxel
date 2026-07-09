@@ -936,26 +936,32 @@ actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=inte
     subcategory: 'AI NPC Combat',
     group: 'NPC Lifecycle',
     title: 'Reading AI Nametags and Health',
-    description: 'Explains the world-space AI nametag and health indicator: a pooled tag widget composites the name and a pixel-heart strip into one image, places it above each AI scaled by distance, and shows health above, below, or not at all according to the AI settings.',
+    description: 'Explains the world-space name tag contract shared by AI and the third-person player: the renderer receives actor-head anchors, a perspective-mode target, a cached formatted texture, and the AI health indicator placement.',
     sections: [
       {
-        id: 'reading-ai-nametags-and-health-pool',
-        title: 'Tags Are Pooled Per Actor',
+        id: 'reading-ai-nametags-and-health-render-state',
+        title: 'Tags Are Renderer Inputs',
         body: [
-          'AI tags are managed by a pool keyed on actor id. Each frame the pool begins, shows a tag for every visible AI, and ends, disposing tags for AI that were not seen. This keeps one tag widget alive per visible AI and removes tags for AI that despawned.',
-          'Because tags are pooled and reused, the on-screen label for an AI is tied to its actor id, the same id the manager uses for its state.',
+          '`_build_world_name_tags` in `src/ludoxel/presentation/interface/viewport/render_loop/loop.py` builds `NameTagRenderState` values before the frame is handed to the backend renderer. AI tags use the live AI render snapshots for actor id, display name, position, height, health, maximum health, and health-indicator mode. The local player tag uses the player model snapshot and is emitted only outside first-person view.',
+          'The tag is therefore not a Qt child widget and not a screen-space HUD label. Its identity key is still stable: AI tags are keyed by `ai:{actor_id}`, while the local player uses `player:local`.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The pool reuses a tag per actor id and disposes stale ones.',
-            code: `def end_frame(self) -> None:
-  stale_ids = [actor_id for actor_id in self._entries.keys() if actor_id not in self._seen_ids]
-  for actor_id in stale_ids:
-    entry = self._entries.pop(str(actor_id), None)
-    if entry is not None:
-      entry.setVisible(False)
-      entry.dispose()`,
+            caption: 'Viewport frame composition turns snapshots into renderer name tag states.',
+            code: `anchor = Vec3(float(ai_snapshot.position_x), float(ai_snapshot.position_y) + float(ai_snapshot.height) + float(NAME_TAG_ANCHOR_OFFSET_BLOCKS), float(ai_snapshot.position_z))
+tags.append(
+  NameTagRenderState(
+    tag_id=f"ai:{str(ai_snapshot.actor_id)}",
+    text=text,
+    anchor=anchor,
+    target=target,
+    fallback_forward=body_forward,
+    health=float(ai_snapshot.health),
+    max_health=float(ai_snapshot.max_health),
+    health_indicator=str(ai_snapshot.health_indicator),
+  )
+)`,
           },
         ],
       },
@@ -963,29 +969,55 @@ actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=inte
         id: 'reading-ai-nametags-and-health-name-source',
         title: 'The Name Comes From AI Settings',
         body: [
-          'The displayed name is the AI’s normalized name from its settings, the same value the manager validates against other live AI. Two living AI cannot share a name, so a nametag identifies a specific actor.',
-          'The renderer only displays the name; it does not assign or deduplicate it. Name conflicts are resolved on the simulation side before a tag is shown.',
-          'When the F3 Debug HUD is visible and an AI has a confirmed Route Patrol path with at least two points, the AI name text uses the same actor-id-derived color as that AI’s completed route overlay. Hiding the Debug HUD or removing the confirmed route returns the name text to the normal HUD style.',
+          'The displayed name is the AI’s saved display name from its settings, while validation and duplicate checks use the plain name after recognized `§` formatting codes are stripped. Two living AI cannot share the same plain name, so color formatting does not create a separate actor identity.',
+          'The renderer only displays the name; it does not assign or deduplicate it. Name conflicts are resolved on the simulation side before a tag is shown, and chat target matching also compares plain names so a colorized display name remains addressable by its ordinary name.',
+          'If a display name contains no explicit `§` color code, the name tag renderer prepends `§7` for the default gray text. If a recognized color code appears in the name, the parsed foreground color is used for the following text run.',
+        ],
+      },
+      {
+        id: 'reading-ai-nametags-and-health-facing-target',
+        title: 'Perspective Chooses the Facing Target',
+        body: [
+          'The name tag face is not aligned to the camera object. The viewport derives a target from the active perspective and the player body. First-person uses the body position, third-person back uses a point behind the player body, and third-person front uses a point in front of it.',
+          '`NameTagRenderState` carries that target into both backends. `name_tag_model_matrix` then turns the target into the face normal, with a body-forward fallback if the horizontal target vector is degenerate.',
+        ],
+        codeBlocks: [
+          {
+            language: 'py',
+            caption: 'The viewport chooses a perspective-specific target point.',
+            code: `if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_BACK:
+  return (body_position - body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
+if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT:
+  return (body_position + body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
+return (body_position, body_forward)`,
+          },
+        ],
+      },
+      {
+        id: 'reading-ai-nametags-and-health-box-style',
+        title: 'AI and Player Names Share the Same Box',
+        body: [
+          '`render_name_tag_texture` draws one black box at `NAME_TAG_BACKGROUND_OPACITY`, using the same box height, padding, centered text alignment, and default `§7` color for AI and the third-person player. Health hearts can extend above or below the AI box, but the name box itself is the same renderer texture contract.',
+          'The player name tag is not emitted in first-person view. In third-person view it uses the same anchor offset and world-space face path as AI tags, but without the AI health strip.',
         ],
       },
       {
         id: 'reading-ai-nametags-and-health-indicator-modes',
         title: 'Health Can Sit Above, Below, or Be Hidden',
         body: [
-          'The health indicator has three placements: above the name, below the name, or off. When hearts are shown, the composite stacks the name and the heart strip in the chosen order; when off, only the name is drawn.',
-          'A tag is only shown if it has a name or a visible health indicator. An AI with no name and a hidden indicator produces no tag.',
-          'Route owner color changes only the rendered name pixmap. The heart fill, outline, and highlight colors remain the health indicator colors.',
+          'The health indicator has three placements: above the name, below the name, or off. When hearts are shown, `render_name_tag_texture` stacks the black name box and the heart strip in the chosen order; when off, the texture contains only the name box.',
+          'The heart fill, outline, and highlight colors remain the health indicator colors. `§` text formatting affects the name text runs, not the heart strip.',
         ],
         codeBlocks: [
           {
             language: 'py',
             caption: 'Hearts are placed above or below the name based on the indicator.',
-            code: `if hearts_visible and indicator == AI_HEALTH_INDICATOR_ABOVE:
+            code: `if bool(hearts_visible) and mode == AI_HEALTH_INDICATOR_ABOVE:
   hearts_y = 0
-  name_y = int(hearts_h + gap)
-elif hearts_visible:
-  name_y = 0
-  hearts_y = int(name_h + gap)`,
+  box_y = int(hearts_h + gap)
+elif bool(hearts_visible):
+  box_y = 0
+  hearts_y = int(box_height + gap)`,
           },
         ],
       },
@@ -1000,7 +1032,7 @@ elif hearts_visible:
           {
             expression: 'N = \\max\\!\\bigl(1,\\ \\bigl\\lceil \\tfrac{1}{2}\\max(2, H_{\\max}) \\bigr\\rceil\\bigr), \\qquad F = \\tfrac{1}{2}\\,\\mathrm{clamp}\\bigl(H,\\, 0,\\, \\max(2, H_{\\max})\\bigr)',
             displayMode: true,
-            caption: '_heart_count and _paint_heart_strip in src/ludoxel/presentation/interface/hud/ai_status_tags.py: the strip draws N hearts at one heart per two maximum-health points, and the fractional fill F lets a heart render half-full.',
+            caption: '_heart_count and _paint_heart_strip in src/ludoxel/presentation/rendering/visuals/name_tags.py: the strip draws N hearts at one heart per two maximum-health points, and the fractional fill F lets a heart render half-full.',
           },
         ],
         codeBlocks: [
@@ -1019,37 +1051,40 @@ def _paint_heart_strip(painter, *, x, y, health, max_health):
       },
       {
         id: 'reading-ai-nametags-and-health-composite',
-        title: 'The Tag Is One Composite Image',
+        title: 'The Texture Is Cached by Content',
         body: [
-          'The name and hearts form one base pixmap. The composite is rebuilt only when the content key — name, health, max health, indicator, and route-owner name color — changes, leaving an unchanged tag outside the redraw path.',
-          'A stationary AI’s tag therefore costs almost nothing per frame: the composite image is cached, and only geometry or opacity changes trigger an update.',
+          'The name box and optional heart strip form one transparent texture. Backends keep that texture until the content key changes: display text, health, maximum health, or indicator placement. Actor motion and camera motion rebuild the world-space face row, not the text image.',
+          'The OpenGL pass stores `ImageTexture` entries by tag id. The WGPU backend stores texture bind groups by the same tag id. Both paths evict stale entries when a tag is no longer present in the frame.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The composite is rebuilt only when the content key changes.',
-            code: `content_key = (text, round(float(next_health), 6), round(float(next_max), 6), str(mode), str(name_color))
-if content_key != self._content_key:
-  self._content_key = content_key
-  self._rebuild_base_pixmap(name=text, health=float(next_health), max_health=float(next_max), indicator=str(mode), name_color_hex=str(name_color))
-  self._content_dirty = True`,
+            caption: 'The content key excludes camera and actor position.',
+            code: `def name_tag_content_key(tag: NameTagRenderState) -> tuple[object, ...]:
+  indicator = normalize_ai_health_indicator(tag.health_indicator)
+  max_health = None if tag.max_health is None else round(float(max(2.0, float(tag.max_health))), 6)
+  health = None if tag.health is None or max_health is None else round(float(clampf(float(tag.health), 0.0, float(max_health))), 6)
+  return (str(tag.text).strip(), health, max_health, str(indicator))`,
           },
         ],
       },
       {
         id: 'reading-ai-nametags-and-health-distance-scale',
-        title: 'Distance Scales the Whole Tag',
+        title: 'Projection Scales the Whole Tag',
         body: [
-          'When a tag is placed, a scale derived from the camera-to-AI distance is applied to the entire composite, so the name, hearts, padding, and spacing all shrink together with distance. The tag is also clamped to stay within the viewport margins.',
-          'A far AI therefore shows a small but complete tag, and a near AI a large one, with the same layout at every distance.',
+          'The tag is a world-space textured face. `name_tag_model_matrix` derives its size from `NAME_TAG_BOX_WORLD_HEIGHT_BLOCKS` and the texture’s name-box pixel height, then places the face at the actor-head anchor. There is no separate distance scale, near-distance shrink, or screen-edge clamp.',
+          'A far tag appears smaller because the same world-space face is projected by the camera. At viewport edges, the backend and the graphics API clip the face like other world geometry; the label is not moved to remain inside the screen.',
         ],
         codeBlocks: [
           {
             language: 'py',
-            caption: 'The display size scales the composite by the distance factor.',
-            code: `self._display_scale = max(0.05, float(scale))
-display_w = max(1, int(round(float(self._base_pixmap.width()) * float(self._display_scale))))
-display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._display_scale))))`,
+            caption: 'The model matrix turns texture pixels into one world-space face.',
+            code: `scale = float(NAME_TAG_BOX_WORLD_HEIGHT_BLOCKS) / max(1.0, float(spec.name_box_height_px))
+world_w = float(spec.width_px) * float(scale)
+world_h = float(spec.height_px) * float(scale)
+axis_x = right * float(world_w)
+axis_y = up * float(world_h)
+axis_z = front * float(_NAME_TAG_WORLD_DEPTH_SCALE)`,
           },
         ],
       },
@@ -1057,8 +1092,8 @@ display_h = max(1, int(round(float(self._base_pixmap.height()) * float(self._dis
         id: 'reading-ai-nametags-and-health-display-only',
         title: 'The Tag Reflects State, It Does Not Decide It',
         body: [
-          'The tag receives the AI’s name, health, and indicator for display. It does not decide whether the AI is damaged, defeated, regenerating, or allowed to attack; those are combat and manager decisions in the simulation.',
-          'So a tag is evidence of current AI state, not a control over it. A wrong heart count is a display question, while a wrong health value is a simulation question.',
+          'The AI tag receives the AI’s name, health, and indicator for display. It does not decide whether the AI is damaged, defeated, regenerating, or allowed to attack; those are combat and manager decisions in the simulation.',
+          'The player tag receives the resolved local player name and third-person body anchor for display. It does not change player identity, chat history, save data, or input. A wrong tag placement is a renderer contract question, while a wrong name value is an identity or settings question.',
         ],
       },
     ],

@@ -7,7 +7,6 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QImage, QKeyEvent, QMouseEvent, QWheelEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
-from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel
 
 import ludoxel.presentation.interface.chat.controller as chat_controller
 import ludoxel.presentation.interface.othello.viewport as othello_controller
@@ -84,15 +83,6 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     self._hud = None
     self._othello_hud = OthelloHudWidget(self)
     self._othello_hud.setVisible(False)
-    self._player_name_tag = QLabel(self)
-    self._player_name_tag.setObjectName("playerNameTag")
-    self._player_name_tag.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-    self._player_name_tag.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-    self._player_name_tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    self._player_name_tag.setVisible(False)
-    self._player_name_tag_effect = QGraphicsOpacityEffect(self._player_name_tag)
-    self._player_name_tag_effect.setOpacity(1.0)
-    self._player_name_tag.setGraphicsEffect(self._player_name_tag_effect)
 
     self._upload = WorldUploadTracker()
     self._hud_ctl = HudController()

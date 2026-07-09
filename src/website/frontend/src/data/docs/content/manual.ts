@@ -816,7 +816,7 @@ def resizeEvent(self, e) -> None:
         id: 'reading-the-main-window-hud-layers',
         title: 'HUD Elements Are Layered, Not Part of the World',
         body: [
-          'The HUD draws on top of renderer output: the hotbar and its health strip near the bottom, the crosshair at the center, and text payloads supplied by the viewport. AI status tags and debug metrics are also HUD layers. None of these own simulation rules; they display values produced elsewhere.',
+          'The HUD draws on top of renderer output: the hotbar and its health strip near the bottom, the crosshair at the center, and text payloads supplied by the viewport. Debug metrics are HUD layers, while player and AI name tags now render inside the world renderer so screen overlays can sit above them. None of these presentation surfaces own simulation rules; they display values produced elsewhere.',
           'The HUD payload is a small frozen dataclass with left and right text fields, pushed from the viewport via `hud_updated`. Reading a number off the HUD is reading a presentation label, so a wrong HUD value is a display question, while a wrong saved value is a persistence question handled by the data pages.',
           '`HUDWidget.set_payload` coerces an incoming payload into left and right strings and returns early when both strings match the prior values. Its relayout code sizes labels from their text and current widget bounds. The HUD owns text placement and truncation behavior; it does not mutate the `SessionManager`, `RuntimePreferences`, block registry, or persisted envelopes that produced values upstream.',
         ],

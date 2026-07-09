@@ -36,6 +36,7 @@ class WgpuRendererResources:
   transform_shadow_pipeline: object
   shadow_depth_pipeline: object
   textured_face_pipeline: object
+  name_tag_pipeline: object
   selection_pipeline: object
   othello_board_vertex_buffer: object
   othello_board_vertex_count: int

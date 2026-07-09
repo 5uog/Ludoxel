@@ -10,6 +10,7 @@ from PyQt6.QtGui import QDesktopServices
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.chat.commands import candidates_for_input, execute_command
 from ludoxel.application.chat.runtime import ChatRuntime
+from ludoxel.foundations.text.format_codes import strip_formatting
 from ludoxel.presentation.interface.chat.feed import HUD_FEED_MESSAGE_LIMIT, ChatFeedWidget
 from ludoxel.presentation.interface.chat.screen import ChatScreen
 from ludoxel.presentation.interface.hud.hotbar_layout import HOTBAR_BOTTOM_MARGIN_PX, HOTBAR_HEALTH_GAP_PX, HOTBAR_SLOT_SIDE_PX
@@ -222,18 +223,18 @@ class ChatController:
     return (int(start), int(end))
 
   def _local_mention_targets(self) -> tuple[str, ...]:
-    name = str(self._v._state.resolved_player_name).strip() or "Player"
+    name = strip_formatting(str(self._v._state.resolved_player_name)).strip() or "Player"
     return (name,)
 
   def _mention_candidates(self, prefix: str) -> tuple[str, ...]:
     entries: list[str] = []
-    player_name = str(self._v._state.resolved_player_name).strip() or "Player"
+    player_name = strip_formatting(str(self._v._state.resolved_player_name)).strip() or "Player"
     if player_name:
       entries.append(str(player_name))
     for snapshot in tuple(self._v._session.ai_render_snapshots()):
       if float(getattr(snapshot, "health", 0.0)) <= 1e-6:
         continue
-      name = str(getattr(snapshot, "name", "")).strip()
+      name = strip_formatting(str(getattr(snapshot, "name", ""))).strip()
       if name:
         entries.append(str(name))
     counts: dict[str, int] = {}

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+from ludoxel.foundations.text.format_codes import strip_formatting
+
 AI_NAME_BODY_MIN_LENGTH: int = 1
 AI_NAME_BODY_MAX_LENGTH: int = 16
 AI_NAME_SUFFIX_MIN: int = 1
@@ -14,8 +16,12 @@ _AI_NAME_BODY_PATTERN = re.compile(r"\A[A-Za-z][A-Za-z0-9]{0,15}\Z")
 _AI_NAME_SUFFIX_PATTERN = re.compile(r"\A[0-9]{4}\Z")
 
 
+def ai_plain_display_name(name: object) -> str:
+  return strip_formatting(str(name)).strip()
+
+
 def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
-  text = str(name).strip()
+  text = ai_plain_display_name(name)
   if "#" not in text:
     if _AI_NAME_BODY_PATTERN.match(text) is None:
       return None
@@ -41,7 +47,7 @@ def format_ai_display_name(body: str, suffix: int | None) -> str:
 
 
 def ai_display_name_format_error(name: object) -> str | None:
-  text = str(name).strip()
+  text = ai_plain_display_name(name)
   if not text:
     return "AI name cannot be empty."
   body = text.partition("#")[0]
@@ -61,7 +67,7 @@ def ai_display_name_format_error(name: object) -> str | None:
 
 
 def ai_name_duplicate_key(name: object) -> str:
-  return str(name).strip().casefold()
+  return ai_plain_display_name(name).casefold()
 
 
 def allocate_suffixed_ai_name(body: str, taken_keys: set[str]) -> str | None:

@@ -14,6 +14,7 @@ from ludoxel.presentation.rendering.contracts.config import BackendRendererParam
 from ludoxel.presentation.rendering.contracts.factory import create_backend_renderer
 from ludoxel.presentation.rendering.contracts.metrics import BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.state import DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, BackendRendererRuntimeState
+from ludoxel.presentation.rendering.visuals.name_tags import NameTagRenderState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
@@ -176,6 +177,7 @@ class Renderer:
     render_distance_chunks: int,
     player_state: PlayerRenderState | None = None,
     extra_player_states: tuple[PlayerRenderState, ...] = (),
+    name_tags: tuple[NameTagRenderState, ...] = (),
     othello_state: OthelloRenderState | None = None,
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = (),
     block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = (),
@@ -191,6 +193,7 @@ class Renderer:
       render_distance_chunks=int(render_distance_chunks),
       player_state=player_state,
       extra_player_states=tuple(extra_player_states),
+      name_tags=tuple(name_tags),
       othello_state=othello_state,
       falling_blocks=falling_blocks,
       block_break_particles=block_break_particles,

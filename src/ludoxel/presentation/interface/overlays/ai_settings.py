@@ -91,7 +91,9 @@ class _LearningInitialSnapshot:
   policy_save_path: str
 
 
-_AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + 5
+_AI_NAME_SUFFIX_TEXT_LENGTH = 5
+_AI_NAME_FORMAT_CODE_ALLOWANCE = 16
+_AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + int(_AI_NAME_SUFFIX_TEXT_LENGTH) + int(_AI_NAME_FORMAT_CODE_ALLOWANCE)
 _REGEN_CAP_MIN_UI = 1.0
 _REGEN_CAP_MAX_UI = 20.0
 _REGEN_DELAY_MIN_UI = 0.0
@@ -184,7 +186,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _build_identity_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Identity", subtitle="Name and world nametag identity for this AI.")
-    _card, body, body_layout = add_settings_card(layout, host, title="AI Name", description="Use 1 to 16 letters or digits, beginning with a letter. An optional suffix from #0001 to #9999 can distinguish AI that share a name body. Names of live AI must be unique.")
+    _card, body, body_layout = add_settings_card(layout, host, title="AI Name", description="Use 1 to 16 letters or digits, beginning with a letter. An optional suffix from #0001 to #9999 can distinguish AI that share a name body. Recognized § color codes are display formatting; the plain name must still be unique.")
     self._name_edit = QLineEdit(body)
     self._name_edit.setMaxLength(int(_AI_NAME_INPUT_MAX_LENGTH))
     self._name_edit.setPlaceholderText("Example: Guard or Guard#0001")

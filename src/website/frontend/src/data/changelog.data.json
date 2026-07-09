@@ -2,6 +2,20 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.5",
+      "tags": ["Desktop Application", "Rendering", "UI"],
+      "sections": [
+        {
+          "title": "World Name Tags Share One Renderer Contract",
+          "items": [
+            "`NameTagRenderState` now carries AI and third-person player name tags into the backend renderer as world-space faces anchored above the actor body. The shared texture builder applies the same black 30% name box, padding, box height, centered text, default `§7` color, and recognized `§` color-code foreground runs for both AI and player names, with AI health hearts stacked above, below, or omitted from the same cached texture.",
+            "`_build_world_name_tags` derives AI anchors from AI render snapshots and the player anchor from the player render snapshot, then chooses the facing target from the active perspective: the player body in first person, a point behind the player body in third-person back, and a point in front of the body in third-person front. The renderer projects the resulting world-space face directly, so viewport edges no longer clamp the name away from the actor or apply a separate distance scale.",
+            "OpenGL and WGPU now draw the name-tag face inside the world renderer with alpha blending, depth testing, and depth writes disabled after world, actor, and cloud drawing and before selection and first-person view-model passes. The old Qt gameplay name labels and AI status-tag widget pool are removed, so chat, pause, settings, AI settings, inventory, and other screen surfaces compose above AI and player name tags instead of the tags being raised over them."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.4",
       "tags": ["Desktop Application", "Chat", "Input"],
       "sections": [

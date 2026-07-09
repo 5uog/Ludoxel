@@ -13,8 +13,12 @@ import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
 import ludoxel.presentation.interface.viewport.controllers.effects as effects_controller
 import ludoxel.presentation.interface.viewport.controllers.interaction as interaction_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
+from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_THIRD_PERSON_BACK, CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
+from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
+from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.presentation.audio import PLAYER_EVENT_DAMAGE_HIT, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
+from ludoxel.presentation.rendering.visuals.name_tags import NAME_TAG_ANCHOR_OFFSET_BLOCKS, NAME_TAG_CROUCH_ANCHOR_OFFSET_BLOCKS, NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS, NameTagRenderState
 from ludoxel.presentation.rendering.visuals.players.render_state_composer import compose_player_render_state
 
 if TYPE_CHECKING:
@@ -59,6 +63,41 @@ class ViewportRenderLoopMixin:
 
   def _world_block_state(self: "GLViewportWidget", x: int, y: int, z: int) -> str | None:
     return self._session.world.blocks.get((int(x), int(y), int(z)))
+
+  def _world_name_tags_visible(self: "GLViewportWidget") -> bool:
+    return bool((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()))
+
+  def _name_tag_target(self: "GLViewportWidget", *, snapshot) -> tuple[Vec3, Vec3]:
+    model = snapshot.player_model
+    body_position = Vec3(float(model.base_x), float(model.base_y), float(model.base_z))
+    body_forward = forward_from_yaw_pitch_deg(float(model.body_yaw_deg), 0.0).normalized()
+    if body_forward.length() <= 1e-6:
+      body_forward = Vec3(0.0, 0.0, 1.0)
+    perspective = str(self._state.camera_perspective)
+    if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_BACK:
+      return (body_position - body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
+    if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT:
+      return (body_position + body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
+    return (body_position, body_forward)
+
+  def _build_world_name_tags(self: "GLViewportWidget", *, snapshot) -> tuple[NameTagRenderState, ...]:
+    if not bool(self._world_name_tags_visible()):
+      return ()
+    target, body_forward = self._name_tag_target(snapshot=snapshot)
+    tags: list[NameTagRenderState] = []
+    for ai_snapshot in tuple(self._session.ai_render_snapshots()):
+      text = str(getattr(ai_snapshot, "name", "")).strip()
+      if not text:
+        continue
+      anchor = Vec3(float(ai_snapshot.position_x), float(ai_snapshot.position_y) + float(ai_snapshot.height) + float(NAME_TAG_ANCHOR_OFFSET_BLOCKS), float(ai_snapshot.position_z))
+      tags.append(NameTagRenderState(tag_id=f"ai:{str(ai_snapshot.actor_id)}", text=text, anchor=anchor, target=target, fallback_forward=body_forward, health=float(ai_snapshot.health), max_health=float(ai_snapshot.max_health), health_indicator=str(ai_snapshot.health_indicator)))
+    player_text = str(self._state.resolved_player_name).strip()
+    if player_text and not bool(self._state.is_first_person_view()):
+      player = self._session.player
+      crouch_amount = clampf(float(snapshot.player_model.crouch_amount), 0.0, 1.0)
+      y = float(snapshot.player_model.base_y) + float(player.height) + float(NAME_TAG_ANCHOR_OFFSET_BLOCKS) - float(NAME_TAG_CROUCH_ANCHOR_OFFSET_BLOCKS) * float(crouch_amount)
+      tags.append(NameTagRenderState(tag_id="player:local", text=player_text, anchor=Vec3(float(snapshot.player_model.base_x), float(y), float(snapshot.player_model.base_z)), target=target, fallback_forward=body_forward))
+    return tuple(tags)
 
   def _refresh_selection_for_frame(self: "GLViewportWidget", *, snapshot, interaction_eye: Vec3, interaction_yaw_deg: float, interaction_pitch_deg: float) -> None:
     if bool(self.loading_active()):
@@ -202,6 +241,7 @@ class ViewportRenderLoopMixin:
     fb_w, fb_h, dpr = self._framebuffer_extent()
     player_state = compose_player_render_state(snapshot=snapshot, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry, arm_rotation_limit_min_deg=float(self._state.arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(self._state.arm_rotation_limit_max_deg))
     extra_player_states = ai_controller.extra_player_render_states(self, snapshot=snapshot)
+    name_tags = self._build_world_name_tags(snapshot=snapshot)
 
     self._renderer.render(
       w=fb_w,
@@ -214,6 +254,7 @@ class ViewportRenderLoopMixin:
       render_distance_chunks=int(self._state.render_distance_chunks),
       player_state=player_state,
       extra_player_states=tuple(extra_player_states),
+      name_tags=tuple(name_tags),
       othello_state=othello_controller.build_render_state(self),
       falling_blocks=tuple(snapshot.falling_blocks),
       block_break_particles=tuple(snapshot.block_break_particles),
@@ -223,8 +264,6 @@ class ViewportRenderLoopMixin:
       self._route_overlay.set_paths(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(camera_snapshot.fov_deg), z_far=float(self._renderer._cfg.camera.z_far), paths=route_paths)
     else:
       self._route_overlay.clear_paths()
-    self._update_world_player_name_tag(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
-    self._update_ai_status_tags(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
     self._update_axis_crosshair_camera(yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
     self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
     self._update_menu_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))

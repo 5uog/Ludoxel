@@ -20,6 +20,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.cloud import CloudPas
 from ludoxel.presentation.rendering.backends.opengl.passes.falling_block import FallingBlockPass
 from ludoxel.presentation.rendering.backends.opengl.passes.first_person_arm import FirstPersonArmPass
 from ludoxel.presentation.rendering.backends.opengl.passes.held_block import HeldBlockPass
+from ludoxel.presentation.rendering.backends.opengl.passes.name_tag import NameTagPass
 from ludoxel.presentation.rendering.backends.opengl.passes.player_model import PlayerModelPass
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapPass
 from ludoxel.presentation.rendering.backends.opengl.passes.special_item import SpecialItemPass
@@ -41,6 +42,7 @@ from ludoxel.presentation.rendering.contracts.config import (
   sun_glare_strength,
 )
 from ludoxel.presentation.rendering.contracts.state import BackendRendererRuntimeState
+from ludoxel.presentation.rendering.visuals.name_tags import NameTagRenderState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ludoxel.presentation.rendering.visuals.players.model_pose import build_player_model_pose
@@ -70,6 +72,7 @@ class FramePipeline:
   player_pass: PlayerModelPass
   first_person_arm_pass: FirstPersonArmPass
   held_block_pass: HeldBlockPass
+  name_tag_pass: NameTagPass
   special_item_pass: SpecialItemPass
   sun_pass: SunPass
   cloud_pass: CloudPass
@@ -98,6 +101,7 @@ class FramePipeline:
     render_distance_chunks: int,
     player_state: PlayerRenderState | None,
     extra_player_states: tuple[PlayerRenderState, ...],
+    name_tags: tuple[NameTagRenderState, ...],
     othello_state: OthelloRenderState | None,
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...],
     block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...],
@@ -229,6 +233,9 @@ class FramePipeline:
     cloud_proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(cloud_projection_z_far(int(render_distance_chunks), float(self.cfg.camera.z_far))))
     cloud_vp = mat4.mul(cloud_proj, view)
     self.cloud_pass.draw(eye=eye, view_proj=cloud_vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir, fog=cloud_fog, far_distance=float(cloud_far_distance(int(render_distance_chunks))), ultra=bool(ultra_visuals))
+
+    name_tag_dc, name_tag_inst = self.name_tag_pass.draw(name_tags=tuple(name_tags), view_proj=vp)
+    world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + name_tag_dc), instances=int(world_metrics.instances + name_tag_inst), rendered=bool(world_metrics.rendered or (name_tag_dc > 0)))
 
     self.selection.draw(view_proj=vp)
 

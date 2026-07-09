@@ -11,6 +11,7 @@ from PyQt6.QtGui import QImage
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
+from ludoxel.presentation.rendering.visuals.name_tags import NameTagRenderState
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.render_state import PlayerRenderState
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
@@ -62,6 +63,7 @@ class BackendRendererApi(Protocol):
     render_distance_chunks: int,
     player_state: PlayerRenderState | None = None,
     extra_player_states: tuple[PlayerRenderState, ...] = (),
+    name_tags: tuple[NameTagRenderState, ...] = (),
     othello_state: OthelloRenderState | None = None,
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = (),
     block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = (),

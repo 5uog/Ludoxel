@@ -706,10 +706,16 @@
     <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health</loc>
   </url>
   <url>
-    <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health#reading-ai-nametags-and-health-pool</loc>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health#reading-ai-nametags-and-health-render-state</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health#reading-ai-nametags-and-health-name-source</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health#reading-ai-nametags-and-health-facing-target</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health#reading-ai-nametags-and-health-box-style</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/gameplay/ai-npc-combat/npc-lifecycle/reading-ai-nametags-and-health#reading-ai-nametags-and-health-indicator-modes</loc>

@@ -21,6 +21,7 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
   create_cloud_pipeline,
   create_cloud_volume_pipeline,
   create_cloud_wireframe_pipeline,
+  create_name_tag_pipeline,
   create_othello_pipeline,
   create_othello_shadow_pipeline,
   create_selection_pipeline,
@@ -45,6 +46,7 @@ from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.falling_blocks import build_falling_block_face_rows
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
+from ludoxel.presentation.rendering.visuals.name_tags import NameTagRenderState, NameTagTextureSpec, build_name_tag_face_rows, name_tag_content_key, render_name_tag_texture
 from ludoxel.presentation.rendering.visuals.othello.scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 from ludoxel.presentation.rendering.visuals.players.first_person_geometry import FIRST_PERSON_HAND_NEAR, build_first_person_arm_face_rows, build_first_person_held_block_face_rows, build_first_person_special_item_face_rows
@@ -151,6 +153,12 @@ class WgpuRendererBackend:
     self._ai_skin_texture_views: dict[str, object] = {}
     self._ai_skin_samplers: dict[str, object] = {}
     self._ai_skin_bind_groups: dict[str, object] = {}
+    self._name_tag_textures: dict[str, object] = {}
+    self._name_tag_texture_views: dict[str, object] = {}
+    self._name_tag_samplers: dict[str, object] = {}
+    self._name_tag_bind_groups: dict[str, object] = {}
+    self._name_tag_specs: dict[str, NameTagTextureSpec] = {}
+    self._name_tag_content_keys: dict[str, tuple[object, ...]] = {}
     self._special_item_textures: dict[str, object] = {}
     self._special_item_bind_groups: dict[str, object] = {}
     self._cloud_field = CloudField(self._cfg.clouds)
@@ -219,6 +227,7 @@ class WgpuRendererBackend:
     othello_shadow_pipeline = create_othello_shadow_pipeline(device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope))
     transform_shadow_pipeline = create_transform_shadow_pipeline(device=device, depth_format="depth32float", camera_bind_group_layout=camera_bgl, depth_bias=int(shadow_depth_bias), depth_bias_slope_scale=float(shadow_depth_slope))
     textured_face_pipeline = create_textured_face_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, texture_bind_group_layout=atlas_bgl)
+    name_tag_pipeline = create_name_tag_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl, texture_bind_group_layout=atlas_bgl)
     selection_pipeline = create_selection_pipeline(device=device, target_format=target_format, depth_format=_DEPTH_FORMAT, camera_bind_group_layout=camera_bgl)
     face_vertex_buffer = device.create_buffer_with_data(label="ludoxel-static-face-vertices", data=np.ascontiguousarray(build_face_vertex_rows(), dtype=np.float32), usage=wgpu.BufferUsage.VERTEX)
     face_wire_vertices = np.ascontiguousarray(build_face_wire_vertex_rows(), dtype=np.float32)
@@ -262,6 +271,7 @@ class WgpuRendererBackend:
       transform_shadow_pipeline=transform_shadow_pipeline,
       shadow_depth_pipeline=shadow_depth_pipeline,
       textured_face_pipeline=textured_face_pipeline,
+      name_tag_pipeline=name_tag_pipeline,
       selection_pipeline=selection_pipeline,
       othello_board_vertex_buffer=othello_board_vertex_buffer,
       othello_board_vertex_count=int(othello_board_vertices.shape[0]),
@@ -307,6 +317,7 @@ class WgpuRendererBackend:
     self._skin_sampler = None
     self._skin_size = (0, 0)
     self._destroy_ai_skin_gpu_resources()
+    self._destroy_name_tag_gpu_resources()
     for texture in tuple(self._special_item_textures.values()):
       if texture is not None and hasattr(texture, "destroy"):
         texture.destroy()
@@ -759,7 +770,7 @@ class WgpuRendererBackend:
         append_face_instance(buffers, int(face_idx), model, uv_rect)
     return face_rows_from_buffers(buffers)
 
-  def _draw_transform_buckets(self, render_pass, *, buckets: tuple[np.ndarray, ...] | list[np.ndarray], texture_bind_group, label: str, camera_bind_groups: tuple[object, ...] | None = None) -> tuple[int, int, list[WgpuFaceInstances]]:
+  def _draw_transform_buckets(self, render_pass, *, buckets: tuple[np.ndarray, ...] | list[np.ndarray], texture_bind_group, label: str, camera_bind_groups: tuple[object, ...] | None = None, pipeline=None) -> tuple[int, int, list[WgpuFaceInstances]]:
     if self._res is None or texture_bind_group is None:
       return (0, 0, [])
     frame_bgs = self._res.camera_bind_groups if camera_bind_groups is None else tuple(camera_bind_groups)
@@ -767,7 +778,7 @@ class WgpuRendererBackend:
     live_uploads: list[WgpuFaceInstances] = []
     draw_calls = 0
     instances = 0
-    render_pass.set_pipeline(self._res.textured_face_pipeline)
+    render_pass.set_pipeline(self._res.textured_face_pipeline if pipeline is None else pipeline)
     render_pass.set_bind_group(1, texture_bind_group)
     render_pass.set_vertex_buffer(0, self._res.face_vertex_buffer)
     for face_idx, face in enumerate(uploaded):
@@ -795,6 +806,7 @@ class WgpuRendererBackend:
     render_distance_chunks: int,
     player_state: PlayerRenderState | None = None,
     extra_player_states: tuple[PlayerRenderState, ...] = (),
+    name_tags: tuple[NameTagRenderState, ...] = (),
     othello_state: OthelloRenderState | None = None,
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = (),
     block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = (),
@@ -1096,6 +1108,20 @@ class WgpuRendererBackend:
               draw_calls += 1
               instances += int(face_count)
 
+    live_name_tag_ids: set[str] = set()
+    for tag in tuple(name_tags):
+      cached = self._name_tag_bind_group_for(tag)
+      if cached is None:
+        continue
+      bind_group, spec = cached
+      live_name_tag_ids.add(str(tag.tag_id))
+      tag_rows = build_name_tag_face_rows(tag, spec)
+      dc, inst, uploads = self._draw_transform_buckets(render_pass, buckets=tag_rows, texture_bind_group=bind_group, label=f"ludoxel-name-tag-temp-{len(live_name_tag_ids)}", camera_bind_groups=world_uniform_bind_groups, pipeline=self._res.name_tag_pipeline)
+      draw_calls += int(dc)
+      instances += int(inst)
+      temp_uploads.extend(uploads)
+    self._destroy_name_tag_gpu_resources(keep_ids=live_name_tag_ids)
+
     if self._selection_buffer is not None and self._selection_vertex_count > 0 and bool(self._state.outline_selection_enabled):
       selection_uniform_buffers, selection_uniform_bind_groups = self._create_frame_uniform_bind_groups(label="ludoxel-selection-frame", view_proj=view_proj, light_view_proj=light_view_proj, tint_value=0.0, sel_mode=0, sel_block=None)
       temp_uniform_buffers.extend(selection_uniform_buffers)
@@ -1177,6 +1203,42 @@ class WgpuRendererBackend:
     self._ai_skin_texture_views.clear()
     self._ai_skin_samplers.clear()
     self._ai_skin_bind_groups.clear()
+
+  def _destroy_name_tag_gpu_resources(self, *, keep_ids: set[str] | None = None) -> None:
+    keep = set() if keep_ids is None else {str(value) for value in keep_ids}
+    for tag_id in list(self._name_tag_textures.keys()):
+      if keep and str(tag_id) in keep:
+        continue
+      texture = self._name_tag_textures.pop(str(tag_id), None)
+      if texture is not None and hasattr(texture, "destroy"):
+        texture.destroy()
+      self._name_tag_texture_views.pop(str(tag_id), None)
+      self._name_tag_samplers.pop(str(tag_id), None)
+      self._name_tag_bind_groups.pop(str(tag_id), None)
+      self._name_tag_specs.pop(str(tag_id), None)
+      self._name_tag_content_keys.pop(str(tag_id), None)
+
+  def _name_tag_bind_group_for(self, tag: NameTagRenderState) -> tuple[object, NameTagTextureSpec] | None:
+    if self._res is None:
+      return None
+    tag_id = str(tag.tag_id)
+    key = name_tag_content_key(tag)
+    bind_group = self._name_tag_bind_groups.get(tag_id)
+    spec = self._name_tag_specs.get(tag_id)
+    if bind_group is not None and spec is not None and self._name_tag_content_keys.get(tag_id) == key:
+      return (bind_group, spec)
+    self._destroy_name_tag_gpu_resources(keep_ids={existing_id for existing_id in self._name_tag_textures.keys() if str(existing_id) != tag_id})
+    next_spec = render_name_tag_texture(tag)
+    if next_spec is None:
+      return None
+    texture, view, sampler, next_bind_group, _width, _height = _create_texture_bind_group(device=self._res.device, layout=self._res.atlas_bind_group_layout, label=f"ludoxel-name-tag-{tag_id}", image=next_spec.image, mirror_y=True)
+    self._name_tag_textures[tag_id] = texture
+    self._name_tag_texture_views[tag_id] = view
+    self._name_tag_samplers[tag_id] = sampler
+    self._name_tag_bind_groups[tag_id] = next_bind_group
+    self._name_tag_specs[tag_id] = next_spec
+    self._name_tag_content_keys[tag_id] = key
+    return (next_bind_group, next_spec)
 
   def _replace_ai_skin_gpu_resources(self) -> None:
     self._destroy_ai_skin_gpu_resources()
