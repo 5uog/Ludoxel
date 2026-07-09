@@ -2,6 +2,24 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.4",
+      "tags": [
+        "Desktop Application",
+        "Chat",
+        "Input"
+      ],
+      "sections": [
+        {
+          "title": "Chat Recall Keeps Arrow Keys on History Until Edited",
+          "items": [
+            "`ChatController` now keeps sent-input recall as its own focused-field state: the saved draft, selected history index, recalled text, and dirty flag stay separate from command candidate selection. When Up restores a previous message or slash command, the controller closes the candidate view and leaves Up and Down assigned to history traversal until the recalled text changes.",
+            "User typing, deletion, paste, or selection replacement clears the clean recall state and lets slash-command or mention candidates reopen from the edited field. Candidate selection still owns Up and Down only for an active user-edited suggestion popup, while Tab completion, mention Enter confirmation, slash-command Enter submission, Esc close, and validation-error command recall stay on their existing routes.",
+            "`ChatScreen` tracks input-method preedit text and leaves composition key presses to the line edit while preedit text is active, so candidate selection and history traversal do not consume composition Up, Down, Enter, Tab, or Esc."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.3",
       "tags": [
         "Desktop Application",

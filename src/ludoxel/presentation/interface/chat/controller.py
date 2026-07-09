@@ -51,11 +51,13 @@ class ChatController:
     self._screen.mute_changed.connect(self._on_mute_changed)
     self._screen.link_activated.connect(self._on_link_activated)
     self._screen.sent_history_requested.connect(self._on_sent_history_requested)
-    self._screen.input_edited.connect(self._reset_sent_history_navigation)
+    self._screen.input_edited.connect(self._on_input_edited)
     self._screen.candidate_activated.connect(self._on_candidate_activated)
     self._feed.fade_visibility_changed.connect(self.sync_visibility)
     self._sent_history_index: int | None = None
     self._sent_history_draft = ""
+    self._sent_history_recalled_text = ""
+    self._sent_history_recalled_dirty = False
     self._suggestion_mode = ""
 
     self._support_timer = QTimer(viewport)
@@ -150,6 +152,7 @@ class ChatController:
 
   def _on_input_changed(self, text: str) -> None:
     source = str(text)
+    self._screen.set_candidate_key_routing_enabled(True)
     mention_span = self._mention_token_span(source, self._screen.cursor_position())
     if mention_span is not None:
       start, _end = mention_span
@@ -168,6 +171,12 @@ class ChatController:
       self._suggestion_mode = ""
       self._screen.set_candidate_enter_activation(False)
       self._screen.show_candidates(False)
+
+  def _on_input_edited(self) -> None:
+    self._sent_history_recalled_dirty = bool(self._sent_history_index is not None)
+    self._sent_history_index = None
+    self._sent_history_draft = ""
+    self._sent_history_recalled_text = ""
 
   def _on_candidate_activated(self, candidate: str) -> None:
     selected = str(candidate)
@@ -268,27 +277,46 @@ class ChatController:
       return
     step = -1 if int(direction) < 0 else 1
     if step < 0:
-      if self._sent_history_index is None:
+      if not self._sent_history_recall_clean():
         self._sent_history_draft = self._screen.input_text()
         self._sent_history_index = len(items) - 1
       else:
         self._sent_history_index = max(0, int(self._sent_history_index) - 1)
-      self._screen.set_input_text(items[int(self._sent_history_index)])
+      self._set_recalled_input_text(items[int(self._sent_history_index)])
       return
     if self._sent_history_index is None:
       return
     if int(self._sent_history_index) < len(items) - 1:
       self._sent_history_index = int(self._sent_history_index) + 1
-      self._screen.set_input_text(items[int(self._sent_history_index)])
+      self._set_recalled_input_text(items[int(self._sent_history_index)])
       return
     self._reset_sent_history_navigation(restore_draft=True)
+
+  def _sent_history_recall_clean(self) -> bool:
+    if self._sent_history_index is None:
+      return False
+    return (not bool(self._sent_history_recalled_dirty)) and str(self._sent_history_recalled_text) == str(self._screen.input_text())
+
+  def _set_recalled_input_text(self, text: str) -> None:
+    value = str(text)
+    self._sent_history_recalled_text = str(value)
+    self._sent_history_recalled_dirty = False
+    self._suggestion_mode = ""
+    self._screen.set_candidate_enter_activation(False)
+    self._screen.set_candidate_key_routing_enabled(False)
+    self._screen.show_candidates(False)
+    self._screen.set_input_text(value)
 
   def _reset_sent_history_navigation(self, *, restore_draft: bool = False) -> None:
     draft = str(self._sent_history_draft)
     self._sent_history_index = None
     self._sent_history_draft = ""
+    self._sent_history_recalled_text = ""
+    self._sent_history_recalled_dirty = False
+    self._screen.set_candidate_key_routing_enabled(True)
     if restore_draft:
       self._screen.set_input_text(draft)
+      self._on_input_changed(draft)
 
   def _apply_effects(self, effects) -> None:
     viewport = self._v

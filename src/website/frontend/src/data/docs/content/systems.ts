@@ -2582,7 +2582,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.3"`,
+            code: `__version__ = "3.8.4"`,
           },
           {
             kind: 'note',
@@ -3018,7 +3018,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
         content: [
           {
             kind: 'paragraph',
-            text: 'The application chat state lives under `src/ludoxel/application/chat/`. `ChatRuntime` owns a `ChatHistory`, a `SentInputHistory`, and a `ChatRuntimeSettings`. Both histories use the one-hundred-entry cap, so the oldest entry is dropped when the corresponding sequence reaches capacity. `ChatController` records every nonempty submitted message or command before command routing, while `ChatScreen` keeps only the current traversal index and draft text for its focused field. The mute flag and both histories are held for the running game and are absent from saved preferences, the app-state schema, and every world and Othello save.',
+            text: 'The application chat state lives under `src/ludoxel/application/chat/`. `ChatRuntime` owns a `ChatHistory`, a `SentInputHistory`, and a `ChatRuntimeSettings`. Both histories use the one-hundred-entry cap, so the oldest entry is dropped when the corresponding sequence reaches capacity. `ChatController` records every nonempty submitted message or command before command routing. The controller also owns the focused-field traversal state: the saved draft, selected sent-history index, recalled text, and dirty flag. `ChatScreen` emits user-edited text separately from programmatic field replacement, so a restored history row remains clean until typing, deletion, paste, or selection replacement changes it. The mute flag and both histories are held for the running game and are absent from saved preferences, the app-state schema, and every world and Othello save.',
           },
           {
             kind: 'code',
@@ -3073,7 +3073,11 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
           },
           {
             kind: 'paragraph',
-            text: '`ChatScreen` keeps `ChatCandidateView` in the chat display area and hides the message scroll while candidates are visible. Slash-command candidates and mention candidates therefore share the same row design, selected-row state, mouse activation, and keyboard navigation while the popup is clamped inside the display area and aligned to its lower edge. Tab activates the selected candidate for both suggestion modes. Enter activates the selected candidate only when mention mode is active; slash-command mode leaves Enter to the message field submission path. `ChatController` chooses one suggestion mode from the current token: slash commands when the input begins with `/`, or mention candidates when the token under the cursor begins with `@`.',
+            text: '`ChatScreen` keeps `ChatCandidateView` in the chat display area and hides the message scroll while candidates are visible. Slash-command candidates and mention candidates therefore share the same row design, selected-row state, mouse activation, and keyboard navigation while the popup is clamped inside the display area and aligned to its lower edge. Tab activates the selected candidate for both suggestion modes. Enter activates the selected candidate only when mention mode is active; slash-command mode leaves Enter to the message field submission path. `ChatController` chooses one suggestion mode from user-edited text: slash commands when the input begins with `/`, or mention candidates when the token under the cursor begins with `@`.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'Sent-input recall is a separate field state. `_set_recalled_input_text` closes the candidate view, clears the suggestion mode, and disables candidate key routing while it installs the recalled row. A clean recalled slash command therefore keeps Up and Down assigned to `sent_history_requested`; another Up or Down continues through `SentInputHistory` instead of moving a candidate row. The next user edit clears the recall state, enables candidate key routing, and lets the edited text open slash-command or mention candidates again. While `QEvent.Type.InputMethod` carries preedit text for the message field, `ChatScreen.eventFilter` leaves key presses to the line edit, so candidate selection and history traversal do not consume composition Up, Down, Enter, Tab, or Esc.',
           },
           {
             kind: 'paragraph',

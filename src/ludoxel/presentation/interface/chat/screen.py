@@ -38,6 +38,8 @@ class ChatScreen(QWidget):
     self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
     self.setVisible(False)
     self._candidate_enter_activation = False
+    self._candidate_key_routing_enabled = True
+    self._input_preedit_active = False
 
     root = QVBoxLayout(self)
     root.setContentsMargins(0, 0, 0, 0)
@@ -99,8 +101,7 @@ class ChatScreen(QWidget):
     self._input.setPlaceholderText("Message or /command")
     self._input.setFixedHeight(int(inner))
     self._input.installEventFilter(self)
-    self._input.textChanged.connect(self.input_changed.emit)
-    self._input.textEdited.connect(self.input_edited.emit)
+    self._input.textEdited.connect(self._on_text_edited)
     self._input.returnPressed.connect(self._on_return_pressed)
     layout.addWidget(self._input, stretch=1)
 
@@ -114,10 +115,17 @@ class ChatScreen(QWidget):
     return bar
 
   def _on_return_pressed(self) -> None:
+    if bool(self._input_preedit_active):
+      return
     self.submit_requested.emit(str(self._input.text()))
 
   def _on_send_clicked(self) -> None:
     self.submit_requested.emit(str(self._input.text()))
+
+  def _on_text_edited(self, text: str) -> None:
+    self._input_preedit_active = False
+    self.input_edited.emit()
+    self.input_changed.emit(str(text))
 
   def input_text(self) -> str:
     return str(self._input.text())
@@ -162,6 +170,9 @@ class ChatScreen(QWidget):
   def set_candidate_enter_activation(self, enabled: bool) -> None:
     self._candidate_enter_activation = bool(enabled)
 
+  def set_candidate_key_routing_enabled(self, enabled: bool) -> None:
+    self._candidate_key_routing_enabled = bool(enabled)
+
   def settings_open(self) -> bool:
     return bool(self._settings_panel.isVisible())
 
@@ -188,9 +199,21 @@ class ChatScreen(QWidget):
       self._settings_panel.setGeometry(0, 0, max(1, int(self.width())), max(1, int(self.height())))
 
   def eventFilter(self, watched, event) -> bool:
+    if watched is self._input and event.type() == QEvent.Type.InputMethod:
+      preedit = ""
+      try:
+        preedit = str(event.preeditString())
+      except Exception:
+        preedit = ""
+      self._input_preedit_active = bool(preedit)
+      return super().eventFilter(watched, event)
+    if watched is self._input and event.type() == QEvent.Type.FocusOut:
+      self._input_preedit_active = False
     if watched is self._input and event.type() == QEvent.Type.KeyPress:
+      if bool(self._input_preedit_active):
+        return super().eventFilter(watched, event)
       key = int(event.key())
-      if self._candidates.isVisible():
+      if self._candidates.isVisible() and bool(self._candidate_key_routing_enabled):
         if key == int(Qt.Key.Key_Up):
           self._candidates.move_selection(-1)
           event.accept()
