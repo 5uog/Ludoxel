@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { DEFAULT_PREVIEW_FIT_PADDING_PX, DEFAULT_PREVIEW_PITCH_DEGREES, DEFAULT_PREVIEW_ROLL_DEGREES, DEFAULT_PREVIEW_SCALE_FACTOR, DEFAULT_PREVIEW_YAW_DEGREES, PREVIEW_CANVAS_SIZE_PX } from '../../config/preview.config.mjs';
+
 export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
   ja: Object.freeze({
     title: Object.freeze({
@@ -9,7 +11,7 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
       generate: 'block thumbnail generate',
       check: 'block thumbnail check',
     }),
-    purpose: Object.freeze(['Ludoxel の既存 block model / state / face rendering code path から 300x300 RGBA PNG preview を生成又は検査する。', 'tool 側では block geometry、connectivity、UV、face projection を定義しない。']),
+    purpose: Object.freeze([`Ludoxel の既存 block model / state / face rendering code path から ${PREVIEW_CANVAS_SIZE_PX}x${PREVIEW_CANVAS_SIZE_PX} RGBA PNG preview を生成又は検査する。`, 'tool 側では block geometry、connectivity、UV、face projection を定義しない。']),
     sections: Object.freeze([
       Object.freeze({
         heading: 'Commands',
@@ -25,11 +27,11 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
           '--model-category CATEGORY    cube/full_block, slab, stairs, fence, fence_gate, wall のいずれかで絞り込む。',
           '--state KEY=VALUE            block state property override。複数回指定できる。',
           '--neighbor DIR=STATE         中心 block の connectivity 判定にだけ使う neighbor state context。DIR は north/east/south/west/up/down。',
-          '--yaw DEG                    preview yaw。既定値 45。',
-          '--pitch DEG                  preview pitch。既定値 30。',
-          '--roll DEG                   preview roll。既定値 0。',
-          '--scale FLOAT                fit 後の追加 scale。既定値 1。',
-          '--fit-padding PX             透明余白。既定値 18。',
+          `--yaw DEG                    preview yaw。既定値 ${DEFAULT_PREVIEW_YAW_DEGREES}。`,
+          `--pitch DEG                  preview pitch。既定値 ${DEFAULT_PREVIEW_PITCH_DEGREES}。`,
+          `--roll DEG                   preview roll。既定値 ${DEFAULT_PREVIEW_ROLL_DEGREES}。`,
+          `--scale FLOAT                fit 後の追加 scale。既定値 ${DEFAULT_PREVIEW_SCALE_FACTOR}。`,
+          `--fit-padding PX             透明余白。既定値 ${DEFAULT_PREVIEW_FIT_PADDING_PX}。`,
           '--dry-run                    generate の検査だけを行い、書き込まない。',
           '--allow-overwrite            既存 output PNG の上書きを許可する。',
           '--lang ja|en                 help language。--language と --locale も同じ。',
@@ -61,7 +63,7 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
       generate: 'block thumbnail generate',
       check: 'block thumbnail check',
     }),
-    purpose: Object.freeze(['Generate or check 300x300 RGBA PNG previews through the existing Ludoxel block model, state, and face rendering code path.', 'The repository tool does not define block geometry, connectivity, UVs, or face projection.']),
+    purpose: Object.freeze([`Generate or check ${PREVIEW_CANVAS_SIZE_PX}x${PREVIEW_CANVAS_SIZE_PX} RGBA PNG previews through the existing Ludoxel block model, state, and face rendering code path.`, 'The repository tool does not define block geometry, connectivity, UVs, or face projection.']),
     sections: Object.freeze([
       Object.freeze({
         heading: 'Commands',
@@ -77,11 +79,11 @@ export const BLOCK_THUMBNAIL_HELP_MESSAGES = Object.freeze({
           '--model-category CATEGORY    Filter by cube/full_block, slab, stairs, fence, fence_gate, or wall.',
           '--state KEY=VALUE            Block-state property override. May be repeated.',
           '--neighbor DIR=STATE         Neighbor state context used only for center-block connectivity. DIR is north/east/south/west/up/down.',
-          '--yaw DEG                    Preview yaw. Default is 45.',
-          '--pitch DEG                  Preview pitch. Default is 30.',
-          '--roll DEG                   Preview roll. Default is 0.',
-          '--scale FLOAT                Additional scale after fitting. Default is 1.',
-          '--fit-padding PX             Transparent padding. Default is 18.',
+          `--yaw DEG                    Preview yaw. Default is ${DEFAULT_PREVIEW_YAW_DEGREES}.`,
+          `--pitch DEG                  Preview pitch. Default is ${DEFAULT_PREVIEW_PITCH_DEGREES}.`,
+          `--roll DEG                   Preview roll. Default is ${DEFAULT_PREVIEW_ROLL_DEGREES}.`,
+          `--scale FLOAT                Additional scale after fitting. Default is ${DEFAULT_PREVIEW_SCALE_FACTOR}.`,
+          `--fit-padding PX             Transparent padding. Default is ${DEFAULT_PREVIEW_FIT_PADDING_PX}.`,
           '--dry-run                    Validate generate inputs without writing files.',
           '--allow-overwrite            Allow replacement of existing output PNG files.',
           '--lang ja|en                 Help language. --language and --locale are aliases.',

@@ -7,15 +7,20 @@ import numpy as np
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO
 from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, identity_matrix, scale_matrix, translate_matrix
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
+from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Z
+from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.row_utils import append_face_instance, empty_textured_face_rows, face_rows_from_buffers
+
+_BILLBOARD_PARALLEL_EPSILON: float = 1e-9
+_BILLBOARD_FORWARD_OFFSET_BLOCKS: float = -0.5
 
 
 def _billboard_basis(forward: Vec3) -> tuple[Vec3, Vec3, Vec3]:
   direction = forward.normalized()
   right = Vec3(0.0, 1.0, 0.0).cross(direction)
-  if right.length() <= 1e-9:
+  if right.length() <= _BILLBOARD_PARALLEL_EPSILON:
     right = Vec3(1.0, 0.0, 0.0).cross(direction)
-  if right.length() <= 1e-9:
+  if right.length() <= _BILLBOARD_PARALLEL_EPSILON:
     right = Vec3(1.0, 0.0, 0.0)
   right = right.normalized()
   up = direction.cross(right).normalized()
@@ -42,10 +47,10 @@ def build_block_break_particle_face_rows(*, samples: tuple[BlockBreakParticleRen
 
   right, up, forward = _billboard_basis(camera_forward)
   rotation = _rotation_from_basis(right=right, up=up, forward=forward)
-  buffers: list[list[list[float]]] = [[] for _ in range(6)]
+  buffers: list[list[list[float]]] = [[] for _ in range(FACE_COUNT)]
 
   for sample in samples:
-    model = compose_matrices(translate_matrix(float(sample.x), float(sample.y), float(sample.z)), rotation, scale_matrix(float(sample.size), float(sample.size), 1.0), translate_matrix(0.0, 0.0, -0.5))
-    append_face_instance(buffers, 4, model, (float(sample.u0), float(sample.v0), float(sample.u1), float(sample.v1)))
+    model = compose_matrices(translate_matrix(float(sample.x), float(sample.y), float(sample.z)), rotation, scale_matrix(float(sample.size), float(sample.size), 1.0), translate_matrix(0.0, 0.0, _BILLBOARD_FORWARD_OFFSET_BLOCKS))
+    append_face_instance(buffers, FACE_POS_Z, model, (float(sample.u0), float(sample.v0), float(sample.u1), float(sample.v1)))
 
   return face_rows_from_buffers(buffers)

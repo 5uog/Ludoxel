@@ -10,7 +10,8 @@ from pathlib import Path
 
 from PyQt6.QtGui import QImage
 
-from ludoxel.presentation.rendering.faces.preview import PREVIEW_CANVAS_SIZE, write_block_preview_png
+from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
+from ludoxel.presentation.rendering.faces.preview import DEFAULT_PREVIEW_FIT_PADDING_PX, DEFAULT_PREVIEW_PITCH_DEGREES, DEFAULT_PREVIEW_ROLL_DEGREES, DEFAULT_PREVIEW_SCALE_FACTOR, DEFAULT_PREVIEW_YAW_DEGREES, PREVIEW_CANVAS_SIZE, write_block_preview_png
 from ludoxel.presentation.rendering.faces.visible import iter_visible_faces
 from ludoxel.presentation.resources.asset_roots import resolve_block_texture_path, resolve_visual_asset_roots
 from ludoxel.simulation.blocks.definitions.block import BlockDefinition
@@ -204,7 +205,7 @@ def _build_plans(registry: BlockRegistry, request: BlockPreviewRequest, texture_
     if not list(iter_visible_faces(x=0, y=0, z=0, state_str=state_str, get_state=get_state, def_lookup=registry.get, fast_boundary_full_cube_only=True)):
       failures.append(f"{block.block_id}: model contract produced no visible faces for {state_str}")
 
-    for texture_name in sorted({block.texture_for_face(face_idx) for face_idx in range(6)}):
+    for texture_name in sorted({block.texture_for_face(face_idx) for face_idx in range(FACE_COUNT)}):
       texture_path = resolve_block_texture_path(texture_root / "block", texture_name)
       image = QImage(str(texture_path))
       if not texture_path.is_file() or image.isNull():
@@ -232,11 +233,11 @@ def _parse_arguments(argv: Sequence[str] | None = None) -> BlockPreviewRequest:
   parser.add_argument("--model-category", default="")
   parser.add_argument("--state", action="append", default=[])
   parser.add_argument("--neighbor", action="append", default=[])
-  parser.add_argument("--yaw", type=float, default=45.0)
-  parser.add_argument("--pitch", type=float, default=30.0)
-  parser.add_argument("--roll", type=float, default=0.0)
-  parser.add_argument("--scale", type=float, default=1.0)
-  parser.add_argument("--fit-padding", type=float, default=18.0)
+  parser.add_argument("--yaw", type=float, default=DEFAULT_PREVIEW_YAW_DEGREES)
+  parser.add_argument("--pitch", type=float, default=DEFAULT_PREVIEW_PITCH_DEGREES)
+  parser.add_argument("--roll", type=float, default=DEFAULT_PREVIEW_ROLL_DEGREES)
+  parser.add_argument("--scale", type=float, default=DEFAULT_PREVIEW_SCALE_FACTOR)
+  parser.add_argument("--fit-padding", type=float, default=DEFAULT_PREVIEW_FIT_PADDING_PX)
   parser.add_argument("--dry-run", action="store_true")
   parser.add_argument("--allow-overwrite", action="store_true")
   args = parser.parse_args(argv)

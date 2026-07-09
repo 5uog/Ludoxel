@@ -12,16 +12,35 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPainter
 
 from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState
+from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.row_utils import atlas_face_uv
 from ludoxel.presentation.rendering.faces.visible import iter_visible_faces
 from ludoxel.presentation.resources.asset_roots import resolve_block_texture_path
 from ludoxel.simulation.blocks.definitions.block import BlockDefinition
 
-PREVIEW_CANVAS_SIZE = 300
-PREVIEW_RASTER_SCALE = 4
+PREVIEW_CANVAS_SIZE_PX = 300
+PREVIEW_RASTER_SCALE_FACTOR = 4
+DEFAULT_PREVIEW_YAW_DEGREES = 45.0
+DEFAULT_PREVIEW_PITCH_DEGREES = 30.0
+DEFAULT_PREVIEW_ROLL_DEGREES = 0.0
+DEFAULT_PREVIEW_SCALE_FACTOR = 1.0
+DEFAULT_PREVIEW_FIT_PADDING_PX = 18.0
+RGBA_CHANNEL_COUNT = 4
+ALPHA_CHANNEL_OFFSET = 3
+COLOR_CHANNEL_MAX = 255
+_PREVIEW_BLOCK_CENTER_OFFSET = 0.5
+_PREVIEW_PIXEL_CENTER_OFFSET = 0.5
+_MIN_PROJECTED_FACE_SPAN_PX = 1e-9
+_BACKFACE_NORMAL_EPSILON = 1e-8
+_TRIANGLE_AREA_EPSILON = 1e-9
+_BARYCENTRIC_EDGE_EPSILON = 1e-7
+_FACE_VERTEX_COUNT = 4
+
+PREVIEW_CANVAS_SIZE = PREVIEW_CANVAS_SIZE_PX
+PREVIEW_RASTER_SCALE = PREVIEW_RASTER_SCALE_FACTOR
 PREVIEW_RASTER_SIZE = PREVIEW_CANVAS_SIZE * PREVIEW_RASTER_SCALE
 
-_FACE_SHADE_ALPHA_BY_FACE: tuple[int, int, int, int, int, int] = (102, 102, 0, 128, 51, 51)
+_FACE_SHADE_ALPHA_BY_FACE: tuple[int, ...] = (102, 102, 0, 128, 51, 51)
 
 
 @dataclass(frozen=True)
@@ -76,7 +95,7 @@ def _quad_from_bounds(mn: tuple[float, float, float], mx: tuple[float, float, fl
 
 
 def _shade_alpha_for_face(face_idx: int) -> int:
-  if int(face_idx) < 0 or int(face_idx) >= len(_FACE_SHADE_ALPHA_BY_FACE):
+  if int(face_idx) < 0 or int(face_idx) >= min(FACE_COUNT, len(_FACE_SHADE_ALPHA_BY_FACE)):
     return 0
 
   return int(_FACE_SHADE_ALPHA_BY_FACE[int(face_idx)])
@@ -90,7 +109,7 @@ def _project_faces(*, block: BlockDefinition, state_str: str, get_state: GetStat
 
     rotated_normal = _rotate_point(_normal_for_face(face_idx), yaw=float(yaw), pitch=float(pitch), roll=float(roll))
 
-    if float(rotated_normal[2]) <= 1e-8:
+    if float(rotated_normal[2]) <= _BACKFACE_NORMAL_EPSILON:
       continue
 
     texture_name = block.texture_for_face(face_idx)
@@ -100,7 +119,7 @@ def _project_faces(*, block: BlockDefinition, state_str: str, get_state: GetStat
 
     source_uvs = ((float(u0), float(v0)), (float(u1), float(v0)), (float(u1), float(v1)), (float(u0), float(v1)))
 
-    rotated = tuple(_rotate_point((x - 0.5, y - 0.5, z - 0.5), yaw=float(yaw), pitch=float(pitch), roll=float(roll)) for x, y, z in _quad_from_bounds(visible.mn, visible.mx, face_idx))
+    rotated = tuple(_rotate_point((x - _PREVIEW_BLOCK_CENTER_OFFSET, y - _PREVIEW_BLOCK_CENTER_OFFSET, z - _PREVIEW_BLOCK_CENTER_OFFSET), yaw=float(yaw), pitch=float(pitch), roll=float(roll)) for x, y, z in _quad_from_bounds(visible.mn, visible.mx, face_idx))
 
     vertices = tuple((float(point[0]), -float(point[1]), float(point[2]), float(uv[0]), float(uv[1])) for point, uv in zip(rotated, source_uvs, strict=True))
 
@@ -116,19 +135,19 @@ def _fit_faces_to_canvas(faces: Sequence[ProjectedPreviewFace], *, canvas_size: 
   if not xs or not ys:
     return []
 
-  width = max(max(xs) - min(xs), 1e-9)
-  height = max(max(ys) - min(ys), 1e-9)
+  width = max(max(xs) - min(xs), _MIN_PROJECTED_FACE_SPAN_PX)
+  height = max(max(ys) - min(ys), _MIN_PROJECTED_FACE_SPAN_PX)
 
   available = max(1.0, float(canvas_size) - (2.0 * float(fit_padding)))
   fit = min(available / width, available / height) * float(scale)
 
-  center_x = 0.5 * (min(xs) + max(xs))
-  center_y = 0.5 * (min(ys) + max(ys))
+  center_x = _PREVIEW_PIXEL_CENTER_OFFSET * (min(xs) + max(xs))
+  center_y = _PREVIEW_PIXEL_CENTER_OFFSET * (min(ys) + max(ys))
 
   out: list[ProjectedPreviewFace] = []
 
   for face in faces:
-    vertices = tuple(((x - center_x) * fit + canvas_size * 0.5, (y - center_y) * fit + canvas_size * 0.5, z, u, v) for x, y, z, u, v in face.vertices)
+    vertices = tuple(((x - center_x) * fit + canvas_size * _PREVIEW_PIXEL_CENTER_OFFSET, (y - center_y) * fit + canvas_size * _PREVIEW_PIXEL_CENTER_OFFSET, z, u, v) for x, y, z, u, v in face.vertices)
 
     out.append(ProjectedPreviewFace(texture_path=face.texture_path, uv_rect=face.uv_rect, vertices=vertices, shade_alpha=face.shade_alpha))
 
@@ -161,18 +180,18 @@ def _sample_texture(texture: TexturePixels, u: float, v: float) -> tuple[int, in
   x = int(round(uu * float(texture.width - 1)))
   y = int(round((1.0 - vv) * float(texture.height - 1)))
 
-  offset = ((y * int(texture.width)) + x) * 4
-  return (int(texture.data[offset]), int(texture.data[offset + 1]), int(texture.data[offset + 2]), int(texture.data[offset + 3]))
+  offset = ((y * int(texture.width)) + x) * RGBA_CHANNEL_COUNT
+  return (int(texture.data[offset]), int(texture.data[offset + 1]), int(texture.data[offset + 2]), int(texture.data[offset + ALPHA_CHANNEL_OFFSET]))
 
 
 def _shade_rgba(rgba: tuple[int, int, int, int], shade_alpha: int) -> tuple[int, int, int, int]:
   r, g, b, a = rgba
-  shade = max(0, min(255, int(shade_alpha)))
+  shade = max(0, min(COLOR_CHANNEL_MAX, int(shade_alpha)))
 
   if shade <= 0:
     return (int(r), int(g), int(b), int(a))
 
-  factor = (255 - shade) / 255.0
+  factor = (COLOR_CHANNEL_MAX - shade) / float(COLOR_CHANNEL_MAX)
   return (int(round(float(r) * factor)), int(round(float(g) * factor)), int(round(float(b) * factor)), int(a))
 
 
@@ -183,7 +202,7 @@ def _triangle_area(a: tuple[float, float, float, float, float], b: tuple[float, 
 def _rasterize_triangle(*, out: bytearray, zbuffer: list[float], size: int, texture: TexturePixels, shade_alpha: int, a: tuple[float, float, float, float, float], b: tuple[float, float, float, float, float], c: tuple[float, float, float, float, float]) -> None:
   area = _triangle_area(a, b, c)
 
-  if abs(area) <= 1e-9:
+  if abs(area) <= _TRIANGLE_AREA_EPSILON:
     return
 
   min_x = max(0, int(math.floor(min(float(a[0]), float(b[0]), float(c[0])))))
@@ -197,16 +216,16 @@ def _rasterize_triangle(*, out: bytearray, zbuffer: list[float], size: int, text
   inv_area = 1.0 / area
 
   for py in range(min_y, max_y + 1):
-    sy = float(py) + 0.5
+    sy = float(py) + _PREVIEW_PIXEL_CENTER_OFFSET
 
     for px in range(min_x, max_x + 1):
-      sx = float(px) + 0.5
+      sx = float(px) + _PREVIEW_PIXEL_CENTER_OFFSET
 
       w0 = (((float(b[0]) - sx) * (float(c[1]) - sy)) - ((float(b[1]) - sy) * (float(c[0]) - sx))) * inv_area
       w1 = (((float(c[0]) - sx) * (float(a[1]) - sy)) - ((float(c[1]) - sy) * (float(a[0]) - sx))) * inv_area
       w2 = 1.0 - w0 - w1
 
-      if w0 < -1e-7 or w1 < -1e-7 or w2 < -1e-7:
+      if w0 < -_BARYCENTRIC_EDGE_EPSILON or w1 < -_BARYCENTRIC_EDGE_EPSILON or w2 < -_BARYCENTRIC_EDGE_EPSILON:
         continue
 
       z = (w0 * float(a[2])) + (w1 * float(b[2])) + (w2 * float(c[2]))
@@ -222,11 +241,11 @@ def _rasterize_triangle(*, out: bytearray, zbuffer: list[float], size: int, text
       if alpha <= 0:
         continue
 
-      out_index = z_index * 4
+      out_index = z_index * RGBA_CHANNEL_COUNT
       out[out_index] = r
       out[out_index + 1] = g
       out[out_index + 2] = b_channel
-      out[out_index + 3] = alpha
+      out[out_index + ALPHA_CHANNEL_OFFSET] = alpha
       zbuffer[z_index] = z
 
 
@@ -236,7 +255,7 @@ def _rasterize_face(*, out: bytearray, zbuffer: list[float], size: int, face: Pr
   if texture is None:
     return
 
-  if len(face.vertices) != 4:
+  if len(face.vertices) != _FACE_VERTEX_COUNT:
     return
 
   v0, v1, v2, v3 = face.vertices
@@ -274,7 +293,7 @@ def _visible_alpha_bounds(image: QImage) -> tuple[int, int, int, int] | None:
 
   for y in range(height):
     for x in range(width):
-      if data[((int(y) * width) + int(x)) * 4 + 3] <= 0:
+      if data[((int(y) * width) + int(x)) * RGBA_CHANNEL_COUNT + ALPHA_CHANNEL_OFFSET] <= 0:
         continue
       min_x = min(min_x, int(x))
       min_y = min(min_y, int(y))
@@ -292,10 +311,10 @@ def _center_visible_alpha(image: QImage) -> QImage:
     return image
 
   min_x, min_y, max_x, max_y = bounds
-  center_x = (float(min_x) + float(max_x)) * 0.5
-  center_y = (float(min_y) + float(max_y)) * 0.5
-  target_x = (float(image.width()) - 1.0) * 0.5
-  target_y = (float(image.height()) - 1.0) * 0.5
+  center_x = (float(min_x) + float(max_x)) * _PREVIEW_PIXEL_CENTER_OFFSET
+  center_y = (float(min_y) + float(max_y)) * _PREVIEW_PIXEL_CENTER_OFFSET
+  target_x = (float(image.width()) - 1.0) * _PREVIEW_PIXEL_CENTER_OFFSET
+  target_y = (float(image.height()) - 1.0) * _PREVIEW_PIXEL_CENTER_OFFSET
   dx = int(round(float(target_x) - float(center_x)))
   dy = int(round(float(target_y) - float(center_y)))
   if dx == 0 and dy == 0:
@@ -318,20 +337,32 @@ def image_has_visible_alpha(image: QImage) -> bool:
   ptr.setsize(rgba.sizeInBytes())
   data = bytes(ptr)
 
-  return any(data[index] > 0 for index in range(3, len(data), 4))
+  return any(data[index] > 0 for index in range(ALPHA_CHANNEL_OFFSET, len(data), RGBA_CHANNEL_COUNT))
 
 
 def render_block_preview_frame(
-  *, block: BlockDefinition, state_str: str, get_state: GetState, def_lookup: DefLookup, texture_root: Path, width: int = PREVIEW_CANVAS_SIZE, height: int = PREVIEW_CANVAS_SIZE, yaw_deg: float = 45.0, pitch_deg: float = 30.0, roll_deg: float = 0.0, scale: float = 1.0, fit_padding: float = 18.0
+  *,
+  block: BlockDefinition,
+  state_str: str,
+  get_state: GetState,
+  def_lookup: DefLookup,
+  texture_root: Path,
+  width: int = PREVIEW_CANVAS_SIZE,
+  height: int = PREVIEW_CANVAS_SIZE,
+  yaw_deg: float = DEFAULT_PREVIEW_YAW_DEGREES,
+  pitch_deg: float = DEFAULT_PREVIEW_PITCH_DEGREES,
+  roll_deg: float = DEFAULT_PREVIEW_ROLL_DEGREES,
+  scale: float = DEFAULT_PREVIEW_SCALE_FACTOR,
+  fit_padding: float = DEFAULT_PREVIEW_FIT_PADDING_PX,
 ) -> QImage:
   if int(width) != PREVIEW_CANVAS_SIZE or int(height) != PREVIEW_CANVAS_SIZE:
-    raise ValueError("block preview frames must be 300x300")
+    raise ValueError(f"block preview frames must be {PREVIEW_CANVAS_SIZE}x{PREVIEW_CANVAS_SIZE}")
 
   faces = _fit_faces_to_canvas(
     _project_faces(block=block, state_str=str(state_str), get_state=get_state, texture_root=Path(texture_root), def_lookup=def_lookup, yaw=float(yaw_deg), pitch=float(pitch_deg), roll=float(roll_deg)), canvas_size=PREVIEW_RASTER_SIZE, scale=float(scale), fit_padding=float(fit_padding) * PREVIEW_RASTER_SCALE
   )
 
-  out = bytearray(PREVIEW_RASTER_SIZE * PREVIEW_RASTER_SIZE * 4)
+  out = bytearray(PREVIEW_RASTER_SIZE * PREVIEW_RASTER_SIZE * RGBA_CHANNEL_COUNT)
   zbuffer = [-float("inf")] * (PREVIEW_RASTER_SIZE * PREVIEW_RASTER_SIZE)
   texture_cache: dict[Path, TexturePixels] = {}
 
@@ -342,7 +373,20 @@ def render_block_preview_frame(
   return _downsample_preview(raster)
 
 
-def write_block_preview_png(*, block: BlockDefinition, state_str: str, get_state: GetState, def_lookup: DefLookup, texture_root: Path, output_path: Path, yaw_deg: float = 45.0, pitch_deg: float = 30.0, roll_deg: float = 0.0, scale: float = 1.0, fit_padding: float = 18.0) -> None:
+def write_block_preview_png(
+  *,
+  block: BlockDefinition,
+  state_str: str,
+  get_state: GetState,
+  def_lookup: DefLookup,
+  texture_root: Path,
+  output_path: Path,
+  yaw_deg: float = DEFAULT_PREVIEW_YAW_DEGREES,
+  pitch_deg: float = DEFAULT_PREVIEW_PITCH_DEGREES,
+  roll_deg: float = DEFAULT_PREVIEW_ROLL_DEGREES,
+  scale: float = DEFAULT_PREVIEW_SCALE_FACTOR,
+  fit_padding: float = DEFAULT_PREVIEW_FIT_PADDING_PX,
+) -> None:
   image = render_block_preview_frame(
     block=block, state_str=str(state_str), get_state=get_state, def_lookup=def_lookup, texture_root=Path(texture_root), width=PREVIEW_CANVAS_SIZE, height=PREVIEW_CANVAS_SIZE, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), scale=float(scale), fit_padding=float(fit_padding)
   )
@@ -359,4 +403,4 @@ def write_block_preview_png(*, block: BlockDefinition, state_str: str, get_state
   verified = QImage(str(output))
 
   if verified.isNull() or int(verified.width()) != PREVIEW_CANVAS_SIZE or int(verified.height()) != PREVIEW_CANVAS_SIZE or not verified.hasAlphaChannel() or not image_has_visible_alpha(verified):
-    raise RuntimeError(f"generated preview is not a visible 300x300 alpha PNG: {output}")
+    raise RuntimeError(f"generated preview is not a visible {PREVIEW_CANVAS_SIZE}x{PREVIEW_CANVAS_SIZE} alpha PNG: {output}")

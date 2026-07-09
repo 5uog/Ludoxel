@@ -16,8 +16,22 @@ use std::time::Instant;
 use crate::bitboard::{apply_move_bits, bit_count, bitboard_to_moves, legal_moves_bitboard, BOARD_CELL_COUNT, CORNERS};
 use crate::evaluation::{classic_evaluate, classic_terminal_score, evaluate_position, normalize_sacrifice_level, terminal_score, LOSS_SCORE, POSITION_WEIGHTS};
 
-const X_SQUARES: [u32; 4] = [9, 14, 49, 54];
-const C_SQUARES: [u32; 8] = [1, 6, 8, 15, 48, 55, 57, 62];
+const X_SQUARES: &[u32] = &[9, 14, 49, 54];
+const C_SQUARES: &[u32] = &[1, 6, 8, 15, 48, 55, 57, 62];
+
+const OTHELLO_AI_HASH_LEVEL_MIN: i64 = 0;
+const OTHELLO_AI_HASH_LEVEL_MAX: i64 = 6;
+const EXACT_SOLVE_EMPTY_SQUARE_THRESHOLD: i64 = 14;
+const TRANSPOSITION_SOFT_LIMIT_DISABLED: usize = 0;
+const TRANSPOSITION_SOFT_LIMIT_BASE_SHIFT: i64 = 11;
+const TRANSPOSITION_SOFT_LIMIT_MAX_SHIFT: i64 = 21;
+const TRANSPOSITION_SOFT_LIMIT_HASH_LEVEL_SHIFT_FACTOR: i64 = 2;
+const CORNER_MOVE_ORDERING_BONUS: i64 = 50_000;
+const X_SQUARE_MOVE_ORDERING_PENALTY: i64 = -9_000;
+const C_SQUARE_MOVE_ORDERING_PENALTY: i64 = -4_500;
+const POSITION_WEIGHT_ORDERING_FACTOR: i64 = 32;
+const REPLY_MOVE_ORDERING_PENALTY: i64 = 96;
+const TRANSPOSITION_MOVE_ORDERING_BONUS: i64 = 100_000;
 
 const BOUND_EXACT: i8 = 0;
 const BOUND_LOWER: i8 = 1;
@@ -26,7 +40,7 @@ const BOUND_UPPER: i8 = -1;
 pub struct SearchTimeout;
 
 fn normalize_hash_level(value: i64) -> i64 {
-  value.clamp(0, 6)
+  value.clamp(OTHELLO_AI_HASH_LEVEL_MIN, OTHELLO_AI_HASH_LEVEL_MAX)
 }
 
 fn classic_ordered_moves(legal: u64, maximizing: bool) -> Vec<u32> {
@@ -123,15 +137,15 @@ pub fn classic_root_scores(player: u64, opponent: u64, depth: i64, sacrifice_lev
 
 fn ordering_bonus(move_index: u32) -> i64 {
   if CORNERS.contains(&move_index) {
-    return 50_000;
+    return CORNER_MOVE_ORDERING_BONUS;
   }
   if X_SQUARES.contains(&move_index) {
-    return -9_000;
+    return X_SQUARE_MOVE_ORDERING_PENALTY;
   }
   if C_SQUARES.contains(&move_index) {
-    return -4_500;
+    return C_SQUARE_MOVE_ORDERING_PENALTY;
   }
-  POSITION_WEIGHTS[move_index as usize] * 32
+  POSITION_WEIGHTS[move_index as usize] * POSITION_WEIGHT_ORDERING_FACTOR
 }
 
 fn ordered_moves(player: u64, opponent: u64, legal_moves: &[u32], tt_move: Option<u32>) -> Vec<u32> {
@@ -140,9 +154,9 @@ fn ordered_moves(player: u64, opponent: u64, legal_moves: &[u32], tt_move: Optio
     .map(|&move_index| {
       let (next_player, next_opponent) = apply_move_bits(player, opponent, move_index);
       let reply_count = bit_count(legal_moves_bitboard(next_opponent, next_player));
-      let mut score = ordering_bonus(move_index) - reply_count * 96;
+      let mut score = ordering_bonus(move_index) - reply_count * REPLY_MOVE_ORDERING_PENALTY;
       if tt_move == Some(move_index) {
-        score += 100_000;
+        score += TRANSPOSITION_MOVE_ORDERING_BONUS;
       }
       (score, move_index)
     })
@@ -172,14 +186,14 @@ impl SearchState {
   pub fn new(hash_level: i64, sacrifice_level: i64) -> Self {
     let normalized_hash_level = normalize_hash_level(hash_level);
     let soft_limit = if normalized_hash_level <= 0 {
-      0usize
+      TRANSPOSITION_SOFT_LIMIT_DISABLED
     } else {
-      1usize << std::cmp::min(21, 11 + normalized_hash_level * 2) as usize
+      1usize << std::cmp::min(TRANSPOSITION_SOFT_LIMIT_MAX_SHIFT, TRANSPOSITION_SOFT_LIMIT_BASE_SHIFT + normalized_hash_level * TRANSPOSITION_SOFT_LIMIT_HASH_LEVEL_SHIFT_FACTOR) as usize
     };
     SearchState {
       hash_level: normalized_hash_level,
       sacrifice_level: normalize_sacrifice_level(sacrifice_level),
-      exact_threshold: 14,
+      exact_threshold: EXACT_SOLVE_EMPTY_SQUARE_THRESHOLD,
       transposition_soft_limit: soft_limit,
       transposition: HashMap::new(),
       exact_transposition: HashMap::new(),

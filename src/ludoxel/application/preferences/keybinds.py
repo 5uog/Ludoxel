@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Iterable
 
+from ludoxel.simulation.inventories.hotbars.hotbar import HOTBAR_SIZE
+
 ACTION_MOVE_FORWARD = "move_forward"
 ACTION_MOVE_BACKWARD = "move_backward"
 ACTION_MOVE_LEFT = "move_left"
@@ -21,7 +23,13 @@ ACTION_TOGGLE_DEBUG_HUD = "toggle_debug_hud"
 ACTION_TOGGLE_DEBUG_SHADOW = "toggle_debug_shadow"
 ACTION_CLEAR_SELECTED_SLOT = "clear_selected_slot"
 
-HOTBAR_ACTIONS: tuple[str, ...] = tuple(f"hotbar_slot_{int(index) + 1}" for index in range(9))
+_KEY_DIGIT_COUNT: int = 10
+_KEY_LETTER_COUNT: int = 26
+_QT_FUNCTION_KEY_COUNT: int = 35
+_PORTABLE_KEY_TEXT_CACHE_SIZE: int = 256
+_BINDING_TEXT_CACHE_SIZE: int = 512
+
+HOTBAR_ACTIONS: tuple[str, ...] = tuple(f"hotbar_slot_{int(index) + 1}" for index in range(HOTBAR_SIZE))
 
 KEYBIND_ACTION_ORDER: tuple[str, ...] = (
   ACTION_MOVE_FORWARD,
@@ -141,9 +149,9 @@ _KEY_NAME_BY_CODE: dict[int, str] = {
   _QT_KEY_NUM_LOCK: "NumLock",
   _QT_KEY_SCROLL_LOCK: "ScrollLock",
 }
-_KEY_NAME_BY_CODE.update({int(_QT_KEY_DIGIT_START + index): str(index) for index in range(10)})
-_KEY_NAME_BY_CODE.update({int(_QT_KEY_LETTER_START + index): chr(_QT_KEY_LETTER_START + index) for index in range(26)})
-_KEY_NAME_BY_CODE.update({int(_QT_KEY_F1 + index): f"F{int(index) + 1}" for index in range(35)})
+_KEY_NAME_BY_CODE.update({int(_QT_KEY_DIGIT_START + index): str(index) for index in range(_KEY_DIGIT_COUNT)})
+_KEY_NAME_BY_CODE.update({int(_QT_KEY_LETTER_START + index): chr(_QT_KEY_LETTER_START + index) for index in range(_KEY_LETTER_COUNT)})
+_KEY_NAME_BY_CODE.update({int(_QT_KEY_F1 + index): f"F{int(index) + 1}" for index in range(_QT_FUNCTION_KEY_COUNT)})
 
 _KEY_ALIASES: dict[str, str] = {
   "": "",
@@ -193,9 +201,9 @@ _KEY_ALIASES: dict[str, str] = {
   "scrolllock": "ScrollLock",
   "scroll lock": "ScrollLock",
 }
-_KEY_ALIASES.update({str(index): str(index) for index in range(10)})
-_KEY_ALIASES.update({chr(_QT_KEY_LETTER_START + index).lower(): chr(_QT_KEY_LETTER_START + index) for index in range(26)})
-_KEY_ALIASES.update({f"f{int(index) + 1}": f"F{int(index) + 1}" for index in range(35)})
+_KEY_ALIASES.update({str(index): str(index) for index in range(_KEY_DIGIT_COUNT)})
+_KEY_ALIASES.update({chr(_QT_KEY_LETTER_START + index).lower(): chr(_QT_KEY_LETTER_START + index) for index in range(_KEY_LETTER_COUNT)})
+_KEY_ALIASES.update({f"f{int(index) + 1}": f"F{int(index) + 1}" for index in range(_QT_FUNCTION_KEY_COUNT)})
 
 _KEY_CODE_BY_NAME: dict[str, int] = {str(name): int(code) for code, name in _KEY_NAME_BY_CODE.items()}
 
@@ -228,7 +236,7 @@ def hotbar_index_for_action(action: str | None) -> int | None:
   return None
 
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=_PORTABLE_KEY_TEXT_CACHE_SIZE)
 def portable_text_for_key(key: int) -> str:
   try:
     normalized_key = int(key)
@@ -247,7 +255,7 @@ def normalize_key_code(key: int) -> str:
   return portable_text_for_key(int(normalized_key))
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=_BINDING_TEXT_CACHE_SIZE)
 def _normalize_binding_text_cached(raw: str) -> str:
   source = str(raw).strip()
   if not source:
@@ -263,7 +271,7 @@ def normalize_binding_text(value: object) -> str:
   return _normalize_binding_text_cached(str(value))
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=_BINDING_TEXT_CACHE_SIZE)
 def _binding_to_key_cached(normalized_binding: str) -> int | None:
   if not normalized_binding:
     return None
@@ -276,7 +284,7 @@ def binding_to_key(binding: str | None) -> int | None:
   return _binding_to_key_cached(str(normalized))
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=_BINDING_TEXT_CACHE_SIZE)
 def _display_text_for_binding_cached(normalized_binding: str) -> str:
   if not normalized_binding:
     return "Unbound"

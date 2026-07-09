@@ -11,11 +11,21 @@ from ludoxel.simulation.spaces.othello.engines.bitboards import apply_move_bits,
 from ludoxel.simulation.spaces.othello.engines.evaluation import LOSS_SCORE, WIN_SCORE, evaluate_position
 from ludoxel.simulation.spaces.othello.engines.native import create_native_insane_search
 from ludoxel.simulation.spaces.othello.engines.ordering import ordered_moves
-from ludoxel.simulation.spaces.othello.engines.search import check_deadline, negamax, solve_exact
+from ludoxel.simulation.spaces.othello.engines.search import EXACT_SOLVE_EMPTY_SQUARE_THRESHOLD, check_deadline, negamax, solve_exact
 from ludoxel.simulation.spaces.othello.engines.transposition import TranspositionEntry
 from ludoxel.simulation.spaces.othello.game.state import BOARD_CELL_COUNT, DEFAULT_OTHELLO_HASH_LEVEL, DEFAULT_OTHELLO_SACRIFICE_LEVEL, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_hash_level, normalize_sacrifice_level, normalize_side
 
 _EMPTY_OPENING_BOOK = OpeningBook(moves_by_key={})
+_DISABLED_TRANSPOSITION_SOFT_LIMIT: int = 0
+_TRANSPOSITION_SOFT_LIMIT_BASE_SHIFT: int = 11
+_TRANSPOSITION_SOFT_LIMIT_MAX_SHIFT: int = 21
+_TRANSPOSITION_SOFT_LIMIT_HASH_LEVEL_SHIFT_FACTOR: int = 2
+_DEFAULT_TRANSPOSITION_SOFT_LIMIT_SHIFT: int = min(_TRANSPOSITION_SOFT_LIMIT_MAX_SHIFT, _TRANSPOSITION_SOFT_LIMIT_BASE_SHIFT + DEFAULT_OTHELLO_HASH_LEVEL * _TRANSPOSITION_SOFT_LIMIT_HASH_LEVEL_SHIFT_FACTOR)
+_SEARCH_SCORE_TIE_EPSILON: float = 1e-9
+_MIN_INSANE_TIME_BUDGET_SECONDS: float = 0.25
+_DEFAULT_INSANE_TIME_BUDGET_SECONDS: float = 4.0
+_INSANE_ITERATIVE_DEEPENING_MIN_DEPTH: int = 6
+_INSANE_ITERATIVE_DEEPENING_MAX_DEPTH: int = 24
 
 
 @dataclass(frozen=True)
@@ -53,8 +63,8 @@ class InsaneSearchCache:
   exact_transposition: dict[tuple[int, int, int], int] = field(default_factory=dict)
   opening_book: OpeningBook = field(default_factory=lambda: _EMPTY_OPENING_BOOK)
   opening_book_project_root_key: str = ""
-  exact_threshold: int = 14
-  transposition_soft_limit: int = 1 << 15
+  exact_threshold: int = EXACT_SOLVE_EMPTY_SQUARE_THRESHOLD
+  transposition_soft_limit: int = 1 << _DEFAULT_TRANSPOSITION_SOFT_LIMIT_SHIFT
   native_search: object | None = field(default=None, repr=False)
 
   def ensure_opening_book(self, project_root=None) -> None:
@@ -80,8 +90,8 @@ class InsaneSearchCache:
     self.hash_level = int(normalized_hash_level)
     self.sacrifice_level = int(normalized_sacrifice_level)
     self.project_root_key = str(normalized_project_root_key)
-    self.exact_threshold = 14
-    self.transposition_soft_limit = 0 if int(self.hash_level) <= 0 else int(1 << min(21, 11 + int(self.hash_level) * 2))
+    self.exact_threshold = EXACT_SOLVE_EMPTY_SQUARE_THRESHOLD
+    self.transposition_soft_limit = _DISABLED_TRANSPOSITION_SOFT_LIMIT if int(self.hash_level) <= 0 else int(1 << min(_TRANSPOSITION_SOFT_LIMIT_MAX_SHIFT, _TRANSPOSITION_SOFT_LIMIT_BASE_SHIFT + int(self.hash_level) * _TRANSPOSITION_SOFT_LIMIT_HASH_LEVEL_SHIFT_FACTOR))
     self.ensure_opening_book(self.project_root_key)
 
     if bool(changed):
@@ -111,7 +121,7 @@ def _choose_tied_best(move_evaluations: tuple[InsaneMoveEvaluation, ...], *, ran
   if not move_evaluations:
     return None
   best_score = float(move_evaluations[0].score)
-  tied = [int(evaluation.move_index) for evaluation in move_evaluations if abs(float(evaluation.score) - float(best_score)) <= 1e-9]
+  tied = [int(evaluation.move_index) for evaluation in move_evaluations if abs(float(evaluation.score) - float(best_score)) <= _SEARCH_SCORE_TIE_EPSILON]
   if not tied:
     return int(move_evaluations[0].move_index)
   chooser = random.Random(int(random_seed))
@@ -162,7 +172,7 @@ def _root_move_evaluations(cache: InsaneSearchCache, player_bits: int, opponent_
   return tuple(sorted(evaluations, key=lambda evaluation: (-float(evaluation.score), int(evaluation.move_index))))
 
 
-def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = 4.0, cache: InsaneSearchCache | None = None) -> InsaneAnalysis:
+def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = _DEFAULT_INSANE_TIME_BUDGET_SECONDS, cache: InsaneSearchCache | None = None) -> InsaneAnalysis:
   materialized = coerce_board(board)
   normalized_side = normalize_side(side, default=SIDE_BLACK)
   if normalized_side not in (SIDE_BLACK, SIDE_WHITE):
@@ -182,7 +192,7 @@ def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, ra
     return InsaneAnalysis(best_move_index=None, score=0.0, solved=False, depth_reached=0, depth_samples=(), move_evaluations=())
 
   active_cache = cache or InsaneSearchCache()
-  deadline = time.perf_counter() + max(0.25, float(time_budget_s))
+  deadline = time.perf_counter() + max(_MIN_INSANE_TIME_BUDGET_SECONDS, float(time_budget_s))
   empties = BOARD_CELL_COUNT - bit_count(int(player_bits) | int(opponent_bits))
 
   if empties <= int(active_cache.exact_threshold):
@@ -194,7 +204,7 @@ def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, ra
 
   last_complete_evaluations: tuple[InsaneMoveEvaluation, ...] = ()
   depth_samples: list[InsaneDepthSample] = []
-  max_depth = min(24, max(6, empties))
+  max_depth = min(_INSANE_ITERATIVE_DEEPENING_MAX_DEPTH, max(_INSANE_ITERATIVE_DEEPENING_MIN_DEPTH, empties))
 
   for depth in range(1, max_depth + 1):
     try:
@@ -219,7 +229,7 @@ def analyze_insane_position(board: tuple[int, ...] | list[int], side: int, *, ra
   return InsaneAnalysis(best_move_index=best_move_index, score=float(best_score), solved=bool(solved), depth_reached=int(depth_reached), depth_samples=tuple(depth_samples), move_evaluations=tuple(last_complete_evaluations))
 
 
-def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = 4.0, cache: InsaneSearchCache | None = None, use_opening_book: bool = False) -> int | None:
+def choose_insane_move(board: tuple[int, ...] | list[int], side: int, *, random_seed: int = 0, time_budget_s: float = _DEFAULT_INSANE_TIME_BUDGET_SECONDS, cache: InsaneSearchCache | None = None, use_opening_book: bool = False) -> int | None:
   materialized = coerce_board(board)
   normalized_side = normalize_side(side, default=SIDE_BLACK)
   if normalized_side not in (SIDE_BLACK, SIDE_WHITE):

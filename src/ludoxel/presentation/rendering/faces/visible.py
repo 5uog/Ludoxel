@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from ludoxel.foundations.mathematics.voxels.faces import face_neighbor_offset
 from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState
 from ludoxel.presentation.rendering.faces.axes import face_touches_cell_boundary
+from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.occlusion import is_block_face_occluded, is_local_face_occluded
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 from ludoxel.simulation.blocks.models.common import LocalBox
@@ -61,7 +62,7 @@ def iter_visible_faces(*, x: int, y: int, z: int, state_str: str, get_state: Get
     mn = (float(x) + float(box.mn_x), float(y) + float(box.mn_y), float(z) + float(box.mn_z))
     mx = (float(x) + float(box.mx_x), float(y) + float(box.mx_y), float(z) + float(box.mx_z))
 
-    for fi in range(6):
+    for fi in range(FACE_COUNT):
       if is_local_face_occluded(box=box, face_idx=int(fi), boxes=boxes):
         continue
 

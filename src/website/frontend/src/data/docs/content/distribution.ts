@@ -1443,7 +1443,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
           },
           {
             kind: 'paragraph',
-            text: '`--allow-overwrite` is required when an output PNG already exists. Without that flag, generate mode reports each existing output as a validation failure. Check mode validates the same roots and selected blocks, reports the selected and existing counts, and exits before writing files. The parser default uses `fitPadding` 18, and the Python service accepts the same `--fit-padding` value for direct execution.',
+            text: '`--allow-overwrite` is required when an output PNG already exists. Without that flag, generate mode reports each existing output as a validation failure. Check mode validates the same roots and selected blocks, reports the selected and existing counts, and exits before writing files. The Node parser reads `DEFAULT_PREVIEW_FIT_PADDING_PX` from `tools/generate_block_thumbnails/src/config/preview.config.mjs`; direct Python execution uses `DEFAULT_PREVIEW_FIT_PADDING_PX` from `src/ludoxel/presentation/rendering/faces/preview.py`, so both entry points keep the same transparent padding default.',
           },
         ],
       },
@@ -1453,7 +1453,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/presentation/rendering/faces/preview.py` projects the visible faces from `iter_visible_faces`, fits their projected alpha footprint into a 300x300 canvas, and recenters the final visible alpha bounds after downsampling. Texture sampling treats `v=0` as the lower texture row, matching the runtime atlas preparation that mirrors block texture images before OpenGL and WGPU upload.',
+            text: '`src/ludoxel/presentation/rendering/faces/preview.py` projects the visible faces from `iter_visible_faces`, fits their projected alpha footprint into the `PREVIEW_CANVAS_SIZE` square canvas, and recenters the final visible alpha bounds after downsampling. Texture sampling treats `v=0` as the lower texture row, matching the runtime atlas preparation that mirrors block texture images before OpenGL and WGPU upload.',
           },
           {
             kind: 'code',
@@ -1474,7 +1474,7 @@ y = int(round((1.0 - vv) * float(texture.height - 1)))`,
         content: [
           {
             kind: 'paragraph',
-            text: '`write_block_preview_png` renders each selected block preview to a 300x300 RGBA PNG. `ItemPhotoProvider.pixmap_for_item` later resolves the visual asset family through `resolve_visual_asset_roots`, checks the selected family thumbnail directory for `<block>.gif` and then `<block>.png`, and only then falls back to item textures. Inventory cells and hotbar slots consume the resulting pixmaps through that provider.',
+            text: '`write_block_preview_png` renders each selected block preview to a square RGBA PNG whose dimensions come from `PREVIEW_CANVAS_SIZE`. `ItemPhotoProvider.pixmap_for_item` later resolves the visual asset family through `resolve_visual_asset_roots`, checks the selected family thumbnail directory for `<block>.gif` and then `<block>.png`, and only then falls back to item textures. Inventory cells and hotbar slots consume the resulting pixmaps through that provider.',
           },
           {
             kind: 'code',

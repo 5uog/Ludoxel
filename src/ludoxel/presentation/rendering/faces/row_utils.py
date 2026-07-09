@@ -7,28 +7,35 @@ from collections.abc import Mapping
 import numpy as np
 
 from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, scale_matrix, translate_matrix
+from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
 from ludoxel.simulation.blocks.models.common import LocalBox
 
+MODEL_MATRIX_FLOATS: int = 16
+TEXTURED_FACE_ROW_FLOATS: int = MODEL_MATRIX_FLOATS + 4
+DEFAULT_BLOCK_TEXTURE_SIZE_PX: float = 16.0
+_LOCAL_BOX_CENTER_FACTOR: float = 0.5
+_MIN_TEXTURE_SIZE_PX: float = 1.0
+
 
 def empty_textured_face_rows() -> tuple[np.ndarray, ...]:
-  return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
+  return tuple(np.zeros((0, TEXTURED_FACE_ROW_FLOATS), dtype=np.float32) for _ in range(FACE_COUNT))
 
 
 def append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: UVRect) -> None:
-  row = list(np.asarray(model, dtype=np.float32).reshape(16))
+  row = list(np.asarray(model, dtype=np.float32).reshape(MODEL_MATRIX_FLOATS))
   row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
   buffers[int(face_idx)].append(row)
 
 
 def face_rows_from_buffers(buffers: list[list[list[float]]]) -> tuple[np.ndarray, ...]:
-  return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+  return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, TEXTURED_FACE_ROW_FLOATS), dtype=np.float32) for face_rows in buffers)
 
 
-def uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float], *, texture_size_px: float = 16.0) -> UVRect:
+def uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float], *, texture_size_px: float = DEFAULT_BLOCK_TEXTURE_SIZE_PX) -> UVRect:
   u0_a, v0_a, u1_a, v1_a = texture_uv
   px0, py0, px1, py1 = px_rect
-  scale = max(float(texture_size_px), 1.0)
+  scale = max(float(texture_size_px), _MIN_TEXTURE_SIZE_PX)
   return (float(u0_a + (u1_a - u0_a) * (float(px0) / scale)), float(v0_a + (v1_a - v0_a) * (float(py0) / scale)), float(u0_a + (u1_a - u0_a) * (float(px1) / scale)), float(v0_a + (v1_a - v0_a) * (float(py1) / scale)))
 
 
@@ -52,9 +59,9 @@ def atlas_face_uv(texture_uv: UVRect, face_idx: int, box: LocalBox, *, kind: str
 
 
 def model_matrix_for_local_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
-  center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
-  center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
-  center_z = 0.5 * (float(box.mn_z) + float(box.mx_z))
+  center_x = _LOCAL_BOX_CENTER_FACTOR * (float(box.mn_x) + float(box.mx_x))
+  center_y = _LOCAL_BOX_CENTER_FACTOR * (float(box.mn_y) + float(box.mx_y))
+  center_z = _LOCAL_BOX_CENTER_FACTOR * (float(box.mn_z) + float(box.mx_z))
   size_x = float(box.mx_x) - float(box.mn_x)
   size_y = float(box.mx_y) - float(box.mn_y)
   size_z = float(box.mx_z) - float(box.mn_z)

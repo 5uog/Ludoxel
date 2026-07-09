@@ -10,6 +10,8 @@ from ludoxel.simulation.spaces.othello.engines.ordering import ordered_moves
 from ludoxel.simulation.spaces.othello.engines.transposition import BOUND_EXACT, BOUND_LOWER, BOUND_UPPER, TranspositionEntry, store_exact_transposition, store_transposition
 from ludoxel.simulation.spaces.othello.game.state import BOARD_CELL_COUNT
 
+EXACT_SOLVE_EMPTY_SQUARE_THRESHOLD: int = 14
+
 
 def check_deadline(deadline_s: float | None) -> None:
   if deadline_s is not None and time.perf_counter() >= float(deadline_s):

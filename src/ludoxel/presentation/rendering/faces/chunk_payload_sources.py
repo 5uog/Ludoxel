@@ -12,23 +12,30 @@ from ludoxel.presentation.rendering.faces.row_utils import atlas_face_uv
 from ludoxel.presentation.rendering.faces.visible import iter_visible_faces
 from ludoxel.simulation.blocks.states.codec import parse_state
 
+FACE_SOURCE_ROW_FLOATS: int = 14
+FACE_INSTANCE_ROW_FLOATS: int = 12
+FACE_SOURCE_FACE_INDEX_COLUMN: int = 12
+FACE_SOURCE_SLOT_COLUMN: int = 13
+FACE_SOURCE_FULL_BRIGHTNESS: float = 1.0
+FACE_SOURCE_LIGHTING_PLACEHOLDER: float = 0.0
+
 
 def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
   arr = np.asarray(face_sources, dtype=np.float32)
-  if arr.ndim != 2 or int(arr.shape[1]) != 14:
-    raise ValueError("face_sources must be a float32 Nx14 array")
+  if arr.ndim != 2 or int(arr.shape[1]) != FACE_SOURCE_ROW_FLOATS:
+    raise ValueError(f"face_sources must be a float32 Nx{FACE_SOURCE_ROW_FLOATS} array")
   if not arr.flags["C_CONTIGUOUS"]:
     arr = np.ascontiguousarray(arr, dtype=np.float32)
   return arr
 
 
 def empty_face_buckets() -> list[np.ndarray]:
-  return empty_face_bucket_arrays(12)
+  return empty_face_bucket_arrays(FACE_INSTANCE_ROW_FLOATS)
 
 
 def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: BucketCounts) -> list[np.ndarray]:
   counts = normalize_bucket_counts(bucket_counts)
-  out = [np.zeros((int(c), 12), dtype=np.float32) for c in counts]
+  out = [np.zeros((int(c), FACE_INSTANCE_ROW_FLOATS), dtype=np.float32) for c in counts]
 
   if face_sources.size <= 0:
     return out
@@ -36,15 +43,15 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
   src = _as_face_source_rows(face_sources)
 
   for row in src:
-    fi = int(round(float(row[12])))
-    slot = int(round(float(row[13])))
+    fi = int(round(float(row[FACE_SOURCE_FACE_INDEX_COLUMN])))
+    slot = int(round(float(row[FACE_SOURCE_SLOT_COLUMN])))
 
     if fi < 0 or fi >= FACE_COUNT:
       continue
     if slot < 0 or slot >= int(counts[fi]):
       continue
 
-    out[fi][slot, :] = row[:12]
+    out[fi][slot, :] = row[:FACE_INSTANCE_ROW_FLOATS]
 
   return out
 
@@ -75,11 +82,11 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
       atlas = uv_lookup(str(state_str), int(fi))
       u0, v0, u1, v1 = atlas_face_uv(atlas, int(fi), face.box, kind=(None if defn is None else str(defn.kind)))
 
-      rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), 1.0, 0.0, float(fi), float(slot)])
+      rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), FACE_SOURCE_FULL_BRIGHTNESS, FACE_SOURCE_LIGHTING_PLACEHOLDER, float(fi), float(slot)])
 
   counts = normalize_bucket_counts(bucket_counts)
 
   if not rows:
-    return np.zeros((0, 14), dtype=np.float32), counts
+    return np.zeros((0, FACE_SOURCE_ROW_FLOATS), dtype=np.float32), counts
 
   return np.asarray(rows, dtype=np.float32), counts

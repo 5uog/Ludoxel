@@ -9,6 +9,15 @@ import sys
 import time
 from dataclasses import dataclass
 
+_BYTES_PER_KIB: int = 1024
+_POSIX_QUERY_TIMEOUT_SECONDS: float = 0.6
+_WINDOWS_QUERY_TIMEOUT_SECONDS: float = 0.8
+_MHZ_PER_GHZ: float = 1000.0
+_HZ_PER_GHZ: float = 1_000_000_000.0
+_GPU_UTILIZATION_MIN_PERCENT: float = 0.0
+_GPU_UTILIZATION_MAX_PERCENT: float = 100.0
+_DEFAULT_GPU_SAMPLE_INTERVAL_SECONDS: float = 1.0
+
 
 @dataclass(frozen=True)
 class SystemInfo:
@@ -87,7 +96,7 @@ def _linux_total_mem_bytes() -> int | None:
           parts = line.split()
           if len(parts) >= 2:
             kb = int(parts[1])
-            return kb * 1024
+            return kb * _BYTES_PER_KIB
   except Exception:
     return None
   return None
@@ -102,7 +111,7 @@ def _linux_rss_bytes_proc() -> int | None:
           parts = line.split()
           if len(parts) >= 2:
             kb = int(parts[1])
-            return kb * 1024
+            return kb * _BYTES_PER_KIB
   except Exception:
     return None
   return None
@@ -111,21 +120,21 @@ def _linux_rss_bytes_proc() -> int | None:
 def _posix_rss_bytes_ps() -> int | None:
   try:
     pid = str(os.getpid())
-    out = subprocess.check_output(["ps", "-o", "rss=", "-p", pid], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
+    out = subprocess.check_output(["ps", "-o", "rss=", "-p", pid], stderr=subprocess.DEVNULL, text=True, timeout=_POSIX_QUERY_TIMEOUT_SECONDS)
     s = str(out).strip()
     if not s:
       return None
     kb = int(s.split()[0])
     if kb <= 0:
       return None
-    return kb * 1024
+    return kb * _BYTES_PER_KIB
   except Exception:
     return None
 
 
 def _mac_sysctl_str(name: str) -> str:
   try:
-    out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
+    out = subprocess.check_output(["sysctl", "-n", name], stderr=subprocess.DEVNULL, text=True, timeout=_POSIX_QUERY_TIMEOUT_SECONDS)
     return str(out).strip()
   except Exception:
     return ""
@@ -226,7 +235,7 @@ def _windows_rss_bytes_psapi() -> int | None:
 def _windows_rss_bytes_tasklist() -> int | None:
   try:
     pid = str(os.getpid())
-    out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], stderr=subprocess.DEVNULL, text=True, timeout=0.8, **_windows_hidden_subprocess_kwargs())
+    out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], stderr=subprocess.DEVNULL, text=True, timeout=_WINDOWS_QUERY_TIMEOUT_SECONDS, **_windows_hidden_subprocess_kwargs())
     line = str(out).strip()
     if not line or "INFO:" in line:
       return None
@@ -243,7 +252,7 @@ def _windows_rss_bytes_tasklist() -> int | None:
     kb = int(digits)
     if kb <= 0:
       return None
-    return kb * 1024
+    return kb * _BYTES_PER_KIB
   except Exception:
     return None
 
@@ -261,7 +270,7 @@ def read_system_info() -> SystemInfo:
     cpu_name = _windows_cpu_name()
     mhz = _windows_cpu_mhz()
     if mhz is not None:
-      cpu_ghz = float(mhz) / 1000.0
+      cpu_ghz = float(mhz) / _MHZ_PER_GHZ
     total_mem = _windows_total_mem_bytes()
 
   elif plat.startswith("linux"):
@@ -269,14 +278,14 @@ def read_system_info() -> SystemInfo:
     mhz_s = _linux_read_first_cpu_field("cpu MHz")
     mhz = _safe_float(mhz_s)
     if mhz is not None:
-      cpu_ghz = float(mhz) / 1000.0
+      cpu_ghz = float(mhz) / _MHZ_PER_GHZ
     total_mem = _linux_total_mem_bytes()
 
   elif plat.startswith("darwin"):
     cpu_name = _mac_sysctl_str("machdep.cpu.brand_string")
     hz = _mac_sysctl_int("hw.cpufrequency")
     if hz is not None and hz > 0:
-      cpu_ghz = float(hz) / 1e9
+      cpu_ghz = float(hz) / _HZ_PER_GHZ
     total_mem = _mac_sysctl_int("hw.memsize")
 
   if total_mem is None:
@@ -321,13 +330,13 @@ def read_process_memory(total_mem_bytes: int | None = None) -> ProcessMemorySnap
 
 def _nvidia_smi_util_percent() -> float | None:
   try:
-    out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=0.8, **_windows_hidden_subprocess_kwargs())
+    out = subprocess.check_output(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"], stderr=subprocess.DEVNULL, text=True, timeout=_WINDOWS_QUERY_TIMEOUT_SECONDS, **_windows_hidden_subprocess_kwargs())
     line = str(out).strip().splitlines()[0].strip()
     value = float(line)
-    if value < 0.0:
-      return 0.0
-    if value > 100.0:
-      return 100.0
+    if value < _GPU_UTILIZATION_MIN_PERCENT:
+      return _GPU_UTILIZATION_MIN_PERCENT
+    if value > _GPU_UTILIZATION_MAX_PERCENT:
+      return _GPU_UTILIZATION_MAX_PERCENT
     return float(value)
   except Exception:
     return None
@@ -335,7 +344,7 @@ def _nvidia_smi_util_percent() -> float | None:
 
 @dataclass
 class GpuUtilizationSampler:
-  min_interval_s: float = 1.0
+  min_interval_s: float = _DEFAULT_GPU_SAMPLE_INTERVAL_SECONDS
   _last_t: float = 0.0
   _last: float | None = None
 

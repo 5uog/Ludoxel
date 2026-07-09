@@ -13,21 +13,25 @@ AUDIO_CATEGORY_PLAYER = "player"
 
 AUDIO_CATEGORY_ORDER: tuple[str, ...] = (AUDIO_CATEGORY_MASTER, AUDIO_CATEGORY_AMBIENT, AUDIO_CATEGORY_BLOCK, AUDIO_CATEGORY_PLAYER)
 
+DEFAULT_AUDIO_VOLUME_RATIO: float = 1.0
+AUDIO_VOLUME_MIN_RATIO: float = 0.0
+AUDIO_VOLUME_MAX_RATIO: float = 1.0
 
-def _clamp_volume(value: object, *, default: float = 1.0) -> float:
+
+def _clamp_volume(value: object, *, default: float = DEFAULT_AUDIO_VOLUME_RATIO) -> float:
   try:
     numeric = float(value)
   except Exception:
     numeric = float(default)
-  return float(clampf(float(numeric), 0.0, 1.0))
+  return float(clampf(float(numeric), AUDIO_VOLUME_MIN_RATIO, AUDIO_VOLUME_MAX_RATIO))
 
 
 @dataclass(frozen=True)
 class AudioPreferences:
-  master: float = 1.0
-  ambient: float = 1.0
-  block: float = 1.0
-  player: float = 1.0
+  master: float = DEFAULT_AUDIO_VOLUME_RATIO
+  ambient: float = DEFAULT_AUDIO_VOLUME_RATIO
+  block: float = DEFAULT_AUDIO_VOLUME_RATIO
+  player: float = DEFAULT_AUDIO_VOLUME_RATIO
 
   def __post_init__(self) -> None:
     object.__setattr__(self, "master", _clamp_volume(self.master))
@@ -55,4 +59,9 @@ class AudioPreferences:
   def from_dict(data: object) -> "AudioPreferences":
     if not isinstance(data, dict):
       return AudioPreferences()
-    return AudioPreferences(master=_clamp_volume(data.get(AUDIO_CATEGORY_MASTER, 1.0)), ambient=_clamp_volume(data.get(AUDIO_CATEGORY_AMBIENT, 1.0)), block=_clamp_volume(data.get(AUDIO_CATEGORY_BLOCK, 1.0)), player=_clamp_volume(data.get(AUDIO_CATEGORY_PLAYER, 1.0)))
+    return AudioPreferences(
+      master=_clamp_volume(data.get(AUDIO_CATEGORY_MASTER, DEFAULT_AUDIO_VOLUME_RATIO)),
+      ambient=_clamp_volume(data.get(AUDIO_CATEGORY_AMBIENT, DEFAULT_AUDIO_VOLUME_RATIO)),
+      block=_clamp_volume(data.get(AUDIO_CATEGORY_BLOCK, DEFAULT_AUDIO_VOLUME_RATIO)),
+      player=_clamp_volume(data.get(AUDIO_CATEGORY_PLAYER, DEFAULT_AUDIO_VOLUME_RATIO)),
+    )

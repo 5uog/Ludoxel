@@ -14,6 +14,8 @@ from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import parse_state
 from ludoxel.simulation.inventories.special_items.registry import get_special_item_descriptor
 
+DEFAULT_ITEM_PHOTO_ICON_SIZE_PX = 36
+MIN_ITEM_PHOTO_ICON_SIZE_PX = 16
 _SPECIAL_ICON_EDGE_MARGIN_PX = 1
 
 
@@ -31,11 +33,11 @@ class PhotoPaths:
 class ItemPhotoProvider(QObject):
   pixmap_changed = pyqtSignal(str)
 
-  def __init__(self, *, resource_root: Path, registry: BlockRegistry, icon_size: int = 36) -> None:
+  def __init__(self, *, resource_root: Path, registry: BlockRegistry, icon_size: int = DEFAULT_ITEM_PHOTO_ICON_SIZE_PX) -> None:
     super().__init__(None)
     self._resource_root = Path(resource_root)
     self._reg = registry
-    self._icon = int(max(16, icon_size))
+    self._icon = int(max(MIN_ITEM_PHOTO_ICON_SIZE_PX, icon_size))
     self._paths = PhotoPaths(roots=resolve_visual_asset_roots(self._resource_root / "assets", required_texture_names=self._reg.required_texture_names()))
     self._animations_enabled = True
     self._active = False

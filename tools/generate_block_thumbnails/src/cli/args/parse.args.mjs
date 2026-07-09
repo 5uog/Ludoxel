@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { DEFAULT_PREVIEW_FIT_PADDING_PX, DEFAULT_PREVIEW_PITCH_DEGREES, DEFAULT_PREVIEW_ROLL_DEGREES, DEFAULT_PREVIEW_SCALE_FACTOR, DEFAULT_PREVIEW_YAW_DEGREES } from '../../config/preview.config.mjs';
+
 const VALUE_OPTIONS = new Map([
   ['--texture-root', 'textureRoot'],
   ['--output-root', 'outputRoot'],
@@ -32,11 +34,11 @@ export function parseBlockThumbnailArgs(argv = [], defaults = {}) {
     modelCategory: '',
     states: [],
     neighbors: [],
-    yaw: 45,
-    pitch: 30,
-    roll: 0,
-    scale: 1,
-    fitPadding: 18,
+    yaw: DEFAULT_PREVIEW_YAW_DEGREES,
+    pitch: DEFAULT_PREVIEW_PITCH_DEGREES,
+    roll: DEFAULT_PREVIEW_ROLL_DEGREES,
+    scale: DEFAULT_PREVIEW_SCALE_FACTOR,
+    fitPadding: DEFAULT_PREVIEW_FIT_PADDING_PX,
     dryRun: false,
     allowOverwrite: false,
     errors: [],

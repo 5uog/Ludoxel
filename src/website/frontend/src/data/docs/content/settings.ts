@@ -625,25 +625,29 @@ overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)`,
         content: [
           {
             kind: 'paragraph',
-            text: '`AudioPreferences` is a frozen value object. Construction immediately passes every component through `_clamp_volume`, which converts the input to `float`, falls back to the default when conversion fails, and clamps the result to the closed interval `[0, 1]`. The object is normalized after construction; `normalized()` returns that instance.',
+            text: '`AudioPreferences` is a frozen value object. Construction immediately passes every component through `_clamp_volume`, which converts the input to `float`, falls back to `DEFAULT_AUDIO_VOLUME_RATIO` when conversion fails, and clamps the result between `AUDIO_VOLUME_MIN_RATIO` and `AUDIO_VOLUME_MAX_RATIO`. Those constants define the closed unit interval used by the saved gain vector. The object is normalized after construction; `normalized()` returns that instance.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/audio.py',
-            code: `def _clamp_volume(value: object, *, default: float = 1.0) -> float:
+            code: `DEFAULT_AUDIO_VOLUME_RATIO: float = 1.0
+AUDIO_VOLUME_MIN_RATIO: float = 0.0
+AUDIO_VOLUME_MAX_RATIO: float = 1.0
+
+def _clamp_volume(value: object, *, default: float = DEFAULT_AUDIO_VOLUME_RATIO) -> float:
   try:
     numeric = float(value)
   except Exception:
     numeric = float(default)
-  return float(clampf(float(numeric), 0.0, 1.0))
+  return float(clampf(float(numeric), AUDIO_VOLUME_MIN_RATIO, AUDIO_VOLUME_MAX_RATIO))
 
 @dataclass(frozen=True)
 class AudioPreferences:
-  master: float = 1.0
-  ambient: float = 1.0
-  block: float = 1.0
-  player: float = 1.0`,
+  master: float = DEFAULT_AUDIO_VOLUME_RATIO
+  ambient: float = DEFAULT_AUDIO_VOLUME_RATIO
+  block: float = DEFAULT_AUDIO_VOLUME_RATIO
+  player: float = DEFAULT_AUDIO_VOLUME_RATIO`,
           },
           {
             kind: 'paragraph',

@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Kento Konishi
  * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
  */
+import { EXCLUSIVE_MAX_PREVIEW_FIT_PADDING_PX, MAX_PREVIEW_FIT_PADDING_DISPLAY_PX, MIN_PREVIEW_FIT_PADDING_PX, MIN_PREVIEW_SCALE_FACTOR } from '../../config/preview.config.mjs';
+
 const CATEGORIES = new Set(['', 'cube', 'full', 'full_block', 'slab', 'stairs', 'fence', 'fence_gate', 'wall']);
 const NEIGHBOR_DIRECTIONS = new Set(['north', 'east', 'south', 'west', 'up', 'down']);
 const LANGUAGES = new Set(['ja', 'en']);
@@ -34,8 +36,8 @@ export function validateBlockThumbnailArgs(options) {
   if (!CATEGORIES.has(String(parsed.modelCategory).toLowerCase())) parsed.errors.push(`Unsupported --model-category: ${parsed.modelCategory}`);
 
   if (!Number.isFinite(parsed.yaw) || !Number.isFinite(parsed.pitch) || !Number.isFinite(parsed.roll)) parsed.errors.push('yaw, pitch, and roll must be finite numbers.');
-  if (!Number.isFinite(parsed.scale) || parsed.scale <= 0) parsed.errors.push('--scale must be greater than zero.');
-  if (!Number.isFinite(parsed.fitPadding) || parsed.fitPadding < 0 || parsed.fitPadding >= 150) parsed.errors.push('--fit-padding must be in the range 0..149.');
+  if (!Number.isFinite(parsed.scale) || parsed.scale <= MIN_PREVIEW_SCALE_FACTOR) parsed.errors.push('--scale must be greater than zero.');
+  if (!Number.isFinite(parsed.fitPadding) || parsed.fitPadding < MIN_PREVIEW_FIT_PADDING_PX || parsed.fitPadding >= EXCLUSIVE_MAX_PREVIEW_FIT_PADDING_PX) parsed.errors.push(`--fit-padding must be in the range ${MIN_PREVIEW_FIT_PADDING_PX}..${MAX_PREVIEW_FIT_PADDING_DISPLAY_PX}.`);
 
   for (const state of parsed.states) {
     const text = String(state).trim();

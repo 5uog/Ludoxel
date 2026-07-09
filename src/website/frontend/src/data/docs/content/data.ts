@@ -513,25 +513,29 @@ object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval `[0, 1]` by `_clamp_volume`. Failed `float` conversion selects the provided default, itself `1.0` by default, before clamping supplies the persisted category gain.',
+            text: '`src/ludoxel/application/preferences/audio.py` defines a four-component gain vector: `master`, `ambient`, `block`, and `player`. Each component is projected onto the closed interval defined by `AUDIO_VOLUME_MIN_RATIO` and `AUDIO_VOLUME_MAX_RATIO`. Failed `float` conversion selects `DEFAULT_AUDIO_VOLUME_RATIO` unless the caller supplied a different default, before clamping supplies the persisted category gain.',
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'Audio gain values are finite category coefficients before playback consumes them.',
-            code: `def _clamp_volume(value: object, *, default: float = 1.0) -> float:
+            code: `DEFAULT_AUDIO_VOLUME_RATIO: float = 1.0
+AUDIO_VOLUME_MIN_RATIO: float = 0.0
+AUDIO_VOLUME_MAX_RATIO: float = 1.0
+
+def _clamp_volume(value: object, *, default: float = DEFAULT_AUDIO_VOLUME_RATIO) -> float:
   try:
     numeric = float(value)
   except Exception:
     numeric = float(default)
-  return float(clampf(float(numeric), 0.0, 1.0))
+  return float(clampf(float(numeric), AUDIO_VOLUME_MIN_RATIO, AUDIO_VOLUME_MAX_RATIO))
 
 @dataclass(frozen=True)
 class AudioPreferences:
-  master: float = 1.0
-  ambient: float = 1.0
-  block: float = 1.0
-  player: float = 1.0`,
+  master: float = DEFAULT_AUDIO_VOLUME_RATIO
+  ambient: float = DEFAULT_AUDIO_VOLUME_RATIO
+  block: float = DEFAULT_AUDIO_VOLUME_RATIO
+  player: float = DEFAULT_AUDIO_VOLUME_RATIO`,
           },
           {
             kind: 'paragraph',

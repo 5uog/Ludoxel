@@ -8,10 +8,14 @@ _ADJECTIVES: tuple[str, ...] = ("Amber", "Aqua", "Brisk", "Cinder", "Clear", "Co
 
 _NOUNS: tuple[str, ...] = ("Badger", "Comet", "Falcon", "Finch", "Fox", "Heron", "Lynx", "Maple", "Otter", "Panda", "Pine", "Raven", "Salmon", "Stone", "Tern", "Tiger", "Violet", "Willow", "Wolf")
 
+PLAYER_NAME_MAX_CHARS: int = 32
+RANDOM_PLAYER_NUMBER_MIN: int = 100
+RANDOM_PLAYER_NUMBER_VARIANTS: int = 900
+
 
 def normalize_player_name(value: object) -> str:
   text = " ".join(str(value or "").split())
-  return str(text[:32]).strip()
+  return str(text[:PLAYER_NAME_MAX_CHARS]).strip()
 
 
 def has_explicit_player_name(value: object) -> bool:
@@ -21,7 +25,7 @@ def has_explicit_player_name(value: object) -> bool:
 def generate_random_player_name() -> str:
   adjective = _ADJECTIVES[randbelow(len(_ADJECTIVES))]
   noun = _NOUNS[randbelow(len(_NOUNS))]
-  number = 100 + randbelow(900)
+  number = RANDOM_PLAYER_NUMBER_MIN + randbelow(RANDOM_PLAYER_NUMBER_VARIANTS)
   return f"{adjective}{noun}{number}"
 
 

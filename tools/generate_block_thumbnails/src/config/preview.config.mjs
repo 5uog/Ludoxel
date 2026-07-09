@@ -1,0 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+export const PREVIEW_CANVAS_SIZE_PX = 300;
+export const DEFAULT_PREVIEW_YAW_DEGREES = 45;
+export const DEFAULT_PREVIEW_PITCH_DEGREES = 30;
+export const DEFAULT_PREVIEW_ROLL_DEGREES = 0;
+export const DEFAULT_PREVIEW_SCALE_FACTOR = 1;
+export const MIN_PREVIEW_SCALE_FACTOR = 0;
+export const DEFAULT_PREVIEW_FIT_PADDING_PX = 18;
+export const MIN_PREVIEW_FIT_PADDING_PX = 0;
+export const EXCLUSIVE_MAX_PREVIEW_FIT_PADDING_PX = 150;
+export const MAX_PREVIEW_FIT_PADDING_DISPLAY_PX = EXCLUSIVE_MAX_PREVIEW_FIT_PADDING_PX - 1;

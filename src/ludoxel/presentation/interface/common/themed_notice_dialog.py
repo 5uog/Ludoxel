@@ -6,10 +6,30 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
 from ludoxel.presentation.interface.common.sidebar_dialog import SidebarDialogBase
 
+_NOTICE_WINDOW_SIZE_PX: tuple[int, int] = (760, 520)
+_NOTICE_MINIMUM_WINDOW_SIZE_PX: tuple[int, int] = (640, 420)
+_NOTICE_PANEL_MINIMUM_SIZE_PX: tuple[int, int] = (580, 320)
+_NOTICE_FOOTER_MARGIN_LEFT_PX: int = 18
+_NOTICE_FOOTER_MARGIN_TOP_PX: int = 14
+_NOTICE_FOOTER_MARGIN_RIGHT_PX: int = 18
+_NOTICE_FOOTER_MARGIN_BOTTOM_PX: int = 0
+_NOTICE_FOOTER_SPACING_PX: int = 12
+
 
 class ThemedNoticeDialog(SidebarDialogBase):
   def __init__(self, *, parent=None, title: str, message: str, nav_label: str = "Notice", confirm_text: str = "OK") -> None:
-    super().__init__(parent, as_window=True, root_object_name="settingsRoot", window_title=str(title), window_size=(760, 520), minimum_window_size=(640, 420), panel_minimum_size=(580, 320), sidebar_object_name="settingsSidebar", content_object_name="settingsContent", stack_object_name="settingsStack")
+    super().__init__(
+      parent,
+      as_window=True,
+      root_object_name="settingsRoot",
+      window_title=str(title),
+      window_size=_NOTICE_WINDOW_SIZE_PX,
+      minimum_window_size=_NOTICE_MINIMUM_WINDOW_SIZE_PX,
+      panel_minimum_size=_NOTICE_PANEL_MINIMUM_SIZE_PX,
+      sidebar_object_name="settingsSidebar",
+      content_object_name="settingsContent",
+      stack_object_name="settingsStack",
+    )
     self._tab_notice = self._make_tab_button(str(nav_label), 0, self._set_page)
     self._sidebar_layout.addWidget(self._tab_notice)
     self._sidebar_layout.addStretch(1)
@@ -30,8 +50,8 @@ class ThemedNoticeDialog(SidebarDialogBase):
 
     footer = QWidget(self)
     footer_layout = QHBoxLayout(footer)
-    footer_layout.setContentsMargins(18, 14, 18, 0)
-    footer_layout.setSpacing(12)
+    footer_layout.setContentsMargins(_NOTICE_FOOTER_MARGIN_LEFT_PX, _NOTICE_FOOTER_MARGIN_TOP_PX, _NOTICE_FOOTER_MARGIN_RIGHT_PX, _NOTICE_FOOTER_MARGIN_BOTTOM_PX)
+    footer_layout.setSpacing(_NOTICE_FOOTER_SPACING_PX)
     footer_layout.addStretch(1)
     self._confirm_button = QPushButton(str(confirm_text), footer)
     self._confirm_button.setObjectName("menuBtn")
