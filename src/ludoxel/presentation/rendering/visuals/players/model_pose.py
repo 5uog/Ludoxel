@@ -8,7 +8,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
+from ludoxel.foundations.mathematics.linear.native import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
 from ludoxel.foundations.mathematics.scalars.numeric import clampf, lerpf
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y, FACE_POS_Z
 from ludoxel.presentation.rendering.faces.box_instances import cube_rows_from_boxes

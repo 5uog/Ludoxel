@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ludoxel.foundations.mathematics.geometry.native import ray_aabb_face
 from ludoxel.foundations.mathematics.geometry.ray import Ray
-from ludoxel.foundations.mathematics.geometry.ray_aabb import ray_aabb_face
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.voxels.dda import dda_grid_traverse
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Y, face_neighbor_offset
+from ludoxel.foundations.mathematics.voxels.native import dda_grid_traverse
 from ludoxel.simulation.blocks.models.api import pick_aabbs_for_block
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import parse_state

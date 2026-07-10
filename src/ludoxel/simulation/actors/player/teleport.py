@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
 from __future__ import annotations
 
+from ludoxel.foundations.mathematics.linear.native import yaw_pitch_deg_from_forward
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import yaw_pitch_deg_from_forward
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 
 

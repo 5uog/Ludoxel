@@ -9,12 +9,12 @@ from pathlib import Path
 import numpy as np
 from PyQt6.QtGui import QColor, QImage
 
-import ludoxel.foundations.mathematics.linear.mat4 as mat4
+import ludoxel.foundations.mathematics.linear.native as mat4
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_ULTRA
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chunk_key
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.presentation.interface.common.special_item_art import build_special_item_icon_image
 from ludoxel.presentation.rendering.backends.wgpu.meshes.chunk import WgpuChunkMesh, WgpuFaceInstances, build_face_vertex_rows, build_face_wire_vertex_rows, upload_chunk_mesh, upload_face_rows, upload_transform_face_rows
 from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (

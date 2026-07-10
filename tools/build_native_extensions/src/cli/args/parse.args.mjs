@@ -9,7 +9,6 @@ export function parseNativeExtensionArgs(argv = [], defaults = {}) {
     command: defaults.defaultCommand || 'build',
     help: false,
     skipVerify: false,
-    requireBuilt: false,
     language: 'ja',
     errors: [],
   };
@@ -33,11 +32,6 @@ export function parseNativeExtensionArgs(argv = [], defaults = {}) {
 
     if (arg === '--skip-verify') {
       parsed.skipVerify = true;
-      continue;
-    }
-
-    if (arg === '--require-built') {
-      parsed.requireBuilt = true;
       continue;
     }
 

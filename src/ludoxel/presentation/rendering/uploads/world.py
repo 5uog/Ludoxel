@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import queue
+import threading
 from collections import OrderedDict
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
@@ -19,6 +20,14 @@ from ludoxel.simulation.worlds.config.render_distance import clamp_render_distan
 from ludoxel.simulation.worlds.state.world import WorldState
 
 _KEEP_MARGIN = 2
+# Measured with a real offscreen GL 4.3 context: raising this to 2 made a full render-distance-6
+# backlog (446 chunks) take ~6.8s to drain instead of ~2.9s at 1 worker. build_chunk_face_sources'
+# per-face Python loop (parse_state, occlusion checks, UV/texture-hash lookups) dominates a chunk
+# build and holds the GIL for nearly all of it; the GIL-released slice (terrain_materials, numpy
+# occupancy ops) is too small a fraction for a second worker thread to overlap profitably, and the
+# extra thread adds GIL contention instead. Keep this at 1 unless a future change makes the
+# per-chunk build meaningfully more GIL-released.
+_MESH_BUILD_WORKER_COUNT = 1
 
 
 @dataclass(frozen=True)
@@ -31,7 +40,7 @@ class _BuildResult:
 
 class WorldUploadTracker:
   def __init__(self) -> None:
-    self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorldMeshBuild")
+    self._executor = ThreadPoolExecutor(max_workers=_MESH_BUILD_WORKER_COUNT, thread_name_prefix="WorldMeshBuild")
     self._pending: Dict[tuple[int, ChunkKey], Future] = {}
     self._pending_rev: Dict[tuple[int, ChunkKey], int] = {}
     self._want_rev: Dict[ChunkKey, int] = {}
@@ -42,6 +51,10 @@ class WorldUploadTracker:
     self._visible_cache_key: tuple[int, int, int, ChunkKey, int] | None = None
     self._visible_cache_chunks: tuple[ChunkKey, ...] = ()
     self._build_cache: "OrderedDict[tuple[int, ChunkKey, int], _BuildResult]" = OrderedDict()
+    # _store_cached_result runs inside a worker-thread done-callback; with more than one mesh-build
+    # worker, two callbacks can fire on different threads at the same time and mutate this OrderedDict
+    # concurrently with each other and with the main thread's reads in _schedule_build and reset().
+    self._build_cache_lock = threading.Lock()
     self._max_cached_results: int = 192
     self._last_scheduled_chunk: ChunkKey | None = None
     self._last_built_chunk: ChunkKey | None = None
@@ -62,17 +75,18 @@ class WorldUploadTracker:
   def _store_cached_result(self, result: _BuildResult) -> None:
     ck = normalize_chunk_key(result.chunk)
     prefix = (int(result.world_token), ck)
-    for cache_key in list(self._build_cache.keys()):
-      if cache_key[:2] != prefix:
-        continue
-      self._build_cache.pop(cache_key, None)
+    with self._build_cache_lock:
+      for cache_key in list(self._build_cache.keys()):
+        if cache_key[:2] != prefix:
+          continue
+        self._build_cache.pop(cache_key, None)
 
-    cache_key = self._build_cache_key(int(result.world_token), ck, int(result.chunk_rev))
-    self._build_cache[cache_key] = result
-    self._build_cache.move_to_end(cache_key)
+      cache_key = self._build_cache_key(int(result.world_token), ck, int(result.chunk_rev))
+      self._build_cache[cache_key] = result
+      self._build_cache.move_to_end(cache_key)
 
-    while len(self._build_cache) > int(self._max_cached_results):
-      self._build_cache.popitem(last=False)
+      while len(self._build_cache) > int(self._max_cached_results):
+        self._build_cache.popitem(last=False)
 
   def reset(self, renderer: BackendRendererApi, *, world: WorldState | None = None) -> None:
     renderer.evict_chunks(keep_chunks=set())
@@ -81,7 +95,8 @@ class WorldUploadTracker:
     self._resident_rev.clear()
     self._visible_cache_key = None
     self._visible_cache_chunks = ()
-    self._build_cache.clear()
+    with self._build_cache_lock:
+      self._build_cache.clear()
     self._last_scheduled_chunk = None
     self._last_built_chunk = None
     self._last_submitted_chunk = None
@@ -155,6 +170,24 @@ class WorldUploadTracker:
     candidates = world.visible_content_chunk_keys(normalize_chunk_key(center), int(max(0, rd)))
     return self._sorted_chunks(candidates, center)
 
+  def _content_chunks_with_keep(self, world: WorldState, center: ChunkKey, rd: int, keep_margin: int) -> tuple[list[ChunkKey], set[ChunkKey]]:
+    # visible_content_chunk_keys(center, r) is always a horizontally-bounded subset of
+    # visible_content_chunk_keys(center, R) for R >= r >= 1: every branch of that method (the column-band
+    # loop, the floor row, and the tracked-chunk filter) is gated by abs(dx) <= r / abs(dz) <= r, and the one
+    # radius-independent branch (the immediate 3x3x3 neighborhood around center) is always within radius 1,
+    # which is inside any r >= 1. So the keep-radius call (the larger of the two) can be computed once and the
+    # render-radius result derived by filtering, instead of walking the column-band grid twice per frame.
+    r = int(max(0, rd))
+    margin = int(max(0, keep_margin))
+    keep_radius = r + margin
+    keep_candidates = world.visible_content_chunk_keys(normalize_chunk_key(center), keep_radius)
+    if r < 1:
+      visible_candidates = world.visible_content_chunk_keys(normalize_chunk_key(center), r)
+    else:
+      ccx, _ccy, ccz = normalize_chunk_key(center)
+      visible_candidates = {k for k in keep_candidates if abs(int(k[0]) - ccx) <= r and abs(int(k[2]) - ccz) <= r}
+    return self._sorted_chunks(visible_candidates, center), keep_candidates
+
   def _evict_far_chunks(self, *, renderer: BackendRendererApi, keep: set[ChunkKey]) -> None:
     keep_n = {normalize_chunk_key(k) for k in keep}
 
@@ -216,7 +249,8 @@ class WorldUploadTracker:
       return
 
     cache_key = self._build_cache_key(int(world_token), ck, int(chunk_rev))
-    cached = self._build_cache.get(cache_key)
+    with self._build_cache_lock:
+      cached = self._build_cache.get(cache_key)
     if cached is not None:
       if bool(active_matches):
         self._results.put(cached)
@@ -325,8 +359,7 @@ class WorldUploadTracker:
     center = self._center_chunk(eye)
     rd = clamp_render_distance_chunks(int(render_distance_chunks))
 
-    visible = self._content_chunks(world, center, rd)
-    keep_set = set(self._content_chunks(world, center, rd + int(_KEEP_MARGIN)))
+    visible, keep_set = self._content_chunks_with_keep(world, center, rd, int(_KEEP_MARGIN))
     if not visible and not keep_set:
       return
 

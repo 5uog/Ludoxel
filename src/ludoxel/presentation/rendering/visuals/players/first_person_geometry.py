@@ -8,7 +8,7 @@ from typing import Literal
 
 import numpy as np
 
-from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
+from ludoxel.foundations.mathematics.linear.native import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.foundations.mathematics.voxels.faces import FACE_POS_Z
 from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup

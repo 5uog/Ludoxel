@@ -11,10 +11,9 @@ from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import QWidget
 
-import ludoxel.foundations.mathematics.linear.mat4 as mat4
-from ludoxel.foundations.mathematics.linear.transform_matrices import rotate_z_deg_matrix
+import ludoxel.foundations.mathematics.linear.native as mat4
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg, rotate_z_deg_matrix
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 
 _VIEW_CLIP_MARGIN = 1.2
 _VIEW_CLIP_EPSILON = 1e-6

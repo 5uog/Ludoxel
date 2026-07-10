@@ -15,10 +15,6 @@ export function validateNativeExtensionArgs(parsed) {
     errors.push('--skip-verify is only valid for build.');
   }
 
-  if (parsed.command !== 'verify' && parsed.requireBuilt) {
-    errors.push('--require-built is only valid for verify.');
-  }
-
   return {
     ...parsed,
     language: LANGUAGES.has(parsed.language) ? parsed.language : 'ja',

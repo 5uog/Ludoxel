@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import ludoxel.foundations.mathematics.linear.mat4 as mat4
+import ludoxel.foundations.mathematics.linear.native as mat4
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, BackendSunParams
 

@@ -16,8 +16,8 @@ import ludoxel.presentation.interface.viewport.controllers.ai as ai_controller
 import ludoxel.presentation.interface.viewport.controllers.overlay_navigation as overlay_controller
 import ludoxel.presentation.interface.viewport.controllers.settings as settings_controller
 from ludoxel.application.preferences.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CHAT, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_GAMEPLAY_HUD, ACTION_TOGGLE_INVENTORY, action_for_key
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.voxels.faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z, face_neighbor_offset
 from ludoxel.presentation.audio import PLAYER_EVENT_ATTACK_STRONG, PLAYER_EVENT_ATTACK_WEAK, PLAYER_EVENT_DAMAGE_HIT
 from ludoxel.presentation.interface.common.hotbar_support import hotbar_index_from_key

@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from ludoxel.application.sessions.pipelines.render_snapshot import FallingBlockRenderSampleDTO
-from ludoxel.foundations.mathematics.linear.transform_matrices import translate_matrix
+from ludoxel.foundations.mathematics.linear.native import translate_matrix
 from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.occlusion import is_local_face_occluded

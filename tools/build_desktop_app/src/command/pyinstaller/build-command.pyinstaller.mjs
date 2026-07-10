@@ -54,7 +54,7 @@ function addApplicationBootstrapHiddenImports(args) {
   args.push('--hidden-import', 'ludoxel.application.bootstrap.run');
   args.push('--hidden-import', 'ludoxel.simulation.worlds.generation._terrain_native');
   args.push('--hidden-import', 'ludoxel.simulation.spaces.othello.engines._othello_native');
-  args.push('--hidden-import', 'ludoxel.foundations.mathematics.frustums._frustum_native');
+  args.push('--hidden-import', 'ludoxel.foundations.mathematics._mathematics_native');
 }
 
 function addMacosRendererBackendArgs(args) {
@@ -172,7 +172,7 @@ a = Analysis(
     pathex=[r'${srcPath}'],
     binaries=[],
     datas=datas,
-    hiddenimports=['ludoxel.application.bootstrap', 'ludoxel.application.bootstrap.run', 'ludoxel.simulation.worlds.generation._terrain_native', 'ludoxel.simulation.spaces.othello.engines._othello_native', 'ludoxel.foundations.mathematics.frustums._frustum_native'],
+    hiddenimports=['ludoxel.application.bootstrap', 'ludoxel.application.bootstrap.run', 'ludoxel.simulation.worlds.generation._terrain_native', 'ludoxel.simulation.spaces.othello.engines._othello_native', 'ludoxel.foundations.mathematics._mathematics_native'],
     hookspath=[r'${hookPath}'],
     hooksconfig={},
     runtime_hooks=[],

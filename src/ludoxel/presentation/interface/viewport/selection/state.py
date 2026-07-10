@@ -6,8 +6,8 @@ import time
 from dataclasses import dataclass
 
 from ludoxel.application.sessions.managers.session import SessionManager
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 
 SelectionTarget = tuple[int, int, int, str]
 

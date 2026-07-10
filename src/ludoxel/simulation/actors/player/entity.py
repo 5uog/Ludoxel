@@ -6,8 +6,8 @@ import math
 from dataclasses import dataclass
 
 from ludoxel.foundations.mathematics.geometry.aabb import AABB
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 
 

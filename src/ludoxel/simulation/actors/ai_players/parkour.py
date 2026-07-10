@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import math
 
+from ludoxel.foundations.mathematics.linear.native import yaw_pitch_deg_from_forward
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import yaw_pitch_deg_from_forward
 from ludoxel.foundations.mathematics.scalars.numeric import clampf
 from ludoxel.simulation.actors.ai_players.navigation import _limit_angle_delta, _movement_inputs_toward_target, _parkour_takeoff_point, _support_cell_center, _yaw_diff_deg
 from ludoxel.simulation.actors.ai_players.runtime import _AI_TURN_RATE_DEG_PER_S, _AiPlayerRuntime

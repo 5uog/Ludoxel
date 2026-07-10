@@ -6,7 +6,7 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from ludoxel.foundations.mathematics.linear.transform_matrices import compose_matrices, scale_matrix, translate_matrix
+from ludoxel.foundations.mathematics.linear.native import compose_matrices, scale_matrix, translate_matrix
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT
 from ludoxel.presentation.rendering.faces.uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
 from ludoxel.simulation.blocks.models.common import LocalBox

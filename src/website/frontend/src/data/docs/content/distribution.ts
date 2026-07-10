@@ -388,89 +388,100 @@ function requireBundledResource(appPath, label, relativePaths) {
     group: 'Native and Runtime Materials',
     title: 'Understanding Native Extension Fallbacks',
     description:
-      'Separates source availability, compiled acceleration, verification policy, and release permission in build_native_extensions and the foundations Python fallbacks: the configured candidates, compiled-suffix detection, the generated build payload, and the require-built gate — and refuses to read a native success as runtime superiority or distribution permission.',
+      'Separates source availability, compiled acceleration, verification policy, and release permission in build_native_extensions and the foundations Python fallbacks: the RUST_NATIVE_MODULES registry, the compiled-import verification gate, the guarded-import fallback pattern each selector module shares, and the desktop-package effect — and refuses to read a native success as runtime superiority or distribution permission.',
     sections: [
       {
         id: 'understanding-native-extension-fallbacks-owner-files',
-        title: 'Owner Files and Candidate Set',
+        title: 'Owner Files and the Rust Crate Registry',
         content: [
+          {
+            kind: 'paragraph',
+            text: 'Native extension handling is fixed by `tools/build_native_extensions` against three Rust crates under `native/`, declared in `RUST_NATIVE_MODULES` in `tools/build_native_extensions/src/config/native.config.mjs`. There is no separate Cython build path: the tool formerly carried a distinct candidate set, a compiled-suffix classifier, and a require-built verification policy for three Cython sources under `src/ludoxel/foundations/mathematics`, and that path, its collection and build-script services, and its generated-payload build directory no longer exist in the repository. Every native target the tool builds or verifies is a Rust crate reached through this one registry.',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'RUST_NATIVE_MODULES in native.config.mjs.',
+            code: `export const RUST_NATIVE_MODULES = Object.freeze([
+  Object.freeze({
+    id: 'terrain_native',
+    crateDirectory: 'native/ludoxel_terrain',
+    moduleName: 'ludoxel.simulation.worlds.generation._terrain_native',
+    installDirectory: 'src/ludoxel/simulation/worlds/generation',
+    fallbackModuleName: 'ludoxel.simulation.worlds.generation.fallback',
+  }),
+  Object.freeze({
+    id: 'othello_native',
+    crateDirectory: 'native/ludoxel_othello',
+    moduleName: 'ludoxel.simulation.spaces.othello.engines._othello_native',
+    installDirectory: 'src/ludoxel/simulation/spaces/othello/engines',
+    fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
+  }),
+  Object.freeze({
+    id: 'mathematics_native',
+    crateDirectory: 'native/ludoxel_mathematics',
+    moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
+    installDirectory: 'src/ludoxel/foundations/mathematics',
+    fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
+  }),
+]);`,
+          },
           {
             kind: 'paragraph',
             text: [
-              'Cython native extension handling is fixed by `tools/build_native_extensions` against the Python sources under `src/ludoxel/foundations/mathematics`, and the candidate set and recognized compiled suffixes are declared in `tools/build_native_extensions/src/config/native.config.mjs`. Each candidate names a Python module whose source remains the reference implementation; a compiled binary, where it exists, is an acceleration of that module and not a distinct feature. The same tool also owns the separate ',
+              'The three registered crates are the ',
               {
                 kind: 'link',
-                label: 'Rust crate targets',
+                label: 'terrain engine',
                 href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
               },
-              ' — the terrain engine, the Othello search engine, and the chunk frustum-cull engine — whose sources are Rust crates with verification policy separate from the Cython candidates below.',
+              ', the ',
+              {
+                kind: 'link',
+                label: 'Othello search engine',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-othello-engine-extension',
+              },
+              ', and the ',
+              {
+                kind: 'link',
+                label: 'foundations-mathematics engine',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension',
+              },
+              '. `fallbackModuleName` names one representative Python module for registry reporting; the mathematics entry’s actual fallback set spans four selector modules and their matching pure-Python bodies, which the mathematics-crate article develops in full. Each record’s Python source remains the reference implementation for its crate: a compiled binary, where it exists, accelerates that reference and is not a distinct feature with its own behavior.',
             ],
           },
+        ],
+      },
+      {
+        id: 'understanding-native-extension-fallbacks-guarded-import',
+        title: 'The Guarded-Import Fallback Pattern',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'Every crate’s Python import owner selects between the compiled module and the pure-Python fallback with the same shape: one module-level `try`/`except ImportError` that binds a compiled-module name or `None`, evaluated once at import time. `ludoxel.foundations.mathematics._native` is representative of the pattern every crate’s owner module repeats.',
+          },
           {
             kind: 'code',
-            language: 'js',
-            caption: 'NATIVE_EXTENSION_MODULES and COMPILED_EXTENSION_SUFFIXES in native.config.mjs.',
-            code: `export const NATIVE_EXTENSION_MODULES = Object.freeze([
-  Object.freeze({
-    id: 'ray_aabb',
-    moduleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
-    sourcePath: 'src/ludoxel/foundations/mathematics/geometry/ray_aabb.py',
-  }),
-  Object.freeze({
-    id: 'voxel_dda',
-    moduleName: 'ludoxel.foundations.mathematics.voxels.dda',
-    sourcePath: 'src/ludoxel/foundations/mathematics/voxels/dda.py',
-  }),
-  Object.freeze({
-    id: 'view_angles',
-    moduleName: 'ludoxel.foundations.mathematics.linear.view_angles',
-    sourcePath: 'src/ludoxel/foundations/mathematics/linear/view_angles.py',
-  }),
-]);
-
-export const COMPILED_EXTENSION_SUFFIXES = Object.freeze(['.pyd', '.so', '.dylib']);`,
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/_native.py',
+            code: `try:
+  from ludoxel.foundations.mathematics import _mathematics_native as native_module
+except ImportError:
+  native_module = None`,
           },
           {
             kind: 'paragraph',
-            text: 'There are exactly three candidates — ray and AABB intersection, voxel DDA traversal, and view-angle math — and the Python source for each is authoritative. The distribution question is never whether a compiled binary exists in the abstract but whether the produced artifact and its build log record the native state accurately. The presence or absence of a `.pyd`, `.so`, or `.dylib` alters runtime speed; it does not alter the project’s legal status, and a description must not let the former imply the latter.',
+            text: 'Nothing in a source tree without a Rust build raises past this point: an absent compiled module produces `native_module = None`, and every call site checks that value before deciding which implementation runs, rather than letting the import failure propagate. This is the entire startup native check for a crate — a single guarded import, not a build, a self-test, or a bulk computation — so application startup cost does not grow with the number of registered crates.',
           },
         ],
       },
       {
-        id: 'understanding-native-extension-fallbacks-suffix-detection',
-        title: 'Compiled-Suffix Detection',
+        id: 'understanding-native-extension-fallbacks-verify',
+        title: 'Compiled-Import Verification',
         content: [
           {
             kind: 'paragraph',
-            text: '`compiledBinariesForSource` in `tools/build_native_extensions/src/collect/binary.collect.mjs` classifies a source as compiled or fallback-only. It derives the stem from the Python file name, lists the source directory, and admits only files whose extension is a recognized compiled suffix and whose base name begins with that stem.',
-          },
-          {
-            kind: 'code',
-            language: 'js',
-            caption: 'compiledBinariesForSource in binary.collect.mjs.',
-            code: `export function compiledBinariesForSource(source) {
-  const stem = basename(source.sourcePath, '.py');
-
-  return listFiles(source.sourceDirectory).filter((path) => {
-    const extension = extname(path);
-    if (!COMPILED_EXTENSION_SUFFIXES.includes(extension)) return false;
-    return basename(path).startsWith(stem);
-  });
-}`,
-          },
-          {
-            kind: 'paragraph',
-            text: 'A source is fallback-only exactly when this function returns an empty list: no file in the module directory carries both a recognized suffix and the shared stem. Directory contents supply the classification, giving every platform and session the same evidence source. A packaged artifact can execute the Python fallback when a description presumes a compiled module; the classifier prevents that unsupported native-acceleration claim.',
-          },
-        ],
-      },
-      {
-        id: 'understanding-native-extension-fallbacks-build-and-verify',
-        title: 'Build Payload and Verification Gate',
-        content: [
-          {
-            kind: 'paragraph',
-            text: '`buildNativeExtensions` in `tools/build_native_extensions/src/service/build.service.mjs` collects the sources, writes a generated Python build script and a JSON payload under `build/native-extension-scripts`, resolves a Python executable, runs the script, then runs the Rust crate build, and then verifies with the require-built policy enabled unless verification was skipped. The generated script compiles the Cython extensions in place through Cython and setuptools and instructs the operator to install the development dependencies when they are absent; the generated script root is always removed in a `finally` block, so no payload is left as a stale artifact. The two entry points are:',
+            text: '`verifyRustNativeExtensions` runs inside every `npm run build:native:check` invocation and inside the post-build verification of `npm run build:native`. For each registered crate it imports the compiled module name in a subprocess whose `PYTHONPATH` is pinned to the repository `src` tree, reads the imported module’s `__file__`, and accepts the target only when that file resolves under `src/ludoxel` and carries the platform’s compiled suffix.',
           },
           {
             kind: 'code',
@@ -481,32 +492,14 @@ npm run build:native:check`,
           },
           {
             kind: 'paragraph',
-            text: '`verifyNativeExtensions` prints each source, its module name, and the compiled files found, and elevates a missing-binary condition to a failure only under the require-built policy.',
-          },
-          {
-            kind: 'code',
-            language: 'js',
-            caption: 'The require-built gate in verify.service.mjs.',
-            code: `if (options.requireBuilt && missingCompiled.length > 0) {
-  console.error('Native extension verification failed because --require-built was specified.');
-
-  for (const source of missingCompiled) {
-    console.error(\`  - missing compiled extension for \${source.id}: \${source.moduleName}\`);
-  }
-
-  return 1;
-}`,
-          },
-          {
-            kind: 'paragraph',
             text: [
-              'Without the require-built policy, the verifier records `compiled extension: none; Python fallback source exists.` for each fallback-only Cython source and accepts that state because a Cython fallback is a valid runtime state; with it, a single fallback-only candidate fails the entire verification. The Rust crate targets are checked after the Cython candidates on every verification run and do not accept a fallback import; their gate is fixed by the ',
+              'A missing artifact, an import that resolves outside the repository source tree, or an import that resolves to a Python source file each fails the check for that crate; the Python fallback never passes this verification, because the gate exists to prove the compiled extension is the module the interpreter actually loads, not merely that some working implementation is reachable. `rustCrateStates` separately derives, from the same registry, the manifest path, the built cdylib path under `target/release`, the installed artifact path, and a staleness flag comparing crate source modification times against the installed artifact; a stale artifact is reported with a rebuild instruction, and the tool never rebuilds implicitly during verification. Four conditions move independently for every registered crate: source availability belongs to the Rust crate and its Python fallback module, compiled acceleration belongs to whether the configured artifact path holds a file the interpreter resolves the module name to, verification result belongs to this import gate, and release permission belongs to the controlling ',
               {
                 kind: 'link',
-                label: 'Rust verification policy',
-                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
+                label: 'License Text',
+                href: '/docs/legal',
               },
-              '. Four conditions move independently for the Cython candidates. Source availability belongs to the `.py` reference implementation. Compiled acceleration belongs to the module directory and requires `compiledBinariesForSource` to find a suffix-matched binary. Verification policy belongs to the run and is selected by `--require-built`. Release permission belongs to the controlling License Text. A fallback-only directory retains a working implementation, and a passing native build establishes neither runtime superiority nor distribution permission.',
+              '. A fallback-only crate retains a working implementation, and a passing native build establishes neither runtime superiority nor distribution permission.',
             ],
           },
         ],
@@ -517,16 +510,16 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'In the desktop build, `buildNativeExtensionsBeforeDesktop` runs the native build before PyInstaller packaging unless `--skip-native-build` or a dry run is in effect, and a nonzero native exit code stops the desktop build before packaging. The package effect is not a single bit: an artifact may run through the Python fallback with no compiled binary and still fail a require-built policy imposed for a particular distribution candidate, and it may satisfy native verification and still fail legal-material inclusion, shader validation, resource-root checks, or release-language constraints.',
+            text: 'In the desktop build, `buildNativeExtensionsBeforeDesktop` runs the native build before PyInstaller packaging unless `--skip-native-build` or a dry run is in effect, and a nonzero native exit code stops the desktop build before packaging. The package effect is not a single bit: an artifact may run entirely through Python fallbacks with no compiled crate present and still be a working, if slower, build, and it may satisfy every native-crate verification and still fail legal-material inclusion, shader validation, resource-root checks, or release-language constraints checked elsewhere in the same pipeline.',
           },
           {
             kind: 'paragraph',
-            text: '`compiledBinariesForSource` in `tools/build_native_extensions/src/collect/binary.collect.mjs` classifies compiled state from suffix-matched files beside each Python source, while `verifyNativeExtensions` reports the Python fallback and applies `--require-built` only when requested. Build output establishes the selected technical state of that source. Distribution authority continues to arise from the controlling License Text.',
+            text: '`verifyRustNativeExtensions` in `tools/build_native_extensions/src/service/rust.service.mjs` is the one classifier the desktop preflight and a source-tree check both consult for native state; there is no separate Cython-era classifier left to consult, and a description that cites `compiledBinariesForSource` or a `--require-built` flag as current build behavior is describing a removed path. Build output establishes the selected technical state of each registered crate. Distribution authority continues to arise from the controlling License Text.',
           },
         ],
       },
     ],
-    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Frustum Extension', 'Running a Desktop Build with Permission', 'Reading Build Output'],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Mathematics Extension', 'Running a Desktop Build with Permission', 'Reading Build Output'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1683,13 +1676,13 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
     fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
   }),
   Object.freeze({
-    id: 'frustum_native',
-    crateDirectory: 'native/ludoxel_frustum',
-    crateName: 'ludoxel_frustum',
-    moduleName: 'ludoxel.foundations.mathematics.frustums._frustum_native',
-    artifactStem: '_frustum_native',
-    installDirectory: 'src/ludoxel/foundations/mathematics/frustums',
-    fallbackModuleName: 'ludoxel.foundations.mathematics.frustums.clip',
+    id: 'mathematics_native',
+    crateDirectory: 'native/ludoxel_mathematics',
+    crateName: 'ludoxel_mathematics',
+    moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
+    artifactStem: '_mathematics_native',
+    installDirectory: 'src/ludoxel/foundations/mathematics',
+    fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
   }),
 ]);`,
           },
@@ -1705,8 +1698,8 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
               ', and the ',
               {
                 kind: 'link',
-                label: 'frustum-cull crate',
-                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension',
+                label: 'foundations-mathematics crate',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-mathematics-extension',
               },
               ', and the build and verification services iterate every entry. `rustCrateStates` derives from each record the manifest path, the built cdylib path under `target/release`, the installed artifact path, and a staleness flag comparing crate source modification times against the installed artifact. A stale artifact is reported with a rebuild instruction; the tool does not rebuild implicitly during verification, and application startup never runs cargo.',
             ],
@@ -1758,7 +1751,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
         ],
       },
     ],
-    relatedTitles: ['Understanding Native Extension Fallbacks', 'Building the Rust Othello Engine Extension', 'Building the Rust Frustum Extension', 'Running a Desktop Build with Permission'],
+    relatedTitles: ['Understanding Native Extension Fallbacks', 'Building the Rust Othello Engine Extension', 'Building the Rust Mathematics Extension', 'Running a Desktop Build with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1829,29 +1822,30 @@ if (!importedFile.endsWith(expectedSuffix)) {
         ],
       },
     ],
-    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Frustum Extension', 'Understanding Native Extension Fallbacks', 'Understanding Othello Search'],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Mathematics Extension', 'Understanding Native Extension Fallbacks', 'Understanding Othello Search'],
   }),
   defineDocsArticle({
     category: 'Distribution',
     subcategory: 'Runtime Inclusions',
     group: 'Native and Runtime Materials',
-    title: 'Building the Rust Frustum Extension',
-    description: 'Defines the Rust chunk-visibility crate, the byte-buffer contract it shares with the numpy fallback in clip.py, the build and artifact placement it shares with the terrain and Othello crates, and the desktop-package inclusion path for the compiled extension.',
+    title: 'Building the Rust Mathematics Extension',
+    description:
+      'Defines the Rust foundations-mathematics crate that replaced the Cython build path and absorbed the former standalone frustum crate: its per-function byte contracts, the build and artifact placement it shares with the terrain and Othello crates, the compiled-import verification, and the desktop-package inclusion path.',
     sections: [
       {
-        id: 'building-the-rust-frustum-extension-crate-and-contract',
-        title: 'Crate Source and Shared Contract',
+        id: 'building-the-rust-mathematics-extension-crate-and-contract',
+        title: 'Crate Source and Merged Contract',
         content: [
           {
             kind: 'paragraph',
-            text: 'The Rust frustum-cull engine lives in the repository as `native/ludoxel_frustum`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set, matching the terrain and Othello crates. Unlike those two, the crate is one file: `native/ludoxel_frustum/src/lib.rs` holds both the clip-volume arithmetic and the PyO3 binding surface, because the crate exposes exactly one computation. It names its module `_frustum_native` and exposes `chunks_intersect_clip_volume_batch` and `native_build_info` as Python functions. The compiled artifact is imported as `ludoxel.foundations.mathematics.frustums._frustum_native`, placing it under `foundations`: chunk-grid geometry and clip-volume tests are a foundations-layer contract, so this crate sits beside the frustum math it accelerates instead of beside a simulation subsystem.',
+            text: 'The Rust foundations-mathematics engine lives in the repository as `native/ludoxel_mathematics`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 0.29 with the stable-ABI feature set, matching the terrain and Othello crates. It replaces the former Cython build path for ray-AABB intersection, voxel DDA traversal, and view-angle conversion, and it absorbs the former standalone `native/ludoxel_frustum` crate: `chunks_intersect_clip_volume_batch`, the chunk-visibility batch test, is now one function among several this crate exposes rather than the sole reason for a separate crate. `native/ludoxel_mathematics/src/lib.rs` holds the PyO3 binding surface over five source modules — `ray_aabb.rs`, `dda.rs`, `view_angles.rs`, `frustum.rs`, and `mat4.rs` — and names its compiled module `_mathematics_native`, imported as `ludoxel.foundations.mathematics._mathematics_native`.',
           },
           {
             kind: 'code',
             language: 'toml',
-            caption: 'native/ludoxel_frustum/Cargo.toml',
+            caption: 'native/ludoxel_mathematics/Cargo.toml',
             code: `[lib]
-name = "ludoxel_frustum"
+name = "ludoxel_mathematics"
 crate-type = ["cdylib"]
 
 [dependencies]
@@ -1859,71 +1853,105 @@ pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311", "genera
           },
           {
             kind: 'paragraph',
-            text: 'The contract is a raw byte buffer in both directions, with no PyO3 object graph beyond the returned bytes. `chunks_intersect_clip_volume_batch` takes `keys_xyz`, little-endian `int64` bytes in C order with shape `(count, 3)`, one normalized chunk-grid key per row; `matrix`, sixteen little-endian `float32` bytes in C order forming a row-major 4x4 matrix; and `count`. It returns one `uint8` byte per input row, `1` where the chunk’s eight world-space corners intersect the clip volume and `0` where every corner lies on the outside of the same single clip plane. `ludoxel.foundations.mathematics.frustums.native`, the import owner, reinterprets that returned buffer directly as `numpy.bool_` without a copy step beyond the buffer itself, because a numpy boolean array already stores one byte per element with the same `0`/`1` encoding the crate writes.',
+            text: 'The crate does not port every function `foundations/mathematics` defines. Per-scalar numeric conversion, smoothing, and dynamic-typing coercion helpers stay Python-only because a PyO3 round trip per call would cost more than the pure-Python body it replaces; chunk-grid hashing and the single-AABB and single-vector helpers stay Python-only for the same reason, reachable instead through the batched entry points below where a caller needs volume. `ludoxel.foundations.mathematics._native` is the one loader every selector module imports: it resolves `_mathematics_native` once at import time inside a `try`/`except ImportError` block and exposes `native_mathematics_available`, `native_mathematics_module_file`, and `native_mathematics_status` so a caller can report which state a running session is in without importing the compiled module directly.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/_native.py',
+            code: `try:
+  from ludoxel.foundations.mathematics import _mathematics_native as native_module
+except ImportError:
+  native_module = None`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'Four selector modules call through that loader and fall back to their matching pure-Python module when `native_module` is `None`: `geometry/native.py` wraps `ray_aabb_face` against the `geometry.ray_aabb` fallback, `voxels/native.py` wraps a batched `dda_grid_traverse_batch` against the `voxels.dda` fallback, `linear/native.py` wraps the view-angle conversions and every `mat4`/`transform_matrices` builder against those two fallback modules, and `frustums/native.py` wraps `chunks_intersect_clip_volume_batch` against `frustums.clip`, unchanged in contract from the crate `ludoxel_frustum` used to provide. Every caller across picking, player and AI movement, camera composition, the OpenGL and WGPU backends, and the HUD crosshair axis now imports from these four `.native` modules rather than importing a Cython-candidate or fallback module directly.',
           },
         ],
       },
       {
-        id: 'building-the-rust-frustum-extension-build-and-placement',
+        id: 'building-the-rust-mathematics-extension-per-function-contracts',
+        title: 'Per-Function Byte Contracts',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ray_aabb_face` takes a ray origin and direction and an AABB min and max as twelve `f64` arguments and returns `Option<(f64, f64, f64, f64, i32)>` — entry `t`, hit point, and hit face — directly as a PyO3 tuple, matching `RayHitFace` in `geometry/ray_aabb.py` field for field. `dda_grid_traverse_batch` releases the GIL through `py.detach()` while it walks the full ray, then packs every traversed cell as one `<qqqdi>` record — three little-endian `int64` cell coordinates, one little-endian `float64` parametric `t`, one little-endian `int32` entered face — and returns the concatenated bytes; `voxels/native.py` unpacks each record with `struct.unpack_from` and yields a `DDAHit` per record, so a caller sees the same generator interface the pure-Python `dda_grid_traverse` returns.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'The DDA batch record format in voxels/native.py.',
+            code: `_RECORD_FORMAT = "<qqqdi"
+_RECORD_SIZE = struct.calcsize(_RECORD_FORMAT)
+
+raw = native_module.dda_grid_traverse_batch(origin.x, origin.y, origin.z, direction.x, direction.y, direction.z, float(t_max), float(cell_size))
+for offset in range(0, len(raw), _RECORD_SIZE):
+  cell_x, cell_y, cell_z, t, enter_face = struct.unpack_from(_RECORD_FORMAT, raw, offset)`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`chunks_intersect_clip_volume_batch` keeps the exact contract the former `ludoxel_frustum` crate defined: `keys_xyz`, little-endian `int64` bytes in C order with shape `(count, 3)`, one normalized chunk-grid key per row; `matrix`, sixteen little-endian `float32` bytes in C order forming a row-major 4x4 matrix; and `count`. It returns one `uint8` byte per input row, `1` where the chunk’s eight world-space corners intersect the clip volume and `0` where every corner lies outside the same single clip plane, and `frustums/native.py` reinterprets that buffer directly as `numpy.bool_` without an extra copy step. Every `mat4_*` function — `identity`, `perspective`, `ortho`, `look_dir`, `mul`, `translate`, `scale`, the three axis rotations, and `compose` — returns sixteen little-endian `float32` bytes in row-major order, and `linear/native.py`’s `_matrix_from_bytes` reshapes that buffer into the same `(4, 4)` float32 numpy layout the pure-Python `mat4.py` and `transform_matrices.py` already returned, so a caller cannot observe which implementation produced a given matrix from its shape or dtype alone.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-mathematics-extension-build-and-placement',
         title: 'Cargo Build and Artifact Placement',
         content: [
           {
             kind: 'paragraph',
-            text: 'The crate is the third entry of `RUST_NATIVE_MODULES` in `tools/build_native_extensions/src/config/native.config.mjs`, alongside the terrain and Othello crates documented in ',
+            text: 'The crate is the third entry of `RUST_NATIVE_MODULES` in `tools/build_native_extensions/src/config/native.config.mjs`, alongside the terrain and Othello crates.',
           },
           {
             kind: 'code',
             language: 'js',
-            caption: 'The frustum entry in RUST_NATIVE_MODULES.',
+            caption: 'The mathematics entry in RUST_NATIVE_MODULES.',
             code: `Object.freeze({
-  id: 'frustum_native',
-  crateDirectory: 'native/ludoxel_frustum',
-  crateName: 'ludoxel_frustum',
-  moduleName: 'ludoxel.foundations.mathematics.frustums._frustum_native',
-  artifactStem: '_frustum_native',
-  installDirectory: 'src/ludoxel/foundations/mathematics/frustums',
-  fallbackModuleName: 'ludoxel.foundations.mathematics.frustums.clip',
+  id: 'mathematics_native',
+  crateDirectory: 'native/ludoxel_mathematics',
+  crateName: 'ludoxel_mathematics',
+  moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
+  artifactStem: '_mathematics_native',
+  installDirectory: 'src/ludoxel/foundations/mathematics',
+  fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
 }),`,
           },
           {
             kind: 'paragraph',
             text: [
-              '`buildRustNativeExtensions` builds every entry the same way regardless of position in the array: it resolves cargo, runs `cargo build --release --manifest-path` against `native/ludoxel_frustum/Cargo.toml`, and copies the produced cdylib to `src/ludoxel/foundations/mathematics/frustums/_frustum_native.pyd` on Windows or the `.so` suffix elsewhere, matching the placement and failure handling the ',
+              '`buildRustNativeExtensions` builds every entry the same way regardless of position in the array: it resolves cargo, runs `cargo build --release --manifest-path` against `native/ludoxel_mathematics/Cargo.toml`, and copies the produced cdylib to `src/ludoxel/foundations/mathematics/_mathematics_native.pyd` on Windows or the `.so` suffix elsewhere, matching the placement and failure handling the ',
               {
                 kind: 'link',
                 label: 'terrain crate',
                 href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
               },
-              ' article describes in full. `npm run build:native` runs this build for all three crates in one invocation; `native/ludoxel_frustum/target` is pruned from the source distribution by `MANIFEST.in` the same way the other two crate directories are.',
+              ' article describes in full. `npm run build:native` runs this build for all three crates in one invocation; `native/ludoxel_mathematics/target` is pruned from the source distribution by `MANIFEST.in`, and the former `native/ludoxel_frustum` directory and its `MANIFEST.in` prune entry no longer exist in the repository.',
             ],
           },
         ],
       },
       {
-        id: 'building-the-rust-frustum-extension-verification',
+        id: 'building-the-rust-mathematics-extension-verification',
         title: 'Import Verification Refuses the Fallback',
         content: [
           {
             kind: 'paragraph',
-            text: '`verifyRustNativeExtensions` applies the identical compiled-import gate to this crate that it applies to the terrain and Othello crates: it imports `ludoxel.foundations.mathematics.frustums._frustum_native` in a subprocess pinned to the repository `src` tree, reads the imported module’s `__file__`, and accepts the target only when that file resolves under `src/ludoxel` and carries the platform’s compiled suffix. `npm run build:native:check` runs this gate for all three registered crates; a fallback-only source tree fails the frustum entry exactly as it fails the other two, and the check names that specific failure in its output.',
+            text: '`verifyRustNativeExtensions` applies the identical compiled-import gate to this crate that it applies to the terrain and Othello crates: it imports `ludoxel.foundations.mathematics._mathematics_native` in a subprocess pinned to the repository `src` tree, reads the imported module’s `__file__`, and accepts the target only when that file resolves under `src/ludoxel` and carries the platform’s compiled suffix. `npm run build:native:check` runs this gate for all three registered crates; a fallback-only source tree fails the mathematics entry exactly as it fails the other two, and the check names that specific failure in its output. This is the only native-extension verification path in the repository: `build_native_extensions` no longer carries a separate Cython candidate set, a compiled-suffix classifier, or a require-built policy distinct from this gate.',
           },
         ],
       },
       {
-        id: 'building-the-rust-frustum-extension-runtime-and-package',
+        id: 'building-the-rust-mathematics-extension-runtime-and-package',
         title: 'Runtime Fallback and Package Inclusion',
         content: [
           {
             kind: 'paragraph',
-            text: '`ludoxel.foundations.mathematics.frustums.native` performs one guarded import of `_frustum_native` at module import time. `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` imports `chunks_intersect_clip_volume_batch` from that module, so both the world pass and the shadow pass reach the compiled extension, when it is present, on every drawn frame. When the compiled module is absent, the same call routes to the numpy-vectorized fallback in `clip.py`, which the Systems documentation for chunk visibility describes as the reference contract a native build must match value for value.',
+            text: 'At runtime, `_native.py` performs one guarded import of `_mathematics_native` at module import time; that import is the entire startup native check for this crate, and no build, self-test, or bulk computation runs during application startup. When the compiled module is absent, every one of the four selector modules routes to its pure-Python fallback, so a source tree without a Rust build still starts, picks blocks, moves players and AI actors, and renders frustum-culled chunks, only slower. `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` still imports `chunks_intersect_clip_volume_batch` from `frustums/native.py`, so both the world pass and the shadow pass reach the compiled extension, when it is present, on every drawn frame, exactly as they did when the function lived in `ludoxel_frustum`.',
           },
           {
             kind: 'paragraph',
-            text: 'The desktop build declares `ludoxel.foundations.mathematics.frustums._frustum_native` as a PyInstaller hidden import on both platform paths in `tools/build_desktop_app`, the wheel package data in `pyproject.toml` admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output, mirroring the terrain and Othello inclusion paths exactly.',
-          },
-          {
-            kind: 'paragraph',
-            text: 'This crate accelerates an operation the numpy fallback had already reduced from a per-chunk Python loop to one batched array call, adding native speed on top of an already-vectorized operation. A source-tree benchmark comparing the two implementations at 3,125 candidate chunks against one clip matrix measured the numpy path at under one millisecond and the compiled path at roughly one twentieth of that, with identical visibility results across every compared key. Both figures sit far below typical per-frame budgets at common render-distance settings, placing chunk culling outside the operations a frame-rate investigation should target first; the crate exists as a native-acceleration target consistent with the terrain and Othello crates.',
+            text: 'The desktop build declares `ludoxel.foundations.mathematics._mathematics_native` as a PyInstaller hidden import on both platform paths in `tools/build_desktop_app`, replacing the former `ludoxel.foundations.mathematics.frustums._frustum_native` entry. The wheel package data in `pyproject.toml` admits the installed `_mathematics_native` artifact in place of the removed `_frustum_native` entry, and `MANIFEST.in` carries the crate source while pruning its `target` output, mirroring the terrain and Othello inclusion paths exactly.',
           },
         ],
       },

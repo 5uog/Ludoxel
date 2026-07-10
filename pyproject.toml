@@ -17,7 +17,7 @@ keywords = [
     "wgpu",
     "voxel",
     "shadow-map",
-    "cython",
+    "rust",
 ]
 
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -43,7 +43,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["build>=1.2,<2", "Cython>=3.0,<4", "PyInstaller>=6,<7", "setuptools>=82", "wheel>=0.45", "ruff>=0.14,<1"]
+dev = ["build>=1.2,<2", "PyInstaller>=6,<7", "setuptools>=82", "wheel>=0.45", "ruff>=0.14,<1"]
 figures = ["manim>=0.19,<1"]
 
 [project.scripts]
@@ -69,8 +69,8 @@ ludoxel = [
     "simulation/worlds/generation/_terrain_native*.so",
     "simulation/spaces/othello/engines/_othello_native*.pyd",
     "simulation/spaces/othello/engines/_othello_native*.so",
-    "foundations/mathematics/frustums/_frustum_native*.pyd",
-    "foundations/mathematics/frustums/_frustum_native*.so",
+    "foundations/mathematics/_mathematics_native*.pyd",
+    "foundations/mathematics/_mathematics_native*.so",
 ]
 
 [tool.setuptools.packages.find]

@@ -22,8 +22,8 @@ from ludoxel.application.preferences.clouds import (
   normalize_cloud_speed_range,
 )
 from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality
+from ludoxel.foundations.mathematics.linear.native import sun_dir_from_az_el_deg
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import sun_dir_from_az_el_deg
 
 
 @dataclass

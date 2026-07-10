@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ludoxel.foundations.mathematics.geometry.native import ray_aabb_face
 from ludoxel.foundations.mathematics.geometry.ray import Ray
-from ludoxel.foundations.mathematics.geometry.ray_aabb import ray_aabb_face
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.rules.picking.block import BlockPick

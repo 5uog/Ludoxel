@@ -145,9 +145,19 @@ class BackendShadowParams:
   dark_mul: float = 0.20
   cull_front: bool = False
   bias_min: float = 0.00003
-  bias_slope: float = 0.00035
-  poly_offset_factor: float = 0.50
-  poly_offset_units: float = 0.75
+  # bias_slope and poly_offset_factor/units (below) both widen the same failure mode: at a
+  # caster's own silhouette edge -- a lone block's convex corner, not the concave notches
+  # SHADOW_NORMAL_OFFSET_TEXELS targets -- their combined push let ground right next to the
+  # corner compare as unshadowed, leaving a visible lit gap between the block's base and its own
+  # cast shadow. Measured on a lone block at sun 45/25 (debug harness, not exposed here): the
+  # prior 0.00035/0.50/0.75 left the ground beside the corner ~40% brighter than the shadow's
+  # interior; these values cut that to ~23% with no measurable new self-shadow speckling on
+  # flat or gently sloped ground at low sun elevation. Lowering them further keeps closing the
+  # corner gap but starts reintroducing that speckling, so this is a deliberate midpoint, not
+  # the tightest possible value.
+  bias_slope: float = 0.00018
+  poly_offset_factor: float = 0.35
+  poly_offset_units: float = 0.50
   coverage_radius: float = 40.0
   pcf_radius: float = 0.85
   ultra_filter: bool = False

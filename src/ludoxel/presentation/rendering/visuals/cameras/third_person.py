@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from ludoxel.application.preferences.camera import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_THIRD_PERSON_BACK, normalize_camera_perspective
+from ludoxel.foundations.mathematics.geometry.native import ray_aabb_face
 from ludoxel.foundations.mathematics.geometry.ray import Ray
-from ludoxel.foundations.mathematics.geometry.ray_aabb import ray_aabb_face
+from ludoxel.foundations.mathematics.linear.native import forward_from_yaw_pitch_deg, yaw_pitch_deg_from_forward
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.foundations.mathematics.linear.view_angles import forward_from_yaw_pitch_deg, yaw_pitch_deg_from_forward
-from ludoxel.foundations.mathematics.voxels.dda import dda_grid_traverse
+from ludoxel.foundations.mathematics.voxels.native import dda_grid_traverse
 from ludoxel.simulation.blocks.models.api import collision_aabbs_for_block
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.worlds.state.world import WorldState
