@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 
 from ludoxel.application.sessions.pipelines.render_snapshot import BlockBreakParticleRenderSampleDTO
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
-from ludoxel.presentation.rendering.contracts.lookups import DefLookup, UVLookup
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, WorldUVLookup
 from ludoxel.presentation.rendering.faces.row_utils import uv_rect_from_pixels
 from ludoxel.simulation.blocks.models.api import render_boxes_for_block
 
@@ -72,7 +72,7 @@ def _scaled_particle_count(base_count: int, spawn_rate: float) -> int:
   return max(0, int(whole))
 
 
-def spawn_block_break_particles(*, state_str: str, cell: tuple[int, int, int], uv_lookup: UVLookup, def_lookup: DefLookup, spawn_rate: float = 1.0, speed_scale: float = 1.0) -> tuple[BlockBreakParticleState, ...]:
+def spawn_block_break_particles(*, state_str: str, cell: tuple[int, int, int], uv_lookup: WorldUVLookup, def_lookup: DefLookup, spawn_rate: float = 1.0, speed_scale: float = 1.0) -> tuple[BlockBreakParticleState, ...]:
   boxes = tuple(render_boxes_for_block(str(state_str), lambda _x, _y, _z: None, def_lookup, 0, 0, 0))
   if not boxes:
     return ()
@@ -103,7 +103,7 @@ def spawn_block_break_particles(*, state_str: str, cell: tuple[int, int, int], u
       position = Vec3(float(cell_x) + float(local_x), float(cell_y) + float(local_y), float(cell_z) + float(local_z))
       offset = position - box_center
       face_idx = _dominant_face_index(offset)
-      texture_uv = uv_lookup(str(state_str), int(face_idx))
+      texture_uv, _rotation_steps = uv_lookup(cell_x, cell_y, cell_z, str(state_str), int(face_idx))
       px0 = random.uniform(float(_PARTICLE_MIN_SUBPIXEL_ORIGIN_PX), float(_PARTICLE_MAX_SUBPIXEL_ORIGIN_PX))
       py0 = random.uniform(float(_PARTICLE_MIN_SUBPIXEL_ORIGIN_PX), float(_PARTICLE_MAX_SUBPIXEL_ORIGIN_PX))
       uv_rect = uv_rect_from_pixels(texture_uv, (float(px0), float(py0), float(px0) + float(_PARTICLE_FRAGMENT_SIZE_PX), float(py0) + float(_PARTICLE_FRAGMENT_SIZE_PX)))

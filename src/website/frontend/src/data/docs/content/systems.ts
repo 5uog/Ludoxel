@@ -2754,7 +2754,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.6"`,
+            code: `__version__ = "3.8.6+hotfix.1"`,
           },
           {
             kind: 'note',
@@ -3484,7 +3484,15 @@ class FormattedSegment:
           },
           {
             kind: 'paragraph',
-            text: 'The draw-side bound agrees with that selection: `within_render_distance` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` compares only the horizontal chunk distances against the render distance, and the vertical extent of drawn chunks is whatever the tracker keeps resident. The WGPU backend draws every resident chunk, so a vertical clamp in the OpenGL predicate would have culled resident terrain — the surface seen from bedrock depth — that the other backend keeps visible; frustum culling against the view-projection matrix remains the per-frame visibility test on both paths.',
+            text: [
+              "The draw-side bound diverges from that selection by backend. OpenGL's `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` layers `within_render_distance` — which compares only the horizontal chunk distances against the render distance — with a clip-volume test against the view-projection matrix, and `world.py` and `shadow_map.py` submit the resident chunk set to that combined test on every drawn frame, under the frustum contract ",
+              {
+                kind: 'link',
+                label: 'Understanding View, Transform, and Chunk Visibility Contracts',
+                href: '/docs/systems/rendering-backends/world-visuals/understanding-view-transform-and-chunk-visibility-contracts',
+              },
+              " fixes. The WGPU frame renderer in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` iterates `self._chunks.values()` directly for its shadow pass and its world pass, drawing every resident mesh and bypassing `select_visible_chunks` entirely; its draw-time bound is exactly the tracker's resident set, fixed by upload-time selection and the two-chunk keep margin rather than by a per-frame frustum test. A vertical clamp added to the OpenGL predicate would cull resident terrain — the surface seen from bedrock depth — that the WGPU path keeps drawing at its current bound, and only the OpenGL path narrows its resident set further through the clip-volume test.",
+            ],
           },
           {
             kind: 'paragraph',

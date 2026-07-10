@@ -2,6 +2,22 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.6 Hotfix 1",
+      "tags": [
+        "Desktop Application",
+        "Rendering",
+        "Block Placement"
+      ],
+      "sections": [
+        {
+          "title": "Block-Break Particles No Longer Crash on the Coordinate-Aware Texture Lookup",
+          "items": [
+            "`spawn_block_break_particles` in `src/ludoxel/presentation/rendering/visuals/worlds/block_break_particles.py` now calls its `uv_lookup` argument with the broken block's `x`, `y`, `z` cell coordinates ahead of the block state and face index, matching the five-argument `WorldUVLookup` contract `BlockVisualResolver.world_face_visual` exposes through `world_build_tools`. The prior two-argument call matched the contract `world_face_visual` carried before coordinate-derived texture variants and rotation were added; `spawn_break_effect` in `src/ludoxel/presentation/interface/viewport/controllers/effects.py` already passed the newer five-argument function unchanged, so every left-click break on a rendered block raised `TypeError: BlockVisualResolver.world_face_visual() missing 3 required positional arguments` from `mousePressEvent` before a single particle spawned. The lookup now unpacks the `(UVRect, rotation_steps)` pair `world_face_visual` returns and keeps only the UV rect for the particle fragment; `BlockBreakParticleRenderSampleDTO` carries no rotation field, so the resolved rotation step is discarded rather than applied."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.6",
       "tags": [
         "Desktop Application",
