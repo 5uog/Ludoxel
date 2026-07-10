@@ -15,8 +15,8 @@ out vec4 fragColor;
 // warm corona rings the disc. Every radial term decays to zero before the quad
 // border so the disc and its glow stay circular and the square billboard never
 // shows a straight lit edge or a corner frame. The colour is dominated by the
-// black-body white of the core and disc; the warm tint is confined to the
-// faint corona rather than flooding the whole disc yellow or orange.
+// black-body white of the core and disc; the warm tint stays confined to the
+// faint corona, leaving the rest of the disc yellow- and orange-free.
 vec4 ldx_sun_body(vec2 uv, float outerGlow) {
     vec2 p = uv * 2.0 - 1.0;
     float r = length(p);

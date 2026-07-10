@@ -38,7 +38,19 @@ from ludoxel.presentation.rendering.backends.wgpu.pipelines.factory import (
 from ludoxel.presentation.rendering.backends.wgpu.runtime.resources import WgpuRendererResources
 from ludoxel.presentation.rendering.backends.wgpu.runtime.surface import configure_wgpu_canvas
 from ludoxel.presentation.rendering.backends.wgpu.textures.atlas import WgpuTextureAtlas
-from ludoxel.presentation.rendering.contracts.config import CloudDistanceFog, GeometryDistanceFog, cloud_far_distance, cloud_fog_range, cloud_projection_z_far, effective_backend_shadow_params, max_unfogged_render_distance_radius_blocks, render_distance_fog_range, sun_flare_screen, sun_glare_strength
+from ludoxel.presentation.rendering.contracts.config import (
+  CloudDistanceFog,
+  GeometryDistanceFog,
+  cloud_far_distance,
+  cloud_fog_range,
+  cloud_projection_z_far,
+  effective_backend_shadow_params,
+  max_unfogged_render_distance_radius_blocks,
+  render_distance_fog_range,
+  shadow_normal_offset_world_units,
+  sun_flare_screen,
+  sun_glare_strength,
+)
 from ludoxel.presentation.rendering.contracts.metrics import BackendPassFrameMetrics, BackendRendererFrameMetrics
 from ludoxel.presentation.rendering.contracts.resources import BackendRendererInfo
 from ludoxel.presentation.rendering.faces.break_particles import build_block_break_particle_face_rows
@@ -58,6 +70,7 @@ from ludoxel.presentation.rendering.visuals.selections.outline import SelectionO
 from ludoxel.presentation.rendering.visuals.worlds.block_visual_resolver import BlockVisualResolver
 from ludoxel.presentation.rendering.visuals.worlds.cloud_field import CloudField, cloud_face_rows, cloud_volume_rows
 from ludoxel.presentation.rendering.visuals.worlds.light_space import compute_light_view_proj
+from ludoxel.presentation.rendering.visuals.worlds.texture_variation import world_atlas_texture_names
 from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.structures.neighborhood import six_neighbor_state_signature
@@ -190,7 +203,7 @@ class WgpuRendererBackend:
 
     names = block_registry.required_texture_names()
     visual_roots = resolve_visual_asset_roots(assets_dir, required_texture_names=names)
-    atlas = WgpuTextureAtlas.build_from_dir(visual_roots.block_texture_dir, names=names)
+    atlas = WgpuTextureAtlas.build_from_dir(visual_roots.block_texture_dir, names=world_atlas_texture_names(block_registry))
     atlas.upload(device=device)
 
     atlas_bgl = device.create_bind_group_layout(label="ludoxel-texture-bgl", entries=[{"binding": 0, "visibility": wgpu.ShaderStage.FRAGMENT, "texture": {"sample_type": "float", "view_dimension": "2d", "multisampled": False}}, {"binding": 1, "visibility": wgpu.ShaderStage.FRAGMENT, "sampler": {"type": "filtering"}}])
@@ -454,12 +467,31 @@ class WgpuRendererBackend:
     self._res.depth_view = depth.create_view(label="ludoxel-depth-view")
     self._res.depth_size = (w, h)
 
+  def _wgpu_max_texture_dimension_2d(self, default: int) -> int:
+    # wgpu-py has exposed GPUAdapter.limits under both snake_case and kebab-case keys across
+    # versions; try both known spellings and fall back to `default` (today's unclamped size) so a
+    # bad guess here degrades gracefully, since this is the only platform that runs it.
+    adapter = self._res.adapter if self._res is not None else None
+    limits = getattr(adapter, "limits", None) if adapter is not None else None
+    if limits is None:
+      return int(default)
+    for key in ("max_texture_dimension_2d", "max-texture-dimension-2d"):
+      value = limits.get(key) if hasattr(limits, "get") else getattr(limits, key, None)
+      if value:
+        try:
+          return int(value)
+        except (TypeError, ValueError):
+          continue
+    return int(default)
+
   def _ensure_shadow_target(self) -> bool:
     if self._res is None:
       return False
     import wgpu
 
-    size = max(1, int(self._effective_shadow.size))
+    requested = max(1, int(self._effective_shadow.size))
+    max_dim = max(1, int(self._wgpu_max_texture_dimension_2d(default=requested)))
+    size = min(int(requested), int(max_dim))
     if self._res.shadow_texture is not None and int(self._res.shadow_size) == int(size) and self._res.shadow_bind_group is not None:
       return True
 
@@ -495,7 +527,7 @@ class WgpuRendererBackend:
     shadow = self._effective_shadow
     shadow_texel = 1.0 / float(max(1, int(shadow.size)))
     uniform[52:56] = (float(shadow_texel), float(shadow.dark_mul), float(shadow.bias_min), float(shadow.bias_slope))
-    uniform[56:60] = (float(shadow.pcf_radius), 1.0 if bool(ultra) else 0.0, 0.0, 0.0)
+    uniform[56:60] = (float(shadow.pcf_radius), 1.0 if bool(ultra) else 0.0, 1.0 if bool(shadow.ultra_filter) else 0.0, float(shadow_normal_offset_world_units(shadow)))
     raw = bytearray(uniform.tobytes())
     ints = np.frombuffer(raw, dtype=np.int32)
     ints[36] = int(face_idx)

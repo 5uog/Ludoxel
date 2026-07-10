@@ -69,6 +69,8 @@ ludoxel = [
     "simulation/worlds/generation/_terrain_native*.so",
     "simulation/spaces/othello/engines/_othello_native*.pyd",
     "simulation/spaces/othello/engines/_othello_native*.so",
+    "foundations/mathematics/frustums/_frustum_native*.pyd",
+    "foundations/mathematics/frustums/_frustum_native*.so",
 ]
 
 [tool.setuptools.packages.find]

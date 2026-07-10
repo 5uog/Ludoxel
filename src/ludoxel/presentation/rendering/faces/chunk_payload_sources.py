@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState, UVLookup
+from ludoxel.presentation.rendering.contracts.lookups import DefLookup, GetState, WorldUVLookup
 from ludoxel.presentation.rendering.faces.bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
 from ludoxel.presentation.rendering.faces.row_utils import atlas_face_uv
 from ludoxel.presentation.rendering.faces.visible import iter_visible_faces
@@ -17,7 +17,6 @@ FACE_INSTANCE_ROW_FLOATS: int = 12
 FACE_SOURCE_FACE_INDEX_COLUMN: int = 12
 FACE_SOURCE_SLOT_COLUMN: int = 13
 FACE_SOURCE_FULL_BRIGHTNESS: float = 1.0
-FACE_SOURCE_LIGHTING_PLACEHOLDER: float = 0.0
 
 
 def _as_face_source_rows(face_sources: np.ndarray) -> np.ndarray:
@@ -56,7 +55,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
   return out
 
 
-def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
+def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get_state: GetState, uv_lookup: WorldUVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, BucketCounts]:
   rows: list[list[float]] = []
   bucket_counts = [0 for _ in range(FACE_COUNT)]
 
@@ -79,10 +78,10 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
       mnx, mny, mnz = face.mn
       mxx, mxy, mxz = face.mx
 
-      atlas = uv_lookup(str(state_str), int(fi))
+      atlas, uv_rotation_steps = uv_lookup(int(x), int(y), int(z), str(state_str), int(fi))
       u0, v0, u1, v1 = atlas_face_uv(atlas, int(fi), face.box, kind=(None if defn is None else str(defn.kind)))
 
-      rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), FACE_SOURCE_FULL_BRIGHTNESS, FACE_SOURCE_LIGHTING_PLACEHOLDER, float(fi), float(slot)])
+      rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), FACE_SOURCE_FULL_BRIGHTNESS, float(uv_rotation_steps), float(fi), float(slot)])
 
   counts = normalize_bucket_counts(bucket_counts)
 

@@ -2,6 +2,46 @@
   "version": 1,
   "entries": [
     {
+      "date": "v3.8.6",
+      "tags": ["Desktop Application", "Rendering", "My World", "Block Placement", "Settings"],
+      "sections": [
+        {
+          "title": "World Textures Vary and Rotate by Block Coordinate",
+          "items": [
+            "`resolve_variant_texture_name` and `TEXTURE_VARIANT_GROUPS` in `src/ludoxel/presentation/rendering/visuals/worlds/texture_variation.py` select among a block's main texture and its alt variants from `splitmix64` and `fnv1a_uint64` mixing of the block's world coordinate and texture name in `src/ludoxel/foundations/mathematics/scalars/hashing.py`, so the same coordinate always resolves to the same variant across restarts, chunk rebuilds, and saves. 32 texture families carry alt textures this way, covering the plank set for all eleven wood types, dirt, cobblestone, stone, sand, red sand, and the stone-family blocks listed in `TEXTURE_VARIANT_GROUPS`. `world_atlas_texture_names` adds the alt textures to the world atlas build in both `opengl/runtime/resources.py` and `wgpu/runtime/backend.py`, while `preview.py`'s thumbnail and inventory-icon projection resolves only axis orientation through `resolve_oriented_texture_name` and keeps every face on the block's main texture.",
+            "`resolve_uv_rotation_steps` in the same module derives a 0/90/180/270 degree rotation step from the identical coordinate hash for 36 rotation-eligible texture names in `ROTATABLE_TEXTURE_NAMES`, covering clay, dirt and its alts, sand and its alts, sandstone, red sandstone, netherrack, obsidian, the nylium tops, and related flat textures. `chunk_payload_sources.py` writes the resolved step into the `i_uvRot` vertex attribute that `world.vert`, `world.frag`, and their WGPU-adapted equivalents already declared and read through `rot_uv()`, so both backends rotate the same face the same way from one shared CPU-side value instead of leaving the attribute at its former constant `0.0`. Animated textures such as the magma frames resolve one rotation step per block and face and hold it across every frame of the animation."
+          ]
+        },
+        {
+          "title": "Pillar Blocks Orient Toward Their Placement Face",
+          "items": [
+            "`PILLAR_AXIS_TAG` in `src/ludoxel/simulation/blocks/structures/axis_orientation.py` marks Basalt, Deepslate, Polished Basalt, Purpur Pillar, and Quartz Pillar in `families/stone.py` and `families/special_stone.py`. `resolve_place_state` in `simulation/rules/placement/policy.py` derives an `axis=x`, `axis=y`, or `axis=z` state property from `axis_from_hit_face`, which reads the targeted face of the block the player places against, so a pillar placed against a floor or ceiling keeps the vertical axis and one placed against a wall face takes that wall's horizontal axis. `resolve_oriented_texture_name` routes the on-axis faces to the block's top texture and the remaining faces to its side texture, and `world_face_visual` calls it for every world-rendered face, so the placement behavior reaches both OpenGL and WGPU through the shared face builder. Blocks that keep a fixed top regardless of placement, including Ancient Debris, Chiseled Tuff, Grass Block, and Mycelium, carry no `PILLAR_AXIS_TAG` and read their texture exactly as before. The `axis` property is absent from every previously saved pillar block's state string, and `normalize_axis` treats that absence as the vertical axis, so existing saves keep their current orientation without a migration step."
+          ]
+        },
+        {
+          "title": "Shadow Quality Presets Reshuffle, and Ultra Gets a Rotated Filter",
+          "items": [
+            "`_SHADOW_QUALITY_PRESETS` in `src/ludoxel/presentation/rendering/contracts/config.py` keeps the five stored quality values and the Lowest, Low, Standard, High, and Ultra labels `application/preferences/shadow.py` already exposed, and reassigns their render parameters: the former Lowest preset is retired, the former Low, Standard, High, and Ultra presets become the new Lowest, Low, Standard, and High, and a new Ultra preset takes their place with a 6144-pixel shadow map, a 1.75-texel PCF radius, and a new `ultra_filter` flag that the four lower tiers leave off. The four lower presets still express `pcf_radius` as a fraction of one shadow-map texel for their fixed nine-tap box filter; Ultra's radius counts whole texels instead, wide enough for its sixteen-tap kernel to land on distinct texels and average away the shadow map's own grid, while staying tight enough that a straight silhouette edge still reads as a clean line at that width.",
+            "`shadow_filtering.glsl` adds a 16-tap Vogel-disk offset table and an interleaved-gradient-noise rotation angle that `shadow_pcf` in `world.frag` and `othello.frag` consults only when `ultra_filter` is set, replacing the shared 3x3 box filter with a wider, per-pixel-rotated kernel for Ultra alone; the four lower tiers keep the existing box filter and its cost. `opengl/passes/world.py` and `opengl/othello/render_pass.py` set the new `u_shadowUltra` uniform, and `wgpu/runtime/backend.py`'s `_frame_uniform_bytes` packs the same flag into the previously unused `ldx_shadowParams2.z` slot the WGPU-adapted shaders read, so both backends select the same filter for the same quality.",
+            "`_ensure_shadow_target` in `wgpu/runtime/backend.py` clamps the requested shadow map size against the adapter's reported maximum 2D texture dimension before creating the depth texture, matching the clamp `ShadowMapPass._normalize_shadow_size` already applied against `GL_MAX_TEXTURE_SIZE` on OpenGL. The reshuffle raises the default Standard preset's shadow map from 2048 to 3072 pixels."
+          ]
+        },
+        {
+          "title": "Shadow Bias Gains a Normal Offset for Concave Block Corners",
+          "items": [
+            "`shadow_normal_offset_world_units` in `src/ludoxel/presentation/rendering/contracts/config.py` pushes each vertex's light-space sample point along its own normal by `SHADOW_NORMAL_OFFSET_TEXELS` (0.5) shadow-map texels, converted to world units through the active tier's coverage radius and size, before `world.vert` and `othello.vert` apply the light-space transform that produces `v_lightPos`. A concave junction between two block faces, such as a trench corner or an inside wall meeting a floor, receives a shadow sample at this offset point instead of reading as fully lit under flat slope bias alone, which cannot distinguish that geometry from a grazing but unoccluded surface.",
+            "`BackendShadowParams.bias_min` and `bias_slope` tighten from 0.00005/0.00050 to 0.00003/0.00035, so slope bias keeps carrying most of the grazing-angle acne protection at every quality tier and the normal offset only closes the residual corner-notch gap a flat bias cannot reach. The offset stays at half a texel because Ludoxel's sun sits at a low, often-grazing elevation: on a near-horizontal receiver such as grass or a floor, whose normal points close to perpendicular to the sun direction, a larger offset projects into light space mostly as a shift across the shadow map and visibly detaches a caster's shadow from its own base before it helps a corner further."
+          ]
+        },
+        {
+          "title": "Render Timer's Repaint Request Floors at 1000 Hertz Instead of 125",
+          "items": [
+            "`_effective_render_timer_interval_ms` in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py` derives its fallback repaint interval from at least 1000 hertz instead of 120, so the derived request now floors at one millisecond instead of roughly eight whenever `render_timer_interval_ms` is left at its default zero. `_render_timer` in both `viewport/widgets/renderer.py` and `viewport/widgets/gl.py` already carries `Qt.TimerType.PreciseTimer`, so the raised floor requests the finest repaint cadence the platform timer grants; the platform compositor, the active vsync setting, and per-frame paint cost still govern the frame rate a session actually delivers, since the timer interval only bounds the requested cadence from below."
+          ]
+        }
+      ]
+    },
+    {
       "date": "v3.8.5",
       "tags": ["Desktop Application", "Rendering", "UI"],
       "sections": [
@@ -127,7 +167,7 @@
         {
           "title": "Clouds Reach a Horizon Wider Than the World",
           "items": [
-            "`cloud_far_distance` in `src/ludoxel/presentation/rendering/contracts/config.py` sets the cloud horizon to five times the render-distance radius with a 320-block floor, and `CloudField.set_view_radius` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` drives shape generation out to that same distance from the camera. Both the OpenGL and WGPU cloud passes pass this far distance as the generation radius, cull cloud shapes against it, and fade them through `cloud_fog_range`, so distant clouds thin into the sky rather than cutting off at the world chunk boundary. The earlier field generated shapes only to a fixed 256-block radius regardless of the cloud fog and far plane, so at larger render distances clouds ended before the fog band began."
+            "`cloud_far_distance` in `src/ludoxel/presentation/rendering/contracts/config.py` sets the cloud horizon to five times the render-distance radius with a 320-block floor, and `CloudField.set_view_radius` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` drives shape generation out to that same distance from the camera. Both the OpenGL and WGPU cloud passes pass this far distance as the generation radius, cull cloud shapes against it, and fade them through `cloud_fog_range`, so distant clouds thin gradually into the sky at that horizon. The earlier field generated shapes only to a fixed 256-block radius regardless of the cloud fog and far plane, so at larger render distances clouds ended before the fog band began."
           ]
         },
         {
@@ -157,7 +197,7 @@
         {
           "title": "Ultra Sun Glare Occluded by World Geometry",
           "items": [
-            "The Ultra veiling glare now draws as background before the world pass, alongside the sun disc: `FramePipeline.render` in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU render encoder in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` issue the `SunPass.draw_glare` and `create_sun_glare_pipeline` draws before the world, and both write no depth so the opaque world drawn next overdraws them. World geometry nearer than the sun therefore occludes the glow at the terrain silhouette rather than the glow painting over foreground blocks. The earlier build drew the veil after the world and depth-tested a flat billboard at one world depth, which cut a hard line across the fogged terrain and framed the glow against the sky beyond the fog band; drawing it behind the world removes that frame and keeps the radial falloff of `ldx_sun_glare` continuous."
+            "The Ultra veiling glare now draws as background before the world pass, alongside the sun disc: `FramePipeline.render` in `src/ludoxel/presentation/rendering/backends/opengl/pipelines/frame.py` and the WGPU render encoder in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` issue the `SunPass.draw_glare` and `create_sun_glare_pipeline` draws before the world, and both write no depth so the opaque world drawn next overdraws them. World geometry nearer than the sun therefore occludes the glow at the terrain silhouette. The earlier build drew the veil after the world and depth-tested a flat billboard at one world depth, which cut a hard line across the fogged terrain, framed the glow against the sky beyond the fog band, and let the glow paint over foreground blocks; drawing it behind the world removes that frame and keeps the radial falloff of `ldx_sun_glare` continuous."
           ]
         },
         {
@@ -169,7 +209,7 @@
         {
           "title": "Slabs Stack in Half-Block Steps",
           "items": [
-            "`place_from_hit_for_service` in `src/ludoxel/simulation/rules/interaction/placing.py` now chooses the added slab half from the exposed top or bottom face of the slab under the cursor, so a held slab completes the struck cell to a double rather than stepping a full cell and leaving a 0.5-block gap, even while the continuous-placement lock forces one half.",
+            "`place_from_hit_for_service` in `src/ludoxel/simulation/rules/interaction/placing.py` now chooses the added slab half from the exposed top or bottom face of the slab under the cursor, so a held slab completes the struck cell to a double, even while the continuous-placement lock forces one half. The earlier placement stepped a full cell for every added slab and left a 0.5-block gap.",
             "`_perform_vertical_slab_pillar` in `src/ludoxel/presentation/interface/viewport/controllers/interaction.py` drives the vertical build gesture for slabs: it fills a cell's second half before advancing to the next cell, so a held slab pillar rises in 0.5-block units without gaps. The earlier path applied the full-cube placement offset to slabs and stepped a whole cell for each one."
           ]
         }
@@ -232,7 +272,7 @@
           "title": "Cloud Cluster Footprints and Ultra Volumetric Clouds",
           "items": [
             "Each cloud is a cluster of occupied cells on a per-cloud grid instead of a single rectangle. `CloudField` in `src/ludoxel/presentation/rendering/visuals/worlds/cloud_field.py` fills a solid core, notches corners, and attaches edge bumps, keeps the largest connected component, and produces L, T, notched, and stepped footprints that are always contiguous and at most four cells per axis.",
-            "The flat and wireframe tiers draw only the exterior cell faces. `cloud_face_rows` emits a face instance for a cell side only when the neighbouring cell is empty, and always for the top and bottom, so the six face buckets form one merged cloud surface with no interior faces: the wireframe shows the merged silhouette rather than overlapping box frames, and the solid cloud has no doubled internal walls. Both backends draw the same face buckets.",
+            "The flat and wireframe tiers draw only the exterior cell faces. `cloud_face_rows` emits a face instance for a cell side only when the neighbouring cell is empty, and always for the top and bottom, so the six face buckets form one merged cloud surface with no interior faces: the wireframe shows one merged silhouette with no overlapping box frames, and the solid cloud has no doubled internal walls. Both backends draw the same face buckets.",
             "Ultra clouds are gated on the existing Shadow map quality setting: the OpenGL frame pipeline and the WGPU backend draw the volumetric path only when `shadow_quality` reaches `SHADOW_MAP_QUALITY_ULTRA`, and every lower tier keeps the flat cell-face path. No separate shader-quality preference is added.",
             "The Ultra path renders each cloud as one translucent volume. `cloud_volume_rows` emits a single bounding box per cloud that carries the occupancy bitmask and grid dimensions; `cloud_volume.vert`/`cloud_volume.frag` march the view ray through that box and integrate an animated value-noise fbm density masked by the cell occupancy, so the volume uses the cluster footprint instead of a single oval and stays see-through. The noise domain scrolls with `u_time`, so the whole cloud keeps churning in place. The volumes are drawn back to front without depth writes so distant clouds remain visible through nearer ones.",
             "A cloud size preference joins the Clouds settings. `normalize_cloud_cell_size` in `src/ludoxel/application/preferences/clouds.py` bounds the cell size to eight through forty blocks with a default of twenty; the value persists in the settings schema, projects into `BackendRendererRuntimeState`, and reaches `CloudField.set_cell_size` on both backends. The cloud density preference now changes the number of clouds: the macro cell that hosts one cloud shrinks and the drop threshold falls as density rises, so raising density from one to four multiplies the cloud count.",
@@ -325,8 +365,8 @@
           "title": "Seeded My World Creation",
           "items": [
             "Create New World now selects a world type and a seed in addition to the world name and game mode. `WorldCreatePage` adds a Normal/Flat toggle and a seed field pre-filled with `1`; an empty field resolves to seed `1`, an explicit `0` is stored and restored as `0`, and a non-integer or out-of-64-bit-range entry disables Create. The confirmed name, game mode, generation mode, and seed travel through `StartupShellOverlay` and the viewport menu controller into `WorldGenerationSpec` and `WorldLibraryStore.create_world`.",
-            "Normal mode generates deterministic terrain from the seed, the generation version, and the world coordinate: four bounded value-noise octaves keep adjacent surface columns within one block of each other, a masked ridge field carves meandering ravines whose surfaces expose stone, a bedrock layer sits at y = -65, and dirt, coarse dirt, gravel, stone variants, deepslate, and registered ore blocks are mixed through noise fields rather than axis-aligned clusters. `validate_terrain_materials` raises at session construction when a terrain material id is not registered.",
-            "Flat mode is an explicit Create New World selection rather than an implicit default; the previous fixed 65-by-65 flat map path through `generate_test_map` is removed, and `make_my_world_state` now builds a world from a generation spec. The Othello play space keeps its own fixed flat board world through `create_othello_session`.",
+            "Normal mode generates deterministic terrain from the seed, the generation version, and the world coordinate: four bounded value-noise octaves keep adjacent surface columns within one block of each other, a masked ridge field carves meandering ravines whose surfaces expose stone, a bedrock layer sits at y = -65, and noise fields mix dirt, coarse dirt, gravel, stone variants, deepslate, and registered ore blocks so their distribution avoids axis-aligned clusters. `validate_terrain_materials` raises at session construction when a terrain material id is not registered.",
+            "Flat mode is now an explicit Create New World selection; the previous implicit default and its fixed 65-by-65 flat map path through `generate_test_map` are removed, and `make_my_world_state` now builds a world from a generation spec. The Othello play space keeps its own fixed flat board world through `create_othello_session`.",
             "The initial player position for a normal-mode world comes from `spawn_for_generation` in the simulation layer, which scans outward from the origin for a ravine-free column whose neighbors differ by at most one block; flat mode spawns above its ground level and legacy static worlds keep the previous fixed spawn."
           ]
         },
@@ -341,7 +381,7 @@
         {
           "title": "Surface Envelope Rendering Uploads",
           "items": [
-            "`WorldUploadTracker` selects chunks from `WorldState.visible_content_chunk_keys` instead of the existing-block chunk index. Per-chunk-column content bands derived from bulk surface heights bound which chunks exist to render, `snapshot_for_chunk_build` materializes one 18-cubed box per chunk and emits only exposed cells as face sources with a one-cell state margin for occlusion, and materialization runs inside the mesh-build worker thread rather than on the render thread.",
+            "`WorldUploadTracker` selects chunks from `WorldState.visible_content_chunk_keys` instead of the existing-block chunk index. Per-chunk-column content bands derived from bulk surface heights bound which chunks exist to render, `snapshot_for_chunk_build` materializes one 18-cubed box per chunk and emits only exposed cells as face sources with a one-cell state margin for occlusion, and materialization now runs inside the mesh-build worker thread, off the render thread.",
             "The loading gate counts content chunks within the initial gate radius and closes only when each is resident in the renderer backend at its current mesh revision; a zero denominator closes the loader only when the world genuinely reports no content chunks in range. The loading status line shows ready/total chunks with the pending build count and, after four seconds without progress, appends the tracker stall detail naming pending and resident counts and the last scheduled, built, and uploaded chunk."
           ]
         },
@@ -369,9 +409,9 @@
         {
           "title": "World Thumbnail Cache and Packages",
           "items": [
-            "The active My World thumbnail cache is refreshed at explicit exit boundaries rather than from the save path. Before the PAUSE overlay is shown, and before direct viewport shutdown, the viewport crops the still-visible My World widget with `QScreen.grabWindow`, encodes that image with `encode_thumbnail_png`, and keeps only cached bytes for `save_state`. If no cache exists, the world body still saves and `WorldLibraryStore.save_space` preserves the thumbnail already in the package.",
-            "`encode_thumbnail_png` now keeps the `QByteArray` backing its `QBuffer` alive while `QImage.save` writes the PNG bytes, so thumbnail encoding does not depend on a temporary Qt buffer object.",
-            "The world thumbnail path does not add an OpenGL framebuffer readback, does not require WGPU surface copy-source usage, and does not change the renderer `render` contract. Switching My Worlds passes the outgoing world's cached thumbnail to `save_space` and clears the cache for the selected world, preventing a previous world's image from being saved onto the next entry.",
+            "The active My World thumbnail cache now refreshes at explicit exit boundaries. Before the PAUSE overlay is shown, and before direct viewport shutdown, the viewport crops the still-visible My World widget with `QScreen.grabWindow`, encodes that image with `encode_thumbnail_png`, and keeps only cached bytes for `save_state`; the save path itself no longer performs this capture. If no cache exists, the world body still saves and `WorldLibraryStore.save_space` preserves the thumbnail already in the package.",
+            "`encode_thumbnail_png` now keeps the `QByteArray` backing its `QBuffer` alive while `QImage.save` writes the PNG bytes, so thumbnail encoding stays independent of any temporary Qt buffer object.",
+            "The world thumbnail path stays within the existing `QScreen.grabWindow` capture: it needs no OpenGL framebuffer readback, no WGPU surface copy-source usage, and no change to the renderer `render` contract. Switching My Worlds passes the outgoing world's cached thumbnail to `save_space` and clears the cache for the selected world, preventing a previous world's image from being saved onto the next entry.",
             "The `.ldxworld` thumbnail member now remains connected across the visible library path: summaries read `thumbnail.png`, grid cards and list rows display those bytes inside their fixed thumbnail slots, export writes the stored thumbnail, and import passes the package thumbnail into the newly created library entry."
           ]
         },
@@ -449,15 +489,15 @@
           "items": [
             "Leaving the active play-space now runs through one boundary. `_exit_active_play_space` saves the current My World and Othello through `viewport.save_state` and only advances on success, and Save & Quit, the pause Play My World button, and the pause Play Othello (Reversi) button all use it. The pause Play My World and Play Othello paths previously switched without saving, so block placement, player position, inventory, health, AI actors, and world settings for My World, and board, match, and turn state for Othello, are now written before the play-space is left.",
             "The save no longer reports success when the active world cannot be written. `AppStateStore.save` raises when `WorldLibraryStore.save_space` fails, the world-data save is allowed to propagate out of `viewport.save_state`, and the exit boundary catches a failure, shows a notification, logs the traceback, and stays in the current play-space instead of advancing. The previous `try/except Exception: pass` that hid Save & Quit failures is removed.",
-            "Returning to the startup menu after a save is deferred to the next event-loop pass and guarded, so the pause button that triggered it is not torn down inside its own handler and a navigation error is logged rather than aborting the process.",
+            "Returning to the startup menu after a save is deferred to the next event-loop pass and guarded, so the pause button that triggered it survives its own handler and a navigation error is logged while the process keeps running.",
             "Auxiliary save steps are isolated from the world write. A failure in the renderer sun read, the Othello animation settle, or the framebuffer thumbnail grab is logged and skipped, and a thumbnail capture failure no longer counts as a world-data save failure."
           ]
         },
         {
           "title": "World Package Write Path",
           "items": [
-            "Saving the active world reads only the package manifest and thumbnail rather than decompressing the full world body. `WorldLibraryStore.save_space` resolves the preserved name, created time, and thumbnail from `read_world_package_summary` and writes the new `PersistedPlaySpace`, narrowing the window in which the `state/worlds/<id>.ldxworld` file is held open.",
-            "`export_world_package` retries the final `os.replace` when it fails transiently and raises `LdxworldError` if it cannot finalize, and a failed write removes its temporary file rather than leaving a partial package. An unreadable package is reported as absent by the library reads, so a single corrupt world cannot crash a library rebuild."
+            "Saving the active world now reads only the package manifest and thumbnail, leaving the full world body compressed. `WorldLibraryStore.save_space` resolves the preserved name, created time, and thumbnail from `read_world_package_summary` and writes the new `PersistedPlaySpace`, narrowing the window in which the `state/worlds/<id>.ldxworld` file is held open.",
+            "`export_world_package` retries the final `os.replace` when it fails transiently and raises `LdxworldError` if it cannot finalize, and a failed write removes its temporary file, leaving no partial package behind. An unreadable package is reported as absent by the library reads, so a single corrupt world cannot crash a library rebuild."
           ]
         }
       ]
@@ -470,7 +510,7 @@
           "title": "Startup Menu Profile Preview",
           "items": [
             "The skin preview now reacts to the pointer across the whole startup menu page. `StartupMenuPage` installs the pointer event filter and forwards press, move, release, and leave events to the shared `PlayerSkinPreviewWidget`, using the page extent for head and body tracking. The forwarding leaves clicks intact, so Play My World, Play Othello (Reversi), Quit, Change Skin, Reset to Alex, and the changelog button still receive their own input while the model turns toward the cursor.",
-            "The menu skin preview no longer slides into the Change Skin and Reset to Alex buttons at short window heights. `PlayerSkinPreviewWidget` carries a Preferred size policy with a lower minimum box, and the profile panel lets the preview yield height before the buttons, so the box shrinks and keeps the full model rendered inside it at the minimum window height. The model is fit to a fixed vertical field of view, so a shorter box shows the whole model smaller rather than clipping the legs."
+            "The menu skin preview no longer slides into the Change Skin and Reset to Alex buttons at short window heights. `PlayerSkinPreviewWidget` carries a Preferred size policy with a lower minimum box, and the profile panel lets the preview yield height before the buttons, so the box shrinks and keeps the full model rendered inside it at the minimum window height. The model is fit to a fixed vertical field of view, so a shorter box shows the whole model at a smaller scale, with no clipped legs."
           ]
         },
         {
@@ -494,7 +534,7 @@
         {
           "title": "Pause and Menu Navigation",
           "items": [
-            "Pause Play My World opens the My World library page. It closes the pause overlay and shows the startup shell on the library page rather than starting the active world, so a specific world is entered only by selecting it in the library.",
+            "Pause Play My World opens the My World library page. It closes the pause overlay and shows the startup shell on the library page without starting the active world, so a specific world is entered only by selecting it in the library.",
             "Pause Save & Quit saves and returns to the startup menu. It writes the current state through `save_state` and opens the startup menu through `open_startup_menu` instead of closing the window.",
             "The startup menu adds a Quit button. `StartupMenuPage` emits a quit request that closes the main window, and the window close path runs the existing shutdown and final save. Application exit is no longer reached from the pause Save & Quit button."
           ]
@@ -530,7 +570,7 @@
         {
           "title": "My World Library",
           "items": [
-            "Play My World opens a My World library rather than starting a single world. `MyWorldLibraryPage` lists each world with a thumbnail, the current Survival or Creative game mode, the created and updated dates, and the on-disk world size, and toggles between a grid and a list view. Create New World adds a world after a name and a game mode are chosen and returns to the library with the world present rather than entering gameplay; a per-world action menu provides rename, delete, and export, with rename rejecting empty, whitespace, and duplicate names and delete requiring confirmation.",
+            "Play My World now opens a My World library, not a single started world. `MyWorldLibraryPage` lists each world with a thumbnail, the current Survival or Creative game mode, the created and updated dates, and the on-disk world size, and toggles between a grid and a list view. Create New World adds a world after a name and a game mode are chosen and returns to the library with the world present, stopping short of gameplay; a per-world action menu provides rename, delete, and export, with rename rejecting empty, whitespace, and duplicate names and delete requiring confirmation.",
             "Each My World is stored as its own runtime file. `WorldLibraryStore` owns `state/world_library.json`, the per-world `state/worlds/<id>.json` entries, the per-world game mode, and the active-world pointer, and the My World save path writes the active world's player, world blocks, and AI actors into its own entry. Othello state remains separate and is never placed in the My World library."
           ]
         },
@@ -618,7 +658,7 @@
         {
           "title": "Inventory Ambient Playback Continuity",
           "items": [
-            "Opening the inventory no longer disables the My World ambient source. `_ambient_audio_active` now treats the inventory as an input-neutral storage surface rather than an ambient reset boundary, so the existing ambient key, source rotation, and looping effect stay owned by the active `AudioManager` while storage is open.",
+            "Opening the inventory no longer disables the My World ambient source. `_ambient_audio_active` now treats the inventory as an input-neutral storage surface, no longer as an ambient reset boundary, so the existing ambient key, source rotation, and looping effect stay owned by the active `AudioManager` while storage is open.",
             "Pause, death, loading, and the Othello settings surface remain ambient stop boundaries. Chat, inventory, the ordinary settings surface, AI settings, and hidden-HUD states leave the ambient loop controlled by the current play-space key and the saved ambient-volume preferences."
           ]
         }
@@ -752,7 +792,7 @@
           "title": "9x4 My World Inventory Storage",
           "items": [
             "Expanded the My World inventory from a nine-slot hotbar to thirty-six storage slots per game mode: the nine-slot hotbar plus a 9x3 upper inventory of twenty-seven slots that stays hidden until the inventory opens. `RuntimePreferences` now carries `creative_upper_slots` and `survival_upper_slots` next to the existing per-mode hotbars, and the upper inventory orders its slots row-major from the top-left while the hotbar keeps indices 0 through 8 left to right.",
-            "Each storage slot still holds a single item id; the change adds slots rather than stack counts. `PersistedInventory` now serializes `creative_upper_slots` and `survival_upper_slots`, `runtime_state` carries those fields in both directions, and `PlayerStateFile` advanced to version 8.",
+            "Each storage slot still holds a single item id; the change adds slots and leaves stack counts untouched. `PersistedInventory` now serializes `creative_upper_slots` and `survival_upper_slots`, `runtime_state` carries those fields in both directions, and `PlayerStateFile` advanced to version 8.",
             "Added a 2x2 crafting input and a 1x1 crafting output to the central box, kept apart from the thirty-six storage slots. The crafting input is a transient working area: closing the inventory moves each crafting item into the storage by hotbar-then-upper priority and leaves the grid empty, so the crafting grid is never persisted. The 1x1 output is read-only and resolves to empty because Ludoxel implements no crafting recipe resolution."
           ]
         },
@@ -851,7 +891,7 @@
         {
           "title": "Teleport and Game Mode Commands",
           "items": [
-            "Added command candidate display and parsing under `src/ludoxel/application/chat/commands/`: a leading slash hides the message list and shows `/teleport` candidates for `/t` and `/gamemode` candidates for `/g`, an unknown prefix shows an empty candidate list rather than repeated errors, and the command coordinator routes execution through the simulation player operations.",
+            "Added command candidate display and parsing under `src/ludoxel/application/chat/commands/`: a leading slash hides the message list and shows `/teleport` candidates for `/t` and `/gamemode` candidates for `/g`, an unknown prefix shows an empty candidate list with no repeated errors, and the command coordinator routes execution through the simulation player operations.",
             "Added `/teleport <x> <y> <z>` with an optional `chunkForBlocks` boolean, an optional `facing <x y z>` position, and an optional `facing <target>` entity: finite coordinates move the local player in My World and in the Othello play space, `teleport_player` zeroes velocity and resets fall-related player state, facing resolves a look direction through `yaw_pitch_deg_from_forward`, and a true `chunkForBlocks` arms a world-upload sync around the destination.",
             "Added `/gamemode` accepting `survival`, `s`, `0`, `creative`, `c`, and `1` with an optional trailing player target resolved to the local player only, routed through the shared `apply_game_mode` operation that the Settings game-mode toggle now also uses.",
             "Removed the `B` survival and creative toggle: the `toggle_creative_mode` keybind action is gone from the keybind catalog, defaults, display names, and the Controls tab, and game-mode changes now flow through the Settings surface and the `/gamemode` command."
@@ -907,7 +947,7 @@
           "title": "Audio Sample Voices",
           "items": [
             "Allocated rapid one-shot player sounds across the whole event pool instead of a single randomly selected sample source: `_play_pool` now ensures the voice slots of every prepared source, gathers the sources that still hold an idle voice through `has_idle_voice`, and selects among only those, so a busy sample source no longer drops a request while other voices in the pool are idle.",
-            "Kept the pool bounded and overlap-only: when every voice in the pool is already playing, `_play_pool` drops the request rather than stopping an active voice, which lets repeated weak and strong attack swings overlap across their samples within the existing per-pool polyphony."
+            "Kept the pool bounded and overlap-only: when every voice in the pool is already playing, `_play_pool` drops the request and leaves every active voice playing, which lets repeated weak and strong attack swings overlap across their samples within the existing per-pool polyphony."
           ]
         },
         {
@@ -933,7 +973,7 @@
         {
           "title": "Fall Damage Audio",
           "items": [
-            "Counted fall damage when deciding whether to play the damage sound: the session step now reports `play_damage_sound` for any fall damage past the safe distance, not only void and combat damage.",
+            "Counted fall damage when deciding whether to play the damage sound: the session step now reports `play_damage_sound` for any fall damage past the safe distance, extending the earlier void-and-combat-only trigger.",
             "Added a `play_landing_sound` field to the session step result and suppressed the landing sound on a step that applied fall damage, so a damaging landing plays the damage hit while a non-damaging landing still plays its surface landing sample."
           ]
         },
@@ -947,7 +987,7 @@
         {
           "title": "Held Fence Gate Placement",
           "items": [
-            "Made the right-click placement repeat prefer interaction for a held fence gate: when the held block is a fence gate, the player is not crouching, and the current target is a fence gate, the repeat toggles that gate and stops rather than continuing to place gates in the adjacent cells, while a crouching hold still places gates and single placement is unchanged."
+            "Made the right-click placement repeat prefer interaction for a held fence gate: when the held block is a fence gate, the player is not crouching, and the current target is a fence gate, the repeat toggles that gate and stops, leaving adjacent cells untouched, while a crouching hold still places gates and single placement is unchanged."
           ]
         },
         {
@@ -967,7 +1007,7 @@
           "title": "Dynamic Face Upload",
           "items": [
             "Stopped the shared textured face pass from reusing a previous frame’s GPU instance buffer when falling blocks, first-person held blocks, arms, special items, block-break particles, player skins, or player-held blocks rebuild their per-face transform rows with the same row count, by removing the object-identity and row-count upload-skip condition so every non-empty face uploads the current transform and UV rows before drawing.",
-            "Applied the same per-frame upload to the player-model shadow pass so the ground shadow uploads the current instance rows rather than caching them by object identity."
+            "Applied the same per-frame upload to the player-model shadow pass so the ground shadow uploads the current instance rows every frame, no longer caching them by object identity."
           ]
         }
       ]

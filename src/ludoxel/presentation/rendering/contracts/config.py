@@ -144,12 +144,13 @@ class BackendShadowParams:
   size: int = 2048
   dark_mul: float = 0.20
   cull_front: bool = False
-  bias_min: float = 0.00005
-  bias_slope: float = 0.00050
+  bias_min: float = 0.00003
+  bias_slope: float = 0.00035
   poly_offset_factor: float = 0.50
   poly_offset_units: float = 0.75
   coverage_radius: float = 40.0
   pcf_radius: float = 0.85
+  ultra_filter: bool = False
 
 
 @dataclass(frozen=True)
@@ -158,14 +159,22 @@ class ShadowQualityPreset:
   size: int
   coverage_radius: float
   pcf_radius: float
+  ultra_filter: bool = False
 
 
+# Tiers 1-4 keep the prior Low/Standard/High/Ultra render parameters shifted down one rung (the
+# old Lowest tier is discontinued). Tier 5 is a new Ultra: a materially larger shadow map and
+# `ultra_filter` gating a 16-tap rotated Vogel-disk kernel (see common/shadow_filtering.glsl) in
+# place of the shared 3x3 box filter every other tier still uses. Ultra's pcf_radius counts whole
+# shadow-map texels, wide enough that the 16 taps land on distinct texels and actually average away
+# the shadow map's own grid, while staying tight enough that a straight silhouette edge still reads
+# as a clean anti-aliased line at that width.
 _SHADOW_QUALITY_PRESETS: dict[int, ShadowQualityPreset] = {
-  1: ShadowQualityPreset(quality=1, size=1024, coverage_radius=36.0, pcf_radius=1.50),
-  2: ShadowQualityPreset(quality=2, size=1536, coverage_radius=38.0, pcf_radius=1.15),
-  3: ShadowQualityPreset(quality=3, size=2048, coverage_radius=40.0, pcf_radius=0.85),
-  4: ShadowQualityPreset(quality=4, size=3072, coverage_radius=46.0, pcf_radius=0.55),
-  5: ShadowQualityPreset(quality=5, size=4096, coverage_radius=52.0, pcf_radius=0.35),
+  1: ShadowQualityPreset(quality=1, size=1536, coverage_radius=38.0, pcf_radius=1.15),
+  2: ShadowQualityPreset(quality=2, size=2048, coverage_radius=40.0, pcf_radius=0.85),
+  3: ShadowQualityPreset(quality=3, size=3072, coverage_radius=46.0, pcf_radius=0.55),
+  4: ShadowQualityPreset(quality=4, size=4096, coverage_radius=52.0, pcf_radius=0.35),
+  5: ShadowQualityPreset(quality=5, size=6144, coverage_radius=52.0, pcf_radius=1.75, ultra_filter=True),
 }
 
 
@@ -175,7 +184,27 @@ def resolve_shadow_quality_preset(quality: object) -> ShadowQualityPreset:
 
 def effective_backend_shadow_params(base: BackendShadowParams, quality: object) -> BackendShadowParams:
   preset = resolve_shadow_quality_preset(quality)
-  return replace(base, size=int(preset.size), coverage_radius=float(preset.coverage_radius), pcf_radius=float(preset.pcf_radius))
+  return replace(base, size=int(preset.size), coverage_radius=float(preset.coverage_radius), pcf_radius=float(preset.pcf_radius), ultra_filter=bool(preset.ultra_filter))
+
+
+# Normal-offset shadow bias: before a fragment's world position is projected into light space, it
+# is pushed along its own geometric normal by this many shadow-map texels (converted to world
+# units via the active tier's coverage_radius/size), closing the shadow gap at concave block
+# corners where flat depth/slope bias alone leaves acne. The offset is kept small because Ludoxel
+# suns sit at a low, grazing elevation most of the time: for a near-horizontal receiver (grass,
+# floors) whose normal is close to perpendicular to the sun direction, an offset along that normal
+# projects into light space almost entirely as a UV shift, with only a small depth-shift component,
+# so most of its magnitude reads as shadow-map distance travelled, separate from bias proper. Too
+# large a value visibly detaches a caster's shadow from its own base (peter-panning) before it
+# meaningfully helps a corner. bias_min/bias_slope
+# still carry most of the grazing-angle protection; the normal offset only mops up the residual
+# corner-notch acne a slope bias cannot reach because it knows nothing about neighbouring casters.
+SHADOW_NORMAL_OFFSET_TEXELS: float = 0.5
+
+
+def shadow_normal_offset_world_units(shadow: BackendShadowParams) -> float:
+  texel_world_size = (2.0 * float(shadow.coverage_radius)) / float(max(1, int(shadow.size)))
+  return float(SHADOW_NORMAL_OFFSET_TEXELS) * float(texel_world_size)
 
 
 @dataclass(frozen=True)

@@ -403,7 +403,7 @@ function requireBundledResource(appPath, label, relativePaths) {
                 label: 'Rust crate targets',
                 href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
               },
-              ' — the terrain engine and the Othello search engine — whose sources are Rust crates with verification policy separate from the Cython candidates below.',
+              ' — the terrain engine, the Othello search engine, and the chunk frustum-cull engine — whose sources are Rust crates with verification policy separate from the Cython candidates below.',
             ],
           },
           {
@@ -526,7 +526,7 @@ npm run build:native:check`,
         ],
       },
     ],
-    relatedTitles: ['Building the Rust Terrain Extension', 'Running a Desktop Build with Permission', 'Reading Build Output', 'Running Package Checks with Permission'],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Frustum Extension', 'Running a Desktop Build with Permission', 'Reading Build Output'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1453,7 +1453,7 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
         content: [
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/presentation/rendering/faces/preview.py` projects the visible faces from `iter_visible_faces`, fits their projected alpha footprint into the `PREVIEW_CANVAS_SIZE` square canvas, and recenters the final visible alpha bounds after downsampling. Texture sampling treats `v=0` as the lower texture row, matching the runtime atlas preparation that mirrors block texture images before OpenGL and WGPU upload.',
+            text: '`src/ludoxel/presentation/rendering/faces/preview.py` projects the visible faces from `iter_visible_faces`, fits their projected alpha footprint into the `PREVIEW_CANVAS_SIZE` square canvas, and recenters the final visible alpha bounds after downsampling. Texture sampling treats `v=0` as the lower texture row, matching the runtime atlas preparation that mirrors block texture images before OpenGL and WGPU upload. `_project_faces` resolves each face texture through `resolve_oriented_texture_name`, so a pillar block rendered with a state that sets the `axis` property shows its top and side textures the same way the world renderer does; the projection carries no world coordinate, so it never calls the coordinate-driven variant or rotation resolution that world rendering layers on top of that same call, and a generated thumbnail or inventory icon always shows one texture per face regardless of where the block is later placed.',
           },
           {
             kind: 'code',
@@ -1495,7 +1495,7 @@ if not p.exists():
         ],
       },
     ],
-    relatedTitles: ['Running Resource and Shader Checks with Permission', 'Separating Original Materials from Output', 'Using the Hotbar', 'Understanding Block Shapes'],
+    relatedTitles: ['Running Resource and Shader Checks with Permission', 'Separating Original Materials from Output', 'Using the Hotbar', 'Understanding Block Shapes', 'Understanding Block Face Texture Selection'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1682,16 +1682,31 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
     installDirectory: 'src/ludoxel/simulation/spaces/othello/engines',
     fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
   }),
+  Object.freeze({
+    id: 'frustum_native',
+    crateDirectory: 'native/ludoxel_frustum',
+    crateName: 'ludoxel_frustum',
+    moduleName: 'ludoxel.foundations.mathematics.frustums._frustum_native',
+    artifactStem: '_frustum_native',
+    installDirectory: 'src/ludoxel/foundations/mathematics/frustums',
+    fallbackModuleName: 'ludoxel.foundations.mathematics.frustums.clip',
+  }),
 ]);`,
           },
           {
             kind: 'paragraph',
             text: [
-              'Each configured module record separates the crate directory, the compiled module name, the installed artifact stem, and the fallback module; the registry carries the terrain crate and the ',
+              'Each configured module record separates the crate directory, the compiled module name, the installed artifact stem, and the fallback module; the registry carries the terrain crate, the ',
               {
                 kind: 'link',
                 label: 'Othello engine crate',
                 href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-othello-engine-extension',
+              },
+              ', and the ',
+              {
+                kind: 'link',
+                label: 'frustum-cull crate',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension',
               },
               ', and the build and verification services iterate every entry. `rustCrateStates` derives from each record the manifest path, the built cdylib path under `target/release`, the installed artifact path, and a staleness flag comparing crate source modification times against the installed artifact. A stale artifact is reported with a rebuild instruction; the tool does not rebuild implicitly during verification, and application startup never runs cargo.',
             ],
@@ -1743,7 +1758,7 @@ if (!importedFile.endsWith(expectedSuffix)) {
         ],
       },
     ],
-    relatedTitles: ['Understanding Native Extension Fallbacks', 'Building the Rust Othello Engine Extension', 'Running a Desktop Build with Permission', 'Reading Build Output'],
+    relatedTitles: ['Understanding Native Extension Fallbacks', 'Building the Rust Othello Engine Extension', 'Building the Rust Frustum Extension', 'Running a Desktop Build with Permission'],
   }),
   defineDocsArticle({
     category: 'Distribution',
@@ -1814,6 +1829,105 @@ if (!importedFile.endsWith(expectedSuffix)) {
         ],
       },
     ],
-    relatedTitles: ['Building the Rust Terrain Extension', 'Understanding Native Extension Fallbacks', 'Understanding Othello Search', 'Running a Desktop Build with Permission'],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Frustum Extension', 'Understanding Native Extension Fallbacks', 'Understanding Othello Search'],
+  }),
+  defineDocsArticle({
+    category: 'Distribution',
+    subcategory: 'Runtime Inclusions',
+    group: 'Native and Runtime Materials',
+    title: 'Building the Rust Frustum Extension',
+    description: 'Defines the Rust chunk-visibility crate, the byte-buffer contract it shares with the numpy fallback in clip.py, the build and artifact placement it shares with the terrain and Othello crates, and the desktop-package inclusion path for the compiled extension.',
+    sections: [
+      {
+        id: 'building-the-rust-frustum-extension-crate-and-contract',
+        title: 'Crate Source and Shared Contract',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The Rust frustum-cull engine lives in the repository as `native/ludoxel_frustum`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set, matching the terrain and Othello crates. Unlike those two, the crate is one file: `native/ludoxel_frustum/src/lib.rs` holds both the clip-volume arithmetic and the PyO3 binding surface, because the crate exposes exactly one computation. It names its module `_frustum_native` and exposes `chunks_intersect_clip_volume_batch` and `native_build_info` as Python functions. The compiled artifact is imported as `ludoxel.foundations.mathematics.frustums._frustum_native`, placing it under `foundations`: chunk-grid geometry and clip-volume tests are a foundations-layer contract, so this crate sits beside the frustum math it accelerates instead of beside a simulation subsystem.',
+          },
+          {
+            kind: 'code',
+            language: 'toml',
+            caption: 'native/ludoxel_frustum/Cargo.toml',
+            code: `[lib]
+name = "ludoxel_frustum"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311", "generate-import-lib"] }`,
+          },
+          {
+            kind: 'paragraph',
+            text: 'The contract is a raw byte buffer in both directions, with no PyO3 object graph beyond the returned bytes. `chunks_intersect_clip_volume_batch` takes `keys_xyz`, little-endian `int64` bytes in C order with shape `(count, 3)`, one normalized chunk-grid key per row; `matrix`, sixteen little-endian `float32` bytes in C order forming a row-major 4x4 matrix; and `count`. It returns one `uint8` byte per input row, `1` where the chunk’s eight world-space corners intersect the clip volume and `0` where every corner lies on the outside of the same single clip plane. `ludoxel.foundations.mathematics.frustums.native`, the import owner, reinterprets that returned buffer directly as `numpy.bool_` without a copy step beyond the buffer itself, because a numpy boolean array already stores one byte per element with the same `0`/`1` encoding the crate writes.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-frustum-extension-build-and-placement',
+        title: 'Cargo Build and Artifact Placement',
+        content: [
+          {
+            kind: 'paragraph',
+            text: 'The crate is the third entry of `RUST_NATIVE_MODULES` in `tools/build_native_extensions/src/config/native.config.mjs`, alongside the terrain and Othello crates documented in ',
+          },
+          {
+            kind: 'code',
+            language: 'js',
+            caption: 'The frustum entry in RUST_NATIVE_MODULES.',
+            code: `Object.freeze({
+  id: 'frustum_native',
+  crateDirectory: 'native/ludoxel_frustum',
+  crateName: 'ludoxel_frustum',
+  moduleName: 'ludoxel.foundations.mathematics.frustums._frustum_native',
+  artifactStem: '_frustum_native',
+  installDirectory: 'src/ludoxel/foundations/mathematics/frustums',
+  fallbackModuleName: 'ludoxel.foundations.mathematics.frustums.clip',
+}),`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              '`buildRustNativeExtensions` builds every entry the same way regardless of position in the array: it resolves cargo, runs `cargo build --release --manifest-path` against `native/ludoxel_frustum/Cargo.toml`, and copies the produced cdylib to `src/ludoxel/foundations/mathematics/frustums/_frustum_native.pyd` on Windows or the `.so` suffix elsewhere, matching the placement and failure handling the ',
+              {
+                kind: 'link',
+                label: 'terrain crate',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-terrain-extension',
+              },
+              ' article describes in full. `npm run build:native` runs this build for all three crates in one invocation; `native/ludoxel_frustum/target` is pruned from the source distribution by `MANIFEST.in` the same way the other two crate directories are.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-frustum-extension-verification',
+        title: 'Import Verification Refuses the Fallback',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`verifyRustNativeExtensions` applies the identical compiled-import gate to this crate that it applies to the terrain and Othello crates: it imports `ludoxel.foundations.mathematics.frustums._frustum_native` in a subprocess pinned to the repository `src` tree, reads the imported module’s `__file__`, and accepts the target only when that file resolves under `src/ludoxel` and carries the platform’s compiled suffix. `npm run build:native:check` runs this gate for all three registered crates; a fallback-only source tree fails the frustum entry exactly as it fails the other two, and the check names that specific failure in its output.',
+          },
+        ],
+      },
+      {
+        id: 'building-the-rust-frustum-extension-runtime-and-package',
+        title: 'Runtime Fallback and Package Inclusion',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ludoxel.foundations.mathematics.frustums.native` performs one guarded import of `_frustum_native` at module import time. `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` imports `chunks_intersect_clip_volume_batch` from that module, so both the world pass and the shadow pass reach the compiled extension, when it is present, on every drawn frame. When the compiled module is absent, the same call routes to the numpy-vectorized fallback in `clip.py`, which the Systems documentation for chunk visibility describes as the reference contract a native build must match value for value.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'The desktop build declares `ludoxel.foundations.mathematics.frustums._frustum_native` as a PyInstaller hidden import on both platform paths in `tools/build_desktop_app`, the wheel package data in `pyproject.toml` admits the installed artifact, and `MANIFEST.in` carries the crate source while pruning its `target` output, mirroring the terrain and Othello inclusion paths exactly.',
+          },
+          {
+            kind: 'paragraph',
+            text: 'This crate accelerates an operation the numpy fallback had already reduced from a per-chunk Python loop to one batched array call, adding native speed on top of an already-vectorized operation. A source-tree benchmark comparing the two implementations at 3,125 candidate chunks against one clip matrix measured the numpy path at under one millisecond and the compiled path at roughly one twentieth of that, with identical visibility results across every compared key. Both figures sit far below typical per-frame budgets at common render-distance settings, placing chunk culling outside the operations a frame-rate investigation should target first; the crate exists as a native-acceleration target consistent with the terrain and Othello crates.',
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Building the Rust Terrain Extension', 'Building the Rust Othello Engine Extension', 'Understanding Native Extension Fallbacks', 'Understanding Render Distance Fog and Shadows'],
   }),
 ];

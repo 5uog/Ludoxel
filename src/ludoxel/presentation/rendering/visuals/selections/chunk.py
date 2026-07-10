@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 import numpy as np
 
 from ludoxel.foundations.mathematics.chunks.grid import ChunkKey, normalize_chunk_key
-from ludoxel.foundations.mathematics.frustums.clip import chunk_intersects_clip_volume
+from ludoxel.foundations.mathematics.frustums.native import chunks_intersect_clip_volume_batch
 
 ChunkPredicate = Callable[[ChunkKey], bool]
 
@@ -26,17 +26,16 @@ def within_render_distance(chunk_key: ChunkKey, camera_chunk: ChunkKey, render_d
 
 
 def select_visible_chunks(chunk_keys: Iterable[ChunkKey], matrix: np.ndarray, *, predicate: ChunkPredicate | None = None) -> list[ChunkKey]:
-  out: list[ChunkKey] = []
-
+  candidates: list[ChunkKey] = []
   for chunk_key in chunk_keys:
     ck = normalize_chunk_key(chunk_key)
-
     if predicate is not None and (not bool(predicate(ck))):
       continue
+    candidates.append(ck)
 
-    if not chunk_intersects_clip_volume(ck, matrix):
-      continue
+  if not candidates:
+    return []
 
-    out.append(ck)
-
-  return out
+  keys_xyz = np.asarray(candidates, dtype=np.int64)
+  visible_mask = chunks_intersect_clip_volume_batch(keys_xyz, matrix)
+  return [ck for ck, keep in zip(candidates, visible_mask.tolist()) if bool(keep)]

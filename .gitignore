@@ -45,6 +45,7 @@ src/**/*.dll
 # Rust build output for the native crates.
 native/ludoxel_terrain/target/
 native/ludoxel_othello/target/
+native/ludoxel_frustum/target/
 
 # Local cache used by the repository-managed Ruff wrapper.
 tools/format_python_source/.cache/

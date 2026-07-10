@@ -1096,10 +1096,37 @@
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-boundary</loc>
   </url>
   <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-shadow-filtering</loc>
+  </url>
+  <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#shared-shaders-sun-optics</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/backend-implementations/understanding-shared-shader-sources-and-color-targets#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#face-texture-resolver</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#face-texture-hash</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#face-texture-variants</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#face-texture-rotation</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#face-texture-axis</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#face-texture-parity</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/systems/rendering-backends/world-visuals/understanding-render-distance-fog-and-shadows</loc>
@@ -2297,6 +2324,24 @@
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-othello-engine-extension#see-also</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-crate-and-contract</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-build-and-placement</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-verification</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#building-the-rust-frustum-extension-runtime-and-package</loc>
+  </url>
+  <url>
+    <loc>https://ludoxel.vercel.app/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension#see-also</loc>
   </url>
   <url>
     <loc>https://ludoxel.vercel.app/docs/legal/license-authority-and-materials/authority-text/understanding-license-authority</loc>

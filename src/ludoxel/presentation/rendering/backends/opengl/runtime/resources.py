@@ -13,6 +13,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import Sha
 from ludoxel.presentation.rendering.backends.opengl.resources.image_texture import ImageTexture
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.shaders.source import shader_source_root
+from ludoxel.presentation.rendering.visuals.worlds.texture_variation import world_atlas_texture_names
 from ludoxel.presentation.resources.asset_roots import resolve_visual_asset_roots
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 
@@ -73,7 +74,7 @@ class GLResources:
     tex_names = blocks.required_texture_names()
 
     visual_roots = resolve_visual_asset_roots(assets_dir, required_texture_names=tex_names)
-    atlas = TextureAtlas.build_from_dir(visual_roots.block_texture_dir, tile_size=64, names=tex_names, pad=1)
+    atlas = TextureAtlas.build_from_dir(visual_roots.block_texture_dir, tile_size=64, names=world_atlas_texture_names(blocks), pad=1)
     skin_texture = ImageTexture.load(assets_dir / "ludoxel" / "skins" / "timo.png")
 
     empty_vao = int(glGenVertexArrays(1))

@@ -289,8 +289,8 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-controlling-text-publication-and-platform-surfaces',
         title: 'Publication and Platform Surfaces',
         body: [
-          'Public display is the usual source of false conflict. A repository page, website page, preview deployment, production deployment, generated static file, cached excerpt, search result, browser display, package preview, fork button, clone button, download button, archive, issue form, pull-request page, action log, or release page may make material visible or technically obtainable. That surface condition does not supply a license term inconsistent with the License Text.',
-          'When a platform surface appears to enable an act that the License Text does not authorize, the legal result is not that the platform surface expands the License. The result is that technical capability, service-level functionality, and interface affordance must be separated from permission granted by the Licensor.',
+          'Public display is the usual source of false conflict. A repository page, website page, preview deployment, production deployment, generated static file, cached excerpt, search result, browser display, package preview, fork button, clone button, download button, archive, issue form, pull-request page, action log, or release page may make material visible or technically obtainable. The License Text alone supplies license terms; visibility or technical obtainability through any such surface supplies none.',
+          'The License Text alone controls the scope of an act that a platform surface appears to enable. Technical capability, service-level functionality, and interface affordance remain separate from permission the Licensor grants, regardless of what a platform surface appears to allow.',
           'The same reasoning applies to Documentation Site content. Code blocks, configuration examples, command examples, images, videos, navigation data, search data, legal notices, and interface text may be publicly displayed, but their display remains subordinate to the License Text. A public page can inform the reader of a legal boundary; it cannot erase that boundary by being public.',
         ],
       },
@@ -630,7 +630,7 @@ export const legalPages: DocsPageContent[] = [
         id: 'understanding-original-materials-permission-boundary',
         title: 'Permission Boundary',
         body: [
-          'Classifying a material as Original Materials does not authorize copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark creation, deployment, sublicensing, sale, rental, lending, or removal of legal markings.',
+          'Original Materials classification fixes which protected components fall within the License Text’s reservation of rights; the classification itself grants no act. Copying, modification, redistribution, derivative preparation, republication, mirroring, scraping, crawling, extraction, incorporation, AI Use, dataset creation, benchmark creation, deployment, sublicensing, sale, rental, lending, and removal of legal markings each require a grant the License Text separately supplies.',
           [
             'The License Text contains an exhaustive limited grant for human review and verification of Repository Contents, Ordinary Documentation Site Viewing, and ',
             {
@@ -900,7 +900,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Permission Boundary',
         body: [
           [
-            'Classifying material as Distribution Materials does not authorize distribution, deployment, republication, redistribution, mirroring, hosting, transmission, sublicensing, sale, rental, lending, incorporation into another work, preparation of derivative works, AI Use, dataset creation, benchmark construction, extraction, or removal of legal markings. The separate restricted-use analysis belongs to ',
+            'Distribution Materials classification fixes which components fall within the License Text’s restricted-use analysis; the classification itself grants no act. Distribution, deployment, republication, redistribution, mirroring, hosting, transmission, sublicensing, sale, rental, lending, incorporation into another work, preparation of derivative works, AI Use, dataset creation, benchmark construction, extraction, and removal of legal markings each require a grant the License Text separately supplies. The separate restricted-use analysis belongs to ',
             {
               kind: 'link',
               label: 'redistribution',
@@ -908,7 +908,7 @@ export const legalPages: DocsPageContent[] = [
             },
             ', derivative-work, and AI-use articles when those acts are proposed.',
           ],
-          'The limited grant in the License Text covers only the expressly stated permissions. Distributing Distribution Materials, deploying the Documentation Site, republishing a package or release artifact, and treating distribution form as a substitute for written authorization all fall outside it, each demanding an affirmative grant that the limited permission does not contain.',
+          'The limited grant in the License Text covers only the expressly stated permissions. Distributing Distribution Materials, deploying the Documentation Site, republishing a package or release artifact, and treating distribution form as a substitute for written authorization all fall outside it, each demanding an affirmative grant absent from the limited permission.',
           'If the proposed act is outside the limited grant, the answer must come from the License Text or from a later competent written instrument. It must not be inferred from package form, official-looking structure, legal-text inclusion, build success, repository visibility, static-site deployment, preview availability, metadata, or ordinary user expectation.',
         ],
       },
@@ -1188,13 +1188,13 @@ export const legalPages: DocsPageContent[] = [
         title: 'Distribution and Public Sharing Boundary',
         body: [
           [
-            'Using Ludoxel locally does not authorize distribution of Ludoxel, application bundles, executable files, installers, archives, wheels, source distributions, generated distribution directories, packages, release artifacts, website deployment material, embedded resources, copied legal materials, metadata, or other ',
+            'Distribution of Ludoxel, application bundles, executable files, installers, archives, wheels, source distributions, generated distribution directories, packages, release artifacts, website deployment material, embedded resources, copied legal materials, metadata, or other ',
             {
               kind: 'link',
               label: 'Distribution Materials',
               href: '/docs/legal/license-authority-and-materials/material-scope/understanding-distribution-materials',
             },
-            '.',
+            ' requires a grant separate from local use.',
           ],
           [
             'A user may have a separate output-sharing question when sharing the user’s own screenshots, recordings, save data, logs, configuration files, rendered states, or other output. That question must be resolved under the License Text, applicable third-party rights, protected-material inclusion, and the ',
@@ -1205,7 +1205,7 @@ export const legalPages: DocsPageContent[] = [
             },
             ' boundary where public circulation of protected material is involved.',
           ],
-          'Ordinary Application Use is therefore not a distribution permission. It is a local-use permission whose downstream public consequences remain legally conditional.',
+          'Ordinary Application Use grants only a local-use permission; its downstream public consequences remain legally conditional.',
         ],
       },
       {
@@ -1213,7 +1213,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'AI Use Boundary',
         body: [
           [
-            'AI Use is outside Ordinary Application Use. The License Text separately defines AI Use and excludes it from the limited grant. Running Ludoxel, viewing its interface, recording ordinary footage, or obtaining output does not authorize creation, training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, population, operation, indexing, retrieval, embedding, vector-database use, dataset creation, synthetic-data generation, or comparable computational use involving protected material.',
+            'AI Use is outside Ordinary Application Use. The License Text separately defines AI Use and excludes it from the limited grant. Creation, training, fine-tuning, evaluation, benchmarking, validation, testing, improvement, population, operation, indexing, retrieval, embedding, vector-database use, dataset creation, synthetic-data generation, and comparable computational use involving protected material each require authority that running Ludoxel, viewing its interface, recording ordinary footage, or obtaining output does not supply.',
           ],
           [
             'If Application Output contains protected material, that protected portion remains subject to the applicable legal terms. Training, benchmarking, retrieval, and dataset use require authority for the protected portion even when ordinary application operation produced the output. The detailed restriction belongs to ',
@@ -1374,7 +1374,7 @@ export const legalPages: DocsPageContent[] = [
                 content: [
                   {
                     kind: 'paragraph',
-                    text: 'The Licensee’s own output is subject to the License and applicable third-party rights. Embedded protected material remains subject to its own applicable legal terms. The permission to share one part does not authorize separable reuse of another.',
+                    text: 'The Licensee’s own output is subject to the License and applicable third-party rights. Embedded protected material remains subject to its own applicable legal terms. Separable reuse of another part requires authority distinct from the permission covering the shared part.',
                   },
                   {
                     kind: 'note',
@@ -1620,18 +1620,18 @@ export const legalPages: DocsPageContent[] = [
       },
       {
         id: 'understanding-redistribution-restrictions-non-authorizing-circumstances',
-        title: 'Circumstances That Do Not Authorize Redistribution',
+        title: 'Non-Authorizing Circumstances for Redistribution',
         body: [
           [
-            'Public ',
+            'Redistribution authority remains separate from public ',
             {
               kind: 'link',
               label: 'repository visibility',
               href: '/docs/legal/license-authority-and-materials/material-scope/understanding-repository-visibility',
             },
-            ' does not authorize redistribution. The fact that material can be viewed, cloned, forked, downloaded, archived, cached, indexed, or rendered in a browser establishes technical obtainability, not permission to circulate.',
+            '. Viewing, cloning, forking, downloading, archiving, caching, indexing, or browser rendering establishes technical obtainability, not permission to circulate.',
           ],
-          'The existence of a package, build artifact, or generated site directory does not authorize redistribution. An artifact can exist, be reproducible, and contain the correct files while no permission to publish or host it exists.',
+          'Redistribution authority remains separate from the existence of a package, build artifact, or generated site directory. An artifact can exist, be reproducible, and contain the correct files while no permission to publish or host it exists.',
           'Inclusion of the License Text, Third-Party License Text, SPDX identifiers, or other legal materials inside a copy leaves redistribution authority with Section 9 of the License Text. Retained legal text is a condition that an authorized distribution must satisfy. Authorization itself requires the permission source stated by the License Text. A noncommercial purpose, an educational purpose, and private convenience are equally insufficient, because the limited grant does not turn on the Licensee’s purpose.',
         ],
       },
@@ -1648,15 +1648,15 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'The reservation means that a third party cannot cure the absence of redistribution permission by producing an artifact that resembles the official application. Resemblance, inclusion of legal text, use of Ludoxel names, or production through a repository build path does not create authority to circulate.',
+          'The reservation means that a third party cannot cure the absence of redistribution permission by producing an artifact that resembles the official application. Resemblance, inclusion of legal text, use of Ludoxel names, and production through a repository build path each leave circulation authority absent.',
         ],
       },
       {
         id: 'understanding-redistribution-restrictions-documentation-site',
         title: 'Documentation Site Republication',
         body: [
-          'Republication of the Documentation Site is within the restriction. The License Text provides that public website availability, static-site output, previews, and hosting-service features do not grant rights to copy, mirror, redeploy, or republish the site. A Licensee who can view the documentation in a browser has Ordinary Documentation Site Viewing, not a republication license.',
-          'Static-site output does not change this result. Generated HTML, assets, search data, and metadata produced from the website source remain Original Materials in object form. The ability to retrieve or regenerate that output does not authorize hosting it elsewhere or incorporating it into another documentation set.',
+          'Republication of the Documentation Site is within the restriction. The License Text withholds, from public website availability, static-site output, previews, and hosting-service features, any right to copy, mirror, redeploy, or republish the site. A Licensee who can view the documentation in a browser has Ordinary Documentation Site Viewing, not a republication license.',
+          'Static-site output leaves this result unchanged: generated HTML, assets, search data, and metadata produced from the website source remain Original Materials in object form. Hosting that output elsewhere or incorporating it into another documentation set each require authority beyond the ability to retrieve or regenerate it.',
         ],
       },
       {
@@ -1664,7 +1664,7 @@ export const legalPages: DocsPageContent[] = [
         title: 'Third-Party and Provenance Boundary',
         body: [
           [
-            'A redistribution may carry Third-Party Materials and Provenance-Sensitive Materials in addition to Original Materials. Compliance with a third-party license governing one component does not grant any right in the Ludoxel Original Materials carried alongside it, and the separate material split is owned by ',
+            'A redistribution may carry Third-Party Materials and Provenance-Sensitive Materials in addition to Original Materials. Rights in the Ludoxel Original Materials carried alongside a component remain governed by the Ludoxel License Text independent of compliance with any third-party license governing that component, and the separate material split is owned by ',
             {
               kind: 'link',
               label: 'third-party material boundaries',
@@ -1672,7 +1672,7 @@ export const legalPages: DocsPageContent[] = [
             },
             '.',
           ],
-          'Conversely, the Ludoxel limited grant does not authorize redistribution of third-party or provenance-sensitive components. A party that proposes to circulate any such component must separately confirm redistribution permission for that component under its own terms.',
+          'Conversely, redistribution of third-party or provenance-sensitive components requires authority the Ludoxel limited grant does not supply. A party that proposes to circulate any such component must separately confirm redistribution permission for that component under its own terms.',
         ],
       },
       {
@@ -1972,7 +1972,7 @@ export const legalPages: DocsPageContent[] = [
                     kind: 'note',
                     note: {
                       type: 'warning',
-                      content: 'Public visibility, technical obtainability, a noncommercial purpose, a research purpose, or an evaluation-only purpose does not authorize AI Use. The License Text grants the act, or the act is not granted.',
+                      content: 'AI Use requires authority that public visibility, technical obtainability, a noncommercial purpose, a research purpose, and an evaluation-only purpose do not supply. The License Text grants the act, or the act is not granted.',
                     },
                   },
                 ],

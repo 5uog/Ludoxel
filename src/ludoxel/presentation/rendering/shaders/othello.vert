@@ -13,6 +13,7 @@ layout(location = 7) in vec4 i_tint;
 
 uniform mat4 u_viewProj;
 uniform mat4 u_lightViewProj;
+uniform float u_shadowNormalOffset;
 
 out vec3 v_normal;
 out vec3 v_color;
@@ -37,9 +38,10 @@ void main() {
 
     mat3 m = model_mat3();
 
-    v_normal = normalize(transpose(inverse(m)) * a_normal);
+    vec3 n = normalize(transpose(inverse(m)) * a_normal);
+    v_normal = n;
     v_color = a_color * i_tint.rgb;
     v_alpha = i_tint.a;
-    v_lightPos = u_lightViewProj * world_pos;
+    v_lightPos = u_lightViewProj * vec4(world_pos.xyz + n * u_shadowNormalOffset, 1.0);
     v_worldPos = world_pos.xyz;
 }

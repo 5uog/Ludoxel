@@ -96,7 +96,7 @@ class SunPass:
   def draw_flare(self, sun_ndc: tuple[float, float], strength: float, aspect: float) -> None:
     # Screen-space lens flare drawn as a final overlay. A fullscreen triangle covers the frame;
     # the fragment stage places ghost discs along the axis through the sun's screen position and the frame centre.
-    # It writes no depth and blends over the composed scene, so it reads as a lens artifact rather than world geometry.
+    # It writes no depth and blends over the composed scene, so it reads as a lens artifact sitting outside the world geometry.
     if self._flare_prog is None or int(self._empty_vao) == 0 or float(strength) <= 0.0:
       return
 

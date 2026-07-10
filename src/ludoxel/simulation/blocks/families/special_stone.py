@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ludoxel.simulation.blocks.families.stone import StoneType, column_textures, cube_textures, side_top_bottom_textures
 from ludoxel.simulation.blocks.sounds.groups import SOUND_GROUP_CALCITE, SOUND_GROUP_CORAL_BLOCK, SOUND_GROUP_DEEPSLATE, SOUND_GROUP_GILDED_BLACKSTONE, SOUND_GROUP_LODESTONE, SOUND_GROUP_METAL, SOUND_GROUP_NETHER_BRICKS, SOUND_GROUP_NETHERITE, SOUND_GROUP_RESIN
+from ludoxel.simulation.blocks.structures.axis_orientation import PILLAR_AXIS_TAG
 
 SPECIAL_STONE_TYPES: tuple[StoneType, ...] = (
   StoneType(key="cobblestone", display="Cobblestone", textures=cube_textures("cobblestone"), slab_key="cobblestone_slab", stairs_key="cobblestone_stairs", wall_key="cobblestone_wall"),
@@ -19,14 +20,14 @@ SPECIAL_STONE_TYPES: tuple[StoneType, ...] = (
   StoneType(key="netherite_block", display="Block of Netherite", textures=cube_textures("netherite_block"), sound_group=SOUND_GROUP_NETHERITE),
   StoneType(key="lodestone", display="Lodestone", textures=side_top_bottom_textures("lodestone_side", "lodestone_top", "lodestone_top"), sound_group=SOUND_GROUP_LODESTONE),
   StoneType(key="purpur_block", display="Purpur Block", textures=cube_textures("purpur_block"), slab_key="purpur_slab", stairs_key="purpur_stairs"),
-  StoneType(key="purpur_pillar", display="Purpur Pillar", textures=column_textures("purpur_pillar_side", "purpur_pillar_top")),
+  StoneType(key="purpur_pillar", display="Purpur Pillar", textures=column_textures("purpur_pillar_side", "purpur_pillar_top"), tags=(PILLAR_AXIS_TAG,)),
   StoneType(key="honeycomb_block", display="Honeycomb Block", textures=cube_textures("honeycomb"), sound_group=SOUND_GROUP_CORAL_BLOCK),
   StoneType(key="dark_prismarine", display="Dark Prismarine", textures=cube_textures("prismarine_dark"), slab_key="dark_prismarine_slab", stairs_key="dark_prismarine_stairs"),
   StoneType(key="prismarine_bricks", display="Prismarine Bricks", textures=cube_textures("prismarine_bricks"), slab_key="prismarine_brick_slab", stairs_key="prismarine_brick_stairs"),
   StoneType(key="prismarine", display="Prismarine", textures=cube_textures("prismarine_rough_01"), slab_key="prismarine_slab", stairs_key="prismarine_stairs"),
   StoneType(key="quartz_block", display="Block of Quartz", textures=side_top_bottom_textures("quartz_block_side", "quartz_block_top", "quartz_block_bottom")),
   StoneType(key="quartz_bricks", display="Quartz Bricks", textures=cube_textures("quartz_bricks")),
-  StoneType(key="quartz_pillar", display="Quartz Pillar", textures=column_textures("quartz_column_side", "quartz_column_top")),
+  StoneType(key="quartz_pillar", display="Quartz Pillar", textures=column_textures("quartz_column_side", "quartz_column_top"), tags=(PILLAR_AXIS_TAG,)),
   StoneType(key="chiseled_quartz_block", display="Chiseled Quartz Block", textures=side_top_bottom_textures("quartz_block_chiseled", "quartz_block_chiseled_top", "quartz_block_chiseled_top")),
   StoneType(key="smooth_quartz", display="Smooth Quartz Block", textures=cube_textures("smooth_quartz"), slab_key="smooth_quartz_slab", stairs_key="smooth_quartz_stairs"),
   StoneType(key="iron_block", display="Block of Iron", textures=cube_textures("iron_block"), sound_group=SOUND_GROUP_METAL),

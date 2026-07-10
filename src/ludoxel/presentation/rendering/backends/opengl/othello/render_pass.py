@@ -13,7 +13,7 @@ from ludoxel.presentation.rendering.backends.opengl.gl.shader_program import Sha
 from ludoxel.presentation.rendering.backends.opengl.gl.state_guard import GLStateGuard
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapInfo
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, GeometryDistanceFog
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, GeometryDistanceFog, shadow_normal_offset_world_units
 from ludoxel.presentation.rendering.visuals.othello.scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
 from ludoxel.presentation.rendering.visuals.othello.state import OthelloRenderState
 
@@ -95,6 +95,8 @@ class OthelloPass:
       self._world_prog.set_float("u_shadowBiasMin", float(shadow.bias_min))
       self._world_prog.set_float("u_shadowBiasSlope", float(shadow.bias_slope))
       self._world_prog.set_float("u_shadowPcfRadius", float(shadow.pcf_radius))
+      self._world_prog.set_float("u_shadowUltra", 1.0 if bool(shadow.ultra_filter) else 0.0)
+      self._world_prog.set_float("u_shadowNormalOffset", float(shadow_normal_offset_world_units(shadow)))
 
       glActiveTexture(GL_TEXTURE1)
       glBindTexture(GL_TEXTURE_2D, int(shadow_info.tex_id) if shadow_sampling_ok else 0)

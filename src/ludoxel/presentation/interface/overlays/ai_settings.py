@@ -305,7 +305,7 @@ class AiSettingsOverlay(SidebarDialogBase):
   def _build_placement_page(self) -> None:
     scroll, host, layout = self._make_scroll_page()
     add_page_header(layout, host, title="Block Placement", subtitle="Placement permission and the movement safety rules that depend on it.")
-    _placement_card, placement_body, placement_layout = add_settings_card(layout, host, title="Placement Permission", description="Block placement is a movement aid rather than unrestricted building permission.")
+    _placement_card, placement_body, placement_layout = add_settings_card(layout, host, title="Placement Permission", description="Block placement grants a scoped movement aid, distinct from unrestricted building permission.")
     self._can_place_blocks = QCheckBox("Allow block placement", placement_body)
     add_setting_row(placement_layout, placement_body, label="Placement", description="Allows bridging, securing the next footing, escaping boxed positions, and defensive placement.", control=self._can_place_blocks)
     placement_note = QLabel("Placement requires a clear line of sight. During bridging, forward movement waits until the next footing exists instead of advancing ahead of an unfinished bridge.", placement_body)

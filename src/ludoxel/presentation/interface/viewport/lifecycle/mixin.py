@@ -175,5 +175,5 @@ class ViewportLifecycleMixin:
     ms = int(self._loop.render_timer_interval_ms)
     if ms > 0:
       return ms
-    hz = max(120.0, float(self._loop.sim_hz))
+    hz = max(1000.0, float(self._loop.sim_hz))
     return max(1, int(round(1000.0 / hz)))

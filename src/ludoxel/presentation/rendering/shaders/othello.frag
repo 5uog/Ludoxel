@@ -14,6 +14,7 @@ uniform float u_shadowDarkMul;
 uniform float u_shadowBiasMin;
 uniform float u_shadowBiasSlope;
 uniform float u_shadowPcfRadius;
+uniform float u_shadowUltra;
 
 uniform int u_debugShadow;
 
@@ -32,6 +33,7 @@ in vec3 v_worldPos;
 out vec4 fragColor;
 
 #include "common/distance_fog.glsl"
+#include "common/shadow_filtering.glsl"
 
 float shadow_sample(vec3 uvz, float bias) {
     float z = uvz.z - bias;
@@ -40,6 +42,17 @@ float shadow_sample(vec3 uvz, float bias) {
 
 float shadow_pcf(vec3 uvz, float bias) {
     vec2 t = u_shadowTexel * max(u_shadowPcfRadius, 0.0);
+
+    if (u_shadowUltra > 0.5) {
+        float angle = ldx_shadow_ultra_angle(gl_FragCoord.xy);
+        float sum = 0.0;
+        for (int k = 0; k < LDX_SHADOW_ULTRA_TAP_COUNT; ++k) {
+            vec2 offset = ldx_shadow_ultra_tap(k, angle) * t;
+            sum += shadow_sample(vec3(uvz.xy + offset, uvz.z), bias);
+        }
+        return sum * (1.0 / float(LDX_SHADOW_ULTRA_TAP_COUNT));
+    }
+
     float sum = 0.0;
     for (int j = -1; j <= 1; ++j) {
         for (int i = -1; i <= 1; ++i) {

@@ -16,7 +16,7 @@ from ludoxel.presentation.rendering.backends.opengl.passes.aggregated_face_batch
 from ludoxel.presentation.rendering.backends.opengl.passes.shadow_map import ShadowMapInfo
 from ludoxel.presentation.rendering.backends.opengl.resources.texture_atlas import TextureAtlas
 from ludoxel.presentation.rendering.backends.opengl.runtime.metrics import PassFrameMetrics
-from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, GeometryDistanceFog
+from ludoxel.presentation.rendering.contracts.config import BackendShadowParams, GeometryDistanceFog, shadow_normal_offset_world_units
 from ludoxel.presentation.rendering.visuals.selections.chunk import select_visible_chunks, within_render_distance
 from ludoxel.simulation.worlds.config.render_distance import clamp_render_distance_chunks
 
@@ -133,6 +133,8 @@ class WorldPass:
         prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
         prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
         prog.set_float("u_shadowPcfRadius", float(inp.shadow.pcf_radius))
+        prog.set_float("u_shadowUltra", 1.0 if bool(inp.shadow.ultra_filter) else 0.0)
+        prog.set_float("u_shadowNormalOffset", float(shadow_normal_offset_world_units(inp.shadow)))
 
       glActiveTexture(GL_TEXTURE0)
       glBindTexture(GL_TEXTURE_2D, int(self._atlas.tex_id))

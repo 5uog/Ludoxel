@@ -17,6 +17,8 @@ from ludoxel.presentation.rendering.faces.row_utils import atlas_face_uv
 from ludoxel.presentation.rendering.faces.visible import iter_visible_faces
 from ludoxel.presentation.resources.asset_roots import resolve_block_texture_path
 from ludoxel.simulation.blocks.definitions.block import BlockDefinition
+from ludoxel.simulation.blocks.states.codec import parse_state
+from ludoxel.simulation.blocks.structures.axis_orientation import resolve_oriented_texture_name
 
 PREVIEW_CANVAS_SIZE_PX = 300
 PREVIEW_RASTER_SCALE_FACTOR = 4
@@ -103,6 +105,7 @@ def _shade_alpha_for_face(face_idx: int) -> int:
 
 def _project_faces(*, block: BlockDefinition, state_str: str, get_state: GetState, texture_root: Path, def_lookup: DefLookup, yaw: float, pitch: float, roll: float) -> list[ProjectedPreviewFace]:
   faces: list[ProjectedPreviewFace] = []
+  _base_id, props = parse_state(str(state_str))
 
   for visible in iter_visible_faces(x=0, y=0, z=0, state_str=str(state_str), get_state=get_state, def_lookup=def_lookup, fast_boundary_full_cube_only=True):
     face_idx = int(visible.face_idx)
@@ -112,7 +115,7 @@ def _project_faces(*, block: BlockDefinition, state_str: str, get_state: GetStat
     if float(rotated_normal[2]) <= _BACKFACE_NORMAL_EPSILON:
       continue
 
-    texture_name = block.texture_for_face(face_idx)
+    texture_name = resolve_oriented_texture_name(block, props, face_idx)
     texture_path = resolve_block_texture_path(texture_root / "block", texture_name)
 
     u0, v0, u1, v1 = atlas_face_uv((0.0, 0.0, 1.0, 1.0), face_idx, visible.box, kind=str(block.kind_name()))

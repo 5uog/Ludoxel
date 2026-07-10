@@ -16,6 +16,7 @@ uniform mat4 u_lightViewProj;
 uniform int u_face;
 uniform int u_selMode;
 uniform ivec3 u_selBlock;
+uniform float u_shadowNormalOffset;
 
 out vec3 v_normal;
 out vec2 v_uv;
@@ -47,7 +48,7 @@ void main() {
     v_normal = a_normal;
     v_uv = rot_uv(uv, i_uvRot);
     v_uvRect = i_uvRect;
-    v_lightPos = u_lightViewProj * vec4(worldPos, 1.0);
+    v_lightPos = u_lightViewProj * vec4(worldPos + a_normal * u_shadowNormalOffset, 1.0);
     v_shade = i_shade;
     v_worldPos = worldPos;
 

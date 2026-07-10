@@ -31,7 +31,7 @@ export const systemsPages: DocsPageContent[] = [
           },
           {
             kind: 'paragraph',
-            text: 'The viewport derives two timer intervals in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py`. `_effective_sim_timer_interval_ms` rounds the reciprocal of `sim_hz` to milliseconds, while `_effective_render_timer_interval_ms` rounds the reciprocal of at least 120 hertz. The first timer drives `_tick_sim`, the second requests repaints. Either field, if set above zero, overrides the derived interval. These are nominal scheduling intervals; the runner itself measures real elapsed time and is not bound to them. `_sync_runtime_activity` keeps both timers running for an initialized, visible viewport while loading remains active even after desktop deactivation; after loading ends, an inactive application again stops the runtime timers.',
+            text: 'The viewport derives two timer intervals in `src/ludoxel/presentation/interface/viewport/lifecycle/mixin.py`. `_effective_sim_timer_interval_ms` rounds the reciprocal of `sim_hz` to milliseconds, while `_effective_render_timer_interval_ms` rounds the reciprocal of at least 1000 hertz, so the derived repaint interval floors at one millisecond once `sim_hz` sits below that rate. The first timer drives `_tick_sim`, the second requests repaints. Either field, if set above zero, overrides the derived interval. Both timers carry `Qt.TimerType.PreciseTimer` in `viewport/widgets/renderer.py` and `viewport/widgets/gl.py`, requesting the finest timer resolution the platform grants for the derived millisecond interval. These are nominal scheduling intervals; the runner itself measures real elapsed time and is not bound to them, and the platform compositor, vsync state, and per-frame paint cost govern the delivered repaint rate, with the requested interval bounding it from below only. `_sync_runtime_activity` keeps both timers running for an initialized, visible viewport while loading remains active even after desktop deactivation; after loading ends, an inactive application again stops the runtime timers.',
           },
           {
             kind: 'paragraph',
@@ -1147,6 +1147,38 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         ],
       },
       {
+        id: 'shared-shaders-shadow-filtering',
+        title: 'The Ultra Shadow Filter Stays Sampler-Free to Survive Adaptation',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`src/ludoxel/presentation/rendering/shaders/common/shadow_filtering.glsl` adds a second shared include next to `distance_fog.glsl`: a sixteen-entry Vogel-disk offset table and an interleaved-gradient-noise rotation angle that `world.frag` and `othello.frag` both pull in through `#include`. `shadow_pcf` in each file calls `shadow_sample` up to sixteen times with a per-pixel-rotated offset when `u_shadowUltra` is set, in place of the nine-tap box average every lower tier still uses; `shadow_sample` itself, and the literal `texture(u_shadowMap, vec3(uvz.xy, z))` call inside it, are unchanged by that branch.',
+          },
+          {
+            kind: 'paragraph',
+            text: '`_adapt_wgpu_glsl` rewrites specific literal substrings, among them that exact `texture(u_shadowMap, ...)` call inside `shadow_sample`, into the split `texture2D`/`sampler` form the WGPU dialect requires. A shared helper that itself sampled the shadow map would need its own rewrite rule and would fail silently on WGPU if that rule were ever missed, so `shadow_filtering.glsl` carries only the offset table and the rotation angle, both sampler-free, and leaves every `texture(u_shadowMap, ...)` call sitting inside the one `shadow_sample` function the existing substitution already rewrites. The new kernel is therefore adaptation-safe by construction: every call it adds targets that already-adapted function, so the adaptation needs no new sampling call to learn.',
+          },
+          {
+            kind: 'code',
+            language: 'glsl',
+            caption: 'world.frag and othello.frag; the Ultra branch calls the unmodified shadow_sample',
+            code: `if (u_shadowUltra > 0.5) {
+    float angle = ldx_shadow_ultra_angle(gl_FragCoord.xy);
+    float sum = 0.0;
+    for (int k = 0; k < LDX_SHADOW_ULTRA_TAP_COUNT; ++k) {
+        vec2 offset = ldx_shadow_ultra_tap(k, angle) * t;
+        sum += shadow_sample(vec3(uvz.xy + offset, uvz.z), bias);
+    }
+    return sum * (1.0 / float(LDX_SHADOW_ULTRA_TAP_COUNT));
+}`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`u_shadowUltra` is set from `BackendShadowParams.ultra_filter` on the OpenGL side in `opengl/passes/world.py` and `opengl/othello/render_pass.py`. On WGPU, `_frame_uniform_bytes` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` packs the same flag into the third component of the `ldx_shadowParams2` uniform, a slot the packed frame-uniform layout carried unused before this feature, and `_adapt_wgpu_glsl` maps the `u_shadowUltra` token to that component for both `world.frag` and `othello.frag`. Neither backend needed a new bind-group entry or a new draw call to add the flag; both read it from a uniform slot the existing frame-uniform buffer already transmitted every frame.',
+          },
+        ],
+      },
+      {
         id: 'shared-shaders-sun-optics',
         title: 'The Ultra Sun, Veiling Glare, and Lens Flare',
         content: [
@@ -1205,7 +1237,139 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         ],
       },
     ],
-    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Render Distance Fog and Shadows'],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Understanding Render Distance Fog and Shadows', 'Understanding Block Face Texture Selection'],
+  }),
+  defineDocsArticle({
+    category: 'Systems',
+    subcategory: 'Rendering Backends',
+    group: 'World Visuals',
+    title: 'Understanding Block Face Texture Selection',
+    description:
+      'Documents how a world face resolves to one texture name, UV rect, and rotation step: the deterministic coordinate hash that drives texture variants and 90-degree rotation, the axis-orientation routing pillar blocks add on top of it, and the one CPU-side resolver both backends and the coordinate-free preview path consume.',
+    sections: [
+      {
+        id: 'face-texture-resolver',
+        title: 'One Resolver, Two Entry Points',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`BlockVisualResolver` in `src/ludoxel/presentation/rendering/visuals/worlds/block_visual_resolver.py` exposes two lookups over the same block registry and atlas UV table. `atlas_uv_face` takes a block state and a face index with no coordinate, resolves the block through `resolve_oriented_texture_name`, and returns one UV rect; `src/ludoxel/presentation/interface/common/item_photo_provider.py` and the thumbnail and inventory-icon projection in `src/ludoxel/presentation/rendering/faces/preview.py` call this coordinate-free form. `world_face_visual` takes an `(x, y, z)` cell in addition to the state and face, chains `resolve_oriented_texture_name` into `resolve_variant_texture_name` and then `resolve_uv_rotation_steps`, and returns both the UV rect and a rotation step. `world_build_tools` hands that second method to the chunk face builder as the `WorldUVLookup` both rendering backends consume, so coordinate-driven variation exists only on the path that has a coordinate to drive it.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/presentation/rendering/visuals/worlds/block_visual_resolver.py',
+            code: `def atlas_uv_face(self, block_state_or_id: str, face_idx: int) -> UVRect:
+  base_id, props = parse_state(str(block_state_or_id))
+  block = self.blocks.get(str(base_id))
+  if block is None:
+    return self._uv_for_texture("default")
+  texture_name = resolve_oriented_texture_name(block, props, int(face_idx))
+  return self._uv_for_texture(texture_name)
+
+def world_face_visual(self, x: int, y: int, z: int, block_state_or_id: str, face_idx: int) -> tuple[UVRect, float]:
+  base_id, props = parse_state(str(block_state_or_id))
+  block = self.blocks.get(str(base_id))
+  if block is None:
+    return (self._uv_for_texture("default"), 0.0)
+  fi = int(face_idx)
+  oriented_name = resolve_oriented_texture_name(block, props, fi)
+  resolved_name = resolve_variant_texture_name(oriented_name, int(x), int(y), int(z))
+  uv = self._uv_for_texture(resolved_name)
+  rotation_steps = resolve_uv_rotation_steps(resolved_name, int(x), int(y), int(z), fi)
+  return (uv, float(rotation_steps))`,
+          },
+        ],
+      },
+      {
+        id: 'face-texture-hash',
+        title: 'The Coordinate Hash Is Arithmetic, Not `hash()`',
+        content: [
+          {
+            kind: 'paragraph',
+            text: "`splitmix64` and `fnv1a_uint64` in `src/ludoxel/foundations/mathematics/scalars/hashing.py` replace every use of Python's built-in `hash()` for this feature. `fnv1a_uint64` folds a texture name into a 64-bit salt by iterating its UTF-8 bytes; `mix_uint64` seeds an accumulator with the splitmix64 golden-ratio increment and folds each supplied integer through `splitmix64` in turn, so the same `(x, y, z, salt)` tuple produces the same 64-bit value in this process, the next run, and on a different machine. `uint64_to_unit_index` reduces that value against a candidate count with a plain modulus, returning zero whenever the count is at most one. Python's `hash()` is seeded per process by `PYTHONHASHSEED` and cannot reproduce a value across a restart, which is why `resolve_variant_texture_name` and `resolve_uv_rotation_steps` route through this module instead of the builtin.",
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/scalars/hashing.py',
+            code: `def splitmix64(state: int) -> int:
+  z = (int(state) + _SPLITMIX64_GAMMA) & _MASK64
+  z = ((z ^ (z >> 30)) * _SPLITMIX64_MIX_A) & _MASK64
+  z = ((z ^ (z >> 27)) * _SPLITMIX64_MIX_B) & _MASK64
+  return (z ^ (z >> 31)) & _MASK64
+
+
+def mix_uint64(*values: int) -> int:
+  acc = _SPLITMIX64_GAMMA
+  for value in values:
+    folded = int(value) & _MASK64
+    acc = splitmix64((acc ^ folded) & _MASK64)
+  return acc & _MASK64`,
+          },
+          {
+            kind: 'math',
+            math: {
+              expression: 'z_0 = (s + \\gamma) \\bmod 2^{64},\\ \\ z_1 = \\bigl((z_0 \\oplus (z_0 \\gg 30))\\, m_1\\bigr) \\bmod 2^{64},\\ \\ z_2 = \\bigl((z_1 \\oplus (z_1 \\gg 27))\\, m_2\\bigr) \\bmod 2^{64},\\ \\ \\mathrm{splitmix64}(s) = z_2 \\oplus (z_2 \\gg 31)',
+              displayMode: true,
+              caption: 'The splitmix64 avalanche in `splitmix64`, with gamma, m1, and m2 the fixed 64-bit constants the module declares. `mix_uint64` re-seeds the accumulator with this function once per supplied integer, folding in x, y, z, and a texture or face salt in turn.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'face-texture-variants',
+        title: 'Variants Draw Only from the World Atlas',
+        content: [
+          {
+            kind: 'paragraph',
+            text: "`TEXTURE_VARIANT_GROUPS` in `src/ludoxel/presentation/rendering/visuals/worlds/texture_variation.py` maps 32 base texture names to their alt textures, covering the plank family for all eleven wood types, dirt, cobblestone, stone, sand, red sand, and the remaining stone-family entries the dictionary lists. `resolve_variant_texture_name` returns the base name unchanged when a name carries no entry; otherwise it salts the family with `fnv1a_uint64(base_name)`, mixes that salt with the cell coordinate through `mix_uint64`, and indexes the base name plus its alts with `uint64_to_unit_index`, so neighboring cells of the same block routinely diverge while a rebuilt chunk or a reloaded save reproduces the same choice at the same cell. `world_atlas_texture_names` unions `world_atlas_variant_texture_names` into the block registry's required texture names before either backend builds its atlas, so every alt texture has a tile; `atlas_uv_face`, and therefore every thumbnail and inventory icon, never calls `resolve_variant_texture_name` and stays on the family's base texture.",
+          },
+        ],
+      },
+      {
+        id: 'face-texture-rotation',
+        title: 'UV Rotation Fills an Attribute the Shaders Already Read',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`ROTATABLE_TEXTURE_NAMES` names 36 flat textures, among them clay, the dirt family, the sand and red sand families, the sandstone and red sandstone faces, netherrack, obsidian, and the nylium tops. `resolve_uv_rotation_steps` returns zero for any other name; for a listed name it salts the texture with `fnv1a_uint64`, mixes in the cell coordinate and the face index, and reduces the result modulo `UV_ROTATION_STEP_COUNT`, four, so the outcome is one of a 0, 90, 180, or 270 degree step chosen per block and per face. `chunk_payload_sources.py` writes that step into the twelfth float of each face row, the slot the vertex stage already reads into the `i_uvRot` attribute declared at `layout(location = 7)` and already passes to `rot_uv()` in the shared fragment math; before this feature the row builder wrote a constant `0.0` into that slot, so the attribute and the rotation function existed on both backends with no live source of variation. Because `resolve_uv_rotation_steps` takes the already-resolved texture name, an animated block such as magma resolves its rotation once from that logical identity and keeps the same step across every frame the animation controller swaps in.',
+          },
+        ],
+      },
+      {
+        id: 'face-texture-axis',
+        title: 'Axis Orientation Routes Top and Side Faces',
+        content: [
+          {
+            kind: 'paragraph',
+            text: [
+              "`resolve_oriented_texture_name` in `src/ludoxel/simulation/blocks/structures/axis_orientation.py` runs before variant and rotation resolution. For a block definition carrying the `pillar_axis` tag, it reads the `axis` state property, normalizes it to `x`, `y`, or `z` with a `y` default, and returns the block's top texture for the two faces on that axis and its side texture for the remaining four; a definition without the tag returns `texture_for_face` unchanged. Basalt, Deepslate, Polished Basalt, Purpur Pillar, and Quartz Pillar carry the tag; Ancient Debris, Chiseled Tuff, Grass Block, Mycelium, and the other blocks that must keep one fixed top regardless of orientation do not, so exclusion from the tagged set follows from tag omission alone, with no separate exception list to maintain. ",
+              { kind: 'link', label: 'Building in My World', href: '/docs/gameplay/my-world-building/block-construction/building-in-my-world' },
+              " owns how a placement derives the `axis` value from the targeted face; this resolver only consumes whatever value the state already carries, including a state saved before this feature existed, where the absent property normalizes to the vertical axis and reproduces the block's previous appearance.",
+            ],
+          },
+        ],
+      },
+      {
+        id: 'face-texture-parity',
+        title: 'One CPU Path Feeds Both Backends',
+        content: [
+          {
+            kind: 'paragraph',
+            text: '`build_chunk_mesh_cpu` in `src/ludoxel/presentation/rendering/faces/chunk_payload_cpu.py` and the row construction in `chunk_payload_sources.py` call the `WorldUVLookup` that `world_build_tools` returns once per visible face, so the resolved UV rect and rotation step are computed exactly once per face per chunk build regardless of which backend consumes the result. `src/ludoxel/presentation/rendering/uploads/world.py` runs this CPU path on a background thread and hands the resulting face rows to whichever backend is active; the OpenGL backend either uploads those CPU rows directly or feeds them to its compute payload builder, and the WGPU backend consumes the same rows with no compute stage. A texture variant, a rotation step, or an oriented face therefore reads identically on both backends because one function produced the value both consume, not because each backend reimplements the same rule.',
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content: 'The world atlas UV table itself is built per backend, by `TextureAtlas.build_from_dir` on OpenGL and its WGPU counterpart, each from the same `world_atlas_texture_names` list; the resolver in this article assumes that table already carries a rect for every name it can return.',
+            },
+          },
+        ],
+      },
+    ],
+    relatedTitles: ['Understanding OpenGL Rendering', 'Understanding WGPU Rendering', 'Building in My World', 'Understanding Block Shapes', 'Generating Block Thumbnails'],
   }),
   defineDocsArticle({
     category: 'Systems',
@@ -1315,7 +1479,7 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
         content: [
           {
             kind: 'paragraph',
-            text: 'Shadow quality is a discrete level from one to five. `ShadowQualityPreset` maps each level to a shadow-map size, a light-space coverage radius, and a PCF radius; `resolve_shadow_quality_preset` normalizes an arbitrary level to a valid preset, collapsing a missing or out-of-range value to the standard level. `effective_backend_shadow_params` substitutes the preset size, coverage, and PCF radius while keeping bias, slope bias, polygon offset, darkness, and stabilization from the base parameters. The OpenGL and WGPU frame paths also read the Ultra threshold as the visual gate for the volumetric cloud path and the Ultra sun disc branch. The coverage radius is a shadow-specific policy, not a function of render distance, so changing render distance does not degrade the texel density of a given quality level.',
+            text: 'Shadow quality is a discrete level from one to five, and `SHADOW_MAP_QUALITY_LABELS` in `src/ludoxel/application/preferences/shadow.py` fixes those five levels to the Lowest, Low, Standard, High, and Ultra names the settings surface displays. `_SHADOW_QUALITY_PRESETS` in `src/ludoxel/presentation/rendering/contracts/config.py` maps each level to a `ShadowQualityPreset`: a shadow-map size, a light-space coverage radius, a PCF radius, and an `ultra_filter` flag. `resolve_shadow_quality_preset` normalizes an arbitrary level to a valid preset, collapsing a missing or out-of-range value to the standard level. `effective_backend_shadow_params` substitutes the preset size, coverage, PCF radius, and `ultra_filter` while keeping bias, slope bias, polygon offset, darkness, and stabilization from the base parameters. The OpenGL and WGPU frame paths also read the Ultra threshold as the visual gate for the volumetric cloud path and the Ultra sun disc branch, a separate gate from `ultra_filter` that this section covers next. The coverage radius is a shadow-specific policy, not a function of render distance, so changing render distance does not degrade the texel density of a given quality level.',
           },
           {
             kind: 'math',
@@ -1327,7 +1491,15 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
           },
           {
             kind: 'paragraph',
-            text: '`BackendRendererRuntimeState.set_shadow_quality` in `src/ludoxel/presentation/rendering/contracts/state.py` normalizes the stored level so a malformed value converges to standard, independent of render distance. To keep shadows present across the visible scene regardless of quality, the pipeline raises the coverage radius to at least the unfogged radius at maximum render distance, computed by `max_unfogged_render_distance_radius_blocks`, so casters within the fully visible range cast into the light box while texel density remains governed by quality alone.',
+            text: 'The five presets keep the render parameters the four lower levels held before this quality scale gained a sixth, higher tier: retiring the level-one preset that scale previously used, sliding the former Low, Standard, High, and Ultra parameters down to the new Lowest, Low, Standard, and High levels, and introducing a new Ultra preset in the vacated slot with a larger shadow-map size and `ultra_filter` set, which the four lower presets leave unset. The four lower presets express `pcf_radius` as a fraction of one shadow-map texel, shrinking that fraction as size rises so their fixed nine-tap box average stays tight; Ultra instead sets `pcf_radius` to several whole texels, because its sixteen-tap kernel needs neighbouring taps to land on distinct texels before they average into a penumbra instead of resampling the same texel. `ultra_filter` selects that wider, per-pixel-rotated sampling kernel in place of the fixed box filter every preset used before it; the kernel itself is shared GLSL, covered in the next article, and costs nothing at the four lower levels because their presets never set the flag.',
+          },
+          {
+            kind: 'paragraph',
+            text: "`BackendRendererRuntimeState.set_shadow_quality` in `src/ludoxel/presentation/rendering/contracts/state.py` normalizes the stored level so a malformed value converges to standard, independent of render distance. To keep shadows present across the visible scene regardless of quality, the pipeline raises the coverage radius to at least the unfogged radius at maximum render distance, computed by `max_unfogged_render_distance_radius_blocks`, so casters within the fully visible range cast into the light box while texel density remains governed by quality alone. `ShadowMapPass._normalize_shadow_size` in `src/ludoxel/presentation/rendering/backends/opengl/passes/shadow_map.py` clamps the requested size to the smaller of a fixed ceiling and the driver-reported `GL_MAX_TEXTURE_SIZE`, and `_ensure_shadow_target` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` applies the equivalent clamp against the adapter's reported maximum 2D texture dimension before creating the depth texture, so a preset's configured size is a request the active driver can still narrow; the info each backend reports back reflects the size it actually created, and that created size, not the configured value, governs texel density.",
+          },
+          {
+            kind: 'paragraph',
+            text: '`shadow_normal_offset_world_units` in `src/ludoxel/presentation/rendering/contracts/config.py` computes a per-tier normal-offset bias: `SHADOW_NORMAL_OFFSET_TEXELS` (0.5) times the active preset’s world-space texel size, `2 * coverage_radius / size`. `world.vert` and `othello.vert` add that offset, scaled by the vertex normal, to the world position before the light-space transform that produces `v_lightPos`, so the fragment shader samples the shadow map at a point pushed slightly off the receiving surface instead of at the surface itself. A concave junction between two block faces, such as a trench corner or an inside wall meeting a floor, otherwise reads as fully lit because the flat slope bias in `shadow_factor` alone cannot distinguish that geometry from a grazing but unoccluded surface; the normal offset closes that gap without relying on a larger flat bias, which would widen the acne-versus-peter-panning margin at every silhouette instead of only at concave junctions. The offset is kept to half a texel because Ludoxel’s sun sits at a low, often-grazing elevation: on a near-horizontal receiver such as grass or a floor, whose normal points close to perpendicular to the sun direction, an offset along that normal projects into light space mostly as a shift across the shadow map and only slightly as a shift in depth, so a larger value visibly detaches a caster’s shadow from its own base before it meaningfully helps a corner.',
           },
         ],
       },
@@ -2582,7 +2754,7 @@ score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_st
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/identity/version.py',
-            code: `__version__ = "3.8.5"`,
+            code: `__version__ = "3.8.6"`,
           },
           {
             kind: 'note',
@@ -2925,7 +3097,7 @@ if int(lx) >= int(CHUNK_SIZE - 1):
           },
           {
             kind: 'paragraph',
-            text: '`src/ludoxel/foundations/mathematics/frustums/clip.py` constructs the eight homogeneous corners of those chunk bounds as `float32`, applies the caller matrix, and rejects a chunk only when every transformed corner lies outside the same left, right, bottom, top, near, or far clip inequality. `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` consumes the boolean before adding a normalized key to its result. The test is a visibility predicate over a supplied matrix; it does not select a graphics API, allocate GPU resources, or draw the chunk.',
+            text: '`src/ludoxel/foundations/mathematics/frustums/clip.py` constructs the eight homogeneous corners of those chunk bounds as `float32`, applies the caller matrix, and rejects a chunk only when every transformed corner lies outside the same left, right, bottom, top, near, or far clip inequality. `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py` first collects every normalized key that survives the optional render-distance predicate, then submits that whole candidate list to the clip test in one call. The test is a visibility predicate over a supplied matrix; it does not select a graphics API, allocate GPU resources, or draw the chunk.',
           },
           {
             kind: 'math',
@@ -2970,6 +3142,50 @@ if int(lx) >= int(CHUNK_SIZE - 1):
     return False
 
   return True`,
+          },
+          {
+            kind: 'paragraph',
+            text: '`chunk_corners_homogeneous_batch` and `chunks_intersect_clip_volume_batch` in `clip.py` apply that identical corner construction and six-plane test to every surviving candidate key at once inside one array operation. The single-key `chunk_corners_homogeneous` and `chunk_intersects_clip_volume` functions stay in place unchanged for any single-chunk caller; the batched pair adds a second entry point over that same corner-construction and six-plane math, sized for the many-key case `select_visible_chunks` submits on every drawn frame. `clip.py`’s batched pair is also the Python fallback contract for the compiled extension the next paragraph describes, so its arithmetic is the reference implementation a native build must match value for value, not merely a numpy convenience.',
+          },
+          {
+            kind: 'code',
+            language: 'py',
+            caption: 'src/ludoxel/foundations/mathematics/frustums/clip.py',
+            code: `def chunks_intersect_clip_volume_batch(keys_xyz: np.ndarray, matrix: np.ndarray) -> np.ndarray:
+  keys = np.asarray(keys_xyz, dtype=np.int64).reshape(-1, 3)
+  if int(keys.shape[0]) <= 0:
+    return np.zeros((0,), dtype=bool)
+
+  corners = chunk_corners_homogeneous_batch(keys)
+  clip = corners @ matrix.astype(np.float32, copy=False).T
+
+  xs = clip[:, :, 0]
+  ys = clip[:, :, 1]
+  zs = clip[:, :, 2]
+  ws = clip[:, :, 3]
+
+  outside = np.all(xs < -ws, axis=1) | np.all(xs > ws, axis=1) | np.all(ys < -ws, axis=1) | np.all(ys > ws, axis=1) | np.all(zs < -ws, axis=1) | np.all(zs > ws, axis=1)
+  return ~outside`,
+          },
+          {
+            kind: 'paragraph',
+            text: [
+              '`select_visible_chunks` reaches this test through `native.py` in the same package, which imports `chunks_intersect_clip_volume_batch` and tries `ludoxel.foundations.mathematics.frustums._frustum_native` at import time, holding the result in a module-level reference. When that compiled extension is present, `native.py` packs the candidate keys and matrix into little-endian byte buffers, calls the compiled function, and reinterprets its returned bytes as a `numpy.bool_` array; when it is absent, `native.py` calls straight through to the `clip.py` implementation above with no behavior difference beyond speed. Both the world pass and the shadow pass reach this dispatch on every drawn frame through `select_visible_chunks` in `src/ludoxel/presentation/rendering/visuals/selections/chunk.py`. The crate, its build path, and its packaging are covered in ',
+              {
+                kind: 'link',
+                label: 'Building the Rust Frustum Extension',
+                href: '/docs/distribution/runtime-inclusions/native-and-runtime-materials/building-the-rust-frustum-extension',
+              },
+              '.',
+            ],
+          },
+          {
+            kind: 'note',
+            note: {
+              type: 'note',
+              content:
+                'The world render pass and the shadow map pass each call `select_visible_chunks` once per drawn frame in `src/ludoxel/presentation/rendering/backends/opengl/passes/world.py` and `shadow_map.py`, so the candidate count this test receives scales with resident chunk count and render distance on both call sites, continuously through gameplay.',
+            },
           },
         ],
       },

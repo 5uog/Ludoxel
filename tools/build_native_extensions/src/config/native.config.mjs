@@ -45,4 +45,13 @@ export const RUST_NATIVE_MODULES = Object.freeze([
     installDirectory: 'src/ludoxel/simulation/spaces/othello/engines',
     fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
   }),
+  Object.freeze({
+    id: 'frustum_native',
+    crateDirectory: 'native/ludoxel_frustum',
+    crateName: 'ludoxel_frustum',
+    moduleName: 'ludoxel.foundations.mathematics.frustums._frustum_native',
+    artifactStem: '_frustum_native',
+    installDirectory: 'src/ludoxel/foundations/mathematics/frustums',
+    fallbackModuleName: 'ludoxel.foundations.mathematics.frustums.clip',
+  }),
 ]);

@@ -1008,7 +1008,7 @@ if isinstance(placed_raw, list):
                 label: 'user-created materials',
                 href: '/docs/data/learning-and-material-data/output-and-material-boundaries/understanding-user-created-materials',
               },
-              '; the existence of a saved world, whether the Othello save in `app_state.json` or a My World `worlds/<id>.ldxworld` entry, does not authorize publication or redistribution.',
+              '; publication or redistribution of a saved world, whether the Othello save in `app_state.json` or a My World `worlds/<id>.ldxworld` entry, requires authority beyond the world’s existence.',
             ],
           },
         ],
@@ -1113,7 +1113,7 @@ if isinstance(placed_raw, list):
             note: {
               type: 'note',
               content:
-                'A thumbnail records the most recent visible My World viewport image admitted into `_world_thumbnail_png_cache` before save. Its presence does not certify world completeness, and its absence does not indicate a corrupt world; the library lists a world from its package manifest whether or not a thumbnail is present, and the card widgets keep their fixed thumbnail slots even when no image bytes are present.',
+                'A thumbnail records the most recent visible My World viewport image admitted into `_world_thumbnail_png_cache` before save. Thumbnail presence and thumbnail absence stay independent of world completeness and world corruption: the library lists a world from its package manifest whether or not a thumbnail is present, and the card widgets keep their fixed thumbnail slots even when no image bytes are present.',
             },
           },
         ],

@@ -9,6 +9,7 @@ from ludoxel.simulation.actors.player.entity import PlayerEntity
 from ludoxel.simulation.blocks.registries.block import BlockRegistry
 from ludoxel.simulation.blocks.states.codec import format_state, parse_state
 from ludoxel.simulation.blocks.states.values import slab_type_value
+from ludoxel.simulation.blocks.structures.axis_orientation import AXIS_STATE_KEY, axis_from_hit_face, is_axis_orientable
 from ludoxel.simulation.blocks.structures.cardinal import cardinal_from_xz
 from ludoxel.simulation.blocks.structures.connectivity import make_fence_gate_state, make_wall_state
 from ludoxel.simulation.blocks.structures.structural_rules import is_fence_gate, is_slab, is_stairs, is_wall
@@ -85,6 +86,15 @@ class PlacementPolicy:
 
     if is_wall(defn):
       return make_wall_state(base_sel, waterlogged=False)
+
+    if is_axis_orientable(defn):
+      inherited_axis: str | None = None
+      if str(inherit_base) == base_sel:
+        candidate = str(inherit_props.get(AXIS_STATE_KEY, "")).strip().lower()
+        if candidate in ("x", "y", "z"):
+          inherited_axis = candidate
+      props[AXIS_STATE_KEY] = inherited_axis if inherited_axis is not None else axis_from_hit_face(int(hit_face))
+      return format_state(base_sel, props)
 
     return format_state(base_sel, props)
 

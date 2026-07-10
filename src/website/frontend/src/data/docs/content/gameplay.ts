@@ -264,6 +264,11 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
         title: 'Placement Resolves the Cell and State Shape',
         body: [
           'Placement requires a non-empty, registered item. If the hit block is a slab matching the held item, the merge completes that cell to a double at the hit cell, and the exposed pick face supplies the added half, so a held slab packs in half-block steps even while continuous placement is locked to one half. Otherwise the adjacent placement cell is used, and the placement policy resolves the concrete block state from the held item, the hit face, and the player facing, while a held bridge that extends from a slab or stair source inherits that source half or facing.',
+          [
+            "A held item whose definition carries the `pillar_axis` tag receives an `axis` state property instead of a facing. `resolve_place_state` in `src/ludoxel/simulation/rules/placement/policy.py` derives that axis from `axis_from_hit_face`: a hit on the top or bottom face keeps the vertical axis, and a hit on a side face takes that face's horizontal axis, so placing the same held pillar against a floor, a ceiling, or a wall orients it toward whichever surface it was set against. A continuous placement chain that stays on the same base block id inherits the previous axis instead of rederiving it from the new hit face, matching how a continuous slab or stair placement inherits its half or facing. Basalt, Deepslate, Polished Basalt, Purpur Pillar, and Quartz Pillar carry the tag; the resulting `axis` value is consumed only at render time, by the ",
+            { kind: 'link', label: 'face texture resolver', href: '/docs/systems/rendering-backends/world-visuals/understanding-block-face-texture-selection' },
+            ', so a block whose definition does not carry the tag is placed exactly as before.',
+          ],
           'A placement that would intersect the player is rejected before any edit. `placement_intersects_player` builds the candidate block collision boxes at the target cell and tests them against the player box, so standing too close to the target stops a placement that would otherwise be legal.',
           '`src/ludoxel/foundations/mathematics/geometry/aabb.py` owns the closed-open overlap predicate used by that rejection. Its `intersects` method requires non-empty overlap in every coordinate dimension; faces that meet at a maximum/minimum boundary remain separate. `placement_intersects_player` in `src/ludoxel/simulation/rules/placement/support.py` supplies the player box and candidate block-model boxes, then converts an accepted predicate into a placement rejection. Block shapes, item registration, and world edits remain under their respective simulation owners.',
         ],
@@ -344,7 +349,7 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
         ],
       },
     ],
-    relatedTitles: ['Understanding Block Shapes', 'Reading Placement Rejection', 'Reading Saved World State'],
+    relatedTitles: ['Understanding Block Shapes', 'Reading Placement Rejection', 'Reading Saved World State', 'Understanding Block Face Texture Selection'],
   }),
   defineDocsArticle({
     category: 'Gameplay',
