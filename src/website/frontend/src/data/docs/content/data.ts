@@ -45,6 +45,12 @@ export const dataPages: DocsPageContent[] = [
   if xdg_data_home:
     return (Path(xdg_data_home).expanduser() / "ludoxel").resolve()
 
+  if project_root is not None:
+    try:
+      _ = Path(project_root).resolve()
+    except Exception:
+      pass
+
   return (Path.home() / ".local" / "share" / "ludoxel").resolve()`,
           },
           {
@@ -123,11 +129,11 @@ def runtime_integrity_key_path(data_root: Path) -> Path:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
-            code: `def _state_path(self, name: str) -> Path:
-  return runtime_state_root(self._data_root()) / str(name)
+            code: `  def _state_path(self, name: str) -> Path:
+    return runtime_state_root(self._data_root()) / str(name)
 
-def _app_store(self) -> JsonFileStore:
-  return JsonFileStore(path=self._state_path("app_state.json"))`,
+  def _previous_config_path(self, name: str) -> Path:
+    return previous_configs_root(Path(self.project_root)) / str(name)`,
           },
           {
             kind: 'paragraph',
@@ -239,19 +245,19 @@ def runtime_cache_root(data_root: Path) -> Path:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
-            code: `def _read_runtime_or_previous(self, name: str) -> dict | None:
-  runtime_path = self._state_path(name)
-  if runtime_path.exists():
-    relative_path = f"state/{name}"
-    if not verify_runtime_file(self._data_root(), relative_path):
-      return None
-    return JsonFileStore(path=runtime_path).read()
+            code: `  def _read_runtime_or_previous(self, name: str) -> dict | None:
+    runtime_path = self._state_path(name)
+    if runtime_path.exists():
+      relative_path = f"state/{name}"
+      if not verify_runtime_file(self._data_root(), relative_path):
+        return None
+      return JsonFileStore(path=runtime_path).read()
 
-  previous_path = self._previous_config_path(name)
-  if previous_path.exists():
-    return JsonFileStore(path=previous_path).read()
+    previous_path = self._previous_config_path(name)
+    if previous_path.exists():
+      return JsonFileStore(path=previous_path).read()
 
-  return None`,
+    return None`,
           },
           {
             kind: 'paragraph',
@@ -303,9 +309,9 @@ def runtime_cache_root(data_root: Path) -> Path:
             kind: 'code',
             language: 'py',
             caption: 'The override branch relocates the entire runtime data tree.',
-            code: `env_root = os.environ.get("LUDOXEL_DATA_ROOT", "").strip()
-if env_root:
-  return Path(env_root).expanduser().resolve()`,
+            code: `  env_root = os.environ.get("LUDOXEL_DATA_ROOT", "").strip()
+  if env_root:
+    return Path(env_root).expanduser().resolve()`,
           },
           {
             kind: 'paragraph',
@@ -351,16 +357,16 @@ class PersistedAppFile:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
-            code: `def clear_dataset(self, dataset_id: str) -> bool:
-  removed = False
-  for path in (self.dataset_path(dataset_id), self._legacy_dataset_path(dataset_id)):
-    if path.is_file():
-      try:
-        path.unlink()
-        removed = True
-      except OSError:
-        continue
-  return bool(removed)`,
+            code: `  def clear_dataset(self, dataset_id: str) -> bool:
+    removed = False
+    for path in (self.dataset_path(dataset_id), self._legacy_dataset_path(dataset_id)):
+      if path.is_file():
+        try:
+          path.unlink()
+          removed = True
+        except OSError:
+          continue
+    return bool(removed)`,
           },
           {
             kind: 'paragraph',
@@ -482,16 +488,6 @@ class PersistedAppFile:
             text: '`src/ludoxel/application/persistence/schema/settings.py` owns `PersistedSettings`, the saved-data admission point for runtime preferences. It applies the specialized preference normalizers: `AudioPreferences` for category gains, `normalize_cloud_speed_range` and `normalize_cloud_height_settings` for cloud ranges, `KeybindSettings` for portable keyboard bindings, `RuntimePreferences` for default values, and `normalize_shadow_map_quality` for the shadow-specific quality tier.',
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/schema/settings.py',
-            code: `from ludoxel.application.preferences.audio import AudioPreferences
-from ludoxel.application.preferences.clouds import normalize_cloud_height_settings, normalize_cloud_speed_range
-from ludoxel.application.preferences.keybinds import KeybindSettings
-from ludoxel.application.preferences.runtime import RuntimePreferences
-from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, normalize_shadow_map_quality`,
-          },
-          {
             kind: 'paragraph',
             text: 'The `__post_init__` path is part of the saved-data contract. Even when `PersistedSettings.from_dict` receives numbers from JSON coercion, the dataclass construction still reprojects cloud speeds, cloud heights, and shadow quality into the ranges maintained by the preference modules. Stored JSON is therefore not a direct renderer or input parameter; it is an input to a normalization boundary.',
           },
@@ -499,11 +495,20 @@ from ludoxel.application.preferences.shadow import SHADOW_MAP_QUALITY_DEFAULT, n
             kind: 'code',
             language: 'py',
             caption: 'Preference construction reuses the same normalization functions as runtime code.',
-            code: `speed_min, speed_max = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
-fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, probability = normalize_cloud_height_settings(
-  self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
-)
-object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self.shadow_map_quality))`,
+            code: `    speed_min, speed_max = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    fixed_y, spawn_y_min, spawn_y_max, preferred_y_min, preferred_y_max, probability = normalize_cloud_height_settings(self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent)
+    object.__setattr__(self, "cloud_speed_variation_enabled", bool(self.cloud_speed_variation_enabled))
+    object.__setattr__(self, "cloud_speed_min_blocks_per_second", float(speed_min))
+    object.__setattr__(self, "cloud_speed_max_blocks_per_second", float(speed_max))
+    object.__setattr__(self, "cloud_height_variation_enabled", bool(self.cloud_height_variation_enabled))
+    object.__setattr__(self, "cloud_fixed_y", int(fixed_y))
+    object.__setattr__(self, "cloud_spawn_y_min", int(spawn_y_min))
+    object.__setattr__(self, "cloud_spawn_y_max", int(spawn_y_max))
+    object.__setattr__(self, "cloud_preferred_y_min", int(preferred_y_min))
+    object.__setattr__(self, "cloud_preferred_y_max", int(preferred_y_max))
+    object.__setattr__(self, "cloud_preferred_y_probability_percent", int(probability))
+    object.__setattr__(self, "cloud_cell_size", normalize_cloud_cell_size(self.cloud_cell_size))
+    object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self.shadow_map_quality))`,
           },
         ],
       },
@@ -523,12 +528,14 @@ object.__setattr__(self, "shadow_map_quality", normalize_shadow_map_quality(self
 AUDIO_VOLUME_MIN_RATIO: float = 0.0
 AUDIO_VOLUME_MAX_RATIO: float = 1.0
 
+
 def _clamp_volume(value: object, *, default: float = DEFAULT_AUDIO_VOLUME_RATIO) -> float:
   try:
     numeric = float(value)
   except Exception:
     numeric = float(default)
   return float(clampf(float(numeric), AUDIO_VOLUME_MIN_RATIO, AUDIO_VOLUME_MAX_RATIO))
+
 
 @dataclass(frozen=True)
 class AudioPreferences:
@@ -570,20 +577,20 @@ class AudioPreferences:
             kind: 'code',
             language: 'py',
             caption: 'The preferred cloud band is constrained by both global Y limits and the spawn band.',
-            code: `fixed = clampi(int(fixed_y), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
-spawn_lo = clampi(int(spawn_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
-spawn_hi = clampi(int(spawn_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
-if int(spawn_lo) > int(spawn_hi):
-  spawn_lo, spawn_hi = int(spawn_hi), int(spawn_lo)
+            code: `  fixed = clampi(int(fixed_y), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+  spawn_lo = clampi(int(spawn_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+  spawn_hi = clampi(int(spawn_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+  if int(spawn_lo) > int(spawn_hi):
+    spawn_lo, spawn_hi = int(spawn_hi), int(spawn_lo)
 
-preferred_lo = clampi(int(preferred_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
-preferred_hi = clampi(int(preferred_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
-if int(preferred_lo) > int(preferred_hi):
-  preferred_lo, preferred_hi = int(preferred_hi), int(preferred_lo)
-preferred_lo = clampi(int(preferred_lo), int(spawn_lo), int(spawn_hi))
-preferred_hi = clampi(int(preferred_hi), int(spawn_lo), int(spawn_hi))
+  preferred_lo = clampi(int(preferred_y_min), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+  preferred_hi = clampi(int(preferred_y_max), int(CLOUD_Y_MIN), int(CLOUD_Y_MAX))
+  if int(preferred_lo) > int(preferred_hi):
+    preferred_lo, preferred_hi = int(preferred_hi), int(preferred_lo)
+  preferred_lo = clampi(int(preferred_lo), int(spawn_lo), int(spawn_hi))
+  preferred_hi = clampi(int(preferred_hi), int(spawn_lo), int(spawn_hi))
 
-probability = clampi(int(preferred_y_probability_percent), 0, 100)`,
+  probability = clampi(int(preferred_y_probability_percent), 0, 100)`,
           },
         ],
       },
@@ -613,6 +620,12 @@ probability = clampi(int(preferred_y_probability_percent), 0, 100)`,
   collapsed = compact.replace(" ", "")
   return str(_KEY_ALIASES.get(compact, _KEY_ALIASES.get(collapsed, ""))).strip()
 
+
+def normalize_binding_text(value: object) -> str:
+  return _normalize_binding_text_cached(str(value))
+
+
+@lru_cache(maxsize=_BINDING_TEXT_CACHE_SIZE)
 def _binding_to_key_cached(normalized_binding: str) -> int | None:
   if not normalized_binding:
     return None
@@ -627,13 +640,13 @@ def _binding_to_key_cached(normalized_binding: str) -> int | None:
             kind: 'code',
             language: 'py',
             caption: 'Duplicate binding resolution clears the older action and records the later owner.',
-            code: `if normalized_binding:
-  previous_action = seen_by_binding.get(str(normalized_binding))
-  if previous_action is not None and previous_action in normalized:
-    normalized[str(previous_action)] = ""
-  seen_by_binding[str(normalized_binding)] = str(normalized_action)
+            code: `    if normalized_binding:
+      previous_action = seen_by_binding.get(str(normalized_binding))
+      if previous_action is not None and previous_action in normalized:
+        normalized[str(previous_action)] = ""
+      seen_by_binding[str(normalized_binding)] = str(normalized_action)
 
-normalized[str(normalized_action)] = str(normalized_binding)`,
+    normalized[str(normalized_action)] = str(normalized_binding)`,
           },
         ],
       },
@@ -649,13 +662,80 @@ normalized[str(normalized_action)] = str(normalized_binding)`,
             kind: 'code',
             language: 'py',
             caption: 'Runtime normalization gathers saved preference families into one mutable contract.',
-            code: `self.current_space_id = normalize_play_space_id(self.current_space_id)
-self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
-self.player_name = normalize_player_name(self.player_name)
-self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
-self.camera_perspective = normalize_camera_perspective(self.camera_perspective)
-self.keybinds = self.keybinds.normalized()
-self.audio = self.audio.normalized()`,
+            code: `    self.current_space_id = normalize_play_space_id(self.current_space_id)
+
+    self.invert_x = bool(self.invert_x)
+    self.invert_y = bool(self.invert_y)
+    self.outline_selection = bool(self.outline_selection)
+    self.cloud_wire = bool(self.cloud_wire)
+    self.cloud_enabled = bool(self.cloud_enabled)
+    self.cloud_speed_variation_enabled = bool(self.cloud_speed_variation_enabled)
+    self.cloud_height_variation_enabled = bool(self.cloud_height_variation_enabled)
+    self.world_wire = bool(self.world_wire)
+    self.shadow_enabled = bool(self.shadow_enabled)
+    self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
+    self.creative_mode = bool(self.creative_mode)
+    self.route_edit_active = bool(self.route_edit_active)
+    self.auto_jump_enabled = bool(self.auto_jump_enabled)
+    self.auto_sprint_enabled = bool(self.auto_sprint_enabled)
+    self.hide_hud = bool(self.hide_hud)
+    self.hide_hand = bool(self.hide_hand)
+    self.player_name = normalize_player_name(self.player_name)
+    self.resolved_player_name = normalize_player_name(self.resolved_player_name) or str(self.player_name)
+    self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
+    self.crosshair_pixels = normalize_crosshair_pixels(self.crosshair_pixels)
+    self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
+    self.camera_perspective = normalize_camera_perspective(self.camera_perspective)
+    self.fullscreen = bool(self.fullscreen)
+    self.view_bobbing_enabled = bool(self.view_bobbing_enabled)
+    self.camera_shake_enabled = bool(self.camera_shake_enabled)
+    self.animated_textures_enabled = bool(self.animated_textures_enabled)
+    self.debug_shadow = bool(self.debug_shadow)
+    self.vsync_on = bool(self.vsync_on)
+    self.hud_visible = bool(self.hud_visible)
+
+    self.cloud_density = clampi(int(self.cloud_density), 0, 4)
+    self.cloud_cell_size = normalize_cloud_cell_size(self.cloud_cell_size)
+    self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
+    self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
+    self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = normalize_cloud_height_settings(
+      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+    )
+    self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
+    self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
+    self.camera_shake_strength = clampf(float(self.camera_shake_strength), 0.0, 1.0)
+    self.arm_rotation_limit_min_deg = clampf(float(self.arm_rotation_limit_min_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    self.arm_rotation_limit_max_deg = clampf(float(self.arm_rotation_limit_max_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_deg):
+      self.arm_rotation_limit_min_deg, self.arm_rotation_limit_max_deg = float(self.arm_rotation_limit_max_deg), float(self.arm_rotation_limit_min_deg)
+    self.arm_swing_duration_s = clampf(float(self.arm_swing_duration_s), float(self.ARM_SWING_DURATION_MIN_S), float(self.ARM_SWING_DURATION_MAX_S))
+    self.reach = max(0.0, float(self.reach))
+    self.block_break_repeat_interval_s = clampf(float(self.block_break_repeat_interval_s), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MIN), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MAX))
+    self.block_place_repeat_interval_s = clampf(float(self.block_place_repeat_interval_s), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MIN), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MAX))
+    if math.isclose(float(self.block_place_repeat_interval_s), float(self.LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S), rel_tol=0.0, abs_tol=1e-9):
+      self.block_place_repeat_interval_s = float(self.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
+    self.block_interact_repeat_interval_s = clampf(float(self.block_interact_repeat_interval_s), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MIN), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MAX))
+    self.block_break_particle_spawn_rate = clampf(float(self.block_break_particle_spawn_rate), float(self.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MIN), float(self.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MAX))
+    self.block_break_particle_speed_scale = clampf(float(self.block_break_particle_speed_scale), float(self.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MIN), float(self.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MAX))
+    self.window_left = _coerce_optional_int(self.window_left)
+    self.window_top = _coerce_optional_int(self.window_top)
+    self.window_width = max(320, int(self.window_width))
+    self.window_height = max(240, int(self.window_height))
+    self.window_screen_name = str(self.window_screen_name or "").strip()
+
+    azimuth = float(self.sun_az_deg) % 360.0
+    self.sun_az_deg = azimuth if azimuth >= 0.0 else azimuth + 360.0
+    self.sun_el_deg = clampf(float(self.sun_el_deg), 0.0, 90.0)
+
+    self.my_world_hotbar_slots, self.my_world_selected_hotbar_index = _normalize_hotbar_state(self.my_world_hotbar_slots, self.my_world_selected_hotbar_index, size=HOTBAR_SIZE)
+    self.my_world_upper_slots = list(normalize_upper_inventory_slots(self.my_world_upper_slots))
+    self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
+    self.route_hotbar_slots, self.route_selected_hotbar_index = _normalize_hotbar_state(self.route_hotbar_slots, self.route_selected_hotbar_index, size=HOTBAR_SIZE)
+
+    self.othello_settings = self.othello_settings.normalized()
+    self.keybinds = self.keybinds.normalized()
+    self.audio = self.audio.normalized()`,
           },
           {
             kind: 'paragraph',
@@ -669,18 +749,18 @@ self.audio = self.audio.normalized()`,
             kind: 'code',
             language: 'py',
             caption: 'The active hotbar branch is selected before item identity is interpreted.',
-            code: `def _active_hotbar_state_attrs(self) -> tuple[str, str]:
-  if self.is_othello_space():
-    return ("othello_hotbar_slots", "othello_selected_hotbar_index")
-  if bool(self.route_edit_active):
-    return ("route_hotbar_slots", "route_selected_hotbar_index")
-  return ("my_world_hotbar_slots", "my_world_selected_hotbar_index")
+            code: `  def _active_hotbar_state_attrs(self) -> tuple[str, str]:
+    if self.is_othello_space():
+      return ("othello_hotbar_slots", "othello_selected_hotbar_index")
+    if bool(self.route_edit_active):
+      return ("route_hotbar_slots", "route_selected_hotbar_index")
+    return ("my_world_hotbar_slots", "my_world_selected_hotbar_index")
 
-def current_block_id(self) -> str | None:
-  item_id = self.current_item_id()
-  if item_id is None or is_special_item_id(item_id):
-    return None
-  return item_id`,
+  def _active_hotbar_slots(self) -> list[str]:
+    slots_attr, _index_attr = self._active_hotbar_state_attrs()
+    return getattr(self, slots_attr)
+
+  def _active_hotbar_index(self) -> int:`,
           },
           {
             kind: 'paragraph',
@@ -690,11 +770,14 @@ def current_block_id(self) -> str | None:
             kind: 'code',
             language: 'py',
             caption: 'The My World upper inventory has one normalized shared field.',
-            code: `def my_world_upper_snapshot(self) -> tuple[str, ...]:
-  return tuple(str(value).strip() for value in self.my_world_upper_slots)
+            code: `  def my_world_upper_snapshot(self) -> tuple[str, ...]:
+    return tuple(str(value).strip() for value in self.my_world_upper_slots)
 
-def set_my_world_upper_slots(self, slots: object) -> None:
-  self.my_world_upper_slots = list(normalize_upper_inventory_slots(slots))`,
+  def set_my_world_hotbar_slots(self, slots: object) -> None:
+    self.my_world_hotbar_slots = list(normalize_hotbar_slots(slots, size=HOTBAR_SIZE))
+
+  def set_my_world_upper_slots(self, slots: object) -> None:
+    self.my_world_upper_slots = list(normalize_upper_inventory_slots(slots))`,
           },
           {
             kind: 'paragraph',
@@ -714,13 +797,13 @@ def set_my_world_upper_slots(self, slots: object) -> None:
             kind: 'code',
             language: 'py',
             caption: 'Shadow quality admits only the five declared tiers.',
-            code: `SHADOW_MAP_QUALITY_LABELS: dict[int, str] = {
-  SHADOW_MAP_QUALITY_LOWEST: "Lowest",
-  SHADOW_MAP_QUALITY_LOW: "Low",
-  SHADOW_MAP_QUALITY_STANDARD: "Standard",
-  SHADOW_MAP_QUALITY_HIGH: "High",
-  SHADOW_MAP_QUALITY_ULTRA: "Ultra",
-}
+            code: `SHADOW_MAP_QUALITY_MAX: int = SHADOW_MAP_QUALITY_ULTRA
+SHADOW_MAP_QUALITY_DEFAULT: int = SHADOW_MAP_QUALITY_STANDARD
+
+SHADOW_MAP_QUALITY_ORDER: tuple[int, ...] = (SHADOW_MAP_QUALITY_LOWEST, SHADOW_MAP_QUALITY_LOW, SHADOW_MAP_QUALITY_STANDARD, SHADOW_MAP_QUALITY_HIGH, SHADOW_MAP_QUALITY_ULTRA)
+
+SHADOW_MAP_QUALITY_LABELS: dict[int, str] = {SHADOW_MAP_QUALITY_LOWEST: "Lowest", SHADOW_MAP_QUALITY_LOW: "Low", SHADOW_MAP_QUALITY_STANDARD: "Standard", SHADOW_MAP_QUALITY_HIGH: "High", SHADOW_MAP_QUALITY_ULTRA: "Ultra"}
+
 
 def normalize_shadow_map_quality(value: object) -> int:
   try:
@@ -749,9 +832,28 @@ def normalize_shadow_map_quality(value: object) -> int:
             kind: 'code',
             language: 'py',
             caption: 'Legacy-key fallback pattern.',
-            code: `cloud_wireframe=mapping_bool(d, "cloud_wireframe", mapping_bool(d, "cloud_wire", False)),
-world_wireframe=mapping_bool(d, "world_wireframe", mapping_bool(d, "world_wire", False)),
-creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)),`,
+            code: `      cloud_wireframe=mapping_bool(d, "cloud_wireframe", mapping_bool(d, "cloud_wire", False)),
+      world_wireframe=mapping_bool(d, "world_wireframe", mapping_bool(d, "world_wire", False)),
+      shadow_enabled=mapping_bool(d, "shadow_enabled", True),
+      shadow_map_quality=normalize_shadow_map_quality(d.get("shadow_map_quality", SHADOW_MAP_QUALITY_DEFAULT)),
+      sun_az_deg=mapping_float(d, "sun_az_deg", 45.0),
+      sun_el_deg=mapping_float(d, "sun_el_deg", 60.0),
+      cloud_enabled=mapping_bool(d, "cloud_enabled", True),
+      cloud_density=mapping_int(d, "cloud_density", 1),
+      cloud_cell_size=normalize_cloud_cell_size(mapping_int(d, "cloud_cell_size", int(DEFAULT_CLOUD_CELL_SIZE))),
+      cloud_seed=mapping_int(d, "cloud_seed", 1337),
+      cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"),
+      cloud_speed_variation_enabled=mapping_bool(d, "cloud_speed_variation_enabled", True),
+      cloud_speed_min_blocks_per_second=mapping_float(d, "cloud_speed_min_blocks_per_second", float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND)),
+      cloud_speed_max_blocks_per_second=mapping_float(d, "cloud_speed_max_blocks_per_second", float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MAX_BLOCKS_PER_SECOND)),
+      cloud_height_variation_enabled=mapping_bool(d, "cloud_height_variation_enabled", True),
+      cloud_fixed_y=mapping_int(d, "cloud_fixed_y", int(RuntimePreferences.DEFAULT_CLOUD_FIXED_Y)),
+      cloud_spawn_y_min=mapping_int(d, "cloud_spawn_y_min", int(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MIN)),
+      cloud_spawn_y_max=mapping_int(d, "cloud_spawn_y_max", int(RuntimePreferences.DEFAULT_CLOUD_SPAWN_Y_MAX)),
+      cloud_preferred_y_min=mapping_int(d, "cloud_preferred_y_min", int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MIN)),
+      cloud_preferred_y_max=mapping_int(d, "cloud_preferred_y_max", int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_MAX)),
+      cloud_preferred_y_probability_percent=mapping_int(d, "cloud_preferred_y_probability_percent", int(RuntimePreferences.DEFAULT_CLOUD_PREFERRED_Y_PROBABILITY_PERCENT)),
+      creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)),`,
           },
           {
             kind: 'paragraph',
@@ -787,19 +889,19 @@ creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", Fal
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/integrity/manifest.py',
-            code: `if not path.exists():
-  return True
+            code: `  if not path.exists():
+    return True
 
-files = manifest.get("files", {})
-if not isinstance(files, dict) or not files:
-  return True
+  manifest = _read_manifest(Path(data_root))
+  files = manifest.get("files", {})
+  if not isinstance(files, dict) or not files:
+    return True
 
-if not key_path.is_file():
-  return False
+  key_path = runtime_integrity_key_path(Path(data_root))
+  if not key_path.is_file():
+    return False
 
-expected_entry = files.get(_display_relative(relative_path))
-if not isinstance(expected_entry, dict):
-  return True`,
+  try:`,
           },
         ],
       },
@@ -815,17 +917,17 @@ if not isinstance(expected_entry, dict):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
-            code: `if runtime_path.exists():
-  relative_path = f"state/{name}"
-  if not verify_runtime_file(self._data_root(), relative_path):
-    return None
-  return JsonFileStore(path=runtime_path).read()
+            code: `    if runtime_path.exists():
+      relative_path = f"state/{name}"
+      if not verify_runtime_file(self._data_root(), relative_path):
+        return None
+      return JsonFileStore(path=runtime_path).read()
 
-previous_path = self._previous_config_path(name)
-if previous_path.exists():
-  return JsonFileStore(path=previous_path).read()
+    previous_path = self._previous_config_path(name)
+    if previous_path.exists():
+      return JsonFileStore(path=previous_path).read()
 
-return None`,
+    return None`,
           },
           {
             kind: 'paragraph',
@@ -835,18 +937,26 @@ return None`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/json_file.py',
-            code: `f = None
-try:
-  f = open(tmp, "w", encoding="utf-8", newline="\\n")
-  f.write(data)
-  f.flush()
-  os.fsync(f.fileno())
-finally:
-  if f is not None:
+            code: `  def write(self, obj: dict[str, Any]) -> None:
+    p = Path(self.path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+
+    tmp = p.with_suffix(p.suffix + ".tmp")
+
+    data = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+    f = None
     try:
-      f.close()
-    except OSError:
-      pass`,
+      f = open(tmp, "w", encoding="utf-8", newline="\\n")
+      f.write(data)
+      f.flush()
+      os.fsync(f.fileno())
+    finally:
+      if f is not None:
+        try:
+          f.close()
+        except OSError:
+          pass`,
           },
         ],
       },
@@ -877,19 +987,6 @@ finally:
             ],
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/schema/othello.py',
-            code: `def to_dict(self) -> dict[str, Any]:
-  return {
-    "player": self.player.to_dict(),
-    "world": self.world.to_dict(),
-    "inventory": self.inventory.to_dict(),
-    "othello_game_state": self.othello_game_state.to_dict(),
-    "ai_players": [player.to_dict() for player in self.ai_players],
-  }`,
-          },
-          {
             kind: 'paragraph',
             text: 'The `othello_space` member is the outer structural boundary for the Othello save. It keeps Othello state from being read as an undifferentiated world and carries its own player, world, inventory, AI actors, and Othello-specific game state. The active My World space is sourced from the library entry and merged into the in-memory `AppState` at load time, so a reader must not expect a `my_world` key inside `app_state.json`.',
           },
@@ -915,15 +1012,15 @@ finally:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/worlds/state/world.py',
-            code: `def to_persisted_dict(self) -> dict[str, Any]:
-  with self._lock:
-    placed_items: list[list[Any]] = []
-    for (x, y, z), s in self._placed.items():
-      placed_items.append([int(x), int(y), int(z), str(s)])
-    broken_items: list[list[int]] = []
-    for x, y, z in sorted(self._broken):
-      broken_items.append([int(x), int(y), int(z)])
-    return {"version": 2, "generation": self._generation.to_dict(), "revision": int(self.revision), "placed": placed_items, "broken": broken_items}`,
+            code: `  def to_persisted_dict(self) -> dict[str, Any]:
+    with self._lock:
+      placed_items: list[list[Any]] = []
+      for (x, y, z), s in self._placed.items():
+        placed_items.append([int(x), int(y), int(z), str(s)])
+      broken_items: list[list[int]] = []
+      for x, y, z in sorted(self._broken):
+        broken_items.append([int(x), int(y), int(z)])
+      return {"version": 2, "generation": self._generation.to_dict(), "revision": int(self.revision), "placed": placed_items, "broken": broken_items}`,
           },
           {
             kind: 'paragraph',
@@ -947,7 +1044,7 @@ finally:
 class PersistedPlaySpace:
   player: PersistedPlayer = field(default_factory=PersistedPlayer)
   world: PersistedWorld = field(default_factory=PersistedWorld)
-  ai_players: tuple[PersistedAiPlayer, ...] = ()`,
+  inventory: PersistedWorldInventory = field(default_factory=PersistedWorldInventory)`,
           },
           {
             kind: 'paragraph',
@@ -979,15 +1076,15 @@ class PersistedPlaySpace:
             kind: 'code',
             language: 'py',
             caption: 'Malformed placed rows are rejected without aborting the whole delta.',
-            code: `placed: Dict[BlockKey, str] = {}
-if isinstance(placed_raw, list):
-  for it in placed_raw:
-    if not isinstance(it, list) or len(it) != 4:
-      continue
-    try:
-      placed[(int(it[0]), int(it[1]), int(it[2]))] = str(it[3])
-    except Exception:
-      continue`,
+            code: `    placed: Dict[BlockKey, str] = {}
+    if isinstance(placed_raw, list):
+      for it in placed_raw:
+        if not isinstance(it, list) or len(it) != 4:
+          continue
+        try:
+          placed[(int(it[0]), int(it[1]), int(it[2]))] = str(it[3])
+        except Exception:
+          continue`,
           },
           {
             kind: 'paragraph',
@@ -1028,12 +1125,12 @@ if isinstance(placed_raw, list):
             code: `def _maybe_replace_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
   if persisted_world.is_empty():
     return
-  session.world.replace_content(
-    generation=persisted_world.generation,
-    placed={key: str(value) for (key, value) in persisted_world.placed_blocks.items()},
-    broken=tuple(persisted_world.broken_cells),
-    revision=int(max(1, int(persisted_world.revision))),
-  )`,
+  session.world.replace_content(generation=persisted_world.generation, placed={key: str(value) for (key, value) in persisted_world.placed_blocks.items()}, broken=tuple(persisted_world.broken_cells), revision=int(max(1, int(persisted_world.revision))))
+
+
+def _replace_othello_world(session: SessionManager, persisted_world: PersistedWorld) -> None:
+  if persisted_world.is_empty():
+    return`,
           },
           {
             kind: 'paragraph',
@@ -1063,8 +1160,8 @@ if isinstance(placed_raw, list):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schema/world_library.py',
-            code: `def to_dict(self) -> dict[str, Any]:
-  return {"version": int(WORLD_LIBRARY_INDEX_VERSION), "active_world_id": str(self.active_world_id), "world_ids": [str(world_id) for world_id in self.world_ids]}`,
+            code: `  def to_dict(self) -> dict[str, Any]:
+    return {"version": int(WORLD_LIBRARY_INDEX_VERSION), "active_world_id": str(self.active_world_id), "world_ids": [str(world_id) for world_id in self.world_ids]}`,
           },
           {
             kind: 'paragraph',
@@ -1079,20 +1176,6 @@ if isinstance(placed_raw, list):
           {
             kind: 'paragraph',
             text: '`PersistedWorldMetadata` carries the world identifier, the display name, the game mode, and the created and updated timestamps. The game mode is per world. It is normalized to `survival` or `creative`, applied to the runtime and the player when the world is opened, and written back from the runtime game mode when the world is saved. The created timestamp is fixed at creation; the updated timestamp advances on each package write. The on-disk size shown in the library is the size of the `.ldxworld` package, which already contains the thumbnail, not a count of blocks.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/schema/world_library.py',
-            code: `def to_dict(self) -> dict[str, Any]:
-  normalized = self.normalized()
-  return {
-    "id": str(normalized.world_id),
-    "name": str(normalized.name),
-    "game_mode": str(normalized.game_mode),
-    "created_at": float(normalized.created_at),
-    "updated_at": float(normalized.updated_at),
-  }`,
           },
           {
             kind: 'paragraph',
@@ -1125,13 +1208,6 @@ if isinstance(placed_raw, list):
           {
             kind: 'paragraph',
             text: '`src/ludoxel/application/persistence/packages/ldxworld.py` owns the `.ldxworld` package read and write used both for on-disk library storage and for user export and import of a single world. The package is a zip archive holding `manifest.json`, `world.json`, and an optional `thumbnail.png`. The manifest records the package format identifier, the format version, the runtime application version, and the world metadata; the world member is the serialized `PersistedPlaySpace`. A summary read takes only the manifest and thumbnail, while a full read expands the world body. Export reads the stored thumbnail from `WorldLibraryStore.read_thumbnail_bytes`, and import passes `package.thumbnail_bytes` into `WorldLibraryStore.import_entry`, so a package thumbnail follows the world into the newly assigned library entry.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/packages/ldxworld.py',
-            code: `if not isinstance(manifest, dict) or str(manifest.get("format", "")) != LDXWORLD_FORMAT_ID:
-  raise LdxworldError("World package is not a Ludoxel world.")`,
           },
           {
             kind: 'paragraph',
@@ -1219,14 +1295,14 @@ class PersistedAiLearningSettings:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
-            code: `return PersistedAiLearningSettings(
-  learning_mode=normalize_learning_mode(self.learning_mode),
-  capture_flags=_normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False),
-  skill_flags=_normalize_flag_map(self.skill_flags, keys=skill_category_ids(), default=True),
-  selected_policy_kind=normalize_policy_kind(self.selected_policy_kind),
-  selected_policy_id=str(self.selected_policy_id).strip(),
-  dataset_id=str(dataset_id),
-)`,
+            code: `    return PersistedAiLearningSettings(
+      learning_mode=normalize_learning_mode(self.learning_mode),
+      capture_flags=_normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False),
+      skill_flags=_normalize_flag_map(self.skill_flags, keys=skill_category_ids(), default=True),
+      selected_policy_kind=normalize_policy_kind(self.selected_policy_kind),
+      selected_policy_id=str(self.selected_policy_id).strip(),
+      dataset_id=str(dataset_id),
+    )`,
           },
         ],
       },
@@ -1237,22 +1313,6 @@ class PersistedAiLearningSettings:
           {
             kind: 'paragraph',
             text: 'The saved mapping includes the derived key `observe_only`, but the truth source remains `learning_mode`. `recording_enabled()` returns true only for `observe_only`; `captured_kinds()` returns an empty tuple when recording is disabled and otherwise returns enabled record kinds in `RECORD_KINDS` order. Restoring a stale derived key cannot force recording when the normalized mode is not observe-only.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
-            code: `def to_dict(self) -> dict[str, Any]:
-  normalized = self.normalized()
-  return {
-    "learning_mode": str(normalized.learning_mode),
-    "capture_flags": dict(normalized.capture_flags),
-    "skill_flags": dict(normalized.skill_flags),
-    "selected_policy_kind": str(normalized.selected_policy_kind),
-    "selected_policy_id": str(normalized.selected_policy_id),
-    "dataset_id": str(normalized.dataset_id),
-    "observe_only": bool(normalized.recording_enabled()),
-  }`,
           },
           {
             kind: 'paragraph',
@@ -1277,11 +1337,162 @@ class PersistedAiLearningSettings:
   filtered = "".join(character if character in _SAFE_NAME_CHARS else "_" for character in lowered).strip("_")
   return filtered or str(fallback)
 
-def dataset_path(self, dataset_id: str) -> Path:
-  return self._learning_root() / _DEMONSTRATIONS_DIR_NAME / f"{_safe_name(dataset_id)}.jsonl"
 
-def policy_path(self, policy_id: str) -> Path:
-  return self._learning_root() / _POLICIES_DIR_NAME / f"{_safe_name(policy_id)}.json"`,
+@dataclass
+class DemonstrationDatasetWriter:
+  path: Path
+
+  def write_records(self, rows: Iterable[dict[str, Any]]) -> int:
+    lines: list[str] = []
+    for row in rows:
+      try:
+        lines.append(json.dumps(dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+      except (TypeError, ValueError):
+        continue
+    if not lines:
+      return 0
+    target = Path(self.path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with open(target, "a", encoding="utf-8", newline="\\n") as handle:
+      for line in lines:
+        handle.write(line)
+        handle.write("\\n")
+      handle.flush()
+      os.fsync(handle.fileno())
+    return len(lines)
+
+
+@dataclass
+class AiLearningStore:
+  project_root: Path
+  data_root: Path | None = None
+
+  def _data_root(self) -> Path:
+    if self.data_root is not None:
+      return Path(self.data_root)
+    return default_runtime_data_root(Path(self.project_root))
+
+  def _learning_root(self) -> Path:
+    return runtime_state_root(self._data_root()) / _LEARNING_DIR_NAME
+
+  def _settings_path(self) -> Path:
+    return runtime_state_root(self._data_root()) / _SETTINGS_FILE_NAME
+
+  def dataset_path(self, dataset_id: str) -> Path:
+    return self._learning_root() / _DEMONSTRATIONS_DIR_NAME / f"{_safe_name(dataset_id)}.jsonl"
+
+  def _legacy_dataset_path(self, dataset_id: str) -> Path:
+    return self._learning_root() / f"{_safe_name(dataset_id)}.jsonl"
+
+  def _read_dataset_path(self, dataset_id: str) -> Path:
+    new_path = self.dataset_path(dataset_id)
+    if new_path.is_file():
+      return new_path
+    legacy_path = self._legacy_dataset_path(dataset_id)
+    if legacy_path.is_file():
+      return legacy_path
+    return new_path
+
+  def load_state(self) -> PersistedAiLearningState:
+    raw = JsonFileStore(path=self._settings_path()).read()
+    if raw is None:
+      return PersistedAiLearningState.default()
+    return PersistedAiLearningState.from_dict(raw)
+
+  def save_state(self, state: PersistedAiLearningState) -> None:
+    JsonFileStore(path=self._settings_path()).write(state.to_dict())
+
+  def dataset_writer(self, dataset_id: str) -> DemonstrationDatasetWriter:
+    return DemonstrationDatasetWriter(path=self.dataset_path(dataset_id))
+
+  def iter_demonstration_records(self, dataset_id: str) -> tuple[list[DemonstrationRecord], int]:
+    path = self._read_dataset_path(dataset_id)
+    if not path.is_file():
+      return ([], 0)
+    records: list[DemonstrationRecord] = []
+    corrupt = 0
+    try:
+      with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+          if not str(line).strip():
+            continue
+          record = decode_record_line(line)
+          if record is None:
+            corrupt += 1
+            continue
+          records.append(record)
+    except OSError:
+      return (records, corrupt)
+    return (records, int(corrupt))
+
+  def dataset_summary(self, dataset_id: str) -> DatasetSummary:
+    path = self._read_dataset_path(dataset_id)
+    if not path.is_file():
+      return DatasetSummary()
+    try:
+      byte_size = int(path.stat().st_size)
+    except OSError:
+      byte_size = 0
+    kinds: dict[str, int] = {kind: 0 for kind in RECORD_KINDS}
+    record_count = 0
+    try:
+      with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+          record = decode_record_line(line)
+          if record is None:
+            continue
+          record_count += 1
+          kinds[str(record.kind)] = int(kinds.get(str(record.kind), 0)) + 1
+    except OSError:
+      return DatasetSummary(record_count=0, byte_size=int(byte_size), kinds={})
+    populated = {kind: int(count) for kind, count in kinds.items() if int(count) > 0}
+    return DatasetSummary(record_count=int(record_count), byte_size=int(byte_size), kinds=populated)
+
+  def clear_dataset(self, dataset_id: str) -> bool:
+    removed = False
+    for path in (self.dataset_path(dataset_id), self._legacy_dataset_path(dataset_id)):
+      if path.is_file():
+        try:
+          path.unlink()
+          removed = True
+        except OSError:
+          continue
+    return bool(removed)
+
+  def export_dataset(self, dataset_id: str, destination: Path) -> int:
+    source = self._read_dataset_path(dataset_id)
+    if not source.is_file():
+      return 0
+    target = Path(destination)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    with open(source, "r", encoding="utf-8") as reader, open(target, "w", encoding="utf-8", newline="\\n") as writer:
+      for line in reader:
+        record = decode_record_line(line)
+        if record is None:
+          continue
+        writer.write(encode_record_line(record))
+        writer.write("\\n")
+        written += 1
+    return int(written)
+
+  def import_dataset(self, dataset_id: str, source: Path) -> int:
+    origin = Path(source)
+    if not origin.is_file():
+      return 0
+    rows: list[dict[str, Any]] = []
+    with open(origin, "r", encoding="utf-8") as reader:
+      for line in reader:
+        record = decode_record_line(line)
+        if record is None:
+          continue
+        rows.append(record.to_dict())
+    if not rows:
+      return 0
+    return int(self.dataset_writer(dataset_id).write_records(rows))
+
+  def policy_path(self, policy_id: str) -> Path:
+    return self._learning_root() / _POLICIES_DIR_NAME / f"{_safe_name(policy_id)}.json"`,
           },
           {
             kind: 'paragraph',
@@ -1319,24 +1530,24 @@ def policy_path(self, policy_id: str) -> Path:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
-            code: `lines: list[str] = []
-for row in rows:
-  try:
-    lines.append(json.dumps(dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
-  except (TypeError, ValueError):
-    continue
-if not lines:
-  return 0
-
-target = Path(self.path)
-target.parent.mkdir(parents=True, exist_ok=True)
-with open(target, "a", encoding="utf-8", newline="\\n") as handle:
-  for line in lines:
-    handle.write(line)
-    handle.write("\\n")
-  handle.flush()
-  os.fsync(handle.fileno())
-return len(lines)`,
+            code: `  def write_records(self, rows: Iterable[dict[str, Any]]) -> int:
+    lines: list[str] = []
+    for row in rows:
+      try:
+        lines.append(json.dumps(dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+      except (TypeError, ValueError):
+        continue
+    if not lines:
+      return 0
+    target = Path(self.path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with open(target, "a", encoding="utf-8", newline="\\n") as handle:
+      for line in lines:
+        handle.write(line)
+        handle.write("\\n")
+      handle.flush()
+      os.fsync(handle.fileno())
+    return len(lines)`,
           },
         ],
       },
@@ -1362,8 +1573,8 @@ return len(lines)`,
             kind: 'code',
             language: 'py',
             caption: 'Terminal match normalization clears transient active-state fields.',
-            code: `if normalized.status == OTHELLO_GAME_STATE_FINISHED:
-  return replace(normalized, legal_moves=(), thinking=False, animations=()).normalized()`,
+            code: `    if normalized.status == OTHELLO_GAME_STATE_FINISHED:
+      return replace(normalized, legal_moves=(), thinking=False, animations=()).normalized()`,
           },
           {
             kind: 'paragraph',
@@ -1378,18 +1589,6 @@ return len(lines)`,
           {
             kind: 'paragraph',
             text: 'The board is serialized as a compact 64-cell representation and restored through a coercion path. Standing Othello settings live in `app_state.json` under the `othello_settings` member; per-match Othello settings live inside the saved match within the `othello_space` member. These layers must not be conflated. Changing a standing preference does not rewrite the historical configuration under which an already saved match was created.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Representative Othello game-state serialization shape.',
-            code: `return {
-  "status": str(normalized.status),
-  "board": encode_board(normalized.board),
-  "settings": normalized.settings.to_dict(),
-  "player_side": str(side_name(normalized.player_side)),
-  "ai_side": str(side_name(normalized.ai_side)),
-}`,
           },
           {
             kind: 'paragraph',
@@ -1417,10 +1616,10 @@ return len(lines)`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/spaces/othello/books/opening.py',
-            code: `merged_lines = _normalize_lines(list(lines))
-bundled_lines = load_bundled_opening_book_lines()
-bundled_set = set(bundled_lines)
-user_only_lines = tuple(line for line in merged_lines if line not in bundled_set)`,
+            code: `  merged_lines = _normalize_lines(list(lines))
+  bundled_lines = load_bundled_opening_book_lines()
+  bundled_set = set(bundled_lines)
+  user_only_lines = tuple(line for line in merged_lines if line not in bundled_set)`,
           },
           {
             kind: 'paragraph',
@@ -1438,6 +1637,7 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
   data_root = Path(normalize_opening_book_root(project_root_key))
   _write_json_file(user_opening_book_file_path(data_root), opening_book_lines_payload(tuple(lines)))
   update_runtime_integrity_manifest(data_root, ("state/othello_opening_book.json",))
+
 
 def _load_compiled_opening_book_cache(project_root_key: str, _fingerprint: str) -> object:
   return _read_json_file(compiled_opening_book_cache_file_path(project_root_key))`,
@@ -1546,18 +1746,21 @@ class DemonstrationRecord:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
-            code: `records: list[DemonstrationRecord] = []
-corrupt = 0
-with open(path, "r", encoding="utf-8") as handle:
-  for line in handle:
-    if not str(line).strip():
-      continue
-    record = decode_record_line(line)
-    if record is None:
-      corrupt += 1
-      continue
-    records.append(record)
-return (records, int(corrupt))`,
+            code: `    records: list[DemonstrationRecord] = []
+    corrupt = 0
+    try:
+      with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+          if not str(line).strip():
+            continue
+          record = decode_record_line(line)
+          if record is None:
+            corrupt += 1
+            continue
+          records.append(record)
+    except OSError:
+      return (records, corrupt)
+    return (records, int(corrupt))`,
           },
           {
             kind: 'paragraph',
@@ -1608,22 +1811,6 @@ return (records, int(corrupt))`,
             text: 'A learned policy is a versioned policy artifact made of structured modifiers. The policy record stores identity, compatibility target, skill categories, feature encoder version, action catalog version, action weight overrides, negative modifiers, utility score modifiers, and an evaluation mapping. Runtime behavior is affected only through those fields; neural-network checkpoints sit outside this schema.',
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/simulation/actors/ai_players/learning/policy.py',
-            code: `@dataclass(frozen=True)
-class Policy:
-  policy_id: str
-  policy_name: str
-  skill_categories: tuple[str, ...] = ()
-  action_weight_overrides: dict[str, float] = field(default_factory=dict)
-  negative_modifiers: dict[str, float] = field(default_factory=dict)
-  utility_score_modifiers: dict[str, float] = field(default_factory=dict)
-  evaluation: dict[str, Any] = field(default_factory=dict)
-  schema_version: int = POLICY_SCHEMA_VERSION
-  compatibility_target: str = POLICY_COMPATIBILITY_TARGET`,
-          },
-          {
             kind: 'paragraph',
             text: 'The record shape rejects inflated descriptions of learning. A policy modifies scores and weights. Executable behavior remains in the planner, physics, placement policy, collision system, and combat-eligibility checks.',
           },
@@ -1641,16 +1828,16 @@ class Policy:
             kind: 'code',
             language: 'py',
             caption: 'Policy usability gate.',
-            code: `def is_usable(self) -> bool:
-  if int(self.schema_version) != int(POLICY_SCHEMA_VERSION):
-    return False
-  if str(self.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
-    return False
-  if int(self.feature_encoder_version) not in (0, int(FEATURE_ENCODER_VERSION)):
-    return False
-  if int(self.action_catalog_version) not in (0, int(ACTION_SCHEMA_VERSION)):
-    return False
-  return bool(self.evaluation.get("passed", False))`,
+            code: `  def is_usable(self) -> bool:
+    if int(self.schema_version) != int(POLICY_SCHEMA_VERSION):
+      return False
+    if str(self.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
+      return False
+    if int(self.feature_encoder_version) not in (0, int(FEATURE_ENCODER_VERSION)):
+      return False
+    if int(self.action_catalog_version) not in (0, int(ACTION_SCHEMA_VERSION)):
+      return False
+    return bool(self.evaluation.get("passed", False))`,
           },
           {
             kind: 'paragraph',
@@ -1669,16 +1856,27 @@ class Policy:
           {
             kind: 'code',
             language: 'json',
-            caption: 'Representative bundled policy resource.',
+            caption: 'src/ludoxel/simulation/actors/ai_players/learning/resources/policies/route_policy.json',
             code: `{
   "schema_version": 1,
   "policy_id": "bundled_route_v1",
   "policy_name": "Bundled Route Policy",
+  "policy_version": 1,
   "compatibility_target": "ludoxel.ai.v1",
+  "created_at": "2026-06-15",
   "skill_categories": ["route_finding", "visual_awareness"],
-  "evaluation_summary": { "passed": true },
-  "action_weight_overrides": { "replan_route": 0.1, "follow_route": 0.06 },
-  "utility_score_modifiers": { "route": 0.08, "route_finding": 0.06 }
+  "evaluation_summary": {
+    "passed": true,
+    "note": "Authored bias artifact. It only reweights actions already permitted by the action mask and cannot bypass any safety rule."
+  },
+  "action_weight_overrides": {
+    "replan_route": 0.1,
+    "follow_route": 0.06
+  },
+  "utility_score_modifiers": {
+    "route": 0.08,
+    "route_finding": 0.06
+  }
 }`,
           },
           {
@@ -1774,11 +1972,11 @@ class AiActionMask:
             kind: 'code',
             language: 'py',
             caption: 'Corrupt rows are skipped and counted.',
-            code: `record = decode_record_line(line)
-if record is None:
-  corrupt += 1
-  continue
-records.append(record)`,
+            code: `          record = decode_record_line(line)
+          if record is None:
+            corrupt += 1
+            continue
+          records.append(record)`,
           },
           {
             kind: 'paragraph',
@@ -1798,12 +1996,12 @@ records.append(record)`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/ai_learning.py',
-            code: `lines: list[str] = []
-for row in rows:
-  try:
-    lines.append(json.dumps(dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
-  except (TypeError, ValueError):
-    continue`,
+            code: `    lines: list[str] = []
+    for row in rows:
+      try:
+        lines.append(json.dumps(dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+      except (TypeError, ValueError):
+        continue`,
           },
           {
             kind: 'paragraph',
@@ -1868,11 +2066,11 @@ for row in rows:
             kind: 'code',
             language: 'py',
             caption: 'Representative JSON-store write behavior.',
-            code: `def write(self, data: dict[str, Any]) -> None:
-  self.path.parent.mkdir(parents=True, exist_ok=True)
-  tmp = self.path.with_suffix(self.path.suffix + ".tmp")
-  tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
-  tmp.replace(self.path)`,
+            code: `  def write(self, obj: dict[str, Any]) -> None:
+    p = Path(self.path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+
+    tmp = p.with_suffix(p.suffix + ".tmp")`,
           },
           {
             kind: 'paragraph',
@@ -1969,8 +2167,8 @@ for row in rows:
             kind: 'code',
             language: 'py',
             caption: 'World edits are explicit saved block rows.',
-            code: `for (x, y, z), s in self.blocks.items():
-  items.append([int(x), int(y), int(z), str(s)])`,
+            code: `      for (x, y, z), s in self._placed.items():
+        placed_items.append([int(x), int(y), int(z), str(s)])`,
           },
           {
             kind: 'paragraph',
@@ -1985,13 +2183,6 @@ for row in rows:
           {
             kind: 'paragraph',
             text: 'Imported material can be user-created, third-party, or otherwise outside the project’s control. A local `player_skin.png` records that the user supplied an image to the application. Image ownership and outside restrictions require separate provenance evidence.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Player-state schema stores the skin mode that decides whether a custom skin participates.',
-            code: `player_skin_kind: str = PLAYER_SKIN_KIND_TIMO
-player_name: str = ""`,
           },
           {
             kind: 'paragraph',
@@ -2011,9 +2202,9 @@ player_name: str = ""`,
             kind: 'code',
             language: 'py',
             caption: 'Bundled lines are removed before user lines are saved.',
-            code: `bundled_lines = load_bundled_opening_book_lines()
-bundled_set = set(bundled_lines)
-user_only_lines = tuple(line for line in merged_lines if line not in bundled_set)`,
+            code: `  bundled_lines = load_bundled_opening_book_lines()
+  bundled_set = set(bundled_lines)
+  user_only_lines = tuple(line for line in merged_lines if line not in bundled_set)`,
           },
           {
             kind: 'paragraph',
@@ -2267,9 +2458,9 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/worlds/generation/spec.py',
-            code: `def to_dict(self) -> dict[str, Any]:
-  normalized = self.normalized()
-  return {"mode": str(normalized.mode), "version": int(normalized.version), "seed": int(normalized.seed), "flat_ground_y": int(normalized.flat_ground_y)}`,
+            code: `  def to_dict(self) -> dict[str, Any]:
+    normalized = self.normalized()
+    return {"mode": str(normalized.mode), "version": int(normalized.version), "seed": int(normalized.seed), "flat_ground_y": int(normalized.flat_ground_y)}`,
           },
           {
             kind: 'paragraph',
@@ -2284,18 +2475,6 @@ user_only_lines = tuple(line for line in merged_lines if line not in bundled_set
           {
             kind: 'paragraph',
             text: 'The version-2 world payload written by `WorldState.to_persisted_dict` holds the spec under `generation`, the mutation counter under `revision`, four-element `placed` rows of coordinates and block state for every block the user added, and three-element `broken` rows for every base-terrain coordinate the user removed. Base terrain is never serialized; it is a function of the spec and the coordinate. A world file therefore stays small in proportion to what the user changed, and two files with the same spec and empty deltas describe the same world.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'Version-2 world payload shape written into `world.json` (schema example).',
-            code: `{
-  "version": 2,
-  "generation": {"mode": "normal", "version": 1, "seed": 1, "flat_ground_y": 0},
-  "revision": 42,
-  "placed": [[3, -5, 9, "ludoxel:stone"]],
-  "broken": [[0, -6, 0]]
-}`,
           },
           {
             kind: 'paragraph',

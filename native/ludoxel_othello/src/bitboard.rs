@@ -50,16 +50,7 @@ fn shift_north_west(bits: u64) -> u64 {
   (bits & NOT_FILE_A) >> 9
 }
 
-const SHIFT_FUNCS: [fn(u64) -> u64; 8] = [
-  shift_east,
-  shift_west,
-  shift_south,
-  shift_north,
-  shift_south_east,
-  shift_south_west,
-  shift_north_east,
-  shift_north_west,
-];
+const SHIFT_FUNCS: [fn(u64) -> u64; 8] = [shift_east, shift_west, shift_south, shift_north, shift_south_east, shift_south_west, shift_north_east, shift_north_west];
 
 pub fn legal_moves_bitboard(player: u64, opponent: u64) -> u64 {
   let empty = !(player | opponent);
@@ -102,14 +93,7 @@ pub fn apply_move_bits(player: u64, opponent: u64, move_index: u32) -> (u64, u64
 }
 
 pub fn adjacent_bits(bits: u64) -> u64 {
-  shift_east(bits)
-    | shift_west(bits)
-    | shift_south(bits)
-    | shift_north(bits)
-    | shift_south_east(bits)
-    | shift_south_west(bits)
-    | shift_north_east(bits)
-    | shift_north_west(bits)
+  shift_east(bits) | shift_west(bits) | shift_south(bits) | shift_north(bits) | shift_south_east(bits) | shift_south_west(bits) | shift_north_east(bits) | shift_north_west(bits)
 }
 
 #[inline]

@@ -54,17 +54,7 @@ fn classic_check_deadline(deadline: Option<Instant>) -> Result<(), SearchTimeout
 }
 
 #[allow(clippy::too_many_arguments)]
-fn classic_alpha_beta(
-  root: u64,
-  other: u64,
-  root_to_move: bool,
-  depth: i64,
-  mut alpha: f64,
-  mut beta: f64,
-  deadline: Option<Instant>,
-  pass_count: i64,
-  sacrifice_level: i64,
-) -> Result<f64, SearchTimeout> {
+fn classic_alpha_beta(root: u64, other: u64, root_to_move: bool, depth: i64, mut alpha: f64, mut beta: f64, deadline: Option<Instant>, pass_count: i64, sacrifice_level: i64) -> Result<f64, SearchTimeout> {
   classic_check_deadline(deadline)?;
 
   let (mover, waiter) = if root_to_move { (root, other) } else { (other, root) };

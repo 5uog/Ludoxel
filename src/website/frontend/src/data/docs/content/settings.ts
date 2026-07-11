@@ -32,13 +32,16 @@ export const settingsPages: DocsPageContent[] = [
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
-            code: `overlay._lbl_fov = QLabel("FOV: 80 deg", host)
-overlay._sld_fov = overlay._new_slider(host, int(overlay._params.fov_min), int(overlay._params.fov_max))
-overlay._sld_fov.valueChanged.connect(overlay._on_fov)
+            code: `  overlay._lbl_fov = QLabel("FOV: 80 deg", host)
+  overlay._sld_fov = overlay._new_slider(host, int(overlay._params.fov_min), int(overlay._params.fov_max))
+  overlay._sld_fov.valueChanged.connect(overlay._on_fov)
+  add_setting_row(camera_layout, camera_body, label="Field of view", description="Vertical camera field of view in degrees.", control=overlay._sld_fov, label_widget=overlay._lbl_fov)
 
-for value in CAMERA_PERSPECTIVE_ORDER:
-  overlay._cmb_camera_perspective.addItem(str(CAMERA_PERSPECTIVE_LABELS[str(value)]), userData=str(value))
-overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_perspective)`,
+  overlay._lbl_camera_perspective = QLabel("Camera perspective", host)
+  overlay._cmb_camera_perspective = QComboBox(host)
+  for value in CAMERA_PERSPECTIVE_ORDER:
+    overlay._cmb_camera_perspective.addItem(str(CAMERA_PERSPECTIVE_LABELS[str(value)]), userData=str(value))
+  overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_perspective)`,
           },
         ],
       },
@@ -67,6 +70,33 @@ overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_p
     return float(value)
   except Exception:
     return float(default)
+
+
+def coerce_int(value: object, default: int) -> int:
+  try:
+    return int(value)
+  except Exception:
+    return int(default)
+
+
+def coerce_bool(value: object, default: bool) -> bool:
+  if isinstance(value, bool):
+    return bool(value)
+  if isinstance(value, (int, float)):
+    return bool(value)
+  if isinstance(value, str):
+    token = str(value).strip().lower()
+    if token in _BOOL_TRUE_TOKENS:
+      return True
+    if token in _BOOL_FALSE_TOKENS:
+      return False
+  return bool(default)
+
+
+def coerce_str(value: object, default: str) -> str:
+  if value is None:
+    return str(default)
+  return str(value)
 
 
 def mapping_float(d: Mapping[str, Any], key: str, default: float) -> float:
@@ -111,6 +141,10 @@ def mapping_float(d: Mapping[str, Any], key: str, default: float) -> float:
   return value
 
 
+def clamp01f(x: float) -> float:
+  return clampf(float(x), 0.0, 1.0)
+
+
 def round_clampi(x: float, lo: int, hi: int) -> int:
   return clampi(int(round(float(x))), int(lo), int(hi))`,
           },
@@ -137,6 +171,8 @@ def round_clampi(x: float, lo: int, hi: int) -> int:
             language: 'py',
             caption: 'src/ludoxel/application/preferences/camera.py',
             code: `CAMERA_PERSPECTIVE_ORDER: tuple[str, ...] = (CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_THIRD_PERSON_BACK, CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT)
+CAMERA_PERSPECTIVE_LABELS: dict[str, str] = {CAMERA_PERSPECTIVE_FIRST_PERSON: "First Person", CAMERA_PERSPECTIVE_THIRD_PERSON_BACK: "Third Person Back", CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT: "Third Person Front"}
+
 
 def normalize_camera_perspective(value: object) -> str:
   normalized = str(value).strip().lower()
@@ -144,9 +180,17 @@ def normalize_camera_perspective(value: object) -> str:
     return normalized
   return CAMERA_PERSPECTIVE_FIRST_PERSON
 
+
+def camera_perspective_display_name(value: object) -> str:
+  normalized = normalize_camera_perspective(value)
+  return str(CAMERA_PERSPECTIVE_LABELS[normalized])
+
+
 def cycle_camera_perspective(value: object, step: int = 1) -> str:
   normalized = normalize_camera_perspective(value)
   count = len(CAMERA_PERSPECTIVE_ORDER)
+  if count <= 0:
+    return CAMERA_PERSPECTIVE_FIRST_PERSON
   index = CAMERA_PERSPECTIVE_ORDER.index(normalized)
   return str(CAMERA_PERSPECTIVE_ORDER[(index + int(step)) % count])`,
           },
@@ -164,11 +208,12 @@ def cycle_camera_perspective(value: object, step: int = 1) -> str:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/runtime.py',
-            code: `self.player_name = normalize_player_name(self.player_name)
-self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
-self.crosshair_pixels = normalize_crosshair_pixels(self.crosshair_pixels)
-self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
-self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`,
+            code: `    self.player_name = normalize_player_name(self.player_name)
+    self.resolved_player_name = normalize_player_name(self.resolved_player_name) or str(self.player_name)
+    self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
+    self.crosshair_pixels = normalize_crosshair_pixels(self.crosshair_pixels)
+    self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
+    self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`,
           },
           {
             kind: 'paragraph',
@@ -205,13 +250,18 @@ self.camera_perspective = normalize_camera_perspective(self.camera_perspective)`
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
-            code: `overlay._crosshair_preview = CrosshairPreviewWidget(crosshair_body)
+            code: `  overlay._crosshair_preview = CrosshairPreviewWidget(crosshair_body)
+  crosshair_preview_row.addWidget(overlay._crosshair_preview)
+  crosshair_preview_row.addStretch(1)
+  crosshair_layout.addLayout(crosshair_preview_row)
 
-overlay._crosshair_editor = CrosshairPixelEditor(crosshair_body)
-overlay._crosshair_editor.pixels_changed.connect(overlay.crosshair_pixels_changed.emit)
+  overlay._crosshair_editor = CrosshairPixelEditor(crosshair_body)
+  overlay._crosshair_editor.pixels_changed.connect(overlay.crosshair_pixels_changed.emit)
+  crosshair_layout.addWidget(overlay._crosshair_editor)
 
-overlay._btn_crosshair_reset = QPushButton("Reset to Built-in Crosshair", crosshair_body)
-overlay._btn_crosshair_reset.clicked.connect(overlay.crosshair_clear_requested.emit)`,
+  overlay._btn_crosshair_reset = QPushButton("Reset to Built-in Crosshair", crosshair_body)
+  overlay._btn_crosshair_reset.setObjectName("dangerBtn")
+  overlay._btn_crosshair_reset.clicked.connect(overlay.crosshair_clear_requested.emit)`,
           },
         ],
       },
@@ -230,6 +280,33 @@ overlay._btn_crosshair_reset.clicked.connect(overlay.crosshair_clear_requested.e
             code: `CROSSHAIR_GRID_SIZE = 16
 CROSSHAIR_MODE_DEFAULT = "default"
 CROSSHAIR_MODE_CUSTOM = "custom"
+_EMPTY_ROW = "0" * int(CROSSHAIR_GRID_SIZE)
+DEFAULT_CROSSHAIR_PIXELS: tuple[str, ...] = (
+  _EMPTY_ROW,
+  _EMPTY_ROW,
+  "0000000100000000",
+  "0000000100000000",
+  "0000000100000000",
+  "0000000100000000",
+  "0000000100000000",
+  "0011111111111000",
+  "0000000100000000",
+  "0000000100000000",
+  "0000000100000000",
+  "0000000100000000",
+  "0000000100000000",
+  _EMPTY_ROW,
+  _EMPTY_ROW,
+  _EMPTY_ROW,
+)
+EMPTY_CROSSHAIR_PIXELS: tuple[str, ...] = tuple(_EMPTY_ROW for _ in range(CROSSHAIR_GRID_SIZE))
+
+
+def normalize_crosshair_mode(value: object) -> str:
+  if str(value or "").strip().lower() == CROSSHAIR_MODE_CUSTOM:
+    return CROSSHAIR_MODE_CUSTOM
+  return CROSSHAIR_MODE_DEFAULT
+
 
 def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
   rows: list[str] = []
@@ -306,15 +383,23 @@ def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/hud/crosshair_axis.py',
-            code: `right = _UP_HINT.cross(forward).normalized()
-up = forward.cross(right).normalized()
+            code: `  right = _UP_HINT.cross(forward).normalized()
+  up = forward.cross(right).normalized()
+  if float(right.length()) <= 1e-9 or float(up.length()) <= 1e-9:
+    return (None, None, None)
 
-view_x = float(right.dot(axis))
-view_y = float(up.dot(axis))
-rolled_x = float(cos_roll) * float(view_x) - float(sin_roll) * float(view_y)
-rolled_y = float(sin_roll) * float(view_x) + float(cos_roll) * float(view_y)
-screen_dx = float(rolled_x)
-screen_dy = -float(rolled_y)`,
+  roll_rad = math.radians(float(roll_deg))
+  cos_roll = math.cos(float(roll_rad))
+  sin_roll = math.sin(float(roll_rad))
+
+  offsets: list[tuple[float, float] | None] = []
+  for axis in _WORLD_AXES:
+    view_x = float(right.dot(axis))
+    view_y = float(up.dot(axis))
+    rolled_x = float(cos_roll) * float(view_x) - float(sin_roll) * float(view_y)
+    rolled_y = float(sin_roll) * float(view_x) + float(cos_roll) * float(view_y)
+    screen_dx = float(rolled_x)
+    screen_dy = -float(rolled_y)`,
           },
           {
             kind: 'math',
@@ -377,18 +462,18 @@ screen_dy = -float(rolled_y)`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
-            code: `overlay._tg_clouds_enabled = overlay._add_toggle(cloud_layout, cloud_body, "Show clouds", overlay._on_clouds_toggled)
-overlay._tg_cloud_wire = overlay._add_toggle(cloud_layout, cloud_body, "Cloud wireframe", overlay.cloud_wireframe_changed.emit)
+            code: `  overlay._tg_clouds_enabled = overlay._add_toggle(cloud_layout, cloud_body, "Show clouds", overlay._on_clouds_toggled)
+  overlay._tg_cloud_wire = overlay._add_toggle(cloud_layout, cloud_body, "Cloud wireframe", overlay.cloud_wireframe_changed.emit)
 
-overlay._ctl_cloud_speed_min = AdvancedScalarControl(
-  title="Slowest cloud speed (blocks/s)",
-  min_value=float(RuntimePreferences.CLOUD_SPEED_ALLOWED_MIN_BLOCKS_PER_SECOND),
-  max_value=float(RuntimePreferences.CLOUD_SPEED_ALLOWED_MAX_BLOCKS_PER_SECOND),
-  slider_scale=100.0,
-  decimals=2,
-  default_value=float(RuntimePreferences.DEFAULT_CLOUD_SPEED_MIN_BLOCKS_PER_SECOND),
-  parent=cloud_body,
-)`,
+  overlay._lbl_cloud_flow = QLabel("Cloud flow direction", host)
+  overlay._cmb_cloud_flow = QComboBox(host)
+  for value, label in CLOUD_FLOW_OPTIONS:
+    overlay._cmb_cloud_flow.addItem(str(label), userData=str(value))
+  overlay._cmb_cloud_flow.currentIndexChanged.connect(overlay._on_cloud_flow_direction)
+  add_setting_row(cloud_layout, cloud_body, label="Cloud flow direction", description="Horizontal direction used by cloud motion.", control=overlay._cmb_cloud_flow, label_widget=overlay._lbl_cloud_flow)
+
+  overlay._lbl_cloud_density = QLabel("Cloud density: 1", host)
+  overlay._sld_cloud_density = overlay._new_slider(host, 0, 4)`,
           },
           {
             kind: 'paragraph',
@@ -452,24 +537,24 @@ overlay._ctl_cloud_speed_min = AdvancedScalarControl(
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/runtime.py',
-            code: `self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(
-  self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second
-)
-(
-  self.cloud_fixed_y,
-  self.cloud_spawn_y_min,
-  self.cloud_spawn_y_max,
-  self.cloud_preferred_y_min,
-  self.cloud_preferred_y_max,
-  self.cloud_preferred_y_probability_percent,
-) = normalize_cloud_height_settings(
-  self.cloud_fixed_y,
-  self.cloud_spawn_y_min,
-  self.cloud_spawn_y_max,
-  self.cloud_preferred_y_min,
-  self.cloud_preferred_y_max,
-  self.cloud_preferred_y_probability_percent,
-)`,
+            code: `    self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = normalize_cloud_height_settings(
+      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+    )
+    self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
+    self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
+    self.camera_shake_strength = clampf(float(self.camera_shake_strength), 0.0, 1.0)
+    self.arm_rotation_limit_min_deg = clampf(float(self.arm_rotation_limit_min_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    self.arm_rotation_limit_max_deg = clampf(float(self.arm_rotation_limit_max_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_deg):
+      self.arm_rotation_limit_min_deg, self.arm_rotation_limit_max_deg = float(self.arm_rotation_limit_max_deg), float(self.arm_rotation_limit_min_deg)
+    self.arm_swing_duration_s = clampf(float(self.arm_swing_duration_s), float(self.ARM_SWING_DURATION_MIN_S), float(self.ARM_SWING_DURATION_MAX_S))
+    self.reach = max(0.0, float(self.reach))
+    self.block_break_repeat_interval_s = clampf(float(self.block_break_repeat_interval_s), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MIN), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MAX))
+    self.block_place_repeat_interval_s = clampf(float(self.block_place_repeat_interval_s), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MIN), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MAX))
+    if math.isclose(float(self.block_place_repeat_interval_s), float(self.LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S), rel_tol=0.0, abs_tol=1e-9):
+      self.block_place_repeat_interval_s = float(self.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
+    self.block_interact_repeat_interval_s = clampf(float(self.block_interact_repeat_interval_s), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MIN), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MAX))`,
           },
           {
             kind: 'paragraph',
@@ -480,12 +565,8 @@ overlay._ctl_cloud_speed_min = AdvancedScalarControl(
             language: 'py',
             caption: 'src/ludoxel/application/preferences/cloud_flow.py',
             code: `DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION: str = "west_to_east"
-BACKEND_CLOUD_FLOW_DIRECTIONS: tuple[str, str, str, str] = (
-  "east_to_west",
-  DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION,
-  "south_to_north",
-  "north_to_south",
-)
+BACKEND_CLOUD_FLOW_DIRECTIONS: tuple[str, str, str, str] = ("east_to_west", DEFAULT_BACKEND_CLOUD_FLOW_DIRECTION, "south_to_north", "north_to_south")
+
 
 def normalize_backend_cloud_flow_direction(raw: object) -> str:
   value = str(raw or "").strip().lower()
@@ -521,13 +602,13 @@ def normalize_backend_cloud_flow_direction(raw: object) -> str:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
-            code: `overlay._tg_shadow_enabled = overlay._add_toggle(world_layout, world_body, "Shadow map", overlay._on_shadow_enabled_toggled)
+            code: `  overlay._tg_shadow_enabled = overlay._add_toggle(world_layout, world_body, "Shadow map", overlay._on_shadow_enabled_toggled)
 
-overlay._lbl_shadow_quality = QLabel("Shadow map quality", host)
-overlay._cmb_shadow_quality = QComboBox(host)
-for value in SHADOW_MAP_QUALITY_ORDER:
-  overlay._cmb_shadow_quality.addItem(str(SHADOW_MAP_QUALITY_LABELS[int(value)]), userData=int(value))
-overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_quality)`,
+  overlay._lbl_shadow_quality = QLabel("Shadow map quality", host)
+  overlay._cmb_shadow_quality = QComboBox(host)
+  for value in SHADOW_MAP_QUALITY_ORDER:
+    overlay._cmb_shadow_quality.addItem(str(SHADOW_MAP_QUALITY_LABELS[int(value)]), userData=int(value))
+  overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_quality)`,
           },
         ],
       },
@@ -548,7 +629,7 @@ overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_q
     quality = int(value)
   except (TypeError, ValueError):
     return int(SHADOW_MAP_QUALITY_DEFAULT)
-  if int(quality) < int(SHADOW_MAP_QUALITY_MIN) or int(quality) > int(SHADOW_MAP_QUALITY_MAX):
+  if quality < int(SHADOW_MAP_QUALITY_MIN) or quality > int(SHADOW_MAP_QUALITY_MAX):
     return int(SHADOW_MAP_QUALITY_DEFAULT)
   return int(quality)`,
           },
@@ -570,13 +651,13 @@ overlay._cmb_shadow_quality.currentIndexChanged.connect(overlay._on_shadow_map_q
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/overlay.py',
-            code: `def _on_shadow_enabled_toggled(self, on: bool) -> None:
-  enabled = bool(on)
-  self._cmb_shadow_quality.setEnabled(enabled)
-  self.shadow_enabled_changed.emit(enabled)
+            code: `  def _on_shadow_enabled_toggled(self, on: bool) -> None:
+    enabled = bool(on)
+    self._cmb_shadow_quality.setEnabled(enabled)
+    self.shadow_enabled_changed.emit(enabled)
 
-def _on_shadow_map_quality(self, _index: int) -> None:
-  self.shadow_map_quality_changed.emit(int(self._current_shadow_map_quality_value()))`,
+  def _on_shadow_map_quality(self, _index: int) -> None:
+    self.shadow_map_quality_changed.emit(int(self._current_shadow_map_quality_value()))`,
           },
           {
             kind: 'paragraph',
@@ -610,12 +691,12 @@ def _on_shadow_map_quality(self, _index: int) -> None:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
-            code: `add_page_header(layout, host, title="Audio", subtitle="Independent gain controls for master, ambient, block, and player audio.")
-_mixer_card, mixer_body, mixer_layout = add_settings_card(layout, host, title="Mixer", description="Master gain and category gains persisted by the audio preference schema.")
+            code: `  add_page_header(layout, host, title="Audio", subtitle="Independent gain controls for master, ambient, block, and player audio.")
+  _mixer_card, mixer_body, mixer_layout = add_settings_card(layout, host, title="Mixer", description="Master gain and category gains persisted by the audio preference schema.")
 
-overlay._lbl_master_volume = QLabel("Master volume: 100%", host)
-overlay._sld_master_volume = overlay._new_slider(host, 0, 100)
-overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)`,
+  overlay._lbl_master_volume = QLabel("Master volume: 100%", host)
+  overlay._sld_master_volume = overlay._new_slider(host, 0, 100)
+  overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)`,
           },
         ],
       },
@@ -635,12 +716,14 @@ overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)`,
 AUDIO_VOLUME_MIN_RATIO: float = 0.0
 AUDIO_VOLUME_MAX_RATIO: float = 1.0
 
+
 def _clamp_volume(value: object, *, default: float = DEFAULT_AUDIO_VOLUME_RATIO) -> float:
   try:
     numeric = float(value)
   except Exception:
     numeric = float(default)
   return float(clampf(float(numeric), AUDIO_VOLUME_MIN_RATIO, AUDIO_VOLUME_MAX_RATIO))
+
 
 @dataclass(frozen=True)
 class AudioPreferences:
@@ -667,15 +750,15 @@ class AudioPreferences:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/audio.py',
-            code: `def volume_for(self, category: str) -> float:
-  key = str(category).strip().lower()
-  if key == AUDIO_CATEGORY_AMBIENT:
-    return float(self.master) * float(self.ambient)
-  if key == AUDIO_CATEGORY_BLOCK:
-    return float(self.master) * float(self.block)
-  if key == AUDIO_CATEGORY_PLAYER:
-    return float(self.master) * float(self.player)
-  return float(self.master)`,
+            code: `  def volume_for(self, category: str) -> float:
+    key = str(category).strip().lower()
+    if key == AUDIO_CATEGORY_AMBIENT:
+      return float(self.master) * float(self.ambient)
+    if key == AUDIO_CATEGORY_BLOCK:
+      return float(self.master) * float(self.block)
+    if key == AUDIO_CATEGORY_PLAYER:
+      return float(self.master) * float(self.player)
+    return float(self.master)`,
           },
           {
             kind: 'math',
@@ -827,6 +910,7 @@ class AudioPreferences:
             code: `PLAYER_SKIN_KIND_TIMO = "timo"
 PLAYER_SKIN_KIND_CUSTOM = "custom"
 
+
 def normalize_player_skin_kind(value: object) -> str:
   normalized = str(value or "").strip().lower()
   if normalized == PLAYER_SKIN_KIND_CUSTOM:
@@ -859,6 +943,7 @@ def normalize_player_skin_kind(value: object) -> str:
         return normalize_player_skin_image(custom_image)
       except ValueError:
         pass
+  bundled_root = Path(data_root if resource_root is None else resource_root)
   default_image = QImage(str(default_player_skin_path(bundled_root)))`,
           },
         ],
@@ -908,11 +993,11 @@ def normalize_player_skin_kind(value: object) -> str:
     return
 
   image = QImage(str(selected_path))
-  normalized_image = normalize_player_skin_image(image)
-  write_custom_player_skin(viewport._data_root, normalized_image)
-  viewport._state.player_skin_kind = PLAYER_SKIN_KIND_CUSTOM
-  viewport._state.normalize()
-  sync_player_skin(viewport, push_to_renderer=True)`,
+  try:
+    normalized_image = normalize_player_skin_image(image)
+    write_custom_player_skin(viewport._data_root, normalized_image)
+  except Exception as exc:
+    QMessageBox.warning(viewport, "Invalid Player Skin", str(exc))`,
           },
         ],
       },
@@ -936,12 +1021,12 @@ def normalize_player_skin_kind(value: object) -> str:
     raise ValueError("Only modern 64x64 skin textures are accepted.")
   return candidate.convertToFormat(QImage.Format.Format_RGBA8888)
 
-def write_custom_player_skin(data_root: Path, image: QImage) -> None:
-  normalized = normalize_player_skin_image(image)
-  target = custom_player_skin_path(data_root)
-  target.parent.mkdir(parents=True, exist_ok=True)
-  normalized.save(str(target), "PNG")
-  update_runtime_integrity_manifest(Path(data_root), ("state/player_skin.png",))`,
+
+def load_player_skin_image(data_root: Path, *, kind: object, resource_root: Path | None = None) -> QImage:
+  normalized_kind = normalize_player_skin_kind(kind)
+  if normalized_kind == PLAYER_SKIN_KIND_CUSTOM:
+    custom_path = custom_player_skin_path(data_root)
+    if not verify_runtime_file(Path(data_root), "state/player_skin.png"):`,
           },
         ],
       },
@@ -979,7 +1064,19 @@ def write_custom_player_skin(data_root: Path, image: QImage) -> None:
             caption: 'src/ludoxel/application/preferences/player_name.py',
             code: `def normalize_player_name(value: object) -> str:
   text = " ".join(str(value or "").split())
-  return str(text[:32]).strip()
+  return str(text[:PLAYER_NAME_MAX_CHARS]).strip()
+
+
+def has_explicit_player_name(value: object) -> bool:
+  return bool(normalize_player_name(value))
+
+
+def generate_random_player_name() -> str:
+  adjective = _ADJECTIVES[randbelow(len(_ADJECTIVES))]
+  noun = _NOUNS[randbelow(len(_NOUNS))]
+  number = RANDOM_PLAYER_NUMBER_MIN + randbelow(RANDOM_PLAYER_NUMBER_VARIANTS)
+  return f"{adjective}{noun}{number}"
+
 
 def resolve_session_player_name(explicit_name: object, *, fallback_name: str | None = None) -> str:
   normalized = normalize_player_name(explicit_name)
@@ -1008,11 +1105,11 @@ def resolve_session_player_name(explicit_name: object, *, fallback_name: str | N
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/settings/pages.py',
-            code: `overlay._name_edit = QLineEdit(identity_body)
-overlay._name_edit.setPlaceholderText("Leave blank for a random name each launch")
-overlay._name_edit.editingFinished.connect(overlay._on_player_name_edited)
+            code: `  overlay._name_edit = QLineEdit(identity_body)
+  overlay._name_edit.setPlaceholderText("Leave blank for a random name each launch")
+  overlay._name_edit.editingFinished.connect(overlay._on_player_name_edited)
 
-overlay._player_name_hint = QLabel("", identity_body)`,
+  overlay._player_name_hint = QLabel("", identity_body)`,
           },
         ],
       },
@@ -1048,10 +1145,10 @@ overlay._player_name_hint = QLabel("", identity_body)`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schema/settings.py',
-            code: `player_regen_enabled: bool = bool(PLAYER_REGEN_DEFAULT_ENABLED)
-player_regen_start_delay_s: float = float(PLAYER_REGEN_DEFAULT_START_DELAY_S)
-player_regen_cap_hp: float = float(PLAYER_REGEN_DEFAULT_CAP_HP)
-player_regen_time_to_cap_s: float = float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S)`,
+            code: `  player_regen_enabled: bool = bool(PLAYER_REGEN_DEFAULT_ENABLED)
+  player_regen_start_delay_s: float = float(PLAYER_REGEN_DEFAULT_START_DELAY_S)
+  player_regen_cap_hp: float = float(PLAYER_REGEN_DEFAULT_CAP_HP)
+  player_regen_time_to_cap_s: float = float(PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S)`,
           },
           {
             kind: 'paragraph',
@@ -1079,12 +1176,11 @@ class PlayerRegenParams:
   time_to_cap_s: float = PLAYER_REGEN_DEFAULT_TIME_TO_CAP_S
 
   def normalized(self) -> "PlayerRegenParams":
-    return PlayerRegenParams(
-      enabled=bool(self.enabled),
-      start_delay_s=normalize_player_regen_start_delay_s(self.start_delay_s),
-      cap_hp=normalize_player_regen_cap_hp(self.cap_hp),
-      time_to_cap_s=normalize_player_regen_time_to_cap_s(self.time_to_cap_s),
-    )`,
+    return PlayerRegenParams(enabled=bool(self.enabled), start_delay_s=normalize_player_regen_start_delay_s(self.start_delay_s), cap_hp=normalize_player_regen_cap_hp(self.cap_hp), time_to_cap_s=normalize_player_regen_time_to_cap_s(self.time_to_cap_s))
+
+
+DEFAULT_PLAYER_REGEN_PARAMS = PlayerRegenParams()
+`,
           },
           {
             kind: 'math',
@@ -1108,14 +1204,14 @@ class PlayerRegenParams:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/player/regeneration.py',
-            code: `if bool(took_damage):
-  return 0.0
-if not player.alive():
-  return 0.0
+            code: `  if bool(took_damage):
+    return 0.0
+  if not player.alive():
+    return 0.0
 
-new_wait_s = max(0.0, float(wait_s)) + max(0.0, float(dt))
-if not bool(params.enabled):
-  return float(new_wait_s)`,
+  new_wait_s = max(0.0, float(wait_s)) + max(0.0, float(dt))
+  if not bool(params.enabled):
+    return float(new_wait_s)`,
           },
           {
             kind: 'paragraph',
@@ -1153,12 +1249,124 @@ if not bool(params.enabled):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/runtime.py',
-            code: `othello_hotbar_slots: list[str] = field(default_factory=_default_othello_hotbar_slots_list)
-othello_selected_hotbar_index: int = 0
-othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
+            code: `  othello_hotbar_slots: list[str] = field(default_factory=_default_othello_hotbar_slots_list)
+  othello_selected_hotbar_index: int = 0
+  route_hotbar_slots: list[str] = field(default_factory=_default_route_hotbar_slots_list)
+  route_selected_hotbar_index: int = 0
+  route_edit_active: bool = False
+  othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
+  reach: float = 5.0
+  block_break_repeat_interval_s: float = DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S
+  block_place_repeat_interval_s: float = DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S
+  block_interact_repeat_interval_s: float = DEFAULT_BLOCK_INTERACT_REPEAT_INTERVAL_S
+  block_break_particle_spawn_rate: float = DEFAULT_BLOCK_BREAK_PARTICLE_SPAWN_RATE
+  block_break_particle_speed_scale: float = DEFAULT_BLOCK_BREAK_PARTICLE_SPEED_SCALE
+  auto_jump_enabled: bool = False
+  auto_sprint_enabled: bool = False
+  hide_hud: bool = False
+  hide_hand: bool = False
+  player_name: str = ""
+  resolved_player_name: str = ""
+  crosshair_mode: str = CROSSHAIR_MODE_DEFAULT
+  crosshair_pixels: tuple[str, ...] = field(default_factory=lambda: EMPTY_CROSSHAIR_PIXELS)
+  player_skin_kind: str = PLAYER_SKIN_KIND_TIMO
+  camera_perspective: str = CAMERA_PERSPECTIVE_FIRST_PERSON
+  fullscreen: bool = False
+  view_bobbing_enabled: bool = True
+  camera_shake_enabled: bool = True
+  view_bobbing_strength: float = 0.35
+  camera_shake_strength: float = 0.20
+  arm_rotation_limit_min_deg: float = DEFAULT_ARM_ROTATION_LIMIT_MIN_DEG
+  arm_rotation_limit_max_deg: float = DEFAULT_ARM_ROTATION_LIMIT_MAX_DEG
+  arm_swing_duration_s: float = DEFAULT_ARM_SWING_DURATION_S
+  animated_textures_enabled: bool = True
+  render_distance_chunks: int = 6
+  sun_az_deg: float = 45.0
+  sun_el_deg: float = 60.0
+  debug_shadow: bool = False
+  vsync_on: bool = False
+  hud_visible: bool = False
+  window_left: int | None = None
+  window_top: int | None = None
+  window_width: int = 1280
+  window_height: int = 720
+  window_screen_name: str = ""
+  keybinds: KeybindSettings = field(default_factory=KeybindSettings)
+  audio: AudioPreferences = field(default_factory=AudioPreferences)
 
-self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
-self.othello_settings = self.othello_settings.normalized()`,
+  def normalize(self) -> None:
+    self.current_space_id = normalize_play_space_id(self.current_space_id)
+
+    self.invert_x = bool(self.invert_x)
+    self.invert_y = bool(self.invert_y)
+    self.outline_selection = bool(self.outline_selection)
+    self.cloud_wire = bool(self.cloud_wire)
+    self.cloud_enabled = bool(self.cloud_enabled)
+    self.cloud_speed_variation_enabled = bool(self.cloud_speed_variation_enabled)
+    self.cloud_height_variation_enabled = bool(self.cloud_height_variation_enabled)
+    self.world_wire = bool(self.world_wire)
+    self.shadow_enabled = bool(self.shadow_enabled)
+    self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
+    self.creative_mode = bool(self.creative_mode)
+    self.route_edit_active = bool(self.route_edit_active)
+    self.auto_jump_enabled = bool(self.auto_jump_enabled)
+    self.auto_sprint_enabled = bool(self.auto_sprint_enabled)
+    self.hide_hud = bool(self.hide_hud)
+    self.hide_hand = bool(self.hide_hand)
+    self.player_name = normalize_player_name(self.player_name)
+    self.resolved_player_name = normalize_player_name(self.resolved_player_name) or str(self.player_name)
+    self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
+    self.crosshair_pixels = normalize_crosshair_pixels(self.crosshair_pixels)
+    self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
+    self.camera_perspective = normalize_camera_perspective(self.camera_perspective)
+    self.fullscreen = bool(self.fullscreen)
+    self.view_bobbing_enabled = bool(self.view_bobbing_enabled)
+    self.camera_shake_enabled = bool(self.camera_shake_enabled)
+    self.animated_textures_enabled = bool(self.animated_textures_enabled)
+    self.debug_shadow = bool(self.debug_shadow)
+    self.vsync_on = bool(self.vsync_on)
+    self.hud_visible = bool(self.hud_visible)
+
+    self.cloud_density = clampi(int(self.cloud_density), 0, 4)
+    self.cloud_cell_size = normalize_cloud_cell_size(self.cloud_cell_size)
+    self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
+    self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
+    self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = normalize_cloud_height_settings(
+      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+    )
+    self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
+    self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
+    self.camera_shake_strength = clampf(float(self.camera_shake_strength), 0.0, 1.0)
+    self.arm_rotation_limit_min_deg = clampf(float(self.arm_rotation_limit_min_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    self.arm_rotation_limit_max_deg = clampf(float(self.arm_rotation_limit_max_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_deg):
+      self.arm_rotation_limit_min_deg, self.arm_rotation_limit_max_deg = float(self.arm_rotation_limit_max_deg), float(self.arm_rotation_limit_min_deg)
+    self.arm_swing_duration_s = clampf(float(self.arm_swing_duration_s), float(self.ARM_SWING_DURATION_MIN_S), float(self.ARM_SWING_DURATION_MAX_S))
+    self.reach = max(0.0, float(self.reach))
+    self.block_break_repeat_interval_s = clampf(float(self.block_break_repeat_interval_s), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MIN), float(self.BLOCK_BREAK_REPEAT_INTERVAL_MAX))
+    self.block_place_repeat_interval_s = clampf(float(self.block_place_repeat_interval_s), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MIN), float(self.BLOCK_PLACE_REPEAT_INTERVAL_MAX))
+    if math.isclose(float(self.block_place_repeat_interval_s), float(self.LEGACY_DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S), rel_tol=0.0, abs_tol=1e-9):
+      self.block_place_repeat_interval_s = float(self.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S)
+    self.block_interact_repeat_interval_s = clampf(float(self.block_interact_repeat_interval_s), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MIN), float(self.BLOCK_INTERACT_REPEAT_INTERVAL_MAX))
+    self.block_break_particle_spawn_rate = clampf(float(self.block_break_particle_spawn_rate), float(self.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MIN), float(self.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MAX))
+    self.block_break_particle_speed_scale = clampf(float(self.block_break_particle_speed_scale), float(self.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MIN), float(self.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MAX))
+    self.window_left = _coerce_optional_int(self.window_left)
+    self.window_top = _coerce_optional_int(self.window_top)
+    self.window_width = max(320, int(self.window_width))
+    self.window_height = max(240, int(self.window_height))
+    self.window_screen_name = str(self.window_screen_name or "").strip()
+
+    azimuth = float(self.sun_az_deg) % 360.0
+    self.sun_az_deg = azimuth if azimuth >= 0.0 else azimuth + 360.0
+    self.sun_el_deg = clampf(float(self.sun_el_deg), 0.0, 90.0)
+
+    self.my_world_hotbar_slots, self.my_world_selected_hotbar_index = _normalize_hotbar_state(self.my_world_hotbar_slots, self.my_world_selected_hotbar_index, size=HOTBAR_SIZE)
+    self.my_world_upper_slots = list(normalize_upper_inventory_slots(self.my_world_upper_slots))
+    self.othello_hotbar_slots, self.othello_selected_hotbar_index = _normalize_hotbar_state(self.othello_hotbar_slots, self.othello_selected_hotbar_index, size=HOTBAR_SIZE)
+    self.route_hotbar_slots, self.route_selected_hotbar_index = _normalize_hotbar_state(self.route_hotbar_slots, self.route_selected_hotbar_index, size=HOTBAR_SIZE)
+
+    self.othello_settings = self.othello_settings.normalized()`,
           },
         ],
       },
@@ -1169,17 +1377,6 @@ self.othello_settings = self.othello_settings.normalized()`,
           {
             kind: 'paragraph',
             text: 'The persisted Othello space schema is broader than settings. It stores player state, world state, `othello_game_state`, and AI players as separate payloads. Settings explain how the preference object is normalized and applied; Data explains the file shape and recovery behavior; Gameplay explains legal Othello moves and match outcome. Treating those three subjects as one page would erase the implementation boundary.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/persistence/schema/othello.py',
-            code: `@dataclass(frozen=True)
-class PersistedOthelloSpace:
-  player: PersistedPlayerState = field(default_factory=PersistedPlayerState)
-  world: PersistedWorldState = field(default_factory=PersistedWorldState)
-  othello_game_state: dict[str, Any] = field(default_factory=dict)
-  ai_players: PersistedAiPlayerCollection = field(default_factory=PersistedAiPlayerCollection)`,
           },
         ],
       },
@@ -1241,6 +1438,25 @@ class OthelloSettings:
             caption: 'src/ludoxel/simulation/spaces/othello/game/settings.py',
             code: `OTHELLO_DIFFICULTIES: tuple[str, ...] = (OTHELLO_DIFFICULTY_WEAK, OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_STRONG, OTHELLO_DIFFICULTY_INSANE, OTHELLO_DIFFICULTY_INSANE_PLUS)
 
+OTHELLO_AI_THREAD_MIN: int = 1
+OTHELLO_AI_THREAD_MAX: int = 8
+OTHELLO_AI_HASH_LEVEL_MIN: int = 0
+OTHELLO_AI_HASH_LEVEL_MAX: int = 6
+OTHELLO_AI_SACRIFICE_LEVEL_MIN: int = 0
+OTHELLO_AI_SACRIFICE_LEVEL_MAX: int = 4
+OTHELLO_BOOK_LEARNING_DEPTH_MIN: int = 0
+OTHELLO_BOOK_LEARNING_DEPTH_MAX: int = 60
+DEFAULT_OTHELLO_THREAD_COUNT: int = 1
+DEFAULT_OTHELLO_HASH_LEVEL: int = 2
+DEFAULT_OTHELLO_SACRIFICE_LEVEL: int = 2
+DEFAULT_OTHELLO_BOOK_LEARNING_DEPTH: int = 55
+DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR: float = 22.0
+DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR: float = 19.0
+DEFAULT_OTHELLO_BOOK_LEAF_ERROR: float = 20.0
+OTHELLO_BOOK_ERROR_MIN: float = 0.0
+OTHELLO_BOOK_ERROR_MAX: float = 24.0
+
+
 def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MEDIUM) -> str:
   raw = str(value).strip().lower()
   if raw in OTHELLO_DIFFICULTIES:
@@ -1290,6 +1506,43 @@ OTHELLO_AI_HASH_LEVEL_MIN: int = 0
 OTHELLO_AI_HASH_LEVEL_MAX: int = 6
 OTHELLO_AI_SACRIFICE_LEVEL_MIN: int = 0
 OTHELLO_AI_SACRIFICE_LEVEL_MAX: int = 4
+OTHELLO_BOOK_LEARNING_DEPTH_MIN: int = 0
+OTHELLO_BOOK_LEARNING_DEPTH_MAX: int = 60
+DEFAULT_OTHELLO_THREAD_COUNT: int = 1
+DEFAULT_OTHELLO_HASH_LEVEL: int = 2
+DEFAULT_OTHELLO_SACRIFICE_LEVEL: int = 2
+DEFAULT_OTHELLO_BOOK_LEARNING_DEPTH: int = 55
+DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR: float = 22.0
+DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR: float = 19.0
+DEFAULT_OTHELLO_BOOK_LEAF_ERROR: float = 20.0
+OTHELLO_BOOK_ERROR_MIN: float = 0.0
+OTHELLO_BOOK_ERROR_MAX: float = 24.0
+
+
+def normalize_difficulty(value: object, *, default: str = OTHELLO_DIFFICULTY_MEDIUM) -> str:
+  raw = str(value).strip().lower()
+  if raw in OTHELLO_DIFFICULTIES:
+    return raw
+  fallback = str(default).strip().lower()
+  if fallback in OTHELLO_DIFFICULTIES:
+    return fallback
+  return OTHELLO_DIFFICULTY_MEDIUM
+
+
+def difficulty_display_name(value: object) -> str:
+  normalized = normalize_difficulty(value)
+  if normalized == OTHELLO_DIFFICULTY_WEAK:
+    return "Weak"
+  if normalized == OTHELLO_DIFFICULTY_MEDIUM:
+    return "Medium"
+  if normalized == OTHELLO_DIFFICULTY_STRONG:
+    return "Strong"
+  if normalized == OTHELLO_DIFFICULTY_INSANE:
+    return "Insane"
+  if normalized == OTHELLO_DIFFICULTY_INSANE_PLUS:
+    return "Insane+"
+  return "Medium"
+
 
 def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THREAD_COUNT) -> int:
   return coerce_clampi(value, default=int(default), lo=int(OTHELLO_AI_THREAD_MIN), hi=int(OTHELLO_AI_THREAD_MAX))`,
@@ -1309,16 +1562,22 @@ def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THRE
             language: 'py',
             caption: 'src/ludoxel/simulation/spaces/othello/engines/worker.py',
             code: `def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int, project_root: str, sacrifice_level: int, hash_level: int) -> int | None:
-  return choose_ai_move(
+  return choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_process_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
+
+
+def _compute_analysis(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int, project_root: str, sacrifice_level: int, hash_level: int):
+  return analyze_position(
     board,
     side,
     difficulty,
-    seed=int(seed),
-    generation=int(generation),
-    project_root=project_root,
+    random_seed=int(seed),
+    project_root=str(project_root),
+    strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S),
+    insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S),
+    match_generation=int(generation),
+    insane_cache=_process_cache(),
     sacrifice_level=int(sacrifice_level),
-    hash_level=int(hash_level),
-  )`,
+    hash_level=int(hash_level),`,
           },
         ],
       },
@@ -1356,6 +1615,9 @@ def normalize_thread_count(value: object, *, default: int = DEFAULT_OTHELLO_THRE
             caption: 'src/ludoxel/simulation/spaces/othello/game/settings.py',
             code: `OTHELLO_BOOK_LEARNING_DEPTH_MIN: int = 0
 OTHELLO_BOOK_LEARNING_DEPTH_MAX: int = 60
+DEFAULT_OTHELLO_THREAD_COUNT: int = 1
+DEFAULT_OTHELLO_HASH_LEVEL: int = 2
+DEFAULT_OTHELLO_SACRIFICE_LEVEL: int = 2
 DEFAULT_OTHELLO_BOOK_LEARNING_DEPTH: int = 55
 DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR: float = 22.0
 DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR: float = 19.0
@@ -1377,12 +1639,12 @@ OTHELLO_BOOK_ERROR_MAX: float = 24.0`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/spaces/othello/books/learning.py',
-            code: `normalized_depth = normalize_book_learning_depth(depth)
-normalized_per_move_error = normalize_book_error(per_move_error, default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR))
-normalized_cumulative_error = normalize_book_error(cumulative_error, default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR))
-normalized_leaf_error = normalize_book_error(leaf_error, default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR))
-normalized_hash_level = normalize_hash_level(hash_level, default=DEFAULT_OTHELLO_HASH_LEVEL)
-normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=DEFAULT_OTHELLO_SACRIFICE_LEVEL)`,
+            code: `  normalized_depth = normalize_book_learning_depth(depth)
+  normalized_per_move_error = normalize_book_error(per_move_error, default=float(DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR))
+  normalized_cumulative_error = normalize_book_error(cumulative_error, default=float(DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR))
+  normalized_leaf_error = normalize_book_error(leaf_error, default=float(DEFAULT_OTHELLO_BOOK_LEAF_ERROR))
+  normalized_hash_level = normalize_hash_level(hash_level, default=DEFAULT_OTHELLO_HASH_LEVEL)
+  normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=DEFAULT_OTHELLO_SACRIFICE_LEVEL)`,
           },
         ],
       },
@@ -1418,12 +1680,19 @@ normalized_sacrifice_level = normalize_sacrifice_level(sacrifice_level, default=
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/naming.py',
-            code: `AI_NAME_BODY_MAX_LENGTH: int = 16
+            code: `AI_NAME_BODY_MIN_LENGTH: int = 1
+AI_NAME_BODY_MAX_LENGTH: int = 16
 AI_NAME_SUFFIX_MIN: int = 1
 AI_NAME_SUFFIX_MAX: int = 9999
+AI_DEFAULT_NAME_BODY: str = "AI"
 
-_AI_NAME_BODY_PATTERN = re.compile(r"\A[A-Za-z][A-Za-z0-9]{0,15}\Z")
-_AI_NAME_SUFFIX_PATTERN = re.compile(r"\A[0-9]{4}\Z")
+_AI_NAME_BODY_PATTERN = re.compile(r"\\A[A-Za-z][A-Za-z0-9]{0,15}\\Z")
+_AI_NAME_SUFFIX_PATTERN = re.compile(r"\\A[0-9]{4}\\Z")
+
+
+def ai_plain_display_name(name: object) -> str:
+  return strip_formatting(str(name)).strip()
+
 
 def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
   text = ai_plain_display_name(name)
@@ -1449,11 +1718,103 @@ def split_ai_display_name(name: object) -> tuple[str, int | None] | None:
             code: `_AI_NAME_SUFFIX_TEXT_LENGTH = 5
 _AI_NAME_FORMAT_CODE_ALLOWANCE = 16
 _AI_NAME_INPUT_MAX_LENGTH = int(AI_NAME_BODY_MAX_LENGTH) + int(_AI_NAME_SUFFIX_TEXT_LENGTH) + int(_AI_NAME_FORMAT_CODE_ALLOWANCE)
+_REGEN_CAP_MIN_UI = 1.0
+_REGEN_CAP_MAX_UI = 20.0
+_REGEN_DELAY_MIN_UI = 0.0
+_REGEN_DELAY_MAX_UI = 60.0
+_REGEN_TIME_TO_CAP_MIN_UI = 0.5
+_REGEN_TIME_TO_CAP_MAX_UI = 3600.0
 
-self._name_edit = QLineEdit(body)
-self._name_edit.setMaxLength(int(_AI_NAME_INPUT_MAX_LENGTH))
-self._name_edit.setPlaceholderText("Example: Guard or Guard#0001")
-add_setting_row(body_layout, body, label="Name", description="Shown in the world nametag above this AI.", control=self._name_edit)`,
+
+class AiSettingsOverlay(SidebarDialogBase):
+  preview_requested = pyqtSignal()
+
+  def __init__(
+    self,
+    *,
+    parent: QWidget | None = None,
+    settings: AiSpawnEggSettings,
+    name_validator: Callable[[str], str | None] | None = None,
+    settings_updater: Callable[[AiSpawnEggSettings], bool] | None = None,
+    skin_importer: Callable[[str], str | None] | None = None,
+    skin_available: Callable[[str], bool] | None = None,
+    learning_controller: "AiLearningTabController | None" = None,
+    learning_controller_factory: Callable[[], "AiLearningTabController"] | None = None,
+    as_window: bool = False,
+    include_preview_button: bool = True,
+  ) -> None:
+    super().__init__(parent, as_window=as_window, root_object_name="settingsRoot", window_title="AI Settings", window_size=(1000, 740), minimum_window_size=(900, 660), panel_minimum_size=(840, 580), sidebar_object_name="settingsSidebar", content_object_name="settingsContent", stack_object_name="settingsStack")
+    self._settings = settings.normalized()
+    self._name_validator = name_validator
+    self._settings_updater = settings_updater
+    self._skin_importer = skin_importer
+    self._skin_available = skin_available
+    self._learning_controller = learning_controller
+    self._learning_controller_factory = learning_controller_factory
+    self._learning_page_built = False
+    self._learning_page_build_scheduled = False
+    self._learning_initial_thread: _LearningTaskThread | None = None
+    self._learning_page_index: int | None = None
+    self._learning_placeholder_page: QWidget | None = None
+    self._learning_loader_label: QLabel | None = None
+    self._learning_loader_progress: QProgressBar | None = None
+    self._skin_availability_cache: dict[str, bool] = {}
+    self._skin_availability_check_scheduled = False
+    self._edit_route_requested = False
+    self._delete_requested = False
+
+    self._tab_identity = self._make_tab_button("Identity", 0, self._set_page)
+    self._tab_display = self._make_tab_button("Display", 1, self._set_page)
+    self._tab_skin = self._make_tab_button("Skin", 2, self._set_page)
+    self._tab_health = self._make_tab_button("Health", 3, self._set_page)
+    self._tab_behavior = self._make_tab_button("Behavior", 4, self._set_page)
+    self._tab_placement = self._make_tab_button("Block Placement", 5, self._set_page)
+    tab_buttons = [self._tab_identity, self._tab_display, self._tab_skin, self._tab_health, self._tab_behavior, self._tab_placement]
+    self._tab_learning: QPushButton | None = None
+    if self._learning_controller is not None or self._learning_controller_factory is not None:
+      self._tab_learning = self._make_tab_button("Learning", len(tab_buttons), self._set_page)
+      tab_buttons.append(self._tab_learning)
+    self._tab_buttons = tuple(tab_buttons)
+    for button in self._tab_buttons:
+      self._sidebar_layout.addWidget(button)
+    self._preview_button: QPushButton | None = None
+    if bool(include_preview_button):
+      self._preview_button = self._make_sidebar_action_button("Preview", self.preview_requested.emit)
+      self._sidebar_layout.addWidget(self._preview_button)
+    self._sidebar_layout.addStretch(1)
+
+    self._delete_button = self._make_tab_button("Delete AI", 0, self._request_delete)
+    self._delete_button.setObjectName("dangerBtn")
+    self._delete_button.setCheckable(False)
+    self._delete_button.setAutoExclusive(False)
+    self._sidebar_layout.addWidget(self._delete_button)
+    self._close_button: QPushButton | None = None
+    if not bool(as_window):
+      self._close_button = self._make_sidebar_action_button("Close", self.reject)
+      self._sidebar_layout.addWidget(self._close_button)
+
+    self._build_identity_page()
+    self._build_display_page()
+    self._build_skin_page()
+    self._build_health_page()
+    self._build_behavior_page()
+    self._build_placement_page()
+    if self._learning_controller is not None or self._learning_controller_factory is not None:
+      self._build_learning_placeholder_page()
+    self._load_settings(self._settings)
+    self._connect_immediate_updates()
+    self._sync_route_controls()
+    self._sync_regen_controls()
+    self._set_page(0)
+
+  def _build_identity_page(self) -> None:
+    scroll, host, layout = self._make_scroll_page()
+    add_page_header(layout, host, title="Identity", subtitle="Name and world nametag identity for this AI.")
+    _card, body, body_layout = add_settings_card(layout, host, title="AI Name", description="Use 1 to 16 letters or digits, beginning with a letter. An optional suffix from #0001 to #9999 can distinguish AI that share a name body. Recognized § color codes are display formatting; the plain name must still be unique.")
+    self._name_edit = QLineEdit(body)
+    self._name_edit.setMaxLength(int(_AI_NAME_INPUT_MAX_LENGTH))
+    self._name_edit.setPlaceholderText("Example: Guard or Guard#0001")
+    add_setting_row(body_layout, body, label="Name", description="Shown in the world nametag above this AI.", control=self._name_edit)`,
           },
         ],
       },
@@ -1493,6 +1854,41 @@ add_setting_row(body_layout, body, label="Name", description="Shown in the world
 AI_SKIN_MODE_TIMO: str = "timo"
 AI_SKIN_MODE_CUSTOM: str = "custom"
 
+
+def normalize_ai_mode(value: object) -> str:
+  raw = str(value).strip().lower()
+  if raw == AI_MODE_IDLE:
+    return AI_MODE_IDLE
+  if raw == AI_MODE_ROUTE:
+    return AI_MODE_ROUTE
+  return AI_MODE_WANDER
+
+
+def normalize_ai_personality(value: object) -> str:
+  raw = str(value).strip().lower()
+  if raw == AI_PERSONALITY_PEACEFUL:
+    return AI_PERSONALITY_PEACEFUL
+  return AI_PERSONALITY_AGGRESSIVE
+
+
+def normalize_ai_route_style(value: object) -> str:
+  raw = str(value).strip().lower()
+  if raw == AI_ROUTE_STYLE_FLEXIBLE:
+    return AI_ROUTE_STYLE_FLEXIBLE
+  return AI_ROUTE_STYLE_STRICT
+
+
+def normalize_ai_health_indicator(value: object) -> str:
+  raw = str(value).strip().lower()
+  if raw == AI_HEALTH_INDICATOR_OFF:
+    return AI_HEALTH_INDICATOR_OFF
+  if raw == AI_HEALTH_INDICATOR_ABOVE:
+    return AI_HEALTH_INDICATOR_ABOVE
+  if raw == AI_HEALTH_INDICATOR_BELOW:
+    return AI_HEALTH_INDICATOR_BELOW
+  return AI_HEALTH_INDICATOR_ABOVE
+
+
 def normalize_ai_skin_mode(value: object) -> str:
   raw = str(value).strip().lower()
   if raw == AI_SKIN_MODE_TIMO:
@@ -1500,6 +1896,7 @@ def normalize_ai_skin_mode(value: object) -> str:
   if raw == AI_SKIN_MODE_CUSTOM:
     return AI_SKIN_MODE_CUSTOM
   return AI_SKIN_MODE_PLAYER
+
 
 def normalize_ai_skin_id(value: object) -> str:
   raw = str(value or "").strip().lower()
@@ -1516,23 +1913,6 @@ def normalize_ai_skin_id(value: object) -> str:
           {
             kind: 'paragraph',
             text: 'The AI Settings overlay uses one combo box for the source. Opening the overlay does not decode the stored custom skin file before the Identity page is shown. Initial status text can report that an imported skin id is stored and will be checked when the Skin page opens; selecting the Skin page first switches to the page, then schedules the availability callback through a zero-delay `QTimer`. If the user selects Imported PNG and no available imported skin exists, the importer runs. An import failure restores the previous mode and leaves the actor on a resolved skin source.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `def _set_page(self, index: int) -> None:
-  selected_index = self._set_stack_page(index=index, max_index=len(self._tab_buttons) - 1, tab_buttons=self._tab_buttons)
-  if int(selected_index) == 2:
-    self._sync_skin_controls(check_availability=False)
-    self._schedule_skin_availability_check()
-
-def _load_settings(self, settings: AiSpawnEggSettings) -> None:
-  self._settings = settings.normalized()
-  self._name_edit.setText(str(self._settings.name))
-  self._set_combo_value(self._health_indicator_combo, str(self._settings.health_indicator))
-  self._set_combo_value(self._skin_mode_combo, str(self._settings.skin_mode))
-  self._sync_skin_controls(check_availability=False)`,
           },
         ],
       },
@@ -1564,26 +1944,6 @@ def _load_settings(self, settings: AiSpawnEggSettings) -> None:
             kind: 'paragraph',
             text: 'AI behavior values are held in `AiSpawnEggSettings` while editing and in `AiPlayerState` while the actor is alive. The shared fields include mode, personality, block-placement permission, health indicator, regeneration parameters, route points, route loop state, route run flag, and route style. The object is a bounded state vector. Script interfaces and arbitrary world-data mutation permissions are outside that vector.',
           },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/simulation/actors/ai_players/settings.py',
-            code: `@dataclass(frozen=True)
-class AiSpawnEggSettings:
-  mode: str = AI_MODE_IDLE
-  personality: str = AI_PERSONALITY_AGGRESSIVE
-  can_place_blocks: bool = False
-  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
-  auto_regen_enabled: bool = AI_REGEN_DEFAULT_ENABLED
-  regen_start_delay_s: float = AI_REGEN_DEFAULT_START_DELAY_S
-  regen_interval_s: float = AI_REGEN_DEFAULT_INTERVAL_S
-  regen_amount_hp: float = AI_REGEN_DEFAULT_AMOUNT_HP
-  regen_cap_hp: float = AI_REGEN_DEFAULT_CAP_HP
-  route_points: tuple[AiRoutePoint, ...] = ()
-  route_closed: bool = False
-  route_run: bool = False
-  route_style: str = AI_ROUTE_STYLE_STRICT`,
-          },
         ],
       },
       {
@@ -1606,6 +1966,7 @@ class AiSpawnEggSettings:
     return AI_MODE_ROUTE
   return AI_MODE_WANDER
 
+
 def normalize_ai_personality(value: object) -> str:
   raw = str(value).strip().lower()
   if raw == AI_PERSONALITY_PEACEFUL:
@@ -1626,13 +1987,13 @@ def normalize_ai_personality(value: object) -> str:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `def _persist_current_settings(self, _value=None) -> bool:
-  candidate = self.settings()
-  if self._current_name_error() is not None:
-    candidate = replace(candidate, name=str(self._settings.name)).normalized()
-  if str(candidate.mode) == AI_MODE_ROUTE and len(candidate.route_points) < 2:
-    candidate = replace(candidate, mode=str(self._settings.mode)).normalized()
-  return self._persist_candidate(candidate)`,
+            code: `  def _persist_current_settings(self, _value=None) -> bool:
+    candidate = self.settings()
+    if self._current_name_error() is not None:
+      candidate = replace(candidate, name=str(self._settings.name)).normalized()
+    if str(candidate.mode) == AI_MODE_ROUTE and len(candidate.route_points) < 2:
+      candidate = replace(candidate, mode=str(self._settings.mode)).normalized()
+    return self._persist_candidate(candidate)`,
           },
           {
             kind: 'note',
@@ -1664,18 +2025,6 @@ def normalize_ai_personality(value: object) -> str:
           {
             kind: 'paragraph',
             text: '`AiSettingsOverlay` can receive a `learning_controller_factory` instead of an already constructed controller. Opening AI Settings shows the Identity page without constructing `AiLearningController`, scanning bundled or user policies, reading dataset summaries, or resolving the policy folder label. When the Learning tab is selected, the tab area first shows the same loader shell used by the Settings About page through `create_settings_loader_page`; a `_LearningTaskThread` then creates or reuses the controller and gathers policy options, dataset summary, and the policy path before the Learning controls are assembled on the UI thread. Training and evaluation actions still run through the existing background task thread once the page exists.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `_LEARNING_MODE_LABELS: tuple[tuple[str, str], ...] = (
-  (LEARNING_MODE_OFF, "Off"),
-  (LEARNING_MODE_OBSERVE_ONLY, "Observe Only"),
-  (LEARNING_MODE_USE_LEARNED_POLICY, "Use Learned Policy"),
-  (LEARNING_MODE_TRAIN_FROM_PLAYER_DATA, "Train From Player Data"),
-  (LEARNING_MODE_TRAIN_IN_SANDBOX, "Train In Sandbox"),
-)`,
           },
         ],
       },
@@ -1719,14 +2068,14 @@ def is_active_learning_mode(mode: object) -> bool:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schema/ai_learning.py',
-            code: `def recording_enabled(self) -> bool:
-  return normalize_learning_mode(self.learning_mode) == LEARNING_MODE_OBSERVE_ONLY
+            code: `  def recording_enabled(self) -> bool:
+    return normalize_learning_mode(self.learning_mode) == LEARNING_MODE_OBSERVE_ONLY
 
-def captured_kinds(self) -> tuple[str, ...]:
-  if not self.recording_enabled():
-    return ()
-  normalized = _normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False)
-  return tuple(kind for kind in RECORD_KINDS if bool(normalized.get(kind, False)))`,
+  def captured_kinds(self) -> tuple[str, ...]:
+    if not self.recording_enabled():
+      return ()
+    normalized = _normalize_flag_map(self.capture_flags, keys=RECORD_KINDS, default=False)
+    return tuple(kind for kind in RECORD_KINDS if bool(normalized.get(kind, False)))`,
           },
           {
             kind: 'note',
@@ -1759,16 +2108,16 @@ def captured_kinds(self) -> tuple[str, ...]:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `def _on_learning_mode_changed(self, _index: int = 0) -> None:
-  mode = str(self._learning_mode_combo.currentData())
-  self._sync_learning_mode_notice()
-  if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:
-    self._run_learning_task(self._learning_controller.train_from_player_data, self._on_training_done, busy_text="Training from player data...")
-    return
-  if mode == LEARNING_MODE_TRAIN_IN_SANDBOX:
-    self._run_learning_task(self._learning_controller.train_in_sandbox, self._on_training_done, busy_text="Training in sandbox...")
-    return
-  self._learning_controller.set_learning_mode(mode)`,
+            code: `  def _on_learning_mode_changed(self, _index: int = 0) -> None:
+    mode = str(self._learning_mode_combo.currentData())
+    self._sync_learning_mode_notice()
+    if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:
+      self._run_learning_task(self._learning_controller.train_from_player_data, self._on_training_done, busy_text="Training from player data...")
+      return
+    if mode == LEARNING_MODE_TRAIN_IN_SANDBOX:
+      self._run_learning_task(self._learning_controller.train_in_sandbox, self._on_training_done, busy_text="Training in sandbox...")
+      return
+    self._learning_controller.set_learning_mode(mode)`,
           },
         ],
       },
@@ -1784,19 +2133,19 @@ def captured_kinds(self) -> tuple[str, ...]:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_learning_controller.py',
-            code: `dataset_id = str(self._state.settings.dataset_id)
-records, corrupt = self._store.iter_demonstration_records(dataset_id)
-summary = self._store.dataset_summary(dataset_id)
-next_version = int(self._state.policy_version) + 1
-result = TrainingService().train_from_player_data(
-  records,
-  policy_id=USER_PLAYER_POLICY_ID,
-  policy_name="User Learned Policy",
-  dataset_id=dataset_id,
-  dataset_size=int(summary.record_count),
-  policy_version=int(next_version),
-  corrupt_lines=int(corrupt),
-)`,
+            code: `    dataset_id = str(self._state.settings.dataset_id)
+    records, corrupt = self._store.iter_demonstration_records(dataset_id)
+    summary = self._store.dataset_summary(dataset_id)
+    next_version = int(self._state.policy_version) + 1
+    result = TrainingService().train_from_player_data(records, policy_id=USER_PLAYER_POLICY_ID, policy_name="User Learned Policy", dataset_id=dataset_id, dataset_size=int(summary.record_count), policy_version=int(next_version), corrupt_lines=int(corrupt))
+    run_id = f"train_player_{int(time.time())}"
+    if result.policy is None:
+      self._store.save_training_run(run_id, {**result.to_dict(), "mode": "train_from_player_data"})
+      self._save(last_training_summary=result.to_dict())
+      return {"status": str(result.status), "message": str(result.message), "policy_id": "", "passed": False, "policy_path": "", "evaluation_path": ""}
+    report = run_evaluation(result.policy)
+    artifact = result.policy.to_dict()
+    artifact["evaluation"] = report.to_dict()`,
           },
         ],
       },
@@ -1812,9 +2161,9 @@ result = TrainingService().train_from_player_data(
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_learning_controller.py',
-            code: `base = self._raw_selected_policy()
-next_version = int(self._state.policy_version) + 1
-result = sandbox_train(policy_id=USER_SANDBOX_POLICY_ID, policy_name="Sandbox Learned Policy", base_policy=base, policy_version=int(next_version), iterations=1)`,
+            code: `    base = self._raw_selected_policy()
+    next_version = int(self._state.policy_version) + 1
+    result = sandbox_train(policy_id=USER_SANDBOX_POLICY_ID, policy_name="Sandbox Learned Policy", base_policy=base, policy_version=int(next_version), iterations=1)`,
           },
           {
             kind: 'paragraph',
@@ -1844,14 +2193,14 @@ result = sandbox_train(policy_id=USER_SANDBOX_POLICY_ID, policy_name="Sandbox Le
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_settings.py',
-            code: `def _sync_learning_policy_id_enabled(self) -> None:
-  kind = str(self._learning_policy_kind_combo.currentData())
-  self._learning_policy_id_combo.setEnabled(kind in (POLICY_KIND_BUNDLED, POLICY_KIND_USER))
+            code: `  def _sync_learning_policy_id_enabled(self) -> None:
+    kind = str(self._learning_policy_kind_combo.currentData())
+    self._learning_policy_id_combo.setEnabled(kind in (POLICY_KIND_BUNDLED, POLICY_KIND_USER))
 
-def _on_learning_policy_changed(self, _index: int = 0) -> None:
-  kind = str(self._learning_policy_kind_combo.currentData())
-  policy_id = str(self._learning_policy_id_combo.currentData() or "")
-  self._learning_controller.set_policy(kind, policy_id)`,
+  def _on_learning_mode_changed(self, _index: int = 0) -> None:
+    mode = str(self._learning_mode_combo.currentData())
+    self._sync_learning_mode_notice()
+    if mode == LEARNING_MODE_TRAIN_FROM_PLAYER_DATA:`,
           },
         ],
       },
@@ -1867,31 +2216,31 @@ def _on_learning_policy_changed(self, _index: int = 0) -> None:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/overlays/ai_learning_controller.py',
-            code: `def _raw_selected_policy(self) -> Policy | None:
-  settings = self._state.settings
-  kind = str(settings.selected_policy_kind)
-  if kind == POLICY_KIND_USER:
-    return self._load_user_policy(settings.selected_policy_id)
-  if kind == POLICY_KIND_BUNDLED:
-    requested = str(settings.selected_policy_id).strip()
-    for policy in self._registry.bundled_policies():
-      if not requested or str(policy.policy_id) == requested:
-        return policy
-    return None
-  if kind == POLICY_KIND_BUILTIN:
-    return builtin_deterministic_policy()
-  return None`,
+            code: `  def _raw_selected_policy(self) -> Policy | None:
+    settings = self._state.settings
+    kind = str(settings.selected_policy_kind)
+    if kind == POLICY_KIND_USER:
+      return self._load_user_policy(settings.selected_policy_id)
+    if kind == POLICY_KIND_BUNDLED:
+      requested = str(settings.selected_policy_id).strip()
+      for policy in self._registry.bundled_policies():
+        if not requested or str(policy.policy_id) == requested:
+          return policy
+      return None
+    if kind == POLICY_KIND_BUILTIN:
+      return builtin_deterministic_policy()
+    return None`,
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/learning/coordinator.py',
-            code: `def policy_enabled(self) -> bool:
-  return self._mode == LEARNING_RUNTIME_USE_LEARNED_POLICY and isinstance(self._policy, Policy) and bool(self._policy.is_usable())
+            code: `  def policy_enabled(self) -> bool:
+    return self._mode == LEARNING_RUNTIME_USE_LEARNED_POLICY and isinstance(self._policy, Policy) and bool(self._policy.is_usable())
 
-def decide(self, observation: AiObservation, mask: AiActionMask) -> PolicyDecision:
-  policy = self._policy if self.policy_enabled() else None
-  return self._deterministic.decide(observation, mask, policy)`,
+  def decide(self, observation: AiObservation, mask: AiActionMask) -> PolicyDecision:
+    policy = self._policy if self.policy_enabled() else None
+    return self._deterministic.decide(observation, mask, policy)`,
           },
         ],
       },

@@ -24,9 +24,7 @@ fn ray_aabb_face(ox: f64, oy: f64, oz: f64, dx: f64, dy: f64, dz: f64, mnx: f64,
 #[allow(clippy::too_many_arguments)]
 #[pyfunction]
 fn dda_grid_traverse_batch(py: Python<'_>, ox: f64, oy: f64, oz: f64, dx: f64, dy: f64, dz: f64, t_max: f64, cell_size: f64) -> PyResult<Py<PyBytes>> {
-  let hits = py
-    .detach(move || dda::dda_grid_traverse(ox, oy, oz, dx, dy, dz, t_max, cell_size))
-    .map_err(PyValueError::new_err)?;
+  let hits = py.detach(move || dda::dda_grid_traverse(ox, oy, oz, dx, dy, dz, t_max, cell_size)).map_err(PyValueError::new_err)?;
 
   let mut buffer: Vec<u8> = Vec::with_capacity(hits.len() * 36);
   for hit in &hits {

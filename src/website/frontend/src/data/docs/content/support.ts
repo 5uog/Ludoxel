@@ -39,13 +39,13 @@ export const supportPages: DocsPageContent[] = [
             code: `name: Limited problem report
 description: Report a reproducible non-security problem without submitting Contribution Materials.
 title: '[Problem]: '
+labels: []
 body:
   - type: markdown
     attributes:
       value: |
         This public form is limited to reproducible, non-security problems in the Current Repository or an Official Distribution of Ludoxel.
-
-        Do not use this form to submit Contribution Materials.`,
+`,
           },
           {
             kind: 'paragraph',
@@ -70,39 +70,6 @@ body:
             text: 'The required fields separate the report into distinct evidentiary functions. The summary identifies the observed problem. The reproduction field states the public sequence that produces it. The expected and actual fields force the reporter to distinguish normative expectation from observation. That separation produces a report evaluable as a reproducible non-security defect.',
           },
           {
-            kind: 'code',
-            language: 'yaml',
-            caption: 'The problem-report template makes the core evidentiary fields mandatory.',
-            code: `- type: textarea
-  id: summary
-  attributes:
-    label: Problem summary
-  validations:
-    required: true
-
-- type: textarea
-  id: reproduction
-  attributes:
-    label: Reproduction steps
-    description: Provide only public, non-sensitive steps that reproduce the problem.
-  validations:
-    required: true
-
-- type: textarea
-  id: expected
-  attributes:
-    label: Expected behavior
-  validations:
-    required: true
-
-- type: textarea
-  id: actual
-  attributes:
-    label: Actual behavior
-  validations:
-    required: true`,
-          },
-          {
             kind: 'paragraph',
             text: 'Each field carries a distinct evidentiary load, and collapsing them defeats the separation the template enforces. The `reproduction` field records the public action sequence that produces the behavior; the `expected` field records the normative result the reporter relied on; the `actual` field records the build result. Maintainer review owns diagnosis, the Repository Contribution Policy classifies a patch as excluded Contribution Material, and the additional-context field admits public, non-sensitive evidence. The issue closes as a public record of observable behavior; the LICENSE governs any incorporation of supplied material into Ludoxel.',
           },
@@ -120,17 +87,17 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The acknowledgement section requires the reporter to exclude security-sensitive and contribution material.',
-            code: `- type: checkboxes
-  id: acknowledgement
-  attributes:
-    label: Acknowledgement
-    options:
-      - label: I understand that this Public Issue must not contain security-sensitive details or non-public reproduction information.
-        required: true
-      - label: I understand that this Public Issue must not contain Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals.
-        required: true
-      - label: I understand that public GitHub features and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the LICENSE.
-        required: true`,
+            code: `  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I understand that this Public Issue must not contain security-sensitive details or non-public reproduction information.
+          required: true
+        - label: I understand that this Public Issue must not contain Contribution Materials, replacement text, design assets, datasets, generated files, shader rewrites, or implementation proposals.
+          required: true
+        - label: I understand that public GitHub features and the GitHub Platform Terms do not grant permission to Use the Original Materials beyond the LICENSE.
+          required: true`,
           },
           {
             kind: 'note',
@@ -171,17 +138,17 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The reproduction field requires only public, non-sensitive steps.',
-            code: `- type: textarea
-  id: reproduction
-  attributes:
-    label: Reproduction steps
-    description: Provide only public, non-sensitive steps that reproduce the problem.
-    placeholder: |
-      1.
-      2.
-      3.
-  validations:
-    required: true`,
+            code: `  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide only public, non-sensitive steps that reproduce the problem.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true`,
           },
           {
             kind: 'paragraph',
@@ -257,14 +224,14 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The problem-report template keeps environment evidence optional but specific.',
-            code: `- type: input
-  id: environment
-  attributes:
-    label: Environment
-    description: Operating system, Python version, PyQt6 version, GPU/OpenGL details, or package/build path if relevant.
-    placeholder: Windows 11, Python 3.13, PyQt6 6.6, OpenGL 4.3 capable GPU
-  validations:
-    required: false`,
+            code: `  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, PyQt6 version, GPU/OpenGL details, or package/build path if relevant.
+      placeholder: Windows 11, Python 3.13, PyQt6 6.6, OpenGL 4.3 capable GPU
+    validations:
+      required: false`,
           },
           {
             kind: 'paragraph',
@@ -340,13 +307,13 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The additional-context field is limited to public, non-sensitive material.',
-            code: `- type: textarea
-  id: additional-context
-  attributes:
-    label: Additional public context
-    description: Add only public, non-sensitive context necessary to understand the problem.
-  validations:
-    required: false`,
+            code: `  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional public context
+      description: Add only public, non-sensitive context necessary to understand the problem.
+    validations:
+      required: false`,
           },
           {
             kind: 'paragraph',
@@ -429,6 +396,7 @@ body:
             code: `name: Security contact request
 description: Request a Private Reporting Channel for a suspected vulnerability. Do not include vulnerability details here.
 title: '[Security Contact Request]: '
+labels: []
 body:
   - type: markdown
     attributes:
@@ -460,27 +428,6 @@ body:
             text: 'The public form permits only a minimal category-level summary and an optional non-sensitive contact method. Those fields are intentionally insufficient to evaluate the vulnerability. Their function is to create a private communication path without placing exploit-enabling information into a public issue.',
           },
           {
-            kind: 'code',
-            language: 'yaml',
-            caption: 'The public fields allow only a minimal summary and optional contact method.',
-            code: `- type: textarea
-  id: limited-summary
-  attributes:
-    label: Limited public summary
-    description: Provide only a minimal category-level description suitable for a Public Issue.
-    placeholder: I would like to report a suspected vulnerability affecting the Current Repository or an Official Distribution.
-  validations:
-    required: true
-
-- type: input
-  id: contact
-  attributes:
-    label: Preferred reply method
-    description: Provide a non-sensitive contact method only if you want to receive a reply outside this Public Issue.
-  validations:
-    required: false`,
-          },
-          {
             kind: 'paragraph',
             text: 'The limited summary must identify only the broad category of concern and the affected supported scope. It must not identify the vulnerable mechanism, affected private URL, exploit payload, proof of concept, secret-bearing log, private file path, or non-public reproduction path.',
           },
@@ -498,17 +445,17 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The acknowledgement section excludes vulnerability detail and testing overreach.',
-            code: `- type: checkboxes
-  id: acknowledgement
-  attributes:
-    label: Acknowledgement
-    options:
-      - label: I have not included vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, or other non-public reproduction information in this Public Issue.
-        required: true
-      - label: I understand that this request does not grant permission to Use the Original Materials beyond the LICENSE.
-        required: true
-      - label: I understand that any Security Testing must remain lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data that I am authorized to test.
-        required: true`,
+            code: `  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I have not included vulnerability details, exploit steps, proof-of-concept code, sensitive URLs, credentials, tokens, cookies, logs containing secrets, private local files, or other non-public reproduction information in this Public Issue.
+          required: true
+        - label: I understand that this request does not grant permission to Use the Original Materials beyond the LICENSE.
+          required: true
+        - label: I understand that any Security Testing must remain lawful, non-destructive, good-faith, and limited to systems, accounts, files, and data that I am authorized to test.
+          required: true`,
           },
         ],
       },
@@ -622,14 +569,6 @@ body:
           {
             kind: 'paragraph',
             text: 'Exploit detail is excluded from public support channels because public disclosure changes the risk profile of the report. A public issue, pull request, discussion, social post, or comment is readable by parties who are not part of the private evaluation process. The Security Reporting Policy therefore requires suspected vulnerability detail to remain out of public channels.',
-          },
-          {
-            kind: 'code',
-            language: 'yaml',
-            caption: 'The security-contact template states the public exclusion directly.',
-            code: `attributes:
-  value: |
-    Do not disclose vulnerability details, exploit steps, proof-of-concept code, credentials, tokens, cookies, logs containing secrets, private local files, third-party confidential information, or non-public reproduction information in this Public Issue.`,
           },
           {
             kind: 'paragraph',
@@ -777,13 +716,13 @@ body:
             code: `name: Limited question
 description: Ask a limited repository question without submitting Contribution Materials.
 title: '[Question]: '
+labels: []
 body:
   - type: markdown
     attributes:
       value: |
         This public form is limited to questions about repository policy, the LICENSE, Third-Party Materials, Ordinary Application Use, packaging status, or the Security Reporting Policy.
-
-        Do not use this form to submit Contribution Materials.`,
+`,
           },
           {
             kind: 'paragraph',
@@ -803,19 +742,19 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The template restricts the question to enumerated topic classes.',
-            code: `- type: dropdown
-  id: topic
-  attributes:
-    label: Topic
-    options:
-      - Repository policy
-      - License or Third-Party Materials
-      - Ordinary Application Use
-      - Packaging or build status
-      - Security Reporting Policy
-      - Other limited question
-  validations:
-    required: true`,
+            code: `  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - Repository policy
+        - License or Third-Party Materials
+        - Ordinary Application Use
+        - Packaging or build status
+        - Security Reporting Policy
+        - Other limited question
+    validations:
+      required: true`,
           },
           {
             kind: 'paragraph',
@@ -843,13 +782,13 @@ body:
             kind: 'code',
             language: 'yaml',
             caption: 'The question field excludes Contribution Materials and non-public security information.',
-            code: `- type: textarea
-  id: question
-  attributes:
-    label: Question
-    description: Ask the limited question without submitting Contribution Materials, proposed repository content, or non-public security information.
-  validations:
-    required: true`,
+            code: `  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: Ask the limited question without submitting Contribution Materials, proposed repository content, or non-public security information.
+    validations:
+      required: true`,
           },
         ],
       },

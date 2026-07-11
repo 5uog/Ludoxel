@@ -35,10 +35,7 @@ fn surface_heights(py: Python<'_>, seed: i64, version: u32, mode: u32, flat_grou
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
 fn terrain_materials(py: Python<'_>, seed: i64, version: u32, mode: u32, flat_ground_y: i32, x0: i64, y0: i64, z0: i64, nx: usize, ny: usize, nz: usize) -> PyResult<Py<PyBytes>> {
-  let cells = nx
-    .checked_mul(ny)
-    .and_then(|v| v.checked_mul(nz))
-    .ok_or_else(|| PyValueError::new_err("terrain_materials extent overflows"))?;
+  let cells = nx.checked_mul(ny).and_then(|v| v.checked_mul(nz)).ok_or_else(|| PyValueError::new_err("terrain_materials extent overflows"))?;
   if cells > MAX_MATERIAL_CELLS {
     return Err(PyValueError::new_err("terrain_materials extent exceeds the supported cell budget"));
   }

@@ -1,0 +1,52 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Kento Konishi
+ * SPDX-License-Identifier: LicenseRef-All-Rights-Reserved
+ */
+import { buildRustFormatCommand } from '../../rust/command/build.command.mjs';
+import { discoverRustTargets } from '../../rust/target/discover.target.mjs';
+import { helpMessagesFor } from './message.help.mjs';
+
+function lines(values) {
+  return values.join('\n');
+}
+
+function option(flag, description) {
+  return `  ${flag.padEnd(28)} ${description}`;
+}
+
+function section(title, content) {
+  return `${title}\n${content}`;
+}
+
+function taskText(task, language) {
+  const text = task.text?.[language] || task.text?.ja || task.text?.en || {};
+  return {
+    description: text.description || task.name,
+  };
+}
+
+export function renderRustSourceQualityHelp(task, language = 'ja', env = process.env) {
+  const messages = helpMessagesFor(language);
+  const text = taskText(task, language);
+  const targets = discoverRustTargets();
+  const commands = targets.map((target) => buildRustFormatCommand(target, task, env));
+
+  return lines([
+    `${messages.title}: ${task.name}`,
+    '',
+    section(messages.purpose, `  ${text.description}`),
+    '',
+    section(messages.synopsis, lines([`  npm run ${task.npmScript} -- [options]`, `  node tools/format_rust_source/scripts/run/${task.entryFile} [options]`])),
+    '',
+    section(messages.options, lines([option('--help, -h', messages.helpOption), option('--lang ja|en', messages.languageOption), option('--language ja|en', messages.languageOption), option('--locale ja|en', messages.languageOption)])),
+    '',
+    section(messages.targets, lines(targets.length > 0 ? targets.map((target) => `  - ${target.displayPath} (${target.kind})`) : [`  ${messages.noTargets}`])),
+    '',
+    section(messages.commandPlan, lines(commands.length > 0 ? commands.map((command) => `  - ${command.displayCommand}`) : [`  ${messages.noTargets}`])),
+  ]);
+}
+
+export function renderRustSourceQualityArgumentErrors(errors, task, language = 'ja', env = process.env) {
+  const messages = helpMessagesFor(language);
+  return lines([...errors.map((error) => `Error: ${error}`), '', messages.unknownOptionHint, '', renderRustSourceQualityHelp(task, language, env)]);
+}

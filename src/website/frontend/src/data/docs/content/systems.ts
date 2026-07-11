@@ -51,20 +51,20 @@ export const systemsPages: DocsPageContent[] = [
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/sessions/runners/fixed_step.py',
-            code: `frame_dt = max(0.0, min(0.25, now - self._last))
-self._last = now
-self._accum += frame_dt
+            code: `    frame_dt = max(0.0, min(0.25, now - self._last))
+    self._last = now
+    self._accum += frame_dt
 
-substeps = 0
-limit = int(max(1, int(self.max_substeps)))
+    substeps = 0
+    limit = int(max(1, int(self.max_substeps)))
 
-while self._accum >= step and substeps < limit:
-  self.on_step(step)
-  self._accum -= step
-  substeps += 1
+    while self._accum >= step and substeps < limit:
+      self.on_step(step)
+      self._accum -= step
+      substeps += 1
 
-if self._accum >= step:
-  self._accum = min(float(self._accum), step)`,
+    if self._accum >= step:
+      self._accum = min(float(self._accum), step)`,
           },
           {
             kind: 'math',
@@ -235,19 +235,6 @@ if self._accum >= step:
             text: '`src/ludoxel/application/sessions/context/builders.py` turns a seed, spawn, world, and block registry into `SessionSettings`, a `PlayerEntity`, and a `SessionManager`. `PlaySpaceContext.create_default` in `src/ludoxel/application/sessions/context/play_space.py` constructs one default block registry and gives that registry to both factories. `src/ludoxel/application/sessions/factories/my_world.py` obtains the My World state from its simulation factory through `MyWorldSessionSeed`; `src/ludoxel/application/sessions/factories/othello.py` instead creates a flat world, lays out the board, and fixes an Othello spawn record. The application layer therefore chooses and retains two stateful sessions; it does not reimplement terrain generation, board legality, player kinematics, or backend rendering.',
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/application/sessions/context/play_space.py',
-            code: `@staticmethod
-def create_default(seed: int = 0) -> "PlaySpaceContext":
-  registry = create_default_registry()
-
-  my_world = create_my_world_session(seed=int(seed), block_registry=registry)
-  othello = create_othello_session(seed=int(seed), block_registry=registry)
-
-  return PlaySpaceContext(my_world=my_world, othello=othello, active_space_id=PLAY_SPACE_MY_WORLD)`,
-          },
-          {
             kind: 'paragraph',
             text: [
               '`session_for` normalizes a requested space identifier and returns either the Othello or My World manager; `set_active_space` changes only that selection. It does not merge players, worlds, AI actors, inventories, or Othello state. `shutdown` delegates to both managers so AI resources are released for the complete context. The user-facing switch procedure is documented under ',
@@ -273,10 +260,10 @@ def create_default(seed: int = 0) -> "PlaySpaceContext":
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/schedulers/state.py',
-            code: `runtime.normalize()
-sessions.set_active_space(runtime.current_space_id)
-apply_runtime_to_renderer(runtime, renderer)
-return (runtime, othello_game_state)`,
+            code: `  runtime.normalize()
+  sessions.set_active_space(runtime.current_space_id)
+  apply_runtime_to_renderer(runtime, renderer)
+  return (runtime, othello_game_state)`,
           },
           {
             kind: 'paragraph',
@@ -470,11 +457,42 @@ class RenderSnapshotDTO:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/runtime.py',
-            code: `self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
-self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
-self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
-if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_deg):
-  self.arm_rotation_limit_min_deg, self.arm_rotation_limit_max_deg = float(self.arm_rotation_limit_max_deg), float(self.arm_rotation_limit_min_deg)`,
+            code: `    self.shadow_map_quality = normalize_shadow_map_quality(self.shadow_map_quality)
+    self.creative_mode = bool(self.creative_mode)
+    self.route_edit_active = bool(self.route_edit_active)
+    self.auto_jump_enabled = bool(self.auto_jump_enabled)
+    self.auto_sprint_enabled = bool(self.auto_sprint_enabled)
+    self.hide_hud = bool(self.hide_hud)
+    self.hide_hand = bool(self.hide_hand)
+    self.player_name = normalize_player_name(self.player_name)
+    self.resolved_player_name = normalize_player_name(self.resolved_player_name) or str(self.player_name)
+    self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
+    self.crosshair_pixels = normalize_crosshair_pixels(self.crosshair_pixels)
+    self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
+    self.camera_perspective = normalize_camera_perspective(self.camera_perspective)
+    self.fullscreen = bool(self.fullscreen)
+    self.view_bobbing_enabled = bool(self.view_bobbing_enabled)
+    self.camera_shake_enabled = bool(self.camera_shake_enabled)
+    self.animated_textures_enabled = bool(self.animated_textures_enabled)
+    self.debug_shadow = bool(self.debug_shadow)
+    self.vsync_on = bool(self.vsync_on)
+    self.hud_visible = bool(self.hud_visible)
+
+    self.cloud_density = clampi(int(self.cloud_density), 0, 4)
+    self.cloud_cell_size = normalize_cloud_cell_size(self.cloud_cell_size)
+    self.cloud_seed = clampi(int(self.cloud_seed), 0, 9999)
+    self.cloud_flow_direction = normalize_backend_cloud_flow_direction(str(self.cloud_flow_direction))
+    self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second = normalize_cloud_speed_range(self.cloud_speed_min_blocks_per_second, self.cloud_speed_max_blocks_per_second)
+    (self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent) = normalize_cloud_height_settings(
+      self.cloud_fixed_y, self.cloud_spawn_y_min, self.cloud_spawn_y_max, self.cloud_preferred_y_min, self.cloud_preferred_y_max, self.cloud_preferred_y_probability_percent
+    )
+    self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
+    self.view_bobbing_strength = clampf(float(self.view_bobbing_strength), 0.0, 1.0)
+    self.camera_shake_strength = clampf(float(self.camera_shake_strength), 0.0, 1.0)
+    self.arm_rotation_limit_min_deg = clampf(float(self.arm_rotation_limit_min_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    self.arm_rotation_limit_max_deg = clampf(float(self.arm_rotation_limit_max_deg), float(self.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), float(self.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG))
+    if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_deg):
+      self.arm_rotation_limit_min_deg, self.arm_rotation_limit_max_deg = float(self.arm_rotation_limit_max_deg), float(self.arm_rotation_limit_min_deg)`,
           },
           {
             kind: 'paragraph',
@@ -518,23 +536,19 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/persistence/stores/app.py',
-            code: `def save(self, state: AppState, *, my_world_thumbnail_bytes: bytes | None = None) -> None:
-  app_file = PersistedAppFile(
-    version=int(APP_STATE_FILE_VERSION),
-    current_space_id=state.current_space_id,
-    settings=state.settings,
-    othello_settings=state.othello_settings.normalized(),
-    othello_space=(state.othello_space if isinstance(state.othello_space, PersistedOthelloSpace) else PersistedOthelloSpace()),
-  )
-  self._app_store().write(app_file.to_dict())
-  update_runtime_integrity_manifest(self._data_root(), (_APP_STATE_RELATIVE,))
-  library = self._library()
-  active_id = self._resolve_active_world_id(library)
-  if not active_id:
-    return
-  my_world = state.my_world if isinstance(state.my_world, PersistedPlaySpace) else default_new_world_space()
-  if not library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes):
-    raise OSError(f"failed to save My World package for active world {active_id}")`,
+            code: `  def save(self, state: AppState, *, my_world_thumbnail_bytes: bytes | None = None) -> None:
+    app_file = PersistedAppFile(version=int(APP_STATE_FILE_VERSION), current_space_id=state.current_space_id, settings=state.settings, othello_settings=state.othello_settings.normalized(), othello_space=(state.othello_space if isinstance(state.othello_space, PersistedOthelloSpace) else PersistedOthelloSpace()))
+
+    self._app_store().write(app_file.to_dict())
+    update_runtime_integrity_manifest(self._data_root(), (_APP_STATE_RELATIVE,))
+
+    library = self._library()
+    active_id = self._resolve_active_world_id(library)
+    if not active_id:
+      return
+    my_world = state.my_world if isinstance(state.my_world, PersistedPlaySpace) else default_new_world_space()
+    if not library.save_space(active_id, my_world, game_mode=world_game_mode_from_creative(state.settings.creative_mode), thumbnail_bytes=my_world_thumbnail_bytes):
+      raise OSError(f"failed to save My World package for active world {active_id}")`,
           },
           {
             kind: 'paragraph',
@@ -618,15 +632,15 @@ if float(self.arm_rotation_limit_min_deg) > float(self.arm_rotation_limit_max_de
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/preferences/keybinds.py',
-            code: `def key_for_action(self, action: str) -> int | None:
-  return self._keys_by_action.get(str(action).strip())
+            code: `  def key_for_action(self, action: str) -> int | None:
+    return self._keys_by_action.get(str(action).strip())
 
-def action_for_key_code(self, key: int) -> str | None:
-  try:
-    normalized_key = int(key)
-  except Exception:
-    return None
-  return self._action_by_key.get(int(normalized_key))`,
+  def action_for_key_code(self, key: int) -> str | None:
+    try:
+      normalized_key = int(key)
+    except Exception:
+      return None
+    return self._action_by_key.get(int(normalized_key))`,
           },
         ],
       },
@@ -642,20 +656,20 @@ def action_for_key_code(self, key: int) -> str | None:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/input/qt.py',
-            code: `if self._action_pressed(ACTION_MOVE_FORWARD):
-  f += 1.0
-if self._action_pressed(ACTION_MOVE_BACKWARD):
-  f -= 1.0
-if self._action_pressed(ACTION_MOVE_RIGHT):
-  s += 1.0
-if self._action_pressed(ACTION_MOVE_LEFT):
-  s -= 1.0
+            code: `    if self._action_pressed(ACTION_MOVE_FORWARD):
+      f += 1.0
+    if self._action_pressed(ACTION_MOVE_BACKWARD):
+      f -= 1.0
+    if self._action_pressed(ACTION_MOVE_RIGHT):
+      s += 1.0
+    if self._action_pressed(ACTION_MOVE_LEFT):
+      s -= 1.0
 
-crouch = self._action_pressed(ACTION_CROUCH)
-sprint = self._action_pressed(ACTION_SPRINT)
+    crouch = self._action_pressed(ACTION_CROUCH)
+    sprint = self._action_pressed(ACTION_SPRINT)
 
-jump_held = self._action_pressed(ACTION_JUMP)
-jump_pressed = bool(self._jump_pressed_edge)`,
+    jump_held = self._action_pressed(ACTION_JUMP)
+    jump_pressed = bool(self._jump_pressed_edge)`,
           },
           {
             kind: 'paragraph',
@@ -718,21 +732,21 @@ jump_pressed = bool(self._jump_pressed_edge)`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/viewport/overlays/state.py and render_loop/loop.py',
-            code: `def _gameplay_suspended(self) -> bool:
-  return bool(
-    self.loading_active()
-    or self._overlays.dead()
-    or self._overlays.paused()
-    or self._overlays.menu_open()
-    or self._overlays.settings_open()
-    or self._overlays.othello_settings_open()
-    or bool(getattr(self, "_ai_settings_overlay_open", False))
-    or bool(self._transient_modal_active())
-  )
+            code: `  def _gameplay_suspended(self: "RendererViewportWidget") -> bool:
+    return bool(
+      self.loading_active() or self._overlays.dead() or self._overlays.paused() or self._overlays.menu_open() or self._overlays.settings_open() or self._overlays.othello_settings_open() or bool(getattr(self, "_ai_settings_overlay_open", False)) or bool(getattr(self, "_transient_modal_active", lambda: False)())
+    )
 
-# render_loop/loop.py
-if bool(getattr(self, "_shutdown_done", False)) or bool(self._gameplay_suspended()):
-  return`,
+  def _sync_gameplay_hud_visibility(self: "RendererViewportWidget") -> None:
+    show_gameplay_hud = bool(self._gameplay_hud_active())
+    show_othello_hud = bool(
+      (not bool(self.loading_active()))
+      and (not bool(self._state.hide_hud))
+      and (not self._overlays.dead())
+      and (not self._overlays.paused())
+      and (not self._overlays.menu_open())
+      and (not self._overlays.inventory_open())
+      and (not self._overlays.settings_open())`,
           },
           {
             kind: 'paragraph',
@@ -842,11 +856,11 @@ if bool(getattr(self, "_shutdown_done", False)) or bool(self._gameplay_suspended
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/backends/opengl/runtime/backend.py',
-            code: `if gpu_face_sources is not None and gpu_bucket_counts is not None:
-  gpu_payload = self._gpu_payload_builder.build_and_store(chunk_key=chunk_key, world_revision=int(world_revision), face_sources=gpu_face_sources, bucket_counts=gpu_bucket_counts)
-  authoritative_world_faces = gpu_payload.face_buckets
-  authoritative_shadow_faces = authoritative_world_faces
-  self._last_payload_validation = None`,
+            code: `    if gpu_face_sources is not None and gpu_bucket_counts is not None:
+      gpu_payload = self._gpu_payload_builder.build_and_store(chunk_key=chunk_key, world_revision=int(world_revision), face_sources=gpu_face_sources, bucket_counts=gpu_bucket_counts)
+      authoritative_world_faces = gpu_payload.face_buckets
+      authoritative_shadow_faces = authoritative_world_faces
+      self._last_payload_validation = None`,
           },
         ],
       },
@@ -894,13 +908,13 @@ if bool(getattr(self, "_shutdown_done", False)) or bool(self._gameplay_suspended
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/backends/opengl/passes/textured_face.py',
-            code: `for face_idx, rows in enumerate(face_rows):
-  if rows.size <= 0 or int(rows.shape[0]) <= 0:
-    continue
-  mesh = self._meshes[int(face_idx)]
-  mesh.upload_instances(rows)
-  glBindVertexArray(int(mesh.vao))
-  glDrawArraysInstanced(GL_TRIANGLES, 0, int(mesh.vertex_count), int(rows.shape[0]))`,
+            code: `      for face_idx, rows in enumerate(face_rows):
+        if rows.size <= 0 or int(rows.shape[0]) <= 0:
+          continue
+        mesh = self._meshes[int(face_idx)]
+        mesh.upload_instances(rows)
+        glBindVertexArray(int(mesh.vao))
+        glDrawArraysInstanced(GL_TRIANGLES, 0, int(mesh.vertex_count), int(rows.shape[0]))`,
           },
         ],
       },
@@ -971,6 +985,20 @@ if bool(getattr(self, "_shutdown_done", False)) or bool(self._gameplay_suspended
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py',
             code: `_OPENGL_TO_WGPU_CLIP = np.asarray(((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.5, 0.5), (0.0, 0.0, 0.0, 1.0)), dtype=np.float32)
+_PREVIEW_EYE = Vec3(0.0, 0.98, 6.8)
+_PREVIEW_TARGET = Vec3(0.0, 0.78, 0.0)
+_PREVIEW_FOV_DEG = 26.0
+_PREVIEW_NEAR = 0.1
+_PREVIEW_FAR = 10.0
+
+
+def _adapter_info_value(info, name: str) -> str:
+  if info is None:
+    return ""
+  if isinstance(info, dict):
+    return str(info.get(name, "") or "")
+  return str(getattr(info, name, "") or "")
+
 
 def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
   return (_OPENGL_TO_WGPU_CLIP @ np.asarray(view_proj, dtype=np.float32)).astype(np.float32)`,
@@ -1020,16 +1048,6 @@ def _opengl_clip_to_wgpu(view_proj: np.ndarray) -> np.ndarray:
           {
             kind: 'paragraph',
             text: '`render_player_preview_frame` draws a single third-person player into an offscreen color texture for the pause, inventory, and AI-settings surfaces. It builds the pose with `build_player_model_pose`, allocates a color and depth texture, and opens one render pass that first draws `pose.skin_face_rows` with the skin bind group and then draws the third-person held block from `_third_person_held_block_face_rows(pose.held_block_pose)` with the atlas bind group, before reading the texture back as a `QImage`. The held block uses the same per-face instance path and `held_block_model_boxes_for_kind` geometry as the main third-person model, so the block held in the selected hotbar slot appears in the preview and changes with the slot. This matches the OpenGL preview, whose `draw_world` path already emits the held block alongside the skin.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py',
-            code: `held_rows = self._third_person_held_block_face_rows(pose.held_block_pose)
-held_uniform_buffers, held_uniform_bind_groups = self._create_frame_uniform_bind_groups(
-  label="ludoxel-preview-held-frame", view_proj=view_proj, tint_value=0.0, sel_mode=0, sel_block=None
-)
-self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=self._res.atlas_bind_group, label="ludoxel-preview-held-temp", camera_bind_groups=held_uniform_bind_groups)`,
           },
           {
             kind: 'note',
@@ -1171,20 +1189,6 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
             text: '`_adapt_wgpu_glsl` rewrites specific literal substrings, among them that exact `texture(u_shadowMap, ...)` call inside `shadow_sample`, into the split `texture2D`/`sampler` form the WGPU dialect requires. A shared helper that itself sampled the shadow map would need its own rewrite rule and would fail silently on WGPU if that rule were ever missed, so `shadow_filtering.glsl` carries only the offset table and the rotation angle, both sampler-free, and leaves every `texture(u_shadowMap, ...)` call sitting inside the one `shadow_sample` function the existing substitution already rewrites. The new kernel is therefore adaptation-safe by construction: every call it adds targets that already-adapted function, so the adaptation needs no new sampling call to learn.',
           },
           {
-            kind: 'code',
-            language: 'glsl',
-            caption: 'world.frag and othello.frag; the Ultra branch calls the unmodified shadow_sample',
-            code: `if (u_shadowUltra > 0.5) {
-    float angle = ldx_shadow_ultra_angle(gl_FragCoord.xy);
-    float sum = 0.0;
-    for (int k = 0; k < LDX_SHADOW_ULTRA_TAP_COUNT; ++k) {
-        vec2 offset = ldx_shadow_ultra_tap(k, angle) * t;
-        sum += shadow_sample(vec3(uvz.xy + offset, uvz.z), bias);
-    }
-    return sum * (1.0 / float(LDX_SHADOW_ULTRA_TAP_COUNT));
-}`,
-          },
-          {
             kind: 'paragraph',
             text: '`u_shadowUltra` is set from `BackendShadowParams.ultra_filter` on the OpenGL side in `opengl/passes/world.py` and `opengl/othello/render_pass.py`. On WGPU, `_frame_uniform_bytes` in `src/ludoxel/presentation/rendering/backends/wgpu/runtime/backend.py` packs the same flag into the third component of the `ldx_shadowParams2` uniform, a slot the packed frame-uniform layout carried unused before this feature, and `_adapt_wgpu_glsl` maps the `u_shadowUltra` token to that component for both `world.frag` and `othello.frag`. Neither backend needed a new bind-group entry or a new draw call to add the flag; both read it from a uniform slot the existing frame-uniform buffer already transmitted every frame.',
           },
@@ -1197,30 +1201,6 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
           {
             kind: 'paragraph',
             text: 'The sun billboard is the shared `sun.frag`. Both tiers shape the disc through coverage alone in `ldx_sun_body`: a photospheric disc fills most of the billboard, a near-white hot core sits at its centre, and a thin warm corona rings the disc, with each radial term falling to zero before the quad border and an edge mask retiring coverage there, so the straight quad edge never clips a lit texel into a visible frame or corner. `ldx_simple_sun` and `ldx_ultra_sun` both call `ldx_sun_body` and differ only in the outer-glow weight, so neither tier draws a square-masked billboard. `half_angle_deg` in `BackendSunParams` sets the billboard half-angle that both backends read, so the disc subtends a fixed apparent size. The emitted color is dominated by the black-body white of the core and disc, and the falloffs do not pre-attenuate it, so alpha blending over the sky brightens toward the disc and avoids a dark ring around it. The `u_ultra` value both backends carry in the sun-mode uniform selects the outer-glow branch.',
-          },
-          {
-            kind: 'code',
-            language: 'glsl',
-            caption: 'sun.frag; the sun-mode dispatch shared by both backends',
-            code: `void main() {
-    if (u_mode > 0.5) {
-        vec4 glare = ldx_sun_glare(v_uv, u_glare);
-        if (glare.a < 0.003) {
-            discard;
-        }
-        fragColor = glare;
-        return;
-    }
-    if (u_ultra < 0.5) {
-        fragColor = ldx_simple_sun(v_uv);
-        return;
-    }
-    vec4 sun = ldx_ultra_sun(v_uv);
-    if (sun.a < 0.01) {
-        discard;
-    }
-    fragColor = sun;
-}`,
           },
           {
             kind: 'paragraph',
@@ -1271,25 +1251,26 @@ self._draw_transform_buckets(render_pass, buckets=held_rows, texture_bind_group=
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/worlds/block_visual_resolver.py',
-            code: `def atlas_uv_face(self, block_state_or_id: str, face_idx: int) -> UVRect:
-  base_id, props = parse_state(str(block_state_or_id))
-  block = self.blocks.get(str(base_id))
-  if block is None:
-    return self._uv_for_texture("default")
-  texture_name = resolve_oriented_texture_name(block, props, int(face_idx))
-  return self._uv_for_texture(texture_name)
+            code: `  def atlas_uv_face(self, block_state_or_id: str, face_idx: int) -> UVRect:
+    base_id, props = parse_state(str(block_state_or_id))
+    block = self.blocks.get(str(base_id))
+    if block is None:
+      return self._uv_for_texture("default")
+    texture_name = resolve_oriented_texture_name(block, props, int(face_idx))
+    return self._uv_for_texture(texture_name)
 
-def world_face_visual(self, x: int, y: int, z: int, block_state_or_id: str, face_idx: int) -> tuple[UVRect, float]:
-  base_id, props = parse_state(str(block_state_or_id))
-  block = self.blocks.get(str(base_id))
-  if block is None:
-    return (self._uv_for_texture("default"), 0.0)
-  fi = int(face_idx)
-  oriented_name = resolve_oriented_texture_name(block, props, fi)
-  resolved_name = resolve_variant_texture_name(oriented_name, int(x), int(y), int(z))
-  uv = self._uv_for_texture(resolved_name)
-  rotation_steps = resolve_uv_rotation_steps(resolved_name, int(x), int(y), int(z), fi)
-  return (uv, float(rotation_steps))`,
+  def world_face_visual(self, x: int, y: int, z: int, block_state_or_id: str, face_idx: int) -> tuple[UVRect, float]:
+    base_id, props = parse_state(str(block_state_or_id))
+    block = self.blocks.get(str(base_id))
+    if block is None:
+      return (self._uv_for_texture("default"), 0.0)
+
+    fi = int(face_idx)
+    oriented_name = resolve_oriented_texture_name(block, props, fi)
+    resolved_name = resolve_variant_texture_name(oriented_name, int(x), int(y), int(z))
+    uv = self._uv_for_texture(resolved_name)
+    rotation_steps = resolve_uv_rotation_steps(resolved_name, int(x), int(y), int(z), fi)
+    return (uv, float(rotation_steps))`,
           },
         ],
       },
@@ -1310,6 +1291,14 @@ def world_face_visual(self, x: int, y: int, z: int, block_state_or_id: str, face
   z = ((z ^ (z >> 30)) * _SPLITMIX64_MIX_A) & _MASK64
   z = ((z ^ (z >> 27)) * _SPLITMIX64_MIX_B) & _MASK64
   return (z ^ (z >> 31)) & _MASK64
+
+
+def fnv1a_uint64(text: str) -> int:
+  h = _FNV64_OFFSET_BASIS
+  for byte in str(text).encode("utf-8"):
+    h = (h ^ int(byte)) & _MASK64
+    h = (h * _FNV64_PRIME) & _MASK64
+  return h & _MASK64
 
 
 def mix_uint64(*values: int) -> int:
@@ -1436,9 +1425,9 @@ def mix_uint64(*values: int) -> int:
     if (fogEnd <= fogStart) {
         return 0.0;
     }
+
     float d = length(worldPos - camPos);
-    return clamp((d - fogStart) / max(fogEnd - fogStart, 1e-3), 0.0, 1.0);
-}`,
+    return clamp((d - fogStart) / max(fogEnd - fogStart, 1e-3), 0.0, 1.0);`,
           },
           {
             kind: 'math',
@@ -1467,13 +1456,14 @@ def mix_uint64(*values: int) -> int:
     if (fogAmt <= 0.0) {
         return color;
     }
+
     vec3 viewVec = worldPos - camPos;
     vec3 viewDir = viewVec / max(length(viewVec), 1e-4);
     float sunAlign = max(dot(viewDir, normalize(sunDir)), 0.0);
     float shaft = pow(sunAlign, 6.0) * fogAmt;
+
     vec3 shaftColor = vec3(1.00, 0.86, 0.62);
-    return color + shaftColor * shaft * 0.55;
-}`,
+    return color + shaftColor * shaft * 0.55;`,
           },
           {
             kind: 'math',
@@ -1531,15 +1521,15 @@ def mix_uint64(*values: int) -> int:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/worlds/light_space.py',
-            code: `s = float(max(1, int(shadow_size)))
-texel = (2.0 * r) / s
+            code: `    s = float(max(1, int(shadow_size)))
+    texel = (2.0 * r) / s
 
-cx = right.dot(center)
-cy = up.dot(center)
-cz = light_axis.dot(center)
+    cx = right.dot(center)
+    cy = up.dot(center)
+    cz = light_axis.dot(center)
 
-sx = _snap(float(cx), float(texel))
-sy = _snap(float(cy), float(texel))`,
+    sx = _snap(float(cx), float(texel))
+    sy = _snap(float(cy), float(texel))`,
           },
           {
             kind: 'note',
@@ -1573,22 +1563,23 @@ sy = _snap(float(cy), float(texel))`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/rules/picking/block.py',
-            code: `for h in dda_grid_traverse(origin=o, direction=d, t_max=r, cell_size=1.0):
-  cx, cy, cz = int(h.cell_x), int(h.cell_y), int(h.cell_z)
-  k = (cx, cy, cz)
-  st = world.blocks.get(k)
-  if st is None:
-    prev_cell = k
-    continue
+            code: `  for h in dda_grid_traverse(origin=o, direction=d, t_max=r, cell_size=1.0):
+    cx, cy, cz = int(h.cell_x), int(h.cell_y), int(h.cell_z)
+    k = (cx, cy, cz)
 
-  aabbs = pick_aabbs_for_block(str(st), get_state, get_def, x=int(cx), y=int(cy), z=int(cz))
-  if not aabbs:
-    prev_cell = k
-    continue
+    st = world.blocks.get(k)
+    if st is None:
+      prev_cell = k
+      continue
 
-  best_t: float | None = None
-  best_face: int = -1
-  best_point: Vec3 | None = None`,
+    aabbs = pick_aabbs_for_block(str(st), get_state, get_def, x=int(cx), y=int(cy), z=int(cz))
+    if not aabbs:
+      prev_cell = k
+      continue
+
+    best_t: float | None = None
+    best_face: int = -1
+    best_point: Vec3 | None = None`,
           },
           {
             kind: 'paragraph',
@@ -1685,8 +1676,8 @@ sy = _snap(float(cy), float(texel))`,
             kind: 'code',
             language: 'py',
             caption: 'The held-block short-cube branch uses the same sixteenth height as the block model.',
-            code: `if normalized == "short_cube":
-  return (TexturedBox(box=px_box(0, 0, 0, 16, 15, 16)),)`,
+            code: `  if normalized == "short_cube":
+    return (TexturedBox(box=px_box(0, 0, 0, 16, 15, 16)),)`,
           },
           {
             kind: 'paragraph',
@@ -1730,11 +1721,11 @@ sy = _snap(float(cy), float(texel))`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/players/first_person_geometry.py',
-            code: `for box, uv_map in ((arm_boxes[0], FIRST_PERSON_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX)):
-  model = model_matrix_for_local_box(parent_transform, box)
-  for face_idx in range(6):
-    uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
-    append_face_instance(buffers, int(face_idx), model, uv_rect)`,
+            code: `  for box, uv_map in ((arm_boxes[0], FIRST_PERSON_RIGHT_ARM_BASE_UV_PX), (arm_boxes[1], FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX)):
+    model = model_matrix_for_local_box(parent_transform, box)
+    for face_idx in range(6):
+      uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
+      append_face_instance(buffers, int(face_idx), model, uv_rect)`,
           },
           {
             kind: 'paragraph',
@@ -1819,15 +1810,21 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
-            code: `for model, uv_map in (
-  (head, _HEAD_BASE_UV_PX),
-  (body, _BODY_BASE_UV_PX),
-  (right_arm, VISUAL_LEFT_ARM_BASE_UV_PX),
-  (left_arm, VISUAL_RIGHT_ARM_BASE_UV_PX),
-  (right_leg, _RIGHT_LEG_BASE_UV_PX),
-  (left_leg, _LEFT_LEG_BASE_UV_PX),
-):
-  _append_unit_cube_rows(skin_buffers, model, uv_map)`,
+            code: `  for model, uv_map in (
+    (head, _HEAD_BASE_UV_PX),
+    (hat, _HEAD_HAT_UV_PX),
+    (body, _BODY_BASE_UV_PX),
+    (jacket, _BODY_JACKET_UV_PX),
+    (right_arm, VISUAL_LEFT_ARM_BASE_UV_PX),
+    (right_sleeve, VISUAL_LEFT_ARM_SLEEVE_UV_PX),
+    (left_arm, VISUAL_RIGHT_ARM_BASE_UV_PX),
+    (left_sleeve, VISUAL_RIGHT_ARM_SLEEVE_UV_PX),
+    (right_leg, _RIGHT_LEG_BASE_UV_PX),
+    (right_pants, _RIGHT_LEG_PANTS_UV_PX),
+    (left_leg, _LEFT_LEG_BASE_UV_PX),
+    (left_pants, _LEFT_LEG_PANTS_UV_PX),
+  ):
+    _append_unit_cube_rows(skin_buffers, model, uv_map)`,
           },
           {
             kind: 'paragraph',
@@ -1847,7 +1844,7 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/player/kinematics.py',
-            code: `def _ease_angle_toward(current, target, *, tau, dt, max_lag_deg):
+            code: `def _ease_angle_toward(current: float | None, target: float, *, tau: float, dt: float, max_lag_deg: float) -> float:
   if current is None:
     return float(math.remainder(float(target), 360.0))
   diff = float(math.remainder(float(target) - float(current), 360.0))
@@ -1886,10 +1883,10 @@ FIRST_PERSON_RIGHT_ARM_SLEEVE_UV_PX = VISUAL_RIGHT_ARM_SLEEVE_UV_PX`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
-            code: `idle_weight = (1.0 - walk_fraction) * (1.0 - attack_weight)
-idle_time = float(state.idle_anim_time_s)
-idle_roll = (math.cos(idle_time * _IDLE_SWAY_ROLL_FREQ) * _IDLE_SWAY_ROLL_AMP + _IDLE_SWAY_ROLL_BIAS) * idle_weight
-idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP * idle_weight`,
+            code: `  idle_weight = (1.0 - float(walk_fraction)) * (1.0 - float(attack_weight))
+  idle_time = float(state.idle_anim_time_s)
+  idle_roll = (math.cos(float(idle_time) * float(_IDLE_SWAY_ROLL_FREQ)) * float(_IDLE_SWAY_ROLL_AMP) + float(_IDLE_SWAY_ROLL_BIAS)) * float(idle_weight)
+  idle_pitch = math.sin(float(idle_time) * float(_IDLE_SWAY_PITCH_FREQ)) * float(_IDLE_SWAY_PITCH_AMP) * float(idle_weight)`,
           },
           {
             kind: 'math',
@@ -1954,30 +1951,30 @@ idle_pitch = math.sin(idle_time * _IDLE_SWAY_PITCH_FREQ) * _IDLE_SWAY_PITCH_AMP 
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/visuals/players/model_pose.py',
-            code: `backward_scale = 1.0 if forward_ratio >= -1e-6 else _BACKWARD_SWING_SCALE
-fore_aft_amp = 0.5 * abs(forward_ratio) * backward_scale
-strafe_step = abs(clampf(strafe_ratio, -1.0, 1.0))
-pitch_amp = clampf(fore_aft_amp + strafe_step * _STRAFE_FOREAFT_SCALE, 0.0, swing)
-right_leg_rot_x = pitch_amp * walk_r
-left_leg_rot_x = pitch_amp * walk_l
-root = compose_matrices(translate_matrix(base_x, base_y, base_z), rotate_y_rad_matrix(body_yaw), translate_matrix(0.0, _MODEL_FEET_OFFSET_Y, 0.0))`,
+            code: `  backward_scale = 1.0 if float(forward_ratio) >= -1e-6 else float(_BACKWARD_SWING_SCALE)
+  fore_aft_amp = 0.5 * abs(float(forward_ratio)) * float(backward_scale)
+  strafe_step = abs(float(clampf(float(strafe_ratio), -1.0, 1.0)))
+  pitch_amp = float(clampf(float(fore_aft_amp) + float(strafe_step) * float(_STRAFE_FOREAFT_SCALE), 0.0, float(swing)))
+
+  first_person = state.first_person
+  swing_pitch = 0.0`,
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/player/kinematics.py',
-            code: `target = 0.0
-if abs(strafe) > PLAYER_STRAFE_INPUT_EPS and abs(forward) <= PLAYER_STRAFE_INPUT_EPS:
-  target = -strafe * PLAYER_STRAFE_BODY_TURN_MAX_DEG
-alpha = 1.0 - math.exp(-dt / PLAYER_STRAFE_BODY_TURN_TAU_S)
-motion.strafe_turn_deg = motion.strafe_turn_deg + (target - motion.strafe_turn_deg) * alpha`,
+            code: `  target = 0.0
+  if abs(float(strafe)) > float(PLAYER_STRAFE_INPUT_EPS) and abs(float(forward)) <= float(PLAYER_STRAFE_INPUT_EPS):
+    target = -float(strafe) * float(PLAYER_STRAFE_BODY_TURN_MAX_DEG)
+
+  if step <= 1e-6:`,
           },
           {
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/sessions/pipelines/player_model.py',
-            code: `body_pose_yaw_deg = math.remainder(body_visual_yaw_deg + motion.strafe_turn_deg, 360.0)
-head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0)`,
+            code: `  body_pose_yaw_deg = float(math.remainder(float(body_visual_yaw_deg) + float(motion.strafe_turn_deg), 360.0))
+  head_yaw_rel_deg = float(math.remainder(float(head_visual_yaw_deg) - float(body_pose_yaw_deg), 360.0))`,
           },
           {
             kind: 'math',
@@ -2085,21 +2082,6 @@ head_yaw_rel_deg = math.remainder(head_visual_yaw_deg - body_pose_yaw_deg, 360.0
             text: 'Pooled `QSoundEffect` playback has separate local-feedback and remote-world entrances before it reaches the shared effect-slot allocator. `_play_local_pool` resolves only the category volume, so player block placement, block breaking, block interaction, footsteps, landings, local player damage, and Othello feedback remain outside listener cutoff and distance gain even when the simulation result carries a target or board position. `_play_remote_pool` requires a world position and a cached listener pose, checks the pool distance cutoff, multiplies the category volume by `spatial_distance_gain` for spatial pools, and refuses playback when the listener is absent, the position is absent, or the source lies outside the cutoff. Both entrances then call `_play_effect_pool`, which applies pool cooldown admission, searches for an idle prepared `QSoundEffect` slot, applies active-voice headroom to the request gain, calls `setVolume(final_volume)` immediately before `play()`, and records the voice hold interval. The voice search is pool-wide: `_play_effect_pool` ensures the slots of every prepared source, checks `has_idle_voice` in `src/ludoxel/presentation/audio/playback/effects.py`, and runs random or round-robin selection only across sources with an idle voice. A voice qualifies as idle only when its `QSoundEffect` is loaded, playback has ended, and the source hold interval recorded on `EffectVoiceSlot.busy_until_s` has passed. That hold interval comes from the WAV duration plus a small release pad in `src/ludoxel/presentation/audio/playback/sources.py`, so a pooled source keeps its voice reserved until the recorded audible tail has cleared even after the Qt playback state has cleared. When every reserved voice of every source is still busy, `_play_effect_pool` selects a source over the whole pool and reclaims its longest-playing voice through `steal_oldest_effect_slot` in `src/ludoxel/presentation/audio/playback/effects.py`: the stolen effect is stopped, restarted with the new request gain, and re-marked with its hold interval, so an event that passed cooldown admission always reaches a voice instead of being dropped under load.',
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/presentation/audio/playback/manager.py',
-            code: `request_volume = float(self._preferences.volume_for(pool.category))
-if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
-  if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
-    return False
-  distance_gain = self._spatial_distance_gain(position=position, cutoff=float(pool.distance_cutoff))
-  if float(distance_gain) <= 1e-6:
-    return False
-  request_volume = float(request_volume) * float(distance_gain)
-
-return self._play_effect_pool(pool_key=str(pool_key), pool=pool, request_volume=float(request_volume))`,
-          },
-          {
             kind: 'paragraph',
             text: 'Every sound belongs to one of the categories in `src/ludoxel/application/preferences/audio.py`: master, ambient, block, or player. `AudioPreferences.volume_for` returns the product of master and the category factor, each clamped to the unit interval. Block break, place, and interact sounds use the block category; footsteps, landings, and damage hits use the player category. This category is a volume preference, not a spatial classification. Local feedback versus remote world source is decided by the render-loop route that consumed the event, and only the remote route applies listener cutoff and distance gain. The audio preference object is the boundary between the saved volume values and playback; the playback manager reads it and never alters simulation rules to make a sound.',
           },
@@ -2111,12 +2093,12 @@ return self._play_effect_pool(pool_key=str(pool_key), pool=pool, request_volume=
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/audio/playback/manager.py',
-            code: `self._player_attack_mixer.retarget_default_audio_output()
+            code: `    self._player_attack_mixer.retarget_default_audio_output()
 
-for prepared_group in tuple(self._prepared_sources.values()):
-  for prepared in tuple(prepared_group):
-    for slot in tuple(prepared.slots):
-      self._retarget_effect_to_default_audio_output(slot.effect)`,
+    for prepared_group in tuple(self._prepared_sources.values()):
+      for prepared in tuple(prepared_group):
+        for slot in tuple(prepared.slots):
+          self._retarget_effect_to_default_audio_output(slot.effect)`,
           },
           {
             kind: 'math',
@@ -2140,27 +2122,27 @@ for prepared_group in tuple(self._prepared_sources.values()):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/audio/playback/manager.py',
-            code: `def _play_player_attack_event(self, *, event_name: str) -> None:
-  pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
-  if pool is None:
-    return
+            code: `  def _play_player_attack_event(self, *, event_name: str) -> None:
+    pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
+    if pool is None:
+      return
 
-  base_volume = float(self._preferences.volume_for(pool.category))
-  if base_volume <= 1e-6:
-    return
+    base_volume = float(self._preferences.volume_for(pool.category))
+    if base_volume <= 1e-6:
+      return
 
-  pool_key = f"player_event:{event_name}"
-  if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
-    return
+    pool_key = f"player_event:{event_name}"
+    if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
+      return
 
-  urls = self._resolved_urls.get(str(pool_key))
-  if urls is None:
-    urls = self._resolve_existing_urls(pool)
-    self._resolved_urls[str(pool_key)] = urls
+    urls = self._resolved_urls.get(str(pool_key))
+    if urls is None:
+      urls = self._resolve_existing_urls(pool)
+      self._resolved_urls[str(pool_key)] = urls
 
-  self._player_attack_mixer.play(
-    urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random
-  )`,
+    self._player_attack_mixer.play(urls=tuple(urls), pool_key=str(pool_key), selection_mode=str(pool.selection_mode), volume=float(base_volume), max_voices=int(pool.max_polyphony), random_source=self._random)
+
+  def _resolve_block_action(self, *, action: str | None, block_state: str | None) -> tuple[str, str] | None:`,
           },
           {
             kind: 'paragraph',
@@ -2170,15 +2152,15 @@ for prepared_group in tuple(self._prepared_sources.values()):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/audio/playback/mixer.py',
-            code: `voice_limit = max(1, min(_MAX_MIX_VOICES, int(max_voices)))
-if len(self._active) >= voice_limit:
-  self._active = self._active[-max(0, voice_limit - 1) :]
+            code: `    voice_limit = max(1, min(_MAX_MIX_VOICES, int(max_voices)))
+    if len(self._active) >= voice_limit:
+      self._active = self._active[-max(0, voice_limit - 1) :]
 
-sample = self._pick_sample(pool_key=str(pool_key), selection_mode=str(selection_mode), samples=samples, random_source=random_source)
-if sample is None:
-  return False
+    sample = self._pick_sample(pool_key=str(pool_key), selection_mode=str(selection_mode), samples=samples, random_source=random_source)
+    if sample is None:
+      return False
 
-self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0, min(1.0, float(volume)))))`,
+    self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0, min(1.0, float(volume)))))`,
           },
           {
             kind: 'paragraph',
@@ -2211,18 +2193,10 @@ self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0
             caption: 'src/ludoxel/presentation/audio/catalogs/ambient.py',
             code: `AMBIENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
   AMBIENT_KEY_MY_WORLD: make_audio_pool(
-    "assets/audio/ambient/my_world/wind1.wav",
-    "assets/audio/ambient/my_world/wind2.wav",
-    "assets/audio/ambient/my_world/wind3.wav",
-    "assets/audio/ambient/my_world/wind4.wav",
-    category=AUDIO_CATEGORY_AMBIENT,
-    selection_mode=SELECTION_ROUND_ROBIN,
-    spatial=False,
-    distance_cutoff=0.0,
-    size=0.0,
-    max_polyphony=1,
+    "assets/audio/ambient/my_world/wind1.wav", "assets/audio/ambient/my_world/wind2.wav", "assets/audio/ambient/my_world/wind3.wav", "assets/audio/ambient/my_world/wind4.wav", category=AUDIO_CATEGORY_AMBIENT, selection_mode=SELECTION_ROUND_ROBIN, spatial=False, distance_cutoff=0.0, size=0.0, max_polyphony=1
   )
-}`,
+}
+`,
           },
         ],
       },
@@ -2256,13 +2230,15 @@ self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/audio/playback/manager.py',
-            code: `def _on_ambient_playing_changed(self) -> None:
-  if self._ambient_effect is None:
-    return
-  if self._ambient_transitioning or self._ambient_pending_play:
-    return
-  if self._ambient_key is not None and not self._ambient_effect.isPlaying():
-    self._start_next_ambient_source()`,
+            code: `  def _on_ambient_playing_changed(self) -> None:
+    if self._ambient_effect is None:
+      return
+
+    if self._ambient_transitioning or self._ambient_pending_play:
+      return
+
+    if self._ambient_key is not None and not self._ambient_effect.isPlaying():
+      self._start_next_ambient_source()`,
           },
           {
             kind: 'paragraph',
@@ -2276,11 +2252,11 @@ self._active.append(_ActivePcmVoice(sample=sample, frame_index=0, volume=max(0.0
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/audio/playback/manager.py',
-            code: `should_resume = self._ambient_key is not None and float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)) > 1e-6
-self._ambient_transitioning = True
-self._ambient_effect.stop()
-self._retarget_effect_to_default_audio_output(self._ambient_effect)
-self._ambient_transitioning = False`,
+            code: `    should_resume = self._ambient_key is not None and float(self._preferences.volume_for(AUDIO_CATEGORY_AMBIENT)) > 1e-6
+    self._ambient_transitioning = True
+    self._ambient_effect.stop()
+    self._retarget_effect_to_default_audio_output(self._ambient_effect)
+    self._ambient_transitioning = False`,
           },
         ],
       },
@@ -2349,19 +2325,19 @@ self._ambient_transitioning = False`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/worker.py',
-            code: `def request_plan(self, request: AiRoutePlanRequest) -> None:
-  self.cancel_actor(str(request.actor_id))
-  executor = self._ensure_process_executor()
-  future: Future
-  if executor is not None:
-    try:
-      future = executor.submit(compute_ai_route_plan, request)
-    except Exception:
-      self._process_unavailable = True
+            code: `  def request_plan(self, request: AiRoutePlanRequest) -> None:
+    self.cancel_actor(str(request.actor_id))
+    executor = self._ensure_process_executor()
+    future: Future
+    if executor is not None:
+      try:
+        future = executor.submit(compute_ai_route_plan, request)
+      except Exception:
+        self._process_unavailable = True
+        future = self._ensure_thread_executor().submit(compute_ai_route_plan, request)
+    else:
       future = self._ensure_thread_executor().submit(compute_ai_route_plan, request)
-  else:
-    future = self._ensure_thread_executor().submit(compute_ai_route_plan, request)
-  self._pending[str(request.actor_id)] = _PendingRoutePlan(actor_id=str(request.actor_id), generation=int(request.generation), future=future)`,
+    self._pending[str(request.actor_id)] = _PendingRoutePlan(actor_id=str(request.actor_id), generation=int(request.generation), future=future)`,
           },
           {
             kind: 'paragraph',
@@ -2381,14 +2357,14 @@ self._ambient_transitioning = False`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/manager.py',
-            code: `if mode == AI_MODE_WANDER and bool(learning.policy_enabled()):
-  decision = learning.decide(learn_observation, learn_mask)
-  learn_action_id = str(decision.action_id)
-  learn_action_source = ACTION_SOURCE_LEARNED_POLICY
-  control = self._apply_learned_action(actor, control, str(decision.action_id))
-else:
-  learn_action_id = self._control_to_action_id(control)
-  learn_action_source = ACTION_SOURCE_DETERMINISTIC`,
+            code: `        if mode == AI_MODE_WANDER and bool(learning.policy_enabled()):
+          decision = learning.decide(learn_observation, learn_mask)
+          learn_action_id = str(decision.action_id)
+          learn_action_source = ACTION_SOURCE_LEARNED_POLICY
+          control = self._apply_learned_action(actor, control, str(decision.action_id))
+        else:
+          learn_action_id = self._control_to_action_id(control)
+          learn_action_source = ACTION_SOURCE_DETERMINISTIC`,
           },
           {
             kind: 'note',
@@ -2468,8 +2444,8 @@ class DemonstrationRecord:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/learning/recorder.py',
-            code: `def captures(self, kind: str) -> bool:
-  return bool(self._enabled) and str(kind) in self._captured_kinds`,
+            code: `  def captures(self, kind: str) -> bool:
+    return bool(self._enabled) and str(kind) in self._captured_kinds`,
           },
         ],
       },
@@ -2485,13 +2461,19 @@ class DemonstrationRecord:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/learning/coordinator.py',
-            code: `def configure(self, *, mode: str, captured_kinds: Iterable[str], policy: Policy | None) -> None:
-  self._mode = str(mode)
-  self._policy = policy if isinstance(policy, Policy) else None
-  self._recorder.configure(enabled=(str(mode) == LEARNING_RUNTIME_OBSERVE_ONLY), captured_kinds=tuple(captured_kinds))
+            code: `  def configure(self, *, mode: str, captured_kinds: Iterable[str], policy: Policy | None) -> None:
+    self._mode = str(mode)
+    self._policy = policy if isinstance(policy, Policy) else None
+    self._recorder.configure(enabled=(str(mode) == LEARNING_RUNTIME_OBSERVE_ONLY), captured_kinds=tuple(captured_kinds))
 
-def policy_enabled(self) -> bool:
-  return self._mode == LEARNING_RUNTIME_USE_LEARNED_POLICY and isinstance(self._policy, Policy) and bool(self._policy.is_usable())`,
+  def active(self) -> bool:
+    return self._mode in (LEARNING_RUNTIME_OBSERVE_ONLY, LEARNING_RUNTIME_USE_LEARNED_POLICY)
+
+  def recording(self) -> bool:
+    return self._mode == LEARNING_RUNTIME_OBSERVE_ONLY
+
+  def policy_enabled(self) -> bool:
+    return self._mode == LEARNING_RUNTIME_USE_LEARNED_POLICY and isinstance(self._policy, Policy) and bool(self._policy.is_usable())`,
           },
           {
             kind: 'paragraph',
@@ -2533,14 +2515,14 @@ def policy_enabled(self) -> bool:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/learning/policy.py',
-            code: `features = encode_features(observation)
-for feature in features:
-  mapping = policy.action_weights.get(feature)
-  if not mapping:
-    continue
-  for action_id, weight in mapping.items():
-    if action_id in scores:
-      scores[action_id] += float(weight)`,
+            code: `    features = encode_features(observation)
+    for feature in features:
+      mapping = policy.action_weights.get(feature)
+      if not mapping:
+        continue
+      for action_id, weight in mapping.items():
+        if action_id in scores:
+          scores[action_id] += float(weight)`,
           },
           {
             kind: 'paragraph',
@@ -2550,13 +2532,13 @@ for feature in features:
             kind: 'code',
             language: 'json',
             caption: 'src/ludoxel/simulation/actors/ai_players/learning/resources/policies/movement_policy.json',
-            code: `{
-  "schema_version": 1,
+            code: `  "schema_version": 1,
   "policy_id": "bundled_movement_v1",
+  "policy_name": "Bundled Movement Policy",
+  "policy_version": 1,
   "compatibility_target": "ludoxel.ai.v1",
-  "evaluation_summary": { "passed": true },
-  "utility_score_modifiers": { "movement": 0.08, "wasd_control": 0.06, "jumping": 0.04 }
-}`,
+  "created_at": "2026-06-15",
+  "skill_categories": ["movement", "wasd_control", "jumping"],`,
           },
         ],
       },
@@ -2582,16 +2564,16 @@ for feature in features:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/actors/ai_players/learning/policy.py',
-            code: `def is_usable(self) -> bool:
-  if int(self.schema_version) != int(POLICY_SCHEMA_VERSION):
-    return False
-  if str(self.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
-    return False
-  if int(self.feature_encoder_version) not in (0, int(FEATURE_ENCODER_VERSION)):
-    return False
-  if int(self.action_catalog_version) not in (0, int(ACTION_SCHEMA_VERSION)):
-    return False
-  return bool(self.evaluation.get("passed", False))`,
+            code: `  def is_usable(self) -> bool:
+    if int(self.schema_version) != int(POLICY_SCHEMA_VERSION):
+      return False
+    if str(self.compatibility_target) != str(POLICY_COMPATIBILITY_TARGET):
+      return False
+    if int(self.feature_encoder_version) not in (0, int(FEATURE_ENCODER_VERSION)):
+      return False
+    if int(self.action_catalog_version) not in (0, int(ACTION_SCHEMA_VERSION)):
+      return False
+    return bool(self.evaluation.get("passed", False))`,
           },
           {
             kind: 'paragraph',
@@ -2696,13 +2678,13 @@ for feature in features:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/spaces/othello/engines/evaluation.py',
-            code: `score += float(position_score(int(player_bits), int(opponent_bits)))
-score += float(corner_score(int(player_bits), int(opponent_bits))) * float(corner_weight)
-score += float(corner_closeness_penalty(int(player_bits), int(opponent_bits)))
-score += float(mobility_score(int(player_bits), int(opponent_bits))) * float(mobility_weight)
-score += float(frontier_score(int(player_bits), int(opponent_bits))) * float(frontier_weight)
-score += float(parity_score(int(player_bits), int(opponent_bits)))
-score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_stage_weight) * float(disc_weight)`,
+            code: `  score += float(position_score(int(player_bits), int(opponent_bits)))
+  score += float(corner_score(int(player_bits), int(opponent_bits))) * float(corner_weight)
+  score += float(corner_closeness_penalty(int(player_bits), int(opponent_bits)))
+  score += float(mobility_score(int(player_bits), int(opponent_bits))) * float(mobility_weight)
+  score += float(frontier_score(int(player_bits), int(opponent_bits))) * float(frontier_weight)
+  score += float(parity_score(int(player_bits), int(opponent_bits)))
+  score += float(disc_score(int(player_bits), int(opponent_bits))) * float(disc_stage_weight) * float(disc_weight)`,
           },
           {
             kind: 'paragraph',
@@ -2842,13 +2824,13 @@ def search_project_root(start: Path) -> Path | None:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/diagnostics/system.py',
-            code: `def sample(self) -> float | None:
-  now = time.perf_counter()
-  if (now - float(self._last_t)) < float(self.min_interval_s):
-    return self._last
-  self._last_t = now
-  self._last = _nvidia_smi_util_percent()
-  return self._last`,
+            code: `  def sample(self) -> float | None:
+    now = time.perf_counter()
+    if (now - float(self._last_t)) < float(self.min_interval_s):
+      return self._last
+    self._last_t = now
+    self._last = _nvidia_smi_util_percent()
+    return self._last`,
           },
           {
             kind: 'paragraph',
@@ -2902,18 +2884,21 @@ def search_project_root(start: Path) -> Path | None:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/foundations/mathematics/linear/vec3.py',
-            code: `def dot(self, o: "Vec3") -> float:
-  return self.x * o.x + self.y * o.y + self.z * o.z
+            code: `  def dot(self, o: "Vec3") -> float:
+    return self.x * o.x + self.y * o.y + self.z * o.z
 
-def cross(self, o: "Vec3") -> "Vec3":
-  return Vec3(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
+  def cross(self, o: "Vec3") -> "Vec3":
+    return Vec3(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
 
-def normalized(self) -> "Vec3":
-  n = self.length()
-  if n <= 1e-12:
-    return Vec3(0.0, 0.0, 0.0)
-  inv = 1.0 / n
-  return Vec3(self.x * inv, self.y * inv, self.z * inv)`,
+  def length(self) -> float:
+    return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
+
+  def normalized(self) -> "Vec3":
+    n = self.length()
+    if n <= 1e-12:
+      return Vec3(0.0, 0.0, 0.0)
+    inv = 1.0 / n
+    return Vec3(self.x * inv, self.y * inv, self.z * inv)`,
           },
           {
             kind: 'math',
@@ -3122,10 +3107,22 @@ def mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
   z0 = cz * CHUNK_SIZE
   return (x0, x0 + CHUNK_SIZE, y0, y0 + CHUNK_SIZE, z0, z0 + CHUNK_SIZE)
 
-if int(lx) <= 0:
-  keys.add((int(cx) - 1, int(cy), int(cz)))
-if int(lx) >= int(CHUNK_SIZE - 1):
-  keys.add((int(cx) + 1, int(cy), int(cz)))`,
+
+def neighbor_chunk_keys_for_cell(x: int, y: int, z: int) -> Set[ChunkKey]:
+  xi = int(x)
+  yi = int(y)
+  zi = int(z)
+  cx, cy, cz = chunk_key(xi, yi, zi)
+  keys: Set[ChunkKey] = {(int(cx), int(cy), int(cz))}
+
+  lx = int(xi - int(cx) * CHUNK_SIZE)
+  ly = int(yi - int(cy) * CHUNK_SIZE)
+  lz = int(zi - int(cz) * CHUNK_SIZE)
+
+  if int(lx) <= 0:
+    keys.add((int(cx) - 1, int(cy), int(cz)))
+  if int(lx) >= int(CHUNK_SIZE - 1):
+    keys.add((int(cx) + 1, int(cy), int(cz)))`,
           },
           {
             kind: 'paragraph',
@@ -3243,16 +3240,16 @@ if int(lx) >= int(CHUNK_SIZE - 1):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/viewport/render_loop/loop.py',
-            code: `if (
-  bool(getattr(self, "_shutdown_done", False))
-  or (not bool(getattr(self, "_runtime_active", False)))
-  or (not bool(self.isVisible()))
-  or bool(self.loading_active())
-  or bool(getattr(self, "_ai_settings_overlay_open", False))
-  or bool(self._transient_modal_active())
-  or (self._overlays.dead() or self._overlays.paused() or self._overlays.settings_open() or self._overlays.othello_settings_open())
-):
-  return`,
+            code: `    if bool(getattr(self, "_shutdown_done", False)):
+      return False
+    if bool(self.loading_active()):
+      return False
+    if not bool(getattr(self, "_application_active", True)):
+      return False
+    if self._state.is_othello_space():
+      return False
+    if not str(getattr(self, "_loaded_my_world_id", "") or ""):
+      return False`,
           },
           {
             kind: 'paragraph',
@@ -3272,15 +3269,15 @@ if int(lx) >= int(CHUNK_SIZE - 1):
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/chat/runtime.py',
-            code: `def display_messages(self) -> tuple[ChatMessage, ...]:
-  if self.mute_all():
-    return ()
-  return self._history.display_messages()
+            code: `  def display_messages(self) -> tuple[ChatMessage, ...]:
+    if self.mute_all():
+      return ()
+    return self._history.display_messages()
 
-def recent_display_messages(self, count: int) -> tuple[ChatMessage, ...]:
-  if self.mute_all():
-    return ()
-  return self._history.recent_display_messages(int(count))`,
+  def recent_display_messages(self, count: int) -> tuple[ChatMessage, ...]:
+    if self.mute_all():
+      return ()
+    return self._history.recent_display_messages(int(count))`,
           },
           {
             kind: 'paragraph',
@@ -3335,7 +3332,7 @@ SUPPORT_LINK_URL: str = "https://github.com/5uog/"`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/application/chat/commands/coordinator.py',
-            code: `def execute_command(text: str, *, prefs, sessions) -> CommandResult:
+            code: `def execute_command(text: str, *, prefs: "RuntimePreferences", sessions: "PlaySpaceContext") -> CommandResult:
   parsed = parse_command(text)
   if isinstance(parsed, CommandError):
     return CommandResult(messages=(make_command_error_message(f"§c{parsed.message}"),))
@@ -3474,17 +3471,17 @@ class FormattedSegment:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/worlds/state/world.py',
-            code: `def chunk_has_content(self, ck: ChunkKey) -> bool:
-  key = (int(ck[0]), int(ck[1]), int(ck[2]))
-  with self._lock:
-    if key in self._chunk_index or key in self._broken_chunk_keys:
-      return True
-  band = self._chunk_column_band(int(key[0]), int(key[2]))
-  if band is None:
-    return False
-  y_lo = int(key[1]) * CHUNK_SIZE
-  y_hi = y_lo + CHUNK_SIZE - 1
-  return int(y_hi) >= int(self._content_floor_y()) and int(y_lo) <= int(band[1])`,
+            code: `  def chunk_has_content(self, ck: ChunkKey) -> bool:
+    key = (int(ck[0]), int(ck[1]), int(ck[2]))
+    with self._lock:
+      if key in self._chunk_index or key in self._broken_chunk_keys:
+        return True
+    band = self._chunk_column_band(int(key[0]), int(key[2]))
+    if band is None:
+      return False
+    y_lo = int(key[1]) * CHUNK_SIZE
+    y_hi = y_lo + CHUNK_SIZE - 1
+    return int(y_hi) >= int(self._content_floor_y()) and int(y_lo) <= int(band[1])`,
           },
           {
             kind: 'paragraph',
@@ -3544,9 +3541,9 @@ class FormattedSegment:
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/uploads/world.py',
-            code: `def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
-  ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
-  return int(ready) >= int(total)`,
+            code: `  def visible_chunks_ready(self, *, world: WorldState, eye: Vec3, render_distance_chunks: int) -> bool:
+    ready, total = self.visible_load_progress(world=world, eye=eye, render_distance_chunks=int(render_distance_chunks))
+    return int(ready) >= int(total)`,
           },
           {
             kind: 'paragraph',

@@ -140,11 +140,11 @@ export const HELP_COMMANDS = Object.freeze([
     npmScript: 'format',
     usage: 'npm run format',
     description: {
-      ja: 'Web/Node/Markdown/YAML と Python を整形する集約 command。',
-      en: 'Format web, Node, Markdown, YAML, and Python sources.',
+      ja: 'Web/Node/Markdown/YAML、Python、Rust を整形する集約 command。',
+      en: 'Format web, Node, Markdown, YAML, Python, and Rust sources.',
     },
     options: ['個別 command の --help を参照する。'],
-    examples: ['npm run format', 'npm run format:web', 'npm run format:py'],
+    examples: ['npm run format', 'npm run format:web', 'npm run format:py', 'npm run format:rust'],
   },
   {
     name: 'format:web',
@@ -191,12 +191,34 @@ export const HELP_COMMANDS = Object.freeze([
     examples: ['npm run format:py:check', 'npm run format:check'],
   },
   {
+    name: 'format:rust',
+    npmScript: 'format:rust',
+    usage: 'npm run format:rust -- [options]',
+    description: {
+      ja: 'native/ 配下の全 Rust crate と Cargo workspace に cargo fmt を実行する。',
+      en: 'Run cargo fmt for every Rust crate and Cargo workspace under native/.',
+    },
+    options: ['--help, -h', '--lang ja|en'],
+    examples: ['npm run format:rust', 'npm run format:rust -- --help --lang en'],
+  },
+  {
+    name: 'format:rust:check',
+    npmScript: 'format:rust:check',
+    usage: 'npm run format:rust:check -- [options]',
+    description: {
+      ja: 'cargo fmt -- --check で native/ 配下の Rust source を変更せず検査する。',
+      en: 'Check Rust sources under native/ with cargo fmt -- --check without writing files.',
+    },
+    options: ['--help, -h', '--lang ja|en'],
+    examples: ['npm run format:rust:check', 'npm run format:check'],
+  },
+  {
     name: 'format:check',
     npmScript: 'format:check',
     usage: 'npm run format:check',
     description: {
-      ja: 'Web/Node/Markdown/YAML と Python の format check を順に実行する。',
-      en: 'Run web, Node, Markdown, YAML, and Python format checks in sequence.',
+      ja: 'Web/Node/Markdown/YAML、Python、Rust の format check を順に実行する。',
+      en: 'Run web, Node, Markdown, YAML, Python, and Rust format checks in sequence.',
     },
     options: ['個別 command の --help を参照する。'],
     examples: ['npm run format:check', 'npm run check'],

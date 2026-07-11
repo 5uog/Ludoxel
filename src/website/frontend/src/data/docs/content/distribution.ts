@@ -70,38 +70,6 @@ npm run build:desktop -- windows`,
             text: "The spec's `console` field fixes the console policy of the packaged executable. It is `False` by default, so the published `Ludoxel.exe` launches with no developer console or terminal log window; it is `True` only when the Windows build is invoked with `--developer-console`. A single ternary in the generator selects one value, so the spec never declares both, and the option is confined to the Windows one-file build — a console-bearing executable is an explicit opt-in, never the default artifact.",
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'The generated OpenGL hook and post-Analysis DLL guard used by the Windows spec.',
-            code: `from PyInstaller.compat import is_darwin, is_win
-from PyInstaller.utils.hooks import collect_submodules
-
-if is_win:
-    hiddenimports = ['OpenGL.platform.win32']
-elif is_darwin:
-    hiddenimports = ['OpenGL.platform.darwin']
-else:
-    hiddenimports = ['OpenGL.platform.glx']
-
-hiddenimports += collect_submodules('OpenGL.arrays')
-datas = []
-binaries = []
-
-
-def _keep_pyinstaller_entry(dest):
-    dest = str(dest)
-    base = os.path.basename(dest).lower()
-    if base in {'msvcr90.dll', 'msvcr100.dll'}:
-        return False
-    if os.path.basename(os.path.dirname(dest)).lower() == 'dlls' and 'opengl' in dest.lower():
-        return False
-    return True
-
-
-a.binaries = [entry for entry in a.binaries if _keep_pyinstaller_entry(entry[0])]
-a.datas = [entry for entry in a.datas if _keep_pyinstaller_entry(entry[0])]`,
-          },
-          {
             kind: 'paragraph',
             text: 'The generated hook keeps PyOpenGL platform and array hidden imports while setting hook `datas` and `binaries` empty, so the upstream `OpenGL/DLLS` GLUT and GLE runtime directory is absent before dependency analysis. Ludoxel drives windowing through Qt and uses only the OpenGL core, which loads the system `opengl32.dll`; the unused `OpenGL/DLLS` runtime has no load path in the application. The post-Analysis predicate still drops any cached `OpenGL/DLLS`, `MSVCR90.dll`, or `MSVCR100.dll` entry if one appears, leaving `OpenGL.GL`, `OpenGL.error`, and `OpenGL.platform` in the bundle. The Windows path adds none of the macOS `--collect-binaries wgpu`, `--collect-data wgpu`, or wgpu and rendercanvas imports, consistent with the repository statement that Windows retains the OpenGL renderer path.',
           },
@@ -133,6 +101,9 @@ a.datas = [entry for entry in a.datas if _keep_pyinstaller_entry(entry[0])]`,
       return;
     } catch (error) {
       if (attempt < maxAttempts && isFileLockError(error)) {
+        if (attempt === 1) {
+          console.log(\`[build_desktop_app] published executable is busy; retrying replacement of \${publishExe}\`);
+        }
         sleepMs(retryDelayMs);
         continue;
       }
@@ -143,7 +114,17 @@ a.datas = [entry for entry in a.datas if _keep_pyinstaller_entry(entry[0])]`,
 }
 
 function publishWindowsExecutable(stagingDir) {
-  // ... staged/publish paths, the staged-output gate, and the legal copy ...
+  const stagedExe = resolve(stagingDir, \`\${APP_NAME}.exe\`);
+  const publishDir = resolve(PROJECT_ROOT, WINDOWS_PUBLISH_DIR);
+  const publishExe = resolve(publishDir, \`\${APP_NAME}.exe\`);
+
+  if (!existsSync(stagedExe)) {
+    throw new Error(\`PyInstaller did not produce staged executable: \${stagedExe}\`);
+  }
+
+  ensureDirectory(publishDir);
+  copyLegalMaterial(stagingDir);
+
   const pendingExe = resolve(publishDir, \`\${APP_NAME}.exe.pending-\${randomUUID().replace(/-/g, '').slice(0, 12)}\`);
 
   try {
@@ -155,10 +136,7 @@ function publishWindowsExecutable(stagingDir) {
     removeIfExists(pendingExe);
 
     if (isFileLockError(error)) {
-      throw new Error(
-        \`Could not publish \${publishExe}: the file is in use. Close any running \${APP_NAME}.exe (and any window previewing it), then run the build again.\`,
-        { cause: error },
-      );
+      throw new Error(\`Could not publish \${publishExe}: the file is in use. Close any running \${APP_NAME}.exe (and any window previewing it), then run the build again.\`, { cause: error });
     }
 
     throw error;
@@ -340,12 +318,8 @@ function verifyMacosCodeSignature(appPath) {
           {
             kind: 'code',
             language: 'js',
-            caption: 'bundledAssetCandidates and requireBundledResource in macos-build.service.mjs.',
-            code: `function bundledAssetCandidates(relativeAssetPath) {
-  return Object.freeze([\`Contents/Frameworks/\${relativeAssetPath}\`, \`Contents/Resources/\${relativeAssetPath}\`]);
-}
-
-function requireBundledResource(appPath, label, relativePaths) {
+            caption: 'requireBundledResource and bundledAssetCandidates in macos-build.service.mjs.',
+            code: `function requireBundledResource(appPath, label, relativePaths) {
   const matchedPath = relativePaths.find((relativePath) => bundledResourceExists(appPath, relativePath));
 
   if (!matchedPath) {
@@ -353,6 +327,10 @@ function requireBundledResource(appPath, label, relativePaths) {
   }
 
   return matchedPath;
+}
+
+function bundledAssetCandidates(relativeAssetPath) {
+  return Object.freeze([\`Contents/Frameworks/\${relativeAssetPath}\`, \`Contents/Resources/\${relativeAssetPath}\`]);
 }`,
           },
           {
@@ -406,21 +384,27 @@ function requireBundledResource(appPath, label, relativePaths) {
   Object.freeze({
     id: 'terrain_native',
     crateDirectory: 'native/ludoxel_terrain',
+    crateName: 'ludoxel_terrain',
     moduleName: 'ludoxel.simulation.worlds.generation._terrain_native',
+    artifactStem: '_terrain_native',
     installDirectory: 'src/ludoxel/simulation/worlds/generation',
     fallbackModuleName: 'ludoxel.simulation.worlds.generation.fallback',
   }),
   Object.freeze({
     id: 'othello_native',
     crateDirectory: 'native/ludoxel_othello',
+    crateName: 'ludoxel_othello',
     moduleName: 'ludoxel.simulation.spaces.othello.engines._othello_native',
+    artifactStem: '_othello_native',
     installDirectory: 'src/ludoxel/simulation/spaces/othello/engines',
     fallbackModuleName: 'ludoxel.simulation.spaces.othello.engines.search',
   }),
   Object.freeze({
     id: 'mathematics_native',
     crateDirectory: 'native/ludoxel_mathematics',
+    crateName: 'ludoxel_mathematics',
     moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
+    artifactStem: '_mathematics_native',
     installDirectory: 'src/ludoxel/foundations/mathematics',
     fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
   }),
@@ -459,15 +443,6 @@ function requireBundledResource(appPath, label, relativePaths) {
           {
             kind: 'paragraph',
             text: 'Every crate’s Python import owner selects between the compiled module and the pure-Python fallback with the same shape: one module-level `try`/`except ImportError` that binds a compiled-module name or `None`, evaluated once at import time. `ludoxel.foundations.mathematics._native` is representative of the pattern every crate’s owner module repeats.',
-          },
-          {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/foundations/mathematics/_native.py',
-            code: `try:
-  from ludoxel.foundations.mathematics import _mathematics_native as native_module
-except ImportError:
-  native_module = None`,
           },
           {
             kind: 'paragraph',
@@ -623,17 +598,17 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'The repository legal check reads the root `LICENSE`, requires the terms `Ludoxel Independent License`, `LicenseRef-All-Rights-Reserved`, and `third-party/`, requires `third-party/` to exist, checks the required third-party license file, and scans source-like files for the required SPDX identifier outside excluded asset, config, and third-party paths.',
+            text: 'The repository legal check resolves the root `LICENSE` through `LEGAL_PATHS.license` and fails when that file is absent. A passing result records the displayed path that was checked.',
           },
           {
             kind: 'code',
             language: 'sh',
-            caption: 'Repository legal-material and SPDX check from package.json.',
+            caption: 'Repository root-license existence check from package.json.',
             code: `npm run license:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Its output is a statement about the repository at the moment of the check, not a forensic audit of any generated directory. A passing legal check supports only the proposition that the repository carries the required text and SPDX discipline; it does not establish that a previously copied artifact still contains the material, that a modified artifact retained it, or that a third party may circulate it. A failure must be read by its named cause — a missing root `LICENSE`, a missing SPDX header, a missing third-party license are distinct defects — because collapsing them into an undifferentiated statement that the package is not ready discards the evidence the check produced.',
+            text: 'The result establishes the presence of the root `LICENSE` at check time. Artifact retention is established by inspecting the publish directory after `copyLegalMaterial` runs. Third-party notice coverage and distribution authority follow their own source texts and artifact evidence.',
           },
         ],
       },
@@ -663,7 +638,7 @@ npm run build:native:check`,
     subcategory: 'Runtime Inclusions',
     group: 'Legal Material Inclusion',
     title: 'Including Third Party License Text',
-    description: 'Separates third-party notice retention from redistribution clearance, centered on the Kaisei Opti font: the legal policy constant, the required-terms checker, the macOS font requirements, and the refusal to read one verified notice as blanket provenance clearance.',
+    description: 'Explains third-party notice retention for the Kaisei Opti font through the repository notice, desktop legal-copy path, and macOS font-resource requirements.',
     sections: [
       {
         id: 'including-third-party-license-text-owner-files',
@@ -671,23 +646,11 @@ npm run build:native:check`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Third-party license inclusion keeps the license texts of third-party material present in the repository and in any artifact that carries that material. It is fixed by the policy constants in `tools/check_project/src/check/legal/legal.policy.mjs`, the required-terms checker in `legal.check.mjs`, and the configured `third-party` path that `copyLegalMaterial` writes into each publish directory. The one third-party license the policy verifies in detail is the Kaisei Opti font notice.',
-          },
-          {
-            kind: 'code',
-            language: 'js',
-            caption: 'REQUIRED_THIRD_PARTY_LICENSES in legal.policy.mjs.',
-            code: `export const REQUIRED_THIRD_PARTY_LICENSES = Object.freeze([
-  Object.freeze({
-    label: 'third-party/kaisei-opti/LICENSE.txt',
-    path: LEGAL_PATHS.kaiseiLicense,
-    terms: Object.freeze(['Kaisei', 'SIL Open Font License', 'Version 1.1']),
-  }),
-]);`,
+            text: '`third-party/kaisei-opti/LICENSE.txt` carries the Kaisei Opti notice in the repository. `LEGAL_MATERIAL_PATHS` includes `third-party`, and `copyLegalMaterial` copies that directory into each desktop publish directory.',
           },
           {
             kind: 'paragraph',
-            text: 'The policy’s reach stops at this one notice. It establishes that the Kaisei notice carries the expected identifying terms and nothing more, and it leaves the provenance of any Minecraft-derived texture, local asset, generated thumbnail, or provenance-sensitive material unsettled. One verified notice must not be inflated into a blanket clearance.',
+            text: 'The notice supplies terms for the named font material. Other assets retain their own provenance and governing terms.',
           },
           {
             kind: 'note',
@@ -700,43 +663,40 @@ npm run build:native:check`,
       },
       {
         id: 'including-third-party-license-text-checker',
-        title: 'The Required-Terms Checker',
+        title: 'Repository Legal Check Boundary',
         content: [
           {
             kind: 'paragraph',
-            text: 'The `checkRequiredTerms` helper that validates the root `LICENSE` also validates the Kaisei notice. It accepts a label, a path, and a term set, fails on a missing file or a missing term, and reports the defect under the license label.',
+            text: '`checkLegal` resolves the root `LICENSE` through `LEGAL_PATHS.license`, fails when that file is absent, and records the displayed path when it exists. Third-party notice retention is established through the repository notice, the configured desktop copy path, and inspection of the published artifact.',
           },
           {
             kind: 'code',
             language: 'js',
-            caption: 'checkRequiredTerms in legal.check.mjs.',
-            code: `function checkRequiredTerms({ failures, label, path, terms }) {
-  if (!existsSync(path)) {
-    failures.push(\`\${label} is missing\`);
-    return null;
+            caption: 'checkLegal in legal.check.mjs.',
+            code: `export function checkLegal() {
+  const failures = [];
+  const licenseLabel = displayPath(LEGAL_PATHS.license);
+
+  if (!existsSync(LEGAL_PATHS.license)) {
+    failures.push(\`\${licenseLabel} is missing\`);
   }
 
-  const text = readFileSync(path, 'utf8');
-  for (const term of terms) {
-    if (!text.includes(term)) failures.push(\`\${label} missing term: \${term}\`);
-  }
-
-  return text;
+  return printCheckResult('legal', failures, [\`checked \${licenseLabel}\`]);
 }`,
           },
           {
             kind: 'paragraph',
-            text: 'It is run as part of the repository legal check.',
+            text: 'The repository legal command invokes this existence check directly.',
           },
           {
             kind: 'code',
             language: 'sh',
-            caption: 'The third-party notice is verified by the legal check.',
+            caption: 'The repository root-license existence check.',
             code: `npm run license:check`,
           },
           {
             kind: 'paragraph',
-            text: 'Its reach is exact. If `third-party/kaisei-opti/LICENSE.txt` is absent or lacks `Kaisei`, `SIL Open Font License`, or `Version 1.1`, the check reports the defect by the license label. The predicate confirms selected terms in a named notice. License interpretation and distribution authority remain with the controlling legal texts; a package process must retain this notice.',
+            text: 'This command reports the root-license existence result. The Kaisei notice is inspected at `third-party/kaisei-opti/LICENSE.txt`, and packaged retention is inspected in the applicable publish directory.',
           },
         ],
       },
@@ -949,13 +909,13 @@ npm run build:macos -- --status`,
             kind: 'code',
             language: 'js',
             caption: 'Native-build ordering gate in windows-build.service.mjs.',
-            code: `if (!options.skipNativeBuild && !options.dryRun) {
-  const nativeExitCode = buildNativeExtensionsBeforeDesktop(options);
+            code: `  if (!options.skipNativeBuild && !options.dryRun) {
+    const nativeExitCode = buildNativeExtensionsBeforeDesktop(options);
 
-  if (nativeExitCode !== 0) {
-    return nativeExitCode;
-  }
-}`,
+    if (nativeExitCode !== 0) {
+      return nativeExitCode;
+    }
+  }`,
           },
           {
             kind: 'paragraph',
@@ -1093,22 +1053,44 @@ npm run build:macos -- --status`,
         content: [
           {
             kind: 'paragraph',
-            text: 'Windows and macOS report publication differently because the artifacts differ. Windows prints `published Windows executable` when `dist/windows/Ludoxel.exe` is replaced, and prints instead that the published executable is locked and the staged executable preserved when it is not. macOS prints a published app bundle only after Info.plist patching, ad-hoc signing, verification, copying, re-signing, re-verification, and legal-material copying. Native verification prints a line per source and an explicit fallback statement for any fallback-only source.',
+            text: 'Windows and macOS report publication differently because the artifacts differ. Windows prints `published Windows executable` when `dist/windows/Ludoxel.exe` is replaced, and reports a preserved staged executable when the publish target remains locked. macOS prints a published app bundle after Info.plist patching, ad-hoc signing, verification, copying, re-signing, re-verification, and legal-material copying. Rust native verification prints each configured target and then requires its installed compiled artifact and imported compiled suffix; the Python fallback is an explicit failure state for this check.',
           },
           {
             kind: 'code',
             language: 'js',
-            caption: 'Per-source output and the fallback statement in verify.service.mjs.',
-            code: `console.log(\`native source: \${source.id}: \${source.moduleName} -> \${source.displayPath}\`);
+            caption: 'Per-target output and compiled-artifact gates in rust.service.mjs.',
+            code: `    console.log(\`rust native target: \${state.id}: \${state.moduleName} -> \${displayPath(state.crateRoot)}\`);
 
-if (source.binaries.length === 0) {
-  console.log('  compiled extension: none; Python fallback source exists.');
-  continue;
-}`,
+    if (!state.installedExists) {
+      console.error(\`  compiled extension: missing (\${displayPath(state.installedArtifactPath)}). The Python fallback (\${state.fallbackModuleName}) is not accepted by this check; run: npm run build:native\`);
+      failed = true;
+      continue;
+    }
+
+    const imported = importedModuleFile(python, state.moduleName, env);
+    if (!imported.ok) {
+      console.error(\`  compiled extension import failed for \${state.moduleName}: \${imported.detail}\`);
+      failed = true;
+      continue;
+    }
+
+    const importedFile = resolve(imported.file);
+    if (!importedFile.startsWith(srcLudoxelRoot)) {
+      console.error(\`  imported module resolves outside the repository source tree: \${importedFile}\`);
+      failed = true;
+      continue;
+    }
+    if (!importedFile.endsWith(expectedSuffix)) {
+      console.error(\`  imported module is not a compiled \${expectedSuffix} extension: \${importedFile}\`);
+      failed = true;
+      continue;
+    }
+
+    console.log(\`  compiled extension: \${displayPath(importedFile)}\`);`,
           },
           {
             kind: 'paragraph',
-            text: 'Each message carries its own meaning and no more. A preserved staged Windows executable is diagnostic residue from a locked publish target, and only the `published Windows executable` line marks the replaced `dist/windows/Ludoxel.exe`. A `compiled extension: none` line records a valid fallback runtime state, which `verifyNativeExtensions` passes when `--require-built` is absent. An ad-hoc verified macOS bundle records local signature integrity, while Developer ID signing and notarization stay outside the tool by its own status text. A copied-legal-material line records retention in the publish coordinate. The description of the artifact is assembled from these specific facts, and drawing it from a single favorable line is the inference the granularity of the output exists to refuse.',
+            text: 'Each message carries its own bounded result. A preserved staged Windows executable records a locked publish target, and only the `published Windows executable` line marks replacement of `dist/windows/Ludoxel.exe`. Rust native verification accepts a target after the installed artifact exists, the configured module imports from the repository source tree, and the imported file ends in the platform extension suffix. An ad-hoc verified macOS bundle records local signature integrity, while Developer ID signing and notarization remain outside the tool. A copied-legal-material line records retention at the publication path. Artifact descriptions derive from these individual results.',
           },
         ],
       },
@@ -1211,16 +1193,25 @@ export async function runProjectCheck(checkName, options = {}) {
             kind: 'code',
             language: 'js',
             caption: 'Identity and required-script verification in package.check.mjs.',
-            code: `if (packageJson.name !== 'ludoxel') failures.push('package.json name must be ludoxel');
-if (packageJson.license !== 'LicenseRef-All-Rights-Reserved') failures.push('package.json license must be LicenseRef-All-Rights-Reserved');
+            code: `export function checkPackage() {
+  const failures = [];
+  const packageJson = readPackageJson();
 
-const scripts = packageJson.scripts || {};
-
-for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
-  if (!Object.hasOwn(scripts, scriptName)) {
-    failures.push(\`package.json missing script: \${scriptName}\`);
+  if (!packageJson) {
+    return printCheckResult('package', ['package.json is missing']);
   }
-}`,
+
+  if (packageJson.name !== 'ludoxel') failures.push('package.json name must be ludoxel');
+  if (packageJson.license !== 'LicenseRef-All-Rights-Reserved') failures.push('package.json license must be LicenseRef-All-Rights-Reserved');
+
+  const scripts = packageJson.scripts || {};
+
+  for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
+    if (!Object.hasOwn(scripts, scriptName)) {
+      failures.push(\`package.json missing script: \${scriptName}\`);
+    }
+  }
+`,
           },
           {
             kind: 'paragraph',
@@ -1234,11 +1225,11 @@ for (const scriptName of REQUIRED_PACKAGE_SCRIPTS) {
         content: [
           {
             kind: 'paragraph',
-            text: 'The legal predicate verifies the root License Text terms, the `third-party` root, the required third-party license text, and SPDX headers on source-like files outside excluded paths; the documentation predicate verifies that `README.md` exists and carries the required Ludoxel legal-information terms. Both are narrower than the documents they touch: they confirm that required terms and markers are present, and they neither interpret the full legal text nor certify that any public explanation is complete.',
+            text: 'The legal and documentation predicates each resolve the root `LICENSE` through their own path configuration and fail when that file is absent. Their passing output records the checked path.',
           },
           {
             kind: 'paragraph',
-            text: 'These two predicates are the most frequently over-read signals in the surface. A green legal or documentation check certifies the inspected terms and markers and no further proposition. It leaves the meaning of the License Text to the Legal category, the completeness of any public explanation unjudged, and redistribution authority to the controlling text. The implication runs one direction only. A repository that fails these predicates yields a package that must be treated as suspect before the platform artifact is examined; a repository that passes them has established nothing about whether a later archive, installer, upload, or copied directory retained the material.',
+            text: 'A green legal or documentation check establishes root-license presence at check time. Package contents, copied legal material, public explanations, and distribution authority require their corresponding artifact and governing evidence.',
           },
         ],
       },
@@ -1411,8 +1402,8 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
             kind: 'code',
             language: 'js',
             caption: 'package.json',
-            code: `"assets:block-thumbnails:generate": "node ./tools/generate_block_thumbnails/scripts/run/generate.run.mjs",
-"assets:block-thumbnails:check": "node ./tools/generate_block_thumbnails/scripts/run/check.run.mjs"`,
+            code: `    "assets:block-thumbnails:generate": "node ./tools/generate_block_thumbnails/scripts/run/generate.run.mjs",
+    "assets:block-thumbnails:check": "node ./tools/generate_block_thumbnails/scripts/run/check.run.mjs",`,
           },
           {
             kind: 'paragraph',
@@ -1452,8 +1443,8 @@ export const REQUIRED_RUNTIME_PATH_TERMS = Object.freeze(['default_runtime_data_
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/rendering/faces/preview.py',
-            code: `x = int(round(uu * float(texture.width - 1)))
-y = int(round((1.0 - vv) * float(texture.height - 1)))`,
+            code: `  x = int(round(uu * float(texture.width - 1)))
+  y = int(round((1.0 - vv) * float(texture.height - 1)))`,
           },
           {
             kind: 'paragraph',
@@ -1473,13 +1464,13 @@ y = int(round((1.0 - vv) * float(texture.height - 1)))`,
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/presentation/interface/common/item_photo_provider.py',
-            code: `gif_path = self._paths.thumbs_dir() / f"{name}.gif"
-if gif_path.exists():
-  return self._ensure_movie_pixmap(str(bid), gif_path)
+            code: `    gif_path = self._paths.thumbs_dir() / f"{name}.gif"
+    if gif_path.exists():
+      return self._ensure_movie_pixmap(str(bid), gif_path)
 
-p = self._paths.thumbs_dir() / f"{name}.png"
-if not p.exists():
-  p = self._paths.item_dir() / f"{name}.png"`,
+    p = self._paths.thumbs_dir() / f"{name}.png"
+    if not p.exists():
+      p = self._paths.item_dir() / f"{name}.png"`,
           },
           {
             kind: 'paragraph',
@@ -1561,7 +1552,22 @@ if not p.exists():
             language: 'js',
             caption: 'Artifact name and publish directories declared in build.config.mjs.',
             code: `export const APP_NAME = 'Ludoxel';
+
+export const WINDOWS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
+export const WINDOWS_ICON_CANDIDATE_PATHS = Object.freeze(['assets/app/icons/windows/app_icon_256x256.ico', 'assets/app/icons/windows/app_icon_128x128.ico', 'assets/app/icons/windows/app_icon_32x32.ico', 'assets/app/icons/windows/app_icon_16x16.ico']);
+export const WINDOWS_ICON_PATH = WINDOWS_ICON_CANDIDATE_PATHS[0];
 export const WINDOWS_PUBLISH_DIR = 'dist/windows';
+
+export const MACOS_ENTRY_SCRIPT = 'src/ludoxel/__main__.py';
+export const MACOS_ICON_CANDIDATE_PATHS = Object.freeze([
+  'assets/app/icons/macos/app_icon_1024x1024.icns',
+  'assets/app/icons/macos/app_icon_512x512.icns',
+  'assets/app/icons/macos/app_icon_256x256.icns',
+  'assets/app/icons/macos/app_icon_128x128.icns',
+  'assets/app/icons/macos/app_icon_32x32.icns',
+  'assets/app/icons/macos/app_icon_16x16.icns',
+]);
+export const MACOS_ICON_PATH = MACOS_ICON_CANDIDATE_PATHS[0];
 export const MACOS_PUBLISH_DIR = 'dist/macos';`,
           },
           {
@@ -1626,17 +1632,6 @@ export const MACOS_PUBLISH_DIR = 'dist/macos';`,
           {
             kind: 'paragraph',
             text: 'The Rust terrain engine lives in the repository as `native/ludoxel_terrain`, a cargo crate whose `Cargo.toml` declares a `cdylib` built against PyO3 with the stable-ABI feature set. The crate is split by responsibility: `native/ludoxel_terrain/src/noise.rs` owns the deterministic hashing and value-noise sampling, `native/ludoxel_terrain/src/height.rs` owns the surface-height octaves, the ravine carving, and the generation-mode selectors, and `native/ludoxel_terrain/src/material.rs` owns the per-cell material and ore selection. `native/ludoxel_terrain/src/lib.rs` holds only the PyO3 binding surface: it exposes `surface_heights`, `terrain_materials`, and `native_build_info` as Python functions and names the module `_terrain_native`. The compiled artifact is imported as `ludoxel.simulation.worlds.generation._terrain_native`; the pure Python implementation of the same formulas is `ludoxel.simulation.worlds.generation.fallback` backed by `terrain_math.py`, and the import owner `native.py` selects between them at import time. Both implementations return the same bytes-level contract: `surface_heights` yields little-endian `int32` values in C order with shape `(nx, nz)`, and `terrain_materials` yields `uint8` material codes in C order with shape `(nx, ny, nz)`, where code zero is air and non-zero codes index the registered block ids in `materials.py`.',
-          },
-          {
-            kind: 'code',
-            language: 'toml',
-            caption: 'native/ludoxel_terrain/Cargo.toml',
-            code: `[lib]
-name = "ludoxel_terrain"
-crate-type = ["cdylib"]
-
-[dependencies]
-pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "generate-import-lib"] }`,
           },
           {
             kind: 'paragraph',
@@ -1718,17 +1713,17 @@ pyo3 = { version = "0.25", features = ["extension-module", "abi3-py311", "genera
             kind: 'code',
             language: 'js',
             caption: 'The compiled-import gate in rust.service.mjs.',
-            code: `const importedFile = resolve(imported.file);
-if (!importedFile.startsWith(srcLudoxelRoot)) {
-  console.error(\`  imported module resolves outside the repository source tree: \${importedFile}\`);
-  failed = true;
-  continue;
-}
-if (!importedFile.endsWith(expectedSuffix)) {
-  console.error(\`  imported module is not a compiled \${expectedSuffix} extension: \${importedFile}\`);
-  failed = true;
-  continue;
-}`,
+            code: `    const importedFile = resolve(imported.file);
+    if (!importedFile.startsWith(srcLudoxelRoot)) {
+      console.error(\`  imported module resolves outside the repository source tree: \${importedFile}\`);
+      failed = true;
+      continue;
+    }
+    if (!importedFile.endsWith(expectedSuffix)) {
+      console.error(\`  imported module is not a compiled \${expectedSuffix} extension: \${importedFile}\`);
+      failed = true;
+      continue;
+    }`,
           },
           {
             kind: 'paragraph',
@@ -1787,8 +1782,6 @@ if (!importedFile.endsWith(expectedSuffix)) {
             language: 'py',
             caption: 'src/ludoxel/simulation/spaces/othello/engines/native.py',
             code: `def create_native_insane_search(*, hash_level: int, sacrifice_level: int):
-  # Returns a per-cache native search session owning its own transposition tables, or None when the compiled module is absent;
-  # the pure Python negamax and solve_exact in search.py stay the fallback owners.
   if _native_module is None:
     return None
   return _native_module.InsaneSearch(int(hash_level), int(sacrifice_level))`,
@@ -1856,15 +1849,6 @@ pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311", "genera
             text: 'The crate does not port every function `foundations/mathematics` defines. Per-scalar numeric conversion, smoothing, and dynamic-typing coercion helpers stay Python-only because a PyO3 round trip per call would cost more than the pure-Python body it replaces; chunk-grid hashing and the single-AABB and single-vector helpers stay Python-only for the same reason, reachable instead through the batched entry points below where a caller needs volume. `ludoxel.foundations.mathematics._native` is the one loader every selector module imports: it resolves `_mathematics_native` once at import time inside a `try`/`except ImportError` block and exposes `native_mathematics_available`, `native_mathematics_module_file`, and `native_mathematics_status` so a caller can report which state a running session is in without importing the compiled module directly.',
           },
           {
-            kind: 'code',
-            language: 'py',
-            caption: 'src/ludoxel/foundations/mathematics/_native.py',
-            code: `try:
-  from ludoxel.foundations.mathematics import _mathematics_native as native_module
-except ImportError:
-  native_module = None`,
-          },
-          {
             kind: 'paragraph',
             text: 'Four selector modules call through that loader and fall back to their matching pure-Python module when `native_module` is `None`: `geometry/native.py` wraps `ray_aabb_face` against the `geometry.ray_aabb` fallback, `voxels/native.py` wraps a batched `dda_grid_traverse_batch` against the `voxels.dda` fallback, `linear/native.py` wraps the view-angle conversions and every `mat4`/`transform_matrices` builder against those two fallback modules, and `frustums/native.py` wraps `chunks_intersect_clip_volume_batch` against `frustums.clip`, unchanged in contract from the crate `ludoxel_frustum` used to provide. Every caller across picking, player and AI movement, camera composition, the OpenGL and WGPU backends, and the HUD crosshair axis now imports from these four `.native` modules rather than importing a Cython-candidate or fallback module directly.',
           },
@@ -1885,9 +1869,15 @@ except ImportError:
             code: `_RECORD_FORMAT = "<qqqdi"
 _RECORD_SIZE = struct.calcsize(_RECORD_FORMAT)
 
-raw = native_module.dda_grid_traverse_batch(origin.x, origin.y, origin.z, direction.x, direction.y, direction.z, float(t_max), float(cell_size))
-for offset in range(0, len(raw), _RECORD_SIZE):
-  cell_x, cell_y, cell_z, t, enter_face = struct.unpack_from(_RECORD_FORMAT, raw, offset)`,
+
+def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0) -> Iterator[DDAHit]:
+  if native_module is None:
+    yield from _fallback.dda_grid_traverse(origin, direction, t_max, cell_size)
+    return
+
+  raw = native_module.dda_grid_traverse_batch(origin.x, origin.y, origin.z, direction.x, direction.y, direction.z, float(t_max), float(cell_size))
+  for offset in range(0, len(raw), _RECORD_SIZE):
+    cell_x, cell_y, cell_z, t, enter_face = struct.unpack_from(_RECORD_FORMAT, raw, offset)`,
           },
           {
             kind: 'paragraph',
@@ -1907,15 +1897,15 @@ for offset in range(0, len(raw), _RECORD_SIZE):
             kind: 'code',
             language: 'js',
             caption: 'The mathematics entry in RUST_NATIVE_MODULES.',
-            code: `Object.freeze({
-  id: 'mathematics_native',
-  crateDirectory: 'native/ludoxel_mathematics',
-  crateName: 'ludoxel_mathematics',
-  moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
-  artifactStem: '_mathematics_native',
-  installDirectory: 'src/ludoxel/foundations/mathematics',
-  fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
-}),`,
+            code: `  Object.freeze({
+    id: 'mathematics_native',
+    crateDirectory: 'native/ludoxel_mathematics',
+    crateName: 'ludoxel_mathematics',
+    moduleName: 'ludoxel.foundations.mathematics._mathematics_native',
+    artifactStem: '_mathematics_native',
+    installDirectory: 'src/ludoxel/foundations/mathematics',
+    fallbackModuleName: 'ludoxel.foundations.mathematics.geometry.ray_aabb',
+  }),`,
           },
           {
             kind: 'paragraph',

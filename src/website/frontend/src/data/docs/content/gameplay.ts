@@ -105,69 +105,69 @@ class InteractionService:
           {
             language: 'py',
             caption: 'Picking uses the eye position and view direction with a default reach.',
-            code: `def _pick_target(self, reach: float, *, origin=None, direction=None):
-  eye = self.player.eye_pos() if origin is None else origin
-  direction = self.player.view_forward() if direction is None else direction
-  return pick_block(self.world, origin=eye, direction=direction, reach=float(reach), block_registry=self.block_registry)`,
+            code: `  def _pick_target(self, reach: float, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> BlockPick | None:
+    eye = self.player.eye_pos() if origin is None else origin
+    direction = self.player.view_forward() if direction is None else direction
+    return pick_block(self.world, origin=eye, direction=direction, reach=float(reach), block_registry=self.block_registry)`,
           },
           {
             language: 'py',
             caption: 'src/ludoxel/foundations/mathematics/geometry/ray_aabb.py',
-            code: `for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
-  if abs(d_comp) < 1e-12:
-    if o_comp < mn or o_comp > mx:
+            code: `  for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
+    if abs(d_comp) < 1e-12:
+      if o_comp < mn or o_comp > mx:
+        return None
+      continue
+
+    inv = 1.0 / d_comp
+    t1 = (mn - o_comp) * inv
+    t2 = (mx - o_comp) * inv
+
+    if t1 > t2:
+      t1, t2 = t2, t1
+
+    if t1 > tmin:
+      tmin = t1
+      enter_face = _enter_face_for_axis(int(axis), float(inv))
+
+    if t2 < tmax:
+      tmax = t2
+      exit_face = _exit_face_for_axis(int(axis), float(inv))
+
+    if tmin > tmax:
       return None
-    continue
 
-  inv = 1.0 / d_comp
-  t1 = (mn - o_comp) * inv
-  t2 = (mx - o_comp) * inv
-
-  if t1 > t2:
-    t1, t2 = t2, t1
-
-  if t1 > tmin:
-    tmin = t1
-    enter_face = _enter_face_for_axis(int(axis), float(inv))
-
-  if t2 < tmax:
-    tmax = t2
-    exit_face = _exit_face_for_axis(int(axis), float(inv))
-
-  if tmin > tmax:
+  if tmax < 0.0:
     return None
 
-if tmax < 0.0:
-  return None
-
-if tmin >= 0.0:
-  t_enter = float(tmin)
-  face = int(enter_face)
-else:
-  t_enter = float(tmax)
-  face = int(exit_face)`,
+  if tmin >= 0.0:
+    t_enter = float(tmin)
+    face = int(enter_face)
+  else:
+    t_enter = float(tmax)
+    face = int(exit_face)`,
           },
           {
             language: 'py',
             caption: 'src/ludoxel/foundations/mathematics/voxels/dda.py',
-            code: `while t <= t_max:
-  yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))
+            code: `  while t <= t_max:
+    yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))
 
-  if tmx < tmy and tmx < tmz:
-    x += step_x
-    t = tmx
-    tmx += tdx
-    enter_face = 1 if step_x > 0 else 0
-  elif tmy < tmz:
-    y += step_y
-    t = tmy
-    tmy += tdy
-    enter_face = 3 if step_y > 0 else 2
-  else:
-    z += step_z
-    t = tmz
-    tmz += tdz
-    enter_face = 5 if step_z > 0 else 4`,
+    if tmx < tmy and tmx < tmz:
+      x += step_x
+      t = tmx
+      tmx += tdx
+      enter_face = 1 if step_x > 0 else 0
+    elif tmy < tmz:
+      y += step_y
+      t = tmy
+      tmy += tdy
+      enter_face = 3 if step_y > 0 else 2
+    else:
+      z += step_z
+      t = tmz
+      tmz += tdz
+      enter_face = 5 if step_z > 0 else 4`,
           },
           {
             language: 'py',
@@ -203,8 +203,18 @@ else:
             code: `def break_block_for_session(session, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
   return session.interaction.break_block(reach=float(reach), origin=origin, direction=direction)
 
+
 def pick_block_for_session(session, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None):
   return session.interaction.pick_block(reach=float(reach), origin=origin, direction=direction)
+
+
+def interact_block_at_hit_for_session(session, hit_cell: tuple[int, int, int]):
+  return session.interaction.interact_block_at_hit(hit_cell)
+
+
+def place_block_from_hit_for_session(session, hit, block_id: str | None, *, forced_place_state: str | None = None, inherit_state: str | None = None):
+  return session.interaction.place_block_from_hit(hit, block_id, forced_place_state=forced_place_state, inherit_state=inherit_state)
+
 
 def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None):
   return session.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)`,
@@ -222,16 +232,16 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
           {
             language: 'py',
             caption: 'Breaking reads the previous state, then commits a removal.',
-            code: `def break_block_for_service(service, reach=5.0, *, origin=None, direction=None):
+            code: `def break_block_for_service(service, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> InteractionOutcome:
   hit = service._pick_target(reach=float(reach), origin=origin, direction=direction)
   if hit is None:
     return InteractionOutcome(success=False)
+
   hx, hy, hz = hit.hit
   previous_state = service.world.blocks.get((int(hx), int(hy), int(hz)))
   if previous_state is None:
     return InteractionOutcome(success=False)
-  service._commit_world_edit(removals=((int(hx), int(hy), int(hz)),))
-  return InteractionOutcome(success=True, action=INTERACTION_ACTION_BREAK, target_block_state=str(previous_state), target_position=(int(hx), int(hy), int(hz)))`,
+`,
           },
         ],
       },
@@ -242,22 +252,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
           'A normal place action first tries to interact with the targeted block, for example toggling a fence gate. If interaction succeeds, that is the result and no block is placed. Only when interaction does not apply does the service fall through to placement.',
           'Crouching changes this order: a crouching place skips interaction and goes straight to placement. The crouching route places a block against a gate.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Without crouch, interaction is attempted before placement.',
-            code: `def place_block_for_service(service, block_id, reach=5.0, *, crouching=False, origin=None, direction=None):
-  hit = service.pick_block(reach=float(reach), origin=origin, direction=direction)
-  if hit is None:
-    return InteractionOutcome(success=False)
-  if bool(crouching):
-    return place_from_hit_for_service(service, hit=hit, block_id=block_id)
-  interact_outcome = service.interact_block_at_hit(hit.hit)
-  if bool(interact_outcome.success):
-    return interact_outcome
-  return place_from_hit_for_service(service, hit=hit, block_id=block_id)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'building-in-my-world-placement-cell',
@@ -283,25 +278,9 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
           {
             language: 'py',
             caption: 'src/ludoxel/foundations/mathematics/geometry/aabb.py',
-            code: `def intersects(self, o: "AABB") -> bool:
-  return not (
-    self.mx.x <= o.mn.x
-    or self.mn.x >= o.mx.x
-    or self.mx.y <= o.mn.y
-    or self.mn.y >= o.mx.y
-    or self.mx.z <= o.mn.z
-    or self.mn.z >= o.mx.z
-  )`,
-          },
-          {
-            language: 'py',
-            caption: 'A placement that intersects the player is rejected before committing.',
-            code: `def apply_place_state_for_service(service, *, cell, place_state):
-  px, py, pz = (int(cell[0]), int(cell[1]), int(cell[2]))
-  if service.placement_policy.placement_intersects_player(player=service.player, world=service.world, px=px, py=py, pz=pz, place_state=str(place_state)):
-    return InteractionOutcome(success=False)
-  service._commit_world_edit(updates={(px, py, pz): str(place_state)})
-  return InteractionOutcome(success=True, action=INTERACTION_ACTION_PLACE, target_block_state=str(place_state), target_position=(px, py, pz))`,
+            code: `  def intersects(self, o: "AABB") -> bool:
+    return not (self.mx.x <= o.mn.x or self.mn.x >= o.mx.x or self.mx.y <= o.mn.y or self.mn.y >= o.mx.y or self.mx.z <= o.mn.z or self.mn.z >= o.mx.z)
+`,
           },
         ],
       },
@@ -312,22 +291,7 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
           'A committed edit writes the touched cells with its structural neighbor updates. The service collects updates for adjacent fences, walls, and other connected blocks, then applies the combined updates and removals in one bulk write to the world.',
           'A single place or break can change the visible shape of nearby blocks. `collect_structural_neighbor_updates` recomputes connected fences and walls during the same commit, placing neighbor reshaping inside the accepted world edit.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Structural neighbor updates are merged into the bulk world write.',
-            code: `def _commit_world_edit(self, *, updates=None, removals=()):
-  normalized_updates = {(int(k[0]), int(k[1]), int(k[2])): str(v) for k, v in (updates or {}).items()}
-  normalized_removals = tuple((int(k[0]), int(k[1]), int(k[2])) for k in removals)
-  touched = set(normalized_updates.keys()) | set(normalized_removals)
-  if not touched:
-    return
-  structural_updates = collect_structural_neighbor_updates(self.world, touched, block_registry=self.block_registry, overlay_updates=normalized_updates, overlay_removals=normalized_removals)
-  final_updates = dict(normalized_updates)
-  final_updates.update(structural_updates)
-  self.world.set_blocks_bulk(updates=final_updates, removals=normalized_removals)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'building-in-my-world-render-handoff',
@@ -341,10 +305,10 @@ def place_block_for_session(session, block_id: str | None, reach: float = 5.0, *
           {
             language: 'py',
             caption: 'src/ludoxel/simulation/worlds/state/world.py',
-            code: `self.revision += 1
-self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
-self._mark_gravity_dirty_cell(int(x), int(y), int(z))
-self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
+            code: `      self.revision += 1
+      self._mark_chunks_dirty(dirty_keys)
+      self._mark_gravity_dirty_cells(gravity_cells)
+`,
           },
         ],
       },
@@ -365,27 +329,7 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
           'Each block definition has a kind, and the model layer dispatches on it. Full cubes, short cubes, slabs, stairs, fences, fence gates, and walls each build a different set of local boxes. A block that is not one of the special kinds falls back to a unit cube.',
           'The boxes are expressed in local coordinates where one block spans from zero to one. The model functions return these boxes; the rest of the system translates them into world-space AABBs as needed.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The render model dispatches on the block kind.',
-            code: `def _render_boxes_uncached(state_str, get_state, get_def, x, y, z):
-  base, props, kind = _resolve_block_kind(str(state_str), get_def)
-  if kind == "slab":
-    return tuple(boxes_for_slab(props))
-  if kind == "stairs":
-    return tuple(boxes_for_stairs(base_id=str(base), props=props, get_state=get_state, get_def=get_def, x=x, y=y, z=z))
-  if kind == "fence":
-    return tuple(boxes_for_fence(get_state=get_state, get_def=get_def, x=x, y=y, z=z))
-  if kind == "fence_gate":
-    return tuple(boxes_for_fence_gate(props))
-  if kind == "wall":
-    return tuple(boxes_for_wall(props=props, get_state=get_state, get_def=get_def, x=x, y=y, z=z))
-  if kind == "short_cube":
-    return (LocalBox(0.0, 0.0, 0.0, 1.0, 15.0 / 16.0, 1.0),)
-  return (LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0),)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-block-shapes-slabs',
@@ -394,19 +338,7 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
           'A slab builds one box depending on its type. A bottom slab fills the lower half of the cell, a top slab fills the upper half, and a double slab fills the whole cell. This single box is what collision, picking, and rendering all use for the slab.',
           'Because the type determines the box, the same slab block id behaves differently as bottom, top, or double. Placing a second slab into a matching half is what produces the double form.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The slab box is chosen from the type property.',
-            code: `def boxes_for_slab(props):
-  t = str(props.get("type", "bottom"))
-  if t == "top":
-    return [LocalBox(0.0, 0.5, 0.0, 1.0, 1.0, 1.0)]
-  if t == "double":
-    return [LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)]
-  return [LocalBox(0.0, 0.0, 0.0, 1.0, 0.5, 1.0)]`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-block-shapes-three-uses',
@@ -415,24 +347,7 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
           'The model layer produces three box sets per block: render, collision, and pick. For most blocks these are the same as the render boxes, but structural blocks diverge. The split lets the visible shape, the solid shape, and the targetable shape each be correct for its purpose.',
           'These box sets are cached by a signature of the block state and its neighbors, so recomputing the shape of an unchanged block is cheap. The cache is what keeps shape-aware collision and picking from being expensive per frame.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Pick boxes are built per block and cached by shape signature.',
-            code: `def pick_boxes_for_block(state_str, get_state, get_def, x, y, z):
-  key = _local_box_cache_key("pick", str(state_str), get_state, get_def, x, y, z)
-
-  def _build():
-    _base, _props, kind = _resolve_block_kind(str(state_str), get_def)
-    if kind == "fence_gate":
-      return _fence_gate_pick_boxes(str(state_str), get_state, get_def, x, y, z)
-    if kind in ("fence", "wall"):
-      return _tall_structural_boxes(str(state_str), get_state, get_def, x, y, z)
-    return tuple(render_boxes_for_block(str(state_str), get_state, get_def, x, y, z))
-
-  return _cache_get_or_build(_PICK_BOX_CACHE, key, _build)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-block-shapes-tall-hull',
@@ -446,10 +361,10 @@ self._mark_gravity_dirty_cell(int(x), int(y) + 1, int(z))`,
             language: 'py',
             caption: 'Structural blocks raise their boxes to a minimum tall height.',
             code: `_TALL_STRUCTURAL_MIN_HEIGHT = 1.5
+_LOCAL_BOX_CACHE_CAP = 32768
+_WORLD_AABB_CACHE_CAP = 32768
 
-
-def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
-  return _raise_boxes_to_min_height(render_boxes_for_block(str(state_str), get_state, get_def, x, y, z), _TALL_STRUCTURAL_MIN_HEIGHT)`,
+`,
           },
         ],
       },
@@ -460,16 +375,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
           'A fence gate changes its solid shape when open. A closed gate uses the tall structural hull for collision, while an open gate has no collision boxes at all, so the player can pass through. Picking keeps an interaction hull so the gate can still be toggled.',
           'An open gate therefore stops blocking movement while remaining targetable: its collision set is empty, and its pick set keeps a hull for interaction.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'An open fence gate returns no collision boxes.',
-            code: `if kind == "fence_gate":
-  if prop_as_bool(props, "open", False):
-    return ()
-  return _tall_structural_boxes(str(state_str), get_state, get_def, x, y, z)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-block-shapes-neighbors',
@@ -497,12 +403,12 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
           {
             language: 'py',
             caption: 'Full top support requires complete coverage at full height.',
-            code: `for box in render_boxes_for_block(str(state_str), get_state, get_def, x, y, z):
-  if float(box.mx_y) < (1.0 - 1e-6):
-    continue
-  start_x = max(0, min(16, int(round(float(box.mn_x) * 16.0))))
-  end_x = max(0, min(16, int(round(float(box.mx_x) * 16.0))))
-  # ... mark covered cells; require all 16x16 covered`,
+            code: `    for box in render_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z)):
+      if float(box.mx_y) < (1.0 - 1e-6):
+        continue
+      start_x = max(0, min(16, int(round(float(box.mn_x) * 16.0))))
+      end_x = max(0, min(16, int(round(float(box.mx_x) * 16.0))))
+      start_z = max(0, min(16, int(round(float(box.mn_z) * 16.0))))`,
           },
         ],
       },
@@ -523,17 +429,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
           'Placement requires a non-empty item id that the block registry knows. An empty hand or an unknown id is rejected before any pick or world check, returning a failed outcome with no edit.',
           'The placement path begins with the selected hotbar slot. An empty slot or an item absent from the placeable-block registry supplies no block identifier to the interaction service, leaving the world state unchanged.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'A placeable block must exist in the registry.',
-            code: `def has_selected_placeable_block_for_service(service, block_id):
-  bid = str(block_id).strip()
-  if not bid:
-    return False
-  return service.block_registry.get(str(bid)) is not None`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-placement-rejection-no-target',
@@ -550,26 +446,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
           'When the held item matches an existing slab, placement tries to merge them into a double slab. The merge only succeeds when the existing block is the same slab id, is actually a slab, the desired half is the opposite of the current half, and the current slab is not already double.',
           'If those conditions are not met, the merge returns nothing and the placement falls through to the adjacent cell or fails. A merge attempt that does nothing is usually a half or id mismatch.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'A slab merge requires the same id and an opposite half.',
-            code: `def resolve_same_slab_merge_state(*, block_registry, existing_state, block_id, desired_type):
-  base, props = parse_state(str(existing_state))
-  if str(base) != str(block_id):
-    return None
-  defn = block_registry.get(str(base))
-  if defn is None or (not is_slab(defn)):
-    return None
-  want = str(desired_type)
-  if want not in ("bottom", "top"):
-    return None
-  cur = slab_type_value(props)
-  if cur == "double" or cur == want:
-    return None
-  return format_state(str(base), {"type": "double"})`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-placement-rejection-occupied-cell',
@@ -578,19 +455,7 @@ def _tall_structural_boxes(state_str, get_state, get_def, x, y, z):
           'The adjacent placement cell must be empty unless a slab merge applies. If the pick reports a placement cell that already contains a block, the pick itself clears the placement target, and a non-merge placement into an occupied cell is rejected.',
           'A non-merge placement into an occupied cell is therefore refused, and only a valid slab merge can change a cell that already holds a block.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The pick drops the placement cell if it is already occupied.',
-            code: `ox, oy, oz = face_neighbor_offset(int(face))
-if ox == 0 and oy == 0 and oz == 0:
-  place = prev_cell
-else:
-  place = (int(cx + ox), int(cy + oy), int(cz + oz))
-if place is not None and place in world.blocks:
-  place = None`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-placement-rejection-player-intersect',
@@ -599,22 +464,7 @@ if place is not None and place in world.blocks:
           'Before committing, placement checks whether the new block shape would intersect the player body. The check builds the would-be block collision boxes at the target cell and tests them against the player AABB; any overlap rejects the placement.',
           'Standing in the cell you are trying to fill, or placing a tall structural shape against yourself, is therefore refused even when everything else is legal.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Placement is refused if the new shape overlaps the player.',
-            code: `def placement_intersects_player(*, block_registry, player, world, px, py, pz, place_state):
-  pa = player.aabb_at(player.position)
-  def get_state(x, y, z):
-    if (int(x), int(y), int(z)) == (int(px), int(py), int(pz)):
-      return str(place_state)
-    return world.blocks.get((int(x), int(y), int(z)))
-  for ba in collision_aabbs_for_block(str(place_state), get_state, block_registry.get, px, py, pz):
-    if pa.intersects(ba):
-      return True
-  return False`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-placement-rejection-interaction-first',
@@ -624,44 +474,7 @@ if place is not None and place in world.blocks:
           'When a click toggles a gate, interaction has taken priority over placement and reported success, so the placement path never runs. Crouching skips interaction so the same click places a block.',
           'When placement runs, `resolve_place_state` derives a slab `type`, or a stair `facing` and `half`, from the hit face, the hit point, and the player facing. A bridge that extends from a slab or stair source into an adjacent empty cell instead receives that source state through `inherit_state` and copies its half or facing, so a held lower-slab bridge stays lower and an upper-slab bridge stays upper even where the synthesized support-face hit point would read the opposite half. Ordinary single-click placement passes no `inherit_state` and keeps the hit-geometry result.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The placement policy resolves shape state when placement does run.',
-            code: `def resolve_place_state(self, *, player, block_id, hit_face, hit_point, inherit_state=None):
-  base_sel = str(block_id)
-  defn = self.block_registry.get(base_sel)
-  if defn is None:
-    return None
-  inherit_base, inherit_props = (None, {})
-  if inherit_state is not None:
-    inherit_base, inherit_props = parse_state(str(inherit_state))
-  props = {}
-  if is_slab(defn):
-    inherited_type = None
-    if str(inherit_base) == base_sel:
-      candidate = slab_type_value(inherit_props)
-      if candidate in ("bottom", "top"):
-        inherited_type = candidate
-    props["type"] = inherited_type if inherited_type is not None else self._choose_half_type(int(hit_face), hit_point)
-    return format_state(base_sel, props)
-  if is_stairs(defn):
-    if str(inherit_base) == base_sel:
-      inherited_facing = str(inherit_props.get("facing", "")).strip()
-      inherited_half = str(inherit_props.get("half", "")).strip()
-      props["facing"] = inherited_facing if inherited_facing in ("north", "east", "south", "west") else self._player_cardinal(player)
-      props["half"] = inherited_half if inherited_half in ("bottom", "top") else self._choose_half_type(int(hit_face), hit_point)
-    else:
-      props["facing"] = self._player_cardinal(player)
-      props["half"] = self._choose_half_type(int(hit_face), hit_point)
-    return format_state(base_sel, props)
-  if is_fence_gate(defn):
-    return make_fence_gate_state(base_sel, self._player_cardinal(player), open_state=False)
-  if is_wall(defn):
-    return make_wall_state(base_sel, waterlogged=False)
-  return format_state(base_sel, props)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-placement-rejection-reporting',
@@ -692,15 +505,15 @@ if place is not None and place in world.blocks:
           {
             language: 'py',
             caption: 'The airborne start height is captured when the player leaves the ground.',
-            code: `if not bool(report.supported_after):
-  if motion.airborne_start_y is None:
-    motion.airborne_start_y = float(prev_pos_y)
+            code: `  if not bool(report.supported_after):
+    if motion.airborne_start_y is None:
+      motion.airborne_start_y = float(prev_pos_y)
 
-landed_now = (not prev_on_ground) and bool(report.supported_after) and (float(prev_vy) <= 0.0)
-fall_distance_blocks = None
-if bool(landed_now):
-  start_y = float(prev_pos_y) if motion.airborne_start_y is None else float(motion.airborne_start_y)
-  fall_distance_blocks = max(0.0, float(start_y) - float(player.position.y))`,
+  landed_now = (not prev_on_ground) and bool(report.supported_after) and (float(prev_vy) <= 0.0)
+  fall_distance_blocks: float | None = None
+  if bool(landed_now):
+    start_y = float(prev_pos_y) if motion.airborne_start_y is None else float(motion.airborne_start_y)
+    fall_distance_blocks = max(0.0, float(start_y) - float(player.position.y))`,
           },
         ],
       },
@@ -724,8 +537,53 @@ if bool(landed_now):
             caption: 'Fall damage is the rounded-up excess over the safe distance.',
             code: `FALL_DAMAGE_SAFE_DISTANCE_BLOCKS = 3.0
 
+PLAYER_BODY_YAW_FOLLOW_TAU_S = 0.24
+PLAYER_HEAD_BODY_YAW_MAX_DEG = 58.0
+PLAYER_HEAD_VISUAL_LAG_TAU_S = 0.09
+PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG = 12.0
+PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG = 6.0
 
-def fall_damage_amount(*, fall_distance_blocks):
+PLAYER_STRAFE_BODY_TURN_MAX_DEG = 18.0
+PLAYER_STRAFE_BODY_TURN_TAU_S = 0.40
+PLAYER_STRAFE_INPUT_EPS = 0.3
+
+
+@dataclass
+class PlayerMotionState:
+  walk_phase_rad: float = 0.0
+  walk_phase_total_rad: float = 0.0
+  airborne_start_y: float | None = None
+  visual_time_s: float = 0.0
+  body_visual_yaw_deg: float | None = None
+  head_visual_yaw_deg: float | None = None
+  head_visual_pitch_deg: float | None = None
+  strafe_turn_deg: float = 0.0
+
+
+@dataclass(frozen=True)
+class PlayerStepInput:
+  move_f: float
+  move_s: float
+  jump_held: bool
+  jump_pressed: bool
+  sprint: bool
+  crouch: bool
+  yaw_delta_deg: float
+  pitch_delta_deg: float
+  auto_jump_enabled: bool
+
+
+@dataclass(frozen=True)
+class RuntimePlayerStepResult:
+  jump_started: bool
+  landed: bool
+  footstep_triggered: bool
+  support_block_state: str | None
+  support_position: tuple[int, int, int] | None
+  fall_distance_blocks: float | None
+
+
+def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
   if fall_distance_blocks is None:
     return 0.0
   distance = max(0.0, float(fall_distance_blocks))
@@ -749,9 +607,13 @@ def fall_damage_amount(*, fall_distance_blocks):
             code: `VOID_DAMAGE_START_Y = -64.0
 VOID_DAMAGE_INTERVAL_S = 0.50
 VOID_DAMAGE_AMOUNT = 4.0
+MELEE_KNOCKBACK_HORIZONTAL_SPEED = 0.40 * _VANILLA_TICKS_PER_SECOND
+MELEE_KNOCKBACK_VERTICAL_SPEED = 0.40 * _VANILLA_TICKS_PER_SECOND
+MELEE_SPRINT_BONUS_HORIZONTAL_SPEED = 0.50 * _VANILLA_TICKS_PER_SECOND
+MELEE_ATTACKER_SPRINT_SPEED_KEEP = 0.60
 
 
-def apply_void_damage(*, player, dt, timer_s):
+def apply_void_damage(*, player: PlayerEntity, dt: float, timer_s: float) -> tuple[float, float]:
   if (not bool(player.alive())) or float(player.position.y) >= float(VOID_DAMAGE_START_Y):
     return (0.0, 0.0)`,
           },
@@ -775,12 +637,12 @@ def apply_void_damage(*, player, dt, timer_s):
           {
             language: 'py',
             caption: 'Each interval applies a fixed amount and carries the remainder.',
-            code: `remaining = max(0.0, float(timer_s)) + max(0.0, float(dt))
-damage_taken = 0.0
-while float(remaining) + 1e-9 >= float(VOID_DAMAGE_INTERVAL_S) and bool(player.alive()):
-  remaining -= float(VOID_DAMAGE_INTERVAL_S)
-  damage_taken += float(player.apply_damage(float(VOID_DAMAGE_AMOUNT), bypass_cooldown=True))
-return (float(damage_taken), max(0.0, float(remaining)))`,
+            code: `  remaining = max(0.0, float(timer_s)) + max(0.0, float(dt))
+  damage_taken = 0.0
+  while float(remaining) + 1e-9 >= float(VOID_DAMAGE_INTERVAL_S) and bool(player.alive()):
+    remaining -= float(VOID_DAMAGE_INTERVAL_S)
+    damage_taken += float(player.apply_damage(float(VOID_DAMAGE_AMOUNT), bypass_cooldown=True))
+  return (float(damage_taken), max(0.0, float(remaining)))`,
           },
         ],
       },
@@ -817,23 +679,7 @@ return (float(damage_taken), max(0.0, float(remaining)))`,
           'An AI is created from spawn-egg settings covering mode, personality, name, health-indicator placement, skin source, auto-regeneration, route data, and whether the AI may place blocks. The settings are normalized before use, so out-of-range or unknown values resolve to valid defaults.',
           'These settings define the AI before it exists in the world. The manager turns them into a concrete actor; the egg itself is just the configuration.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'AI player state defaults define the initial behavior and health.',
-            code: `@dataclass(frozen=True)
-class AiPlayerState:
-  actor_id: str
-  mode: str = AI_MODE_IDLE
-  personality: str = AI_PERSONALITY_AGGRESSIVE
-  can_place_blocks: bool = False
-  name: str = ""
-  health_indicator: str = AI_HEALTH_INDICATOR_ABOVE
-  skin_mode: str = AI_SKIN_MODE_PLAYER
-  health: float = 20.0
-  max_health: float = 20.0`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'spawning-ai-npcs-actor-id',
@@ -846,10 +692,10 @@ class AiPlayerState:
           {
             language: 'py',
             caption: 'Actor ids are sequential within the manager.',
-            code: `def _allocate_actor_id(self) -> str:
-  actor_id = f"ai_player_{int(self._next_actor_index)}"
-  self._next_actor_index += 1
-  return str(actor_id)`,
+            code: `  def _allocate_actor_id(self) -> str:
+    actor_id = f"ai_player_{int(self._next_actor_index)}"
+    self._next_actor_index += 1
+    return str(actor_id)`,
           },
         ],
       },
@@ -864,11 +710,11 @@ class AiPlayerState:
           {
             language: 'py',
             caption: 'The spawn is rejected when the body intersects nearby blocks.',
-            code: `actor = self._state_to_runtime(state)
-if not _spawn_position_clear(player=actor.player, world=self.world, block_registry=self.block_registry):
-  return None
-self._actors[str(actor.actor_id)] = actor
-return str(actor.actor_id)`,
+            code: `    actor = self._state_to_runtime(state)
+    if not _spawn_position_clear(player=actor.player, world=self.world, block_registry=self.block_registry):
+      return None
+    self._actors[str(actor.actor_id)] = actor
+    return str(actor.actor_id)`,
           },
         ],
       },
@@ -883,12 +729,12 @@ return str(actor.actor_id)`,
           {
             language: 'py',
             caption: 'An invalid or taken spawn name falls back to a default.',
-            code: `spawn_name = str(normalized_settings.name).strip()
-if not spawn_name or self.ai_name_error(actor_id=None, name=spawn_name) is not None:
-  allocated = allocate_default_spawn_ai_name(self._live_name_keys())
-  if allocated is None:
-    return None
-  spawn_name = str(allocated)`,
+            code: `    spawn_name = str(normalized_settings.name).strip()
+    if not spawn_name or self.ai_name_error(actor_id=None, name=spawn_name) is not None:
+      allocated = allocate_default_spawn_ai_name(self._live_name_keys())
+      if allocated is None:
+        return None
+      spawn_name = str(allocated)`,
           },
         ],
       },
@@ -903,8 +749,8 @@ if not spawn_name or self.ai_name_error(actor_id=None, name=spawn_name) is not N
           {
             language: 'py',
             caption: 'Route mode requires at least two route points to apply.',
-            code: `if normalize_ai_mode(normalized.mode) == AI_MODE_ROUTE and len(normalized.route_points) < 2:
-  return False`,
+            code: `    if normalize_ai_mode(normalized.mode) == AI_MODE_ROUTE and len(normalized.route_points) < 2:
+      return False`,
           },
         ],
       },
@@ -927,9 +773,9 @@ if not spawn_name or self.ai_name_error(actor_id=None, name=spawn_name) is not N
           {
             language: 'py',
             caption: 'The AI runtime owns a player entity and an interaction service.',
-            code: `player = self._build_player(state=normalized)
-interaction = InteractionService.create(world=self.world, player=player, block_registry=self.block_registry)
-actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=interaction, mode=normalize_ai_mode(normalized.mode), personality=normalize_ai_personality(normalized.personality), ...)`,
+            code: `    player = self._build_player(state=normalized)
+    interaction = InteractionService.create(world=self.world, player=player, block_registry=self.block_registry)
+    actor = _AiPlayerRuntime(`,
           },
         ],
       },
@@ -954,19 +800,19 @@ actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=inte
           {
             language: 'py',
             caption: 'Viewport frame composition turns snapshots into renderer name tag states.',
-            code: `anchor = Vec3(float(ai_snapshot.position_x), float(ai_snapshot.position_y) + float(ai_snapshot.height) + float(NAME_TAG_ANCHOR_OFFSET_BLOCKS), float(ai_snapshot.position_z))
-tags.append(
-  NameTagRenderState(
-    tag_id=f"ai:{str(ai_snapshot.actor_id)}",
-    text=text,
-    anchor=anchor,
-    target=target,
-    fallback_forward=body_forward,
-    health=float(ai_snapshot.health),
-    max_health=float(ai_snapshot.max_health),
-    health_indicator=str(ai_snapshot.health_indicator),
-  )
-)`,
+            code: `      anchor = Vec3(float(ai_snapshot.position_x), float(ai_snapshot.position_y) + float(ai_snapshot.height) + float(NAME_TAG_ANCHOR_OFFSET_BLOCKS), float(ai_snapshot.position_z))
+      tags.append(NameTagRenderState(tag_id=f"ai:{str(ai_snapshot.actor_id)}", text=text, anchor=anchor, target=target, fallback_forward=body_forward, health=float(ai_snapshot.health), max_health=float(ai_snapshot.max_health), health_indicator=str(ai_snapshot.health_indicator)))
+    player_text = str(self._state.resolved_player_name).strip()
+    if player_text and not bool(self._state.is_first_person_view()):
+      player = self._session.player
+      crouch_amount = clampf(float(snapshot.player_model.crouch_amount), 0.0, 1.0)
+      y = float(snapshot.player_model.base_y) + float(player.height) + float(NAME_TAG_ANCHOR_OFFSET_BLOCKS) - float(NAME_TAG_CROUCH_ANCHOR_OFFSET_BLOCKS) * float(crouch_amount)
+      tags.append(NameTagRenderState(tag_id="player:local", text=player_text, anchor=Vec3(float(snapshot.player_model.base_x), float(y), float(snapshot.player_model.base_z)), target=target, fallback_forward=body_forward))
+    return tuple(tags)
+
+  def _refresh_selection_for_frame(self: "GLViewportWidget", *, snapshot, interaction_eye: Vec3, interaction_yaw_deg: float, interaction_pitch_deg: float) -> None:
+    if bool(self.loading_active()):
+      return`,
           },
         ],
       },
@@ -990,11 +836,11 @@ tags.append(
           {
             language: 'py',
             caption: 'The viewport chooses a perspective-specific target point.',
-            code: `if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_BACK:
-  return (body_position - body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
-if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT:
-  return (body_position + body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
-return (body_position, body_forward)`,
+            code: `    if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_BACK:
+      return (body_position - body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
+    if perspective == CAMERA_PERSPECTIVE_THIRD_PERSON_FRONT:
+      return (body_position + body_forward * float(NAME_TAG_THIRD_PERSON_TARGET_DISTANCE_BLOCKS), body_forward)
+    return (body_position, body_forward)`,
           },
         ],
       },
@@ -1017,12 +863,12 @@ return (body_position, body_forward)`,
           {
             language: 'py',
             caption: 'Hearts are placed above or below the name based on the indicator.',
-            code: `if bool(hearts_visible) and mode == AI_HEALTH_INDICATOR_ABOVE:
-  hearts_y = 0
-  box_y = int(hearts_h + gap)
-elif bool(hearts_visible):
-  box_y = 0
-  hearts_y = int(box_height + gap)`,
+            code: `  if bool(hearts_visible) and mode == AI_HEALTH_INDICATOR_ABOVE:
+    hearts_y = 0
+    box_y = int(hearts_h + gap)
+  elif bool(hearts_visible):
+    box_y = 0
+    hearts_y = int(box_height + gap)`,
           },
         ],
       },
@@ -1044,11 +890,11 @@ elif bool(hearts_visible):
           {
             language: 'py',
             caption: 'Heart count is half of maximum health, and fill is proportional.',
-            code: `def _heart_count(max_health):
-  return max(1, int(math.ceil(max(2.0, float(max_health)) * 0.5)))
+            code: `      if row_index <= 1 and int(px + scale) <= int(fill_limit_x):
+        painter.fillRect(px, py, scale, 1, QColor(_HEART_HIGHLIGHT_COLOR))
 
 
-def _paint_heart_strip(painter, *, x, y, health, max_health):
+def _paint_heart_strip(painter: QPainter, *, x: int, y: int, health: float, max_health: float) -> None:
   next_max = max(2.0, float(max_health))
   filled_hearts = float(clampf(float(health), 0.0, float(next_max))) * 0.5`,
           },
@@ -1084,12 +930,12 @@ def _paint_heart_strip(painter, *, x, y, health, max_health):
           {
             language: 'py',
             caption: 'The model matrix turns texture pixels into one world-space face.',
-            code: `scale = float(NAME_TAG_BOX_WORLD_HEIGHT_BLOCKS) / max(1.0, float(spec.name_box_height_px))
-world_w = float(spec.width_px) * float(scale)
-world_h = float(spec.height_px) * float(scale)
-axis_x = right * float(world_w)
-axis_y = up * float(world_h)
-axis_z = front * float(_NAME_TAG_WORLD_DEPTH_SCALE)`,
+            code: `  scale = float(NAME_TAG_BOX_WORLD_HEIGHT_BLOCKS) / max(1.0, float(spec.name_box_height_px))
+  world_w = float(spec.width_px) * float(scale)
+  world_h = float(spec.height_px) * float(scale)
+  axis_x = right * float(world_w)
+  axis_y = up * float(world_h)
+  axis_z = front * float(_NAME_TAG_WORLD_DEPTH_SCALE)`,
           },
         ],
       },
@@ -1137,14 +983,14 @@ axis_z = front * float(_NAME_TAG_WORLD_DEPTH_SCALE)`,
           {
             language: 'py',
             caption: 'Forward speed depends on how well the AI faces the target.',
-            code: `if float(abs_error_deg) <= 12.0:
-  move_f = 1.0
-elif float(abs_error_deg) <= 24.0:
-  move_f = 0.85
-elif float(abs_error_deg) <= 42.0:
-  move_f = 0.45
-else:
-  move_f = 0.0`,
+            code: `  if float(abs_error_deg) <= 12.0:
+    move_f = 1.0
+  elif float(abs_error_deg) <= 24.0:
+    move_f = 0.85
+  elif float(abs_error_deg) <= 42.0:
+    move_f = 0.45
+  else:
+    move_f = 0.0`,
           },
         ],
       },
@@ -1166,12 +1012,9 @@ else:
           {
             language: 'py',
             caption: 'Strafing is gated by an active timer and the distance window.',
-            code: `strafe = 0.0
-if (float(actor.combat_strafe_timer_s) > 1e-6
-    and float(distance_xz) >= float(_AI_COMBAT_STRAFE_DISTANCE_MIN)
-    and float(distance_xz) <= float(_AI_COMBAT_STRAFE_DISTANCE_MAX)
-    and float(abs_error_deg) <= 18.0):
-  strafe = float(_AI_COMBAT_STRAFE_MAG) * (1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0)`,
+            code: `  strafe = 0.0
+  if float(actor.combat_strafe_timer_s) > 1e-6 and float(distance_xz) >= float(_AI_COMBAT_STRAFE_DISTANCE_MIN) and float(distance_xz) <= float(_AI_COMBAT_STRAFE_DISTANCE_MAX) and float(abs_error_deg) <= 18.0:
+    strafe = float(_AI_COMBAT_STRAFE_MAG) * (1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0)`,
           },
         ],
       },
@@ -1186,9 +1029,9 @@ if (float(actor.combat_strafe_timer_s) > 1e-6
           {
             language: 'py',
             caption: 'A tap timer drives close-range engagement.',
-            code: `if float(actor.combat_w_tap_s) > 1e-6 and float(distance_xz) <= 2.85 and float(abs_error_deg) <= 18.0:
-  engage_ratio = 0.0 if float(actor.combat_w_tap_s) > float(_AI_COMBAT_W_TAP_S) * 0.5 else 1.0
-  return PlayerStepInput(move_f=float(engage_ratio), move_s=float(strafe), sprint=bool(engage_ratio > 0.5), ...)`,
+            code: `  if float(actor.combat_w_tap_s) > 1e-6 and float(distance_xz) <= 2.85 and float(abs_error_deg) <= 18.0:
+    engage_ratio = 0.0 if float(actor.combat_w_tap_s) > float(_AI_COMBAT_W_TAP_S) * 0.5 else 1.0
+    return PlayerStepInput(move_f=float(engage_ratio), move_s=float(strafe), jump_held=bool(jump_pressed), jump_pressed=bool(jump_pressed), sprint=bool(engage_ratio > 0.5), crouch=False, yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=True)`,
           },
         ],
       },
@@ -1229,8 +1072,8 @@ MELEE_HURT_TILT_S = 0.18`,
           {
             language: 'py',
             caption: 'Knockback is applied only after damage is dealt.',
-            code: `def apply_melee_damage(*, attacker, target, attack_direction, sprinting, damage=MELEE_ATTACK_DAMAGE):
-  damage_taken = target.apply_damage(float(damage), cooldown_s=float(MELEE_DAMAGE_COOLDOWN_S), source_position=attacker.eye_pos(), ...)
+            code: `def apply_melee_damage(*, attacker: PlayerEntity, target: PlayerEntity, attack_direction: Vec3, sprinting: bool, damage: float = MELEE_ATTACK_DAMAGE) -> float:
+  damage_taken = target.apply_damage(float(damage), cooldown_s=float(MELEE_DAMAGE_COOLDOWN_S), source_position=attacker.eye_pos(), flash_s=float(MELEE_HURT_FLASH_S), tilt_s=float(MELEE_HURT_TILT_S), jump_reset_window_s=float(MELEE_JUMP_RESET_WINDOW_S))
   if float(damage_taken) <= 1e-6:
     return 0.0
   apply_melee_knockback(attacker=attacker, target=target, attack_direction=attack_direction, sprinting=bool(sprinting))
@@ -1249,14 +1092,14 @@ MELEE_HURT_TILT_S = 0.18`,
           {
             language: 'py',
             caption: 'Auto-regeneration waits after damage, then ticks up to a cap.',
-            code: `actor.regen_wait_s = float(actor.regen_wait_s) + max(0.0, float(dt))
-if not bool(actor.auto_regen_enabled):
-  actor.regen_tick_s = 0.0
-  return
-cap = min(float(actor.regen_cap_hp), float(actor.player.max_health))
-if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
-  actor.regen_tick_s = 0.0
-  return`,
+            code: `    actor.regen_wait_s = float(actor.regen_wait_s) + max(0.0, float(dt))
+    if not bool(actor.auto_regen_enabled):
+      actor.regen_tick_s = 0.0
+      return
+    cap = min(float(actor.regen_cap_hp), float(actor.player.max_health))
+    if float(actor.player.health) >= float(cap) - 1e-9:
+      actor.regen_tick_s = 0.0
+      return`,
           },
         ],
       },
@@ -1286,17 +1129,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
           'Each AI has a can-place-blocks setting. When it is off, the placement aids are unavailable; when it is on, the AI may use them during navigation. Toggling it on or off changes the held item the AI carries for placement.',
           'The placement-aid toggle controls aid availability. Route selection, combat selection, and learned-policy evaluation continue through their respective manager paths, while `InteractionService` applies the shared world-placement predicates to every accepted action.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The held item for placement follows the placement permission.',
-            code: `def _held_item_id_for_settings(*, can_place_blocks, held_item_id=None):
-  if not bool(can_place_blocks):
-    return None
-  normalized = None if held_item_id is None else str(held_item_id).strip()
-  return str(normalized) if normalized else str(AI_DEFAULT_HELD_ITEM_ID)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-ai-placement-behavior-same-rules',
@@ -1324,7 +1157,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
           {
             language: 'py',
             caption: 'The build face is derived from the horizontal step direction.',
-            code: `def _face_for_horizontal_step(step_x, step_z):
+            code: `def _face_for_horizontal_step(step_x: int, step_z: int) -> int:
   if int(step_x) > 0:
     return int(FACE_POS_X)
   if int(step_x) < 0:
@@ -1351,23 +1184,7 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
           'Grounded AI movement runs an edge-safety check that halts a forward step if there is no landing within a safe drop depth, leaving only turning. The check stops the AI from walking itself into the void, and the halted step is what opens the opportunity for bridge placement.',
           'When the AI is stopped by edge safety, building a bridge footing is one way for it to make the next step safe.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Edge safety halts an unsafe forward step to turning only.',
-            code: `def _apply_edge_safety(self, actor, control, *, max_drop):
-  if bool(actor.player.flying) or (not bool(actor.player.on_ground)):
-    return (control, False)
-  if bool(control.jump_pressed):
-    return (control, False)
-  direction = self._intended_move_direction_xz(actor, control)
-  if direction is None:
-    return (control, False)
-  if self._forward_step_safe(actor, direction=direction, max_drop=int(max_drop)):
-    return (control, False)
-  return (self._halted_control(control), True)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-ai-placement-behavior-no-bypass',
@@ -1426,18 +1243,26 @@ if float(actor.regen_wait_s) < float(actor.regen_start_delay_s):
           {
             language: 'py',
             caption: 'Starting a match builds state then resolves the first turn.',
-            code: `self._state = OthelloGameState(
-  status=OTHELLO_GAME_STATE_IDLE,
-  board=create_initial_board(),
-  settings=settings,
-  player_side=player_side,
-  ai_side=ai_side,
-  current_turn=int(SIDE_BLACK),
-  black_time_remaining_s=time_limit_s,
-  white_time_remaining_s=time_limit_s,
-  match_generation=int(self._state.match_generation) + 1,
-).normalized()
-self._state = self._resolve_turn_transition(message_prefix="Match started.", reset_per_move_timer=True)`,
+            code: `    self._state = OthelloGameState(
+      status=OTHELLO_GAME_STATE_IDLE,
+      board=create_initial_board(),
+      settings=settings,
+      player_side=player_side,
+      ai_side=ai_side,
+      current_turn=current_turn,
+      black_time_remaining_s=time_limit_s,
+      white_time_remaining_s=time_limit_s,
+      move_count=0,
+      consecutive_passes=0,
+      winner=None,
+      message="Match initialized.",
+      last_move_index=None,
+      animations=(),
+      match_generation=int(self._state.match_generation) + 1,
+      legal_moves=(),
+      thinking=False,
+    ).normalized()
+    self._state = self._resolve_turn_transition(message_prefix="Match started.", reset_per_move_timer=True)`,
           },
         ],
       },
@@ -1452,10 +1277,10 @@ self._state = self._resolve_turn_transition(message_prefix="Match started.", res
           {
             language: 'py',
             caption: 'The player side comes from settings; the AI takes the other.',
-            code: `settings = self._default_settings.normalized()
-player_side = int(settings.player_side)
-ai_side = int(other_side(player_side))
-current_turn = int(SIDE_BLACK)`,
+            code: `    settings = self._default_settings.normalized()
+    player_side = int(settings.player_side)
+    ai_side = int(other_side(player_side))
+    current_turn = int(SIDE_BLACK)`,
           },
         ],
       },
@@ -1466,14 +1291,7 @@ current_turn = int(SIDE_BLACK)`,
           'The match draws its difficulty, time control, disc animation mode, player side, engine thread count, hash level, sacrifice level, and book-learning thresholds from normalized Othello settings. These determine how the AI plays and how the clocks behave during the match.',
           'Settings are normalized before the match uses them, so out-of-range values are clamped and the match always starts from a valid configuration.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Difficulty levels and time controls are part of normalized settings.',
-            code: `OTHELLO_DIFFICULTIES  # weak, medium, strong, insane, insane_plus
-OTHELLO_TIME_CONTROLS  # off, per-move 5s/10s/30s, per-side 1m/3m/5m/10m/20m`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'starting-an-othello-match-first-turn',
@@ -1486,11 +1304,11 @@ OTHELLO_TIME_CONTROLS  # off, per-move 5s/10s/30s, per-side 1m/3m/5m/10m/20m`,
           {
             language: 'py',
             caption: 'The turn transition publishes legal moves and the turn status.',
-            code: `current_side = int(state.current_turn)
-legal_moves = find_legal_moves(state.board, current_side)
-if legal_moves:
-  next_status = _turn_status_for_player_side(state.player_side, current_side)
-  next_state = replace(state, status=next_status, legal_moves=tuple(legal_moves), thinking=False, ...)`,
+            code: `  current_side = int(state.current_turn)
+  legal_moves = find_legal_moves(state.board, current_side)
+  if legal_moves:
+    next_status = _turn_status_for_player_side(state.player_side, current_side)
+    next_state = replace(state, status=next_status, legal_moves=tuple(legal_moves), thinking=False, message=f"{message_prefix} {side_name(current_side).title()} to move.").normalized()`,
           },
         ],
       },
@@ -1523,18 +1341,18 @@ if legal_moves:
           {
             language: 'py',
             caption: 'The same legality check authorizes and applies the move.',
-            code: `def can_player_move(self, square_index: int) -> bool:
-  state = self._state.normalized()
-  return bool(state.status == OTHELLO_GAME_STATE_PLAYER_TURN and int(square_index) in set(state.legal_moves))
+            code: `  def can_player_move(self, square_index: int) -> bool:
+    state = self._state.normalized()
+    return bool(state.status == OTHELLO_GAME_STATE_PLAYER_TURN and int(square_index) in set(state.legal_moves))
 
-def submit_player_move(self, square_index: int) -> bool:
-  state = self._state.normalized()
-  if state.status != OTHELLO_GAME_STATE_PLAYER_TURN:
-    return False
-  if int(square_index) not in set(state.legal_moves):
-    return False
-  self._apply_turn_move(side=state.player_side, square_index=int(square_index))
-  return True`,
+  def set_ai_thinking(self, thinking: bool) -> None:
+    self._state = replace(self._state, thinking=bool(thinking)).normalized()
+
+  def settled_game_state(self) -> OthelloGameState:
+    state = self._state.normalized()
+    if state.status != OTHELLO_GAME_STATE_ANIMATING or not state.animations:
+      return replace(state, animations=(), thinking=False).normalized()
+    resolved = replace(state, animations=(), thinking=False).normalized()`,
           },
         ],
       },
@@ -1545,24 +1363,7 @@ def submit_player_move(self, square_index: int) -> bool:
           'A square is legal only if placing there captures at least one opposing line. The rule engine scans the eight directions from an empty square, collecting opposing discs until it meets one of its own, and a move with no captures is illegal.',
           '`legal_moves` in the Othello rule path admits a square only when its directional scan yields at least one flanked opposing disc. Empty squares without a capture line remain outside the published legal-move set.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Captures are collected in each of the eight directions.',
-            code: `def captures_for_move(board, *, side, index):
-  norm_side = normalize_side(side)
-  if norm_side not in (SIDE_BLACK, SIDE_WHITE):
-    return ()
-  materialized = coerce_board(board)
-  if materialized[int(index)] != SIDE_EMPTY:
-    return ()
-  row, col = index_to_row_col(int(index))
-  captured = []
-  for d_row, d_col in _DIRECTIONS:
-    captured.extend(_captures_in_direction(materialized, side=norm_side, row=row, col=col, d_row=d_row, d_col=d_col))
-  return tuple(captured)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'placing-an-othello-move-apply',
@@ -1571,21 +1372,7 @@ def submit_player_move(self, square_index: int) -> bool:
           'Applying a move places the disc and flips every captured square to the mover’s color. The rule engine rejects a move that flips nothing, so by the time apply runs, the captures are known and the board update is deterministic.',
           'The result is a new board plus the exact set of flipped squares, which the controller uses both to update state and to drive the flip animation.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Apply places the disc and flips the captured squares.',
-            code: `def apply_move(board, *, side, index):
-  captured = captures_for_move(board, side=side, index=index)
-  if not captured:
-    raise ValueError("The requested Othello move is illegal because it flips no opposing discs.")
-  materialized = list(coerce_board(board))
-  materialized[int(index)] = normalize_side(side)
-  for captured_index in captured:
-    materialized[int(captured_index)] = normalize_side(side)
-  return (tuple(materialized[:BOARD_CELL_COUNT]), tuple(captured))`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'placing-an-othello-move-animation',
@@ -1594,20 +1381,7 @@ def submit_player_move(self, square_index: int) -> bool:
           'The controller orders the flipped squares by distance from the placed disc and assigns each a staggered start delay based on the animation mode. This produces a ripple from the placed disc outward, with the fast and slow modes using different spacing and the off mode using none.',
           'While animations are pending, the match status is animating, and the turn does not advance until they settle.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Flipped squares get staggered delays by animation mode.',
-            code: `def _animation_start_delay_s(*, mode, flip_order_index):
-  normalized_mode = normalize_animation_mode(mode)
-  order_index = max(0, int(flip_order_index))
-  if normalized_mode == OTHELLO_ANIMATION_SLOW:
-    return float(order_index) * float(_ANIMATION_SLOW_STEP_S)
-  if normalized_mode == OTHELLO_ANIMATION_FAST:
-    return float(order_index) * float(_ANIMATION_FAST_STEP_S)
-  return 0.0`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'placing-an-othello-move-advance',
@@ -1616,16 +1390,7 @@ def submit_player_move(self, square_index: int) -> bool:
           'After a move (and any animation), the controller inverts the turn and resolves the next transition: it publishes the next side’s legal moves, handles a pass when a side cannot move, or finishes the match when neither side can. The move count increments and the consecutive-pass count resets on a real move.',
           'Placing a move therefore drives the whole turn machine forward to the next playable state, reaching past the board change into turn inversion, legal-move publication, pass handling, and match settlement.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'A move inverts the turn and schedules the transition.',
-            code: `updated = replace(state, board=next_board, current_turn=other_side(side), move_count=int(state.move_count) + 1, consecutive_passes=0, last_move_index=int(square_index), animations=animations, status=OTHELLO_GAME_STATE_ANIMATING if animations else OTHELLO_GAME_STATE_IDLE, legal_moves=()).normalized()
-self._state = updated
-if not animations:
-  self._state = self._resolve_turn_transition(message_prefix="Move applied.", reset_per_move_timer=True)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'placing-an-othello-move-highlight',
@@ -1656,8 +1421,8 @@ if not animations:
           {
             language: 'py',
             caption: 'The thinking flag marks an in-progress AI request.',
-            code: `def set_ai_thinking(self, thinking: bool) -> None:
-  self._state = replace(self._state, thinking=bool(thinking)).normalized()`,
+            code: `  def set_ai_thinking(self, thinking: bool) -> None:
+    self._state = replace(self._state, thinking=bool(thinking)).normalized()`,
           },
         ],
       },
@@ -1668,26 +1433,7 @@ if not animations:
           'When the engine returns, the controller applies the AI move only while the status is AI-turn, using the same board apply rule as a player move. So an AI move flips captured lines and advances the turn exactly as a player move does.',
           'Because the AI move runs through the same board apply rule as a player move, the AI cannot make a move the rules would reject; it is bound by the same legality as the player.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'AI submission applies through the same turn-move path.',
-            code: `def submit_ai_move(self, square_index):
-  state = self._state.normalized()
-  if state.status != OTHELLO_GAME_STATE_AI_TURN:
-    return False
-  legal = tuple(state.legal_moves)
-  if not legal:
-    self._state = replace(state, thinking=False).normalized()
-    self._state = self._resolve_turn_transition(message_prefix="AI had no legal move.", reset_per_move_timer=True)
-    return False
-  move_index = legal[0] if square_index is None else int(square_index)
-  if move_index not in set(legal):
-    move_index = int(legal[0])
-  self._apply_turn_move(side=state.ai_side, square_index=int(move_index))
-  return True`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'understanding-othello-ai-turns-fallback',
@@ -1708,11 +1454,11 @@ if not animations:
           {
             language: 'py',
             caption: 'When the current side cannot move, the other side is tried.',
-            code: `other = int(other_side(current_side))
-other_legal_moves = find_legal_moves(state.board, other)
-if other_legal_moves:
-  next_status = _turn_status_for_player_side(state.player_side, other)
-  next_state = replace(state, current_turn=other, legal_moves=tuple(other_legal_moves), consecutive_passes=min(2, int(state.consecutive_passes) + 1), status=next_status, message=f"{message_prefix} {side_name(current_side).title()} must pass.")`,
+            code: `  other = int(other_side(current_side))
+  other_legal_moves = find_legal_moves(state.board, other)
+  if other_legal_moves:
+    next_status = _turn_status_for_player_side(state.player_side, other)
+    next_state = replace(state, current_turn=other, legal_moves=tuple(other_legal_moves), consecutive_passes=min(2, int(state.consecutive_passes) + 1), status=next_status, thinking=False, message=f"{message_prefix} {side_name(current_side).title()} must pass.").normalized()`,
           },
         ],
       },
@@ -1727,9 +1473,9 @@ if other_legal_moves:
           {
             language: 'py',
             caption: 'A clock reaching zero finishes the match for the other side.',
-            code: `if (timed_state.current_turn == SIDE_BLACK and black_time is not None and black_time <= 1e-9) or (timed_state.current_turn == SIDE_WHITE and white_time is not None and white_time <= 1e-9):
-  winner = side_name(other_side(timed_state.current_turn))
-  self._state = replace(timed_state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, message=f"{side_name(timed_state.current_turn).title()} ran out of time.").normalized()`,
+            code: `    if (timed_state.current_turn == SIDE_BLACK and black_time is not None and black_time <= 1e-9) or (timed_state.current_turn == SIDE_WHITE and white_time is not None and white_time <= 1e-9):
+      winner = side_name(other_side(timed_state.current_turn))
+      self._state = replace(timed_state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, message=f"{side_name(timed_state.current_turn).title()} ran out of time.").normalized()`,
           },
         ],
       },
@@ -1762,10 +1508,10 @@ if other_legal_moves:
           {
             language: 'py',
             caption: 'When neither side can move, the match finishes.',
-            code: `winner = winner_for_board(state.board)
-black, white = counts_for_board(state.board)
-message = f"{message_prefix} Match finished. Black {int(black)} - White {int(white)}."
-self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, animations=(), message=message).normalized()`,
+            code: `  winner = winner_for_board(state.board)
+  black, white = counts_for_board(state.board)
+  message = f"{message_prefix} Match finished. Black {int(black)} - White {int(white)}."
+  return replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(), winner=winner, thinking=False, animations=(), message=message).normalized()`,
           },
         ],
       },
@@ -1783,19 +1529,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
             caption: 'winner_for_board over counts_for_board in src/ludoxel/simulation/spaces/othello/game/board.py decides the result purely by disc tally with no positional tiebreak, so an equal count is a draw.',
           },
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'A higher disc count wins; an equal count draws.',
-            code: `def winner_for_board(board):
-  black, white = counts_for_board(board)
-  if black > white:
-    return "black"
-  if white > black:
-    return "white"
-  return OTHELLO_WINNER_DRAW`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-match-results-timeout',
@@ -1816,8 +1550,8 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
           {
             language: 'py',
             caption: 'The finished state clears transient fields and keeps the result.',
-            code: `if normalized.status == OTHELLO_GAME_STATE_FINISHED:
-  return replace(normalized, legal_moves=(), thinking=False, animations=()).normalized()`,
+            code: `    if normalized.status == OTHELLO_GAME_STATE_FINISHED:
+      return replace(normalized, legal_moves=(), thinking=False, animations=()).normalized()`,
           },
         ],
       },
@@ -1828,22 +1562,7 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
           'The black and white counts are computed by scanning the sixty-four cells and tallying each color. The finished message embeds these counts, so the score shown is exactly the board tally, not a separate running total.',
           'Because counts are derived from the board, they always agree with the visible discs in the final position.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Counts are a direct tally of the board cells.',
-            code: `def counts_for_board(board):
-  black = 0
-  white = 0
-  for value in coerce_board(board):
-    side = normalize_side(value)
-    if side == SIDE_BLACK:
-      black += 1
-    elif side == SIDE_WHITE:
-      white += 1
-  return (int(black), int(white))`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-match-results-saved-state',
@@ -1856,8 +1575,8 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
           {
             language: 'py',
             caption: 'Loading reconciles a finished state to a clean terminal form.',
-            code: `if normalized.status == OTHELLO_GAME_STATE_FINISHED:
-  return replace(normalized, legal_moves=(), thinking=False, animations=()).normalized()`,
+            code: `    if normalized.status == OTHELLO_GAME_STATE_FINISHED:
+      return replace(normalized, legal_moves=(), thinking=False, animations=()).normalized()`,
           },
         ],
       },
@@ -1988,15 +1707,15 @@ self._state = replace(state, status=OTHELLO_GAME_STATE_FINISHED, legal_moves=(),
             kind: 'code',
             language: 'py',
             caption: 'src/ludoxel/simulation/worlds/state/world.py',
-            code: `def state_at(self, x: int, y: int, z: int) -> str | None:
-  k = (int(x), int(y), int(z))
-  with self._lock:
-    placed = self._placed.get(k)
-    if placed is not None:
-      return placed
-    if k in self._broken:
-      return None
-  return self.base_state_at(int(x), int(y), int(z))`,
+            code: `  def state_at(self, x: int, y: int, z: int) -> str | None:
+    k = (int(x), int(y), int(z))
+    with self._lock:
+      placed = self._placed.get(k)
+      if placed is not None:
+        return placed
+      if k in self._broken:
+        return None
+    return self.base_state_at(int(x), int(y), int(z))`,
           },
           {
             kind: 'paragraph',

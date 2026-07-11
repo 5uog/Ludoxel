@@ -119,6 +119,12 @@ def __getattr__(name: str):
   if xdg_data_home:
     return (Path(xdg_data_home).expanduser() / "ludoxel").resolve()
 
+  if project_root is not None:
+    try:
+      _ = Path(project_root).resolve()
+    except Exception:
+      pass
+
   return (Path.home() / ".local" / "share" / "ludoxel").resolve()`,
           },
         ],
@@ -150,36 +156,72 @@ def __getattr__(name: str):
           {
             language: 'py',
             caption: 'Bundled font registration is a startup requirement and failure raises before the final game window.',
-            code: `fonts = install_minecraft_fonts(font_dir=(bundled_root / "assets" / "fonts"))
-if not bool(fonts.ok):
-  details = "\\n".join(str(error) for error in tuple(fonts.errors) if str(error))
-  raise RuntimeError(f"Ludoxel bundled font registration failed.\\n{details}")
+            code: `  fonts = install_minecraft_fonts(font_dir=(bundled_root / "assets" / "fonts"))
+  if not bool(fonts.ok):
+    details = "\\n".join(str(error) for error in tuple(fonts.errors) if str(error))
+    raise RuntimeError(f"Ludoxel bundled font registration failed.\\n{details}")
+  apply_application_font(app=app, family=str(fonts.family), point_size=12, fallback_families=tuple(fonts.fallback_families))
+  print(f"[ludoxel] registered bundled UI font: {fonts.family}; fallbacks={','.join(tuple(fonts.fallback_families))}; paths={','.join(str(path) for path in tuple(fonts.font_paths))}", file=sys.stderr)
 
-apply_application_font(app=app, family=str(fonts.family), point_size=12, fallback_families=tuple(fonts.fallback_families))
-theme_qss = load_theme_stylesheet(styles_dir)
-if theme_qss:
-  app.setStyleSheet(str(font_qss) + theme_qss)`,
+  font_qss = application_font_stylesheet(family=str(fonts.family), fallback_families=tuple(fonts.fallback_families))
+  styles_dir = Path(__file__).resolve().parents[1] / "theme" / "styles"
+  theme_qss = load_theme_stylesheet(styles_dir)
+  if theme_qss:
+    qss_text = str(font_qss) + theme_qss
+    arrow_up = (bundled_root / "assets" / "ui" / "settings" / "arrow_up.svg").resolve().as_posix()
+    arrow_down = (bundled_root / "assets" / "ui" / "settings" / "arrow_down.svg").resolve().as_posix()
+    qss_text = qss_text.replace("__ARROW_UP__", str(arrow_up))
+    qss_text = qss_text.replace("__ARROW_DOWN__", str(arrow_down))
+    app.setStyleSheet(qss_text)
+  elif font_qss:
+    app.setStyleSheet(str(font_qss))`,
           },
           {
             language: 'py',
             caption: 'Single-instance activation and the player-name gate can end startup before a new main window exists.',
-            code: `relay = SingleInstanceRelay(managed_data_root, app)
-if relay.activate_existing_instance():
-  return
-relay.listen()
-app.aboutToQuit.connect(relay.close)
-
-persisted_state = AppStateStore(project_root=root, data_root=managed_data_root).load()
-explicit_player_name = ""
-if persisted_state is not None:
-  explicit_player_name = normalize_player_name(persisted_state.settings.player_name)
-
-launch_player_name = explicit_player_name
-if not launch_player_name:
-  dialog = PlayerNameDialog(title_image_path=startup_title_image_path, initial_name=explicit_player_name)
-  if not bool(dialog.exec()):
+            code: `  relay = SingleInstanceRelay(managed_data_root, app)
+  if relay.activate_existing_instance(open_path=launch_open_path):
     return
-  launch_player_name = dialog.selected_player_name()`,
+  relay.listen()
+  app.aboutToQuit.connect(relay.close)
+  activation_handler: dict[str, object] = {"callback": None}
+  file_open_handler: dict[str, object] = {"callback": None}
+
+  def _set_activation_callback(callback) -> None:
+    activation_handler["callback"] = callback
+
+  def _set_file_open_callback(callback) -> None:
+    file_open_handler["callback"] = callback
+
+  def _handle_activation_request() -> None:
+    callback = activation_handler.get("callback")
+    if callable(callback):
+      callback()
+
+  def _handle_file_open_request(path: str) -> None:
+    callback = file_open_handler.get("callback")
+    if callable(callback) and str(path).strip():
+      callback(str(path))
+
+  relay.activation_requested.connect(_handle_activation_request)
+  relay.file_open_requested.connect(_handle_file_open_request)
+  app.installEventFilter(_FileOpenEventFilter(_handle_file_open_request, app))
+
+  persisted_state = AppStateStore(project_root=root, data_root=managed_data_root).load()
+  explicit_player_name = ""
+  if persisted_state is not None:
+    explicit_player_name = normalize_player_name(persisted_state.settings.player_name)
+
+  startup_title_image_path = status_overlay_title_image_path(bundled_root)
+  launch_player_name = explicit_player_name
+  if not launch_player_name:
+    dialog = PlayerNameDialog(title_image_path=startup_title_image_path, initial_name=explicit_player_name)
+    if app_icon is not None:
+      dialog.setWindowIcon(app_icon)
+    _set_activation_callback(lambda current=dialog: _request_widget_activation(current))
+    if not bool(dialog.exec()):
+      return
+    launch_player_name = dialog.selected_player_name()`,
           },
         ],
       },
@@ -208,38 +250,20 @@ if not launch_player_name:
           },
           {
             language: 'py',
-            caption: 'The game screen keeps the preparing overlay visible until the viewport reports completion.',
-            code: `self._loading_overlay = StatusOverlayFrame(
-  title_text="Ludoxel",
-  status_text="Preparing viewport...",
-  object_name="loadingOverlay",
-  title_object_name="loadingTitle",
-  status_object_name="loadingStatus",
-  title_image_path=title_image_path,
-  parent=self,
-)
-self._loading_overlay.set_status_text(self.viewport.loading_status_text())
-self._loading_overlay.setVisible(bool(self.viewport.loading_active()))
-self.viewport.loading_state_changed.connect(self._handle_loading_state_changed)
-self.viewport.loading_status_changed.connect(self._loading_overlay.set_status_text)
-self.viewport.loading_finished.connect(self._handle_loading_finished)`,
-          },
-          {
-            language: 'py',
             caption: 'Viewport completion hides the overlay, then defers the focus transfer until the current signal delivery completes.',
-            code: `def _handle_loading_finished(self) -> None:
-  self._loading_overlay.hide()
-  QTimer.singleShot(0, self._focus_viewport_after_loading)
+            code: `  def _handle_loading_finished(self) -> None:
+    self._loading_overlay.hide()
+    QTimer.singleShot(0, self._focus_viewport_after_loading)
 
-def _focus_viewport_after_loading(self) -> None:
-  if bool(self.viewport.loading_active()):
-    return
-  self.viewport.setFocus(Qt.FocusReason.OtherFocusReason)
+  def _focus_viewport_after_loading(self) -> None:
+    if bool(self.viewport.loading_active()):
+      return
+    if bool(self.viewport.menu_active()):
+      return
+    self.viewport.setFocus(Qt.FocusReason.OtherFocusReason)
 
-def _handle_loading_state_changed(self, active: bool) -> None:
-  self._loading_overlay.setVisible(bool(active))
-  if bool(active):
-    self._loading_overlay.raise_()`,
+  def _handle_loading_state_changed(self, active: bool) -> None:
+    self._loading_overlay.setVisible(bool(active))`,
           },
         ],
       },
@@ -257,8 +281,8 @@ def _handle_loading_state_changed(self, active: bool) -> None:
           {
             language: 'py',
             caption: 'Runtime activity retains the initialized visible render path while loading is active, but not ordinary inactive gameplay.',
-            code: `def _sync_runtime_activity(self: "GLViewportWidget") -> None:
-  self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and (bool(self._application_active) or bool(self.loading_active())) and (not bool(self._shutdown_done)))`,
+            code: `  def _sync_runtime_activity(self: "GLViewportWidget") -> None:
+    self._set_runtime_active(bool(self._gl_initialized) and bool(self.isVisible()) and (bool(self._application_active) or bool(self.loading_active())) and (not bool(self._shutdown_done)))`,
           },
         ],
       },
@@ -456,16 +480,19 @@ class PlaySpaceContext:
           {
             language: 'py',
             caption: 'The active manager is selected by normalized space id; unknown ids fall back before lookup.',
-            code: `def session_for(self, space_id: object) -> SessionManager:
-  normalized = normalize_play_space_id(space_id)
-  if normalized == PLAY_SPACE_OTHELLO:
-    return self.othello
-  return self.my_world
+            code: `  def session_for(self, space_id: object) -> SessionManager:
+    normalized = normalize_play_space_id(space_id)
+    if normalized == PLAY_SPACE_OTHELLO:
+      return self.othello
+    return self.my_world
 
-def set_active_space(self, space_id: object) -> SessionManager:
-  normalized = normalize_play_space_id(space_id)
-  self.active_space_id = normalized
-  return self.session_for(normalized)`,
+  def active_session(self) -> SessionManager:
+    return self.session_for(self.active_space_id)
+
+  def set_active_space(self, space_id: object) -> SessionManager:
+    normalized = normalize_play_space_id(space_id)
+    self.active_space_id = normalized
+    return self.session_for(normalized)`,
           },
         ],
       },
@@ -480,24 +507,6 @@ def set_active_space(self, space_id: object) -> SessionManager:
         codeBlocks: [
           {
             language: 'py',
-            caption: 'My World is produced through the My World session seed and its generation spec.',
-            code: `@dataclass(frozen=True)
-class MyWorldSessionSeed:
-  generation: WorldGenerationSpec = field(default_factory=WorldGenerationSpec)
-  yaw_deg: float = MY_WORLD_YAW_DEG
-  pitch_deg: float = MY_WORLD_PITCH_DEG
-
-  @property
-  def spawn(self) -> tuple[float, float, float]:
-    return my_world_spawn(self.generation)
-
-
-def make_my_world_state(generation: WorldGenerationSpec) -> WorldState:
-  spec = generation.normalized()
-  return WorldState(blocks={}, revision=1, generation=spec)`,
-          },
-          {
-            language: 'py',
             caption: 'Othello is produced from a generation-backed flat world that then receives the board layout.',
             code: `def othello_world_generation_spec() -> WorldGenerationSpec:
   return WorldGenerationSpec(mode=GENERATION_MODE_FLAT, seed=DEFAULT_SEED, flat_ground_y=OTHELLO_DEFAULT_GROUND_Y).normalized()
@@ -509,11 +518,11 @@ def make_othello_world_state() -> WorldState:
   return world
 
 
-def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
-  spec = OthelloSessionSeed(seed=int(seed))
-  return make_session_manager(
-    seed=int(spec.seed), spawn=tuple(spec.spawn), yaw_deg=float(spec.yaw_deg), pitch_deg=float(spec.pitch_deg), world=make_othello_world_state(), block_registry=block_registry
-  )`,
+def strip_othello_flat_floor_blocks(placed: Dict[BlockKey, str]) -> Dict[BlockKey, str]:
+  probe = WorldState(blocks={}, revision=0, generation=othello_world_generation_spec())
+  out: Dict[BlockKey, str] = {}
+  for key, value in placed.items():
+    cell = (int(key[0]), int(key[1]), int(key[2]))`,
           },
         ],
       },
@@ -529,30 +538,30 @@ def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> S
           {
             language: 'py',
             caption: 'Persistence restores both session branches before selecting the active space id.',
-            code: `if state is not None:
-  persisted_settings = state.settings
-  for session in sessions.all_sessions():
-    apply_persisted_settings_to_session(session, persisted_settings)
+            code: `  if state is not None:
+    persisted_settings = state.settings
+    for session in sessions.all_sessions():
+      apply_persisted_settings_to_session(session, persisted_settings)
 
-  runtime = runtime_preferences_from_app_state(state, runtime=runtime)
+    runtime = runtime_preferences_from_app_state(state, runtime=runtime)
 
-  _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
-  _maybe_replace_world(sessions.my_world, state.my_world.world)
-  _sync_my_world_spawn_settings(sessions.my_world)
-  sessions.my_world.set_ai_players(tuple(player.to_state() for player in state.my_world.ai_players))
-  _restore_player_overlap_exemptions(sessions.my_world)
+    _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
+    _maybe_replace_world(sessions.my_world, state.my_world.world)
+    _sync_my_world_spawn_settings(sessions.my_world)
+    sessions.my_world.set_ai_players(tuple(player.to_state() for player in state.my_world.ai_players))
+    _restore_player_overlap_exemptions(sessions.my_world)
 
-  _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
-  _replace_othello_world(sessions.othello, state.othello_space.world)
-  sessions.othello.set_ai_players(tuple(player.to_state() for player in state.othello_space.ai_players))
-  ensure_othello_board_layout(sessions.othello.world)
-  _lift_player_above_othello_board_if_needed(sessions.othello)
-  _restore_player_overlap_exemptions(sessions.othello)
-  othello_game_state = state.othello_space.othello_game_state.normalized()
+    _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
+    _replace_othello_world(sessions.othello, state.othello_space.world)
+    sessions.othello.set_ai_players(tuple(player.to_state() for player in state.othello_space.ai_players))
+    ensure_othello_board_layout(sessions.othello.world)
+    _lift_player_above_othello_board_if_needed(sessions.othello)
+    _restore_player_overlap_exemptions(sessions.othello)
+    othello_game_state = state.othello_space.othello_game_state.normalized()
 
-runtime.normalize()
-sessions.set_active_space(runtime.current_space_id)
-apply_runtime_to_renderer(runtime, renderer)`,
+  runtime.normalize()
+  sessions.set_active_space(runtime.current_space_id)
+  apply_runtime_to_renderer(runtime, renderer)`,
           },
         ],
       },
@@ -564,39 +573,7 @@ apply_runtime_to_renderer(runtime, renderer)`,
           'Both destination buttons leave the active play-space through one save boundary, `_exit_active_play_space`. It saves the current My World and Othello with `viewport.save_state`, and only when that write succeeds does it run the destination on the next event-loop pass; on a save failure it shows a notification, logs the traceback, and stays in the current play-space. Play Othello then runs `switch_play_space` with `resume=True`, and Play My World runs `open_my_world_library_from_pause`, which closes the pause overlay and opens the startup shell on the My World library page so a particular world is entered only by selecting it in the library. Deferring the destination keeps the pause button that fired the request from being torn down inside its own handler.',
           '`PauseOverlay.keyPressEvent` maps Escape to `resume_requested`; destination buttons emit their own signals without embedding a session mutation or a save. The widget records the enabled state for the two controls, while `bind_overlay_actions` routes both destinations through the shared exit boundary, so the My World block, player, inventory, health, AI actors, and world settings, and the Othello board, match, and turn state, are persisted before the play-space is left.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The pause overlay exposes one signal per destination and disables the active destination button.',
-            code: `play_my_world_requested = pyqtSignal()
-play_othello_requested = pyqtSignal()
-
-self._btn_my_world = self._make_menu_button("Play My World", panel)
-self._btn_my_world.clicked.connect(self.play_my_world_requested.emit)
-
-self._btn_othello = self._make_menu_button("Play Othello (Reversi)", panel)
-self._btn_othello.clicked.connect(self.play_othello_requested.emit)
-
-
-def set_current_space(self, space_id: str) -> None:
-  normalized = normalize_play_space_id(space_id)
-  self._btn_my_world.setEnabled(not is_my_world_space(normalized))
-  self._btn_othello.setEnabled(not is_othello_space(normalized))`,
-          },
-          {
-            language: 'py',
-            caption: 'Both pause destinations save the active play-space first, then proceed on success.',
-            code: `def _exit_active_play_space(viewport, proceed):
-  viewport._reset_held_mouse_actions()
-  if not _persist_active_play_space(viewport):
-    _notify_save_failed(viewport)
-    return
-  QTimer.singleShot(0, lambda: _guard(proceed))
-
-viewport._overlay.play_my_world_requested.connect(lambda: open_my_world_library_from_pause(viewport))
-viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_pause(viewport))`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'switching-play-spaces-controller-sequence',
@@ -617,34 +594,34 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_
     if resume:
       resume_from_overlay(viewport)
     return
+  _perform_space_switch(viewport, normalized, resume=resume)
 
-  target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
-  viewport._reset_held_mouse_actions()
-  ai_controller.cancel_route_edit(viewport)
-  viewport._clear_block_break_particles()
-  othello_controller.clear_state_for_space_switch(viewport)
-  viewport._state.current_space_id = normalized
-  viewport._state.normalize()
-  viewport._session = viewport._sessions.set_active_space(normalized)
-  _learning_runtime = getattr(viewport, "_learning_runtime", None)
-  if _learning_runtime is not None:
-    _learning_runtime.flush(viewport._session)
-    _learning_runtime.configure_session(viewport._session)
-  viewport._begin_loading(target_label)
-  viewport._overlay.set_current_space(normalized)
-  viewport._upload.reset(viewport._renderer, world=viewport._session.world)
-  viewport._invalidate_selection_target()
-  viewport._renderer.clear_selection()
-  settings_controller.sync_hotbar_widgets(viewport)
-  settings_controller.sync_first_person_target(viewport)
-  othello_controller.sync_hud_text(viewport)
-  viewport._sync_gameplay_hud_visibility()
 
-  if resume:
-    resume_from_overlay(viewport)
+def force_enter_space(viewport: "RendererViewportWidget", space_id: str, *, resume: bool = False) -> None:
+  _perform_space_switch(viewport, normalize_play_space_id(space_id), resume=bool(resume))
 
-  othello_controller.maybe_request_ai(viewport)
-  viewport.update()`,
+
+def open_settings_from_pause(viewport: "RendererViewportWidget") -> None:
+  settings_controller.sync_settings_values(viewport)
+  viewport._set_settings_overlay(True)
+  settings_controller.sync_cloud_motion_pause(viewport)
+
+
+def open_settings_preview(viewport: "RendererViewportWidget") -> None:
+  from ludoxel.presentation.interface.settings.overlay import SettingsOverlay
+
+  if getattr(viewport, "_settings_preview", None) is not None:
+    return
+
+  host = viewport.window() if viewport.window() is not None else viewport
+  preview = SettingsOverlay(host, resource_root=viewport._resource_root, as_window=True, include_preview_button=False)
+  preview.setWindowTitle("Settings Preview")
+  viewport._settings_preview = preview
+  settings_controller.bind_settings_overlay_value_signals(viewport, preview)
+  preview.back_requested.connect(lambda: close_settings_preview(viewport))
+
+  viewport._settings.setVisible(False)
+  settings_controller.sync_settings_values(viewport)`,
           },
         ],
       },
@@ -690,34 +667,30 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_
           {
             language: 'py',
             caption: 'Beginning a transition publishes loading state and resynchronizes pause-sensitive surfaces.',
-            code: `def _begin_loading(self: "RendererViewportWidget", text: str) -> None:
-  became_active = self._frame_sync.loading.begin()
-  self._reset_held_mouse_actions()
-  self._clear_block_break_particles()
-  self._set_loading_status(text)
-  self._sync_gameplay_hud_visibility()
-  settings_controller.sync_cloud_motion_pause(self)
-  if bool(became_active):
-    self.loading_state_changed.emit(True)
-  self.update()`,
+            code: `  def _begin_loading(self: "RendererViewportWidget", text: str) -> None:
+    became_active = self._frame_sync.loading.begin()
+    self._loading_progress_changed_s = float(time.perf_counter())
+    self._reset_held_mouse_actions()
+    self._clear_block_break_particles()
+    self._set_loading_status(text)
+    self._sync_gameplay_hud_visibility()
+    settings_controller.sync_cloud_motion_pause(self)
+    if bool(became_active):
+      self.loading_state_changed.emit(True)`,
           },
           {
             language: 'py',
             caption: 'Selection cadence is keyed by current space id and world revision.',
-            code: `def _selection_due(self: "RendererViewportWidget", *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> bool:
-  current_space_id = str(self._state.current_space_id)
-  current_world_revision = int(self._session.world.revision)
-  if self._frame_sync.selection.world_revision_changed(world_revision=int(current_world_revision)):
-    self._arm_world_change_sync()
-  return self._frame_sync.selection.due(
-    eye=eye,
-    yaw_deg=float(yaw_deg),
-    pitch_deg=float(pitch_deg),
-    current_space_id=str(current_space_id),
-    current_world_revision=int(current_world_revision),
-    target_present=(self._selection_state.target() is not None),
-    is_othello_space=bool(self._state.is_othello_space()),
-  )`,
+            code: `  def _selection_due(self: "RendererViewportWidget", *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> bool:
+    current_space_id = str(self._state.current_space_id)
+    current_world_revision = int(self._session.world.revision)
+    if self._frame_sync.selection.world_revision_changed(world_revision=int(current_world_revision)):
+      self._arm_world_change_sync()
+    return self._frame_sync.selection.due(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(current_space_id), current_world_revision=int(current_world_revision), target_present=(self._selection_state.target() is not None), is_othello_space=bool(self._state.is_othello_space()))
+
+  def _mark_selection(self: "RendererViewportWidget", *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> None:
+    self._frame_sync.selection.mark(eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), current_space_id=str(self._state.current_space_id), current_world_revision=int(self._session.world.revision))
+`,
           },
         ],
       },
@@ -733,23 +706,22 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_
           {
             language: 'py',
             caption: 'Save state writes the normalized selector and separate My World/Othello payloads.',
-            code: `state = AppState(
-  current_space_id=normalize_play_space_id(state_runtime.current_space_id),
-  settings=settings,
-  inventory=inventory,
-  othello_settings=state_runtime.othello_settings.normalized(),
-  my_world=PersistedPlaySpace(
-    player=_persisted_player_from_session(sessions.my_world, allow_flying=bool(state_runtime.creative_mode)),
-    world=_persisted_world_from_session(sessions.my_world),
-    ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.my_world.ai_states()),
-  ),
-  othello_space=PersistedOthelloSpace(
-    player=_persisted_player_from_session(sessions.othello, allow_flying=False),
-    world=_persisted_world_from_session(sessions.othello),
-    othello_game_state=persisted_othello_state,
-    ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.othello.ai_states()),
-  ),
-)`,
+            code: `  state = AppState(
+    current_space_id=normalize_play_space_id(state_runtime.current_space_id),
+    settings=settings,
+    othello_settings=state_runtime.othello_settings.normalized(),
+    my_world=PersistedPlaySpace(
+      player=_persisted_player_from_session(sessions.my_world, allow_flying=bool(state_runtime.creative_mode)),
+      world=_persisted_world_from_session(sessions.my_world),
+      inventory=persisted_world_inventory_from_runtime(state_runtime),
+      ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.my_world.ai_states()),
+    ),
+    othello_space=PersistedOthelloSpace(
+      player=_persisted_player_from_session(sessions.othello, allow_flying=False), world=_persisted_world_from_session(sessions.othello), othello_game_state=persisted_othello_state, ai_players=tuple(PersistedAiPlayer.from_state(player_state) for player_state in sessions.othello.ai_states())
+    ),
+  )
+  store.save(state, my_world_thumbnail_bytes=my_world_thumbnail_bytes)
+`,
           },
         ],
       },
@@ -773,21 +745,7 @@ viewport._overlay.play_othello_requested.connect(lambda: switch_to_othello_from_
           '`GameScreen` constructs the selected viewport with `project_root`, `resource_root`, `data_root`, and the launch player name, then passes `HudPayload` values through `hud_updated.connect(self.hud.set_payload)`. The platform branch selects a widget class; backend equivalence claims are limited to this shared host wiring. The displayed scene and the text labels arrive through different consumers inside the same central widget stack.',
           '`HUDWidget` itself is transparent to mouse events, has no system background, and creates two plain-text labels. It calculates their available panel width from the window width, then places a left label and optional right label. This root HUD surface provides an overlay for payload text; it receives no keyboard focus and carries no direct overlay-navigation actions.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The game screen wires the viewport to the HUD and selects the backend by platform.',
-            code: `if sys.platform == "darwin":
-  from ludoxel.presentation.interface.viewport.widgets.renderer import RendererViewportWidget as ViewportWidget
-else:
-  from ludoxel.presentation.interface.viewport.widgets.gl import GLViewportWidget as ViewportWidget
-
-self.viewport = ViewportWidget(project_root=self.project_root, resource_root=self.resource_root, data_root=self.data_root, launch_player_name=launch_player_name)
-self.hud = HUDWidget()
-self.viewport.set_hud(self.hud)
-self.viewport.hud_updated.connect(self.hud.set_payload)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-the-main-window-preparing-overlay',
@@ -801,14 +759,14 @@ self.viewport.hud_updated.connect(self.hud.set_payload)`,
           {
             language: 'py',
             caption: 'The overlay follows viewport loading state and resizes with the screen.',
-            code: `self._loading_overlay.setVisible(bool(self.viewport.loading_active()))
-self.viewport.loading_state_changed.connect(self._handle_loading_state_changed)
-self.viewport.loading_status_changed.connect(self._loading_overlay.set_status_text)
-self.viewport.loading_finished.connect(self._handle_loading_finished)
+            code: `    self._loading_overlay.setVisible(bool(self.viewport.loading_active()))
+    self.viewport.loading_state_changed.connect(self._handle_loading_state_changed)
+    self.viewport.loading_status_changed.connect(self._loading_overlay.set_status_text)
+    self.viewport.loading_finished.connect(self._handle_loading_finished)
+    self._loading_overlay.raise_()
 
-def resizeEvent(self, e) -> None:
-  super().resizeEvent(e)
-  self._loading_overlay.setGeometry(0, 0, max(1, self.width()), max(1, self.height()))`,
+    if not self.viewport.loading_active():
+      self._handle_loading_finished()`,
           },
         ],
       },
@@ -847,16 +805,16 @@ class HudPayload:
           {
             language: 'py',
             caption: 'The hotbar centers its panel and places the health strip above it.',
-            code: `def _layout_children(self) -> None:
-  pw = int(self._panel.sizeHint().width())
-  ph = int(self._panel.sizeHint().height())
-  x = max(0, (int(self.width()) - pw) // 2)
-  y = max(0, int(self.height()) - ph - 18)
-  self._panel.setGeometry(x, y, pw, ph)
+            code: `  def _layout_children(self) -> None:
+    pw = int(self._panel.sizeHint().width())
+    ph = int(self._panel.sizeHint().height())
+    x = max(0, (int(self.width()) - pw) // 2)
+    y = max(0, int(self.height()) - ph - HOTBAR_BOTTOM_MARGIN_PX)
+    self._panel.setGeometry(x, y, pw, ph)
 
-  hh = int(self._health_strip.sizeHint().height())
-  hy = max(0, int(y) - hh - 8)
-  self._health_strip.setGeometry(int(x), int(hy), int(pw), int(hh))`,
+    hh = int(self._health_strip.sizeHint().height())
+    hy = max(0, int(y) - hh - HOTBAR_HEALTH_GAP_PX)
+    self._health_strip.setGeometry(int(x), int(hy), int(pw), int(hh))`,
           },
         ],
       },
@@ -868,21 +826,7 @@ class HudPayload:
           'These surfaces sit above the viewport in the same window. Which overlay is open determines what a key press or click does next, so when describing the window state it matters whether the central viewport is live or whether an overlay such as the inventory or pause menu currently owns input.',
           '`RendererViewportWidget` creates `PauseOverlay`, `SettingsOverlay`, `OthelloSettingsOverlay`, `DeathOverlay`, and `InventoryOverlay`, then places their references in `ViewportOverlays`. The event path checks modal and capture state before treating mouse motion as gameplay input. A window screenshot can identify an overlay surface; it cannot show the controller mutation that led there unless the corresponding runtime state and signal path are also observed.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Opening the pause menu closes other overlays before it takes focus.',
-            code: `def open_pause_menu(viewport):
-  if viewport._overlays.dead():
-    return
-  if viewport._overlays.inventory_open():
-    viewport._set_inventory_overlay(False)
-  if viewport._overlays.settings_open():
-    back_from_settings(viewport)
-  viewport._overlay.set_current_space(viewport._state.current_space_id)
-  viewport._set_paused_overlay(True)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'reading-the-main-window-death-overlay',
@@ -898,6 +842,45 @@ class HudPayload:
             caption: 'The death overlay exposes a respawn request and a settable message.',
             code: `class DeathOverlay(QWidget):
   respawn_requested = pyqtSignal()
+
+  def __init__(self, parent: QWidget | None = None) -> None:
+    super().__init__(parent)
+
+    self.setVisible(False)
+    self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+    self.setObjectName("deathRoot")
+
+    root = QVBoxLayout(self)
+    root.setContentsMargins(0, 0, 0, 0)
+    root.addStretch(1)
+
+    panel = QFrame(self)
+    panel.setObjectName("panel")
+    panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    panel.setMinimumWidth(420)
+
+    pv = QVBoxLayout(panel)
+    pv.setContentsMargins(20, 18, 20, 20)
+    pv.setSpacing(12)
+
+    title = QLabel("YOU DIED", panel)
+    title.setObjectName("title")
+    title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    pv.addWidget(title)
+
+    self._message = QLabel("Player died.", panel)
+    self._message.setWordWrap(True)
+    self._message.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    pv.addWidget(self._message)
+
+    btn = QPushButton("Respawn", panel)
+    btn.setObjectName("menuBtn")
+    btn.clicked.connect(self.respawn_requested.emit)
+    pv.addWidget(btn)
+
+    root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
+    root.addStretch(1)
 
   def set_message(self, text: str) -> None:
     body = str(text).strip()
@@ -919,27 +902,8 @@ class HudPayload:
           {
             language: 'py',
             caption: 'The game screen exposes a QSS-owned host surface under the viewport.',
-            code: `self.setObjectName("gameScreen")
-self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)`,
-          },
-          {
-            language: 'qss',
-            caption: 'The theme fragment owns the game-screen and status-frame decoration.',
-            code: `QWidget#gameScreen,
-QFrame#loadingOverlay {
-  background: #121212;
-}
-
-QLabel#loadingTitle {
-  color: #f4f4f4;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-QLabel#loadingStatus {
-  color: #c8c8c8;
-  font-size: 14px;
-}`,
+            code: `    self.setObjectName("gameScreen")
+    self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)`,
           },
         ],
       },
@@ -970,12 +934,31 @@ QLabel#loadingStatus {
             code: `HOTBAR_SIZE: int = 9
 
 
+def normalize_hotbar_slots(raw: Sequence[object] | None, *, size: int = HOTBAR_SIZE) -> tuple[str, ...]:
+  width = int(max(1, int(size)))
+  out: list[str] = []
+
+  if raw is not None:
+    for value in tuple(raw)[:width]:
+      if value is None:
+        out.append("")
+      else:
+        out.append(str(value).strip())
+
+  while len(out) < width:
+    out.append("")
+
+  return tuple(out[:width])
+
+
 def normalize_hotbar_index(index: int, *, size: int = HOTBAR_SIZE) -> int:
   width = int(max(1, int(size)))
+
   try:
     idx = int(index)
   except Exception:
     idx = 0
+
   return max(0, min(width - 1, idx))`,
           },
         ],
@@ -992,10 +975,10 @@ def normalize_hotbar_index(index: int, *, size: int = HOTBAR_SIZE) -> int:
           {
             language: 'py',
             caption: 'Hotbar slot actions and their default digit bindings.',
-            code: `HOTBAR_ACTIONS = tuple(f"hotbar_slot_{int(index) + 1}" for index in range(9))
+            code: `HOTBAR_ACTIONS: tuple[str, ...] = tuple(f"hotbar_slot_{int(index) + 1}" for index in range(HOTBAR_SIZE))
 
-for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
-  DEFAULT_KEYBINDS[_action] = str(int(_index))`,
+KEYBIND_ACTION_ORDER: tuple[str, ...] = (
+  ACTION_MOVE_FORWARD,`,
           },
         ],
       },
@@ -1015,8 +998,10 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
   width = int(max(1, int(size)))
   idx = normalize_hotbar_index(int(selected_index), size=width)
   step = int(delta_steps)
+
   if step == 0:
     return idx
+
   return int((idx + step) % width)`,
           },
         ],
@@ -1033,7 +1018,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           {
             language: 'py',
             caption: 'The held block id is read from the selected, normalized slot.',
-            code: `def current_hotbar_block_id(slots, selected_index, *, size: int = HOTBAR_SIZE) -> str | None:
+            code: `def current_hotbar_block_id(slots: Sequence[object] | None, selected_index: int, *, size: int = HOTBAR_SIZE) -> str | None:
   norm = normalize_hotbar_slots(slots, size=int(size))
   idx = normalize_hotbar_index(int(selected_index), size=int(size))
   bid = str(norm[idx]).strip()
@@ -1049,17 +1034,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           'The default "Clear Selected Slot" action is bound to Q. It empties the selected slot, which is the quick way to return a slot to an empty hand without opening the inventory.',
           '`with_hotbar_assignment` is a pure tuple transformation. It neither writes a persistence store nor updates a Qt widget. Controller code must install the returned value into runtime state, then call hotbar and first-person synchronization consumers before the window reflects the assignment. The clear action uses the same state path with an empty item value.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Assigning a slot replaces only the chosen index.',
-            code: `def with_hotbar_assignment(slots, index, block_id, *, size: int = HOTBAR_SIZE):
-  out = list(normalize_hotbar_slots(slots, size=int(size)))
-  idx = normalize_hotbar_index(int(index), size=int(size))
-  out[idx] = "" if block_id is None else str(block_id).strip()
-  return tuple(out)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'using-the-hotbar-display-widget',
@@ -1069,19 +1044,7 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           'When synchronized, the widget normalizes the incoming slots and index exactly as the simulation does, then sets each slot button to the matching item, tooltip, and selected state. Item icons are supplied asynchronously by a photo provider and updated as they become available.',
           '`apply_item_slot_state` writes the Qt properties `itemId` and `selected`, tooltip text, and the current pixmap before refreshing widget style. `_DisplaySlot` has `Qt.NoFocus` and the arrow cursor, while the hotbar root is also input-transparent. The visual selected border thus follows a synchronized index and remains outside keyboard focus and mouse dispatch.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The display hotbar synchronizes its slots from normalized simulation values.',
-            code: `def sync_hotbar(self, *, slots, selected_index: int) -> None:
-  norm = normalize_hotbar_slots(slots, size=HOTBAR_SIZE)
-  idx = normalize_hotbar_index(selected_index, size=HOTBAR_SIZE)
-  for i, btn in enumerate(self._slots):
-    item_id = str(norm[i]).strip()
-    self._slot_item_ids[i] = str(item_id)
-    btn.set_slot_state(item_id=item_id, tooltip=hotbar_slot_tooltip(self._registry, slot_index=i, item_id=item_id), selected=(int(i) == int(idx)), photos=self._photos)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'using-the-hotbar-tooltips',
@@ -1095,14 +1058,14 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           {
             language: 'py',
             caption: 'A new item icon re-syncs every slot that holds that item.',
-            code: `def _on_item_pixmap_changed(self, item_id: str) -> None:
-  normalized = str(item_id).strip()
-  if not normalized:
-    return
-  for index, btn in enumerate(self._slots):
-    if str(self._slot_item_ids[index]).strip() != normalized:
-      continue
-    btn.set_slot_state(item_id=normalized, tooltip=hotbar_slot_tooltip(self._registry, slot_index=index, item_id=normalized), selected=bool(btn.property("selected")), photos=self._photos)`,
+            code: `  def _on_item_pixmap_changed(self, item_id: str) -> None:
+    normalized = str(item_id).strip()
+    if not normalized:
+      return
+    for index, btn in enumerate(self._slots):
+      if str(self._slot_item_ids[index]).strip() != normalized:
+        continue
+      btn.set_slot_state(item_id=normalized, tooltip=hotbar_slot_tooltip(self._registry, slot_index=index, item_id=normalized), selected=bool(btn.property("selected")), photos=self._photos)`,
           },
         ],
       },
@@ -1129,12 +1092,12 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           {
             language: 'py',
             caption: 'Escape closes the overlay, and the bound inventory action closes it too.',
-            code: `def keyPressEvent(self, e) -> None:
-  key = int(e.key())
-  if key == int(Qt.Key.Key_Escape):
-    self._close()
-    e.accept()
-    return`,
+            code: `  def keyPressEvent(self, e) -> None:
+    key = int(e.key())
+    if key == int(Qt.Key.Key_Escape):
+      self._close()
+      e.accept()
+      return`,
           },
         ],
       },
@@ -1151,9 +1114,11 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           {
             language: 'py',
             caption: 'The upper inventory fills row-major across nine columns.',
-            code: `for slot_index in range(UPPER_INVENTORY_SIZE):
-  button = _StorageSlotButton(REGION_UPPER, slot_index, droppable=True, draggable_getter=self._can_begin_drag, parent=upper)
-  upper_grid.addWidget(button, int(slot_index // UPPER_INVENTORY_COLUMNS), int(slot_index % UPPER_INVENTORY_COLUMNS))`,
+            code: `    for slot_index in range(UPPER_INVENTORY_SIZE):
+      button = _StorageSlotButton(REGION_UPPER, slot_index, droppable=True, draggable_getter=self._can_begin_drag, parent=upper)
+      self._wire_storage_slot(button)
+      self._upper_buttons.append(button)
+      upper_grid.addWidget(button, int(slot_index // UPPER_INVENTORY_COLUMNS), int(slot_index % UPPER_INVENTORY_COLUMNS))`,
           },
         ],
       },
@@ -1169,11 +1134,11 @@ for _index, _action in enumerate(HOTBAR_ACTIONS, start=1):
           {
             language: 'py',
             caption: 'Search keeps the top-left, row-major catalog order.',
-            code: `tokens = tuple(token for token in query_text.split() if token)
-matching_entries = [entry for entry in self._catalog_entries if all(token in entry[1] for token in tokens)]
+            code: `    tokens = tuple(token for token in query_text.split() if token)
+    matching_entries = [entry for entry in self._catalog_entries if all(token in entry[1] for token in tokens)]
 
-for index, (_item_id, _search_key, button) in enumerate(matching_entries):
-  self._grid_layout.addWidget(button, int(index // _CATALOG_COLUMNS), int(index % _CATALOG_COLUMNS))`,
+    for index, (_item_id, _search_key, button) in enumerate(matching_entries):
+      row = int(index // _CATALOG_COLUMNS)`,
           },
         ],
       },
@@ -1190,12 +1155,12 @@ for index, (_item_id, _search_key, button) in enumerate(matching_entries):
           {
             language: 'py',
             caption: 'Placing a carried item moves it, swaps it, or replaces the destination.',
-            code: `if self._carry_region == REGION_CATALOG:
-  self._set_slot(dest_region, dest_index, carried)
-else:
-  self._set_slot(dest_region, dest_index, carried)
-  if not (self._carry_region == dest_region and int(self._carry_index) == int(dest_index)):
-    self._set_slot(self._carry_region, self._carry_index, destination_old)`,
+            code: `    if self._carry_region == REGION_CATALOG:
+      self._set_slot(dest_region, dest_index, carried)
+    else:
+      self._set_slot(dest_region, dest_index, carried)
+      if not (self._carry_region == dest_region and int(self._carry_index) == int(dest_index)):
+        self._set_slot(self._carry_region, self._carry_index, destination_old)`,
           },
         ],
       },
@@ -1211,11 +1176,11 @@ else:
           {
             language: 'py',
             caption: 'Priority placement fills the hotbar, then the upper inventory.',
-            code: `inserted_hotbar, hotbar_index = insert_into_first_empty(normalized_hotbar, item_id, size=HOTBAR_SIZE)
-if hotbar_index is not None:
-  return inserted_hotbar, normalized_upper, True
-inserted_upper, upper_index = insert_into_first_empty(normalized_upper, item_id, size=UPPER_INVENTORY_SIZE)
-return normalized_hotbar, inserted_upper, upper_index is not None`,
+            code: `  inserted_hotbar, hotbar_index = insert_into_first_empty(normalized_hotbar, item_id, size=HOTBAR_SIZE)
+  if hotbar_index is not None:
+    return inserted_hotbar, normalized_upper, True
+  inserted_upper, upper_index = insert_into_first_empty(normalized_upper, item_id, size=UPPER_INVENTORY_SIZE)
+  return normalized_hotbar, inserted_upper, upper_index is not None`,
           },
         ],
       },
@@ -1231,10 +1196,12 @@ return normalized_hotbar, inserted_upper, upper_index is not None`,
           {
             language: 'py',
             caption: 'A finite number-key source swaps atomically with the hotbar target.',
-            code: `hovered_item = self._get_slot(region, hovered_index)
-hotbar_item = self._get_slot(REGION_HOTBAR, target_index)
-self._set_slot(REGION_HOTBAR, target_index, hovered_item)
-self._set_slot(region, hovered_index, hotbar_item)`,
+            code: `    hovered_item = self._get_slot(region, hovered_index)
+    if not hovered_item:
+      return
+    hotbar_item = self._get_slot(REGION_HOTBAR, target_index)
+    self._set_slot(REGION_HOTBAR, target_index, hovered_item)
+    self._set_slot(region, hovered_index, hotbar_item)`,
           },
         ],
       },
@@ -1249,18 +1216,19 @@ self._set_slot(region, hovered_index, hotbar_item)`,
           {
             language: 'py',
             caption: 'The drop key clears a hovered hotbar or upper slot.',
-            code: `def _clear_hovered_slot(self) -> None:
-  if self._is_carrying():
-    return
-  region = self._hovered_region
-  if region not in (REGION_HOTBAR, REGION_UPPER) or self._hovered_index is None:
-    return
-  hovered_index = int(self._hovered_index)
-  if not self._get_slot(region, hovered_index):
-    return
-  self._set_slot(region, hovered_index, "")
-  self._sync_storage_buttons()
-  self._emit_storage_changed()`,
+            code: `  def _clear_hovered_slot(self) -> None:
+    if self._is_carrying():
+      return
+    region = self._hovered_region
+    if region not in (REGION_HOTBAR, REGION_UPPER) or self._hovered_index is None:
+      return
+    hovered_index = int(self._hovered_index)
+    if not self._get_slot(region, hovered_index):
+      return
+    self._set_slot(region, hovered_index, "")
+    self._hovered_item_id = None
+    self._sync_storage_buttons()
+    self._emit_storage_changed()`,
           },
         ],
       },
@@ -1272,18 +1240,7 @@ self._set_slot(region, hovered_index, hotbar_item)`,
           '`bind_overlay_actions` connects `storage_changed` to `apply_inventory_storage`. The controller writes the shared My World hotbar and upper storage through `set_my_world_hotbar_slots` and `set_my_world_upper_slots`, normalizes the runtime, then re-syncs the HUD hotbar, the health strip, and the first-person held item before invalidating the inventory preview cache and requesting another frame.',
           'The overlay keeps its working copy while open, and the controller leaves the open overlay alone after a commit. The runtime re-pushes storage into the overlay only when the inventory opens or the game mode changes, so an in-progress carry survives until the player places it.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'One signal carries the hotbar and upper tuples to the controller.',
-            code: `self.storage_changed.emit(
-  {
-    "hotbar": tuple(str(value).strip() for value in self._hotbar_slots),
-    "upper": tuple(str(value).strip() for value in self._upper_slots),
-  }
-)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'using-the-inventory-overlay-preview',
@@ -1293,17 +1250,7 @@ self._set_slot(region, hovered_index, hotbar_item)`,
           'Because the fixed-step runtime keeps advancing with the inventory open, the preview reflects the current skin, hurt tint, and the held block or special item resolved from the selected hotbar slot. Its cache key includes the skin reference plus `visible_block_id`, `visible_block_kind`, and `visible_special_item_icon`, the `FirstPersonRenderState` fields consumed by the third-person preview pose. A storage commit updates the first-person target, invalidates that cache, and requests a repaint; removing or adding the selected held item therefore changes the open inventory preview. The preview frame is cleared when the inventory hides, and this path is separate from the pause-screen preview so neither one drives the other.',
           'The preview follows the pointer. The overlay event filter forwards mouse motion to `move_pointer`, and `_InventoryPreviewWidget` enables hover body tracking, so the model turns its head toward the cursor and adjusts its body yaw by a smaller amount as the pointer moves. `_build_inventory_preview_player_state` reads those angles through `preview_widget().preview_angles()`, so the pointer motion that changes the angles produces a fresh cache key and a re-rendered frame.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The inventory preview composes a third-person state from the live player state.',
-            code: `def _build_inventory_preview_player_state(self, player_state):
-  if player_state is None:
-    return None
-  body_yaw_deg, head_yaw_deg, head_pitch_deg = self._inventory.preview_widget().preview_angles()
-  return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)`,
-          },
-        ],
+        codeBlocks: [],
       },
     ],
     relatedTitles: ['Using the Hotbar', 'Understanding Overlay Input Blocking', 'Reading the Main Window'],
@@ -1341,15 +1288,35 @@ self._set_slot(region, hovered_index, hotbar_item)`,
           {
             language: 'py',
             caption: 'The input adapter accumulates and then drains the mouse delta per frame.',
-            code: `def add_mouse_delta(self, dx: float, dy: float) -> None:
-  self._mdx += float(dx)
-  self._mdy += float(dy)
+            code: `  def add_mouse_delta(self, dx: float, dy: float) -> None:
+    self._mdx += float(dx)
+    self._mdy += float(dy)
 
-def consume(self) -> InputFrame:
-  out = InputFrame(mdx=float(self._mdx), mdy=float(self._mdy))
-  self._mdx = 0.0
-  self._mdy = 0.0
-  return out`,
+  def consume(self) -> InputFrame:
+    f = 0.0
+    s = 0.0
+
+    if self._action_pressed(ACTION_MOVE_FORWARD):
+      f += 1.0
+    if self._action_pressed(ACTION_MOVE_BACKWARD):
+      f -= 1.0
+    if self._action_pressed(ACTION_MOVE_RIGHT):
+      s += 1.0
+    if self._action_pressed(ACTION_MOVE_LEFT):
+      s -= 1.0
+
+    crouch = self._action_pressed(ACTION_CROUCH)
+    sprint = self._action_pressed(ACTION_SPRINT)
+
+    jump_held = self._action_pressed(ACTION_JUMP)
+    jump_pressed = bool(self._jump_pressed_edge)
+
+    out = InputFrame(move_f=float(f), move_s=float(s), jump_held=bool(jump_held), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), mdx=float(self._mdx), mdy=float(self._mdy))
+
+    self._jump_pressed_edge = False
+    self._mdx = 0.0
+    self._mdy = 0.0
+    return out`,
           },
         ],
       },
@@ -1365,15 +1332,17 @@ def consume(self) -> InputFrame:
           {
             language: 'py',
             caption: 'Look-axis inversion is applied when the frame is consumed.',
-            code: `def consume(self, *, invert_x: bool, invert_y: bool) -> tuple[InputFrame, MouseDelta]:
-  fr = self._a.consume()
-  mdx = float(fr.mdx)
-  mdy = float(fr.mdy)
-  if bool(invert_x):
-    mdx = -mdx
-  if bool(invert_y):
-    mdy = -mdy
-  return fr, MouseDelta(dx=float(mdx), dy=float(mdy))`,
+            code: `  def consume(self, *, invert_x: bool, invert_y: bool) -> tuple[InputFrame, MouseDelta]:
+    fr = self._a.consume()
+    mdx = float(fr.mdx)
+    mdy = float(fr.mdy)
+
+    if bool(invert_x):
+      mdx = -mdx
+    if bool(invert_y):
+      mdy = -mdy
+
+    return fr, MouseDelta(dx=float(mdx), dy=float(mdy))`,
           },
         ],
       },
@@ -1389,9 +1358,9 @@ def consume(self) -> InputFrame:
           {
             language: 'py',
             caption: 'Yaw and pitch deltas are added to the player at the start of each step.',
-            code: `player.yaw_deg += float(control.yaw_delta_deg)
-player.pitch_deg += float(control.pitch_delta_deg)
-player.clamp_pitch()`,
+            code: `  player.yaw_deg += float(control.yaw_delta_deg)
+  player.pitch_deg += float(control.pitch_delta_deg)
+  player.clamp_pitch()`,
           },
         ],
       },
@@ -1450,8 +1419,8 @@ class PlayerStepInput:
             language: 'py',
             caption: 'The perspective cycle is a bound action with a default of F5.',
             code: `ACTION_CYCLE_CAMERA_PERSPECTIVE = "cycle_camera_perspective"
-
-DEFAULT_KEYBINDS[ACTION_CYCLE_CAMERA_PERSPECTIVE] = "F5"`,
+ACTION_TOGGLE_GAMEPLAY_HUD = "toggle_gameplay_hud"
+ACTION_TOGGLE_DEBUG_HUD = "toggle_debug_hud"`,
           },
         ],
       },
@@ -1463,20 +1432,7 @@ DEFAULT_KEYBINDS[ACTION_CYCLE_CAMERA_PERSPECTIVE] = "F5"`,
           'On the polling path, the captured cursor is repeatedly compared against the viewport center and warped back, turning each frame’s offset into a delta. If you cannot look around, the first thing to confirm is whether the viewport is captured.',
           '`poll_relative_mouse_delta` exits before any cursor read when `_captured` is false. During capture synchronization it clears accumulated delta, recenters the cursor, and waits for two near-center polls; ordinary polling then adds only non-zero offsets. Capture state therefore gates delta production before the session sees mouse sensitivity or player-angle computation.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'Capture polling converts the offset from center into a look delta.',
-            code: `center = self._center_global()
-cur = QCursor.pos()
-dx = float(cur.x() - center.x())
-dy = float(cur.y() - center.y())
-if dx == 0.0 and dy == 0.0:
-  return
-self._a.add_mouse_delta(dx, dy)
-self._warp_cursor_to_center()`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'looking-around-sensitivity',
@@ -1518,13 +1474,13 @@ self._warp_cursor_to_center()`,
           {
             language: 'py',
             caption: 'Enabling capture focuses the viewport, hides the cursor, and grabs input.',
-            code: `self._w.setFocus(Qt.FocusReason.MouseFocusReason)
-self._sync_override_cursor(hidden=True)
-self._w.setCursor(Qt.CursorShape.BlankCursor)
-if host_window is not None:
-  host_window.setCursor(Qt.CursorShape.BlankCursor)
-self._w.grabMouse()
-self._w.grabKeyboard()`,
+            code: `      self._w.setFocus(Qt.FocusReason.MouseFocusReason)
+      self._sync_override_cursor(hidden=True)
+      self._w.setCursor(Qt.CursorShape.BlankCursor)
+      if host_window is not None:
+        host_window.setCursor(Qt.CursorShape.BlankCursor)
+      self._w.grabMouse()
+      self._w.grabKeyboard()`,
           },
         ],
       },
@@ -1540,13 +1496,14 @@ self._w.grabKeyboard()`,
           {
             language: 'py',
             caption: 'A warp recenters the cursor without arming an input-delay gate.',
-            code: `def _warp_cursor_to_center(self) -> None:
-  center = self._center_global()
-  warped = False
-  if self._macos_cursor_warp is not None:
-    warped = bool(self._macos_cursor_warp.warp(x=int(center.x()), y=int(center.y())).succeeded)
-  if not bool(warped):
-    QCursor.setPos(center)`,
+            code: `  def _warp_cursor_to_center(self) -> None:
+    center = self._center_global()
+    warped = False
+    if self._macos_cursor_warp is not None:
+      result = self._macos_cursor_warp.warp(x=int(center.x()), y=int(center.y()))
+      warped = bool(result.succeeded)
+    if not bool(warped):
+      QCursor.setPos(center)`,
           },
         ],
       },
@@ -1562,12 +1519,12 @@ self._w.grabKeyboard()`,
           {
             language: 'py',
             caption: 'Native relative capture is tried first; warping is the fallback.',
-            code: `self._clear_capture_resume_guard()
-self._a.clear_mouse_delta()
-center = self._center_global()
-native_relative = bool(self._macos_relative_mouse is not None and self._macos_relative_mouse.begin(x=int(center.x()), y=int(center.y())))
-if not bool(native_relative):
-  self._warp_cursor_to_center()`,
+            code: `      self._clear_capture_resume_guard()
+      self._a.clear_mouse_delta()
+      center = self._center_global()
+      native_relative = bool(self._macos_relative_mouse is not None and self._macos_relative_mouse.begin(x=int(center.x()), y=int(center.y())))
+      if not bool(native_relative):
+        self._warp_cursor_to_center()`,
           },
         ],
       },
@@ -1579,19 +1536,7 @@ if not bool(native_relative):
           'Because the keyboard guard and cursor handling are separate components, a fault in one does not imply a fault in the other. Cursor capture concerns pointer hiding and look deltas, while the guard concerns native key delivery during play.',
           '`MacosGameplayInputGuard` creates a second CoreGraphics event tap for key-down, key-up, and modifier events, maps macOS keycodes to Qt keys, and calls its injected handler only while active. It reports installation failure through its status and stderr path. `ViewportInput` constructs that guard only when a native key handler is supplied, whereas the relative cursor capture has its own lifecycle and pending delta buffer.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The macOS keyboard guard is toggled with capture but is a separate component.',
-            code: `if self._macos_input_guard is not None:
-  self._macos_input_guard.set_active(True)
-# on release:
-if self._macos_relative_mouse is not None:
-  self._macos_relative_mouse.end()
-if self._macos_input_guard is not None:
-  self._macos_input_guard.set_active(False)`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'using-mouse-capture-polling',
@@ -1605,11 +1550,11 @@ if self._macos_input_guard is not None:
           {
             language: 'py',
             caption: 'Polling reads native relative movement when it is active.',
-            code: `if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
-  delta = self._macos_relative_mouse.poll()
-  if int(delta.dx) != 0 or int(delta.dy) != 0:
-    self._a.add_mouse_delta(float(delta.dx), float(delta.dy))
-  return`,
+            code: `    if self._macos_relative_mouse is not None and self._macos_relative_mouse.active():
+      delta = self._macos_relative_mouse.poll()
+      if int(delta.dx) != 0 or int(delta.dy) != 0:
+        self._a.add_mouse_delta(float(delta.dx), float(delta.dy))
+      return`,
           },
         ],
       },
@@ -1625,13 +1570,13 @@ if self._macos_input_guard is not None:
           {
             language: 'py',
             caption: 'Disabling capture releases the grabs and restores the cursor.',
-            code: `self._w.releaseKeyboard()
-self._w.releaseMouse()
-self._sync_override_cursor(hidden=False)
-self._w.unsetCursor()
-host_window = self._w.window()
-if host_window is not None:
-  host_window.unsetCursor()`,
+            code: `      self._w.releaseKeyboard()
+      self._w.releaseMouse()
+      self._sync_override_cursor(hidden=False)
+      self._w.unsetCursor()
+      host_window = self._w.window()
+      if host_window is not None:
+        host_window.unsetCursor()`,
           },
         ],
       },
@@ -1659,14 +1604,14 @@ if host_window is not None:
           {
             language: 'py',
             caption: 'Pressed movement actions are combined into forward and strafe values.',
-            code: `if self._action_pressed(ACTION_MOVE_FORWARD):
-  f += 1.0
-if self._action_pressed(ACTION_MOVE_BACKWARD):
-  f -= 1.0
-if self._action_pressed(ACTION_MOVE_RIGHT):
-  s += 1.0
-if self._action_pressed(ACTION_MOVE_LEFT):
-  s -= 1.0`,
+            code: `    if self._action_pressed(ACTION_MOVE_FORWARD):
+      f += 1.0
+    if self._action_pressed(ACTION_MOVE_BACKWARD):
+      f -= 1.0
+    if self._action_pressed(ACTION_MOVE_RIGHT):
+      s += 1.0
+    if self._action_pressed(ACTION_MOVE_LEFT):
+      s -= 1.0`,
           },
         ],
       },
@@ -1682,13 +1627,13 @@ if self._action_pressed(ACTION_MOVE_LEFT):
           {
             language: 'py',
             caption: 'Jump tracks a held state and a single pressed edge.',
-            code: `def on_key_press(self, e: QKeyEvent) -> None:
-  if bool(e.isAutoRepeat()):
-    return
-  k = int(e.key())
-  self._keys.add(k)
-  if self._action_keys.get(ACTION_JUMP) == int(k):
-    self._jump_pressed_edge = True`,
+            code: `  def on_key_press(self, e: QKeyEvent) -> None:
+    if bool(e.isAutoRepeat()):
+      return
+    k = int(e.key())
+    self._keys.add(k)
+    if self._action_keys.get(ACTION_JUMP) == int(k):
+      self._jump_pressed_edge = True`,
           },
         ],
       },
@@ -1700,17 +1645,7 @@ if self._action_pressed(ACTION_MOVE_LEFT):
           'The player advance reads this control object for movement input. Packing the complete step state preserves fixed-timestep determinism across event timing.',
           '`FixedStepRunner.update` accumulates elapsed time, clamps a frame contribution to 0.25 seconds, invokes `on_step(step_dt)` while enough time remains, and caps a cycle at `max_substeps`. The runner supplies a fixed `dt` to the viewport step callback; it does not store keys, world state, or collision geometry. Input collection and simulation stepping meet only at the control object assembled for each executed substep.',
         ],
-        codeBlocks: [
-          {
-            language: 'py',
-            caption: 'The fixed-step advance reads one control object per step.',
-            code: `def advance_runtime_player(*, player, world, block_registry, settings, motion, dt, control: PlayerStepInput):
-  player.advance_hurt_state(float(dt))
-  player.yaw_deg += float(control.yaw_delta_deg)
-  player.pitch_deg += float(control.pitch_delta_deg)
-  player.clamp_pitch()`,
-          },
-        ],
+        codeBlocks: [],
       },
       {
         id: 'moving-the-player-walk-vs-fly',
@@ -1724,8 +1659,8 @@ if self._action_pressed(ACTION_MOVE_LEFT):
           {
             language: 'py',
             caption: 'The grounded path steps the walking model then integrates with collisions.',
-            code: `step_bedrock(player, move_input, float(dt), params=settings.movement)
-report = integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=bool(control.crouch), jump_pressed=bool(jump_pulse), flying=False)`,
+            code: `  step_bedrock(player, move_input, float(dt), params=settings.movement)
+  report = integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=bool(control.crouch), jump_pressed=bool(jump_pulse), flying=False)`,
           },
         ],
       },
@@ -1741,12 +1676,12 @@ report = integrate_with_collisions(player, world, float(dt), block_registry=bloc
           {
             language: 'py',
             caption: 'Ground state and the press or hold queue decide the jump pulse.',
-            code: `jump_pulse = False
-if bool(player.on_ground) and bool(control.jump_pressed):
-  jump_pulse = True
-elif bool(player.on_ground) and bool(player.hold_jump_queued) and bool(control.jump_held):
-  jump_pulse = True
-  player.hold_jump_queued = False`,
+            code: `  jump_pulse = False
+  if bool(player.on_ground) and bool(control.jump_pressed):
+    jump_pulse = True
+  elif bool(player.on_ground) and bool(player.hold_jump_queued) and bool(control.jump_held):
+    jump_pulse = True
+    player.hold_jump_queued = False`,
           },
         ],
       },
@@ -1762,12 +1697,14 @@ elif bool(player.on_ground) and bool(player.hold_jump_queued) and bool(control.j
           {
             language: 'py',
             caption: 'Auto-jump probes one block ahead in the wished direction.',
-            code: `wish = wish_dir_from_input(player, forward, strafe)
-probe = float(settings.movement.auto_jump_probe)
-if can_auto_jump_one_block(player, world, dx=float(wish.x) * probe, dz=float(wish.z) * probe, block_registry=block_registry, params=settings.collision):
-  jump_pulse = True
-  player.auto_jump_pending = True
-  player.auto_jump_start_y = float(player.position.y)`,
+            code: `        wish = wish_dir_from_input(player, forward, strafe)
+        probe = float(settings.movement.auto_jump_probe)
+        dx = float(wish.x) * probe
+        dz = float(wish.z) * probe
+        if can_auto_jump_one_block(player, world, dx=dx, dz=dz, block_registry=block_registry, params=settings.collision):
+          jump_pulse = True
+          player.auto_jump_pending = True
+          player.auto_jump_start_y = float(player.position.y)`,
           },
         ],
       },
@@ -1783,11 +1720,14 @@ if can_auto_jump_one_block(player, world, dx=float(wish.x) * probe, dz=float(wis
           {
             language: 'py',
             caption: 'A footstep fires when the walk phase crosses a half cycle while grounded.',
-            code: `rate = float(PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED) * (float(speed) / float(base))
-motion.walk_phase_total_rad = float(previous_total + rate * float(dt))
-if bool(player.flying) or (not bool(player.on_ground)) or speed < float(PLAYER_FOOTSTEP_MIN_SPEED):
-  return False
-return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.walk_phase_total_rad) / math.pi))`,
+            code: `  rate = float(PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED) * (float(speed) / float(base))
+  previous_total = float(motion.walk_phase_total_rad)
+  motion.walk_phase_total_rad = float(previous_total + rate * float(dt))
+  motion.walk_phase_rad = float(motion.walk_phase_total_rad % (2.0 * math.pi))
+
+  if bool(player.flying) or (not bool(player.on_ground)) or speed < float(PLAYER_FOOTSTEP_MIN_SPEED):
+    return False
+  return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.walk_phase_total_rad) / math.pi))`,
           },
         ],
       },
@@ -1810,12 +1750,12 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
           {
             language: 'py',
             caption: 'The crouch eye offset eases toward its target each step.',
-            code: `def _update_crouch_eye(player, *, dt: float, crouch: bool) -> None:
+            code: `def _update_crouch_eye(player: PlayerEntity, *, dt: float, crouch: bool) -> None:
   target = float(player.crouch_eye_drop) if bool(crouch) else 0.0
   current = float(player.crouch_eye_offset)
   alpha = 1.0 - math.exp(-18.0 * max(0.0, float(dt)))
   next_value = current + (target - current) * alpha
-  player.crouch_eye_offset = max(0.0, min(float(player.crouch_eye_drop), float(next_value)))`,
+  next_value = max(0.0, min(float(player.crouch_eye_drop), float(next_value)))`,
           },
         ],
       },
@@ -1843,11 +1783,11 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
           {
             language: 'py',
             caption: 'The health strip draws hearts from the current and maximum health.',
-            code: `def set_state(self, *, show_health: bool, health: float, max_health: float) -> None:
-  self._show_health = bool(show_health)
-  self._max_health = max(2.0, float(max_health))
-  self._health = max(0.0, min(float(health), float(self._max_health)))
-  self.update()`,
+            code: `  def set_state(self, *, show_health: bool, health: float, max_health: float) -> None:
+    self._show_health = bool(show_health)
+    self._max_health = max(_MIN_HEALTH_CAP_POINTS, float(max_health))
+    self._health = max(0.0, min(float(health), float(self._max_health)))
+    self.setVisible(bool(self._show_health))`,
           },
         ],
       },
@@ -1864,6 +1804,51 @@ return int(math.floor(previous_total / math.pi)) != int(math.floor(float(motion.
             language: 'py',
             caption: 'Fall damage is the rounded-up distance past the safe distance.',
             code: `FALL_DAMAGE_SAFE_DISTANCE_BLOCKS = 3.0
+
+PLAYER_BODY_YAW_FOLLOW_TAU_S = 0.24
+PLAYER_HEAD_BODY_YAW_MAX_DEG = 58.0
+PLAYER_HEAD_VISUAL_LAG_TAU_S = 0.09
+PLAYER_HEAD_VISUAL_YAW_LAG_MAX_DEG = 12.0
+PLAYER_HEAD_VISUAL_PITCH_LAG_MAX_DEG = 6.0
+
+PLAYER_STRAFE_BODY_TURN_MAX_DEG = 18.0
+PLAYER_STRAFE_BODY_TURN_TAU_S = 0.40
+PLAYER_STRAFE_INPUT_EPS = 0.3
+
+
+@dataclass
+class PlayerMotionState:
+  walk_phase_rad: float = 0.0
+  walk_phase_total_rad: float = 0.0
+  airborne_start_y: float | None = None
+  visual_time_s: float = 0.0
+  body_visual_yaw_deg: float | None = None
+  head_visual_yaw_deg: float | None = None
+  head_visual_pitch_deg: float | None = None
+  strafe_turn_deg: float = 0.0
+
+
+@dataclass(frozen=True)
+class PlayerStepInput:
+  move_f: float
+  move_s: float
+  jump_held: bool
+  jump_pressed: bool
+  sprint: bool
+  crouch: bool
+  yaw_delta_deg: float
+  pitch_delta_deg: float
+  auto_jump_enabled: bool
+
+
+@dataclass(frozen=True)
+class RuntimePlayerStepResult:
+  jump_started: bool
+  landed: bool
+  footstep_triggered: bool
+  support_block_state: str | None
+  support_position: tuple[int, int, int] | None
+  fall_distance_blocks: float | None
 
 
 def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
@@ -1891,9 +1876,13 @@ def fall_damage_amount(*, fall_distance_blocks: float | None) -> float:
             code: `VOID_DAMAGE_START_Y = -64.0
 VOID_DAMAGE_INTERVAL_S = 0.50
 VOID_DAMAGE_AMOUNT = 4.0
+MELEE_KNOCKBACK_HORIZONTAL_SPEED = 0.40 * _VANILLA_TICKS_PER_SECOND
+MELEE_KNOCKBACK_VERTICAL_SPEED = 0.40 * _VANILLA_TICKS_PER_SECOND
+MELEE_SPRINT_BONUS_HORIZONTAL_SPEED = 0.50 * _VANILLA_TICKS_PER_SECOND
+MELEE_ATTACKER_SPRINT_SPEED_KEEP = 0.60
 
 
-def apply_void_damage(*, player, dt, timer_s):
+def apply_void_damage(*, player: PlayerEntity, dt: float, timer_s: float) -> tuple[float, float]:
   if (not bool(player.alive())) or float(player.position.y) >= float(VOID_DAMAGE_START_Y):
     return (0.0, 0.0)
   remaining = max(0.0, float(timer_s)) + max(0.0, float(dt))
@@ -1920,6 +1909,45 @@ def apply_void_damage(*, player, dt, timer_s):
             code: `class DeathOverlay(QWidget):
   respawn_requested = pyqtSignal()
 
+  def __init__(self, parent: QWidget | None = None) -> None:
+    super().__init__(parent)
+
+    self.setVisible(False)
+    self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+    self.setObjectName("deathRoot")
+
+    root = QVBoxLayout(self)
+    root.setContentsMargins(0, 0, 0, 0)
+    root.addStretch(1)
+
+    panel = QFrame(self)
+    panel.setObjectName("panel")
+    panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    panel.setMinimumWidth(420)
+
+    pv = QVBoxLayout(panel)
+    pv.setContentsMargins(20, 18, 20, 20)
+    pv.setSpacing(12)
+
+    title = QLabel("YOU DIED", panel)
+    title.setObjectName("title")
+    title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    pv.addWidget(title)
+
+    self._message = QLabel("Player died.", panel)
+    self._message.setWordWrap(True)
+    self._message.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    pv.addWidget(self._message)
+
+    btn = QPushButton("Respawn", panel)
+    btn.setObjectName("menuBtn")
+    btn.clicked.connect(self.respawn_requested.emit)
+    pv.addWidget(btn)
+
+    root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
+    root.addStretch(1)
+
   def set_message(self, text: str) -> None:
     body = str(text).strip()
     if not body:
@@ -1940,7 +1968,7 @@ def apply_void_damage(*, player, dt, timer_s):
           {
             language: 'py',
             caption: 'Respawn resets player state and clears the dead overlay.',
-            code: `def respawn(viewport) -> None:
+            code: `def respawn(viewport: "RendererViewportWidget") -> None:
   viewport._reset_held_mouse_actions()
   ai_controller.cancel_route_edit(viewport)
   viewport._session.respawn()

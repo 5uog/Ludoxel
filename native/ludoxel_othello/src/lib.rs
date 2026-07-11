@@ -54,7 +54,9 @@ struct InsaneSearch {
 impl InsaneSearch {
   #[new]
   fn new(hash_level: i64, sacrifice_level: i64) -> Self {
-    InsaneSearch { state: search::SearchState::new(hash_level, sacrifice_level) }
+    InsaneSearch {
+      state: search::SearchState::new(hash_level, sacrifice_level),
+    }
   }
 
   fn clear(&mut self) {
