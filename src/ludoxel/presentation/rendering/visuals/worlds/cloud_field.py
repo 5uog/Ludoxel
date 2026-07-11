@@ -12,7 +12,6 @@ from ludoxel.application.preferences.clouds import normalize_cloud_height_settin
 from ludoxel.foundations.mathematics.linear.vec3 import Vec3
 from ludoxel.presentation.rendering.contracts.config import BackendCloudParams
 
-
 CLOUD_FACE_COUNT = 6
 CLOUD_INSTANCE_ROW_WIDTH = 11
 _CLOUD_SPEED_BUCKET_COUNT = 12
